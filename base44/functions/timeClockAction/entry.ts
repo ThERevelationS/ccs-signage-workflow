@@ -6979,6 +6979,218 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, request: confirmedRecord, audit_id: updateIntent.id, reused: finalOutcome === 'recovered' });
     }
 
+    if (action === 'list_time_off_requests') {
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view time-off requests.' }, { status: 403 });
+      const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
+      const query = adminScope
+        ? { status: { $in: ['pending', 'approved'] }, archived_test_data: { $ne: true } }
+        : { user_email: target.email, archived_test_data: { $ne: true } };
+      const requests = await timeOffRequestEntity.filter(query);
+      if (!Array.isArray(requests)) throw new Error('Time-off request list did not return records.');
+      requests.sort((a: any, b: any) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime());
+      return Response.json({ success: true, requests });
+    }
+
+    if (action === 'time_off_decision') {
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to decide time-off requests.' }, { status: 403 });
+      const timeOffRequestId = String(body?.time_off_request_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const decision = String(body?.decision || '').trim();
+      const decisionNotes = String(body?.admin_notes || '').trim().slice(0, 1000);
+      if (!timeOffRequestId || !expectedUpdatedDate) {
+        return Response.json({ success: false, error: 'The loaded time-off request version is required before deciding it.' }, { status: 400 });
+      }
+      if (!['approved', 'denied', 'cancelled'].includes(decision)) {
+        return Response.json({ success: false, error: 'A valid time-off decision is required.' }, { status: 400 });
+      }
+      const decisionEventType = decision === 'approved' ? 'time_off_approved'
+        : decision === 'denied' ? 'time_off_denied' : 'time_off_cancelled';
+      const fromStatuses = decision === 'cancelled' ? ['pending', 'approved'] : ['pending'];
+      const decisionTimestamp = new Date().toISOString();
+
+      let requestRecord = await timeOffRequestEntity.get(timeOffRequestId).catch(() => null);
+      if (!requestRecord?.id || requestRecord.archived_test_data) {
+        return Response.json({ success: false, error: 'Time-off request was not found or is archived.' }, { status: 404 });
+      }
+      const requestOwnerEmail = asEmail(requestRecord.user_email);
+      // Admins approve, deny, or cancel; the requesting employee may only
+      // cancel their own pending/approved request.
+      const ownerCancel = decision === 'cancelled' && actorEmail === requestOwnerEmail;
+      if (actor.role !== 'admin' && !ownerCancel) {
+        return Response.json({ success: false, error: 'Only a manager can approve or deny time-off requests.' }, { status: 403 });
+      }
+
+      const decisionFields = {
+        status: decision,
+        approved_by: actorEmail,
+        approved_date: decisionTimestamp,
+        admin_notes: decisionNotes,
+      };
+      const decisionPayloadHash = await payloadHash({
+        time_off_request_id: timeOffRequestId,
+        expected_updated_date: expectedUpdatedDate,
+        ...decisionFields,
+      });
+      const decidedFieldsMatch = (row: any) => (
+        row?.id === timeOffRequestId &&
+        String(row.status || '') === decision &&
+        asEmail(row.approved_by) === actorEmail &&
+        String(row.admin_notes || '') === decisionNotes
+      );
+      const auditQuery = { action: 'time_off_decision', request_id: requestId, user_email: requestOwnerEmail };
+      let decisionIntent = await uniqueRow(auditEntity, auditQuery, 'Time-off decision audit');
+      if (decisionIntent?.id) {
+        const priorHash = String(decisionIntent.details?.payload_hash || '');
+        if (!priorHash || !constantTimeEqual(priorHash, decisionPayloadHash) ||
+          String(decisionIntent.details?.time_off_request_id || '') !== timeOffRequestId) {
+          return Response.json({ success: false, error: 'This time-off decision request id has mismatched or incomplete audit details. Admin investigation is required.' }, { status: 409 });
+        }
+        if (decisionIntent.outcome === 'blocked') {
+          return Response.json({ success: false, error: 'This time-off decision was previously blocked. Reload before deciding again.' }, { status: 409 });
+        }
+        if (['confirmed', 'recovered'].includes(String(decisionIntent.outcome || ''))) {
+          if (String(requestRecord.last_request_id || '') !== requestId ||
+            !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+            !decidedFieldsMatch(requestRecord)) {
+            return Response.json({ success: false, error: 'The completed time-off decision audit no longer matches the request record. Admin investigation is required.' }, { status: 409 });
+          }
+          return Response.json({ success: true, request: requestRecord, audit_id: decisionIntent.id, reused: true });
+        }
+        if (decisionIntent.outcome !== 'pending') {
+          return Response.json({ success: false, error: 'This time-off decision audit is not in a recoverable state.' }, { status: 409 });
+        }
+      }
+
+      const sameRequestSaved = String(requestRecord.last_request_id || '') === requestId;
+      if (sameRequestSaved && (
+        !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+        !decidedFieldsMatch(requestRecord)
+      )) {
+        return Response.json({ success: false, error: 'This time-off decision request id no longer matches the saved decision. Admin investigation is required.' }, { status: 409 });
+      }
+      if (!sameRequestSaved && (
+        !fromStatuses.includes(String(requestRecord.status || '')) || String(requestRecord.updated_date || '') !== expectedUpdatedDate
+      )) {
+        return Response.json({ success: false, error: `This time-off request is no longer ${fromStatuses.join('/')} at its loaded version. Reload before deciding.` }, { status: 409 });
+      }
+
+      const hadPendingAudit = decisionIntent?.outcome === 'pending';
+      if (!decisionIntent?.id) {
+        try {
+          const ensured = await ensureUserActionAudit(auditEntity, {
+            action: 'time_off_decision',
+            outcome: 'pending',
+            user_email: requestOwnerEmail,
+            user_name: requestRecord.user_name || requestOwnerEmail,
+            actor_email: actorEmail,
+            actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target),
+            server_timestamp: decisionTimestamp,
+            request_id: requestId,
+            reason: decisionNotes || `Time-off request ${decision}`,
+            details: {
+              payload_hash: decisionPayloadHash,
+              time_off_request_id: timeOffRequestId,
+              expected_updated_date: expectedUpdatedDate,
+              decision,
+              previous_status: requestRecord.status,
+            },
+          }, 'Time-off decision audit intent');
+          decisionIntent = ensured.audit;
+        } catch {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off decision audit intent could not be verified. Retry the same decision.' }, { status: 409 });
+        }
+      }
+      // Audit creation can race; never mutate while the request id has ambiguous audit evidence.
+      decisionIntent = await uniqueRow(auditEntity, auditQuery, 'Time-off decision audit intent');
+      if (!decisionIntent?.id || decisionIntent.outcome !== 'pending' ||
+        !constantTimeEqual(String(decisionIntent.details?.payload_hash || ''), decisionPayloadHash) ||
+        String(decisionIntent.details?.time_off_request_id || '') !== timeOffRequestId) {
+        return Response.json({ success: false, error: 'The time-off decision audit intent is ambiguous or no longer pending. Admin review is required.' }, { status: 409 });
+      }
+
+      if (!sameRequestSaved) {
+        if (!fromStatuses.includes(String(requestRecord.status || ''))) {
+          return Response.json({ success: false, error: `Only ${fromStatuses.join('/')} time-off requests can be ${decision === 'approved' ? 'approved' : decision === 'denied' ? 'denied' : 'cancelled'}.` }, { status: 409 });
+        }
+        if (String(requestRecord.updated_date || '') !== expectedUpdatedDate) {
+          return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before deciding it.' }, { status: 409 });
+        }
+        const updated = await timeOffRequestEntity.updateMany(
+          { id: requestRecord.id, updated_date: expectedUpdatedDate, status: { $in: fromStatuses }, archived_test_data: { $ne: true } },
+          { $set: { ...decisionFields, last_request_id: requestId, last_request_payload_hash: decisionPayloadHash } },
+        );
+        if (!updated || updated.updated !== 1) {
+          const raced = await timeOffRequestEntity.get(requestRecord.id).catch(() => null);
+          if (raced?.id && String(raced.last_request_id || '') === requestId &&
+            constantTimeEqual(String(raced.last_request_payload_hash || ''), decisionPayloadHash) &&
+            decidedFieldsMatch(raced)) {
+            requestRecord = raced; // The exact same request succeeded in another session.
+          } else {
+            await auditEntity.updateMany(
+              { id: decisionIntent.id, outcome: 'pending', request_id: requestId, user_email: requestOwnerEmail },
+              { $set: { outcome: 'blocked' } },
+            );
+            return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before deciding it.' }, { status: 409 });
+          }
+        } else {
+          requestRecord = await timeOffRequestEntity.get(requestRecord.id);
+        }
+      }
+
+      // A saved decision is never success without the exact record fields, request
+      // marker, and a confirmed/recovered audit for this request id.
+      if (!requestRecord?.id ||
+        String(requestRecord.last_request_id || '') !== requestId ||
+        !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+        !decidedFieldsMatch(requestRecord)) {
+        return Response.json({ success: false, error: 'The saved time-off decision no longer matches its audit intent. Admin investigation is required.' }, { status: 409 });
+      }
+
+      const finalOutcome = hadPendingAudit || sameRequestSaved ? 'recovered' : 'confirmed';
+      const finalized = await auditEntity.updateMany(
+        { id: decisionIntent.id, outcome: 'pending', request_id: requestId, user_email: requestOwnerEmail },
+        { $set: {
+          outcome: finalOutcome,
+          server_timestamp: new Date().toISOString(),
+          details: {
+            ...(decisionIntent.details || {}),
+            payload_hash: decisionPayloadHash,
+            time_off_request_id: timeOffRequestId,
+            saved_updated_date: requestRecord.updated_date,
+            decision,
+          },
+        } },
+      );
+      if (!finalized || finalized.updated !== 1) {
+        const fresh = await uniqueRow(auditEntity, auditQuery, 'Time-off decision audit finalization');
+        if (!fresh?.id || fresh.id !== decisionIntent.id ||
+          !['confirmed', 'recovered'].includes(String(fresh.outcome || '')) ||
+          !constantTimeEqual(String(fresh.details?.payload_hash || ''), decisionPayloadHash) ||
+          String(fresh.details?.time_off_request_id || '') !== timeOffRequestId) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off decision was saved but its audit finalization is incomplete. Retry the same decision.' }, { status: 409 });
+        }
+        decisionIntent = fresh;
+      } else {
+        decisionIntent = await uniqueRow(auditEntity, auditQuery, 'Confirmed time-off decision audit');
+      }
+
+      const confirmedRecord = await timeOffRequestEntity.get(timeOffRequestId).catch(() => null);
+      if (!decisionIntent?.id || !['confirmed', 'recovered'].includes(String(decisionIntent.outcome || '')) ||
+        !constantTimeEqual(String(decisionIntent.details?.payload_hash || ''), decisionPayloadHash) ||
+        String(decisionIntent.details?.time_off_request_id || '') !== timeOffRequestId ||
+        !confirmedRecord?.id ||
+        String(confirmedRecord.last_request_id || '') !== requestId ||
+        !constantTimeEqual(String(confirmedRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+        !decidedFieldsMatch(confirmedRecord)) {
+        return Response.json({ success: false, error: 'The time-off decision and confirmed audit do not agree. Admin investigation is required.' }, { status: 409 });
+      }
+      if (finalOutcome === 'confirmed' && confirmedRecord?.id) {
+        await emitTimeClockEvent(base44, decisionEventType, confirmedRecord.id, actorEmail);
+      }
+      return Response.json({ success: true, request: confirmedRecord, audit_id: decisionIntent.id, reused: finalOutcome === 'recovered' });
+    }
+
     if (action === 'list_correction_requests') {
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view correction requests.' }, { status: 403 });
       const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
