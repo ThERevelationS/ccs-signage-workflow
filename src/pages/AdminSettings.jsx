@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { AUTOMATION_PRESETS, draftFromPreset, recordFilterFields, destinationWorkOrderId, draftProblems } from "@/components/admin/automationBuilderModel.mjs";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -385,8 +386,8 @@ const ORDER_DEADLINE_TRIGGER_SET = new Set([
   "order_date_needed_approaching", "order_date_needed_passed", "order_overdue",
 ]);
 
-// Emitted server-side by opportunityWorkspaceAction after verified saves —
-// Opportunity record context, send_email only.
+// Record events can email or append a task/note to an explicitly selected
+// Work Order. Scheduled record reminders remain email-only.
 const SALES_TRIGGER_SET = new Set([
   "sales_lead_created", "sales_status_changed", "sales_status_won",
   "sales_status_lost", "sales_status_on_hold", "sales_rep_changed",
@@ -439,6 +440,7 @@ const JURISDICTION_TRIGGER_SET = new Set([
 ]);
 
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
+const RECORD_SUPPORTED_ACTIONS = new Set(["send_email", "add_task", "add_note"]);
 
 const ENGINE_SUPPORTED_ACTIONS = new Set([
   "send_email", "change_stage", "set_asap", "assign_to",
@@ -452,11 +454,11 @@ const DEADLINE_SUPPORTED_ACTIONS = new Set([
 
 const getTriggerSupportedActions = (triggerType) => {
   if (WORKFLOW_ENGINE_TRIGGER_SET.has(triggerType)) return ENGINE_SUPPORTED_ACTIONS;
-  if (ORDER_TRIGGER_SET.has(triggerType) || ORDER_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
-  if (SALES_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
+  if (ORDER_TRIGGER_SET.has(triggerType) || SALES_TRIGGER_SET.has(triggerType)) return RECORD_SUPPORTED_ACTIONS;
+  if (ORDER_DEADLINE_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (TIME_CLOCK_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (PENDING_IMPORT_TRIGGER_SET.has(triggerType) || FEATURE_REPORT_TRIGGER_SET.has(triggerType) ||
-      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
+      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType)) return RECORD_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
@@ -475,11 +477,15 @@ const triggerHasOrderFilters = (condition) =>
 const describeAutomation = (triggers, actions) => {
   const triggerText = (triggers || [])
     .filter(t => t?.trigger_type)
-    .map((t, i) => `${i > 0 ? ` ${t.logic === "and" ? "and" : "or"} ` : ""}${TRIGGER_TYPES.find(tt => tt.value === t.trigger_type)?.label || t.trigger_type}`)
+    .map((t, i) => {
+      const filters = Object.entries(t.trigger_condition || {}).filter(([, value]) => value != null && value !== "");
+      const onlyIf = filters.length ? ` (only if ${filters.map(([key, value]) => `${key.replace(/^record_/, "").replace(/_/g, " ")} = ${value}`).join(" and ")})` : "";
+      return `${i > 0 ? ` ${t.logic === "and" ? "and" : "or"} ` : ""}${TRIGGER_TYPES.find(tt => tt.value === t.trigger_type)?.label || t.trigger_type}${onlyIf}`;
+    })
     .join("");
   const actionText = (actions || [])
     .filter(a => a?.action_type)
-    .map(a => ACTION_TYPES.find(at => at.value === a.action_type)?.label || a.action_type)
+    .map(a => `${ACTION_TYPES.find(at => at.value === a.action_type)?.label || a.action_type}${a.action_config?.target_work_order_id ? ` to Work Order ${a.action_config.target_work_order_id}` : ""}`)
     .join(" and ");
   return triggerText && actionText ? `When ${triggerText}, then ${actionText}.` : "";
 };
@@ -1037,6 +1043,8 @@ export default function AdminSettings() {
 
   const handleSave = async () => {
     if (automationOperationRef.current) return;
+    const problems = draftProblems(triggers, actions, needsRecordDestination);
+    if (problems.length) { setAutomationSaveError(problems.join(" ")); return; }
     if (automationUncertainRef.current || automationSaveInFlight.current || automationSaving || emailGroupsLoading ||
         emailGroupsLoadError || !formData.name?.trim() ||
         !triggers[0]?.trigger_type || !actions[0]?.action_type) return;
@@ -1056,7 +1064,9 @@ export default function AdminSettings() {
       ...formData,
       name: String(formData.name || "").trim(),
       triggers,
-      actions
+      actions: actions.map(action => action.action_config?.target_work_order_id ? {
+        ...action, action_config: { ...action.action_config, target_work_order_id: destinationWorkOrderId(action.action_config.target_work_order_id) },
+      } : action)
     };
     setAutomationSaveError("");
     setAutomationSaving(true);
@@ -1533,7 +1543,16 @@ export default function AdminSettings() {
   const ORDER_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
   const ORDER_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
-  const groupedTriggers = TRIGGER_TYPES.reduce((acc, trigger) => {
+  const needsRecordDestination = triggers.some(t => getTriggerSupportedActions(t.trigger_type) === RECORD_SUPPORTED_ACTIONS);
+  const builderProblems = draftProblems(triggers, actions, needsRecordDestination);
+  const applyAutomationPreset = (preset) => {
+    const draft = draftFromPreset(preset);
+    setFormData(draft.formData);
+    setTriggers(draft.triggers);
+    setActions(draft.actions);
+    setAutomationSaveError("");
+  };
+  const groupedTriggers = TRIGGER_TYPES.filter(t => getTriggerSupportedActions(t.value)).reduce((acc, trigger) => {
     if (!acc[trigger.category]) acc[trigger.category] = [];
     acc[trigger.category].push(trigger);
     return acc;
@@ -1580,6 +1599,20 @@ export default function AdminSettings() {
     }
   };
 
+  const renderRecordDestination = (config, index) => needsRecordDestination && (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+      <Label htmlFor={`record-destination-${index}`}>Destination Work Order *</Label>
+      <Input id={`record-destination-${index}`} className="mt-1" value={config.target_work_order_id || ""}
+        placeholder="Paste the Work Order link or ID"
+        onChange={e => updateAction(index, "target_work_order_id", e.target.value)}
+        onBlur={e => {
+          const id = destinationWorkOrderId(e.target.value);
+          if (id) updateAction(index, "target_work_order_id", id);
+        }} />
+      <p className="mt-1 text-xs text-blue-800">This event is not a Work Order. The task or note goes only to the Work Order you choose here; saving verifies that it exists and is not in Trash.</p>
+    </div>
+  );
+
   const renderActionConfig = (action, index) => {
     const config = action.action_config || {};
     
@@ -1624,7 +1657,8 @@ export default function AdminSettings() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {RECIPIENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      {RECIPIENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}
+                        disabled={needsRecordDestination && ["assigned_user", "creator"].includes(t.value)}>{t.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   {recipient.type === "email" && (
@@ -1718,7 +1752,10 @@ export default function AdminSettings() {
         );
       
       case "add_task":
-        return <Input className="mt-2" placeholder="Task text" value={config.task || ""} onChange={(e) => updateAction(index, "task", e.target.value)} />;
+        return <div className="space-y-2 mt-2">
+          <Input aria-label="Task text" placeholder="What needs to be done?" value={config.task || ""} onChange={(e) => updateAction(index, "task", e.target.value)} />
+          {renderRecordDestination(config, index)}
+        </div>;
       
       case "add_note":
         return (
@@ -1732,6 +1769,7 @@ export default function AdminSettings() {
               </SelectContent>
             </Select>
             <Textarea placeholder="Note text" value={config.note || ""} onChange={(e) => updateAction(index, "note", e.target.value)} />
+            {renderRecordDestination(config, index)}
           </div>
         );
       
@@ -1742,8 +1780,8 @@ export default function AdminSettings() {
             <Select value={config.direction || "after"} onValueChange={(val) => updateAction(index, "direction", val)}>
               <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="after">days from now</SelectItem>
-                <SelectItem value="before">days before trigger</SelectItem>
+                <SelectItem value="after">days from today</SelectItem>
+                <SelectItem value="before">days before today</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -2157,7 +2195,7 @@ export default function AdminSettings() {
             </div>
 
             {/* Stats are authoritative only after a complete successful read. */}
-            {!isLoading && !automationLoadError && <div className="grid grid-cols-3 gap-4 mb-6">
+            {!isLoading && !automationLoadError && <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="clay-card p-4">
                 <div className="flex items-center gap-3">
                   <Zap className="w-5 h-5 text-purple-600" />
@@ -2279,8 +2317,20 @@ export default function AdminSettings() {
             {ordinaryAutomationRecovery}
             {uncertainAutomationReview}
             <fieldset disabled={automationSaving} className="min-w-0 space-y-6 mt-4">
+              {!editingRule && !formData.name && !triggers[0]?.trigger_type && (
+                <section aria-label="Automation starters" className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                  <h3 className="font-semibold text-blue-950">Start with an example</h3>
+                  <p className="mt-1 text-sm text-blue-800">Pick one, review it, then save. Examples start disabled so you can check them before turning them on.</p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {AUTOMATION_PRESETS.map(preset => (
+                      <Button key={preset.trigger} variant="outline" className="h-auto justify-start whitespace-normal text-left"
+                        onClick={() => applyAutomationPreset(preset)}>{preset.name}</Button>
+                    ))}
+                  </div>
+                </section>
+              )}
               {/* Name & Priority */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Automation Name *</Label>
                   <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -2296,8 +2346,8 @@ export default function AdminSettings() {
               <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
                 <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">IF</div>
-                          <span className="text-gray-600 text-sm">these conditions are met...</span>
+                          <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">WHEN</div>
+                          <span className="text-gray-600 text-sm">this happens...</span>
                         </div>
                         <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
                           <Plus className="w-3 h-3 mr-1" /> Add Trigger
@@ -2326,6 +2376,11 @@ export default function AdminSettings() {
                       <Select value={trigger.trigger_type} onValueChange={(val) => updateTrigger(index, "trigger_type", val)}>
                         <SelectTrigger><SelectValue placeholder="Select trigger" /></SelectTrigger>
                         <SelectContent>
+                          {trigger.trigger_type && !getTriggerSupportedActions(trigger.trigger_type) && (
+                            <SelectItem value={trigger.trigger_type} disabled>
+                              {TRIGGER_TYPES.find(t => t.value === trigger.trigger_type)?.label || trigger.trigger_type} (not working yet)
+                            </SelectItem>
+                          )}
                           {Object.entries(groupedTriggers).map(([category, list]) => (
                             <div key={category}>
                               <div className="px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100">{category}</div>
@@ -2355,7 +2410,7 @@ export default function AdminSettings() {
                         </div>
                       )}
 
-                      {trigger.trigger_type && !getTriggerIsOrderType(trigger.trigger_type) && (
+                      {(WORKFLOW_ENGINE_TRIGGER_SET.has(trigger.trigger_type) || DEADLINE_TRIGGER_SET.has(trigger.trigger_type)) && (
                         <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-orange-100">
                           <div className="flex items-center gap-1">
                             <Switch checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
@@ -2380,6 +2435,41 @@ export default function AdminSettings() {
                                 <SelectItem value="riders">Riders Only</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+                      )}
+
+                      {getTriggerSupportedActions(trigger.trigger_type) === RECORD_SUPPORTED_ACTIONS &&
+                        ["is_asap", "is_rider", "stage", "assigned_to", "from_stage", "to_stage"].some(key => trigger.trigger_condition[key] != null) && (
+                        <div role="status" className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                          This saved event has Work Order filters that do not describe this record.
+                          <Button variant="outline" size="sm" className="mt-2" onClick={() => setTriggers(current => current.map((item, i) =>
+                            i !== index ? item : { ...item, trigger_condition: Object.fromEntries(Object.entries(item.trigger_condition).filter(([key]) =>
+                              !["is_asap", "is_rider", "stage", "assigned_to", "from_stage", "to_stage"].includes(key))) }))}>
+                            Remove incompatible filters
+                          </Button>
+                        </div>
+                      )}
+
+                      {getTriggerSupportedActions(trigger.trigger_type) === RECORD_SUPPORTED_ACTIONS && recordFilterFields(trigger.trigger_type).length > 0 && (
+                        <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 p-3">
+                          <p className="mb-2 text-xs font-semibold text-orange-900">IF (optional) - only when these fields match</p>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {recordFilterFields(trigger.trigger_type).map(([key, label, values]) => (
+                              <div key={key}>
+                                <Label htmlFor={`record-filter-${index}-${key}`} className="text-xs">{label}</Label>
+                                {values ? (
+                                  <select id={`record-filter-${index}-${key}`} className="mt-1 h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-sm"
+                                    value={trigger.trigger_condition[key] || ""} onChange={e => updateTrigger(index, key, e.target.value || undefined)}>
+                                    <option value="">Any</option>
+                                    {values.map(value => <option key={value} value={value}>{value.replace(/_/g, " ")}</option>)}
+                                  </select>
+                                ) : (
+                                  <Input id={`record-filter-${index}-${key}`} className="mt-1" placeholder="Any"
+                                    value={trigger.trigger_condition[key] || ""} onChange={e => updateTrigger(index, key, e.target.value || undefined)} />
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -2435,7 +2525,7 @@ export default function AdminSettings() {
                                 type="number"
                                 min="0"
                                 placeholder="Any"
-                                value={trigger.trigger_condition.min_quantity || ""}
+                                value={trigger.trigger_condition.min_quantity ?? ""}
                                 onChange={(e) => updateTrigger(index, "min_quantity", e.target.value ? parseInt(e.target.value) : undefined)}
                                 className="mt-1 h-8 text-sm"
                               />
@@ -2446,7 +2536,7 @@ export default function AdminSettings() {
                                 type="number"
                                 min="0"
                                 placeholder="Any"
-                                value={trigger.trigger_condition.max_quantity || ""}
+                                value={trigger.trigger_condition.max_quantity ?? ""}
                                 onChange={(e) => updateTrigger(index, "max_quantity", e.target.value ? parseInt(e.target.value) : undefined)}
                                 className="mt-1 h-8 text-sm"
                               />
@@ -2528,8 +2618,8 @@ export default function AdminSettings() {
                             <SelectValue placeholder="Select action" />
                           </SelectTrigger>
                           <SelectContent>
-                            {ACTION_TYPES.map(t => (
-                              <SelectItem key={t.value} value={t.value}>
+                            {ACTION_TYPES.filter(t => actionRunsForTriggers(t.value, triggers) || t.value === action.action_type).map(t => (
+                              <SelectItem key={t.value} value={t.value} disabled={!actionRunsForTriggers(t.value, triggers)}>
                                 <div className="flex items-center gap-2">
                                   <t.icon className="w-4 h-4" />
                                   {t.label}
@@ -2563,6 +2653,12 @@ export default function AdminSettings() {
                   <div className="mt-1 text-xs">{automationSaveError}</div>
                 </div>
               )}
+              {builderProblems.length > 0 && triggers[0]?.trigger_type && (
+                <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                  <p className="font-medium">Before saving:</p>
+                  {builderProblems.map(problem => <p key={problem} className="mt-1">{problem}</p>)}
+                </div>
+              )}
 
               {/* Validation Messages */}
               {(!formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type) && (
@@ -2583,7 +2679,7 @@ export default function AdminSettings() {
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" disabled={automationSaving} onClick={() => closeAutomationEditor(false)}>Close editor</Button>
                 {!automationUncertain && <Button variant="outline" disabled={automationSaving} onClick={discardAutomationDraft}>Discard draft</Button>}
-                <Button onClick={handleSave} disabled={!!automationUncertain || automationSaving || !!automationOperation || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
+                <Button onClick={handleSave} disabled={builderProblems.length > 0 || !!automationUncertain || automationSaving || !!automationOperation || emailGroupsLoading || emailGroupsLoadError || !formData.name || !triggers[0]?.trigger_type || !actions[0]?.action_type}
                   className="clay-button border-none" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                   {automationSaving ? "Saving..." : `${editingRule ? "Update" : "Create"} Automation`}
                 </Button>
