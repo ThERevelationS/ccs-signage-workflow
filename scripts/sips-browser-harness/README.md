@@ -79,3 +79,15 @@ Acceptance checklist:
 7. Verify all test records and audit history are retained or cleaned up using the nonproduction environment's approved procedure. Record the environment, build/commit, browser versions and actual results.
 
 Only mark authenticated QA complete after those steps run successfully; a local synthetic PASS is not a substitute.
+
+## Monday Morning Meeting board browser acceptance (October 26, 2026)
+
+`scripts/test-mmm-board-browser.mjs` mounts the **real `MondayMorningMeeting.jsx`** with production CSS in isolated Chromium contexts, using the same synthetic-fixture pattern: a temp Vite server, an in-memory CAS-protected Work Order fixture over `/__mmm_fixture`, `EmailGate` replaced by a local `mockAuth.jsx` covering every export (`getSessionToken` is needed by transitive imports), and `WorkOrderDetailsDialog` replaced by a synthetic refresh facade. Two fixture rows cover both board-membership paths (`current_task_assigned_to` and WIP-flagged task descriptions).
+
+Run after `npm run build` with Playwright installed as described above:
+
+```bash
+node scripts/test-mmm-board-browser.mjs
+```
+
+**11/11 scenarios** cover: board mount with all meeting columns and auto-expanded open-task line; mobile viewport with no document overflow; Discussed checkbox parking the row in "Discussed & Scheduled" with a single CAS write of `mmm_last_discussed_at` + cleared `mmm_defer_until`; Return restoring the row to To Discuss; snooze Next Monday writing `mmm_defer_until` and showing a `returns M/d` chip; inline meeting-task add and completion (tasks disappear when done); author-stamped meeting notes appending to shared `work_notes`; search empty state + Clear restore; **two-browser concurrent discussed + task-add both persisting**; the "+N job tasks" chip opening details and its `onUpdate` refreshing the board; and row-number focus applying the orange `mmm-focus-row` zoom. Synthetic UI acceptance only — authenticated nonproduction acceptance remains outstanding per the section above.
