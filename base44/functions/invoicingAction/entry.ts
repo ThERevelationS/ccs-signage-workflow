@@ -584,12 +584,19 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, invoice: updated });
     }
 
-    if (action === "email_invoice") {
+    if (action === "email_invoice" || action === "send_past_due_reminder") {
+      const reminder = action === "send_past_due_reminder";
       const invoiceId = clean(body?.invoice_id);
       const invoice = await Invoice.get(invoiceId).catch(() => null);
       if (!invoice?.id) throw bad("Invoice not found.", 404);
       if (clean(invoice.status) === "void" || clean(invoice.status) === "draft") {
         throw bad("Only issued invoices (sent/partial/paid) can be emailed.", 409);
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const daysPastDue = clean(invoice.due_date) ? Math.max(0, Math.floor((Date.parse(today) - Date.parse(clean(invoice.due_date))) / 86400000)) : 0;
+      if (reminder) {
+        if (num(invoice.balance_due) <= 0) throw bad("This invoice has no open balance — nothing to remind about.", 409);
+        if (daysPastDue <= 0) throw bad("This invoice is not past due yet — use the regular invoice email instead.", 409);
       }
       const customer = clean(invoice.customer_id)
         ? await Customer.get(clean(invoice.customer_id)).catch(() => null)
@@ -633,8 +640,11 @@ Deno.serve(async (req) => {
       const money = (n: any) => `$${num(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       const rows = items.map((i: any) =>
         `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.description || i?.name) || "Item"}${num(i?.quantity) > 1 ? ` × ${num(i.quantity)}` : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(num(i?.quantity) * num(i?.unit_price))}</td></tr>`).join("");
-      const subject = `${companyName} — ${invNum} ${num(invoice.balance_due) > 0 ? `(${money(invoice.balance_due)} due)` : ""}`;
+      const subject = reminder
+        ? `${companyName} — Payment reminder: ${invNum} (${daysPastDue} day${daysPastDue === 1 ? "" : "s"} past due, ${money(invoice.balance_due)} open)`
+        : `${companyName} — ${invNum} ${num(invoice.balance_due) > 0 ? `(${money(invoice.balance_due)} due)` : ""}`;
       const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+        ${reminder ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:16px"><p style="margin:0;font-weight:700;color:#b91c1c">Payment reminder</p><p style="margin:4px 0 0;font-size:13px;color:#7f1d1d">This invoice is ${daysPastDue} day${daysPastDue === 1 ? "" : "s"} past its due date. We'd appreciate payment at your earliest convenience — or a quick note so we know it's on the way.</p></div>` : ""}
         <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName}</h2>
         <p style="margin-top:0;color:#64748b;font-size:13px">${invNum}${clean(invoice.issue_date) ? ` · issued ${clean(invoice.issue_date)}` : ""}${clean(invoice.due_date) ? ` · due ${clean(invoice.due_date)}` : ""}</p>
         ${rows ? `<table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">${rows}</table>` : ""}
