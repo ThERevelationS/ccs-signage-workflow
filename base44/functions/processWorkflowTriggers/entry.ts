@@ -74,6 +74,14 @@ const RECORD_EVENTS = new Set([
 ]);
 const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS, ...TIME_CLOCK_EVENTS, ...RECORD_EVENTS]);
 
+// These events originate inside verified backend writes and call the engine
+// directly. A browser must not manufacture account or report transitions.
+const SERVER_RECORD_EVENTS = new Set([
+  'pending_import_created', 'duplicate_detected',
+  'feature_report_submitted', 'feature_report_status_changed', 'feature_report_completed',
+  'user_registered', 'user_password_reset', 'regulation_alert_created',
+]);
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -84,6 +92,12 @@ Deno.serve(async (req) => {
     const eventType = String(payload?.event_type || '').trim();
     if (!ALLOWED_EVENTS.has(eventType)) {
       throw Object.assign(new Error('Unsupported automation event type'), { status: 400 });
+    }
+    if (SERVER_RECORD_EVENTS.has(eventType)) {
+      throw Object.assign(new Error('This automation event requires a verified backend write.'), { status: 403 });
+    }
+    if (['user_role_changed', 'user_face_enrolled'].includes(eventType) && user.role !== 'admin') {
+      throw Object.assign(new Error('An administrator is required for account automation events.'), { status: 403 });
     }
 
     if (PERMIT_EVENTS.has(eventType)) {
@@ -173,7 +187,7 @@ Deno.serve(async (req) => {
     return Response.json(result);
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 404, 409, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
     console.error('Error processing workflow triggers:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Workflow automation could not be processed safely' : error.message,
