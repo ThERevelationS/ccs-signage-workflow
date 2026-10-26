@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-10-26",
- "unit": "Sentinel-URL cleanup, wrong-state repairs, queue type corrections, guarded backlog dispatch drain",
+ "unit": "Sentinel-URL cleanup, wrong-state repairs, queue type corrections, guarded backlog dispatch drain + hold triage",
  "approvals": "User approved clearing, LLM research dispatch, and repairs (standing approval for these classes).",
  "sentinel_cleanup": {
   "permitting_url_sentinels_cleared": 105,
@@ -16,30 +16,34 @@
  },
  "queue_type_corrections": {
   "retyped_rows": 51,
-  "method": "single official inventory candidate for the queued name; township retypes received deterministic parent_county_name; gate re-verified post-write before unblock"
+  "county_disambiguated_rows": 13,
+  "method": "single official inventory candidate for the queued name, then county-aware elimination for multi-candidate names; township retypes received deterministic parent_county_name; gate re-verified post-write before unblock"
  },
  "dispatch_drain": {
-  "batches": 17,
-  "total_ok": 342,
-  "total_held_identity": 182,
+  "batches": 19,
+  "total_ok": 358,
   "threw_then_recovered": "12 township 409s (profile parent_county missing) + 7 profile-type 409s; all recovered by repairs and retried successfully",
-  "final_queue": {"total": 1775, "sources_found": 1556, "blocked": 218, "verified_current": 1, "not_started": 0},
-  "blocked_breakdown": {"identity_holds": 152, "other_blocked": 66},
-  "final_profiles": {"oh_ky": 1635, "with_permitting_url": 1119, "with_documents": 1328, "held_profiles": 7}
+  "final_queue": {"total": 1775, "sources_found": 1572, "blocked": 202, "verified_current": 1, "not_started": 0},
+  "blocked_breakdown": {"identity_holds_no_candidate": 125, "policy_holds": 6, "wrong_state_holds": 5, "other_blocked": 66},
+  "final_profiles": {"oh_ky": 1635, "with_permitting_url": 1119, "with_documents": 1328, "held_profiles": 15}
  },
+ "duplicates": {
+  "dispatch_created_pairs_held": 8,
+  "names": ["Williamsburg KY", "Campton KY", "Versailles KY", "Shreve OH", "Smithville OH", "West Salem OH", "Chippewa OH", "Bryan OH"],
+  "handling": "lesser profile held as duplicate_profile with canonical id; nothing deleted",
+  "legacy_pairs_for_review": "15 pre-existing pairs (city+village same name: Troy, Dublin, Columbus, etc.; Miami Township x3; Hamilton County x2) — merge policy decision required"
+ },
+ "spot_verification": "14/15 sampled new URLs return 200 with jurisdiction-matching content; Georgetown KY WAF-blocked locally but domain-correct",
  "persistent_gaps": {
-  "infrastructure": "Franklin, Greene, Montgomery county OH domains Cloudflare/WAF-blocked from sandbox egress (Franklin fetches 200 locally)",
+  "infrastructure": "Franklin, Greene, Montgomery county OH domains Cloudflare/WAF-blocked from sandbox egress",
   "wrong_state_recurrence_hold": "Jeffersonville KY — automatic research resolves to the Indiana namesake; guard refused storage twice; held for manual verification",
-  "review_categories": {
-   "unincorporated_no_candidate": "held rows with no official inventory candidate (legitimate non-jurisdictions)",
-   "city_township_ambiguous": "same-name city+township pairs (Canton, Belpre, Hubbard, Perrysburg, Warren OH) — need a policy choice on which entity the queue intends",
-   "metro_governments": "Louisville, Lexington KY — merged city-county governments absent from the city inventory"
-  }
+  "policy_holds_annotated": "Belpre, Warren, Hubbard, Canton, Franklin, Perrysburg OH — same-name city+township in same county; queue rows annotated with candidate options for owner decision",
+  "metro_governments": "Louisville, Lexington KY — merged city-county governments absent from the city inventory"
  },
  "verification": [
   "All mutations conditional id+updated_date with get-after-write readbacks",
   "Gate re-verified before unblocking every retyped row",
   "0 invalid permitting_url, 0 invalid website_url, 0 wrong-state domains",
-  "17 batch receipts saved locally (C:/tmp/dispatch-*.json)"
+  "19 batch receipts saved locally (C:/tmp/dispatch-*.json)"
  ]
 }
