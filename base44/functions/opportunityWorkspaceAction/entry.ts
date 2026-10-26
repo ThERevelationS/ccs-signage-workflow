@@ -206,6 +206,7 @@ Deno.serve(async (req) => {
     const CustomerContact = base44.asServiceRole.entities.CustomerContact;
     const CustomerLocation = base44.asServiceRole.entities.CustomerLocation;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const Order = base44.asServiceRole.entities.Order;
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
     const Invoice = base44.asServiceRole.entities.Invoice;
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
@@ -282,6 +283,7 @@ Deno.serve(async (req) => {
         .map((r: any) => ({
           id: clean(r?.id),
           request_number: clean(r?.request_number),
+          opportunity_id: clean(r?.opportunity_id),
           opportunity_title: clean(r?.opportunity_title) || clean(r?.title),
           status: clean(r?.status),
           assigned_estimator: clean(r?.assigned_estimator) || clean(r?.estimator),
@@ -386,9 +388,9 @@ Deno.serve(async (req) => {
 
     if (action === "global_search") {
       const query = clean(body?.query).toLowerCase();
-      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [], work_orders: [] };
+      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [], work_orders: [], orders: [] };
       if (query.length < 2) return Response.json({ success: true, action, results: empty });
-      const [opps, estimates, invoices, pos, cos, customers, wos] = await Promise.all([
+      const [opps, estimates, invoices, pos, cos, customers, wos, orders] = await Promise.all([
         Opportunity.filter({}, "-last_activity_at", 500),
         Estimate.filter({}, "-created_date", 500),
         Invoice.filter({}),
@@ -396,6 +398,7 @@ Deno.serve(async (req) => {
         ChangeOrder.filter({}),
         Customer.filter({}, "-updated_date", 500).catch(() => []),
         WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
+        Order.filter({}, "-updated_date", 500).catch(() => []),
       ]);
       for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
         if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
@@ -423,6 +426,10 @@ Deno.serve(async (req) => {
             .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description"]))
             .slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date) })),
+          orders: (Array.isArray(orders) ? orders : [])
+            .filter((r: any) => !r?.deleted && has(r, ["customer_name", "description", "vendor", "requestor_name", "request_type"]))
+            .slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name), description: clean(r?.description), vendor: clean(r?.vendor), status: clean(r?.status) })),
         },
       });
     }
