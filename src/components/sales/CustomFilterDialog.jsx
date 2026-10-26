@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, Pencil, Copy, Users, X, Undo2, Redo2 } from "lucide-react";
+import { Plus, Trash2, Save, Pencil, Copy, Users, X, Undo2, Redo2, GripVertical } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, loadSalesPersonRosterSafely, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
-import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns } from "@/components/sales/salesColumnCatalog.mjs";
-import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual, SALES_ESSENTIAL_COLUMN_IDS } from "@/components/sales/salesColumnEditorDraft.mjs";
+import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries } from "@/components/sales/salesColumnCatalog.mjs";
+import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual } from "@/components/sales/salesColumnEditorDraft.mjs";
 import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 import { hasRetiredSalesStageCondition } from "@/components/sales/salesStageTrust.mjs";
 
@@ -127,6 +127,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [users, setUsers] = useState([]);
   const [persistenceError, setPersistenceError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const dragColumnIdRef = useRef(null);
+  const [draggingColumnId, setDraggingColumnId] = useState(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -429,9 +432,37 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
   const visiblePreviewColumns = columnSettings.filter((column) => column.visible);
   const allColumnsShown = columnSettings.every((column) => column.visible);
-  const optionalColumnsHidden = columnSettings.every((column) =>
-    column.visible === SALES_ESSENTIAL_COLUMN_IDS.includes(column.id));
   const columnLayoutMatchesBaseline = salesColumnSettingsEqual(columnSettings, editorBaseline.columns);
+  // Number each chip by its position among VISIBLE columns — the same order
+  // the preview and the saved layout use. Hidden columns get no number.
+  const visibleOrderById = new Map(visiblePreviewColumns.map((column, index) => [column.id, index + 1]));
+
+  const handleColumnDragStart = (event, columnId) => {
+    dragColumnIdRef.current = columnId;
+    setDraggingColumnId(columnId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", columnId);
+  };
+  const handleColumnDragOver = (event, columnId) => {
+    if (!dragColumnIdRef.current || dragColumnIdRef.current === columnId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (dragOverColumnId !== columnId) setDragOverColumnId(columnId);
+  };
+  const handleColumnDrop = (event, columnId) => {
+    event.preventDefault();
+    const draggedId = dragColumnIdRef.current;
+    dragColumnIdRef.current = null;
+    setDragOverColumnId(null);
+    if (draggedId && draggedId !== columnId) {
+      dispatchColumnDraft({ type: "reorder", id: draggedId, toId: columnId });
+    }
+  };
+  const handleColumnDragEnd = () => {
+    dragColumnIdRef.current = null;
+    setDraggingColumnId(null);
+    setDragOverColumnId(null);
+  };
 
   const canDelete = (item) => {
     if (item.is_standard) return false;
@@ -447,7 +478,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) requestClose(); }} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
           className="clay-card min-w-0 border-none p-3 sm:p-5 dark:border dark:border-slate-700 dark:bg-slate-950 [&>button]:hidden"
-          style={{ maxWidth: activeTab === "columns" ? "96vw" : "90vw", width: activeTab === "columns" ? "1400px" : "1100px", maxHeight: "92vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+          style={{ maxWidth: "98vw", width: activeTab === "columns" ? "1780px" : "1500px", maxHeight: "94vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
         >
           <DialogHeader className="shrink-0">
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -933,10 +964,6 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           onClick={() => dispatchColumnDraft({ type: "show_all" })}
                           title="Show all supported columns without changing their order">Show All</Button>
                         <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
-                          disabled={optionalColumnsHidden || isSaving}
-                          onClick={() => dispatchColumnDraft({ type: "hide_optional" })}
-                          title="Keep Customer, Sales Status, Task Description and Follow Up; you can still change any checkbox">Hide Optional</Button>
-                        <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
                           disabled={columnLayoutMatchesBaseline || isSaving}
                           onClick={() => dispatchColumnDraft({ type: "restore", columns: editorBaseline.columns })}
                           title="Restore the original saved layout and visibility; Undo is available">Reset</Button>
@@ -959,44 +986,69 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-slate-700 dark:bg-slate-950/40">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-950/40 sm:p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">Columns</div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Everything stays visible here—no search or hidden picker.</div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100">Columns</div>
+                      <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        Drag a chip to reorder — numbers show the saved layout order.
+                      </div>
                     </div>
-                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Click a column to show or hide it</span>
+                    <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-medium text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700 dark:text-slate-400">
+                      Click to show or hide · Drag to reorder
+                    </span>
                   </div>
-                  {editingItem && getUnavailableSalesColumns(editingItem.column_settings).length > 0 && (
-                    <p role="status" className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-                      This older preset includes unavailable columns: {getUnavailableSalesColumns(editingItem.column_settings).map((item) => item.label || item.id).join(", ")}.
-                      They are preserved in the saved record for later review but cannot be displayed in the table.
-                    </p>
-                  )}
-                  
-                  <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-                    {columnSettings.map((column) => (
-                      <label 
-                        key={column.id} 
-                        title={column.label}
-                        className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 sm:min-h-8 ${
-                          column.visible
-                            ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.08)] dark:border-blue-700 dark:bg-blue-950/45 dark:text-blue-100'
-                            : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500 dark:hover:border-slate-600 dark:hover:text-slate-300'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={column.visible}
-                          disabled={isSaving}
-                          onChange={() => toggleColumnVisibility(column.id)}
-                          className="h-3.5 w-3.5 flex-shrink-0 accent-blue-600"
-                        />
-                        <span className={`min-w-0 truncate ${column.visible ? "font-semibold" : "font-medium"}`}>
-                          {column.label}
-                        </span>
-                      </label>
-                    ))}
+
+                  <div
+                    className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7"
+                    onDragLeave={(event) => { if (event.currentTarget === event.target) setDragOverColumnId(null); }}
+                  >
+                    {columnSettings.map((column) => {
+                      const order = visibleOrderById.get(column.id);
+                      const isDragTarget = dragOverColumnId === column.id;
+                      const isDragging = draggingColumnId === column.id;
+                      return (
+                        <div
+                          key={column.id}
+                          draggable={!isSaving}
+                          onDragStart={(event) => handleColumnDragStart(event, column.id)}
+                          onDragOver={(event) => handleColumnDragOver(event, column.id)}
+                          onDrop={(event) => handleColumnDrop(event, column.id)}
+                          onDragEnd={handleColumnDragEnd}
+                          title={`${column.label} — click to ${column.visible ? "hide" : "show"}, drag to reorder`}
+                          onClick={(event) => { if (!isSaving && !event.target.closest("label")) toggleColumnVisibility(column.id); }}
+                          className={`group flex min-h-11 min-w-0 cursor-grab items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[11px] transition-all focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 active:cursor-grabbing sm:min-h-9 ${
+                            isDragTarget
+                              ? 'border-blue-500 bg-blue-100 ring-2 ring-blue-400/60 dark:border-blue-400 dark:bg-blue-900/60'
+                              : column.visible
+                                ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-sm hover:border-blue-400 hover:shadow dark:border-blue-700 dark:bg-blue-950/45 dark:text-blue-100 dark:hover:border-blue-500'
+                                : 'border-dashed border-slate-300 bg-white/60 text-slate-400 hover:border-slate-400 hover:bg-white hover:text-slate-600 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-500 dark:hover:border-slate-500 dark:hover:text-slate-300'
+                          } ${isDragging ? 'opacity-40' : ''}`}
+                        >
+                          <GripVertical className={`h-3.5 w-3.5 shrink-0 ${column.visible ? 'text-blue-400' : 'text-slate-300 dark:text-slate-600'} group-hover:text-slate-500 dark:group-hover:text-slate-400`} aria-hidden="true" />
+                          <span className={`flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none sm:h-5 sm:min-w-5 ${
+                            order
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-500'
+                          }`}>
+                            {order ?? "–"}
+                          </span>
+                          <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={column.visible}
+                              disabled={isSaving}
+                              onChange={() => toggleColumnVisibility(column.id)}
+                              aria-label={`Show ${column.label}`}
+                              className="h-3.5 w-3.5 flex-shrink-0 accent-blue-600"
+                            />
+                            <span className={`min-w-0 truncate ${column.visible ? "font-semibold" : "font-medium"}`}>
+                              {column.label}
+                            </span>
+                          </label>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1008,38 +1060,41 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         {visiblePreviewColumns.length}/{SALES_TABLE_COLUMNS.length}
                       </span>
                     </div>
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Drag-free reorder with arrows</span>
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Reorder by dragging chips or using arrows</span>
                   </div>
-                  <p id="sales-column-preview-instructions" className="mb-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-                    Same headers, minimum widths and saved order as the Sales Pipeline table. Use the header arrows to reorder. Scroll horizontally → Keyboard: Tab into the preview and use the arrow keys to scroll.
+                  <p id="sales-column-preview-instructions" className="mb-2 text-xs text-slate-600 dark:text-slate-400">
+                    Same headers, minimum widths and saved order as the Sales Pipeline table. Drag the numbered chips above, or use the header arrows, to reorder. Scroll horizontally → Keyboard: Tab into the preview and use the arrow keys to scroll.
                   </p>
                   {visiblePreviewColumns.length === 0 && (
                     <p role="status" className="mb-1 text-xs text-amber-800">No data columns selected. Check a column above to add it.</p>
                   )}
                   <div className="max-w-full overflow-x-auto rounded-lg border border-slate-300 bg-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900" role="region" aria-label="Horizontal Sales Pipeline column preview" aria-describedby="sales-column-preview-instructions" tabIndex={0}>
-                    <table className="w-full border-collapse" style={{ tableLayout: "auto", minWidth: "max-content", fontSize: "12px" }}>
-                      <thead className="bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap">
-                        <tr className="h-7 border-b">
-                          <th className="border-r px-2 py-1 text-center font-medium text-gray-700" style={{ width: "32px", minWidth: "32px" }}>#</th>
+                    <table className="w-full border-collapse" style={{ tableLayout: "auto", minWidth: "max-content", fontSize: "13px" }}>
+                      <thead className="bg-gradient-to-b from-slate-100 to-slate-50 text-xs leading-tight [&_th]:whitespace-nowrap">
+                        <tr className="h-11 border-b">
+                          <th className="border-r px-3 py-2.5 text-center font-semibold text-gray-600" style={{ width: "38px", minWidth: "38px" }}>#</th>
                           {visiblePreviewColumns.map((column, index) => (
                             <th
                               key={column.id}
-                              className="border-r px-2 py-1 text-left font-medium text-gray-700"
-                              style={{ minWidth: `${getSalesColumnLayout(column.id).minWidth}px` }}
+                              className="border-r px-3 py-2.5 text-left font-semibold text-gray-700"
+                              style={{ minWidth: `${Math.round(getSalesColumnLayout(column.id).minWidth * 1.15)}px` }}
                               title={column.label}
                             >
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="min-w-0 truncate">{getSalesColumnLayout(column.id).headerLabel}</span>
-                                <div className="flex shrink-0 items-center">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">{index + 1}</span>
+                                  <span className="min-w-0 truncate">{getSalesColumnLayout(column.id).headerLabel}</span>
+                                </span>
+                                <div className="flex shrink-0 items-center gap-0.5">
                                   <button
                                     type="button"
                                     aria-label={`Move ${column.label} left`}
                                     title={`Move ${column.label} left`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
                                     disabled={index === 0 || isSaving}
-                                    className="inline-flex h-11 w-11 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 sm:h-6 sm:w-5"
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 sm:h-7 sm:w-6"
                                   >
-                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                   </button>
                                   <button
                                     type="button"
@@ -1047,28 +1102,28 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                     title={`Move ${column.label} right`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
                                     disabled={index === visiblePreviewColumns.length - 1 || isSaving}
-                                    className="inline-flex h-11 w-11 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 sm:h-6 sm:w-5"
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 sm:h-7 sm:w-6"
                                   >
-                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                   </button>
                                 </div>
                               </div>
                             </th>
                           ))}
-                          <th className="px-2 py-1 text-left font-medium text-gray-700" style={{ minWidth: "60px" }}>Actions</th>
+                          <th className="px-3 py-2.5 text-left font-semibold text-gray-700" style={{ minWidth: "64px" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-b bg-white">
-                          <td className="border-r px-2 py-1 text-center font-medium text-gray-500">1</td>
+                        <tr className="h-12 border-b bg-white">
+                          <td className="border-r px-3 py-3 text-center font-medium text-gray-500">1</td>
                           {visiblePreviewColumns.map((column) => {
                             const sample = SALES_COLUMN_PREVIEW_SAMPLE[column.id];
                             const isEmpty = sample === "—";
                             return (
                               <td
                                 key={column.id}
-                                className="border-r px-1 py-0.5 whitespace-nowrap"
-                                style={{ minWidth: `${getSalesColumnLayout(column.id).minWidth}px` }}
+                                className="border-r px-2 py-3 whitespace-nowrap"
+                                style={{ minWidth: `${Math.round(getSalesColumnLayout(column.id).minWidth * 1.15)}px` }}
                               >
                                 <span className={column.id === "sales_status"
                                   ? "rounded bg-blue-50 px-1 py-0.5 text-blue-700"
@@ -1082,7 +1137,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                               </td>
                             );
                           })}
-                          <td className="px-2 py-0.5 text-gray-500 whitespace-nowrap">•••</td>
+                          <td className="px-3 py-3 text-gray-500 whitespace-nowrap">•••</td>
                         </tr>
                       </tbody>
                     </table>
