@@ -1,0 +1,567 @@
+{
+ "generated_at": "2026-10-26T05:11:54.643Z",
+ "scope": "OH/KY no-frontier/no-document JurisdictionProfiles and SourceCollectionQueue rows",
+ "method": "read-only entity inventory via base44 exec --privileged; bounded discovery_only reseed attempts; local HTTP probes of stored permitting_url values",
+ "totals": {
+  "profiles_oh_ky": 1210,
+  "empty_frontier_profiles": 248,
+  "categories": {
+   "researched_no_url": 190,
+   "has_url_no_frontier": 24,
+   "no_queue_row": 9,
+   "queue_blocked": 25
+  },
+  "queue_counts": {
+   "OH": {
+    "sources_found": 969,
+    "blocked": 12,
+    "not_started": 293
+   },
+   "KY": {
+    "sources_found": 168,
+    "blocked": 53,
+    "not_started": 279,
+    "verified_current": 1
+   }
+  }
+ },
+ "reseed_attempt": {
+  "eligible": 57,
+  "ok": 9,
+  "threw_500": 48,
+  "skipped_state_changed": 0,
+  "note": "discovery_only refresh now validates page identity (title/H1/footer) and requires a parseable http(s) seed URL",
+  "results": [
+   {
+    "id": "6ad05abd2f3175938c0e7288",
+    "name": "Perryopolis",
+    "state": "OH",
+    "type": "village",
+    "url": "https://www.perryopolisborough.org/government",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 0,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 0,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6aca3fb12dacd5a21906a778",
+    "name": "Harrison Township",
+    "state": "OH",
+    "type": "township",
+    "url": "https://www.harrisontownshipohio.com/zoning",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 1,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 1,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6ac96cc5b42e6e5c9417704c",
+    "name": "Miami Township",
+    "state": "OH",
+    "type": "township",
+    "url": "https://www.miamitownship.org/zoning",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 3,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 3,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6ac92e850924ddbe0e2f88c3",
+    "name": "Crosby Township",
+    "state": "OH",
+    "type": "township",
+    "url": "https://crosbytownshipohio.gov/zoning-department/",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 1,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 4,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6ac92dee074e0e48d031f6dc",
+    "name": "Symmes Township",
+    "state": "OH",
+    "type": "township",
+    "url": "https://symmestownship.org/243/Zoning-Resolution",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 3,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 9,
+    "blocked_after": false,
+    "gaps": [
+     "page_fetch_failed"
+    ]
+   },
+   {
+    "id": "6ac92b2c77006fe6c8a353fd",
+    "name": "Delhi Township",
+    "state": "OH",
+    "type": "township",
+    "url": "https://www.delhi.oh.us/177/Planning-Zoning",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 3,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 22,
+    "blocked_after": false,
+    "gaps": [
+     "page_fetch_failed"
+    ]
+   },
+   {
+    "id": "6ac1f9820e6a276b4e90afd6",
+    "name": "Erie County",
+    "state": "OH",
+    "type": "county",
+    "url": "http://eriecounty.oh.gov/ZoningandJurisdictionalInformation.aspx",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 3,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 23,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6ac1f97283016966d3bb8af8",
+    "name": "Franklin County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1f2b41d1df4038cebfc41",
+    "name": "Greene County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1f2ab85d1bd5579e2432e",
+    "name": "Guernsey County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1ebc39ac89ef356b07d09",
+    "name": "Lake County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1e82dd494c2bd41b6e023",
+    "name": "Licking County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1e49c44b5411e6b147efa",
+    "name": "Medina County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1e100249f540223c028ee",
+    "name": "Geauga County",
+    "state": "OH",
+    "type": "county",
+    "url": "https://bocc.geauga.oh.gov/departments/building-department",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 3,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 40,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6ac1e0fcd9f29765b5dc68b1",
+    "name": "Holmes County",
+    "state": "OH",
+    "type": "county",
+    "url": "https://www.co.holmes.oh.us/planning-commission-overview",
+    "outcome": "ok",
+    "error": "",
+    "attempted": 0,
+    "scan_success": true,
+    "pending_after": 0,
+    "docs_after": 0,
+    "blocked_after": false,
+    "gaps": []
+   },
+   {
+    "id": "6ac1d68a613d7ca7cea36154",
+    "name": "Montgomery County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a2c2c5a7eb852e2a1799",
+    "name": "Adams County",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a19d430f3bdbc18added",
+    "name": "Russellville",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a194842b3ac6d56b9ecd",
+    "name": "Martinsville",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a18c025fdc1a444a0627",
+    "name": "Fayetteville",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a18191721dd016aaa9dd",
+    "name": "Fairview",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a16ad79bf38507c1f780",
+    "name": "Port William",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a15b8dd6f5306ab79358",
+    "name": "Rocky Fork Lake",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a14b53878e66460a8759",
+    "name": "Mowrystown",
+    "state": "OH",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a2f47014931f8b1c9399",
+    "name": "Montgomery County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a2c864996a420caa6d2e",
+    "name": "Metcalfe County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a2abf37e266d1e015457",
+    "name": "Powell County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a29e83a7df7a77c5d289",
+    "name": "Morgan County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a29800d18640d84c3188",
+    "name": "Martin County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a296b9281ba996beb739",
+    "name": "Menifee County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a27e41320e557b7d9fec",
+    "name": "Nicholas County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a27dce328d9369d0b804",
+    "name": "Jackson County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a264e07af0c05aa9689c",
+    "name": "Clinton County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a259a8935045c46522b0",
+    "name": "Casey County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a257646672d9da4ace59",
+    "name": "Edmonson County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a2525afa7741e2eb1952",
+    "name": "Livingston County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a24ec5a7eb852e2a1750",
+    "name": "Clay County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a24e782e7e8dc310cad7",
+    "name": "Lee County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a2466a0889322599f677",
+    "name": "Floyd County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a23d0e3a16c893d4e2bf",
+    "name": "Estill County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a23c46e86ac9135a3f3f",
+    "name": "Harlan County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a235e330d4b21834434f",
+    "name": "Knott County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a22f6b5acdbfe530cdf0",
+    "name": "Elliott County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a22ca4d8afc6190f403a",
+    "name": "Grayson County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a229a2d1666fa6e09b7c",
+    "name": "Graves County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a226c34936c2c52e8d19",
+    "name": "Letcher County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a221e3bbb6da1c2c1ac6",
+    "name": "Cumberland County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a1ea112a19a6148ff171",
+    "name": "Barlow",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a1e3f119a781e5e2e531",
+    "name": "Albany",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a1d474e50c388d49a51b",
+    "name": "Allensville",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a1d2103f5c6ef0478ff2",
+    "name": "Brodhead",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a1a2934312388bd3ca13",
+    "name": "Buckhorn",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a19835389e54bcbb404f",
+    "name": "Breckinridge County",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a194db30d65188b62a67",
+    "name": "Bremen",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a18f2575f84e7692f2a5",
+    "name": "Blackey",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a18b68fbd08626170df2",
+    "name": "Brooksville",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   },
+   {
+    "id": "6ac1a188d96dc38759918cd7",
+    "name": "City of Booneville",
+    "state": "KY",
+    "outcome": "threw",
+    "error": "Request failed with status code 500"
+   }
+  ]
+ },
+ "findings": {
+  "sentinel_urls": {
+   "count": 40,
+   "description": "permitting_url literally stores the string INFORMATION NOT FOUND; new URL() throws Invalid URL and every discovery_only call 500s. The research sanitizer now nulls non-URL strings (cleanUrl) but these 40 rows were written through a path that bypassed it.",
+   "repair": "clear permitting_url to null on the 40 listed profiles; then either rerun research or leave as documented no-online-source"
+  },
+  "real_url_failures": {
+   "count": 10,
+   "cloudflare_403": [
+    "Greene County OH",
+    "Guernsey County OH",
+    "Lake County OH",
+    "Medina County OH",
+    "Montgomery County OH"
+   ],
+   "cross_host_redirect": [
+    "Licking County OH (viewpointcloud.com -> portal.opengov.com; same-host redirect guard rejects)"
+   ],
+   "wrong_jurisdiction_suspect": [
+    "Perryopolis OH (perryopolisborough.org is a Pennsylvania borough site; branding lacks explicit PA pattern so identity guard did not fire; zero documents retained)",
+    "Medina County OH (permitting_url and ai_summary describe the CITY of Medina, not the county)"
+   ],
+   "readable_but_empty": [
+    "Holmes County OH (200 OK, thin planning page, no permitting resources found)",
+    "Franklin County OH (200 OK locally at 116KB; in-sandbox fetch still failed - possible egress/WAF difference)"
+   ]
+  },
+  "researched_no_url": {
+   "count": 190,
+   "note": "research completed (all have ai_summary, 88 have office_research) but returned no permitting_url; predominantly OH villages; requires new research runs (LLM) or documented no-source status"
+  },
+  "not_started_queue_rows": {
+   "count": 572,
+   "note": "never dispatched; the new official-identity gate will hold unmatched/ambiguous rows when dispatch is enabled"
+  },
+  "queue_blocked": {
+   "count": 25,
+   "note": "legitimate blocks, e.g. unincorporated communities with no government/online source - no action"
+  },
+  "no_queue_row": {
+   "count": 9,
+   "note": "orphaned profiles incl. 5 OH townships that reseeded successfully in this unit"
+  }
+ },
+ "code_changes": [
+  "jurisdictionResearchSanitizer.ts: cleanUrl validates http(s) and nulls non-URL strings for website_url/permitting_url/cagis_database_url",
+  "refreshJurisdiction/entry.ts: discovery_only now requires a parseable http(s) stored permitting_url (clean 400 instead of Invalid URL 500)",
+  "scripts/permitting-research-url-sanitize.test.mjs: 3 focused tests"
+ ],
+ "next_units": [
+  "approve clearing the 40 sentinel permitting_url values (itemized reversible update)",
+  "identity review for Perryopolis (PA borough URL) and Medina County (city-of-Medina URL/summary)",
+  "decide whether Cloudflare-403 counties get alternate official URLs",
+  "decide LLM research re-dispatch for 190 researched_no_url + 572 not_started queue rows"
+ ]
+}
