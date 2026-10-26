@@ -66,6 +66,9 @@ Deno.serve(async (req) => {
     const siteSurveyRules = automations.filter(a =>
       a.triggers?.some(t => t.trigger_type === 'site_survey_approaching')
     );
+    const sipRevisitRules = automations.filter(a =>
+      a.triggers?.some(t => t.trigger_type === 'sip_revisit_date_approaching')
+    );
     const taskDeadlineRules = automations.filter(a =>
       a.triggers?.some(t =>
         t.trigger_type === 'task_due_date_approaching' ||
@@ -137,6 +140,70 @@ Deno.serve(async (req) => {
           }
         }
       }
+      // Install-date reminders run the same claim/action path as due dates,
+      // keyed on project_install_date.
+      if (installDateRules.length > 0 && wo.project_install_date) {
+        const installDate = new Date(wo.project_install_date + 'T23:59:59');
+        const daysUntilInstall = Math.ceil((installDate - now) / (1000 * 60 * 60 * 24));
+        for (const rule of installDateRules) {
+          if (installDate < now) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'work_order_install_date_passed');
+            if (!trigger) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|work_order_install_date_passed|${wo.project_install_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'work_order_install_date_passed');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'work_order_install_date_passed', actions: actionResults });
+          } else if (daysUntilInstall <= 7 && daysUntilInstall > 0) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'work_order_install_date_approaching');
+            if (!trigger) continue;
+            const condition = trigger.trigger_condition || {};
+            if (daysUntilInstall > (condition.days_before_due || 7)) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|work_order_install_date_approaching|${wo.project_install_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'work_order_install_date_approaching');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'work_order_install_date_approaching', days_until_due: daysUntilInstall, actions: actionResults });
+          }
+        }
+      }
+
+      // Site-survey reminders fire only on approach — there is no advertised
+      // "survey passed" trigger.
+      if (siteSurveyRules.length > 0 && wo.site_survey_date) {
+        const surveyDate = new Date(wo.site_survey_date + 'T23:59:59');
+        const daysUntilSurvey = Math.ceil((surveyDate - now) / (1000 * 60 * 60 * 24));
+        if (surveyDate >= now && daysUntilSurvey <= 7 && daysUntilSurvey > 0) {
+          for (const rule of siteSurveyRules) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'site_survey_approaching');
+            if (!trigger) continue;
+            const condition = trigger.trigger_condition || {};
+            if (daysUntilSurvey > (condition.days_before_due || 7)) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|site_survey_approaching|${wo.site_survey_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'site_survey_approaching');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'site_survey_approaching', days_until_due: daysUntilSurvey, actions: actionResults });
+          }
+        }
+      }
+
+      // SIP revisit reminders fire only on approach — there is no advertised
+      // "revisit passed" trigger.
+      if (sipRevisitRules.length > 0 && wo.sip_revisit_date) {
+        const revisitDate = new Date(wo.sip_revisit_date + 'T23:59:59');
+        const daysUntilRevisit = Math.ceil((revisitDate - now) / (1000 * 60 * 60 * 24));
+        if (revisitDate >= now && daysUntilRevisit <= 7 && daysUntilRevisit > 0) {
+          for (const rule of sipRevisitRules) {
+            const trigger = rule.triggers?.find(t => t.trigger_type === 'sip_revisit_date_approaching');
+            if (!trigger) continue;
+            const condition = trigger.trigger_condition || {};
+            if (daysUntilRevisit > (condition.days_before_due || 7)) continue;
+            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|sip_revisit_date_approaching|${wo.sip_revisit_date}`, today);
+            if (!claim.claimed) continue;
+            const actionResults = await executeRuleActions(base44, rule, wo, 'sip_revisit_date_approaching');
+            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'sip_revisit_date_approaching', days_until_due: daysUntilRevisit, actions: actionResults });
+          }
+        }
+      }
+
       if (!wo.due_date) continue;
       
       const dueDate = new Date(wo.due_date + 'T23:59:59');
@@ -202,50 +269,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Install-date reminders run the same claim/action path as due dates,
-      // keyed on project_install_date.
-      if (installDateRules.length > 0 && wo.project_install_date) {
-        const installDate = new Date(wo.project_install_date + 'T23:59:59');
-        const daysUntilInstall = Math.ceil((installDate - now) / (1000 * 60 * 60 * 24));
-        for (const rule of installDateRules) {
-          if (installDate < now) {
-            const trigger = rule.triggers?.find(t => t.trigger_type === 'work_order_install_date_passed');
-            if (!trigger) continue;
-            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|work_order_install_date_passed|${wo.project_install_date}`, today);
-            if (!claim.claimed) continue;
-            const actionResults = await executeRuleActions(base44, rule, wo, 'work_order_install_date_passed');
-            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'work_order_install_date_passed', actions: actionResults });
-          } else if (daysUntilInstall <= 7 && daysUntilInstall > 0) {
-            const trigger = rule.triggers?.find(t => t.trigger_type === 'work_order_install_date_approaching');
-            if (!trigger) continue;
-            const condition = trigger.trigger_condition || {};
-            if (daysUntilInstall > (condition.days_before_due || 7)) continue;
-            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|work_order_install_date_approaching|${wo.project_install_date}`, today);
-            if (!claim.claimed) continue;
-            const actionResults = await executeRuleActions(base44, rule, wo, 'work_order_install_date_approaching');
-            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'work_order_install_date_approaching', days_until_due: daysUntilInstall, actions: actionResults });
-          }
-        }
-      }
-
-      // Site-survey reminders fire only on approach — there is no advertised
-      // "survey passed" trigger.
-      if (siteSurveyRules.length > 0 && wo.site_survey_date) {
-        const surveyDate = new Date(wo.site_survey_date + 'T23:59:59');
-        const daysUntilSurvey = Math.ceil((surveyDate - now) / (1000 * 60 * 60 * 24));
-        if (surveyDate >= now && daysUntilSurvey <= 7 && daysUntilSurvey > 0) {
-          for (const rule of siteSurveyRules) {
-            const trigger = rule.triggers?.find(t => t.trigger_type === 'site_survey_approaching');
-            if (!trigger) continue;
-            const condition = trigger.trigger_condition || {};
-            if (daysUntilSurvey > (condition.days_before_due || 7)) continue;
-            const claim = await claimDeadlineFire(base44, wo, `${rule.id}|site_survey_approaching|${wo.site_survey_date}`, today);
-            if (!claim.claimed) continue;
-            const actionResults = await executeRuleActions(base44, rule, wo, 'site_survey_approaching');
-            results.triggered_automations.push({ rule: rule.name, work_order: wo.title, trigger: 'site_survey_approaching', days_until_due: daysUntilSurvey, actions: actionResults });
-          }
-        }
-      }
     }
     
     // Orders awaiting delivery get the same once-per-rule/due-date treatment:
@@ -524,15 +547,16 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type, taskC
   
   const isInstall = trigger_type === 'work_order_install_date_passed' || trigger_type === 'work_order_install_date_approaching';
   const isTask = taskCtx !== null;
+  const isRevisit = trigger_type === 'sip_revisit_date_approaching';
   const isOverdue = trigger_type === 'due_date_passed' || trigger_type === 'work_order_install_date_passed' || trigger_type === 'task_due_date_passed';
-  const effectiveDate = isTask ? taskCtx.due_date : isInstall ? work_order.project_install_date : work_order.due_date;
+  const effectiveDate = isTask ? taskCtx.due_date : isInstall ? work_order.project_install_date : isRevisit ? work_order.sip_revisit_date : work_order.due_date;
   const dueDate = new Date(effectiveDate);
   const now = new Date();
   const daysDiff = Math.ceil(Math.abs(dueDate - now) / (1000 * 60 * 60 * 24));
 
   let subject = config.subject || (isOverdue
     ? `⚠️ ${isTask ? 'TASK OVERDUE' : isInstall ? 'INSTALL DATE PASSED' : 'OVERDUE'}: ${isTask ? taskCtx.text : work_order.title}`
-    : `📅 ${isTask ? 'Task Due Approaching' : isInstall ? 'Install Date Approaching' : 'Deadline Approaching'}: ${isTask ? taskCtx.text : work_order.title}`);
+    : `📅 ${isTask ? 'Task Due Approaching' : isInstall ? 'Install Date Approaching' : isRevisit ? 'SIP Revisit Date Approaching' : 'Deadline Approaching'}: ${isTask ? taskCtx.text : work_order.title}`);
 
   let body = config.body || '';
 
@@ -547,6 +571,7 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type, taskC
     '{{assigned_to}}': esc(work_order.assigned_to || 'Unassigned'),
     '{{task_text}}': esc(taskCtx?.text),
     '{{task_due_date}}': esc(taskCtx?.due_date),
+    '{{sip_revisit_date}}': esc(work_order.sip_revisit_date),
     '{{days_overdue}}': isOverdue ? String(daysDiff) : '0',
     '{{days_until_due}}': !isOverdue ? String(daysDiff) : '0',
   };
