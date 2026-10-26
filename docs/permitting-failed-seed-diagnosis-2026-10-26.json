@@ -511,9 +511,9 @@
  },
  "findings": {
   "sentinel_urls": {
-   "count": 40,
+   "count": 105,
    "description": "permitting_url literally stores the string INFORMATION NOT FOUND; new URL() throws Invalid URL and every discovery_only call 500s. The research sanitizer now nulls non-URL strings (cleanUrl) but these 40 rows were written through a path that bypassed it.",
-   "repair": "clear permitting_url to null on the 40 listed profiles; then either rerun research or leave as documented no-online-source"
+   "repair": "clear permitting_url to null on 105 listed profiles (manifest+backup prepared); separately decide the 34 invalid website_url values"
   },
   "real_url_failures": {
    "count": 10,
@@ -563,5 +563,56 @@
   "identity review for Perryopolis (PA borough URL) and Medina County (city-of-Medina URL/summary)",
   "decide whether Cloudflare-403 counties get alternate official URLs",
   "decide LLM research re-dispatch for 190 researched_no_url + 572 not_started queue rows"
- ]
+ ],
+ "updated_at": "2026-10-26T05:33:36.430Z",
+ "followup_2026_10_26": {
+  "identity_holds_applied": [
+   {
+    "profile": "Perryopolis OH 6ad05abd2f3175938c0e7288",
+    "reason": "entire record identifies Perryopolis Borough PA (Fayette County PA parent, PA URLs, PA ai_summary); no official OH candidate exists",
+    "action": "auto_refresh=false + _source_identity_hold; queue row 6ac191ca9a17e3df459aee0e blocked"
+   },
+   {
+    "profile": "Medina County OH 6ac1e49c44b5411e6b147efa",
+    "reason": "stored urls + ai_summary describe City of Medina (separate correct city profile 6ad98ab79b6711042bd9fd27 exists)",
+    "action": "auto_refresh=false + _source_identity_hold; queue row 6ac18f8ca11bdffce7716c81 blocked"
+   }
+  ],
+  "url_repairs": [
+   {
+    "profile": "Lake County OH",
+    "from": "http://lakecountyohio.gov/building-inspection/permit-applications",
+    "to": "https://www.lakecountyohio.gov/building-inspection/permit-applications/",
+    "result": "reseeded ok - 12 documents"
+   },
+   {
+    "profile": "Licking County OH",
+    "from": "https://lickingcountyoh.viewpointcloud.com/",
+    "to": "https://lickingcountyoh.portal.opengov.com/",
+    "result": "reseeded ok - 0 docs (JS portal, honest gap)"
+   }
+  ],
+  "unresolved_sources": {
+   "cloudflare_blocked_no_alternate": [
+    "Greene County OH (co.greene.oh.us fails, gis shell only)",
+    "Montgomery County OH (montgomerycountyohio.gov fails)"
+   ],
+   "infra_blocked": [
+    "Franklin County OH (200 locally, 500 from sandbox egress - WAF/geo block; stored URL is valid)"
+   ],
+   "medina_county_candidates": [
+    "https://www.medinaco.org/building-department/",
+    "https://www.medinaco.org/planning/"
+   ],
+   "guernsey": "main domain guernseycounty.gov works but no zoning/planning dept page found; auditor subdomain Cloudflare-blocked"
+  },
+  "sentinel_cleanup_plan": {
+   "count": 105,
+   "all_values": "INFORMATION NOT FOUND (exact)",
+   "note": "64 of 105 already have documents from other paths; cleanup only removes corrupt field values",
+   "also_invalid_website_url": 34,
+   "manifest_and_full_backup": "C:/tmp/sentinel-cleanup-manifest.json (367060 bytes, full profile snapshots)",
+   "status": "awaiting approval"
+  }
+ }
 }
