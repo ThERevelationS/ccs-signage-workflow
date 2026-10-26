@@ -88,24 +88,39 @@ async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any
 
   const now = new Date().toISOString();
   const parentCountyName = String(row?.parent_county_name || "").trim();
-  const created = await Profiles.create({
-    name: String(row?.jurisdiction_name || "").trim(),
-    state: String(row?.state || "").trim().toUpperCase(),
-    type: jurisdictionProfileTypeForQueueRow(row),
-    auto_refresh: true,
-    verification_status: "needs_verification",
-    ...(parentCountyName ? { parent_county: { name: parentCountyName } } : {}),
-    activity_log: [{
-      id: crypto.randomUUID(),
-      action: "created",
-      description: "Created automatically from the credit-controlled permitting research backlog.",
-      user: "system:permittingResearchBacklogDispatch",
-      timestamp: now,
-      changes: { source_queue_id: String(row?.id || "") },
-    }],
-  });
-  profiles.push(created);
-  return { profile: created, created: true };
+  try {
+    const created = await Profiles.create({
+      name: String(row?.jurisdiction_name || "").trim(),
+      state: String(row?.state || "").trim().toUpperCase(),
+      type: jurisdictionProfileTypeForQueueRow(row),
+      auto_refresh: true,
+      verification_status: "needs_verification",
+      ...(parentCountyName ? { parent_county: { name: parentCountyName } } : {}),
+      activity_log: [{
+        id: crypto.randomUUID(),
+        action: "created",
+        description: "Created automatically from the credit-controlled permitting research backlog.",
+        user: "system:permittingResearchBacklogDispatch",
+        timestamp: now,
+        changes: { source_queue_id: String(row?.id || "") },
+      }],
+    });
+    profiles.push(created);
+    return { profile: created, created: true };
+  } catch (createError) {
+    // A timed-out create may have landed server-side; retrying would store a
+    // duplicate profile. Re-read and adopt the landed record when present.
+    const reread = await Profiles.filter({
+      name: String(row?.jurisdiction_name || "").trim(),
+      state: String(row?.state || "").trim().toUpperCase(),
+    }).catch(() => []);
+    const resolved = resolveResearchProfile(row, Array.isArray(reread) ? reread : []);
+    if (resolved.profile) {
+      profiles.push(resolved.profile);
+      return { profile: resolved.profile, created: false, recoveredAfterCreateError: true };
+    }
+    throw createError;
+  }
 }
 
 Deno.serve(async (req) => {
