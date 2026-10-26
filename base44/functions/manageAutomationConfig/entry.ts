@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { assertAutomationStructure, recordDestinationIds } from '../../shared/automationRecordPolicy.mjs';
 
 const MAX_RULE_JSON = 250_000;
 const MAX_GROUP_EMAILS = 500;
@@ -40,6 +41,7 @@ function cleanAutomationData(value: any) {
   if (!Array.isArray(data.triggers) || !Array.isArray(data.actions)) {
     throw Object.assign(new Error('Automation Rule triggers and actions are required.'), { status: 400 });
   }
+  assertAutomationStructure(data);
   const cleaned = {
     name,
     enabled: data.enabled !== false,
@@ -102,18 +104,35 @@ function ruleReferencesGroup(rule: any, groupId: string) {
   );
 }
 
-async function createRule(Rule: any, data: any) {
+async function verifyRuleDestinations(WorkOrder: any, rule: any) {
+  for (const id of recordDestinationIds(rule)) {
+    const record = await WorkOrder.get(id);
+    if (!record?.id || record.deleted === true) {
+      throw Object.assign(new Error('The destination Work Order is missing or in Project Trash. Choose a live Work Order.'), { status: 400 });
+    }
+  }
+}
+
+function verifyMatchingRule(record: any, cleaned: any) {
+  if (!fieldsMatch(record, cleaned)) {
+    throw Object.assign(new Error('An automation with this name already exists with different settings. Open that rule or choose another name.'), { status: 409 });
+  }
+  return record;
+}
+
+async function createRule(Rule: any, data: any, WorkOrder: any) {
   const cleaned = cleanAutomationData(data);
+  await verifyRuleDestinations(WorkOrder, cleaned);
   const before = nameMatches(await listRules(Rule), cleaned.name);
   if (before.length > 1) throw Object.assign(new Error(`Automation Rule name “${cleaned.name}” already has duplicate records.`), { status: 409 });
-  if (before.length === 1) return { record: before[0], status: 'existing' };
+  if (before.length === 1) return { record: verifyMatchingRule(before[0], cleaned), status: 'existing' };
 
   let created: any = null;
   let createError: any = null;
   try { created = await Rule.create(cleaned); } catch (error) { createError = error; }
   await new Promise((resolve) => setTimeout(resolve, 50));
   let after = nameMatches(await listRules(Rule), cleaned.name);
-  if (after.length === 1) return { record: after[0], status: created?.id === after[0].id ? 'created' : 'recovered' };
+  if (after.length === 1) return { record: verifyMatchingRule(after[0], cleaned), status: created?.id === after[0].id ? 'created' : 'recovered' };
   if (after.length > 1) {
     const keep = canonical(after);
     if (created?.id && keep?.id && created.id !== keep.id) {
@@ -123,7 +142,7 @@ async function createRule(Rule: any, data: any) {
         const deleted = await Rule.deleteMany({ id: losing.id, updated_date: version, name: losing.name });
         if (deleted?.deleted === 1) {
           after = nameMatches(await listRules(Rule), cleaned.name);
-          if (after.length === 1) return { record: after[0], status: 'concurrent_duplicate_discarded' };
+          if (after.length === 1) return { record: verifyMatchingRule(after[0], cleaned), status: 'concurrent_duplicate_discarded' };
         }
       }
     }
@@ -133,7 +152,7 @@ async function createRule(Rule: any, data: any) {
   throw new Error('Automation Rule create outcome could not be verified.');
 }
 
-async function updateRule(Rule: any, body: any) {
+async function updateRule(Rule: any, body: any, WorkOrder: any) {
   const id = String(body?.id || '').trim();
   const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
   if (!id || !expectedUpdatedDate) throw Object.assign(new Error('Automation Rule version is required.'), { status: 400 });
@@ -143,6 +162,9 @@ async function updateRule(Rule: any, body: any) {
     throw Object.assign(new Error('Automation Rule changed in another session. Reload before saving.'), { status: 409 });
   }
   const patch = cleanAutomationPatch(body?.next_fields, current);
+  if (patch.triggers || patch.actions || patch.enabled === true) {
+    await verifyRuleDestinations(WorkOrder, { ...current, ...patch });
+  }
   if (patch.name) {
     const duplicates = nameMatches(await listRules(Rule), patch.name, id);
     if (duplicates.length) throw Object.assign(new Error(`Another automation named “${patch.name}” already exists.`), { status: 409 });
@@ -154,7 +176,7 @@ async function updateRule(Rule: any, body: any) {
   return saved;
 }
 
-async function toggleRule(Rule: any, body: any) {
+async function toggleRule(Rule: any, body: any, WorkOrder: any) {
   const id = String(body?.id || '').trim();
   if (!id || typeof body?.expected_enabled !== 'boolean') throw Object.assign(new Error('Automation Rule toggle state is required.'), { status: 400 });
   const current = await Rule.get(id).catch(() => null);
@@ -163,6 +185,10 @@ async function toggleRule(Rule: any, body: any) {
     throw Object.assign(new Error('Automation Rule enabled state changed in another session.'), { status: 409 });
   }
   const nextEnabled = !body.expected_enabled;
+  if (nextEnabled) {
+    assertAutomationStructure(current);
+    await verifyRuleDestinations(WorkOrder, current);
+  }
   const result = await Rule.updateMany(
     { id, updated_date: current.updated_date, enabled: body.expected_enabled },
     { $set: { enabled: nextEnabled } },
@@ -191,7 +217,10 @@ async function createGroup(Group: any, data: any) {
   const cleaned = cleanEmailGroupData(data);
   const before = nameMatches(await listGroups(Group), cleaned.name);
   if (before.length > 1) throw Object.assign(new Error(`Email group name “${cleaned.name}” already has duplicate records.`), { status: 409 });
-  if (before.length === 1) return { record: before[0], status: 'existing' };
+  if (before.length === 1) {
+    if (!fieldsMatch(before[0], cleaned)) throw Object.assign(new Error('An email group with this name already exists with different values.'), { status: 409 });
+    return { record: before[0], status: 'existing' };
+  }
   let created: any = null;
   let createError: any = null;
   try { created = await Group.create(cleaned); } catch (error) { createError = error; }
@@ -251,9 +280,10 @@ Deno.serve(async (req) => {
     const Rule = base44.asServiceRole.entities.AutomationRule;
     const Group = base44.asServiceRole.entities.EmailGroup;
 
-    if (action === 'automation_create') return Response.json(await createRule(Rule, body?.data));
-    if (action === 'automation_update') return Response.json({ record: await updateRule(Rule, body) });
-    if (action === 'automation_toggle') return Response.json({ record: await toggleRule(Rule, body) });
+    const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    if (action === 'automation_create') return Response.json(await createRule(Rule, body?.data, WorkOrder));
+    if (action === 'automation_update') return Response.json({ record: await updateRule(Rule, body, WorkOrder) });
+    if (action === 'automation_toggle') return Response.json({ record: await toggleRule(Rule, body, WorkOrder) });
     if (action === 'automation_delete') return Response.json(await deleteRule(Rule, body));
     if (action === 'email_group_create') return Response.json(await createGroup(Group, body?.data));
     if (action === 'email_group_update') return Response.json({ record: await updateGroup(Group, body) });
