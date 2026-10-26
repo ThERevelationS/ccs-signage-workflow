@@ -61,7 +61,8 @@ import {
   ClipboardCheck,
   Scale,
   FlaskConical,
-  BookOpen
+  BookOpen,
+  Truck
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
@@ -70,6 +71,7 @@ import UserManagement from "../components/admin/UserManagement";
 import ProjectTrash from "../components/admin/ProjectTrash";
 import OrderTrash from "../components/admin/OrderTrash";
 import TimeClockAdmin from "../components/timeclock/TimeClockAdmin";
+import FleetSettings from "@/pages/FleetSettings";
 import TimeClockReportsDashboard from "../components/timeclock/TimeClockReportsDashboard";
 import ActivityFeed from "../components/admin/ActivityFeed";
 import PTOManagement from "../components/admin/PTOManagement";
@@ -529,6 +531,7 @@ const ADMIN_TAB_ICONS = {
   task_assignments: UserCheck,
   calendar: CalendarDays,
   activity: Activity,
+  fleet: Truck,
 };
 
 export default function AdminSettings() {
@@ -1994,6 +1997,10 @@ export default function AdminSettings() {
                   </AdminPanelContent>
                   </Tabs>
                   </AdminPanelContent>
+
+              <AdminPanelContent value="fleet">
+                <FleetSettings embedded />
+              </AdminPanelContent>
 
               <AdminPanelContent value="corebridge">
                 <CorebridgeApiSettings sessionToken={sessionToken} />
