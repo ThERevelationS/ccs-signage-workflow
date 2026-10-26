@@ -92,7 +92,7 @@ export default function MissedClockInDialog({
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-            Only today's arrival can be reported here, in {TIME_CLOCK_COMPANY_TIME_LABEL} company time ??? not a future or earlier-day time.
+            Only today's arrival can be reported here, in {TIME_CLOCK_COMPANY_TIME_LABEL} company time - not a future or earlier-day time.
             A self-reported Clock In is kept in a full audit record and flagged so a manager can review the shift; it is never treated as
             silently approved time.
           </div>
@@ -110,7 +110,7 @@ export default function MissedClockInDialog({
             disabled={busy}
             className="w-full text-slate-500 hover:text-slate-700"
           >
-            Never mind ??? back to Clock In
+            Never mind - back to Clock In
           </Button>
         </div>
       </DialogContent>
