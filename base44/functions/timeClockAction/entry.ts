@@ -8996,10 +8996,10 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id });
     }
 
-    if (action === 'recover_missed_clock_in') {
+    if (action === 'recover_missed_clock_in' || action === 'report_missed_clock_in') {
       const serverNow = new Date();
       const companyMinutes = minutesOfDayInCompanyTime(serverNow.toISOString());
-      if (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60) {
+      if (action === 'recover_missed_clock_in' && (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60)) {
         return Response.json({ success: false, error: 'Missed Clock In recovery is only available at or after 3:00 PM company time.' }, { status: 409 });
       }
 
@@ -9167,7 +9167,9 @@ Deno.serve(async (req) => {
             claimed_clock_in: claimedClockInIso,
             submitted_at: reportedAt,
             request_id: requestId,
-            resolution_note: 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
+            resolution_note: action === 'report_missed_clock_in'
+              ? 'Employee self-reported a missed Clock In from the Quick Clock arrival-time prompt; shift requires manager review.'
+              : 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
           });
         }
         if (!punchCase?.id ||
@@ -9205,7 +9207,9 @@ Deno.serve(async (req) => {
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: reportedAt, request_id: requestId, time_entry_id: entry.id,
-          reason: 'Employee reported a missing Clock In during the late-day pre-clockout review',
+          reason: action === 'report_missed_clock_in'
+            ? 'Employee reported a missed Clock In from the Quick Clock arrival-time prompt'
+            : 'Employee reported a missing Clock In during the late-day pre-clockout review',
           details: {
             payload_hash: recoveryPayloadHash,
             punch_exception_id: punchCase.id,
