@@ -56,6 +56,7 @@ import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import { TimeClockStatusProvider } from "@/components/timeclock/TimeClockStatusContext";
 import FocusPausePair from "@/components/timeclock/FocusPausePair";
+import TimeTracker from "@/components/timeclock/TimeTracker";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 import SyncConflictAlert from '@/components/admin/SyncConflictAlert';
 
@@ -1010,6 +1011,12 @@ function LayoutContent({ children }) {
 
                 {currentUser && <FocusPausePair currentUser={currentUser} fullWidth compact={compactView} />}
 
+                {currentUser && (
+                  <div className="mt-2 flex justify-center">
+                    <TimeTracker position="side" />
+                  </div>
+                )}
+
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
                   <button
@@ -1254,6 +1261,7 @@ function LayoutContent({ children }) {
                     )}
 
                     {currentUser && <FocusPausePair currentUser={currentUser} compact={compactView} />}
+                    {currentUser && <TimeTracker position="top" />}
 
                     {/* Announcement button - admin only, square, two rows tall */}
                     {isUserAdmin(currentUser) && (
@@ -1375,7 +1383,7 @@ function LayoutContent({ children }) {
                     transition={{ duration: 0.18, ease: 'easeInOut' }}
                     style={{ minHeight: '100%' }}
                   >
-                    <LoginGate>{children}</LoginGate>
+                    <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
                   </motion.div>
                 </AnimatePresence>
               ) : (
@@ -1386,7 +1394,7 @@ function LayoutContent({ children }) {
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   style={{ minHeight: "100%" }}
                 >
-                  <LoginGate>{children}</LoginGate>
+                  <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
                 </motion.div>
               )}
             </MultiPageContainer>
@@ -1569,8 +1577,11 @@ function LayoutContent({ children }) {
                     </button>
                   </div>
                   {currentUser && (
-                    <div className="mb-3">
+                    <div className="mb-3 space-y-2">
                       <FocusPausePair currentUser={currentUser} fullWidth compact />
+                      <div className="flex justify-center">
+                        <TimeTracker position="side" />
+                      </div>
                     </div>
                   )}
                   {isUserAdmin(currentUser) && (

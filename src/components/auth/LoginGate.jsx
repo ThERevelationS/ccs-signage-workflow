@@ -12,10 +12,12 @@ import { Button } from "@/components/ui/button";
  *
  * Reading / scrolling is still allowed so users can "browse" the app.
  */
-export default function LoginGate({ children }) {
+export default function LoginGate({ children, exempt = false }) {
   const { currentUser, showLoginDialog } = useAuth();
 
-  if (currentUser) return <>{children}</>;
+  // Exempt pages (the Time Clock kiosk) are fully usable by guests: no click
+  // interception and no guest banner. The top-nav Sign In button still works.
+  if (currentUser || exempt) return <>{children}</>;
 
   const intercept = (e) => {
     // Allow clicks on elements that explicitly opt out of the gate

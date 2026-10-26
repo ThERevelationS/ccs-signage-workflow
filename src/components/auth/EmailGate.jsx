@@ -67,6 +67,17 @@ export function storeAdminSettingsAuthorization(capability, expiresAt) {
   sessionStorage.setItem(ADMIN_CAPABILITY_EXPIRES_KEY, expiresAt);
 }
 
+// The Time Clock kiosk page is guest-facing: app-level Sign In dialogs must
+// never appear there on their own (auto-pop on mount or after a sign-out).
+const isTimeClockKioskPath = () => {
+  try {
+    const path = String(window.location.pathname || "").replace(/\/+$/, "").toLowerCase();
+    return path === "/timeclock";
+  } catch {
+    return false;
+  }
+};
+
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
@@ -125,7 +136,7 @@ export function AuthProvider({ children }) {
     clearAdminSettingsAuthorization();
     setCurrentUser(null);
     setBrowseOnly(false);
-    setShowLogin(true);
+    setShowLogin(!isTimeClockKioskPath());
   }, [setCurrentUser]);
 
   const loginWithCredentials = useCallback(async (username, password) => {
@@ -152,9 +163,11 @@ export function AuthProvider({ children }) {
     return currentUser.full_name.split(" ")[0];
   }, [currentUser]);
 
-  // Show login dialog automatically when not authenticated and not in browse mode
+  // Show login dialog automatically when not authenticated and not in browse
+  // mode — except on the Time Clock kiosk, where guests must be left alone.
+  // Explicit Sign In clicks still open it through showLoginDialog().
   useEffect(() => {
-    if (!isLoading && !currentUser && !browseOnly) {
+    if (!isLoading && !currentUser && !browseOnly && !isTimeClockKioskPath()) {
       setShowLogin(true);
     }
   }, [isLoading, currentUser, browseOnly]);

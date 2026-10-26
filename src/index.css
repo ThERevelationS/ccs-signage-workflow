@@ -424,3 +424,36 @@ tr.mmm-focus-row > td :where(*) {
   .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
   .check-draw { stroke-dashoffset: 0; }
 }
+
+/* Time Tracker pill animations */
+@keyframes trackerPulse {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.55); }
+  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+.tracker-pulse { animation: trackerPulse 1.2s ease-out 2; }
+@keyframes trackerFlip {
+  0% { transform: rotateX(90deg); opacity: 0; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+.tracker-flip { animation: trackerFlip 320ms ease-out; transform-origin: 50% 100%; }
+@keyframes trackerTodayBar {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.18); }
+}
+.tracker-today-bar { animation: trackerTodayBar 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tracker-pulse, .tracker-flip, .tracker-today-bar { animation: none !important; }
+}
+
+@keyframes punchSheen {
+  0% { transform: translateX(-160%) skewX(-16deg); }
+  55%, 100% { transform: translateX(420%) skewX(-16deg); }
+}
+.punch-sheen {
+  left: -10%;
+  animation: punchSheen 3.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .punch-sheen { animation: none; }
+}

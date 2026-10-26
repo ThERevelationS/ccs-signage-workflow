@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
+import TimeTrackerSettings from "@/components/timeclock/TimeTrackerSettings";
 import { useAuth } from "@/components/auth/EmailGate";
 
 export default function UserSettingsTab({ currentUser, sessionToken: sessionTokenOverride = "", onUserUpdated }) {
@@ -130,6 +131,9 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
           )}
         </div>
       </div>
+
+      {/* Time Tracker Section (salary employees) */}
+      <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
 
       {/* Face Enrollment Dialog */}
       <FaceEnrollmentDialog
