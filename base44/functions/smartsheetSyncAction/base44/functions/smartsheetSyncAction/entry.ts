@@ -1689,7 +1689,7 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
       .filter(([k, v]) => Number(v) > 0 && k !== 'unchanged_skipped' && k !== 'rows_examined' && k !== 'records_examined' && /review|orphan|conflict|held|unlinked|missing|flagged|skipped|failure/.test(k))
       .map(([k, v]) => `  ${label}: ${k} = ${v}`);
   }).slice(0, 15);
-  const signature = [alertType, status, totalErrors, openConflicts, datasetLabel, direction].join('|');
+  const signature = [alertType, status, totalErrors, openConflicts, datasetLabel, direction, reviewSummary.join(';')].join('|');
   const cooldownMs = Math.max(15, Number(config?.cooldown_minutes) || SYNC_ALERT_DEFAULT_COOLDOWN_MINUTES) * 60_000;
   const lastSentAt = Date.parse(String(config?.last_alert_at || ''));
   if (signature === cleanText(config?.last_alert_signature, 400) &&
