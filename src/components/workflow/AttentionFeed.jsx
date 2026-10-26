@@ -117,7 +117,7 @@ export default function AttentionFeed() {
         id: r.id,
         primary: `${r.request_number || "Request"}${r.opportunity_title ? ` · ${r.opportunity_title}` : ""}`,
         secondary: `${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : " · unassigned"}`,
-        href: "/EstimatorQueues",
+        href: r.opportunity_id ? `/Opportunities?open=${r.opportunity_id}` : "/Opportunities",
       })),
     },
   ].filter((c) => c.count > 0) : [];
