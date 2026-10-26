@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
@@ -19,8 +20,8 @@ const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
-async function authorize(base44: any) {
-  const user = await base44.auth.me().catch(() => null);
+async function authorize(base44: any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user, role: 'admin' };
   const matches = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -140,11 +141,12 @@ async function finalizeReceive(Request: any, Receipt: any, request: any, receipt
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await authorize(base44);
+    const body = await req.json().catch(() => ({}));
+    const auth = await authorize(base44, body?.session_token);
     if (auth.error) return auth.error;
     const user = auth.user;
     const isAdmin = auth.role === 'admin' || user.role === 'admin';
-    const body = await req.json().catch(() => ({}));
+
     const action = String(body?.action || '').trim();
 
     const Request = base44.asServiceRole.entities.FleetPartFluidRequest;
