@@ -102,6 +102,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import OrderMobileDetail from "@/components/orders/OrderMobileDetail";
+import OrderDuplicateReview from "@/components/orders/OrderDuplicateReview";
 import OrderLinkedCustomerReview from "@/components/orders/OrderLinkedCustomerReview";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { isStaleVerifiedOrderCustomerBlur } from "@/components/orders/orderCustomerBlurSafety.mjs";
@@ -119,8 +120,6 @@ import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, ord
 import { orderDueState } from "@/shared/orderDueState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
-import { usePolling } from "@/lib/usePolling";
-import { shouldRunFocusRefresh } from "@/lib/pollingSchedule.mjs";
 
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
@@ -338,10 +337,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     });
   };
 
-  usePolling(() => loadData(false), 60000, { runOnMount: false, refreshOnFocus: false });
-
   useEffect(() => {
     loadData();
+    const interval = setInterval(() => loadData(false), 60000); // Reduced frequency
+    return () => clearInterval(interval);
   }, [workOrderFilter]);
 
   const markOrderNeedsSync = useCallback((orderId) => {
@@ -510,12 +509,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   // quiet reload per window is enough while a load ran moments ago.
   useEffect(() => {
     const refreshAuthoritativeOrders = () => {
-      if (!shouldRunFocusRefresh(lastLoadStartedAtRef.current, Date.now(), ORDER_FOCUS_RELOAD_THROTTLE_MS)) return;
+      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
       loadData(false);
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState !== 'visible') return;
-      if (!shouldRunFocusRefresh(lastLoadStartedAtRef.current, Date.now(), ORDER_FOCUS_RELOAD_THROTTLE_MS)) return;
+      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
       loadData(false);
     };
     window.addEventListener('online', refreshAuthoritativeOrders);
@@ -528,13 +527,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     };
   }, [workOrderFilter]);
 
-  // While durable Order markers are pending, reconcile them frequently so a
-  // refreshed/reopened tab learns promptly which rows the backend completed.
-  usePolling(() => loadData(false), 30000, {
-    enabled: pendingSyncCount > 0,
-    runOnMount: false,
-    refreshOnFocus: false,
-  });
+  useEffect(() => {
+    if (pendingSyncCount <= 0) return undefined;
+    // While durable Order markers are pending, reconcile them frequently so a
+    // refreshed/reopened tab learns promptly which rows the backend completed.
+    const interval = setInterval(() => loadData(false), 30000);
+    return () => clearInterval(interval);
+  }, [pendingSyncCount, workOrderFilter]);
 
   const saveAllChanges = async () => {
     if (saveInFlightRef.current || dateNeededSaveInFlightRef.current) return { complete: false, savedIds: [], busy: true };
@@ -1113,9 +1112,30 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [duplicateReviewOrderId, setDuplicateReviewOrderId] = useState(null);
+  const [duplicateReviewBusy, setDuplicateReviewBusy] = useState(false);
 
   const deleteOrder = async (order) => {
     setDeleteConfirm(order);
+  };
+
+  // Shared post-delete cleanup for the grid delete and duplicate review.
+  // Drops the row from every local edit/sync ledger so nothing tries to
+  // write a trashed Order again.
+  const removeOrdersFromState = (ids) => {
+    const idSet = new Set(ids);
+    orderLocalEditGenerationRef.current += 1;
+    setOrders((current) => current.filter(o => !idSet.has(o.id)));
+    for (const id of ids) {
+      delete pendingChangesRef.current[id];
+      delete originalOrdersRef.current[id];
+      verifiedCustomerSelectionRef.current.delete(id);
+      manuallyUnlinkedCustomerOrderIdsRef.current.delete(id);
+      pendingSyncIdsRef.current.delete(id);
+      pendingSyncVersionRef.current.delete(id);
+    }
+    setPendingSyncCount(pendingSyncIdsRef.current.size);
+    setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
   };
 
   const confirmDelete = async () => {
@@ -1132,16 +1152,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         deletedBy: currentUser?.email || "unknown",
         label: "Order Spreadsheet delete",
       });
-      orderLocalEditGenerationRef.current += 1;
-      setOrders((current) => current.filter(o => o.id !== target.id));
-      delete pendingChangesRef.current[target.id];
-      delete originalOrdersRef.current[target.id];
-      verifiedCustomerSelectionRef.current.delete(target.id);
-      manuallyUnlinkedCustomerOrderIdsRef.current.delete(target.id);
-      pendingSyncIdsRef.current.delete(target.id);
-      pendingSyncVersionRef.current.delete(target.id);
-      setPendingSyncCount(pendingSyncIdsRef.current.size);
-      setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
+      removeOrdersFromState([target.id]);
       setDeleteConfirm(null);
     } catch (error) {
       console.error("Could not delete Order safely:", error);
@@ -1149,6 +1160,68 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setDeleteConfirm(null);
     } finally {
       deleteInFlightRef.current = false;
+    }
+  };
+
+  // Duplicate review: keeping one Order trashes the rest of its group via the
+  // same guarded soft-delete as the grid (tombstones preserved; Smartsheet
+  // rows and links are never touched automatically). Fails closed like the
+  // single delete while a pull is in flight.
+  const handleDuplicateKeep = async (keepOrder) => {
+    const group = duplicateGroupsById.get(keepOrder.id) || [];
+    const others = group.filter(o => o.id !== keepOrder.id && !o.deleted);
+    if (!others.length || duplicateReviewBusy || deleteInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
+    deleteInFlightRef.current = true;
+    setDuplicateReviewBusy(true);
+    setSaveError("");
+    try {
+      for (const other of others) {
+        const baseline = originalOrdersRef.current[other.id] || other;
+        await softDeleteOrderFromLoadedSnapshot({
+          entity: Order,
+          order: baseline,
+          deletedBy: currentUser?.email || "unknown",
+          label: "Order duplicate review keep",
+        });
+        removeOrdersFromState([other.id]);
+      }
+      setDuplicateReviewOrderId(null);
+    } catch (error) {
+      console.error("Could not resolve duplicate Orders safely:", error);
+      throw new Error(error?.message || "A duplicate Order changed in another session. Reload before retrying.");
+    } finally {
+      deleteInFlightRef.current = false;
+      setDuplicateReviewBusy(false);
+    }
+  };
+
+  // Verified "not duplicates" decision: Base44-only field, no pending-sync
+  // marker, so the record does not queue a Smartsheet write for a review
+  // annotation.
+  const handleDuplicateNotDuplicates = async () => {
+    const group = (duplicateGroupsById.get(duplicateReviewOrderId) || []).filter(o => !o.deleted);
+    if (!group.length || duplicateReviewBusy || manualPullInFlightRef.current || isPulling) return;
+    setDuplicateReviewBusy(true);
+    setSaveError("");
+    try {
+      for (const member of group) {
+        const baseline = originalOrdersRef.current[member.id] || member;
+        await replaceOrderFieldsIfUnchanged({
+          entity: Order,
+          order: baseline,
+          nextFields: { duplicate_review_status: 'not_duplicate' },
+          fullVersion: true,
+          label: "Order duplicate review",
+        });
+        originalOrdersRef.current[member.id] = { ...baseline, duplicate_review_status: 'not_duplicate' };
+        setOrders((current) => current.map(o => o.id === member.id ? { ...o, duplicate_review_status: 'not_duplicate' } : o));
+      }
+      setDuplicateReviewOrderId(null);
+    } catch (error) {
+      console.error("Could not record the duplicate review decision:", error);
+      throw new Error(error?.message || "A duplicate Order changed in another session. Reload before retrying.");
+    } finally {
+      setDuplicateReviewBusy(false);
     }
   };
 
@@ -1432,26 +1505,35 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   // Open Orders sharing the same customer, description, and vendor are almost
   // always accidental re-entries. Flag them without blocking any save.
-  const { duplicateOrderIds, duplicateGroupSizes } = useMemo(() => {
+  const { duplicateOrderIds, duplicateGroupSizes, duplicateGroupsById } = useMemo(() => {
     const groups = new Map();
     for (const order of orders) {
       if (order.deleted || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') continue;
+      // A verified "not duplicates" review decision stops flagging the Order.
+      if (order.duplicate_review_status === 'not_duplicate') continue;
       const parts = ['customer_name', 'description', 'vendor']
         .map(field => String(order[field] ?? '').trim().toLowerCase());
       if (parts.some(part => !part)) continue;
       const key = parts.join('|');
       if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(order.id);
+      groups.get(key).push(order);
     }
     const ids = new Set();
     const sizes = new Map();
-    for (const groupIds of groups.values()) {
-      if (groupIds.length > 1) {
-        groupIds.forEach(id => { ids.add(id); sizes.set(id, groupIds.length); });
+    const byId = new Map();
+    for (const groupOrders of groups.values()) {
+      if (groupOrders.length > 1) {
+        groupOrders.forEach(order => {
+          ids.add(order.id);
+          sizes.set(order.id, groupOrders.length);
+          byId.set(order.id, groupOrders);
+        });
       }
     }
-    return { duplicateOrderIds: ids, duplicateGroupSizes: sizes };
+    return { duplicateOrderIds: ids, duplicateGroupSizes: sizes, duplicateGroupsById: byId };
   }, [orders]);
+
+  const duplicateReviewGroup = (duplicateGroupsById.get(duplicateReviewOrderId) || []).filter(o => !o.deleted);
 
   const overdueCount = useMemo(
     () => orders.filter(order => orderDueState(order, todayStr) === "overdue").length,
@@ -1462,6 +1544,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     let result = orders.filter(order => {
       if (!orderMatchesReceivedFilter(order, filterStatus)) return false;
       if (filterStatus === "overdue" && orderDueState(order, todayStr) !== "overdue") return false;
+      if (filterStatus === "duplicates" && !duplicateOrderIds.has(order.id)) return false;
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         const linkedJob = workOrdersById.get(order.work_order_id);
@@ -1556,7 +1639,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     notReceived.sort(defaultSortFn);
     received.sort(defaultSortFn);
     return [...notReceived, ...received];
-  }, [orders, filterStatus, searchTerm, sortConfig, todayStr, workOrdersById]);
+  }, [orders, filterStatus, searchTerm, sortConfig, todayStr, workOrdersById, duplicateOrderIds]);
 
   const historyLayout = useMemo(() => orderHistoryLayout(filteredOrders, filterStatus), [filteredOrders, filterStatus]);
 
@@ -2174,12 +2257,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         onClick={() => setExpandedDescription(order.id)}
                       >
                         {duplicateOrderIds.has(order.id) && (
-                          <span
-                            title={`Possible duplicate — ${duplicateGroupSizes.get(order.id)} open orders share this customer, description, and vendor`}
-                            aria-label="Possible duplicate order"
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setDuplicateReviewOrderId(order.id); }}
+                            title={`Possible duplicate — ${duplicateGroupSizes.get(order.id)} open orders share this customer, description, and vendor. Click to compare.`}
+                            aria-label="Review possible duplicate order"
+                            className="flex-shrink-0 rounded hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400"
                           >
-                            <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
-                          </span>
+                            <AlertTriangle className="w-3 h-3 text-amber-500" />
+                          </button>
                         )}
                         <span className="truncate">{order.description || "Description..."}</span>
                         {order.description && order.description.length > 30 && (
@@ -2745,6 +2831,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           onUpdate={() => {
             loadData(false);
           }}
+        />
+      )}
+
+      {/* Duplicate Order Review */}
+      {duplicateReviewGroup.length > 1 && (
+        <OrderDuplicateReview
+          orders={duplicateReviewGroup}
+          workOrdersById={workOrdersById}
+          onKeepOrder={handleDuplicateKeep}
+          onNotDuplicates={handleDuplicateNotDuplicates}
+          busy={duplicateReviewBusy || isPulling}
+          onClose={() => setDuplicateReviewOrderId(null)}
         />
       )}
 
