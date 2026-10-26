@@ -256,8 +256,6 @@ export default function TimeTracker({ position = "top" } = {}) {
      (locationPref === "top" && position !== "side") ||
      (locationPref === "side" && position === "side"));
 
-  if (!visibleHere) return null;
-
   const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
   const ringColor = TONE_RING[tone] || accent.ring;
   const clockedIn = snapshot?.status === "clocked_in";
@@ -296,6 +294,10 @@ export default function TimeTracker({ position = "top" } = {}) {
       ? { label: `${formatMinutes(Math.round(diff))} ahead of pace`, minutes: diff }
       : { label: `${formatMinutes(Math.round(-diff))} behind pace`, minutes: diff };
   }, [snapshot, live, clockedIn, goalMinutes]);
+
+  // The location gate stays below every hook so hook order is identical whether
+  // or not this tracker is hidden in the current location.
+  if (!visibleHere) return null;
 
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);

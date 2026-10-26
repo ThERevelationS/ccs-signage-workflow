@@ -60,7 +60,6 @@ import FleetReservations from './pages/FleetReservations';
 import FleetRequests from './pages/FleetRequests';
 import FleetHistory from './pages/FleetHistory';
 import FleetAnalytics from './pages/FleetAnalytics';
-import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
 import FleetMechanic from './pages/FleetMechanic';
 import CustomerPortal from './pages/CustomerPortal';
@@ -121,7 +120,6 @@ const FLEET_PAGES = {
   FleetRequests,
   FleetHistory,
   FleetAnalytics,
-  FleetSettings,
 };
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -167,6 +165,7 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/ResetPassword" element={<NewUserSetup />} />
       <Route path="/PermittingRepository" element={<Navigate to="/Permitting?view=jurisdictions" replace />} />
+      <Route path="/FleetSettings" element={<Navigate to="/AdminSettings?tab=fleet" replace />} />
       <Route path="/PermittingDocs" element={
         <LayoutWrapper currentPageName="PermittingDocs">
           <PermittingDocs />
