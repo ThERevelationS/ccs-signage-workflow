@@ -218,4 +218,21 @@ assert(!salesRunRequiresReview([{ dataset: 'sales', direction: 'pull', created: 
   { dataset: 'sales', direction: 'push', unchanged_skipped: 500, conflicts: 0, errors: 0 }]),
   'A verified no-op Sales sync should still report completed.');
 
+// Held-field reviews flag a run only when their evidence is newly reported or
+// unknown. A stable, already-reported review queue stays visible to admins
+// without re-failing every subsequent pull.
+assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'pull',
+  local_pending_preserved: 3, local_pending_newly_reported: 2 }]),
+  'Newly reported held-field reviews must show needs_review.');
+assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'pull',
+  local_pending_preserved: 3 }]),
+  'Unknown review freshness must fail closed and show needs_review.');
+assert(!salesRunRequiresReview([{ dataset: 'sales', direction: 'pull',
+  local_pending_preserved: 3, local_pending_newly_reported: 0, errors: 0 },
+  { dataset: 'sales', direction: 'push', unchanged_skipped: 500, errors: 0 }]),
+  'A stable already-reported review queue must not re-fail every pull.');
+assert(!salesRunRequiresReview([{ dataset: 'sales', direction: 'pull',
+  local_pending_preserved: 0, local_pending_newly_reported: 5 }]),
+  'No preserved fields means nothing held, regardless of stale counters.');
+
 console.log("Smartsheet Sales boundary validation passed.");
