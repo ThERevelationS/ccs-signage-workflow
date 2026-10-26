@@ -4,6 +4,7 @@ import {
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { triggerNotification } from "@/components/workflow/NotificationService";
 
 const EDITABLE_FIELDS = [
   "name", "state", "type", "website_url", "permitting_url", "cagis_database_url",
@@ -103,13 +104,18 @@ export async function saveJurisdictionFromLoadedSnapshot({ entity, jurisdiction,
     throw new Error(`${label} cannot use the same jurisdiction identity as another stored record (${identityDescription(identityData)}). No row was changed.`);
   }
 
-  return replaceEntityFieldsIfUnchanged({
+  const saved = await replaceEntityFieldsIfUnchanged({
     entity,
     id: jurisdiction.id,
     expectedFields: expectedEntityFields(jurisdiction, payload),
     nextFields: payload,
     label,
   });
+  triggerNotification("jurisdiction_profile_updated", null, {
+    recordData: saved,
+    eventDescription: "Jurisdiction profile updated",
+  });
+  return saved;
 }
 
 export async function deleteJurisdictionFromLoadedSnapshot({ entity, jurisdiction, label = "Jurisdiction deletion" } = {}) {
@@ -265,7 +271,14 @@ export async function createJurisdictionIfAbsent({ entity, data, label = "Jurisd
     if (!created?.id && !jurisdictionCreatePayloadMatches(afterExisting, createPayload)) {
       throw new Error(`${label} create response was unavailable and a different Jurisdiction state now owns ${identityDescription(createPayload)}. Reload and review it before retrying.`);
     }
-    return { record: afterExisting, status: created?.id ? "created" : "recovered" };
+    const createdStatus = created?.id ? "created" : "recovered";
+    // A Jurisdiction this call actually created (or recovered) — emit the
+    // automation event. 'existing'/concurrent-discard paths never emit.
+    triggerNotification("jurisdiction_profile_created", null, {
+      recordData: afterExisting,
+      eventDescription: "Jurisdiction profile created",
+    });
+    return { record: afterExisting, status: createdStatus };
   }
 
   if (exactRows.length > 1 && created?.id) {
