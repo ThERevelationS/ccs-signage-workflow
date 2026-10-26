@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const INSPECTION_TYPES = new Set(['pre_trip','post_trip','daily','weekly','monthly','safety','custom']);
@@ -10,8 +11,8 @@ const uniq = (values: unknown) => Array.isArray(values) ? [...new Set(values.map
 const nowIso = () => new Date().toISOString();
 const easternDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-async function authorize(base44: any, adminRequired = false) {
-  const user = await base44.auth.me().catch(() => null);
+async function authorize(base44: any, adminRequired = false, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user, admin: true };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = norm(body?.action);
     const adminRequired = ['template_create','template_update'].includes(action);
-    const auth = await authorize(base44, adminRequired);
+    const auth = await authorize(base44, adminRequired, body?.session_token);
     if (auth.error) return auth.error;
 
     const Template = base44.asServiceRole.entities.FleetInspectionTemplate;
