@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { resolveFleetMeterReading } from '../../shared/fleetMeterReading.ts';
@@ -14,8 +15,8 @@ const nonNegativeOrNull = (value: unknown) => {
   return parsed == null || parsed < 0 ? null : parsed;
 };
 
-async function authorize(base44:any) {
-  const user = await base44.auth.me().catch(()=>null);
+async function authorize(base44:any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return {error:Response.json({error:'Unauthorized'},{status:401})};
   if (user.role === 'admin') return {user,isAdmin:true};
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
@@ -78,10 +79,11 @@ async function currentMeter(base44:any,equipment:any) {
 Deno.serve(async req=>{
   try{
     const base44=createClientFromRequest(req);
-    const auth=await authorize(base44);
+    const body = await req.json().catch(()=>({}));
+    const auth = await authorize(base44, body?.session_token);
     if(auth.error)return auth.error;
     const {user,isAdmin}=auth;
-    const body=await req.json().catch(()=>({}));
+
     const action=norm(body?.action);
     const Reservation=base44.asServiceRole.entities.FleetReservation;
     const Equipment=base44.asServiceRole.entities.FleetEquipment;
