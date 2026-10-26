@@ -5,6 +5,7 @@ import {
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -209,8 +210,8 @@ Deno.serve(async (req) => {
     if (action === "revenue_summary") {
       const months = Math.max(3, Math.min(24, Number(body?.months) || 12));
       const [rows, payments] = await Promise.all([
-        Invoice.filter({}),
-        Payment.filter({}).catch(() => []),
+        loadAllEntityRows({ entity: Invoice, query: {}, sort: null, label: 'Revenue summary invoices' }),
+        loadAllEntityRows({ entity: Payment, query: {}, sort: null, label: 'Revenue summary payments' }).catch(() => []),
       ]);
       if (!Array.isArray(rows)) throw bad("Invoice lookup failed.", 500);
       const live = rows.filter((r: any) => clean(r?.status) !== "void");
