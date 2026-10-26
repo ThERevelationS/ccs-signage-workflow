@@ -344,7 +344,9 @@ try {
       await page.getByRole("checkbox", { name: "Mark Alpha Signs as discussed this week" }).click();
       await page.locator("#mmm-parked").getByText("Alpha Signs").waitFor();
       await page.locator("#mmm-parked").getByText(/discussed /).waitFor();
-      const state = await fixtureAction(page, origin, "fixtureStatus");
+      const state = await awaitFixture(page, origin,
+        s => s.rows.find(r => r.id === "synthetic-mmm-alpha").discussed !== "",
+        "discussed timestamp write");
       const alpha = state.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.ok(alpha.discussed, "Discussed timestamp written");
       assert.equal(alpha.defer, "");
@@ -358,7 +360,9 @@ try {
       await page.locator("#mmm-parked").getByText("Alpha Signs").waitFor();
       await page.getByRole("checkbox", { name: "Return Alpha Signs to the To Discuss list" }).click();
       await page.locator("#mmm-parked").waitFor({ state: "detached" });
-      const state = await fixtureAction(page, origin, "fixtureStatus");
+      const state = await awaitFixture(page, origin,
+        s => s.rows.find(r => r.id === "synthetic-mmm-alpha").discussed === "" && s.writeCount >= 2,
+        "return-to-discuss write");
       const alpha = state.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.equal(alpha.discussed, "");
       assert.equal(alpha.defer, "");
@@ -370,7 +374,9 @@ try {
       await page.getByRole("button", { name: /Next Monday/ }).click();
       await page.locator("#mmm-parked").getByText("Alpha Signs").waitFor();
       await page.locator("#mmm-parked").getByText(/returns \d+\/\d+/).waitFor();
-      const state = await fixtureAction(page, origin, "fixtureStatus");
+      const state = await awaitFixture(page, origin,
+        s => s.rows.find(r => r.id === "synthetic-mmm-alpha").defer !== "",
+        "defer-until write");
       const alpha = state.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.equal(alpha.defer, nextMonday());
       assert.equal(alpha.discussed, "");
@@ -384,14 +390,18 @@ try {
       await input.fill("Order mounting hardware");
       await page.getByRole("button", { name: "Add", exact: true }).click();
       await page.getByText("Order mounting hardware").waitFor();
-      const state = await fixtureAction(page, origin, "fixtureStatus");
+      const state = await awaitFixture(page, origin,
+        s => s.rows.find(r => r.id === "synthetic-mmm-alpha").mmmTasks.length === 1,
+        "meeting-task array write");
       const alpha = state.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.equal(alpha.mmmTasks.length, 1);
       assert.equal(alpha.mmmTasks[0].text, "Order mounting hardware");
       assert.equal(alpha.mmmTasks[0].completed, false);
       await page.getByRole("checkbox", { name: "Complete meeting task: Order mounting hardware" }).click();
       await page.getByText("Order mounting hardware").waitFor({ state: "detached" });
-      const after = await fixtureAction(page, origin, "fixtureStatus");
+      const after = await awaitFixture(page, origin,
+        s => s.rows.find(r => r.id === "synthetic-mmm-alpha").mmmTasks.every(t => t.completed),
+        "meeting-task completion write");
       const alphaAfter = after.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.equal(alphaAfter.mmmTasks.filter(t => !t.completed).length, 0);
     });
@@ -404,7 +414,9 @@ try {
       await input.fill("Waiting on engineering drawings");
       await page.getByRole("button", { name: "Add note" }).click();
       await page.getByText("Waiting on engineering drawings").waitFor();
-      const state = await fixtureAction(page, origin, "fixtureStatus");
+      const state = await awaitFixture(page, origin,
+        s => s.rows.find(r => r.id === "synthetic-mmm-alpha").workNotes.length === 1,
+        "meeting-note array write");
       const alpha = state.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.equal(alpha.workNotes.length, 1);
       assert.equal(alpha.workNotes[0].text, "Waiting on engineering drawings");
