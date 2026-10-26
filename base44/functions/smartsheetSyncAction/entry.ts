@@ -318,6 +318,12 @@ async function pullDataset(
         label: 'Sales Smartsheet assignee translation users',
       })
     : [];
+  // Admin-acknowledged external/historical assignee labels resolve to their
+  // canonical stored form instead of flagging the pull forever. Configured per
+  // dataset profile as assignee_confirmed_labels.
+  const salesAssigneeConfirmedLabels = dataset === 'sales' && Array.isArray(profile?.assignee_confirmed_labels)
+    ? profile.assignee_confirmed_labels
+    : [];
 
   let orderUnlinkedRowCount = 0;
   let orderUnlinkedRowIds: string[] = [];
@@ -455,7 +461,7 @@ async function pullDataset(
         }
       }
       if (dataset === 'sales' && key === 'current_task_assigned_to') {
-        const resolution = canonicalBase44SalesAssignee(val, salesAssigneeUsers);
+        const resolution = canonicalBase44SalesAssignee(val, salesAssigneeUsers, salesAssigneeConfirmedLabels);
         if (resolution.name) {
           fieldValues[key] = resolution.name;
         } else if (String(val ?? '').trim()) {
@@ -4531,6 +4537,39 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({ success: false, error: `Smartsheet sync configuration has ${duplicateCount} records. Resolve the duplicate settings before editing.` }, { status: 409 });
       }
       return Response.json({ success: true, record: safeConfigRecord(record) });
+    }
+
+    // Admin-acknowledged external/historical assignee labels for the Sales
+    // pull translation. Saved server-side with the loaded record as its own
+    // concurrency baseline so a browser round-trip can never corrupt it.
+    if (action === 'assignee_labels_save') {
+      if (adminActor?.role !== 'admin') {
+        return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
+      }
+      const { record, duplicateCount } = await loadSyncConfig(base44);
+      if (!record?.id || duplicateCount > 1) {
+        return Response.json({ success: false, error: 'The Smartsheet sync configuration could not be verified. Reload before saving.' }, { status: 409 });
+      }
+      const labels = (Array.isArray(body?.labels) ? body.labels : [])
+        .map((l: any) => cleanText(l, 80)).filter(Boolean)
+        .filter((l: string, i: number, all: string[]) => all.indexOf(l) === i)
+        .slice(0, 60);
+      const next = {
+        ...(record.setting_value || {}),
+        sales: { ...(record.setting_value?.sales || {}), assignee_confirmed_labels: labels },
+      };
+      const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
+        { id: record.id, updated_date: record.updated_date, setting_key: SETTING_KEY },
+        { $set: { setting_value: next } },
+      );
+      if (!result || result.updated !== 1) {
+        return Response.json({ success: false, error: 'Smartsheet sync settings changed while saving. Reload before retrying.' }, { status: 409 });
+      }
+      const saved = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);
+      if (!saved?.id || !sameStableValue(saved.setting_value, next)) {
+        return Response.json({ success: false, error: 'The assignee label list was saved but could not be verified. Reload before retrying.' }, { status: 500 });
+      }
+      return Response.json({ success: true, assignee_confirmed_labels: saved.setting_value?.sales?.assignee_confirmed_labels || [] });
     }
 
     if (action === 'config_save') {
