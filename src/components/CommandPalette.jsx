@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { getSessionToken } from "@/components/auth/EmailGate";
 import { pagesConfig } from "@/pages.config";
-import { Calculator, FileDiff, FileText, GitBranch, KanbanSquare, Loader2, Package, Receipt, Search, Users } from "lucide-react";
+import { Calculator, FileDiff, FileText, GitBranch, KanbanSquare, Loader2, Package, Receipt, Search, ShoppingCart, Users } from "lucide-react";
 
 const RECORD_GROUPS = [
   ["customers", "Customers", Users, (r) => `${r.contact_name || "—"} · ${(r.customer_status || "").replace(/_/g, " ")}`, (r) => `/EstimatorCustomers?customer=${r.id}`],
   ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${(r.stage || "").replace(/_/g, " ")}`, (r) => `/Opportunities?open=${r.id}`],
   ["work_orders", "Work Orders", KanbanSquare, (r) => `${r.client_name || "—"} · ${(r.current_stage || "").replace(/_/g, " ")}`, (r) => `/MainWorkflow?wo=${r.id}`],
+  ["orders", "Orders", ShoppingCart, (r) => `${r.customer_name || "—"} · ${(r.status || "").replace(/_/g, " ")}${r.vendor ? ` · ${r.vendor}` : ""}`, (r) => `/OrderForm?order=${r.id}`],
   ["estimates", "Estimates", Calculator, (r) => `${r.client_name || "—"} · ${r.estimate_number || r.status || "—"}`, (r) => `/EstimateDetail?id=${r.id}`],
   ["invoices", "Invoices", Receipt, (r) => `${r.customer_display_name || "—"} · ${r.status || "—"}`, (r) => `/Invoices?invoice=${r.id}`],
   ["purchase_orders", "Purchase Orders", Package, (r) => `${r.vendor_name || "—"} · ${r.status || "—"}`, (r) => `/PurchaseOrders?po=${r.id}`],
@@ -114,7 +115,7 @@ export default function CommandPalette() {
     if (q.length >= 2 && records) {
       for (const [key, group, Icon, sub, href] of RECORD_GROUPS) {
         for (const r of (records[key] || []).slice(0, 4)) {
-          const title = r.title || r.company_name || r.project_name || r.invoice_number || r.po_number || r.change_order_number || r.estimate_number || "Record";
+          const title = r.title || r.company_name || r.project_name || r.invoice_number || r.po_number || r.change_order_number || r.estimate_number || r.description || "Record";
           out.push({ kind: "record", label: title, sub: `${group} · ${sub(r)}`, path: href(r), icon: Icon });
         }
       }
