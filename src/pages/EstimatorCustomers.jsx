@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, Link2, Copy, Send, MessageSquare } from "lucide-react";
+import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, Link2, Copy, Send, MessageSquare, Printer } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
 import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -17,6 +17,49 @@ const FILTERS = [
 ];
 
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const escHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function statementHtml(data) {
+  const c = data?.customer || {};
+  const inv = (data?.invoices || []).filter((i) => !["draft", "void"].includes(i.status));
+  const pays = (data?.payments || []).filter((p) => p.status !== "void");
+  const invById = new Map(inv.map((i) => [i.id, i.invoice_number || i.id]));
+  const aging = data?.ar_aging || {};
+  const totals = data?.summary || {};
+  const addr = [c.billing_address_1, c.billing_address_2, [c.billing_city, c.billing_state, c.billing_postal_code].filter(Boolean).join(" ")].filter(Boolean);
+  const billTo = [c.billing_contact_name || c.company_name, ...addr].filter(Boolean).map(escHtml).join("<br>");
+  const row = (cells, cls = "") => `<tr>${cells.map((x, i) => `<td class="${cls}" style="padding:6px 10px;${i === 0 ? "" : "text-align:right;"}">${x}</td>`).join("")}</tr>`;
+  const agingRow = [["Current", aging.current], ["1–30 days", aging.d1_30], ["31–60", aging.d31_60], ["61–90", aging.d61_90], ["90+", aging.d90_plus]]
+    .map(([l, v]) => `<td style="text-align:center;padding:6px;border:1px solid #e2e8f0"><div style="font-size:10px;text-transform:uppercase;color:#64748b">${l}</div><div style="font-weight:700">${usd(v)}</div></td>`).join("");
+  return `<!doctype html><html><head><title>Statement — ${escHtml(c.company_name || "Customer")}</title><style>
+    body{font-family:system-ui,-apple-system,sans-serif;color:#0f172a;margin:32px;font-size:13px}
+    table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #e2e8f0}
+    th{text-align:left;font-size:10px;text-transform:uppercase;color:#64748b;padding:6px 10px}
+    h1{font-size:20px;margin:0} .muted{color:#64748b;font-size:12px}
+    @media print{button{display:none}}
+  </style></head><body>
+  <button onclick="window.print()" style="float:right;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer">Print / Save PDF</button>
+  <h1>CCS Signage — Account Statement</h1>
+  <p class="muted">Statement date: ${escHtml(aging.as_of || new Date().toISOString().slice(0, 10))}</p>
+  <h2 style="font-size:14px;margin:24px 0 4px">Bill to</h2><p>${billTo || "—"}</p>
+  <h2 style="font-size:14px;margin:20px 0 4px">Open activity</h2>
+  <table><tr><th>Invoice</th><th>Issued</th><th>Due</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr>
+  ${inv.map((i) => row([
+    escHtml(i.invoice_number || "—"), escHtml(i.issue_date || "—"), escHtml(i.due_date || "—"),
+    escHtml(i.status), usd(i.total), usd(i.amount_paid), `<b>${usd(i.balance_due)}</b>`,
+  ])).join("") || `<tr><td colspan="7" style="padding:12px;color:#94a3b8">No invoices.</td></tr>`}
+  </table>
+  ${pays.length ? `<h2 style="font-size:14px;margin:20px 0 4px">Payments received</h2>
+  <table><tr><th>Date</th><th>Invoice</th><th>Method</th><th>Reference</th><th>Amount</th></tr>
+  ${pays.map((p) => row([escHtml(p.paid_date || "—"), escHtml(invById.get(p.invoice_id) || p.invoice_id || "—"), escHtml(p.method || "—"), escHtml(p.reference_number || ""), usd(p.amount)])).join("")}
+  </table>` : ""}
+  <h2 style="font-size:14px;margin:20px 0 8px">Balance aging</h2>
+  <table style="width:auto">${`<tr>${agingRow}</tr>`}</table>
+  <p style="margin-top:16px;font-size:15px"><b>Total balance due: ${usd(totals.open_ar)}</b></p>
+  <p class="muted">Questions about this statement? Contact CCS Signage.</p>
+  </body></html>`;
+}
 
 function CustomerDetail({ sessionToken, customerId, onClose }) {
   const [data, setData] = useState(null);
@@ -124,7 +167,21 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 ))}
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Invoices</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Invoices</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const w = window.open("", "_blank", "width=900,height=1100");
+                      if (!w) return;
+                      w.document.write(statementHtml(data));
+                      w.document.close();
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-500 hover:bg-gray-50"
+                  >
+                    <Printer className="h-3 w-3" />Statement
+                  </button>
+                </div>
                 {(data.invoices || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
                 {(data.invoices || []).map((i) => (
                   <div key={i.id} className="mt-1.5 flex items-center justify-between text-sm">
