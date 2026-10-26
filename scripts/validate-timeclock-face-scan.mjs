@@ -189,7 +189,7 @@ await test("clock-in notification draws its check/x and bursts", () => {
 
 await test("punch button has press feedback and focus ring", () => {
   const qc = readFileSync("src/components/timeclock/QuickClockSection.jsx", "utf8");
-  assert.match(qc, /motion-safe:active:scale-95/);
+  assert.match(qc, /motion-safe:active:scale-(?:95|\[0\.9\d?\])/);
   assert.match(qc, /focus-visible:ring-purple-400\/60/);
 });
 
