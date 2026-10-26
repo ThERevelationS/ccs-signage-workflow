@@ -190,8 +190,12 @@ test("supported action sets match real executors", () => {
   );
 });
 
-test("dead options are marked and warned about in the builder", () => {
-  // Trigger picker marks un-wired options.
+test("dead options are excluded from new choices and preserved in saved rules", () => {
+  assert.ok(adminSettings.includes("TRIGGER_TYPES.filter(t => getTriggerSupportedActions(t.value))"),
+    "new trigger choices must exclude unsupported events");
+  assert.ok(adminSettings.includes('<SelectItem value={trigger.trigger_type} disabled>'),
+    "saved legacy trigger values must remain visible but disabled");
+  // Existing saved choices retain their unavailable label.
   assert.ok(
     adminSettings.includes('getTriggerSupportedActions(t.value) ? "" : " (not working yet)"'),
     "dead triggers must be marked in the picker"
@@ -231,6 +235,10 @@ test("dead options are marked and warned about in the builder", () => {
   assert.ok(adminSettings.includes("describeAutomation(triggers, actions)"), "plain-English summary missing");
   // Saved-rule badge.
   assert.ok(adminSettings.includes("Won't run — not wired yet"), "saved-rule badge missing");
+  assert.ok(adminSettings.includes('recordFilterFields(trigger.trigger_type)'),
+    "record events must offer their own filters instead of Work Order filters");
+  assert.ok(adminSettings.includes("RECORD_SUPPORTED_ACTIONS") && workflowEngine.includes("target_work_order_id"),
+    "record task/note capabilities need an explicit destination executor");
 });
 
 test("every advertised trigger resolves to a status", () => {
