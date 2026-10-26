@@ -196,13 +196,9 @@ const TRIGGER_TYPES = [
   { value: "sales_follow_up_date_passed", label: "Follow-Up Date Passed", category: "Sales Pipeline" },
   { value: "sales_close_date_approaching", label: "Close Date Approaching", category: "Sales Pipeline" },
   { value: "sales_rep_changed", label: "Sales Rep Changed", category: "Sales Pipeline" },
-  { value: "sales_in_pipeline_toggled", label: "Added / Removed from Pipeline", category: "Sales Pipeline" },
 
   // ── Pending Imports ──
   { value: "pending_import_created", label: "New Pending Import Arrived", category: "Pending Imports" },
-  { value: "pending_import_approved", label: "Pending Import Approved", category: "Pending Imports" },
-  { value: "pending_import_merged", label: "Pending Import Merged", category: "Pending Imports" },
-  { value: "pending_import_rejected", label: "Pending Import Rejected", category: "Pending Imports" },
   { value: "duplicate_detected", label: "Duplicate Record Detected", category: "Pending Imports" },
 
   // ── Priority / ASAP ──
