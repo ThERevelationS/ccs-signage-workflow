@@ -206,6 +206,60 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, invoices, aging: agingSummary(rows) });
     }
 
+    if (action === "revenue_summary") {
+      const months = Math.max(3, Math.min(24, Number(body?.months) || 12));
+      const [rows, payments] = await Promise.all([
+        Invoice.filter({}),
+        Payment.filter({}).catch(() => []),
+      ]);
+      if (!Array.isArray(rows)) throw bad("Invoice lookup failed.", 500);
+      const live = rows.filter((r: any) => clean(r?.status) !== "void");
+      // Trailing `months` window keyed YYYY-MM, oldest first.
+      const now = new Date();
+      const buckets: any[] = [];
+      for (let i = months - 1; i >= 0; i -= 1) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        buckets.push({ key: d.toISOString().slice(0, 7), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }), invoiced: 0, collected: 0, invoice_count: 0 });
+      }
+      const bucketByKey = new Map(buckets.map((b) => [b.key, b]));
+      const startKey = buckets[0].key;
+      for (const r of live) {
+        const key = clean(r?.issue_date || r?.created_date).slice(0, 7);
+        if (key < startKey) continue;
+        const b = bucketByKey.get(key);
+        if (!b) continue;
+        b.invoiced += num(r?.total);
+        b.invoice_count += 1;
+      }
+      for (const p of Array.isArray(payments) ? payments : []) {
+        if (clean(p?.status) === "void") continue;
+        const key = clean(p?.paid_date || p?.created_date).slice(0, 7);
+        if (key < startKey) continue;
+        const b = bucketByKey.get(key);
+        if (b) b.collected += num(p?.amount);
+      }
+      for (const b of buckets) { b.invoiced = money(b.invoiced); b.collected = money(b.collected); }
+      const today = new Date().toISOString().slice(0, 10);
+      let openAr = 0; let overdueAr = 0; let overdueCount = 0;
+      for (const r of live) {
+        const bal = num(r?.balance_due);
+        if (bal <= 0) continue;
+        openAr += bal;
+        if (clean(r?.due_date) && clean(r.due_date) < today && ["sent", "partially_paid"].includes(clean(r?.status))) {
+          overdueAr += bal; overdueCount += 1;
+        }
+      }
+      return Response.json({
+        success: true, action,
+        months: buckets,
+        open_ar: money(openAr),
+        overdue_ar: money(overdueAr),
+        overdue_count: overdueCount,
+        invoiced_total: money(live.reduce((s: number, r: any) => s + num(r?.total), 0)),
+        collected_total: money(live.reduce((s: number, r: any) => s + num(r?.amount_paid), 0)),
+      });
+    }
+
     if (action === "export_ar") {
       const status = clean(body?.status);
       if (status && !INVOICE_STATUSES.includes(status)) throw bad("Unknown invoice status filter.");
