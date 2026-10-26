@@ -212,6 +212,93 @@ Deno.serve(async (req) => {
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
     const Payment = base44.asServiceRole.entities.Payment;
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
+    const PortalMessage = base44.asServiceRole.entities.PortalMessage;
+
+    if (action === "attention_feed") {
+      const today = new Date().toISOString().slice(0, 10);
+      const [messages, invoices, pos, cos, opps, requests] = await Promise.all([
+        PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
+        Invoice.filter({}, "-updated_date", 500).catch(() => []),
+        PurchaseOrder.filter({}, "-updated_date", 500).catch(() => []),
+        ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(() => []),
+        Opportunity.filter({}, "-last_activity_at", 500).catch(() => []),
+        EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
+      ]);
+      const list = (v: any) => (Array.isArray(v) ? v : []);
+
+      const unreadMessages = list(messages).map((m: any) => ({
+        id: clean(m?.id),
+        customer_id: clean(m?.customer_id),
+        kind: clean(m?.kind) || "message",
+        related_label: clean(m?.related_label),
+        excerpt: clean(m?.body).slice(0, 120),
+        author_name: clean(m?.author_name),
+        created_date: clean(m?.created_date),
+      }));
+
+      const overdueInvoices = list(invoices)
+        .filter((i: any) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today)
+        .map((i: any) => ({
+          id: clean(i?.id),
+          invoice_number: clean(i?.invoice_number),
+          customer_name: clean(i?.customer_name),
+          due_date: clean(i?.due_date),
+          balance_due: money(num(i?.balance_due)),
+        }));
+      const overdueInvoiceTotal = money(overdueInvoices.reduce((s: number, i: any) => s + i.balance_due, 0));
+
+      const overduePos = list(pos)
+        .filter((p: any) => ["sent", "partially_received"].includes(clean(p?.status)) && clean(p?.expected_date) && clean(p?.expected_date) < today)
+        .map((p: any) => ({
+          id: clean(p?.id),
+          po_number: clean(p?.po_number),
+          vendor_name: clean(p?.vendor_name),
+          expected_date: clean(p?.expected_date),
+          status: clean(p?.status),
+        }));
+
+      const proposedCos = list(cos).map((c: any) => ({
+        id: clean(c?.id),
+        change_order_number: clean(c?.change_order_number),
+        customer_display_name: clean(c?.customer_display_name),
+        amount_delta: money(num(c?.amount_delta)),
+        proposed_by: clean(c?.proposed_by),
+        created_date: clean(c?.created_date),
+      }));
+
+      const overdueFollowUps = list(opps)
+        .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today)
+        .map((o: any) => ({
+          id: clean(o?.id),
+          title: clean(o?.title),
+          customer_display_name: clean(o?.customer_display_name),
+          next_action: clean(o?.next_action),
+          next_action_due: clean(o?.next_action_due),
+          salesperson: clean(o?.salesperson),
+        }));
+
+      const openRequests = list(requests)
+        .filter((r: any) => OPEN_REQUEST_STATUSES.has(clean(r?.status)))
+        .map((r: any) => ({
+          id: clean(r?.id),
+          request_number: clean(r?.request_number),
+          opportunity_title: clean(r?.opportunity_title) || clean(r?.title),
+          status: clean(r?.status),
+          assigned_estimator: clean(r?.assigned_estimator) || clean(r?.estimator),
+          created_date: clean(r?.created_date),
+        }));
+
+      return Response.json({
+        success: true, action, today,
+        unread_portal_messages: unreadMessages,
+        overdue_invoices: overdueInvoices,
+        overdue_invoice_total: overdueInvoiceTotal,
+        overdue_pos: overduePos,
+        proposed_cos: proposedCos,
+        overdue_follow_ups: overdueFollowUps,
+        open_estimating_requests: openRequests,
+      });
+    }
 
     if (action === "search_customers") {
       const query = clean(body?.query).toLowerCase();
@@ -299,14 +386,15 @@ Deno.serve(async (req) => {
 
     if (action === "global_search") {
       const query = clean(body?.query).toLowerCase();
-      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [] };
+      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [] };
       if (query.length < 2) return Response.json({ success: true, action, results: empty });
-      const [opps, estimates, invoices, pos, cos] = await Promise.all([
+      const [opps, estimates, invoices, pos, cos, customers] = await Promise.all([
         Opportunity.filter({}, "-last_activity_at", 500),
         Estimate.filter({}, "-created_date", 500),
         Invoice.filter({}),
         PurchaseOrder.filter({}),
         ChangeOrder.filter({}),
+        Customer.filter({}, "-updated_date", 500).catch(() => []),
       ]);
       for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
         if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
@@ -326,6 +414,10 @@ Deno.serve(async (req) => {
             .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total) })),
           change_orders: cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"])).slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status) })),
+          customers: (Array.isArray(customers) ? customers : [])
+            .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"]))
+            .slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status) })),
         },
       });
     }
