@@ -15,6 +15,14 @@ export function getSessionToken() {
   try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; }
 }
 
+// Mirrors the verified session user outside React so non-hook call sites
+// (entity loaders, role checks inside load callbacks) can resolve the same
+// AuthorizedEmail identity without a network round-trip.
+let lastSessionUser = null;
+export function getSessionUser() {
+  return lastSessionUser;
+}
+
 export function clearAdminSettingsAuthorization() {
   try {
     sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
@@ -68,10 +76,15 @@ export const useAuth = () => {
 };
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUserState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [browseOnly, setBrowseOnly] = useState(false);
+
+  const setCurrentUser = useCallback((user) => {
+    lastSessionUser = user || null;
+    setCurrentUserState(user || null);
+  }, []);
 
   // Restore session from stored token
   const restoreSession = useCallback(async () => {
@@ -89,6 +102,7 @@ export function AuthProvider({ children }) {
       } else if (data?.valid === false) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
+        setCurrentUser(null);
       }
     } catch (error) {
       // A temporary service failure is not session revocation. Keep the token
@@ -96,10 +110,11 @@ export function AuthProvider({ children }) {
       if ([401, 409].includes(Number(error?.response?.status))) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
+        setCurrentUser(null);
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [setCurrentUser]);
 
   useEffect(() => {
     restoreSession();
@@ -111,7 +126,7 @@ export function AuthProvider({ children }) {
     setCurrentUser(null);
     setBrowseOnly(false);
     setShowLogin(true);
-  }, []);
+  }, [setCurrentUser]);
 
   const loginWithCredentials = useCallback(async (username, password) => {
     try {
@@ -130,7 +145,7 @@ export function AuthProvider({ children }) {
       const apiError = err?.response?.data?.error;
       return { success: false, error: apiError || "Invalid username or password" };
     }
-  }, []);
+  }, [setCurrentUser]);
 
   const getUserFirstName = useCallback(() => {
     if (!currentUser?.full_name) return "";
