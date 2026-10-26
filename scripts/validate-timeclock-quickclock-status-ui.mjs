@@ -59,6 +59,7 @@ vm.runInNewContext(compiled, {
     '@/components/timeclock/ClockOutDialog': pop('clock_out'),
     '@/components/timeclock/MissedPunchResolutionDialog': pop('missed_punch'),
     '@/components/timeclock/LateClockInReviewDialog': pop('late_clock_in'),
+    '@/components/timeclock/MissedClockInDialog': pop('missed_clock_in'),
     '@/components/timeclock/WorkPauseOverlay': pop('work_pause'),
     '@/components/timeclock/faceScanRuntime': {
       createFaceMatcher: () => () => null,
