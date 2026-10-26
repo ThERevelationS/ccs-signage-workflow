@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2, Pause } from "lucide-react";
+import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -49,11 +49,9 @@ export default function ClockOutDialog({
   breakStatus = "working",
   activeBreak = null,
   breakSummary = { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
-  workPauseAllowed = false,
   workPauseSummary = { count: 0, total_minutes: 0 },
   onStartBreak,
   onEndBreak,
-  onStartWorkPause,
   activeLabor = null,
   laborSummary = { count: 0, total_minutes: 0 },
   onStartLabor,
@@ -73,7 +71,6 @@ export default function ClockOutDialog({
   const [displayNow, setDisplayNow] = useState(() => new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [breakActionBusy, setBreakActionBusy] = useState(false);
-  const [workPauseBusy, setWorkPauseBusy] = useState(false);
   // Preview responses belong to the exact employee shift and open dialog.
   // Do not allow an old asynchronous snapshot to replace a newer shift.
   const shiftKey = timeEntry?.id ? JSON.stringify([
@@ -328,20 +325,6 @@ export default function ClockOutDialog({
     }
   };
 
-  const handleStartWorkPause = async () => {
-    if (!onStartWorkPause || workPauseBusy || breakActionBusy || onBreak) return;
-    setError("");
-    setWorkPauseBusy(true);
-    try {
-      await onStartWorkPause();
-      setAllocationsReviewed(false);
-    } catch (err) {
-      setError(err?.message || "Work Pause was not confirmed by the server.");
-    } finally {
-      setWorkPauseBusy(false);
-    }
-  };
-
   const handleLaborMutation = async (handler, payload) => {
     if (!handler) return null;
     const result = await handler(payload);
@@ -528,43 +511,12 @@ export default function ClockOutDialog({
           <CurrentWorkCard
             activeLabor={activeLabor}
             laborSummary={laborSummary}
-            disabled={onBreak || workPauseBusy || breakActionBusy || isSubmitting}
-            disabledReason={onBreak ? "End the current break before changing Current Work." : workPauseBusy ? "Work Pause is changing. Current Work will be available after the server confirms the new state." : ""}
+            disabled={onBreak || breakActionBusy || isSubmitting}
+            disabledReason={onBreak ? "End the current break before changing Current Work." : ""}
             onStart={(payload) => handleLaborMutation(onStartLabor, payload)}
             onChange={(payload) => handleLaborMutation(onChangeLabor, payload)}
             onStop={() => handleLaborMutation(onStopLabor)}
           />
-
-          {workPauseAllowed && (
-            <div className="clay-card p-4 border-2 border-purple-200 bg-purple-50/70">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Pause className="w-4 h-4 text-purple-700" />
-                    <Label className="font-semibold text-purple-900">Work Pause</Label>
-                  </div>
-                  <p className="text-xs text-purple-800 mt-1 max-w-xl">
-                    Pause counted work time without clocking out. Work Pause is separate from break/lunch and does not change payroll status.
-                  </p>
-                  {trackedWorkPauseMinutes > 0 && (
-                    <p className="text-xs text-purple-700 mt-2">
-                      Paused earlier this shift: <span className="font-semibold">{trackedWorkPauseMinutes} min</span>
-                    </p>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  onClick={handleStartWorkPause}
-                  disabled={workPauseBusy || breakActionBusy || isSubmitting || onBreak}
-                  className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
-                >
-                  {workPauseBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Pause className="w-4 h-4 mr-2" />}
-                  {workPauseBusy ? "Pausing..." : "Pause Work"}
-                </Button>
-              </div>
-              {onBreak && <p className="text-xs text-amber-700 mt-2">End the current break before using Work Pause.</p>}
-            </div>
-          )}
 
           {/* Break / Lunch Tracking */}
           <div className={`clay-card p-4 ${onBreak ? 'border-2 border-amber-400 bg-amber-50' : !lunchEntered ? 'border-2 border-red-400' : ''}`}>
