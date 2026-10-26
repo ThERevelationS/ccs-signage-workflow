@@ -70,6 +70,7 @@ function LocalityPickerSession({
   onClose,
   localities,
   onApply,  // (localityId, { excludeElectrical }) => void
+  initialAddress = "",
 }) {
   const { sessionToken,currentUser } = useAuth();
   const {runAction}=useResearchProgress();
@@ -92,10 +93,12 @@ function LocalityPickerSession({
   const [creatingDraft, setCreatingDraft] = useState(false);
   const inputRef = useRef(null);
 
+  const autoSearchRef = useRef(false);
   useEffect(() => {
     searchVersion.current++;pendingSearch.current=null;
     if (isOpen) {
-      setAddress("");
+      const preset = String(initialAddress || "").trim();
+      setAddress(preset);
       setSearching(false);
       setResult(null);
       setError("");
@@ -103,9 +106,18 @@ function LocalityPickerSession({
       setExcludeElectrical(false);
       setDraftCandidate(null);setRepositoryDraftId("");
       setDraftCreateError("");
+      autoSearchRef.current = Boolean(preset);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+  // When the dialog opens with the job/client address already known, run the
+  // jurisdiction lookup immediately instead of making the user retype it.
+  useEffect(() => {
+    if (!isOpen || !autoSearchRef.current) return;
+    if (!String(address || "").trim()) return;
+    autoSearchRef.current = false;
+    runSearch();
+  }, [isOpen, address]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
