@@ -1857,6 +1857,14 @@ export default function WorkOrderDetailsDialog({
                     <Button
                       className="w-full justify-start clay-button"
                       variant="ghost"
+                      onClick={() => window.open(`/WorkOrderTraveler?wo=${encodeURIComponent(workOrder.id)}`, "_blank")}>
+                      <FileText className="w-4 h-4 mr-2 text-violet-600" />
+                      Print Traveler
+                    </Button>
+
+                    <Button
+                      className="w-full justify-start clay-button"
+                      variant="ghost"
                       disabled={!relatedDataVerified}
                       title={!relatedDataVerified ? "Related Work Orders must be verified before duplicate checking is available." : undefined}
                       onClick={() => {
