@@ -144,12 +144,19 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'task_completed':
     case 'task_uncompleted':
     case 'task_edited':
+    case 'task_due_date_set':
+    case 'task_assigned':
+    case 'all_tasks_completed':
     case 'task_deleted':
     case 'note_added':
     case 'note_deleted':
     case 'sub_note_added':
     case 'sub_note_deleted':
+    case 'note_completed':
+    case 'follow_up_added':
+    case 'follow_up_completed':
     case 'rider_completed':
+    case 'rider_all_tasks_completed':
     case 'rider_deleted':
     case 'rider_stage_changed':
     case 'rider_assigned_to_changed':
