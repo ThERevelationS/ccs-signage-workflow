@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import {
   Camera,
   Clock,
+  Clock3,
   Loader2,
   Play,
   QrCode,
@@ -17,6 +18,7 @@ import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
+import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
 import { Html5Qrcode } from "html5-qrcode";
@@ -168,6 +170,7 @@ export default function QuickClockSection({
   const [punchResolutionError, setPunchResolutionError] = useState("");
   const [lateClockInReview, setLateClockInReview] = useState(null);
   const [lateClockInError, setLateClockInError] = useState("");
+  const [missedClockInPrompt, setMissedClockInPrompt] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -197,6 +200,9 @@ export default function QuickClockSection({
   // Work Pause, Clock Out, labor action, or authoritative status restoration.
   const workViewEpochRef = useRef(0);
   const identifyFlowSeqRef = useRef(0);
+  // "clock_in" punches immediately after identity; "missed_clock_in" first
+  // collects the employee's reported arrival time before starting the shift.
+  const identifyIntentRef = useRef("clock_in");
   // In-flight actions are isolated by the signed Time Clock session: a slow
   // request for one employee must not block status restoration for another.
   const activeActionCountRef = useRef(new Map());
@@ -568,6 +574,8 @@ export default function QuickClockSection({
     setPunchResolutionError("");
     setLateClockInReview(null);
     setLateClockInError("");
+    setMissedClockInPrompt(false);
+    identifyIntentRef.current = "clock_in";
     setUsernameInput("");
     setManualPassword("");
     setUsernameError("");
@@ -674,6 +682,12 @@ export default function QuickClockSection({
         return;
       }
       if (resolvedStatus === "transition") return;
+
+      if (identifyIntentRef.current === "missed_clock_in") {
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Enter the time you actually arrived today.`);
+        setMissedClockInPrompt(true);
+        return;
+      }
 
       setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
       await performClockIn(verifiedUser, credential);
@@ -1311,6 +1325,67 @@ export default function QuickClockSection({
     }
   };
 
+  const handleReportMissedClockIn = async (claimedClockIn) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Missed Clock In identity is no longer verified. Identify again before continuing.");
+    }
+
+    const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("report_missed_clock_in", email);
+    let actionEpoch = workViewEpochRef.current;
+    setLateClockInError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const pending = invokeTimeClock({
+        action: "report_missed_clock_in",
+        request_id: requestId,
+        claimed_clock_in: claimedClockIn,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertEmployeeAcknowledgement(result, email, "Missed Clock In report");
+      clearRequest("report_missed_clock_in", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
+      if (result?.recovered_missed_clock_in !== true || result?.status !== "clocked_in" || !result?.entry?.id) {
+        throw new Error("Missed Clock In report returned an unexpected authoritative state. Reload before continuing.");
+      }
+
+      identifyIntentRef.current = "clock_in";
+      setMissedClockInPrompt(false);
+      setLateClockInReview(null);
+      setLateClockInError("");
+      setPunchResolution(null);
+      setActiveEntry(result.entry);
+      setBreakStatus("working");
+      setActiveBreak(null);
+      setBreakSummary({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+      setWorkPauseStatus("working");
+      setActiveWorkPause(null);
+      setWorkPauseSummary({ count: 0, total_minutes: 0 });
+      setActiveLabor(null);
+      setLaborSummary({ count: 0, total_minutes: 0 });
+      setShowClockOut(true);
+      showNotification("in", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_in || new Date().toISOString());
+      setRecognitionStatus("Shift started from your reported arrival time. A manager will review this Clock In.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("report_missed_clock_in", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        const message = err?.message || "Missed Clock In report was not confirmed by the server.";
+        setLateClockInError(message);
+        setRecognitionStatus(err?.retrySameRequest
+          ? "Missed Clock In may have been saved. Retry the same report to finish safely."
+          : "Missed Clock In report is blocked. Review the message in the window.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
   const handleLateClockInClockInNow = async () => {
     if (!selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock In identity is no longer verified. Identify again before continuing.");
@@ -1429,6 +1504,15 @@ export default function QuickClockSection({
         onClockInNow={handleLateClockInClockInNow}
       />
 
+      <MissedClockInDialog
+        open={missedClockInPrompt && Boolean(selectedUser)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={lateClockInError}
+        onReport={handleReportMissedClockIn}
+        onCancel={resetState}
+      />
+
       <WorkPauseOverlay
         userOverride={selectedUser}
         credentialOverride={credentialRef.current}
@@ -1509,19 +1593,37 @@ export default function QuickClockSection({
               Tap the button, then identify with face recognition, a secure QR badge, or username/password.
             </p>
             <button
+              type="button"
+              onClick={() => { identifyIntentRef.current = "missed_clock_in"; startRecognition(); }}
+              disabled={isLoading}
+              className="w-64 flex items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-md motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60"
+            >
+              <Clock3 className="w-4 h-4" />
+              Forgot to Clock In? Set arrival time
+            </button>
+            <button
               onClick={startRecognition}
               disabled={isLoading}
-              className="relative w-64 h-32 rounded-2xl shadow-lg hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-105 motion-safe:active:scale-95 transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
+              className="group relative w-64 h-32 rounded-3xl shadow-xl shadow-emerald-900/25 hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-[1.04] motion-safe:active:scale-[0.96] transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
             >
-              <div className="absolute inset-0 bg-green-600" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute inset-0 bg-red-600" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-              <div className="absolute top-4 left-6 text-white flex items-center gap-2">
-                <Play className="w-6 h-6" />
-                <span className="text-xl font-bold">In</span>
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-700" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+              <div className="absolute inset-0 bg-gradient-to-tl from-rose-400 via-red-500 to-red-700" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.55) 50%, transparent calc(50% + 1px))" }} />
+              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
+              <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/25 to-transparent" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+              <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/20 to-transparent" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+              <div className="punch-sheen absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
+              <div className="absolute top-4 left-5 text-white flex items-center gap-2.5 drop-shadow-md">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
+                  <Play className="w-4 h-4 fill-current" />
+                </span>
+                <span className="text-xl font-bold tracking-wide">In</span>
               </div>
-              <div className="absolute bottom-4 right-6 text-white flex items-center gap-2">
-                <span className="text-xl font-bold">Out</span>
-                <Square className="w-6 h-6" />
+              <div className="absolute bottom-4 right-5 text-white flex items-center gap-2.5 drop-shadow-md">
+                <span className="text-xl font-bold tracking-wide">Out</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
+                  <Square className="w-4 h-4 fill-current" />
+                </span>
               </div>
             </button>
             {isLoading && <Loader2 className="w-6 h-6 animate-spin text-purple-600" />}
