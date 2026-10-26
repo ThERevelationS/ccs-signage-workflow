@@ -7140,6 +7140,189 @@ test('final corrected-shift approval is bound to terminal correction evidence', 
   assert.match(approvalSlice, /verifyResolvedCorrectionForApproval\(savedEntry\)/);
 });
 
+test('employee-reported missed Clock In works before the late-day cutoff, flags manager review, and retries idempotently', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T14:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [];
+
+  const blockedRecover = await h.invoke({
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'recover-too-early-001', claimed_clock_in: '2026-09-28T12:30:00.000Z',
+  });
+  assert.equal(blockedRecover.status, 409, JSON.stringify(blockedRecover.body));
+  assert.equal(h.rows.TimeEntry.length, 0);
+
+  const payload = {
+    action: 'report_missed_clock_in', target_email: employee.email,
+    request_id: 'report-missed-clock-in-001',
+    claimed_clock_in: '2026-09-28T12:30:00.000Z',
+  };
+  const first = await h.invoke(payload);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.recovered_missed_clock_in, true);
+  assert.equal(first.body.status, 'clocked_in');
+  assert.equal(h.rows.TimeEntry.length, 1);
+  const entry = h.rows.TimeEntry[0];
+  assert.equal(entry.clock_in, '2026-09-28T12:30:00.000Z');
+  assert.equal(entry.clock_source, 'employee_attested_missed_clock_in');
+  assert.equal(entry.status, 'clocked_in');
+  assert.equal(entry.approval_status, 'needs_review');
+  assert.ok(entry.missed_clock_in_reported_at);
+  assert.ok(entry.punch_exception_id);
+
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  assert.equal(state.status, 'clocked_in');
+  assert.equal(state.active_entry_id, entry.id);
+
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  const punchCase = h.rows.TimeClockPunchException[0];
+  assert.equal(punchCase.exception_type, 'late_clock_in');
+  assert.equal(punchCase.status, 'pending_manager_review');
+  assert.equal(punchCase.claimed_clock_in, entry.clock_in);
+  assert.match(punchCase.resolution_note, /Quick Clock arrival-time prompt/);
+
+  const retry = await h.invoke(payload);
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.recovered_missed_clock_in, true);
+  assert.equal(h.rows.TimeEntry.length, 1);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+
+  const mismatchedRetry = await h.invoke({ ...payload, claimed_clock_in: '2026-09-28T13:00:00.000Z' });
+  assert.equal(mismatchedRetry.status, 409, JSON.stringify(mismatchedRetry.body));
+  assert.equal(h.rows.TimeEntry.length, 1);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+});
+
+test('employee-reported missed Clock In rejects future times, wrong-day claims, and active shifts', async () => {
+  const future = setup({ entryCount: 0, serverNow: '2026-09-28T14:00:00.000Z' });
+  future.rows.TimeClockPayPeriod = [];
+  const blockedFuture = await future.invoke({
+    action: 'report_missed_clock_in', target_email: employee.email,
+    request_id: 'report-missed-future-001', claimed_clock_in: '2026-09-28T20:00:00.000Z',
+  });
+  assert.ok([400, 409].includes(blockedFuture.status), JSON.stringify(blockedFuture.body));
+  assert.equal(future.rows.TimeEntry.length, 0);
+
+  const wrongDay = setup({ entryCount: 0, serverNow: '2026-09-28T14:00:00.000Z' });
+  wrongDay.rows.TimeClockPayPeriod = [];
+  const blockedDay = await wrongDay.invoke({
+    action: 'report_missed_clock_in', target_email: employee.email,
+    request_id: 'report-missed-wrongday-001', claimed_clock_in: '2026-09-27T20:00:00.000Z',
+  });
+  assert.ok([400, 409].includes(blockedDay.status), JSON.stringify(blockedDay.body));
+  assert.equal(wrongDay.rows.TimeEntry.length, 0);
+  assert.equal(wrongDay.rows.TimeClockPunchException.length, 0);
+
+  const active = setup({ entryCount: 1, serverNow: '2026-09-28T14:00:00.000Z' });
+  active.rows.TimeClockPayPeriod = [];
+  const activeEntry = active.rows.TimeEntry[0];
+  Object.assign(activeEntry, {
+    status: 'clocked_in', clock_in: '2026-09-28T12:00:00.000Z', clock_out: null,
+  });
+  const activeState = active.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  Object.assign(activeState, { status: 'clocked_in', active_entry_id: activeEntry.id });
+  const blockedActive = await active.invoke({
+    action: 'report_missed_clock_in', target_email: employee.email,
+    request_id: 'report-missed-active-001', claimed_clock_in: '2026-09-28T11:00:00.000Z',
+  });
+  assert.equal(blockedActive.status, 409, JSON.stringify(blockedActive.body));
+  assert.match(blockedActive.body.error, /active shift|state changed/i);
+  assert.equal(active.rows.TimeEntry.length, 1);
+});
+
+test('missed Work Pause report records one completed employee-attested pause and retries idempotently', async () => {
+  const h = setup({ entryCount: 1, serverNow: '2026-09-28T20:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [];
+  const entry = h.rows.TimeEntry[0];
+  Object.assign(entry, {
+    status: 'clocked_in', clock_in: '2026-09-28T13:00:00.000Z', clock_out: null,
+  });
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  Object.assign(state, { status: 'clocked_in', active_entry_id: entry.id });
+  h.rows.AuthorizedEmail.find((row) => row.email === employee.email).can_work_pause = true;
+
+  const payload = {
+    action: 'work_pause_report_missed', target_email: employee.email,
+    request_id: 'missed-work-pause-001',
+    started_at: '2026-09-28T17:00:00.000Z', resumed_at: '2026-09-28T17:30:00.000Z',
+    note: 'Forgot to log a truck run',
+  };
+  const first = await h.invokeAs(employee, payload);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.work_pause_status, 'working');
+  assert.equal(h.rows.TimeClockWorkPause.length, 1);
+  const pauseRow = h.rows.TimeClockWorkPause[0];
+  assert.equal(pauseRow.status, 'completed');
+  assert.equal(pauseRow.source, 'employee_attested_missed');
+  assert.equal(pauseRow.started_at, payload.started_at);
+  assert.equal(pauseRow.resumed_at, payload.resumed_at);
+  assert.equal(pauseRow.duration_minutes, 30);
+  assert.equal(pauseRow.start_request_id, payload.request_id);
+  assert.equal(first.body.work_pause.id, pauseRow.id);
+  assert.equal(first.body.work_pause_summary.count, 1);
+
+  const pauseAudits = h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'work_pause_report_missed' && row.request_id === payload.request_id
+  );
+  assert.equal(pauseAudits.length, 1);
+  assert.equal(pauseAudits[0].time_entry_id, entry.id);
+
+  const retry = await h.invokeAs(employee, payload);
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.reused, true);
+  assert.equal(h.rows.TimeClockWorkPause.length, 1);
+
+  const mismatchedRetry = await h.invokeAs(employee, { ...payload, started_at: '2026-09-28T17:15:00.000Z' });
+  assert.equal(mismatchedRetry.status, 409, JSON.stringify(mismatchedRetry.body));
+  assert.equal(h.rows.TimeClockWorkPause.length, 1);
+});
+
+test('missed Work Pause report rejects invalid windows, wrong actors, and inactive shifts', async () => {
+  const buildActive = (canWorkPause = true) => {
+    const h = setup({ entryCount: 1, serverNow: '2026-09-28T20:00:00.000Z' });
+    h.rows.TimeClockPayPeriod = [];
+    const entry = h.rows.TimeEntry[0];
+    Object.assign(entry, {
+      status: 'clocked_in', clock_in: '2026-09-28T13:00:00.000Z', clock_out: null,
+    });
+    const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+    Object.assign(state, { status: 'clocked_in', active_entry_id: entry.id });
+    h.rows.AuthorizedEmail.find((row) => row.email === employee.email).can_work_pause = canWorkPause;
+    return h;
+  };
+  const base = {
+    action: 'work_pause_report_missed', target_email: employee.email,
+    request_id: 'missed-work-pause-reject-001',
+    started_at: '2026-09-28T17:00:00.000Z', resumed_at: '2026-09-28T17:30:00.000Z',
+  };
+
+  const notClockedIn = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  const blockedOut = await notClockedIn.invokeAs(employee, base);
+  assert.equal(blockedOut.status, 409, JSON.stringify(blockedOut.body));
+
+  const noFeature = buildActive(false);
+  const blockedFeature = await noFeature.invokeAs(employee, base);
+  assert.equal(blockedFeature.status, 403, JSON.stringify(blockedFeature.body));
+
+  const badOrder = buildActive();
+  const blockedOrder = await badOrder.invokeAs(employee, { ...base, resumed_at: '2026-09-28T16:00:00.000Z' });
+  assert.equal(blockedOrder.status, 400, JSON.stringify(blockedOrder.body));
+  assert.equal((badOrder.rows.TimeClockWorkPause || []).length, 0);
+
+  const beforeClockIn = buildActive();
+  const blockedBefore = await beforeClockIn.invokeAs(employee, { ...base, started_at: '2026-09-28T12:00:00.000Z', resumed_at: '2026-09-28T12:30:00.000Z' });
+  assert.equal(blockedBefore.status, 400, JSON.stringify(blockedBefore.body));
+
+  const tooLong = buildActive();
+  const blockedLong = await tooLong.invokeAs(employee, { ...base, started_at: '2026-09-28T13:30:00.000Z', resumed_at: '2026-09-29T02:30:00.000Z' });
+  assert.equal(blockedLong.status, 400, JSON.stringify(blockedLong.body));
+  assert.equal((tooLong.rows.TimeClockWorkPause || []).length, 0);
+
+  const adminActor = buildActive();
+  const blockedActor = await adminActor.invoke(base);
+  assert.equal(blockedActor.status, 403, JSON.stringify(blockedActor.body));
+});
+
+
 // Export the same real backend VM for isolated browser acceptance. Test registration
 // has no side effects against live Base44; execute the CLI suite only when direct.
 export { setup as setupSyntheticTimeClock };
