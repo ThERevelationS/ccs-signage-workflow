@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import SavedViews from "@/components/workflow/SavedViews";
 import {
   CheckCircle2,
   ChevronRight,
@@ -402,6 +403,7 @@ export default function PurchaseOrders() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
+  const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -458,16 +460,22 @@ export default function PurchaseOrders() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-52 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search PO # or vendor…" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search PO # or vendor…" />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {["", "draft", "sent", "partially_received", "received", "cancelled"].map((s) => (
-            <button key={s || "all"} onClick={() => setStatus(s)}
+            <button key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
               className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
               {s ? STATUS_LABELS[s] : "All"}
             </button>
           ))}
         </div>
+        <SavedViews
+          storageKey="views.purchase_orders"
+          getState={() => ({ status, query })}
+          activeName={viewName}
+          onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
+        />
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
