@@ -364,6 +364,16 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{hours_requested}}': esc(record?.hours_requested),
     '{{activity_type}}': esc(record?.activity_type),
     '{{reason}}': esc(record?.reason),
+    // Aliases matching the names the automation builder advertises in
+    // TEMPLATE_VARIABLES (src/pages/AdminSettings.jsx).
+    '{{employee_name}}': esc(record?.user_name || record?.user_email),
+    '{{clock_in_time}}': esc(record?.clock_in),
+    '{{clock_out_time}}': esc(record?.clock_out),
+    '{{total_hours}}': esc(record?.total_hours),
+    '{{time_off_type}}': esc(record?.request_type),
+    '{{time_off_dates}}': esc(record?.start_date ? `${record.start_date} – ${record.end_date || record.start_date}` : ''),
+    '{{time_off_hours}}': esc(record?.hours_requested),
+    '{{time_off_reason}}': esc(record?.reason),
   };
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
@@ -561,7 +571,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const oldData = payload?.old_data && typeof payload.old_data === 'object' ? payload.old_data : {};
   const extras = payload?.extras && typeof payload.extras === 'object' ? payload.extras : {};
   const changedBy = String(changedByOverride || payload?.changed_by || 'System').trim() || 'System';
-  const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, extras };
+  const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, recordEntity, extras };
 
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
