@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -605,6 +606,9 @@ export default function MondayMorningMeeting() {
         mutateItem: (current) => ({ ...current, completed: targetCompleted }),
       }));
       setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, mmm_tasks: saved.mmm_tasks || [] } : w));
+      if (targetCompleted && saved?.id) {
+        void NotificationTriggers.mmmItemCompleted(saved, task?.text, currentUser?.email).catch(() => {});
+      }
     } catch (error) {
       console.error("Error updating Monday Morning Meeting task:", error);
       setQuickEditError(error?.message || "The task could not be updated. The latest Work Order was reloaded.");
