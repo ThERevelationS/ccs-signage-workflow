@@ -302,6 +302,11 @@ function entryAuditSnapshot(entry: any) {
 const COMPANY_TIME_ZONE = 'America/New_York';
 const MISSED_PUNCH_PROMPT_MS = 18 * 60 * 60 * 1000;
 const MISSED_PUNCH_REPROMPT_MS = 8 * 60 * 60 * 1000;
+const LATE_CLOCK_IN_MINUTES = 8 * 60; // After 8:00 AM company time — matches the admin trigger label.
+const FULL_SHIFT_HOURS = 8; // Clocking out under a full worked day counts as early.
+const LONG_SHIFT_HOURS = 10; // Worked length that raises the long-shift event.
+const PTO_LOW_HOURS_THRESHOLD = 8; // Available balance under one workday counts as low.
+const PTO_LOW_ALERT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // At most one low-balance alert per type per week.
 const STALE_SHIFT_MONITOR_CAPABILITY_HASH = 'f63c5b792d82c0fade5324f96447480a3530b9e8459dc141909ae16782096ed0';
 
 function dateKeyInCompanyTime(value: any) {
@@ -1594,7 +1599,7 @@ async function releaseCompletedCorrectionCreateLock(
   return false;
 }
 
-async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity }: any) {
+async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity, ptoBalanceEntity, base44 }: any) {
   const serverNow = new Date();
   const activeEntries = await loadAllFilteredRows(
     entryEntity,
@@ -1777,12 +1782,43 @@ async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEn
       );
       if (!released) throw new Error('Stale-shift monitor created the exception but could not verify audit/lock release.');
       summary.created += 1;
+      await emitTimeClockEvent(base44, 'time_entry_no_clock_out', entry.id, 'system');
     } catch (error) {
       summary.errors += 1;
       console.error('Stale-shift monitor entry failed:', observedEntry.id, error?.message || error);
       // Do not release an uncertain create lock here. The stable monitor request id and
       // exact payload let a later scheduled run safely recover it without duplicating a case.
     }
+  }
+
+  // Low PTO balances ride the same verified periodic scan: one alert per
+  // (employee, time-off type, week) while a balance stays under the threshold.
+  try {
+    const balanceRows = await loadAllFilteredRows(
+      ptoBalanceEntity, {}, 'user_email', 'PTO balances for the low-balance check',
+    );
+    const lowWeekKey = `w${Math.floor(serverNow.getTime() / PTO_LOW_ALERT_INTERVAL_MS)}`;
+    for (const row of balanceRows) {
+      const email = asEmail(row?.user_email);
+      if (!row?.id || !email) continue;
+      for (const bal of Array.isArray(row.balances) ? row.balances : []) {
+        const typeId = String(bal?.type_id || bal?.type_name || '').trim();
+        const available = Number(bal?.available_hours);
+        if (!typeId || !Number.isFinite(available) || available >= PTO_LOW_HOURS_THRESHOLD) continue;
+        const alertAudit = await ensureUserActionAudit(auditEntity, {
+          action: 'pto_balance_low', outcome: 'confirmed', user_email: email,
+          user_name: row.user_name || email, actor_email: 'system', actor_role: 'system',
+          authentication_method: 'system', server_timestamp: serverNow.toISOString(),
+          request_id: `pto-low-${email}-${typeId}-${lowWeekKey}`,
+          reason: `PTO balance for ${bal?.type_name || typeId} fell below ${PTO_LOW_HOURS_THRESHOLD} hours`,
+          details: { time_off_type_id: typeId, available_hours: available, pto_balance_id: row.id },
+        }, 'Low PTO balance alert audit');
+        if (alertAudit?.reused) continue;
+        await emitTimeClockEvent(base44, 'pto_balance_low', row.id, 'system');
+      }
+    }
+  } catch (error: any) {
+    console.error('Low PTO balance scan failed:', error?.message || error);
   }
 
   return summary;
@@ -3123,12 +3159,13 @@ Deno.serve(async (req) => {
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
+    const ptoBalanceEntity = base44.asServiceRole.entities.UserPTOBalance;
 
     if (action === 'monitor_stale_shifts') {
       if (!(await hasStaleShiftMonitorCapability(body))) {
         return Response.json({ success: false, error: 'Verified scheduled Time Clock workflow is required.' }, { status: 403 });
       }
-      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity });
+      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity, ptoBalanceEntity, base44 });
       return Response.json(summary);
     }
 
@@ -9765,6 +9802,9 @@ Deno.serve(async (req) => {
         }
 
         await emitTimeClockEvent(base44, 'time_clock_in', entry.id, actorEmail);
+        if ((minutesOfDayInCompanyTime(entry.clock_in) ?? 0) > LATE_CLOCK_IN_MINUTES) {
+          await emitTimeClockEvent(base44, 'time_clock_in_late', entry.id, actorEmail);
+        }
 
         return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
       } finally {
@@ -10037,6 +10077,13 @@ Deno.serve(async (req) => {
       }
 
       await emitTimeClockEvent(base44, 'time_clock_out', savedEntry.id, actorEmail);
+      const workedHours = Number(savedEntry.total_hours);
+      if (Number.isFinite(workedHours) && workedHours < FULL_SHIFT_HOURS) {
+        await emitTimeClockEvent(base44, 'time_clock_out_early', savedEntry.id, actorEmail);
+      }
+      if (Number.isFinite(workedHours) && workedHours > LONG_SHIFT_HOURS) {
+        await emitTimeClockEvent(base44, 'time_entry_long_shift', savedEntry.id, actorEmail);
+      }
 
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
     }
