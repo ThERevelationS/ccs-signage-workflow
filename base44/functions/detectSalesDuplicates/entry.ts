@@ -3,6 +3,20 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — a failure must never break the scan.
+async function emitRecordAutomation(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
 
 // Simple string similarity (Jaro-Winkler-ish via character overlap)
 function similarity(a, b) {
@@ -154,7 +168,16 @@ Deno.serve(async (req) => {
       }),
       label: `Pending duplicate ${pendingData.doc_number}`,
     });
-    if (createResult.status === 'created') createdCount += 1;
+    if (createResult.status === 'created') {
+      createdCount += 1;
+      const newId = String(createResult.record?.id || '');
+      if (newId) {
+        // A duplicate flag is a pending import arriving — both advertised
+        // events are true for the same record.
+        await emitRecordAutomation(base44, 'pending_import_created', newId, 'system');
+        await emitRecordAutomation(base44, 'duplicate_detected', newId, 'system');
+      }
+    }
     else reusedCount += 1;
   }
 
