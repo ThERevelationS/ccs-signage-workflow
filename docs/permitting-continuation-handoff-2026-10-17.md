@@ -1,3 +1,16 @@
+# Failed-seed diagnosis + seed-URL hardening (2026-10-26)
+
+- Diagnosed all 248 OH/KY profiles with empty frontiers and zero retained documents. Categories: 190 researched-with-no-URL (all have ai_summary), 24 has-url-no-frontier, 25 legitimately blocked queue rows (unincorporated communities), 9 orphaned no-queue-row profiles.
+- Bounded discovery_only reseed of the 57 eligible has-URL profiles: 9 seeded successfully (5 OH townships, Erie/Geauga/Holmes counties, Perryopolis); 48 threw.
+- Root cause of 40 failures: permitting_url literally stores "INFORMATION NOT FOUND" (non-URL sentinel) -> Invalid URL 500 on every discovery attempt. Written before/around the sanitizer path.
+- Remaining real-URL failures classified by direct probe: 5 Cloudflare-403 (Greene, Guernsey, Lake, Medina, Montgomery OH counties), 1 cross-host redirect rejected (Licking viewpointcloud->opengov), 1 wrong-jurisdiction suspect (Perryopolis -> PA borough site), Holmes readable-but-empty, Franklin 200-locally but failed in-sandbox.
+- Hardening shipped: sanitizer cleanUrl() nulls non-http(s) strings for website_url/permitting_url/cagis_database_url; refreshJurisdiction discovery_only now requires a parseable http(s) stored URL (clean 400 instead of 500). New test: scripts/permitting-research-url-sanitize.test.mjs (3 tests).
+- Notable wrong-jurisdiction candidates needing identity review: Perryopolis OH (PA borough site, branding lacked explicit state so guard did not fire - zero docs retained, no contamination), Medina County OH (URL + ai_summary describe CITY of Medina).
+- Full report: docs/permitting-failed-seed-diagnosis-2026-10-26.json.
+- Sandbox verification: sanitize 3/3, discovery-refresh 13/13, merge 24/24 pass in sandbox. Local merge/office-identity failures remain pre-existing evidence-drift only.
+- Still needs decisions/approval: clearing the 40 sentinel URLs; LLM research dispatch for 190 researched_no_url + 572 not_started queue rows; alternate official URLs for Cloudflare-blocked counties; Perryopolis/Medina identity repair.
+- Note: discoveryOnly reseeds used no LLM calls and no archive uploads. Nothing was deleted.
+
 # Recurrence guards - official identity gate and fail-closed source checks
 
 - New shared module base44/shared/permittingSourceIdentity.mjs: assessOfficialQueueIdentity, assertOfficialProfileResearchIdentity, assertResearchSourceIdentity, assertPageSourceIdentity. Backed by base44/shared/permittingGeographicCandidates.mjs (2848 official Census-derived candidates, source SHA-256 c6c64b5c263e601beeb4e595cf056622d66d092b954eba509ef1ce91b6c8eecd, vintage 2026-01-01).
