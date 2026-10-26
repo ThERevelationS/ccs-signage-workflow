@@ -245,7 +245,8 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
           event_type: triggerType,
           work_order: workOrder?.id ? { id: workOrder.id } : undefined,
           order: extraData.orderData?.id ? { id: extraData.orderData.id } : undefined,
-          extras: { ...extraData, orderData: undefined },
+          record: extraData.recordData?.id ? { id: extraData.recordData.id } : undefined,
+          extras: { ...extraData, orderData: undefined, recordData: undefined },
           session_token: sessionToken,
         });
       } catch (automationError) {
