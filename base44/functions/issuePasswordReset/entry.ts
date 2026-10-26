@@ -3,6 +3,22 @@ import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — a failure must never break a verified
+// write, so this swallows and logs like the other emit helpers.
+async function emitRecordAutomation(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
+
 function secureToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -101,6 +117,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'The reset token was saved, but the reset email could not be sent. Retry to issue a new link.' }, { status: 502 });
     }
 
+    await emitRecordAutomation(base44, 'user_password_reset', target.id, actorEmail);
     return Response.json({ success: true });
   } catch (error) {
     console.error('issuePasswordReset error:', error?.message || error);
