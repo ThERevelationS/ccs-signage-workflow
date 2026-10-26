@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
+import SavedViews from "@/components/workflow/SavedViews";
 import {
   CheckCircle2,
   ChevronRight,
@@ -228,7 +227,7 @@ function ChangeOrderDetail({ sessionToken, changeOrderId, onClose, onChanged }) 
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <div className="my-8 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         {loading && !detail ? (
-          <ListSkeleton rows={3} />
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
         ) : !co ? (
           <div className="py-8 text-center text-sm text-red-600">{error || "Change order not found."}</div>
         ) : (
@@ -331,6 +330,7 @@ export default function ChangeOrders() {
   const [changeOrders, setChangeOrders] = useState([]);
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
+  const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -380,23 +380,29 @@ export default function ChangeOrders() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-52 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search #, title, or customer…" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search #, title, or customer…" />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {["", "proposed", "approved", "applied", "rejected", "cancelled"].map((s) => (
-            <button key={s || "all"} onClick={() => setStatus(s)}
+            <button key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
               className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
               {s ? STATUS_LABELS[s] : "All"}
             </button>
           ))}
         </div>
+        <SavedViews
+          storageKey="views.change_orders"
+          getState={() => ({ status, query })}
+          activeName={viewName}
+          onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
+        />
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && changeOrders.length === 0 ? (
-          <TableSkeleton columns={6} />
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading change orders…</div>
         ) : changeOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-500">
             <FileText className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
