@@ -28,6 +28,7 @@ export default function ReportingDashboard() {
   const [users, setUsers] = useState([]);
   const [financials, setFinancials] = useState(null);
   const [pipeline, setPipeline] = useState(null);
+  const [oppRows, setOppRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [readError, setReadError] = useState("");
 
@@ -60,7 +61,7 @@ export default function ReportingDashboard() {
       const rev = revRes?.data || revRes;
       if (rev?.success) setFinancials(rev);
       const opp = oppRes?.data || oppRes;
-      if (opp?.success) setPipeline(opp.funnel || null);
+      if (opp?.success) { setPipeline(opp.funnel || null); setOppRows(opp.opportunities || []); }
     } catch (error) {
       console.error("Error loading reporting dashboard data:", error);
       setWorkOrders([]);
@@ -115,6 +116,25 @@ export default function ReportingDashboard() {
     .map(([name, count]) => ({ name: name.split(" ")[0] || name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
+
+  // Won/lost by month — bucket closed opportunities by their close date.
+  const trendData = (() => {
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: format(d, "MMM"), won: 0, lost: 0 });
+    }
+    const idx = Object.fromEntries(months.map((m, i) => [m.key, i]));
+    for (const o of oppRows) {
+      const stage = String(o?.stage || "");
+      if (stage !== "won" && stage !== "lost") continue;
+      const when = String(o?.closed_at || o?.stage_changed_at || "").slice(0, 7);
+      const i = idx[when];
+      if (i != null) months[i][stage] += 1;
+    }
+    return months;
+  })();
 
   // ASAP count
   const asapCount = active.filter(wo => wo.asap).length;
@@ -242,6 +262,20 @@ export default function ReportingDashboard() {
                         </span>
                       ))}
                     </div>
+                  </div>
+                )}
+                {trendData.some((m) => m.won || m.lost) && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Won vs lost — 6 months</div>
+                    <ResponsiveContainer width="100%" height={120}>
+                      <BarChart data={trendData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }} barGap={1}>
+                        <XAxis dataKey="label" tick={{ fontSize: 9 }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 9 }} />
+                        <Tooltip />
+                        <Bar dataKey="won" fill="#10B981" radius={[3, 3, 0, 0]} name="Won" />
+                        <Bar dataKey="lost" fill="#EF4444" radius={[3, 3, 0, 0]} name="Lost" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 )}
               </div>
