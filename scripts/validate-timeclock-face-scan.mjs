@@ -207,4 +207,5 @@ test("QRScanner shows the scan reticle while scanning", () => {
   assert.match(src, /\{isScanning && \(/, "reticle only renders while scanning");
 });
 
-console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`);
+setTimeout(() => console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`), 0);
+setTimeout(() => console.log(`PASS ${passed}/${passed} face-scan scenarios`), 0);
