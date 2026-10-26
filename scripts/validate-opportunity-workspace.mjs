@@ -387,4 +387,30 @@ assert.match(dashboard, /useAuth/, 'dashboard financial layer must be session-au
 const homePage = readFileSync('src/pages/Home.jsx', 'utf8');
 assert.match(homePage, /Navigate/, 'the dead /Home route must redirect to a real page');
 
+const savedViews = readFileSync('src/components/workflow/SavedViews.jsx', 'utf8');
+assert.match(savedViews, /localStorage/, 'saved views must persist presets');
+assert.match(invoicesPage, /SavedViews/, 'invoices must wire saved views');
+assert.match(poPage, /SavedViews/, 'purchase orders must wire saved views');
+const oppPage3 = oppPage2;
+assert.match(oppPage3, /SavedViews/, 'opportunities must wire saved views');
+assert.match(invoicing, /send_past_due_reminder/, 'invoicing must expose past-due reminders');
+assert.match(invoicesPage, /send_past_due_reminder/, 'invoice detail must offer a past-due reminder');
+assert.match(oppPage3, /dupes/, 'intake must warn on possible duplicate customers');
+assert.match(entry, /attention_feed/, 'workspace must expose an attention feed');
+assert.match(entry, /read_by_staff: false/, 'attention feed must count unread portal messages');
+const attentionFeed = readFileSync('src/components/workflow/AttentionFeed.jsx', 'utf8');
+assert.match(attentionFeed, /attention_feed/, 'attention feed must call the workspace action');
+const mainWorkflow = readFileSync('src/pages/MainWorkflow.jsx', 'utf8');
+assert.match(mainWorkflow, /AttentionFeed/, 'main workflow must mount the attention feed');
+const traveler = readFileSync('src/pages/WorkOrderTraveler.jsx', 'utf8');
+assert.match(traveler, /window\.print/, 'traveler must be printable');
+assert.match(appShell, /WorkOrderTraveler/, 'traveler route must be registered');
+const woDialog = readFileSync('src/components/workflow/WorkOrderDetailsDialog.jsx', 'utf8');
+assert.match(woDialog, /Print Traveler/, 'work order dialog must link to the traveler');
+assert.match(oppPage3, /PipelineBoard/, 'opportunities must include a kanban board view');
+assert.match(oppPage3, /text\/opp-id/, 'board must support drag-drop stage moves');
+assert.match(entry, /work_orders: \(Array\.isArray\(wos\)/, 'global search must include work orders');
+assert.match(palette, /work_orders/, 'command palette must surface work orders');
+assert.match(mainWorkflow, /\?wo=|get\("wo"\)/, 'main workflow must deep-link work orders');
+
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
