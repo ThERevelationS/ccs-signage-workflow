@@ -140,7 +140,7 @@ async function awaitFixture(page, origin, condition, explanation) {
 
 const alias = [
   { find: "@/api/base44Client", replacement: path.join(scratch, "mockBase44.js") },
-  { find: "@/components/auth/EmailGate", replacement: path.join(source, "mockUI.jsx") },
+  { find: "@/components/auth/EmailGate", replacement: path.join(scratch, "mockAuth.jsx") },
   { find: "@/components/workflow/WorkOrderDetailsDialog", replacement: path.join(scratch, "mockDetails.jsx") },
   { find: /^@\//, replacement: path.join(appRoot, "src") + "/" },
 ];
@@ -202,6 +202,23 @@ try {
     '<button type="button" onClick={() => { onUpdate(); }}>Synthetic Details Refresh</button>',
     '<button type="button" onClick={() => { onClose(); }}>Close Synthetic Details</button>',
     '</div>; }',
+  ].join("\n"));
+
+  // Isolated, synthetic registered-user context matching every EmailGate
+  // export the page's transitive imports can reach. No production auth.
+  await writeFile(path.join(scratch, "mockAuth.jsx"), [
+    'export function getSessionToken() { return "synthetic-session"; }',
+    'export function clearAdminSettingsAuthorization() {}',
+    'export function getStoredAdminSettingsCapability() { return null; }',
+    'export function getStoredAdminSettingsCapabilityExpiry() { return null; }',
+    'export function hasStoredAdminSettingsAuthorization() { return false; }',
+    'export function storeAdminSettingsAuthorization() {}',
+    'export const useAuth = () => ({',
+    '  currentUser: { id: "synthetic-user", email: "sips.qa@example.test", role: "admin" },',
+    '  isRegistered: true,',
+    '});',
+    'export function AuthProvider({ children }) { return children; }',
+    'export default function UnusedGate() { return null; }',
   ].join("\n"));
 
   // MMM-flavored copy of the isolated Base44 fixture: shared CAS write path,
