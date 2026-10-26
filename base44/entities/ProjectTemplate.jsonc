@@ -30,7 +30,11 @@
     "project_data"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    },
     "read": {},
     "update": {
       "$or": [
