@@ -56,19 +56,29 @@ for (const [task, status] of [
     same(guarded.snapshot[taskColumn], task, "Stage snapshot advances only after verified CAS: " + task);
     check(!guarded.held.includes("current_task_description"), "Safe nonterminal task is not held: " + task);
   } else {
-    check(!Object.hasOwn(guarded.fields, "current_task_description"),
-      "Never apply protected task independently of stage/approval: " + task);
-    same(guarded.snapshot[taskColumn], startTask, "Blocked task keeps prior snapshot: " + task);
-    check(guarded.held.includes("current_task_description"), "Protected task stays in review pipeline: " + task);
+    // Remote-only terminal changes adopt through the dedicated CAS batch:
+    // task + mapped stage + close fields commit atomically, never bulkUpdate.
+    same(guarded.taskAdoption, { mode: "adoption", kind: "stage", to: status, remoteTask: task },
+      "Remote-only terminal task routes to the adoption CAS path: " + task);
+    same(guarded.fields.current_task_description, task, "Adoption patch carries its mapped task: " + task);
+    same(guarded.snapshot[taskColumn], task, "Adopted task snapshot advances only after verified CAS: " + task);
+    check(!guarded.held.includes("current_task_description"), "Remote-only terminal task is not held: " + task);
+    check(!guarded.stageTransition, "Terminal task never uses the nonterminal stage path: " + task);
   }
   same(guarded.fields.estimate_amount, 150, "Unrelated safe estimate can still pull: " + task);
 }
 const neutral = held(base, "Closed - Did not Lose");
-check(!Object.hasOwn(neutral.fields, "current_task_description") &&
-  neutral.held.includes("current_task_description"), "Neutral closeout never pulls without approval.");
+same(neutral.taskAdoption?.kind, "neutral_close",
+  "Neutral closeout adopts through the CAS batch, not a field overwrite.");
+same(neutral.fields.current_task_description, "Closed - Did not Lose",
+  "Neutral closeout patch carries its remote task.");
+check(!neutral.held.includes("current_task_description") && !neutral.stageTransition,
+  "Remote-only neutral closeout is not held or stage-routed.");
 const unmapped = held(base, "A newly invented custom task");
-check(!Object.hasOwn(unmapped.fields, "current_task_description"),
-  "Unknown task may not silently bypass the Task Description → Status contract.");
+same(unmapped.fields.current_task_description, "A newly invented custom task",
+  "Remote-only unmapped task text pulls plainly without stage effects.");
+check(!unmapped.taskAdoption && !unmapped.stageTransition && !unmapped.held.includes("current_task_description"),
+  "Unmapped remote task needs no transition, adoption, or review.");
 
 const sameStage = merge(base, {
   current_task_description: "Conduct Site Survey",
@@ -137,13 +147,16 @@ const wonContinuation = held(won, "WIP - Installation");
 same(wonContinuation.fields.current_task_description, "WIP - Installation",
   "Already-approved Won may continue normal mapped WIP operations.");
 const reopening = held(won, "Follow up with Customer - Post-Estimate");
-check(reopening.held.includes("current_task_description"),
-  "Smartsheet cannot reopen modern Won without protected confirmation.");
+same(reopening.taskAdoption, { mode: "adoption", kind: "stage", to: "follow_up",
+  remoteTask: "Follow up with Customer - Post-Estimate" },
+  "A remote-only backward move reopens Won through the guarded adoption CAS, never silently.");
+check(!reopening.held.includes("current_task_description"),
+  "Remote-only reopen is adopted, not left to an unactionable queue.");
 
 const lost = { ...base, sales_status: "lost", current_task_description: "Lost",
   smartsheet_sync_snapshot: { [taskColumn]: "Lost", [amountColumn]: 100 } };
-check(held(lost, "Conduct Site Survey").held.includes("current_task_description"),
-  "Smartsheet cannot reopen modern Lost without confirmation.");
+same(held(lost, "Conduct Site Survey").taskAdoption?.to, "lead",
+  "A remote-only reopen of Lost routes through the guarded adoption CAS.");
 const closed = { ...base, in_pipeline: false };
 const nonPipeline = held(closed, "Estimate Sent to Customer");
 check(!nonPipeline.held.includes("current_task_description"),
@@ -161,8 +174,15 @@ const backend = readFileSync("base44/functions/smartsheetSyncAction/entry.ts", "
 check(backend.includes("guardSalesPulledTaskTransition(existing, fieldValues") &&
   backend.includes("planSalesFieldPull(existing, fieldValues, salesRemoteSnapshot, bindings)"),
   "Production Sales pull applies task guard before constructing any bulk business update.");
-check(backend.includes("buildSalesPullReviews(existing") && backend.includes("plan.held.map"),
+check(backend.includes("buildSalesPullReviews(existing") && backend.includes("stillHeld.map"),
   "Held tasks retain the existing admin review and baseline-preservation path.");
+check(backend.includes("verifiedLocalFieldTime(base44, 'WorkOrder', existing, binding)") &&
+      backend.includes("planSalesRemoteTaskApplication"),
+  "Both-changed held fields arbitrate by timestamp evidence before review.");
+check(backend.includes("adoptionBatch = dataset === 'sales'") &&
+      backend.includes("buildSalesTaskAdoptionPatch(_existing, fields") &&
+      backend.includes("expectedNeutralClose"),
+  "Terminal task adoptions bypass bulkUpdate, use CAS, and verify neutral-close read-back.");
 check(backend.includes("stageBatch = dataset === 'sales'") &&
       backend.includes("ordinaryBatch.map(") &&
       backend.includes("trackedConditionalSave(base44, 'WorkOrder', _existing, patch") &&
