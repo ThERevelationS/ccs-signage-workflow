@@ -612,7 +612,23 @@
    "note": "64 of 105 already have documents from other paths; cleanup only removes corrupt field values",
    "also_invalid_website_url": 34,
    "manifest_and_full_backup": "C:/tmp/sentinel-cleanup-manifest.json (367060 bytes, full profile snapshots)",
-   "status": "awaiting approval"
+   "status": "EXECUTED"
+  },
+  "sentinel_cleanup_executed": {
+   "cleared_permitting_url": 105,
+   "cleared_website_url": "34 of the 105 also had invalid website_url cleared in same pass",
+   "verification": "zero unparseable permitting_url or website_url values remain across 1210 OH/KY profiles",
+   "backup": "docs/permitting-sentinel-url-cleanup-manifest-2026-10-26.json"
+  },
+  "identity_repairs": {
+   "perryopolis": "PA data fields cleared (urls, ai_summary, Fayette County parent); profile remains held - no official OH candidate exists",
+   "medina_county": "permitting_url+website_url replaced with verified county sources (medinaco.org building-department); city summary cleared; hold removed; queue row restored to sources_found; discovery_only reseed retained 18 county documents"
+  },
+  "automatic_research_dispatch": {
+   "status": "in progress",
+   "smoke_test": "Otway OH - guarded automatic_research invoke succeeded; honest no-source result retained without sentinel corruption",
+   "batch_1": "15 not_started rows: 9 held by official-identity gate pre-creation (Cutler, Dunbar, Whipple, Matamoras, Belpre, Furnas, Clearcreek, Turtlecreek, Carlisle), 6 researched ok with real permitting_url (Macksburg, Lowell, Beverly, Marietta, Pleasant Plain, Corwin)",
+   "batch_2": "40 rows running"
   }
  }
 }
