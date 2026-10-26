@@ -1,3 +1,13 @@
+# Statewide completeness + Cincinnati-radius dispatch (2026-10-26f)
+
+- **Completeness seed**: queue covered only 1,778 of 2,848 inventory jurisdictions. Seeded all 1,461 missing entities (1,264 OH townships, 90 KY cities, 57 OH villages, 50 OH cities) as not_started rows.
+- **Municipality drain**: all 197 seeded cities/villages researched OK through the guarded path.
+- **Cincinnati-radius ordering**: new dispatch_rank field (miles from downtown Cincinnati via Census gazetteer centroids + FIPS join) stamped on every pending row; ohioFirstResearchRows now sorts nearest-first (unranked last, OH-first tiebreak). Order verified live: Delhi 6.6mi, Columbia 6.9, Green 8.2, Anderson 8.5, Springfield 9.8, Sycamore 11.2, Colerain 12.1, Miami 12.9.
+- **Daily dispatch limit raised 40->80** in permitting_research_dispatch_config.
+- **Repair**: Springfield Township Hamilton Co initially grabbed Clark Co sibling site (springfieldtownshipclarkoh.gov) - corrected to springfieldtwp.org, 12 wrong-entity docs removed. Standing risk: common OH township names (Washington x43, Union x27, Franklin x25) attract sibling contamination; post-drain domain-vs-county verification pass needed.
+- Bug found+fixed: cousub gazetteer column offset had scrambled township ranks (fixed before writes).
+- Township drain (1,244 ranked rows) running nearest-first; scheduled dispatcher continues unattended at 80/day.
+
 # Coverage promotion + audit verification (2026-10-27b)
 
 - Hollow audit re-run: 0 truly-empty profiles; only 2 no-profile sourced rows remain (Louisville/Lexington city rows -> county profiles by metro design). Withamsville/Lake Lorelei/Burlington rows retyped to unincorporated_community to match their correct profiles.
