@@ -20,7 +20,15 @@ import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResol
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
 import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
-import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
+import {
+  FACE_QUALITY,
+  createFaceMatcher,
+  createMatchVoter,
+  detectDetailedFace,
+  estimateFaceBrightness,
+  loadFaceModelsOnce,
+  passesFaceQualityGate,
+} from '@/components/timeclock/faceScanRuntime';
 import { Html5Qrcode } from "html5-qrcode";
 
 function newRequestId() {
@@ -769,7 +777,7 @@ export default function QuickClockSection({
       const [modelsReady, stream] = await Promise.all([
         loadFaceModels(),
         navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
         }),
       ]);
       if (faceRun !== faceRunRef.current) {
@@ -790,21 +798,34 @@ export default function QuickClockSection({
       if (faceRun !== faceRunRef.current) return;
       setRecognitionStatus("Look directly at the camera...");
 
+      const voter = createMatchVoter({ required: 3, window: 5 });
       scanIntervalRef.current = setInterval(async () => {
         if (!videoRef.current || faceDetectionBusyRef.current || recognitionLockedRef.current) return;
         faceDetectionBusyRef.current = true;
         try {
           const detection = await detectDetailedFace(videoRef.current);
           if (faceRun !== faceRunRef.current) return;
-          if (detection) {
-            if (detection.detection.box.width < 80 || detection.detection.score < 0.5) {
-              setRecognitionStatus("Move closer and face the light for a clearer scan.");
-              return;
-            }
-            const matched = findMatchingUser(detection.descriptor);
-            if (matched) await handleFaceRecognized(matched);
-            else setRecognitionStatus("Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
-          } else setRecognitionStatus("Look directly at the camera in even lighting.");
+          if (!detection || !passesFaceQualityGate(detection)) {
+            voter(null);
+            setRecognitionStatus(detection
+              ? "Move closer and face the light for a clearer scan."
+              : "Look directly at the camera in even lighting.");
+            return;
+          }
+          const dim = estimateFaceBrightness(videoRef.current, detection.detection.box);
+          const matched = dim !== null && dim < FACE_QUALITY.minBrightness
+            ? null
+            : findMatchingUser(detection.descriptor);
+          const winner = voter(matched);
+          if (dim !== null && dim < FACE_QUALITY.minBrightness) {
+            setRecognitionStatus("Lighting is dim. Move to better light or face the light source.");
+          } else if (winner) {
+            await handleFaceRecognized(winner);
+          } else {
+            setRecognitionStatus(matched
+              ? "Hold still - verifying your identity..."
+              : "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
+          }
         } catch (err) {
           console.warn("Face scan warning:", err);
         } finally {
