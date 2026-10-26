@@ -4,16 +4,22 @@ import { readFileSync } from "node:fs";
 // Held Sales task reviews are stage decisions. Choosing the Smartsheet task
 // must apply the remote task AND its mapped stage in one conditional write —
 // the bulk push guard can never perform that transition, so an approved
-// review would otherwise stay pending forever.
+// review would otherwise stay pending forever. The patch semantics live in
+// the shared adoption builder so the review path and the pull's verified
+// remote-wins adoption can never diverge.
 const src = readFileSync("base44/shared/smartsheetConflictReview.ts", "utf8");
+const adoption = readFileSync("base44/shared/smartsheetSalesTaskAdoption.mjs", "utf8");
 
 let checks = 0;
 const check = (cond, message) => { assert.ok(cond, message); checks++; };
 const match = (re, message) => { assert.match(src, re, message); checks++; };
+const matchAdoption = (re, message) => { assert.match(adoption, re, message); checks++; };
 
 match(/import \{[^}]*trackedConditionalSave[^}]*\} from '\.\/fieldAudit\.ts'/,
   "the held-task apply path must reuse the audited conditional save");
-match(/import \{ mapSalesTaskToStage \} from '\.\/salesTaskStageCatalog\.mjs'/,
+match(/import \{ buildSalesTaskAdoptionPatch \} from '\.\/smartsheetSalesTaskAdoption\.mjs'/,
+  "task decisions must build their patch through the shared adoption builder");
+matchAdoption(/import \{ mapSalesTaskToStage \} from '\.\/salesTaskStageCatalog\.mjs'/,
   "task decisions must be classified by the shared task catalog");
 
 const branch = src.slice(src.indexOf("conflict.field_name==='current_task_description'"));
@@ -22,19 +28,21 @@ check(branch.indexOf("current_task_description") < src.length,
   "the branch is scoped to the sales task field only");
 match(/body\.decision==='smartsheet'/, "the apply path runs only for the Smartsheet-side decision");
 
-match(/mapSalesTaskToStage\(remoteTask\)/, "the remote task is classified before any write");
-match(/in_pipeline:false,sales_neutral_closed_at:stamp,follow_up_date:''/,
+match(/buildSalesTaskAdoptionPatch\(record,\{\},remoteTask,/,
+  "the remote task is classified and patched through the shared builder before any write");
+matchAdoption(/mapSalesTaskToStage\(task\)/, "the remote task is classified before any write");
+matchAdoption(/in_pipeline:\s*false,\s*sales_neutral_closed_at:\s*stamp,\s*follow_up_date:\s*''/,
   "a neutral close applies the full closeout patch, not just the task text");
-match(/patch\.sales_status=mapped\.status;patch\.sales_stage_changed_at=stamp/,
+matchAdoption(/patch\.sales_status\s*=\s*mapped\.status;\s*patch\.sales_stage_changed_at\s*=\s*stamp/,
   "a stage change writes the task, the real status, and the stage stamp together");
-match(/patch\.close_date=today;patch\.follow_up_date=''/,
+matchAdoption(/patch\.close_date\s*=\s*today;\s*patch\.follow_up_date\s*=\s*''/,
   "Won/Lost closes clear follow-up and record the close date like the pipeline UI");
-match(/patch\.lost_reason=mapped\.status==='lost'/,
+matchAdoption(/patch\.lost_reason\s*=\s*mapped\.status\s*===\s*'lost'/,
   "a Lost close only carries a lost reason for lost outcomes");
-match(/patch\.close_date='';patch\.lost_reason=''/,
+matchAdoption(/patch\.close_date\s*=\s*'';\s*patch\.lost_reason\s*=\s*''/,
   "reopening a terminal record clears outcome fields");
 
-match(/smartsheet_sync_snapshot=\{\.\.\.\(record\.smartsheet_sync_snapshot\|\|\{\}\),\[conflict\.column_id\]:remoteTask\}/,
+match(/\[conflict\.column_id\]\s*:\s*remoteTask/,
   "the applied task advances its Smartsheet baseline so later pulls do not re-review it");
 match(/trackedConditionalSave\(base44,'WorkOrder',record,patch/,
   "the apply uses a conditional save that fails closed on a stale revision");
