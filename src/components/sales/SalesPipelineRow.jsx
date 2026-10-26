@@ -70,8 +70,8 @@ const DateCell = memo(function DateCell({ woId, field, value, popoverKey, openDa
 });
 
 // Keep the clicked row pinned under the pointer while the focus gaps and
-// cell growth animate around it: re-anchor its screen position every frame
-// through the nearest vertical scroller instead of letting it drift down.
+// cell growth animate around it: re-anchor the clicked element's center on
+// screen every frame through the nearest vertical scroller.
 const anchorFocusedRow = (el) => {
   if (!el?.isConnected) return;
   let scroller = el.parentElement;
@@ -88,7 +88,7 @@ const anchorFocusedRow = (el) => {
     const r = el.getBoundingClientRect();
     const drift = r.top + r.height / 2 - beforeCenter;
     if (Math.abs(drift) > 0.5) target.scrollTop += drift;
-    if (performance.now() - start < 450) requestAnimationFrame(tick);
+    if (performance.now() - start < 220) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
   setTimeout(() => {
@@ -96,7 +96,7 @@ const anchorFocusedRow = (el) => {
     const r = el.getBoundingClientRect();
     const drift = r.top + r.height / 2 - beforeCenter;
     if (Math.abs(drift) > 0.5) target.scrollTop += drift;
-  }, 500);
+  }, 240);
 };
 
 const SalesPipelineRow = memo(function SalesPipelineRow({
