@@ -1276,6 +1276,107 @@ async function canonicalLateClockInPayrollProvenance({
   };
 }
 
+function defaultTrackerPrefs(email: string, name: string) {
+  return {
+    tracker_enabled: false,
+    daily_goal_minutes: 480,
+    weekly_goal_minutes: 2400,
+    show_week_strip: true,
+    display_style: 'ring',
+    count_mode: 'paid',
+    direction: 'up',
+    milestones_mode: 'goal',
+    milestone_behavior: 'pulse',
+    milestone_thresholds: [0.5, 0.75, 1],
+    overtime_warning: false,
+    milestone_sound: 'chime',
+    show_overtime: true,
+    show_projected_finish: true,
+    show_pace: true,
+    accent_color: 'indigo',
+    privacy_blur: false,
+    size: 'compact',
+    location: 'both',
+    scale: 1,
+    opacity: 1,
+    font: 'default',
+    background_style: 'glass',
+    update_interval_seconds: 60,
+    animation_style: 'smooth',
+    time_format: 'hh_mm_ss',
+  };
+}
+
+const TRACKER_ENUMS: Record<string, string[]> = {
+  display_style: ['ring', 'bar', 'minimal', 'flip'],
+  count_mode: ['paid', 'elapsed'],
+  direction: ['up', 'down'],
+  milestones_mode: ['off', 'goal', 'custom'],
+  milestone_behavior: ['silent', 'pulse', 'toast', 'toast_sound'],
+  milestone_sound: ['chime', 'bell', 'ding', 'fanfare', 'alert'],
+  accent_color: ['indigo', 'emerald', 'amber', 'violet', 'rose', 'sky'],
+  size: ['compact', 'expanded'],
+  location: ['both', 'top', 'side', 'hidden'],
+  font: ['default', 'mono', 'rounded', 'serif'],
+  background_style: ['glass', 'solid', 'minimal'],
+  animation_style: ['smooth', 'pulse', 'none'],
+  time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
+};
+
+const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'time_format'];
+
+function trackerClamp(value: any, min: number, max: number, fallback: number) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function normalizeTrackerPrefs(row: any, target: any) {
+  const base = defaultTrackerPrefs(asEmail(target?.email), target?.full_name || '');
+  if (!row || typeof row !== 'object') return base;
+  const out: any = { ...base };
+  for (const key of TRACKER_BOOL_KEYS) out[key] = row[key] === true;
+  for (const [key, choices] of Object.entries(TRACKER_ENUMS)) {
+    const v = String(row?.[key] || '');
+    if (choices.includes(v)) out[key] = v;
+  }
+  out.daily_goal_minutes = Math.round(trackerClamp(row.daily_goal_minutes, 240, 840, 480));
+  out.weekly_goal_minutes = Math.round(trackerClamp(row.weekly_goal_minutes, 480, 5880, 2400));
+  out.scale = trackerClamp(row.scale, 0.8, 1.3, 1);
+  out.opacity = trackerClamp(row.opacity, 0.4, 1, 1);
+  out.update_interval_seconds = Math.round(trackerClamp(row.update_interval_seconds, 15, 300, 60));
+  const rawThresholds = Array.isArray(row.milestone_thresholds) ? row.milestone_thresholds : base.milestone_thresholds;
+  out.milestone_thresholds = rawThresholds
+    .map((t: any) => Number(t))
+    .filter((t: number) => Number.isFinite(t) && t > 0 && t <= 1.5)
+    .slice(0, 8);
+  if (!out.milestone_thresholds.length) out.milestone_thresholds = [...base.milestone_thresholds];
+  return out;
+}
+
+async function trackerPaidMinutesForEntry({ entry, breakEntity, workPauseEntity, userEmail, nowMs }: any) {
+  const startMs = new Date(String(entry?.clock_in || '')).getTime();
+  const endMs = entry?.clock_out ? new Date(String(entry.clock_out)).getTime() : nowMs;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return 0;
+  const elapsed = (endMs - startMs) / 60000;
+  const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, userEmail);
+  const pauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, userEmail);
+  const lunch = Math.max(0, Number(entry.lunch_minutes || 0));
+  return Math.max(0, elapsed - Math.max(0, Number(breakSummary?.unpaid_minutes || 0)) - Math.max(0, Number(pauseSummary?.total_minutes || 0)) - lunch);
+}
+
+function companyWeekStartKey(nowIso: string) {
+  const todayKey = dateKeyInCompanyTime(nowIso);
+  if (!todayKey) return '';
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, weekday: 'short' }).format(new Date(nowIso));
+  const dayIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday);
+  if (dayIndex < 0) return '';
+  const daysSinceMonday = (dayIndex + 6) % 7;
+  const d = new Date(`${todayKey}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - daysSinceMonday);
+  return d.toISOString().slice(0, 10);
+}
 async function ensureState(stateEntity: any, target: any) {
   const email = asEmail(target?.email);
   let rows = await stateEntity.filter({ user_email: email });
@@ -3160,6 +3261,7 @@ Deno.serve(async (req) => {
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
     const ptoBalanceEntity = base44.asServiceRole.entities.UserPTOBalance;
+    const prefsEntity = base44.asServiceRole.entities.TimeClockEmployeePreference;
 
     if (action === 'monitor_stale_shifts') {
       if (!(await hasStaleShiftMonitorCapability(body))) {
@@ -3339,6 +3441,160 @@ Deno.serve(async (req) => {
     state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
     state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
     state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, state, target);
+
+    if (action === 'time_tracker_snapshot' || action === 'time_tracker_prefs_get') {
+      // Read-only Time Tracker snapshot + preferences. Never mutates clock
+      // state; sessions read their own row and admins may read a target.
+      const prefRows = await prefsEntity.filter({ user_email: target.email });
+      if (!Array.isArray(prefRows)) throw new Error('Time Tracker preference lookup did not return a record list.');
+      if (prefRows.length > 1) return Response.json({ success: false, error: 'Time Tracker preferences are ambiguous. Admin review is required.' }, { status: 409 });
+      const prefs = normalizeTrackerPrefs(prefRows[0] || null, target);
+      const serverNow = new Date();
+      const nowMs = serverNow.getTime();
+      const employmentType = String(target.employment_type || 'hourly');
+
+      if (action === 'time_tracker_prefs_get') {
+        return Response.json({ success: true, prefs, employment_type: employmentType, server_time: serverNow.toISOString() });
+      }
+
+      const clockedIn = state.status === 'clocked_in' && !!state.active_entry_id;
+      let entry: any = null;
+      if (clockedIn) {
+        entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+        if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+          return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
+        }
+      }
+
+      let liveUnpaidMinutes = 0;
+      let onUnpaidBreakNow = false;
+      let pausedNow = false;
+      if (entry) {
+        const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
+        const safeActiveBreak = activeBreak?.id && activeBreak.status === 'active' && asEmail(activeBreak.user_email) === target.email && activeBreak.time_entry_id === entry.id ? activeBreak : null;
+        const activePause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        const safeActivePause = activePause?.id && activePause.status === 'active' && asEmail(activePause.user_email) === target.email && activePause.time_entry_id === entry.id ? activePause : null;
+        if (safeActiveBreak && safeActiveBreak.is_paid !== true) {
+          onUnpaidBreakNow = true;
+          liveUnpaidMinutes += Math.max(0, (nowMs - new Date(safeActiveBreak.started_at).getTime()) / 60000);
+        }
+        if (safeActivePause) {
+          pausedNow = true;
+          liveUnpaidMinutes += Math.max(0, (nowMs - new Date(safeActivePause.started_at).getTime()) / 60000);
+        }
+      }
+
+      let elapsedToday = 0;
+      let paidToday = 0;
+      let breakMinutes = 0;
+      let paidBreakMinutes = 0;
+      let pauseMinutes = 0;
+      if (entry) {
+        const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+        const pauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+        breakMinutes = Math.max(0, Number(breakSummary?.total_minutes || 0));
+        paidBreakMinutes = Math.max(0, Number(breakSummary?.paid_minutes || 0));
+        pauseMinutes = Math.max(0, Number(pauseSummary?.total_minutes || 0));
+        const startMs = new Date(String(entry.clock_in || '')).getTime();
+        elapsedToday = Number.isFinite(startMs) ? Math.max(0, (nowMs - startMs) / 60000) : 0;
+        paidToday = Math.max(0, elapsedToday
+          - Math.max(0, Number(breakSummary?.unpaid_minutes || 0))
+          - pauseMinutes
+          - liveUnpaidMinutes
+          - Math.max(0, Number(entry.lunch_minutes || 0)));
+      }
+
+      const weekStartKey = companyWeekStartKey(serverNow.toISOString());
+      const weeklyDaily = [0, 0, 0, 0, 0, 0, 0];
+      let weeklyPaid = 0;
+      if (weekStartKey) {
+        const recent = await entryEntity.filter({ user_email: target.email }, '-clock_in', 90);
+        if (!Array.isArray(recent)) throw new Error('Time Tracker weekly entry lookup did not return a record list.');
+        for (const row of recent) {
+          if (!row?.id || row.archived_test_data || row.archived_admin) continue;
+          const dayKey = dateKeyInCompanyTime(row.clock_in);
+          if (!dayKey || dayKey < weekStartKey) continue;
+          const dayIndex = (new Date(`${dayKey}T00:00:00Z`).getUTCDay() + 6) % 7;
+          const paid = row.id === entry?.id
+            ? paidToday
+            : await trackerPaidMinutesForEntry({ entry: row, breakEntity, workPauseEntity, userEmail: target.email, nowMs });
+          weeklyDaily[dayIndex] += paid;
+          weeklyPaid += paid;
+        }
+      }
+
+      return Response.json({
+        success: true,
+        server_time: serverNow.toISOString(),
+        employment_type: employmentType,
+        status: clockedIn ? 'clocked_in' : 'clocked_out',
+        clock_in: entry?.clock_in || null,
+        paid_minutes_today: paidToday,
+        elapsed_minutes_today: elapsedToday,
+        break_minutes: breakMinutes,
+        paid_break_minutes: paidBreakMinutes,
+        pause_minutes: pauseMinutes,
+        live_unpaid_minutes: liveUnpaidMinutes,
+        on_unpaid_break_now: onUnpaidBreakNow,
+        paused_now: pausedNow,
+        accruing_paid: Boolean(entry) && !onUnpaidBreakNow && !pausedNow,
+        weekly_paid_minutes: weeklyPaid,
+        weekly_daily_minutes: weeklyDaily,
+        company_day: dateKeyInCompanyTime(serverNow.toISOString()),
+        prefs,
+      });
+    }
+
+    if (action === 'time_tracker_prefs_update') {
+      if (!requestId) {
+        return Response.json({ success: false, error: 'A request_id is required to update Time Tracker preferences.' }, { status: 400 });
+      }
+      if (String(actor.id).startsWith('badge:') || (actor.role !== 'admin' && actorEmail !== target.email)) {
+        return Response.json({ success: false, error: 'A signed-in session can only update its own Time Tracker preferences.' }, { status: 403 });
+      }
+      const isSalary = String(target.employment_type || '') === 'salary';
+      if (!isSalary && body?.prefs?.tracker_enabled === true) {
+        return Response.json({ success: false, error: 'The Time Tracker is available to salary employees.' }, { status: 403 });
+      }
+      const requested = body?.prefs && typeof body.prefs === 'object' ? body.prefs : {};
+      const prefRows = await prefsEntity.filter({ user_email: target.email });
+      if (!Array.isArray(prefRows)) throw new Error('Time Tracker preference lookup did not return a record list.');
+      if (prefRows.length > 1) return Response.json({ success: false, error: 'Time Tracker preferences are ambiguous. Admin review is required.' }, { status: 409 });
+      const existing = prefRows[0] || null;
+      if (existing && String(existing.last_request_id || '') === requestId) {
+        return Response.json({ success: true, reused: true, prefs: normalizeTrackerPrefs(existing, target) });
+      }
+      const merged: any = { ...normalizeTrackerPrefs(existing, target) };
+      for (const key of TRACKER_EDITABLE_KEYS) {
+        if (Object.prototype.hasOwnProperty.call(requested, key)) merged[key] = requested[key];
+      }
+      const normalized = normalizeTrackerPrefs(merged, target);
+      if (!isSalary) normalized.tracker_enabled = false;
+      const write = { ...normalized, user_email: target.email, user_name: target.full_name || target.email, last_request_id: requestId };
+      if (existing?.id) {
+        const updated = await prefsEntity.updateMany(
+          { id: existing.id, updated_date: existing.updated_date },
+          { $set: write },
+        );
+        if (!updated || updated.updated !== 1) {
+          const fresh = await prefsEntity.get(existing.id).catch(() => null);
+          if (String(fresh?.last_request_id || '') === requestId) {
+            return Response.json({ success: true, reused: true, prefs: normalizeTrackerPrefs(fresh, target) });
+          }
+          return Response.json({ success: false, retry_same_request: true, error: 'Time Tracker preferences changed while saving. Reload and try again.' }, { status: 409 });
+        }
+        const fresh = await prefsEntity.get(existing.id);
+        return Response.json({ success: true, prefs: normalizeTrackerPrefs(fresh, target) });
+      }
+      await prefsEntity.create(write);
+      const verify = await prefsEntity.filter({ user_email: target.email });
+      const row = Array.isArray(verify) && verify.length === 1 ? verify[0] : null;
+      if (!row?.id || String(row.last_request_id || '') !== requestId) {
+        return Response.json({ success: false, retry_same_request: true, error: 'Time Tracker preferences were saved but could not be verified. Retry the same request.' }, { status: 409 });
+      }
+      return Response.json({ success: true, prefs: normalizeTrackerPrefs(row, target) });
+    }
+
 
     if (action === 'status') {
       const unresolvedPunchReview = await unresolvedPunchReviewSummary({
@@ -6526,6 +6782,121 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: true, work_pause_allowed: target.can_work_pause === true });
     }
 
+    if (action === 'work_pause_report_missed') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in to report a missed Work Pause.' }, { status: 409 });
+      }
+      if (target.can_work_pause !== true) {
+        return Response.json({ success: false, error: 'Work Pause is not enabled for this employee.' }, { status: 403 });
+      }
+      if (actor.role !== 'badge' && actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees can only report their own Work Pause time.' }, { status: 403 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+      if (workPauseStatusOf(state) !== 'working') {
+        return Response.json({ success: false, error: 'Finish the active Work Pause before reporting a missed one.' }, { status: 409 });
+      }
+      if (state.active_break_id) {
+        return Response.json({ success: false, error: 'End the active break before reporting a missed Work Pause.' }, { status: 409 });
+      }
+
+      const startedIso = String(body?.started_at || '').trim();
+      const resumedIso = String(body?.resumed_at || '').trim();
+      const note = String(body?.note || '').trim().slice(0, 500);
+      const startedMs = new Date(startedIso).getTime();
+      const resumedMs = new Date(resumedIso).getTime();
+      const clockInMs = new Date(entry.clock_in).getTime();
+      const nowMs = Date.now();
+      if (!Number.isFinite(startedMs) || !Number.isFinite(resumedMs)) {
+        return Response.json({ success: false, error: 'Enter a valid pause start and end time.' }, { status: 400 });
+      }
+      if (resumedMs <= startedMs) {
+        return Response.json({ success: false, error: 'The missed Work Pause end must be after its start.' }, { status: 400 });
+      }
+      if (!Number.isFinite(clockInMs) || startedMs < clockInMs) {
+        return Response.json({ success: false, error: 'The missed Work Pause cannot start before Clock In.' }, { status: 400 });
+      }
+      if (resumedMs > nowMs + 60000) {
+        return Response.json({ success: false, error: 'The missed Work Pause cannot end in the future.' }, { status: 400 });
+      }
+      const entryDay = dateKeyInCompanyTime(entry.clock_in);
+      if (dateKeyInCompanyTime(startedIso) !== entryDay || dateKeyInCompanyTime(resumedIso) !== entryDay) {
+        return Response.json({ success: false, error: 'The missed Work Pause must stay on the same company day as this shift.' }, { status: 400 });
+      }
+      const durationMinutes = Math.max(1, Math.floor((resumedMs - startedMs) / 60000));
+      if (durationMinutes > 12 * 60) {
+        return Response.json({ success: false, error: 'A missed Work Pause cannot exceed 12 hours. Contact a manager for a correction.' }, { status: 400 });
+      }
+
+      const priorRows = await workPauseEntity.filter({ user_email: target.email, time_entry_id: entry.id, start_request_id: requestId });
+      if (!Array.isArray(priorRows)) throw new Error('Missed Work Pause lookup did not return a record list.');
+      if (priorRows.length > 1) {
+        return Response.json({ success: false, error: 'Multiple Work Pause records match this request. Admin review is required.' }, { status: 409 });
+      }
+      if (priorRows.length === 1) {
+        const prior = priorRows[0];
+        if (prior.status === 'completed' && prior.source === 'employee_attested_missed' &&
+            String(prior.started_at || '') === startedIso && String(prior.resumed_at || '') === resumedIso) {
+          const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: prior, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: true });
+        }
+        return Response.json({ success: false, error: 'This request was already used for a different Work Pause. Reload status and try again.' }, { status: 409 });
+      }
+
+      const existingPauses = await workPauseEntity.filter({ user_email: target.email, time_entry_id: entry.id });
+      if (!Array.isArray(existingPauses)) throw new Error('Work Pause overlap lookup did not return a record list.');
+      for (const row of existingPauses) {
+        const s = new Date(row.started_at).getTime();
+        const e = row.status === 'active' ? nowMs : new Date(row.resumed_at || row.started_at).getTime();
+        if (Number.isFinite(s) && Number.isFinite(e) && startedMs < e && resumedMs > s) {
+          return Response.json({ success: false, error: 'The missed Work Pause overlaps an existing Work Pause on this shift.' }, { status: 409 });
+        }
+      }
+      const existingBreaks = await breakEntity.filter({ user_email: target.email, time_entry_id: entry.id });
+      if (!Array.isArray(existingBreaks)) throw new Error('Break overlap lookup did not return a record list.');
+      for (const row of existingBreaks) {
+        const s = new Date(row.started_at).getTime();
+        const e = row.status === 'active' ? nowMs : new Date(row.ended_at || row.started_at).getTime();
+        if (Number.isFinite(s) && Number.isFinite(e) && startedMs < e && resumedMs > s) {
+          return Response.json({ success: false, error: 'The missed Work Pause overlaps a break on this shift.' }, { status: 409 });
+        }
+      }
+
+      const pauseRow = await workPauseEntity.create({
+        user_email: target.email,
+        user_name: target.full_name || target.email,
+        time_entry_id: entry.id,
+        started_at: startedIso,
+        resumed_at: resumedIso,
+        duration_minutes: durationMinutes,
+        status: 'completed',
+        start_request_id: requestId,
+        resume_request_id: requestId,
+        source: 'employee_attested_missed',
+      });
+      if (!pauseRow?.id) throw new Error('Missed Work Pause record could not be created.');
+      await ensureActionAudit(auditEntity, {
+        action: 'work_pause_report_missed', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: new Date().toISOString(),
+        request_id: requestId, time_entry_id: entry.id,
+        reason: 'Employee self-reported a missed Work Pause',
+        details: {
+          work_pause_id: pauseRow.id,
+          started_at: startedIso,
+          resumed_at: resumedIso,
+          duration_minutes: durationMinutes,
+          ...(note ? { note } : {}),
+        },
+      }, 'Missed Work Pause audit');
+      const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: true, work_pause_allowed: true });
+    }
+
     if (action === 'time_off_request_create' || action === 'time_off_request_update') {
       if (actor.role === 'badge' || actorEmail !== target.email) {
         return Response.json({ success: false, error: 'Employees must use their own signed-in Time Clock session to manage time-off requests.' }, { status: 403 });
@@ -9250,10 +9621,10 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id });
     }
 
-    if (action === 'recover_missed_clock_in') {
+    if (action === 'recover_missed_clock_in' || action === 'report_missed_clock_in') {
       const serverNow = new Date();
       const companyMinutes = minutesOfDayInCompanyTime(serverNow.toISOString());
-      if (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60) {
+      if (action === 'recover_missed_clock_in' && (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60)) {
         return Response.json({ success: false, error: 'Missed Clock In recovery is only available at or after 3:00 PM company time.' }, { status: 409 });
       }
 
@@ -9421,7 +9792,9 @@ Deno.serve(async (req) => {
             claimed_clock_in: claimedClockInIso,
             submitted_at: reportedAt,
             request_id: requestId,
-            resolution_note: 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
+            resolution_note: action === 'report_missed_clock_in'
+              ? 'Employee self-reported a missed Clock In from the Quick Clock arrival-time prompt; shift requires manager review.'
+              : 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
           });
         }
         if (!punchCase?.id ||
@@ -9459,7 +9832,9 @@ Deno.serve(async (req) => {
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: reportedAt, request_id: requestId, time_entry_id: entry.id,
-          reason: 'Employee reported a missing Clock In during the late-day pre-clockout review',
+          reason: action === 'report_missed_clock_in'
+            ? 'Employee reported a missed Clock In from the Quick Clock arrival-time prompt'
+            : 'Employee reported a missing Clock In during the late-day pre-clockout review',
           details: {
             payload_hash: recoveryPayloadHash,
             punch_exception_id: punchCase.id,
