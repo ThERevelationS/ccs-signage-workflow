@@ -223,6 +223,7 @@ const TimeClockLoginDialog = loadComponent('../src/components/timeclock/TimeCloc
   '@/components/ui/button': { Button },
   '@/components/ui/input': { Input: ({ id, value, onChange, type }) => React.createElement('input', { id, value, type, onChange }) },
   '@/components/ui/label': { Label: ({ children, htmlFor }) => React.createElement('label', { htmlFor }, children) },
+  '@/components/motion/FadeIn': { default: passthrough('FadeIn'), FadeIn: passthrough('FadeIn') },
   'lucide-react': new Proxy({}, { get: () => icon }),
 });
 assert.equal(typeof TimeClockLoginDialog, 'function');
