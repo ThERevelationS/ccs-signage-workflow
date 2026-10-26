@@ -95,6 +95,11 @@ Deno.serve(async (req) => {
       username: uname,
       password_hash,
       session_not_before: new Date().toISOString(),
+      // A credential change is also the recovery path out of a brute-force
+      // lockout; leaving the deadline in place would keep the new password
+      // refused until it lapses.
+      failed_login_count: 0,
+      login_locked_until: null,
     };
     // Admin password changes invalidate any outstanding reset link. Reset-flow links
     // were already claimed atomically above.

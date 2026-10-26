@@ -168,6 +168,8 @@ Deno.serve(async (req) => {
         password_reset_token_hash: null,
         password_reset_expires: null,
         session_not_before: new Date().toISOString(),
+        failed_login_count: 0,
+        login_locked_until: null,
       };
       if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) nextFields.face_descriptors = body.face_descriptors;
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({

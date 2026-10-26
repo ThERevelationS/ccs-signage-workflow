@@ -64,6 +64,30 @@
       "format": "date-time",
       "description": "Custom sign-shop sessions issued before this timestamp are invalid. Advanced on password changes and credential resets."
     },
+    "failed_login_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Consecutive failed sign-in attempts. Reset on success or credential change.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "login_locked_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Sign-in attempts are refused until this time after repeated failures.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
     "role": {
       "type": "string",
       "enum": [
