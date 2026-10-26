@@ -55,7 +55,7 @@ vm.runInNewContext(compiled, {
     '@/components/ui/button': { Button },
     '@/components/ui/input': { Input },
     'lucide-react': Object.fromEntries(
-      ['Camera','Clock','Loader2','Play','QrCode','Square','User','X'].map((name) => [name, icon])),
+      ['Camera','Clock','Clock3','Loader2','Play','QrCode','Square','User','X'].map((name) => [name, icon])),
     '@/components/timeclock/ClockOutDialog': pop('clock_out'),
     '@/components/timeclock/MissedPunchResolutionDialog': pop('missed_punch'),
     '@/components/timeclock/LateClockInReviewDialog': pop('late_clock_in'),
