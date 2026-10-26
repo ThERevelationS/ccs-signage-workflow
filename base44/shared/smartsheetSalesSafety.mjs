@@ -226,7 +226,12 @@ export function salesRunRequiresReview(results = []) {
       Number(result?.errors || 0) > 0 || Number(result?.conflicts || 0) > 0 ||
       Number(result?.snapshot_review_required || 0) > 0 ||
       Number(result?.assignee_translation_review_required || 0) > 0 ||
-      Number(result?.local_pending_preserved || 0) > 0 ||
+      // Held-field reviews only flag a run when they are newly reported this
+      // run (or their freshness is unknown). A stable, already-reported review
+      // queue stays visible to admins without re-failing every later pull.
+      (Number(result?.local_pending_preserved || 0) > 0 &&
+        (result?.local_pending_newly_reported === undefined ||
+          Number(result?.local_pending_newly_reported || 0) > 0)) ||
       Number(result?.business_field_write_failures || 0) > 0 ||
       Number(result?.snapshot_write_failures || 0) > 0 ||
       Number(result?.create_attempts_need_review || 0) > 0 ||
