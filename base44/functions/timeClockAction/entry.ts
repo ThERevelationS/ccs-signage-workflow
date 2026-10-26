@@ -7026,10 +7026,15 @@ Deno.serve(async (req) => {
         approved_date: decisionTimestamp,
         admin_notes: decisionNotes,
       };
+      // The hash covers only the semantic decision. approved_date is generated
+      // inside decisionFields on every invocation, so including it would make an
+      // idempotent replay appear to mismatch its own audit and always fail.
       const decisionPayloadHash = await payloadHash({
         time_off_request_id: timeOffRequestId,
         expected_updated_date: expectedUpdatedDate,
-        ...decisionFields,
+        decision,
+        admin_notes: decisionNotes,
+        decided_by: actorEmail,
       });
       const decidedFieldsMatch = (row: any) => (
         row?.id === timeOffRequestId &&
