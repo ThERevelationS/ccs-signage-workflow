@@ -423,6 +423,7 @@ tr.mmm-focus-row > td :where(*) {
 @media (prefers-reduced-motion: reduce) {
   .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
   .check-draw { stroke-dashoffset: 0; }
+  .tracker-pulse, .tracker-flip, .tracker-today-bar, .punch-sheen { animation: none !important; }
 }
 
 /* Time Tracker pill animations */
@@ -442,9 +443,6 @@ tr.mmm-focus-row > td :where(*) {
   50% { filter: brightness(1.18); }
 }
 .tracker-today-bar { animation: trackerTodayBar 2.4s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .tracker-pulse, .tracker-flip, .tracker-today-bar { animation: none !important; }
-}
 
 @keyframes punchSheen {
   0% { transform: translateX(-160%) skewX(-16deg); }
@@ -453,7 +451,4 @@ tr.mmm-focus-row > td :where(*) {
 .punch-sheen {
   left: -10%;
   animation: punchSheen 3.4s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .punch-sheen { animation: none; }
 }
