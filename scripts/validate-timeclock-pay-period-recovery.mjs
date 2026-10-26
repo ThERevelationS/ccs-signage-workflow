@@ -24,7 +24,7 @@ const compiled = transformSync(
     .replace("import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';",
       'const buildStatusLite = () => ({ requires_full_status: true });')
     .replace("import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';",
-      'const processWorkflowTriggerEvent = async () => {};')
+      'const processWorkflowTriggerEvent = async (args) => { const { base44: _ignored, ...rest } = args || {}; globalThis.__emittedWorkflowEvents.push(JSON.parse(JSON.stringify(rest))); };')
     .replace("import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';",
       'const { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } = globalThis.__payrollMembershipEvidence;'),
   { loader: 'ts', format: 'cjs', target: 'es2022' },
@@ -90,6 +90,7 @@ function setup({ entryCount = 1, serverNow = null, auditIdForRequest = null } = 
   };
   let beforeUpdate = null;
   let afterRowUpdate = null;
+  const emittedEvents = [];
   const modelFor = (entityName) => ({
     async filter(query) { return clone((rows[entityName] || []).filter((row) => matches(row, query))); },
     async get(id) { return clone((rows[entityName] || []).find((row) => row.id === id) || null); },
@@ -127,6 +128,7 @@ function setup({ entryCount = 1, serverNow = null, auditIdForRequest = null } = 
   let handler = null;
   const context = vm.createContext({
     __syntheticClient: () => client,
+    __emittedWorkflowEvents: emittedEvents,
     __payrollMembershipEvidence: { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence },
     Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => key === 'SESSION_SIGNING_SECRET' ? secret : '' } },
     crypto: webcrypto, TextEncoder, TextDecoder, Response, Request, btoa, atob,
@@ -159,7 +161,7 @@ function setup({ entryCount = 1, serverNow = null, auditIdForRequest = null } = 
     return invoke({ action: 'clock_in', request_id, target_email: employee.email });
   }
   return {
-    rows, action, clockIn, invoke, invokeAs,
+    rows, action, clockIn, invoke, invokeAs, emittedEvents,
     setServerNow(value) {
       if (!serverNow || !Number.isFinite(Date.parse(String(value || '')))) {
         throw new Error('A valid synthetic server time is required');
