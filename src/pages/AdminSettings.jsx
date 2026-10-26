@@ -350,6 +350,9 @@ const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "sub_note_added", "sub_note_deleted",
   "rider_completed", "rider_all_tasks_completed", "rider_deleted",
   "rider_stage_changed", "rider_assigned_to_changed",
+  "designer_assigned", "surveyor_assigned",
+  "project_manager_assigned", "estimator_assigned",
+  "sip_item_completed", "mmm_item_completed", "sip_item_revisit_set",
   "image_uploaded",
   "asap_toggled_on", "asap_toggled_off",
   "assigned_to_changed",
@@ -371,6 +374,7 @@ const DEADLINE_TRIGGER_SET = new Set([
   "work_order_install_date_approaching", "work_order_install_date_passed",
   "site_survey_approaching",
   "task_due_date_approaching", "task_due_date_passed",
+  "sip_revisit_date_approaching",
 ]);
 
 // Fired by checkDeadlineReminders against Orders awaiting delivery — order
@@ -393,6 +397,14 @@ const SALES_DEADLINE_TRIGGER_SET = new Set([
   "sales_close_date_approaching",
 ]);
 
+// Emitted server-side by timeClockAction after verified writes — carries a
+// TimeEntry/TimeOffRequest/labor-segment record (not a Work Order), so only
+// send_email can run.
+const TIME_CLOCK_TRIGGER_SET = new Set([
+  "time_clock_in", "time_clock_out", "time_entry_notes_updated",
+  "time_off_requested", "time_off_updated", "job_allocation_added",
+]);
+
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
 
 const ENGINE_SUPPORTED_ACTIONS = new Set([
@@ -409,6 +421,7 @@ const getTriggerSupportedActions = (triggerType) => {
   if (WORKFLOW_ENGINE_TRIGGER_SET.has(triggerType)) return ENGINE_SUPPORTED_ACTIONS;
   if (ORDER_TRIGGER_SET.has(triggerType) || ORDER_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (SALES_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
+  if (TIME_CLOCK_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
