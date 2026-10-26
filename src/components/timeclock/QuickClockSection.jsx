@@ -693,15 +693,20 @@ export default function QuickClockSection({
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
         return;
       }
-      if (resolvedStatus === "late_clock_in_review") {
-        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Confirm whether you missed Clock In before continuing.`);
-        return;
-      }
       if (resolvedStatus === "transition") return;
 
       if (identifyIntentRef.current === "missed_clock_in") {
+        // The employee explicitly chose the missed Clock In flow; the
+        // arrival-time prompt takes priority over the late-day review gate.
+        setLateClockInReview(null);
+        setLateClockInError("");
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Enter the time you actually arrived today.`);
         setMissedClockInPrompt(true);
+        return;
+      }
+
+      if (resolvedStatus === "late_clock_in_review") {
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Confirm whether you missed Clock In before continuing.`);
         return;
       }
 
