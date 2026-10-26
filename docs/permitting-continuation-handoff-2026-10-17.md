@@ -1,3 +1,16 @@
+# Hollow-profile audit - stale-type rows, missing entities, mistyped communities (2026-10-27)
+
+- **Audit trigger**: 1,606 sources_found vs 1,119 profiles with permitting_url. Result: 264 summary-only rows are legitimate (honest no-online-source findings count as evidence); 48 sourced rows had NO matching profile; 1 truly-empty profile (Blaine - its summary was previously cleared).
+- **23 stale village-typed queue rows retyped to city** (inventory-confirmed; researched city profiles already existed): South Lebanon, Marion, Eaton, Hillsboro, Kenton, Springdale, Wyoming, Reading, Norwood, North College Hill, Montgomery, Forest Park, Deer Park, Cheviot, Blue Ash, South Euclid, Seven Hills, Rocky River, Wilmington, Madeira, Loveland, Sharonville, Trenton.
+- **15 missing real entities created + researched** through guarded refreshJurisdiction: Mariemont/Addyston/Fairfax/Manchester/Maineville villages, Highland Heights/Milford/Middletown cities (OH); Russell Springs/Edgewood/Covington/Fort Thomas/Newport cities (KY). All landed correct official URLs (mariemont.org, milfordohio.org, russellsprings.net, pdskc.org, newportky.portal.iworq.net...).
+- **Newtonsville OH: dissolved village (Nov 2019)** - new profile held, row blocked; Wayne Township governs (community profile carries evidence).
+- **Indian Hill OH**: real village absent from candidate inventory - identity guard correctly refused auto-research; official site indianhill.gov manually verified and stored needs_verification.
+- **Type-label corrections** (evidence was already correct; the label lied): Withamsville/Newtonsville/Lake Lorelei township->unincorporated_community; Burlington KY county->unincorporated_community; Bremen KY village->city. Alvaton/Bagdad/Buckner queue rows city->unincorporated_community (Buckner confirmed CDP via KY SoS).
+- **Held**: Milford-village-Butler row and Blaine-OH row (no such incorporated entity in those counties/states per inventory).
+- **Maineville**: canonical 'Maineville' profile created+researched; docs merged from 2 'Village of Maineville' records, both held superseded_duplicate.
+- Self-corrected: a placeholder row id accidentally held Senecaville village; verified its profile and restored sources_found. Disclosure recorded.
+- Final: 1,596 sources_found / 168 blocked / 13 duplicate / 1 verified_current; profiles 1,675, 1,181 with permitting_url (+62), 1,371 with docs.
+
 # Tail work — SoS city records, queue dedup, create-idempotency (2026-10-26e)
 
 - **7 honest-no-source KY cities deep-hunted via KY SoS Land Office** (web.sos.ky.gov/land/cities.aspx?CTR=<id>): Bardwell CTR=16 (Carlisle seat), Brodhead CTR=43, Burkesville CTR=51 (Cumberland seat), Adairville CTR=1, Benham CTR=26, Brooksville CTR=50 (Bracken seat). Each profile: SoS record attached as manual_verified document + permitting_url; summary documents mayor/contact/office hours + no published sign ordinance (honest). Rows -> sources_found.
