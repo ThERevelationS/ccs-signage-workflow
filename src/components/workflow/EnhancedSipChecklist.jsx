@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,7 @@ async function removeSipTask(workOrderId, task, label = "SIP Work Order tasks") 
 
 async function setSipTaskCompleted(workOrderId, task, targetCompleted, label = "SIP Work Order tasks") {
   const locator = createWorkOrderArrayItemLocator(task);
-  return mutateWorkOrderArrayField({
+  const saved = await mutateWorkOrderArrayField({
     workOrderId,
     field: "notes",
     label,
@@ -80,6 +81,10 @@ async function setSipTaskCompleted(workOrderId, task, targetCompleted, label = "
         : currentTask);
     },
   });
+  if (targetCompleted && saved?.id) {
+    void NotificationTriggers.sipItemCompleted(saved, task?.text).catch(() => {});
+  }
+  return saved;
 }
 
 // Task creation popup
