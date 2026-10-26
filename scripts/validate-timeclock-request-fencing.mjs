@@ -12,6 +12,7 @@ const timeOff = readFileSync('src/components/timeclock/TimeOffRequestDialog.jsx'
 const adminPanel = readFileSync('src/components/timeclock/CorrectionRequestAdminPanel.jsx', 'utf8');
 const timeClockPage = readFileSync('src/pages/TimeClock.jsx', 'utf8');
 const quickClock = readFileSync('src/components/timeclock/QuickClockSection.jsx', 'utf8');
+const globalPause = readFileSync('src/components/timeclock/GlobalWorkPauseControl.jsx', 'utf8');
 
 // Every storage-backed clear must accept an expected request ID and refuse to
 // delete an ID it did not settle.
@@ -42,7 +43,10 @@ assert.match(timeOff, /clearOperation\(storageKey, requestId\)/);
 assert.match(timeClockPage, /clearNotesRequest\(entryId, requestId\)/);
 assert.match(adminPanel, /clearReviewRetry\(selected\.id, payload\.request_id\)/);
 assert.match(quickClock, /clearRequest\("clock_in", email, requestId\)/);
-assert.match(quickClock, /clearRequest\("work_pause_start", email, requestId\)/);
+// Work Pause initiation lives in the toolbar pause menu; its acknowledgement
+// path must still clear only the request ID it settled.
+assert.match(globalPause, /paused \? "work_pause_resume" : "work_pause_start"/);
+assert.match(globalPause, /clearRequestId\(action, email, requestId\)/);
 assert.match(quickClock, /clearRequest\("resolve_punch_exception", email, requestId\)/);
 assert.match(quickClock, /clearRequest\("recover_missed_clock_in", email, requestId\)/);
 console.log('PASS acknowledgement paths clear only the request ID they settled');
