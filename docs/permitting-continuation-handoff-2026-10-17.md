@@ -1,3 +1,71 @@
+# Permitting continuation handoff — October 26, 2026 (sentinel-URL cleanup, wrong-state repairs, guarded backlog dispatch)
+
+Checkpoint for this unit: see final report (created after dispatch batches settle). Prior: `6adee74b415bf3740943b33f` (identity holds + Lake/Licking URL repairs).
+
+## What ran
+
+### Sentinel-URL cleanup (approved, verified complete)
+- Cleared all **105** `permitting_url = "INFORMATION NOT FOUND"` sentinels via conditional `updateMany` writes paced under the 50-updates/60s entity limit; resumable on 429. Final readback: **0 invalid `permitting_url` remain**.
+- Cleared the **34 invalid `website_url`** values from the manifest in the same pass; final readback: **0 invalid `website_url` remain**.
+- Manifest + full profile backups: `docs/permitting-sentinel-url-cleanup-manifest-2026-10-26.json`. No profiles or documents deleted.
+
+### Wrong-state contamination repair (pre-guard research)
+Deterministic scan of `ai_summary`/`notes`/`permit_requirements` for other-state names, plus a state-code domain scan of stored URLs (0 domain hits). Confirmed wrong-state profiles and repaired:
+
+| Profile | Stored data | Action |
+|---|---|---|
+| Perryopolis OH | PA borough URLs + "Perryopolis Borough, Pennsylvania" summary; no OH candidate | cleared wrong-state fields; held (`_source_identity_hold`), queue blocked |
+| Walcott, Westville, Lansing, Conover OH | wrong-state URL+summary (IA/PA/IL/WI); **no OH candidate exists** | cleared; held + queue blocked |
+| Lykens, Augusta OH | wrong-state URL+summary (PA/WI) but real OH township exists | cleared; **retyped to township** with correct parent county; queue `not_started` for re-research |
+| Medina County OH | described City of Medina | replaced with verified county sources; reseeded 18 docs |
+| Lake County OH | non-canonical URL 403 | canonical www+https URL; reseeded 12 docs |
+| Licking County OH | dead URL | OpenGov portal canonical URL; reseeded (0 static docs — JS portal, honest gap) |
+
+False positives left alone: Belmont OH (URL verified OH), Neville/Chilo/Moscow OH (villages correctly deferring to Clermont County permit portal), Fresno/New Washington/Sulphur Springs/Blaine/Kilgore/Manchester/Edgewood OH and Germantown/California KY (honest disclaimers naming other states).
+
+### Queue-row type corrections (approved repair class)
+Legacy queue rows typed real jurisdictions as `village` when the official inventory holds exactly one candidate of another type. **34 rows retyped** across three passes and returned to `not_started` with gate re-verified before write (`assessOfficialQueueIdentity` re-checked after fix). Township retypes also received deterministic `parent_county_name` from the single inventory candidate. 54+ rows skipped — genuinely unincorporated/ambiguous and correctly held.
+
+### Guarded automatic research dispatch
+Bounded 40-row batches through `refreshJurisdiction(automatic_research:true)` with `assessOfficialQueueIdentity` gate before any profile create/invoke:
+
+| Batch | ok | held | threw |
+|---|---|---|---|
+| smoke (Otway) | 1 honest no-source | — | — |
+| 15-row | 6 | 9 | 0 |
+| 40-row ×2 | 28, 18 | 12, 22 | 0 |
+| 40-row | 11 | 17 | 12 (townships pre-county-fix; all recovered next batch) |
+| 40-row | **31** | 9 | 0 |
+| 40-row ×6 | 5, 2*, 31, 23, 31, 32 | 35, 10, 8, 10, 9, 6 | 0, 1*, 0, 7**, 2**, 2** |
+| 40-row ×4 | 33, 33, 39, 36 | 5, 7, 1, 4 | 2, 0, 0, 0 |
+| 8-row final | 8 | 0 | 0 |
+
+*batch-8 aborted on 429 (patched: 65 s backoff → continue). **township profile-`parent_county` + stale profile-type 409s; all recovered via repairs and retried `ok`. **Jeffersonville KY held after 2 wrong-state (Indiana) research rejections — guard working, needs manual source verification.**
+
+**Queue fully drained: `not_started` = 0.** Final: 1,556 `sources_found`, 218 blocked (152 identity holds + 66 other), 1 `verified_current`. Profiles OH/KY: 1,635 total, 1,119 with `permitting_url`, 1,328 with documents, 7 held.
+Batch-5's 12 township 409s were caused by profile `parent_county` not being set on create (batch script wrote queue's `parent_county_name` field onto the profile); profiles patched with `parent_county: {name}` + `parent_county_name` and all 12 resolved `ok` in batch 6 with real township URLs. Batch script create payload fixed.
+
+## Verification
+- Every mutation conditional (`id`+`updated_date`) with get-after-write readback; gate re-verified post-write.
+- Invalid-URL scans: 0 bad `permitting_url`, 0 bad `website_url`, 0 wrong-state domains.
+- `cleanUrl` hardening (earlier unit) + `assertOfficialProfileResearchIdentity` now block sentinel/wrong-state storage.
+
+## Known state
+- `not_started` queue (OH+KY) draining ~40/batch; held rows are legitimately unincorporated/ambiguous — **do not force**.
+- Persistent infra gaps (sandbox egress): Franklin, Greene, Montgomery county domains Cloudflare-blocked from sandbox; Franklin fetches fine locally. Recorded as gaps, not data errors.
+- Bridge write timeouts continue; all writes re-read and verified.
+
+## Repair error disclosed (must document)
+`repair-wrongstate.ts` used hand-copied profile IDs that were shifted: Blaine OH (honest no-source profile) was wrongly cleared — summary unrecoverable, annotated in notes; Westville was temporarily retyped to Lykens' township identity before being restored to village/Champaign County/held. All 8 affected profiles verified into correct end states by a name-keyed correction pass. Lesson: never hand-copy entity IDs into repair scripts — key by name with guard asserts.
+
+## Next chunk options
+1. Triage remaining 152 identity holds by class: unincorporated/no-candidate (~majority), city+township ambiguous pairs (Canton, Belpre, Hubbard, Perrysburg, Warren, Paris, Freedom, Shelby OH), metro governments (Louisville, Lexington KY) — policy decision needed on which entity queue rows intend.
+2. Manual verification for the 7 held profiles (wrong-state or recurrence holds).
+3. ~66 other-blocked rows (prior blocks, `page_fetch_failed`, unincorporated) — review queue.
+4. Then Milestone 3: statewide completeness review with the now-complete inventory.
+
+---
+
 # Identity holds, URL repairs and sentinel-cleanup plan (2026-10-26b)
 
 - Reversible identity holds (conditional writes, no deletion): Perryopolis OH profile is entirely PA data (parent county Fayette PA, PA borough URLs, PA ai_summary; no official OH candidate) -> auto_refresh=false + _source_identity_hold, queue row blocked. Medina County OH profile stores City-of-Medina url+summary while a separate correct city profile exists -> same hold, queue row blocked.
