@@ -21,6 +21,14 @@ const setLiteral = (source, name) => {
 const processTriggersEntry = read("base44/functions/processWorkflowTriggers/entry.ts");
 const opportunityWorkspace = read("base44/functions/opportunityWorkspaceAction/entry.ts");
 const timeClockAction = read("base44/functions/timeClockAction/entry.ts");
+const detectSalesDuplicates = read("base44/functions/detectSalesDuplicates/entry.ts");
+const manageFeatureReports = read("base44/functions/manageFeatureReports/entry.ts");
+const onboardingAccountAction = read("base44/functions/onboardingAccountAction/entry.ts");
+const issuePasswordReset = read("base44/functions/issuePasswordReset/entry.ts");
+const monitorJurisdictionChanges = read("base44/functions/monitorJurisdictionChanges/entry.ts");
+const jurisdictionPersistence = read("src/components/permitting/jurisdictionPersistence.js");
+const faceEnrollmentDialog = read("src/components/timeclock/FaceEnrollmentDialog.jsx");
+const userManagement = read("src/components/admin/UserManagement.jsx");
 
 test("live trigger sets match real emitters", () => {
   const engine = setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET");
@@ -30,9 +38,14 @@ test("live trigger sets match real emitters", () => {
   const sales = setLiteral(adminSettings, "SALES_TRIGGER_SET");
   const salesDeadline = setLiteral(adminSettings, "SALES_DEADLINE_TRIGGER_SET");
   const timeClock = setLiteral(adminSettings, "TIME_CLOCK_TRIGGER_SET");
+  const pendingImport = setLiteral(adminSettings, "PENDING_IMPORT_TRIGGER_SET");
+  const featureReport = setLiteral(adminSettings, "FEATURE_REPORT_TRIGGER_SET");
+  const users = setLiteral(adminSettings, "USER_TRIGGER_SET");
+  const jurisdiction = setLiteral(adminSettings, "JURISDICTION_TRIGGER_SET");
 
   // No overlap between the execution paths.
-  const all = [...engine, ...order, ...deadline, ...orderDeadline, ...sales, ...salesDeadline, ...timeClock];
+  const all = [...engine, ...order, ...deadline, ...orderDeadline, ...sales, ...salesDeadline, ...timeClock,
+    ...pendingImport, ...featureReport, ...users, ...jurisdiction];
   assert.equal(new Set(all).size, all.length, "trigger sets must not overlap");
 
   // Every client-emitted engine/order trigger must actually be emitted by
@@ -89,10 +102,15 @@ test("live trigger sets match real emitters", () => {
   const timeClockEntities = {
     time_clock_in: 'TimeEntry',
     time_clock_out: 'TimeEntry',
+    time_clock_in_late: 'TimeEntry',
+    time_clock_out_early: 'TimeEntry',
+    time_entry_long_shift: 'TimeEntry',
+    time_entry_no_clock_out: 'TimeEntry',
     time_entry_notes_updated: 'TimeEntry',
     time_off_requested: 'TimeOffRequest',
     time_off_updated: 'TimeOffRequest',
     job_allocation_added: 'TimeClockLaborSegment',
+    pto_balance_low: 'UserPTOBalance',
   };
   for (const t of timeClock) {
     assert.ok(
@@ -102,6 +120,41 @@ test("live trigger sets match real emitters", () => {
     assert.ok(
       workflowEngine.includes(`${t}: '${timeClockEntities[t]}'`),
       `"${t}" is advertised as live but the engine maps no record context for it`
+    );
+    assert.ok(
+      processTriggersEntry.includes(`'${t}'`),
+      `"${t}" is advertised as live but processWorkflowTriggers rejects it`
+    );
+  }
+
+  // Remaining record-context domains — every advertised trigger must appear
+  // in a real emitter, the engine's record map, and the endpoint allowlist.
+  const recordEmitters = {
+    pending_import_created: { files: [detectSalesDuplicates], entity: 'PendingImport' },
+    duplicate_detected: { files: [detectSalesDuplicates], entity: 'PendingImport' },
+    feature_report_submitted: { files: [manageFeatureReports], entity: 'FeatureReport' },
+    feature_report_status_changed: { files: [manageFeatureReports], entity: 'FeatureReport' },
+    feature_report_completed: { files: [manageFeatureReports], entity: 'FeatureReport' },
+    user_registered: { files: [onboardingAccountAction], entity: 'AuthorizedEmail' },
+    user_password_reset: { files: [issuePasswordReset], entity: 'AuthorizedEmail' },
+    user_face_enrolled: { files: [faceEnrollmentDialog], entity: 'AuthorizedEmail' },
+    user_role_changed: { files: [userManagement], entity: 'AuthorizedEmail' },
+    jurisdiction_profile_created: { files: [jurisdictionPersistence], entity: 'JurisdictionProfile' },
+    jurisdiction_profile_updated: { files: [jurisdictionPersistence, monitorJurisdictionChanges], entity: 'JurisdictionProfile' },
+    regulation_alert_created: { files: [monitorJurisdictionChanges], entity: 'RegulationAlert' },
+  };
+  for (const [t, spec] of Object.entries(recordEmitters)) {
+    const advertised = [...pendingImport, ...featureReport, ...users, ...jurisdiction].includes(t);
+    assert.ok(advertised, `"${t}" has an emitter but is not in any live trigger set`);
+    for (const file of spec.files) {
+      assert.ok(
+        file.includes(`'${t}'`) || file.includes(`"${t}"`),
+        `"${t}" is advertised as live but a declared emitter file never emits it`
+      );
+    }
+    assert.ok(
+      workflowEngine.includes(`${t}: '${spec.entity}'`),
+      `"${t}" is advertised as live but the engine maps no ${spec.entity} record context for it`
     );
     assert.ok(
       processTriggersEntry.includes(`'${t}'`),
@@ -191,6 +244,10 @@ test("every advertised trigger resolves to a status", () => {
     ...setLiteral(adminSettings, "SALES_TRIGGER_SET"),
     ...setLiteral(adminSettings, "SALES_DEADLINE_TRIGGER_SET"),
     ...setLiteral(adminSettings, "TIME_CLOCK_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "PENDING_IMPORT_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "FEATURE_REPORT_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "USER_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "JURISDICTION_TRIGGER_SET"),
   ]);
   for (const v of values) {
     assert.ok(typeof v === "string" && v.length > 0, "trigger values must be non-empty strings");
