@@ -35,8 +35,8 @@ vm.runInNewContext(compiled, {
       calls.push({ payload, resolve, reject });
     }) } } },
     '@/components/auth/EmailGate': { useAuth: () => authSession },
-    '@/components/timeclock/WorkPauseMenu': ({ open, onToggle, onClose }) =>
-      open ? React.createElement('button', { 'data-menu-toggle': true, onClick: () => { const r = onToggle(); if (onClose) onClose(); return r; } }) : null,
+    '@/components/timeclock/WorkPauseMenu': ({ onToggle, onClose }) =>
+      React.createElement('wpm-toggle', { onClick: () => { const r = onToggle(); if (onClose) onClose(); return r; } }),
     '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => React.useMemo(() => ({
       version: 0,
       refresh: (() => {
@@ -126,9 +126,9 @@ await act(async () => { calls[3].resolve({ data: {
   status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
 } }); });
 let pendingOldAction;
-await act(async () => { (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })(); });
+await act(async () => { (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })(); });
 await act(async () => {
-  pendingOldAction = renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick();
+  pendingOldAction = renderer.root.findByType('wpm-toggle').props.onClick();
 });
 assert.equal(calls.length, 5);
 assert.equal(calls[4].payload.action, 'work_pause_start');
@@ -172,9 +172,9 @@ await act(async () => { calls[6].resolve({ data: {
   status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
 } }); });
 let pendingOldSuccess;
-await act(async () => { (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })(); });
+await act(async () => { (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })(); });
 await act(async () => {
-  pendingOldSuccess = renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick();
+  pendingOldSuccess = renderer.root.findByType('wpm-toggle').props.onClick();
 });
 assert.equal(calls.length, 8);
 assert.equal(calls[7].payload.action, 'work_pause_start');
@@ -236,7 +236,7 @@ await act(async () => { calls[11].resolve({ data: {
 assert.match(JSON.stringify(renderer.toJSON()), /Pause Work/);
 let pendingCurrentAction;
 await act(async () => {
-  pendingCurrentAction = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })();
+  pendingCurrentAction = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })();
 });
 assert.equal(calls.length, 13);
 assert.equal(calls[12].payload.action, 'work_pause_start');
@@ -261,7 +261,7 @@ assert.match(JSON.stringify(renderer.toJSON()), /Resume Work/);
 console.log('PASS confirmed action triggers one status refresh');
 let pendingMismatchedAck;
 await act(async () => {
-  pendingMismatchedAck = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })();
+  pendingMismatchedAck = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })();
 });
 assert.equal(calls.length, 15);
 assert.equal(calls[14].payload.action, 'work_pause_resume');
@@ -298,7 +298,7 @@ assert.equal(storage.has('ccs_timeclock_request:work_pause_resume:second@synthet
   'A signed-employee status response should clear the recovered Work Pause request ID');
 let pendingMismatchedStart;
 await act(async () => {
-  pendingMismatchedStart = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })();
+  pendingMismatchedStart = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })();
 });
 assert.equal(calls.length, 17);
 assert.equal(calls[16].payload.action, 'work_pause_start');
@@ -344,7 +344,7 @@ await act(async () => { calls[18].resolve({ data: {
 assert.equal(renderer.root.findByType('button').props.disabled, false);
 failStorageWrites = true;
 let storageBlockedAction;
-await act(async () => { storageBlockedAction = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })(); });
+await act(async () => { storageBlockedAction = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })(); });
 assert.equal(calls.length, 19,
   'Work Pause must not be sent when the exact request ID cannot be safely retained in session storage');
 await storageBlockedAction;
@@ -362,7 +362,7 @@ await act(async () => { calls[19].resolve({ data: {
   status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
 } }); });
 let pendingSupersededStart;
-await act(async () => { pendingSupersededStart = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick(); })(); });
+await act(async () => { pendingSupersededStart = (() => { renderer.root.findByType('button').props.onClick(); return renderer.root.findByType('wpm-toggle').props.onClick(); })(); });
 assert.equal(calls.length, 21);
 assert.equal(calls[20].payload.action, 'work_pause_start');
 const staleActionRequestId = calls[20].payload.request_id;
