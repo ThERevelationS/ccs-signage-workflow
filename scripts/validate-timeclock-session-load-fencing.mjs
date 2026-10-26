@@ -276,4 +276,4 @@ for (const scenario of [sessionSwitchScenario, overlappingLoadsScenario, contrac
   results.push(await scenario());
 }
 for (const label of results) console.log(`PASS ${label}`);
-console.log(`Time Clock session-load fencing: ${results.length}/${results.length} scenarios pass`);
+console.log(`PASS ${results.length}/${results.length} Time Clock session-load fencing scenarios`);
