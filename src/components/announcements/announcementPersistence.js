@@ -15,6 +15,16 @@ async function invokeAnnouncement(payload) {
   }
 }
 
+export async function fetchActiveAnnouncementFeed() {
+  const result = await invokeAnnouncement({ action: "active_feed" });
+  return Array.isArray(result?.announcements) ? result.announcements : [];
+}
+
+export async function acknowledgeAnnouncement({ id, viewerKey } = {}) {
+  if (!id || !viewerKey) return null;
+  return invokeAnnouncement({ action: "acknowledge", id, viewer_key: viewerKey });
+}
+
 export async function createAnnouncementWithRecovery({ data, sessionToken, label = "Announcement" } = {}) {
   const result = await invokeAnnouncement({
     action: "create",

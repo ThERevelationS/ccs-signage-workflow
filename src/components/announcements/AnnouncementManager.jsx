@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Megaphone, Save, Send, Trash2, Volume2, ImageIcon, Users, Monitor,
-  Plus, X, RefreshCw, Loader2, ChevronDown, ChevronUp, Music
+  Plus, X, RefreshCw, Loader2, ChevronDown, ChevronUp, Music,
+  Repeat2, Eye, Info, AlertTriangle, Zap, CalendarClock, Sparkles
 } from "lucide-react";
 import { playSoundEffect } from "./AnnouncementContext";
 import {
@@ -54,6 +55,76 @@ const PRIORITY_OPTIONS = [
   { value: "urgent", label: "Urgent", color: "#FCA5A5" },
 ];
 
+const PAGE_GROUPS = [
+  { label: "All pages", all: true },
+  { label: "Kiosk", pages: ["TimeClock", "customerportal"] },
+  { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "WorkOrderCalendar", "MondayMorningMeeting"] },
+  { label: "Sales", pages: ["SalesPipeline", "Estimating", "OrderForm", "Permitting"] },
+  { label: "Admin", pages: ["Financials", "SIPs", "Design", "Production", "Fabrication", "InstallationDeliver"] },
+];
+
+const ANNOUNCEMENT_TEMPLATES = [
+  { label: "Meeting in 5", fields: { title: "Meeting in 5 minutes", message: "Please gather in the main area — meeting starts in 5 minutes.", priority: "normal", sound_type: "chime", duration_seconds: 20, expires_choice: "30m", display_mode: "repeat", repeat_interval_minutes: 5 } },
+  { label: "Lunch break", fields: { title: "Lunch break", message: "Lunch starts now. See you back in 30!", priority: "low", sound_type: "ding", duration_seconds: 15, expires_choice: "1h", display_mode: "once" } },
+  { label: "Safety reminder", fields: { title: "Safety reminder", message: "Reminder: wear your PPE and keep work areas clear.", priority: "high", sound_type: "alert", duration_seconds: 0, requires_ack: true, expires_choice: "4h", display_mode: "once" } },
+  { label: "Shop closed", fields: { title: "Shop closed", message: "The shop is closed today. See you next shift.", priority: "urgent", sound_type: "fanfare", duration_seconds: 0, expires_choice: "eod", display_mode: "once" } },
+  { label: "Birthday", fields: { title: "Happy Birthday!", message: "Join us in wishing a happy birthday today!", priority: "low", sound_type: "fanfare", duration_seconds: 15, expires_choice: "eod", display_mode: "once" } },
+];
+
+const PREVIEW_STYLES = {
+  low:    { gradient: "linear-gradient(135deg, #E0F2FE, #BAE6FD)", iconBg: "linear-gradient(135deg, #0EA5E9, #0284C7)", text: "#0C4A6E", sub: "#075985", accent: "#38BDF8", Icon: Info },
+  normal: { gradient: "linear-gradient(135deg, #FFF7ED, #FDE68A)", iconBg: "linear-gradient(135deg, #F59E0B, #D97706)", text: "#78350F", sub: "#92400E", accent: "#FBBF24", Icon: Megaphone },
+  high:   { gradient: "linear-gradient(135deg, #FFF7ED, #FDBA74)", iconBg: "linear-gradient(135deg, #F97316, #EA580C)", text: "#7C2D12", sub: "#9A3412", accent: "#FB923C", Icon: AlertTriangle },
+  urgent: { gradient: "linear-gradient(135deg, #FEF2F2, #FCA5A5)", iconBg: "linear-gradient(135deg, #EF4444, #DC2626)", text: "#7F1D1D", sub: "#991B1B", accent: "#F87171", Icon: Zap },
+};
+
+function toLocalInput(iso) {
+  const ms = Date.parse(iso || "");
+  if (!Number.isFinite(ms)) return "";
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromLocalInput(value) {
+  const ms = Date.parse(value || "");
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : "";
+}
+
+function expiresAtFor(f) {
+  const now = Date.now();
+  switch (f?.expires_choice) {
+    case "15m": return new Date(now + 15 * 60000).toISOString();
+    case "30m": return new Date(now + 30 * 60000).toISOString();
+    case "1h":  return new Date(now + 3600000).toISOString();
+    case "4h":  return new Date(now + 4 * 3600000).toISOString();
+    case "eod": { const d = new Date(); d.setHours(23, 59, 59, 0); return d.toISOString(); }
+    case "custom": return fromLocalInput(f.expires_custom);
+    default: return "";
+  }
+}
+
+function announcementStatus(ann) {
+  const now = Date.now();
+  const sched = Date.parse(ann?.scheduled_for || "");
+  const exp = Date.parse(ann?.expires_at || "");
+  if (ann?.is_active === true) {
+    if (Number.isFinite(sched) && sched > now) return "Scheduled";
+    if (Number.isFinite(exp) && exp <= now) return "Expired";
+    return "Live";
+  }
+  if (ann?.sent_at) return Number.isFinite(exp) && exp <= now ? "Expired" : "Stopped";
+  return "Draft";
+}
+
+const STATUS_BADGE = {
+  Live: "bg-green-100 text-green-700",
+  Scheduled: "bg-blue-100 text-blue-700",
+  Expired: "bg-gray-100 text-gray-500",
+  Stopped: "bg-amber-100 text-amber-700",
+  Draft: "bg-slate-100 text-slate-500",
+};
+
 const defaultForm = {
   name: "",
   title: "",
@@ -65,6 +136,12 @@ const defaultForm = {
   target_users: [],
   duration_seconds: 10,
   priority: "normal",
+  expires_choice: "",
+  expires_custom: "",
+  scheduled_at: "",
+  display_mode: "once",
+  repeat_interval_minutes: 30,
+  requires_ack: false,
 };
 
 export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
@@ -119,6 +196,19 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
 
   const handleField = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
+  const applyTemplate = (tpl) => setForm(f => ({ ...f, ...tpl.fields }));
+
+  const applyPageGroup = (group) => setForm(f => ({
+    ...f,
+    display_pages: group.all ? [] : [...new Set(group.pages)],
+  }));
+
+  const payloadForm = () => ({
+    ...form,
+    expires_at: expiresAtFor(form),
+    scheduled_for: fromLocalInput(form.scheduled_at),
+  });
+
   const togglePage = (page) => {
     setForm(f => ({
       ...f,
@@ -171,13 +261,13 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
     if (loadedRecord) {
       return updateAnnouncementIfUnchanged({
         record: loadedRecord,
-        nextFields: { ...form },
+        nextFields: payloadForm(),
         sessionToken,
         label: `Announcement ${loadedRecord.name || loadedRecord.title || loadedRecord.id}`,
       });
     }
     const created = await createAnnouncementWithRecovery({
-      data: { ...form, is_active: false },
+      data: { ...payloadForm(), is_active: false },
       sessionToken,
       label: `Announcement ${form.name || form.title}`,
     });
@@ -214,9 +304,13 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
       if (editingId && !loadedRecord) {
         throw new Error("The announcement being broadcast is no longer in the loaded list. Reload before broadcasting.");
       }
+      const expiresAt = expiresAtFor(form);
+      if (!expiresAt) {
+        throw new Error("Choose when this announcement should stop broadcasting before sending.");
+      }
       const result = await publishAnnouncementSafely({
         loadedRecord,
-        form: { ...form },
+        form: payloadForm(),
         sessionToken,
         label: `Announcement broadcast ${form.name || form.title}`,
       });
@@ -270,6 +364,12 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
       target_users: ann.target_users || [],
       duration_seconds: ann.duration_seconds ?? 10,
       priority: ann.priority || "normal",
+      expires_choice: ann.expires_at ? "custom" : "",
+      expires_custom: toLocalInput(ann.expires_at),
+      scheduled_at: toLocalInput(ann.scheduled_for),
+      display_mode: ann.display_mode === "repeat" ? "repeat" : "once",
+      repeat_interval_minutes: ann.repeat_interval_minutes ?? 30,
+      requires_ack: ann.requires_ack === true,
     });
     setEditingId(ann.id);
     setShowSavedList(false);
@@ -280,6 +380,9 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
     setForm(defaultForm);
     setEditingId(null);
   };
+
+  const previewStyle = PREVIEW_STYLES[form.priority] || PREVIEW_STYLES.normal;
+  const PreviewIcon = previewStyle.Icon;
 
   const handleDelete = async (announcement) => {
     if (!announcement?.id || saving || sending) return;
@@ -385,7 +488,10 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
                     <p className="text-xs font-semibold text-gray-800 truncate">{ann.name || ann.title}</p>
                     <p className="text-xs text-gray-500 truncate">{ann.title}</p>
                   </div>
-                  {ann.is_active && <Badge className="text-[10px] bg-green-100 text-green-700 px-1">Live</Badge>}
+                  {(() => {
+                    const status = announcementStatus(ann);
+                    return <Badge className={`text-[10px] px-1 ${STATUS_BADGE[status] || STATUS_BADGE.Draft}`}>{status}</Badge>;
+                  })()}
                   <Button
                     variant="ghost" size="icon"
                     className="h-6 w-6 flex-shrink-0"
@@ -397,6 +503,53 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
               ))}
             </div>
           )}
+
+          {/* Templates */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />Templates
+            </span>
+            {ANNOUNCEMENT_TEMPLATES.map(tpl => (
+              <button
+                key={tpl.label}
+                onClick={() => applyTemplate(tpl)}
+                className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:text-red-700 transition-colors"
+              >
+                {tpl.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Live preview */}
+          <div>
+            <Label className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 flex items-center gap-1 mb-1.5">
+              <Eye className="w-3 h-3" />Preview
+            </Label>
+            <div className="rounded-2xl overflow-hidden shadow-md border" style={{ background: previewStyle.gradient }}>
+              <div className="h-1" style={{ background: previewStyle.accent }} />
+              <div className="p-3.5 flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow flex-shrink-0" style={{ background: previewStyle.iconBg }}>
+                  <PreviewIcon className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-sm leading-tight truncate" style={{ color: previewStyle.text }}>{form.title || "Announcement title"}</p>
+                  <p className="text-xs mt-1 leading-relaxed whitespace-pre-wrap" style={{ color: previewStyle.sub }}>{form.message || "Your message will appear here…"}</p>
+                  {form.image_url && <img src={form.image_url} alt="" className="mt-2 h-14 rounded-lg object-cover shadow" />}
+                </div>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.4)" }}>
+                  <X className="w-3.5 h-3.5" style={{ color: previewStyle.text }} />
+                </div>
+              </div>
+              {form.duration_seconds > 0 && !form.requires_ack && (
+                <div className="h-1" style={{ background: `${previewStyle.accent}66` }} />
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">
+              {expiresAtFor(form) ? `Stops ${new Date(expiresAtFor(form)).toLocaleString()}` : "Pick a stop-showing time to broadcast"}
+              {" · "}{form.display_mode === "repeat" ? `repeats every ${form.repeat_interval_minutes}m while live` : "shows once per viewer"}
+              {form.requires_ack ? " · requires acknowledgement" : ""}
+            </p>
+          </div>
 
           {/* Name (save label) */}
           <div>
@@ -536,12 +689,105 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             )}
           </div>
 
+          {/* Delivery window */}
+          <div className="clay-card p-3 space-y-3">
+            <Label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
+              <CalendarClock className="w-3 h-3" /> Delivery
+            </Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] text-gray-500">Start showing</Label>
+                <Input
+                  type="datetime-local"
+                  value={form.scheduled_at}
+                  onChange={e => handleField("scheduled_at", e.target.value)}
+                  className="mt-1 h-8 text-sm"
+                />
+                <p className="text-[10px] text-gray-400 mt-0.5">Empty = immediately on send</p>
+              </div>
+              <div>
+                <Label className="text-[11px] text-gray-500">Stop showing *</Label>
+                <Select value={form.expires_choice} onValueChange={v => handleField("expires_choice", v)}>
+                  <SelectTrigger className="mt-1 h-8 text-xs">
+                    <SelectValue placeholder="Choose…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15m">15 minutes</SelectItem>
+                    <SelectItem value="30m">30 minutes</SelectItem>
+                    <SelectItem value="1h">1 hour</SelectItem>
+                    <SelectItem value="4h">4 hours</SelectItem>
+                    <SelectItem value="eod">End of day</SelectItem>
+                    <SelectItem value="custom">Custom…</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {form.expires_choice === "custom" && (
+              <Input
+                type="datetime-local"
+                value={form.expires_custom}
+                onChange={e => handleField("expires_custom", e.target.value)}
+                className="h-8 text-sm"
+              />
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] text-gray-500 flex items-center gap-1">
+                  <Repeat2 className="w-3 h-3" /> While live, show
+                </Label>
+                <Select value={form.display_mode} onValueChange={v => handleField("display_mode", v)}>
+                  <SelectTrigger className="mt-1 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="once">Once per viewer</SelectItem>
+                    <SelectItem value="repeat">Repeat while live</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.display_mode === "repeat" && (
+                <div>
+                  <Label className="text-[11px] text-gray-500">Every (minutes)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={form.repeat_interval_minutes}
+                    onChange={e => handleField("repeat_interval_minutes", parseInt(e.target.value) || 30)}
+                    className="mt-1 h-8 text-sm"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="ann-ack"
+                checked={form.requires_ack}
+                onCheckedChange={v => handleField("requires_ack", v === true)}
+              />
+              <label htmlFor="ann-ack" className="text-xs text-gray-700 cursor-pointer">
+                Require viewers to press "Got it" (tracked per viewer)
+              </label>
+            </div>
+          </div>
+
           {/* Pages */}
           <div className="clay-card p-3">
             <Label className="text-xs font-semibold text-gray-600 flex items-center gap-1 mb-2">
               <Monitor className="w-3 h-3" /> Display on Pages
               <span className="text-gray-400 font-normal ml-1">(empty = all pages)</span>
             </Label>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {PAGE_GROUPS.map(group => (
+                <button
+                  key={group.label}
+                  onClick={() => applyPageGroup(group)}
+                  className="px-2 py-1 text-[10px] rounded-md border border-dashed border-gray-300 text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
+                >
+                  {group.label}
+                </button>
+              ))}
+            </div>
             <div className="flex flex-wrap gap-1">
               {ALL_PAGES.map(page => (
                 <button
@@ -626,7 +872,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
               className="h-9 rounded-xl text-xs font-bold shadow-sm transition-all hover:shadow-md hover:scale-[1.02]"
               style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: 'white', border: '1px solid #EF4444' }}
               onClick={handleSend}
-              disabled={sending || !form.title || !form.message}
+              disabled={sending || !form.title || !form.message || !expiresAtFor(form)}
             >
               {sending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
               Broadcast

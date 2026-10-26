@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchActiveAnnouncementFeed, acknowledgeAnnouncement } from "./announcementPersistence";
 import { usePolling } from "@/lib/usePolling";
 
 const AnnouncementContext = createContext(null);
@@ -62,6 +63,31 @@ export const playSoundEffect = (soundType, customUrl = null) => {
   }
 };
 
+const DEVICE_KEY_STORAGE = "ccs_announcement_viewer";
+
+function deviceViewerKey() {
+  try {
+    let key = localStorage.getItem(DEVICE_KEY_STORAGE);
+    if (!key) {
+      key = `device:${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+      localStorage.setItem(DEVICE_KEY_STORAGE, key);
+    }
+    return key;
+  } catch {
+    return `device:${Date.now()}`;
+  }
+}
+
+const seenStorageKey = (ann) => `ccs_ann_seen:${ann?.id || ""}:${ann?.sent_at || ""}`;
+const shownStorageKey = (ann) => `ccs_ann_shown:${ann?.id || ""}:${ann?.sent_at || ""}`;
+
+function storageGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function storageSet(key, value) {
+  try { localStorage.setItem(key, value); } catch {}
+}
+
 export function AnnouncementProvider({ children, currentPageName }) {
   const [allActive, setAllActive] = useState([]);
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
@@ -70,16 +96,35 @@ export function AnnouncementProvider({ children, currentPageName }) {
   const lastSeenIdRef = useRef(null);
   const timerRef = useRef(null);
   const subscribeDebounceRef = useRef(null);
+  const deviceKeyRef = useRef(null);
+  if (!deviceKeyRef.current) deviceKeyRef.current = deviceViewerKey();
+  const viewerKey = currentUser?.email
+    ? `user:${String(currentUser.email).toLowerCase()}`
+    : deviceKeyRef.current;
 
   const fetchActive = useCallback(async () => {
     try {
-      const all = await loadAllEntityRows({
-        entity: base44.entities.Announcement,
-        query: { is_active: true },
-        sort: null,
-        label: "Active announcements",
-      });
-      setAllActive(all || []);
+      let rows;
+      try {
+        rows = await fetchActiveAnnouncementFeed();
+      } catch {
+        rows = await loadAllEntityRows({
+          entity: base44.entities.Announcement,
+          query: { is_active: true },
+          sort: null,
+          label: "Active announcements",
+        });
+      }
+      // Scheduled/expired broadcasts never reach the banner even if the
+      // server feed path is unavailable and stale rows linger in storage.
+      const now = Date.now();
+      setAllActive((rows || []).filter((ann) => {
+        const exp = Date.parse(ann?.expires_at || "");
+        if (Number.isFinite(exp) && exp <= now) return false;
+        const sched = Date.parse(ann?.scheduled_for || "");
+        if (Number.isFinite(sched) && sched > now) return false;
+        return true;
+      }));
     } catch {}
   }, []);
 
@@ -125,20 +170,41 @@ export function AnnouncementProvider({ children, currentPageName }) {
       const sorted = applicable.sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0));
       const ann = sorted[0];
 
-      // If it's a new announcement, show it and play sound
-      if (ann.id !== lastSeenIdRef.current) {
-        lastSeenIdRef.current = ann.id;
-        setDismissed(false);
-        setActiveAnnouncement(ann);
-        playSoundEffect(ann.sound_type, ann.custom_sound_url);
+      const isRepeat = ann.display_mode === "repeat";
+      const seen = Boolean(storageGet(seenStorageKey(ann)));
+      const lastShown = Number(storageGet(shownStorageKey(ann)) || 0);
+      const intervalMin = Number(ann.repeat_interval_minutes) || 0;
 
-        // Auto-dismiss after duration
-        if (ann.duration_seconds > 0) {
-          if (timerRef.current) clearTimeout(timerRef.current);
-          timerRef.current = setTimeout(() => {
-            setDismissed(true);
-          }, ann.duration_seconds * 1000);
-        }
+      let shouldShow;
+      if (seen && !isRepeat) {
+        // Acknowledged/dismissed once-mode announcements never re-show,
+        // even days later or after remounting the app.
+        shouldShow = false;
+      } else if (isRepeat && intervalMin > 0) {
+        shouldShow = !lastShown || Date.now() - lastShown >= intervalMin * 60_000;
+      } else {
+        // interval 0 / default: once per mounted session.
+        shouldShow = ann.id !== lastSeenIdRef.current;
+      }
+
+      if (!shouldShow) {
+        setActiveAnnouncement(null);
+        return;
+      }
+
+      lastSeenIdRef.current = ann.id;
+      storageSet(shownStorageKey(ann), String(Date.now()));
+      setDismissed(false);
+      setActiveAnnouncement(ann);
+      playSoundEffect(ann.sound_type, ann.custom_sound_url);
+
+      // Auto-dismiss after duration (ack-required banners wait for the button).
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (!ann.requires_ack && ann.duration_seconds > 0) {
+        timerRef.current = setTimeout(() => {
+          storageSet(seenStorageKey(ann), "1");
+          setDismissed(true);
+        }, ann.duration_seconds * 1000);
       }
     };
 
@@ -149,12 +215,24 @@ export function AnnouncementProvider({ children, currentPageName }) {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
 
-  const dismiss = () => setDismissed(true);
+  const dismiss = () => {
+    if (activeAnnouncement?.id) storageSet(seenStorageKey(activeAnnouncement), "1");
+    setDismissed(true);
+  };
+
+  const acknowledge = () => {
+    const ann = activeAnnouncement;
+    if (ann?.id) {
+      storageSet(seenStorageKey(ann), "1");
+      acknowledgeAnnouncement({ id: ann.id, viewerKey }).catch(() => {});
+    }
+    setDismissed(true);
+  };
 
   const visibleAnnouncement = activeAnnouncement && !dismissed ? activeAnnouncement : null;
 
   return (
-    <AnnouncementContext.Provider value={{ activeAnnouncement: visibleAnnouncement, dismiss }}>
+    <AnnouncementContext.Provider value={{ activeAnnouncement: visibleAnnouncement, dismiss, acknowledge }}>
       {children}
     </AnnouncementContext.Provider>
   );
