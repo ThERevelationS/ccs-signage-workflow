@@ -106,7 +106,7 @@ const anchorFocusedRow = (el) => {
     const r = el.getBoundingClientRect();
     const drift = r.top + r.height / 2 - beforeCenter;
     if (Math.abs(drift) > 0.5) target.scrollTop += drift;
-    if (performance.now() - start < 450) requestAnimationFrame(tick);
+    if (performance.now() - start < 220) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
   setTimeout(() => {
@@ -114,7 +114,7 @@ const anchorFocusedRow = (el) => {
     const r = el.getBoundingClientRect();
     const drift = r.top + r.height / 2 - beforeCenter;
     if (Math.abs(drift) > 0.5) target.scrollTop += drift;
-  }, 500);
+  }, 240);
 };
 
 export default function SIPs() {
