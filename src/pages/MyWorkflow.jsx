@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList } from "lucide-react";
+import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -124,14 +122,31 @@ export default function MyWorkflow() {
       ]);
 
       const userName = currentUser?.full_name || currentUser?.email;
-      
+      const userEmail = (currentUser?.email || "").toLowerCase();
+      const userFirstName = String(userName || "").split(" ")[0];
+
       const isAssignedTo = (assignedTo) => {
         const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
         return arr.includes(userName);
       };
 
-      // Find work orders where user has tasks assigned to them (in notes array OR sip_checklist)
+      // A job assigned to a person is treated like a task: the job-level
+      // assignee (email) and the current-task assignee (Smartsheet name) both
+      // place the work order on My Workflow.
+      const isJobAssignedToMe = (wo) => {
+        const jobAssignee = String(wo.assigned_to || "").trim().toLowerCase();
+        const taskAssignee = String(wo.current_task_assigned_to || "").trim();
+        return (userEmail !== "" && jobAssignee === userEmail)
+          || (jobAssignee !== "" && (jobAssignee === userName.toLowerCase() || jobAssignee === userFirstName.toLowerCase()))
+          || taskAssignee === userName
+          || (userFirstName !== "" && taskAssignee === userFirstName);
+      };
+
+      // Find work orders assigned to the user or where user has tasks assigned
+      // to them (in notes array OR sip_checklist)
       const myOrders = allOrders.filter(wo => {
+        if (isJobAssignedToMe(wo)) return true;
+
         // Check notes array (traditional tasks)
         const hasAssignedTask = (wo.notes || []).some(task => isAssignedTo(task.assigned_to) && !task.completed);
         if (hasAssignedTask) return true;
@@ -455,8 +470,24 @@ export default function MyWorkflow() {
 
   const getMyTasksForWorkOrder = (wo) => {
     const userName = currentUser?.full_name || currentUser?.email;
+    const userEmail = (currentUser?.email || "").toLowerCase();
+    const userFirstName = String(userName || "").split(" ")[0];
     const myTasks = [];
-    
+
+    // A job assigned to the user counts like a task of its own.
+    if (!wo._isGeneral) {
+      const jobAssignee = String(wo.assigned_to || "").trim().toLowerCase();
+      const taskAssignee = String(wo.current_task_assigned_to || "").trim();
+      if (
+        (userEmail !== "" && jobAssignee === userEmail)
+        || (jobAssignee !== "" && (jobAssignee === userName.toLowerCase() || jobAssignee === userFirstName.toLowerCase()))
+        || taskAssignee === userName
+        || (userFirstName !== "" && taskAssignee === userFirstName)
+      ) {
+        myTasks.push({ type: 'job_assignment', workOrderId: wo.id });
+      }
+    }
+
     // Check traditional notes array
     (wo.notes || []).forEach((task, taskIndex) => {
       // Skip completed tasks
@@ -516,12 +547,8 @@ export default function MyWorkflow() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="mb-6 space-y-2">
-          <Skeleton className="h-8 w-56" />
-          <Skeleton className="h-4 w-80" />
-        </div>
-        <ListSkeleton rows={8} />
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
     );
   }
@@ -644,6 +671,18 @@ export default function MyWorkflow() {
                           
                           return (
                             <div key={idx} className="group">
+                              {/* Job-level assignment: the job itself acts like a task */}
+                              {item.type === 'job_assignment' && (
+                                <button
+                                  onClick={() => setSelectedWorkOrder(wo)}
+                                  className="w-full flex items-center gap-1 p-1 rounded border bg-purple-50 border-purple-200 text-left hover:bg-purple-100"
+                                >
+                                  <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
+                                  <p className="text-xs font-medium text-purple-700 truncate">
+                                    Job assigned to you{wo.current_task_description ? ` — ${wo.current_task_description}` : ""}
+                                  </p>
+                                </button>
+                              )}
                               {/* Task with my subtasks/details - show parent as context */}
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
