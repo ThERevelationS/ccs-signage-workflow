@@ -66,6 +66,12 @@ Deno.serve(async (req) => {
     const siteSurveyRules = automations.filter(a =>
       a.triggers?.some(t => t.trigger_type === 'site_survey_approaching')
     );
+    const taskDeadlineRules = automations.filter(a =>
+      a.triggers?.some(t =>
+        t.trigger_type === 'task_due_date_approaching' ||
+        t.trigger_type === 'task_due_date_passed'
+      )
+    );
     const SALES_DEADLINE_TRIGGERS = [
       'sales_follow_up_date_approaching', 'sales_follow_up_date_passed',
       'sales_close_date_approaching',
@@ -99,6 +105,38 @@ Deno.serve(async (req) => {
     };
     
     for (const wo of workOrders) {
+      // Per-task due dates: each (rule, task, due date) is claimed on the
+      // WO's marker map so a task reminder fires exactly once.
+      if (taskDeadlineRules.length > 0 && Array.isArray(wo.notes)) {
+        for (const task of wo.notes) {
+          const taskDue = String(task?.due_date || '').trim();
+          if (!taskDue || task?.completed) continue;
+          const taskKey = String(task?.id ?? task?.text ?? '').slice(0, 80);
+          if (!taskKey) continue;
+          const taskTarget = new Date(taskDue + 'T23:59:59');
+          const daysUntilTask = Math.ceil((taskTarget - now) / (1000 * 60 * 60 * 24));
+          const taskCtx = { text: String(task?.text || ''), due_date: taskDue };
+          for (const rule of taskDeadlineRules) {
+            if (taskTarget < now) {
+              const trigger = rule.triggers?.find(t => t.trigger_type === 'task_due_date_passed');
+              if (!trigger) continue;
+              const claim = await claimDeadlineFire(base44, wo, `${rule.id}|task_due_date_passed|${taskKey}|${taskDue}`, today);
+              if (!claim.claimed) continue;
+              const actionResults = await executeRuleActions(base44, rule, wo, 'task_due_date_passed', taskCtx);
+              results.triggered_automations.push({ rule: rule.name, work_order: wo.title, task: taskCtx.text, trigger: 'task_due_date_passed', actions: actionResults });
+            } else if (daysUntilTask <= 7 && daysUntilTask > 0) {
+              const trigger = rule.triggers?.find(t => t.trigger_type === 'task_due_date_approaching');
+              if (!trigger) continue;
+              const condition = trigger.trigger_condition || {};
+              if (daysUntilTask > (condition.days_before_due || 7)) continue;
+              const claim = await claimDeadlineFire(base44, wo, `${rule.id}|task_due_date_approaching|${taskKey}|${taskDue}`, today);
+              if (!claim.claimed) continue;
+              const actionResults = await executeRuleActions(base44, rule, wo, 'task_due_date_approaching', taskCtx);
+              results.triggered_automations.push({ rule: rule.name, work_order: wo.title, task: taskCtx.text, trigger: 'task_due_date_approaching', days_until_due: daysUntilTask, actions: actionResults });
+            }
+          }
+        }
+      }
       if (!wo.due_date) continue;
       
       const dueDate = new Date(wo.due_date + 'T23:59:59');
@@ -347,16 +385,16 @@ async function claimDeadlineFire(base44, wo, key, today) {
   }
 }
 
-async function executeRuleActions(base44, rule, work_order, trigger_type) {
+async function executeRuleActions(base44, rule, work_order, trigger_type, taskCtx = null) {
   const results = [];
-  
+
   for (const action of rule.actions || []) {
     try {
       const config = action.action_config || {};
-      
+
       switch (action.action_type) {
         case 'send_email':
-          const emailResult = await sendDeadlineEmail(base44, config, work_order, trigger_type);
+          const emailResult = await sendDeadlineEmail(base44, config, work_order, trigger_type, taskCtx);
           results.push({ type: 'send_email', result: emailResult });
           break;
           
@@ -437,7 +475,7 @@ async function executeRuleActions(base44, rule, work_order, trigger_type) {
   return results;
 }
 
-async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
+async function sendDeadlineEmail(base44, config, work_order, trigger_type, taskCtx = null) {
   const recipients = [];
   
   for (const recipient of (config.recipients || [])) {
@@ -485,18 +523,19 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
   }
   
   const isInstall = trigger_type === 'work_order_install_date_passed' || trigger_type === 'work_order_install_date_approaching';
-  const isOverdue = trigger_type === 'due_date_passed' || trigger_type === 'work_order_install_date_passed';
-  const effectiveDate = isInstall ? work_order.project_install_date : work_order.due_date;
+  const isTask = taskCtx !== null;
+  const isOverdue = trigger_type === 'due_date_passed' || trigger_type === 'work_order_install_date_passed' || trigger_type === 'task_due_date_passed';
+  const effectiveDate = isTask ? taskCtx.due_date : isInstall ? work_order.project_install_date : work_order.due_date;
   const dueDate = new Date(effectiveDate);
   const now = new Date();
   const daysDiff = Math.ceil(Math.abs(dueDate - now) / (1000 * 60 * 60 * 24));
-  
-  let subject = config.subject || (isOverdue 
-    ? `⚠️ ${isInstall ? 'INSTALL DATE PASSED' : 'OVERDUE'}: ${work_order.title}` 
-    : `📅 ${isInstall ? 'Install Date Approaching' : 'Deadline Approaching'}: ${work_order.title}`);
-    
+
+  let subject = config.subject || (isOverdue
+    ? `⚠️ ${isTask ? 'TASK OVERDUE' : isInstall ? 'INSTALL DATE PASSED' : 'OVERDUE'}: ${isTask ? taskCtx.text : work_order.title}`
+    : `📅 ${isTask ? 'Task Due Approaching' : isInstall ? 'Install Date Approaching' : 'Deadline Approaching'}: ${isTask ? taskCtx.text : work_order.title}`);
+
   let body = config.body || '';
-  
+
   // Replace variables — HTML-escape all work-order-derived values to prevent
   // injected markup from rendering inside notification emails.
   const vars: Record<string, string> = {
@@ -506,6 +545,8 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
     '{{install_date}}': esc(work_order.project_install_date),
     '{{current_stage}}': esc(work_order.current_stage),
     '{{assigned_to}}': esc(work_order.assigned_to || 'Unassigned'),
+    '{{task_text}}': esc(taskCtx?.text),
+    '{{task_due_date}}': esc(taskCtx?.due_date),
     '{{days_overdue}}': isOverdue ? String(daysDiff) : '0',
     '{{days_until_due}}': !isOverdue ? String(daysDiff) : '0',
   };
