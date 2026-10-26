@@ -1,3 +1,15 @@
+# Blocked-row deep-dive — KY counties + Fairview (2026-10-26d)
+
+- **Fairview OH**: queue county corrected to Guernsey (real village on Belmont/Guernsey line, pop ~69); honest no-source finding stands.
+- **KY county "no source" rows — 22 upgraded via deep-hunt.** Pulaski Co: no zoning BUT commercial permits via county building inspector + official ordinances page (pulaskigov.com/ordinances). Pike Co: Pikeville-Pike-Elkhorn JOINT planning commission exists (pikevilleky.gov page) but NO enacted county zoning (KY PSC filings confirm). Perry Co: P&Z dept issues improvement-location permits for unincorporated areas (>2 mi from cities) but no P&Z page published — county site + DHBC roster attached. Taylor Co: no program, state inspections + septic only.
+- **Systematic source found: KY DHBC per-county building inspector rosters** (dhbc.ky.gov/Documents/<County> County.pdf) — verified HTTP 200 for all 20 remaining blocked KY counties; attached as permitting_url + manual_verified document on each county profile. These counties have no zoning — the DHBC roster IS the actionable permitting path (county inspector via Judge/Executive office).
+- **Carlisle County KY** had no profile (row blocked pre-creation) — created with DHBC source.
+- **WAF-blocked OH counties re-checked**: Franklin/Greene/Montgomery county domains now 403 even locally (Cloudflare tightened); profiles already carry correct urls + accurate summaries (Franklin requires sign zoning-compliance certificate; Greene+Montgomery correctly decentralized to townships/municipalities). Document extraction remains infra-blocked — recorded gap.
+- **KY SoS Land Office pattern established** for no-web-presence KY cities (web.sos.ky.gov/land/cities.aspx?CTR=<id>) — used for Jeffersonville; reusable for the 7 remaining honest-no-source KY cities (Bardwell, Brodhead, Adairville, Blackey, Benham, Burkesville, Brooksville) if deeper coverage wanted.
+- amlegal/municode probing from this environment returns 403 (WAF) — cannot verify those libraries; do not store unverified code-library urls.
+- **Pre-existing duplicate queue rows noted**: Webster County KY x2 (both sources_found) — legacy artifact, queue-dedup review.
+- Final queue: 1,606 sources_found / 171 blocked (123 identity holds + 5 wrong-state + 43 honest no-source) / 1 verified_current / 0 not_started. Remaining blocked is terminal-by-design.
+
 # Owner decisions applied — pairs, dupes, metros, Jeffersonville (2026-10-26c)
 
 - **6 same-county city/township pairs — owner: "research both entities."** Village-typed queue rows retyped to township (Belpre/Washington, Warren/Tuscarawas, Hubbard/Trumbull, Canton/Stark, Franklin/Portage, Perrysburg/Wood); city queue rows created for Belpre, Hubbard, Perrysburg (Franklin city row already existed). All 10 dispatched ok: Perrysburg city perrysburgoh.gov + Perrysburg Twp perrysburgtownship.us; Hubbard city + hubbardtwpohio.gov; Canton Twp cantontwp-oh.gov; Belpre city cityofbelpre.com. Warren + Canton cities were already sources_found.
