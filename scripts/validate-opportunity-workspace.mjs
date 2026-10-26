@@ -412,5 +412,13 @@ assert.match(oppPage3, /text\/opp-id/, 'board must support drag-drop stage moves
 assert.match(entry, /work_orders: \(Array\.isArray\(wos\)/, 'global search must include work orders');
 assert.match(palette, /work_orders/, 'command palette must surface work orders');
 assert.match(mainWorkflow, /\?wo=|get\("wo"\)/, 'main workflow must deep-link work orders');
+const coPage2 = readFileSync('src/pages/ChangeOrders.jsx', 'utf8');
+assert.match(coPage2, /SavedViews/, 'change orders must wire saved views');
+const stockPage = readFileSync('src/pages/Inventory.jsx', 'utf8');
+assert.match(stockPage, /SavedViews/, 'inventory must wire saved views');
+const sched = readFileSync('src/pages/ProductionSchedule.jsx', 'utf8');
+assert.match(sched, /buildWorkOrderSegments/, 'production schedule must reuse timeline segments');
+assert.match(sched, /useAllWorkOrders/, 'production schedule must use the work order cache');
+assert.match(appShell, /ProductionSchedule/, 'production schedule route must be registered');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
