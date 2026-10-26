@@ -66,6 +66,7 @@ import {
   updateAuthorizedUserHrAdmin,
 } from "@/components/admin/authorizedUserAdminPersistence";
 import { getDeletionImpactRetryState } from "@/components/admin/deletionImpactRetryCoordinator";
+import { triggerNotification } from "@/components/workflow/NotificationService";
 
 export default function UserManagement() {
   const { sessionToken } = useAuth();
@@ -836,6 +837,12 @@ export default function UserManagement() {
       }
 
       verifiedAccountReceipt = true;
+      if (accountWriteSent && savedUser.role !== record.role) {
+        triggerNotification("user_role_changed", null, {
+          recordData: savedUser,
+          eventDescription: "User role changed",
+        });
+      }
       // The confirmed receipt may include remote-only field changes which
       // were never in our changed-field patch. Adopt those values instead of
       // treating the stale submitted form as fresh local edits. Keep only
