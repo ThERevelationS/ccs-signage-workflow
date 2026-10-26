@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
+import SavedViews from "@/components/workflow/SavedViews";
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -74,6 +74,7 @@ export default function Inventory() {
   const [lowCount, setLowCount] = useState(0);
   const [query, setQuery] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
+  const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
@@ -146,7 +147,7 @@ export default function Inventory() {
       </div>
 
       {lowCount > 0 && (
-        <button onClick={() => setLowOnly(!lowOnly)} className="mb-3 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+        <button onClick={() => { setViewName(""); setLowOnly(!lowOnly); }} className="mb-3 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           <AlertTriangle className="h-4 w-4" />{lowCount} item{lowCount === 1 ? "" : "s"} at/below reorder point — {lowOnly ? "show all" : "show only these"}
         </button>
       )}
@@ -154,15 +155,21 @@ export default function Inventory() {
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="relative min-w-52 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search material, type, size, supplier…" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search material, type, size, supplier…" />
         </div>
+        <SavedViews
+          storageKey="views.inventory"
+          getState={() => ({ query, lowOnly })}
+          activeName={viewName}
+          onApply={(s, name) => { setQuery(s.query || ""); setLowOnly(s.lowOnly === true); setViewName(name || ""); }}
+        />
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && items.length === 0 ? (
-          <TableSkeleton columns={7} />
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading stock…</div>
         ) : items.length === 0 ? (
           <div className="py-16 text-center text-slate-500">No inventory items.</div>
         ) : (
