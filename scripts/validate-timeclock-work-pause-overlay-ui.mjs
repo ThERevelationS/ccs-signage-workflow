@@ -22,6 +22,9 @@ const documentStub = { visibilityState: 'visible',
 };
 const icon = () => React.createElement('svg');
 const Button = ({ children, onClick, disabled }) => React.createElement('button', { onClick, disabled }, children);
+// Stable context stub: refresh identity churn would re-run the overlay's
+// status effect and reset pause state on every render.
+const statusContextStub = { isFallback: true, version: 0, refresh: async () => null, sharedStatus: null };
 const module = { exports: {} };
 vm.runInNewContext(compiled, {
   module, exports: module.exports,
@@ -31,7 +34,7 @@ vm.runInNewContext(compiled, {
     }) } } },
     '@/components/auth/EmailGate': { useAuth: () => ({ currentUser: null, sessionToken: '' }) },
     '@/components/ui/button': { Button },
-    '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => ({ isFallback: true, version: 0, refresh: async () => null, sharedStatus: null }) },
+    '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => statusContextStub },
     '@/lib/usePolling': { usePolling: () => {} },
     'framer-motion': { motion: new Proxy({}, { get: () => (props) => React.createElement('div', props, props?.children) }), useReducedMotion: () => false },
     'date-fns': { format: () => '' },
