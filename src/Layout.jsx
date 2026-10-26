@@ -226,7 +226,7 @@ function LayoutContent({ children }) {
   const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
   
   // Multi-page view state
-  const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
+  const { additionalPages, addPage, removePage, clearPages, isInMultiView, orientation, toggleOrientation } = useMultiPageView();
   
   // Detect mobile
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -1372,6 +1372,8 @@ function LayoutContent({ children }) {
               additionalPages={isMobile ? [] : additionalPages} 
               onRemovePage={removePage}
               onClearAll={clearPages}
+              orientation={orientation}
+              onToggleOrientation={toggleOrientation}
             >
               {isMobile ? (
                 <AnimatePresence mode="wait" initial={false}>
