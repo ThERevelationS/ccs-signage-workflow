@@ -210,6 +210,7 @@ Deno.serve(async (req) => {
     const Invoice = base44.asServiceRole.entities.Invoice;
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
+    const Payment = base44.asServiceRole.entities.Payment;
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
 
     if (action === "search_customers") {
@@ -1079,12 +1080,13 @@ Deno.serve(async (req) => {
       const customerId = clean(body?.customer_id);
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const [contacts, locations, opportunities, invoices, workOrders] = await Promise.all([
+      const [contacts, locations, opportunities, invoices, workOrders, payments] = await Promise.all([
         CustomerContact.filter({ customer_id: customerId }).catch(() => []),
         CustomerLocation.filter({ customer_id: customerId }).catch(() => []),
         Opportunity.filter({ customer_id: customerId }).catch(() => []),
         Invoice.filter({ customer_id: customerId }).catch(() => []),
         WorkOrder.filter({ customer_id: customerId }).catch(() => []),
+        Payment.filter({ customer_id: customerId }).catch(() => []),
       ]);
       const inv = Array.isArray(invoices) ? invoices : [];
       const liveInvoices = inv.filter((i: any) => !["draft", "void"].includes(clean(i?.status)));
@@ -1129,10 +1131,20 @@ Deno.serve(async (req) => {
             id: clean(i?.id), invoice_number: clean(i?.invoice_number), status: clean(i?.status),
             billing_type: clean(i?.billing_type), total: num(i?.total),
             amount_paid: num(i?.amount_paid), balance_due: num(i?.balance_due),
-            due_date: clean(i?.due_date), created_date: clean(i?.created_date),
+            issue_date: clean(i?.issue_date), due_date: clean(i?.due_date), terms: clean(i?.terms),
+            created_date: clean(i?.created_date),
             days_overdue: clean(i?.due_date)
               ? Math.max(0, Math.floor((Date.parse(asOf) - Date.parse(clean(i.due_date))) / 86400000))
               : 0,
+          })),
+        payments: (Array.isArray(payments) ? payments : [])
+          .filter((p: any) => clean(p?.status) !== "void")
+          .sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date)))
+          .slice(0, 100)
+          .map((p: any) => ({
+            id: clean(p?.id), invoice_id: clean(p?.invoice_id), status: clean(p?.status),
+            paid_date: clean(p?.paid_date || p?.created_date).slice(0, 10),
+            amount: num(p?.amount), method: clean(p?.method), reference_number: clean(p?.reference_number),
           })),
         summary: {
           open_opportunities: opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).length,
