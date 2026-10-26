@@ -49,9 +49,10 @@ check(filters.includes('onClick={() => requestNavigation(resetForm)} disabled={i
   "Cancel/navigation must remain locked during persistence");
 check(source.includes('placeholder="e.g., My Custom View"\n                    disabled={isSaving}'),
   "Column preset name save lock must remain intact");
-check(source.includes('checked={column.visible}\n                          disabled={isSaving}'),
-  "Column preset visibility controls must remain locked during persistence");
-check(source.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
+check(source.includes('checked={column.visible}') && source.includes('disabled={isSaving}') &&
+      source.includes('draggable={!isSaving}'),
+  "Column preset visibility controls and drag handles must remain locked during persistence");
+check(source.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7') &&
       source.includes('aria-label="Horizontal Sales Pipeline column preview"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
 
