@@ -669,6 +669,26 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
     }
   };
 
+  const snooze = async (row, days) => {
+    if (clearing) return;
+    setClearing(row.id);
+    setError("");
+    try {
+      const due = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+      await invoke(sessionToken, {
+        action: "update_opportunity",
+        opportunity_id: row.id,
+        baseline: row,
+        fields: { next_action_due: due },
+      });
+      await load();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Could not snooze the follow-up.");
+    } finally {
+      setClearing("");
+    }
+  };
+
   return (
     <div>
       <div className="mb-3 text-sm text-slate-500 dark:text-slate-400">
@@ -721,10 +741,19 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
                         Open
                       </button>
                     ) : (
-                      <button type="button" onClick={() => markDone(r)} disabled={clearing === r.id}
-                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40">
-                        {clearing === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}Done
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        {[1, 3, 7].map((d) => (
+                          <button key={d} type="button" onClick={() => snooze(r, d)} disabled={clearing === r.id}
+                            title={`Snooze ${d} day${d > 1 ? "s" : ""}`}
+                            className="rounded-lg border border-slate-300 px-1.5 py-1 text-[10px] font-semibold text-slate-500 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800">
+                            +{d}d
+                          </button>
+                        ))}
+                        <button type="button" onClick={() => markDone(r)} disabled={clearing === r.id}
+                          className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40">
+                          {clearing === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}Done
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
