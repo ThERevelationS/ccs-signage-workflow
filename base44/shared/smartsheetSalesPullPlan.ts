@@ -124,8 +124,23 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
       held: [...new Set([...(plan.held || []), 'current_task_description'])], stageTransition: null };
   }
   if (record?.in_pipeline !== true ||
-      !Object.prototype.hasOwnProperty.call(incoming || {}, 'current_task_description') ||
-      same(record?.current_task_description, incoming.current_task_description)) return { ...plan, stageTransition: null };
+      !Object.prototype.hasOwnProperty.call(incoming || {}, 'current_task_description')) {
+    return { ...plan, stageTransition: null };
+  }
+  if (same(record?.current_task_description, incoming.current_task_description)) {
+    // The task text already matches Smartsheet, but the stored stage may still
+    // disagree with what the proven remote task means (a partial adoption, a
+    // stale repair, or a manual task edit). Heal the stage through the same
+    // guarded adoption write — transition-shaped cases must not ride the
+    // nonterminal patch, which requires the task text itself to change.
+    const healed = planSalesRemoteTaskApplication(record, incoming.current_task_description);
+    if (healed.mode === 'adoption') return { ...plan, stageTransition: null, taskAdoption: healed };
+    if (healed.mode === 'transition') {
+      return { ...plan, stageTransition: null,
+        taskAdoption: { mode: 'adoption', kind: 'stage', to: healed.to, remoteTask: String(incoming.current_task_description ?? '').trim() } };
+    }
+    return { ...plan, stageTransition: null };
+  }
   const bindingId = String(bindings?.current_task_description || '').trim();
   if (!/^\d+$/.test(bindingId)) return { ...plan, stageTransition: null };
 
