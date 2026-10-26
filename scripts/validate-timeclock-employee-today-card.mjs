@@ -41,6 +41,7 @@ vm.runInNewContext(compiled, {
     }) } } },
     '@/components/ui/badge': { Badge },
     '@/components/ui/button': { Button },
+    '@/lib/usePolling': { usePolling: (fn) => { React.useEffect(() => { fn(); }, [fn]); } },
     'lucide-react': new Proxy({}, { get: () => icon }),
   })[id] || require(id),
   console, window: windowStub, document: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} },
