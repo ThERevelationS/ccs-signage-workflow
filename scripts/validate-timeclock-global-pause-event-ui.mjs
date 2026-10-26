@@ -39,9 +39,16 @@ vm.runInNewContext(compiled, {
       open ? React.createElement('button', { 'data-menu-toggle': true, onClick: () => { const r = onToggle(); if (onClose) onClose(); return r; } }) : null,
     '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => ({
       version: 0,
-      refresh: () => new Promise((resolve, reject) => {
-        calls.push({ payload: { action: 'status', session_token: authSession.sessionToken, target_email: String(authSession.currentUser?.email || '').trim().toLowerCase() }, resolve, reject });
-      }).then((r) => r?.data || r),
+      refresh: (() => {
+        let inFlight = null;
+        return ({ force } = {}) => {
+          if (!force && inFlight) return inFlight;
+          inFlight = new Promise((resolve, reject) => {
+            calls.push({ payload: { action: 'status', session_token: authSession.sessionToken, target_email: String(authSession.currentUser?.email || '').trim().toLowerCase() }, resolve, reject });
+          }).then((r) => r?.data || r).finally(() => { inFlight = null; });
+          return inFlight;
+        };
+      })(),
     }) },
     'lucide-react': { Loader2: icon, Pause: icon, Play: icon },
   })[id] || require(id),
