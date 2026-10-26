@@ -1288,6 +1288,35 @@ async function pullDataset(
         const rowId = cleanText(r?.smartsheet_row_id, 40);
         return rowId && /^\d+$/.test(rowId) && !smartsheetRowIds.has(rowId) && !r.deleted;
       });
+
+  // A row deleted in Smartsheet is honored in Base44: the linked WorkOrder is
+  // moved to Project Trash (recoverable, keeps its permanent row ID and
+  // snapshot) instead of flagging for review forever. Guarded twice: an empty
+  // sheet download can never trash records, and a mass disappearance (> 25)
+  // still requires human review rather than mass-trashing the pipeline.
+  const ORPHAN_SOFT_DELETE_LIMIT = 25;
+  const orphanSoftDeletedIds: string[] = [];
+  let orphansFlagged = orphans;
+  if (dataset === 'sales' && orphans.length > 0 && allRows.length > 0 && orphans.length <= ORPHAN_SOFT_DELETE_LIMIT) {
+    const stillFlagged: any[] = [];
+    for (const record of orphans) {
+      const expectedUpdatedAt = cleanText(record?.updated_date, 80);
+      if (!expectedUpdatedAt) { stillFlagged.push(record); continue; }
+      try {
+        const result = await base44.asServiceRole.entities.WorkOrder.updateMany(
+          { id: record.id, updated_date: expectedUpdatedAt },
+          { $set: { deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'smartsheet_sync' } },
+        );
+        if (result && result.updated === 1) orphanSoftDeletedIds.push(String(record.id));
+        else stillFlagged.push(record);
+      } catch {
+        const latest = await base44.asServiceRole.entities.WorkOrder.get(record.id).catch(() => null);
+        if (latest?.deleted === true) orphanSoftDeletedIds.push(String(record.id));
+        else stillFlagged.push(record);
+      }
+    }
+    orphansFlagged = stillFlagged;
+  }
   const debugCounts = {
     existing_records: existingRecords.length,
     records_by_row_id: Object.keys(recordsByRowId).length,
@@ -1314,7 +1343,7 @@ async function pullDataset(
     }));
   debugCounts.duplicates_soft_deleted = 0;
   debugCounts.duplicate_groups_flagged_for_review = duplicateGroups.length;
-  debugCounts.orphans_preserved_for_review = orphans.length;
+  debugCounts.orphans_preserved_for_review = orphansFlagged.length;
 
   return {
     dataset,
@@ -1376,9 +1405,10 @@ async function pullDataset(
     } : {}),
     errors: errors.length,
     error_details: errors.slice(0, 10),
-    orphans_soft_deleted: 0,
-    orphans_flagged_for_review: orphans.length,
-    orphan_record_ids: orphans.slice(0, 10).map((record: any) => record.id),
+    orphans_soft_deleted: orphanSoftDeletedIds.length,
+    orphans_soft_deleted_record_ids: orphanSoftDeletedIds.slice(0, 10),
+    orphans_flagged_for_review: orphansFlagged.length,
+    orphan_record_ids: orphansFlagged.slice(0, 10).map((record: any) => record.id),
     duplicates_soft_deleted: 0,
     duplicate_groups_flagged_for_review: duplicateGroups.length,
     duplicate_groups: duplicateGroups.slice(0, 10),
