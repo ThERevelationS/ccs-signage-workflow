@@ -19,7 +19,6 @@ import {
   ShoppingCart,
   History,
   BarChart3,
-  Settings,
   Grid3X3,
   X,
 } from "lucide-react";
@@ -45,7 +44,6 @@ const items = [
   { title: "Requests", page: "FleetRequests", icon: ShoppingCart },
   { title: "History", page: "FleetHistory", icon: History, adminOnly: true },
   { title: "Analytics", page: "FleetAnalytics", icon: BarChart3, adminOnly: true },
-  { title: "Fleet Settings", page: "FleetSettings", icon: Settings, adminOnly: true },
 ];
 
 export default function FleetModuleNav() {
