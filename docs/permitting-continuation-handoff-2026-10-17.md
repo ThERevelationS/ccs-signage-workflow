@@ -1,3 +1,12 @@
+# Tail work — SoS city records, queue dedup, create-idempotency (2026-10-26e)
+
+- **7 honest-no-source KY cities deep-hunted via KY SoS Land Office** (web.sos.ky.gov/land/cities.aspx?CTR=<id>): Bardwell CTR=16 (Carlisle seat), Brodhead CTR=43, Burkesville CTR=51 (Cumberland seat), Adairville CTR=1, Benham CTR=26, Brooksville CTR=50 (Bracken seat). Each profile: SoS record attached as manual_verified document + permitting_url; summary documents mayor/contact/office hours + no published sign ordinance (honest). Rows -> sources_found.
+- **Discovery: Blackey KY is a DISSOLVED city** (KY SoS, Letcher Co listing) — profile held as non-jurisdiction, queue annotated terminal; permitting via county inspector.
+- **Queue dedup pass**: 13 pre-existing duplicate rows marked status 'duplicate' with canonical id (Bellbrook, Lincoln Heights, Elmwood Place, North Canton, Galion — Crawford is correct county, Mansfield, Parma, Lakewood, Webster Co, Ashland, Boyle Co, Bourbon Co, Bardwell). Nothing deleted.
+- **Profile-create idempotency guard added to permittingResearchBacklogDispatch/entry.ts**: on Profiles.create error/timeout, re-reads by name+state and adopts the landed profile via resolveResearchProfile before throwing — closes the retry-duplicate hole that created today's 8 dup pairs. (App's profileMatchesQueueRow already matched type+county; local batch script's name-only match was also fixed.) Sandbox edit applied.
+- Self-corrected: a bulk update briefly overwrote the Bardwell duplicate row's status — re-marked duplicate.
+- Remaining honest tails: ~9 OH villages + Rocky Fork Lake have county-level pointers already in their notes — terminal.
+
 # Blocked-row deep-dive — KY counties + Fairview (2026-10-26d)
 
 - **Fairview OH**: queue county corrected to Guernsey (real village on Belmont/Guernsey line, pop ~69); honest no-source finding stands.
