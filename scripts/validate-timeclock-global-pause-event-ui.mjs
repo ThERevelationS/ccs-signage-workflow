@@ -37,7 +37,7 @@ vm.runInNewContext(compiled, {
     '@/components/auth/EmailGate': { useAuth: () => authSession },
     '@/components/timeclock/WorkPauseMenu': ({ open, onToggle, onClose }) =>
       open ? React.createElement('button', { 'data-menu-toggle': true, onClick: () => { const r = onToggle(); if (onClose) onClose(); return r; } }) : null,
-    '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => ({
+    '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => React.useMemo(() => ({
       version: 0,
       refresh: (() => {
         let inFlight = null;
@@ -49,7 +49,7 @@ vm.runInNewContext(compiled, {
           return inFlight;
         };
       })(),
-    }) },
+    }), []) },
     'lucide-react': { Loader2: icon, Pause: icon, Play: icon },
   })[id] || require(id),
   console, Promise, Date, Math, Object, Number, String, Map, Set,
