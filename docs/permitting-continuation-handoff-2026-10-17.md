@@ -1,6 +1,6 @@
 # Permitting continuation handoff — October 26, 2026 (sentinel-URL cleanup, wrong-state repairs, guarded backlog dispatch)
 
-Checkpoint for this unit: see final report (created after dispatch batches settle). Prior: `6adee74b415bf3740943b33f` (identity holds + Lake/Licking URL repairs).
+Checkpoint for this unit: `6adf0588b7409c934d3c7dca` (backlog dispatch drained). Prior: `6adee74b415bf3740943b33f` (identity holds + Lake/Licking URL repairs). Completion receipt: `docs/permitting-backlog-dispatch-completion-2026-10-26.json`.
 
 ## What ran
 
@@ -42,7 +42,7 @@ Bounded 40-row batches through `refreshJurisdiction(automatic_research:true)` wi
 
 *batch-8 aborted on 429 (patched: 65 s backoff → continue). **township profile-`parent_county` + stale profile-type 409s; all recovered via repairs and retried `ok`. **Jeffersonville KY held after 2 wrong-state (Indiana) research rejections — guard working, needs manual source verification.**
 
-**Queue fully drained: `not_started` = 0.** Final: 1,556 `sources_found`, 218 blocked (152 identity holds + 66 other), 1 `verified_current`. Profiles OH/KY: 1,635 total, 1,119 with `permitting_url`, 1,328 with documents, 7 held.
+**Queue fully drained: `not_started` = 0.** Final: 1,572 `sources_found`, 202 blocked (125 no-candidate identity holds + 6 policy holds + 5 wrong-state holds + 66 other), 1 `verified_current`. Profiles OH/KY: 1,635 total, 1,119 with `permitting_url`, 1,328 with documents, 15 held.
 Batch-5's 12 township 409s were caused by profile `parent_county` not being set on create (batch script wrote queue's `parent_county_name` field onto the profile); profiles patched with `parent_county: {name}` + `parent_county_name` and all 12 resolved `ok` in batch 6 with real township URLs. Batch script create payload fixed.
 
 ## Verification
@@ -50,8 +50,15 @@ Batch-5's 12 township 409s were caused by profile `parent_county` not being set 
 - Invalid-URL scans: 0 bad `permitting_url`, 0 bad `website_url`, 0 wrong-state domains.
 - `cleanUrl` hardening (earlier unit) + `assertOfficialProfileResearchIdentity` now block sentinel/wrong-state storage.
 
+## Post-drain triage (same day)
+- Identity holds reclassified: 19 ambiguous rows reviewed; **13 resolved by county-aware disambiguation** (Rush/Hartford/Pleasant/Paris/Freedom/Deerfield/Hopewell/York/Bristol townships by their own queue county; Carlisle/Shelby/Union/Clayton cities by elimination) — all dispatched `ok` with real URLs.
+- **6 policy holds remain** (same-name city+township in the same county — a semantic choice, never guess): Belpre, Warren, Hubbard, Canton, Franklin, Perrysburg OH. Queue rows annotated with candidate options.
+- **8 same-name duplicate profile pairs** found created by retried `Profiles.create` POSTs (Williamsburg/Campton/Versailles KY; Shreve/Smithville/West Salem/Chippewa/Bryan OH). Lesser of each held as `duplicate_profile` with canonical id; nothing deleted. Harden create path with idempotency recheck.
+- **15 pre-existing legacy duplicates** (city+village same-name pairs: Troy, Dublin, Columbus, etc.; Miami Township x3; Hamilton County x2) — merge-policy decision required, untouched.
+- Spot-check: 14/15 sampled new URLs live + jurisdiction-correct; Georgetown KY 403 locally (WAF, domain correct).
+
 ## Known state
-- `not_started` queue (OH+KY) draining ~40/batch; held rows are legitimately unincorporated/ambiguous — **do not force**.
+- `not_started` queue (OH+KY) fully drained; held rows are legitimately unincorporated/ambiguous — **do not force**.
 - Persistent infra gaps (sandbox egress): Franklin, Greene, Montgomery county domains Cloudflare-blocked from sandbox; Franklin fetches fine locally. Recorded as gaps, not data errors.
 - Bridge write timeouts continue; all writes re-read and verified.
 
@@ -59,10 +66,12 @@ Batch-5's 12 township 409s were caused by profile `parent_county` not being set 
 `repair-wrongstate.ts` used hand-copied profile IDs that were shifted: Blaine OH (honest no-source profile) was wrongly cleared — summary unrecoverable, annotated in notes; Westville was temporarily retyped to Lykens' township identity before being restored to village/Champaign County/held. All 8 affected profiles verified into correct end states by a name-keyed correction pass. Lesson: never hand-copy entity IDs into repair scripts — key by name with guard asserts.
 
 ## Next chunk options
-1. Triage remaining 152 identity holds by class: unincorporated/no-candidate (~majority), city+township ambiguous pairs (Canton, Belpre, Hubbard, Perrysburg, Warren, Paris, Freedom, Shelby OH), metro governments (Louisville, Lexington KY) — policy decision needed on which entity queue rows intend.
-2. Manual verification for the 7 held profiles (wrong-state or recurrence holds).
-3. ~66 other-blocked rows (prior blocks, `page_fetch_failed`, unincorporated) — review queue.
-4. Then Milestone 3: statewide completeness review with the now-complete inventory.
+1. Owner policy decision: the 6 same-county city/township pairs (Belpre, Warren, Hubbard, Canton, Franklin, Perrysburg OH) — which entity does the queue row intend?
+2. Merge policy for the 15 legacy duplicate profile groups.
+3. Manual source verification for Jeffersonville KY (research keeps finding the Indiana namesake) and remaining held profiles.
+4. ~66 other-blocked rows (`page_fetch_failed`, prior blocks) — review queue.
+5. Metro governments: Louisville, Lexington KY absent from city inventory — add or map.
+6. Then Milestone 3: statewide completeness review with the now-complete inventory.
 
 ---
 
