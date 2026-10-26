@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import PortalPanel from "@/components/portal/PortalPanel";
+import SavedViews from "@/components/workflow/SavedViews";
 import {
   AlertTriangle,
   ArrowRight,
@@ -171,6 +172,22 @@ function NewIntakeDialog({ sessionToken, onClose, onCreated }) {
   });
   const set = (k, v) => setF((prev) => ({ ...prev, [k]: v }));
 
+  const [dupes, setDupes] = useState([]);
+  useEffect(() => {
+    const q = clean(f.customer_display_name);
+    if (customer?.id || q.length < 3) { setDupes([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await base44.functions.invoke("opportunityWorkspaceAction", {
+          session_token: sessionToken, action: "search_customers", query: q,
+        });
+        if (!cancelled) setDupes(((r?.data || r)?.customers || []).slice(0, 4));
+      } catch { if (!cancelled) setDupes([]); }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [f.customer_display_name, customer?.id, sessionToken]);
+
   const submit = async () => {
     if (saving) return;
     setSaving(true);
@@ -220,6 +237,21 @@ function NewIntakeDialog({ sessionToken, onClose, onCreated }) {
           <Field label="Customer name">
             <input className={inputCls} value={f.customer_display_name} onChange={(e) => set("customer_display_name", e.target.value)} placeholder={customer?.company_name || "Company / prospect name"} />
           </Field>
+          {!customer?.id && dupes.length > 0 && (
+            <div className="md:col-span-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                Possible existing customers — link one instead of creating a duplicate:
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {dupes.map((d) => (
+                  <button key={d.id} type="button" onClick={() => { setCustomer(d); setDupes([]); }}
+                    className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-amber-900/40">
+                    {d.company_name}{d.contact_name ? ` · ${d.contact_name}` : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <Field label="Title">
             <input className={inputCls} value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="Short pursuit title (defaults to customer name)" />
           </Field>
@@ -1065,6 +1097,7 @@ export default function Opportunities() {
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState("pipeline");
   const [funnel, setFunnel] = useState(null);
+  const [viewName, setViewName] = useState("");
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -1211,7 +1244,7 @@ export default function Opportunities() {
                   <span key={r.reason} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-800 dark:bg-red-950/40 dark:text-red-200" title={r.lost_value ? `$${Number(r.lost_value).toLocaleString()} in lost pipeline` : undefined}>
                     <span className="font-medium">{r.reason}</span>
                     <span className="font-semibold text-red-500">×{r.count}</span>
-                    {r.lost_value > 0 && <span className="text-red-400">($${Number(r.lost_value).toLocaleString()})</span>}
+                    {r.lost_value > 0 && <span className="text-red-400">(${Number(r.lost_value).toLocaleString()})</span>}
                   </span>
                 ))}
               </div>
@@ -1261,7 +1294,7 @@ export default function Opportunities() {
               <button
                 key={s.key}
                 type="button"
-                onClick={() => setStageFilter(s.key)}
+                onClick={() => { setViewName(""); setStageFilter(s.key); }}
                 aria-pressed={stageFilter === s.key}
                 className={`min-h-10 rounded-lg border px-3 text-xs font-semibold ${stageFilter === s.key
                   ? "border-violet-500 bg-violet-600 text-white"
@@ -1273,7 +1306,7 @@ export default function Opportunities() {
           </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-              <input type="checkbox" checked={includeClosed} onChange={(e) => setIncludeClosed(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+              <input type="checkbox" checked={includeClosed} onChange={(e) => { setViewName(""); setIncludeClosed(e.target.checked); }} className="h-4 w-4 rounded border-slate-300" />
               include won/lost
             </label>
             <div className="relative">
@@ -1282,9 +1315,20 @@ export default function Opportunities() {
                 className="min-h-10 w-56 rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm dark:border-slate-700 dark:bg-slate-900"
                 placeholder="Search…"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setViewName(""); setSearch(e.target.value); }}
               />
             </div>
+            <SavedViews
+              storageKey="views.opportunities"
+              getState={() => ({ stageFilter, search, includeClosed })}
+              activeName={viewName}
+              onApply={(s, name) => {
+                setStageFilter(s.stageFilter || "open");
+                setSearch(s.search || "");
+                setIncludeClosed(s.includeClosed === true);
+                setViewName(name || "");
+              }}
+            />
           </div>
         </div>
 
