@@ -4,6 +4,21 @@ import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { constantTimeEqual } from '../../shared/constantTime.ts';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — a failure must never break the monitor
+// scan, so this swallows and logs like the other emit helpers.
+async function emitRecordAutomation(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -149,6 +164,7 @@ Deno.serve(async (req) => {
                   guardFields: jurisdictionProtectionGuards(jurisdiction, profileUpdate, { respectManualProtection: true }),
                   label: `Jurisdiction change monitor ${jurisdiction.name || jurisdiction.id}`,
                 });
+                await emitRecordAutomation(base44, 'jurisdiction_profile_updated', jurisdiction.id, 'system');
               } catch (updateErr) {
                 console.warn(`Failed to update profile for ${jurisdiction.name}:`, updateErr.message);
               }
@@ -191,6 +207,7 @@ Deno.serve(async (req) => {
               });
 
               if (alertResult.status === 'created') {
+                await emitRecordAutomation(base44, 'regulation_alert_created', alertResult.record.id, 'system');
                 const claim = await claimRegulationAlertNotification({
                   entity: base44.asServiceRole.entities.RegulationAlert,
                   alert: alertResult.record,
