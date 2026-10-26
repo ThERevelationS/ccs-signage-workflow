@@ -35,7 +35,7 @@ check(source.includes("checked={isSelected(item)}\n                            d
 check(source.includes("onChange={() => toggleSelection(item, true)}") &&
       !toggle.split("if (isStandard) {")[1]?.split("} else {")[0]?.includes("selectionInFlightRef"),
   "Standard local preset selection must remain independent of backend selection locks");
-check(source.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
+check(source.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7') &&
       source.includes('aria-label="Horizontal Sales Pipeline column preview"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
 
