@@ -289,7 +289,7 @@ export default function MondayMorningMeeting() {
   // Save/conflict recovery still invokes loadWorkOrders directly.
   usePolling(() => {
     if (boardSavesPendingRef.current === 0) void refreshBoardWhenIdle();
-  }, 120000, { runOnMount: false });
+  }, 60000, { runOnMount: false });
 
   // Track every board write (field saves and task/note array saves) so a
   // slower background refresh cannot replace a newer optimistic edit.
