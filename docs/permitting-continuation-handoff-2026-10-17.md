@@ -1,3 +1,11 @@
+# Coverage promotion + audit verification (2026-10-27b)
+
+- Hollow audit re-run: 0 truly-empty profiles; only 2 no-profile sourced rows remain (Louisville/Lexington city rows -> county profiles by metro design). Withamsville/Lake Lorelei/Burlington rows retyped to unincorporated_community to match their correct profiles.
+- **158 profiles promoted** docs->permitting_url (best permitting/zoning/ordinance doc, official-domain scored); 43 skipped where only non-permitting docs exist (auditor/realestate/aggregator pages) - conservative, evidence retained.
+- Verified in sandbox: create-idempotency guard present in permittingResearchBacklogDispatch/entry.ts.
+- Final scans clean: 0 invalid permitting_url, 0 invalid website_url, 0 wrong-state domains.
+- Final: 1,596 sources_found / 168 blocked / 13 duplicate / 1 verified_current; profiles 1,675 with 1,339 permitting_url (+220 over audit start) and 1,371 with documents.
+
 # Hollow-profile audit - stale-type rows, missing entities, mistyped communities (2026-10-27)
 
 - **Audit trigger**: 1,606 sources_found vs 1,119 profiles with permitting_url. Result: 264 summary-only rows are legitimate (honest no-online-source findings count as evidence); 48 sourced rows had NO matching profile; 1 truly-empty profile (Blaine - its summary was previously cleared).
