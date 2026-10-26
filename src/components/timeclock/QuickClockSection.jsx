@@ -856,15 +856,18 @@ export default function QuickClockSection({
     setRecognitionStatus("Starting QR camera...");
     setUsernameError("");
 
+    const qrPrompt = canUseFace
+      ? "Show your face or scan your secure Time Clock QR badge."
+      : "Scan your secure Time Clock QR badge.";
     try {
       await startQrScannerWithFacingMode("environment");
-      setRecognitionStatus("Scan your secure Time Clock QR badge.");
+      setRecognitionStatus(qrPrompt);
     } catch (environmentError) {
       console.warn("Rear QR camera unavailable, trying front camera:", environmentError);
       await stopQrScanner();
       try {
         await startQrScannerWithFacingMode("user");
-        setRecognitionStatus("Scan your secure Time Clock QR badge.");
+        setRecognitionStatus(qrPrompt);
       } catch (frontError) {
         console.error("QR camera error:", frontError);
         await stopQrScanner();
