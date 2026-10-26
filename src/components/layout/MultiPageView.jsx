@@ -1,5 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
-import { X, Loader2, Columns } from "lucide-react";
+import { X, Loader2, Columns, Rows2 } from "lucide-react";
+
+const SPLIT_ORIENTATION_KEY = "ccs_multiview_orientation";
 
 // Dynamic page imports - keys must match the URL paths (lowercase)
 const pageComponents = {
@@ -22,6 +24,25 @@ const pageComponents = {
 
 export function useMultiPageView() {
   const [additionalPages, setAdditionalPages] = useState([]);
+  const [orientation, setOrientation] = useState(() => {
+    try {
+      return window.localStorage.getItem(SPLIT_ORIENTATION_KEY) === "rows" ? "rows" : "columns";
+    } catch {
+      return "columns";
+    }
+  });
+
+  const toggleOrientation = () => {
+    setOrientation((prev) => {
+      const next = prev === "columns" ? "rows" : "columns";
+      try {
+        window.localStorage.setItem(SPLIT_ORIENTATION_KEY, next);
+      } catch {
+        // Storage is best-effort; the toggle still works for the session.
+      }
+      return next;
+    });
+  };
 
   const addPage = (pageName, pageTitle) => {
     // Generate unique ID for each page instance to allow duplicates
@@ -45,24 +66,28 @@ export function useMultiPageView() {
 
   const isInMultiView = additionalPages.length > 0;
 
-  return { additionalPages, addPage, removePage, clearPages, isInMultiView };
+  return { additionalPages, addPage, removePage, clearPages, isInMultiView, orientation, toggleOrientation };
 }
 
-export function MultiPageContainer({ children, additionalPages, onRemovePage, onClearAll }) {
+export function MultiPageContainer({ children, additionalPages, onRemovePage, onClearAll, orientation = "columns", onToggleOrientation }) {
   const totalPanes = 1 + additionalPages.length;
-  
+
   if (additionalPages.length === 0) {
     return children;
   }
 
+  const stacked = orientation === "rows";
+
   return (
-    <div className="flex h-full w-full">
+    <div className={`flex h-full w-full ${stacked ? "flex-col" : ""}`}>
       {/* Clear all button removed - now in Layout footer */}
 
       {/* Main page */}
-      <div 
-        className="h-full border-r border-gray-300"
-        style={{ width: `${100 / totalPanes}%`, overflow: 'auto' }}
+      <div
+        className={stacked ? "w-full border-b border-gray-300" : "h-full border-r border-gray-300"}
+        style={stacked
+          ? { height: `${100 / totalPanes}%`, overflow: 'auto' }
+          : { width: `${100 / totalPanes}%`, overflow: 'auto' }}
       >
         {children}
       </div>
@@ -71,10 +96,12 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
       {additionalPages.map((page, index) => {
         const PageComponent = pageComponents[page.name.toLowerCase()];
         return (
-          <div 
+          <div
             key={page.id || page.name}
-            className={`h-full relative flex flex-col ${index < additionalPages.length - 1 ? 'border-r border-gray-300' : ''}`}
-            style={{ width: `${100 / totalPanes}%`, overflow: 'hidden' }}
+            className={`relative flex flex-col ${stacked ? "w-full" : "h-full"} ${index < additionalPages.length - 1 ? (stacked ? 'border-b' : 'border-r') + ' border-gray-300' : ''}`}
+            style={stacked
+              ? { height: `${100 / totalPanes}%`, overflow: 'hidden' }
+              : { width: `${100 / totalPanes}%`, overflow: 'hidden' }}
           >
             {/* Page header with close button */}
             <div className="flex-shrink-0 bg-purple-100 px-3 py-1.5 flex items-center justify-between border-b border-purple-200">
@@ -82,14 +109,24 @@ export function MultiPageContainer({ children, additionalPages, onRemovePage, on
                 <Columns className="w-3.5 h-3.5 text-purple-600" />
                 <span className="text-xs font-medium text-purple-800">{page.title}</span>
               </div>
-              <button
-                onClick={() => onRemovePage(page.id || page.name)}
-                className="p-1 hover:bg-purple-200 rounded transition-colors"
-              >
-                <X className="w-3.5 h-3.5 text-purple-600" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={onToggleOrientation}
+                  title={stacked ? "Split pages side by side" : "Stack pages vertically"}
+                  aria-label={stacked ? "Split pages side by side" : "Stack pages vertically"}
+                  className="p-1 hover:bg-purple-200 rounded transition-colors"
+                >
+                  {stacked ? <Columns className="w-3.5 h-3.5 text-purple-600" /> : <Rows2 className="w-3.5 h-3.5 text-purple-600" />}
+                </button>
+                <button
+                  onClick={() => onRemovePage(page.id || page.name)}
+                  className="p-1 hover:bg-purple-200 rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 text-purple-600" />
+                </button>
+              </div>
             </div>
-            
+
             {/* Page content */}
             <div className="flex-1 overflow-auto">
               <Suspense fallback={
