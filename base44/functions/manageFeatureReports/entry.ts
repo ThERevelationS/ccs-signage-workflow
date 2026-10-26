@@ -1,4 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — a failure must never break the report
+// write that already verified.
+async function emitRecordAutomation(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
@@ -183,7 +198,13 @@ Deno.serve(async (req) => {
         submitted_by_name: cleanText(actor?.full_name || actor?.username || actor?.email, 500) || 'Unknown',
         submitted_by_email: cleanText(actor?.email, 320).toLowerCase(),
       };
-      return Response.json(await createWithRecovery(Report, payload));
+      const created = await createWithRecovery(Report, payload);
+      // Every returned record was genuinely created by this request (there is
+      // no 'reused' path — ambiguous candidates throw instead).
+      if (created?.record?.id) {
+        await emitRecordAutomation(base44, 'feature_report_submitted', created.record.id, actor?.email || 'system');
+      }
+      return Response.json(created);
     }
 
     if (actor?.role !== 'admin') {
@@ -197,7 +218,14 @@ Deno.serve(async (req) => {
       const current = await Report.get(id).catch(() => null);
       if (!current?.id) return Response.json({ error: 'Report no longer exists.' }, { status: 404 });
       const patch = cleanAdminPatch(body?.next_fields, current);
-      return Response.json({ record: await updateExact(Report, id, expectedUpdatedDate, patch) });
+      const saved = await updateExact(Report, id, expectedUpdatedDate, patch);
+      if (patch.status && patch.status !== current.status) {
+        await emitRecordAutomation(base44, 'feature_report_status_changed', saved.id, actor?.email || 'system');
+        if (patch.status === 'completed') {
+          await emitRecordAutomation(base44, 'feature_report_completed', saved.id, actor?.email || 'system');
+        }
+      }
+      return Response.json({ record: saved });
     }
 
     if (action === 'delete') {
