@@ -1641,16 +1641,28 @@ async function claimSyncRun(base44: any, status: any, dataset?: string) {
 
 const ALERT_SETTING_KEY = 'smartsheetSyncAlertConfig';
 
-async function loadSyncAlertConfig(base44: any) {
+async function loadSyncAlertConfigRecord(base44: any) {
   try {
     const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });
     const rows = Array.isArray(results) ? results : (results ? [results] : []);
-    return rows[0]?.setting_value || { enabled: false, recipient_email: 'brettheinlein1@gmail.com' };
-  } catch { return { enabled: false, recipient_email: 'brettheinlein1@gmail.com' }; }
+    return rows[0] || null;
+  } catch { return null; }
 }
 
+async function loadSyncAlertConfig(base44: any) {
+  const record = await loadSyncAlertConfigRecord(base44);
+  return record?.setting_value || { enabled: false, recipient_email: 'brettheinlein1@gmail.com' };
+}
+
+// A persistent alert condition (e.g., one record permanently flagged for
+// review) must not re-email on every scheduled run. Identical alert
+// signatures are suppressed until the cooldown elapses; a changed signature
+// emails immediately. cooldown_minutes may be tuned in the alert config.
+const SYNC_ALERT_DEFAULT_COOLDOWN_MINUTES = 360;
+
 async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: any[]) {
-  const config = await loadSyncAlertConfig(base44);
+  const record = await loadSyncAlertConfigRecord(base44);
+  const config = record?.setting_value || { enabled: false, recipient_email: 'brettheinlein1@gmail.com' };
   if (!config?.enabled) return;
   const recipient = cleanText(config?.recipient_email, 200) || 'brettheinlein1@gmail.com';
   const status = syncStatus?.status || '';
@@ -1661,22 +1673,49 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
   let openConflicts = 0;
   try { openConflicts = Number(await base44.asServiceRole.entities.SyncConflict.count({ status: 'open' })) || 0; } catch {}
   if (!isStale && !isFailed && !hasErrors && openConflicts === 0) return;
-  const alertType = isStale ? 'Stuck/Stale Run' : isFailed ? 'Failed Run' : hasErrors ? 'Run with Errors' : 'Open Conflicts';
+  const alertType = isStale ? 'Stuck/Stale Run'
+    : status === 'failed' ? 'Failed Run'
+    : status === 'needs_review' ? 'Run Needs Review'
+    : hasErrors ? 'Run with Errors' : 'Open Conflicts';
   const stage = syncStatus?.current_step_label || syncStatus?.progress_item_label || 'Unknown';
   const datasetLabel = syncStatus?.progress_dataset || '';
   const direction = syncStatus?.progress_direction || '';
   const errorDetails = (runResults || []).flatMap((r: any) => r?.error_details || []).slice(0, 10);
   const reviewUrl = 'https://clay-flow-signage-suite-387da97c.base44.app/AdminSettings?tab=smartsheet';
   const totalErrors = (runResults || []).reduce((sum: number, r: any) => sum + (Number(r?.errors) || 0), 0);
+  const reviewSummary = (runResults || []).flatMap((r: any) => {
+    const label = `${r?.dataset || '?'} ${r?.direction || ''}`.trim();
+    return Object.entries(r || {})
+      .filter(([k, v]) => Number(v) > 0 && k !== 'unchanged_skipped' && k !== 'rows_examined' && k !== 'records_examined' && /review|orphan|conflict|held|unlinked|missing|flagged|skipped|failure/.test(k))
+      .map(([k, v]) => `  ${label}: ${k} = ${v}`);
+  }).slice(0, 15);
+  const signature = [alertType, status, totalErrors, openConflicts, datasetLabel, direction].join('|');
+  const cooldownMs = Math.max(15, Number(config?.cooldown_minutes) || SYNC_ALERT_DEFAULT_COOLDOWN_MINUTES) * 60_000;
+  const lastSentAt = Date.parse(String(config?.last_alert_at || ''));
+  if (signature === cleanText(config?.last_alert_signature, 400) &&
+      Number.isFinite(lastSentAt) && Date.now() - lastSentAt < cooldownMs) return;
   const body = [
     `Smartsheet Sync Alert: ${alertType}`, '',
     `Sync: ${datasetLabel || 'Unknown'}${direction ? ' \u2192 ' + direction : ''}`,
     `Stage reached: ${stage}`, `Progress: ${syncStatus?.progress_current || 0} / ${syncStatus?.progress_total || 0}`,
     `Errors: ${totalErrors}`, `Open conflicts: ${openConflicts}`,
+    ...(reviewSummary.length ? ['', 'Items needing review:', ...reviewSummary] : []),
     ...(errorDetails.length ? ['', 'Error details:', ...errorDetails] : []),
     '', `Review and resolve: ${reviewUrl}`,
   ].join('\n');
-  try { await base44.integrations.Core.SendEmail({ to: recipient, subject: `Smartsheet Sync Alert \u2014 ${alertType}`, body }); } catch {}
+  try {
+    await base44.integrations.Core.SendEmail({ to: recipient, subject: `Smartsheet Sync Alert \u2014 ${alertType}`, body });
+  } catch { return; }
+  // Persist only after a successful send: a lost email must not suppress
+  // future alerts, and the updated_date guard leaves concurrent admin edits intact.
+  if (record?.id) {
+    try {
+      await base44.asServiceRole.entities.GlobalSettings.updateMany(
+        { id: record.id, setting_key: ALERT_SETTING_KEY, updated_date: record.updated_date },
+        { $set: { setting_value: { ...config, last_alert_signature: signature, last_alert_at: new Date().toISOString() } } },
+      );
+    } catch {}
+  }
 }
 
 async function syncRunOwned(base44: any, startedAt: string, dataset?: string) {
@@ -4537,9 +4576,10 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       if (adminActor?.role !== 'admin') return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       const enabled = Boolean(body?.enabled);
       const recipient_email = cleanText(body?.recipient_email, 200) || 'brettheinlein1@gmail.com';
-      const value = { enabled, recipient_email };
       const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });
       const rows = Array.isArray(results) ? results : (results ? [results] : []);
+      // Preserve dedup state and any admin-tuned cooldown across settings saves.
+      const value = { ...(rows[0]?.setting_value || {}), enabled, recipient_email };
       if (rows.length > 0) await base44.asServiceRole.entities.GlobalSettings.update(rows[0].id, { setting_value: value });
       else await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: ALERT_SETTING_KEY, setting_value: value });
       return Response.json({ success: true, config: value });
