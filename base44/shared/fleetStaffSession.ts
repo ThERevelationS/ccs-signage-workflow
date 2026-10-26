@@ -21,7 +21,14 @@ export async function resolveFleetStaffUser(base44: any, sessionToken: unknown) 
       full_name: actor.full_name,
       role,
     };
-  } catch {
-    return null;
+  } catch (error: any) {
+    // Only a rejected identity means "not signed in". A verification that could
+    // not be completed (rate-limited or transient entity read, missing signing
+    // secret) must not be reported as an expired session, because callers turn
+    // null into 401 "Authentication required" and the client then demands a new
+    // sign-in for what is really a retryable service failure.
+    const status = Number(error?.status || 0);
+    if (status === 401 || status === 409) return null;
+    throw error;
   }
 }

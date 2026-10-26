@@ -44,6 +44,7 @@ export const ADMIN_TAB_GROUPS = [
     label: 'System',
     tabs: [
       { value: 'backend', label: 'Backend Functions', adminOnly: true },
+      { value: 'fleet', label: 'Fleet Settings', adminOnly: true },
     ],
   },
 ];
@@ -106,7 +107,6 @@ export const ADMIN_NESTED_TABS = {
     { value: 'wip_import', label: 'WIP Import', keywords: 'work in progress importer' },
     { value: 'permitting', label: 'Permitting Repository', keywords: 'permit documents' },
     { value: 'monitoring', label: 'Jurisdiction Monitoring', keywords: 'permit research jurisdictions' },
-    { value: 'scheduled_jobs', label: 'Scheduled Jobs', keywords: 'workflows cron schedules background jobs' },
   ],
 };
 
@@ -126,6 +126,7 @@ const ADMIN_SEARCH_KEYWORDS = {
   task_assignments: 'task assignment rules',
   calendar: 'scheduling calendar',
   activity: 'activity feed events history',
+  fleet: 'fleet settings bouncie notifications reminders maintenance mechanic portal public report',
 };
 
 export function getAccessibleAdminSubtab(parentTab, requestedSubtab) {
