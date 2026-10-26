@@ -199,12 +199,12 @@ tr.sips-focus-gap > td {
 }
 .sips-focus-gap-inner {
   height: 10px;
-  animation: sipsGapGrow 260ms ease-out;
+  animation: sipsGapGrow 150ms ease-out;
 }
 tr.sips-board-row {
   transform-origin: 50% 50%;
-  transition: transform 280ms cubic-bezier(0.22, 1.1, 0.36, 1),
-    box-shadow 280ms ease, background-color 180ms ease;
+  transition: transform 170ms cubic-bezier(0.22, 1.1, 0.36, 1),
+    box-shadow 170ms ease, background-color 120ms ease;
 }
 tr.sips-focus-row {
   position: relative;
@@ -217,7 +217,7 @@ tr.sips-focus-row > td {
   padding-top: 9px;
   padding-bottom: 9px;
   font-size: 15px;
-  transition: padding-top 260ms ease, padding-bottom 260ms ease, font-size 260ms ease;
+  transition: padding-top 150ms ease, padding-bottom 150ms ease, font-size 150ms ease;
 }
 tr.sips-focus-row > td :where(*) {
   font-size: inherit;
@@ -242,12 +242,12 @@ tr.sales-focus-gap > td {
 }
 .sales-focus-gap-inner {
   height: 12px;
-  animation: salesGapGrow 260ms ease-out;
+  animation: salesGapGrow 150ms ease-out;
 }
 tr.sales-board-row {
   transform-origin: 50% 50%;
-  transition: transform 280ms cubic-bezier(0.22, 1.1, 0.36, 1),
-    box-shadow 280ms ease, background-color 180ms ease;
+  transition: transform 170ms cubic-bezier(0.22, 1.1, 0.36, 1),
+    box-shadow 170ms ease, background-color 120ms ease;
 }
 tr.sales-focus-row {
   position: relative;
@@ -260,7 +260,7 @@ tr.sales-focus-row > td {
   padding-top: 10px;
   padding-bottom: 10px;
   font-size: 14px;
-  transition: padding-top 260ms ease, padding-bottom 260ms ease, font-size 260ms ease;
+  transition: padding-top 150ms ease, padding-bottom 150ms ease, font-size 150ms ease;
 }
 tr.sales-focus-row > td :where(*) {
   font-size: inherit;
@@ -285,12 +285,12 @@ tr.mmm-focus-gap > td {
 }
 .mmm-focus-gap-inner {
   height: 10px;
-  animation: mmmGapGrow 260ms ease-out;
+  animation: mmmGapGrow 150ms ease-out;
 }
 tr.mmm-board-row {
   transform-origin: 50% 50%;
-  transition: transform 280ms cubic-bezier(0.22, 1.1, 0.36, 1),
-    box-shadow 280ms ease, background-color 180ms ease;
+  transition: transform 170ms cubic-bezier(0.22, 1.1, 0.36, 1),
+    box-shadow 170ms ease, background-color 120ms ease;
 }
 tr.mmm-focus-row {
   position: relative;
@@ -303,7 +303,7 @@ tr.mmm-focus-row > td {
   padding-top: 9px;
   padding-bottom: 9px;
   font-size: 15px;
-  transition: padding-top 260ms ease, padding-bottom 260ms ease, font-size 260ms ease;
+  transition: padding-top 150ms ease, padding-bottom 150ms ease, font-size 150ms ease;
 }
 tr.mmm-focus-row > td :where(*) {
   font-size: inherit;
