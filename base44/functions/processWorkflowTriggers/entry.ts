@@ -38,6 +38,9 @@ const WORK_ORDER_EVENTS = new Set([
   'task_due_date_set', 'task_assigned', 'all_tasks_completed',
   'sub_note_added', 'sub_note_deleted',
   'note_completed', 'follow_up_added', 'follow_up_completed',
+  'designer_assigned', 'surveyor_assigned',
+  'project_manager_assigned', 'estimator_assigned',
+  'sip_item_completed', 'mmm_item_completed', 'sip_item_revisit_set',
   'rider_completed', 'rider_all_tasks_completed', 'rider_deleted',
   'rider_stage_changed', 'rider_assigned_to_changed',
   'rider_created',
@@ -48,7 +51,12 @@ const WORK_ORDER_EVENTS = new Set([
   'asap_toggled_on', 'asap_toggled_off',
   'assigned_to_changed',
 ]);
-const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS]);
+// Time Clock / PTO events emitted by timeClockAction after verified writes.
+const TIME_CLOCK_EVENTS = new Set([
+  'time_clock_in', 'time_clock_out', 'time_entry_notes_updated',
+  'time_off_requested', 'time_off_updated', 'job_allocation_added',
+]);
+const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS, ...TIME_CLOCK_EVENTS]);
 
 Deno.serve(async (req) => {
   try {
