@@ -49,6 +49,9 @@ const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   time_entry_notes_updated: 'TimeEntry',
   time_off_requested: 'TimeOffRequest',
   time_off_updated: 'TimeOffRequest',
+  time_off_approved: 'TimeOffRequest',
+  time_off_denied: 'TimeOffRequest',
+  time_off_cancelled: 'TimeOffRequest',
   job_allocation_added: 'TimeClockLaborSegment',
   pto_balance_low: 'UserPTOBalance',
   pending_import_created: 'PendingImport',
@@ -240,6 +243,9 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'time_entry_notes_updated':
     case 'time_off_requested':
     case 'time_off_updated':
+    case 'time_off_approved':
+    case 'time_off_denied':
+    case 'time_off_cancelled':
     case 'job_allocation_added':
     case 'pending_import_created':
     case 'duplicate_detected':
