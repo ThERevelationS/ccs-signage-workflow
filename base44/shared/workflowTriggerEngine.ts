@@ -42,10 +42,27 @@ const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   sales_close_date_approaching: 'Opportunity',
   time_clock_in: 'TimeEntry',
   time_clock_out: 'TimeEntry',
+  time_clock_in_late: 'TimeEntry',
+  time_clock_out_early: 'TimeEntry',
+  time_entry_long_shift: 'TimeEntry',
+  time_entry_no_clock_out: 'TimeEntry',
   time_entry_notes_updated: 'TimeEntry',
   time_off_requested: 'TimeOffRequest',
   time_off_updated: 'TimeOffRequest',
   job_allocation_added: 'TimeClockLaborSegment',
+  pto_balance_low: 'UserPTOBalance',
+  pending_import_created: 'PendingImport',
+  duplicate_detected: 'PendingImport',
+  feature_report_submitted: 'FeatureReport',
+  feature_report_status_changed: 'FeatureReport',
+  feature_report_completed: 'FeatureReport',
+  user_registered: 'AuthorizedEmail',
+  user_password_reset: 'AuthorizedEmail',
+  user_face_enrolled: 'AuthorizedEmail',
+  user_role_changed: 'AuthorizedEmail',
+  jurisdiction_profile_created: 'JurisdictionProfile',
+  jurisdiction_profile_updated: 'JurisdictionProfile',
+  regulation_alert_created: 'RegulationAlert',
 };
 
 // Human labels for record-bearing domains — drives the default email subject.
@@ -54,6 +71,12 @@ const RECORD_LABELS: Record<string, string> = {
   TimeEntry: 'Time Entry',
   TimeOffRequest: 'Time-Off Request',
   TimeClockLaborSegment: 'Job Allocation',
+  UserPTOBalance: 'PTO Balance',
+  PendingImport: 'Pending Import',
+  FeatureReport: 'Feature Report',
+  AuthorizedEmail: 'User Account',
+  JurisdictionProfile: 'Jurisdiction Profile',
+  RegulationAlert: 'Regulation Alert',
 };
 
 // Named events arrive with event_type === the UI's trigger vocabulary; the
@@ -210,10 +233,27 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'sales_close_date_approaching':
     case 'time_clock_in':
     case 'time_clock_out':
+    case 'time_clock_in_late':
+    case 'time_clock_out_early':
+    case 'time_entry_long_shift':
+    case 'time_entry_no_clock_out':
     case 'time_entry_notes_updated':
     case 'time_off_requested':
     case 'time_off_updated':
     case 'job_allocation_added':
+    case 'pending_import_created':
+    case 'duplicate_detected':
+    case 'feature_report_submitted':
+    case 'feature_report_status_changed':
+    case 'feature_report_completed':
+    case 'user_registered':
+    case 'user_password_reset':
+    case 'user_face_enrolled':
+    case 'user_role_changed':
+    case 'jurisdiction_profile_created':
+    case 'jurisdiction_profile_updated':
+    case 'regulation_alert_created':
+    case 'pto_balance_low':
     case 'permit_submitted':
     case 'permit_received':
     case 'permit_followup_due':
@@ -373,6 +413,33 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{time_off_dates}}': esc(record?.start_date ? `${record.start_date} – ${record.end_date || record.start_date}` : ''),
     '{{time_off_hours}}': esc(record?.hours_requested),
     '{{time_off_reason}}': esc(record?.reason),
+    // Generic record identity — FeatureReport title, JurisdictionProfile name,
+    // PendingImport doc/email subject all resolve through these.
+    '{{record_title}}': esc(record?.title || record?.name || record?.doc_number || record?.email_subject),
+    '{{name}}': esc(record?.name),
+    '{{state}}': esc(record?.state),
+    '{{type}}': esc(record?.type),
+    '{{priority}}': esc(record?.priority),
+    '{{full_name}}': esc(record?.full_name),
+    '{{role}}': esc(record?.role),
+    '{{email}}': esc(record?.email || record?.submitted_by_email),
+    // PendingImport fields.
+    '{{doc_number}}': esc(record?.doc_number),
+    '{{doc_type}}': esc(record?.doc_type),
+    '{{email_subject}}': esc(record?.email_subject),
+    '{{match_score}}': esc(record?.extracted_data?.match_score),
+    // FeatureReport fields.
+    '{{submitted_by_name}}': esc(record?.submitted_by_name),
+    '{{submitted_by_email}}': esc(record?.submitted_by_email),
+    // RegulationAlert fields.
+    '{{jurisdiction_name}}': esc(record?.jurisdiction_name),
+    '{{jurisdiction_state}}': esc(record?.jurisdiction_state),
+    '{{alert_type}}': esc(record?.alert_type),
+    '{{severity}}': esc(record?.severity),
+    '{{field_changed}}': esc(record?.field_changed),
+    '{{previous_value}}': esc(record?.previous_value),
+    '{{new_value}}': esc(record?.new_value),
+    '{{impact_summary}}': esc(record?.impact_summary),
   };
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
