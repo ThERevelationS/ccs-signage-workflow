@@ -48,7 +48,8 @@
       "type": "string",
       "enum": [
         "server",
-        "admin_correction"
+        "admin_correction",
+        "employee_attested_missed"
       ],
       "default": "server"
     }

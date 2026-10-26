@@ -21,6 +21,7 @@
         "break_end",
         "work_pause_start",
         "work_pause_resume",
+        "work_pause_report_missed",
         "time_approval",
         "pay_period_create",
         "pay_period_status",

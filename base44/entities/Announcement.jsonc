@@ -83,6 +83,42 @@
     "sent_by": {
       "type": "string",
       "description": "Email of admin who sent it"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Broadcast stops after this time (required to publish)"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Broadcast goes live at this time (empty = immediately when published)"
+    },
+    "display_mode": {
+      "type": "string",
+      "enum": [
+        "once",
+        "repeat"
+      ],
+      "default": "once",
+      "description": "once = show a single time per viewer; repeat = re-show while live"
+    },
+    "repeat_interval_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Minutes between re-shows when display_mode is repeat (0 = every poll cycle)"
+    },
+    "requires_ack": {
+      "type": "boolean",
+      "default": false,
+      "description": "Viewers must press the acknowledge button to dismiss"
+    },
+    "acknowledged_viewers": {
+      "type": "array",
+      "description": "Viewer keys (emails or device ids) that acknowledged this broadcast",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
