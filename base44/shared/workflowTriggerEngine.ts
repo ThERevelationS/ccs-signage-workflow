@@ -330,7 +330,7 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{permit_received_date}}': esc(workOrder.permit_received_date),
     // Order context for order_* events.
     '{{customer_name}}': esc(order?.customer_name),
-    '{{request_type}}': esc(order?.request_type),
+    '{{request_type}}': esc(order?.request_type ?? record?.request_type),
     '{{quantity}}': esc(order?.quantity),
     '{{requestor_name}}': esc(order?.requestor_name),
     '{{requestor_email}}': esc(order?.requestor_email),
@@ -358,7 +358,6 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{user_email}}': esc(record?.user_email),
     '{{clock_in}}': esc(record?.clock_in),
     '{{clock_out}}': esc(record?.clock_out),
-    '{{request_type}}': esc(record?.request_type),
     '{{start_date}}': esc(record?.start_date),
     '{{end_date}}': esc(record?.end_date),
     '{{hours_requested}}': esc(record?.hours_requested),
