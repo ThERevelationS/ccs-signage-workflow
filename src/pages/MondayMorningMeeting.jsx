@@ -1327,9 +1327,9 @@ export default function MondayMorningMeeting() {
 
         {/* Discussed & Scheduled section */}
         {parkedOrders.length > 0 && (
-          <div id="mmm-parked" className="clay-card p-4 w-full mt-6">
+          <div id="mmm-parked" className="clay-card p-4 w-full mt-6 overflow-x-auto">
             <h3 className="text-sm font-semibold text-gray-600 mb-3">Discussed &amp; Scheduled ({parkedOrders.length}) — returns to the list next Monday</h3>
-            <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
+            <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed', minWidth: '760px' }}>
               <thead className="bg-gray-50">
                 <tr className="border-b">
                   <th className="px-2 py-2 border-r text-center font-medium text-gray-600" style={{ width: '60px' }}>Return</th>
