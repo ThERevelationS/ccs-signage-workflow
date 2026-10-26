@@ -320,7 +320,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       data-work-pause-trigger
       type="button"
       onClick={() => setMenuOpen(true)}
-      disabled={unavailable || busy}
+      disabled={busy || transition || unavailable}
       aria-pressed={paused}
       title={title}
       className={`${pairedClassName} ${className}`}
