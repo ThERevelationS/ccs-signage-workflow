@@ -385,10 +385,15 @@ try {
   await caseRun("Desktop: add an inline meeting task, then completing it removes it",
     origin, [desktop], async ([page]) => {
       await page.getByRole("button", { name: "Show meeting tasks and notes for Alpha Signs" }).click();
-      const input = page.getByPlaceholder("Add a meeting task…");
+      // Beta's updates cell is auto-expanded by its open task, so scope to the
+      // cell without that text to reach Alpha's inputs deterministically.
+      const alphaCell = page.locator("td")
+        .filter({ has: page.getByPlaceholder("Add a meeting task…") })
+        .filter({ hasNotText: "Confirm lift reservation" });
+      const input = alphaCell.getByPlaceholder("Add a meeting task…");
       await input.waitFor();
       await input.fill("Order mounting hardware");
-      await page.getByRole("button", { name: "Add", exact: true }).click();
+      await alphaCell.getByRole("button", { name: "Add", exact: true }).click();
       await page.getByText("Order mounting hardware").waitFor();
       const state = await awaitFixture(page, origin,
         s => s.rows.find(r => r.id === "synthetic-mmm-alpha").mmmTasks.length === 1,
@@ -409,10 +414,13 @@ try {
   await caseRun("Desktop: recording a meeting update appends an author-stamped note",
     origin, [desktop], async ([page]) => {
       await page.getByRole("button", { name: "Show meeting tasks and notes for Alpha Signs" }).click();
-      const input = page.getByPlaceholder("Record a meeting update…");
+      const alphaCell = page.locator("td")
+        .filter({ has: page.getByPlaceholder("Record a meeting update…") })
+        .filter({ hasNotText: "Confirm lift reservation" });
+      const input = alphaCell.getByPlaceholder("Record a meeting update…");
       await input.waitFor();
       await input.fill("Waiting on engineering drawings");
-      await page.getByRole("button", { name: "Add note" }).click();
+      await alphaCell.getByRole("button", { name: "Add note" }).click();
       await page.getByText("Waiting on engineering drawings").waitFor();
       const state = await awaitFixture(page, origin,
         s => s.rows.find(r => r.id === "synthetic-mmm-alpha").workNotes.length === 1,
@@ -436,10 +444,13 @@ try {
     origin, [desktop, desktop], async ([a, b]) => {
       await a.getByRole("checkbox", { name: "Mark Alpha Signs as discussed this week" }).click();
       await b.getByRole("button", { name: "Show meeting tasks and notes for Alpha Signs" }).click();
-      const input = b.getByPlaceholder("Add a meeting task…");
+      const alphaCell = b.locator("td")
+        .filter({ has: b.getByPlaceholder("Add a meeting task…") })
+        .filter({ hasNotText: "Confirm lift reservation" });
+      const input = alphaCell.getByPlaceholder("Add a meeting task…");
       await input.waitFor();
       await input.fill("Verify anchor bolts");
-      await b.getByRole("button", { name: "Add", exact: true }).click();
+      await alphaCell.getByRole("button", { name: "Add", exact: true }).click();
       await awaitFixture(a, origin, s => {
         const alpha = s.rows.find(r => r.id === "synthetic-mmm-alpha");
         return alpha.discussed !== "" && alpha.mmmTasks.length === 1;
