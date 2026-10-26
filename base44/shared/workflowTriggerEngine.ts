@@ -1,5 +1,6 @@
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from './workOrderFieldPersistence.mjs';
 import { loadAllEntityRows } from './pagedEntityRows.ts';
+import { matchesRecordFilters, supportsRecordDestination } from './automationRecordPolicy.mjs';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -28,8 +29,8 @@ const formatStage = (s: unknown) => STAGE_LABELS[String(s || '')] || String(s ||
 const RIDER_STAGES = new Set(['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation']);
 
 // Event vocabularies that carry a business record other than a Work Order
-// or Order. The engine resolves the record server-side by entity+id; only
-// send_email can execute for them (the mutating actions all target WOs).
+// or Order. The engine resolves the source server-side. Task/note actions
+// may additionally select an explicit live Work Order; other mutations may not.
 const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   sales_lead_created: 'Opportunity',
   sales_status_changed: 'Opportunity',
@@ -84,7 +85,7 @@ const RECORD_LABELS: Record<string, string> = {
 
 // Named events arrive with event_type === the UI's trigger vocabulary; the
 // legacy 'create'/'update' vocabulary is still honored for field-diff checks.
-function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any) {
+function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any, record?: any) {
   const condition = trigger?.trigger_condition || {};
 
   switch (trigger?.trigger_type) {
@@ -288,7 +289,7 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     if (condition.min_quantity != null && !(Number(order.quantity) >= Number(condition.min_quantity))) return false;
     if (condition.max_quantity != null && !(Number(order.quantity) <= Number(condition.max_quantity))) return false;
   }
-  return true;
+  return matchesRecordFilters(condition, record);
 }
 
 async function sendEmailAction(base44: any, config: any, context: any, changedBy: string) {
@@ -485,6 +486,18 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
 
 async function executeAction(base44: any, action: any, workOrder: any, context: any, changedBy: string) {
   const config = action?.action_config || {};
+  let recordActionId = '';
+  if (!workOrder?.id && ['add_task', 'add_note'].includes(action?.action_type) && supportsRecordDestination(context?.eventType)) {
+    const targetId = String(config.target_work_order_id || '').trim();
+    if (!targetId) return { skipped: true, reason: 'Record action requires an explicit destination Work Order' };
+    workOrder = await base44.asServiceRole.entities.WorkOrder.get(targetId);
+    if (!workOrder?.id || workOrder.deleted === true) throw new Error('Destination Work Order is missing or in Project Trash.');
+    // The source version, rule, and action identify a retry of the same
+    // record event, not an unrelated task with identical text.
+    const bytes = new TextEncoder().encode(context.actionKey);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    recordActionId = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
   // Mutating actions all write through workOrder; events without one (order
   // events) can only send email.
   if (action?.action_type !== 'send_email' && !workOrder?.id) {
@@ -518,7 +531,9 @@ async function executeAction(base44: any, action: any, workOrder: any, context: 
     case 'add_task':
       if (config.task) {
         const currentNotes = Array.isArray(workOrder.notes) ? workOrder.notes : [];
-        const newTask = { text: config.task, timestamp: new Date().toISOString(), created_by: 'Automation', completed: false, sub_tasks: [] };
+        const taskId = recordActionId ? `automation-${recordActionId}` : undefined;
+        if (taskId && currentNotes.some((task: any) => task.id === taskId)) return { skipped: true, reason: 'Record event task already exists' };
+        const newTask = { ...(taskId ? { id: taskId } : {}), text: config.task, timestamp: new Date().toISOString(), created_by: 'Automation', completed: false, sub_tasks: [] };
         const nextFields = { notes: [...currentNotes, newTask] };
         const saved = await replaceWorkOrderFieldsIfUnchanged({ entity: base44.asServiceRole.entities.WorkOrder, workOrderId: workOrder.id, expectedFields: expectedWorkOrderFields(workOrder, nextFields), nextFields, label: 'Workflow automation task addition' });
         Object.assign(workOrder, saved);
@@ -528,7 +543,9 @@ async function executeAction(base44: any, action: any, workOrder: any, context: 
     case 'add_note':
       if (config.note) {
         const currentWorkNotes = Array.isArray(workOrder.work_notes) ? workOrder.work_notes : [];
-        const newNote = { id: Date.now(), type: config.note_type || 'admin', text: config.note, timestamp: new Date().toISOString(), created_by: 'Automation', sub_tasks: [] };
+        const noteId = recordActionId ? parseInt(recordActionId.slice(0, 13), 16) : Date.now();
+        if (recordActionId && currentWorkNotes.some((note: any) => note.id === noteId)) return { skipped: true, reason: 'Record event note already exists' };
+        const newNote = { id: noteId, type: config.note_type || 'admin', text: config.note, timestamp: new Date().toISOString(), created_by: 'Automation', sub_tasks: [] };
         const nextFields = { work_notes: [...currentWorkNotes, newNote] };
         const saved = await replaceWorkOrderFieldsIfUnchanged({ entity: base44.asServiceRole.entities.WorkOrder, workOrderId: workOrder.id, expectedFields: expectedWorkOrderFields(workOrder, nextFields), nextFields, label: 'Workflow automation note addition' });
         Object.assign(workOrder, saved);
@@ -536,10 +553,11 @@ async function executeAction(base44: any, action: any, workOrder: any, context: 
       }
       break;
     case 'set_due_date':
-      if (config.days) {
-        const days = parseInt(config.days, 10);
+      if (config.days != null && String(config.days).trim() !== '') {
+        const days = Number(config.days);
+        if (!Number.isInteger(days) || days < 0 || days > 3650) throw new Error('Due date offset must be between 0 and 3650 whole days.');
         const date = new Date();
-        date.setDate(date.getDate() + days);
+        date.setDate(date.getDate() + (config.direction === 'before' ? -days : days));
         const nextFields = { due_date: date.toISOString().split('T')[0] };
         const saved = await replaceWorkOrderFieldsIfUnchanged({ entity: base44.asServiceRole.entities.WorkOrder, workOrderId: workOrder.id, expectedFields: expectedWorkOrderFields(workOrder, nextFields), nextFields, label: 'Workflow automation due date update' });
         Object.assign(workOrder, saved);
@@ -643,24 +661,31 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const oldData = payload?.old_data && typeof payload.old_data === 'object' ? payload.old_data : {};
   const extras = payload?.extras && typeof payload.extras === 'object' ? payload.extras : {};
   const changedBy = String(changedByOverride || payload?.changed_by || 'System').trim() || 'System';
-  const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, recordEntity, extras };
+  const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, recordEntity, extras, eventType };
 
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
-  for (const rule of automations) {
+  const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
+  for (const rule of orderedRules) {
+    if (!rule || rule.enabled !== true || !Array.isArray(rule.triggers) || !Array.isArray(rule.actions)) continue;
     // Triggers combine with each row's declared logic (and/or). AND only
     // holds when several trigger rows can match the same event — the same
     // semantics the Admin editor warns about for mixed event types.
     let triggered: boolean | null = null;
     for (const trigger of rule.triggers || []) {
-      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras, orderRecord);
+      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras, orderRecord, contextRecord);
       if (triggered === null) triggered = m;
       else triggered = trigger?.logic === 'and' ? (triggered && m) : (triggered || m);
     }
     if (triggered !== true) continue;
-    for (const action of rule.actions || []) {
+    for (const [actionIndex, action] of rule.actions.entries()) {
+      if (!action?.action_type) continue;
       try {
-        const result = await executeAction(base44, action, actionWorkOrder, context, changedBy);
+        const source = contextRecord || orderRecord;
+        if (!actionWorkOrder?.id && ['add_task', 'add_note'].includes(action.action_type) && supportsRecordDestination(eventType) &&
+            (!source?.updated_date || !rule.id)) throw new Error('Record action requires a verified source version and rule identity.');
+        const actionKey = JSON.stringify([eventType, source?.id, source?.updated_date, rule.id, actionIndex]);
+        const result = await executeAction(base44, action, actionWorkOrder, { ...context, actionKey }, changedBy);
         triggeredActions.push({ rule: rule.name, action: action.action_type, result });
       } catch (error) {
         console.error(`Action error for rule ${rule.name}:`, error?.message || error);
