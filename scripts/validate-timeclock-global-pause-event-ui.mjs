@@ -35,6 +35,14 @@ vm.runInNewContext(compiled, {
       calls.push({ payload, resolve, reject });
     }) } } },
     '@/components/auth/EmailGate': { useAuth: () => authSession },
+    '@/components/timeclock/WorkPauseMenu': ({ open, onToggle, onClose }) =>
+      open ? React.createElement('button', { 'data-menu-toggle': true, onClick: () => { const r = onToggle(); if (onClose) onClose(); return r; } }) : null,
+    '@/components/timeclock/TimeClockStatusContext': { useTimeClockStatus: () => ({
+      version: 0,
+      refresh: () => new Promise((resolve, reject) => {
+        calls.push({ payload: { action: 'status', session_token: authSession.sessionToken, target_email: String(authSession.currentUser?.email || '').trim().toLowerCase() }, resolve, reject });
+      }).then((r) => r?.data || r),
+    }) },
     'lucide-react': { Loader2: icon, Pause: icon, Play: icon },
   })[id] || require(id),
   console, Promise, Date, Math, Object, Number, String, Map, Set,
@@ -111,8 +119,9 @@ await act(async () => { calls[3].resolve({ data: {
   status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
 } }); });
 let pendingOldAction;
+await act(async () => { renderer.root.findByType('button').props.onClick(); });
 await act(async () => {
-  pendingOldAction = renderer.root.findByType('button').props.onClick();
+  pendingOldAction = renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick();
 });
 assert.equal(calls.length, 5);
 assert.equal(calls[4].payload.action, 'work_pause_start');
@@ -156,8 +165,9 @@ await act(async () => { calls[6].resolve({ data: {
   status: 'clocked_in', work_pause_status: 'working', work_pause_allowed: true, break_status: 'working',
 } }); });
 let pendingOldSuccess;
+await act(async () => { renderer.root.findByType('button').props.onClick(); });
 await act(async () => {
-  pendingOldSuccess = renderer.root.findByType('button').props.onClick();
+  pendingOldSuccess = renderer.root.findAllByType('button').find((b) => b.props['data-menu-toggle']).props.onClick();
 });
 assert.equal(calls.length, 8);
 assert.equal(calls[7].payload.action, 'work_pause_start');
