@@ -378,5 +378,13 @@ assert.match(annManager, /customerportal/, 'announcement manager must offer the 
 assert.match(entry, /payments: \(Array\.isArray\(payments\)/, 'customer 360 must return payments for the statement');
 assert.match(custDetailPage, /statementHtml/, 'customer 360 must render a printable statement');
 assert.match(custDetailPage, /escHtml/, 'statement must escape customer-supplied values');
+assert.match(invoicing, /action === "revenue_summary"/, 'invoicing must expose a revenue summary for reporting');
+assert.match(invoicing, /overdue_count/, 'revenue summary must report overdue AR');
+const dashboard = readFileSync('src/pages/ReportingDashboard.jsx', 'utf8');
+assert.match(dashboard, /revenue_summary/, 'dashboard must load the revenue summary');
+assert.match(dashboard, /list_opportunities/, 'dashboard must load the sales funnel');
+assert.match(dashboard, /useAuth/, 'dashboard financial layer must be session-authenticated');
+const homePage = readFileSync('src/pages/Home.jsx', 'utf8');
+assert.match(homePage, /Navigate/, 'the dead /Home route must redirect to a real page');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
