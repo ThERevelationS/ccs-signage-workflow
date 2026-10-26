@@ -344,4 +344,4 @@ for (const scenario of [
   results.push(await scenario());
 }
 for (const label of results) console.log(`PASS ${label}`);
-console.log(`Time Clock read-scope fencing: ${results.length}/${results.length} scenarios pass`);
+console.log(`PASS ${results.length}/${results.length} Time Clock read-scope fencing scenarios`);
