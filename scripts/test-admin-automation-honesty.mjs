@@ -20,6 +20,7 @@ const setLiteral = (source, name) => {
 
 const processTriggersEntry = read("base44/functions/processWorkflowTriggers/entry.ts");
 const opportunityWorkspace = read("base44/functions/opportunityWorkspaceAction/entry.ts");
+const timeClockAction = read("base44/functions/timeClockAction/entry.ts");
 
 test("live trigger sets match real emitters", () => {
   const engine = setLiteral(adminSettings, "WORKFLOW_ENGINE_TRIGGER_SET");
@@ -28,9 +29,10 @@ test("live trigger sets match real emitters", () => {
   const orderDeadline = setLiteral(adminSettings, "ORDER_DEADLINE_TRIGGER_SET");
   const sales = setLiteral(adminSettings, "SALES_TRIGGER_SET");
   const salesDeadline = setLiteral(adminSettings, "SALES_DEADLINE_TRIGGER_SET");
+  const timeClock = setLiteral(adminSettings, "TIME_CLOCK_TRIGGER_SET");
 
   // No overlap between the execution paths.
-  const all = [...engine, ...order, ...deadline, ...orderDeadline, ...sales, ...salesDeadline];
+  const all = [...engine, ...order, ...deadline, ...orderDeadline, ...sales, ...salesDeadline, ...timeClock];
   assert.equal(new Set(all).size, all.length, "trigger sets must not overlap");
 
   // Every client-emitted engine/order trigger must actually be emitted by
@@ -78,6 +80,32 @@ test("live trigger sets match real emitters", () => {
     assert.ok(
       workflowEngine.includes(`${t}: 'Opportunity'`),
       `"${t}" is advertised as live but the engine maps no record context for it`
+    );
+  }
+
+  // Time Clock / PTO events are emitted server-side by timeClockAction after
+  // verified writes, matched by the engine record map, and accepted by the
+  // endpoint (it receives the record id, not a Work Order).
+  const timeClockEntities = {
+    time_clock_in: 'TimeEntry',
+    time_clock_out: 'TimeEntry',
+    time_entry_notes_updated: 'TimeEntry',
+    time_off_requested: 'TimeOffRequest',
+    time_off_updated: 'TimeOffRequest',
+    job_allocation_added: 'TimeClockLaborSegment',
+  };
+  for (const t of timeClock) {
+    assert.ok(
+      timeClockAction.includes(`'${t}'`),
+      `"${t}" is advertised as live but timeClockAction never emits it`
+    );
+    assert.ok(
+      workflowEngine.includes(`${t}: '${timeClockEntities[t]}'`),
+      `"${t}" is advertised as live but the engine maps no record context for it`
+    );
+    assert.ok(
+      processTriggersEntry.includes(`'${t}'`),
+      `"${t}" is advertised as live but processWorkflowTriggers rejects it`
     );
   }
 });
@@ -162,6 +190,7 @@ test("every advertised trigger resolves to a status", () => {
     ...setLiteral(adminSettings, "ORDER_DEADLINE_TRIGGER_SET"),
     ...setLiteral(adminSettings, "SALES_TRIGGER_SET"),
     ...setLiteral(adminSettings, "SALES_DEADLINE_TRIGGER_SET"),
+    ...setLiteral(adminSettings, "TIME_CLOCK_TRIGGER_SET"),
   ]);
   for (const v of values) {
     assert.ok(typeof v === "string" && v.length > 0, "trigger values must be non-empty strings");
