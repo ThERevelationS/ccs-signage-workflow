@@ -24,7 +24,8 @@ const PAGE_LABEL_OVERRIDES = {
   NewAllInOneEstimate: "New All-in-One Estimate", Estimator: "Estimator", EstimateDetail: "Estimate Detail",
   QuickPrice: "Quick Price", SalesHome: "Sales Home", EstimatorQueues: "Estimator Queues",
   EstimatorProducts: "Products", EstimatorParts: "Parts", MasterInventory: "Master Inventory",
-  QuoteSettings: "Quote Settings", VinylEstimator: "Vinyl Estimator", ChannelLetterEstimator: "Channel Letter Estimator",
+  QuoteSettings: "Quote Settings", WorkOrderTraveler: "WO Traveler", ProductionSchedule: "Production Schedule",
+  VinylEstimator: "Vinyl Estimator", ChannelLetterEstimator: "Channel Letter Estimator",
   CNCEstimator: "CNC Estimator", LaserEstimator: "Laser Estimator", MetalEstimator: "Metal Estimator",
   PaintingEstimator: "Painting Estimator", FoundationEstimator: "Foundation Estimator",
   FleetOverview: "Fleet Overview", FleetWorkOrders: "Fleet Work Orders", FleetEquipment: "Fleet Equipment",
@@ -42,6 +43,7 @@ const EXTRA_PAGE_NAMES = [
   "FleetOverview", "FleetSearch", "FleetNotifications", "FleetTracking", "FleetEquipment",
   "FleetEquipmentDetail", "FleetMaintenance", "FleetInspections", "FleetWorkOrders", "FleetParts",
   "FleetFluids", "FleetFuel", "FleetWarranties", "FleetReservations",
+  "WorkOrderTraveler", "ProductionSchedule",
 ];
 
 const pageLabel = (name) =>
