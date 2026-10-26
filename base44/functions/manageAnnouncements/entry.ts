@@ -28,6 +28,12 @@ function cleanForm(value: any, { requireContent = true } = {}) {
   const durationRaw = Number(data.duration_seconds);
   const duration = Number.isFinite(durationRaw) ? Math.max(0, Math.min(3600, Math.round(durationRaw))) : 10;
   const background = cleanText(data.background_color, 32) || '#FFF9C4';
+  const expiresAtRaw = cleanText(data.expires_at, 64);
+  const expiresAt = expiresAtRaw && Number.isFinite(Date.parse(expiresAtRaw)) ? new Date(expiresAtRaw).toISOString() : '';
+  const scheduledForRaw = cleanText(data.scheduled_for, 64);
+  const scheduledFor = scheduledForRaw && Number.isFinite(Date.parse(scheduledForRaw)) ? new Date(scheduledForRaw).toISOString() : '';
+  const repeatRaw = Number(data.repeat_interval_minutes);
+  const repeatInterval = Number.isFinite(repeatRaw) ? Math.max(0, Math.min(1440, Math.round(repeatRaw))) : 0;
   return {
     name: cleanText(data.name, 500),
     title,
@@ -40,6 +46,11 @@ function cleanForm(value: any, { requireContent = true } = {}) {
     duration_seconds: duration,
     background_color: background,
     priority,
+    expires_at: expiresAt,
+    scheduled_for: scheduledFor,
+    display_mode: String(data.display_mode) === 'repeat' ? 'repeat' : 'once',
+    repeat_interval_minutes: repeatInterval,
+    requires_ack: data.requires_ack === true,
   };
 }
 
@@ -153,10 +164,53 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
-    if (actor?.role !== 'admin') return Response.json({ error: 'Admin access is required.' }, { status: 403 });
-
     const action = String(body?.action || '').trim();
     const Announcement = base44.asServiceRole.entities.Announcement;
+
+    // Server-enforced live feed: scheduled announcements are withheld until
+    // their start time and expired broadcasts are lazily deactivated here so
+    // stale records can never keep re-appearing on viewer devices.
+    if (action === 'active_feed') {
+      const now = Date.now();
+      const rows = await listAll(Announcement);
+      const feed: any[] = [];
+      for (const row of rows) {
+        if (row?.is_active !== true) continue;
+        const expiresMs = Date.parse(String(row.expires_at || ''));
+        if (Number.isFinite(expiresMs) && expiresMs <= now) {
+          await deactivateIfStillLive(Announcement, row).catch(() => null);
+          continue;
+        }
+        const scheduledMs = Date.parse(String(row.scheduled_for || ''));
+        if (Number.isFinite(scheduledMs) && scheduledMs > now) continue;
+        feed.push(row);
+      }
+      feed.sort(comparePublication);
+      return Response.json({ announcements: feed.slice(0, 3), live_count: feed.length });
+    }
+
+    // Viewer acknowledgement is a best-effort append. The client also
+    // persists dismissal locally, so a lost ack never re-shows the banner.
+    if (action === 'acknowledge') {
+      const id = String(body?.id || '').trim();
+      const viewerKey = cleanText(body?.viewer_key, 160).toLowerCase();
+      if (!id || !viewerKey) return Response.json({ error: 'Announcement id and viewer key are required.' }, { status: 400 });
+      const viewer = actor?.email ? String(actor.email).trim().toLowerCase() : viewerKey;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const row = await Announcement.get(id).catch(() => null);
+        if (!row?.id) return Response.json({ acknowledged: true, already_absent: true });
+        const seen = Array.isArray(row.acknowledged_viewers) ? row.acknowledged_viewers.map((v: any) => String(v).toLowerCase()) : [];
+        if (seen.includes(viewer)) return Response.json({ acknowledged: true, already_acknowledged: true });
+        const result = await Announcement.updateMany(
+          { id: row.id, updated_date: row.updated_date },
+          { $set: { acknowledged_viewers: [...seen, viewer].slice(-500) } },
+        );
+        if (result && result.updated === 1) return Response.json({ acknowledged: true });
+      }
+      return Response.json({ acknowledged: true, deferred: true });
+    }
+
+    if (actor?.role !== 'admin') return Response.json({ error: 'Admin access is required.' }, { status: 403 });
 
     if (action === 'create') {
       const form = cleanForm(body?.data);
@@ -172,6 +226,18 @@ Deno.serve(async (req) => {
 
     if (action === 'publish') {
       const form = cleanForm(body?.form);
+      // Expiration is mandatory for a live broadcast. Announcements without
+      // one stay saved as drafts but can never go out unbounded.
+      const now = Date.now();
+      const expiresMs = Date.parse(String(form.expires_at || ''));
+      const scheduledMs = Date.parse(String(form.scheduled_for || ''));
+      if (!Number.isFinite(expiresMs)) {
+        return Response.json({ error: 'Choose when this announcement should stop broadcasting before sending.' }, { status: 400 });
+      }
+      const floor = Number.isFinite(scheduledMs) && scheduledMs > now ? scheduledMs : now;
+      if (expiresMs <= floor) {
+        return Response.json({ error: 'The stop-broadcasting time must be after the start time.' }, { status: 400 });
+      }
       const sentAt = new Date().toISOString();
       const payload = { ...form, is_active: true, sent_at: sentAt, sent_by: String(actor.email || '').trim().toLowerCase() };
       let published: any;
