@@ -375,5 +375,8 @@ assert.match(portalFn, /display_pages.*customerportal|customerportal.*display_pa
 assert.match(portalPage, /data\?\.announcements/, 'portal page must render announcements');
 const annManager = readFileSync('src/components/announcements/AnnouncementManager.jsx', 'utf8');
 assert.match(annManager, /customerportal/, 'announcement manager must offer the portal page target');
+assert.match(entry, /payments: \(Array\.isArray\(payments\)/, 'customer 360 must return payments for the statement');
+assert.match(custDetailPage, /statementHtml/, 'customer 360 must render a printable statement');
+assert.match(custDetailPage, /escHtml/, 'statement must escape customer-supplied values');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
