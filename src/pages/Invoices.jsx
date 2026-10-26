@@ -718,6 +718,7 @@ export default function Invoices() {
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
   const [viewName, setViewName] = useState("");
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -827,11 +828,15 @@ export default function Invoices() {
             </button>
           ))}
         </div>
+        <button type="button" onClick={() => { setViewName(""); setOverdueOnly((v) => !v); }}
+          className={`min-h-9 rounded-full px-3 text-xs font-semibold ${overdueOnly ? "bg-red-600 text-white" : "border border-red-300 text-red-600 dark:border-red-800 dark:text-red-400"}`}>
+          Overdue
+        </button>
         <SavedViews
           storageKey="views.invoices"
-          getState={() => ({ status, query })}
+          getState={() => ({ status, query, overdueOnly })}
           activeName={viewName}
-          onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
+          onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setOverdueOnly(s.overdueOnly === true); setViewName(name || ""); }}
         />
       </div>
 
@@ -855,7 +860,7 @@ export default function Invoices() {
               </tr>
             </thead>
             <tbody>
-              {invoices.map((inv) => {
+              {(overdueOnly ? invoices.filter((i) => Number(i.balance_due) > 0 && ["sent", "partially_paid"].includes(i.status) && i.due_date && i.due_date < today()) : invoices).map((inv) => {
                 const overdue = Number(inv.balance_due) > 0 && ["sent", "partially_paid"].includes(inv.status) && inv.due_date && inv.due_date < today();
                 return (
                 <tr key={inv.id} onClick={() => setOpenId(inv.id)} className={`cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${overdue ? "bg-red-50/60 dark:bg-red-950/20" : ""}`}>
