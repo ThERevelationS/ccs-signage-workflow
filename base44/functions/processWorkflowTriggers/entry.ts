@@ -53,10 +53,25 @@ const WORK_ORDER_EVENTS = new Set([
 ]);
 // Time Clock / PTO events emitted by timeClockAction after verified writes.
 const TIME_CLOCK_EVENTS = new Set([
-  'time_clock_in', 'time_clock_out', 'time_entry_notes_updated',
-  'time_off_requested', 'time_off_updated', 'job_allocation_added',
+  'time_clock_in', 'time_clock_out', 'time_clock_in_late', 'time_clock_out_early',
+  'time_entry_long_shift', 'time_entry_no_clock_out', 'time_entry_notes_updated',
+  'time_off_requested', 'time_off_updated', 'job_allocation_added', 'pto_balance_low',
 ]);
-const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS, ...TIME_CLOCK_EVENTS]);
+// Other record-context events — emitted by manageFeatureReports,
+// onboardingAccountAction, issuePasswordReset, detectSalesDuplicates,
+// monitorJurisdictionChanges, and client-side jurisdiction/user funnels
+// after verified writes. The engine resolves each record's entity from its
+// RECORD_CONTEXT_EVENTS map and re-reads it by id server-side.
+const RECORD_EVENTS = new Set([
+  'pending_import_created', 'duplicate_detected',
+  'feature_report_submitted', 'feature_report_status_changed',
+  'feature_report_completed',
+  'user_registered', 'user_password_reset', 'user_face_enrolled',
+  'user_role_changed',
+  'jurisdiction_profile_created', 'jurisdiction_profile_updated',
+  'regulation_alert_created',
+]);
+const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS, ...TIME_CLOCK_EVENTS, ...RECORD_EVENTS]);
 
 Deno.serve(async (req) => {
   try {
@@ -117,6 +132,21 @@ Deno.serve(async (req) => {
         payload: {
           event_type: eventType,
           order: { id: orderId },
+          extras: payload?.extras,
+        },
+        changedByOverride: changedBy,
+      });
+      return Response.json(result);
+    }
+
+    if (RECORD_EVENTS.has(eventType) || TIME_CLOCK_EVENTS.has(eventType)) {
+      const recordId = String(payload?.record?.id || payload?.record_id || '').trim();
+      if (!recordId) throw Object.assign(new Error('Missing record id'), { status: 400 });
+      const result = await processWorkflowTriggerEvent({
+        base44,
+        payload: {
+          event_type: eventType,
+          record: { id: recordId },
           extras: payload?.extras,
         },
         changedByOverride: changedBy,
