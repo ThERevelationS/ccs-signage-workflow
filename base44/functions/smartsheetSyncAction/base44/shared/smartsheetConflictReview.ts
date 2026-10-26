@@ -1,6 +1,7 @@
 import { buildSnapshot, buildSalesPullSnapshot, parseRowToFields } from './smartsheetSyncFields.ts';
 import { preview, trackedConditionalSave } from './fieldAudit.ts';
 import { mapSalesTaskToStage } from './salesTaskStageCatalog.mjs';
+import { buildSalesTaskAdoptionPatch } from './smartsheetSalesTaskAdoption.mjs';
 
 export async function handleConflictReview({base44,body,actor,token,loadConfig,get,claim,finish,push,assertOwner}) {
   if(actor?.role!=='admin')throw Object.assign(new Error('Only admins can review sync conflicts.'),{status:403});
@@ -36,25 +37,13 @@ export async function handleConflictReview({base44,body,actor,token,loadConfig,g
       const remoteTask=String(buildSalesPullSnapshot(remote.body,profile.column_bindings)[conflict.column_id]??'').trim();
       const mapped=mapSalesTaskToStage(remoteTask);
       const stamp=new Date().toISOString();
-      const today=stamp.slice(0,10);
-      const currentStatus=String(record.sales_status||'lead').trim().toLowerCase();
-      const patch={current_task_description:remoteTask};
-      if(mapped.kind==='neutral_close') {
-        if(record.in_pipeline!==true || ['won','lost'].includes(currentStatus)) {
-          await entity.update(conflict.id,{status:'superseded'});
-          throw Object.assign(new Error('This record is no longer an active Sales opportunity; the neutral closure could not be applied. Reload before reviewing again.'),{status:409});
-        }
-        Object.assign(patch,{in_pipeline:false,sales_neutral_closed_at:stamp,follow_up_date:''});
-      } else if(mapped.kind==='stage' && mapped.status!==currentStatus) {
-        patch.sales_status=mapped.status;patch.sales_stage_changed_at=stamp;
-        if(['won','lost'].includes(mapped.status)) {
-          patch.close_date=today;patch.follow_up_date='';
-          patch.lost_reason=mapped.status==='lost'
-            ? String(parseRowToFields(remote.body,profile.column_bindings,'sales')?.lost_reason??'').trim()
-            : '';
-        } else if(['won','lost'].includes(currentStatus)) {
-          patch.close_date='';patch.lost_reason='';
-        }
+      let patch;
+      try {
+        patch=buildSalesTaskAdoptionPatch(record,{},remoteTask,
+          String(parseRowToFields(remote.body,profile.column_bindings,'sales')?.lost_reason??'').trim(),stamp);
+      } catch(error) {
+        await entity.update(conflict.id,{status:'superseded'});
+        throw Object.assign(new Error(`${error?.message||'This record can no longer adopt the Smartsheet task.'} Reload before reviewing again.`),{status:409});
       }
       // Advance the task-column baseline so no later pull treats the applied
       // task as an unverified local change.
