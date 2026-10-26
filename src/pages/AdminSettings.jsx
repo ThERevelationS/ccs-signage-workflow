@@ -1609,7 +1609,7 @@ export default function AdminSettings() {
           const id = destinationWorkOrderId(e.target.value);
           if (id) updateAction(index, "target_work_order_id", id);
         }} />
-      <p className="mt-1 text-xs text-blue-800">This event is not a Work Order. The task or note goes only to the Work Order you choose here; saving verifies that it exists and is not in Trash.</p>
+      <p className="mt-1 text-xs text-blue-800">For record events, the task or note goes to this Work Order; saving verifies it is not in Trash. Work Order events in the same rule still use their original Work Order.</p>
     </div>
   );
 
@@ -1776,7 +1776,7 @@ export default function AdminSettings() {
       case "set_due_date":
         return (
           <div className="flex gap-2 mt-2">
-            <Input type="number" placeholder="Days" value={config.days || ""} onChange={(e) => updateAction(index, "days", e.target.value)} className="w-20" />
+            <Input type="number" min="0" max="3650" step="1" placeholder="Days" value={config.days ?? ""} onChange={(e) => updateAction(index, "days", e.target.value)} className="w-20" />
             <Select value={config.direction || "after"} onValueChange={(val) => updateAction(index, "direction", val)}>
               <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
               <SelectContent>
