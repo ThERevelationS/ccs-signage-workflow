@@ -156,7 +156,7 @@ const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 const ORDER_AUX_RELOAD_MS = 5 * 60 * 1000;
 const ORDER_FOCUS_RELOAD_THROTTLE_MS = 15 * 1000;
 
-const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
+const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", focusOrderId = "", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -1651,6 +1651,26 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     estimateSize: (index) => index === historyLayout.historyVirtualIndex ? 36 : 32,
     overscan: 15,
   });
+
+  // Deep link: /OrderForm?order=<id> focuses the row on desktop or opens the
+  // mobile detail dialog. Retries until the Order finishes loading.
+  const deepLinkAppliedRef = useRef('');
+  useEffect(() => {
+    if (!focusOrderId || deepLinkAppliedRef.current === focusOrderId || !orders.length) return;
+    const order = orders.find(o => o.id === focusOrderId);
+    if (!order) return;
+    deepLinkAppliedRef.current = focusOrderId;
+    if (isMobile) {
+      setMobileDetailOrderId(order.id);
+      return;
+    }
+    const orderIndex = filteredOrders.findIndex(o => o.id === focusOrderId);
+    if (orderIndex < 0) return;
+    const virtualIndex = historyLayout.historyVirtualIndex !== null && orderIndex >= historyLayout.historyVirtualIndex
+      ? orderIndex + 1 : orderIndex;
+    rowVirtualizer.scrollToIndex(virtualIndex, { align: 'center' });
+    setFocusedRowId(order.id);
+  }, [focusOrderId, orders, filteredOrders, isMobile, historyLayout, rowVirtualizer]);
 
   const handleContextMenu = (e, order, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
