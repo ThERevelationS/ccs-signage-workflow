@@ -66,6 +66,7 @@ import FleetMechanic from './pages/FleetMechanic';
 import CustomerPortal from './pages/CustomerPortal';
 import NewUserSetup from './pages/NewUserSetup';
 import PermittingDocs from './pages/PermittingDocs';
+import WorkOrderTraveler from './pages/WorkOrderTraveler';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -169,6 +170,11 @@ const AuthenticatedApp = () => {
       <Route path="/PermittingDocs" element={
         <LayoutWrapper currentPageName="PermittingDocs">
           <PermittingDocs />
+        </LayoutWrapper>
+      } />
+      <Route path="/WorkOrderTraveler" element={
+        <LayoutWrapper currentPageName="WorkOrderTraveler">
+          <WorkOrderTraveler />
         </LayoutWrapper>
       } />
       {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (
