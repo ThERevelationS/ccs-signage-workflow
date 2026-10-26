@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import FaceRecognition from "./FaceRecognition";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
+import { triggerNotification } from "@/components/workflow/NotificationService";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -60,6 +61,10 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
         label: `Face enrollment for ${user?.full_name || user?.email || user?.id}`
       });
       if (!current()) return;
+      triggerNotification("user_face_enrolled", null, {
+        recordData: user,
+        eventDescription: "User face ID enrolled",
+      });
       setSaved(true);
       completionTimerRef.current = setTimeout(() => {
         if (!current()) return;
