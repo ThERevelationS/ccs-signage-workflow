@@ -36,7 +36,7 @@ function cleanObject(value: any): any {
 function cleanDocument(doc: any) {
   const cleaned = cleanObject(doc || {});
   const title = cleanString(cleaned?.title);
-  const url = cleanString(cleaned?.url);
+  const url = cleanUrl(cleaned?.url);
   if (!title || title.toLowerCase() === 'untitled' || !url) return null;
   return { ...cleaned, title, url };
 }
