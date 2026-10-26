@@ -17,6 +17,14 @@ const compiled = transformSync(
   source
     .replace("import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';",
       'const createClientFromRequest = globalThis.__syntheticClient;')
+    .replace("import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';",
+      'const withEmployeeAccessReads = (client) => client;')
+    .replace("import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';",
+      'const withEntityRateLimitRetry = (client) => client;')
+    .replace("import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';",
+      'const buildStatusLite = () => ({ requires_full_status: true });')
+    .replace("import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';",
+      'const processWorkflowTriggerEvent = async () => {};')
     .replace("import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';",
       'const { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } = globalThis.__payrollMembershipEvidence;'),
   { loader: 'ts', format: 'cjs', target: 'es2022' },
