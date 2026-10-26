@@ -423,7 +423,7 @@ tr.mmm-focus-row > td :where(*) {
 @media (prefers-reduced-motion: reduce) {
   .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
   .check-draw { stroke-dashoffset: 0; }
-  .tracker-pulse, .tracker-flip, .tracker-today-bar, .punch-sheen { animation: none !important; }
+  .tracker-pulse, .tracker-flip, .tracker-today-bar, .punch-sheen, .mci-time-pop { animation: none !important; }
 }
 
 /* Time Tracker pill animations */
@@ -452,3 +452,45 @@ tr.mmm-focus-row > td :where(*) {
   left: -10%;
   animation: punchSheen 3.4s ease-in-out infinite;
 }
+
+/* Missed Clock In dialog */
+@keyframes mciTimePop {
+  0% { transform: translateY(6px) scale(0.96); opacity: 0.35; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.mci-time-pop { animation: mciTimePop 180ms ease-out; }
+.mci-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #f59e0b var(--mci-fill, 0%), #e7e5e4 var(--mci-fill, 0%));
+  outline: none;
+  cursor: pointer;
+}
+.mci-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 120ms ease;
+}
+.mci-slider::-webkit-slider-thumb:hover { transform: scale(1.12); }
+.mci-slider:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.18); }
+.mci-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 120ms ease;
+}
+.mci-slider::-moz-range-thumb:hover { transform: scale(1.12); }
+.mci-slider:active::-moz-range-thumb { cursor: grabbing; transform: scale(1.18); }
+.mci-slider::-moz-range-track { background: transparent; }

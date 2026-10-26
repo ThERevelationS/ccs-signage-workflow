@@ -191,6 +191,9 @@ export default function QuickClockSection({
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
+  // A dismissed Clock Out stays dismissed until the employee re-identifies.
+  // Passive status refresh must never steal the page back.
+  const clockOutDismissedRef = useRef(false);
   const notificationTimerRef = useRef(null);
   const displayResetTimerRef = useRef(null);
   // Passive refreshes may return out of order, after a session switch, or
@@ -439,7 +442,11 @@ export default function QuickClockSection({
     if (status?.status === "clocked_in" && status?.entry?.id) {
       setAuthoritativeTransition(null);
       setActiveEntry(status.entry);
-      setShowClockOut(status?.work_pause_status !== "paused");
+      if (status?.work_pause_status === "paused") {
+        setShowClockOut(false);
+      } else if (!clockOutDismissedRef.current) {
+        setShowClockOut(true);
+      }
       setIsRecognizing(false);
       return "clocked_in";
     }
@@ -640,6 +647,7 @@ export default function QuickClockSection({
 
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Clock-in confirmed by server.");
+      clockOutDismissedRef.current = true;
       scheduleDisplayReset(5000);
       return data;
     } catch (err) {
@@ -659,6 +667,7 @@ export default function QuickClockSection({
   const resolveVerifiedIdentity = async ({ user = null, credential }) => {
     setIsLoading(true);
     setPersistenceError("");
+    clockOutDismissedRef.current = false;
     try {
       const status = await invokeTimeClock({
         action: "status",
@@ -672,6 +681,7 @@ export default function QuickClockSection({
       if (resolvedStatus === "clocked_in") {
         if (identifyIntentRef.current === "missed_clock_in") {
           identifyIntentRef.current = "clock_in";
+          clockOutDismissedRef.current = true;
           setShowClockOut(false);
           setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in — no missed Clock In to report.`);
           return;
@@ -1680,7 +1690,10 @@ export default function QuickClockSection({
       {showClockOut && activeEntry && selectedUser && (
         <ClockOutDialog
           isOpen={showClockOut}
-          onClose={resetState}
+          onClose={() => {
+            clockOutDismissedRef.current = true;
+            void resetState();
+          }}
           timeEntry={activeEntry}
           userName={selectedUser.full_name || selectedUser.email}
           breakStatus={breakStatus}
