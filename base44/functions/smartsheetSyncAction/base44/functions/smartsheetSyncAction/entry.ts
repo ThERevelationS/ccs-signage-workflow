@@ -2,10 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { planFieldPush, recordFieldPullHolds, applyMergedLocalFields } from '../../shared/smartsheetFieldMerge.ts';
 import { staleOrderRetryPrewriteIds } from '../../shared/smartsheetOrderRetryPrewriteSafety.mjs';
-import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
+import { trackedConditionalSave, verifiedLocalFieldTime } from '../../shared/fieldAudit.ts';
 import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
-import { planSalesFieldPull, guardSalesPulledTaskTransition } from '../../shared/smartsheetSalesPullPlan.ts';
+import { planSalesFieldPull, guardSalesPulledTaskTransition, planSalesRemoteTaskApplication } from '../../shared/smartsheetSalesPullPlan.ts';
+import { buildSalesTaskAdoptionPatch } from '../../shared/smartsheetSalesTaskAdoption.mjs';
 import { buildNonterminalSalesPullPatch } from '../../shared/smartsheetSalesStageTransition.mjs';
 import { guardSalesPushTaskPlan } from '../../shared/smartsheetSalesPushTaskGuard.mjs';
 import { verifiedSalesConflictResolutionTargets, approvedSalesRecordStillCurrent, approvedSalesRemoteSnapshotStillCurrent, recoverCompletedApprovedSalesTaskDecisionIds, staleSalesRemotePutPlans, staleSalesRemotePutSnapshotIds } from '../../shared/smartsheetSalesConflictResolution.mjs';
@@ -384,6 +385,7 @@ async function pullDataset(
   const toUpdate: any[] = [];
   const salesAssigneeTranslationIssues: any[] = [];
   const salesLocalPendingPreserved: string[] = [];
+  const salesLocalWinsSilent: string[] = [];
   const salesPullReviews: any[] = [];
   const salesPendingSnapshotRepairs: any[] = [];
   const salesSnapshotOnlyUpdates: any[] = [];
@@ -495,20 +497,79 @@ async function pullDataset(
       }
     }
     let salesStageTransition: { from: string; to: string } | null = null;
+    let salesTaskAdoption: any = null;
     if (dataset === 'sales' && existing) {
       // Stage-changing, terminal, and locally edited tasks require a protected
       // Sales transition, not a blind Smartsheet bulkUpdate. Other fields may pull.
+      const remoteCandidate = { ...fieldValues };
+      const fullRemoteSnapshot = salesRemoteSnapshot;
       const plan = guardSalesPulledTaskTransition(existing, fieldValues,
         planSalesFieldPull(existing, fieldValues, salesRemoteSnapshot, bindings), bindings);
       for (const key of Object.keys(fieldValues)) delete fieldValues[key];
       Object.assign(fieldValues, plan.fields);
       salesRemoteSnapshot = plan.snapshot;
       salesStageTransition = plan.stageTransition || null;
+      salesTaskAdoption = plan.taskAdoption
+        ? { ...plan.taskAdoption, lostReason: remoteCandidate.lost_reason }
+        : null;
+      const stillHeld: string[] = [];
+      const localWinsBindings: string[] = [...(plan.localWins || [])];
       if (plan.held.length) {
+        // Both sides moved on these fields since the verified baseline. Newest
+        // wins: a committed local app-edit newer than the remote row keeps the
+        // local value silently; a remote row newer than (or unopposed by) local
+        // edit evidence takes the remote value. Only missing or equal evidence
+        // queues a human review.
+        const remoteAt = Date.parse(String(row?.modified_at || ''));
+        for (const binding of plan.held) {
+          const column = String(bindings[binding] || '');
+          const field = binding === 'notes_serialized' ? 'work_notes' : binding;
+          // A push-blocked task is held because remote never changed — only the
+          // local task/stage inconsistency needs review. Timestamp arbitration
+          // must not adopt an unchanged remote baseline over a local edit.
+          if (binding === 'current_task_description' && plan.pushBlockedTask) {
+            stillHeld.push(binding);
+            continue;
+          }
+          const localAt = await verifiedLocalFieldTime(base44, 'WorkOrder', existing, binding).catch(() => '');
+          const localMs = Date.parse(String(localAt || ''));
+          if (Number.isFinite(remoteAt) && (!Number.isFinite(localMs) || remoteAt > localMs)) {
+            // Remote newer or local intent unproven: apply the remote value.
+            if (binding === 'current_task_description') {
+              const mode = planSalesRemoteTaskApplication(existing, remoteCandidate.current_task_description);
+              if (mode.mode === 'held') {
+                stillHeld.push(binding);
+              } else {
+                fieldValues.current_task_description = remoteCandidate.current_task_description;
+                if (column) salesRemoteSnapshot[column] = fullRemoteSnapshot?.[column];
+                if (mode.mode === 'transition') {
+                  salesStageTransition = { from: String(existing.sales_status || 'lead').trim().toLowerCase(), to: mode.to };
+                } else if (mode.mode === 'adoption') {
+                  salesTaskAdoption = { ...mode, lostReason: remoteCandidate.lost_reason };
+                }
+              }
+            } else if (Object.prototype.hasOwnProperty.call(remoteCandidate, field)) {
+              fieldValues[field] = remoteCandidate[field];
+              if (column) salesRemoteSnapshot[column] = fullRemoteSnapshot?.[column];
+            } else {
+              stillHeld.push(binding);
+            }
+          } else if (Number.isFinite(localMs) && Number.isFinite(remoteAt) && localMs > remoteAt) {
+            // Local edit provably newer: keep it silently; the push carries it.
+            localWinsBindings.push(binding);
+          } else {
+            stillHeld.push(binding);
+          }
+        }
+      }
+      if (stillHeld.length || localWinsBindings.length) {
+        salesAssigneeTranslationUnresolved = true; // Do not advance completion while local data is un-synced.
+      }
+      if (localWinsBindings.length) salesLocalWinsSilent.push(existing.id);
+      if (stillHeld.length) {
         salesLocalPendingPreserved.push(existing.id);
-        salesAssigneeTranslationUnresolved = true; // Do not advance completion while fields are held.
         salesPullReviews.push(...await buildSalesPullReviews(existing,
-          Object.fromEntries(plan.held.map(field => [field, bindings[field]])), row));
+          Object.fromEntries(stillHeld.map(field => [field, bindings[field]])), row));
       }
     }
     if (dataset === 'orders' && existing?.smartsheet_pending_local_sync === true) {
@@ -593,6 +654,7 @@ async function pullDataset(
                 _remoteSnapshot: salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings),
                 _salesAssigneeNeedsReview: salesAssigneeTranslationUnresolved,
                 _salesStageTransition: salesStageTransition,
+                _salesTaskAdoption: salesTaskAdoption,
               }
             : {}),
         ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
@@ -691,7 +753,7 @@ async function pullDataset(
     };
   }
 
-  await persistSalesReviews(base44, salesPullReviews, options?.assertRunOwnership);
+  const salesReviewPersist = await persistSalesReviews(base44, salesPullReviews, options?.assertRunOwnership);
 
   // Historical Smartsheet assignee labels can outlive the current authorized
   // Base44 roster. They must not freeze the entire Sales mirror. For unresolved
@@ -872,8 +934,9 @@ async function pullDataset(
       });
     }
     const stageBatch = dataset === 'sales' ? batch.filter((rec: any) => rec._salesStageTransition) : [];
-    const ordinaryBatch = dataset === 'sales' ? batch.filter((rec: any) => !rec._salesStageTransition) : batch;
-    const payload = ordinaryBatch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, ...fields }: any) => {
+    const adoptionBatch = dataset === 'sales' ? batch.filter((rec: any) => !rec._salesStageTransition && rec._salesTaskAdoption) : [];
+    const ordinaryBatch = dataset === 'sales' ? batch.filter((rec: any) => !rec._salesStageTransition && !rec._salesTaskAdoption) : batch;
+    const payload = ordinaryBatch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, _salesTaskAdoption, ...fields }: any) => {
       const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
       return { id, ...withoutUnverifiedTimestamp };
     });
@@ -882,7 +945,7 @@ async function pullDataset(
       if (dataset === 'orders') updatedCount += payload.length;
       for (const rec of ordinaryBatch) {
         if (rec._existing) {
-          const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, ...fields } = rec;
+          const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, _salesTaskAdoption, ...fields } = rec;
           const snapshot = _remoteSnapshot;
           if (dataset === 'orders') {
             const changes = changedPulledOrderDates(_existing, fields);
@@ -974,6 +1037,66 @@ async function pullDataset(
           `Review before retrying: ${error?.message || 'unknown error'}`);
       }
     }
+    // Terminal/neutral task adoptions also commit only through a compare-and-set
+    // WorkOrder save: the task, real status, close fields and stage timestamp
+    // must land atomically. Never include these rows in bulkUpdate.
+    for (const rec of adoptionBatch) {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, _salesStageTransition, _salesTaskAdoption, ...fields } = rec;
+      try {
+        const stamp = new Date().toISOString();
+        const patch = buildSalesTaskAdoptionPatch(_existing, fields, _salesTaskAdoption.remoteTask,
+          _salesTaskAdoption.lostReason, stamp);
+        try {
+          await trackedConditionalSave(base44, 'WorkOrder', _existing, patch,
+            { full_name: 'Smartsheet Sales task synchronization' }, 'smartsheet');
+        } catch (error) {
+          // The remote ACK may be lost after the CAS actually commits.
+          // Verify exact fields once, never retry an uncertain write.
+          const latest = await base44.asServiceRole.entities.WorkOrder.get(id);
+          if (!latest || !Object.entries(patch).every(([field, value]) =>
+            field === 'smartsheet_parent_row_id'
+              ? cleanText(latest[field], 40) === cleanText(value, 40)
+              : JSON.stringify(latest[field] ?? null) === JSON.stringify(value ?? null))) throw error;
+        }
+        if (_salesTaskAdoption.kind === 'stage') {
+          // FieldAudit captures the guarded server save. Also preserve regular-
+          // user-visible CellHistory, verifying every created event before the
+          // Smartsheet snapshot can advance.
+          const historyRows = salesStageCellHistoryRows(_existing, patch);
+          const createdHistory = await base44.asServiceRole.entities.CellHistory.bulkCreate(historyRows);
+          const historyIds = Array.isArray(createdHistory) ? createdHistory.map((event: any) => event?.id) : [];
+          if (historyIds.length !== historyRows.length || historyIds.some((eventId: any) => !eventId)) {
+            throw new Error('Sales stage history creation was not acknowledged in full.');
+          }
+          const historyReadback = await base44.asServiceRole.entities.CellHistory.filter({ id: { $in: historyIds } }, { limit: historyIds.length });
+          const historyConfirmed = Array.isArray(historyReadback) ? historyReadback : historyReadback?.items || [];
+          const historyById = new Map(historyConfirmed.map((event: any) => [String(event.id), event]));
+          if (!createdHistory.every((event: any, index: number) => {
+            const saved = historyById.get(String(event.id));
+            const expected = historyRows[index];
+            return saved && saved.entity_id === expected.entity_id && saved.field_name === expected.field_name &&
+              saved.old_value === expected.old_value && saved.new_value === expected.new_value;
+          })) throw new Error('Sales stage history did not pass ID-based read-back.');
+        }
+        const expectedFields = { ...fields };
+        delete expectedFields.smartsheet_parent_row_id;
+        salesBusinessVerifications.push({
+          id, expectedFields,
+          expectedParentRowId: cleanText(fields.smartsheet_parent_row_id, 40),
+          expectedStage: _salesTaskAdoption.kind === 'stage' ? _salesTaskAdoption.to : null,
+          expectedNeutralClose: _salesTaskAdoption.kind === 'neutral_close',
+          expectedStageChangedAt: stamp,
+          expectedRowId: cleanText(_existing.smartsheet_row_id, 40),
+          snapshot: _remoteSnapshot,
+          salesAssigneeNeedsReview: Boolean(_salesAssigneeNeedsReview),
+        });
+      } catch (error: any) {
+        salesBusinessWriteFailureIds.push(String(id));
+        errors.push(`Sales ${id} task adoption conditional save not verified; snapshot not advanced. ` +
+          `Review before retrying: ${error?.message || 'unknown error'}`);
+      }
+    }
     if (dataset === 'orders' && options.reportOrderPullProgress) {
       if (orderPullBatchEvidence?.recent_batches?.at(-1)?.state === 'attempting') {
         orderPullBatchEvidence = recordOrderPullBatchEvidence(orderPullBatchEvidence, {
@@ -1015,13 +1138,20 @@ async function pullDataset(
           persisted &&
           cleanText(persisted?.smartsheet_parent_row_id, 40) === item.expectedParentRowId
         );
-        const stageVerified = !item.expectedStage || Boolean(
-          persisted && persisted.in_pipeline === true &&
-          persisted.sales_status === item.expectedStage &&
-          persisted.sales_stage_changed_at === item.expectedStageChangedAt &&
-          cleanText(persisted.smartsheet_sheet_id, 40) === sheetId &&
-          cleanText(persisted.smartsheet_row_id, 40) === item.expectedRowId
-        );
+        const stageVerified = item.expectedNeutralClose
+          ? Boolean(
+              persisted && persisted.in_pipeline === false &&
+              persisted.sales_neutral_closed_at === item.expectedStageChangedAt &&
+              cleanText(persisted.smartsheet_sheet_id, 40) === sheetId &&
+              cleanText(persisted.smartsheet_row_id, 40) === item.expectedRowId
+            )
+          : !item.expectedStage || Boolean(
+              persisted && persisted.in_pipeline === true &&
+              persisted.sales_status === item.expectedStage &&
+              persisted.sales_stage_changed_at === item.expectedStageChangedAt &&
+              cleanText(persisted.smartsheet_sheet_id, 40) === sheetId &&
+              cleanText(persisted.smartsheet_row_id, 40) === item.expectedRowId
+            );
         if (!businessFieldsVerified || !parentRowVerified || !stageVerified) {
           salesBusinessWriteFailureIds.push(String(item.id));
           errors.push(
@@ -1036,7 +1166,7 @@ async function pullDataset(
           smartsheet_sync_snapshot: item.snapshot,
           ...(item.salesAssigneeNeedsReview ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
         };
-        if (item.expectedStage) {
+        if (item.expectedStage || item.expectedNeutralClose) {
           // The successful stage CAS is not license to advance the remote
           // baseline after another app edit. Guard this metadata write too.
           salesStageMetadataCandidates.push({ record: persisted, patch: snapshotPatch });
@@ -1389,6 +1519,15 @@ async function pullDataset(
       assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
       local_pending_preserved: salesLocalPendingPreserved.length,
       local_pending_record_ids: salesLocalPendingPreserved.slice(0, 20),
+      // Held-field reviews first surfaced this run. A stable, already-reported
+      // review queue does not re-flag every run; only new or changed divergence
+      // evidence does. Absent persistence evidence defaults to the preserved
+      // count so unknown states still flag (fail-closed).
+      local_pending_newly_reported: salesReviewPersist
+        ? salesReviewPersist.added
+        : salesLocalPendingPreserved.length,
+      local_wins_silent: salesLocalWinsSilent.length,
+      local_wins_silent_record_ids: salesLocalWinsSilent.slice(0, 20),
       business_field_write_failures: salesBusinessWriteFailureIds.length,
       business_field_write_failure_ids: salesBusinessWriteFailureIds.slice(0, 20),
       snapshot_write_failures: snapshotWriteFailures,
@@ -1702,6 +1841,14 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
   const hasErrors = (runResults || []).some((r: any) => Number(r?.errors) > 0);
   let openConflicts = 0;
   try { openConflicts = Number(await base44.asServiceRole.entities.SyncConflict.count({ status: 'open' })) || 0; } catch {}
+  let openConflictLabels: string[] = [];
+  if (openConflicts > 0) {
+    try {
+      const rows = await base44.asServiceRole.entities.SyncConflict.filter({ status: 'open' }, { sort: '-created_date', limit: 10 });
+      const items = Array.isArray(rows) ? rows : rows?.items || [];
+      openConflictLabels = [...new Set(items.map((r: any) => cleanText(r?.record_label, 120)).filter(Boolean))].slice(0, 10);
+    } catch {}
+  }
   if (!isStale && !isFailed && !hasErrors && openConflicts === 0) return;
   const alertType = isStale ? 'Stuck/Stale Run'
     : status === 'failed' ? 'Failed Run'
@@ -1711,7 +1858,7 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
   const datasetLabel = syncStatus?.progress_dataset || '';
   const direction = syncStatus?.progress_direction || '';
   const errorDetails = (runResults || []).flatMap((r: any) => r?.error_details || []).slice(0, 10);
-  const reviewUrl = 'https://clay-flow-signage-suite-387da97c.base44.app/AdminSettings?tab=smartsheet';
+  const reviewUrl = `https://clay-flow-signage-suite-387da97c.base44.app/AdminSettings?tab=${openConflicts > 0 ? 'sync_conflicts' : 'smartsheet'}`;
   const totalErrors = (runResults || []).reduce((sum: number, r: any) => sum + (Number(r?.errors) || 0), 0);
   const reviewSummary = (runResults || []).flatMap((r: any) => {
     const label = `${r?.dataset || '?'} ${r?.direction || ''}`.trim();
@@ -1719,7 +1866,7 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
       .filter(([k, v]) => Number(v) > 0 && k !== 'unchanged_skipped' && k !== 'rows_examined' && k !== 'records_examined' && /review|orphan|conflict|held|unlinked|missing|flagged|skipped|failure/.test(k))
       .map(([k, v]) => `  ${label}: ${k} = ${v}`);
   }).slice(0, 15);
-  const signature = [alertType, status, totalErrors, openConflicts, datasetLabel, direction, reviewSummary.join(';')].join('|');
+  const signature = [alertType, status, totalErrors, openConflicts, datasetLabel, direction, reviewSummary.join(';'), openConflictLabels.join(',')].join('|');
   const cooldownMs = Math.max(15, Number(config?.cooldown_minutes) || SYNC_ALERT_DEFAULT_COOLDOWN_MINUTES) * 60_000;
   const lastSentAt = Date.parse(String(config?.last_alert_at || ''));
   if (signature === cleanText(config?.last_alert_signature, 400) &&
@@ -1729,6 +1876,8 @@ async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: a
     `Sync: ${datasetLabel || 'Unknown'}${direction ? ' \u2192 ' + direction : ''}`,
     `Stage reached: ${stage}`, `Progress: ${syncStatus?.progress_current || 0} / ${syncStatus?.progress_total || 0}`,
     `Errors: ${totalErrors}`, `Open conflicts: ${openConflicts}`,
+    ...(openConflictLabels.length ? ['', 'Pending value decisions (choose app or Smartsheet per field):',
+      ...openConflictLabels.map((label: string) => `  ${label}`)] : []),
     ...(reviewSummary.length ? ['', 'Items needing review:', ...reviewSummary] : []),
     ...(errorDetails.length ? ['', 'Error details:', ...errorDetails] : []),
     '', `Review and resolve: ${reviewUrl}`,
