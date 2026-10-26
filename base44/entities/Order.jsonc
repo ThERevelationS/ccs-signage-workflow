@@ -108,6 +108,10 @@
       "default": false,
       "description": "Order Form-only durable marker that local Base44 edits are waiting for verified Save & Sync to Smartsheet. Cleared only after a confirmed Order push."
     },
+    "duplicate_review_status": {
+      "type": "string",
+      "description": "Order Form-only review annotation for the possible-duplicate indicator. 'not_duplicate' means a human compared the group and confirmed the Orders are distinct; flagged groups with no value remain under review."
+    },
     "smartsheet_create_attempt": {
       "type": "object",
       "description": "Order Form-only write-ahead marker for Smartsheet row creation. Stores the intended mapped snapshot before POST and, when returned, the permanent row ID before final link completion. Preserve unresolved attempts; never infer identity from values or retry an ambiguous POST."
