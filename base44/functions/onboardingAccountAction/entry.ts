@@ -4,6 +4,22 @@ import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — a failure must never break a verified
+// write, so this swallows and logs like the other emit helpers.
+async function emitRecordAutomation(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
+
 function secureToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -185,6 +201,7 @@ Deno.serve(async (req) => {
         guardFields: { ...invitationTokenGuard, onboarding_complete: false, email: user.email },
         label: `Complete onboarding for ${user.email}`,
       });
+      await emitRecordAutomation(base44, 'user_registered', saved.id, String(saved?.email || 'system'));
       return Response.json({ success: true, user: sanitizedUser(saved) });
     }
 
