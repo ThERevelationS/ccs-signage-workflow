@@ -9,6 +9,7 @@ import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { useAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
 import { hasAnyTimelineSegment, earliestSegmentDue } from "@/components/workflow/workOrderTimelineSegments";
+import AttentionFeed from "@/components/workflow/AttentionFeed";
 
 const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation'];
 
@@ -59,6 +60,17 @@ export default function MainWorkflow() {
     document.title = "Main Workflow - Workflow Manager";
   }, []);
 
+  // Deep link: /MainWorkflow?wo=<id> opens that work order's detail dialog.
+  useEffect(() => {
+    const woId = new URLSearchParams(window.location.search).get("wo");
+    if (!woId || !allWorkOrders) return;
+    const found = (allWorkOrders || []).find((w) => w.id === woId);
+    if (found) {
+      setSelectedWorkOrder(found);
+      setIsDialogOpen(true);
+    }
+  }, [allWorkOrders]);
+
   const getSortedWorkOrders = () => {
     const sorted = [...workOrders];
     switch (sortBy) {
@@ -98,6 +110,7 @@ export default function MainWorkflow() {
             </div>
           </div>
         </div>
+        <AttentionFeed />
         {readError && workOrders.length > 0 && (
           <div className="mb-2 px-3 py-2 rounded border border-amber-200 bg-amber-50 text-xs text-amber-800">
             Workflow refresh could not be verified completely. Showing the last verified timeline until the next successful refresh.
