@@ -10,6 +10,17 @@ function cleanString(value: unknown): string | null {
   return trimmed;
 }
 
+function cleanUrl(value: unknown): string | null {
+  const cleaned = cleanString(value);
+  if (!cleaned) return null;
+  try {
+    const url = new URL(cleaned);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? cleaned : null;
+  } catch {
+    return null;
+  }
+}
+
 function cleanObject(value: any): any {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
   const out: Record<string, any> = {};
@@ -40,9 +51,9 @@ export function sanitizeJurisdictionResearch(input: any = {}) {
   }
   return {
     ...data,
-    website_url: cleanString(data.website_url),
-    permitting_url: cleanString(data.permitting_url),
-    cagis_database_url: cleanString(data.cagis_database_url),
+    website_url: cleanUrl(data.website_url),
+    permitting_url: cleanUrl(data.permitting_url),
+    cagis_database_url: cleanUrl(data.cagis_database_url),
     ai_summary: cleanString(data.ai_summary),
     sqft_width_height_rules: cleanString(data.sqft_width_height_rules),
     height_allowances: cleanString(data.height_allowances),
