@@ -119,7 +119,7 @@ test("scanning state is cleared when the dialog closes", () => {
 
 test("in-dialog request creation posts to fleetRequestAction with a stable creation key", () => {
   const submit = src.slice(src.indexOf("const submitRequest"), src.indexOf("const reSearch"));
-  assert.match(submit, /invoke\("fleetRequestAction",\s*\{/);
+  assert.match(submit, /invokeFleet\("fleetRequestAction",\s*\{/);
   assert.match(submit, /action:\s*"create",\s*creation_key:\s*requestKey/);
   assert.match(submit, /item_type:\s*"part"/);
   assert.match(submit, /inventory_item_id: requestFor\.inventory_item_id/);

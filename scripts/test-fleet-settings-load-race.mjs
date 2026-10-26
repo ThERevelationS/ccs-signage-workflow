@@ -26,10 +26,14 @@ function harness(){
     AUTOMATION_SOURCES:["fleetScheduledMaintenanceGeneration","fleetScheduledReminders","fleetNotificationWorker","fleetReminderFallback","bouncieSyncNotifications"],
     checkSequenceRef:{current:0},
     integritySequenceRef:{current:0},
+    sessionToken:"tok",
     base44:{
-      entities:{FleetSettings:{list:()=>gate("FleetSettings.list")},FleetEquipment:{}},
+      entities:{FleetSettings:{},FleetEquipment:{}},
       functions:{invoke:(name,args)=>gate(`${name}:${args?.action||"run"}`)},
     },
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
+    getSessionUser:()=>({id:"admin-1",email:"admin@example.test",role:"admin"}),
+    readFleetRows:(entity,options)=>gate(entity==="FleetSettings"?"FleetSettings.list":"FleetMigrationAudit.list"),
     loadAutomationHealthData:()=>gate("health"),
     listAllFleetRows:()=>gate("equipment"),
     setChecking:value=>checking.push(value),
@@ -53,6 +57,7 @@ const waitForCalls=async(h,count)=>{
 const checkPayload=version=>({
   "fleetCutoverControl:status":{data:{cutover:version}},
   "FleetSettings.list":[{id:`settings-${version}`}],
+  "FleetMigrationAudit.list":[{id:`audit-${version}`,mode:"verification"}],
   "bouncieStatus:run":{data:{connected:version==="new"}},
   health:{logs:[],notifications:[{id:`queue-${version}`}],receipts:[{id:`receipt-${version}`}]},
   "fleetMechanicPortal:admin_list_links":{data:{links:[{id:`link-${version}`}]}},

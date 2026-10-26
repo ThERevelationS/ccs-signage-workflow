@@ -16,6 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const DOCUMENT_TYPES = [
   ["registration", "Registration"],
@@ -93,8 +94,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
     setLoading(true);
     setError("");
     try {
-      const rows = await filterAllFleetRows(
-        base44.entities.FleetEquipmentDocument,
+      const rows = await filterAllFleetRows("FleetEquipmentDocument",
         { equipment_id: equipment.id },
         "-created_date",
         { label: `${equipment.name} Fleet documents` },
@@ -179,7 +179,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
     setNotice("");
     try {
       if (dialog.mode === "edit") {
-        const { data } = await base44.functions.invoke("fleetEquipmentDocumentAction", {
+        const { data } = await invokeFleet("fleetEquipmentDocumentAction", {
           action: "update",
           id: dialog.document.id,
           expected_updated_date: dialog.document.updated_date || "",
@@ -213,7 +213,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
         setPendingUpload(uploaded);
       }
 
-      const { data } = await base44.functions.invoke("fleetEquipmentDocumentAction", {
+      const { data } = await invokeFleet("fleetEquipmentDocumentAction", {
         action: "create",
         creation_key: dialog.creationKey,
         document: {
@@ -244,7 +244,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
     setError("");
     setNotice("");
     try {
-      const { data } = await base44.functions.invoke("fleetEquipmentDocumentAction", {
+      const { data } = await invokeFleet("fleetEquipmentDocumentAction", {
         action,
         id: document.id,
         expected_updated_date: document.updated_date || "",

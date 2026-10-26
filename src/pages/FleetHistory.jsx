@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
-import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { listAllFleetRows, readFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Activity, AlertTriangle, Bug, CheckCircle2, ExternalLink, FileText, History, Lightbulb, Loader2, Paperclip, Plus, RefreshCw, Search, Upload, Wrench, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const LOG_PAGE_SIZE = 200;
 const REPORT_TYPES = [
@@ -43,13 +45,13 @@ export default function FleetHistory() {
     setLoading(true);
     setError("");
     try {
-      const currentUser = await base44.auth.me().catch(() => null);
+      const currentUser = await Promise.resolve(getSessionUser());
       if (requestSequence !== loadSequenceRef.current) return;
       setUser(currentUser);
       if (currentUser?.role !== "admin") return;
       const [reportRows, logRows] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetSystemReport, "-created_date", { label: "Fleet system reports" }),
-        base44.entities.FleetSystemLog.list("-created_date", LOG_PAGE_SIZE + 1, 0),
+        listAllFleetRows("FleetSystemReport", "-created_date", { label: "Fleet system reports" }),
+        readFleetRows("FleetSystemLog", { sort: "-created_date", limit: LOG_PAGE_SIZE + 1 }),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
       ++moreSequenceRef.current;
@@ -71,7 +73,7 @@ export default function FleetHistory() {
     setLoadingMore(true);
     setError("");
     try {
-      const next = await base44.entities.FleetSystemLog.list("-created_date", LOG_PAGE_SIZE + 1, logs.length);
+      const next = await readFleetRows("FleetSystemLog", { sort: "-created_date", limit: LOG_PAGE_SIZE + 1, skip: logs.length });
       if (requestSequence !== moreSequenceRef.current) return;
       setLogs(current => [...current, ...(next || []).slice(0, LOG_PAGE_SIZE)]);
       setLogHasMore((next || []).length > LOG_PAGE_SIZE);
@@ -132,7 +134,7 @@ export default function FleetHistory() {
     setNotice("");
     try {
       if (!reportCreateKey) throw new Error("Fleet feedback create identity is missing. Close and reopen the feedback form.");
-      const { data } = await base44.functions.invoke("fleetSystemReportAction", {
+      const { data } = await invokeFleet("fleetSystemReportAction", {
         action: "create",
         creation_key: reportCreateKey,
         report: {
@@ -167,7 +169,7 @@ export default function FleetHistory() {
     setStatusBusyId(report.id);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetSystemReportAction", {
+      const { data } = await invokeFleet("fleetSystemReportAction", {
         action: "update_status",
         id: latest.id,
         status,

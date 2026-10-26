@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Gauge, Loader2, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const EMPTY = {
   maintenance_task_id: "",
@@ -89,7 +89,7 @@ export default function FleetMeterRuleDialog({ open, equipment, tasks = [], rule
     let mounted = true;
     setReadingPreview(null);
     setReadingLoading(true);
-    base44.functions.invoke("fleetMeterMaintenanceAction", { action: "reading_preview", equipment_id: equipment.id, meter_type: form.meter_type, source: form.source })
+    invokeFleet("fleetMeterMaintenanceAction", { action: "reading_preview", equipment_id: equipment.id, meter_type: form.meter_type, source: form.source })
       .then(({ data }) => {
         if (!mounted) return;
         setReadingPreview(data?.error ? { available:false, value:null, unit: form.meter_type === "engine_hours" ? "hours" : form.meter_type === "odometer_miles" ? "miles" : "units", source:form.source, reason:data.error, recorded_at:"" } : data?.reading || null);
@@ -135,7 +135,7 @@ export default function FleetMeterRuleDialog({ open, equipment, tasks = [], rule
       const body = rule
         ? { action: "update", id: rule.id, expected_updated_date: rule.updated_date || "", rule: payload }
         : { action: "create", creation_key: `meter-rule-${crypto.randomUUID()}`, rule: payload };
-      const { data } = await base44.functions.invoke("fleetMeterMaintenanceAction", body);
+      const { data } = await invokeFleet("fleetMeterMaintenanceAction", body);
       if (data?.error) throw new Error(data.error);
       await onSaved?.(data.rule);
       onClose();

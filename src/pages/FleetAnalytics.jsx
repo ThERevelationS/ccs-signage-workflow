@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -18,6 +17,8 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const ACTIVE_WO = new Set(["open", "assigned", "in_progress"]);
 const DAY_MS = 86400000;
@@ -75,20 +76,20 @@ export default function FleetAnalytics() {
     setError("");
     setLifecycleError("");
     try {
-      const currentUser = await base44.auth.me().catch(() => null);
+      const currentUser = await Promise.resolve(getSessionUser());
       if (requestSequence !== loadSequenceRef.current) return;
       setUser(currentUser);
       if (currentUser?.role !== "admin") return;
       const [equipmentRows, workOrderRows, taskRows] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment analytics" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet maintenance work-order analytics" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedule analytics" }),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment analytics" }),
+        listAllFleetRows("FleetMaintenanceWorkOrder", "-created_date", { label: "Fleet maintenance work-order analytics" }),
+        listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedule analytics" }),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
       setEquipment(equipmentRows || []);
       setWorkOrders(workOrderRows || []);
       setTasks(taskRows || []);
-      const lifecycleResult = await base44.functions.invoke("fleetLifecycleAction", { action: "portfolio" }).catch(() => null);
+      const lifecycleResult = await invokeFleet("fleetLifecycleAction", { action: "portfolio" }).catch(() => null);
       if (requestSequence !== loadSequenceRef.current) return;
       if (lifecycleResult?.data?.error) {
         setLifecycleRows([]);
@@ -112,7 +113,7 @@ export default function FleetAnalytics() {
     let mounted = true;
     setFuelLoading(true);
     setFuelError("");
-    base44.functions.invoke("fleetFuelAction", { action: "summary", start_date: `${selectedYear}-01-01`, end_date: `${selectedYear}-12-31` })
+    invokeFleet("fleetFuelAction", { action: "summary", start_date: `${selectedYear}-01-01`, end_date: `${selectedYear}-12-31` })
       .then(({ data }) => {
         if (!mounted) return;
         if (data?.error) throw new Error(data.error);

@@ -1,4 +1,6 @@
 // Deterministic, browser-only Bouncie responses for FleetTracking race acceptance.
+import { makeFleetDataRead } from "./mockFleetDataRead.js";
+
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const state = {
   vehicles: [
@@ -11,17 +13,17 @@ const state = {
   deferNextTripImei: "",
 };
 window.__fleetTrackingFixture = state;
-const emptyList = { list: async () => [] };
-const emptyFilter = { filter: async () => [] };
+const fleetDataRead = makeFleetDataRead({
+  FleetEquipment: [],
+  FleetMaintenanceWorkOrder: [],
+  FleetMaintenanceTask: [],
+  FleetEquipmentLog: [],
+});
 export const base44 = {
-  entities: {
-    FleetEquipment: emptyList,
-    FleetMaintenanceWorkOrder: emptyFilter,
-    FleetMaintenanceTask: emptyFilter,
-    FleetEquipmentLog: emptyFilter,
-  },
+  entities: {},
   functions: {
     async invoke(name, payload) {
+      if (name === "fleetDataRead") return fleetDataRead(payload || {});
       if (name === "bouncieStatus") return { data: { connected: true, needsReconnect: false, connectedEmail: "synthetic@example.test" } };
       if (name === "fleetBouncieNotificationAction") return { data: { notifications: [] } };
       if (name === "bouncieSyncNotifications") return { data: { success: true } };

@@ -54,6 +54,7 @@ for(const [page,cfg] of Object.entries(PAGES)){
         auth:{me:async()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"})},
         entities:{FleetPart:{},FleetFluid:{},FleetEquipment:{},FleetPartIdentification:{}},
       },
+      getSessionUser:()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"}),
       listAllFleetRows:(_entity,_sort,options)=>gate(options.label),
       setLoading:value=>loading.push(value),
       setError:value=>errors.push(value),

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 const LIMIT = 8;
 const MAX_QUERY_LENGTH = 100;
@@ -31,13 +32,14 @@ function sortByRelevance<T>(query: string, rows: T[], values: (row: T) => unknow
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
+    const body = await req.json().catch(() => ({}));
+    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (!['admin', 'user'].includes(String(user.role || ''))) {
       return Response.json({ error: 'Fleet search requires CCS Fleet access.' }, { status: 403 });
     }
 
-    const body = await req.json().catch(() => ({}));
+
     const query = text(body?.query).slice(0, MAX_QUERY_LENGTH);
     if (query.length < 2) return Response.json({ query, total: 0, groups: {} });
 

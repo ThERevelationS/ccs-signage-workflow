@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const DAYS = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
 const DAY_LABELS = { monday:"Mon", tuesday:"Tue", wednesday:"Wed", thursday:"Thu", friday:"Fri", saturday:"Sat", sunday:"Sun" };
@@ -59,7 +59,7 @@ export default function FleetSettingsEditor({ open, settings, onClose, onSaved }
     setSaving(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetSettingsAction", { action: "update", expected_updated_date: settings?.updated_date || "", settings: draft });
+      const { data } = await invokeFleet("fleetSettingsAction", { action: "update", expected_updated_date: settings?.updated_date || "", settings: draft });
       if (data?.error) throw new Error(data.error);
       onSaved?.(data?.settings || null);
       onClose?.();

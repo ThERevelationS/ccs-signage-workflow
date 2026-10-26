@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -26,6 +25,8 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const normalizeVin = value => String(value || "").trim().toUpperCase();
 const normalizeImei = value => String(value || "").trim();
@@ -87,11 +88,11 @@ export default function FleetEquipment() {
     setError("");
     try {
       const [equipmentRows, workOrderRows, taskRows, user, bouncieResult] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
-        base44.auth.me().catch(() => null),
-        base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        listAllFleetRows("FleetMaintenanceWorkOrder", "-created_date", { label: "Fleet work-order history" }),
+        listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedules" }),
+        Promise.resolve(getSessionUser()),
+        invokeFleet("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
       setEquipment(equipmentRows || []);
@@ -134,7 +135,7 @@ export default function FleetEquipment() {
     setReactivating(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetEquipmentAction", {
+      const { data } = await invokeFleet("fleetEquipmentAction", {
         action: "update",
         id: reactivateTarget.id,
         expected_updated_date: reactivateTarget.updated_date || "",
@@ -157,7 +158,7 @@ export default function FleetEquipment() {
       const body = dialog?.equipment
         ? { action: "update", id: dialog.equipment.id, expected_updated_date: dialog.equipment.updated_date || "", equipment: payload, tracking_applicable }
         : { action: "create", creation_key: dialog?.createKey || "", equipment: payload, tracking_applicable };
-      const { data } = await base44.functions.invoke("fleetEquipmentAction", body);
+      const { data } = await invokeFleet("fleetEquipmentAction", body);
       if (data?.error) throw new Error(data.error);
       setDialog(null);
       await loadData();

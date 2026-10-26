@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentTimeline from "@/components/fleet/FleetEquipmentTimeline";
 import FleetEquipmentDocuments from "@/components/fleet/FleetEquipmentDocuments";
 import FleetLifecyclePanel from "@/components/fleet/FleetLifecyclePanel";
-import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { filterAllFleetRows, listAllFleetRows, readFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
 import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
@@ -32,6 +31,8 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
 const TRACKED_LINK = new Set(["matched", "manual"]);
@@ -96,8 +97,8 @@ export default function FleetEquipmentDetail() {
     setError("");
     try {
       const [equipmentRows, user] = await Promise.all([
-        base44.entities.FleetEquipment.filter({ id }, "name", 1),
-        base44.auth.me().catch(() => null),
+        readFleetRows("FleetEquipment", { query: { id }, sort: "name", limit: 1 }),
+        Promise.resolve(getSessionUser()),
       ]);
       const eq = (equipmentRows || [])[0] || null;
       if (requestSequence !== loadSequenceRef.current) return;
@@ -113,15 +114,15 @@ export default function FleetEquipmentDetail() {
 
       const vin = normalizeVin(eq.vin);
       const [woRows, taskRows, logRows, inspectionRows, partRows, requestRows, liveRows, notifRows, metaRows] = await Promise.all([
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet work-order history` }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceTask, { equipment_id: id }, "start_date", { label: `${eq.name} maintenance schedules` }),
-        filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: id }, "-created_date", { label: `${eq.name} equipment usage history` }),
-        filterAllFleetRows(base44.entities.FleetInspection, { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet inspections` }).catch(() => []),
-        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts for equipment hub" }),
-        filterAllFleetRows(base44.entities.FleetPartFluidRequest, { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet requests` }),
-        vin ? base44.entities.BouncieVehicleLiveState.filter({ vehicle_vin: vin }, "-last_seen_at", 20) : Promise.resolve([]),
-        vin ? base44.entities.BouncieNotification.filter({ vehicle_vin: vin }, "-timestamp", 100) : Promise.resolve([]),
-        vin ? base44.entities.FleetVehicleMetadata.filter({ vehicle_vin: vin }, "-updated_date", 10) : Promise.resolve([]),
+        filterAllFleetRows("FleetMaintenanceWorkOrder", { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet work-order history` }),
+        filterAllFleetRows("FleetMaintenanceTask", { equipment_id: id }, "start_date", { label: `${eq.name} maintenance schedules` }),
+        filterAllFleetRows("FleetEquipmentLog", { equipment_id: id }, "-created_date", { label: `${eq.name} equipment usage history` }),
+        filterAllFleetRows("FleetInspection", { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet inspections` }).catch(() => []),
+        listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts for equipment hub" }),
+        filterAllFleetRows("FleetPartFluidRequest", { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet requests` }),
+        vin ? readFleetRows("BouncieVehicleLiveState", { query: { vehicle_vin: vin }, sort: "-last_seen_at", limit: 20 }) : Promise.resolve([]),
+        vin ? readFleetRows("BouncieNotification", { query: { vehicle_vin: vin }, sort: "-timestamp", limit: 100 }) : Promise.resolve([]),
+        vin ? readFleetRows("FleetVehicleMetadata", { query: { vehicle_vin: vin }, sort: "-updated_date", limit: 10 }) : Promise.resolve([]),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
       setWorkOrders(woRows || []);
@@ -159,7 +160,7 @@ export default function FleetEquipmentDetail() {
         return;
       }
 
-      const { data: vehicleResult } = await base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} });
+      const { data: vehicleResult } = await invokeFleet("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} });
       if (requestSequence !== loadSequenceRef.current) return;
       const vehicles = vehicleResult?.data || [];
       const exactIdentity = vehicles.find(vehicle => normalizeVin(vehicle?.vin) === fleetVin && normalizeImei(vehicle?.imei) === fleetImei);
@@ -173,7 +174,7 @@ export default function FleetEquipmentDetail() {
       }
 
       const ranges = buildWeeklyRanges(7);
-      const results = await Promise.all(ranges.map(range => base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/trips", query: { imei: fleetImei, ...range, "gps-format": "geojson" } })));
+      const results = await Promise.all(ranges.map(range => invokeFleet("bouncieApi", { method: "GET", path: "/v1/trips", query: { imei: fleetImei, ...range, "gps-format": "geojson" } })));
       if (requestSequence !== loadSequenceRef.current) return;
       const all = results.flatMap(result => result?.data?.data || []).sort((a, b) => (Date.parse(b?.startTime || "") || 0) - (Date.parse(a?.startTime || "") || 0));
       setTrips(all);
@@ -213,7 +214,7 @@ export default function FleetEquipmentDetail() {
     setSavingMeta(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetEquipmentAction", { action: "save_metadata", equipment_id: id, metadata_id: metadata?.id || "", expected_metadata_updated_date: metadata?.updated_date || "", metadata: metaForm });
+      const { data } = await invokeFleet("fleetEquipmentAction", { action: "save_metadata", equipment_id: id, metadata_id: metadata?.id || "", expected_metadata_updated_date: metadata?.updated_date || "", metadata: metaForm });
       if (data?.error) throw new Error(data.error);
       setMetadata(data?.metadata || null);
       setMetaForm(metadataSeed(data?.metadata || null, equipment));
@@ -386,7 +387,7 @@ function FuelTab({ equipment, retired = false }) {
   useEffect(() => {
     let mounted = true;
     setLoading(true); setError("");
-    base44.functions.invoke("fleetFuelAction", { action: "summary", equipment_id: equipment.id, start_date: `${year}-01-01`, end_date: `${year}-12-31` })
+    invokeFleet("fleetFuelAction", { action: "summary", equipment_id: equipment.id, start_date: `${year}-01-01`, end_date: `${year}-12-31` })
       .then(({ data }) => { if (!mounted) return; if (data?.error) throw new Error(data.error); setSummary(data || null); })
       .catch(err => mounted && setError(err?.message || "Unable to load this asset's fuel history."))
       .finally(() => mounted && setLoading(false));
@@ -416,7 +417,7 @@ function WarrantyTab({ equipment, retired = false, isAdmin = false }) {
   useEffect(() => {
     let mounted = true;
     setLoading(true); setError("");
-    base44.functions.invoke("fleetWarrantyAction", { action: "portfolio", equipment_id: equipment.id })
+    invokeFleet("fleetWarrantyAction", { action: "portfolio", equipment_id: equipment.id })
       .then(({ data }) => { if (!mounted) return; if (data?.error) throw new Error(data.error); setRows(data?.rows || []); })
       .catch(err => mounted && setError(err?.message || "Unable to load this asset's warranties."))
       .finally(() => mounted && setLoading(false));
@@ -445,7 +446,7 @@ function AssignmentsTab({ equipment, retired = false }) {
   useEffect(() => {
     let mounted = true;
     setLoading(true); setError("");
-    base44.functions.invoke("fleetReservationAction", { action: "list", equipment_id: equipment.id })
+    invokeFleet("fleetReservationAction", { action: "list", equipment_id: equipment.id })
       .then(({ data }) => { if (!mounted) return; if (data?.error) throw new Error(data.error); setRows(data?.reservations || []); })
       .catch(err => mounted && setError(err?.message || "Unable to load this asset's assignments."))
       .finally(() => mounted && setLoading(false));

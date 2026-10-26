@@ -38,6 +38,7 @@ function lifecycleHarness(){
     equipment:{id:"a",name:"Asset A"},
     loadSequenceRef:{current:0},
     base44:{functions:{invoke:(name,args)=>gate(`lifecycle:${args.equipment_id}`)}},
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     seed:profile=>({seeded:profile?.id||"none"}),
     setLoading:value=>loading.push(value),
     setError:value=>errors.push(value),

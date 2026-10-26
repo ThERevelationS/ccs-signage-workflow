@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetInventoryDialog from "@/components/fleet/FleetInventoryDialog";
@@ -8,6 +7,8 @@ import FleetInventoryUsageDialog from "@/components/fleet/FleetInventoryUsageDia
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { isFluidLowStock } from "@/components/fleet/fleetHelpers";
 import { Droplets, Search, Loader2, AlertTriangle, Plus, Pencil, PackageCheck, ShoppingCart, PackageMinus } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 export default function FleetFluids() {
   const [fluids, setFluids] = useState([]);
@@ -28,7 +29,7 @@ export default function FleetFluids() {
     const requestSequence = ++loadSequenceRef.current;
     setLoading(true); setError("");
     try {
-      const [f,e,u] = await Promise.all([listAllFleetRows(base44.entities.FleetFluid,"fluid_name",{label:"Fleet fluids"}), listAllFleetRows(base44.entities.FleetEquipment,"name",{label:"Fleet equipment"}), base44.auth.me().catch(()=>null)]);
+      const [f,e,u] = await Promise.all([listAllFleetRows("FleetFluid","fluid_name",{label:"Fleet fluids"}), listAllFleetRows("FleetEquipment","name",{label:"Fleet equipment"}), Promise.resolve(getSessionUser())]);
       if (requestSequence !== loadSequenceRef.current) return;
       setFluids(f||[]); setEquipment(e||[]); setUser(u||null);
     } catch(e) { if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet fluids."); }
@@ -41,8 +42,8 @@ export default function FleetFluids() {
   const metrics=useMemo(()=>({low:fluids.filter(isFluidLowStock).length,tracked:fluids.filter(f=>f.quantity!=null&&f.unit).length,incomplete:fluids.filter(f=>f.quantity==null||!f.unit).length}),[fluids]);
   const rows=useMemo(()=>{const q=search.trim().toLowerCase();return fluids.filter(f=>{if(stockFilter==="low"&&!isFluidLowStock(f))return false;if(stockFilter==="incomplete"&&f.quantity!=null&&f.unit)return false;return !q||[f.fluid_name,f.fluid_type,f.brand,f.viscosity,f.location].some(v=>String(v||"").toLowerCase().includes(q));});},[fluids,search,stockFilter]);
 
-  const save=async(payload)=>{setSaving(true);setError("");try{const body=dialog?.item?{action:"update",item_type:"fluid",id:dialog.item.id,expected_updated_date:dialog.item.updated_date||"",item:payload}:{action:"create",item_type:"fluid",creation_key:dialog?.createKey||"",item:payload};const {data}=await base44.functions.invoke("fleetInventoryAction",body);if(data?.error)throw new Error(data.error);setDialog(null);await load();}catch(e){setError(e?.message||"Unable to save Fleet fluid.");}finally{setSaving(false);}};
-  const recordUsage=async(payload)=>{if(!usageItem)return;setUsageBusy(true);setUsageError("");try{const {data}=await base44.functions.invoke("fleetInventoryAction",{action:"record_usage",item_type:"fluid",id:usageItem.id,...payload});if(data?.error)throw new Error(data.error);await load();setUsageItem(null);}catch(e){setUsageError(e?.message||"Unable to record Fleet fluid usage.");}finally{setUsageBusy(false);}};
+  const save=async(payload)=>{setSaving(true);setError("");try{const body=dialog?.item?{action:"update",item_type:"fluid",id:dialog.item.id,expected_updated_date:dialog.item.updated_date||"",item:payload}:{action:"create",item_type:"fluid",creation_key:dialog?.createKey||"",item:payload};const {data}=await invokeFleet("fleetInventoryAction",body);if(data?.error)throw new Error(data.error);setDialog(null);await load();}catch(e){setError(e?.message||"Unable to save Fleet fluid.");}finally{setSaving(false);}};
+  const recordUsage=async(payload)=>{if(!usageItem)return;setUsageBusy(true);setUsageError("");try{const {data}=await invokeFleet("fleetInventoryAction",{action:"record_usage",item_type:"fluid",id:usageItem.id,...payload});if(data?.error)throw new Error(data.error);await load();setUsageItem(null);}catch(e){setUsageError(e?.message||"Unable to record Fleet fluid usage.");}finally{setUsageBusy(false);}};
 
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav /><div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Fluids</h1><p className="text-sm text-gray-500 dark:text-slate-400">Fleet-only fluid inventory with unit-aware low-stock thresholds. It never writes to signage inventory.</p></div><div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search fluids..." className="w-full min-h-11 pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" /></div><select value={stockFilter} onChange={e=>setStockFilter(e.target.value)} className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><option value="all">All stock</option><option value="low">Low stock</option><option value="incomplete">Incomplete stock data</option></select>{isAdmin&&<button type="button" onClick={()=>setDialog({item:null,createKey:crypto.randomUUID()})} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"><Plus className="w-4 h-4"/>New Fluid</button>}</div></div>

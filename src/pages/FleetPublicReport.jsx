@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { AlertTriangle, CheckCircle2, ImagePlus, Loader2, Send, Wrench, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const newToken = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 const EMPTY = { equipment_id:"", title:"", description:"", priority:"high", reporter_name:"", reporter_contact:"", company_website:"" };
@@ -77,7 +77,7 @@ export default function FleetPublicReport() {
     let mounted=true;
     (async()=>{
       try{
-        const {data}=await base44.functions.invoke("fleetPublicIssueReport",{action:"list"});
+        const {data}=await invokeFleet("fleetPublicIssueReport",{action:"list"});
         if(!mounted)return;
         setDisabled(!!data?.disabled);
         const safeEquipment=data?.equipment||[];
@@ -115,7 +115,7 @@ export default function FleetPublicReport() {
     try{
       const preparedPhotos=[];
       for(let i=0;i<photos.length;i++)preparedPhotos.push(await preparePublicPhoto(photos[i].file,i));
-      const {data}=await base44.functions.invoke("fleetPublicIssueReport",{action:"submit",submission_token:token,...form,title:form.title.trim(),description:form.description.trim(),reporter_name:form.reporter_name.trim(),reporter_contact:form.reporter_contact.trim(),photos:preparedPhotos});
+      const {data}=await invokeFleet("fleetPublicIssueReport",{action:"submit",submission_token:token,...form,title:form.title.trim(),description:form.description.trim(),reporter_name:form.reporter_name.trim(),reporter_contact:form.reporter_contact.trim(),photos:preparedPhotos});
       if(data?.error)throw new Error(data.error);
       setSubmitted({work_order_number:data?.work_order_number||"",photo_warning:data?.photo_warning||""});
     }catch(e2){setError(e2?.message||"Issue report could not be submitted.");}

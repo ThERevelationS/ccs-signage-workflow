@@ -32,8 +32,10 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { MemoryRouter } from "react-router-dom";',
+    `import { AuthProvider } from "/@fs/${appRoot.replace(/\\/g, "/")}/src/components/auth/EmailGate.jsx";`,
     `import FleetRequests from "/@fs/${appRoot.replace(/\\/g, "/")}/src/pages/FleetRequests.jsx";`,
-    'createRoot(document.getElementById("root")).render(<MemoryRouter><FleetRequests /></MemoryRouter>);',
+    'localStorage.setItem("sss_session_token", "synthetic-session");',
+    'createRoot(document.getElementById("root")).render(<AuthProvider><MemoryRouter><FleetRequests /></MemoryRouter></AuthProvider>);',
   ].join("\n"));
 
   vite = await createServer({

@@ -32,6 +32,7 @@ function harness(action){
     form:{actual_hours:"2",corrective_action:"Synthetic repair",mechanic_note:"Synthetic note"},
     photos:[],
     base44:{functions:{invoke:async(_name,payload)=>{calls.push(payload);return gate.promise;}}},
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     newMechanicRequestId:()=>recovery.requestId,
     storeWorkRecovery:async(_token,value)=>{storedMarker=value;},
     clearStoredWorkRecovery:async(_token,value)=>{

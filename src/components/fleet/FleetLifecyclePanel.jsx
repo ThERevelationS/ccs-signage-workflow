@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { AlertTriangle, CalendarClock, CircleDollarSign, Gauge, Loader2, Pencil, Save, TrendingDown, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const money = value => Number(value || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
 const number = value => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -34,7 +34,7 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
     if (!isAdmin || !equipment?.id) { setLoading(false); return; }
     setLoading(true); setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetLifecycleAction", { action: "get", equipment_id: equipment.id });
+      const { data } = await invokeFleet("fleetLifecycleAction", { action: "get", equipment_id: equipment.id });
       if (requestSequence !== loadSequenceRef.current) return;
       if (data?.error) throw new Error(data.error);
       setProfile(data?.profile || null);
@@ -51,7 +51,7 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
   const save = async () => {
     setSaving(true); setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetLifecycleAction", {
+      const { data } = await invokeFleet("fleetLifecycleAction", {
         action: "save",
         equipment_id: equipment.id,
         expected_updated_date: profile?.updated_date || "",

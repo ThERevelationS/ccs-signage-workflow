@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Activity, AlertTriangle, Camera, CheckCircle2, CircleDollarSign, Clock3, Loader2, Plus, RefreshCw, Save, Trash2, Truck, Wrench, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const pretty = value => String(value || "—").replaceAll("_", " ");
 const fmtDate = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString() : "—";
@@ -150,7 +150,7 @@ export default function FleetMechanic() {
   const photoDraftEpochRef = useRef(0);
 
   const fetchPortalPayload = async () => {
-    const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
+    const { data: result } = await invokeFleet("fleetMechanicPortal", { action: "bootstrap", token });
     if (result?.error) throw new Error(result.error);
     return result || null;
   };
@@ -381,7 +381,7 @@ export default function FleetMechanic() {
     setBusy("work-recovery");
     setRefreshing(true);
     try {
-      const {data:result} = await base44.functions.invoke("fleetMechanicPortal", {
+      const {data:result} = await invokeFleet("fleetMechanicPortal", {
         action:"mutation_status",token,work_order_id:recovery.workOrderId,mutation_action:recovery.action,request_id:recovery.requestId,
       });
       if (result?.error) throw new Error(result.error);
@@ -485,7 +485,7 @@ export default function FleetMechanic() {
       return;
     }
     try {
-      const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
+      const { data: result } = await invokeFleet("fleetMechanicPortal", {
         action: "start", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
       });
       if (result?.error) throw new Error(result.error);
@@ -631,7 +631,7 @@ export default function FleetMechanic() {
         parts_estimate:(estimateForm.parts_estimate||[]).map(line=>({description:line.description||"",quantity:Number(line.quantity||0),estimated_cost:Number(line.estimated_cost||0)})),
         fluids_estimate:(estimateForm.fluids_estimate||[]).map(line=>({description:line.description||"",quantity:Number(line.quantity||0),unit:line.unit||"",estimated_cost:Number(line.estimated_cost||0)})), notes:estimateForm.notes||"",
       };
-      const saved = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
+      const saved = await invokeFleet("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
       if (saved?.data?.error) throw new Error(saved.data.error);
       if (!requestStillCurrent()) {
         await refreshEstimateState(workOrderId, "Save Draft finished after the selected work order or portal view changed. Submit was not attempted.", true);
@@ -648,7 +648,7 @@ export default function FleetMechanic() {
           await refreshEstimateState(workOrderId, "Save Draft finished, but CCS updated the estimate before Submit. Submit was not attempted.", true);
           return;
         }
-        const submitted = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
+        const submitted = await invokeFleet("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
         if (submitted?.data?.error) throw new Error(submitted.data.error);
         if (!requestStillCurrent()) {
           await refreshEstimateState(workOrderId, "Submit Estimate finished after the selected work order or portal view changed. Review the current CCS decision; nothing was resubmitted.", true);
@@ -694,7 +694,7 @@ export default function FleetMechanic() {
       return;
     }
     try {
-      const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
+      const { data: result } = await invokeFleet("fleetMechanicPortal", {
         action: "save", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
         actual_hours: form.actual_hours, corrective_action: form.corrective_action, mechanic_note: form.mechanic_note,
         photos: photos.map(({type, data}) => ({type, data})),

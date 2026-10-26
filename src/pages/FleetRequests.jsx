@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
 import FleetRequestDialog from "@/components/fleet/FleetRequestDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { ShoppingCart, Search, Loader2, ExternalLink, ShieldCheck, Plus, Pencil, PackageCheck, Truck, XCircle, Clock3, CheckCircle2 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 export default function FleetRequests() {
   const [requests, setRequests] = useState([]);
@@ -27,19 +27,15 @@ export default function FleetRequests() {
     const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     try {
-      const user = await base44.auth.me().catch(() => null);
+      const user = await Promise.resolve(getSessionUser());
       const [r, e, p, f] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
-        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
+        listAllFleetRows("FleetPartFluidRequest", "-created_date", { label: "Fleet requests" }),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts" }),
+        listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluids" }),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
-      let admin = user?.role === "admin";
-      if (!admin && user?.email) {
-        const authRows = await base44.entities.AuthorizedEmail.filter({ email: user.email }).catch(() => []);
-        admin = authRows?.[0]?.role === "admin";
-      }
+      const admin = user?.role === "admin";
       if (requestSequence !== loadSequenceRef.current) return;
       setCurrentUser(user);
       setIsAdmin(admin);
@@ -105,7 +101,7 @@ export default function FleetRequests() {
       : action === "edit"
         ? { action: "update", id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", request: form }
         : { action, id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", ...form };
-    const response = await base44.functions.invoke("fleetRequestAction", payload);
+    const response = await invokeFleet("fleetRequestAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
     closeDialog();
@@ -117,7 +113,7 @@ export default function FleetRequests() {
     setBusyId(request.id);
     setActionError("");
     try {
-      const response = await base44.functions.invoke("fleetRequestAction", { action: "cancel", id: request.id, expected_updated_date: request.updated_date || "" });
+      const response = await invokeFleet("fleetRequestAction", { action: "cancel", id: request.id, expected_updated_date: request.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
       await loadData();
     } catch (error) {
@@ -134,7 +130,7 @@ export default function FleetRequests() {
     {actionError&&<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><RequestMetric icon={Clock3} label="Pending" value={metrics.pending} attention={metrics.pending>0} onClick={()=>setStatus("pending")}/><RequestMetric icon={Truck} label="Ordered" value={metrics.ordered} attention={metrics.ordered>0} onClick={()=>setStatus("ordered")}/><RequestMetric icon={CheckCircle2} label="Received" value={metrics.received} onClick={()=>setStatus("received")}/><RequestMetric icon={XCircle} label="Cancelled" value={metrics.cancelled} onClick={()=>setStatus("cancelled")}/></div>
     <div className="flex flex-col sm:flex-row gap-3"><div className="relative flex-1"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search requests..." className="w-full min-h-11 pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={status} onChange={e=>setStatus(e.target.value)} className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Needs action (pending + ordered)</option><option value="all">All statuses</option><option value="pending">Pending</option><option value="ordered">Ordered</option><option value="received">Received</option><option value="cancelled">Cancelled</option></select></div>
-    {loading ? <ListSkeleton rows={6} /> : <div className="space-y-3">{rows.map(r=>{
+    {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : <div className="space-y-3">{rows.map(r=>{
       const canEdit = r.status === "pending" && (isAdmin || owns(r));
       const canCancel = (isAdmin && ["pending","ordered"].includes(r.status)) || (!isAdmin && owns(r) && r.status === "pending");
       return <div key={r.id} className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm"><div className="flex items-start gap-3"><ShoppingCart className="w-5 h-5 mt-0.5 text-indigo-500 shrink-0"/><div className="flex-1 min-w-0"><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-gray-900 dark:text-slate-100">{r.item_name}</h2><span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 capitalize">{r.status}</span>{r.receipt_applied_at&&<span className="text-xs text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5"/>receipt applied</span>}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{r.item_type} · qty {r.quantity_needed} · {names[r.equipment_id] || "No equipment"}</div>

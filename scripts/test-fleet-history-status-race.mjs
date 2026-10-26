@@ -33,6 +33,7 @@ const harness = ({ statusBusyId = "", initialReports = [] } = {}) => {
   } } };
   const ctx = {
     base44,
+    invokeFleet: (name, payload) => base44.functions.invoke(name, payload),
     setReports: makeSetter("reports"),
     setError: makeSetter("error"),
     setStatusBusyId: makeSetter("statusBusyId"),

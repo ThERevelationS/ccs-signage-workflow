@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import FleetMeterRuleDialog from "@/components/fleet/FleetMeterRuleDialog";
@@ -21,6 +20,7 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
 const pretty = value => String(value || "—").replaceAll("_", " ");
@@ -48,9 +48,9 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
     setLoading(true);
     setError("");
     Promise.all([
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet work-order history` }),
-      filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet equipment usage history` }),
-      base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }),
+      filterAllFleetRows("FleetMaintenanceWorkOrder", { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet work-order history` }),
+      filterAllFleetRows("FleetEquipmentLog", { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet equipment usage history` }),
+      invokeFleet("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }),
     ]).then(([woRows, logRows, meterResponse]) => {
       if (!mounted) return;
       setWorkOrders(woRows || []);
@@ -67,7 +67,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
 
   const refreshMeterStatus = async () => {
     try {
-      const { data } = await base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id });
+      const { data } = await invokeFleet("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id });
       if (data?.error) throw new Error(data.error);
       setMeterRows(data?.rows || []);
     } catch (err) {

@@ -31,6 +31,7 @@ function harness(){
       auth:{me:async()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"})},
       entities:{FleetInspectionTemplate:{},FleetInspection:{},FleetEquipment:{}},
     },
+    getSessionUser:()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"}),
     listAllFleetRows:(_entity,_sort,options)=>gate(options.label),
     setLoading:value=>loading.push(value),
     setError:value=>errors.push(value),
@@ -112,6 +113,7 @@ function startHarness(invokeImpl){
   const ctx={
     startDialog:{equipment_id:"equipment-1",template_id:"template-1",creation_key:"key-1"},
     base44:{functions:{invoke:invokeImpl}},
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     templates:[{id:"template-1",name:"Synthetic template"}],
     setError:value=>errors.push(value),
     setRunner:value=>runner.push(value),
@@ -140,6 +142,7 @@ function templateHarness(invokeImpl){
   const errors=[],dialogs=[],loads=[];
   const ctx={
     base44:{functions:{invoke:invokeImpl}},
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     setError:value=>errors.push(value),
     setTemplateDialog:value=>dialogs.push(value),
     load:async()=>{loads.push(true);},

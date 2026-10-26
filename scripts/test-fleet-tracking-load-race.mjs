@@ -35,6 +35,7 @@ const harness = (body, { invokeMap }) => {
   } } };
   const ctx = {
     base44,
+    invokeFleet: (name, payload) => base44.functions.invoke(name, payload),
     setStatus: makeSetter("status"),
     setVehicles: makeSetter("vehicles"),
     setVehiclesLoading: makeSetter("vehiclesLoading"),

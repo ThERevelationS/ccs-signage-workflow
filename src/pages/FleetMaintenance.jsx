@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -23,6 +22,8 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 const todayText = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -64,12 +65,12 @@ export default function FleetMaintenance() {
     setError("");
     try {
       const [t, e, activeWos, p, f, u] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet maintenance work orders" }),
-        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
-        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
-        base44.auth.me().catch(() => null),
+        listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedules" }),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        filterAllFleetRows("FleetMaintenanceWorkOrder", { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet maintenance work orders" }),
+        listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts" }),
+        listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluids" }),
+        Promise.resolve(getSessionUser()),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
       setTasks(t || []);
@@ -219,7 +220,7 @@ export default function FleetMaintenance() {
       const body = dialog?.task
         ? { action: "update", id: dialog.task.id, expected_updated_date: dialog.task.updated_date || "", task: payload }
         : { action: "create", creation_key: dialog?.createKey || "", task: payload };
-      const { data } = await base44.functions.invoke("fleetMaintenanceAction", body);
+      const { data } = await invokeFleet("fleetMaintenanceAction", body);
       if (data?.error) throw new Error(data.error);
       setDialog(null);
       await loadData();

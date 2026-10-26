@@ -40,6 +40,9 @@ function analyticsHarness(){
       entities:{FleetEquipment:{},FleetMaintenanceWorkOrder:{},FleetMaintenanceTask:{}},
       functions:{invoke:(name,args)=>gate(args?.action==="summary"?`fuel:${args.start_date}`:`${name}:${args?.action||"run"}`)},
     },
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
+    getSessionUser:()=>({id:"admin-1",role:"admin"}),
+    readFleetRows:(entity,options)=>gate(options?.label||entity),
     listAllFleetRows:(_entity,_sort,options)=>gate(options.label),
     setLoading:()=>{},
     setError:()=>{},
@@ -159,6 +162,12 @@ function detailHarness(){
         FleetVehicleMetadata:{filter:()=>gate("metadata")},
       },
       functions:{invoke:(name,args)=>gate(`${name}:${args?.path||"run"}`)},
+    },
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
+    getSessionUser:()=>({id:"admin-1",role:"admin"}),
+    readFleetRows:(entity,options)=>{
+      const key={FleetEquipment:`equipment:${options?.query?.id}`,BouncieVehicleLiveState:"liveStates",BouncieNotification:"notifications",FleetVehicleMetadata:"metadata"}[entity]||entity;
+      return gate(key);
     },
     filterAllFleetRows:(_entity,_filter,_sort,options)=>gate(options.label),
     listAllFleetRows:(_entity,_sort,options)=>gate(options.label),

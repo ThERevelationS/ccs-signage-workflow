@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const weekday = () => new Intl.DateTimeFormat('en-US',{ weekday:'long', timeZone:'America/New_York' }).format(new Date()).toLowerCase();
@@ -14,7 +15,8 @@ async function logRun(base44:any, level:'info'|'warning'|'error', message:string
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
+    const requestBody = await req.json().catch(() => ({}));
+    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);
     if (!user || user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const cutover = await getCanonicalCutoverState(base44);

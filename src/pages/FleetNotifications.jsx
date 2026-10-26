@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -22,6 +21,8 @@ import {
   Truck,
   UserRoundX,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
@@ -62,24 +63,24 @@ export default function FleetNotifications() {
     let mounted = true;
     (async () => {
       try {
-        const user = await base44.auth.me().catch(() => null);
+        const user = await Promise.resolve(getSessionUser());
         const admin = user?.role === "admin";
         if (mounted) setIsAdmin(admin);
         const [equipment, tasks, workOrders, inspectionRows, parts, partIdentificationRows, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, bouncieAlertRows, bouncieVehiclesResult] = await Promise.all([
-          listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet notification equipment" }),
-          filterAllFleetRows(base44.entities.FleetMaintenanceTask, { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
-          filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
-          filterAllFleetRows(base44.entities.FleetInspection, { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention notifications" }).catch(() => []),
-          listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet part stock notifications" }),
-          filterAllFleetRows(base44.entities.FleetPartIdentification, { status: { $in: ["draft", "analyzed", "needs_review"] } }, "-created_date", { label: "Fleet part identification review inbox" }).catch(() => []),
-          listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluid stock notifications" }),
-          filterAllFleetRows(base44.entities.FleetPartFluidRequest, { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
-          base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
-          base44.functions.invoke("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
-          admin ? base44.functions.invoke("fleetLifecycleAction", { action: "portfolio" }).catch(() => null) : Promise.resolve(null),
-          admin ? listAllFleetRows(base44.entities.FleetRepairEstimate, "-updated_date", { label: "Fleet repair-estimate approval notifications" }).catch(() => []) : Promise.resolve([]),
-          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: { $in: ["warning", "critical"] } }, "-timestamp", { label: "Unread Bouncie notifications" }),
-          base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
+          listAllFleetRows("FleetEquipment", "name", { label: "Fleet notification equipment" }),
+          filterAllFleetRows("FleetMaintenanceTask", { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
+          filterAllFleetRows("FleetMaintenanceWorkOrder", { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
+          filterAllFleetRows("FleetInspection", { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention notifications" }).catch(() => []),
+          listAllFleetRows("FleetPart", "part_name", { label: "Fleet part stock notifications" }),
+          filterAllFleetRows("FleetPartIdentification", { status: { $in: ["draft", "analyzed", "needs_review"] } }, "-created_date", { label: "Fleet part identification review inbox" }).catch(() => []),
+          listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluid stock notifications" }),
+          filterAllFleetRows("FleetPartFluidRequest", { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
+          invokeFleet("fleetReservationAction", { action: "list" }).catch(() => null),
+          invokeFleet("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
+          admin ? invokeFleet("fleetLifecycleAction", { action: "portfolio" }).catch(() => null) : Promise.resolve(null),
+          admin ? listAllFleetRows("FleetRepairEstimate", "-updated_date", { label: "Fleet repair-estimate approval notifications" }).catch(() => []) : Promise.resolve([]),
+          filterAllFleetRows("BouncieNotification", { is_read: false, severity: { $in: ["warning", "critical"] } }, "-timestamp", { label: "Unread Bouncie notifications" }),
+          invokeFleet("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
         if (mounted) setData({
           equipment: equipment || [],
@@ -100,9 +101,9 @@ export default function FleetNotifications() {
 
         if (admin) {
           const [queueRows, receiptRows, bouncieStatusResult] = await Promise.all([
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notification queue" }),
-            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
-            base44.functions.invoke("bouncieStatus", {}).catch(() => null),
+            filterAllFleetRows("FleetNotificationQueue", { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notification queue" }),
+            filterAllFleetRows("FleetOperationReceipt", { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
+            invokeFleet("bouncieStatus", {}).catch(() => null),
           ]);
           const byStatus = (rows, status) => (rows || []).filter((row) => row?.status === status);
           const bouncieStatus = bouncieStatusResult?.data || null;

@@ -22,6 +22,7 @@ function harness({action="start",selected="wo-A"}={}) {
     selectedWorkOrderRef:{current:selected},
     photoDraftEpochRef:{current:12},
     base44:{functions:{invoke:async(_name,payload)=>{calls.push(payload);return gate.promise;}}},
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     setWorkRecovery:value=>{ctx.workRecovery=typeof value==="function"?value(ctx.workRecovery):value;},
     setBusy:value=>busy.push(value),
     setRefreshing:value=>{},

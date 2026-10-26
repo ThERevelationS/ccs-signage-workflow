@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import {
@@ -20,6 +19,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const GROUPS = [
   { key: "equipment", label: "Equipment", icon: Truck },
@@ -86,7 +86,7 @@ export default function FleetSearch() {
     setError("");
     const timer = window.setTimeout(async () => {
       try {
-        const response = await base44.functions.invoke("fleetSearch", { query: trimmed });
+        const response = await invokeFleet("fleetSearch", { query: trimmed });
         if (sequence !== requestSequence.current) return;
         if (response?.data?.error) throw new Error(response.data.error);
         setGroups(response?.data?.groups || {});

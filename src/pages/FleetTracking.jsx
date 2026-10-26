@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetSidebar from "@/components/fleet/FleetSidebar";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
-import { Skeleton } from "@/components/ui/skeleton";
 import FleetMap from "@/components/fleet/FleetMap";
 import VehiclePanel from "@/components/fleet/VehiclePanel";
 import AlertSettingsModal from "@/components/fleet/AlertSettingsModal";
@@ -10,6 +9,7 @@ import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
 import { useAuth } from "@/components/auth/EmailGate";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, ChevronDown, ChevronUp, Gauge, GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
@@ -114,7 +114,7 @@ export default function FleetTracking() {
   const loadNotifications = useCallback(async () => {
     const loadId = ++notificationLoadGeneration.current;
     try {
-      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "list", session_token: sessionToken });
+      const { data } = await invokeFleet("fleetBouncieNotificationAction", { action: "list", session_token: sessionToken });
       if (data?.error) throw new Error(data.error);
       if (loadId === notificationLoadGeneration.current) setNotifications(data?.notifications || []);
     } catch {
@@ -124,7 +124,7 @@ export default function FleetTracking() {
 
   const syncNotifications = useCallback(async () => {
     try {
-      await base44.functions.invoke("bouncieSyncNotifications", {});
+      await invokeFleet("bouncieSyncNotifications", {});
       loadNotifications();
     } catch {
       // silent
@@ -162,8 +162,8 @@ export default function FleetTracking() {
   useEffect(() => {
     let mounted = true;
     Promise.all([
-      listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work orders" }),
+      listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+      filterAllFleetRows("FleetMaintenanceWorkOrder", { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work orders" }),
     ]).then(([equipmentRows, activeRows]) => {
       if (!mounted) return;
       setFleetEquipment(equipmentRows || []);
@@ -272,7 +272,7 @@ export default function FleetTracking() {
   const handleMarkRead = async (id) => {
     setNotifications(n => n.map(x => x.id === id ? { ...x, is_read: true } : x));
     try {
-      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_read", id, session_token: sessionToken });
+      const { data } = await invokeFleet("fleetBouncieNotificationAction", { action: "mark_read", id, session_token: sessionToken });
       if (data?.error) throw new Error(data.error);
     } catch (e) {
       setError(e?.message || "Unable to mark Bouncie notification read.");
@@ -297,7 +297,7 @@ export default function FleetTracking() {
   const handleClearNotifications = async () => {
     if (!selectedNotificationVins.length) return;
     try {
-      const results = await Promise.all(selectedNotificationVins.map((vin) => base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin, session_token: sessionToken })));
+      const results = await Promise.all(selectedNotificationVins.map((vin) => invokeFleet("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin, session_token: sessionToken })));
       const failed = results.find((result) => result?.data?.error);
       if (failed?.data?.error) throw new Error(failed.data.error);
       const selectedSet = new Set(selectedNotificationVins);
@@ -324,8 +324,8 @@ export default function FleetTracking() {
 
     setFleetMaintenanceLoading(true);
     Promise.all([
-      filterAllFleetRows(base44.entities.FleetMaintenanceTask, { equipment_id: equipmentId }, "start_date", { label: "Selected Fleet equipment maintenance schedules" }),
-      filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: equipmentId }, "-created_date", { label: "Selected Fleet equipment usage history" }),
+      filterAllFleetRows("FleetMaintenanceTask", { equipment_id: equipmentId }, "start_date", { label: "Selected Fleet equipment maintenance schedules" }),
+      filterAllFleetRows("FleetEquipmentLog", { equipment_id: equipmentId }, "-created_date", { label: "Selected Fleet equipment usage history" }),
     ]).then(([taskRows, logRows]) => {
       if (!mounted) return;
       setFleetMaintenanceTasks(taskRows || []);
@@ -346,8 +346,8 @@ export default function FleetTracking() {
     return (
       <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
         <FleetModuleNav />
-        <div className="flex-1 min-h-0 flex p-4" style={{ background: "#1b2029" }}>
-          <Skeleton className="flex-1 rounded-2xl" />
+        <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: "#1b2029" }}>
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
         </div>
       </div>
     );
@@ -488,7 +488,7 @@ export default function FleetTracking() {
         {/* Center dispatch map. */}
         <main className="flex-1 min-w-0 relative">
           {vehiclesLoading && vehicles.length === 0 ? (
-            <Skeleton className="absolute inset-0" />
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
           ) : (
             <FleetMap
               vehicles={vehicles}

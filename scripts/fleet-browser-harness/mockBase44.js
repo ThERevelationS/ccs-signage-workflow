@@ -1,4 +1,6 @@
 // Synthetic, browser-only Fleet data. Never imports a live Base44 client.
+import { makeFleetDataRead, verifySyntheticSession } from "./mockFleetDataRead.js";
+
 const fixture = [
   {
     id: "wo-open", work_order_number: "WO-SYNTH-OPEN", title: "Synthetic open job",
@@ -20,6 +22,10 @@ const fixture = [
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const state = {
   orders: clone(fixture),
+  equipment: [{ id: "eq-synthetic", name: "Synthetic Fleet Van", status: "operational" }],
+  tasks: [],
+  parts: [],
+  fluids: [],
   actions: [],
   failNextWorkOrderList: false,
   asyncLatencyMs: 0,
@@ -36,38 +42,44 @@ const state = {
 window.__fleetBrowserFixture = state;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const list = (source) => async (_sort, limit, skip) => clone(source.slice(skip, skip + limit));
-const ordersEntity = {
-  async list(_sort, limit, skip) {
-    state.workOrderListStarted += 1;
-    if (state.failNextWorkOrderList) {
-      state.failNextWorkOrderList = false;
-      throw new Error("Synthetic Fleet refresh failed");
-    }
-    const snapshot = clone(state.orders.slice(skip, skip + limit));
-    if (state.deferNextWorkOrderList) {
-      state.deferNextWorkOrderList = false;
-      await new Promise((resolve) => state.pendingWorkOrderListResolvers.push(resolve));
-    }
-    if (state.asyncLatencyMs) await sleep(state.asyncLatencyMs);
-    state.workOrderListCompleted += 1;
-    return snapshot;
+
+// Fleet reads now arrive via functions.invoke("fleetDataRead") — the work-order
+// counters/failure/defer hooks the suites rely on run inside that read path.
+const fleetDataRead = makeFleetDataRead(
+  {
+    FleetMaintenanceWorkOrder: state.orders,
+    FleetEquipment: state.equipment,
+    FleetMaintenanceTask: state.tasks,
+    FleetPart: state.parts,
+    FleetFluid: state.fluids,
   },
-};
+  {
+    async onRead(entity) {
+      if (entity !== "FleetMaintenanceWorkOrder") return;
+      state.workOrderListStarted += 1;
+      if (state.failNextWorkOrderList) {
+        state.failNextWorkOrderList = false;
+        throw new Error("Synthetic Fleet refresh failed");
+      }
+      if (state.deferNextWorkOrderList) {
+        state.deferNextWorkOrderList = false;
+        await new Promise((resolve) => state.pendingWorkOrderListResolvers.push(resolve));
+      }
+      if (state.asyncLatencyMs) await sleep(state.asyncLatencyMs);
+      state.workOrderListCompleted += 1;
+    },
+  },
+);
 
 export const createPageUrl = (name) => "/" + name;
 export const base44 = {
   auth: { me: async () => ({ id: "synthetic-user", role: "admin" }) },
-  entities: {
-    FleetMaintenanceWorkOrder: ordersEntity,
-    FleetEquipment: { list: list([{ id: "eq-synthetic", name: "Synthetic Fleet Van", status: "operational" }]) },
-    FleetMaintenanceTask: { list: list([]) },
-    FleetPart: { list: list([]) },
-    FleetFluid: { list: list([]) },
-  },
+  entities: {},
   integrations: { Core: { UploadFile: async () => { throw new Error("Photo uploads are not permitted in browser acceptance"); } } },
   functions: {
     async invoke(name, payload) {
+      if (name === "verifySession") return verifySyntheticSession(payload || {});
+      if (name === "fleetDataRead") return fleetDataRead(payload || {});
       if (name !== "fleetWorkOrderAction") throw new Error("Unexpected synthetic function: " + name);
       state.actions.push({ name, payload: clone(payload) });
       const { action } = payload;

@@ -6,9 +6,10 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalPolicies";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { useAuth } from "@/components/auth/EmailGate";
+import { filterAllFleetRows, listAllFleetRows, readFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { useAuth, getSessionUser } from "@/components/auth/EmailGate";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const LEGACY_FLEET_PUBLIC_REPORT_URL = "https://app--ccsfleet-master-db95ea70.base44.app/PublicReport";
 const LEGACY_FLEET_QR_DISPLAY_SRC = "/fleet/fleetmaster-public-report-qr-200.png";
@@ -19,9 +20,9 @@ async function loadAutomationHealthData() {
   // One $in query per entity keeps entity_list volume low; consumers already
   // select by source/status, and the -created_date sort preserves latest-first.
   const [logs, notifications, receipts] = await Promise.all([
-    base44.entities.FleetSystemLog.filter({ source: { $in: AUTOMATION_SOURCES } }, "-created_date", 500),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
+    readFleetRows("FleetSystemLog", { query: { source: { $in: AUTOMATION_SOURCES } }, sort: "-created_date", limit: 500 }),
+    filterAllFleetRows("FleetNotificationQueue", { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notifications" }),
+    filterAllFleetRows("FleetOperationReceipt", { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
   ]);
   return {
     logs: logs || [],
@@ -73,18 +74,18 @@ export default function FleetSettings() {
   useEffect(() => {
     (async () => {
       try {
-        const u = await base44.auth.me();
+        const u = getSessionUser();
         setUser(u);
         if (u?.role === "admin") {
           const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
-            base44.entities.FleetSettings.list("-updated_date", 10),
+            readFleetRows("FleetSettings", { sort: "-updated_date", limit: 10 }),
             base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
-            base44.entities.FleetMigrationAudit.list("-created_date", 20),
-            base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
-            base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
+            readFleetRows("FleetMigrationAudit", { sort: "-created_date", limit: 20 }),
+            invokeFleet("fleetCutoverControl", { action: "status" }).catch(() => null),
+            invokeFleet("fleetIntegrityAudit", {}).catch(() => null),
             loadAutomationHealthData(),
-            base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
-            listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
+            invokeFleet("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+            listAllFleetRows("FleetEquipment", "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection(bouncieStatusResult?.data || null);
@@ -235,15 +236,15 @@ export default function FleetSettings() {
     const requestSequence = ++checkSequenceRef.current;
     setChecking(true);
     try {
-      const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
+      const { data } = await invokeFleet("fleetCutoverControl", { action: "status" });
       if (requestSequence !== checkSequenceRef.current) return;
       setServerStatus(data || null);
       const [settingsRows, bouncieStatusResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
-        base44.entities.FleetSettings.list("-updated_date", 10),
+        readFleetRows("FleetSettings", { sort: "-updated_date", limit: 10 }),
         base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
         loadAutomationHealthData(),
-        base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
+        invokeFleet("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
       ]);
       if (requestSequence !== checkSequenceRef.current) return;
       setSettings((settingsRows || [])[0] || null);
@@ -262,7 +263,7 @@ export default function FleetSettings() {
     const requestSequence = ++integritySequenceRef.current;
     setIntegrityBusy(true);
     try {
-      const { data } = await base44.functions.invoke("fleetIntegrityAudit", {});
+      const { data } = await invokeFleet("fleetIntegrityAudit", {});
       if (requestSequence !== integritySequenceRef.current) return;
       setIntegrity(data || null);
     } finally {
@@ -278,7 +279,7 @@ export default function FleetSettings() {
     setManualResult("");
     try {
       const functionName = action === "maintenance" ? "fleetScheduledMaintenanceGeneration" : "fleetScheduledReminders";
-      const { data } = await base44.functions.invoke(functionName, {});
+      const { data } = await invokeFleet(functionName, {});
       if (data?.error) throw new Error(data.error);
       if (action === "maintenance") {
         setManualResult(`Maintenance generation finished: ${data?.due ?? 0} due schedule(s), ${data?.created ?? 0} new Fleet work order(s).`);
@@ -318,10 +319,10 @@ export default function FleetSettings() {
     setMechanicError("");
     setGeneratedMechanicLink("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic", expires_in_days: Number(mechanicExpiryDays || 0), allow_estimates: mechanicAllowEstimates, scope_mode: mechanicScopeMode, allowed_equipment_ids: mechanicScopeMode === "selected_equipment" ? mechanicEquipmentIds : [] });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic", expires_in_days: Number(mechanicExpiryDays || 0), allow_estimates: mechanicAllowEstimates, scope_mode: mechanicScopeMode, allowed_equipment_ids: mechanicScopeMode === "selected_equipment" ? mechanicEquipmentIds : [] });
       if (data?.error || !data?.token) throw new Error(data?.error || "Mechanic access link was not generated.");
       setGeneratedMechanicLink(`${window.location.origin}/FleetMechanic#${data.token}`);
-      const listed = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" });
+      const listed = await invokeFleet("fleetMechanicPortal", { action: "admin_list_links" });
       setMechanicLinks(listed?.data?.links || []);
     } catch (error) {
       setMechanicError(error?.message || "Mechanic access link could not be created.");
@@ -335,7 +336,7 @@ export default function FleetSettings() {
     setMechanicError("");
     setMechanicNotice("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_revoke_link", id });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_revoke_link", id });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(data?.links || []);
       setGeneratedMechanicLink("");
@@ -356,7 +357,7 @@ export default function FleetSettings() {
     setMechanicError("");
     setMechanicNotice("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_reconcile_mechanic_mutation", receipt_id: receipt.id });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_reconcile_mechanic_mutation", receipt_id: receipt.id });
       if (data?.error) throw new Error(data.error);
       setMechanicNotice(data?.status === "applied"
         ? "Mechanic operation confirmed and reconciled as applied. The bearer link was not re-enabled."
@@ -374,7 +375,7 @@ export default function FleetSettings() {
     setMechanicBusy(`estimate-${link.id}`);
     setMechanicError("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_update_estimate_permission", id: link.id, allow_estimates: allowEstimates });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_update_estimate_permission", id: link.id, allow_estimates: allowEstimates });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(current => current.map(row => row.id === link.id ? data.link : row));
     } catch (error) {
@@ -389,7 +390,7 @@ export default function FleetSettings() {
     setMechanicBusy(`scope-${mechanicScopeEdit.id}`);
     setMechanicError("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_update_scope", id: mechanicScopeEdit.id, scope_mode: mechanicScopeEdit.scope_mode, allowed_equipment_ids: mechanicScopeEdit.scope_mode === "selected_equipment" ? mechanicScopeEdit.allowed_equipment_ids : [] });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_update_scope", id: mechanicScopeEdit.id, scope_mode: mechanicScopeEdit.scope_mode, allowed_equipment_ids: mechanicScopeEdit.scope_mode === "selected_equipment" ? mechanicScopeEdit.allowed_equipment_ids : [] });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(current => current.map(row => row.id === mechanicScopeEdit.id ? data.link : row));
       setMechanicScopeEdit(null);
@@ -422,7 +423,7 @@ export default function FleetSettings() {
             notes: "FleetMaster source write paths and scheduled automation were frozen after a clean final delta check on 2026-09-09.",
           }
         : { action };
-      const { data } = await base44.functions.invoke("fleetCutoverControl", payload);
+      const { data } = await invokeFleet("fleetCutoverControl", payload);
       if (data?.error) throw new Error(data.error);
       await runServerCheck();
     } catch (error) {

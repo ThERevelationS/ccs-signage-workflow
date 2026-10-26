@@ -23,6 +23,7 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const MAX_PHOTOS = 4;
 
@@ -440,7 +441,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     if (!requestFor.item_name) return setRequestError("The part needs a name before it can be requested.");
     setRequestBusy(true); setRequestError("");
     try {
-      const { data } = await base44.functions.invoke("fleetRequestAction", {
+      const { data } = await invokeFleet("fleetRequestAction", {
         action: "create", creation_key: requestKey,
         request: {
           item_type: "part",
@@ -628,7 +629,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
         confirmed_equipment_ids: confirmedEquipment,
         compatibility_notes: String(ai.compatibility_notes || ""),
       };
-      const { data } = await base44.functions.invoke("fleetPartLookupAction", { action: "analyze_result", creation_key: sessionKey, search_mode: photos.length && (query.trim() || barcodeValue.trim()) ? "combined" : photos.length ? "photo" : barcodeValue.trim() && !query.trim() ? "barcode" : searchMode, identification: lookupPayload });
+      const { data } = await invokeFleet("fleetPartLookupAction", { action: "analyze_result", creation_key: sessionKey, search_mode: photos.length && (query.trim() || barcodeValue.trim()) ? "combined" : photos.length ? "photo" : barcodeValue.trim() && !query.trim() ? "barcode" : searchMode, identification: lookupPayload });
       if (data?.error) throw new Error(data.error);
       const record = data?.identification;
       setIdentification(record);
@@ -670,7 +671,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     if (!identification) return;
     setBusy(true); setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetPartLookupAction", {
+      const { data } = await invokeFleet("fleetPartLookupAction", {
         action: "update_review",
         id: identification.id,
         expected_updated_date: identification.updated_date || "",
@@ -709,7 +710,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     if (!identification || !part) return;
     setBusy(true); setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetPartLookupAction", { action: "match_existing", id: identification.id, expected_updated_date: identification.updated_date || "", part_id: part.id });
+      const { data } = await invokeFleet("fleetPartLookupAction", { action: "match_existing", id: identification.id, expected_updated_date: identification.updated_date || "", part_id: part.id });
       if (data?.error) throw new Error(data.error);
       setIdentification(data.identification);
       setActionedPart(part);
@@ -725,7 +726,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     if (!candidate.part_name.trim() || !candidate.category.trim()) return setError("Part name and category are required before adding to inventory.");
     setBusy(true); setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetPartLookupAction", {
+      const { data } = await invokeFleet("fleetPartLookupAction", {
         action: "promote",
         id: identification.id,
         expected_updated_date: identification.updated_date || "",

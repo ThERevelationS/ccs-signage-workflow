@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -68,8 +69,8 @@ async function blockingRepairEstimate(base44: any, workOrderId: string) {
   return estimate;
 }
 
-async function authorize(base44: any) {
-  const user = await base44.auth.me().catch(() => null);
+async function authorize(base44: any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user, authorized: { role: 'admin', email: user.email } };
   const matches = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -665,10 +666,11 @@ async function finalizeStartedCompletion(base44: any, Receipt: any, mainReceipt:
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await authorize(base44);
+    const body = await req.json().catch(() => ({}));
+    const auth = await authorize(base44, body?.session_token);
     if (auth.error) return auth.error;
     const user = auth.user;
-    const body = await req.json().catch(() => ({}));
+
     const action = String(body?.action || '').trim();
 
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;

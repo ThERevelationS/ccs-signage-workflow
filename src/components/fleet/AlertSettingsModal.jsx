@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { AlertCircle, ExternalLink, Fuel, Gauge, Loader2, Save, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const initialRules = () => ({
   speed: { rule_key: "speed", enabled: false, threshold: "", source: "default", inherited: false },
@@ -21,7 +21,7 @@ export default function AlertSettingsModal({ open, onClose, vehicle }) {
     setLoading(true);
     setError("");
     setSaved("");
-    base44.functions.invoke("fleetAlertSettingsAction", { action: "get", vehicle_vin: vin })
+    invokeFleet("fleetAlertSettingsAction", { action: "get", vehicle_vin: vin })
       .then(({ data }) => {
         if (!mounted) return;
         if (data?.error) throw new Error(data.error);
@@ -55,7 +55,7 @@ export default function AlertSettingsModal({ open, onClose, vehicle }) {
         threshold: rule.threshold,
         expected_updated_date: rule.source === "vehicle" ? (rule.updated_date || "") : "",
       }));
-      const { data } = await base44.functions.invoke("fleetAlertSettingsAction", {
+      const { data } = await invokeFleet("fleetAlertSettingsAction", {
         action: "save_vehicle",
         vehicle_vin: vin,
         rules: payload,
