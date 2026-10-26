@@ -29,6 +29,7 @@ export default function OrderForm() {
   // Show outstanding Orders and a visibly separate received history by default.
   const [filterStatus, setFilterStatus] = useState("all_with_received");
   const [searchTerm, setSearchTerm] = useState("");
+  const [deepLinkOrderId, setDeepLinkOrderId] = useState("");
   const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, customerDraftActive: false, isSaving: false, isSyncing: false, isLoading: true, pendingSyncCount: 0, saveError: "", readError: "" });
@@ -54,11 +55,22 @@ export default function OrderForm() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Deep link: /OrderForm?order=<id> shows the full list (so the row can't be
+  // hidden by a saved filter/search) and asks the grid to focus that Order.
+  // The filter override is view-only — it is not persisted to the profile.
+  useEffect(() => {
+    const orderId = new URLSearchParams(window.location.search).get("order");
+    if (!orderId) return;
+    setDeepLinkOrderId(orderId);
+    setSearchTerm("");
+    setFilterStatus("all_with_received");
+  }, []);
+
   useEffect(() => {
     // The Order Form filter persists on the signed-in user's AuthorizedEmail
     // record and arrives with the verified session payload.
     const saved = currentUser?.order_form_filter;
-    if (saved) {
+    if (saved && !deepLinkOrderId) {
       // Migrate the former default (not_received) and legacy all view to the
       // new split default. A new open_only value preserves future explicit
       // Not Received Only selections.
@@ -209,6 +221,7 @@ export default function OrderForm() {
           ref={spreadsheetRef}
           searchTerm={searchTerm} 
           filterStatus={filterStatus}
+          focusOrderId={deepLinkOrderId}
           showButtonsInline={false}
           canOrderExport={canOrderExport}
           onSaveStatusChange={setSaveStatus}
