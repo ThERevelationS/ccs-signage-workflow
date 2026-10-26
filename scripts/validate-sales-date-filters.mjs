@@ -104,8 +104,8 @@ check(rangeSource.includes("parseFloat(fieldValue) > parseFloat(condValue)") &&
 check(editor.includes('placeholder={selectedField?.type === "date" ? "YYYY-MM-DD" : "Value"}') &&
       editor.includes("Date ranges also accept M/D/YYYY or M/D/YY"),
   "Date-typed filter inputs show the supported date format without rewriting old saved values");
-check(editor.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
+check(editor.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7') &&
       editor.includes('aria-label="Horizontal Sales Pipeline column preview"'),
-  "Dense visible checkbox editor and horizontal preview remain intact");
+  "Numbered draggable column editor and horizontal preview remain intact");
 
 console.log(`Sales custom date range filter regressions: ${checks}/${checks} PASS (source/logic only; browser and live records not tested).`);
