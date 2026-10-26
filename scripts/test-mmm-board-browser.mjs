@@ -369,7 +369,7 @@ try {
       await page.getByRole("button", { name: "Schedule Alpha Signs to return on a future Monday" }).click();
       await page.getByRole("button", { name: /Next Monday/ }).click();
       await page.locator("#mmm-parked").getByText("Alpha Signs").waitFor();
-      await page.locator("#mmm-parked").getByText(/returns /).waitFor();
+      await page.locator("#mmm-parked").getByText(/returns \d+\/\d+/).waitFor();
       const state = await fixtureAction(page, origin, "fixtureStatus");
       const alpha = state.rows.find(r => r.id === "synthetic-mmm-alpha");
       assert.equal(alpha.defer, nextMonday());
