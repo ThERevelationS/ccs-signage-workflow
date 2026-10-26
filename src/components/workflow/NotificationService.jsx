@@ -342,6 +342,18 @@ export const NotificationTriggers = {
   subNoteDeleted: async (workOrder, changedBy) => {
     await triggerNotification("sub_note_deleted", workOrder, { changedBy, eventDescription: "Sub-note deleted" });
   },
+
+  sipItemCompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("sip_item_completed", workOrder, { taskText, changedBy, eventDescription: "SIP checklist item completed" });
+  },
+
+  mmmItemCompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("mmm_item_completed", workOrder, { taskText, changedBy, eventDescription: "Monday Morning Meeting item completed" });
+  },
+
+  sipItemRevisitSet: async (workOrder, changedBy) => {
+    await triggerNotification("sip_item_revisit_set", workOrder, { changedBy, eventDescription: "SIP revisit date set" });
+  },
   
   imageUploaded: async (workOrder, changedBy) => {
     await triggerNotification("image_uploaded", workOrder, { changedBy, eventDescription: "Image uploaded" });
@@ -540,6 +552,24 @@ export const NotificationTriggers = {
     if (taskDueSet) { await emit("task_due_date_set", "notes"); anyField = true; }
     if (taskAssigned) { await emit("task_assigned", "notes"); anyField = true; }
     if (noteCompleted) { await emit("note_completed", "notes"); anyField = true; }
+
+    // Role assignments fire whenever the assignee field gains or changes a
+    // value — a reassignment is an assignment too.
+    const ROLE_TRIGGERS = {
+      designer: "designer_assigned",
+      surveyor: "surveyor_assigned",
+      project_manager: "project_manager_assigned",
+      estimator: "estimator_assigned",
+    };
+    for (const [field, type] of Object.entries(ROLE_TRIGGERS)) {
+      const beforeRole = String(baselineWorkOrder?.[field] || "");
+      const afterRole = String(savedWorkOrder?.[field] || "");
+      if (afterRole && afterRole !== beforeRole) { await emit(type, field); anyField = true; }
+    }
+
+    if (changed("sip_revisit_date") && savedWorkOrder?.sip_revisit_date) {
+      await emit("sip_item_revisit_set", "sip_revisit_date"); anyField = true;
+    }
 
     // "All tasks done" fires on the transition only — completing the last
     // open task once, not on every later save.
