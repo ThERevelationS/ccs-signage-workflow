@@ -24,7 +24,11 @@ function eligibleTaskAssignees(users = []) {
   );
 }
 
-export function canonicalBase44SalesAssignee(value, users = []) {
+// Configured acknowledge list for historical/external assignee labels that
+// are real people but not roster users (former employees, vendors). A
+// confirmed label resolves to its canonical stored form instead of flagging
+// the pull for review forever. Roster matches still win over confirmed labels.
+export function canonicalBase44SalesAssignee(value, users = [], confirmedLabels = []) {
   const raw = clean(value);
   if (!raw) return { state: "blank", name: "", candidates: [] };
   const roster = eligibleTaskAssignees(users);
@@ -36,5 +40,15 @@ export function canonicalBase44SalesAssignee(value, users = []) {
   const first = roster.filter((user) => identityKey(smartsheetSalesAssigneeLabel(user.full_name)) === requested);
   if (first.length === 1) return { state: "unique_first_name", name: clean(first[0].full_name), candidates: first };
   if (first.length > 1) return { state: "ambiguous", name: "", candidates: first };
+
+  const confirmed = (Array.isArray(confirmedLabels) ? confirmedLabels : [])
+    .map((label) => clean(label)).filter(Boolean);
+  const confirmedExact = confirmed.filter((label) => identityKey(label) === requested);
+  if (confirmedExact.length === 1) return { state: "confirmed_custom", name: confirmedExact[0], candidates: [] };
+  if (confirmedExact.length > 1) return { state: "ambiguous", name: "", candidates: [] };
+  const confirmedFirst = confirmed.filter((label) => identityKey(smartsheetSalesAssigneeLabel(label)) === requested);
+  if (confirmedFirst.length === 1) return { state: "confirmed_custom", name: confirmedFirst[0], candidates: [] };
+  if (confirmedFirst.length > 1) return { state: "ambiguous", name: "", candidates: [] };
+
   return { state: "unresolved", name: "", candidates: [] };
 }
