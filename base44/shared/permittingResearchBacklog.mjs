@@ -63,10 +63,19 @@ export function resolveResearchProfile(row = {}, profiles = []) {
   return { profile: null, conflict: eligible.length > 1 || nearby.length > 0 };
 }
 
-// Ohio-first release policy; stable order within each state and no queue mutation.
+// Cincinnati-first release policy: rows carry a dispatch_rank in miles from
+// downtown Cincinnati (stamped from Census gazetteer centroids). Ranked rows go
+// nearest-first regardless of state so the metro-area jurisdictions the
+// workflow actually uses are researched first; unranked rows fall back to the
+// previous Ohio-first policy. Stable order within equal keys, no mutation.
 export function ohioFirstResearchRows(rows = []) {
-  const rank = row => norm(row?.state) === 'oh' ? 0 : norm(row?.state) === 'ky' ? 1 : 2;
-  return [...rows].sort((a, b) => rank(a) - rank(b));
+  const stateRank = row => norm(row?.state) === 'oh' ? 0 : norm(row?.state) === 'ky' ? 1 : 2;
+  const distRank = row => Number.isFinite(Number(row?.dispatch_rank)) ? Number(row.dispatch_rank) : Infinity;
+  return [...rows].sort((a, b) => {
+    const d = distRank(a) - distRank(b);
+    if (d !== 0) return d;
+    return stateRank(a) - stateRank(b);
+  });
 }
 
 export function classifyBacklogRows({ queueRows = [], profiles = [], identityProfiles = profiles, inFlightCount = 0, inFlightTarget = 250, maxDispatchPerRun = 50, geographicGate = null } = {}) {
