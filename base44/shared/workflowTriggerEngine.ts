@@ -40,6 +40,20 @@ const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   sales_follow_up_date_approaching: 'Opportunity',
   sales_follow_up_date_passed: 'Opportunity',
   sales_close_date_approaching: 'Opportunity',
+  time_clock_in: 'TimeEntry',
+  time_clock_out: 'TimeEntry',
+  time_entry_notes_updated: 'TimeEntry',
+  time_off_requested: 'TimeOffRequest',
+  time_off_updated: 'TimeOffRequest',
+  job_allocation_added: 'TimeClockLaborSegment',
+};
+
+// Human labels for record-bearing domains — drives the default email subject.
+const RECORD_LABELS: Record<string, string> = {
+  Opportunity: 'Opportunity',
+  TimeEntry: 'Time Entry',
+  TimeOffRequest: 'Time-Off Request',
+  TimeClockLaborSegment: 'Job Allocation',
 };
 
 // Named events arrive with event_type === the UI's trigger vocabulary; the
@@ -155,6 +169,13 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'note_completed':
     case 'follow_up_added':
     case 'follow_up_completed':
+    case 'designer_assigned':
+    case 'surveyor_assigned':
+    case 'project_manager_assigned':
+    case 'estimator_assigned':
+    case 'sip_item_completed':
+    case 'mmm_item_completed':
+    case 'sip_item_revisit_set':
     case 'rider_completed':
     case 'rider_all_tasks_completed':
     case 'rider_deleted':
@@ -187,6 +208,12 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     case 'sales_follow_up_date_approaching':
     case 'sales_follow_up_date_passed':
     case 'sales_close_date_approaching':
+    case 'time_clock_in':
+    case 'time_clock_out':
+    case 'time_entry_notes_updated':
+    case 'time_off_requested':
+    case 'time_off_updated':
+    case 'job_allocation_added':
     case 'permit_submitted':
     case 'permit_received':
     case 'permit_followup_due':
@@ -272,7 +299,8 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   if (recipients.length === 0) return { skipped: true, reason: 'No recipients' };
 
   const record = context?.record;
-  let subject = config.subject || (order ? 'Order Update' : record ? 'Opportunity Update' : 'Work Order Update');
+  const recordEntity = context?.recordEntity;
+  let subject = config.subject || (order ? 'Order Update' : record ? `${RECORD_LABELS[recordEntity] || 'Record'} Update` : 'Work Order Update');
   let body = config.body || '';
   // HTML-escape all record-derived values before substituting into
   // subject/body templates to prevent injected markup from rendering.
@@ -310,7 +338,7 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{date_ordered}}': esc(order?.date_ordered),
     '{{date_received}}': esc(order?.date_received),
     '{{vendor}}': esc(order?.vendor),
-    '{{status}}': esc(order?.status),
+    '{{status}}': esc(order?.status ?? record?.status),
     // Record context (Opportunity events today; extends cleanly to other
     // record-bearing domains later).
     '{{opportunity_title}}': esc(record?.title),
@@ -323,6 +351,19 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{next_action}}': esc(record?.next_action),
     '{{next_action_due}}': esc(record?.next_action_due),
     '{{desired_completion_date}}': esc(record?.desired_completion_date),
+    // Generic record fields (TimeEntry, TimeOffRequest, labor segments and
+    // any future record-bearing domain). {{status}} above already resolves
+    // order?.status ?? record?.status for both order and record events.
+    '{{user_name}}': esc(record?.user_name),
+    '{{user_email}}': esc(record?.user_email),
+    '{{clock_in}}': esc(record?.clock_in),
+    '{{clock_out}}': esc(record?.clock_out),
+    '{{request_type}}': esc(record?.request_type),
+    '{{start_date}}': esc(record?.start_date),
+    '{{end_date}}': esc(record?.end_date),
+    '{{hours_requested}}': esc(record?.hours_requested),
+    '{{activity_type}}': esc(record?.activity_type),
+    '{{reason}}': esc(record?.reason),
   };
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
@@ -332,8 +373,10 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   if (config.use_ai) {
     const recordContext = order
       ? `Order Details:\n- Customer: ${esc(order.customer_name)}\n- Request Type: ${esc(order.request_type)}\n- Vendor: ${esc(order.vendor || 'Not specified')}\n- Date Needed: ${esc(order.date_needed || 'Not set')}\n- Status: ${esc(order.status || 'pending')}`
-      : record
+      : record && recordEntity === 'Opportunity'
       ? `Opportunity Details:\n- Title: ${esc(record.title)}\n- Customer: ${esc(record.customer_display_name)}\n- Stage: ${esc(record.stage)}\n- Salesperson: ${esc(record.salesperson || 'Unassigned')}\n- Budget: ${esc(record.budget_amount ?? 'Not set')}`
+      : record
+      ? `Record Details:\n- Employee: ${esc(record.user_name || record.user_email || 'Unknown')}\n- Type: ${esc(recordEntity || 'Record')}\n- Status: ${esc(record.status || 'Unknown')}\n- Detail: ${esc(record.title || record.request_type || record.activity_type || '')}`
       : `Work Order Details:\n- Title: ${esc(workOrder.title)}\n- Client: ${esc(workOrder.client_name)}\n- Stage: ${esc(formatStage(workOrder.current_stage))}\n- Due Date: ${esc(workOrder.due_date || 'Not set')}\n- Assigned To: ${esc(workOrder.assigned_to || 'Unassigned')}\n- ASAP: ${workOrder.asap ? 'Yes' : 'No'}\n- Description: ${esc(workOrder.description || 'None')}`;
     const aiResult = await base44.integrations.Core.InvokeLLM({
       prompt: `Generate a professional email notification about a ${order ? 'order' : record ? 'sales opportunity' : 'work order'} update.\n\n${recordContext}\n\nContext from user: ${esc(body || 'Standard notification')}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
