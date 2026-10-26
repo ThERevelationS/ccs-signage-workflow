@@ -265,10 +265,16 @@ export const NotificationTriggers = {
   
   workOrderCompleted: async (workOrder, changedBy) => {
     await triggerNotification("work_order_completed", workOrder, { changedBy, eventDescription: "Work order marked as completed" });
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_completed", workOrder, { changedBy, eventDescription: "Rider marked as completed" });
+    }
   },
   
   workOrderDeleted: async (workOrder, changedBy) => {
     await triggerNotification("work_order_deleted", workOrder, { changedBy, eventDescription: "Work order deleted" });
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_deleted", workOrder, { changedBy, eventDescription: "Rider deleted" });
+    }
   },
   
   riderCreated: async (workOrder, parentTitle, changedBy) => {
@@ -296,6 +302,9 @@ export const NotificationTriggers = {
     if (stageSpecific) {
       await triggerNotification(stageSpecific, workOrder, { previousStage, newStage, changedBy, eventDescription });
     }
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_stage_changed", workOrder, { previousStage, newStage, changedBy, eventDescription: `Rider moved from ${formatStageName(previousStage)} to ${formatStageName(newStage)}` });
+    }
   },
   
   taskAdded: async (workOrder, taskText, changedBy) => {
@@ -304,6 +313,14 @@ export const NotificationTriggers = {
   
   taskCompleted: async (workOrder, taskText, changedBy) => {
     await triggerNotification("task_completed", workOrder, { taskText, changedBy, eventDescription: "Task completed" });
+  },
+
+  taskUncompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("task_uncompleted", workOrder, { taskText, changedBy, eventDescription: "Task marked incomplete" });
+  },
+
+  taskEdited: async (workOrder, oldText, newText, changedBy) => {
+    await triggerNotification("task_edited", workOrder, { taskText: newText, oldValue: oldText, changedBy, eventDescription: "Task text edited" });
   },
   
   taskDeleted: async (workOrder, changedBy) => {
@@ -317,6 +334,14 @@ export const NotificationTriggers = {
   noteDeleted: async (workOrder, changedBy) => {
     await triggerNotification("note_deleted", workOrder, { changedBy, eventDescription: "Note deleted" });
   },
+
+  subNoteAdded: async (workOrder, text, changedBy) => {
+    await triggerNotification("sub_note_added", workOrder, { noteText: text, changedBy, eventDescription: "Sub-note added" });
+  },
+
+  subNoteDeleted: async (workOrder, changedBy) => {
+    await triggerNotification("sub_note_deleted", workOrder, { changedBy, eventDescription: "Sub-note deleted" });
+  },
   
   imageUploaded: async (workOrder, changedBy) => {
     await triggerNotification("image_uploaded", workOrder, { changedBy, eventDescription: "Image uploaded" });
@@ -328,6 +353,9 @@ export const NotificationTriggers = {
   
   assignedToChanged: async (workOrder, previousAssignee, newAssignee, changedBy) => {
     await triggerNotification("assigned_to_changed", workOrder, { previousAssignee, newAssignee, changedBy, eventDescription: `Assignment changed from ${previousAssignee || 'unassigned'} to ${newAssignee}` });
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_assigned_to_changed", workOrder, { previousAssignee, newAssignee, changedBy, eventDescription: `Rider assignment changed to ${newAssignee}` });
+    }
   },
   
   priorityChanged: async (workOrder, changedBy) => {
@@ -481,7 +509,49 @@ export const NotificationTriggers = {
     if (!baselineWorkOrder?.start_date && savedWorkOrder?.start_date) { await emit("start_date_set", "start_date"); anyField = true; }
     if (!baselineWorkOrder?.site_survey_date && savedWorkOrder?.site_survey_date) { await emit("site_survey_scheduled", "site_survey_date"); anyField = true; }
     if (!baselineWorkOrder?.google_drive_folder_url && savedWorkOrder?.google_drive_folder_url) { await emit("google_drive_linked", "google_drive_folder_url"); anyField = true; }
-    if (anyField) {
+    
+    // Item-level diffs on the notes[] (tasks) and follow_up[] arrays —
+    // one event per transition type per save, not per touched item.
+    const itemsOf = (arr) => (Array.isArray(arr) ? arr : []);
+    const tasksBefore = itemsOf(baselineWorkOrder?.notes);
+    const tasksAfter = itemsOf(savedWorkOrder?.notes);
+    const fuBefore = itemsOf(baselineWorkOrder?.follow_up);
+    const fuAfter = itemsOf(savedWorkOrder?.follow_up);
+
+    if (fuAfter.length > fuBefore.length) { await emit("follow_up_added", "follow_up"); anyField = true; }
+    if (fuAfter.some((it, i) => it?.completed && !fuBefore[i]?.completed)) {
+      await emit("follow_up_completed", "follow_up"); anyField = true;
+    }
+
+    // Tasks match by id when present, else by position — the array order is
+    // stable for in-place edits (toggles, due-date, assignee changes).
+    const beforeByKey = new Map(tasksBefore.map((t, i) => [t?.id ?? `idx:${i}`, t]));
+    let taskDueSet = false;
+    let taskAssigned = false;
+    let noteCompleted = false;
+    for (let i = 0; i < tasksAfter.length; i++) {
+      const t = tasksAfter[i];
+      const before = beforeByKey.get(t?.id ?? `idx:${i}`);
+      if (!before) continue;
+      if (!before.due_date && t?.due_date) taskDueSet = true;
+      if ((before.assigned_to || "") !== (t?.assigned_to || "") && t?.assigned_to) taskAssigned = true;
+      if (!before.completed && t?.completed) noteCompleted = true;
+    }
+    if (taskDueSet) { await emit("task_due_date_set", "notes"); anyField = true; }
+    if (taskAssigned) { await emit("task_assigned", "notes"); anyField = true; }
+    if (noteCompleted) { await emit("note_completed", "notes"); anyField = true; }
+
+    // "All tasks done" fires on the transition only — completing the last
+    // open task once, not on every later save.
+    const allDone = tasksAfter.length > 0 && tasksAfter.every((t) => t?.completed);
+    const allDoneBefore = tasksBefore.length > 0 && tasksBefore.every((t) => t?.completed);
+    if (allDone && !allDoneBefore) {
+      await emit("all_tasks_completed", "notes");
+      if (savedWorkOrder?.is_rider) await emit("rider_all_tasks_completed", "notes");
+      anyField = true;
+    }
+
+if (anyField) {
       await triggerNotification("work_order_updated", savedWorkOrder, { changedBy, eventDescription: "Work order updated" });
     }
   },
