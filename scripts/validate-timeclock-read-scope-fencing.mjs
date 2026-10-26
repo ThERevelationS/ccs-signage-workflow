@@ -41,6 +41,7 @@ const uiMocks = {
   '@/components/ui/button': { Button },
   '@/components/ui/badge': { Badge: ({ children }) => React.createElement('span', null, children) },
   '@/components/ui/progress': { Progress: () => React.createElement('div') },
+  '@/components/ui/skeleton': { Skeleton: () => React.createElement('div') },
   '@/components/ui/dialog': uiDialogMocks,
   'lucide-react': iconModule,
   'date-fns': { format: () => '', parseISO: (v) => new Date(v) },
