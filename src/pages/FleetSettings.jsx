@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -8,30 +8,13 @@ import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalP
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { filterAllFleetRows, listAllFleetRows, readFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { useAuth, getSessionUser } from "@/components/auth/EmailGate";
-import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban, LogIn } from "lucide-react";
+import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const LEGACY_FLEET_PUBLIC_REPORT_URL = "https://app--ccsfleet-master-db95ea70.base44.app/PublicReport";
 const LEGACY_FLEET_QR_DISPLAY_SRC = "/fleet/fleetmaster-public-report-qr-200.png";
 const LEGACY_FLEET_QR_DOWNLOAD_SRC = "/fleet/fleetmaster-public-report-qr-400.png";
 const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback", "bouncieSyncNotifications"];
-
-// A failed Fleet read must never take the page down. A 401/409 means the CCS
-// staff session is genuinely no longer accepted; any other failure is a load
-// error the user can retry without signing in again.
-function isFleetSignInFailure(error) {
-  return [401, 409].includes(Number(error?.status || error?.response?.status || 0));
-}
-
-function fleetLoadError(error) {
-  const signIn = isFleetSignInFailure(error);
-  return {
-    signIn,
-    message: signIn
-      ? "Your Fleet sign-in is no longer accepted. Sign in again to load Fleet settings."
-      : error?.message || "Fleet settings data could not be loaded. Try again.",
-  };
-}
 
 async function loadAutomationHealthData() {
   // One $in query per entity keeps entity_list volume low; consumers already
@@ -48,10 +31,9 @@ async function loadAutomationHealthData() {
   };
 }
 
-export default function FleetSettings() {
-  const { sessionToken, currentUser, showLoginDialog } = useAuth();
+export default function FleetSettings({ embedded = false }) {
+  const { sessionToken } = useAuth();
   const [user, setUser] = useState(null);
-  const [loadError, setLoadError] = useState(null);
   const [bouncieReconnectBusy, setBouncieReconnectBusy] = useState(false);
   const [settings, setSettings] = useState(null);
   const [connection, setConnection] = useState(null);
@@ -89,44 +71,38 @@ export default function FleetSettings() {
   const checkSequenceRef = useRef(0);
   const integritySequenceRef = useRef(0);
 
-  // A failed Fleet read must never crash the page. The load reports the failure
-  // so the page can offer a sign-in or a retry instead of an unhandled rejection.
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    try {
-      const u = getSessionUser();
-      setUser(u);
-      if (u?.role === "admin") {
-        const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
-          readFleetRows("FleetSettings", { sort: "-updated_date", limit: 10 }),
-          base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
-          readFleetRows("FleetMigrationAudit", { sort: "-created_date", limit: 20 }),
-          invokeFleet("fleetCutoverControl", { action: "status" }).catch(() => null),
-          invokeFleet("fleetIntegrityAudit", {}).catch(() => null),
-          loadAutomationHealthData(),
-          invokeFleet("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
-          listAllFleetRows("FleetEquipment", "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
-        ]);
-        setSettings((settingsRows || [])[0] || null);
-        setConnection(bouncieStatusResult?.data || null);
-        setAudit((auditRows || []).find((row) => row.mode === "verification") || (auditRows || [])[0] || null);
-        setServerStatus(statusResult?.data || null);
-        setIntegrity(integrityResult?.data || null);
-        setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
-        setQueueRows(health.notifications || []);
-        setReceiptRows(health.receipts || []);
-        setMechanicLinks(mechanicResult?.data?.links || []);
-        setMechanicEquipment(mechanicEquipmentRows || []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const u = getSessionUser();
+        setUser(u);
+        if (u?.role === "admin") {
+          const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
+            readFleetRows("FleetSettings", { sort: "-updated_date", limit: 10 }),
+            base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
+            readFleetRows("FleetMigrationAudit", { sort: "-created_date", limit: 20 }),
+            invokeFleet("fleetCutoverControl", { action: "status" }).catch(() => null),
+            invokeFleet("fleetIntegrityAudit", {}).catch(() => null),
+            loadAutomationHealthData(),
+            invokeFleet("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+            listAllFleetRows("FleetEquipment", "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
+          ]);
+          setSettings((settingsRows || [])[0] || null);
+          setConnection(bouncieStatusResult?.data || null);
+          setAudit((auditRows || []).find((row) => row.mode === "verification") || (auditRows || [])[0] || null);
+          setServerStatus(statusResult?.data || null);
+          setIntegrity(integrityResult?.data || null);
+          setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
+          setQueueRows(health.notifications || []);
+          setReceiptRows(health.receipts || []);
+          setMechanicLinks(mechanicResult?.data?.links || []);
+          setMechanicEquipment(mechanicEquipmentRows || []);
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(fleetLoadError(error));
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionToken, currentUser?.email]);
-
-  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+    })();
+  }, []);
 
   const readiness = useMemo(() => {
     const labels = {
@@ -278,9 +254,6 @@ export default function FleetSettings() {
       setReceiptRows(health.receipts || []);
       setMechanicLinks(mechanicResult?.data?.links || []);
       setMechanicEquipment(mechanicEquipmentRows || []);
-      setLoadError(null);
-    } catch (error) {
-      if (requestSequence === checkSequenceRef.current) setLoadError(fleetLoadError(error));
     } finally {
       if (requestSequence === checkSequenceRef.current) setChecking(false);
     }
@@ -293,9 +266,6 @@ export default function FleetSettings() {
       const { data } = await invokeFleet("fleetIntegrityAudit", {});
       if (requestSequence !== integritySequenceRef.current) return;
       setIntegrity(data || null);
-      setLoadError(null);
-    } catch (error) {
-      if (requestSequence === integritySequenceRef.current) setLoadError(fleetLoadError(error));
     } finally {
       if (requestSequence === integritySequenceRef.current) setIntegrityBusy(false);
     }
@@ -480,10 +450,13 @@ export default function FleetSettings() {
     }
   };
 
-  if (loading) return <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
-  if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div></div></div>;
-
-  if (loadError) return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><AlertTriangle className="w-5 h-5"/>{loadError.signIn ? "Fleet sign-in needed" : "Fleet settings could not be loaded"}</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">{loadError.message}</p><div className="mt-4 flex flex-wrap gap-2">{loadError.signIn && <button type="button" data-login-gate-allow onClick={showLoginDialog} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"><LogIn className="w-4 h-4"/>Sign In</button>}<button type="button" onClick={loadDashboard} disabled={loading} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-amber-300 bg-white text-sm font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50 dark:bg-slate-900 dark:border-amber-800 dark:text-amber-200"><RefreshCw className="w-4 h-4"/>Try again</button></div></div></div></div>;
+  if (loading) return embedded
+    ? <div className="flex min-h-[16rem] items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div>
+    : <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
+  if (user?.role !== "admin") {
+    const gate = <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div>;
+    return embedded ? gate : <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6">{gate}</div></div>;
+  }
 
   const oldUrl = settings?.email_body_template?.includes("ccsfleet-master") || settings?.email_body_template?.includes("68accb163a1b474cdb95ea70");
   const latestAutomation = Object.fromEntries(AUTOMATION_SOURCES.map(source => [source, automationLogs.find(row => row.source === source) || null]));
@@ -496,10 +469,10 @@ export default function FleetSettings() {
   const gates = serverStatus?.cutover || settings || {};
   const cutoverComplete = !!gates.cutover_completed_at && !!gates.notifications_enabled && !!gates.scheduled_reminders_enabled && !!gates.maintenance_generation_enabled && !!gates.public_reporting_enabled;
 
-  return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
+  return <div className={embedded ? "w-full min-w-0" : "min-h-full bg-gray-50 dark:bg-slate-950"}>{embedded ? null : <FleetModuleNav/>}<div className={embedded ? "space-y-5" : "max-w-5xl mx-auto p-4 sm:p-6 space-y-5"}>
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Settings className="w-6 h-6"/>Fleet Settings</h1><p className="text-sm text-gray-500 dark:text-slate-400">CCS Fleet operations health, production gates, notification configuration, and migration safety records.</p></div><div className="flex flex-col sm:flex-row gap-2"><button onClick={()=>setEditorOpen(true)} disabled={!settings} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-indigo-300 bg-indigo-50 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-200 dark:hover:bg-indigo-950/60"><Pencil className="w-4 h-4"/>Edit notifications & reminders</button><button onClick={runServerCheck} disabled={checking} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{checking?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh operations health</button></div></div>
 
-    <nav aria-label="Fleet Settings sections" className="sticky top-[69px] lg:top-[61px] z-20 -mx-1 rounded-xl border border-gray-200 bg-white/95 p-1.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 overflow-x-auto overscroll-x-contain">
+    <nav aria-label="Fleet Settings sections" className={`sticky ${embedded ? "top-0" : "top-[69px] lg:top-[61px]"} z-20 -mx-1 rounded-xl border border-gray-200 bg-white/95 p-1.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 overflow-x-auto overscroll-x-contain`}>
       <div className="flex min-w-max gap-1">
         <a href="#fleet-feature-setup" className="min-h-11 px-3 rounded-lg inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-800">Setup{setupNeedsCount>0&&<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">{setupNeedsCount}</span>}</a>
         <a href="#fleet-production-controls" className="min-h-11 px-3 rounded-lg inline-flex items-center text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-800">Production</a>
