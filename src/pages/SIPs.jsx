@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -390,6 +391,9 @@ export default function SIPs() {
         label: `SIPs ${field}`,
       });
       applySavedBoardFields(orderId, saved, [field]);
+      if (field === "sip_revisit_date" && value && saved?.id) {
+        void NotificationTriggers.sipItemRevisitSet(saved, currentUser?.email).catch(() => {});
+      }
     } catch (error) {
       console.error("Error updating SIPs Work Order field:", error);
       setQuickEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
