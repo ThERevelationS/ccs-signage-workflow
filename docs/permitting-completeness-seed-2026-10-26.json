@@ -1,0 +1,24 @@
+{
+  "work_unit": "statewide completeness seed + Cincinnati-radius dispatch ordering",
+  "date": "2026-10-26",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "completeness": {
+    "inventory_candidates": 2848,
+    "queue_rows_before": 1778,
+    "seeded_missing": 1461,
+    "breakdown": { "OH township": 1264, "KY city": 90, "OH village": 57, "OH city": 50 }
+  },
+  "municipality_drain": { "dispatched": 197, "ok": 197, "errors": 0 },
+  "cincinnati_ordering": {
+    "field": "dispatch_rank (miles from downtown Cincinnati, Census gazetteer centroids joined via FIPS keys)",
+    "schema": "dispatch_rank number property added to SourceCollectionQueue entity",
+    "sort": "ohioFirstResearchRows now orders by dispatch_rank asc (unranked last), OH-first tiebreak",
+    "daily_dispatch_limit": "40 -> 80",
+    "nearest_order_sample": ["Delhi Twp 6.6", "Columbia Twp 6.9", "Green Twp 8.2", "Anderson Twp 8.5", "Springfield Twp 9.8", "Sycamore Twp 11.2", "Colerain Twp 12.1", "Miami Twp 12.9"]
+  },
+  "repairs": {
+    "Springfield Township Hamilton": "research grabbed Clark County sibling (springfieldtownshipclarkoh.gov); corrected to springfieldtwp.org, 12 wrong docs removed",
+    "notes": "same-name township sibling contamination is a standing risk for common OH township names; post-drain domain-vs-county verification pass planned"
+  },
+  "known_gaps": { "unranked": "Keene KY (not in gazetteer) - unranked rows dispatch last" }
+}
