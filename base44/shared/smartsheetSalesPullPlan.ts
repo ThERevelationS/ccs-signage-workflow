@@ -17,11 +17,15 @@ export function hasUnverifiedSalesStageChangeSinceSync(record) {
 }
 
 // Reconcile inbound fields independently. Missing data may be filled without
-// allowing an unrelated local edit to freeze the entire row.
+// allowing an unrelated local edit to freeze the entire row. A divergence is
+// only *held* when the remote side demonstrably changed since the verified
+// baseline (or no baseline exists); a remote value equal to the baseline means
+// only the local side moved, which is a silent local win — the push carries
+// it, not a human review queue.
 export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
   const local = buildSnapshot(record, bindings, 'sales');
   const prior = record.smartsheet_sync_snapshot || {};
-  const snapshot = { ...remoteSnapshot }, fields = {}, held = [];
+  const snapshot = { ...remoteSnapshot }, fields = {}, held = [], localWins = [];
   // Records untouched locally for over 2 weeks defer to Smartsheet's non-blank values.
   const stale = Date.now() - Date.parse(record.updated_date || '') > 14 * 86400000;
   for (const [field, value] of Object.entries(incoming)) {
@@ -34,6 +38,10 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
     const unchangedLocally = known && same(local[column], prior[column]);
     if (same(current, next) || unchangedLocally || (stale && String(next ?? '').trim()) || (!known && blank) || (field === 'work_notes' && blank)) {
       fields[field] = value;
+    } else if (known && same(next, prior[column])) {
+      // Remote equals the verified baseline: only the local side edited.
+      localWins.push(binding);
+      snapshot[column] = prior[column];
     } else {
       held.push(binding);
       if (known) snapshot[column] = prior[column];
@@ -52,7 +60,39 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
       if (!held.includes(binding)) held.push(binding);
     }
   }
-  return { fields, snapshot, held };
+  return { fields, snapshot, held, localWins };
+}
+
+// How a proven remote task value may be applied, if at all. The caller decides
+// that remote wins (baseline or timestamp evidence); this only picks the safe
+// write mode for the winning remote task. A verified local stage move or a
+// protected legacy terminal record always stays held for review.
+export function planSalesRemoteTaskApplication(record, remoteTask) {
+  const task = String(remoteTask ?? '').trim();
+  const status = String(record?.sales_status || 'lead').trim().toLowerCase();
+  if (!task || record?.in_pipeline !== true ||
+      // A legacy terminal row's saved status is not trustworthy evidence —
+      // never let a remote task reopen it silently, same-stage or otherwise.
+      isLegacyTerminalSmartsheetSalesRecord(record)) return { mode: 'held' };
+  const mapped = mapSalesTaskToStage(task);
+  // A same-stage remote task only changes text, never the stage outcome: it
+  // may pull even while a local stage move still awaits sync verification.
+  if (mapped.kind === 'stage' && mapped.status === status) return { mode: 'plain' };
+  // Stage-affecting or unclassifiable remote tasks stay held while a verified
+  // local stage move is unconfirmed.
+  if (hasUnverifiedSalesStageChangeSinceSync(record)) {
+    return { mode: 'held' };
+  }
+  if (mapped.kind === 'unmapped') return { mode: 'plain' };
+  if (mapped.kind === 'neutral_close') {
+    // A closed record cannot be neutral-closed again; it needs human review.
+    return ['won', 'lost'].includes(status) ? { mode: 'held' } : { mode: 'adoption', kind: 'neutral_close', remoteTask: task };
+  }
+  const active = ['lead', 'quoted', 'follow_up', 'on_hold'];
+  if (active.includes(status) && active.includes(mapped.status)) {
+    return { mode: 'transition', to: mapped.status };
+  }
+  return { mode: 'adoption', kind: 'stage', to: mapped.status, remoteTask: task };
 }
 
 // If a stage CAS succeeded but its history/snapshot confirmation did not,
@@ -89,7 +129,6 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
   const bindingId = String(bindings?.current_task_description || '').trim();
   if (!/^\d+$/.test(bindingId)) return { ...plan, stageTransition: null };
 
-  const mapped = mapSalesTaskToStage(incoming.current_task_description);
   const currentStatus = String(record?.sales_status || 'lead').trim().toLowerCase();
   const prior = record?.smartsheet_sync_snapshot || {};
   const known = Boolean(record?.smartsheet_last_synced_at &&
@@ -97,36 +136,45 @@ export function guardSalesPulledTaskTransition(record, incoming, plan, bindings)
   const locallyEdited = known
     ? !same(record?.current_task_description, prior[bindingId])
     : Boolean(String(record?.current_task_description || '').trim());
-  const activeStatuses = ['lead', 'quoted', 'follow_up', 'on_hold'];
-  const needsStageChange = mapped.kind === 'stage' && mapped.status !== currentStatus;
-  const canAutoTransition = needsStageChange &&
-    activeStatuses.includes(currentStatus) && activeStatuses.includes(mapped.status) &&
-    // A verified local stage move since the last full Smartsheet sync takes
-    // precedence over a later remote task disagreement. Hold for review and
-    // keep other independently safe fields flowing.
-    !hasUnverifiedSalesStageChangeSinceSync(record) &&
-    known && !locallyEdited && !isLegacyTerminalSmartsheetSalesRecord(record) &&
-    !plan.held.includes('current_task_description') &&
-    Object.prototype.hasOwnProperty.call(plan.fields, 'current_task_description');
-  if (canAutoTransition) {
+  // Remote equals the verified baseline only when the baseline is known and
+  // the incoming task still matches it. Anything else is a remote change.
+  const remoteChanged = !known || !same(incoming.current_task_description, prior[bindingId]);
+
+  const stripTask = (extra) => {
+    const fields = { ...plan.fields };
+    delete fields.current_task_description;
+    const snapshot = { ...plan.snapshot };
+    if (Object.prototype.hasOwnProperty.call(prior, bindingId)) snapshot[bindingId] = prior[bindingId];
+    else delete snapshot[bindingId];
+    return { ...plan, fields, snapshot, stageTransition: null, ...extra };
+  };
+
+  if (!remoteChanged) {
+    // Only the local side edited the task. Keep it silently — the push carries
+    // it — unless the local task can never be pushed (its mapped stage does not
+    // match the record stage), which is a real inconsistency worth one review.
+    const localMapped = mapSalesTaskToStage(record?.current_task_description);
+    const pushBlocked = localMapped.kind !== 'stage' || localMapped.status !== currentStatus;
+    return stripTask(pushBlocked
+      ? { held: [...new Set([...(plan.held || []), 'current_task_description'])], pushBlockedTask: true }
+      : { localWins: [...new Set([...(plan.localWins || []), 'current_task_description'])] });
+  }
+
+  if (locallyEdited) {
+    // Both sides moved: the pull loop arbitrates by timestamp evidence.
+    return stripTask({ held: [...new Set([...(plan.held || []), 'current_task_description'])] });
+  }
+
+  // Remote-only task change: apply it by safe write mode. Active-to-active
+  // stage moves ride the existing CAS transition; terminal/neutral moves use
+  // the task-adoption CAS batch; unmapped or same-stage text pulls plainly.
+  const mode = planSalesRemoteTaskApplication(record, incoming.current_task_description);
+  if (mode.mode === 'transition') {
     // Only the separate CAS write path may consume this marker. The task,
     // real status, and stage timestamp must commit in one guarded WorkOrder save.
-    return { ...plan, stageTransition: { from: currentStatus, to: mapped.status } };
+    return { ...plan, stageTransition: { from: currentStatus, to: mode.to } };
   }
-  const requiresReview = isLegacyTerminalSmartsheetSalesRecord(record) ||
-    mapped.kind !== 'stage' || needsStageChange || locallyEdited;
-  if (!requiresReview) return { ...plan, stageTransition: null };
-
-  const fields = { ...plan.fields };
-  delete fields.current_task_description;
-  const snapshot = { ...plan.snapshot };
-  if (Object.prototype.hasOwnProperty.call(prior, bindingId)) snapshot[bindingId] = prior[bindingId];
-  else delete snapshot[bindingId];
-  return {
-    ...plan,
-    fields,
-    snapshot,
-    held: [...new Set([...(plan.held || []), 'current_task_description'])],
-    stageTransition: null,
-  };
+  if (mode.mode === 'adoption') return { ...plan, stageTransition: null, taskAdoption: mode };
+  if (mode.mode === 'plain') return { ...plan, stageTransition: null };
+  return stripTask({ held: [...new Set([...(plan.held || []), 'current_task_description'])] });
 }
