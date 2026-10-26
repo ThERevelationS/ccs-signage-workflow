@@ -27,7 +27,8 @@ import {
   Lock,
   Settings,
   Pause,
-  LockKeyhole
+  LockKeyhole,
+  Ban
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
@@ -232,6 +233,7 @@ export default function TimeClock() {
   const [editNotesText, setEditNotesText] = useState("");
   const [savingNotesId, setSavingNotesId] = useState(null);
   const [editingTimeOff, setEditingTimeOff] = useState(null);
+  const [cancellingTimeOffId, setCancellingTimeOffId] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
   const [sessionNotice, setSessionNotice] = useState(null);
   const idleTimerRef = useRef(null);
@@ -338,6 +340,31 @@ export default function TimeClock() {
       console.error("Error loading data:", err);
     }
     if (current()) setIsLoading(false);
+  };
+
+  const cancelTimeOffRequest = async (request) => {
+    if (!request?.id || !timeClockSessionToken || cancellingTimeOffId) return;
+    if (!window.confirm(`Cancel your ${request.request_type?.replace("_", " ")} request (${request.start_date}${request.end_date !== request.start_date ? ` – ${request.end_date}` : ""})?`)) return;
+    setCancellingTimeOffId(request.id);
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "time_off_decision",
+        session_token: timeClockSessionToken,
+        target_email: loggedInUser.email,
+        request_id: newRequestId(),
+        time_off_request_id: request.id,
+        expected_updated_date: request.updated_date,
+        decision: "cancelled",
+      });
+      const data = response?.data || response;
+      if (!data?.success) throw new Error(data?.error || "The request could not be cancelled.");
+      await loadData();
+    } catch (err) {
+      setTimeEntryError(err?.response?.data?.error || err?.message || "The time-off request could not be cancelled. Reload and try again.");
+      await loadData();
+    } finally {
+      setCancellingTimeOffId("");
+    }
   };
 
   const clearEmployeeSession = useCallback(({ reason = "manual" } = {}) => {
@@ -968,6 +995,19 @@ export default function TimeClock() {
                                 onClick={() => setEditingTimeOff(request)}
                               >
                                 <Pencil className="w-3 h-3" />
+                              </Button>
+                            )}
+                            {["pending", "approved"].includes(request.status) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-red-600 hover:bg-red-50"
+                                disabled={cancellingTimeOffId === request.id}
+                                onClick={() => cancelTimeOffRequest(request)}
+                              >
+                                {cancellingTimeOffId === request.id
+                                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                                  : <Ban className="w-3 h-3" />}
                               </Button>
                             )}
                             <Badge className={
