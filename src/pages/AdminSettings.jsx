@@ -343,7 +343,13 @@ const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "rider_created",
   "stage_changed", "stage_entered", "stage_exited",
   "task_added", "task_completed", "task_deleted",
+  "task_uncompleted", "task_edited",
+  "task_due_date_set", "task_assigned", "all_tasks_completed",
   "note_added", "note_deleted",
+  "note_completed", "follow_up_added", "follow_up_completed",
+  "sub_note_added", "sub_note_deleted",
+  "rider_completed", "rider_all_tasks_completed", "rider_deleted",
+  "rider_stage_changed", "rider_assigned_to_changed",
   "image_uploaded",
   "asap_toggled_on", "asap_toggled_off",
   "assigned_to_changed",
@@ -364,6 +370,7 @@ const DEADLINE_TRIGGER_SET = new Set([
   "due_date_approaching", "due_date_passed",
   "work_order_install_date_approaching", "work_order_install_date_passed",
   "site_survey_approaching",
+  "task_due_date_approaching", "task_due_date_passed",
 ]);
 
 // Fired by checkDeadlineReminders against Orders awaiting delivery — order
