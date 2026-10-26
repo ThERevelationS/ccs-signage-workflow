@@ -90,9 +90,9 @@ assert.doesNotMatch(visible(renderer), /pause-A|First Worker/,
 assert.match(visible(renderer), /WORK PAUSED/);
 console.log('PASS previous employee status cannot overwrite new Work Pause session');
 
-await act(async () => { listeners.get('focus')(); });
+await act(async () => { listeners.get('ccs-timeclock-work-pause-changed')({ type: 'ccs-timeclock-work-pause-changed' }); });
 assert.equal(calls.length, 3);
-await act(async () => { listeners.get('focus')(); });
+await act(async () => { listeners.get('ccs-timeclock-work-pause-changed')({ type: 'ccs-timeclock-work-pause-changed' }); });
 assert.equal(calls.length, 4);
 await act(async () => { calls[3].resolve(working(second)); });
 assert.doesNotMatch(visible(renderer), /WORK PAUSED/);
@@ -101,7 +101,7 @@ assert.doesNotMatch(visible(renderer), /WORK PAUSED/,
   'Older paused status must not reopen guard after newer working confirmation');
 console.log('PASS overlapping Work Pause refreshes accept only latest authoritative state');
 
-await act(async () => { listeners.get('focus')(); });
+await act(async () => { listeners.get('ccs-timeclock-work-pause-changed')({ type: 'ccs-timeclock-work-pause-changed' }); });
 assert.equal(calls.length, 5);
 await act(async () => { calls[4].resolve(paused(second, 'latest')); });
 assert.match(visible(renderer), /WORK PAUSED/);
