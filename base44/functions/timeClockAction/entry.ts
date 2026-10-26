@@ -2,6 +2,22 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withE
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — emit failures must never break a verified
+// clock/PTO write, so this swallows and logs like the permit emit.
+async function emitTimeClockEvent(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Time Clock automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
+
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -6075,6 +6091,9 @@ Deno.serve(async (req) => {
       });
       if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Current Work and its audit were saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
       const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+      if (!resumingLaborAction && segment?.id) {
+        await emitTimeClockEvent(base44, 'job_allocation_added', segment.id, actorEmail);
+      }
       return Response.json({ success: true, status: 'clocked_in', entry, active_labor: segment, labor_summary: summary, user: publicEmployee(target), reused: resumingLaborAction });
     }
 
@@ -6717,6 +6736,9 @@ Deno.serve(async (req) => {
           createAudit = await auditEntity.get(createAudit.id).catch(() => createAudit);
         }
 
+        if (finalOutcome === 'confirmed' && saved?.id) {
+          await emitTimeClockEvent(base44, 'time_off_requested', saved.id, actorEmail);
+        }
         return Response.json({
           success: true,
           request: saved,
@@ -6913,6 +6935,9 @@ Deno.serve(async (req) => {
         !constantTimeEqual(String(confirmedRecord.last_request_payload_hash || ''), updatePayloadHash) ||
         !updatedFieldsMatch(confirmedRecord)) {
         return Response.json({ success: false, error: 'The time-off edit and confirmed audit do not agree. Admin investigation is required.' }, { status: 409 });
+      }
+      if (finalOutcome === 'confirmed' && confirmedRecord?.id) {
+        await emitTimeClockEvent(base44, 'time_off_updated', confirmedRecord.id, actorEmail);
       }
       return Response.json({ success: true, request: confirmedRecord, audit_id: updateIntent.id, reused: finalOutcome === 'recovered' });
     }
@@ -7141,6 +7166,7 @@ Deno.serve(async (req) => {
       if (!savedByThisRequest(savedEntry) || !auditMatchesThisRequest(intent) || !['confirmed', 'recovered'].includes(String(intent?.outcome || ''))) {
         return Response.json({ success: false, error: 'The saved notes and audit do not agree. Admin investigation is required.' }, { status: 409 });
       }
+      await emitTimeClockEvent(base44, 'time_entry_notes_updated', savedEntry.id, actorEmail);
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
 
@@ -9734,6 +9760,8 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, retry_same_request: true, error: 'Clock-in and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
         }
 
+        await emitTimeClockEvent(base44, 'time_clock_in', entry.id, actorEmail);
+
         return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
       } finally {
         let releaseFailed = false;
@@ -10003,6 +10031,8 @@ Deno.serve(async (req) => {
       if (!finalized) {
         return Response.json({ success: false, retry_same_request: true, error: 'Clock-out and audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       }
+
+      await emitTimeClockEvent(base44, 'time_clock_out', savedEntry.id, actorEmail);
 
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
     }
