@@ -101,6 +101,39 @@ same(planSalesRemoteTaskApplication(
   { ...base, sales_stage_changed_at: "2026-10-21T00:00:00Z" }, "On Hold - Follow Up with Customer").mode, "held",
   "Unverified local stage move blocks remote stage-affecting tasks.");
 
+// 7b. Converged task, diverged stage: self-heal via adoption, not a silent skip.
+{
+  const converged = { ...base, current_task_description: "Completed Sale", sales_status: "lead",
+    opportunity_id: "OPP-90001" };
+  const incoming = { current_task_description: "Completed Sale" };
+  const healed = guardSalesPulledTaskTransition(converged, incoming,
+    planSalesFieldPull(converged, incoming, { [taskColumn]: "Completed Sale" }, bindings), bindings);
+  same(healed.taskAdoption, { mode: "adoption", kind: "stage", to: "won", remoteTask: "Completed Sale" },
+    "A record whose task already matches Smartsheet still heals a diverged stage.");
+  const legacy = guardSalesPulledTaskTransition(
+    { ...base, current_task_description: "Completed Sale", sales_status: "lead" }, incoming,
+    planSalesFieldPull(base, incoming, { [taskColumn]: "Completed Sale" }, bindings), bindings);
+  check(!legacy.taskAdoption && !legacy.stageTransition,
+    "A legacy-terminal-pattern record still fails closed, converged task or not.");
+  const consistent = guardSalesPulledTaskTransition(base, { current_task_description: "Estimate Sent to Customer" },
+    planSalesFieldPull(base, { current_task_description: "Estimate Sent to Customer" },
+      { [taskColumn]: "Estimate Sent to Customer" }, bindings), bindings);
+  check(!consistent.taskAdoption && !consistent.stageTransition,
+    "A converged task with a consistent stage stays a no-op.");
+  const unverified = guardSalesPulledTaskTransition(
+    { ...converged, sales_stage_changed_at: "2026-10-21T00:00:00Z" }, incoming,
+    planSalesFieldPull(converged, incoming, { [taskColumn]: "Completed Sale" }, bindings), bindings);
+  check(!unverified.taskAdoption && !unverified.stageTransition,
+    "An unverified local stage move blocks the stage heal.");
+  const activeHeal = guardSalesPulledTaskTransition(
+    { ...base, current_task_description: "Waiting on Deposit", sales_status: "lead" },
+    { current_task_description: "Waiting on Deposit" },
+    planSalesFieldPull(base, { current_task_description: "Waiting on Deposit" },
+      { [taskColumn]: "Waiting on Deposit" }, bindings), bindings);
+  same(activeHeal.taskAdoption, { mode: "adoption", kind: "stage", to: "quoted", remoteTask: "Waiting on Deposit" },
+    "Active-stage heals ride the adoption CAS, not the nonterminal transition patch.");
+}
+
 // 8. Adoption patch builder: terminal stage fields.
 {
   const stamp = "2026-10-26T14:00:00.000Z";
@@ -115,8 +148,17 @@ same(planSalesRemoteTaskApplication(
   const neutral = buildSalesTaskAdoptionPatch({ ...base, sales_status: "lead" }, {}, "Closed - Did not Lose", "", stamp);
   same(neutral.in_pipeline, false, "Neutral closeout leaves the pipeline.");
   same(neutral.sales_neutral_closed_at, stamp, "Neutral closeout stamps the closure.");
+  const stageHeal = buildSalesTaskAdoptionPatch(
+    { ...base, current_task_description: "Completed Sale", sales_status: "lead" }, {},
+    "Completed Sale", "", stamp);
+  same(stageHeal.sales_status, "won",
+    "A same-task adoption still repairs the diverged stage.");
+  same(stageHeal.sales_stage_changed_at, stamp, "The stage heal stamps a verified timestamp.");
   assert.throws(() => buildSalesTaskAdoptionPatch({ ...base, sales_status: "won" }, {}, "Closed - Did not Lose", "", stamp)); checks++;
   assert.throws(() => buildSalesTaskAdoptionPatch(base, {}, "Estimate Sent to Customer", "", stamp)); checks++;
+  assert.throws(() => buildSalesTaskAdoptionPatch(
+    { ...base, current_task_description: "Estimate Sent to Customer", sales_status: "quoted" }, {},
+    "Estimate Sent to Customer", "", stamp)); checks++;
   assert.throws(() => buildSalesTaskAdoptionPatch(base, {}, "Completed Sale", "", "not-a-stamp")); checks++;
 }
 
