@@ -670,6 +670,12 @@ export default function QuickClockSection({
 
       const resolvedStatus = applyAuthoritativeStatus(status, verifiedUser, credential);
       if (resolvedStatus === "clocked_in") {
+        if (identifyIntentRef.current === "missed_clock_in") {
+          identifyIntentRef.current = "clock_in";
+          setShowClockOut(false);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in — no missed Clock In to report.`);
+          return;
+        }
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}! Active shift restored.`);
         return;
       }
@@ -945,49 +951,6 @@ export default function QuickClockSection({
     if (data?.entry?.id) setActiveEntry(data.entry);
   };
 
-  const signalWorkPauseChanged = () => {
-    window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
-    try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
-  };
-
-  const handleStartWorkPause = async () => {
-    if (!workPauseAllowed) throw new Error("Work Pause is not enabled for this employee.");
-    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
-      throw new Error("Work Pause identity is no longer verified. Close this dialog and identify again.");
-    }
-    if (breakStatus !== "working" || activeBreak?.id) throw new Error("End the active break before pausing work.");
-    const email = selectedUser.email;
-    const stillCurrent = breakContextFor(email);
-    const requestId = requestIdFor("work_pause_start", email);
-    let actionEpoch = workViewEpochRef.current;
-    setPersistenceError("");
-    try {
-      // The invocation increments the transition epoch synchronously before
-      // sending; a later transition or status restore invalidates this reply.
-      const pending = invokeTimeClock({
-        action: "work_pause_start",
-        request_id: requestId,
-        ...credentialPayload(credentialRef.current, email),
-      });
-      actionEpoch = workViewEpochRef.current;
-      const result = await pending;
-      assertWorkPauseAcknowledgementIdentity(result, email, activeEntry.id);
-      clearRequest("work_pause_start", email, requestId);
-      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
-      applyWorkPauseResponse(result);
-      setShowClockOut(false);
-      setRecognitionStatus("Work Pause confirmed by server.");
-      signalWorkPauseChanged();
-      return result;
-    } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("work_pause_start", email, requestId);
-      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
-        setPersistenceError(err?.message || "Work Pause was not confirmed by the server.");
-      }
-      throw err;
-    }
-  };
-
   const breakContextFor = (email) => {
     const scope = currentActionScope();
     const expectedEmail = String(email || "").trim().toLowerCase();
@@ -1016,23 +979,6 @@ export default function QuickClockSection({
     const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
     if (responseEmail === expectedEmail && (!entryEmail || entryEmail === expectedEmail)) return;
     const error = new Error(`${label} response could not be matched to this employee. The exact request is preserved; refresh status and retry the same action.`);
-    error.retrySameRequest = true;
-    throw error;
-  };
-
-  const assertWorkPauseAcknowledgementIdentity = (data, email, entryId) => {
-    const expectedEmail = String(email || "").trim().toLowerCase();
-    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
-    const responseEntryId = String(data?.entry?.id || "");
-    const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
-    const pause = data?.work_pause || data?.active_work_pause || null;
-    const pauseMatches = !pause || (
-      String(pause.user_email || "").trim().toLowerCase() === expectedEmail &&
-      (!pause.time_entry_id || String(pause.time_entry_id) === String(entryId || ""))
-    );
-    if (responseEmail === expectedEmail && responseEntryId === String(entryId || "") &&
-        entryEmail === expectedEmail && pauseMatches) return;
-    const error = new Error("Work Pause response could not be matched to this employee and active shift. The exact request is preserved; refresh status and retry the same action.");
     error.retrySameRequest = true;
     throw error;
   };
@@ -1740,11 +1686,9 @@ export default function QuickClockSection({
           breakStatus={breakStatus}
           activeBreak={activeBreak}
           breakSummary={breakSummary}
-          workPauseAllowed={workPauseAllowed}
           workPauseSummary={workPauseSummary}
           onStartBreak={handleStartBreak}
           onEndBreak={handleEndBreak}
-          onStartWorkPause={handleStartWorkPause}
           activeLabor={activeLabor}
           laborSummary={laborSummary}
           onStartLabor={(payload) => handleLaborAction("labor_start", payload)}
