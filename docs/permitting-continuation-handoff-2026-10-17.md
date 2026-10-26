@@ -1,3 +1,12 @@
+# Identity holds, URL repairs and sentinel-cleanup plan (2026-10-26b)
+
+- Reversible identity holds (conditional writes, no deletion): Perryopolis OH profile is entirely PA data (parent county Fayette PA, PA borough URLs, PA ai_summary; no official OH candidate) -> auto_refresh=false + _source_identity_hold, queue row blocked. Medina County OH profile stores City-of-Medina url+summary while a separate correct city profile exists -> same hold, queue row blocked.
+- URL canonicalization repairs (verified same-department/same-official-domain): Lake County -> www+https building-inspection URL, reseeded with 12 documents. Licking County -> canonical OpenGov portal URL, reseeded clean (JS portal, 0 static docs - honest gap).
+- Unresolved sources: Greene + Montgomery counties have no fetchable official alternate (domain-wide Cloudflare); Franklin County is valid locally but the sandbox egress is blocked (infra WAF); Guernsey main domain works but has no zoning/planning dept page (auditor subdomain Cloudflare-blocked). Medina County candidates verified: medinaco.org/building-department and /planning (awaiting identity repair decision).
+- Sentinel cleanup plan prepared: 105 profiles (not 40) store literally "INFORMATION NOT FOUND" as permitting_url; 64 already have documents via other paths; 34 also have invalid website_url. Itemized manifest + full profile backups at docs/permitting-sentinel-url-cleanup-manifest-2026-10-26.json. Awaiting approval - no sentinel values cleared yet.
+- Report updated: docs/permitting-failed-seed-diagnosis-2026-10-26.json.
+- Still open for decision: LLM research dispatch (190 researched_no_url + 572 not_started queue rows); Greene/Montgomery/Franklin alternate sourcing; Medina County + Perryopolis identity repairs.
+
 # Failed-seed diagnosis + seed-URL hardening (2026-10-26)
 
 - Diagnosed all 248 OH/KY profiles with empty frontiers and zero retained documents. Categories: 190 researched-with-no-URL (all have ai_summary), 24 has-url-no-frontier, 25 legitimately blocked queue rows (unincorporated communities), 9 orphaned no-queue-row profiles.
