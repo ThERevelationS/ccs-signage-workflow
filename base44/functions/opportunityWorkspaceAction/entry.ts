@@ -386,15 +386,16 @@ Deno.serve(async (req) => {
 
     if (action === "global_search") {
       const query = clean(body?.query).toLowerCase();
-      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [] };
+      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [], work_orders: [] };
       if (query.length < 2) return Response.json({ success: true, action, results: empty });
-      const [opps, estimates, invoices, pos, cos, customers] = await Promise.all([
+      const [opps, estimates, invoices, pos, cos, customers, wos] = await Promise.all([
         Opportunity.filter({}, "-last_activity_at", 500),
         Estimate.filter({}, "-created_date", 500),
         Invoice.filter({}),
         PurchaseOrder.filter({}),
         ChangeOrder.filter({}),
         Customer.filter({}, "-updated_date", 500).catch(() => []),
+        WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
       ]);
       for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
         if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
@@ -418,6 +419,10 @@ Deno.serve(async (req) => {
             .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"]))
             .slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status) })),
+          work_orders: (Array.isArray(wos) ? wos : [])
+            .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description"]))
+            .slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date) })),
         },
       });
     }
