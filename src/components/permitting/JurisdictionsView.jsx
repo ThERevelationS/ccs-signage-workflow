@@ -18,12 +18,12 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
 import { normalizePermitJurisdictionName } from "@/components/permitting/jurisdictionPermitBridge";
 import { useAuth } from "@/components/auth/EmailGate";
-import { usePolling } from "@/lib/usePolling";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
 export default function JurisdictionsView({ focusJurisdiction = null }) {
   const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,10 +38,10 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const [trustFilter, setTrustFilter] = useState("all");
   const [repositoryNotice, setRepositoryNotice] = useState(null);
 
-  usePolling(() => loadJurisdictions(), 300000, { runOnMount: false });
-
   useEffect(() => {
     loadJurisdictions();
+    const interval = setInterval(loadJurisdictions, 300000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -260,6 +260,26 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
+  // Users type things like "Hamilton County" or "City of Mason" while profiles
+  // are stored by bare name + type. Normalize the query (strip type words) and
+  // match against every natural alias so real jurisdictions are found.
+  const searchAliases = (j) => {
+    const name = String(j.name || '').toLowerCase();
+    const type = String(j.type || '').toLowerCase();
+    const county = String(j.parent_county?.name || j.parent_county_name || '').toLowerCase();
+    return [name, `${name} ${type}`, `${type} of ${name}`, `city of ${name}`,
+      `village of ${name}`, `${name} township`, `${name} county`, county,
+      `${name} ${county}`].filter(Boolean);
+  };
+  const queryTokens = normalizedSearch.split(/[^a-z0-9]+/)
+    .filter(t => t && !['county','city','village','township','of','the','twp','ohio','oh','ky','kentucky'].includes(t));
+  const matchesSearchFor = (j) => {
+    if (!normalizedSearch) return true;
+    if (!queryTokens.length) return true;
+    const hay = searchAliases(j);
+    return queryTokens.every(t => hay.some(a => a.includes(t)));
+  };
+
   const duplicateMap = new Map();
   jurisdictions.forEach((jurisdiction) => {
     const key = jurisdictionIdentityKey(jurisdiction);
@@ -273,11 +293,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     return acc;
   }, {});
   const displayList = jurisdictions.filter((jurisdiction) => {
-    const matchesSearch = !normalizedSearch ||
-      jurisdiction.name?.toLowerCase().includes(normalizedSearch) ||
-      jurisdiction.state?.toLowerCase().includes(normalizedSearch) ||
-      jurisdiction.parent_county?.name?.toLowerCase().includes(normalizedSearch);
-    if (!matchesSearch) return false;
+    if (!matchesSearchFor(jurisdiction)) return false;
     if (trustFilter === "all") return true;
     return assessJurisdictionTrust(jurisdiction, duplicateCountFor(jurisdiction)).key === trustFilter;
   });
@@ -294,47 +310,57 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
                 <MapPin className="w-5 h-5 text-purple-600" />
                 Jurisdictions
               </h1>
-              <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions · {totalDocs} documents</p>
-              <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
-                <span className="text-green-700">{trustCounts.verified || 0} verified</span>
-                <span className="text-amber-700">{trustCounts.needs_review || 0} need verification</span>
-                <span className="text-red-700">{trustCounts.blocked || 0} duplicate-blocked</span>
-                <span className="text-slate-600">{trustCounts.historical || 0} historical</span>
-                <span className="text-blue-700">{trustCounts.manual_protected || 0} manual-protected</span>
-                <span className="text-purple-700">{trustCounts.ai_researched || 0} AI researched</span>
-              </div>
+              <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions{currentUser?.role === 'admin' ? ` · ${totalDocs} documents` : ''}</p>
+              {isAdmin && (
+                <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
+                  <span className="text-green-700">{trustCounts.verified || 0} verified</span>
+                  <span className="text-amber-700">{trustCounts.needs_review || 0} need verification</span>
+                  <span className="text-red-700">{trustCounts.blocked || 0} duplicate-blocked</span>
+                  <span className="text-slate-600">{trustCounts.historical || 0} historical</span>
+                  <span className="text-blue-700">{trustCounts.manual_protected || 0} manual-protected</span>
+                  <span className="text-purple-700">{trustCounts.ai_researched || 0} AI researched</span>
+                </div>
+              )}
             </div>
-            <Button
-              onClick={() => { setEditingJurisdiction(null); setShowForm(true); }}
-              size="sm"
-              className="min-h-11 w-full gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto"
-            >
-              <Plus className="w-4 h-4" /> Add
-            </Button>
+            {isAdmin && (
+              <Button
+                onClick={() => { setEditingJurisdiction(null); setShowForm(true); }}
+                size="sm"
+                className="min-h-11 w-full gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto"
+              >
+                <Plus className="w-4 h-4" /> Add
+              </Button>
+            )}
           </div>
 
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row">
-            <Input
-              value={aiDiscoverQuery}
-              onChange={e => setAiDiscoverQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && aiDiscover()}
-              placeholder="AI Discover: e.g. Jefferson County"
-              className="min-h-11 text-sm"
-            />
-            <Input aria-label="Discovery state" value={aiDiscoverState} onChange={e=>setAiDiscoverState(e.target.value)} placeholder="State" className="min-h-11 sm:w-20" />
-            <Button onClick={aiDiscover} disabled={aiDiscoverLoading || !aiDiscoverQuery.trim() || !aiDiscoverState.trim()} size="sm" className="min-h-11 w-full flex-shrink-0 gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto">
-              {aiDiscoverLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-              {aiDiscoverLoading ? "Researching..." : "Discover"}
-            </Button>
-          </div>
-          <p className="text-[10px] text-gray-500 mb-2">Search instructions, source-page scans and discovered links appear in Scan activity.</p>
+          {isAdmin && (
+            <>
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={aiDiscoverQuery}
+                  onChange={e => setAiDiscoverQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && aiDiscover()}
+                  placeholder="AI Discover: e.g. Jefferson County"
+                  className="min-h-11 text-sm"
+                />
+                <Input aria-label="Discovery state" value={aiDiscoverState} onChange={e=>setAiDiscoverState(e.target.value)} placeholder="State" className="min-h-11 sm:w-20" />
+                <Button onClick={aiDiscover} disabled={aiDiscoverLoading || !aiDiscoverQuery.trim() || !aiDiscoverState.trim()} size="sm" className="min-h-11 w-full flex-shrink-0 gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto">
+                  {aiDiscoverLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                  {aiDiscoverLoading ? "Researching..." : "Discover"}
+                </Button>
+              </div>
+              <p className="text-[10px] text-gray-500 mb-2">Search instructions, source-page scans and discovered links appear in Scan activity.</p>
+            </>
+          )}
 
           <Input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search jurisdiction names..."
+            placeholder="Search jurisdictions (e.g. Hamilton County, Mason, Delhi Township)..."
             className="min-h-11 text-sm"
+            autoFocus
           />
+          {isAdmin && (
           <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
             {[
               ["all", "All", jurisdictions.length, "border-gray-200 bg-white text-gray-700"],
@@ -355,6 +381,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               </button>
             ))}
           </div>
+          )}
         </div>
 
         {repositoryNotice && (
@@ -366,7 +393,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
           </div>
         )}
 
-        {duplicateJurisdictionGroups.length > 0 && (
+        {isAdmin && duplicateJurisdictionGroups.length > 0 && (
           <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
             <div className="font-semibold">Duplicate jurisdiction profiles require review</div>
             <div className="mt-1">
