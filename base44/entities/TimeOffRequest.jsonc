@@ -45,7 +45,8 @@
       "enum": [
         "pending",
         "approved",
-        "denied"
+        "denied",
+        "cancelled"
       ],
       "default": "pending",
       "description": "Request status"

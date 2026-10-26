@@ -42,6 +42,7 @@ import {
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
+import TimeOffApprovalPanel from "@/components/timeclock/TimeOffApprovalPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
@@ -998,6 +999,8 @@ export default function TimeClockAdmin() {
         reviewRequestId={correctionReviewRequestId}
         onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
       />
+
+      <TimeOffApprovalPanel sessionToken={sessionToken} />
 
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">

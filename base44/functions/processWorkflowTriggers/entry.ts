@@ -55,7 +55,8 @@ const WORK_ORDER_EVENTS = new Set([
 const TIME_CLOCK_EVENTS = new Set([
   'time_clock_in', 'time_clock_out', 'time_clock_in_late', 'time_clock_out_early',
   'time_entry_long_shift', 'time_entry_no_clock_out', 'time_entry_notes_updated',
-  'time_off_requested', 'time_off_updated', 'job_allocation_added', 'pto_balance_low',
+  'time_off_requested', 'time_off_updated', 'time_off_approved', 'time_off_denied',
+  'time_off_cancelled', 'job_allocation_added', 'pto_balance_low',
 ]);
 // Other record-context events — emitted by manageFeatureReports,
 // onboardingAccountAction, issuePasswordReset, detectSalesDuplicates,

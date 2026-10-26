@@ -401,8 +401,39 @@ const SALES_DEADLINE_TRIGGER_SET = new Set([
 // TimeEntry/TimeOffRequest/labor-segment record (not a Work Order), so only
 // send_email can run.
 const TIME_CLOCK_TRIGGER_SET = new Set([
-  "time_clock_in", "time_clock_out", "time_entry_notes_updated",
-  "time_off_requested", "time_off_updated", "job_allocation_added",
+  "time_clock_in", "time_clock_out", "time_clock_in_late", "time_clock_out_early",
+  "time_entry_long_shift", "time_entry_no_clock_out", "time_entry_notes_updated",
+  "time_off_requested", "time_off_updated", "time_off_approved", "time_off_denied",
+  "time_off_cancelled", "job_allocation_added", "pto_balance_low",
+]);
+
+// Pending-import duplicate flags are created by detectSalesDuplicates. The
+// approve/merge/reject statuses have no write path in the app (the Corebridge
+// import pipeline is disabled), so those three stay unwired on purpose.
+const PENDING_IMPORT_TRIGGER_SET = new Set([
+  "pending_import_created", "duplicate_detected",
+]);
+
+// Emitted by manageFeatureReports after verified writes — FeatureReport
+// record context, send_email only.
+const FEATURE_REPORT_TRIGGER_SET = new Set([
+  "feature_report_submitted", "feature_report_status_changed",
+  "feature_report_completed",
+]);
+
+// Emitted by onboardingAccountAction, issuePasswordReset, the face-enroll
+// dialog, and the User Management account save — AuthorizedEmail record
+// context, send_email only.
+const USER_TRIGGER_SET = new Set([
+  "user_registered", "user_password_reset", "user_face_enrolled",
+  "user_role_changed",
+]);
+
+// Emitted by monitorJurisdictionChanges and the jurisdiction persistence
+// funnels — JurisdictionProfile / RegulationAlert record context.
+const JURISDICTION_TRIGGER_SET = new Set([
+  "jurisdiction_profile_created", "jurisdiction_profile_updated",
+  "regulation_alert_created",
 ]);
 
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
@@ -422,6 +453,8 @@ const getTriggerSupportedActions = (triggerType) => {
   if (ORDER_TRIGGER_SET.has(triggerType) || ORDER_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (SALES_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (TIME_CLOCK_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
+  if (PENDING_IMPORT_TRIGGER_SET.has(triggerType) || FEATURE_REPORT_TRIGGER_SET.has(triggerType) ||
+      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
