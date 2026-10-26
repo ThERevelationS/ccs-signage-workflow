@@ -45,13 +45,14 @@ assert.match(editor, /getSalesColumnLayout\(column\.id\)\.headerLabel/);
 assert.equal((editor.match(/getSalesColumnLayout\(column\.id\)\.minWidth/g) || []).length, 2,
   "Preview headers and sample cells must share the table's minimum widths.");
 assert.match(editor, /visiblePreviewColumns = columnSettings\.filter/);
-assert.match(editor, /className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"/,
-  "Compact, always-visible all-column grid must remain.");
+assert.match(editor, /grid grid-cols-2 gap-1\.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7/,
+  "Numbered, always-visible all-column grid must remain.");
+assert.match(editor, /draggable=\{!isSaving\}/, "Column chips must remain draggable for reordering.");
 assert.match(editor, /overflow-x-auto.*aria-label="Horizontal Sales Pipeline column preview"/);
 assert.match(editor, /aria-label=\{`Move \$\{column\.label\} left`\}/);
 assert.match(editor, /aria-label=\{`Move \$\{column\.label\} right`\}/);
-assert.match(editor, /minWidth: "32px"/);
-assert.match(editor, /minWidth: "60px"/);
+assert.match(editor, /minWidth: "38px"/);
+assert.match(editor, /minWidth: "64px"/);
 const sampleSource = editor.split("const SALES_COLUMN_PREVIEW_SAMPLE = Object.freeze({")[1]?.split("});")[0];
 assert.ok(sampleSource, "Preview sample must be a plainly marked static example.");
 const sampleIds = Array.from(sampleSource.matchAll(/\b([a-z][a-z0-9_]*):\s*"/g), ([, id]) => id);
