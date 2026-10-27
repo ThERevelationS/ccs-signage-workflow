@@ -38,15 +38,17 @@ export default function AioEstimateHeader({
             ${Number(quoteTotal || 0).toFixed(2)}
           </div>
         </div>
-        <button className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
-          <RefreshCw className="w-4 h-4" />
+        <button type="button" aria-label="Refresh" title="Refresh" className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
+          type="button"
           onClick={() => navigator.clipboard?.writeText(window.location.href)}
           title="Copy estimate link"
+          aria-label="Copy estimate link"
           className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
         >
-          <Link2 className="w-4 h-4" />
+          <Link2 className="w-4 h-4" aria-hidden="true" />
         </button>
         {onDuplicate && (
           <button
