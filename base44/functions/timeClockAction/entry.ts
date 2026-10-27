@@ -1322,7 +1322,7 @@ const TRACKER_ENUMS: Record<string, string[]> = {
   milestones_mode: ['off', 'goal', 'custom'],
   milestone_behavior: ['silent', 'pulse', 'toast', 'toast_sound'],
   milestone_sound: ['chime', 'bell', 'ding', 'fanfare', 'alert'],
-  accent_color: ['indigo', 'emerald', 'amber', 'violet', 'rose', 'sky'],
+  accent_color: ['indigo', 'emerald', 'amber', 'violet', 'rose', 'sky', 'cyan', 'teal', 'lime', 'orange', 'fuchsia', 'slate'],
   size: ['compact', 'expanded'],
   location: ['both', 'top', 'side', 'hidden'],
   font: ['default', 'mono', 'rounded', 'serif'],
@@ -1345,7 +1345,7 @@ function normalizeTrackerPrefs(row: any, target: any) {
   const base = defaultTrackerPrefs(asEmail(target?.email), target?.full_name || '');
   if (!row || typeof row !== 'object') return base;
   const out: any = { ...base };
-  for (const key of TRACKER_BOOL_KEYS) out[key] = row[key] === true;
+  for (const key of TRACKER_BOOL_KEYS) out[key] = row[key] === undefined ? base[key] : row[key] === true;
   for (const [key, choices] of Object.entries(TRACKER_ENUMS)) {
     const v = String(row?.[key] || '');
     if (choices.includes(v)) out[key] = v;
