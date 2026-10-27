@@ -22,12 +22,15 @@ let fixture, vite, browser, passed = 0;
 const failures = [];
 
 async function reset() {
-  const h = setupSyntheticTimeClock({ entryCount: 0, serverNow: "2026-10-16T15:00:00.000Z" });
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const h = setupSyntheticTimeClock({ entryCount: 0, serverNow: `${today}T14:00:00.000Z` });
   // Give the admin an employee entry in the visible period so the table has rows.
   const clockIn = await h.invokeAs(admin, {
     action: "clock_in", target_email: worker.email, request_id: "synthetic-admin-ci-1" });
   assert.equal(clockIn.body.success, true, JSON.stringify(clockIn.body));
-  h.setServerNow("2026-10-16T23:30:00.000Z");
+  h.setServerNow(`${today}T23:30:00.000Z`);
   const clockOut = await h.invokeAs(admin, {
     action: "clock_out", target_email: worker.email,
     request_id: "synthetic-admin-co-1", notes: "Synthetic admin smoke shift",
@@ -162,6 +165,21 @@ createRoot(document.getElementById("root")).render(<TimeClockAdmin />);
       console.error("ERROR CARD TEXT:", (await page.getByRole("alert").innerText()).slice(0, 500));
     }
     await page.getByRole("button", { name: "Refresh", exact: true }).first().click();
+    // Exercise row actions on the seeded shift.
+    const row = page.getByRole("row").filter({ hasText: "Synthetic Employee" });
+    assert.equal(await row.count(), 1, "seeded shift row visible");
+    // View details
+    await row.getByTitle("View full shift details").click();
+    await page.getByRole("dialog").first().waitFor();
+    await page.keyboard.press("Escape");
+    // Edit dialog opens
+    await row.getByTitle("Edit time entry").click();
+    await page.getByText("Edit Time Entry").waitFor();
+    await page.keyboard.press("Escape");
+    // Approve opens approval dialog
+    await row.getByRole("button", { name: /Approve/ }).click();
+    await page.getByText(/Approve Shift|Shift Review/).first().waitFor();
+    await page.keyboard.press("Escape");
     await context.close();
     passed++;
   }
