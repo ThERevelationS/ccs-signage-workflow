@@ -260,7 +260,32 @@ function LayoutContent({ children }) {
     }
   }, [location.pathname, isMobile]);
 
-
+  // Clear stale scroll locks left behind when a modal/dropdown unmounts
+  // mid-open. Radix scroll-lock marks body[data-scroll-locked] plus inline
+  // overflow/pointer-events styles; if a control unmounts before its cleanup
+  // runs, the whole page becomes unscrollable. When nothing is actually open
+  // (no mounted portal content), restore the document's scroll state.
+  useEffect(() => {
+    const unlock = () => {
+      if (document.querySelector('[data-radix-portal] [data-state="open"], [data-headlessui-portal] [data-state="open"]')) return;
+      document.querySelectorAll('[data-scroll-locked]').forEach((el) => el.removeAttribute('data-scroll-locked'));
+      document.querySelectorAll('[data-aria-hidden]').forEach((el) => {
+        el.removeAttribute('data-aria-hidden');
+        el.removeAttribute('aria-hidden');
+        if (el.style.pointerEvents === 'none') el.style.pointerEvents = '';
+      });
+      for (const el of [document.body, document.documentElement]) {
+        if (el.style.overflow === 'hidden') el.style.overflow = '';
+        if (el.style.pointerEvents === 'none') el.style.pointerEvents = '';
+        if (el.style.touchAction === 'none') el.style.touchAction = '';
+      }
+      const root = document.getElementById('root');
+      if (root?.style.overflow === 'hidden') root.style.overflow = '';
+    };
+    const timer = setInterval(unlock, 750);
+    window.addEventListener('pointerdown', unlock, true);
+    return () => { clearInterval(timer); window.removeEventListener('pointerdown', unlock, true); };
+  }, []);
 
   // Navigation layout preference - "top" or "side"
   const [darkMode, setDarkMode] = useState(() => {

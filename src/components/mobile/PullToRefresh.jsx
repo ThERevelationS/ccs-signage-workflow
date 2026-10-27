@@ -43,7 +43,7 @@ export default function PullToRefresh({ onRefresh, children }) {
   return (
     <div
       ref={containerRef}
-      className="h-full overflow-y-auto"
+      className="min-h-full overflow-y-auto"
       style={{ overscrollBehavior: 'none' }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
