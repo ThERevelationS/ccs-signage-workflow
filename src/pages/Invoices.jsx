@@ -725,6 +725,32 @@ export default function Invoices() {
   const [showFromEstimate, setShowFromEstimate] = useState(false);
   const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("invoice") || "");
   const [exporting, setExporting] = useState(false);
+  const [busy, setBusy] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const overdueRows = invoices.filter((i) => Number(i.balance_due) > 0 && ["sent", "partially_paid"].includes(i.status) && i.due_date && i.due_date < today());
+  const overdueCount = overdueRows.length;
+
+  const remindAllOverdue = async () => {
+    if (busy || overdueCount === 0) return;
+    if (!confirm(`Email a past-due reminder for all ${overdueCount} overdue invoice${overdueCount === 1 ? "" : "s"}?`)) return;
+    setBusy("remindAll");
+    setError("");
+    setNotice("");
+    let sent = 0, failed = 0;
+    for (const inv of overdueRows) {
+      try {
+        const d = await invokeAction(sessionToken, {
+          action: "send_past_due_reminder",
+          invoice_id: inv.id,
+          portal_base: window.location.origin,
+        });
+        if (d?.sent_to) sent += 1; else failed += 1;
+      } catch { failed += 1; }
+    }
+    setBusy("");
+    setNotice(`Reminders sent: ${sent}${failed ? ` · failed/skipped: ${failed}` : ""}`);
+  };
 
   const downloadCsv = (filename, text) => {
     const blob = new Blob([text], { type: "text/csv" });
@@ -832,6 +858,14 @@ export default function Invoices() {
           className={`min-h-9 rounded-full px-3 text-xs font-semibold ${overdueOnly ? "bg-red-600 text-white" : "border border-red-300 text-red-600 dark:border-red-800 dark:text-red-400"}`}>
           Overdue
         </button>
+        {overdueCount > 0 && (
+          <button type="button" onClick={remindAllOverdue} disabled={Boolean(busy)}
+            title={`Email a past-due reminder for all ${overdueCount} overdue invoice${overdueCount === 1 ? "" : "s"}`}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-amber-300 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-800 dark:text-amber-400">
+            {busy === "remindAll" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+            Remind all ({overdueCount})
+          </button>
+        )}
         <SavedViews
           storageKey="views.invoices"
           getState={() => ({ status, query, overdueOnly })}
@@ -841,6 +875,7 @@ export default function Invoices() {
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+      {notice && <div className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</div>}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && invoices.length === 0 ? (
