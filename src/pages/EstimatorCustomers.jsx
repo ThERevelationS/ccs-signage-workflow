@@ -224,7 +224,9 @@ export default function EstimatorCustomers() {
   const [customers, setCustomers] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
   const [viewName, setViewName] = useState("");
   const [savingTierId, setSavingTierId] = useState(null);
   const [detailId, setDetailId] = useState("");
