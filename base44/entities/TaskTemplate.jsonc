@@ -1,6 +1,6 @@
 {
-  "name": "TaskTemplate",
   "type": "object",
+  "name": "TaskTemplate",
   "properties": {
     "name": {
       "type": "string",
@@ -9,6 +9,7 @@
     "tasks": {
       "type": "array",
       "description": "List of task texts",
+      "default": [],
       "items": {
         "type": "object",
         "properties": {
@@ -17,6 +18,7 @@
           },
           "sub_tasks": {
             "type": "array",
+            "default": [],
             "items": {
               "type": "object",
               "properties": {
@@ -25,28 +27,20 @@
                 },
                 "details": {
                   "type": "array",
+                  "default": [],
                   "items": {
                     "type": "string"
-                  },
-                  "default": []
+                  }
                 }
               }
-            },
-            "default": []
+            }
           }
         }
-      },
-      "default": []
+      }
     }
   },
   "required": [
     "name",
     "tasks"
   ]
-  "rls": {
-    "create": { "user_condition": { "role": "__tasktemplate_backend_only__" } },
-    "read": { "user_condition": { "role": "__tasktemplate_backend_only__" } },
-    "update": { "user_condition": { "role": "__tasktemplate_backend_only__" } },
-    "delete": { "user_condition": { "role": "__tasktemplate_backend_only__" } }
-  }
 }

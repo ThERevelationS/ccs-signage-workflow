@@ -1,6 +1,6 @@
 {
-  "name": "GeneralTask",
   "type": "object",
+  "name": "GeneralTask",
   "description": "General office task not tied to a client or work order. Mirrors the task object shape used inside WorkOrder.notes so it can be assigned and tracked the same way. When `stage` is set, the task also appears on the matching workflow stage page (Estimating, Design, etc.).",
   "properties": {
     "text": {
@@ -23,10 +23,10 @@
     "assigned_to": {
       "type": "array",
       "description": "Users assigned to this task (full_name or email, matching WorkOrder task assignment convention).",
+      "default": [],
       "items": {
         "type": "string"
-      },
-      "default": []
+      }
     },
     "sub_tasks": {
       "type": "array",
@@ -43,10 +43,10 @@
           },
           "assigned_to": {
             "type": "array",
+            "default": [],
             "items": {
               "type": "string"
-            },
-            "default": []
+            }
           },
           "details": {
             "type": "array",
@@ -62,10 +62,10 @@
                 },
                 "assigned_to": {
                   "type": "array",
+                  "default": [],
                   "items": {
                     "type": "string"
-                  },
-                  "default": []
+                  }
                 }
               }
             }
@@ -89,10 +89,4 @@
   "required": [
     "text"
   ]
-  "rls": {
-    "create": { "user_condition": { "role": "__generaltask_backend_only__" } },
-    "read": { "user_condition": { "role": "__generaltask_backend_only__" } },
-    "update": { "user_condition": { "role": "__generaltask_backend_only__" } },
-    "delete": { "user_condition": { "role": "__generaltask_backend_only__" } }
-  }
 }

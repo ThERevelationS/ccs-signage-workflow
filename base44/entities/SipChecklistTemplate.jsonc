@@ -1,6 +1,6 @@
 {
-  "name": "SipChecklistTemplate",
   "type": "object",
+  "name": "SipChecklistTemplate",
   "properties": {
     "name": {
       "type": "string",
@@ -23,18 +23,12 @@
     },
     "is_default": {
       "type": "boolean",
-      "default": false,
-      "description": "Whether this is the default template"
+      "description": "Whether this is the default template",
+      "default": false
     }
   },
   "required": [
     "name",
     "items"
   ]
-  "rls": {
-    "create": { "user_condition": { "role": "__sipchecklisttemplate_backend_only__" } },
-    "read": { "user_condition": { "role": "__sipchecklisttemplate_backend_only__" } },
-    "update": { "user_condition": { "role": "__sipchecklisttemplate_backend_only__" } },
-    "delete": { "user_condition": { "role": "__sipchecklisttemplate_backend_only__" } }
-  }
 }
