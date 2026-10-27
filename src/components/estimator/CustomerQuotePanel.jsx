@@ -268,7 +268,7 @@ export default function CustomerQuotePanel({
           </Button>
           <Button
             type="button"
-            onClick={openSendDialog}
+            onClick={() => openSendDialog().catch((e) => setSendError(e?.message || "Could not open the send dialog."))}
             disabled={!canEmailQuote || sending}
             title={revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to send." : issuingNewQuote ? "Email this quote as the next issued customer version." : currentVersionDelivered ? "Email the currently issued quote version again." : "Email the currently issued quote version for the first time."}
             className="h-[31px] text-[11px] bg-gray-800 hover:bg-gray-900 text-white"
