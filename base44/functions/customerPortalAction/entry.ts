@@ -304,12 +304,8 @@ Deno.serve(async (req) => {
           contact_name: clean(customer?.contact_name) || [customer?.contact_first_name, customer?.contact_last_name].filter(Boolean).join(" "),
           email: clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_contact_email),
         },
-        estimates: (Array.isArray(estimates) ? estimates : [])
-          .filter((e: any) => ["sent", "approved"].includes(clean(e?.status)))
-          .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
-          .map(estimatePortalView);
-        estimates = await Promise.all(estimates);
-        const jobs = (Array.isArray(orders) ? orders : [])
+        estimates: viewEstimates,
+        jobs: (Array.isArray(orders) ? orders : [])
           .filter((o: any) => o?.deleted !== true)
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
           .slice(0, 50)
