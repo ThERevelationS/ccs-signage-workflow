@@ -12,12 +12,24 @@
       ]
     }
   ],
-  "model": "claude_sonnet_4_6",
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "claude-sonnet-5",
   "whatsapp_greeting": "Hi! I'm the Jurisdiction Research Assistant. I help gather accurate, verified sign permitting information for cities and counties. Just tell me which jurisdiction you'd like me to research, and I'll find official requirements, contact info, and relevant documents.",
+  "telegram_greeting": null,
+  "line_greeting": null,
   "memory_config": {
     "enabled": true,
     "scope": "global",
+    "include_other_conversation_context": false,
     "instructions": null
   },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "jurisdiction_research"
 }
