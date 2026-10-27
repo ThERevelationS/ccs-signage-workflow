@@ -47,6 +47,7 @@ export default function EstimatorQueues() {
   const status = params.get("status") || "";
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [query, setQuery] = useState(params.get("q") || "");
   const [sort, setSort] = useState(params.get("sort") || "newest");
 
@@ -60,13 +61,19 @@ export default function EstimatorQueues() {
 
   useEffect(() => {
     const load = async () => {
-      const rows = await loadAllEntityRows({
-        entity: base44.entities.AllInOneEstimate,
-        sort: "-created_date",
-        label: "Estimate queues",
-      });
-      setEstimates(rows);
-      setLoading(false);
+      try {
+        const rows = await loadAllEntityRows({
+          entity: base44.entities.AllInOneEstimate,
+          sort: "-created_date",
+          label: "Estimate queues",
+        });
+        setEstimates(rows);
+      } catch (err) {
+        console.error("Estimate queues could not be loaded:", err);
+        setLoadError(err?.message || "Estimates could not be loaded.");
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -163,6 +170,8 @@ export default function EstimatorQueues() {
         <div className="bg-white">
           {loading ? (
             <div className="px-4 py-10 text-center text-sm text-gray-400">Loading…</div>
+          ) : loadError ? (
+            <div className="px-4 py-10 text-center text-sm text-red-600">{loadError}</div>
           ) : rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-gray-500">Nothing in this queue.</div>
           ) : (
