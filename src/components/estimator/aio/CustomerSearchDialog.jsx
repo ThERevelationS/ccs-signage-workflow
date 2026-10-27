@@ -71,6 +71,8 @@ export default function CustomerSearchDialog({ open, onClose, customers = [], on
     return (
       <button
         type="button"
+        role="option"
+        aria-selected={false}
         key={c.id}
         onClick={() => {
           rememberRecentId(c.id);
@@ -119,7 +121,11 @@ export default function CustomerSearchDialog({ open, onClose, customers = [], on
           />
         </div>
 
-        <div className="max-h-[340px] overflow-y-auto border border-gray-200 rounded-sm divide-y divide-gray-100">
+        <div
+          role="listbox"
+          aria-label="Customer results"
+          className="max-h-[340px] overflow-y-auto border border-gray-200 rounded-sm divide-y divide-gray-100"
+        >
           {results.length === 0 ? (
             <div className="py-8 text-center text-[12px] text-gray-400">No matching customers.</div>
           ) : (
