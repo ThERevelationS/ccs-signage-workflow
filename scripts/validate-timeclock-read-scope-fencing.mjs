@@ -44,6 +44,7 @@ const uiMocks = {
   '@/components/ui/skeleton': { Skeleton: () => React.createElement('div') },
   '@/components/ui/list-skeleton': { ListSkeleton: () => React.createElement('div') },
   '@/components/workflow/NotificationService': { triggerNotification: () => {} },
+  '@/components/staff/staffEntities': { staffEntities: new Proxy({}, { get: (_t, name) => ({ __name: name }) }) },
   '@/components/ui/dialog': uiDialogMocks,
   'lucide-react': iconModule,
   'date-fns': { format: () => '', parseISO: (v) => new Date(v) },
