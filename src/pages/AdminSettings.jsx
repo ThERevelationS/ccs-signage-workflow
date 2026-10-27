@@ -550,19 +550,19 @@ export default function AdminSettings() {
     catch { return null; }
   })();
   const savedNavigation = !searchParams.has("tab") && isUnlocked
-    ? readAdminNavigation(browserStorage, navigationKey, isAdmin)
+    ? readAdminNavigation(browserStorage, navigationKey, isAdmin, currentUser)
     : null;
   const { tab: selectedAdminTab, subtab: selectedAdminSubtab } =
-    resolveAdminNavigation(searchParams, savedNavigation, isAdmin);
+    resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
   useEffect(() => {
     if (isUnlocked && navigationKey) {
       storeAdminNavigation(browserStorage, navigationKey, {
         tab: selectedAdminTab, subtab: selectedAdminSubtab,
-      }, isAdmin);
+      }, isAdmin, currentUser);
     }
   }, [isUnlocked, navigationKey, selectedAdminTab, selectedAdminSubtab, isAdmin, browserStorage]);
-  const availableAdminGroups = getAccessibleAdminGroups(isAdmin);
-  const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin);
+  const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser);
+  const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin, currentUser);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
   const categoryScrollerRef = useRef(null);
   const adminScrollRef = useRef(null);
@@ -688,8 +688,8 @@ export default function AdminSettings() {
     };
   }, [isUnlocked, isAdmin, selectedAdminTab, selectedAdminSubtab]);
   const handleAdminTabChange = (nextTab, nextSubtab = null) => {
-    if (getAccessibleAdminTab(nextTab, isAdmin) !== nextTab) return;
-    const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab) === nextSubtab
+    if (getAccessibleAdminTab(nextTab, isAdmin, currentUser) !== nextTab) return;
+    const validSubtab = nextSubtab && getAccessibleAdminSubtab(nextTab, nextSubtab, currentUser) === nextSubtab
       ? nextSubtab
       : null;
     if (nextTab === selectedAdminTab && validSubtab === (searchParams.get("subtab") || null)) return;
@@ -1916,7 +1916,7 @@ export default function AdminSettings() {
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
-            <AdminSettingsSearch isAdmin={isAdmin} onNavigate={handleAdminTabChange} />
+            <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
             {capabilityExpiryLabel && (
               <p data-admin-capability-expiry className="px-2 pb-1 text-right text-[11px] font-medium text-red-900/60">
                 Admin authorization expires at {capabilityExpiryLabel}
