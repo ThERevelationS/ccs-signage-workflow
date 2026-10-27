@@ -184,7 +184,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               <ArrowLeft className="w-4 h-4" /> Back to estimate
             </Link>
           )}
-          <Button onClick={handleSave} disabled={saving} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
+          <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
           </Button>
         </div>
@@ -212,6 +212,15 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               derived={totals}
               onChange={patch}
             />
+
+            {materials.length === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
+                No masonry materials in the catalog yet.{" "}
+                <Link to="/FoundationCatalog" className="font-semibold underline hover:text-amber-900">
+                  Add brick or stone in the foundation catalog →
+                </Link>
+              </div>
+            )}
           </div>
 
           <div>
