@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { TableSkeleton } from "@/components/ui/table-skeleton";
+import SavedViews from "@/components/workflow/SavedViews";
 import {
   BarChart3,
   ChevronRight,
@@ -164,6 +164,7 @@ export default function JobCosting() {
   const [totals, setTotals] = useState(null);
   const [query, setQuery] = useState("");
   const [activeOnly, setActiveOnly] = useState(true);
+  const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openId, setOpenId] = useState("");
@@ -229,19 +230,25 @@ export default function JobCosting() {
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="relative min-w-52 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search job or client…" />
+          <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search job or client…" />
         </div>
         <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-          <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={activeOnly} onChange={(e) => setActiveOnly(e.target.checked)} />
+          <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={activeOnly} onChange={(e) => { setViewName(""); setActiveOnly(e.target.checked); }} />
           Active jobs only
         </label>
+        <SavedViews
+          storageKey="views.job_costing"
+          getState={() => ({ query, activeOnly })}
+          activeName={viewName}
+          onApply={(s, name) => { setQuery(s.query || ""); setActiveOnly(s.activeOnly !== false); setViewName(name || ""); }}
+        />
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && jobs.length === 0 ? (
-          <TableSkeleton columns={12} />
+          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading job costs…</div>
         ) : visible.length === 0 ? (
           <div className="py-16 text-center text-slate-500">No jobs to show.</div>
         ) : (
