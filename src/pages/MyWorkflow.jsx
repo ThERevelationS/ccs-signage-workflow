@@ -65,27 +65,25 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
-function JobAssignmentInlineRow({ wo, users, onSaveField, onAssigneeChange }) {
+function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAssigneeChange }) {
   const [dateOpen, setDateOpen] = useState(false);
+  const descValue = wo.current_task_description || "";
   const stageOptions = Object.keys(stageDisplayNames);
   if (wo.current_stage && !stageOptions.includes(wo.current_stage)) stageOptions.push(wo.current_stage);
   return (
     <div className="flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
       <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
-      <Input
-        defaultValue={wo.current_task_description || ""}
-        placeholder="Task"
-        title="Current task"
-        className="h-7 w-40 min-w-0 flex-1 text-xs border-0 bg-transparent px-1 focus-visible:ring-1"
-        onBlur={(e) => {
-          const next = e.target.value.trim();
-          if (next !== String(wo.current_task_description || "")) onSaveField(wo, { current_task_description: next });
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
-          if (e.key === 'Escape') { e.currentTarget.value = wo.current_task_description || ""; e.currentTarget.blur(); }
-        }}
-      />
+      <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onSaveField(wo, { current_task_description: next }); }}>
+        <SelectTrigger className="h-7 w-44 min-w-0 flex-1 text-xs border-0 bg-transparent px-1" title="Task description">
+          <SelectValue placeholder="Task" />
+        </SelectTrigger>
+        <SelectContent>
+          {descValue && !descOptions.includes(descValue) && (
+            <SelectItem value={descValue}>{descValue}</SelectItem>
+          )}
+          {descOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+        </SelectContent>
+      </Select>
       <Popover open={dateOpen} onOpenChange={setDateOpen}>
         <PopoverTrigger asChild>
           <button type="button" title="Deadline" className="h-7 inline-flex items-center gap-1 rounded px-1 text-xs text-gray-700 hover:bg-purple-100">
@@ -139,6 +137,13 @@ export default function MyWorkflow() {
   const [editTaskAssignees, setEditTaskAssignees] = useState([]);
   const [addTaskForWo, setAddTaskForWo] = useState(null);
   const [assigneeConfirm, setAssigneeConfirm] = useState(null);
+  const [taskDescriptions, setTaskDescriptions] = useState([]);
+
+  useEffect(() => {
+    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
+      .then((s) => setTaskDescriptions((s?.setting_value?.items || []).map((i) => i.text || i)))
+      .catch(() => {});
+  }, []);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [stageFilter, setStageFilter] = useState("all");
@@ -795,6 +800,7 @@ export default function MyWorkflow() {
                                 <JobAssignmentInlineRow
                                   wo={wo}
                                   users={allUsers}
+                                  descOptions={taskDescriptions}
                                   onSaveField={saveJobField}
                                   onAssigneeChange={(target, name) => setAssigneeConfirm({ wo: target, nextAssignee: name })}
                                 />
