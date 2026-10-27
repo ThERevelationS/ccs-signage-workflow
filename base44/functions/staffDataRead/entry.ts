@@ -59,6 +59,21 @@ const FIELD_DENYLIST: Record<string, string[]> = {
 const MAX_LIMIT = 500;
 const MAX_SKIP = 100000;
 const MAX_QUERY_BYTES = 4000;
+
+// Payroll/HR rows are visible to their owner or an admin — not to every
+// coworker. Entities listed here are filtered to user_email = caller
+// whenever the caller is not an admin.
+const OWNER_SCOPED = new Set([
+  'TimeEntry',
+  'TimeClockAudit',
+  'TimeClockBreak',
+  'TimeClockCorrectionRequest',
+  'TimeClockLaborSegment',
+  'TimeClockPayPeriod',
+  'TimeClockWorkPause',
+  'TimeOffRequest',
+  'UserPTOBalance',
+]);
 const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
 
 function projectItem(entityName: string, item: any) {
@@ -69,11 +84,19 @@ function projectItem(entityName: string, item: any) {
   return clean;
 }
 
-function cleanSort(value: unknown) {
+function cleanSort(value: unknown, entityName: string) {
   const sort = String(value || '').trim();
   if (!sort) return '';
   if (sort.length > 200 || !SORT_PATTERN.test(sort)) {
     throw Object.assign(new Error('Staff read sort is invalid.'), { status: 400 });
+  }
+  // Denylisted fields must not be usable as a sort oracle either.
+  const denied = new Set(FIELD_DENYLIST[entityName] || []);
+  for (const part of sort.split(',')) {
+    const field = part.trim().replace(/^-/, '');
+    if (denied.has(field)) {
+      throw Object.assign(new Error('Staff read sort field is not permitted.'), { status: 400 });
+    }
   }
   return sort;
 }
@@ -83,9 +106,18 @@ function cleanQuery(value: unknown) {
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw Object.assign(new Error('Staff read filter must be an object.'), { status: 400 });
   }
-  for (const key of Object.keys(value)) {
-    if (key.startsWith('$')) {
-      throw Object.assign(new Error('Staff read filter operators are not allowed at the top level.'), { status: 400 });
+  // Reject operator keys at ANY depth — a nested operator like
+  // { password_hash: { $regex: '^5f' } } turns the filter into a boolean
+  // oracle on fields the output projection denies.
+  const stack: any[] = [value];
+  while (stack.length) {
+    const node = stack.pop();
+    if (!node || typeof node !== 'object') continue;
+    for (const [key, val] of Object.entries(node)) {
+      if (key.startsWith('$')) {
+        throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
+      }
+      if (val && typeof val === 'object') stack.push(val);
     }
   }
   let serialized;
@@ -134,22 +166,33 @@ Deno.serve(async (req) => {
     }
 
     const entity = base44.asServiceRole.entities[entityName];
+    const ownerEmail = user.role === 'admin' ? '' : String(user.email).trim().toLowerCase();
     const id = String(body?.id || '').trim();
     if (id) {
       const item = await entity.get(id).catch(() => null);
       if (!item) return Response.json({ error: 'Record not found.' }, { status: 404 });
+      if (OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail) {
+        return Response.json({ error: 'Record not found.' }, { status: 404 });
+      }
       return Response.json({ success: true, item: projectItem(entityName, item) });
     }
 
     const query = cleanQuery(body?.query);
-    const sort = cleanSort(body?.sort);
+    const sort = cleanSort(body?.sort, entityName);
     const limit = cleanLimit(body?.limit, 100);
     const skip = cleanSkip(body?.skip);
-    const items = query
-      ? await entity.filter(query, sort || null, limit, skip)
+    let effectiveQuery = query;
+    if (OWNER_SCOPED.has(entityName) && ownerEmail) {
+      effectiveQuery = { ...(effectiveQuery || {}), user_email: ownerEmail };
+    }
+    const items = effectiveQuery
+      ? await entity.filter(effectiveQuery, sort || null, limit, skip)
       : await entity.list(sort || null, limit, skip);
     const rows = Array.isArray(items) ? items : [];
-    return Response.json({ success: true, items: rows.map((row) => projectItem(entityName, row)) });
+    const scopedRows = OWNER_SCOPED.has(entityName) && ownerEmail
+      ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
+      : rows;
+    return Response.json({ success: true, items: scopedRows.map((row) => projectItem(entityName, row)) });
   } catch (error: any) {
     const status = Number(error?.status || 500);
     if ([400, 401, 403].includes(status)) {
