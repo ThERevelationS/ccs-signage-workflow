@@ -241,7 +241,7 @@ function LocalityPickerSession({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="clay-card border-none max-w-[1400px] w-[95vw] max-h-[92vh] overflow-hidden flex flex-col">
+      <DialogContent className="clay-card flex h-[95dvh] w-[96vw] max-w-none flex-col gap-3 overflow-hidden border-none p-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-purple-600" />
@@ -291,10 +291,11 @@ function LocalityPickerSession({
         )}
 
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden min-h-0 lg:h-[680px]">
-          <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto space-y-3 pr-1">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden">
+          <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
-            <ResearchProgressBar inline />
+            {result?.suggested_locality&&<section aria-label="Selected jurisdiction" className="rounded-lg border bg-white p-3"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality.name}{result.suggested_locality.state?", "+result.suggested_locality.state:""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Saved jurisdiction ready. Confirm office notes below, then use it.":"Location matched as a workflow reference — office review still required."}</p></section>}
+            <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
@@ -552,12 +553,12 @@ function LocalityPickerSession({
                 )}
               </>
             )}
-            <SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/>
-            <SavedAddressResearch />
+            <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Review and research tools</summary><div className="p-3 pt-0"><SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/></div></details>
+            <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Saved research</summary><div className="p-3 pt-0"><SavedAddressResearch /></div></details>
           </div>
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
-          <div className="rounded-lg border relative w-full min-w-0 lg:flex-1 lg:self-stretch lg:min-h-0 lg:overflow-y-auto bg-gray-100">
+          <div className="relative min-h-[360px] w-full min-w-0 overflow-hidden rounded-lg border bg-gray-100 lg:min-h-0 lg:self-stretch">
             <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} />
           </div>
         </div>
