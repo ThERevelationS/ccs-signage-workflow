@@ -36,6 +36,14 @@ export default function QuickPrice() {
   const preset = new URLSearchParams(location.search).get("module") || "";
 
   const [moduleKey, setModuleKey] = useState(preset || ESTIMATOR_MODULES[0].key);
+  const pickModule = (key) => {
+    setModuleKey(key);
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (key && key !== ESTIMATOR_MODULES[0].key) next.set("module", key); else next.delete("module");
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [projectName, setProjectName] = useState("");
   const [clientName, setClientName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -138,7 +146,7 @@ export default function QuickPrice() {
             {ESTIMATOR_MODULES.map((m) => (
               <button
                 key={m.key}
-                onClick={() => setModuleKey(m.key)}
+                onClick={() => pickModule(m.key)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium text-left border ${
                   moduleKey === m.key
                     ? "border-red-400 bg-red-50 text-red-700"
