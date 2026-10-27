@@ -65,11 +65,22 @@ export default function VinylEditDialog({
     }
   };
 
+  // Name is required — keep Save disabled until it is filled in.
+  const nameMissing = !String(draft.vinyl_name || "").trim();
+
+  // Closing discards local edits — confirm first when the draft is dirty.
+  const isDirty = JSON.stringify(draft) !== JSON.stringify(vinyl || {});
+  const handleClose = () => {
+    if (saving) return;
+    if (isDirty && !confirm("Discard unsaved changes?")) return;
+    onClose();
+  };
+
   const dollarPerSqft = vinylCostPerSqft(draft);
   const categoryLabel = VINYL_CATEGORIES.find(c => c.id === draft.vinyl_category)?.label || "—";
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-5xl max-h-[92vh] p-0 overflow-hidden gap-0 flex flex-col">
         {/* Header — gradient + key metrics */}
         <DialogHeader className="bg-gradient-to-r from-slate-900 to-slate-700 text-white px-6 py-4 space-y-3">
@@ -96,7 +107,7 @@ export default function VinylEditDialog({
               <Stat label="Length" value={`${num(draft.roll_length_yards)} yd`} />
               <Stat label="$/sqft" value={`$${dollarPerSqft.toFixed(2)}`} highlight />
             </div>
-            <Button size="icon" variant="ghost" onClick={onClose} className="text-white hover:bg-white/10 flex-shrink-0">
+            <Button size="icon" variant="ghost" onClick={handleClose} className="text-white hover:bg-white/10 flex-shrink-0">
               <X className="w-5 h-5" />
             </Button>
           </div>
@@ -302,9 +313,9 @@ export default function VinylEditDialog({
             {!isAdmin ? "View only — only admins can edit." : "Changes are saved when you click Save."}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button variant="outline" onClick={handleClose} disabled={saving}>Cancel</Button>
             {isAdmin && (
-              <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={handleSave} disabled={saving || nameMissing} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Save className="w-4 h-4 mr-1.5" />
                 {saving ? "Saving…" : "Save Changes"}
               </Button>
