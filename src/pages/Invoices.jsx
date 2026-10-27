@@ -727,9 +727,32 @@ export default function Invoices() {
   const [exporting, setExporting] = useState(false);
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
+  const [selected, setSelected] = useState(() => new Set());
 
   const overdueRows = invoices.filter((i) => Number(i.balance_due) > 0 && ["sent", "partially_paid"].includes(i.status) && i.due_date && i.due_date < today());
   const overdueCount = overdueRows.length;
+  const draftIds = invoices.filter((i) => clean(i.status) === "draft").map((i) => i.id);
+
+  useEffect(() => {
+    setSelected((s) => new Set([...s].filter((id) => invoices.some((i) => i.id === id && clean(i.status) === "draft"))));
+  }, [invoices]);
+
+  const bulkIssue = async () => {
+    const ids = [...selected].filter((id) => draftIds.includes(id));
+    if (!ids.length || busy) return;
+    if (!confirm(`Mark ${ids.length} draft invoice${ids.length === 1 ? "" : "s"} as sent?`)) return;
+    setBusy("issueAll");
+    setError(""); setNotice("");
+    let ok = 0, failed = 0;
+    for (const id of ids) {
+      try { await invokeAction(sessionToken, { action: "mark_sent", invoice_id: id }); ok++; }
+      catch { failed++; }
+    }
+    setBusy("");
+    setSelected(new Set());
+    setNotice(`Issued ${ok} invoice${ok === 1 ? "" : "s"}${failed ? `; ${failed} failed` : ""}.`);
+    load();
+  };
 
   const remindAllOverdue = async () => {
     if (busy || overdueCount === 0) return;
@@ -866,6 +889,13 @@ export default function Invoices() {
             Remind all ({overdueCount})
           </button>
         )}
+        {selected.size > 0 && (
+          <button type="button" onClick={bulkIssue} disabled={Boolean(busy)}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-blue-300 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60 dark:border-blue-800 dark:text-blue-400">
+            {busy === "issueAll" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            Issue selected ({selected.size})
+          </button>
+        )}
         <SavedViews
           storageKey="views.invoices"
           getState={() => ({ status, query, overdueOnly })}
@@ -889,6 +919,11 @@ export default function Invoices() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
+                <th className="w-8 px-2 py-2.5">
+                  <input type="checkbox" title="Select all drafts" className="h-4 w-4 align-middle accent-blue-600"
+                    checked={draftIds.length > 0 && draftIds.every((id) => selected.has(id))}
+                    onChange={(e) => setSelected(e.target.checked ? new Set(draftIds) : new Set())} />
+                </th>
                 <th className="px-4 py-2.5">Invoice</th><th className="px-4 py-2.5">Customer</th>
                 <th className="px-4 py-2.5">Due</th><th className="px-4 py-2.5 text-right">Total</th>
                 <th className="px-4 py-2.5 text-right">Balance</th><th className="px-4 py-2.5">Status</th><th className="px-2 py-2.5" />
@@ -899,6 +934,12 @@ export default function Invoices() {
                 const overdue = Number(inv.balance_due) > 0 && ["sent", "partially_paid"].includes(inv.status) && inv.due_date && inv.due_date < today();
                 return (
                 <tr key={inv.id} onClick={() => setOpenId(inv.id)} className={`cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${overdue ? "bg-red-50/60 dark:bg-red-950/20" : ""}`}>
+                  <td className="w-8 px-2 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    {clean(inv.status) === "draft" ? (
+                      <input type="checkbox" className="h-4 w-4 accent-blue-600" checked={selected.has(inv.id)}
+                        onChange={(e) => setSelected((s) => { const n = new Set(s); e.target.checked ? n.add(inv.id) : n.delete(inv.id); return n; })} />
+                    ) : null}
+                  </td>
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name}</td>
                   <td className="px-4 py-2.5 text-slate-500">
