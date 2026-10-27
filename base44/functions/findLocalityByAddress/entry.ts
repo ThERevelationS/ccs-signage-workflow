@@ -328,6 +328,77 @@ function exactConfiguredLocality(localities, resolution, profiles = []) {
   return matches.length === 1 ? matches[0] : null;
 }
 
+// base44/shared/smartsheetTraceContext.ts
+import { AsyncLocalStorage } from "node:async_hooks";
+var syncTraceContext = new AsyncLocalStorage();
+var round = (n) => Math.round(n * 100) / 100;
+function traceEvent(kind, detail = {}) {
+  const t = syncTraceContext.getStore();
+  if (!t) return;
+  const event = { sequence: ++t.sequence, at: (/* @__PURE__ */ new Date()).toISOString(), elapsed_ms: round(performance.now() - t.start), kind, ...detail };
+  if (t.timeline.length < 300) t.timeline.push(event);
+  else {
+    t.timeline.splice(150, 1);
+    t.timeline.push(event);
+    t.metrics.timeline_omitted++;
+  }
+}
+function traceDelay(kind, ms, retry = false) {
+  const t = syncTraceContext.getStore();
+  if (!t) return;
+  t.metrics[retry ? "retry_delay_ms" : "pacing_delay_ms"] += round(ms);
+  if (retry) t.metrics.retries++;
+  traceEvent(kind, { duration_ms: round(ms) });
+}
+
+// base44/shared/entityRateLimitRetry.ts
+function withEntityRateLimitRetry(client, { paceMs = 0 } = {}) {
+  if (!client?.asServiceRole?.entities) return client;
+  let queue = Promise.resolve();
+  let nextRequestAt = 0;
+  const reserveRequest = () => {
+    const slot = queue.then(async () => {
+      const delay = nextRequestAt - Date.now();
+      if (delay > 0) {
+        const start = performance.now();
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        traceDelay("base44_pacing_wait", performance.now() - start);
+      }
+      nextRequestAt = Date.now() + paceMs;
+    });
+    queue = slot.catch(() => {
+    });
+    return slot;
+  };
+  const isLimited = (e) => e?.status === 429 || /rate limit/i.test(String(e?.message || e?.data?.message || ""));
+  const wrapEntity = (entity) => new Proxy(entity, {
+    get(target, prop) {
+      const value = target[prop];
+      if (typeof value !== "function") return value;
+      return async (...args) => {
+        for (let attempt = 0; ; attempt++) {
+          if (paceMs) await reserveRequest();
+          try {
+            return await value.apply(target, args);
+          } catch (e) {
+            if (!isLimited(e) || attempt >= 5) throw e;
+            const delay = paceMs ? 15e3 * (attempt + 1) : 1500 * (attempt + 1);
+            if (paceMs) nextRequestAt = Math.max(nextRequestAt, Date.now() + delay);
+            const start = performance.now();
+            await new Promise((r) => setTimeout(r, delay));
+            traceDelay("base44_retry_wait", performance.now() - start, true);
+          }
+        }
+      };
+    }
+  });
+  const entities = new Proxy(client.asServiceRole.entities, {
+    get: (target, name) => target[name] ? wrapEntity(target[name]) : target[name]
+  });
+  const serviceRole = new Proxy(client.asServiceRole, { get: (t, p) => p === "entities" ? entities : t[p] });
+  return new Proxy(client, { get: (t, p) => p === "asServiceRole" ? serviceRole : t[p] });
+}
+
 // base44/functions/findLocalityByAddress/handler.ts
 async function fixedJSON(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(15e3) });
