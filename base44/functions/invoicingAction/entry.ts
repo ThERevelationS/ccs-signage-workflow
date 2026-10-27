@@ -674,7 +674,7 @@ Deno.serve(async (req) => {
       if (!cid) throw bad("customer_id or invoice_id is required.");
       const customer = await Customer.get(cid).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email);
+      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email) || clean(customer?.billing_contact_email);
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
       const rows = await Invoice.filter({ customer_id: cid }).catch(() => []);
       const open = (Array.isArray(rows) ? rows : [])
