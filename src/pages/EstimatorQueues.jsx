@@ -50,6 +50,14 @@ export default function EstimatorQueues() {
   const [query, setQuery] = useState(params.get("q") || "");
   const [sort, setSort] = useState(params.get("sort") || "newest");
 
+  const writeParams = (key, value) => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== "newest") next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
+
   useEffect(() => {
     const load = async () => {
       const rows = await loadAllEntityRows({
@@ -135,7 +143,7 @@ export default function EstimatorQueues() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { const v = e.target.value; setQuery(v); writeParams("q", v); }}
               placeholder="Search project, client, or estimate #…"
               className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 pl-9 pr-3 text-sm outline-none focus:border-red-300"
             />
@@ -144,7 +152,7 @@ export default function EstimatorQueues() {
             <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              onChange={(e) => { const v = e.target.value; setSort(v); writeParams("sort", v); }}
               className="rounded-lg border border-gray-200 bg-white/80 px-2 py-2 text-xs font-semibold text-gray-600 outline-none focus:border-red-300"
             >
               {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
