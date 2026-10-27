@@ -90,8 +90,8 @@ export default function NewAllInOneEstimate() {
 
   useEffect(() => {
     loadAllCustomers().then((r) => setCustomers(r || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
-    loadAllEntityRows({ entity: base44.entities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || []));
-    loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || []));
+    loadAllEntityRows({ entity: base44.entities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || "Tax groups could not be loaded."));
+    loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || [])).catch((err) => setError(err?.message || "Users could not be loaded."));
     loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
     base44.auth.me().then(setMe).catch(() => {});
   }, []);
@@ -131,6 +131,8 @@ export default function NewAllInOneEstimate() {
     try {
       const res = await base44.functions.invoke("generateDocNumber", { doc_type: "estimate", session_token: sessionToken });
       if (res?.data?.number) patch({ estimate_number: res.data.number });
+    } catch (e) {
+      setError(e.message || "Could not generate an estimate number.");
     } finally {
       setGenerating(false);
     }
