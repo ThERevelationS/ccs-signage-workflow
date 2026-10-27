@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardPaste, FileMinus, LockKeyhole } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -33,7 +33,7 @@ import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePa
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
-import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
@@ -163,6 +163,16 @@ export default function EstimateDetail() {
   const lines = estimate.line_items || [];
   const persistedStatus = persistedEstimate?.status || estimate.status || "draft";
   const readOnly = isEstimateProtected(persistedStatus) && !openRevision;
+
+  // Stale-quote guardrail: quote validity only applies once the estimate is
+  // sent and both the issue date and validity window exist.
+  const expiresOn =
+    estimate.status === "sent" && estimate.quote_issue_date && Number(estimate.valid_days) > 0
+      ? quoteExpirationDate(estimate.quote_issue_date, estimate.valid_days)
+      : "";
+  const quoteDaysLeft = expiresOn
+    ? Math.round((new Date(`${expiresOn}T00:00:00`) - new Date(`${localDateStamp()}T00:00:00`)) / 86400000)
+    : null;
 
   const patch = (changes) => setEstimate((prev) => ({ ...prev, ...changes }));
 
@@ -1137,6 +1147,18 @@ export default function EstimateDetail() {
             <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-[11px] text-amber-800"><LockKeyhole className="w-4 h-4" /><span><strong>Protected {persistedStatus} estimate.</strong> Viewing is available, but editing requires a recorded revision.</span></div>
               <button type="button" onClick={() => setStep(3)} className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100">Open Finalize / Revise</button>
+            </div>
+          )}
+
+          {quoteDaysLeft !== null && quoteDaysLeft < 0 && (
+            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 flex items-center gap-2 text-[11px] text-red-800">
+              <AlertTriangle className="w-4 h-4" /><span><strong>Quote EXPIRED {formatQuoteIssueDate(expiresOn)}</strong> — re-issue or request a revision.</span>
+            </div>
+          )}
+
+          {quoteDaysLeft !== null && quoteDaysLeft >= 0 && quoteDaysLeft <= 7 && (
+            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 flex items-center gap-2 text-[11px] text-amber-800">
+              <Clock className="w-4 h-4" /><span><strong>Quote expires {formatQuoteIssueDate(expiresOn)}</strong> ({quoteDaysLeft} days left)</span>
             </div>
           )}
 
