@@ -101,7 +101,6 @@ import {
   useAuth,
 } from "@/components/auth/EmailGate";
 import { verifyLogin } from "@/functions/verifyLogin";
-import PasswordMigrationButton from "@/components/admin/PasswordMigrationButton";
 import {
   createAutomationRuleIfAbsent,
   deleteAutomationRuleIfUnchanged,
@@ -1963,9 +1962,6 @@ export default function AdminSettings() {
           </div>
 
           <AdminPanelContent value="users">
-            <div className="mb-6">
-              <PasswordMigrationButton />
-            </div>
             <UserManagement />
           </AdminPanelContent>
 
