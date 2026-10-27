@@ -445,3 +445,6 @@ assert.match(invoicing, /email_statement/, 'invoicing must expose statement emai
 assert.match(invoicesPage, /email_statement/, 'invoice detail must offer email statement');
 const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
 assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
+const layoutShell = readFileSync('src/Layout.jsx', 'utf8');
+assert.match(layoutShell, /AttentionBell/, 'shell must mount the attention bell');
+assert.ok(existsSync('src/components/workflow/AttentionBell.jsx'), 'attention bell component must exist');
