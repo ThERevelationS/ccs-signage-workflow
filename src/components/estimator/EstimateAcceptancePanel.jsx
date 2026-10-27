@@ -26,6 +26,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [rows, setRows] = useState([]);
   const [revisionRows, setRevisionRows] = useState([]);
   const [deliveryRows, setDeliveryRows] = useState([]);
+  const [sectionRows, setSectionRows] = useState([]);
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditReadError, setAuditReadError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     setAuditLoading(true);
     setAuditReadError("");
     try {
-      const [result, revisions, deliveries] = await Promise.all([
+      const [result, revisions, deliveries, sectionDecisions] = await Promise.all([
         loadAllEntityRows({
           entity: base44.entities.EstimateAcceptance,
           query: { estimate_id: estimate.id },
@@ -62,10 +63,17 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
           sort: "sent_at",
           label: "Estimate quote deliveries",
         }),
+        loadAllEntityRows({
+          entity: base44.entities.EstimateSectionAcceptance,
+          query: { estimate_id: estimate.id },
+          sort: "decided_at",
+          label: "Estimate section responses",
+        }).catch(() => []),
       ]);
       setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
       setRevisionRows(revisions || []);
       setDeliveryRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
+      setSectionRows((sectionDecisions || []).slice().sort((a, b) => new Date(b.decided_at || 0) - new Date(a.decided_at || 0)));
       return true;
     } catch (err) {
       setAuditReadError(err?.message || "Customer acceptance or revision history could not be verified.");
