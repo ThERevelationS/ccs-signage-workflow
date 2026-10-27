@@ -163,7 +163,13 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const actor = await authenticateSignShopSession(base44, body?.session_token);
+    // Anonymous viewers may read the live feed and acknowledge banners;
+    // only the admin actions below require a verified actor.
+    const actor = await authenticateSignShopSession(base44, body?.session_token)
+      .catch((error: any) => {
+        if (error?.status !== 401) throw error;
+        return null;
+      });
     const action = String(body?.action || '').trim();
     const Announcement = base44.asServiceRole.entities.Announcement;
 
