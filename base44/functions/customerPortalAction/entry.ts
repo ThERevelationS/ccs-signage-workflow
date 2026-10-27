@@ -299,6 +299,7 @@ Deno.serve(async (req) => {
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
           .map(estimatePortalView),
         jobs: (Array.isArray(orders) ? orders : [])
+          .filter((o: any) => o?.deleted !== true)
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
           .slice(0, 50)
           .map(jobPortalView),
