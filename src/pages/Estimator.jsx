@@ -44,7 +44,7 @@ export default function Estimator() {
   const sort = searchParams.get("sort") || "newest";
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [showNew, setShowNew] = useState(
     new URLSearchParams(window.location.search).get("new") === "1"
   );
@@ -177,7 +177,7 @@ export default function Estimator() {
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setParam("q", e.target.value); }}
               placeholder="Search by description, client or estimate number"
               className="pl-9 clay-card border-none h-11"
             />
