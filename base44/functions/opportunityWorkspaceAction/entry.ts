@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
 
     if (action === "attention_feed") {
       const today = new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock] = await Promise.all([
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 500).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 500).catch(() => []),
@@ -226,6 +226,7 @@ Deno.serve(async (req) => {
         Opportunity.filter({}, "-last_activity_at", 500).catch(() => []),
         EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
         Inventory.filter({}, "-updated_date", 500).catch(() => []),
+        WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -312,6 +313,15 @@ Deno.serve(async (req) => {
         overdue_follow_ups: overdueFollowUps,
         open_estimating_requests: openRequests,
         low_stock: lowStock,
+        overdue_jobs: list(workOrders)
+          .filter((w: any) => clean(w?.current_stage) !== "completed" && clean(w?.due_date) && clean(w?.due_date) < today)
+          .map((w: any) => ({
+            id: clean(w?.id),
+            title: clean(w?.title),
+            client_name: clean(w?.client_name),
+            current_stage: clean(w?.current_stage),
+            due_date: clean(w?.due_date),
+          })),
       });
     }
 
