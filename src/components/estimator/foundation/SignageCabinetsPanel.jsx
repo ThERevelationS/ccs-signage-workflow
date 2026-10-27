@@ -62,7 +62,10 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
 export default function SignageCabinetsPanel({ cabinets = [], items = [], poles = [], onChange }) {
   const update = (idx, changes) =>
     onChange(cabinets.map((c, i) => (i === idx ? { ...c, ...changes } : c)));
-  const remove = (idx) => onChange(cabinets.filter((_, i) => i !== idx));
+  const remove = (idx) => {
+    if (!window.confirm("Remove this cabinet?")) return;
+    onChange(cabinets.filter((_, i) => i !== idx));
+  };
   const add = (mount, index) => onChange([...cabinets, blankCabinet(mount, index)]);
 
   const group = (mount, index) =>
