@@ -2,9 +2,10 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown } from "lucide-react";
+import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
+import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUSES = [
@@ -16,6 +17,7 @@ const STATUSES = [
   { key: "archived", label: "Archived" },
   { key: "cancelled", label: "Cancelled" },
   { key: "sync_issues", label: "Sync Issues" },
+  { key: "trash", label: "Trash" },
 ];
 
 const SORTS = [
@@ -53,6 +55,8 @@ export default function EstimatorQueues() {
   const [loadError, setLoadError] = useState("");
   const [query, setQuery] = useState(params.get("q") || "");
   const [sort, setSort] = useState(params.get("sort") || "newest");
+  const [trashBusyId, setTrashBusyId] = useState("");
+  const [trashError, setTrashError] = useState("");
 
   const writeParams = (key, value) => {
     try {
@@ -81,10 +85,63 @@ export default function EstimatorQueues() {
     load();
   }, []);
 
+  const handleRestore = async (e) => {
+    if (trashBusyId) return;
+    setTrashBusyId(e.id);
+    setTrashError("");
+    try {
+      const saved = await restoreEstimateFromLoadedTrashSnapshot({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: e,
+        label: "Estimate Trash recovery",
+      });
+      setEstimates((prev) => prev.map((row) => (row.id === e.id ? saved : row)));
+    } catch (err) {
+      setTrashError(err?.message || "The estimate could not be restored. Reload Trash before retrying.");
+    } finally {
+      setTrashBusyId("");
+    }
+  };
+
+  const handlePermanentDelete = async (e) => {
+    if (trashBusyId) return;
+    const acceptances = await base44.entities.EstimateAcceptance
+      .filter({ estimate_id: e.id }, "-created_date", 5)
+      .catch(() => []);
+    const linked = [];
+    if (e.work_order_id) linked.push("a linked Work Order");
+    if (Array.isArray(acceptances) && acceptances.length) {
+      linked.push(`${acceptances.length} recorded customer acceptance${acceptances.length === 1 ? "" : "s"}`);
+    }
+    const cascade = linked.length
+      ? `\n\nWARNING: this estimate has ${linked.join(" and ")}. Linked records are NOT deleted automatically and will keep pointing at a removed estimate.`
+      : "";
+    if (!window.confirm(`Permanently delete — this cannot be undone${cascade}`)) return;
+    setTrashBusyId(e.id);
+    setTrashError("");
+    try {
+      await permanentlyDeleteTrashedEstimate({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: e,
+        label: "Estimate Trash permanent delete",
+      });
+      setEstimates((prev) => prev.filter((row) => row.id !== e.id));
+    } catch (err) {
+      setTrashError(err?.message || "The estimate could not be permanently deleted. Reload Trash before retrying.");
+    } finally {
+      setTrashBusyId("");
+    }
+  };
+
   const buckets = useMemo(() => {
     const by = {};
     for (const s of STATUSES) by[s.key] = { count: 0, total: 0 };
     for (const e of estimates) {
+      if (e?.deleted === true) {
+        by.trash.count += 1;
+        by.trash.total += Number(e.quote_total || e.total_cost || 0);
+        continue;
+      }
       const bucketKey = e.pipeline_sync_pending === true ? "sync_issues" : (e.status || "draft");
       if (by[bucketKey]) { by[bucketKey].count += 1; by[bucketKey].total += Number(e.quote_total || e.total_cost || 0); }
       by[""].count += 1;
@@ -95,11 +152,13 @@ export default function EstimatorQueues() {
 
   const q = query.trim().toLowerCase();
   const rows = useMemo(() => {
-    let list = status === "sync_issues"
-      ? estimates.filter((e) => e.pipeline_sync_pending === true)
-      : status
-        ? estimates.filter((e) => (e.status || "draft") === status)
-        : estimates;
+    let list = status === "trash"
+      ? estimates.filter((e) => e?.deleted === true)
+      : status === "sync_issues"
+        ? estimates.filter((e) => e?.deleted !== true && e.pipeline_sync_pending === true)
+        : status
+          ? estimates.filter((e) => e?.deleted !== true && (e.status || "draft") === status)
+          : estimates.filter((e) => e?.deleted !== true);
     if (q) {
       list = list.filter((e) =>
         [e.project_name, e.client_name, e.estimate_number].some((v) => String(v || "").toLowerCase().includes(q)));
@@ -170,6 +229,13 @@ export default function EstimatorQueues() {
           </div>
         </div>
 
+        {trashError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700 flex items-center justify-between gap-3">
+            <span>{trashError}</span>
+            <button type="button" onClick={() => setTrashError("")} className="text-red-500 font-bold">Dismiss</button>
+          </div>
+        )}
+
         <div className="bg-white">
           {loading ? (
             <div className="px-4 py-10 text-center text-sm text-gray-400">Loading…</div>
@@ -184,6 +250,47 @@ export default function EstimatorQueues() {
                 const expired = expires && expires < today();
                 const expiringSoon = expires && !expired && expires <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
                 const age = daysSince(e.updated_date || e.created_date);
+                if (status === "trash") {
+                  return (
+                    <div key={e.id} className="flex items-center gap-3 px-4 py-3">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={`/EstimateDetail?id=${e.id}`}
+                          className="text-sm font-semibold text-gray-800 truncate hover:text-red-600 block"
+                        >
+                          {e.project_name}
+                        </Link>
+                        <div className="text-xs text-gray-500 truncate">
+                          {e.client_name}
+                          {e.estimate_number ? ` · ${e.estimate_number}` : ""}
+                          {e.deleted_at ? ` · deleted ${format(new Date(e.deleted_at), "MMM d")}` : ""}
+                          {e.deleted_by ? ` by ${e.deleted_by}` : ""}
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-gray-800 w-24 text-right flex-shrink-0">
+                        {money0(e.quote_total || e.total_cost)}
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(e)}
+                          disabled={!!trashBusyId}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 disabled:opacity-40"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Restore
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePermanentDelete(e)}
+                          disabled={!!trashBusyId}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-red-200 bg-red-50 text-red-700 hover:border-red-300 disabled:opacity-40"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete permanently
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <Link
                     key={e.id}
