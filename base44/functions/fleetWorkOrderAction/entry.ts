@@ -898,7 +898,10 @@ Deno.serve(async (req) => {
         if (reopenEquipment?.status === 'retired') return Response.json({ error: 'This Fleet work order cannot be reopened while its equipment is retired. Reactivate the equipment first.' }, { status: 409 });
       }
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
-      if (expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
+      if (!expectedUpdatedAt) {
+        return Response.json({ error: 'A loaded work order version (expected_updated_date) is required before reopening.' }, { status: 409 });
+      }
+      if (expectedUpdatedAt !== String(existing.updated_date || '')) {
         return Response.json({ error: 'This Fleet work order changed after the reopen confirmation was opened. Reload it before reopening.' }, { status: 409 });
       }
       const completedReceipts = await Receipt.filter({ operation_type: 'work_order_complete', target_id: id, status: 'applied' });
@@ -930,8 +933,33 @@ Deno.serve(async (req) => {
           patch: { status: 'in_progress', completed_date: null },
           label: 'Fleet work order',
         });
-        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '' });
-        return Response.json({ success: true, work_order: reopened, inventory_reversed: false });
+        // Reopen means the recorded consumption did not happen — restore the
+        // quantities every applied inventory_usage receipt for this work order
+        // took, otherwise stock would be double-charged on the next completion.
+        let inventoryReversed = false;
+        const usageReceipts = (await Receipt.filter({ operation_type: 'inventory_usage', status: 'applied' }).catch(() => [])) || [];
+        for (const usage of usageReceipts) {
+          const us = usage?.result_summary || {};
+          if (String(us.work_order_id || '') !== id || us.inventory_reversed === true) continue;
+          const qty = num(us.quantity_used, 0);
+          const itemEntity = usage.target_entity === 'FleetPart' ? base44.asServiceRole.entities.FleetPart : base44.asServiceRole.entities.FleetFluid;
+          const field = usage.target_entity === 'FleetPart' ? 'quantity_on_hand' : 'quantity';
+          if (qty > 0) {
+            for (let attempt = 0; attempt < 5; attempt += 1) {
+              const item = await itemEntity.get(usage.target_id).catch(() => null);
+              if (!item?.id || !item.updated_date) break;
+              const res = await itemEntity.updateMany(
+                { id: item.id, updated_date: item.updated_date },
+                { $set: { [field]: num(item[field], 0) + qty } },
+              ).catch(() => null);
+              if (res?.updated === 1) break;
+            }
+          }
+          await Receipt.update(usage.id, { result_summary: { ...us, inventory_reversed: true } }).catch(() => null);
+          inventoryReversed = true;
+        }
+        await Receipt.update(claim.receipt.id, { status: 'applied', applied_at: nowIso(), error_message: '', result_summary: { ...(claim.receipt.result_summary || {}), inventory_reversed: inventoryReversed } });
+        return Response.json({ success: true, work_order: reopened, inventory_reversed: inventoryReversed });
       } catch (error: any) {
         await Receipt.update(claim.receipt.id, {
           status: 'failed',
