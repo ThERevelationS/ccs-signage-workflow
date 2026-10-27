@@ -7,6 +7,7 @@ import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, 
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
 import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from "@/components/portal/PortalPanel";
 import SavedViews from "@/components/workflow/SavedViews";
 import { staffEntities } from "@/components/staff/staffEntities";
