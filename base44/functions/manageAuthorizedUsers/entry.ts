@@ -539,6 +539,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'create') {
+      const createWantsAdmin = String(body?.data?.role || '') === 'admin' || body?.data?.is_full_admin === true || Object.prototype.hasOwnProperty.call(body?.data || {}, 'admin_permissions');
+      if (createWantsAdmin && actor?.is_full_admin !== true) {
+        return Response.json({ error: 'Only a full admin can create administrator accounts.' }, { status: 403 });
+      }
       const result = await createUser(AuthorizedEmail, body?.data);
       return Response.json({ success: true, ...result });
     }
@@ -549,6 +553,12 @@ Deno.serve(async (req) => {
 
     if (action === 'update') {
       const desired = cleanManagedFields(body?.next_fields);
+      const touchesPrivilege = Object.prototype.hasOwnProperty.call(desired, 'role') ||
+        Object.prototype.hasOwnProperty.call(desired, 'is_full_admin') ||
+        Object.prototype.hasOwnProperty.call(desired, 'admin_permissions');
+      if (touchesPrivilege && actor?.is_full_admin !== true) {
+        return Response.json({ error: 'Only a full admin can change roles or admin privileges.' }, { status: 403 });
+      }
       const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
         Object.prototype.hasOwnProperty.call(desired, 'can_view_resources');
       // Existing clients may not supply expected_role. They still receive a
