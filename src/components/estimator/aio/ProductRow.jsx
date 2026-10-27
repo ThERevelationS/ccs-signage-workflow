@@ -457,6 +457,7 @@ export default function ProductRow({
           <Percent className="w-3 h-3" /> Pricing
         </button>
         <button
+          type="button"
           onClick={() => onRemove(index)}
           disabled={readOnly || priceAcceptancePending}
           title={priceAcceptancePending ? "Resume the pending Product operation before removing this Product." : "Remove product"}
