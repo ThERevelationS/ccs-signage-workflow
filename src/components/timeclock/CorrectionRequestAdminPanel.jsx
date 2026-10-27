@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { AlertTriangle, CheckCircle2, Clock3, Loader2, Pencil, XCircle } from "lucide-react";
 import {
   TIME_CLOCK_COMPANY_TIME_LABEL,
@@ -17,6 +16,32 @@ import {
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
 
+function reviewRetryStorageKey(correctionRequestId) {
+  return `ccs_timeclock_review_retry:${String(correctionRequestId || "").trim().toLowerCase()}`;
+}
+
+function storedReviewRetry(correctionRequestId) {
+  try {
+    const raw = sessionStorage.getItem(reviewRetryStorageKey(correctionRequestId));
+    const stored = raw ? JSON.parse(raw) : null;
+    if (stored?.payload && stored.payload.correction_request_id !== correctionRequestId) return null;
+    return stored;
+  } catch { return null; }
+}
+
+function persistReviewRetry(correctionRequestId, requestId, decision, payload) {
+  try {
+    sessionStorage.setItem(reviewRetryStorageKey(correctionRequestId), JSON.stringify({ request_id: requestId, decision, payload }));
+  } catch {}
+}
+
+function clearReviewRetry(correctionRequestId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId && storedReviewRetry(correctionRequestId)?.request_id !== expectedRequestId) return;
+    sessionStorage.removeItem(reviewRetryStorageKey(correctionRequestId));
+  } catch {}
+}
+
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return `tc-review-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
@@ -25,46 +50,6 @@ function newRequestId() {
 function displayTime(iso) {
   if (!iso) return "—";
   return formatCompanyDateTime(iso);
-}
-
-function reviewRetryStorageKey(correctionRequestId) {
-  return `ccs_timeclock_correction_review_retry:${String(correctionRequestId || "").trim()}`;
-}
-
-function storedReviewRetry(correctionRequestId) {
-  try {
-    const raw = sessionStorage.getItem(reviewRetryStorageKey(correctionRequestId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const requestId = String(parsed?.request_id || "");
-    const payload = parsed?.payload;
-    if (requestId.length < 8 || requestId.length > 128 || !payload || typeof payload !== "object" ||
-        payload.request_id !== requestId || payload.correction_request_id !== correctionRequestId ||
-        !parsed?.decision) return null;
-    return { request_id: requestId, decision: String(parsed.decision), payload };
-  } catch {
-    return null;
-  }
-}
-
-function persistReviewRetry(correctionRequestId, requestId, decision, payload) {
-  try {
-    sessionStorage.setItem(reviewRetryStorageKey(correctionRequestId), JSON.stringify({
-      request_id: requestId,
-      decision,
-      payload,
-    }));
-  } catch {}
-}
-
-function clearReviewRetry(correctionRequestId, expectedRequestId = "") {
-  try {
-    if (expectedRequestId) {
-      const stored = storedReviewRetry(correctionRequestId);
-      if (!stored || stored.request_id !== expectedRequestId) return;
-    }
-    sessionStorage.removeItem(reviewRetryStorageKey(correctionRequestId));
-  } catch {}
 }
 
 export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
@@ -93,7 +78,20 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Correction requests could not be loaded.");
-      setRequests(Array.isArray(data.requests) ? data.requests : []);
+      const rows = Array.isArray(data.requests) ? data.requests : [];
+      setRequests(rows);
+      for (const request of rows) {
+        const storedRetry = storedReviewRetry(request.id);
+        if (storedRetry?.request_id && storedRetry?.payload) {
+          setRetryReview({
+            correctionRequestId: request.id,
+            decision: storedRetry.payload.decision || "",
+            requestId: storedRetry.request_id,
+            payload: storedRetry.payload,
+          });
+          break;
+        }
+      }
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Correction requests could not be loaded.");
     } finally {
@@ -106,24 +104,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const openReview = useCallback((request) => {
     if (!request?.id) return;
     const requested = request.requested_changes || {};
-    const storedRetry = storedReviewRetry(request.id);
     setSelected(request);
-    if (storedRetry) {
-      const frozenCorrection = storedRetry.payload?.correction || {};
-      setClockIn(companyDateTimeInputFromIso(frozenCorrection.clock_in || requested.clock_in));
-      setClockOut(companyDateTimeInputFromIso(frozenCorrection.clock_out || requested.clock_out));
-      setLunchMinutes(String(frozenCorrection.lunch_minutes ?? requested.lunch_minutes ?? 0));
-      setNotes(frozenCorrection.notes ?? requested.notes ?? "");
-      setReviewReason(storedRetry.payload?.reason || "");
-      setRetryReview({
-        correctionRequestId: request.id,
-        decision: storedRetry.decision,
-        requestId: storedRetry.request_id,
-        payload: storedRetry.payload,
-      });
-      setError("This manager review was interrupted after the server began processing it. Values are locked until you retry the same decision so the original request can finish safely.");
-      return;
-    }
     setClockIn(companyDateTimeInputFromIso(requested.clock_in));
     setClockOut(companyDateTimeInputFromIso(requested.clock_out));
     setLunchMinutes(String(requested.lunch_minutes || 0));
@@ -252,7 +233,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           <Badge className={requests.length ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>{requests.length} awaiting review</Badge>
         </div>
         {loading ? (
-          <ListSkeleton rows={3} />
+          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
         ) : error && !selected ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
         ) : requests.length === 0 ? (

@@ -38,7 +38,10 @@ function persistOperation(key, requestId, payload) {
 
 function clearOperation(key, expectedRequestId = "") {
   try {
-    if (expectedRequestId && storedOperation(key)?.request_id !== expectedRequestId) return;
+    if (expectedRequestId) {
+      const stored = storedOperation(key);
+      if (!stored || stored.request_id !== expectedRequestId) return;
+    }
     sessionStorage.removeItem(key);
   } catch {}
 }

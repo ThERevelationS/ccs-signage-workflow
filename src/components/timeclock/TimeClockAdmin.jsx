@@ -86,8 +86,7 @@ function persistAdminRequestId(action, entryId, requestId) {
 
 function clearAdminRequestId(action, entryId, expectedRequestId = "") {
   try {
-    if (expectedRequestId &&
-        sessionStorage.getItem(adminRequestStorageKey(action, entryId)) !== expectedRequestId) return;
+    if (expectedRequestId && sessionStorage.getItem(adminRequestStorageKey(action, entryId)) !== expectedRequestId) return;
     sessionStorage.removeItem(adminRequestStorageKey(action, entryId));
   } catch {}
 }
@@ -410,9 +409,9 @@ export default function TimeClockAdmin() {
         return;
       }
     }
-    const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
     setSaveBusy(true);
     try {
+      const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
       if (!correctionRequestId) {
         setCorrectionRequestId(requestId);
         persistAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
@@ -519,10 +518,6 @@ export default function TimeClockAdmin() {
     setApprovalBusy(true);
     setApprovalError("");
     const requestAction = approvalRequestStorageAction(approvalDecision);
-    const oppositeDecision = approvalDecision === "approve" ? "reopen" : "approve";
-    const oppositeAction = approvalRequestStorageAction(oppositeDecision);
-    const oppositeStoredRequestId = storedAdminRequestId(oppositeAction, approvalEntry.id);
-    const oppositeRetryRequestId = storedApprovalRetry(oppositeDecision, approvalEntry.id)?.request_id || "";
     const requestId = approvalRequestId || storedAdminRequestId(requestAction, approvalEntry.id) || newRequestId();
     if (!approvalRequestId) {
       setApprovalRequestId(requestId);
@@ -563,10 +558,10 @@ export default function TimeClockAdmin() {
       });
       const data = functionData(response);
       if (!data?.success) throw adminActionError(data, "The approval was not confirmed by the server.");
-      clearAdminRequestId(requestAction, approvalEntry.id, frozenPayload.request_id);
-      if (oppositeStoredRequestId) clearAdminRequestId(oppositeAction, approvalEntry.id, oppositeStoredRequestId);
-      clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
-      if (oppositeRetryRequestId) clearApprovalRetry(oppositeDecision, approvalEntry.id, oppositeRetryRequestId);
+      clearAdminRequestId(approvalRequestStorageAction("approve"), approvalEntry.id);
+      clearAdminRequestId(approvalRequestStorageAction("reopen"), approvalEntry.id);
+      clearApprovalRetry("approve", approvalEntry.id);
+      clearApprovalRetry("reopen", approvalEntry.id);
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
@@ -618,9 +613,9 @@ export default function TimeClockAdmin() {
       setTimeEntryError("Enter an archive reason before continuing.");
       return;
     }
-    const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
     setDeleteBusy(true);
     try {
+      const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
       if (!archiveRequestId) {
         setArchiveRequestId(requestId);
         persistAdminRequestId("admin_archive_entry", entry.id, requestId);

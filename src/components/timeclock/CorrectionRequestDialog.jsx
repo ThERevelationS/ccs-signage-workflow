@@ -39,7 +39,10 @@ function persistCorrectionSubmission(entryId, requestId, payload) {
 
 function clearCorrectionSubmission(entryId, expectedRequestId = "") {
   try {
-    if (expectedRequestId && storedCorrectionSubmission(entryId)?.request_id !== expectedRequestId) return;
+    if (expectedRequestId) {
+      const stored = storedCorrectionSubmission(entryId);
+      if (!stored || stored.request_id !== expectedRequestId) return;
+    }
     sessionStorage.removeItem(correctionSubmissionKey(entryId));
   } catch {}
 }
