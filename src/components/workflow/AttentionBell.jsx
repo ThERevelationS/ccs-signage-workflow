@@ -28,6 +28,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
       const r = await base44.functions.invoke("opportunityWorkspaceAction", {
         session_token: sessionToken,
         action: "attention_feed",
+        today: new Date().toLocaleDateString("en-CA"),
       });
       const feed = r?.data || r || {};
       setCount(SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0));
