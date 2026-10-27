@@ -7,6 +7,7 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 // explicitly allowed below, and operator-style keys ($set, $where, ...) are
 // rejected at any depth so the payload can only ever describe a plain record.
 const WRITE_OPS: Record<string, Set<string>> = {
+  AllInOneEstimate: new Set(['updateMany', 'delete']),
   BuilderPart: new Set(['create']),
   BuilderProduct: new Set(['create']),
   CustomerLocation: new Set(['create']),
@@ -18,7 +19,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   PermittingWorkflowDraft: new Set(['create', 'update']),
   RegulationAlert: new Set(['update', 'delete']),
   SipChecklistTemplate: new Set(['create', 'update', 'delete']),
-  WorkOrder: new Set(['create']),
+  WorkOrder: new Set(['create', 'updateMany']),
 };
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
@@ -74,6 +75,33 @@ Deno.serve(async (req) => {
       }
       const saved = await entity.update(id, data);
       return Response.json({ success: true, record: saved });
+    }
+
+    if (op === 'updateMany') {
+      // Narrow single-record conditional write mirroring the SDK's
+      // updateMany({ id, updated_date }, { $set }) contract the front-end CAS
+      // helpers use. Anything broader — extra query keys, operator queries, or
+      // non-$set update shapes — would become a bulk-edit oracle, so it is
+      // rejected outright.
+      const query = body?.query;
+      const update = body?.update;
+      const queryKeys = query && typeof query === 'object' && !Array.isArray(query) ? Object.keys(query) : [];
+      const queryId = String((query as any)?.id || '').trim();
+      const queryVersion = String((query as any)?.updated_date || '').trim();
+      if (queryKeys.length !== 2 || !queryId || !queryVersion || queryId !== id) {
+        throw bad('A conditional update must target exactly one record id and updated_date.');
+      }
+      const updateKeys = update && typeof update === 'object' && !Array.isArray(update) ? Object.keys(update) : [];
+      if (updateKeys.length !== 1 || updateKeys[0] !== '$set') {
+        throw bad('Only $set updates are allowed here.');
+      }
+      const patch = (update as any).$set;
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw bad('An update payload is required.');
+      rejectOperatorKeys(patch);
+      // Identity/system fields are never client-supplied.
+      for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
+      const result = await entity.updateMany({ id: queryId, updated_date: queryVersion }, { $set: patch });
+      return Response.json({ success: true, result });
     }
 
     if (op === 'delete') {
