@@ -20,10 +20,12 @@ export function expectedEstimateFields(record = {}, nextFields = {}) {
   const expected = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
-  // Guard the trash flag unconditionally — a CAS write that doesn't itself
-  // touch `deleted` must still fail when the loaded row has since been
-  // trashed, so a status change can't resurrect or overwrite a trashed row.
-  if (!Object.prototype.hasOwnProperty.call(expected, "deleted")) {
+  // Guard the trash flag when the loaded row stored it — a CAS write that
+  // doesn't itself touch `deleted` must still fail when the loaded row has
+  // since been trashed. Skipping absent `deleted` keys keeps undefined-vs-
+  // false/null storage shapes from breaking the compare on rows that never
+  // persisted the flag.
+  if (!Object.prototype.hasOwnProperty.call(expected, "deleted") && Object.prototype.hasOwnProperty.call(record || {}, "deleted")) {
     expected.deleted = record?.deleted;
   }
   return expected;
