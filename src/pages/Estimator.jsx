@@ -33,8 +33,9 @@ const money0 = (n) => `$${Number(n || 0).toLocaleString(undefined, { maximumFrac
 const compact = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : money0(n));
 
 function expiryOf(e) {
-  if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !e.valid_days) return null;
-  return quoteExpirationDate(e.quote_issue_date, e.valid_days) || null;
+  const validDays = e.quote_valid_days ?? e.valid_days;
+  if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !validDays) return null;
+  return quoteExpirationDate(e.quote_issue_date, validDays) || null;
 }
 
 export default function Estimator() {
