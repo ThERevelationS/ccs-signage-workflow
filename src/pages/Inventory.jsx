@@ -11,6 +11,7 @@ import {
   Package,
   RefreshCw,
   Search,
+  ShoppingCart,
   X,
 } from "lucide-react";
 
@@ -77,6 +78,7 @@ export default function Inventory() {
   const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState("");
   const [qtys, setQtys] = useState({});
   const [logItem, setLogItem] = useState(null);
@@ -129,6 +131,30 @@ export default function Inventory() {
     }
   };
 
+  const createReorderPo = async () => {
+    if (busy) return;
+    setBusy("reorder-po");
+    setError("");
+    setNotice(null);
+    try {
+      const low = await invokeAction(sessionToken, { action: "list_stock", low_only: true });
+      const ids = (low.items || []).map((it) => it.id).filter(Boolean);
+      if (ids.length === 0) { setError("No low-stock items to reorder."); return; }
+      const data = await invokeAction(sessionToken, {
+        action: "create_reorder_po",
+        item_ids: ids,
+        creation_request_key: keyRef.current,
+      });
+      keyRef.current = uuid();
+      setNotice({ poId: data.purchase_order_id, poNumber: data.po_number || "draft" });
+      await load();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Could not create the purchase order.");
+    } finally {
+      setBusy("");
+    }
+  };
+
   if (!isRegistered) return null;
 
   return (
@@ -147,9 +173,16 @@ export default function Inventory() {
       </div>
 
       {lowCount > 0 && (
-        <button onClick={() => { setViewName(""); setLowOnly(!lowOnly); }} className="mb-3 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          <AlertTriangle className="h-4 w-4" />{lowCount} item{lowCount === 1 ? "" : "s"} at/below reorder point — {lowOnly ? "show all" : "show only these"}
-        </button>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <button onClick={() => { setViewName(""); setLowOnly(!lowOnly); }} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            <AlertTriangle className="h-4 w-4" />{lowCount} item{lowCount === 1 ? "" : "s"} at/below reorder point — {lowOnly ? "show all" : "show only these"}
+          </button>
+          <button onClick={createReorderPo} disabled={Boolean(busy)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-200 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900/60">
+            {busy === "reorder-po" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+            Create draft PO
+          </button>
+        </div>
       )}
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -166,6 +199,13 @@ export default function Inventory() {
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+
+      {notice && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <span>Draft purchase order {notice.poNumber} created.</span>
+          {notice.poId && <a href={`/PurchaseOrders?po=${notice.poId}`} className="font-bold underline">Open it</a>}
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && items.length === 0 ? (
