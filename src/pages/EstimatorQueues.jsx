@@ -28,10 +28,11 @@ const compact = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : money0(n));
 const today = () => new Date().toISOString().slice(0, 10);
 
 function expiryOf(e) {
-  if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !e.valid_days) return null;
+  const validDays = e.quote_valid_days ?? e.valid_days;
+  if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !validDays) return null;
   const d = new Date(e.quote_issue_date);
   if (Number.isNaN(d.getTime())) return null;
-  d.setDate(d.getDate() + Number(e.valid_days));
+  d.setDate(d.getDate() + Number(validDays));
   return d.toISOString().slice(0, 10);
 }
 
