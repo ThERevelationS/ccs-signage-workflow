@@ -67,7 +67,14 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
               <Copy className="w-4 h-4" />
             </button>
           )}
-          <button onClick={() => onRemove(index)} className="text-gray-400 hover:text-red-600" title="Delete">
+          <button
+            onClick={() => {
+              if (!window.confirm(`Remove Foundation #${index + 1}?`)) return;
+              onRemove(index);
+            }}
+            className="text-gray-400 hover:text-red-600"
+            title="Delete"
+          >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
