@@ -145,6 +145,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   };
 
   const removeItem = (index) => {
+    if (!window.confirm("Remove this item?")) return;
     setProject(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
   };
 
@@ -1236,6 +1237,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {project.items.length === 0 && (
+                  <div className="text-center py-8 text-slate-500">
+                    <p>No items added yet. Click "Add Item" to get started.</p>
+                  </div>
+                )}
                 {project.items.map((item, index) => (
                   <div key={index} className="p-6 border rounded-xl bg-slate-25">
                     <div className="flex justify-between items-start mb-4"><h4 className="font-medium">Item {index + 1}</h4><Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button></div>
@@ -1355,7 +1361,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                 </div>
               </CardContent>
             </Card>
-            <Button onClick={saveProject} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
+            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
             <Button onClick={downloadEstimate} variant="outline" className="w-full">Download Estimate (HTML)</Button>
             <Button onClick={printEstimate} variant="outline" className="w-full">Print Estimate</Button>
           </div>
