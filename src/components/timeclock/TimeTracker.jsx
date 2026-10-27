@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/components/auth/EmailGate";
 import { useToast } from "@/components/ui/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -89,6 +90,9 @@ const WEEK_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function TimeTracker({ position = "top", hasTopBar = true, hasSideBar = true } = {}) {
   const { currentUser, sessionToken } = useAuth();
+  const location = useLocation();
+  const onTimeClock = String(location?.pathname || "").toLowerCase().includes("timeclock");
+  const [focused, setFocused] = useState(() => typeof document === "undefined" || document.visibilityState === "visible");
   const { toast } = useToast();
   const email = String(currentUser?.email || "").trim().toLowerCase();
   const scopeKey = `${email}|${sessionToken ? "t" : ""}`;
@@ -259,11 +263,21 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
 
   // Location gate: hidden everywhere, or restricted to a bar.
   const locationPref = prefs?.location || "both";
+  useEffect(() => {
+    const mark = () => setFocused(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", mark);
+    window.addEventListener("blur", mark);
+    window.addEventListener("focus", mark);
+    return () => { document.removeEventListener("visibilitychange", mark); window.removeEventListener("blur", mark); window.removeEventListener("focus", mark); };
+  }, []);
+
   const matchesPref = locationPref === "both" ||
     (locationPref === "top" && position !== "side") ||
     (locationPref === "side" && position === "side");
   const visibleHere = enabled && locationPref !== "hidden" &&
     !(prefs?.show_only_clocked_in === true && snapshot?.status !== "clocked_in") &&
+    !(prefs?.hide_when_unfocused === true && !focused) &&
+    !(prefs?.timeclock_page_only === true && !onTimeClock) &&
     (matchesPref ||
      (locationPref === "top" && !hasTopBar) ||
      (locationPref === "side" && !hasSideBar));
@@ -340,13 +354,13 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           type="button"
           data-time-tracker
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
-          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")}`}
+          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
           style={{
             zoom: prefs?.scale || 1,
             opacity: prefs?.opacity ?? 1,
           }}
         >
-          {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && (
+          {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && prefs?.display_style !== "roll" && (
             <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={`shrink-0 ${animFor("ring")}`} aria-hidden="true">
               <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="26" />
               <circle
@@ -363,8 +377,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           {prefs?.show_icon !== false && (frozen ? <Pause className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"} ${animFor("icon")}`} /> : <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"} ${animFor("icon")}`} />)}
           <span className={`flex flex-col leading-none ${FONTS[prefs?.font] || ""}`}>
             <span
-              className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}
-              key={prefs?.display_style === "flip" ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
+              className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : prefs?.display_style === "roll" ? "tracker-roll" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}
+              key={["flip","roll"].includes(prefs?.display_style) ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
             >
               {trackerLabel && prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
               {trackerTime}

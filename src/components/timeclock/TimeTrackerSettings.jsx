@@ -64,6 +64,9 @@ const DEFAULT_PREFS = {
   show_only_clocked_in: false,
   progressive_colors: true,
   blink_separator: false,
+  hide_when_unfocused: false,
+  timeclock_page_only: false,
+  goal_celebrate: true,
   time_format: "hh_mm_ss",
 };
 
@@ -216,6 +219,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                   <SelectItem value="bar">Gradient bar</SelectItem>
                   <SelectItem value="minimal">Minimal digits</SelectItem>
                   <SelectItem value="flip">Flip-clock digits</SelectItem>
+                  <SelectItem value="roll">Roll digits</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -366,6 +370,9 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               ["show_only_clocked_in", "Only when clocked in"],
               ["progressive_colors", "Progressive colors"],
               ["blink_separator", "Blinking separator"],
+              ["hide_when_unfocused", "Hide when unfocused"],
+              ["timeclock_page_only", "Time Clock page only"],
+              ["goal_celebrate", "Celebrate goal"],
             ].map(([key, label]) => (
               <label key={key} className="flex items-center justify-between gap-2 text-sm">
                 <span>{label}</span>
