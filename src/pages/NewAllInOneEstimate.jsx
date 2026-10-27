@@ -102,10 +102,11 @@ export default function NewAllInOneEstimate() {
   const dupQueryNorm = dupQuery.trim().toLowerCase();
   const dupMatches = dupSources
     .filter((e) =>
-      !dupQueryNorm ||
+      e?.deleted !== true &&
+      (!dupQueryNorm ||
       String(e.estimate_number || "").toLowerCase().includes(dupQueryNorm) ||
       String(e.client_name || "").toLowerCase().includes(dupQueryNorm) ||
-      String(e.project_name || "").toLowerCase().includes(dupQueryNorm)
+      String(e.project_name || "").toLowerCase().includes(dupQueryNorm))
     )
     .slice(0, 20);
 
