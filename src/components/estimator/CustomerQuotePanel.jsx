@@ -129,9 +129,16 @@ export default function CustomerQuotePanel({
 
   const set = (key, value) => onChange?.({ [key]: value });
 
-  const openSendDialog = () => {
+  const openSendDialog = async () => {
     if (!canEmailQuote) return;
-    setRecipientEmail(estimate.contact_email || "");
+    let recipient = estimate.contact_email || "";
+    if (!recipient && estimate.customer_id) {
+      try {
+        const customer = await base44.entities.Customer.get(estimate.customer_id).catch(() => null);
+        recipient = customer?.contact_email || customer?.billing_contact_email || "";
+      } catch {}
+    }
+    setRecipientEmail(recipient);
     setEmailSubject(defaultQuoteEmailSubject(estimate));
     setEmailMessage(defaultQuoteEmailMessage(estimate));
     setSendError("");
