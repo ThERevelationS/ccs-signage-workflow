@@ -1160,7 +1160,7 @@ function LayoutContent({ children }) {
                 {/* Desktop Navigation Links */}
                 <div
                   data-top-navigation-links
-                  className={`hidden lg:flex self-center items-center flex-wrap flex-1 ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
+                  className={`hidden lg:flex self-center items-center flex-nowrap overflow-x-auto flex-1 [scrollbar-width:thin] ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
                 >
                   {navigationItems.map((item) => {
                     const isActive = location.pathname === item.url;
