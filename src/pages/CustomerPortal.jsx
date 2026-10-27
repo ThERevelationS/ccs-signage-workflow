@@ -27,6 +27,19 @@ const money = (value) => {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
+const todayStamp = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const fmtStamp = (stamp) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(stamp || "").trim());
+  if (!m) return String(stamp || "—");
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString();
+};
+
+const ANNOUNCEMENT_DISMISS_KEY = "ccs_portal_dismissed_announcements";
+
 const INVOICE_STYLES = {
   draft: "bg-slate-100 text-slate-700",
   sent: "bg-blue-100 text-blue-800",
@@ -177,7 +190,16 @@ function QuoteCard({ quote, onRespond, busy }) {
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Quote {quote.estimate_number}</p>
           <h3 className="mt-1 text-lg font-semibold text-slate-900">{quote.quote_title || quote.project_name || "Estimate"}</h3>
-          {quote.quote_valid_days > 0 && <p className="mt-0.5 text-xs text-slate-400">Valid {quote.quote_valid_days} days</p>}
+          {quote.status === "sent" && quote.quote_valid_until ? (
+            <span className={`mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+              todayStamp() > quote.quote_valid_until ? "bg-red-100 text-red-700" : "bg-blue-50 text-blue-700"
+            }`}>
+              <Clock className="h-3 w-3" />
+              {todayStamp() > quote.quote_valid_until ? "Expired — request a revision" : `Quote valid until ${fmtStamp(quote.quote_valid_until)}`}
+            </span>
+          ) : (
+            quote.quote_valid_days > 0 && <p className="mt-0.5 text-xs text-slate-400">Valid {quote.quote_valid_days} days</p>
+          )}
         </div>
         <div className="text-right">
           <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${QUOTE_STYLES[quote.status] || QUOTE_STYLES.draft}`}>
@@ -437,7 +459,10 @@ export default function CustomerPortal() {
   const [tab, setTab] = useState("overview");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
-  const [dismissed, setDismissed] = useState(() => new Set());
+  const [dismissed, setDismissed] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(ANNOUNCEMENT_DISMISS_KEY) || "[]")); }
+    catch { return new Set(); }
+  });
   const msgKeyRef = useRef(crypto.randomUUID());
 
   const load = useCallback(async () => {
@@ -475,6 +500,15 @@ export default function CustomerPortal() {
   const activeJobs = jobs.filter((j) => !["completed", "cancelled"].includes(j.status));
   const unreadFromStaff = data?.unread_for_customer || 0;
   const announcements = (data?.announcements || []).filter((a) => !dismissed.has(a.title));
+  const paymentNotices = messages.filter((m) => m.kind === "payment_notice").slice(-5).reverse();
+
+  const dismissAnnouncement = (title) => {
+    setDismissed((prev) => {
+      const next = new Set([...prev, title]);
+      try { localStorage.setItem(ANNOUNCEMENT_DISMISS_KEY, JSON.stringify([...next])); } catch { /* storage unavailable */ }
+      return next;
+    });
+  };
 
   const respond = async (quote, decision, note) => {
     setBusy(true);
@@ -551,7 +585,7 @@ export default function CustomerPortal() {
               {a.message && <p className="mt-0.5 whitespace-pre-line text-sm text-slate-600">{a.message}</p>}
               {a.image_url && <img src={a.image_url} alt="" className="mt-2 max-h-40 rounded-lg" />}
             </div>
-            <button onClick={() => setDismissed((s) => new Set([...s, a.title]))} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
+            <button onClick={() => dismissAnnouncement(a.title)} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -642,6 +676,30 @@ export default function CustomerPortal() {
                   </div>
                 )}
 
+                {paymentNotices.length > 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-900">Your recent notices</h3>
+                    <ul className="mt-3 divide-y divide-slate-100">
+                      {paymentNotices.map((m) => (
+                        <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-800">{m.related_label || "Payment notice"}</p>
+                            {m.body && <p className="truncate text-xs text-slate-500">{m.body}</p>}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="text-[11px] text-slate-400">
+                              {m.created_date ? new Date(m.created_date).toLocaleDateString() : ""}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${m.read_by_staff ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                              {m.read_by_staff ? "Received" : "Sent"}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h3 className="text-sm font-semibold text-slate-900">Recent activity</h3>
                   {messages.length === 0 && <p className="mt-2 text-sm text-slate-400">Nothing yet — activity will appear here as your project moves.</p>}
@@ -660,6 +718,24 @@ export default function CustomerPortal() {
                     ))}
                   </ul>
                 </div>
+
+                {data?.customer && (data.customer.name || data.customer.contact_name || data.customer.email) && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-900">Your account</h3>
+                    <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                      {data.customer.name && (
+                        <div><dt className="text-xs text-slate-500">Company</dt><dd className="mt-0.5 font-medium text-slate-800">{data.customer.name}</dd></div>
+                      )}
+                      {data.customer.contact_name && (
+                        <div><dt className="text-xs text-slate-500">Contact</dt><dd className="mt-0.5 font-medium text-slate-800">{data.customer.contact_name}</dd></div>
+                      )}
+                      {data.customer.email && (
+                        <div><dt className="text-xs text-slate-500">Email</dt><dd className="mt-0.5 font-medium text-slate-800">{data.customer.email}</dd></div>
+                      )}
+                    </dl>
+                    <p className="mt-3 text-[11px] text-slate-400">Account details are maintained by CCS Signage — message us if anything looks off.</p>
+                  </div>
+                )}
               </div>
             )}
 
