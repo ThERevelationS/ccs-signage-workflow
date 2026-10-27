@@ -157,6 +157,15 @@ Deno.serve(async (req) => {
     if (RECORD_EVENTS.has(eventType) || TIME_CLOCK_EVENTS.has(eventType)) {
       const recordId = String(payload?.record?.id || payload?.record_id || '').trim();
       if (!recordId) throw Object.assign(new Error('Missing record id'), { status: 400 });
+      // Durable-state check: a "time_off_approved" event may only be emitted
+      // for a TimeOffRequest that is durably approved — otherwise a staff
+      // session could forge approvals through the automation path.
+      if (eventType === 'time_off_approved') {
+        const request = await base44.asServiceRole.entities.TimeOffRequest.get(recordId).catch(() => null);
+        if (String(request?.status || '').toLowerCase() !== 'approved') {
+          throw Object.assign(new Error('Time off approval event is not durable on the record'), { status: 409 });
+        }
+      }
       const result = await processWorkflowTriggerEvent({
         base44,
         payload: {
@@ -174,13 +183,37 @@ Deno.serve(async (req) => {
     const workOrderId = String(payload?.work_order?.id || payload?.work_order_id || '').trim();
     if (!workOrderId) throw Object.assign(new Error('Missing work_order id'), { status: 400 });
 
+    // Durable-state check for state assertions: a stage-entered or completion
+    // event may only fire when the Work Order record actually shows that
+    // state. Otherwise a staff session could fabricate pipeline history or
+    // trigger completion side effects (rider creation, notifications).
+    const STAGE_ENTERED = /^stage_(.+)_(entered|exited)$/.exec(eventType);
+    const wo = await base44.asServiceRole.entities.WorkOrder.get(workOrderId).catch(() => null);
+    if (!wo?.id) throw Object.assign(new Error('Work order not found'), { status: 404 });
+    if (STAGE_ENTERED && STAGE_ENTERED[2] === 'entered') {
+      const stage = STAGE_ENTERED[1].toLowerCase();
+      const fields = [wo.stage, wo.current_stage, wo.status, wo.production_stage, wo.sales_stage]
+        .map((v: unknown) => String(v || '').toLowerCase());
+      if (!fields.some((v: string) => v === stage || v === `stage_${stage}`)) {
+        throw Object.assign(new Error('Work order is not durably in the claimed stage'), { status: 409 });
+      }
+    }
+    if (['work_order_completed', 'work_order_order_received', 'stage_completed_entered'].includes(eventType)) {
+      const fields = [wo.stage, wo.current_stage, wo.status].map((v: unknown) => String(v || '').toLowerCase());
+      if (!fields.some((v: string) => v.includes('complet') || v.includes('received'))) {
+        throw Object.assign(new Error('Work order completion is not durable on the record'), { status: 409 });
+      }
+    }
+
     const result = await processWorkflowTriggerEvent({
       base44,
       payload: {
         event_type: eventType,
         work_order: { id: workOrderId },
         extras: payload?.extras,
-        old_data: payload?.old_data,
+        // old_data is derived server-side by the engine — a caller must not
+        // inject prior-state history.
+        old_data: {},
       },
       changedByOverride: changedBy,
     });
