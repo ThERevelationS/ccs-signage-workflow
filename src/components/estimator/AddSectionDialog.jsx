@@ -3,6 +3,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { ESTIMATOR_MODULES } from "./moduleRegistry";
 
+const MODULE_DESCRIPTIONS = {
+  foundation: "Concrete pads, masonry bases and pole installs",
+  channel_letters: "Channel letter and dimensional sign installs",
+  vinyl: "Printed vinyl, graphics and wraps",
+  cnc: "CNC-routed shapes, panels and signs",
+  laser: "Laser cutting and engraving",
+  metal: "Custom metal fabrication and welding",
+  brick_stone: "Brick and stone monument work",
+  maintenance: "Service, repair and maintenance work",
+  painting: "Sign painting and finishing",
+};
+
 export default function AddSectionDialog({ open, onClose, onAdd }) {
   const [busyKey, setBusyKey] = useState("");
 
@@ -30,7 +42,8 @@ export default function AddSectionDialog({ open, onClose, onAdd }) {
               onClick={() => handlePick(mod)}
               className="text-left px-3 py-2.5 rounded-lg border border-gray-200 hover:border-red-400 hover:bg-red-50 transition-colors text-sm font-medium text-gray-800 disabled:opacity-50"
             >
-              {busyKey === mod.key ? "Adding…" : mod.label}
+              <span className="block">{busyKey === mod.key ? "Adding…" : mod.label}</span>
+              <span className="block text-xs font-normal text-gray-400 mt-0.5">{MODULE_DESCRIPTIONS[mod.key]}</span>
             </button>
           ))}
         </div>
