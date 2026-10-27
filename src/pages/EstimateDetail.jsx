@@ -166,9 +166,10 @@ export default function EstimateDetail() {
 
   // Stale-quote guardrail: quote validity only applies once the estimate is
   // sent and both the issue date and validity window exist.
+  const validDays = estimate.quote_valid_days ?? estimate.valid_days;
   const expiresOn =
-    estimate.status === "sent" && estimate.quote_issue_date && Number(estimate.valid_days) > 0
-      ? quoteExpirationDate(estimate.quote_issue_date, estimate.valid_days)
+    estimate.status === "sent" && estimate.quote_issue_date && Number(validDays) > 0
+      ? quoteExpirationDate(estimate.quote_issue_date, validDays)
       : "";
   const quoteDaysLeft = expiresOn
     ? Math.round((new Date(`${expiresOn}T00:00:00`) - new Date(`${localDateStamp()}T00:00:00`)) / 86400000)
