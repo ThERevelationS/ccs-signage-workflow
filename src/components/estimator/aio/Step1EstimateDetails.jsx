@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Plus, Sparkles } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import CustomerSearchDialog from "./CustomerSearchDialog";
 import NewCustomerDialog from "./NewCustomerDialog";
 
@@ -14,6 +15,15 @@ const Row = ({ label, hint, children }) => (
 
 const inputCls =
   "w-full h-8 px-2 border border-slate-300 bg-white rounded-sm text-sm focus:outline-none focus:border-lime-500";
+
+const pickerCls =
+  "w-[104px] h-8 px-1 border border-slate-300 bg-white rounded-sm text-[12px] flex-shrink-0 focus:outline-none focus:border-lime-500";
+
+const joinAddress = (line1, line2, city, state, postal) =>
+  [line1, line2, city, [state, postal].map((p) => String(p || "").trim()).filter(Boolean).join(" ")]
+    .map((p) => String(p || "").trim())
+    .filter(Boolean)
+    .join(", ");
 
 export default function Step1EstimateDetails({
   form,
@@ -30,6 +40,33 @@ export default function Step1EstimateDetails({
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const [entityLocations, setEntityLocations] = useState([]);
+  const [entityContacts, setEntityContacts] = useState([]);
+
+  const linkedCustomer = customers.find((c) => c.id === form.customer_id) || null;
+
+  useEffect(() => {
+    if (!form.customer_id) {
+      setEntityLocations([]);
+      setEntityContacts([]);
+      return;
+    }
+    let active = true;
+    const load = (entity) =>
+      entity && typeof entity.filter === "function"
+        ? entity.filter({ customer_id: form.customer_id }).catch(() => [])
+        : Promise.resolve([]);
+    Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact)]).then(
+      ([locations, contacts]) => {
+        if (!active) return;
+        setEntityLocations(locations || []);
+        setEntityContacts(contacts || []);
+      }
+    );
+    return () => {
+      active = false;
+    };
+  }, [form.customer_id]);
 
   const applyCustomer = (c) => {
     patch({
@@ -41,6 +78,112 @@ export default function Step1EstimateDetails({
       terms: c.terms || form.terms,
       order_contact:
         `${c.contact_first_name || ""} ${c.contact_last_name || ""}`.trim() || form.order_contact,
+    });
+  };
+
+  const locationOptions = (() => {
+    const options = [];
+    const seen = new Set();
+    const push = (label, value) => {
+      const v = String(value || "").trim();
+      if (!v || seen.has(v.toLowerCase())) return;
+      seen.add(v.toLowerCase());
+      options.push({ key: options.length, label: label ? `${label}: ${v}` : v, value: v });
+    };
+    if (linkedCustomer) {
+      push(
+        "Site",
+        joinAddress(
+          linkedCustomer.location_address_1,
+          linkedCustomer.location_address_2,
+          linkedCustomer.location_city,
+          linkedCustomer.location_state,
+          linkedCustomer.location_postal_code
+        )
+      );
+      push(
+        "Billing",
+        joinAddress(
+          linkedCustomer.billing_address_1,
+          linkedCustomer.billing_address_2,
+          linkedCustomer.billing_city,
+          linkedCustomer.billing_state,
+          [linkedCustomer.billing_postal_code, linkedCustomer.billing_postal_ext]
+            .filter(Boolean)
+            .join("-")
+        )
+      );
+    }
+    (entityLocations || []).forEach((l) => {
+      if (l?.is_active === false) return;
+      push(l?.label, joinAddress(l?.address_line_1, l?.address_line_2, l?.city, l?.state, l?.postal_code));
+    });
+    return options;
+  })();
+
+  const contactOptions = (() => {
+    const options = [];
+    const seen = new Set();
+    const push = (c) => {
+      const name = String(c?.name || "").trim();
+      if (!name) return;
+      const dedupeKey = `${name.toLowerCase()}|${String(c?.email || "").trim().toLowerCase()}`;
+      if (seen.has(dedupeKey)) return;
+      seen.add(dedupeKey);
+      options.push({
+        ...c,
+        key: options.length,
+        name,
+        label: c?.position ? `${name} (${c.position})` : name,
+      });
+    };
+    if (linkedCustomer) {
+      push({
+        name: `${linkedCustomer.contact_first_name || ""} ${linkedCustomer.contact_last_name || ""}`.trim(),
+        email: linkedCustomer.contact_email,
+        phone: linkedCustomer.contact_office_phone || linkedCustomer.contact_cell_phone,
+        ext: linkedCustomer.contact_office_ext,
+        position: linkedCustomer.contact_position,
+      });
+      (linkedCustomer.additional_contacts || []).forEach((ac) => {
+        if (ac?.is_active === false) return;
+        push({
+          name: `${ac?.first_name || ""} ${ac?.last_name || ""}`.trim(),
+          email: ac?.email,
+          phone: ac?.office_phone || ac?.cell_phone,
+          ext: ac?.office_ext,
+          position: ac?.position,
+        });
+      });
+    }
+    (entityContacts || []).forEach((sc) => {
+      if (sc?.is_active === false) return;
+      push({
+        name: sc.display_name || `${sc.first_name || ""} ${sc.last_name || ""}`.trim(),
+        email: sc.email,
+        phone: sc.phone || sc.mobile_phone,
+        ext: sc.phone_ext,
+        position: sc.position,
+      });
+    });
+    return options;
+  })();
+
+  const applySavedLocation = (key) => {
+    const option = locationOptions.find((o) => String(o.key) === key);
+    if (option) patch({ site_address: option.value });
+  };
+
+  const applySavedContact = (key) => {
+    const c = contactOptions.find((o) => String(o.key) === key);
+    if (!c) return;
+    patch({
+      contact_name: c.name,
+      order_contact: c.name,
+      contact_email: c.email || form.contact_email,
+      contact_phone: c.phone || form.contact_phone,
+      office_phone: c.phone || form.office_phone,
+      office_phone_ext: c.ext || form.office_phone_ext,
     });
   };
 
@@ -151,6 +294,21 @@ export default function Step1EstimateDetails({
                 </option>
               ))}
             </select>
+            {contactOptions.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => applySavedContact(e.target.value)}
+                title="Fill contact fields from a saved customer contact"
+                className={pickerCls}
+              >
+                <option value="">Saved…</option>
+                {contactOptions.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </Row>
           <Row label="Contact Email">
             <input
@@ -171,6 +329,29 @@ export default function Step1EstimateDetails({
               onChange={(e) => patch({ office_phone_ext: e.target.value })}
               className="w-[52px] h-[26px] px-2 border border-gray-300 rounded-sm text-[12px]"
             />
+          </Row>
+          <Row label="Site Address">
+            <input
+              value={form.site_address || ""}
+              onChange={(e) => patch({ site_address: e.target.value })}
+              placeholder="Install / job site address"
+              className={inputCls}
+            />
+            {locationOptions.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => applySavedLocation(e.target.value)}
+                title="Fill site address from a saved customer location"
+                className={pickerCls}
+              >
+                <option value="">Saved…</option>
+                {locationOptions.map((l) => (
+                  <option key={l.key} value={l.key}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </Row>
         </div>
 
