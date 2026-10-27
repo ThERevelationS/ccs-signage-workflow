@@ -61,8 +61,13 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
   };
 
   const remove = async (t) => {
-    await deleteFoundationTemplate(t.id);
-    setTemplates((prev) => prev.filter((x) => x.id !== t.id));
+    if (!window.confirm(`Delete template "${t.template_name || "Untitled"}"?`)) return;
+    try {
+      await deleteFoundationTemplate(t.id);
+      setTemplates((prev) => prev.filter((x) => x.id !== t.id));
+    } catch {
+      // leave the template in the list when the delete fails
+    }
   };
 
   return (
