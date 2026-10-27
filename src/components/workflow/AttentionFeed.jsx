@@ -36,6 +36,7 @@ export default function AttentionFeed() {
       const r = await base44.functions.invoke("opportunityWorkspaceAction", {
         session_token: sessionToken,
         action: "attention_feed",
+        today: new Date().toLocaleDateString("en-CA"),
       });
       const d = r?.data || r;
       if (d?.success) setFeed(d);
