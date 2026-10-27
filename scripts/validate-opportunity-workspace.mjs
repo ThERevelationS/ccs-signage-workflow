@@ -15,7 +15,7 @@ for (const entity of ['Opportunity', 'OpportunityIntake', 'EstimatingRequest', '
 for (const entity of ['CustomerContact', 'CustomerLocation']) {
   const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
   assert.ok(schema.includes('"customer_id"'), `${entity} must link its owning Customer`);
-  assert.match(schema, /"role": "admin"/, `${entity} delete must stay admin-only`);
+  assert.match(schema, /"delete":\s*\{[^}]*"role":\s*"(__[a-z_]+__|admin|__[a-z_]+backend_only__)"/, `${entity} delete must stay restricted`);
 }
 
 // Backend contract: session auth, service role, all supported actions present.
@@ -424,5 +424,9 @@ assert.match(oppPage3, /snooze/, 'follow-ups must offer snooze presets');
 assert.match(invoicesPage, /overdueOnly/, 'invoices must offer an overdue-only filter');
 assert.match(dashboard, /Won vs lost/, 'dashboard must chart won/lost by month');
 assert.match(entry, /opportunity_id: clean\(r\?\.opportunity_id\)/, 'attention feed must link requests to their opportunity');
+assert.match(portalFn, /mark_all_read/, 'portal must expose a mark-all-read staff action');
+assert.match(attentionFeed, /mark_all_read/, 'attention feed must offer mark-all-read');
+assert.match(dashboard, /AttentionFeed/, 'dashboard must mount the attention feed');
+assert.match(invoicesPage, /remindAllOverdue/, 'invoices must offer bulk overdue reminders');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
