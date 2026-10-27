@@ -84,20 +84,30 @@ function quoteValidUntil(estimate: any) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function estimatePortalView(estimate: any) {
+async function estimatePortalView(estimate: any) {
   // Customer-facing section price = unit snapshot x customer qty x (1 + adj%).
   // Sections flagged include_in_customer=false roll up into a single bundled line.
   const items = Array.isArray(estimate?.line_items) ? estimate.line_items : [];
   const priceOf = (i: any) => num(i?.total_snapshot) * (num(i?.customer_quantity) || 1) * (1 + num(i?.adjustment_percent) / 100);
   const round2 = (n: number) => Math.round(n * 100) / 100;
+  const SectionAcceptance = base44.asServiceRole.entities.EstimateSectionAcceptance;
+  const quoteVersion = Math.max(1, whole(estimate?.quote_version, 1));
+  const decisionRows = await SectionAcceptance.filter({ estimate_id: clean(estimate?.id), quote_version: quoteVersion }).catch(() => []);
+  const decisionBySection = {};
+  (Array.isArray(decisionRows) ? decisionRows : []).sort((a: any, b: any) => new Date(clean(a?.decided_at)).getTime() - new Date(clean(b?.decided_at)).getTime()).forEach((r: any) => { decisionBySection[clean(r?.section_key)] = clean(r?.decision); });
   const sections = items
     .filter((i: any) => i?.include_in_customer !== false)
-    .map((i: any) => ({
-      name: clean(i?.client_product_name) || clean(i?.project_name) || clean(i?.product_category) || "Item",
-      description: clean(i?.customer_description),
-      quantity: num(i?.customer_quantity) || 1,
-      amount: round2(priceOf(i)),
-    }));
+    .map((i: any) => {
+      const sectionKey = clean(i?.key || i?.id);
+      return {
+        name: clean(i?.client_product_name) || clean(i?.project_name) || clean(i?.product_category) || "Item",
+        description: clean(i?.customer_description),
+        quantity: num(i?.customer_quantity) || 1,
+        amount: round2(priceOf(i)),
+        section_key: sectionKey,
+        decision: decisionBySection[sectionKey] || "",
+      };
+    });
   const bundled = round2(items.filter((i: any) => i?.include_in_customer === false).reduce((s: number, i: any) => s + priceOf(i), 0));
   if (bundled > 0) sections.push({ name: "Additional project scope", description: "", quantity: 1, amount: bundled });
   return {
