@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   BarChart3,
   ChevronRight,
   Clock,
@@ -31,6 +34,17 @@ const invokeAction = async (sessionToken, body) => {
 function MarginCell({ value }) {
   const v = Number(value) || 0;
   return <span className={`font-semibold ${v < 0 ? "text-red-600" : "text-emerald-600"}`}>{usd(v)}</span>;
+}
+
+function MarginPct({ job }) {
+  const contract = Number(job?.contract_value) || 0;
+  if (!contract) return null;
+  const pct = ((Number(job?.margin_vs_materials) || 0) / contract) * 100;
+  return (
+    <span className={`text-[10px] font-semibold ${pct < 0 ? "text-red-500" : "text-emerald-600"}`}>
+      {pct.toFixed(1)}%
+    </span>
+  );
 }
 
 function JobDetail({ sessionToken, workOrderId, onClose }) {
@@ -168,6 +182,12 @@ export default function JobCosting() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openId, setOpenId] = useState("");
+  const [expandedId, setExpandedId] = useState("");
+  const [highlightId, setHighlightId] = useState("");
+  const [marginSort, setMarginSort] = useState(null);
+  const [deepLinked, setDeepLinked] = useState(false);
+
+  const jobParam = useMemo(() => new URLSearchParams(window.location.search).get("job") || "", []);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -189,9 +209,28 @@ export default function JobCosting() {
     return () => clearTimeout(t);
   }, [load]);
 
+  useEffect(() => {
+    if (!jobParam || deepLinked || jobs.length === 0) return;
+    setDeepLinked(true);
+    const hit = jobs.find((j) => j.work_order_id === jobParam);
+    if (!hit) return;
+    if (hit.current_stage === "completed" || hit.sales_status === "lost") setActiveOnly(false);
+    setExpandedId(hit.work_order_id);
+    setHighlightId(hit.work_order_id);
+    window.setTimeout(() => {
+      document.getElementById(`job-${hit.work_order_id}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 150);
+  }, [jobParam, deepLinked, jobs]);
+
   if (!isRegistered) return null;
 
   const visible = activeOnly ? jobs.filter((j) => j.current_stage !== "completed" && j.sales_status !== "lost") : jobs;
+  const sorted = marginSort
+    ? [...visible].sort((a, b) => {
+        const d = (Number(a.margin_vs_materials) || 0) - (Number(b.margin_vs_materials) || 0);
+        return marginSort === "asc" ? d : -d;
+      })
+    : visible;
 
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-6">
@@ -201,7 +240,7 @@ export default function JobCosting() {
             <BarChart3 className="h-5 w-5 text-violet-600" />
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Job Costing</h1>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Estimate vs actual: contract, POs, labor, invoicing per job.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Estimate vs actual: contract, POs, labor, invoicing per job. Click a row to expand.</p>
         </div>
         <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
@@ -249,7 +288,7 @@ export default function JobCosting() {
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && jobs.length === 0 ? (
           <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading job costs…</div>
-        ) : visible.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <div className="py-16 text-center text-slate-500">No jobs to show.</div>
         ) : (
           <table className="w-full min-w-[960px] text-sm">
@@ -259,26 +298,87 @@ export default function JobCosting() {
                 <th className="px-4 py-2.5 text-right">Contract</th><th className="px-4 py-2.5 text-right">PO</th>
                 <th className="px-4 py-2.5 text-right">Stock</th><th className="px-4 py-2.5 text-right">Labor</th><th className="px-4 py-2.5 text-right">CO Δ</th>
                 <th className="px-4 py-2.5 text-right">Invoiced</th><th className="px-4 py-2.5 text-right">Collected</th>
-                <th className="px-4 py-2.5 text-right">Margin</th><th className="px-2 py-2.5" />
+                <th className="px-4 py-2.5 text-right">
+                  <button
+                    type="button"
+                    onClick={() => setMarginSort((s) => (s === "desc" ? "asc" : "desc"))}
+                    className="inline-flex items-center gap-1 font-semibold uppercase text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    title="Sort by margin"
+                  >
+                    Margin
+                    {marginSort === "asc" ? <ArrowUp className="h-3 w-3" /> : marginSort === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                  </button>
+                </th>
+                <th className="px-2 py-2.5" />
               </tr>
             </thead>
             <tbody>
-              {visible.map((j) => (
-                <tr key={j.work_order_id} onClick={() => setOpenId(j.work_order_id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
-                  <td className="max-w-56 truncate px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{j.title || "—"}</td>
-                  <td className="max-w-48 truncate px-4 py-2.5 text-slate-600 dark:text-slate-300">{j.client_name || "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{j.current_stage || j.sales_status || "—"}</td>
-                  <td className="px-4 py-2.5 text-right font-medium">{usd(j.contract_value)}</td>
-                  <td className="px-4 py-2.5 text-right">{usd(j.po_committed)}</td>
-                  <td className="px-4 py-2.5 text-right">{usd(j.stock_issued)}</td>
-                  <td className="px-4 py-2.5 text-right">{hrs(j.labor_hours)}</td>
-                  <td className="px-4 py-2.5 text-right"><MarginCell value={j.co_delta} /></td>
-                  <td className="px-4 py-2.5 text-right">{usd(j.invoiced)}</td>
-                  <td className="px-4 py-2.5 text-right">{usd(j.collected)}</td>
-                  <td className="px-4 py-2.5 text-right"><MarginCell value={j.margin_vs_materials} /></td>
-                  <td className="px-2 py-2.5 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
-                </tr>
-              ))}
+              {sorted.map((j) => {
+                const expanded = expandedId === j.work_order_id;
+                return (
+                  <Fragment key={j.work_order_id}>
+                    <tr
+                      id={`job-${j.work_order_id}`}
+                      onClick={() => setExpandedId(expanded ? "" : j.work_order_id)}
+                      className={`cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${highlightId === j.work_order_id ? "bg-violet-100/70 dark:bg-violet-900/30" : expanded ? "bg-violet-50/70 dark:bg-slate-800/70" : ""}`}
+                    >
+                      <td className="max-w-56 truncate px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{j.title || "—"}</td>
+                      <td className="max-w-48 truncate px-4 py-2.5 text-slate-600 dark:text-slate-300">{j.client_name || "—"}</td>
+                      <td className="px-4 py-2.5 text-xs text-slate-500">{j.current_stage || j.sales_status || "—"}</td>
+                      <td className="px-4 py-2.5 text-right font-medium">{usd(j.contract_value)}</td>
+                      <td className="px-4 py-2.5 text-right">{usd(j.po_committed)}</td>
+                      <td className="px-4 py-2.5 text-right">{usd(j.stock_issued)}</td>
+                      <td className="px-4 py-2.5 text-right">{hrs(j.labor_hours)}</td>
+                      <td className="px-4 py-2.5 text-right"><MarginCell value={j.co_delta} /></td>
+                      <td className="px-4 py-2.5 text-right">{usd(j.invoiced)}</td>
+                      <td className="px-4 py-2.5 text-right">{usd(j.collected)}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <MarginCell value={j.margin_vs_materials} /> <MarginPct job={j} />
+                      </td>
+                      <td className="px-2 py-2.5 text-slate-400"><ChevronRight className={`h-4 w-4 transition-transform ${expanded ? "rotate-90" : ""}`} /></td>
+                    </tr>
+                    {expanded && (
+                      <tr className="border-t border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40">
+                        <td colSpan={12} className="px-4 py-3">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs sm:grid-cols-3">
+                              {[
+                                ["Estimate", usd(j.estimated_amount)],
+                                ["Change orders", usd(j.co_delta)],
+                                ["Contract value", usd(j.contract_value)],
+                                ["PO committed", usd(j.po_committed)],
+                                ["Stock issued", usd(j.stock_issued)],
+                                ["Labor", hrs(j.labor_hours)],
+                                ["Invoiced", usd(j.invoiced)],
+                                ["Collected", usd(j.collected)],
+                                ["Open AR", usd(j.open_ar)],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex items-baseline justify-between gap-3">
+                                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</span>
+                                  <span className="font-medium text-slate-800 dark:text-slate-200">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Margin vs materials</div>
+                                <div><MarginCell value={j.margin_vs_materials} /> <MarginPct job={j} /></div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setOpenId(j.work_order_id); }}
+                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                              >
+                                Full detail
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         )}
