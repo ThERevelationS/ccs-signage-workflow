@@ -22,6 +22,7 @@ import {
   History,
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 
 const STAGES = [
   { key: "new", label: "New" },
