@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Plus, Wand2, MapPin } from "lucide-react";
 import JurisdictionCard from "@/components/permitting/JurisdictionCard";
+import DrainLiveFeed from "@/components/permitting/DrainLiveFeed";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
 import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDialog";
 import {
@@ -383,6 +384,8 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
           </div>
           )}
         </div>
+
+        {isAdmin && <div className="mx-3 mt-3"><DrainLiveFeed /></div>}
 
         {repositoryNotice && (
           <div className={`mx-3 mt-3 rounded-md border p-3 text-xs ${repositoryNotice.tone === "success" ? "border-green-300 bg-green-50 text-green-800" : "border-amber-300 bg-amber-50 text-amber-900"}`}>
