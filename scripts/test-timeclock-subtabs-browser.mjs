@@ -114,7 +114,7 @@ createRoot(document.getElementById("root")).render(views[which]);
       { find: /^@\//, replacement: path.join(root, "src") + "/" },
       { find: /^react\/jsx-dev-runtime$/, replacement: path.join(root, "node_modules/react/jsx-dev-runtime.js") },
     ] },
-    server: { host: "127.0.0.1", port: 0, fs: { allow: [root, scratch] } }, logLevel: "error",
+    server: { host: "127.0.0.1", port: 0, fs: { strict: false, allow: [root, scratch] } }, logLevel: "error",
   });
   await vite.listen();
   const origin = "http://127.0.0.1:" + vite.httpServer.address().port;
