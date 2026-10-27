@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { buildSync } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 // Vite-style extensionless imports can't be resolved by bare Node — bundle first.
 const here = dirname(fileURLToPath(import.meta.url));
 const bundlePath = resolve(here, '.tmp-aio-pricing.mjs');
-execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['esbuild', 'src/components/estimator/aioPricing.js', '--bundle', '--format=esm', `--outfile=${bundlePath}`], {
-  cwd: resolve(here, '..'), stdio: 'pipe',
+buildSync({
+  entryPoints: [resolve(here, '../src/components/estimator/aioPricing.js')],
+  bundle: true, format: 'esm', outfile: bundlePath, logLevel: 'silent',
 });
 const { computePricing, money } = await import(pathToFileURL(bundlePath).href);
 
