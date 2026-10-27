@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 
     let created;
     try {
-      created = await EstimateUser.create({
+      created = await EstimateService.create({
         ...estimate,
         creation_request_key: creationKey,
       });
