@@ -109,7 +109,7 @@ async function auditSingleJurisdiction(base44, jurisdiction, options) {
 
     // Use the accuracy audit agent to compare stored vs fresh data
     const auditConversation = await base44.asServiceRole.agents.createConversation({
-      agent_name: 'jurisdictionAccuracyAudit'
+      agent_name: 'jurisdiction_accuracy_audit'
     });
 
     const auditResponse = await base44.asServiceRole.agents.addMessage(auditConversation, {
