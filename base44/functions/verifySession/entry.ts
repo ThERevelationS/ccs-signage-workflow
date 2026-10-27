@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
         can_import_export: user.can_import_export,
         can_order_export: user.role === 'admin' && user.can_order_export === true,
         can_view_resources: user.can_view_resources,
+        can_approve_quotes: user.can_approve_quotes === true,
         order_form_filter: user.order_form_filter,
         is_full_admin: user.is_full_admin === true,
         admin_permissions: user.admin_permissions && typeof user.admin_permissions === "object" && !Array.isArray(user.admin_permissions) ? user.admin_permissions : {},
