@@ -10,6 +10,7 @@ import {
   GitBranch,
   Inbox,
   Loader2,
+  Package,
   Receipt,
   RefreshCw,
   ShoppingCart,
@@ -130,6 +131,19 @@ export default function AttentionFeed() {
         primary: `${r.request_number || "Request"}${r.opportunity_title ? ` · ${r.opportunity_title}` : ""}`,
         secondary: `${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : " · unassigned"}`,
         href: r.opportunity_id ? `/Opportunities?open=${r.opportunity_id}` : "/Opportunities",
+      })),
+    },
+    {
+      key: "stock",
+      label: "low stock",
+      count: (feed.low_stock || []).length,
+      icon: Package,
+      tone: "text-teal-700 bg-teal-50 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800",
+      items: (feed.low_stock || []).slice(0, 6).map((it) => ({
+        id: it.id,
+        primary: it.label,
+        secondary: `${it.quantity_on_hand} on hand · reorder at ${it.reorder_point}${it.supplier ? ` · ${it.supplier}` : ""}`,
+        href: "/Inventory",
       })),
     },
   ].filter((c) => c.count > 0) : [];
