@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Search } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { Input } from "@/components/ui/input";
 import DragDropList from "@/components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
@@ -23,6 +26,12 @@ export default function Estimating() {
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isReordering, setIsReordering] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(
+    () => new URLSearchParams(window.location.search).get("q") || ""
+  );
+  const listContainerRef = useRef(null);
+  const [cardContainers, setCardContainers] = useState({});
+  const deepLinkedWorkOrderRef = useRef(false);
 
   useEffect(() => {
     document.title = "Estimating - Workflow Manager";
@@ -52,6 +61,69 @@ export default function Estimating() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  // Client-side queue filter seeded from the ?q= URL param.
+  const filteredWorkOrders = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return workOrders;
+    return workOrders.filter((wo) =>
+      (wo.title || "").toLowerCase().includes(query) ||
+      (wo.client_name || "").toLowerCase().includes(query)
+    );
+  }, [workOrders, searchQuery]);
+
+  const isFiltering = searchQuery.trim() !== "";
+
+  const queueStats = useMemo(() => {
+    let total = 0;
+    let hasAmounts = false;
+    for (const wo of filteredWorkOrders) {
+      const amount = Number(wo.estimate_amount);
+      if (wo.estimate_amount != null && wo.estimate_amount !== "" && Number.isFinite(amount)) {
+        hasAmounts = true;
+        total += amount;
+      }
+    }
+    return { count: filteredWorkOrders.length, total, hasAmounts };
+  }, [filteredWorkOrders]);
+
+  // Locate each rendered card so the days-in-queue chip can be portaled onto it.
+  useEffect(() => {
+    const root = listContainerRef.current;
+    const containers = {};
+    if (root) {
+      root.querySelectorAll("[data-rfd-draggable-id]").forEach((el) => {
+        containers[el.getAttribute("data-rfd-draggable-id")] = el.querySelector(".clay-card") || el;
+      });
+    }
+    setCardContainers(containers);
+  }, [filteredWorkOrders, isLoading]);
+
+  // Deep link: /Estimating?wo=<id> opens that work order once it has loaded.
+  useEffect(() => {
+    if (deepLinkedWorkOrderRef.current || workOrders.length === 0) return;
+    const woId = new URLSearchParams(window.location.search).get("wo");
+    if (!woId) return;
+    const found = workOrders.find((wo) => wo.id === woId);
+    if (!found) return;
+    deepLinkedWorkOrderRef.current = true;
+    if (isRegistered) {
+      handleEdit(found);
+    } else {
+      const cardEl = listContainerRef.current?.querySelector(`[data-rfd-draggable-id="${woId}"]`);
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        cardEl.classList.add("ring-4", "ring-blue-400", "rounded-2xl");
+        setTimeout(() => cardEl.classList.remove("ring-4", "ring-blue-400", "rounded-2xl"), 4000);
+      }
+    }
+  }, [workOrders, isRegistered]);
+
+  const getDaysInQueue = (workOrder) => {
+    const startedAt = workOrder?.created_date ? new Date(workOrder.created_date).getTime() : NaN;
+    if (!Number.isFinite(startedAt)) return null;
+    return Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
+  };
 
   // Get task descriptions mapped to Estimating page from localStorage
   const getEstimatingTaskDescriptions = () => {
@@ -256,24 +328,41 @@ export default function Estimating() {
       )}
 
       {!isFullscreen && (
-        <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto mb-4 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Estimating</h1>
             <p className="text-sm text-gray-500">Manage estimation requests and quotes</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {queueStats.count} {queueStats.count === 1 ? "job" : "jobs"}
+              {queueStats.hasAmounts &&
+                ` · $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            </p>
           </div>
-
+          <div className="relative w-64 max-w-full">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search title or client..."
+              className="pl-8 bg-white/80"
+            />
+          </div>
         </div>
       )}
 
       {!isFullscreen && <StageTasksPanel stage="estimating" />}
-      <div className={isFullscreen ? "h-full" : "max-w-7xl mx-auto"}>
+      <div ref={listContainerRef} className={isFullscreen ? "h-full" : "max-w-7xl mx-auto"}>
         {isLoading ? (
           <ListSkeleton rows={5} />
+        ) : isFiltering && filteredWorkOrders.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No work orders match "{searchQuery.trim()}"</p>
+          </div>
         ) : (
           <DragDropList
-            workOrders={workOrders}
+            workOrders={filteredWorkOrders}
             onReorder={handleReorder}
-            reorderDisabled={isReordering}
+            reorderDisabled={isReordering || isFiltering}
             onMove={handleMove}
             onEdit={handleEdit}
             onSplit={handleSplit}
@@ -285,6 +374,25 @@ export default function Estimating() {
           />
         )}
       </div>
+
+      {/* Subtle days-in-queue chip portaled onto the bottom of each rendered card */}
+      {filteredWorkOrders.map((wo) => {
+        const container = cardContainers[wo.id];
+        const daysInQueue = getDaysInQueue(wo);
+        if (!container || daysInQueue == null) return null;
+        return createPortal(
+          <div className="flex justify-end px-4 pb-2 -mt-1 pointer-events-none">
+            <span
+              className="text-[10px] font-medium text-gray-400"
+              title="Days in estimating queue"
+            >
+              {daysInQueue}d in queue
+            </span>
+          </div>,
+          container,
+          wo.id
+        );
+      })}
 
       {showForm && (
         <WorkOrderForm
