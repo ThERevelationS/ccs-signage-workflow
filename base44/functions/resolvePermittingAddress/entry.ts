@@ -278,8 +278,7 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
   }
   try {
     const keys = [["county", LOCATION_SOURCES.county], ["municipality", LOCATION_SOURCES.place], ["state municipality", state === "OH" ? LOCATION_SOURCES.oh_city : LOCATION_SOURCES.ky_city]];
-    const rows = [];
-    for (const [kind, url] of keys) rows.push(await query(kind, url));
+    const rows = await Promise.all(keys.map(([kind, url]) => query(kind, url)));
     const [counties, places, statePlaces] = rows;
     let townships = [], stateTownships = [];
     const county = counties.filter((f) => f.inside);
@@ -293,8 +292,7 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
       if (String(c.attributes.STATE) !== fips || !new RegExp("^" + fips + "[0-9]{5}$").test(String(c.attributes.GEOID)) || norm(c.attributes.NAME) !== norm(sName)) throw Error("Official municipal identities disagree.");
       target = { name: c.attributes.NAME.replace(/\s+(city|village|town)$/i, ""), state, type: "municipality", geoid: c.attributes.GEOID, county: countyName, county_geoid: countyId, geometry: c.geometry, source_url: s.source_url };
     } else if (state === "OH") {
-      townships = await query("township", LOCATION_SOURCES.township);
-      stateTownships = await query("state township", LOCATION_SOURCES.oh_township);
+      [townships, stateTownships] = await Promise.all([query("township", LOCATION_SOURCES.township), query("state township", LOCATION_SOURCES.oh_township)]);
       const t = townships.filter((f) => f.inside && /\btownship$/i.test(f.attributes.NAME)), s = stateTownships.filter((f) => f.inside);
       if (t.length !== 1 || s.length !== 1 || String(t[0].attributes.STATE) !== fips || !new RegExp("^" + countyId + "[0-9]{5}$").test(String(t[0].attributes.GEOID)) || norm(t[0].attributes.NAME) !== norm(s[0].attributes.TOWNSHIP) || norm(countyName) !== norm(s[0].attributes.COUNTY)) throw Error("Township location is missing or conflicting.");
       target = { name: t[0].attributes.NAME, state, type: "township", geoid: t[0].attributes.GEOID, county: countyName, county_geoid: countyId, geometry: t[0].geometry, source_url: s[0].source_url };
