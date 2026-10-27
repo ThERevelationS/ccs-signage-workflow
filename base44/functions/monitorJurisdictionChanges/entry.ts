@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
         // Use the change monitor agent to compare stored vs fresh data
         const monitorConversation = await base44.asServiceRole.agents.createConversation({
-          agent_name: 'jurisdictionChangeMonitor'
+          agent_name: 'jurisdiction_change_monitor'
         });
 
         const monitorResponse = await base44.asServiceRole.agents.addMessage(monitorConversation, {
