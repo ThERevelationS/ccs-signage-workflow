@@ -62,7 +62,7 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
     for (const f of source.fields) {
       if (f.required) {
         const v = formData[f.name];
-        if (v === undefined || v === null || v === "") {
+        if (v === undefined || v === null || String(v).trim() === "") {
           alert(`Please fill in "${f.label}"`);
           return;
         }
@@ -150,7 +150,7 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
               {source.icon && <source.icon className={`w-5 h-5 ${source.color}`} />}
               {editingItem?.id ? "Edit" : "Add"} {source.label}
             </CardTitle>
-            <Button variant="ghost" size="icon" onClick={onCancel}>
+            <Button variant="ghost" size="icon" onClick={onCancel} disabled={saving}>
               <X className="w-4 h-4" />
             </Button>
           </div>
