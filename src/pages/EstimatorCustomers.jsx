@@ -43,7 +43,7 @@ function statementHtml(data) {
   </style></head><body>
   <button onclick="window.print()" style="float:right;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer">Print / Save PDF</button>
   <h1>CCS Signage — Account Statement</h1>
-  <p class="muted">Statement date: ${escHtml(aging.as_of || new Date().toISOString().slice(0, 10))}</p>
+  <p class="muted">Statement date: ${escHtml(aging.as_of || localDateStamp())}</p>
   <h2 style="font-size:14px;margin:24px 0 4px">Bill to</h2><p>${billTo || "—"}</p>
   <h2 style="font-size:14px;margin:20px 0 4px">Open activity</h2>
   <table><tr><th>Invoice</th><th>Issued</th><th>Due</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr>
