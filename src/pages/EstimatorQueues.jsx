@@ -307,6 +307,7 @@ export default function EstimatorQueues() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {expired && <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">EXPIRED</span>}
+                      {!expired && e.status === "sent" && age != null && age >= 7 && <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5" title={`Sent ${age} days ago without a response`}>FOLLOW UP</span>}
                       {expiringSoon && <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">EXPIRES {format(new Date(expires), "MMM d")}</span>}
                       {e.pipeline_sync_pending && <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">SYNC ISSUE</span>}
                       <span className="text-xs font-medium text-gray-500 capitalize">
