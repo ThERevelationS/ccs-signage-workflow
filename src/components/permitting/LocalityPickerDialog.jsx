@@ -241,10 +241,10 @@ function LocalityPickerSession({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="clay-card flex h-[95dvh] w-[96vw] max-w-none flex-col gap-3 overflow-hidden border-none p-4">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-purple-600" />
+      <DialogContent className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
+        <DialogHeader className="border-b bg-white px-5 py-3.5">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>
             Choose your jurisdiction
           </DialogTitle>
         </DialogHeader>
@@ -291,11 +291,11 @@ function LocalityPickerSession({
         )}
 
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[400px_minmax(0,1fr)] lg:overflow-hidden">
           <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
-            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-lg border bg-white p-3"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Saved jurisdiction ready. Confirm office notes below, then use it.":"Location matched as a workflow reference — office review still required."}</p></section>}
-            <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Saved jurisdiction ready. Confirm office notes below, then use it.":"Location matched as a workflow reference — office review still required."}</p></section>}
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
@@ -553,12 +553,12 @@ function LocalityPickerSession({
                 )}
               </>
             )}
-            <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Review and research tools</summary><div className="p-3 pt-0"><SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/></div></details>
-            <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Saved research</summary><div className="p-3 pt-0"><SavedAddressResearch /></div></details>
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review and research tools</summary><div className="p-3 pt-0"><SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/></div></details>
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Saved research</summary><div className="p-3 pt-0"><SavedAddressResearch /></div></details>
           </div>
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
-          <div className="relative min-h-[360px] w-full min-w-0 overflow-hidden rounded-lg border bg-gray-100 lg:min-h-0 lg:self-stretch">
+          <div className="relative min-h-[360px] w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-gray-100 shadow-sm lg:min-h-0 lg:self-stretch">
             <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} />
           </div>
         </div>
