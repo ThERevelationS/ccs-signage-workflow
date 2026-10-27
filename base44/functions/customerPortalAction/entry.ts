@@ -59,15 +59,15 @@ function invoicePortalView(invoice: any) {
     issue_date: clean(invoice?.issue_date),
     due_date: clean(invoice?.due_date),
     customer_display_name: clean(invoice?.customer_display_name),
-    description: clean(invoice?.description),
+    description: clean(invoice?.notes || invoice?.description),
     line_items: items.map((item: any) => ({
       description: clean(item?.description),
       quantity: num(item?.quantity),
       unit_price: num(item?.unit_price),
-      amount: num(item?.amount),
+      amount: num(item?.line_total ?? item?.amount),
     })),
     subtotal: num(invoice?.subtotal),
-    tax: num(invoice?.tax),
+    tax: num(invoice?.tax_amount ?? invoice?.tax),
     total: num(invoice?.total),
     amount_paid: num(invoice?.amount_paid),
     balance_due: num(invoice?.balance_due),
@@ -119,13 +119,13 @@ function estimatePortalView(estimate: any) {
 }
 
 function jobPortalView(order: any) {
-  const tasks = Array.isArray(order?.tasks) ? order.tasks : [];
+  const tasks = Array.isArray(order?.notes) ? order.notes : [];
   const done = tasks.filter((t: any) => t?.completed === true || clean(t?.status) === "completed").length;
   return {
     id: clean(order?.id),
-    work_order_number: clean(order?.work_order_number),
+    work_order_number: clean(order?.est_inv_at || order?.work_order_number),
     title: clean(order?.title),
-    status: clean(order?.status),
+    status: order?.deleted === true ? "deleted" : order?.completed === true ? "completed" : clean(order?.current_stage || order?.status),
     due_date: clean(order?.due_date),
     install_date: clean(order?.project_install_date),
     install_location: clean(order?.install_location),
@@ -254,9 +254,9 @@ Deno.serve(async (req) => {
           invoice: invoicePortalView(invoice),
           payments: (Array.isArray(payments) ? payments : [])
             .filter((p: any) => clean(p?.status) !== "void")
-            .sort((a: any, b: any) => clean(b?.paid_at || b?.created_date).localeCompare(clean(a?.paid_at || a?.created_date)))
+            .sort((a: any, b: any) => clean(b?.paid_date || b?.paid_at || b?.created_date).localeCompare(clean(a?.paid_date || a?.paid_at || a?.created_date)))
             .map((p: any) => ({
-              paid_at: clean(p?.paid_at || p?.created_date).slice(0, 10),
+              paid_at: clean(p?.paid_date || p?.paid_at || p?.created_date).slice(0, 10),
               amount: num(p?.amount),
               method: clean(p?.method),
             })),
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
         if (clean(p?.status) === "void") continue;
         const key = clean(p?.invoice_id);
         if (!paidByInvoice.has(key)) paidByInvoice.set(key, []);
-        paidByInvoice.get(key).push({ paid_at: clean(p?.paid_at || p?.created_date).slice(0, 10), amount: num(p?.amount), method: clean(p?.method) });
+        paidByInvoice.get(key).push({ paid_at: clean(p?.paid_date || p?.paid_at || p?.created_date).slice(0, 10), amount: num(p?.amount), method: clean(p?.method) });
       }
       return Response.json({
         success: true,
@@ -291,14 +291,13 @@ Deno.serve(async (req) => {
         announcements,
         customer: {
           name: clean(customer?.name) || clean(customer?.company_name) || clean(link.label) || "Customer",
-          contact_name: clean(customer?.contact_name),
-          email: clean(customer?.email),
+          contact_name: clean(customer?.contact_name) || [customer?.contact_first_name, customer?.contact_last_name].filter(Boolean).join(" "),
+          email: clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_contact_email),
         },
         estimates: (Array.isArray(estimates) ? estimates : [])
           .filter((e: any) => ["sent", "approved"].includes(clean(e?.status)))
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
-          .map(estimatePortalView),
-        jobs: (Array.isArray(orders) ? orders : [])
+          .map(estimatePortalView),        jobs: (Array.isArray(orders) ? orders : [])
           .filter((o: any) => o?.deleted !== true)
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
           .slice(0, 50)
@@ -516,7 +515,7 @@ Deno.serve(async (req) => {
       const order = await WorkOrder.get(workOrderId).catch(() => null);
       if (!order?.id || clean(order.customer_id) !== customerId) throw bad("Job not found.", 404);
       if (order.deleted === true || ["cancelled", "completed"].includes(clean(order.current_stage))) throw bad("This job is no longer active.", 409);
-      const woLabel = clean(order.work_order_number) || clean(order.title) || "Job";
+      const woLabel = clean(order.est_inv_at || order.work_order_number) || clean(order.title) || "Job";
 
       // Draft a proposed change order so the request lands in the CO queue.
       const coRows = await ChangeOrder.filter({}).catch(() => []);
@@ -597,8 +596,7 @@ Deno.serve(async (req) => {
           label: "Portal staff mark-all-read",
         }).catch(() => null);
         if (saved) marked += 1;
-      }
-      return Response.json({ success: true, action, marked });
+      }      return Response.json({ success: true, action, marked });
     }
 
     if (action === "create_link") {
@@ -764,7 +762,7 @@ Deno.serve(async (req) => {
       if (!customerId) throw bad("customer_id is required.");
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const to = clean(body?.email) || clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_email);
+      const to = clean(body?.email) || clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_contact_email) || clean(customer.billing_email);
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
       const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
       if (!/^https?:\/\//.test(portalBase)) throw bad("portal_base is required.");
@@ -796,7 +794,7 @@ Deno.serve(async (req) => {
       const portalToken = linkIsUsable(link) ? clean(link.token) : "";
       if (!portalToken) throw bad("A usable portal link could not be created.");
       const url = `${portalBase}/customerportal?token=${encodeURIComponent(portalToken)}`;
-      const customerName = clean(customer.contact_name) || clean(customer.name) || clean(customer.company_name) || "there";
+      const customerName = [clean(customer.contact_first_name), clean(customer.contact_last_name)].filter(Boolean).join(" ") || clean(customer.contact_name) || clean(customer.name) || clean(customer.company_name) || "there";
       const companyName = clean(body?.company_name) || "CCS Signage";
       const subject = `${companyName} — your customer portal link`;
       const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
