@@ -129,6 +129,7 @@ async function sessionSwitchScenario() {
   };
   const TimeClockPage = loadComponent('../src/pages/TimeClock.jsx', {
     '@/api/base44Client': { base44: base44Mock },
+    '@/components/staff/staffEntities': { staffEntities: new Proxy({}, { get: (_t, name) => ({ __name: name }) }) },
     'lucide-react': iconModule,
     'date-fns': dateFnsMock,
     '@/components/auth/EmailGate': {
@@ -211,6 +212,7 @@ async function overlappingLoadsScenario() {
         functions: { invoke: (fn, body) => Promise.resolve({ success: true, user: { email: body?.target_email }, entry: null, requests: [] }) },
       },
     },
+    '@/components/staff/staffEntities': { staffEntities: new Proxy({}, { get: (_t, name) => ({ __name: name }) }) },
     'lucide-react': iconModule,
     'date-fns': dateFnsMock,
     '@/components/auth/EmailGate': {
