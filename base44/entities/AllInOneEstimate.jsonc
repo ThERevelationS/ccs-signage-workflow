@@ -509,6 +509,31 @@
       "default": 0,
       "description": "Customer-facing quote total after the full pricing waterfall (adjustments, discount, contingency, fees, tax)."
     },
+    "internal_approval": {
+      "type": "object",
+      "description": "Manager sign-off recorded when the quote total exceeds the internal approval threshold (GlobalSettings key quote_approval_threshold). Written by the approve_quote action before a quote can be sent.",
+      "properties": {
+        "approved_by_user_id": {
+          "type": "string"
+        },
+        "approved_by_email": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "threshold_at_approval": {
+          "type": "number"
+        },
+        "quote_total_at_approval": {
+          "type": "number"
+        },
+        "quote_version": {
+          "type": "number"
+        }
+      }
+    },
     "notes": {
       "type": "string"
     },
@@ -542,9 +567,25 @@
     "project_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__allinoneestimate_backend_only__" } },
-    "read": { "user_condition": { "role": "__allinoneestimate_backend_only__" } },
-    "update": { "user_condition": { "role": "__allinoneestimate_backend_only__" } },
-    "delete": { "user_condition": { "role": "__allinoneestimate_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    }
   }
 }
