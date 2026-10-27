@@ -14,6 +14,7 @@ import {
   Receipt,
   RefreshCw,
   ShoppingCart,
+  Wrench,
 } from "lucide-react";
 
 const money = (n) => `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -144,6 +145,19 @@ export default function AttentionFeed() {
         primary: it.label,
         secondary: `${it.quantity_on_hand} on hand · reorder at ${it.reorder_point}${it.supplier ? ` · ${it.supplier}` : ""}`,
         href: "/Inventory",
+      })),
+    },
+    {
+      key: "jobs",
+      label: "overdue jobs",
+      count: (feed.overdue_jobs || []).length,
+      icon: Wrench,
+      tone: "text-rose-700 bg-rose-50 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800",
+      items: (feed.overdue_jobs || []).slice(0, 6).map((w) => ({
+        id: w.id,
+        primary: `${w.title || "Work order"}${w.client_name ? ` · ${w.client_name}` : ""}`,
+        secondary: `${w.current_stage || "job"} · due ${w.due_date}`,
+        href: `/MainWorkflow?wo=${w.id}`,
       })),
     },
   ].filter((c) => c.count > 0) : [];
