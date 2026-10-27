@@ -18,6 +18,7 @@ export default function DrainLiveFeed() {
   useEffect(() => {
     let stop = false;
     const tick = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
         const [inFlight, recent, remaining, total] = await Promise.all([
           Q.filter({ status: "source_discovery" }, "-updated_date", 25, 0),
