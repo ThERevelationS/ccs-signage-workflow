@@ -448,3 +448,7 @@ assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive
 const layoutShell = readFileSync('src/Layout.jsx', 'utf8');
 assert.match(layoutShell, /AttentionBell/, 'shell must mount the attention bell');
 assert.ok(existsSync('src/components/workflow/AttentionBell.jsx'), 'attention bell component must exist');
+const queuesPage = readFileSync('src/pages/EstimatorQueues.jsx', 'utf8');
+assert.match(queuesPage, /expiryOf/, 'estimate queues must detect quote expiry');
+assert.match(queuesPage, /buckets/, 'estimate queues must show per-status counts');
+assert.match(queuesPage, /Search/, 'estimate queues must offer search');
