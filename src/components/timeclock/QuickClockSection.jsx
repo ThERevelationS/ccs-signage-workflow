@@ -1572,7 +1572,47 @@ export default function QuickClockSection({
           </div>
         )}
 
-        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && (
+        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && selectedUser && activeEntry && (
+          <div className="flex flex-col items-center gap-4 w-64">
+            <div className="w-full rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <p className="text-sm font-bold text-emerald-900">You're clocked in</p>
+              </div>
+              <p className="mt-1.5 text-sm text-emerald-800/90">
+                {selectedUser.full_name || selectedUser.email}
+              </p>
+              <p className="text-xs text-emerald-700/80">
+                Since {format(new Date(activeEntry.clock_in), "h:mm a")}
+                {activeEntry.approval_status === "needs_review" && " - pending manager review"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { clockOutDismissedRef.current = false; setShowClockOut(true); }}
+              disabled={isLoading}
+              className="w-64 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-900/25 transition-[transform,box-shadow] duration-200 hover:shadow-xl motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/60"
+            >
+              <Square className="w-4 h-4 fill-current" />
+              Clock Out
+            </button>
+            <button
+              type="button"
+              onClick={resetState}
+              disabled={isLoading}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded"
+            >
+              Not you? Identify a different employee
+            </button>
+          </div>
+        )}
+
+        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && !(selectedUser && activeEntry) && (
+
+        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && !(selectedUser && activeEntry) && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
               Tap the button, then identify with face recognition, a secure QR badge, or username/password.
