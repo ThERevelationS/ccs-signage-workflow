@@ -1,0 +1,82 @@
+{
+  "name": "EstimateSectionAcceptance",
+  "type": "object",
+  "description": "Immutable audit record that a customer accepted or rejected ONE section of an issued customer quote version. Rows are append-only; the current decision for a section is its latest row. Whole-quote acceptance continues to live on EstimateAcceptance.",
+  "properties": {
+    "estimate_id": {
+      "type": "string"
+    },
+    "quote_issue_key": {
+      "type": "string",
+      "description": "Stable identity shared with the issued quote version, matching EstimateAcceptance/EstimateQuoteDelivery."
+    },
+    "quote_version": {
+      "type": "number",
+      "minimum": 1
+    },
+    "section_key": {
+      "type": "string",
+      "description": "Stable identity of the accepted/rejected section \u2014 the line_item key or module source-project id on the estimate."
+    },
+    "section_label": {
+      "type": "string",
+      "description": "Denormalized section display name at decision time."
+    },
+    "section_module": {
+      "type": "string",
+      "description": "Module key of the section (channel_letter, vinyl, foundation, etc.)."
+    },
+    "section_quote_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Customer quote total for just this section at decision time."
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "rejected",
+        "question"
+      ]
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional customer note attached to the decision (e.g. a rejection reason or change request)."
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decided_by_name": {
+      "type": "string"
+    },
+    "decided_by_email": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "portal",
+        "verbal",
+        "written",
+        "other"
+      ],
+      "description": "How the decision was recorded."
+    },
+    "delivery_id": {
+      "type": "string",
+      "description": "Optional EstimateQuoteDelivery the customer responded to."
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Client-supplied idempotency key \u2014 retries must reuse an identical key to avoid duplicate decisions."
+    }
+  },
+  "required": [
+    "estimate_id",
+    "quote_version",
+    "section_key",
+    "decision",
+    "decided_at"
+  ]
+}
