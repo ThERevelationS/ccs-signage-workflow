@@ -43,12 +43,14 @@ import {
   Send,
   Camera,
   Scan,
+  ShieldCheck,
   Clock,
   ShieldAlert
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
+import AdminAccessDialog from "@/components/admin/AdminAccessDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
@@ -121,6 +123,7 @@ export default function UserManagement() {
   const onboardingResendInFlight = useRef(false);
   const onboardingResendOwner = useRef(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
+  const [accessUser, setAccessUser] = useState(null);
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
@@ -1829,6 +1832,17 @@ export default function UserManagement() {
                       <Camera className="w-4 h-4 text-gray-400" />
                     )}
                   </Button>
+                  {user.role === 'admin' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAccessUser(user)}
+                      className="h-8 w-8"
+                      title="Admin page access"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -2624,6 +2638,17 @@ export default function UserManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Admin Access Dialog */}
+      <AdminAccessDialog
+        user={accessUser}
+        open={!!accessUser}
+        onOpenChange={(open) => { if (!open) setAccessUser(null); }}
+        sessionToken={sessionToken}
+        onSaved={(saved) => {
+          if (saved?.id) setUsers((current) => current.map((row) => (row.id === saved.id ? { ...row, ...saved } : row)));
+        }}
+      />
 
       {/* Face Enrollment Dialog */}
       <FaceEnrollmentDialog
