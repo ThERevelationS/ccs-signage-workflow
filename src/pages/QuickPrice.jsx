@@ -68,7 +68,7 @@ export default function QuickPrice() {
 
   const reuseEntry = (entry) => {
     if (ESTIMATOR_MODULES.some((m) => m.key === entry.module_key)) {
-      setModuleKey(entry.module_key);
+      pickModule(entry.module_key);
     }
     setProjectName(`${entry.project_name || ""} copy`.trim());
     setClientName(entry.client_name || "");
