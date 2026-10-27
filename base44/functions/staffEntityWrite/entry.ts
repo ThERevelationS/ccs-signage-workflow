@@ -8,9 +8,11 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 // rejected at any depth so the payload can only ever describe a plain record.
 const WRITE_OPS: Record<string, Set<string>> = {
   AllInOneEstimate: new Set(['updateMany', 'delete']),
-  BuilderPart: new Set(['create']),
-  BuilderProduct: new Set(['create']),
-  CustomerLocation: new Set(['create']),
+  BuilderPart: new Set(['create', 'updateMany']),
+  BuilderPartGroup: new Set(['updateMany']),
+  BuilderProduct: new Set(['create', 'updateMany']),
+  Customer: new Set(['updateMany']),
+  CustomerLocation: new Set(['create', 'updateMany']),
   GeneralTask: new Set(['create', 'update']),
   ImportJob: new Set(['create', 'update']),
   JurisdictionProfile: new Set(['create', 'update']),
