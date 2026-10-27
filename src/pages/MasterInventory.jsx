@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Boxes, Upload, ShieldAlert } from "lucide-react";
+import { Plus, Search, Boxes, Upload, ShieldAlert, Download } from "lucide-react";
 
 import { INVENTORY_SOURCES, SOURCE_BY_KEY } from "@/components/masterInventory/inventorySources";
 import InventoryFormModal from "@/components/masterInventory/InventoryFormModal";
@@ -24,7 +24,7 @@ export default function MasterInventory() {
   const [activeKey, setActiveKey] = useState(INVENTORY_SOURCES[0].key);
   const [itemsBySource, setItemsBySource] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showImporter, setShowImporter] = useState(false);
@@ -84,6 +84,24 @@ export default function MasterInventory() {
       )
     );
   }, [items, search]);
+
+  const exportCsvFor = (source) => {
+    const cols = (source?.fields || []).filter((f) => f?.table && f?.name);
+    if (!cols.length || !filteredItems.length) return;
+    const esc = (v) => {
+      const s = v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map((c) => esc(c.label || c.name)).join(",");
+    const rows = filteredItems.map((it) => cols.map((c) => esc(it[c.name])).join(","));
+    const blob = new Blob([`${header}\n${rows.join("\n")}`], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `inventory-${source.key}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleEdit = (item) => {
     if (!isAdmin) return;
@@ -249,6 +267,17 @@ export default function MasterInventory() {
                             className="pl-9"
                           />
                         </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => exportCsvFor(s)}
+                          disabled={!filteredItems.length}
+                          className="h-9 whitespace-nowrap"
+                          title="Export visible rows to CSV"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Export
+                        </Button>
                         {isAdmin && (
                           <Button
                             onClick={handleAdd}
