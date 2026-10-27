@@ -12,6 +12,7 @@ import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
 import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import SavedViews from "@/components/workflow/SavedViews";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
@@ -81,6 +82,7 @@ export default function Permitting() {
   const [queueFilter, setQueueFilter] = useState("all");
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [issuesOnly, setIssuesOnly] = useState(false);
+  const [viewName, setViewName] = useState("");
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
@@ -1009,7 +1011,7 @@ export default function Permitting() {
                 <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  onChange={e => { setViewName(""); setSearchTerm(e.target.value); }}
                   placeholder="Search permits & jobs..."
                   aria-label="Search permitting jobs"
                   className="h-8 w-full pl-8 pr-8 text-sm"
@@ -1030,7 +1032,7 @@ export default function Permitting() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setAssignedToMeOnly((value) => !value)}
+                onClick={() => { setViewName(""); setAssignedToMeOnly((value) => !value); }}
                 disabled={!currentUser?.full_name && !currentUser?.email}
                 className={`gap-1 ${assignedToMeOnly ? "border-purple-400 bg-purple-50 text-purple-800" : ""}`}
                 title="Show only permitting jobs assigned to you"
@@ -1041,7 +1043,7 @@ export default function Permitting() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setIssuesOnly((value) => !value)}
+                onClick={() => { setViewName(""); setIssuesOnly((value) => !value); }}
                 className={`gap-1 ${issuesOnly ? "border-amber-400 bg-amber-50 text-amber-900" : ""}`}
                 title="Show only permitting jobs with proven setup, ownership, follow-up, or routing issues"
               >
@@ -1058,6 +1060,19 @@ export default function Permitting() {
               >
                 {allVisibleGroupsCollapsed ? <ChevronsDown className="w-4 h-4" /> : <ChevronsUp className="w-4 h-4" />}
                 {allVisibleGroupsCollapsed ? "Expand jobs" : "Collapse jobs"}
+              </Button>
+              <SavedViews
+                storageKey="views.permitting"
+                getState={() => ({ searchTerm, queueFilter, assignedToMeOnly, issuesOnly })}
+                activeName={viewName}
+                onApply={(s, name) => {
+                  setSearchTerm(s.searchTerm || "");
+                  setQueueFilter(s.queueFilter || "all");
+                  setAssignedToMeOnly(s.assignedToMeOnly === true);
+                  setIssuesOnly(s.issuesOnly === true);
+                  setViewName(name || "");
+                }}
+              />
               </Button>
               <Button
                 type="button"
