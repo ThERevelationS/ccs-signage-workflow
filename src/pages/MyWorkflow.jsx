@@ -122,8 +122,13 @@ export default function MyWorkflow() {
       ]);
 
       const userName = currentUser?.full_name || currentUser?.email;
-      const userEmail = (currentUser?.email || "").toLowerCase();
-      const userFirstName = String(userName || "").split(" ")[0];
+      // Any spelling of "me": full email, full name, first name, email local part.
+      const userKeys = new Set([
+        (currentUser?.email || "").trim().toLowerCase(),
+        String(currentUser?.full_name || "").trim().toLowerCase(),
+        String(currentUser?.full_name || "").trim().toLowerCase().split(" ")[0],
+        (currentUser?.email || "").trim().toLowerCase().split("@")[0],
+      ].filter(Boolean));
 
       const isAssignedTo = (assignedTo) => {
         const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
@@ -131,16 +136,11 @@ export default function MyWorkflow() {
       };
 
       // A job assigned to a person is treated like a task: the job-level
-      // assignee (email) and the current-task assignee (Smartsheet name) both
-      // place the work order on My Workflow.
-      const isJobAssignedToMe = (wo) => {
-        const jobAssignee = String(wo.assigned_to || "").trim().toLowerCase();
-        const taskAssignee = String(wo.current_task_assigned_to || "").trim();
-        return (userEmail !== "" && jobAssignee === userEmail)
-          || (jobAssignee !== "" && (jobAssignee === userName.toLowerCase() || jobAssignee === userFirstName.toLowerCase()))
-          || taskAssignee === userName
-          || (userFirstName !== "" && taskAssignee === userFirstName);
-      };
+      // assignee (email or name) and the current-task assignee (Smartsheet
+      // name) both place the work order on My Workflow.
+      const isJobAssignedToMe = (wo) =>
+        userKeys.has(String(wo.assigned_to || "").trim().toLowerCase())
+        || userKeys.has(String(wo.current_task_assigned_to || "").trim().toLowerCase());
 
       // Find work orders assigned to the user or where user has tasks assigned
       // to them (in notes array OR sip_checklist)
@@ -470,22 +470,20 @@ export default function MyWorkflow() {
 
   const getMyTasksForWorkOrder = (wo) => {
     const userName = currentUser?.full_name || currentUser?.email;
-    const userEmail = (currentUser?.email || "").toLowerCase();
-    const userFirstName = String(userName || "").split(" ")[0];
+    const userKeys = new Set([
+      (currentUser?.email || "").trim().toLowerCase(),
+      String(currentUser?.full_name || "").trim().toLowerCase(),
+      String(currentUser?.full_name || "").trim().toLowerCase().split(" ")[0],
+      (currentUser?.email || "").trim().toLowerCase().split("@")[0],
+    ].filter(Boolean));
     const myTasks = [];
 
     // A job assigned to the user counts like a task of its own.
-    if (!wo._isGeneral) {
-      const jobAssignee = String(wo.assigned_to || "").trim().toLowerCase();
-      const taskAssignee = String(wo.current_task_assigned_to || "").trim();
-      if (
-        (userEmail !== "" && jobAssignee === userEmail)
-        || (jobAssignee !== "" && (jobAssignee === userName.toLowerCase() || jobAssignee === userFirstName.toLowerCase()))
-        || taskAssignee === userName
-        || (userFirstName !== "" && taskAssignee === userFirstName)
-      ) {
-        myTasks.push({ type: 'job_assignment', workOrderId: wo.id });
-      }
+    if (!wo._isGeneral && (
+      userKeys.has(String(wo.assigned_to || "").trim().toLowerCase())
+      || userKeys.has(String(wo.current_task_assigned_to || "").trim().toLowerCase())
+    )) {
+      myTasks.push({ type: 'job_assignment', workOrderId: wo.id });
     }
 
     // Check traditional notes array
