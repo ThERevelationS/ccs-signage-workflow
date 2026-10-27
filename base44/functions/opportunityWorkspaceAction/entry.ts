@@ -223,14 +223,14 @@ Deno.serve(async (req) => {
       const today = text(body?.today) || new Date().toISOString().slice(0, 10);
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
-        Invoice.filter({}, "-updated_date", 500).catch(() => []),
-        PurchaseOrder.filter({}, "-updated_date", 500).catch(() => []),
+        Invoice.filter({ status: "sent" }, "-updated_date", 200).catch(() => []),
+        PurchaseOrder.filter({ status: "sent" }, "-updated_date", 200).catch(() => []),
         ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(() => []),
-        Opportunity.filter({}, "-last_activity_at", 500).catch(() => []),
+        Opportunity.filter({}, "-last_activity_at", 300).catch(() => []),
         EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
-        Inventory.filter({}, "-updated_date", 500).catch(() => []),
-        WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
-        PermitLineItem.filter({}, "-updated_date", 500).catch(() => []),
+        Inventory.filter({}, "-updated_date", 300).catch(() => []),
+        WorkOrder.filter({}, "-updated_date", 300).catch(() => []),
+        PermitLineItem.filter({}, "-updated_date", 300).catch(() => []),
         Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
