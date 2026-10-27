@@ -124,6 +124,7 @@ async function estimatePortalView(estimate: any) {
     quote_valid_until: quoteValidUntil(estimate),
     updated_date: clean(estimate?.updated_date),
     can_respond: clean(estimate?.status) === "sent",
+    section_acceptance_mode: estimate?.section_acceptance_mode === true,
     sections,
   };
 }
