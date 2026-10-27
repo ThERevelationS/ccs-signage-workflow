@@ -429,19 +429,24 @@ export default function WorkOrderCard({
       sub_tasks: []
     };
 
-    const saved = await mutateWorkOrderArrayField({
-      workOrderId: workOrder.id,
-      field: "notes",
-      label: "Work Order tasks",
-      mutate: (currentNotes) => currentNotes.some((note) => note?.id === newNote.id)
-        ? currentNotes
-        : [...currentNotes, newNote],
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    await ActivityActions.taskAdded(workOrder, newNoteText);
-    setNewNoteText("");
-    setIsAddingNote(false);
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateWorkOrderArrayField({
+        workOrderId: workOrder.id,
+        field: "notes",
+        label: "Work Order tasks",
+        mutate: (currentNotes) => currentNotes.some((note) => note?.id === newNote.id)
+          ? currentNotes
+          : [...currentNotes, newNote],
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      await ActivityActions.taskAdded(workOrder, newNoteText);
+      setNewNoteText("");
+      setIsAddingNote(false);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      alert('Failed to add note: ' + (error?.message || error));
+    }
   };
 
   const handleUseTemplate = async (template) => {
@@ -465,18 +470,23 @@ export default function WorkOrderCard({
         };
       })
     }));
-    const saved = await mutateWorkOrderArrayField({
-      workOrderId: workOrder.id,
-      field: "notes",
-      label: "Work Order template tasks",
-      mutate: (currentNotes) => {
-        const existingIds = new Set(currentNotes.map((note) => note?.id).filter(Boolean));
-        const missing = newTasks.filter((task) => !existingIds.has(task.id));
-        return missing.length > 0 ? [...currentNotes, ...missing] : currentNotes;
-      },
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateWorkOrderArrayField({
+        workOrderId: workOrder.id,
+        field: "notes",
+        label: "Work Order template tasks",
+        mutate: (currentNotes) => {
+          const existingIds = new Set(currentNotes.map((note) => note?.id).filter(Boolean));
+          const missing = newTasks.filter((task) => !existingIds.has(task.id));
+          return missing.length > 0 ? [...currentNotes, ...missing] : currentNotes;
+        },
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to apply template:', error);
+      alert('Failed to apply template: ' + (error?.message || error));
+    }
   };
 
   const handleAddSubTask = async (taskIndex) => {
