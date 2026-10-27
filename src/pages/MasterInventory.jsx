@@ -21,7 +21,16 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
-  const [activeKey, setActiveKey] = useState(INVENTORY_SOURCES[0].key);
+  const [activeKey, setActiveKey] = useState(() => {
+    try { const k = new URLSearchParams(window.location.search).get("src"); return k && INVENTORY_SOURCES.some((s) => s.key === k) ? k : INVENTORY_SOURCES[0].key; } catch { return INVENTORY_SOURCES[0].key; }
+  });
+  const writeParam = (key, value, defaultValue = "") => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== defaultValue) next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [itemsBySource, setItemsBySource] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
@@ -217,7 +226,7 @@ export default function MasterInventory() {
         </div>
 
         {/* Source tabs */}
-        <Tabs value={activeKey} onValueChange={setActiveKey}>
+        <Tabs value={activeKey} onValueChange={(v) => { setActiveKey(v); writeParam("src", v, INVENTORY_SOURCES[0].key); }}>
           <div className="bg-white rounded-xl shadow-sm border p-2 mb-4 overflow-x-auto">
             <TabsList className="bg-transparent gap-1 flex-wrap h-auto">
               {INVENTORY_SOURCES.map((s) => {
