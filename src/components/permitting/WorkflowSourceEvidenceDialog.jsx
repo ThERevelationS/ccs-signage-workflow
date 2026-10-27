@@ -7,6 +7,7 @@ import { safeExternalHttpUrl } from '@/utils/safeExternalUrl';
 import { citationSourceId, matchWorkflowSource, WORKFLOW_SOURCE_FIELDS } from './workflowSourceEvidence.mjs';
 import SourceTextEvidenceBrowser from './SourceTextEvidenceBrowser';
 import PDFViewer from './PDFViewer';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const recorded = value => value === undefined || value === null || value === '' ? 'Not recorded' : String(value);
 const metadata = [
@@ -39,7 +40,7 @@ export default function WorkflowSourceEvidenceDialog({ citation, draftRow, trigg
     if (!sourceId || !jurisdictionId) return;
     let active = true;
     setLoading(true); setResult(null); setError(''); setPreview(false);
-    base44.entities.PermittingSourceDocument.filter({ id: sourceId, jurisdiction_id: jurisdictionId }, { limit: 1, fields: WORKFLOW_SOURCE_FIELDS })
+    staffEntities.PermittingSourceDocument.filter({ id: sourceId, jurisdiction_id: jurisdictionId }, { limit: 1, fields: WORKFLOW_SOURCE_FIELDS })
       .then(response => {
         const rows = Array.isArray(response) ? response : response?.items;
         if (!Array.isArray(rows) || rows.length !== 1) throw new Error('Missing or ambiguous exact source');

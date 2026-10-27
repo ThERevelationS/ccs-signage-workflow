@@ -15,6 +15,7 @@ import {
   deleteCalendarEventIfUnchanged,
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const EVENT_TYPES = [
   { value: "company", label: "Company Event", color: "#7C3AED" },
@@ -59,7 +60,7 @@ export default function CalendarEventForm({ isOpen, onClose, onSaved, event, def
   const [allUsers, setAllUsers] = useState([]);
 
   useEffect(() => {
-    base44.entities.AuthorizedEmail.list().then(setAllUsers).catch(() => {});
+    staffEntities.AuthorizedEmail.list().then(setAllUsers).catch(() => {});
   }, []);
 
   useEffect(() => {

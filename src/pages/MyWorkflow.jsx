@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList } from "lucide-react";
+import { User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -23,8 +25,9 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
@@ -545,8 +548,12 @@ export default function MyWorkflow() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="p-6">
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <ListSkeleton rows={8} />
       </div>
     );
   }

@@ -48,10 +48,11 @@ import {
   classifyTimeClockLoginStatus,
 } from "@/components/timeclock/timeClockSessionSecurity";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeEntry = base44.entities.TimeEntry;
-const TimeOffRequest = base44.entities.TimeOffRequest;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const TimeEntry = staffEntities.TimeEntry;
+const TimeOffRequest = staffEntities.TimeOffRequest;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();

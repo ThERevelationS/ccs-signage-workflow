@@ -24,6 +24,7 @@ import {
   GraduationCap,
   Shirt
 } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 const HOODIE_SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
@@ -134,7 +135,7 @@ export default function UserHRDataForm({ userData, onUpdate, onSave, section, is
         if (!ownsSave() || result === false) return;
       } else {
         await updateAuthorizedEmailIfUnchanged({
-          entity: base44.entities.AuthorizedEmail,
+          entity: staffEntities.AuthorizedEmail,
           record: userData,
           nextFields: { hr_data: hrData },
           exactVersion: false,

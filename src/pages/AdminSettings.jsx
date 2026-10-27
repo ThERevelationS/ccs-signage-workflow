@@ -114,6 +114,7 @@ import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapsho
 import { AutomationReadTimeoutError, withAutomationReadDeadline } from "@/components/admin/automationReadDeadline";
 import { reviewAutomationOperation } from "@/components/admin/automationOperationReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -876,7 +877,7 @@ export default function AdminSettings() {
 
   const loadAllUsers = async () => {
     const users = await loadAllEntityRows({
-      entity: base44.entities.AuthorizedEmail,
+      entity: staffEntities.AuthorizedEmail,
       sort: null,
       label: "Admin Settings authorized users",
     });

@@ -7,6 +7,7 @@ import { money } from "@/components/estimator/aioPricing";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
   const [draft, setDraft] = useState(null);
@@ -40,7 +41,7 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      const live = await base44.entities.PartTemplate.get(template.id);
+      const live = await staffEntities.PartTemplate.get(template.id);
       if (!live) throw new Error("This Saved Part no longer exists. Reload the Part Library before editing it again.");
       const liveCanEdit = user?.role === "admin" || !live.created_by_id || live.created_by_id === user?.id;
       if (!liveCanEdit) throw new Error("You no longer have permission to edit this Saved Part.");
@@ -73,7 +74,7 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
         ].flat(3).filter(Boolean).join(" ").toLowerCase(),
       };
       const refreshed = await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.PartTemplate,
+        entity: staffEntities.PartTemplate,
         id: template.id,
         expectedUpdatedAt: live.updated_date || "",
         expectedFields: expectedEntityFields(live, payload),
@@ -165,7 +166,7 @@ export default function EstimatorParts() {
     toggleRef.current.add(template.id);
     setError("");
     try {
-      const live = await base44.entities.PartTemplate.get(template.id);
+      const live = await staffEntities.PartTemplate.get(template.id);
       if (!live) throw new Error("This Saved Part no longer exists. Reload the Part Library.");
       const liveCanEdit = user?.role === "admin" || !live.created_by_id || live.created_by_id === user?.id;
       if (!liveCanEdit) { updateLocal(live); throw new Error("You no longer have permission to change this Saved Part."); }
@@ -176,7 +177,7 @@ export default function EstimatorParts() {
       const next = template.is_active === false;
       const statusPatch = { is_active: next };
       const refreshed = await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.PartTemplate,
+        entity: staffEntities.PartTemplate,
         id: template.id,
         expectedFields: expectedEntityFields(live, statusPatch),
         nextFields: statusPatch,

@@ -20,9 +20,10 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {

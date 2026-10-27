@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import PermitWorkflowDesigner from './PermitWorkflowDesigner';
 import { PLANNING_REVIEW_DECISIONS, PLANNING_FOLLOW_UP_AREAS, planningReviewDecisionLabel } from './workflowPlanningReview.mjs';
 import { savedDraftReviewView } from './savedDraftReviewFilters.mjs';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function PermittingDraftLibrary({ onClose }) {
   const [rows, setRows] = useState([]);
@@ -31,7 +32,7 @@ export default function PermittingDraftLibrary({ onClose }) {
     setLoading(!append); setLoadingMore(append); setError(''); setOlderError('');
     if (!append) { setRows([]); setHasMore(false); setNextCursor(null); }
     const options = append ? { cursor: request.cursor, limit: 100 } : { sort: '-created_date', limit: 100 };
-    base44.entities.PermittingWorkflowDraft.filter({}, options).then(page => {
+    staffEntities.PermittingWorkflowDraft.filter({}, options).then(page => {
       if (!active) return;
       if (!Array.isArray(page?.items) || typeof page.has_more !== 'boolean' ||
         page.items.some(row => !row?.id) || (page.has_more &&

@@ -23,8 +23,9 @@ import {
   Database, FileCheck2, ShieldCheck, AlertTriangle, Clock,
   ChevronDown, Search, Loader2, Layers, MapPin, FileText, Activity,
 } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const readQueuePage = (query, options) => base44.entities.SourceCollectionQueue.filter(query, options);
+const readQueuePage = (query, options) => staffEntities.SourceCollectionQueue.filter(query, options);
 
 const STATUS_OPTIONS = [
   "not_started", "source_discovery", "sources_found", "archive_incomplete",
@@ -112,25 +113,25 @@ export default function PermittingCompletenessDashboard() {
         monitorTotal, monitorEnabled, monitorReviewRequired, monitorFailed,
         rulesTotal, rulesApproved, rulesNeedsReview,
       ] = await Promise.all([
-        base44.entities.SourceCollectionQueue.aggregate({ groupBy: "state", count: true }),
-        base44.entities.SourceCollectionQueue.aggregate({ groupBy: "status", count: true }),
-        base44.entities.SourceCollectionQueue.aggregate({ groupBy: "jurisdiction_type", count: true }),
+        staffEntities.SourceCollectionQueue.aggregate({ groupBy: "state", count: true }),
+        staffEntities.SourceCollectionQueue.aggregate({ groupBy: "status", count: true }),
+        staffEntities.SourceCollectionQueue.aggregate({ groupBy: "jurisdiction_type", count: true }),
         base44.entities.JurisdictionProfile.aggregate({ groupBy: "state", count: true }),
         base44.entities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified", "rewrite_authority.effectiveDateStatus": "verified" }),
         base44.entities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified" }),
         base44.entities.JurisdictionProfile.count({ "rewrite_authority.effectiveDateStatus": "verified" }),
-        base44.entities.PermittingSourceDocument.aggregate({ groupBy: "authority_classification", count: true }),
-        base44.entities.PermittingSourceDocument.count({}),
-        base44.entities.PermittingSourceDocument.count({ last_checked: { $lt: staleThreshold } }),
-        base44.entities.SourceCollectionQueue.count({ missing_next: { $exists: true } }),
-        base44.entities.SourceCollectionQueue.count({ status: "blocked" }),
-        base44.entities.SourceMonitorState.count({}),
-        base44.entities.SourceMonitorState.count({ monitor_enabled: true }),
-        base44.entities.SourceMonitorState.count({ staff_review_required: true }),
-        base44.entities.SourceMonitorState.count({ failure_count: { $gte: 3 } }),
-        base44.entities.PermittingRule.count({}),
-        base44.entities.PermittingRule.count({ status: "staff_approved" }),
-        base44.entities.PermittingRule.count({ status: "needs_review" }),
+        staffEntities.PermittingSourceDocument.aggregate({ groupBy: "authority_classification", count: true }),
+        staffEntities.PermittingSourceDocument.count({}),
+        staffEntities.PermittingSourceDocument.count({ last_checked: { $lt: staleThreshold } }),
+        staffEntities.SourceCollectionQueue.count({ missing_next: { $exists: true } }),
+        staffEntities.SourceCollectionQueue.count({ status: "blocked" }),
+        staffEntities.SourceMonitorState.count({}),
+        staffEntities.SourceMonitorState.count({ monitor_enabled: true }),
+        staffEntities.SourceMonitorState.count({ staff_review_required: true }),
+        staffEntities.SourceMonitorState.count({ failure_count: { $gte: 3 } }),
+        staffEntities.PermittingRule.count({}),
+        staffEntities.PermittingRule.count({ status: "staff_approved" }),
+        staffEntities.PermittingRule.count({ status: "needs_review" }),
       ]);
 
       const queueByStateMap = {};
@@ -187,7 +188,7 @@ export default function PermittingCompletenessDashboard() {
   const [countyAttempt, setCountyAttempt] = useState(0);
   useEffect(() => {
     let active = true; setCounties([]); setCountyError("");
-    readAllCountyChoices(cursor => base44.entities.SourceCollectionQueue.filter(
+    readAllCountyChoices(cursor => staffEntities.SourceCollectionQueue.filter(
       { state: { $in: ["OH", "KY"] }, parent_county_name: { $exists: true } },
       { distinct: "parent_county_name", limit: 500, ...(cursor ? { cursor } : {}) }
     ), () => active).then(values => { if (active) setCounties(values); })

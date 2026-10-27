@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,8 +7,9 @@ import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck }
 import { format, parseISO } from "date-fns";
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from "@/shared/timeClockPayrollMembershipEvidence.mjs";
 import { validateAuthoritativeAuditPage } from "@/shared/timeClockAuditPagination.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeClockAudit = base44.entities.TimeClockAudit;
+const TimeClockAudit = staffEntities.TimeClockAudit;
 
 const ACTION_LABELS = {
   clock_in: "Clock In",
@@ -388,7 +387,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
 
       {error && <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
       {loading && rows.length === 0 ? (
-        <ListSkeleton rows={5} />
+        <div className="flex items-center justify-center p-8 text-gray-500"><Loader2 className="w-5 h-5 animate-spin mr-2" />Loading audit history...</div>
       ) : filtered.length === 0 ? (
         <div className="rounded-lg bg-gray-50 p-5 text-sm text-gray-500 text-center">No audit records match the current filters.</div>
       ) : (

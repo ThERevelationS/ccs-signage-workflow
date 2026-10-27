@@ -11,9 +11,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Trash2, Edit, Copy, CheckCircle2, AlertTriangle, Loader2, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const GlobalSettings = base44.entities.GlobalSettings;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 const WorkOrder = base44.entities.WorkOrder;
 
 const SETTING_KEY = "taskAssignmentRules";

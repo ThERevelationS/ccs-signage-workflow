@@ -4,6 +4,7 @@ import { addPartPackageToProduct } from "@/components/estimator/parts/partPackag
 import { builderMutationHash } from "@/components/estimator/builder/builderMutationRecovery";
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const detached = (part) => part?.builder_sync_state === "detached_override" || ["detached", "reattach_available"].includes(part?.inventory_link_state) || part?.price_state === "detached";
@@ -41,7 +42,7 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
     meta,
   })}`;
   return ensureReusableRecord({
-    entity: base44.entities.PartTemplate,
+    entity: staffEntities.PartTemplate,
     idempotencyKey,
     label: "Saved Part",
     data: {
@@ -104,7 +105,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
     meta,
   })}`;
   return ensureReusableRecord({
-    entity: base44.entities.PartTemplate,
+    entity: staffEntities.PartTemplate,
     idempotencyKey,
     label: "Saved Part Group",
     data: {
@@ -133,7 +134,7 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
 
 export async function listPartTemplates({ includeInactive = false } = {}) {
   const [rows, me] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.PartTemplate, sort: "template_name", label: "Part Library" }),
+    loadAllEntityRows({ entity: staffEntities.PartTemplate, sort: "template_name", label: "Part Library" }),
     base44.auth.me().catch(() => null),
   ]);
   return (rows || [])
@@ -148,7 +149,7 @@ export async function listPartTemplates({ includeInactive = false } = {}) {
 export async function instantiatePartTemplate({ estimateId, targetBuilderProductId, template, expectedEstimateUpdatedAt = "" }) {
   if (!template?.id) throw new Error("Saved Part is required.");
   const [liveTemplate, me] = await Promise.all([
-    base44.entities.PartTemplate.get(template.id),
+    staffEntities.PartTemplate.get(template.id),
     base44.auth.me().catch(() => null),
   ]);
   if (!liveTemplate) throw new Error("This Saved Part no longer exists. Reopen the Part Library to refresh it.");

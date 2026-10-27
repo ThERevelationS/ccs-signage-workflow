@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -131,7 +132,7 @@ import {
 
 const Order = base44.entities.Order;
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
 const ORDER_REQUEST_TYPES_SETTING_KEY = "orderRequestTypes";

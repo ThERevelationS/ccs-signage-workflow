@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
@@ -12,6 +10,7 @@ import {
   FileText,
   History,
   Home,
+  Loader2,
   LockKeyhole,
   Pause,
   RefreshCw,
@@ -20,13 +19,14 @@ import {
   Wrench,
 } from "lucide-react";
 import { format } from "date-fns";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeClockBreak = base44.entities.TimeClockBreak;
-const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
-const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
-const TimeClockAudit = base44.entities.TimeClockAudit;
-const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
-const TimeClockLaborSegment = base44.entities.TimeClockLaborSegment;
+const TimeClockBreak = staffEntities.TimeClockBreak;
+const TimeClockWorkPause = staffEntities.TimeClockWorkPause;
+const TimeClockCorrectionRequest = staffEntities.TimeClockCorrectionRequest;
+const TimeClockAudit = staffEntities.TimeClockAudit;
+const TimeClockPayPeriod = staffEntities.TimeClockPayPeriod;
+const TimeClockLaborSegment = staffEntities.TimeClockLaborSegment;
 
 function safeDate(value) {
   if (!value) return null;
@@ -75,38 +75,21 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
   const [payPeriod, setPayPeriod] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const detailSeqRef = useRef(0);
-  const detailScopeRef = useRef("");
 
   const loadDetails = async () => {
-    const entryId = entry?.id;
-    if (!entryId || !open) return;
-    const requestSeq = ++detailSeqRef.current;
-    const switchedScope = detailScopeRef.current !== entryId;
-    detailScopeRef.current = entryId;
-    const current = () =>
-      requestSeq === detailSeqRef.current && detailScopeRef.current === entryId;
-    if (switchedScope) {
-      setBreaks([]);
-      setPauses([]);
-      setLaborSegments([]);
-      setCorrections([]);
-      setAudits([]);
-      setPayPeriod(null);
-    }
+    if (!entry?.id || !open) return;
     setLoading(true);
     setError("");
     try {
       const [breakRows, pauseRows, laborRows, correctionRows, auditRows, periodRows] = await Promise.all([
-        TimeClockBreak.filter({ time_entry_id: entryId }),
-        TimeClockWorkPause.filter({ time_entry_id: entryId }),
-        TimeClockLaborSegment.filter({ time_entry_id: entryId }),
-        TimeClockCorrectionRequest.filter({ time_entry_id: entryId }),
-        TimeClockAudit.filter({ time_entry_id: entryId }),
+        TimeClockBreak.filter({ time_entry_id: entry.id }),
+        TimeClockWorkPause.filter({ time_entry_id: entry.id }),
+        TimeClockLaborSegment.filter({ time_entry_id: entry.id }),
+        TimeClockCorrectionRequest.filter({ time_entry_id: entry.id }),
+        TimeClockAudit.filter({ time_entry_id: entry.id }),
         entry.pay_period_id ? TimeClockPayPeriod.filter({ id: entry.pay_period_id }) : Promise.resolve([]),
       ]);
 
-      if (!current()) return;
       setBreaks((Array.isArray(breakRows) ? breakRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setPauses((Array.isArray(pauseRows) ? pauseRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setLaborSegments((Array.isArray(laborRows) ? laborRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
@@ -115,17 +98,15 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
       setPayPeriod(Array.isArray(periodRows) && periodRows.length === 1 ? periodRows[0] : null);
     } catch (err) {
       console.error("Error loading Time Clock shift detail:", err);
-      if (current()) setError(err?.message || "Shift details could not be loaded.");
+      setError(err?.message || "Shift details could not be loaded.");
     } finally {
-      if (current()) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (open && entry?.id) loadDetails();
     if (!open) {
-      detailSeqRef.current += 1;
-      detailScopeRef.current = "";
       setBreaks([]);
       setPauses([]);
       setLaborSegments([]);
@@ -202,7 +183,7 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
         )}
 
         {loading ? (
-          <ListSkeleton rows={4} />
+          <div className="py-12 flex items-center justify-center text-gray-500"><Loader2 className="w-5 h-5 animate-spin mr-2" />Loading authoritative shift history…</div>
         ) : (
           <div className="space-y-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

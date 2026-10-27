@@ -18,9 +18,10 @@ import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrd
 import { isDefinitiveSipsSaveRejection, reconcileInterruptedSipsSave } from "./checklistSaveRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseDateOnly = (dateString) => {
   if (!dateString) return null;

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const moduleLabel = (key) => ESTIMATOR_MODULES.find((module) => module.key === key)?.label || (key === "custom" ? "Custom Product" : key || "Product");
@@ -65,7 +66,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
     setSaving(true);
     setError("");
     try {
-      const live = await base44.entities.QuickProduct.get(product.id);
+      const live = await staffEntities.QuickProduct.get(product.id);
       if (!live) throw new Error("This Quick Product no longer exists. Reload the library before editing it again.");
       if (product.updated_date && live.updated_date && product.updated_date !== live.updated_date) {
         onSaved?.(live);
@@ -84,7 +85,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
         is_active: draft.is_active,
       };
       const refreshed = await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.QuickProduct,
+        entity: staffEntities.QuickProduct,
         id: product.id,
         expectedUpdatedAt: live.updated_date || "",
         expectedFields: expectedEntityFields(live, payload),
@@ -154,7 +155,7 @@ export default function EstimatorProducts() {
     setLibraryError("");
     Promise.all([
       loadAllEntityRows({
-        entity: base44.entities.QuickProduct,
+        entity: staffEntities.QuickProduct,
         sort: "created_date",
         label: "Quick Product Library",
       }),
@@ -213,7 +214,7 @@ export default function EstimatorProducts() {
     toggleRef.current.add(product.id);
     setError("");
     try {
-      const live = await base44.entities.QuickProduct.get(product.id);
+      const live = await staffEntities.QuickProduct.get(product.id);
       if (!live) throw new Error("This Quick Product no longer exists. Reload the library.");
       if ((live.is_active !== false) !== (product.is_active !== false)) {
         updateLocal(live);
@@ -222,7 +223,7 @@ export default function EstimatorProducts() {
       const next = product.is_active === false;
       const statusPatch = { is_active: next };
       const refreshed = await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.QuickProduct,
+        entity: staffEntities.QuickProduct,
         id: product.id,
         expectedFields: expectedEntityFields(live, statusPatch),
         nextFields: statusPatch,

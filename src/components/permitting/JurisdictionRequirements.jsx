@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const link = value => { try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : ''; } catch { return ''; } };
 export function requirementReviewGroup(rule) {
@@ -21,7 +22,7 @@ export default function JurisdictionRequirements({ jurisdictionId, onDocuments }
   useEffect(() => {
     let active = true; setLoading(true); setError(''); setRows([]);
     if (!jurisdictionId) { setLoading(false); setError('Select a canonical jurisdiction to inspect its saved rules.'); return () => { active = false; }; }
-    base44.entities.PermittingRule.filter({ jurisdiction_id: jurisdictionId }, { sort: '-created_date', limit: 200 }).then(result => {
+    staffEntities.PermittingRule.filter({ jurisdiction_id: jurisdictionId }, { sort: '-created_date', limit: 200 }).then(result => {
       if (active) setRows(Array.isArray(result) ? result : result.items || []);
     }).catch(() => { if (active) setError('Saved rules could not be loaded. Refresh to retry.'); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };

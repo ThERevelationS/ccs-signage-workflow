@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { AlertTriangle, CalendarRange, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Download, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
+const TimeClockPayPeriod = staffEntities.TimeClockPayPeriod;
 const COMPANY_TIME_ZONE = "America/New_York";
 
 function formatEvidenceTime(value) {
@@ -96,14 +96,8 @@ function persistPeriodRequest(key, requestId, payload, submitted = false) {
   } catch {}
 }
 
-function clearStoredPeriodRequestId(key, expectedRequestId = "") {
-  try {
-    if (expectedRequestId) {
-      const stored = storedPeriodRequest(key);
-      if (!stored || stored.request_id !== expectedRequestId) return;
-    }
-    sessionStorage.removeItem(periodRequestStorageKey(key));
-  } catch {}
+function clearStoredPeriodRequestId(key) {
+  try { sessionStorage.removeItem(periodRequestStorageKey(key)); } catch {}
 }
 
 function samePeriodPayload(left, right) {
@@ -235,7 +229,6 @@ export default function PayPeriodManager({
   const requestIdFor = (key, payload) => {
     const stored = storedPeriodRequest(key);
     if (stored && samePeriodPayload(stored.payload, payload)) return stored.request_id;
-    if (stored?.submitted) return null;
     if (stored) clearStoredPeriodRequestId(key);
     const id = newRequestId();
     persistPeriodRequest(key, id, payload, false);
@@ -246,8 +239,8 @@ export default function PayPeriodManager({
     persistPeriodRequest(key, requestId, payload, true);
   };
 
-  const clearRequestId = (key, expectedRequestId = "") => {
-    clearStoredPeriodRequestId(key, expectedRequestId);
+  const clearRequestId = (key) => {
+    clearStoredPeriodRequestId(key);
   };
 
   const invoke = async (payload) => {
@@ -283,13 +276,13 @@ export default function PayPeriodManager({
       for (const stored of pending) {
         try {
           await invoke({ ...stored.payload, session_token: sessionToken, request_id: stored.request_id });
-          clearRequestId(stored.key, stored.request_id);
+          clearRequestId(stored.key);
           changed = true;
         } catch (err) {
           if (shouldRetainPeriodRequest(err)) {
             unresolved = true;
           } else {
-            clearRequestId(stored.key, stored.request_id);
+            clearRequestId(stored.key);
             changed = true;
           }
         }
@@ -318,23 +311,19 @@ export default function PayPeriodManager({
       end_date: endDate,
     };
     const requestId = requestIdFor(key, payload);
-    if (!requestId) {
-      setError("A previously submitted pay-period action still needs server confirmation. Retry the preserved request before changing it.");
-      return;
-    }
     markRequestSubmitted(key, requestId, payload);
     setBusy(true);
     setError("");
     try {
       await invoke({ ...payload, session_token: sessionToken, request_id: requestId });
-      clearRequestId(key, requestId);
+      clearRequestId(key);
       setShowCreate(false);
       setLabel("");
       setStartDate("");
       setEndDate("");
       await loadPeriods();
     } catch (err) {
-      if (!shouldRetainPeriodRequest(err)) clearRequestId(key, requestId);
+      if (!shouldRetainPeriodRequest(err)) clearRequestId(key);
       setError(err?.message || "Pay period could not be created.");
     } finally {
       setBusy(false);
@@ -404,22 +393,18 @@ export default function PayPeriodManager({
       note: actionNote.trim(),
     };
     const requestId = requestIdFor(key, payload);
-    if (!requestId) {
-      setError("A previously submitted pay-period action still needs server confirmation. Retry the preserved request before changing it.");
-      return;
-    }
     markRequestSubmitted(key, requestId, payload);
     setBusy(true);
     setError("");
     try {
       await invoke({ ...payload, session_token: sessionToken, request_id: requestId });
-      clearRequestId(key, requestId);
+      clearRequestId(key);
       setActionPeriod(null);
       setActionDecision("");
       setActionNote("");
       await Promise.all([loadPeriods(), onEntriesChanged?.()]);
     } catch (err) {
-      if (!shouldRetainPeriodRequest(err)) clearRequestId(key, requestId);
+      if (!shouldRetainPeriodRequest(err)) clearRequestId(key);
       setError(err?.message || "Pay-period action could not be completed.");
     } finally {
       setBusy(false);
@@ -450,7 +435,7 @@ export default function PayPeriodManager({
       )}
 
       {loading ? (
-        <ListSkeleton rows={3} />
+        <div className="py-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-purple-600" /></div>
       ) : periods.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-5 text-center text-sm text-gray-500">
           No pay periods created yet. Nothing is assumed automatically.
@@ -530,7 +515,7 @@ export default function PayPeriodManager({
         <DialogContent className="clay-card border-none max-w-2xl">
           <DialogHeader><DialogTitle>Verified Payroll History</DialogTitle></DialogHeader>
           {historyLoading ? (
-            <ListSkeleton rows={4} />
+            <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain…</div>
           ) : historyResult?.verified ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">

@@ -52,10 +52,11 @@ import {
 } from "@/components/timeclock/ptoPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const PTOPolicy = base44.entities.PTOPolicy;
-const UserPTOBalance = base44.entities.UserPTOBalance;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const UserPTOBalance = staffEntities.UserPTOBalance;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const ACCRUAL_TYPES = [
   { value: "none", label: "No Accrual (Fixed Amount)" },

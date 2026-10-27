@@ -19,9 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const CellHistory = base44.entities.CellHistory;
-const ActivityLog = base44.entities.ActivityLog;
+const ActivityLog = staffEntities.ActivityLog;
 
 export default function ActivityFeed() {
   const [activities, setActivities] = useState([]);

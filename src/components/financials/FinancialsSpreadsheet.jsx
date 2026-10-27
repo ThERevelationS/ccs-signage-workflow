@@ -12,9 +12,10 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;

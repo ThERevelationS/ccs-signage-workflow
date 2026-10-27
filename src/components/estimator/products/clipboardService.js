@@ -8,6 +8,7 @@ import { builderMutationHash } from "@/components/estimator/builder/builderMutat
 import { ensureReusableRecord } from "@/components/estimator/products/reusableSaveIdempotency";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -100,7 +101,7 @@ async function createClipboardRecord(data) {
   const searchText = [data.item_name, data.source_estimate_number, data.source_order, data.source_company, data.source_product_name, data.source_module_key]
     .filter(Boolean).join(" ").toLowerCase();
   const record = await ensureReusableRecord({
-    entity: base44.entities.EstimateClipboardItem,
+    entity: staffEntities.EstimateClipboardItem,
     idempotencyKey,
     label: "Estimator clipboard item",
     data: {
@@ -119,7 +120,7 @@ async function createClipboardRecord(data) {
     search_text: searchText,
   };
   return replaceEntityFieldsIfUnchanged({
-    entity: base44.entities.EstimateClipboardItem,
+    entity: staffEntities.EstimateClipboardItem,
     id: record.id,
     expectedUpdatedAt: record.updated_date || "",
     expectedFields: expectedEntityFields(record, refreshPatch),
@@ -173,7 +174,7 @@ export async function copyPartGroupToClipboard({ estimateId, builderProductId, g
 }
 
 export async function listClipboardItems() {
-  const rows = await loadAllEntityRows({ entity: base44.entities.EstimateClipboardItem, sort: "-copied_at", label: "Estimator Clipboard" });
+  const rows = await loadAllEntityRows({ entity: staffEntities.EstimateClipboardItem, sort: "-copied_at", label: "Estimator Clipboard" });
   const now = Date.now();
   const currentRows = [];
   for (const row of rows || []) {
@@ -184,14 +185,14 @@ export async function listClipboardItems() {
     }
     try {
       await deleteEntityIfUnchanged({
-        entity: base44.entities.EstimateClipboardItem,
+        entity: staffEntities.EstimateClipboardItem,
         record: row,
         label: "Expired estimator clipboard item",
       });
     } catch {
       // A refreshed clipboard item must never be deleted using a stale expiry
       // snapshot. Re-read it and keep the newer live row when it is still usable.
-      const current = await base44.entities.EstimateClipboardItem.get(row.id).catch(() => null);
+      const current = await staffEntities.EstimateClipboardItem.get(row.id).catch(() => null);
       if (current) currentRows.push(current);
     }
   }
@@ -203,10 +204,10 @@ export async function listClipboardItems() {
 export async function removeClipboardItem(id) {
   const itemId = String(id || "").trim();
   if (!itemId) return;
-  const current = await base44.entities.EstimateClipboardItem.get(itemId).catch(() => null);
+  const current = await staffEntities.EstimateClipboardItem.get(itemId).catch(() => null);
   if (!current) return;
   await deleteEntityIfUnchanged({
-    entity: base44.entities.EstimateClipboardItem,
+    entity: staffEntities.EstimateClipboardItem,
     record: current,
     label: "Estimator clipboard item",
   });
@@ -214,7 +215,7 @@ export async function removeClipboardItem(id) {
 
 export async function pasteClipboardItem({ estimateId, clipboardItem, targetBuilderProductId = "", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !clipboardItem?.id) throw new Error("Clipboard item is required.");
-  const liveItem = await base44.entities.EstimateClipboardItem.get(clipboardItem.id);
+  const liveItem = await staffEntities.EstimateClipboardItem.get(clipboardItem.id);
   if (!liveItem) throw new Error("This clipboard item no longer exists. Reopen the Estimator Clipboard to refresh it.");
   if (liveItem.is_active === false) throw new Error("This clipboard item is inactive and cannot be pasted.");
   if (liveItem.expires_at && new Date(liveItem.expires_at).getTime() <= Date.now()) {

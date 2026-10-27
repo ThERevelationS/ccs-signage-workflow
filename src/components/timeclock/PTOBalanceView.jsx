@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -11,15 +11,16 @@ import {
   Baby,
   Calendar,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const UserPTOBalance = base44.entities.UserPTOBalance;
+const UserPTOBalance = staffEntities.UserPTOBalance;
 const PTOPolicy = base44.entities.PTOPolicy;
-const TimeOffRequest = base44.entities.TimeOffRequest;
+const TimeOffRequest = staffEntities.TimeOffRequest;
 
 const TYPE_ICONS = {
   vacation: Palmtree,
@@ -35,27 +36,14 @@ export default function PTOBalanceView({ currentUser }) {
   const [policy, setPolicy] = useState(null);
   const [upcomingRequests, setUpcomingRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const balanceSeqRef = useRef(0);
-  const balanceScopeRef = useRef("");
 
   useEffect(() => {
-    const email = String(currentUser?.email || "").toLowerCase();
-    balanceScopeRef.current = email;
-    balanceSeqRef.current += 1;
-    setBalance(null);
-    setPolicy(null);
-    setUpcomingRequests([]);
-    setIsLoading(Boolean(email));
-    if (email) {
+    if (currentUser?.email) {
       loadBalanceData();
     }
   }, [currentUser]);
 
   const loadBalanceData = async () => {
-    const requestEmail = String(currentUser?.email || "").toLowerCase();
-    const requestSeq = ++balanceSeqRef.current;
-    const current = () =>
-      requestSeq === balanceSeqRef.current && balanceScopeRef.current === requestEmail;
     setIsLoading(true);
     setBalance(null);
     setPolicy(null);
@@ -84,37 +72,30 @@ export default function PTOBalanceView({ currentUser }) {
         throw new Error(`Multiple PTO balance records were found for ${currentUser.email}. An administrator must review the duplicates before balances can be shown safely.`);
       }
       
-      if (!current()) return;
-
       if (balanceData.length === 1) {
         const userBalance = balanceData[0];
         setBalance(userBalance);
         
         // Load policy
         const policyData = await PTOPolicy.filter({ id: userBalance.policy_id });
-        if (!current()) return;
         if (policyData.length > 0) {
           setPolicy(policyData[0]);
         }
       }
       
-      setUpcomingRequests(requests.sort((a, b) =>
+      setUpcomingRequests(requests.sort((a, b) => 
         new Date(a.start_date) - new Date(b.start_date)
       ));
     } catch (err) {
       console.error("Error loading PTO balance:", err);
     }
-    if (current()) setIsLoading(false);
+    setIsLoading(false);
   };
 
   if (isLoading) {
     return (
-      <div className="clay-card p-6">
-        <div className="space-y-3">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-9 w-24" />
-          <Skeleton className="h-3 w-56" />
-        </div>
+      <div className="clay-card p-6 text-center">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
       </div>
     );
   }

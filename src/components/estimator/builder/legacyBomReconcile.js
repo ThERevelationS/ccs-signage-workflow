@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const APP_ID = "68dfcc5e57bbbc35387da97c";
 export const LEGACY_BOM_RECONCILE_BATCH = "legacy_bom_reconcile_v1";
@@ -360,7 +361,7 @@ async function markBuilderComplete(builder, result) {
     label: "Legacy BOM Builder reconciliation receipt",
   });
 
-  await base44.entities.LegacyMigrationMap.create({
+  await staffEntities.LegacyMigrationMap.create({
     source_app_id: APP_ID,
     source_entity: "BuilderProduct",
     source_id: builder.id,
@@ -383,7 +384,7 @@ async function markBuilderComplete(builder, result) {
 }
 
 async function migrationRows() {
-  const rows = await base44.entities.LegacyMigrationMap.filter({ migration_batch: LEGACY_BOM_RECONCILE_BATCH });
+  const rows = await staffEntities.LegacyMigrationMap.filter({ migration_batch: LEGACY_BOM_RECONCILE_BATCH });
   if (!Array.isArray(rows)) {
     throw new Error("Legacy BOM reconciliation status could not be verified. Reconciliation was paused without writing anything.");
   }
@@ -470,7 +471,7 @@ export async function runLegacyBomReconcile() {
     throw new Error(`Legacy BOM reconciliation verification still has ${verification.mismatch_count} mismatched Product(s).`);
   }
 
-  await base44.entities.LegacyMigrationMap.create({
+  await staffEntities.LegacyMigrationMap.create({
     source_app_id: APP_ID,
     source_entity: "BuilderProduct",
     source_id: COMPLETE_SENTINEL,

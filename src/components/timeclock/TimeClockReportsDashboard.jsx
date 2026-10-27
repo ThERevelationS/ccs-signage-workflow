@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,13 +17,15 @@ import {
   Home,
   Timer,
   Target,
+  Loader2
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, parseISO, isWithinInterval, differenceInDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeEntry = base44.entities.TimeEntry;
+const TimeEntry = staffEntities.TimeEntry;
 const WorkOrder = base44.entities.WorkOrder;
 
 const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#84CC16'];
@@ -41,11 +42,8 @@ export default function TimeClockReportsDashboard() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
 
-  const mountedRef = useRef(true);
-
   useEffect(() => {
     loadData();
-    return () => { mountedRef.current = false; };
   }, []);
 
   const loadData = async () => {
@@ -56,17 +54,15 @@ export default function TimeClockReportsDashboard() {
         loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock entries" }),
         loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" })
       ]);
-      if (!mountedRef.current) return;
       setTimeEntries(entries);
       setWorkOrders(orders);
     } catch (err) {
       console.error("Error loading data:", err);
-      if (!mountedRef.current) return;
       setTimeEntries([]);
       setWorkOrders([]);
       setReadError(err?.message || "Time Clock reporting data could not be verified completely.");
     }
-    if (mountedRef.current) setIsLoading(false);
+    setIsLoading(false);
   };
 
   // Calculate date range
@@ -285,12 +281,8 @@ export default function TimeClockReportsDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        <Skeleton className="h-6 w-56" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
-        </div>
-        <Skeleton className="h-72 w-full rounded-xl" />
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
       </div>
     );
   }

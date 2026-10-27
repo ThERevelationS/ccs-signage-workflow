@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import PDFViewer from './PDFViewer';
 import SourceVersionComparison from './SourceVersionComparison';
 import SourceTextEvidenceBrowser, { hasSavedPhysicalPageText } from './SourceTextEvidenceBrowser';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const types = { sign_ordinance: 'Sign ordinance', permit_application: 'Application', zoning_code: 'Zoning code', fee_schedule: 'Fees', checklist: 'Checklist', legislative_record: 'Legislative record', gis_resource: 'Map / GIS', portal_instruction: 'Portal instructions', other: 'Other' };
 const label = value => String(value || 'Unknown').replaceAll('_', ' ');
@@ -69,7 +70,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     setQuery(''); setType('all'); setGroup('all'); setAvailability('all');
     const identity = { jurisdictionId, sourceId: selectedId, token: selectedToken };
     setSelectedState({ ...identity, row: null, loading: true, error: '' });
-    base44.entities.PermittingSourceDocument.filter({ id: selectedId, jurisdiction_id: jurisdictionId }, { limit: 1, fields }).then(result => {
+    staffEntities.PermittingSourceDocument.filter({ id: selectedId, jurisdiction_id: jurisdictionId }, { limit: 1, fields }).then(result => {
       const row = (Array.isArray(result) ? result : result.items || []).find(item => item.id === selectedId && item.jurisdiction_id === jurisdictionId) || null;
       if (active) setSelectedState({ ...identity, row, loading: false, error: '' });
     }).catch(() => {
@@ -100,7 +101,7 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
       setState({ jurisdictionId, rows: [], loading: false, error: 'Select a canonical jurisdiction to load saved source records.' });
       return () => { active = false; };
     }
-    base44.entities.PermittingSourceDocument.filter({ jurisdiction_id: jurisdictionId }, { sort: '-retrieval_timestamp', limit: 200, fields }).then(result => {
+    staffEntities.PermittingSourceDocument.filter({ jurisdiction_id: jurisdictionId }, { sort: '-retrieval_timestamp', limit: 200, fields }).then(result => {
       if (active) setState({ jurisdictionId, rows: Array.isArray(result) ? result : result.items || [], loading: false, error: '' });
     }).catch(() => {
       if (active) setState({ jurisdictionId, rows: [], loading: false, error: 'Saved source records could not be loaded. Collected links below remain available; classification is unavailable until retry succeeds.' });

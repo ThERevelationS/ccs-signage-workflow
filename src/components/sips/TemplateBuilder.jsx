@@ -20,6 +20,7 @@ import {
   saveSettingMapEntryIfUnchanged,
   updateChecklistSubItemIfUnchanged,
 } from "./templateBuilderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -139,7 +140,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       const loadUsers = async () => {
         try {
           const usersData = await loadAllEntityRows({
-            entity: base44.entities.AuthorizedEmail,
+            entity: staffEntities.AuthorizedEmail,
             sort: null,
             label: "SIP Template Builder authorized users",
           });

@@ -28,10 +28,11 @@ import {
   mutateWorkOrderArrayField,
   replaceWorkOrderArrayFieldIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },

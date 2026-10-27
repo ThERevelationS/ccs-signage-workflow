@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, PauseCircle, PlayCircle, XCircle } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const ImportProgressContext = createContext(null);
 const STORAGE_KEY = "activeImportProgress";
@@ -71,7 +71,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     const restoreActiveImport = async () => {
       if (!currentUserEmail || importJobIdRef.current) return;
       try {
-        const activeJobs = await base44.entities.ImportJob.filter({
+        const activeJobs = await staffEntities.ImportJob.filter({
           user_email: currentUserEmail,
           status: { $in: ["running", "paused"] },
         }, "-started_at", 5);
@@ -94,7 +94,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
       if (polling) return;
       polling = true;
       try {
-        const job = await base44.entities.ImportJob.get(importState.importJobId);
+        const job = await staffEntities.ImportJob.get(importState.importJobId);
         if (!mounted || !job?.id) return;
         syncJob(job);
 
@@ -114,7 +114,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     };
 
     poll();
-    const timer = setInterval(poll, 3000);
+    const timer = setInterval(poll, 1000);
     return () => {
       mounted = false;
       clearInterval(timer);
@@ -132,7 +132,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
 
   const startImport = async (total, userEmail, importType = "sales_pipeline", metadata = {}) => {
     cancelRef.current = { cancelled: false, paused: false };
-    const job = await base44.entities.ImportJob.create({
+    const job = await staffEntities.ImportJob.create({
       user_email: userEmail,
       import_type: importType,
       total_items: total,
@@ -152,7 +152,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     setImportState((prev) => ({ ...prev, current, total, currentItem }));
     if (!importJobIdRef.current) return;
     try {
-      await base44.entities.ImportJob.update(importJobIdRef.current, {
+      await staffEntities.ImportJob.update(importJobIdRef.current, {
         processed_items: current,
         current_item: currentItem,
       });
@@ -164,7 +164,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
   const completeImport = async () => {
     if (!importJobIdRef.current) return;
     try {
-      const job = await base44.entities.ImportJob.get(importJobIdRef.current);
+      const job = await staffEntities.ImportJob.get(importJobIdRef.current);
       if (job?.id) syncJob(job);
     } catch (err) {
       console.error("Failed to refresh completed import:", err);
@@ -176,7 +176,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     if (!importJobIdRef.current) return;
     setImportState((prev) => ({ ...prev, currentItem: "Cancellation requested...", status: "cancelled" }));
     try {
-      await base44.entities.ImportJob.update(importJobIdRef.current, {
+      await staffEntities.ImportJob.update(importJobIdRef.current, {
         status: "cancelled",
         phase: "cancelling",
         current_item: "Cancellation requested...",
@@ -191,7 +191,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     if (!importJobIdRef.current) return;
     setImportState((prev) => ({ ...prev, paused: true, status: "paused", currentItem: "Pausing safely between rows..." }));
     try {
-      await base44.entities.ImportJob.update(importJobIdRef.current, {
+      await staffEntities.ImportJob.update(importJobIdRef.current, {
         status: "paused",
         phase: "paused",
         current_item: "Paused safely between rows.",
@@ -206,7 +206,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     if (!importJobIdRef.current) return;
     setImportState((prev) => ({ ...prev, paused: false, status: "running", currentItem: "Resuming import..." }));
     try {
-      await base44.entities.ImportJob.update(importJobIdRef.current, {
+      await staffEntities.ImportJob.update(importJobIdRef.current, {
         status: "running",
         phase: "applying",
         current_item: "Resuming import...",

@@ -10,8 +10,9 @@ import {
 import FaceRecognition from "./FaceRecognition";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
 import { triggerNotification } from "@/components/workflow/NotificationService";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess }) {
   const [faceDescriptors, setFaceDescriptors] = useState([]);

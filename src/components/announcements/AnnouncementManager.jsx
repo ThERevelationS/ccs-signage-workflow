@@ -26,10 +26,11 @@ import {
   updateAnnouncementIfUnchanged,
 } from "./announcementPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
 const Announcement = base44.entities.Announcement;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
