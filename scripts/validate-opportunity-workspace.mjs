@@ -452,3 +452,6 @@ const queuesPage = readFileSync('src/pages/EstimatorQueues.jsx', 'utf8');
 assert.match(queuesPage, /expiryOf/, 'estimate queues must detect quote expiry');
 assert.match(queuesPage, /buckets/, 'estimate queues must show per-status counts');
 assert.match(queuesPage, /Search/, 'estimate queues must offer search');
+for (const t of ['test-aio-pricing.mjs','test-quote-lifecycle.mjs','test-customer-quote.mjs','test-customer-pricing.mjs','test-entity-persistence.mjs','test-estimate-cas.mjs','test-estimate-lifecycle.mjs','test-estimate-save-recovery.mjs','test-builder-persistence.mjs','test-module-registry.mjs','test-sales-activity.mjs','test-builder-service.mjs','test-builder-recovery.mjs','test-quick-price-persistence.mjs','test-customer-persistence.mjs']) {
+  assert.ok(existsSync(`scripts/${t}`), `hardening test ${t} must exist`);
+}
