@@ -10,7 +10,10 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
   const patchCap = (index, changes) =>
     onChange(caps.map((c, i) => (i === index ? { ...c, ...changes } : c)));
 
-  const removeCap = (index) => onChange(caps.filter((_, i) => i !== index));
+  const removeCap = (index) => {
+    if (!window.confirm(`Remove cap ${index + 1}?`)) return;
+    onChange(caps.filter((_, i) => i !== index));
+  };
 
   const addCap = () => {
     const inv = options[0];
