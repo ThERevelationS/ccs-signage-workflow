@@ -13,5 +13,23 @@
   },
   "required": [
     "checkpoint_name"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled_noop__"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "__disabled_noop__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled_noop__"
+      }
+    }
+  }
 }
