@@ -333,6 +333,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       }
       setDirty(false);
       onSaved?.();
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -372,6 +374,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       });
       if (!copy?.id) throw new Error("Foundation project copy could not be verified.");
       navigate(`/FoundationEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
