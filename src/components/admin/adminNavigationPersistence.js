@@ -8,13 +8,13 @@ export function getAdminNavigationStorageKey(user) {
   return identity ? STORAGE_PREFIX + encodeURIComponent(identity.toLowerCase()) : null;
 }
 
-export function sanitizeAdminNavigation(value, isAdmin) {
-  const tab = getAccessibleAdminTab(value?.tab, isAdmin);
-  const subtab = getAccessibleAdminSubtab(tab, value?.subtab);
+export function sanitizeAdminNavigation(value, isAdmin, user) {
+  const tab = getAccessibleAdminTab(value?.tab, isAdmin, user);
+  const subtab = getAccessibleAdminSubtab(tab, value?.subtab, user);
   return { tab, subtab };
 }
 
-export function readAdminNavigation(storage, key, isAdmin) {
+export function readAdminNavigation(storage, key, isAdmin, user) {
   if (!key) return null;
   try {
     const raw = storage?.getItem(key);
@@ -22,28 +22,28 @@ export function readAdminNavigation(storage, key, isAdmin) {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
     // Stale or revoked tabs are always replaced with a currently accessible destination.
-    return sanitizeAdminNavigation(parsed, isAdmin);
+    return sanitizeAdminNavigation(parsed, isAdmin, user);
   } catch {
     // Private browsing / blocked storage / legacy corrupt preference must not break Admin.
     return null;
   }
 }
 
-export function storeAdminNavigation(storage, key, value, isAdmin) {
+export function storeAdminNavigation(storage, key, value, isAdmin, user) {
   if (!key) return false;
   try {
-    storage?.setItem(key, JSON.stringify(sanitizeAdminNavigation(value, isAdmin)));
+    storage?.setItem(key, JSON.stringify(sanitizeAdminNavigation(value, isAdmin, user)));
     return Boolean(storage);
   } catch {
     return false;
   }
 }
 
-export function resolveAdminNavigation(searchParams, saved, isAdmin) {
+export function resolveAdminNavigation(searchParams, saved, isAdmin, user) {
   // Explicit links win, including invalid or newly restricted links, which fail closed.
   // A nested deep-link is meaningful only with its explicit parent tab.
   const requested = searchParams.has("tab")
     ? { tab: searchParams.get("tab"), subtab: searchParams.get("subtab") }
     : saved;
-  return sanitizeAdminNavigation(requested, isAdmin);
+  return sanitizeAdminNavigation(requested, isAdmin, user);
 }
