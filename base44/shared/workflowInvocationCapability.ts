@@ -1,13 +1,13 @@
 const WORKFLOW_CAPABILITY_HASHES: Record<string, string> = {
-  checkDeadlineReminders: '43ca6f538ae0db65f1b747ae3db37890701a811785f1c09b5d8521c9789b81dd',
-  monitorJurisdictionChanges: 'fee4b26c6308b674be4ad27b240fdc5c5fdd38d1f882d4572527eec299ff4978',
-  checkPermitFollowupReminders: '71384f0bc812c4d329561c9ae1f2b15cc2d19b5b0d34d1ec95536f53fc954ac7',
-  backupToGoogleDrive: '3953829bffb28c3a58e5a3491c7c52f9987867fbbba426e64826c8243ad75463',
-  auditJurisdictionAccuracy: 'bc0b14e3cc1212382f2aaf87bceef3a3c593a59c83f9bf68e0088384b806cac3',
-  refreshJurisdiction: '3df7cc591cb73abbacc2bff993f53dfaa1e6eea116989ad7a6ed44e9b9125887',
+  checkDeadlineReminders: '72fb97c3669c8c641047f620f620eb56885b47fa041c8480a85495d281a55255',
+  monitorJurisdictionChanges: '6126c9db61fec648a4ce353ff498877763b04a61a9119dbbe1fabeeb181c5854',
+  checkPermitFollowupReminders: 'a0baf1a5cec82d39356c9d9a80b957ccaa06a6208b5434c0c74a19ea666448db',
+  backupToGoogleDrive: 'cf38231a84bb7ac33710a981853ce3e359c499c3a2c8ab3076ebfae49b3d7f22',
+  auditJurisdictionAccuracy: 'afc8c4ce47b71f7c560dd4b78a88c4ca168796b7409036c05c3cf371b32649d4',
+  refreshJurisdiction: '52b93296d579efe1c68c30386f06203f4b9b6b94d42ee821ccdfe99bb70a1880',
   refreshJurisdictionTargeted: '1ff5bab9cc29af44a548b7f0355d630b30112fa980e2ac063cc998e373f34cc0',
-  detectSalesDuplicates: '35a68624dd682c8fffccf75d44f04ab35333ac8005868410caca045faa911ac1',
-  smartsheetSyncAction: '75e3ff6d0862cc68a2694148436e3849e7b9c700a67380676f809de47b6da509',
+  detectSalesDuplicates: '714156858aca78f073274f9d372067493ebcbb069613b5adc6d51b85a8c69436',
+  smartsheetSyncAction: '7bf936a6db5677115b441de13a6f442ea914721a5ad67436d09e9379121c503f',
   sendGmail: '11a4e004a291fbc881f4009f67e3ad97f55b0243527fb75ce793f50012605af7',
 };
 

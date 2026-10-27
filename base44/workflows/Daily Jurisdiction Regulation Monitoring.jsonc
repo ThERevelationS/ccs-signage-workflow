@@ -32,7 +32,7 @@
           "with": {
             "function_name": "monitorJurisdictionChanges",
             "args": {
-              "_workflow_capability": "IXQuWtG1aW-mKLqu938anwFhyKSBOJZ_iiu_aAQ9K2c"
+              "_workflow_capability": "ccs-wf-cap-e34e9284f5842cd43c40426f760678a3"
             }
           },
           "then": "end"
