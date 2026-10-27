@@ -67,6 +67,7 @@ export default function EquipmentSelector({
   };
 
   const handleRemove = (idx) => {
+    if (!confirm(`Remove "${selectedEquipment[idx]?.equipment_name || "this equipment"}"?`)) return;
     const next = [...selectedEquipment];
     next.splice(idx, 1);
     onChange(next);
