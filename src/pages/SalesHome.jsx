@@ -9,16 +9,23 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 export default function SalesHome() {
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     const load = async () => {
-      const rows = await loadAllEntityRows({
-        entity: base44.entities.AllInOneEstimate,
-        sort: "-created_date",
-        label: "Sales Home estimates",
-      });
-      setEstimates(rows);
-      setLoading(false);
+      try {
+        const rows = await loadAllEntityRows({
+          entity: base44.entities.AllInOneEstimate,
+          sort: "-created_date",
+          label: "Sales Home estimates",
+        });
+        setEstimates(rows);
+      } catch (err) {
+        console.error("Sales Home estimates could not be loaded:", err);
+        setLoadError(err?.message || "Estimates could not be loaded.");
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -46,6 +53,8 @@ export default function SalesHome() {
         <FadeIn delay={0.12}>
         {loading ? (
           <div className="bg-white px-4 py-10 text-center text-sm text-gray-400">Loading activity…</div>
+        ) : loadError ? (
+          <div className="bg-white px-4 py-10 text-center text-sm text-red-600">{loadError}</div>
         ) : (
           <RecentActivity estimates={estimates.slice(0, 25)} />
         )}
