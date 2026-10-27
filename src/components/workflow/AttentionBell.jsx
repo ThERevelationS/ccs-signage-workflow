@@ -38,8 +38,12 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 60000);
-    return () => clearInterval(t);
+    // Skip the 60s poll while the tab is hidden — keeps the attention_feed
+    // calls (and their entity_list budget) from piling up in the background.
+    const t = setInterval(() => { if (!document.hidden) load(); }, 60000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
   }, [load]);
 
   return (
