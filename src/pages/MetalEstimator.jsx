@@ -24,6 +24,8 @@ const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sig
 // materialTypes is not directly used in the current structure for display, but could be for filtering
 // const materialTypes = ["Aluminum", "Steel", "Stainless_Steel", "Galvanized_Steel"];
 
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 export default function MetalEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
   const editId = embeddedProjectId || searchParams.get('edit') || searchParams.get('id');
@@ -365,7 +367,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Metal Estimate - ${project.project_name}</title>
+  <title>Metal Estimate - ${escHtml(project.project_name)}</title>
   <meta charset="UTF-8">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -668,11 +670,11 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Project:</span>
-          <span class="info-value">${project.project_name}</span>
+          <span class="info-value">${escHtml(project.project_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Client:</span>
-          <span class="info-value">${project.client_name}</span>
+          <span class="info-value">${escHtml(project.client_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Date:</span>
@@ -687,25 +689,25 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       ${enrichedItems.map((item, i) => `
         <div class="item">
           <div class="item-header">
-            Item ${i + 1}: ${item.description || `Metal fabrication item`}
+            Item ${i + 1}: ${escHtml(item.description || "Metal fabrication item")}
           </div>
           
           <div class="item-details">
             <div class="detail-row">
               <span class="detail-label">Type:</span>
-              <span class="detail-value">${item.item_type_display}</span>
+              <span class="detail-value">${escHtml(item.item_type_display)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Material:</span>
-              <span class="detail-value">${item.material_type}</span>
+              <span class="detail-value">${escHtml(item.material_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Dimensions:</span>
-              <span class="detail-value">${item.dimensions_display}</span>
+              <span class="detail-value">${escHtml(item.dimensions_display)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Quantity:</span>
-              <span class="detail-value">${item.quantity}</span>
+              <span class="detail-value">${escHtml(item.quantity)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Labor Hours:</span>
@@ -755,7 +757,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       ${project.notes ? `
         <div class="notes">
           <h3>📝 Additional Notes</h3>
-          <p>${project.notes}</p>
+          <p>${escHtml(project.notes)}</p>
         </div>
       ` : ''}
     </div>
@@ -788,7 +790,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     const printContent = `
       <html>
         <head>
-          <title>Metal Estimate - ${project.project_name}</title>
+          <title>Metal Estimate - ${escHtml(project.project_name)}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
@@ -1090,11 +1092,11 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Project:</span>
-                  <span class="info-value">${project.project_name}</span>
+                  <span class="info-value">${escHtml(project.project_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Client:</span>
-                  <span class="info-value">${project.client_name}</span>
+                  <span class="info-value">${escHtml(project.client_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Date:</span>
@@ -1109,25 +1111,25 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               ${enrichedItems.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
-                    Item ${i + 1}: ${item.description || `Metal fabrication item`}
+                    Item ${i + 1}: ${escHtml(item.description || "Metal fabrication item")}
                   </div>
                   
                   <div class="item-details">
                     <div class="detail-row">
                       <span class="detail-label">Type:</span>
-                      <span class="detail-value">${item.item_type_display}</span>
+                      <span class="detail-value">${escHtml(item.item_type_display)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Material:</span>
-                      <span class="detail-value">${item.material_type}</span>
+                      <span class="detail-value">${escHtml(item.material_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Dimensions:</span>
-                      <span class="detail-value">${item.dimensions_display}</span>
+                      <span class="detail-value">${escHtml(item.dimensions_display)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Quantity:</span>
-                      <span class="detail-value">${item.quantity}</span>
+                      <span class="detail-value">${escHtml(item.quantity)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Labor Hours:</span>
@@ -1177,7 +1179,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               ${project.notes ? `
                 <div class="notes">
                   <h3>📝 Additional Notes</h3>
-                  <p>${project.notes}</p>
+                  <p>${escHtml(project.notes)}</p>
                 </div>
               ` : ''}
             </div>
