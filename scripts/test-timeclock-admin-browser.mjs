@@ -166,8 +166,8 @@ createRoot(document.getElementById("root")).render(<TimeClockAdmin />);
     }
     await page.getByRole("button", { name: "Refresh", exact: true }).first().click();
     // Exercise row actions on the seeded shift.
-    const row = page.locator("tr").filter({ hasText: "worker@synthetic.invalid" });
-    assert.equal(await row.count(), 1, "seeded shift row visible");
+    await page.getByText("worker@synthetic.invalid").first().waitFor();
+    const row = page.locator("tr").filter({ has: page.getByText("worker@synthetic.invalid") });
     // View details
     await row.getByTitle("View full shift details").click();
     await page.getByRole("dialog").first().waitFor();
