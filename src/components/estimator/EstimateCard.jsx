@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FileText, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { isQuoteExpired, localDateStamp, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 
 const STATUS_STYLES = {
   draft: "bg-gray-100 text-gray-700 border-gray-200",
@@ -15,6 +16,15 @@ const STATUS_STYLES = {
 export default function EstimateCard({ estimate }) {
   const total = Number(estimate.quote_total || estimate.total_cost || 0);
   const sections = (estimate.line_items || []).length;
+
+  const sentWithQuote =
+    (estimate.status || "draft") === "sent" && estimate.quote_issue_date && estimate.valid_days;
+  const expires = sentWithQuote
+    ? quoteExpirationDate(estimate.quote_issue_date, estimate.valid_days)
+    : "";
+  const expired = !!expires && isQuoteExpired(estimate.quote_issue_date, estimate.valid_days);
+  const expiringSoon =
+    !!expires && !expired && expires <= localDateStamp(new Date(Date.now() + 7 * 86400000));
 
   return (
     <Link
@@ -53,13 +63,26 @@ export default function EstimateCard({ estimate }) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-3 flex items-center justify-between gap-2">
         <span
           className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
             STATUS_STYLES[estimate.status] || STATUS_STYLES.draft
           }`}
         >
           {estimate.status || "draft"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {expired && (
+            <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">EXPIRED</span>
+          )}
+          {expiringSoon && (
+            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+              EXPIRES {format(new Date(`${expires}T00:00:00`), "MMM d")}
+            </span>
+          )}
+          {estimate.pipeline_sync_pending && (
+            <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">SYNC ISSUE</span>
+          )}
         </span>
       </div>
     </Link>
