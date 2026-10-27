@@ -69,6 +69,13 @@ function functionData(response) {
   return response?.data || response;
 }
 
+function safeFormat(value, pattern) {
+  if (!value) return '�';
+  const date = value instanceof Date ? value : parseISO(String(value));
+  if (!date || Number.isNaN(date.getTime())) return '�';
+  try { return format(date, pattern); } catch { return '�'; }
+}
+
 function adminRequestStorageKey(action, entryId) {
   return `ccs_timeclock_admin_request:${action}:${String(entryId || "").trim()}`;
 }
@@ -699,9 +706,9 @@ export default function TimeClockAdmin() {
     const exportData = filteredEntries.map(entry => ({
       "Employee": entry.user_name,
       "Email": entry.user_email,
-      "Date": format(parseISO(entry.clock_in), "yyyy-MM-dd"),
-      "Clock In": format(parseISO(entry.clock_in), "h:mm a"),
-      "Clock Out": entry.clock_out ? format(parseISO(entry.clock_out), "h:mm a") : "Active",
+      "Date": safeFormat(entry.clock_in, "yyyy-MM-dd"),
+      "Clock In": safeFormat(entry.clock_in, "h:mm a"),
+      "Clock Out": entry.clock_out ? safeFormat(entry.clock_out, "h:mm a") : "Active",
       "Clock Source": entry.clock_source || "",
       "Lunch (min)": entry.lunch_minutes || 0,
       "Tracked Break (min)": entry.tracked_break_minutes || 0,
@@ -710,12 +717,12 @@ export default function TimeClockAdmin() {
       "Work Pause (min)": entry.tracked_work_pause_minutes || 0,
       "Total Hours": entry.total_hours?.toFixed(2) || "0.00",
       "Approval Status": entry.approval_status || "unreviewed",
-      "Approved At": entry.approved_at ? format(parseISO(entry.approved_at), "yyyy-MM-dd h:mm a") : "",
+      "Approved At": entry.approved_at ? safeFormat(entry.approved_at, "yyyy-MM-dd h:mm a") : "",
       "Approved By": entry.approved_by || "",
       "Approval Note": entry.approval_note || "",
       "Finalized Period": entry.pay_period_id ? "Yes" : "No",
       "Pay Period ID": entry.pay_period_id || "",
-      "Locked At": entry.pay_period_locked_at ? format(parseISO(entry.pay_period_locked_at), "yyyy-MM-dd h:mm a") : "",
+      "Locked At": entry.pay_period_locked_at ? safeFormat(entry.pay_period_locked_at, "yyyy-MM-dd h:mm a") : "",
       "Locked By": entry.pay_period_locked_by || "",
       "Notes": entry.notes || "",
       "Jobs": entry.job_allocations?.map(j => 
@@ -731,7 +738,7 @@ export default function TimeClockAdmin() {
     XLSX.writeFile(wb, fileName);
   };
 
-  const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email))].map(email => {
+  const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
     const entry = timeEntries.find(e => e.user_email === email);
     return { email, name: entry?.user_name || email };
   });
@@ -964,11 +971,11 @@ export default function TimeClockAdmin() {
                         <p className="text-xs text-gray-500">{entry.user_email}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3">{format(parseISO(entry.clock_in), "MMM d, yyyy")}</td>
-                    <td className="px-4 py-3">{format(parseISO(entry.clock_in), "h:mm a")}</td>
+                    <td className="px-4 py-3">{safeFormat(entry.clock_in, "MMM d, yyyy")}</td>
+                    <td className="px-4 py-3">{safeFormat(entry.clock_in, "h:mm a")}</td>
                     <td className="px-4 py-3">
                       {entry.clock_out ? (
-                        format(parseISO(entry.clock_out), "h:mm a")
+                        safeFormat(entry.clock_out, "h:mm a")
                       ) : entry.status === "needs_resolution" ? (
                         <Badge className="bg-amber-100 text-amber-800">Missed punch review</Badge>
                       ) : (
@@ -1117,7 +1124,7 @@ export default function TimeClockAdmin() {
                     <div>
                       <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
                       <div className="text-xs text-gray-600">
-                        Clocked in {format(parseISO(entry.clock_in), "MMM d, yyyy 'at' h:mm a")}
+                        Clocked in {safeFormat(entry.clock_in, "MMM d, yyyy 'at' h:mm a")}
                       </div>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleEditEntry(entry)}>
@@ -1587,7 +1594,7 @@ export default function TimeClockAdmin() {
           <AlertDialogHeader>
             <AlertDialogTitle>Archive Time Entry?</AlertDialogTitle>
             <AlertDialogDescription>
-              Archive the {deleteConfirm?.user_name || deleteConfirm?.user_email || "employee"} time entry from {deleteConfirm?.clock_in ? format(parseISO(deleteConfirm.clock_in), "MMM d, yyyy 'at' h:mm a") : "this shift"}? It will disappear from normal Time Clock reports and job labor, but the original record and audit trail will be preserved.
+              Archive the {deleteConfirm?.user_name || deleteConfirm?.user_email || "employee"} time entry from {deleteConfirm?.clock_in ? safeFormat(deleteConfirm.clock_in, "MMM d, yyyy 'at' h:mm a") : "this shift"}? It will disappear from normal Time Clock reports and job labor, but the original record and audit trail will be preserved.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">
