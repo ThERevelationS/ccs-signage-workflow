@@ -191,6 +191,7 @@ export default function EstimatorQueues() {
               <Link
                 key={s.key || "all"}
                 to={s.key ? `/EstimatorQueues?status=${s.key}` : "/EstimatorQueues"}
+                aria-current={status === s.key ? "true" : undefined}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
                   status === s.key
                     ? "bg-red-600 text-white border-red-600"
