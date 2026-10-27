@@ -424,6 +424,8 @@ export default function PermitClientGroup({
           isOpen={showLocalityPicker}
           onClose={() => setShowLocalityPicker(false)}
           localities={localities}
+          initialAddress={[wo?.install_location, wo?.address_line_2, wo?.township_city, wo?.county, wo?.state]
+            .filter(v => String(v || '').trim()).join(', ')}
           onApply={(localityId, opts) => {
             onSelectLocalityForWorkOrder(group.work_order_id, localityId, opts);
           }}
