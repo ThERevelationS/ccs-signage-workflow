@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList } from "lucide-react";
+import { User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList, CalendarDays } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -79,10 +82,7 @@ export default function MyWorkflow() {
   const [editTaskDue, setEditTaskDue] = useState("");
   const [editTaskAssignees, setEditTaskAssignees] = useState([]);
   const [addTaskForWo, setAddTaskForWo] = useState(null);
-  const [editingJobId, setEditingJobId] = useState(null);
-  const [jobEditDesc, setJobEditDesc] = useState("");
-  const [jobEditDue, setJobEditDue] = useState("");
-  const [jobEditAssignee, setJobEditAssignee] = useState([]);
+  const [assigneeConfirm, setAssigneeConfirm] = useState(null);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [stageFilter, setStageFilter] = useState("all");
@@ -441,28 +441,23 @@ export default function MyWorkflow() {
     clearEditTask();
   };
 
-  const handleEditJob = async (wo) => {
+  const saveJobField = async (wo, patch) => {
+    const expectedFields = {};
+    for (const key of Object.keys(patch)) expectedFields[key] = wo[key] ?? "";
     try {
       const saved = await replaceWorkOrderFieldsIfUnchanged({
         workOrderId: wo.id,
-        expectedFields: {
-          current_task_description: wo.current_task_description || "",
-          due_date: wo.due_date || "",
-          assigned_to: wo.assigned_to || "",
-        },
-        nextFields: {
-          current_task_description: jobEditDesc.trim(),
-          due_date: jobEditDue || "",
-          assigned_to: jobEditAssignee[0] || "",
-        },
+        expectedFields,
+        nextFields: patch,
       });
       setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, ...saved } : w));
+      return true;
     } catch (error) {
-      console.error("Job assignment update blocked:", error);
+      console.error("Job field update blocked:", error);
       await loadMyWorkOrders();
       alert(error?.message || "This job changed in another session. The latest version was reloaded.");
+      return false;
     }
-    setEditingJobId(null);
   };
 
   const handleEditSubTask = async (workOrderId, taskIndex, subTaskIndex, newText) => {
@@ -740,51 +735,65 @@ export default function MyWorkflow() {
                           return (
                             <div key={idx} className="group">
                               {/* Job-level assignment: the job itself acts like a task */}
-                              {item.type === 'job_assignment' && (editingJobId === wo.id ? (
-                                <div className="flex flex-col gap-1 p-1 rounded border border-purple-200 bg-purple-50">
+                              {item.type === 'job_assignment' && (
+                                <div className="flex items-center gap-1 p-1 rounded border bg-purple-50 border-purple-200">
+                                  <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
                                   <Input
-                                    value={jobEditDesc}
-                                    onChange={(e) => setJobEditDesc(e.target.value)}
-                                    className="h-6 text-xs"
-                                    autoFocus
+                                    defaultValue={wo.current_task_description || ""}
                                     placeholder="Task description"
-                                    onKeyDown={(e) => { if (e.key === 'Escape') setEditingJobId(null); }}
-                                  />
-                                  <div className="flex items-center gap-1">
-                                    <Input type="date" value={jobEditDue} onChange={(e) => setJobEditDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
-                                    <div className="flex-1 min-w-0">
-                                      <MultiUserSelectInline users={allUsers} selectedUsers={jobEditAssignee} onSelectionChange={(v) => setJobEditAssignee(v.slice(-1))} placeholder="Assign..." className="h-6 w-full" />
-                                    </div>
-                                    <Button size="sm" onClick={() => handleEditJob(wo)} className="h-6 px-1"><Check className="w-2.5 h-2.5" /></Button>
-                                    <Button size="sm" variant="ghost" onClick={() => setEditingJobId(null)} className="h-6 px-1"><X className="w-2.5 h-2.5" /></Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={() => setSelectedWorkOrder(wo)}
-                                    className="flex-1 flex items-center gap-1 p-1 rounded border bg-purple-50 border-purple-200 text-left hover:bg-purple-100"
-                                  >
-                                    <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
-                                    <p className="text-xs font-medium text-purple-700 truncate">
-                                      Job assigned to you{wo.current_task_description ? ` — ${wo.current_task_description}` : ""}
-                                    </p>
-                                  </button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                      setEditingJobId(wo.id);
-                                      setJobEditDesc(wo.current_task_description || "");
-                                      setJobEditDue(String(wo.due_date || "").slice(0, 10));
-                                      setJobEditAssignee(wo.assigned_to ? [wo.assigned_to] : []);
+                                    title="Task description"
+                                    className="h-6 flex-1 min-w-0 text-xs bg-white/70"
+                                    onBlur={(e) => {
+                                      const next = e.target.value.trim();
+                                      if (next !== String(wo.current_task_description || "")) {
+                                        saveJobField(wo, { current_task_description: next });
+                                      }
                                     }}
-                                    className="h-4 w-4 opacity-0 group-hover:opacity-100"
-                                  >
-                                    <Pencil className="w-2.5 h-2.5 text-blue-500" />
-                                  </Button>
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.currentTarget.blur();
+                                      if (e.key === 'Escape') { e.currentTarget.value = wo.current_task_description || ""; e.currentTarget.blur(); }
+                                    }}
+                                  />
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button type="button" title="Deadline" className="h-6 inline-flex items-center gap-1 rounded border border-purple-200 bg-white/70 px-1.5 text-[10px] font-medium text-gray-700 hover:bg-white">
+                                        <CalendarDays className="w-3 h-3 text-purple-500" />
+                                        {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "No date"}
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={wo.due_date ? parseLocalDate(wo.due_date) : undefined}
+                                        onSelect={(day) => {
+                                          if (day) saveJobField(wo, { due_date: format(day, "yyyy-MM-dd") });
+                                        }}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                  <Select value="" onValueChange={(name) => setAssigneeConfirm({ wo, nextAssignee: name })}>
+                                    <SelectTrigger className="h-6 w-28 text-xs bg-white/70" title="Assigned to">
+                                      <SelectValue placeholder={wo.assigned_to || "Assign"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {allUsers.map(u => {
+                                        const name = u.full_name || u.email;
+                                        return <SelectItem key={u.id || u.email} value={name}>{name}</SelectItem>;
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                  <Select value={wo.current_stage || ""} onValueChange={(next) => { if (next !== wo.current_stage) saveJobField(wo, { current_stage: next }); }}>
+                                    <SelectTrigger className="h-6 w-28 text-xs bg-white/70" title="Stage">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {Object.keys(stageDisplayNames).map(s => (
+                                        <SelectItem key={s} value={s}>{stageDisplayNames[s]}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
-                              ))}
+                              )}
                               {/* Task with my subtasks/details - show parent as context */}
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
@@ -1051,6 +1060,24 @@ export default function MyWorkflow() {
         onClose={() => { setAddTaskForWo(null); loadMyWorkOrders(); }}
         lockedWorkOrderId={addTaskForWo?.id || null}
       />
+      <AlertDialog open={!!assigneeConfirm} onOpenChange={(open) => { if (!open) setAssigneeConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reassign this job to {assigneeConfirm?.nextAssignee}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This job is currently assigned to you. Reassigning it moves it to {assigneeConfirm?.nextAssignee}'s workflow and removes it from your My Workflow list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it assigned to me</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              const { wo, nextAssignee } = assigneeConfirm || {};
+              setAssigneeConfirm(null);
+              if (wo && nextAssignee) await saveJobField(wo, { assigned_to: nextAssignee });
+            }}>Reassign job</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Work Order Details Dialog */}
       {selectedWorkOrder && (
         <WorkOrderDetailsDialog
