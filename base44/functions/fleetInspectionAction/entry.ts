@@ -204,6 +204,12 @@ Deno.serve(async (req) => {
       if (!id || !expected) return Response.json({ error: 'Inspection identity/version is required. Reload before saving.' }, { status: 409 });
       const inspection = await Inspection.get(id).catch(() => null);
       if (!inspection) return Response.json({ error: 'Fleet inspection was not found.' }, { status: 404 });
+      // Only the assigned inspector — or an admin — may fill in or complete an
+      // inspection; otherwise results could be recorded under a coworker's name.
+      const inspectorEmail = String(inspection.inspector_email || '').trim().toLowerCase();
+      if (inspectorEmail && String(auth.user?.email || '').trim().toLowerCase() !== inspectorEmail && auth.admin !== true) {
+        return Response.json({ error: 'This inspection is assigned to a different inspector.' }, { status: 403 });
+      }
       if (inspection.completed_at) return Response.json({ success: true, reused: true, inspection });
       const equipment = await Equipment.get(inspection.equipment_id).catch(() => null);
       if (!equipment) return Response.json({ error: 'Inspection equipment no longer exists.' }, { status: 404 });

@@ -136,11 +136,14 @@ async function fieldHistoryHandler(req) {
       const patch={...(body.next_fields||{})}, expected=body.expected_fields;
       if(!patch || !expected || !Object.keys(patch).length || Array.isArray(patch))throw Object.assign(new Error('A field update and its baseline are required.'),{status:400});
       if(record.deleted===true)throw Object.assign(new Error('This record is in Trash. Restore it first.'),{status:409});
+      const PRIVILEGED_FIELDS=new Set(['status','payment_status','invoice_status','approved_by','approved_at','sales_quote_sent_verified_at']);
       for(const [f,v] of Object.entries(patch)) {
+        if(PRIVILEGED_FIELDS.has(f) && actor?.role !== 'admin')throw Object.assign(new Error('This field requires an admin session: '+f),{status:403});
         if(!optionalFields.has(f) && !(type==='Order' && f==='smartsheet_pending_local_sync' && v===true))throw Object.assign(new Error('This field cannot be edited through field history: '+f),{status:400});
         if(!Object.prototype.hasOwnProperty.call(expected,f))throw Object.assign(new Error('Missing loaded field baseline: '+f),{status:400});
         if(!equivalent(record[f],expected[f]) && !equivalent(record[f],v))throw Object.assign(new Error('This field changed in another session: '+f+'. Reload before saving.'),{status:409});
       }
+      for(const gf of Object.keys(body.guard_fields||{}))if(String(gf).startsWith('$'))throw Object.assign(new Error('Guard fields must be plain record fields.'),{status:400});
       for(const [f,v] of Object.entries(body.guard_fields||{}))if(!equivalent(record[f],v))throw Object.assign(new Error('The record no longer matches its loaded state.'),{status:409});
       if(type==='WorkOrder') {
         validateNeutralSalesCloseout(record,patch,equivalent);
