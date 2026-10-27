@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user: target,
-        nextFields: { onboarding_token: null, onboarding_token_hash: tokenHash, onboarding_expires: expires, onboarding_complete: false },
+        nextFields: { onboarding_token: null, onboarding_token_hash: tokenHash, onboarding_expires: expires, onboarding_complete: false, ...(target?.password_hash ? { session_not_before: new Date().toISOString() } : {}) },
         guardFields: { email: target.email },
         label: `Onboarding invitation for ${target.email}`,
       });
@@ -171,7 +171,11 @@ Deno.serve(async (req) => {
         failed_login_count: 0,
         login_locked_until: null,
       };
-      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) nextFields.face_descriptors = body.face_descriptors;
+      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) {
+        const descriptorsOk = body.face_descriptors.every((d) => Array.isArray(d) && d.length === 128 && d.every((n) => Number.isFinite(Number(n)) && Math.abs(Number(n)) <= 10));
+        if (!descriptorsOk) return Response.json({ success: false, error: 'Invalid face descriptor data' }, { status: 400 });
+        nextFields.face_descriptors = body.face_descriptors;
+      }
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user,
