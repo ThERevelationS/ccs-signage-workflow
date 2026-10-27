@@ -190,7 +190,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || tierLoading || !!tierLoadError}
+            disabled={saving || tierLoading || !!tierLoadError || !data.company_name.trim()}
             className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-60"
           >
             {saving ? "Saving…" : "Create Customer"}
