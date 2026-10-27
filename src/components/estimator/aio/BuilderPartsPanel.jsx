@@ -656,6 +656,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   }
 
   let offset = 0;
+  const partsFrozenTotal = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
   return (
     <div className="border-t border-gray-300 bg-[#f6f6f6] px-3 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2 pb-1">
@@ -743,6 +744,11 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           readOnly={readOnly}
         />
       ))}
+
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200">
+        <div className="text-[10px] font-bold tracking-widest text-gray-500">PARTS TOTAL</div>
+        <div className="text-[11px] font-bold text-gray-800">{money(partsFrozenTotal)}</div>
+      </div>
 
       <CreatePartGroupModal
         open={groupModalOpen}
