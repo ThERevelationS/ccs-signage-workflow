@@ -251,39 +251,11 @@ export default function TimeTracker({ position = "top" } = {}) {
     }
   }, [enabled, live, progress, overtime, overtimeMinutes, milestoneThresholds, prefs, email, snapshot?.company_day, displayMinutes, toast]);
 
-  // Location gate: hidden everywhere, or restricted to a bar.
-  const locationPref = prefs?.location || "both";
-  const visibleHere = enabled && locationPref !== "hidden" &&
-    !(prefs?.show_only_clocked_in === true && snapshot?.status !== "clocked_in") &&
-    (locationPref === "both" ||
-     (locationPref === "top" && position !== "side") ||
-     (locationPref === "side" && position === "side"));
-
-  if (!visibleHere) return null;
-
-  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
-  const ringColor = prefs?.progressive_colors === false ? accent.ring : (TONE_RING[tone] || accent.ring);
   const clockedIn = snapshot?.status === "clocked_in";
-  const frozen = live?.frozen === true;
-  const animClass = prefs?.animation_style === "pulse"
-    ? (pulse ? "tracker-pulse" : "")
-    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
-      ? `tracker-${prefs.animation_style}`
-      : "";
-  const animTarget = prefs?.animation_target || "all";
-  const animFor = (t) => (animTarget === t ? animClass : "");
 
-  const ringSize = prefs?.size === "expanded" ? 34 : 26;
-  const circumference = 2 * Math.PI * 100;
-  const ringFraction = Math.min(1, progress);
-
-  const popoverStats = snapshot ? [
-    { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
-    { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
-    { label: "Unpaid break", value: formatMinutes(Math.round((snapshot.break_minutes || 0) - (snapshot.paid_break_minutes || 0) + (snapshot.on_unpaid_break_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
-    { label: "Work Pause", value: formatMinutes(Math.round((snapshot.pause_minutes || 0) + (snapshot.paused_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
-  ] : [];
-
+  // These hooks must stay above the visibility gate below: the pill mounts and
+  // unmounts as the snapshot arrives, and a conditionally skipped hook crashes
+  // the entire navigation shell.
   const projectedFinish = useMemo(() => {
     if (!snapshot || !live || !clockedIn || overtime) return null;
     const remaining = goalMinutes - live.paid;
@@ -306,6 +278,35 @@ export default function TimeTracker({ position = "top" } = {}) {
       : { label: `${formatMinutes(Math.round(-diff))} behind pace`, minutes: diff };
   }, [snapshot, live, clockedIn, goalMinutes]);
 
+  // Location gate: hidden everywhere, or restricted to a bar.
+  const locationPref = prefs?.location || "both";
+  const visibleHere = enabled && locationPref !== "hidden" &&
+    (locationPref === "both" ||
+     (locationPref === "top" && position !== "side") ||
+     (locationPref === "side" && position === "side"));
+
+  if (!visibleHere) return null;
+
+  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
+  const ringColor = TONE_RING[tone] || accent.ring;
+  const frozen = live?.frozen === true;
+  const animClass = prefs?.animation_style === "pulse"
+    ? (pulse ? "tracker-pulse" : "")
+    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
+      ? `tracker-${prefs.animation_style}`
+      : "";
+
+  const ringSize = prefs?.size === "expanded" ? 34 : 26;
+  const circumference = 2 * Math.PI * 100;
+  const ringFraction = Math.min(1, progress);
+
+  const popoverStats = snapshot ? [
+    { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
+    { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
+    { label: "Unpaid break", value: formatMinutes(Math.round((snapshot.break_minutes || 0) - (snapshot.paid_break_minutes || 0) + (snapshot.on_unpaid_break_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
+    { label: "Work Pause", value: formatMinutes(Math.round((snapshot.pause_minutes || 0) + (snapshot.paused_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
+  ] : [];
+
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
   const todayIndex = (() => {
@@ -317,11 +318,7 @@ export default function TimeTracker({ position = "top" } = {}) {
   const trackerLabel = clockedIn
     ? (prefs?.direction === "down" && !overtime ? "Remaining" : "Today")
     : "";
-  const trackerTime = clockedIn
-    ? (prefs?.show_seconds === false
-        ? formatClock(shown, "hours_minutes")
-        : formatClockSeconds(shown, prefs?.time_format))
-    : "Off the clock";
+  const trackerTime = clockedIn ? formatClockSeconds(shown, prefs?.time_format) : "Off the clock";
   const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
 
   return (
@@ -331,7 +328,7 @@ export default function TimeTracker({ position = "top" } = {}) {
           type="button"
           data-time-tracker
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
-          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")}`}
+          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animClass}`}
           style={{
             transform: `scale(${prefs?.scale || 1})`,
             transformOrigin: position === "side" ? "top center" : "left center",
@@ -339,7 +336,7 @@ export default function TimeTracker({ position = "top" } = {}) {
           }}
         >
           {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && (
-            <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={`shrink-0 ${animFor("ring")}`} aria-hidden="true">
+            <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className="shrink-0" aria-hidden="true">
               <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="26" />
               <circle
                 cx="120" cy="120" r="100" fill="none"
@@ -352,15 +349,14 @@ export default function TimeTracker({ position = "top" } = {}) {
               />
             </svg>
           )}
-          {prefs?.show_icon !== false && (frozen ? <Pause className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"} ${animFor("icon")}`} /> : <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"} ${animFor("icon")}`} />)}
+          {frozen ? <Pause className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"}`} /> : <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"}`} />}
           <span className={`flex flex-col leading-none ${FONTS[prefs?.font] || ""}`}>
             <span
-              className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}
+              className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : ""}`}
               key={prefs?.display_style === "flip" ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
             >
-              {trackerLabel && prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
+              {trackerLabel && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
               {trackerTime}
-              {prefs?.show_percent === true && clockedIn && <span className={`ml-1.5 font-semibold opacity-60 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{Math.round(Math.min(1, progress) * 100)}%</span>}
             </span>
             {prefs?.display_style === "bar" && (
               <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
@@ -498,33 +494,27 @@ export function TimeTrackerPreview({ prefs }) {
     : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
       ? `tracker-${prefs.animation_style}`
       : "";
-  const animTarget = prefs?.animation_target || "all";
-  const animFor = (t) => (animTarget === t ? animClass : "");
   const label = prefs?.direction === "down" ? "Remaining" : "Today";
-  const previewMinutes = prefs?.direction === "down" ? 187.35 : 247.8;
-  const timeText = prefs?.show_seconds === false
-    ? formatClock(previewMinutes, "hours_minutes")
-    : formatClockSeconds(previewMinutes, prefs?.time_format);
+  const timeText = formatClockSeconds(prefs?.direction === "down" ? 187.35 : 247.8, prefs?.time_format);
   return (
     <button
       type="button"
       aria-hidden="true"
       tabIndex={-1}
-      className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none pointer-events-none ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")}`}
+      className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none pointer-events-none ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animClass}`}
       style={{ transform: `scale(${prefs?.scale || 1})`, transformOrigin: "left center", opacity: prefs?.opacity ?? 1 }}
     >
       {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && (
-        <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={`shrink-0 ${animFor("ring")}`}>
+        <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className="shrink-0">
           <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="26" />
           <circle cx="120" cy="120" r="100" fill="none" stroke={ringColor} strokeWidth="26" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ringFraction)} transform="rotate(-90 120 120)" />
         </svg>
       )}
-      {prefs?.show_icon !== false && <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"} ${animFor("icon")}`} />}
+      <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
       <span className={`flex flex-col leading-none ${FONTS[prefs?.font] || ""}`}>
-        <span className={`font-bold tabular-nums ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${prefs?.display_style === "flip" ? "tracker-flip" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}>
-          {prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{label}</span>}
+        <span className={`font-bold tabular-nums ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${prefs?.display_style === "flip" ? "tracker-flip" : ""}`}>
+          <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{label}</span>
           {timeText}
-          {prefs?.show_percent === true && <span className={`ml-1.5 font-semibold opacity-60 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>63%</span>}
         </span>
         {prefs?.display_style === "bar" && (
           <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
