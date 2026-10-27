@@ -25,6 +25,8 @@ import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/component
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
 
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 export default function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -341,7 +343,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CNC Estimate - ${project.project_name}</title>
+  <title>CNC Estimate - ${escHtml(project.project_name)}</title>
   <meta charset="UTF-8">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -638,11 +640,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Project:</span>
-          <span class="info-value">${project.project_name}</span>
+          <span class="info-value">${escHtml(project.project_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Client:</span>
-          <span class="info-value">${project.client_name}</span>
+          <span class="info-value">${escHtml(project.client_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Date:</span>
@@ -657,25 +659,25 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       ${project.items.map((item, i) => `
         <div class="item">
           <div class="item-header">
-            Item ${i + 1}: ${item.description || `CNC item`}
+            Item ${i + 1}: ${escHtml(item.description || "CNC item")}
           </div>
           
           <div class="item-details">
             <div class="detail-row">
               <span class="detail-label">Material:</span>
-              <span class="detail-value">${item.material_type}</span>
+              <span class="detail-value">${escHtml(item.material_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Dimensions:</span>
-              <span class="detail-value">${item.length}" × ${item.width}" × ${item.material_thickness}"</span>
+              <span class="detail-value">${escHtml(item.length)}" × ${escHtml(item.width)}" × ${escHtml(item.material_thickness)}"</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Job Type:</span>
-              <span class="detail-value">${item.item_type}</span>
+              <span class="detail-value">${escHtml(item.item_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Quantity:</span>
-              <span class="detail-value">${item.quantity}</span>
+              <span class="detail-value">${escHtml(item.quantity)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Machine Time:</span>
@@ -721,7 +723,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       ${project.notes ? `
         <div class="notes">
           <h3>📝 Additional Notes</h3>
-          <p>${project.notes}</p>
+          <p>${escHtml(project.notes)}</p>
         </div>
       ` : ''}
     </div>
@@ -753,7 +755,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     const printContent = `
       <html>
         <head>
-          <title>CNC Estimate - ${project.project_name}</title>
+          <title>CNC Estimate - ${escHtml(project.project_name)}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
@@ -1049,11 +1051,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Project:</span>
-                  <span class="info-value">${project.project_name}</span>
+                  <span class="info-value">${escHtml(project.project_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Client:</span>
-                  <span class="info-value">${project.client_name}</span>
+                  <span class="info-value">${escHtml(project.client_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Date:</span>
@@ -1068,25 +1070,25 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               ${project.items.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
-                    Item ${i + 1}: ${item.description || `CNC item`}
+                    Item ${i + 1}: ${escHtml(item.description || "CNC item")}
                   </div>
                   
                   <div class="item-details">
                     <div class="detail-row">
                       <span class="detail-label">Material:</span>
-                      <span class="detail-value">${item.material_type}</span>
+                      <span class="detail-value">${escHtml(item.material_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Dimensions:</span>
-                      <span class="detail-value">${item.length}" × ${item.width}" × ${item.material_thickness}"</span>
+                      <span class="detail-value">${escHtml(item.length)}" × ${escHtml(item.width)}" × ${escHtml(item.material_thickness)}"</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Job Type:</span>
-                      <span class="detail-value">${item.item_type}</span>
+                      <span class="detail-value">${escHtml(item.item_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Quantity:</span>
-                      <span class="detail-value">${item.quantity}</span>
+                      <span class="detail-value">${escHtml(item.quantity)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Machine Time:</span>
@@ -1132,7 +1134,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               ${project.notes ? `
                 <div class="notes">
                   <h3>📝 Additional Notes</h3>
-                  <p>${project.notes}</p>
+                  <p>${escHtml(project.notes)}</p>
                 </div>
               ` : ''}
             </div>
