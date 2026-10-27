@@ -3,12 +3,14 @@ import { base44 } from "@/api/base44Client";
 import { Loader2, Printer } from "lucide-react";
 
 const clean = (v) => String(v ?? "").trim();
+const listRows = (v) => (Array.isArray(v) ? v : Array.isArray(v?.items) ? v.items : []);
 const fmtDate = (v) => {
   const s = clean(v);
   if (!s) return "—";
   const d = s.length === 10 ? new Date(`${s}T12:00:00`) : new Date(s);
   return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
+const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const STAGE_LABELS = {
   estimating: "Estimating", sales: "Sales", permitting: "Permitting", design: "Design",
@@ -49,6 +51,8 @@ function TaskRow({ task }) {
 export default function WorkOrderTraveler() {
   const [wo, setWo] = useState(null);
   const [riders, setRiders] = useState([]);
+  const [permits, setPermits] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -64,8 +68,16 @@ export default function WorkOrderTraveler() {
         if (!record?.id) throw new Error("Work order not found.");
         setWo(record);
         document.title = `Traveler — ${clean(record.title) || woId}`;
-        const kids = await base44.entities.WorkOrder.filter({ parent_work_order_id: woId }).catch(() => []);
-        if (!cancelled) setRiders((Array.isArray(kids) ? kids : []).filter((r) => r?.id && !r.deleted));
+        const [kids, permitItems, pulls] = await Promise.all([
+          base44.entities.WorkOrder.filter({ parent_work_order_id: woId }).catch(() => []),
+          base44.entities.PermitLineItem.filter({ work_order_id: woId }).catch(() => []),
+          base44.entities.InventoryMovement.filter({ work_order_id: woId }).catch(() => []),
+        ]);
+        if (!cancelled) {
+          setRiders(listRows(kids).filter((r) => r?.id && !r.deleted));
+          setPermits(listRows(permitItems).filter((p) => p?.id));
+          setMaterials(listRows(pulls).filter((m) => m?.id && ["issue", "return"].includes(clean(m.reason))));
+        }
       } catch (e) {
         if (!cancelled) setError(e?.message || "Could not load work order.");
       } finally {
@@ -85,6 +97,56 @@ export default function WorkOrderTraveler() {
     }
     return [...groups.entries()];
   }, [tasks]);
+
+  const jobCode = useMemo(() => `WO-${clean(wo?.id).toUpperCase() || "—"}`, [wo]);
+  const barcodeWidths = useMemo(
+    () => clean(wo?.id).split("").map((c) => (c.charCodeAt(0) % 4) + 1),
+    [wo],
+  );
+
+  const permitRows = useMemo(
+    () => permits.map((p) => ({
+      id: p.id,
+      name: clean(p.row_name) || (Array.isArray(p.office_types) ? p.office_types.map(clean).filter(Boolean).join(" + ") : "") || "Permit",
+      locality: clean(p.locality_name),
+      status: clean(p.permit_received_date)
+        ? `Received ${fmtDate(p.permit_received_date)}`
+        : clean(p.status) || "active",
+      fee: Number.isFinite(Number(p.jurisdiction_fee_amount)) && clean(p.jurisdiction_fee_amount) ? Number(p.jurisdiction_fee_amount) : null,
+      feeStatus: clean(p.jurisdiction_fee_status),
+    })),
+    [permits],
+  );
+
+  const woPermitSummary = useMemo(() => {
+    if (!wo) return "";
+    return [
+      clean(wo.township_city) || clean(wo.county) ? `Locality: ${[clean(wo.township_city), clean(wo.county)].filter(Boolean).join(", ")}` : "",
+      clean(wo.permit_code) ? `Code ${clean(wo.permit_code)}` : "",
+      clean(wo.permit_class) ? `Class ${clean(wo.permit_class)}` : "",
+      clean(wo.permit_number) ? `Permit # ${clean(wo.permit_number)}` : "",
+      clean(wo.permit_submitted_date) ? `Submitted ${fmtDate(wo.permit_submitted_date)}` : "",
+      clean(wo.permit_approved_date) ? `Approved ${fmtDate(wo.permit_approved_date)}` : "",
+      clean(wo.permit_receipt_confirmed_date) ? `Received ${fmtDate(wo.permit_receipt_confirmed_date)}` : "",
+      clean(wo.permitting) && clean(wo.permitting) !== "na" ? `Required: ${clean(wo.permitting)}` : "",
+    ].filter(Boolean).join(" · ");
+  }, [wo]);
+
+  const cutList = useMemo(() => {
+    if (!wo) return [];
+    const rows = [];
+    for (const p of Array.isArray(wo.products) ? wo.products : []) {
+      const label = clean(p?.description) || clean(p?.customer_description) || clean(p?.product_type);
+      const qty = Number(p?.quantity) || 0;
+      if (!label && !qty) continue;
+      rows.push({ id: p.id, label: label || "Item", type: clean(p.product_type || p.category), qty: qty || null });
+    }
+    for (let i = 1; i <= 6; i += 1) {
+      const label = clean(wo[`product_${i}`]);
+      if (label) rows.push({ id: `legacy-${i}`, label, type: "", qty: null });
+    }
+    return rows;
+  }, [wo]);
 
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-600" /></div>;
@@ -113,8 +175,13 @@ export default function WorkOrderTraveler() {
               <p className="text-sm text-slate-600">{clean(wo.client_name) || "—"}</p>
             </div>
             <div className="text-right text-[11px] text-slate-600">
-              <p className="font-mono">WO {clean(wo.id).slice(-8).toUpperCase()}</p>
-              <p>Printed {new Date().toLocaleDateString()}</p>
+              <div className="inline-block rounded border-2 border-slate-900 px-3 py-1.5">
+                <div className="flex h-7 items-stretch justify-center gap-px">
+                  {barcodeWidths.map((w, i) => <div key={i} className="bg-slate-900" style={{ width: `${w}px` }} />)}
+                </div>
+                <p className="mt-1 text-center font-mono text-[10px] font-bold tracking-[0.3em] text-slate-900">{jobCode}</p>
+              </div>
+              <p className="mt-1">Printed {new Date().toLocaleDateString()}</p>
               {wo.asap ? <p className="mt-1 inline-block rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">ASAP</p> : null}
             </div>
           </div>
@@ -143,6 +210,97 @@ export default function WorkOrderTraveler() {
         {wo.image_url && (
           <div className="mt-4">
             <img src={wo.image_url} alt={clean(wo.title)} className="max-h-56 rounded border border-slate-200 object-contain" />
+          </div>
+        )}
+
+        {/* Permits */}
+        {(permitRows.length > 0 || woPermitSummary) && (
+          <div className="mt-4 break-inside-avoid">
+            <h2 className="border-b border-slate-300 pb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+              Permits{permitRows.length > 0 ? ` (${permitRows.length})` : ""}
+            </h2>
+            {permitRows.length > 0 ? (
+              <table className="mt-2 w-full text-xs">
+                <thead>
+                  <tr className="text-left text-[10px] font-bold uppercase text-slate-400">
+                    <th className="py-1 pr-2">Permit</th>
+                    <th className="py-1 pr-2">Locality</th>
+                    <th className="py-1 pr-2">Status</th>
+                    <th className="py-1 text-right">Fee</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {permitRows.map((p) => (
+                    <tr key={p.id} className="border-t border-slate-200">
+                      <td className="py-1.5 pr-2 font-medium text-slate-800">{p.name}</td>
+                      <td className="py-1.5 pr-2 text-slate-600">{p.locality || "—"}</td>
+                      <td className="py-1.5 pr-2 text-slate-600">{p.status}</td>
+                      <td className="py-1.5 text-right text-slate-600">
+                        {p.fee != null ? `${usd(p.fee)}${p.feeStatus ? ` (${p.feeStatus})` : ""}` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="mt-1.5 text-xs text-slate-600">{woPermitSummary}</p>
+            )}
+          </div>
+        )}
+
+        {/* Cut list */}
+        {cutList.length > 0 && (
+          <div className="mt-4 break-inside-avoid">
+            <h2 className="border-b border-slate-300 pb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+              Cut list ({cutList.length})
+            </h2>
+            <table className="mt-2 w-full text-xs">
+              <thead>
+                <tr className="text-left text-[10px] font-bold uppercase text-slate-400">
+                  <th className="py-1 pr-2">Item</th>
+                  <th className="py-1 pr-2">Type</th>
+                  <th className="py-1 text-right">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cutList.map((c) => (
+                  <tr key={c.id} className="border-t border-slate-200">
+                    <td className="py-1.5 pr-2 font-medium text-slate-800">{c.label}</td>
+                    <td className="py-1.5 pr-2 text-slate-600">{c.type || "—"}</td>
+                    <td className="py-1.5 text-right font-mono text-slate-800">{c.qty ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Materials / Inventory pulls */}
+        {materials.length > 0 && (
+          <div className="mt-4 break-inside-avoid">
+            <h2 className="border-b border-slate-300 pb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
+              Materials / Inventory pulls ({materials.length})
+            </h2>
+            <table className="mt-2 w-full text-xs">
+              <thead>
+                <tr className="text-left text-[10px] font-bold uppercase text-slate-400">
+                  <th className="py-1 pr-2">Item</th>
+                  <th className="py-1 pr-2">Reason</th>
+                  <th className="py-1 pr-2 text-right">Qty</th>
+                  <th className="py-1 text-right">Ext cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {materials.map((m) => (
+                  <tr key={m.id} className="border-t border-slate-200">
+                    <td className="py-1.5 pr-2 font-medium text-slate-800">{clean(m.item_label) || "Item"}</td>
+                    <td className="py-1.5 pr-2 text-slate-600">{clean(m.reason) || "—"}</td>
+                    <td className="py-1.5 pr-2 text-right font-mono text-slate-800">{Math.abs(Number(m.delta) || 0)}</td>
+                    <td className="py-1.5 text-right text-slate-600">{usd(Math.abs(Number(m.delta) || 0) * (Number(m.unit_cost) || 0))}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -202,6 +360,12 @@ export default function WorkOrderTraveler() {
               <p className="mt-1 text-center text-[10px] font-bold uppercase text-slate-500">{label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 flex items-center justify-between border-t border-slate-300 pt-2 text-[10px] text-slate-400">
+          <span>Shop Traveler — {clean(wo.title) || "Work Order"} · {jobCode}</span>
+          <span>Printed {new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
         </div>
       </div>
     </div>
