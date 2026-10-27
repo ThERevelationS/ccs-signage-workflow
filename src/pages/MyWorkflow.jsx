@@ -90,19 +90,19 @@ function JobAssignmentInlineRow({ wo, users, onSaveField, onAssigneeChange }) {
         <PopoverTrigger asChild>
           <button type="button" title="Deadline" className="h-7 inline-flex items-center gap-1 rounded px-1 text-xs text-gray-700 hover:bg-purple-100">
             <CalendarDays className="w-3 h-3 text-purple-500" />
-            {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "—"}
+            {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "M/d/yy") : "—"}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
-            selected={wo.due_date ? parseLocalDate(wo.due_date) : undefined}
-            onSelect={(day) => { if (day) onSaveField(wo, { due_date: format(day, "yyyy-MM-dd") }); setDateOpen(false); }}
+            selected={wo.current_task_deadline ? parseLocalDate(wo.current_task_deadline) : undefined}
+            onSelect={(day) => { if (day) onSaveField(wo, { current_task_deadline: format(day, "yyyy-MM-dd") }); setDateOpen(false); }}
           />
         </PopoverContent>
       </Popover>
       <TaskAssigneeSelect
-        value={wo.assigned_to || ""}
+        value={wo.current_task_assigned_to || ""}
         users={users}
         onChange={(name) => onAssigneeChange(wo, name)}
         className="h-7 w-28 text-xs border-0 bg-transparent px-1"
@@ -1078,7 +1078,7 @@ export default function MyWorkflow() {
             <AlertDialogAction onClick={async () => {
               const { wo, nextAssignee } = assigneeConfirm || {};
               setAssigneeConfirm(null);
-              if (wo && nextAssignee) await saveJobField(wo, { assigned_to: nextAssignee });
+              if (wo && nextAssignee) await saveJobField(wo, { current_task_assigned_to: nextAssignee });
             }}>Reassign job</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
