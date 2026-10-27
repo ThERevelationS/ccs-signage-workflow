@@ -1073,7 +1073,6 @@ export default function Permitting() {
                   setViewName(name || "");
                 }}
               />
-              </Button>
               <Button
                 type="button"
                 size="sm"
