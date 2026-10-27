@@ -26,8 +26,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const action = text(body?.action, 80);
     const estimateId = text(body?.estimate_id, 128);
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
