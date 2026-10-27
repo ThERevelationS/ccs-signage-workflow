@@ -100,8 +100,8 @@ check('alert_minutes reminder effect', () => {
 
 // ---------- backend normalize ----------
 check('backend accepts new enums', () => {
-  assert.match(backend, /display_style: \['ring', 'bar', 'minimal', 'flip', 'roll'\]/);
-  assert.match(backend, /animation_style: \['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'none'\]/);
+  assert.match(backend, /display_style: \['ring', 'bar', 'minimal', 'flip', 'roll', 'donut', 'arc', 'badge'\]/);
+  assert.match(backend, /animation_style: \['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'wave', 'sparkle', 'float', 'flicker', 'rainbow', 'pop', 'wobble', 'ripple', 'shake', 'gradient', 'none'\]/);
   assert.match(backend, /animation_target: \['all', 'digits', 'ring', 'icon'\]/);
   assert.match(backend, /device_scope: \['all', 'desktop_only', 'mobile_only'\]/);
 });
@@ -135,12 +135,15 @@ check('settings defaults mirror backend', () => {
 check('settings expose all new controls', () => {
   for (const label of ['Hide when unfocused', 'Time Clock page only', 'Celebrate goal',
     'Blinking separator', 'Only when clocked in', 'Progressive colors', 'Custom label',
-    'Reminders \\(minutes on clock\\)']) {
+    'Reminders', 'Milestones', 'Appearance', 'Motion', 'Placement & visibility']) {
     assert.ok(new RegExp(label).test(settings), `setting "${label}" missing`);
   }
   assert.match(settings, /set\("device_scope"\)/);
   assert.match(settings, /value="desktop_only"/);
   assert.match(settings, /value="mobile_only"/);
+  assert.match(settings, /type="color"/);
+  assert.match(settings, /addReminder/);
+  assert.match(settings, /InfoDot/);
 });
 check('live preview driven by draft prefs', () => {
   assert.match(settings, /<TimeTrackerPreview prefs=\{p\} \/>/);

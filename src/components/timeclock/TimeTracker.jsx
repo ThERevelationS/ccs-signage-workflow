@@ -18,27 +18,65 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-const ACCENTS = {
-  indigo: { ring: "#6366f1", pill: "border-indigo-300/60 bg-indigo-50/80 text-indigo-950 dark:border-indigo-500/40 dark:bg-indigo-950/50 dark:text-indigo-100", bar: "from-indigo-400 to-indigo-600" },
-  emerald: { ring: "#10b981", pill: "border-emerald-300/60 bg-emerald-50/80 text-emerald-950 dark:border-emerald-500/40 dark:bg-emerald-950/50 dark:text-emerald-100", bar: "from-emerald-400 to-emerald-600" },
-  amber: { ring: "#f59e0b", pill: "border-amber-300/60 bg-amber-50/80 text-amber-950 dark:border-amber-500/40 dark:bg-amber-950/50 dark:text-amber-100", bar: "from-amber-400 to-amber-600" },
-  violet: { ring: "#8b5cf6", pill: "border-violet-300/60 bg-violet-50/80 text-violet-950 dark:border-violet-500/40 dark:bg-violet-950/50 dark:text-violet-100", bar: "from-violet-400 to-violet-600" },
-  rose: { ring: "#f43f5e", pill: "border-rose-300/60 bg-rose-50/80 text-rose-950 dark:border-rose-500/40 dark:bg-rose-950/50 dark:text-rose-100", bar: "from-rose-400 to-rose-600" },
-  cyan: { ring: "#06b6d4", pill: "border-cyan-300/60 bg-cyan-50/80 text-cyan-950 dark:border-cyan-500/40 dark:bg-cyan-950/50 dark:text-cyan-100", bar: "from-cyan-400 to-cyan-600" },
-  teal: { ring: "#14b8a6", pill: "border-teal-300/60 bg-teal-50/80 text-teal-950 dark:border-teal-500/40 dark:bg-teal-950/50 dark:text-teal-100", bar: "from-teal-400 to-teal-600" },
-  lime: { ring: "#84cc16", pill: "border-lime-300/60 bg-lime-50/80 text-lime-950 dark:border-lime-500/40 dark:bg-lime-950/50 dark:text-lime-100", bar: "from-lime-400 to-lime-600" },
-  orange: { ring: "#f97316", pill: "border-orange-300/60 bg-orange-50/80 text-orange-950 dark:border-orange-500/40 dark:bg-orange-950/50 dark:text-orange-100", bar: "from-orange-400 to-orange-600" },
-  fuchsia: { ring: "#d946ef", pill: "border-fuchsia-300/60 bg-fuchsia-50/80 text-fuchsia-950 dark:border-fuchsia-500/40 dark:bg-fuchsia-950/50 dark:text-fuchsia-100", bar: "from-fuchsia-400 to-fuchsia-600" },
-  slate: { ring: "#64748b", pill: "border-slate-300/60 bg-slate-50/80 text-slate-950 dark:border-slate-500/40 dark:bg-slate-950/50 dark:text-slate-100", bar: "from-slate-400 to-slate-600" },
-  sky: { ring: "#0ea5e9", pill: "border-sky-300/60 bg-sky-50/80 text-sky-950 dark:border-sky-500/40 dark:bg-sky-950/50 dark:text-sky-100", bar: "from-sky-400 to-sky-600" },
+// Named accent presets keyed to hex; custom hex colors flow through makeAccent.
+const ACCENT_PRESETS = {
+  indigo: "#6366f1", emerald: "#10b981", amber: "#f59e0b", violet: "#8b5cf6",
+  rose: "#f43f5e", sky: "#0ea5e9", cyan: "#06b6d4", teal: "#14b8a6",
+  lime: "#84cc16", orange: "#f97316", fuchsia: "#d946ef", slate: "#64748b",
+  red: "#ef4444", pink: "#ec4899", purple: "#a855f7", blue: "#3b82f6",
+  green: "#22c55e", yellow: "#eab308", mint: "#34d399", coral: "#fb7185",
+  gold: "#ca8a04", navy: "#1e40af", plum: "#7e22ce", brick: "#b91c1c",
+  seafoam: "#2dd4bf", lavender: "#a78bfa", peach: "#fdba74", charcoal: "#27272a",
 };
+
+function hexToHsl(hex) {
+  const n = parseInt(String(hex).replace("#", ""), 16);
+  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, Math.round(l * 100)];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = 0;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  return [Math.round(h * 60), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function makeAccent(hex) {
+  const [h, s, l] = hexToHsl(hex);
+  const hsl = (hh, ss, ll) => `hsl(${hh} ${ss}% ${ll}%)`;
+  return {
+    ring: hex,
+    barStart: hsl(h, Math.max(20, s - 10), Math.min(78, l + 16)),
+    barEnd: hsl(h, s, Math.max(26, l - 10)),
+    soft: hsl(h, Math.max(28, s - 14), 94),
+    softBorder: hsl(h, Math.max(18, s - 18), 78),
+    text: hsl(h, Math.min(72, s), 24),
+  };
+}
+
+export function resolveAccent(color) {
+  const key = String(color || "indigo");
+  const hex = ACCENT_PRESETS[key] || (/^#[0-9a-fA-F]{6}$/.test(key) ? key : ACCENT_PRESETS.indigo);
+  return makeAccent(hex);
+}
+export { ACCENT_PRESETS };
 
 const FONTS = {
   default: "",
   mono: "font-mono",
   rounded: "tracking-wide",
   serif: "font-serif",
+  light: "font-light tracking-wide",
+  heavy: "font-black tracking-tight",
 };
+
+const ANIMATION_CLASSES = new Set([
+  "pulse", "glow", "breathe", "sweep", "wave", "sparkle", "float",
+  "flicker", "rainbow", "pop", "wobble", "ripple", "shake", "gradient",
+]);
 
 const MILESTONE_STORAGE = "ccs_time_tracker_milestones";
 
@@ -269,6 +307,16 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       }
       if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
     }
+    if (prefs?.weekly_celebrate === true) {
+      const weeklyGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
+      if (live.weekly >= weeklyGoal && !next.includes(2000)) {
+        next.push(2000);
+        setPulse(true);
+        window.setTimeout(() => setPulse(false), 2400);
+        toast({ description: `Time Tracker: weekly goal reached (${formatClock(weeklyGoal, "hours_minutes")})` });
+        if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
+      }
+    }
     if (next.length !== fired.length || next.some((v, i) => v !== fired[i])) {
       writeMilestones(email, snapshot.company_day, next);
     }
@@ -277,17 +325,19 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   // Time-of-day reminders: one toast per configured elapsed-minute mark.
   useEffect(() => {
     if (!enabled || !live || !snapshot?.company_day) return;
-    const marks = Array.isArray(prefs?.alert_minutes) ? prefs.alert_minutes : [];
-    if (!marks.length) return;
+    const source = Array.isArray(prefs?.reminders) && prefs.reminders.length ? prefs.reminders
+      : (Array.isArray(prefs?.alert_minutes) ? prefs.alert_minutes : []);
+    if (!source.length) return;
     const fired = readMilestones(email, snapshot.company_day);
     const next = [...fired];
-    for (const m of marks) {
-      const minute = Number(m);
+    for (const r of source) {
+      const minute = Number(typeof r === "object" && r !== null ? r.minutes : r);
       if (!Number.isFinite(minute) || minute <= 0) continue;
+      const label = typeof r === "object" && r !== null ? String(r.label || "").trim() : "";
       const marker = 10000 + minute;
       if (displayMinutes >= minute && !next.includes(marker)) {
         next.push(marker);
-        toast({ description: `Time Tracker reminder: ${formatClock(minute, "hours_minutes")} on the clock` });
+        toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
         if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
       }
     }
@@ -320,13 +370,13 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
      (locationPref === "top" && !hasTopBar) ||
      (locationPref === "side" && !hasSideBar));
 
-  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
+  const accent = resolveAccent(prefs?.accent_color);
   const ringColor = prefs?.progressive_colors === false ? accent.ring : (TONE_RING[tone] || accent.ring);
   const clockedIn = snapshot?.status === "clocked_in";
   const frozen = live?.frozen === true;
   const animClass = prefs?.animation_style === "pulse"
     ? (pulse ? "tracker-pulse" : "")
-    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
+    : ANIMATION_CLASSES.has(prefs?.animation_style)
       ? `tracker-${prefs.animation_style}`
       : "";
   const animTarget = prefs?.animation_target || "all";
@@ -381,7 +431,15 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
         ? formatClock(shown, "hours_minutes")
         : formatClockSeconds(shown, prefs?.time_format))
     : "Off the clock";
-  const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
+  const bgStyle = String(prefs?.background_style || "minimal");
+  const bgClass = bgStyle === "minimal"
+    ? "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"
+    : `tracker-bg-${bgStyle} rounded-2xl border`;
+  const accentVars = {
+    "--tracker-accent": accent.ring,
+    "--tracker-accent-soft": accent.soft,
+    "--tracker-accent-text": accent.text,
+  };
 
   if (!visibleHere) return null;
 
@@ -392,22 +450,42 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           type="button"
           data-time-tracker
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
-          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
+          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${bgClass} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
           style={{
             zoom: prefs?.scale || 1,
             opacity: prefs?.opacity ?? 1,
+            ...accentVars,
           }}
         >
-          {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && prefs?.display_style !== "roll" && (
-            <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={`shrink-0 ${animFor("ring")}`} aria-hidden="true">
-              <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="26" />
-              <circle
-                cx="120" cy="120" r="100" fill="none"
-                stroke={ringColor}
-                strokeWidth="26" strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={circumference * (1 - ringFraction)}
-                transform="rotate(-90 120 120)"
+          {(prefs?.display_style === "ring" || prefs?.display_style === "donut") && (
+            <span className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
+              <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={animFor("ring")} aria-hidden="true">
+                <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth={prefs?.display_style === "donut" ? 40 : 26} />
+                <circle
+                  cx="120" cy="120" r="100" fill="none"
+                  stroke={ringColor}
+                  strokeWidth={prefs?.display_style === "donut" ? 40 : 26} strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={circumference * (1 - ringFraction)}
+                  transform="rotate(-90 120 120)"
+                  className={prefs?.animation_style === "none" ? "" : "transition-[stroke-dashoffset] duration-700 ease-out"}
+                />
+              </svg>
+              {prefs?.display_style === "donut" && (
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black leading-none" style={{ color: ringColor }}>
+                  {Math.round(Math.min(1, Math.max(0, ringFraction)) * 100)}%
+                </span>
+              )}
+            </span>
+          )}
+          {prefs?.display_style === "arc" && (
+            <svg viewBox="0 0 120 62" style={{ width: ringSize * 1.5, height: Math.round(ringSize * 0.78) }} className={`shrink-0 ${animFor("ring")}`} aria-hidden="true">
+              <path d="M10 58 A50 50 0 0 1 110 58" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="11" strokeLinecap="round" />
+              <path
+                d="M10 58 A50 50 0 0 1 110 58" fill="none"
+                stroke={ringColor} strokeWidth="11" strokeLinecap="round"
+                strokeDasharray="157.1"
+                strokeDashoffset={157.1 * (1 - ringFraction)}
                 className={prefs?.animation_style === "none" ? "" : "transition-[stroke-dashoffset] duration-700 ease-out"}
               />
             </svg>
@@ -419,14 +497,16 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               key={["flip","roll"].includes(prefs?.display_style) ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
             >
               {trackerLabel && prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
-              {trackerTime}
+              {prefs?.display_style === "badge"
+                ? <span className="rounded-md px-1.5 py-0.5 text-white" style={{ background: accent.ring }}>{trackerTime}</span>
+                : trackerTime}
               {prefs?.show_percent === true && clockedIn && <span className={`ml-1.5 font-semibold opacity-60 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{Math.round(Math.min(1, progress) * 100)}%</span>}
             </span>
             {prefs?.display_style === "bar" && (
               <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
                 <span
-                  className={`block h-full rounded-full bg-gradient-to-r ${accent.bar} ${prefs?.animation_style === "none" ? "" : "transition-[width] duration-700 ease-out"}`}
-                  style={{ width: `${Math.min(100, ringFraction * 100)}%` }}
+                  className={`block h-full rounded-full ${prefs?.animation_style === "none" ? "" : "transition-[width] duration-700 ease-out"}`}
+                  style={{ width: `${Math.min(100, ringFraction * 100)}%`, backgroundImage: `linear-gradient(90deg, ${accent.barStart}, ${accent.barEnd})` }}
                 />
               </span>
             )}
@@ -498,8 +578,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                       <div key={index} className="flex flex-1 flex-col items-center gap-1">
                         <div className="flex h-14 w-full items-end rounded-md bg-black/[0.06] dark:bg-white/10">
                           <div
-                            className={`w-full rounded-md bg-gradient-to-t ${accent.bar} ${isToday ? "tracker-today-bar" : ""}`}
-                            style={{ height: `${Math.max(4, fraction * 100)}%` }}
+                            className={`w-full rounded-md ${isToday ? "tracker-today-bar" : ""}`}
+                            style={{ height: `${Math.max(4, fraction * 100)}%`, backgroundImage: `linear-gradient(180deg, ${accent.barStart}, ${accent.barEnd})` }}
                           />
                         </div>
                         <span className={`text-[9px] font-bold ${isToday ? "text-indigo-600" : "text-slate-400"}`}>{WEEK_LABELS[index]}</span>
@@ -516,7 +596,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
             {milestoneThresholds.length > 0 && (
               <div className="mt-4">
                 <div className="relative h-1.5 overflow-hidden rounded-full bg-black/[0.07] dark:bg-white/10">
-                  <div className={`h-full rounded-full bg-gradient-to-r ${accent.bar}`} style={{ width: `${Math.min(100, ringFraction * 100)}%` }} />
+                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, ringFraction * 100)}%`, backgroundImage: `linear-gradient(90deg, ${accent.barStart}, ${accent.barEnd})` }} />
                   {milestoneThresholds.map((marker) => (
                     <span
                       key={marker}
@@ -554,20 +634,28 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
 // Static face preview � renders the tracker trigger with synthetic data so the
 // settings card can preview draft prefs without saving or polling.
 export function TimeTrackerPreview({ prefs }) {
-  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
-  const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
+  const accent = resolveAccent(prefs?.accent_color);
+  const pvStyle = String(prefs?.background_style || "minimal");
+  const pvBg = pvStyle === "minimal"
+    ? "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"
+    : `tracker-bg-${pvStyle} rounded-2xl border`;
+  const pvVars = {
+    "--tracker-accent": accent.ring,
+    "--tracker-accent-soft": accent.soft,
+    "--tracker-accent-text": accent.text,
+  };
   const ringSize = prefs?.size === "expanded" ? 34 : 26;
   const circumference = 2 * Math.PI * 100;
   const ringFraction = 0.63;
   const ringColor = accent.ring;
   const animClass = prefs?.animation_style === "pulse"
-    ? ""
-    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
+    ? "tracker-pulse"
+    : ANIMATION_CLASSES.has(prefs?.animation_style)
       ? `tracker-${prefs.animation_style}`
       : "";
   const animTarget = prefs?.animation_target || "all";
   const animFor = (t) => (animTarget === t ? animClass : "");
-  const label = prefs?.direction === "down" ? "Remaining" : "Today";
+  const label = String(prefs?.custom_label || "").trim() || (prefs?.direction === "down" ? "Remaining" : "Today");
   const previewMinutes = prefs?.direction === "down" ? 187.35 : 247.8;
   const timeText = prefs?.show_seconds === false
     ? formatClock(previewMinutes, "hours_minutes")
@@ -577,25 +665,38 @@ export function TimeTrackerPreview({ prefs }) {
       type="button"
       aria-hidden="true"
       tabIndex={-1}
-      className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none pointer-events-none ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")}`}
-      style={{ zoom: prefs?.scale || 1, opacity: prefs?.opacity ?? 1 }}
+      className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none pointer-events-none ${pvBg} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")}`}
+      style={{ zoom: prefs?.scale || 1, opacity: prefs?.opacity ?? 1, ...pvVars }}
     >
-      {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && (
-        <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={`shrink-0 ${animFor("ring")}`}>
-          <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="26" />
-          <circle cx="120" cy="120" r="100" fill="none" stroke={ringColor} strokeWidth="26" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ringFraction)} transform="rotate(-90 120 120)" />
+      {(prefs?.display_style === "ring" || prefs?.display_style === "donut") && (
+        <span className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
+          <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className={animFor("ring")}>
+            <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth={prefs?.display_style === "donut" ? 40 : 26} />
+            <circle cx="120" cy="120" r="100" fill="none" stroke={ringColor} strokeWidth={prefs?.display_style === "donut" ? 40 : 26} strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ringFraction)} transform="rotate(-90 120 120)" />
+          </svg>
+          {prefs?.display_style === "donut" && (
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black leading-none" style={{ color: ringColor }}>63%</span>
+          )}
+        </span>
+      )}
+      {prefs?.display_style === "arc" && (
+        <svg viewBox="0 0 120 62" style={{ width: ringSize * 1.5, height: Math.round(ringSize * 0.78) }} className={`shrink-0 ${animFor("ring")}`}>
+          <path d="M10 58 A50 50 0 0 1 110 58" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="11" strokeLinecap="round" />
+          <path d="M10 58 A50 50 0 0 1 110 58" fill="none" stroke={ringColor} strokeWidth="11" strokeLinecap="round" strokeDasharray="157.1" strokeDashoffset={157.1 * (1 - ringFraction)} />
         </svg>
       )}
       {prefs?.show_icon !== false && <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"} ${animFor("icon")}`} />}
       <span className={`flex flex-col leading-none ${FONTS[prefs?.font] || ""}`}>
         <span className={`font-bold tabular-nums ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${prefs?.display_style === "flip" ? "tracker-flip" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}>
           {prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{label}</span>}
-          {timeText}
+          {prefs?.display_style === "badge"
+            ? <span className="rounded-md px-1.5 py-0.5 text-white" style={{ background: accent.ring }}>{timeText}</span>
+            : timeText}
           {prefs?.show_percent === true && <span className={`ml-1.5 font-semibold opacity-60 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>63%</span>}
         </span>
         {prefs?.display_style === "bar" && (
           <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-            <span className={`block h-full rounded-full bg-gradient-to-r ${accent.bar}`} style={{ width: "63%" }} />
+            <span className="block h-full rounded-full" style={{ width: "63%", backgroundImage: `linear-gradient(90deg, ${accent.barStart}, ${accent.barEnd})` }} />
           </span>
         )}
       </span>
