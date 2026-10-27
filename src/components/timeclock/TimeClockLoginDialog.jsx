@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import FadeIn from "@/components/motion/FadeIn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,24 +11,25 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const submitSeqRef = useRef(0);
+  const attemptSeqRef = useRef(0);
+  const openRef = useRef(isOpen);
 
+  // Closing the dialog invalidates any in-flight attempt — a late verifyLogin
+  // response after dismissal must never sign the employee in.
   useEffect(() => {
-    if (!isOpen) {
-      submitSeqRef.current += 1;
-      setSubmitting(false);
-    }
+    openRef.current = isOpen;
+    attemptSeqRef.current += 1;
   }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const requestSeq = ++submitSeqRef.current;
+    const attempt = ++attemptSeqRef.current;
     try {
       const res = await base44.functions.invoke("verifyLogin", { username: username.trim(), password });
       const data = res?.data || res;
-      if (submitSeqRef.current !== requestSeq) return;
+      if (!openRef.current || attempt !== attemptSeqRef.current) return;
       if (data?.success && data.user) {
         // Find matching full user record from allUsers list so the page has everything it expects
         const full = (allUsers || []).find(
@@ -42,11 +42,11 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
         setError(data?.error || "Invalid username or password");
       }
     } catch (err) {
-      if (submitSeqRef.current !== requestSeq) return;
+      if (!openRef.current || attempt !== attemptSeqRef.current) return;
       const apiError = err?.response?.data?.error;
       setError(apiError || err?.message || "Login failed");
     }
-    if (submitSeqRef.current === requestSeq) setSubmitting(false);
+    if (attempt === attemptSeqRef.current) setSubmitting(false);
   };
 
   return (
@@ -86,12 +86,10 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
           </div>
 
           {error && (
-            <FadeIn>
-              <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            </FadeIn>
+            <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
           )}
 
           <div className="flex gap-2">

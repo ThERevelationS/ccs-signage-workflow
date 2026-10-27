@@ -46,6 +46,8 @@ function persistBadgeRotationRequest(email, requestId) {
 
 function clearBadgeRotationRequest(email, expectedRequestId = "") {
   try {
+    // Only clear the request id this caller persisted — a delayed ack must not
+    // wipe a newer rotation request stored after a reload or by a fresh retry.
     if (expectedRequestId &&
         sessionStorage.getItem(badgeRotationStorageKey(email)) !== expectedRequestId) return;
     sessionStorage.removeItem(badgeRotationStorageKey(email));
@@ -78,10 +80,9 @@ export default function UserQRCode({ user, sessionToken = "" }) {
       setError("Sign in to Time Clock before viewing or replacing your secure badge.");
       return;
     }
+    const requestScope = badgeScopeRef.current;
     const requestSeq = ++badgeSeqRef.current;
-    const requestScope = `${sessionToken}|${requestEmail}`;
-    const stillCurrent = () =>
-      requestSeq === badgeSeqRef.current && badgeScopeRef.current === requestScope;
+    const stillCurrent = () => requestSeq === badgeSeqRef.current && badgeScopeRef.current === requestScope;
 
     const requestId = rotate
       ? (storedBadgeRotationRequest(user.email) || newBadgeRequestId())
@@ -98,23 +99,25 @@ export default function UserQRCode({ user, sessionToken = "" }) {
         ...(rotate ? { request_id: requestId } : {}),
       });
       const data = response?.data || response;
+      if (!stillCurrent()) return;
       if (!data?.success || !data?.badge_code) {
         const actionError = new Error(data?.error || "Secure Time Clock badge could not be loaded.");
         actionError.retrySameRequest = data?.retry_same_request === true;
         actionError.confirmedServerResponse = true;
         throw actionError;
       }
+      if (String(data?.badge_owner_email || "").trim().toLowerCase() &&
+          String(data.badge_owner_email).trim().toLowerCase() !== requestEmail) return;
       if (rotate) clearBadgeRotationRequest(user.email, requestId);
-      if (!stillCurrent()) return;
       setBadgeCode(data.badge_code);
       setBadgeVersion(data.badge_version || null);
     } catch (err) {
-      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email, requestId);
       if (!stillCurrent()) return;
+      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email, requestId);
       const apiError = err?.response?.data?.error;
       setError(apiError || err?.message || "Secure Time Clock badge could not be loaded.");
     } finally {
-      if (stillCurrent()) {
+      if (requestSeq === badgeSeqRef.current) {
         setIsLoading(false);
         setIsReplacing(false);
       }
@@ -127,15 +130,16 @@ export default function UserQRCode({ user, sessionToken = "" }) {
     }
   }, [open, user?.email, sessionToken]);
 
+  // Employee/session switch: clear the previous badge and issue a fresh read
+  // when the dialog is open. Bumping the sequence also fences any in-flight
+  // response belonging to the previous employee.
   useEffect(() => {
     badgeSeqRef.current += 1;
     setBadgeCode("");
     setBadgeVersion(null);
     setError("");
-    setIsLoading(false);
-    setIsReplacing(false);
-    if (open && sessionToken) loadBadge();
-  }, [user?.email]);
+    if (open && user?.email && sessionToken) loadBadge();
+  }, [user?.email, sessionToken]);
 
   if (!user?.email) return null;
 
@@ -272,3 +276,4 @@ export default function UserQRCode({ user, sessionToken = "" }) {
     </>
   );
 }
+

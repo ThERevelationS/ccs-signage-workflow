@@ -1137,6 +1137,23 @@ export default function TimeClockAdmin() {
           </div>
         </div>
       )}
+      <CorrectionCoordinatorDiagnostics
+        sessionToken={sessionToken}
+        availableEntryIds={timeEntries.map((entry) => entry.id)}
+        onViewShift={(entryId) => {
+          const entry = timeEntries.find((item) => item.id === entryId);
+          if (entry) setDetailEntry(entry);
+        }}
+        onInspectAudits={(entryId) => {
+          if (!String(entryId || "").trim()) return;
+          setAuditInvestigation({
+            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
+          });
+          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
+            behavior: "smooth", block: "start",
+          }), 0);
+        }}
+      />
       <TimeClockExceptionCenter
         timeEntries={timeEntries}
         employeeStates={employeeStates}
@@ -1339,23 +1356,6 @@ export default function TimeClockAdmin() {
           onExitInvestigation={() => setAuditInvestigation(null)}
         />
       </div>
-      <CorrectionCoordinatorDiagnostics
-        sessionToken={sessionToken}
-        availableEntryIds={timeEntries.map((entry) => entry.id)}
-        onViewShift={(entryId) => {
-          const entry = timeEntries.find((item) => item.id === entryId);
-          if (entry) setDetailEntry(entry);
-        }}
-        onInspectAudits={(entryId) => {
-          if (!String(entryId || "").trim()) return;
-          setAuditInvestigation({
-            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
-          });
-          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
-            behavior: "smooth", block: "start",
-          }), 0);
-        }}
-      />
       </AdminSection>
 
       <TimeClockShiftDetail

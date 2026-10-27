@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
-import { usePolling } from "@/lib/usePolling";
 import { Button } from "@/components/ui/button";
-import { motion, useReducedMotion } from "framer-motion";
-import { duration, easing, spring } from "@/components/motion/motion";
 import { Clock3, Loader2, Pause, Play, X } from "lucide-react";
 import { format } from "date-fns";
 
@@ -30,8 +26,6 @@ export default function WorkPauseOverlay({
   onResumed = null,
 } = {}) {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
-  const timeClockStatus = useTimeClockStatus();
-  const sharedStatus = !timeClockStatus.isFallback && !userOverride && !sessionTokenOverride && !credentialOverride;
   const currentUser = userOverride || shellUser;
   const sessionToken = sessionTokenOverride || shellSessionToken;
   const credentialPayload = credentialOverride?.badgeCode
@@ -59,24 +53,17 @@ export default function WorkPauseOverlay({
   const [now, setNow] = useState(() => new Date());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [resumeBusy, setResumeBusy] = useState(false);
-  const reduceMotion = useReducedMotion();
   const [error, setError] = useState("");
   const resumeRequestRef = useRef("");
-  const pendingStatusRefreshRef = useRef(false);
+  const deferredInvalidationRef = useRef(false);
   const mountedRef = useRef(true);
   const pauseStateRef = useRef(null);
   const pauseIdRef = useRef("");
   const dismissedAtRef = useRef(0);
   const lastActivityAtRef = useRef(Date.now());
 
-  const refreshSharedStatus = timeClockStatus.refresh;
-  const loadStatus = useCallback(async ({ preservePausedOnError = true, force = false } = {}) => {
-    if (resumeInFlightRef.current) {
-      // A Resume acknowledgement is still outstanding; remember the
-      // invalidation so status re-verifies once the acknowledgement settles.
-      pendingStatusRefreshRef.current = true;
-      return null;
-    }
+  const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
+    if (resumeInFlightRef.current) return null;
     const sequence = ++statusSequenceRef.current;
     const isCurrent = () => mountedRef.current &&
       sequence === statusSequenceRef.current && scopeRef.current === scopeKey;
@@ -90,17 +77,11 @@ export default function WorkPauseOverlay({
       return null;
     }
     try {
-      let data;
-      if (sharedStatus) {
-        data = await refreshSharedStatus({ force });
-        if (data === null) return null;
-      } else {
-        const response = await base44.functions.invoke("timeClockAction", {
-          action: "status",
-          ...credentialPayload,
-        });
-        data = response?.data || response;
-      }
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "status",
+        ...credentialPayload,
+      });
+      const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
       if (!isCurrent()) return null;
       if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
@@ -140,22 +121,13 @@ export default function WorkPauseOverlay({
       if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey, sharedStatus, refreshSharedStatus]);
-
-  useEffect(() => {
-    if (sharedStatus) void loadStatus();
-  }, [timeClockStatus.version, loadStatus, sharedStatus]);
-
-  usePolling(() => loadStatus({ force: true }), 30000, {
-    enabled: !sharedStatus && !disabled && Boolean(currentUser?.email) && hasCredential,
-  });
+  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled, scopeKey]);
 
   useEffect(() => {
     mountedRef.current = true;
     statusSequenceRef.current += 1;
     resumeSequenceRef.current += 1;
     resumeInFlightRef.current = false;
-    pendingStatusRefreshRef.current = false;
     setResumeBusy(false);
     pauseStateRef.current = null;
     pauseIdRef.current = "";
@@ -164,25 +136,58 @@ export default function WorkPauseOverlay({
     setPauseStateScope("");
     setShowResumePrompt(false);
     setError("");
-    loadStatus({ preservePausedOnError: false, force: false });
-    // Change events can carry a payload that is stale relative to this
-    // session's verified status. Treat them only as invalidation signals;
-    // the signed status read is authoritative.
-    const onPauseChanged = () => {
-      void loadStatus({ force: true });
+    loadStatus({ preservePausedOnError: false });
+    const interval = setInterval(() => loadStatus(), 15000);
+    const onFocus = () => loadStatus();
+    const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
+    const onPauseChanged = (event) => {
+      const confirmed = event?.detail;
+      const confirmedEmail = String(confirmed?.user?.email || confirmed?.entry?.user_email || "").trim().toLowerCase();
+      const matchesEmployee = confirmedEmail &&
+        confirmedEmail === String(currentUser?.email || "").trim().toLowerCase();
+      // A broadcast "working" payload may be stale — while a Resume request is in
+      // flight only its own response may clear the paused overlay.
+      if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working" && !resumeInFlightRef.current) {
+        statusSequenceRef.current += 1;
+        pauseStateRef.current = null;
+        setPauseState(null);
+        setPauseStateScope("");
+        setShowResumePrompt(false);
+        setError("");
+        resumeRequestRef.current = "";
+        pauseIdRef.current = "";
+        dismissedAtRef.current = 0;
+      } else if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "paused") {
+        // A paused payload is an invalidation signal only — it may not fabricate
+        // the guard by itself. The deferred/normal status read below applies the
+        // authoritative paused state.
+      }
+      // An event landing while Resume is in flight is an invalidation we must
+      // defer — loadStatus early-returns during the request, so record the
+      // signal and let the settled Resume drain it with a fresh status read.
+      if (resumeInFlightRef.current) {
+        deferredInvalidationRef.current = true;
+      } else {
+        void loadStatus();
+      }
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus({ force: true }); };
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
+    window.addEventListener("focus", onFocus);
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mountedRef.current = false;
       statusSequenceRef.current += 1;
       resumeSequenceRef.current += 1;
       resumeInFlightRef.current = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
       window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [loadStatus, sharedStatus]);
+  }, [loadStatus]);
 
   useEffect(() => {
     if (!pauseState) return undefined;
@@ -260,14 +265,7 @@ export default function WorkPauseOverlay({
         request_id: requestId,
         ...credentialPayload,
       });
-      if (!isCurrentResume()) {
-        // A newer status read or transition superseded this acknowledgement.
-        // Keep its exact retry ID and send only an invalidation signal so each
-        // signed session re-verifies authoritative state.
-        try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
-        window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
-        return;
-      }
+      if (!isCurrentResume()) return;
       const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || "Resume Work was not confirmed by the server.");
@@ -298,9 +296,11 @@ export default function WorkPauseOverlay({
       if (isCurrentScope()) {
         resumeInFlightRef.current = false;
         setResumeBusy(false);
-        const refreshNeeded = refreshAfterResume || pendingStatusRefreshRef.current;
-        pendingStatusRefreshRef.current = false;
-        if (refreshNeeded) void loadStatus({ preservePausedOnError: true, force: true });
+        if (deferredInvalidationRef.current) {
+          deferredInvalidationRef.current = false;
+          refreshAfterResume = true;
+        }
+        if (refreshAfterResume) void loadStatus({ preservePausedOnError: true });
       }
     }
   };
@@ -320,10 +320,7 @@ export default function WorkPauseOverlay({
   const countedWorkMinutes = Math.max(0, shiftSpanMinutes - unpaidBreakMinutes - priorPauseMinutes - pauseElapsedMinutes);
 
   return (
-    <motion.div
-      initial={reduceMotion ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: duration.ui, ease: easing.decelerate }}
+    <div
       className="pointer-events-auto fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-[2px] sm:p-6"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top))",
@@ -334,10 +331,7 @@ export default function WorkPauseOverlay({
       }}
       role="presentation"
     >
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 24 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={spring.soft}
+      <div
         className="relative w-full max-w-xl rounded-[28px] border border-purple-200 bg-white p-6 text-center shadow-2xl sm:p-9"
         onClick={(event) => event.stopPropagation()}
       >
@@ -410,7 +404,7 @@ export default function WorkPauseOverlay({
           <Clock3 className="h-3.5 w-3.5" />
           <span>If you ignore this reminder and keep using the app, it returns in 2 minutes.</span>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

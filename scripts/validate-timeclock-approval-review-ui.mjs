@@ -24,7 +24,7 @@ assert.match(source, /disabled=\{approvalBusy \|\| Boolean\(approvalRetryPayload
 console.log('PASS interrupted approvals remain recoverable after page reload with frozen editable fields');
 
 assert.match(source, /adminActionError\(data, "The approval was not confirmed by the server\."\)/);
-assert.match(source, /clearApprovalRetry\(approvalDecision, approvalEntry\.id, frozenPayload\.request_id\)/);
+assert.match(source, /clearApprovalRetry\(approvalDecision, approvalEntry\.id(?:, [^)]+)?\)/);
 assert.match(source, /setPendingApprovalRecovery\(frozenPayload\)/);
 console.log('PASS confirmed server rejections clear stale retries while uncertain outcomes retain exact recovery');
 

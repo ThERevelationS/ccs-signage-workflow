@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { usePolling } from "@/lib/usePolling";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock3, Coffee, History, Loader2, Pause, Play, RefreshCw } from "lucide-react";
@@ -36,8 +35,8 @@ export default function EmployeeTodayCard({
   const loadStatus = useCallback(async () => {
     const requestEmail = String(user?.email || "").trim().toLowerCase();
     if (!requestEmail || !sessionToken) return;
+    const requestScope = statusScopeRef.current;
     const requestSeq = ++statusSeqRef.current;
-    const requestScope = `${sessionToken}|${requestEmail}`;
     setLoading(true);
     try {
       const response = await base44.functions.invoke("timeClockAction", {
@@ -46,8 +45,8 @@ export default function EmployeeTodayCard({
         target_email: user.email,
       });
       const data = response?.data || response;
-      if (!data?.success) throw new Error(data?.error || "Current Time Clock status could not be verified.");
       if (requestSeq !== statusSeqRef.current || statusScopeRef.current !== requestScope) return;
+      if (!data?.success) throw new Error(data?.error || "Current Time Clock status could not be verified.");
       if (String(data?.user?.email || "").trim().toLowerCase() !== requestEmail) return;
       setStatusData(data);
       setStatusError("");
@@ -55,29 +54,30 @@ export default function EmployeeTodayCard({
       if (requestSeq !== statusSeqRef.current || statusScopeRef.current !== requestScope) return;
       setStatusError(err?.response?.data?.error || err?.message || "Current Time Clock status could not be verified.");
     } finally {
-      if (requestSeq === statusSeqRef.current && statusScopeRef.current === requestScope) {
-        setLoading(false);
-      }
+      if (requestSeq === statusSeqRef.current) setLoading(false);
     }
   }, [sessionToken, user?.email]);
 
+  // An employee/session switch must drop the previous employee's status immediately.
   useEffect(() => {
     statusSeqRef.current += 1;
     setStatusData(null);
     setStatusError("");
+    setLoading(false);
+  }, [sessionToken, user?.email]);
+
+  useEffect(() => {
     loadStatus();
+    const poll = setInterval(loadStatus, 30000);
     const tick = setInterval(() => setNow(new Date()), 1000);
     const onPauseChanged = () => loadStatus();
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     return () => {
+      clearInterval(poll);
       clearInterval(tick);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     };
   }, [loadStatus]);
-
-  usePolling(loadStatus, 60000, {
-    enabled: Boolean(user?.email) && Boolean(sessionToken),
-  });
 
   const todayEntries = useMemo(() => {
     return timeEntries.filter(entry => {
@@ -141,12 +141,6 @@ export default function EmployeeTodayCard({
     }
   }
 
-  const cardGlow = hasProblem ? "glow-danger"
-    : statusData?.status === "clocked_in" && statusData.work_pause_status === "paused" ? "glow-warning"
-    : statusData?.status === "clocked_in" && statusData.break_status === "on_break" ? "glow-warning"
-    : statusData?.status === "clocked_in" ? "glow-success"
-    : "";
-
   const recentActivity = [];
   for (const entry of todayEntries) {
     if (entry.clock_in) recentActivity.push({ key: `${entry.id}:in`, at: new Date(entry.clock_in), label: "Clocked in" });
@@ -167,7 +161,7 @@ export default function EmployeeTodayCard({
   if (!user?.email || !sessionToken) return null;
 
   return (
-    <div className={`clay-card glow-card p-4 mb-6 ${cardGlow}`}>
+    <div className="clay-card p-4 mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
