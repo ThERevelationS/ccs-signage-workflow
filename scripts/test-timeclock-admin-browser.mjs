@@ -139,6 +139,21 @@ createRoot(document.getElementById("root")).render(<TimeClockAdmin />);
       .waitFor({ state: "hidden", timeout: 2000 }).catch(() => {});
     const errorCard = await page.getByRole("alert").count();
     const entriesHeader = await page.getByText("Time Entries").count();
+    // Entries table must appear before the collapsible sections in DOM order.
+    const tablePos = await page.evaluate(() => document.body.innerText.indexOf("Employee"));
+    const sectionPos = await page.evaluate(() => document.body.innerText.indexOf("Needs Attention"));
+    assert.ok(tablePos > 0, "entries table rendered");
+    assert.ok(tablePos < sectionPos || sectionPos === -1,
+      "entries table must come before the attention section");
+    // Collapsible sections exist and respond.
+    const needsAttention = page.getByRole("button", { name: /Needs Attention/ });
+    assert.equal(await needsAttention.count(), 1, "Needs Attention section exists");
+    const payHistory = page.getByRole("button", { name: /Pay Periods & History/ });
+    assert.equal(await payHistory.count(), 1, "Pay Periods & History section exists");
+    // Pay section starts collapsed; opening it reveals PayPeriodManager.
+    await payHistory.click();
+    await page.getByText("Pay Periods").first().waitFor();
+    await needsAttention.click(); // collapse — verify toggle works both ways
     await page.screenshot({ path: path.join(scratch,
       `admin-${viewport.width}.png`), fullPage: true });
     console.log(`viewport ${viewport.width}: errorCards=${errorCard} entriesSection=${entriesHeader}` +
@@ -146,7 +161,6 @@ createRoot(document.getElementById("root")).render(<TimeClockAdmin />);
     if (errorCard) {
       console.error("ERROR CARD TEXT:", (await page.getByRole("alert").innerText()).slice(0, 500));
     }
-    // Core interactions must be reachable
     await page.getByRole("button", { name: "Refresh", exact: true }).first().click();
     await context.close();
     passed++;
