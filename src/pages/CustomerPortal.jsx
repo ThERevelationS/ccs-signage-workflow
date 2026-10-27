@@ -218,12 +218,26 @@ function QuoteCard({ quote, onRespond, busy }) {
             <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
               <ul className="divide-y divide-slate-100">
                 {sections.map((s, i) => (
-                  <li key={i} className="flex items-start justify-between gap-3 py-2">
+                  <li key={s.section_key || i} className="flex items-start justify-between gap-3 py-2">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-slate-800">{s.name}{s.quantity > 1 ? ` × ${s.quantity}` : ""}</p>
                       {s.description && <p className="mt-0.5 text-xs text-slate-500 whitespace-pre-wrap">{s.description}</p>}
+                      {s.decision && (
+                        <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${s.decision === "accepted" ? "bg-emerald-100 text-emerald-800" : s.decision === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                          {s.decision === "accepted" ? "Accepted" : s.decision === "rejected" ? "Declined" : "Question asked"}
+                        </span>
+                      )}
                     </div>
-                    <span className="shrink-0 text-sm font-medium text-slate-700">{money(s.amount)}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm font-medium text-slate-700">{money(s.amount)}</span>
+                      {quote.can_respond && s.section_key && !s.decision && (
+                        <span className="flex gap-1">
+                          <button type="button" onClick={() => onRespond(quote, "accepted", "", { key: s.section_key, label: s.name })} disabled={busy} title="Accept this section" className="rounded-md border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100">✓</button>
+                          <button type="button" onClick={() => onRespond(quote, "rejected", "", { key: s.section_key, label: s.name })} disabled={busy} title="Decline this section" className="rounded-md border border-red-300 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-100">✗</button>
+                          <button type="button" onClick={() => onRespond(quote, "question", "", { key: s.section_key, label: s.name })} disabled={busy} title="Ask about this section" className="rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 hover:bg-amber-100">?</button>
+                        </span>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
