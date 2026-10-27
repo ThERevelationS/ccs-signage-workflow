@@ -1319,7 +1319,7 @@ const TRACKER_ENUMS: Record<string, string[]> = {
   location: ['both', 'top', 'side', 'hidden'],
   font: ['default', 'mono', 'rounded', 'serif'],
   background_style: ['glass', 'solid', 'minimal'],
-  animation_style: ['smooth', 'pulse', 'none'],
+  animation_style: ['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'none'],
   time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
 };
 
@@ -1343,7 +1343,7 @@ function normalizeTrackerPrefs(row: any, target: any) {
   }
   out.daily_goal_minutes = Math.round(trackerClamp(row.daily_goal_minutes, 240, 840, 480));
   out.weekly_goal_minutes = Math.round(trackerClamp(row.weekly_goal_minutes, 480, 5880, 2400));
-  out.scale = trackerClamp(row.scale, 0.8, 1.3, 1);
+  out.scale = trackerClamp(row.scale, 0.5, 2, 1);
   out.opacity = trackerClamp(row.opacity, 0.4, 1, 1);
   out.update_interval_seconds = Math.round(trackerClamp(row.update_interval_seconds, 15, 300, 60));
   const rawThresholds = Array.isArray(row.milestone_thresholds) ? row.milestone_thresholds : base.milestone_thresholds;
@@ -9217,7 +9217,7 @@ Deno.serve(async (req) => {
         if (!Array.isArray(directAudits) || directAudits.length !== 1) return false;
         return correctionAuditMatchesRecord(directAudits[0], record);
       };
-      if (decision === 'approve' && actorEmail === target.email) {
+      if (decision === 'approve' && actorEmail === target.email && actor.is_full_admin !== true) {
         return Response.json({
           success: false,
           error: 'You cannot approve your own Time Clock shift. Another administrator must review and approve this shift.',
