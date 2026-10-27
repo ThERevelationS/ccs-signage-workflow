@@ -173,7 +173,7 @@ try {
       { find: "@/components/estimator/loadAllEntityRows", replacement: path.join(mockDir, "mockRows.js") },
       { find: /^@\//, replacement: path.join(root, "src") + "/" },
     ] },
-    server: { host: "127.0.0.1", port: 0, fs: { allow: [root, scratch] } },
+    server: { host: "127.0.0.1", port: 0, fs: { strict: false, allow: [root, scratch] } },
     logLevel: "error",
   });
   await vite.listen();

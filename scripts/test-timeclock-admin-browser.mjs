@@ -118,7 +118,7 @@ createRoot(document.getElementById("root")).render(<TimeClockAdmin />);
       { find: "@/components/auth/EmailGate", replacement: mock },
       { find: /^@\//, replacement: path.join(root, "src") + "/" },
     ] },
-    server: { host: "127.0.0.1", port: 0, fs: { allow: [root, scratch] } }, logLevel: "error",
+    server: { host: "127.0.0.1", port: 0, fs: { strict: false, allow: [root, scratch] } }, logLevel: "error",
   });
   await vite.listen();
   const origin = "http://127.0.0.1:" + vite.httpServer.address().port;
