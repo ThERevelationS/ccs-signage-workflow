@@ -49,8 +49,14 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   // Separate LineStrings preserve multipart and hole outlines without assuming ring orientation.
   base.boundaries=[{type:'Feature',properties:{name:target.name,source_url:target.source_url},geometry:{type:'MultiLineString',coordinates:target.geometry.rings}}];
   const relevant=[...counties,...places,...statePlaces,...(cities.length===0?[...townships,...stateTownships]:[])];
-  if(!geocode.location_exact)return {...base,status:'needs_review',reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
-  if(relevant.some(f=>f.distance_m<=25))return {...base,status:'needs_review',reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
+  // Approximate geocodes (e.g. the free Census locator interpolating a street
+  // range) can still confirm jurisdiction — but only when the point sits well
+  // inside every checked boundary. The 150m guard covers street-range
+  // interpolation error; an exact provider result keeps the 25m edge check.
+  const edge=geocode.approximate_source?150:25;
+  if(!geocode.location_exact&&!geocode.approximate_source)return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
+  if(relevant.some(f=>f.distance_m<=edge))return {...base,status:'needs_review',target:base.targets[0],reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
+  if(!geocode.location_exact)return {...base,status:'location_verified',reason:`Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`,target:base.targets[0]};
   return {...base,status:'location_verified',reason:`Building location is inside the checked ${target.name} government boundary. Office responsibility is checked separately.`,target:base.targets[0]};
  }catch(error){await onProgress({kind:'boundary_failed',detail:String(error.message || error)});return {...base,reason:'Government location data could not confirm this address. No jurisdiction was selected.',error:String(error.message || error)};}
 }
