@@ -458,7 +458,11 @@ export default function ProductRow({
         </button>
         <button
           type="button"
-          onClick={() => onRemove(index)}
+          onClick={() => {
+            const name = line.client_product_name || line.project_name || "Product";
+            if (!window.confirm(`Remove “${name}” from this estimate?`)) return;
+            onRemove(index);
+          }}
           disabled={readOnly || priceAcceptancePending}
           title={priceAcceptancePending ? "Resume the pending Product operation before removing this Product." : "Remove product"}
           className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-red-500 hover:bg-red-50 disabled:opacity-50"
