@@ -312,8 +312,6 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
      (locationPref === "top" && !hasTopBar) ||
      (locationPref === "side" && !hasSideBar));
 
-  if (!visibleHere) return null;
-
   const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
   const ringColor = prefs?.progressive_colors === false ? accent.ring : (TONE_RING[tone] || accent.ring);
   const clockedIn = snapshot?.status === "clocked_in";
@@ -376,6 +374,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
         : formatClockSeconds(shown, prefs?.time_format))
     : "Off the clock";
   const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
+
+  // Keep every hook above this gate: the tracker hides itself here, but must
+  // never change how many hooks run between renders.
+  if (!visibleHere) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
