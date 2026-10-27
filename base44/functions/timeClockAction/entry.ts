@@ -1303,7 +1303,15 @@ function defaultTrackerPrefs(email: string, name: string) {
     background_style: 'minimal',
     update_interval_seconds: 60,
     animation_style: 'smooth',
+    animation_target: 'all',
     time_format: 'hh_mm_ss',
+    show_label: true,
+    show_icon: true,
+    show_seconds: true,
+    show_percent: false,
+    show_only_clocked_in: false,
+    progressive_colors: true,
+    blink_separator: false,
   };
 }
 
@@ -1320,11 +1328,12 @@ const TRACKER_ENUMS: Record<string, string[]> = {
   font: ['default', 'mono', 'rounded', 'serif'],
   background_style: ['glass', 'solid', 'minimal'],
   animation_style: ['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'none'],
+  animation_target: ['all', 'digits', 'ring', 'icon'],
   time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
 };
 
-const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur'];
-const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'time_format'];
+const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format'];
 
 function trackerClamp(value: any, min: number, max: number, fallback: number) {
   const n = Number(value);
