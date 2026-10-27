@@ -44,6 +44,7 @@ export default function Estimator() {
   const sort = searchParams.get("sort") || "newest";
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [showNew, setShowNew] = useState(
     new URLSearchParams(window.location.search).get("new") === "1"
@@ -51,27 +52,33 @@ export default function Estimator() {
   const backfillStartedRef = useRef(false);
 
   const load = async () => {
-    const rows = await loadAllEntityRows({
-      entity: base44.entities.AllInOneEstimate,
-      sort: "-created_date",
-      label: "Estimates",
-    });
-    setEstimates(rows);
-    setLoading(false);
+    try {
+      const rows = await loadAllEntityRows({
+        entity: base44.entities.AllInOneEstimate,
+        sort: "-created_date",
+        label: "Estimates",
+      });
+      setEstimates(rows);
 
-    if (!backfillStartedRef.current) {
-      backfillStartedRef.current = true;
-      runHistoricalBuilderBackfill({ seedEstimates: rows })
-        .then(async (result) => {
-          if (result?.estimates?.length) setEstimates(result.estimates);
-          await runLegacyBomReconcile();
-        })
-        .catch((error) => {
-          // Historical conversion/reconciliation must never block normal estimating.
-          // Each migration writes its completion marker last, so the next admin
-          // visit can resume safely if either pass is interrupted.
-          console.error("Historical Product/BOM migration paused:", error);
-        });
+      if (!backfillStartedRef.current) {
+        backfillStartedRef.current = true;
+        runHistoricalBuilderBackfill({ seedEstimates: rows })
+          .then(async (result) => {
+            if (result?.estimates?.length) setEstimates(result.estimates);
+            await runLegacyBomReconcile();
+          })
+          .catch((error) => {
+            // Historical conversion/reconciliation must never block normal estimating.
+            // Each migration writes its completion marker last, so the next admin
+            // visit can resume safely if either pass is interrupted.
+            console.error("Historical Product/BOM migration paused:", error);
+          });
+      }
+    } catch (error) {
+      console.error("Estimates could not be loaded:", error);
+      setLoadError(error?.message || "Estimates could not be loaded.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,6 +206,10 @@ export default function Estimator() {
 
         {loading ? (
           <div className="text-center py-16 text-gray-400">Loading estimates…</div>
+        ) : loadError ? (
+          <div className="clay-card text-center py-16">
+            <p className="text-red-600 font-medium">{loadError}</p>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="clay-card text-center py-16">
             <Calculator className="w-8 h-8 text-red-300 mx-auto mb-3" />
