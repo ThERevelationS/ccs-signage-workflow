@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     const PortalMessage = base44.asServiceRole.entities.PortalMessage;
 
     if (action === "attention_feed") {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = text(body?.today) || new Date().toISOString().slice(0, 10);
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 500).catch(() => []),
@@ -624,7 +624,7 @@ Deno.serve(async (req) => {
     if (action === "list_follow_ups") {
       const rows = await Opportunity.filter({});
       if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = text(body?.today) || new Date().toISOString().slice(0, 10);
       const items = rows
         .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && (clean(o?.next_action) || clean(o?.next_action_due)))
         .map((o: any) => {
