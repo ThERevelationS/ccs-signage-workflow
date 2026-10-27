@@ -256,8 +256,6 @@ export default function TimeTracker({ position = "top" } = {}) {
      (locationPref === "top" && position !== "side") ||
      (locationPref === "side" && position === "side"));
 
-  if (!visibleHere) return null;
-
   const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
   const ringColor = TONE_RING[tone] || accent.ring;
   const clockedIn = snapshot?.status === "clocked_in";
@@ -308,6 +306,10 @@ export default function TimeTracker({ position = "top" } = {}) {
   const pillLabel = clockedIn
     ? `${prefs?.direction === "down" && !overtime ? "Remaining" : "Today"}: ${formatClockSeconds(shown, prefs?.time_format)}`
     : "Off the clock";
+
+  // Location gate: hidden everywhere, or restricted to a bar.
+  // Kept after every hook in this component so the hook count never changes.
+  if (!visibleHere) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

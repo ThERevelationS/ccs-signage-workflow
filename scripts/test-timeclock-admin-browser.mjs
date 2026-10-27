@@ -167,7 +167,11 @@ createRoot(document.getElementById("root")).render(<TimeClockAdmin />);
     await page.getByRole("button", { name: "Refresh", exact: true }).first().click();
     // Exercise row actions on the seeded shift.
     const row = page.locator("tr", { hasText: "Synthetic Employee" });
-    assert.equal(await row.count(), 1, "seeded shift row visible");
+    const rowCount = await row.count();
+    if (rowCount !== 1) {
+      console.error("TABLE TEXT:", (await page.locator("table").innerText()).slice(0, 800));
+    }
+    assert.equal(rowCount, 1, "seeded shift row visible");
     // View details
     await row.getByTitle("View full shift details").click();
     await page.getByRole("dialog").first().waitFor();
