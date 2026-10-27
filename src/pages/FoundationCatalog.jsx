@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundationFieldSchema";
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
@@ -12,6 +13,7 @@ export default function FoundationCatalog() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState("concrete_service");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -35,7 +37,13 @@ export default function FoundationCatalog() {
     load();
   }, []);
 
-  const visible = rows.filter((r) => r.material_type === activeType);
+  const q = search.trim().toLowerCase();
+  const visible = rows.filter((r) => {
+    if (r.material_type !== activeType) return false;
+    if (!q) return true;
+    return [r.material_name, r.material_description, r.supplier, r.unit]
+      .filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
 
   const handleDelete = async (row) => {
     if (!row?.id || loadError || deleteRef.current.has(row.id)) return;
@@ -73,6 +81,15 @@ export default function FoundationCatalog() {
           <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
             <ArrowLeft className="w-4 h-4" /> Estimator
           </Link>
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search name, description, supplier…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
           <Button
             disabled={!!loadError}
             onClick={() => {
