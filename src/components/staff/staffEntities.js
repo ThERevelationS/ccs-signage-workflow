@@ -18,6 +18,8 @@ const METHODS = {
     invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => r?.record),
   update: (entity, id, data) =>
     invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r) => r?.record),
+  updateMany: (entity, query, update) =>
+    invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => r?.result),
   delete: (entity, id) =>
     invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => r?.deleted === true),
 };
