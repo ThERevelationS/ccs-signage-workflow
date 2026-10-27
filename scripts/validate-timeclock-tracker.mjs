@@ -151,6 +151,16 @@ check('scale slider max 200', () => {
 });
 
 // ---------- layout mounts ----------
+// ---------- hooks order ----------
+check('no hooks after render-level early return', () => {
+  const body = comp.slice(comp.indexOf('export default function TimeTracker'), comp.indexOf('export function TimeTrackerPreview'));
+  const retIdx = body.indexOf('if (!visibleHere) return null');
+  assert.ok(retIdx > -1, 'visibleHere early return missing');
+  for (const m of body.matchAll(/\buse(State|Effect|Memo|Callback|Ref)\(/g)) {
+    assert.ok(m.index < retIdx, `hook call after the visibleHere early return (offset ${m.index})`);
+  }
+});
+
 check('bar-availability props on mounts', () => {
   assert.match(layout, /<TimeTracker position="top" hasTopBar hasSideBar=\{isSideNav \|\| isMobile\}/);
   assert.match(layout, /<TimeTracker position="side" hasSideBar hasTopBar=\{!isSideNav\} \/>/);
