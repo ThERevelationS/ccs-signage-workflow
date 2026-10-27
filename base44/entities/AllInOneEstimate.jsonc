@@ -561,6 +561,17 @@
     "last_product_removal_at": {
       "type": "string",
       "description": "Timestamp of the most recently completed Product removal."
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted_by": {
+      "type": "string"
     }
   },
   "required": [
