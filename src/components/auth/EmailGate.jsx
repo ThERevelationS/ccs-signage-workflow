@@ -353,16 +353,7 @@ function LoginDialog({ open, onLogin }) {
           </Button>
         </form>
 
-        <div className="border-t pt-3 space-y-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={onBrowseOnly}
-          >
-            <Eye className="w-4 h-4 mr-2" /> Continue browsing without signing in
-          </Button>
-        </div>
+
       </DialogContent>
     </Dialog>
   );
