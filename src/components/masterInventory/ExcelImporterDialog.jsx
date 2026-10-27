@@ -48,6 +48,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState(null); // { created, updated, skipped, errors }
+  const [skippedRows, setSkippedRows] = useState(0); // spreadsheet rows dropped before preview (no routable name or merged duplicates)
 
   // ------------------------- Step 1: Pick + validate file -------------------------
 
@@ -55,6 +56,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
     setFileError(null);
     setRows([]);
     setResult(null);
+    setSkippedRows(0);
 
     if (!f) return;
 
@@ -129,7 +131,9 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
         seen.set(k, r);
       });
 
-      setRows(Array.from(seen.values()));
+      const unique = Array.from(seen.values());
+      setSkippedRows(data.length - unique.length);
+      setRows(unique);
     } catch (err) {
       console.error("Parse error:", err);
       setRows([]);
@@ -334,7 +338,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
               <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
               Import Inventory from Excel
             </CardTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={onClose} disabled={importing}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -400,7 +404,8 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
                   <p className="font-medium">Parsed {rows.length} unique items.</p>
                   <p className="text-xs mt-0.5">
                     {totalCreate} new item{totalCreate === 1 ? "" : "s"} to create
-                    {totalUpdate > 0 && `, ${totalUpdate} existing item${totalUpdate === 1 ? "" : "s"} to update`}.
+                    {totalUpdate > 0 && `, ${totalUpdate} existing item${totalUpdate === 1 ? "" : "s"} to update`}
+                    {skippedRows > 0 && `, ${skippedRows} spreadsheet row${skippedRows === 1 ? "" : "s"} skipped`}.
                   </p>
                 </div>
               </div>
