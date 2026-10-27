@@ -16,7 +16,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    await authenticateSignShopSession(base44, body?.session_token);
+    // Shared service Drive token — restrict to admin so the lowest-privilege
+    // staff session cannot read/delete arbitrary company Drive files.
+    const gdoActor = await authenticateSignShopSession(base44, body?.session_token);
+    if (gdoActor?.role !== 'admin') {
+      return Response.json({ error: 'Admin access is required for Drive operations.' }, { status: 403 });
+    }
     const { action, folderId, fileName, fileContent, fileType, fileId, expectedFileName, expectedModifiedTime } = body;
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
 
@@ -265,6 +270,9 @@ Deno.serve(async (req) => {
 
         const expectedName = String(expectedFileName || '').trim();
         const expectedModified = String(expectedModifiedTime || '').trim();
+        if (!expectedName && !expectedModified) {
+          return Response.json({ error: 'Deleting a Drive file requires expectedFileName or expectedModifiedTime for safety.' }, { status: 400 });
+        }
         if (expectedName && String(currentFile.name || '') !== expectedName) {
           return Response.json({ error: 'The Google Drive file was renamed after this list was loaded. Reload before deleting it.' }, { status: 409 });
         }
