@@ -256,8 +256,6 @@ export default function TimeTracker({ position = "top" } = {}) {
      (locationPref === "top" && position !== "side") ||
      (locationPref === "side" && position === "side"));
 
-  if (!visibleHere) return null;
-
   const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
   const ringColor = TONE_RING[tone] || accent.ring;
   const clockedIn = snapshot?.status === "clocked_in";
@@ -310,6 +308,11 @@ export default function TimeTracker({ position = "top" } = {}) {
     : "";
   const trackerTime = clockedIn ? formatClockSeconds(shown, prefs?.time_format) : "Off the clock";
   const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
+
+  // Every hook above must run on every render. Bailing out before the later
+  // useMemo calls changes the hook count between renders and crashes React,
+  // so hide the pill only after all hooks have run.
+  if (!visibleHere) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
