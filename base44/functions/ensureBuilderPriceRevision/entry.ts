@@ -140,8 +140,20 @@ Deno.serve(async (req) => {
 
     const allRows = await RevisionService.filter({ builder_product_id: builderProductId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
+    // Only schema-declared revision fields may persist — and any previous_*
+    // snapshot fields are derived from the live Product, never caller input,
+    // so the immutable audit row reflects server-verified state.
+    const ALLOWED_REVISION_FIELDS = ["builder_snapshot_after", "builder_snapshot_before", "changed_parts", "create", "default", "delete", "enum", "new_customer_price", "new_total_cost", "notes", "previous_customer_price", "previous_total_cost", "price_snapshot_after", "price_snapshot_before", "read", "reason", "role", "update", "user_condition"];
+    const cleanRevision: Record<string, unknown> = {};
+    for (const key of ALLOWED_REVISION_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(revision, key)) cleanRevision[key] = revision[key];
+    }
+    const PREV_DERIVED = {};
+    for (const [field, sourceField] of Object.entries(PREV_DERIVED)) {
+      if (Object.prototype.hasOwnProperty.call(builder, sourceField)) cleanRevision[field] = builder[sourceField];
+    }
     const created = await RevisionService.create({
-      ...revision,
+      ...cleanRevision,
       builder_product_id: builderProductId,
       estimate_id: estimateId,
       idempotency_key: idempotencyKey,
