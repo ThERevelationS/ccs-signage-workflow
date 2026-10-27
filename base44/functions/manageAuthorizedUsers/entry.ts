@@ -66,6 +66,8 @@ function adminUserView(row: any) {
     can_view_resources: row?.can_view_resources === true,
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
+    is_full_admin: row?.is_full_admin === true,
+    admin_permissions: row?.admin_permissions && typeof row.admin_permissions === 'object' && !Array.isArray(row.admin_permissions) ? row.admin_permissions : {},
     hr_data: row?.hr_data && typeof row.hr_data === 'object' && !Array.isArray(row.hr_data) ? row.hr_data : {},
     onboarding_complete: row?.onboarding_complete === true,
     has_face_enrollment: Array.isArray(row?.face_descriptors) && row.face_descriptors.length > 0,
@@ -112,6 +114,14 @@ function cleanManagedFields(value: any) {
     out.employment_type = employmentType;
   }
   if (Object.prototype.hasOwnProperty.call(input, 'can_work_pause')) out.can_work_pause = input.can_work_pause === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'is_full_admin')) out.is_full_admin = input.is_full_admin === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'admin_permissions')) {
+    const perms = input.admin_permissions;
+    if (!perms || typeof perms !== 'object' || Array.isArray(perms) || JSON.stringify(perms).length > 20000) {
+      throw Object.assign(new Error('Admin permissions are invalid.'), { status: 400 });
+    }
+    out.admin_permissions = perms;
+  }
 
   if (!Object.keys(out).length) throw Object.assign(new Error('No supported user fields were supplied.'), { status: 400 });
   if (out.role === 'admin') out.can_view_resources = true;
