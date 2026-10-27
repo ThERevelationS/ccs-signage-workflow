@@ -559,6 +559,18 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                   </div>
                 )}
 
+                {vinyls.length === 0 && (
+                  <Card className="bg-amber-50 border-amber-200">
+                    <CardContent className="p-3 text-xs text-amber-900">
+                      Your vinyl inventory is empty.{" "}
+                      <Link to="/VinylInventory" className="underline font-medium">
+                        Add vinyl in Vinyl Inventory
+                      </Link>{" "}
+                      to enable selection.
+                    </CardContent>
+                  </Card>
+                )}
+
                 {project.workflows.map((wf, idx) => (
                   <VinylWorkflowCard
                     key={wf.id}
