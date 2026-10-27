@@ -46,7 +46,7 @@ export default function FleetMaintenance() {
   const [parts, setParts] = useState([]);
   const [fluids, setFluids] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [view, setView] = useState(requestedEquipment ? "workspace" : requestedStatus ? "all_schedules" : requestedView === "calendar" ? "calendar" : "equipment");
+  const [view, setView] = useState(requestedEquipment ? "workspace" : requestedStatus ? "all_schedules" : ["calendar","all_schedules","equipment"].includes(requestedView) ? requestedView : "equipment");
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(requestedEquipment);
   const [workspaceInitialTab, setWorkspaceInitialTab] = useState(["overview", "schedule", "meter", "active", "timeline", "history", "usage"].includes(requestedTab) ? requestedTab : "overview");
   const [search, setSearch] = useState("");
