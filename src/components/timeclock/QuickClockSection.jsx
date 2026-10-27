@@ -1611,8 +1611,6 @@ export default function QuickClockSection({
         )}
 
         {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && !(selectedUser && activeEntry) && (
-
-        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && !(selectedUser && activeEntry) && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
               Tap the button, then identify with face recognition, a secure QR badge, or username/password.
