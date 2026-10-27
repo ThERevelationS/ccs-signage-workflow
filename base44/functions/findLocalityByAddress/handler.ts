@@ -73,8 +73,14 @@ Deno.serve(async req=>{
  if(!geocode){
   try{
    await reporter.emit({kind:'geocode_lookup',url:'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress',detail:'Trying the public US Census address locator.'});
-   const census=await fixedJSON('https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address='+encodeURIComponent(address)+'&benchmark=Public_AR_Current&format=json');
-   const match=census?.result?.addressMatches?.[0];
+   const cleaned=address.replace(/s+,/g,',').replace(/,?s*(USA|United States|US)$/i,'');
+   let match=null,matches=[];
+   for(const candidate of [...new Set([cleaned,address])]){
+    const census=await fixedJSON('https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address='+encodeURIComponent(candidate)+'&benchmark=Public_AR_Current&format=json');
+    matches=census?.result?.addressMatches || [];
+    if(matches.length){match=matches[0];break;}
+   }
+   await reporter.emit({kind:'geocode_service_result',detail:'Census address locator returned '+matches.length+' candidate match(es).'});
    const components=match?.addressComponents || {},state=normalizeAddressState(components.state || (match?.matchedAddress || '').split(',').slice(-2,-1)[0] || ''),city=components.city || '',zip=components.zip || '';
    if(match?.coordinates&&['oh','ky'].includes(state)){
     geocode={lat:match.coordinates.y,lon:match.coordinates.x,display_name:match.matchedAddress || address,location_exact:false,approximate_source:'us_census',address_parts:{administrative_area_level_1:state,locality:city,postal_code:zip}};
