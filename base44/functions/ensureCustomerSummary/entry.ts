@@ -231,8 +231,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
-    const user = await base44.auth.me().catch(() => null);
+    const user = await authenticateSignShopSession(base44, body?.session_token);
     if (!user?.id) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const clientName = String(body?.client_name || '').trim();
     const normalizedName = norm(clientName);
