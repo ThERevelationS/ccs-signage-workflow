@@ -31,10 +31,11 @@ import {
   findRepositoryJurisdictionMatches,
   hasDuplicateRepositoryIdentity,
   jurisdictionToDraftPermitLocality,
+  normalizePermitJurisdictionName,
+  normalizeState,
 } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 const AUTHORITY_ROLE_LABELS = {
   sign_permit: "Sign permit",
@@ -127,7 +128,7 @@ function LocalityPickerSession({
     setRepositoryError("");
 
     loadAllEntityRows({
-      entity: staffEntities.JurisdictionProfile,
+      entity: base44.entities.JurisdictionProfile,
       sort: "name",
       label: "Permitting locality picker repository",
     }).then((rows) => {
@@ -212,8 +213,22 @@ function LocalityPickerSession({
     ? findRepositoryJurisdictionMatches(repositoryJurisdictions, result)
     : [];
 
+  // When a boundary-verified address resolves to a jurisdiction that has no
+  // tracker locality yet, an admin may still create a draft — but only for the
+  // profile matching the detected name/type/county, never a same-name sibling.
+  const detectedTarget = result?.location_resolution?.target;
+  const isDetectedCandidate = (j) => {
+    if (!j || !detectedTarget || result?.location_resolution?.status !== 'location_verified' || result?.suggested_locality) return false;
+    const typeMap = { municipality: ['city', 'village', 'municipality'], township: ['township'], county: ['county'] };
+    const countyOf = (v) => String(v || '').toLowerCase().replace(/\s*county$/u, '').trim();
+    return (typeMap[detectedTarget.type] || [detectedTarget.type]).includes(String(j.type || '').toLowerCase())
+      && normalizePermitJurisdictionName(j.name) === normalizePermitJurisdictionName(detectedTarget.name)
+      && normalizeState(j.state) === normalizeState(detectedTarget.state)
+      && (!detectedTarget.county || !j.parent_county?.name || countyOf(j.parent_county.name) === countyOf(detectedTarget.county));
+  };
+
   const requestDraftFromRepository = (jurisdiction) => {
-    if(currentUser?.role!=="admin"||address.trim()||creatingDraft||pendingDraft.current||!openRef.current)return;
+    if(currentUser?.role!=="admin"||(address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
     if (hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction)) {
       setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Review and resolve the duplicate profiles before creating a permit locality.`);
@@ -223,7 +238,7 @@ function LocalityPickerSession({
   };
 
   const confirmDraftFromRepository = async () => {
-    if (currentUser?.role!=="admin" || !openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || address.trim()) return;
+    if (currentUser?.role!=="admin" || !openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || (address.trim() && !isDetectedCandidate(draftCandidate))) return;
     const draftVersion=searchVersion.current;
     setCreatingDraft(true);
     setDraftCreateError("");
@@ -232,14 +247,14 @@ function LocalityPickerSession({
       await runPickerDraftAction({pending:pendingDraft,isCurrent:()=>openRef.current&&draftVersion===searchVersion.current,
       prepare:async()=>requireReviewedRepositoryProfile({
         reviewed:draftCandidate,
-        rows:await loadAllEntityRows({entity:staffEntities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck"}),
+        rows:await loadAllEntityRows({entity:base44.entities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck"}),
         hasDuplicate:hasDuplicateRepositoryIdentity,
         toDraft:jurisdictionToDraftPermitLocality,
       }),create:payload=>createPermitLocalityIfAbsent({
-        entity: staffEntities.PermitLocality,
+        entity: base44.entities.PermitLocality,
         data: payload,
         readCurrentLocalities: () => loadAllEntityRows({
-          entity: staffEntities.PermitLocality,
+          entity: base44.entities.PermitLocality,
           sort: "name",
           label: "Permit locality repository bridge identity",
         }),
@@ -510,7 +525,7 @@ function LocalityPickerSession({
                               type="button"
                               size="sm"
                               variant="outline"
-                              disabled={duplicate || creatingDraft || Boolean(address.trim())}
+                              disabled={duplicate || creatingDraft || (Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
                               onClick={() => requestDraftFromRepository(jurisdiction)}
                               className="h-7 text-xs border-violet-300 text-violet-800 hover:bg-violet-100 flex-shrink-0"
                             >
