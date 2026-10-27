@@ -20,7 +20,13 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
           placeholder="Sign / elevation description"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button onClick={() => onRemove(index)} className="text-gray-400 hover:text-red-600 p-2">
+        <button
+          onClick={() => {
+            if (!window.confirm("Remove this item?")) return;
+            onRemove(index);
+          }}
+          className="text-gray-400 hover:text-red-600 p-2"
+        >
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -127,7 +133,10 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
               ))}
             </select>
             <button
-              onClick={() => set({ materials: item.materials.filter((_, i) => i !== idx) })}
+              onClick={() => {
+                if (!window.confirm("Remove this material?")) return;
+                set({ materials: item.materials.filter((_, i) => i !== idx) });
+              }}
               className="text-gray-400 hover:text-red-600"
             >
               <Trash2 className="w-3.5 h-3.5" />
