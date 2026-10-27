@@ -510,11 +510,13 @@ export default function CustomerPortal() {
     });
   };
 
-  const respond = async (quote, decision, note) => {
+  const respond = async (quote, decision, note, section) => {
     setBusy(true);
     try {
-      await call({ action: "estimate_respond", token, estimate_id: quote.id, decision, note, creation_request_key: crypto.randomUUID() });
-      setToast(decision === "approve" ? "Quote approved — thank you!" : "Revision request sent.");
+      const payload = { action: "estimate_respond", token, estimate_id: quote.id, decision, note, creation_request_key: crypto.randomUUID() };
+      if (section?.key) { payload.section_key = section.key; payload.section_label = section.label || ""; }
+      await call(payload);
+      setToast(section?.key ? (decision === "accepted" ? "Section accepted — thank you!" : decision === "rejected" ? "Section declined — noted." : "Question sent.") : decision === "approve" ? "Quote approved — thank you!" : "Revision request sent.");
       await load();
     } catch (error) {
       setToast(error?.message || "Could not submit your response.");
