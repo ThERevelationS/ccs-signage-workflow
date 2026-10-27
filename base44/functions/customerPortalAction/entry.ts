@@ -11,6 +11,10 @@ const num = (value: any, fallback = 0) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 };
+const whole = (value: any, fallback = 0) => {
+  const parsed = Math.floor(Number(value));
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
 
 const bad = (message: string, status = 400) => {
   const error: any = new Error(message);
@@ -70,6 +74,16 @@ function invoicePortalView(invoice: any) {
   };
 }
 
+// Matches quoteExpirationDate() in src/components/estimator/quoteLifecycle.js:
+// YYYY-MM-DD issue date + valid days (default 30) -> YYYY-MM-DD stamp, "" when no issue date.
+function quoteValidUntil(estimate: any) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean(estimate?.quote_issue_date));
+  if (!match) return "";
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  date.setDate(date.getDate() + Math.max(0, whole(estimate?.quote_valid_days, 30)));
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 function estimatePortalView(estimate: any) {
   // Customer-facing section price = unit snapshot x customer qty x (1 + adj%).
   // Sections flagged include_in_customer=false roll up into a single bundled line.
@@ -96,6 +110,8 @@ function estimatePortalView(estimate: any) {
     po_number: clean(estimate?.po_number),
     quote_total: num(estimate?.quote_total),
     quote_valid_days: num(estimate?.quote_valid_days),
+    quote_issue_date: clean(estimate?.quote_issue_date),
+    quote_valid_until: quoteValidUntil(estimate),
     updated_date: clean(estimate?.updated_date),
     can_respond: clean(estimate?.status) === "sent",
     sections,
