@@ -212,18 +212,20 @@ Deno.serve(async (req) => {
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
     const Payment = base44.asServiceRole.entities.Payment;
+    const Inventory = base44.asServiceRole.entities.Inventory;
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
     const PortalMessage = base44.asServiceRole.entities.PortalMessage;
 
     if (action === "attention_feed") {
       const today = new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests] = await Promise.all([
+      const [messages, invoices, pos, cos, opps, requests, stock] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 500).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 500).catch(() => []),
         ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(() => []),
         Opportunity.filter({}, "-last_activity_at", 500).catch(() => []),
         EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
+        Inventory.filter({}, "-updated_date", 500).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -290,6 +292,16 @@ Deno.serve(async (req) => {
           created_date: clean(r?.created_date),
         }));
 
+      const lowStock = list(stock)
+        .filter((it: any) => num(it?.reorder_point) > 0 && num(it?.quantity_on_hand) <= num(it?.reorder_point))
+        .map((it: any) => ({
+          id: clean(it?.id),
+          label: [clean(it?.material_type), clean(it?.product_type), clean(it?.size)].filter(Boolean).join(" · ") || "Item",
+          quantity_on_hand: num(it?.quantity_on_hand),
+          reorder_point: num(it?.reorder_point),
+          supplier: clean(it?.vendor) || clean(it?.supplier),
+        }));
+
       return Response.json({
         success: true, action, today,
         unread_portal_messages: unreadMessages,
@@ -299,6 +311,7 @@ Deno.serve(async (req) => {
         proposed_cos: proposedCos,
         overdue_follow_ups: overdueFollowUps,
         open_estimating_requests: openRequests,
+        low_stock: lowStock,
       });
     }
 
