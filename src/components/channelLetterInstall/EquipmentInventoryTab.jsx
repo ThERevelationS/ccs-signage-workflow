@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChannelLetterInstallEquipment } from "@/entities/all";
+import { ChannelLetterInstallEquipment } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
