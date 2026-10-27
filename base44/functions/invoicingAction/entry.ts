@@ -666,6 +666,87 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, sent_to: to, portal_url: portalUrl || undefined });
     }
 
+    if (action === "email_statement") {
+      let cid = clean(body?.customer_id);
+      if (!cid && clean(body?.invoice_id)) {
+        const inv = await Invoice.get(clean(body?.invoice_id)).catch(() => null);
+        cid = clean(inv?.customer_id);
+      }
+      if (!cid) throw bad("customer_id or invoice_id is required.");
+      const customer = await Customer.get(cid).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email);
+      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
+      const rows = await Invoice.filter({ customer_id: cid }).catch(() => []);
+      const open = (Array.isArray(rows) ? rows : [])
+        .filter((i: any) => OPEN_AR_STATUSES.has(clean(i?.status)) && num(i?.balance_due) > 0)
+        .sort((a: any, b: any) => clean(a?.due_date).localeCompare(clean(b?.due_date)));
+      if (!open.length) throw bad("This customer has no open balance — nothing to put on a statement.", 409);
+      const today = new Date().toISOString().slice(0, 10);
+      const total = open.reduce((s: number, i: any) => s + num(i?.balance_due), 0);
+      const overdue = open.filter((i: any) => clean(i?.due_date) && clean(i?.due_date) < today);
+
+      const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
+      const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
+      let portalUrl = "";
+      const existing = await PortalLink.filter({ kind: "customer", record_id: cid }).catch(() => []);
+      let link = (Array.isArray(existing) ? existing : []).find((l: any) => l?.id && l?.revoked !== true && (!l?.expires_at || Date.parse(String(l.expires_at)) > Date.now()));
+      if (!link) {
+        const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+        const key = `portal-link:customer:${cid}:statement:${clean(body?.creation_request_key) || Date.now()}`.slice(0, 256);
+        const created = await createFoundationRecordWithRecovery({
+          entity: PortalLink,
+          data: {
+            creation_request_key: key,
+            token,
+            kind: "customer",
+            record_id: cid,
+            customer_id: cid,
+            label: `${clean(customer.company_name) || clean(customer.name) || "Customer"} portal`,
+            created_by: actor,
+            expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+            revoked: false,
+            open_count: 0,
+          },
+          readMatches: () => PortalLink.filter({ creation_request_key: key }),
+          label: "Customer portal link",
+        });
+        link = created.record;
+      }
+      if (portalBase && link?.token) portalUrl = `${portalBase}/customerportal?token=${encodeURIComponent(clean(link.token))}`;
+
+      const companyName = clean(body?.company_name) || "CCS Signage";
+      const money = (n: any) => `$${num(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const custName = clean(customer.company_name) || clean(customer.name) || "Customer";
+      const stmtRows = open.map((i: any) => {
+        const past = clean(i?.due_date) && clean(i?.due_date) < today;
+        return `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.invoice_number) || "Invoice"}${past ? ' <span style="color:#b91c1c;font-size:11px;font-weight:700">PAST DUE</span>' : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.due_date) || "—"}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(i?.balance_due)}</td></tr>`;
+      }).join("");
+      const subject = `${companyName} — Account statement for ${custName} (${money(total)} open)`;
+      const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
+        ${overdue.length ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:16px"><p style="margin:0;font-weight:700;color:#b91c1c">Your account has ${overdue.length} past-due invoice${overdue.length === 1 ? "" : "s"}</p><p style="margin:4px 0 0;font-size:13px;color:#7f1d1d">Please arrange payment at your earliest convenience — or reply so we know it is on the way.</p></div>` : ""}
+        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName}</h2>
+        <p style="margin-top:0;color:#64748b;font-size:13px">Account statement for ${custName} · as of ${today}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">
+          <tr><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">INVOICE</th><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">DUE</th><th style="text-align:right;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">BALANCE</th></tr>
+          ${stmtRows}
+        </table>
+        <table style="width:100%;font-size:14px;margin-top:8px">
+          <tr><td style="color:#64748b;font-weight:600">Total open balance</td><td style="text-align:right;font-weight:700;color:${overdue.length ? "#b91c1c" : "#1e293b"}">${money(total)}</td></tr>
+        </table>
+        ${portalUrl ? `<p style="text-align:center;margin:28px 0"><a href="${portalUrl}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">View your account online</a></p>
+        <p style="font-size:12px;color:#64748b;text-align:center">Your portal link is valid for 90 days — view invoices, message us, or let us know a payment is on the way.</p>` : ""}
+      </div>`;
+      const sent = await base44.asServiceRole.functions
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d" })
+        .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
+      const sendResult = sent?.data || sent;
+      if (sendResult?.error || sendResult?.success === false) {
+        throw bad(`Statement email could not be sent: ${sendResult?.error || "sendGmail failed"}`);
+      }
+      return Response.json({ success: true, action, sent_to: to, open_invoices: open.length, open_total: money(total), portal_url: portalUrl || undefined });
+    }
+
     if (action === "void_invoice") {
       const invoiceId = clean(body?.invoice_id);
       const current = await Invoice.get(invoiceId).catch(() => null);
