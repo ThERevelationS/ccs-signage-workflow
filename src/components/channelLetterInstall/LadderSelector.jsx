@@ -55,6 +55,7 @@ export default function LadderSelector({
   };
 
   const handleRemove = (idx) => {
+    if (!confirm(`Remove "${selectedEquipment[idx]?.equipment_name || "this ladder"}"?`)) return;
     const next = [...selectedEquipment];
     next.splice(idx, 1);
     onChange(next);
