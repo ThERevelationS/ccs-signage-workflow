@@ -65,7 +65,13 @@ export default async function(req) {
     }
 
     const normalizedProvidedKey = providedKey.replace(/^Bearer\s+/i, '');
-    if (!normalizedProvidedKey || normalizedProvidedKey !== expectedKey) {
+    const keyBytes = new TextEncoder().encode(normalizedProvidedKey);
+    const expectedBytes = new TextEncoder().encode(expectedKey);
+    let keyDiff = keyBytes.length === expectedBytes.length ? 0 : 1;
+    for (let i = 0; i < Math.max(keyBytes.length, expectedBytes.length); i += 1) {
+      keyDiff |= (keyBytes[i % Math.max(keyBytes.length, 1)] || 0) ^ (expectedBytes[i % Math.max(expectedBytes.length, 1)] || 0);
+    }
+    if (!normalizedProvidedKey || keyDiff !== 0) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

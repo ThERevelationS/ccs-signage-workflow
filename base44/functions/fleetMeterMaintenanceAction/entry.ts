@@ -61,7 +61,7 @@ Deno.serve(async req => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(()=>({}));
     const action = norm(body?.action);
-    const auth = await authorize(base44, ['create','update','delete'].includes(action, body?.session_token));
+    const auth = await authorize(base44, ['create','update','delete'].includes(action), body?.session_token);
     if (auth.error) return auth.error;
     const Rule = base44.asServiceRole.entities.FleetMaintenanceMeterRule;
     const Equipment = base44.asServiceRole.entities.FleetEquipment;

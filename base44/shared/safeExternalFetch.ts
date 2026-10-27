@@ -32,6 +32,13 @@ function isBlockedIpv6(ip: string) {
   if (value.startsWith('2002:')) return true; // 6to4
   if (value.startsWith('2001:0:') || value === '2001::') return true; // Teredo
   if (value.startsWith('64:ff9b:')) return true; // NAT64 well-known/local-use prefixes
+  // Full-hex IPv4-embedded form: x:x:x:x:x:ffff:HHHH:HHHH (e.g. 0:0:0:0:0:ffff:a00:1)
+  const hexTail = /(?:^|:)ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(value);
+  if (hexTail) {
+    const hi = parseInt(hexTail[1], 16), lo = parseInt(hexTail[2], 16);
+    if (isBlockedIpv4(`${(hi >> 8) & 255}.${hi & 255}.${(lo >> 8) & 255}.${lo & 255}`)) return true;
+  }
+  if (value.startsWith('2001:0000:')) return true; // Teredo full-form
   const mapped = /(?:^|:)ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(value);
   return mapped ? isBlockedIpv4(mapped[1]) : false;
 }
@@ -119,7 +126,15 @@ export async function safeExternalFetch(input: unknown, init: RequestInit = {}, 
     if (!location) {
       throw Object.assign(new Error('External redirect did not provide a destination.'), { status: 400 });
     }
-    url = await assertSafeExternalUrl(new URL(location, url).toString());
+    const nextUrl = await assertSafeExternalUrl(new URL(location, url).toString());
+    // Never forward credentials across hosts on a redirect hop.
+    if (nextUrl.host !== url.host && init?.headers) {
+      const headers = new Headers(init.headers);
+      headers.delete('authorization');
+      headers.delete('Authorization');
+      init = { ...init, headers };
+    }
+    url = nextUrl;
   }
   throw Object.assign(new Error('External document could not be fetched safely.'), { status: 400 });
 }

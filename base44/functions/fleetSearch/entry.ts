@@ -38,6 +38,12 @@ Deno.serve(async (req) => {
     if (!['admin', 'user'].includes(String(user.role || ''))) {
       return Response.json({ error: 'Fleet search requires CCS Fleet access.' }, { status: 403 });
     }
+    // A platform role claim alone is not enough — the caller must exist in the
+    // authorized staff directory like every other fleet function requires.
+    const staffRows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: String(user.email).trim().toLowerCase() }).catch(() => []);
+    if (!Array.isArray(staffRows) || staffRows.length !== 1) {
+      return Response.json({ error: 'Fleet search requires an authorized staff account.' }, { status: 403 });
+    }
 
 
     const query = text(body?.query).slice(0, MAX_QUERY_LENGTH);
