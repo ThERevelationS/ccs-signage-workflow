@@ -689,8 +689,7 @@ Deno.serve(async (req) => {
             kind: clean(l?.kind),
             record_id: clean(l?.record_id),
             label: clean(l?.label),
-            token: clean(l?.token),
-            revoked: l?.revoked === true,
+            token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
             usable: linkIsUsable(l),
             expires_at: clean(l?.expires_at),
             open_count: num(l?.open_count),
@@ -723,7 +722,7 @@ Deno.serve(async (req) => {
         action,
         messages: thread.slice(-200).map(messageView),
         links: (Array.isArray(links) ? links : []).map((l: any) => ({
-          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: clean(l?.token),
+          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
           usable: linkIsUsable(l), revoked: l?.revoked === true, open_count: num(l?.open_count),
           last_opened_at: clean(l?.last_opened_at), expires_at: clean(l?.expires_at),
         })),
