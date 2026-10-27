@@ -104,6 +104,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
   const [loading, setLoading] = useState(true);
   const [ownership, setOwnership] = useState("rented"); // "rented" | "owned"
   const [activeKind, setActiveKind] = useState("equipment");
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);          // normalized row or { kind, _source, raw: {} } for new
   const [loadError, setLoadError] = useState("");
@@ -132,8 +133,13 @@ export default function MasterEquipmentTab({ isAdmin }) {
   const allNormalized = useMemo(() => {
     const a = foundationRows.map((r) => normalizeRow(r, "foundation_equipment"));
     const b = channelRows.map((r) => normalizeRow(r, "channel_letter_equipment"));
-    return [...a, ...b].filter((r) => (r.ownership || "rented") === ownership);
-  }, [foundationRows, channelRows, ownership]);
+    const list = [...a, ...b].filter((r) => (r.ownership || "rented") === ownership);
+    if (!search.trim()) return list;
+    const q = search.toLowerCase();
+    return list.filter((r) =>
+      [r.name, r.equipment_type].some((v) => v && String(v).toLowerCase().includes(q))
+    );
+  }, [foundationRows, channelRows, ownership, search]);
 
   const isBoom = (r) => BOOM_EQUIPMENT_TYPES.includes(r.equipment_type);
   // "Construction Equipment" = top-level equipment that is NOT a boom lift/truck.
@@ -297,6 +303,7 @@ export default function MasterEquipmentTab({ isAdmin }) {
           <Badge variant="outline" className="ml-2 font-normal">{allNormalized.length} items</Badge>
         </CardTitle>
         <div className="flex items-center gap-3">
+          <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 w-56" />
           <Tabs value={ownership} onValueChange={setOwnership}>
             <TabsList>
               <TabsTrigger value="rented">Rental</TabsTrigger>
