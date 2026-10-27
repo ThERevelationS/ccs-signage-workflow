@@ -275,6 +275,20 @@ Deno.serve(async (req) => {
         created_date: clean(c?.created_date),
       }));
 
+      // Sent estimates aging past 7 days without a response — surfaces quotes
+      // that aren't opportunity-linked (which list_follow_ups already covers).
+      const staleSentEstimates = list(sentEstimates)
+        .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7)
+        .map((e: any) => ({
+          id: clean(e?.id),
+          estimate_number: clean(e?.estimate_number),
+          project_name: clean(e?.project_name),
+          client_name: clean(e?.client_name),
+          quote_total: num(e?.quote_total),
+          days_sent: Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000),
+          updated_date: clean(e?.updated_date),
+        }));
+
       const overdueFollowUps = list(opps)
         .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today)
         .map((o: any) => ({
@@ -316,6 +330,7 @@ Deno.serve(async (req) => {
         overdue_pos: overduePos,
         proposed_cos: proposedCos,
         overdue_follow_ups: overdueFollowUps,
+        stale_sent_estimates: staleSentEstimates,
         open_estimating_requests: openRequests,
         low_stock: lowStock,
         overdue_jobs: list(workOrders)
