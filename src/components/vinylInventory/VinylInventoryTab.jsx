@@ -59,8 +59,19 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const [search, setSearch] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
   });
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [useCaseFilter, setUseCaseFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("category") || "all"; } catch { return "all"; }
+  });
+  const [useCaseFilter, setUseCaseFilter] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("use_case") || "all"; } catch { return "all"; }
+  });
+  const writeParam = (key, value, defaultValue = "all") => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== defaultValue) next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [editingVinyl, setEditingVinyl] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [persistenceError, setPersistenceError] = useState("");
