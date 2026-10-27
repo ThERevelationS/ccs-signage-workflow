@@ -95,25 +95,29 @@ export default function Estimator() {
     setSearchParams(next, { replace: true });
   };
 
+  // Trashed estimates never appear in queue counts or lists — they are only
+  // reachable through the Trash chip on Estimate Queues.
+  const liveEstimates = useMemo(() => estimates.filter((e) => e?.deleted !== true), [estimates]);
+
   const buckets = useMemo(() => {
     const by = {};
     for (const s of STATUSES) by[s.key] = { count: 0, total: 0 };
-    for (const e of estimates) {
+    for (const e of liveEstimates) {
       const bucketKey = e.pipeline_sync_pending === true ? "sync_issues" : (e.status || "draft");
       if (by[bucketKey]) { by[bucketKey].count += 1; by[bucketKey].total += Number(e.quote_total || e.total_cost || 0); }
       by[""].count += 1;
       by[""].total += Number(e.quote_total || e.total_cost || 0);
     }
     return by;
-  }, [estimates]);
+  }, [liveEstimates]);
 
   const term = search.trim().toLowerCase();
   const filtered = useMemo(() => {
     let list = status === "sync_issues"
-      ? estimates.filter((e) => e.pipeline_sync_pending === true)
+      ? liveEstimates.filter((e) => e.pipeline_sync_pending === true)
       : status
-        ? estimates.filter((e) => (e.status || "draft") === status)
-        : estimates;
+        ? liveEstimates.filter((e) => (e.status || "draft") === status)
+        : liveEstimates;
     if (term) {
       list = list.filter((e) =>
         [e.project_name, e.client_name, e.estimate_number]
@@ -129,7 +133,7 @@ export default function Estimator() {
     else if (sort === "expiring") sorted.sort((a, b) => exp(a).localeCompare(exp(b)));
     else sorted.sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)));
     return sorted;
-  }, [estimates, status, term, sort]);
+  }, [liveEstimates, status, term, sort]);
 
   const visibleTotal = filtered.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
 
@@ -216,9 +220,9 @@ export default function Estimator() {
           <div className="clay-card text-center py-16">
             <Calculator className="w-8 h-8 text-red-300 mx-auto mb-3" />
             <p className="text-gray-600 font-medium">
-              {estimates.length === 0 ? "No estimates yet" : "No estimates match your search"}
+              {liveEstimates.length === 0 ? "No estimates yet" : "No estimates match your search"}
             </p>
-            {estimates.length === 0 && (
+            {liveEstimates.length === 0 && (
               <p className="text-sm text-gray-400 mt-1">Create your first estimate to get started.</p>
             )}
           </div>
