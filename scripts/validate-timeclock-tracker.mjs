@@ -46,7 +46,8 @@ check('pause/visibility events force refresh', () => {
 });
 check('save-refresh event listener', () => {
   assert.match(comp, /ccs:timeTrackerRefresh/);
-  assert.match(settings, /dispatchEvent\(new Event\("ccs:timeTrackerRefresh"\)\)/);
+  assert.match(settings, /dispatchEvent\(new CustomEvent\("ccs:timeTrackerRefresh", \{ detail: \{ prefs/);
+  assert.match(comp, /event\?\.detail\?\.prefs/);
 });
 
 // ---------- display prefs applied ----------

@@ -141,7 +141,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
       setPrefs({ ...DEFAULT_PREFS, ...(data.prefs || {}) });
       saveRequestRef.current = { id: "", fingerprint: "" };
       setSavedAt(Date.now());
-      try { window.dispatchEvent(new Event("ccs:timeTrackerRefresh")); } catch {}
+      try { window.dispatchEvent(new CustomEvent("ccs:timeTrackerRefresh", { detail: { prefs: next } })); } catch {}
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Time Tracker settings were not saved.");
     } finally {
