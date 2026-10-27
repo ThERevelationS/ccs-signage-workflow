@@ -272,17 +272,13 @@ export function AuthProvider({ children }) {
       {children}
       <LoginDialog
         open={showLogin && !currentUser}
-        onBrowseOnly={() => {
-          setBrowseOnly(true);
-          setShowLogin(false);
-        }}
         onLogin={loginWithCredentials}
       />
     </AuthContext.Provider>
   );
 }
 
-function LoginDialog({ open, onLogin, onBrowseOnly }) {
+function LoginDialog({ open, onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
