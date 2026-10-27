@@ -1228,6 +1228,10 @@ export default function Opportunities() {
   });
   const [funnel, setFunnel] = useState(null);
   const [viewName, setViewName] = useState("");
+  const [checked, setChecked] = useState(() => new Set());
+  const [bulkAssignee, setBulkAssignee] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -1272,6 +1276,73 @@ export default function Opportunities() {
     });
   }, [opportunities, stageFilter, search]);
 
+  const selectable = useMemo(
+    () => visible.filter((o) => !CLOSED_STAGES.has(clean(o.stage))),
+    [visible],
+  );
+
+  useEffect(() => {
+    setChecked((prev) => {
+      if (prev.size === 0) return prev;
+      const ids = new Set(opportunities.map((o) => o.id));
+      const next = new Set([...prev].filter((id) => ids.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [opportunities]);
+
+  const toggleChecked = (id, on) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const allChecked = selectable.length > 0 && selectable.every((o) => checked.has(o.id));
+
+  const toggleAll = () => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (allChecked) selectable.forEach((o) => next.delete(o.id));
+      else selectable.forEach((o) => next.add(o.id));
+      return next;
+    });
+  };
+
+  const bulkApply = async (fields) => {
+    if (bulkBusy || checked.size === 0) return;
+    setBulkBusy(true);
+    setError("");
+    setNotice("");
+    const rows = opportunities.filter((o) => checked.has(o.id));
+    let ok = 0;
+    let failed = 0;
+    for (const row of rows) {
+      try {
+        await invoke(sessionToken, {
+          action: "update_opportunity",
+          opportunity_id: row.id,
+          baseline: row,
+          fields,
+        });
+        ok += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setBulkBusy(false);
+    setChecked(new Set());
+    setBulkAssignee("");
+    if (failed > 0) setError(`Updated ${ok}; ${failed} failed.`);
+    else setNotice(`Updated ${ok} opportunit${ok === 1 ? "y" : "ies"}.`);
+    await load();
+  };
+
+  const bulkAssign = () => {
+    const v = clean(bulkAssignee);
+    if (v) bulkApply({ salesperson: v });
+  };
+
   if (!isRegistered && !currentUser) {
     return <div className="p-6 text-sm text-slate-600">Sign in to view Opportunities.</div>;
   }
@@ -1313,6 +1384,12 @@ export default function Opportunities() {
       {error && (
         <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/20 dark:text-red-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{error}
+        </div>
+      )}
+
+      {notice && (
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-200">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{notice}
         </div>
       )}
 
@@ -1475,6 +1552,47 @@ export default function Opportunities() {
           </div>
         </div>
 
+        {checked.size > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-900 dark:bg-violet-950/20">
+            <span className="text-xs font-bold text-violet-800 dark:text-violet-200">{checked.size} selected</span>
+            <input
+              className="min-h-9 w-44 rounded-lg border border-slate-300 bg-white px-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              placeholder="Assign to…"
+              value={bulkAssignee}
+              disabled={bulkBusy}
+              onChange={(e) => setBulkAssignee(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") bulkAssign(); }}
+            />
+            <button
+              type="button"
+              onClick={bulkAssign}
+              disabled={bulkBusy || !clean(bulkAssignee)}
+              className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+            >
+              {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              Assign
+            </button>
+            <select
+              className="min-h-9 rounded-lg border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              value=""
+              disabled={bulkBusy}
+              onChange={(e) => { if (e.target.value) bulkApply({ priority: e.target.value }); }}
+            >
+              <option value="">Set priority…</option>
+              {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            {bulkBusy && <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Updating…</span>}
+            <button
+              type="button"
+              onClick={() => setChecked(new Set())}
+              disabled={bulkBusy}
+              className="ml-auto inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </button>
+          </div>
+        )}
+
         <div className="mt-4">
           {loading && opportunities.length === 0 ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-violet-600" /></div>
@@ -1484,48 +1602,71 @@ export default function Opportunities() {
               <p className="mt-2 text-sm text-slate-500">No opportunities match. Capture a new intake or wait for the bridge pilot to seed historical rows.</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {visible.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => setSelected(o)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-violet-300 hover:bg-violet-50/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-violet-800"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{clean(o.title) || "Opportunity"}</span>
-                      <StageBadge stage={o.stage} />
-                      {clean(o.priority) && clean(o.priority) !== "normal" && (
-                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{o.priority}</span>
-                      )}
+            <div>
+              <label className="mb-2 flex items-center gap-2 px-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-violet-600"
+                  checked={allChecked}
+                  onChange={toggleAll}
+                />
+                Select all{selectable.length !== visible.length ? " (open only)" : ""}
+              </label>
+              <div className="space-y-2">
+                {visible.map((o) => {
+                  const closedStage = CLOSED_STAGES.has(clean(o.stage));
+                  return (
+                    <div key={o.id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 shrink-0 accent-violet-600 disabled:opacity-40"
+                        checked={checked.has(o.id)}
+                        disabled={closedStage}
+                        title={closedStage ? "Closed opportunities can't be bulk-edited" : "Select for bulk actions"}
+                        onChange={(e) => toggleChecked(o.id, e.target.checked)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelected(o)}
+                        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-violet-300 hover:bg-violet-50/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-violet-800"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{clean(o.title) || "Opportunity"}</span>
+                            <StageBadge stage={o.stage} />
+                            {clean(o.priority) && clean(o.priority) !== "normal" && (
+                              <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{o.priority}</span>
+                            )}
+                          </div>
+                          <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                            {clean(o.customer_display_name) || "Unresolved customer"}
+                            {o.salesperson ? ` · ${o.salesperson}` : ""}
+                            {o.next_action ? ` · next: ${o.next_action}${o.next_action_due ? ` (${o.next_action_due})` : ""}` : ""}
+                          </div>
+                        </div>
+                        {(() => {
+                          const since = Date.parse(clean(o.stage_changed_at));
+                          const days = Number.isFinite(since) ? Math.max(0, Math.floor((Date.now() - since) / 86400000)) : null;
+                          return days == null ? null : (
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${days >= 30
+                              ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
+                              : days >= 14
+                                ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}
+                              title="Days in current stage">
+                              {days}d
+                            </span>
+                          );
+                        })()}
+                        {Number.isFinite(Number(o.budget_amount)) && Number(o.budget_amount) > 0 && (
+                          <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">${Number(o.budget_amount).toLocaleString()}</span>
+                        )}
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+                      </button>
                     </div>
-                    <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                      {clean(o.customer_display_name) || "Unresolved customer"}
-                      {o.salesperson ? ` · ${o.salesperson}` : ""}
-                      {o.next_action ? ` · next: ${o.next_action}${o.next_action_due ? ` (${o.next_action_due})` : ""}` : ""}
-                    </div>
-                  </div>
-                  {(() => {
-                    const since = Date.parse(clean(o.stage_changed_at));
-                    const days = Number.isFinite(since) ? Math.max(0, Math.floor((Date.now() - since) / 86400000)) : null;
-                    return days == null ? null : (
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${days >= 30
-                        ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
-                        : days >= 14
-                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}
-                        title="Days in current stage">
-                        {days}d
-                      </span>
-                    );
-                  })()}
-                  {Number.isFinite(Number(o.budget_amount)) && Number(o.budget_amount) > 0 && (
-                    <span className="shrink-0 text-sm font-semibold text-slate-700 dark:text-slate-200">${Number(o.budget_amount).toLocaleString()}</span>
-                  )}
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-                </button>
-              ))}
+                  );
+                })}
+              </div>
             </div>
           )}
           <p className="mt-3 text-xs text-slate-400">{visible.length} shown · {total} loaded</p>
