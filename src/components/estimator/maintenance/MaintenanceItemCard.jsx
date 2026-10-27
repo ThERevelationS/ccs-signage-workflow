@@ -26,7 +26,12 @@ export default function MaintenanceItemCard({ item, index, materials, onChange, 
           placeholder="Sign description (e.g. front elevation letters)"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button onClick={() => onRemove(index)} className="text-gray-400 hover:text-red-600 p-2">
+        <button
+          onClick={() => {
+            if (window.confirm("Remove this sign and all its actions?")) onRemove(index);
+          }}
+          className="text-gray-400 hover:text-red-600 p-2"
+        >
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -97,6 +102,11 @@ export default function MaintenanceItemCard({ item, index, materials, onChange, 
       </div>
 
       <div className="space-y-2">
+        {(item.actions || []).length === 0 && (
+          <div className="rounded-lg border border-dashed border-gray-200 p-3 text-center text-xs text-gray-400">
+            No actions yet — add one below.
+          </div>
+        )}
         {(item.actions || []).map((a, aIdx) => (
           <MaintenanceActionRow
             key={aIdx}
