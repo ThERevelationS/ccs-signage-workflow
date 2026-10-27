@@ -164,6 +164,11 @@
       "default": false,
       "description": "When true the customer quote shows ONE bundled project price instead of per-section pricing."
     },
+    "section_acceptance_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true the customer portal lets the customer accept, decline, or question each quote section individually rather than only approving the whole quote."
+    },
     "company_name": {
       "type": "string",
       "description": "Your company name shown in the customer quote header."
