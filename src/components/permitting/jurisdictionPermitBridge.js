@@ -25,7 +25,7 @@ export function normalizePermitJurisdictionName(value) {
     .trim();
 }
 
-function normalizeState(value) {
+export function normalizeState(value) {
   return normalizeAddressState(cleanText(value));
 }
 
@@ -65,17 +65,24 @@ export function findRepositoryJurisdictionMatches(jurisdictions, result) {
 }
 
 export function repositoryJurisdictionIdentity(jurisdiction) {
+  // Same name+type in different parent counties are distinct entities (e.g.,
+  // Ohio's many same-named townships) — identity must include the county.
+  const county = cleanText(jurisdiction?.parent_county?.name).toLowerCase().replace(/\s*county$/u, "");
   return [
     normalizePermitJurisdictionName(jurisdiction?.name),
     normalizeState(jurisdiction?.state),
     cleanText(jurisdiction?.type).toLowerCase(),
+    county,
   ].join("|");
 }
 
 export function hasDuplicateRepositoryIdentity(jurisdictions, jurisdiction) {
   if (!Array.isArray(jurisdictions) || !jurisdiction) return false;
+  // A profile explicitly held as a duplicate of another record is itself
+  // blocked, but it must not disqualify the canonical profile it points at.
+  if (cleanText(jurisdiction?.duplicate_of)) return true;
   const identity = repositoryJurisdictionIdentity(jurisdiction);
-  return jurisdictions.filter((row) => repositoryJurisdictionIdentity(row) === identity).length > 1;
+  return jurisdictions.filter((row) => !cleanText(row?.duplicate_of) && repositoryJurisdictionIdentity(row) === identity).length > 1;
 }
 
 export function jurisdictionToDraftPermitLocality(jurisdiction) {
