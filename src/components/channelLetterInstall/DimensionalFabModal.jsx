@@ -36,11 +36,16 @@ export default function DimensionalFabModal({ open, onOpenChange, purchase, onSa
 
   // Pull settings as a flat name→value map (matches what CNC/Laser/Paint settings pages write)
   const loadSettings = useCallback(async () => {
-    const settingsList = await loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
-    const map = {};
-    settingsList.forEach(s => { map[s.setting_name] = s.setting_value; });
-    setSettings(map);
-    return map;
+    try {
+      const settingsList = await loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
+      const map = {};
+      settingsList.forEach(s => { map[s.setting_name] = s.setting_value; });
+      setSettings(map);
+      return map;
+    } catch (e) {
+      console.error("Failed to load settings:", e);
+      return {};
+    }
   }, []);
 
   // Load everything when modal opens
