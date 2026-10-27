@@ -37,7 +37,9 @@ import {
   CheckCircle2,
   RotateCcw,
   LockKeyhole,
-  Eye
+  Eye,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
@@ -86,7 +88,8 @@ function persistAdminRequestId(action, entryId, requestId) {
 
 function clearAdminRequestId(action, entryId, expectedRequestId = "") {
   try {
-    if (expectedRequestId && sessionStorage.getItem(adminRequestStorageKey(action, entryId)) !== expectedRequestId) return;
+    if (expectedRequestId &&
+        sessionStorage.getItem(adminRequestStorageKey(action, entryId)) !== expectedRequestId) return;
     sessionStorage.removeItem(adminRequestStorageKey(action, entryId));
   } catch {}
 }
@@ -137,6 +140,41 @@ function shouldRetainAdminRequest(err) {
   if (err?.confirmedServerResponse === true) return false;
   const status = Number(err?.response?.status || 0);
   return !err?.response || status >= 500;
+}
+
+function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen = false, count = 0, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const tones = {
+    gray: "border-gray-200 bg-white",
+    amber: "border-amber-300 bg-amber-50",
+    green: "border-green-200 bg-green-50",
+    purple: "border-purple-200 bg-purple-50",
+  };
+  const badgeTones = {
+    gray: "bg-gray-100 text-gray-700",
+    amber: "bg-amber-200 text-amber-900",
+    green: "bg-green-100 text-green-700",
+    purple: "bg-purple-100 text-purple-700",
+  };
+  return (
+    <section className={`rounded-xl border ${tones[tone]} overflow-hidden`}>
+      <button type="button" onClick={() => setOpen(!open)}
+        className="flex w-full min-h-12 items-center justify-between gap-3 px-4 py-3 text-left hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-inset">
+        <span className="flex min-w-0 items-center gap-2">
+          {Icon ? <Icon className="h-4 w-4 shrink-0 text-gray-500" /> : null}
+          <span className="min-w-0">
+            <span className="block font-semibold text-gray-900">{title}</span>
+            {subtitle ? <span className="block truncate text-xs text-gray-500">{subtitle}</span> : null}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {count > 0 && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeTones[tone]}`}>{count}</span>}
+          {open ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+        </span>
+      </button>
+      {open && <div className="border-t border-gray-200 p-3 sm:p-4 space-y-4">{children}</div>}
+    </section>
+  );
 }
 
 export default function TimeClockAdmin() {
@@ -409,9 +447,9 @@ export default function TimeClockAdmin() {
         return;
       }
     }
+    const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
     setSaveBusy(true);
     try {
-      const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
       if (!correctionRequestId) {
         setCorrectionRequestId(requestId);
         persistAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
@@ -518,6 +556,10 @@ export default function TimeClockAdmin() {
     setApprovalBusy(true);
     setApprovalError("");
     const requestAction = approvalRequestStorageAction(approvalDecision);
+    const oppositeDecision = approvalDecision === "approve" ? "reopen" : "approve";
+    const oppositeAction = approvalRequestStorageAction(oppositeDecision);
+    const oppositeStoredRequestId = storedAdminRequestId(oppositeAction, approvalEntry.id);
+    const oppositeRetryRequestId = storedApprovalRetry(oppositeDecision, approvalEntry.id)?.request_id || "";
     const requestId = approvalRequestId || storedAdminRequestId(requestAction, approvalEntry.id) || newRequestId();
     if (!approvalRequestId) {
       setApprovalRequestId(requestId);
@@ -558,10 +600,10 @@ export default function TimeClockAdmin() {
       });
       const data = functionData(response);
       if (!data?.success) throw adminActionError(data, "The approval was not confirmed by the server.");
-      clearAdminRequestId(approvalRequestStorageAction("approve"), approvalEntry.id);
-      clearAdminRequestId(approvalRequestStorageAction("reopen"), approvalEntry.id);
-      clearApprovalRetry("approve", approvalEntry.id);
-      clearApprovalRetry("reopen", approvalEntry.id);
+      clearAdminRequestId(requestAction, approvalEntry.id, frozenPayload.request_id);
+      if (oppositeStoredRequestId) clearAdminRequestId(oppositeAction, approvalEntry.id, oppositeStoredRequestId);
+      clearApprovalRetry(approvalDecision, approvalEntry.id, frozenPayload.request_id);
+      if (oppositeRetryRequestId) clearApprovalRetry(oppositeDecision, approvalEntry.id, oppositeRetryRequestId);
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
@@ -613,9 +655,9 @@ export default function TimeClockAdmin() {
       setTimeEntryError("Enter an archive reason before continuing.");
       return;
     }
+    const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
     setDeleteBusy(true);
     try {
-      const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
       if (!archiveRequestId) {
         setArchiveRequestId(requestId);
         persistAdminRequestId("admin_archive_entry", entry.id, requestId);
@@ -744,259 +786,7 @@ export default function TimeClockAdmin() {
           </Button>
         </div>
       )}
-
-      <TimeClockManagementDashboard
-        timeEntries={timeEntries}
-        employeeStates={employeeStates}
-        correctionRequests={correctionRequests}
-        punchExceptions={punchExceptions}
-        activeLaborSegments={activeLaborSegments}
-      />
-
-      <PayPeriodManager
-        sessionToken={sessionToken}
-        timeEntries={timeEntries}
-        correctionRequests={correctionRequests}
-        onEntriesChanged={loadData}
-        onInvestigateAudit={({ time_entry_id, evidence = [], mode = "conflict" }) => {
-          const normalizedId = String(time_entry_id || "").trim();
-          if (!normalizedId) return;
-          setAuditInvestigation({
-            time_entry_id: normalizedId,
-            evidence: Array.isArray(evidence) ? evidence : [],
-            mode: mode === "integrity" ? "integrity" : "conflict",
-            nonce: Date.now(),
-          });
-          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-        }}
-      />
-
-      <div id="time-clock-audit-trail" className="scroll-mt-4">
-        <TimeClockAuditTrail
-          investigation={auditInvestigation}
-          onExitInvestigation={() => setAuditInvestigation(null)}
-        />
-      </div>
-
-      {staleActiveEntries.length > 0 && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-semibold text-amber-900">
-                {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"} need review
-              </div>
-              <p className="text-sm text-amber-800 mt-1">
-                These entries have remained clocked in for more than 24 hours. Nothing was changed automatically.
-              </p>
-              <div className="mt-3 space-y-2">
-                {staleActiveEntries.map(entry => (
-                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
-                      <div className="text-xs text-gray-600">
-                        Clocked in {format(parseISO(entry.clock_in), "MMM d, yyyy 'at' h:mm a")}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => handleEditEntry(entry)}>
-                      Review Entry
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="clay-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              <Clock3 className="w-4 h-4 text-purple-600" />
-              Live Employee Status
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">Authoritative server state for employees currently working or transitioning.</p>
-          </div>
-          <Button type="button" size="sm" variant="outline" onClick={loadData}>Refresh</Button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
-          <div className="rounded-lg bg-green-50 border border-green-200 p-3">
-            <p className="text-xs text-green-700">Clocked In</p>
-            <p className="text-2xl font-bold text-green-800">{clockedInStates.length}</p>
-          </div>
-          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
-            <p className="text-xs text-emerald-700">Working</p>
-            <p className="text-2xl font-bold text-emerald-800">{workingStates.length}</p>
-          </div>
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-            <p className="text-xs text-amber-700">On Break</p>
-            <p className="text-2xl font-bold text-amber-800">{onBreakStates.length}</p>
-          </div>
-          <div className="rounded-lg bg-purple-50 border border-purple-200 p-3">
-            <p className="text-xs text-purple-700">Work Paused</p>
-            <p className="text-2xl font-bold text-purple-800">{workPausedStates.length}</p>
-          </div>
-          <div className={`rounded-lg border p-3 ${transitionalStates.length ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
-            <p className={`text-xs ${transitionalStates.length ? "text-blue-700" : "text-gray-500"}`}>In Transition</p>
-            <p className={`text-2xl font-bold ${transitionalStates.length ? "text-blue-800" : "text-gray-700"}`}>{transitionalStates.length}</p>
-          </div>
-        </div>
-
-        {clockedInStates.length === 0 && transitionalStates.length === 0 ? (
-          <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No employees are currently clocked in.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {[...clockedInStates, ...transitionalStates.filter(state => state.status !== "clocked_in")].map(state => {
-              const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
-              const breakRow = state.active_break_id ? activeBreakById.get(state.active_break_id) : null;
-              const workPauseRow = state.active_work_pause_id ? activeWorkPauseById.get(state.active_work_pause_id) : null;
-              const laborRow = entry?.id ? activeLaborByEntryId.get(entry.id) : null;
-              const clockIn = entry?.clock_in ? parseISO(entry.clock_in) : null;
-              const breakStarted = breakRow?.started_at ? parseISO(breakRow.started_at) : null;
-              const workPauseStarted = workPauseRow?.started_at ? parseISO(workPauseRow.started_at) : null;
-              const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
-              const validBreakStarted = breakStarted && !Number.isNaN(breakStarted.getTime());
-              const validWorkPauseStarted = workPauseStarted && !Number.isNaN(workPauseStarted.getTime());
-              return (
-                <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{state.user_name || state.user_email}</p>
-                    <p className="text-xs text-gray-500 truncate">{state.user_email}</p>
-                    {validClockIn && <p className="text-xs text-gray-500 mt-1">Clocked in {format(clockIn, "h:mm a")}</p>}
-                    {state.break_status === "on_break" && breakRow && (
-                      <p className="text-xs text-amber-700 mt-1">
-                        {breakRow.is_paid ? "Paid break" : breakRow.break_type === "lunch" ? "Unpaid lunch" : "Unpaid break"}
-                        {validBreakStarted ? ` since ${format(breakStarted, "h:mm a")}` : ""}
-                      </p>
-                    )}
-                    {state.break_status === "on_break" && !breakRow && (
-                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record — review required.</p>
-                    )}
-                    {state.work_pause_status === "paused" && workPauseRow && (
-                      <p className="text-xs text-purple-700 mt-1">
-                        Work Paused{validWorkPauseStarted ? ` since ${format(workPauseStarted, "h:mm a")}` : ""}
-                      </p>
-                    )}
-                    {state.work_pause_status === "paused" && !workPauseRow && (
-                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record — review required.</p>
-                    )}
-                    {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
-                      <p className="text-xs text-blue-700 mt-1 capitalize">
-                        Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
-                        {laborRow.work_order_id ? ` · ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
-                      </p>
-                    )}
-                  </div>
-                  <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
-                    {state.work_pause_status === "paused" ? <Pause className="w-3 h-3 mr-1" /> : state.break_status === "on_break" ? <Coffee className="w-3 h-3 mr-1" /> : null}
-                    {statusLabel(state)}
-                  </Badge>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {transitionalStates.length > 0 && (
-          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-            A transition is still being finalized for {transitionalStates.length} employee{transitionalStates.length === 1 ? "" : "s"}. If it persists, reload before making an administrative correction.
-          </div>
-        )}
-        {orphanActiveBreaks.length > 0 && (
-          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-            {orphanActiveBreaks.length} active break record{orphanActiveBreaks.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Do not correct or close the affected shift until the mismatch is reviewed.
-          </div>
-        )}
-        {orphanActiveWorkPauses.length > 0 && (
-          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-            {orphanActiveWorkPauses.length} active Work Pause record{orphanActiveWorkPauses.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Resume/reconcile the affected pause before correcting or closing the shift.
-          </div>
-        )}
-        {orphanActiveLaborSegments.length > 0 && (
-          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-            {orphanActiveLaborSegments.length} active labor segment{orphanActiveLaborSegments.length === 1 ? " is" : "s are"} not linked to a matching active TimeEntry. Review the affected shift before making administrative changes.
-          </div>
-        )}
-      </div>
-
-      <CorrectionCoordinatorDiagnostics
-        sessionToken={sessionToken}
-        availableEntryIds={timeEntries.map((entry) => entry.id)}
-        onViewShift={(entryId) => {
-          const entry = timeEntries.find((item) => item.id === entryId);
-          if (entry) setDetailEntry(entry);
-        }}
-        onInspectAudits={(entryId) => {
-          if (!String(entryId || "").trim()) return;
-          setAuditInvestigation({
-            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
-          });
-          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
-            behavior: "smooth", block: "start",
-          }), 0);
-        }}
-      />
-
-      <TimeClockExceptionCenter
-        timeEntries={timeEntries}
-        employeeStates={employeeStates}
-        activeBreaks={activeBreaks}
-        activeWorkPauses={activeWorkPauses}
-        activeLaborSegments={activeLaborSegments}
-        correctionRequests={correctionRequests}
-        punchExceptions={punchExceptions}
-        onReviewEntry={handleEditEntry}
-        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
-        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-        onRefresh={loadData}
-      />
-
-      <TimeClockPunchExceptionReport
-        punchExceptions={punchExceptions}
-        timeEntries={timeEntries}
-        correctionRequests={correctionRequests}
-        onReviewEntry={setDetailEntry}
-        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
-        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
-      />
-
-      <div className="clay-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Shift Review
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">Manager review status for completed shifts in the selected period. Approval does not finalize payroll.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p className="text-xs text-gray-600">Unreviewed</p>
-            <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
-          </div>
-          <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
-            <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
-            <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
-          </div>
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-            <p className="text-xs text-green-700">Approved</p>
-            <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
-          </div>
-        </div>
-      </div>
-
-      <CorrectionRequestAdminPanel
-        sessionToken={sessionToken}
-        onEntriesChanged={loadData}
-        reviewRequestId={correctionReviewRequestId}
-        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
-      />
-
-      <TimeOffApprovalPanel sessionToken={sessionToken} />
-
+      <div className="clay-card p-3 sm:p-4 space-y-4">
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -1305,6 +1095,261 @@ export default function TimeClockAdmin() {
           </table>
         </div>
       </div>
+      </div>
+
+      <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
+        subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
+        count={staleActiveEntries.length + needsReviewEntries.length + unreviewedEntries.length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
+      {staleActiveEntries.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-semibold text-amber-900">
+                {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"} need review
+              </div>
+              <p className="text-sm text-amber-800 mt-1">
+                These entries have remained clocked in for more than 24 hours. Nothing was changed automatically.
+              </p>
+              <div className="mt-3 space-y-2">
+                {staleActiveEntries.map(entry => (
+                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
+                      <div className="text-xs text-gray-600">
+                        Clocked in {format(parseISO(entry.clock_in), "MMM d, yyyy 'at' h:mm a")}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => handleEditEntry(entry)}>
+                      Review Entry
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <TimeClockExceptionCenter
+        timeEntries={timeEntries}
+        employeeStates={employeeStates}
+        activeBreaks={activeBreaks}
+        activeWorkPauses={activeWorkPauses}
+        activeLaborSegments={activeLaborSegments}
+        correctionRequests={correctionRequests}
+        punchExceptions={punchExceptions}
+        onReviewEntry={handleEditEntry}
+        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
+        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
+        onRefresh={loadData}
+      />
+      <div className="clay-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              Shift Review
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">Manager review status for completed shifts in the selected period. Approval does not finalize payroll.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <p className="text-xs text-gray-600">Unreviewed</p>
+            <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
+          </div>
+          <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
+            <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
+            <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
+          </div>
+          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+            <p className="text-xs text-green-700">Approved</p>
+            <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
+          </div>
+        </div>
+      </div>
+      <CorrectionRequestAdminPanel
+        sessionToken={sessionToken}
+        onEntriesChanged={loadData}
+        reviewRequestId={correctionReviewRequestId}
+        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
+      />
+      <TimeOffApprovalPanel sessionToken={sessionToken} />
+      <TimeClockPunchExceptionReport
+        punchExceptions={punchExceptions}
+        timeEntries={timeEntries}
+        correctionRequests={correctionRequests}
+        onReviewEntry={setDetailEntry}
+        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
+        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
+      />
+      </AdminSection>
+
+      <AdminSection title="Live Status" icon={Clock3} tone="green" defaultOpen
+        subtitle="Who is working right now">
+      <TimeClockManagementDashboard
+        timeEntries={timeEntries}
+        employeeStates={employeeStates}
+        correctionRequests={correctionRequests}
+        punchExceptions={punchExceptions}
+        activeLaborSegments={activeLaborSegments}
+      />
+      <div className="clay-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <Clock3 className="w-4 h-4 text-purple-600" />
+              Live Employee Status
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">Authoritative server state for employees currently working or transitioning.</p>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={loadData}>Refresh</Button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+          <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+            <p className="text-xs text-green-700">Clocked In</p>
+            <p className="text-2xl font-bold text-green-800">{clockedInStates.length}</p>
+          </div>
+          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+            <p className="text-xs text-emerald-700">Working</p>
+            <p className="text-2xl font-bold text-emerald-800">{workingStates.length}</p>
+          </div>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs text-amber-700">On Break</p>
+            <p className="text-2xl font-bold text-amber-800">{onBreakStates.length}</p>
+          </div>
+          <div className="rounded-lg bg-purple-50 border border-purple-200 p-3">
+            <p className="text-xs text-purple-700">Work Paused</p>
+            <p className="text-2xl font-bold text-purple-800">{workPausedStates.length}</p>
+          </div>
+          <div className={`rounded-lg border p-3 ${transitionalStates.length ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
+            <p className={`text-xs ${transitionalStates.length ? "text-blue-700" : "text-gray-500"}`}>In Transition</p>
+            <p className={`text-2xl font-bold ${transitionalStates.length ? "text-blue-800" : "text-gray-700"}`}>{transitionalStates.length}</p>
+          </div>
+        </div>
+
+        {clockedInStates.length === 0 && transitionalStates.length === 0 ? (
+          <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No employees are currently clocked in.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {[...clockedInStates, ...transitionalStates.filter(state => state.status !== "clocked_in")].map(state => {
+              const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
+              const breakRow = state.active_break_id ? activeBreakById.get(state.active_break_id) : null;
+              const workPauseRow = state.active_work_pause_id ? activeWorkPauseById.get(state.active_work_pause_id) : null;
+              const laborRow = entry?.id ? activeLaborByEntryId.get(entry.id) : null;
+              const clockIn = entry?.clock_in ? parseISO(entry.clock_in) : null;
+              const breakStarted = breakRow?.started_at ? parseISO(breakRow.started_at) : null;
+              const workPauseStarted = workPauseRow?.started_at ? parseISO(workPauseRow.started_at) : null;
+              const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
+              const validBreakStarted = breakStarted && !Number.isNaN(breakStarted.getTime());
+              const validWorkPauseStarted = workPauseStarted && !Number.isNaN(workPauseStarted.getTime());
+              return (
+                <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{state.user_name || state.user_email}</p>
+                    <p className="text-xs text-gray-500 truncate">{state.user_email}</p>
+                    {validClockIn && <p className="text-xs text-gray-500 mt-1">Clocked in {format(clockIn, "h:mm a")}</p>}
+                    {state.break_status === "on_break" && breakRow && (
+                      <p className="text-xs text-amber-700 mt-1">
+                        {breakRow.is_paid ? "Paid break" : breakRow.break_type === "lunch" ? "Unpaid lunch" : "Unpaid break"}
+                        {validBreakStarted ? ` since ${format(breakStarted, "h:mm a")}` : ""}
+                      </p>
+                    )}
+                    {state.break_status === "on_break" && !breakRow && (
+                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record — review required.</p>
+                    )}
+                    {state.work_pause_status === "paused" && workPauseRow && (
+                      <p className="text-xs text-purple-700 mt-1">
+                        Work Paused{validWorkPauseStarted ? ` since ${format(workPauseStarted, "h:mm a")}` : ""}
+                      </p>
+                    )}
+                    {state.work_pause_status === "paused" && !workPauseRow && (
+                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record — review required.</p>
+                    )}
+                    {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
+                      <p className="text-xs text-blue-700 mt-1 capitalize">
+                        Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
+                        {laborRow.work_order_id ? ` · ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
+                    {state.work_pause_status === "paused" ? <Pause className="w-3 h-3 mr-1" /> : state.break_status === "on_break" ? <Coffee className="w-3 h-3 mr-1" /> : null}
+                    {statusLabel(state)}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {transitionalStates.length > 0 && (
+          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+            A transition is still being finalized for {transitionalStates.length} employee{transitionalStates.length === 1 ? "" : "s"}. If it persists, reload before making an administrative correction.
+          </div>
+        )}
+        {orphanActiveBreaks.length > 0 && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            {orphanActiveBreaks.length} active break record{orphanActiveBreaks.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Do not correct or close the affected shift until the mismatch is reviewed.
+          </div>
+        )}
+        {orphanActiveWorkPauses.length > 0 && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            {orphanActiveWorkPauses.length} active Work Pause record{orphanActiveWorkPauses.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Resume/reconcile the affected pause before correcting or closing the shift.
+          </div>
+        )}
+        {orphanActiveLaborSegments.length > 0 && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            {orphanActiveLaborSegments.length} active labor segment{orphanActiveLaborSegments.length === 1 ? " is" : "s are"} not linked to a matching active TimeEntry. Review the affected shift before making administrative changes.
+          </div>
+        )}
+      </div>
+      </AdminSection>
+
+      <AdminSection title="Pay Periods & History" icon={CalendarIcon} tone="purple"
+        subtitle="Pay period finalization, audit trail and diagnostics">
+      <PayPeriodManager
+        sessionToken={sessionToken}
+        timeEntries={timeEntries}
+        correctionRequests={correctionRequests}
+        onEntriesChanged={loadData}
+        onInvestigateAudit={({ time_entry_id, evidence = [], mode = "conflict" }) => {
+          const normalizedId = String(time_entry_id || "").trim();
+          if (!normalizedId) return;
+          setAuditInvestigation({
+            time_entry_id: normalizedId,
+            evidence: Array.isArray(evidence) ? evidence : [],
+            mode: mode === "integrity" ? "integrity" : "conflict",
+            nonce: Date.now(),
+          });
+          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+        }}
+      />
+      <div id="time-clock-audit-trail" className="scroll-mt-4">
+        <TimeClockAuditTrail
+          investigation={auditInvestigation}
+          onExitInvestigation={() => setAuditInvestigation(null)}
+        />
+      </div>
+      <CorrectionCoordinatorDiagnostics
+        sessionToken={sessionToken}
+        availableEntryIds={timeEntries.map((entry) => entry.id)}
+        onViewShift={(entryId) => {
+          const entry = timeEntries.find((item) => item.id === entryId);
+          if (entry) setDetailEntry(entry);
+        }}
+        onInspectAudits={(entryId) => {
+          if (!String(entryId || "").trim()) return;
+          setAuditInvestigation({
+            time_entry_id: entryId, evidence: [], mode: "integrity", nonce: Date.now(),
+          });
+          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({
+            behavior: "smooth", block: "start",
+          }), 0);
+        }}
+      />
+      </AdminSection>
 
       <TimeClockShiftDetail
         entry={detailEntry}
