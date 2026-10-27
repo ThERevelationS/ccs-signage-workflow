@@ -23,12 +23,15 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
 
-        const { to, subject, body, attachments = [] } = await req.json();
+        const payload = await req.json();
+        const { to, subject, body, attachments = [] } = payload;
 
         // Require authentication for direct HTTP requests. Internal service
         // invocations from other backend functions carry a capability token
-        // instead of a user session.
-        const isInternalService = await hasWorkflowInvocationCapability({ _workflow_capability: (body as any)?._workflow_capability }, 'sendGmail');
+        // instead of a user session. The capability is a top-level request
+        // field — reading it off the email body both broke internal callers
+        // and let a crafted body object smuggle the credential.
+        const isInternalService = await hasWorkflowInvocationCapability({ _workflow_capability: payload?._workflow_capability }, 'sendGmail');
         if (!isInternalService) {
           const user = await base44.auth.me().catch(() => null);
           if (!user) {
