@@ -12,6 +12,17 @@ const whole = (value: unknown, fallback = 0) => {
 
 const cleanText = (value: unknown, max = MAX_TEXT) => String(value || '').trim().slice(0, max);
 
+const safeUrl = (value: unknown, max = MAX_URL) => {
+  const raw = cleanText(value, max);
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    return ['http:', 'https:'].includes(url.protocol) ? url.toString().slice(0, max) : '';
+  } catch {
+    return '';
+  }
+};
+
 const canonicalDelivery = (rows: any[] = []) => rows.slice().sort((a, b) => {
   const aTime = Date.parse(a?.created_date || a?.sent_at || '') || 0;
   const bTime = Date.parse(b?.created_date || b?.sent_at || '') || 0;
@@ -79,7 +90,7 @@ Deno.serve(async (req) => {
       sent_at: new Date(sentAt).toISOString(),
       gmail_message_id: gmailMessageId,
       attachment_filename: cleanText(input.attachment_filename, 255),
-      attachment_file_url: cleanText(input.attachment_file_url, MAX_URL),
+      attachment_file_url: safeUrl(input.attachment_file_url),
       attachment_sha256: attachmentSha256,
       attachment_size_bytes: Math.max(0, whole(input.attachment_size_bytes)),
       is_resend: input.is_resend === true,
