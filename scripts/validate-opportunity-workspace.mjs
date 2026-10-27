@@ -455,3 +455,6 @@ assert.match(queuesPage, /Search/, 'estimate queues must offer search');
 for (const t of ['test-aio-pricing.mjs','test-quote-lifecycle.mjs','test-customer-quote.mjs','test-customer-pricing.mjs','test-entity-persistence.mjs','test-estimate-cas.mjs','test-estimate-lifecycle.mjs','test-estimate-save-recovery.mjs','test-builder-persistence.mjs','test-module-registry.mjs','test-sales-activity.mjs','test-builder-service.mjs','test-builder-recovery.mjs','test-quick-price-persistence.mjs','test-customer-persistence.mjs']) {
   assert.ok(existsSync(`scripts/${t}`), `hardening test ${t} must exist`);
 }
+for (const t of ['test-nav-wiring.mjs','test-mutation-guard.mjs','test-quick-price-persistence.mjs','test-customer-persistence.mjs','test-builder-service.mjs','test-builder-recovery.mjs','test-sales-activity.mjs','test-module-registry.mjs','test-profitability.mjs']) {
+  assert.ok(existsSync(`scripts/${t}`), `hardening test ${t} must exist`);
+}
