@@ -307,7 +307,9 @@ Deno.serve(async (req) => {
         estimates: (Array.isArray(estimates) ? estimates : [])
           .filter((e: any) => ["sent", "approved"].includes(clean(e?.status)))
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
-          .map(estimatePortalView),        jobs: (Array.isArray(orders) ? orders : [])
+          .map(estimatePortalView);
+        estimates = await Promise.all(estimates);
+        const jobs = (Array.isArray(orders) ? orders : [])
           .filter((o: any) => o?.deleted !== true)
           .sort((a: any, b: any) => clean(b?.updated_date).localeCompare(clean(a?.updated_date)))
           .slice(0, 50)
@@ -497,7 +499,7 @@ Deno.serve(async (req) => {
           details: { estimate_id: estimateId, quote_total: num(estimate.quote_total), source: "customer_portal" },
           key: `portal-act:approve:${estimateId}:${clean(msg.record?.id) || key}`,
         });
-        return Response.json({ success: true, action, estimate: estimatePortalView(saved), message: messageView(msg.record) });
+        return Response.json({ success: true, action, estimate: await estimatePortalView(saved), message: messageView(msg.record) });
       }
 
       if (!note) throw bad("Please describe the changes you'd like so we can revise the quote.");
@@ -526,7 +528,7 @@ Deno.serve(async (req) => {
         details: { estimate_id: estimateId, note_preview: note.slice(0, 240), source: "customer_portal" },
         key: `portal-act:revise:${estimateId}:${clean(msg.record?.id) || key}`,
       });
-      return Response.json({ success: true, action, estimate: estimatePortalView(estimate), message: messageView(msg.record) });
+      return Response.json({ success: true, action, estimate: await estimatePortalView(estimate), message: messageView(msg.record) });
     }
 
     if (action === "payment_notice") {
