@@ -3,7 +3,7 @@ import { normalizePermittingResearchInput } from '../../shared/permittingResearc
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 
 /**
- * Wrapper function that calls the jurisdictionResearch agent
+ * Wrapper function that calls the jurisdiction_research agent
  * Used by: JurisdictionFormDialog (create), refreshJurisdiction (refresh), batch operations
  * This allows agent prompt control from the dashboard while keeping backend integration simple
  */
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const { jurisdictionName, jurisdictionState, jurisdictionType, includeParentCounty } = researchInput;
 
     // For now, fallback to direct LLM call since agent API may have timing issues
-    // The agent prompt instructions are documented in agents/jurisdictionResearch.json
+    // The agent prompt instructions are documented in agents/jurisdiction_research.jsonc
     
     const researchPrompt = `You are a specialized jurisdiction research assistant for sign permit information.
 
