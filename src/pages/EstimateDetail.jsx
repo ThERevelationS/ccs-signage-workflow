@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole, RotateCcw, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -37,7 +37,7 @@ import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, quoteIssueKe
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
-import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -96,7 +96,7 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
 
 export default function EstimateDetail() {
   const navigate = useNavigate();
-  const { sessionToken, isRegistered } = useAuth();
+  const { sessionToken, isRegistered, currentUser } = useAuth();
   const id = new URLSearchParams(window.location.search).get("id");
   const [estimate, setEstimate] = useState(null);
   const [persistedEstimate, setPersistedEstimate] = useState(null);
@@ -111,6 +111,7 @@ export default function EstimateDetail() {
   const [activeProduct, setActiveProduct] = useState(null);
   const [clipboardOpen, setClipboardOpen] = useState(false);
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
+  const [trashing, setTrashing] = useState(false);
   // Tracks the exact server version this browser session last read or wrote.
   // Keep it separate from persistedEstimate because Product operations may save
   // immediately while the lifecycle baseline intentionally remains older.
@@ -119,6 +120,52 @@ export default function EstimateDetail() {
   // succeeds but audit/pipeline work fails afterward. This preserves the true
   // pre-transition snapshot and a stable idempotency key across retries.
   const pendingLifecycleBaselineRef = useRef(null);
+
+  const handleMoveToTrash = async () => {
+    if (!estimate?.id || trashing) return;
+    if (openRevision) {
+      window.alert("Save the open estimate revision before moving this estimate to Trash.");
+      return;
+    }
+    if (estimate.work_order_id) {
+      window.alert("This estimate is linked to a Work Order. Close or manage the job from the workflow before trashing the source estimate.");
+      return;
+    }
+    if (!window.confirm("Move this estimate to Trash? It will be hidden from all estimate lists until it is restored.")) return;
+    setTrashing(true);
+    try {
+      const saved = await softDeleteEstimateFromLoadedSnapshot({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: persistedEstimate || estimate,
+        deletedBy: currentUser?.email || "unknown",
+        label: "Estimate trash",
+      });
+      setEstimate(saved);
+      setPersistedEstimate(saved);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be moved to Trash.");
+    } finally {
+      setTrashing(false);
+    }
+  };
+
+  const handleRestoreFromTrash = async () => {
+    if (!estimate?.id || trashing) return;
+    setTrashing(true);
+    try {
+      const saved = await restoreEstimateFromLoadedTrashSnapshot({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: persistedEstimate || estimate,
+        label: "Estimate restore",
+      });
+      setEstimate(saved);
+      setPersistedEstimate(saved);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be restored. Reload before retrying.");
+    } finally {
+      setTrashing(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) {
@@ -159,6 +206,42 @@ export default function EstimateDetail() {
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading estimate…</div>;
   if (!estimate) return <div className="p-10 text-center text-gray-500">Estimate not found.</div>;
+
+  if (estimate.deleted === true) {
+    return (
+      <div className="min-h-full bg-gray-50 flex items-start justify-center p-8">
+        <div className="w-full max-w-lg rounded border border-red-300 bg-red-50 px-4 py-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-bold text-red-800">
+            <Trash2 className="w-4 h-4" /> In Trash — {estimate.project_name || "Estimate"}
+          </div>
+          <div className="text-xs text-red-700">
+            {estimate.deleted_at ? `Deleted ${new Date(estimate.deleted_at).toLocaleString()}` : "Deleted"}
+            {estimate.deleted_by ? ` by ${estimate.deleted_by}` : ""}
+          </div>
+          <div className="text-[11px] text-red-700">
+            This estimate is hidden from all estimate lists and cannot be edited until it is restored.
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRestoreFromTrash}
+              disabled={trashing}
+              className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-emerald-300 bg-white text-emerald-700 text-[12px] font-semibold hover:bg-emerald-50 disabled:opacity-40"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> {trashing ? "Restoring…" : "Restore Estimate"}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/EstimatorQueues?status=trash")}
+              className="h-[32px] px-3 rounded-sm border border-gray-300 bg-white text-gray-600 text-[12px] font-semibold hover:bg-gray-100"
+            >
+              Open Estimate Trash
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const pricing = computePricing(estimate);
   const lines = estimate.line_items || [];
@@ -1224,6 +1307,17 @@ export default function EstimateDetail() {
                 >
                   <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} />
                   <span className="text-sm font-medium text-gray-800">{openRevision ? "Save Revision Before Cancelling" : "Cancel Estimate"}</span>
+                </button>
+              )}
+              {estimate.status !== "cancelled" && !estimate.work_order_id && (
+                <button
+                  onClick={handleMoveToTrash}
+                  disabled={!!openRevision || trashing}
+                  className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-red-200 rounded-sm hover:bg-red-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={openRevision ? "Save the open revision before moving this estimate to Trash." : "Move to Trash"}
+                >
+                  <Trash2 className="w-4 h-4" style={{ color: "#8b1e1e" }} />
+                  <span className="text-sm font-medium text-gray-800">{trashing ? "Moving to Trash…" : "Move to Trash"}</span>
                 </button>
               )}
               {estimate.status !== "cancelled" && estimate.work_order_id && (
