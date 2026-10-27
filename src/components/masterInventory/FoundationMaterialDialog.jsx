@@ -22,7 +22,7 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
   const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 
   const handleSave = async () => {
-    if (!form.material_name || saveRef.current) return;
+    if (!form.material_name?.trim() || saveRef.current) return;
     saveRef.current = true;
     setSaving(true);
     try {
@@ -71,7 +71,7 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && !saving && onClose()}>
       <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{record?.id ? "Edit Material" : "New Material"}</DialogTitle>
@@ -115,12 +115,12 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !form.material_name}
+            disabled={saving || !form.material_name?.trim()}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
             {saving ? "Saving…" : "Save"}
