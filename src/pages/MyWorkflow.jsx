@@ -12,6 +12,7 @@ import { User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Tras
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -63,6 +64,61 @@ const parseLocalDate = (dateString) => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
 };
+
+function JobAssignmentInlineRow({ wo, users, onSaveField, onAssigneeChange }) {
+  const [dateOpen, setDateOpen] = useState(false);
+  const stageOptions = Object.keys(stageDisplayNames);
+  if (wo.current_stage && !stageOptions.includes(wo.current_stage)) stageOptions.push(wo.current_stage);
+  return (
+    <div className="flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
+      <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
+      <Input
+        defaultValue={wo.current_task_description || ""}
+        placeholder="Task"
+        title="Current task"
+        className="h-7 w-40 min-w-0 flex-1 text-xs border-0 bg-transparent px-1 focus-visible:ring-1"
+        onBlur={(e) => {
+          const next = e.target.value.trim();
+          if (next !== String(wo.current_task_description || "")) onSaveField(wo, { current_task_description: next });
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') { e.currentTarget.value = wo.current_task_description || ""; e.currentTarget.blur(); }
+        }}
+      />
+      <Popover open={dateOpen} onOpenChange={setDateOpen}>
+        <PopoverTrigger asChild>
+          <button type="button" title="Deadline" className="h-7 inline-flex items-center gap-1 rounded px-1 text-xs text-gray-700 hover:bg-purple-100">
+            <CalendarDays className="w-3 h-3 text-purple-500" />
+            {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "—"}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={wo.due_date ? parseLocalDate(wo.due_date) : undefined}
+            onSelect={(day) => { if (day) onSaveField(wo, { due_date: format(day, "yyyy-MM-dd") }); setDateOpen(false); }}
+          />
+        </PopoverContent>
+      </Popover>
+      <TaskAssigneeSelect
+        value={wo.assigned_to || ""}
+        users={users}
+        onChange={(name) => onAssigneeChange(wo, name)}
+        className="h-7 w-28 text-xs border-0 bg-transparent px-1"
+        context={wo.client_name || "this job"}
+      />
+      <Select value={wo.current_stage || ""} onValueChange={(next) => { if (next !== wo.current_stage) onSaveField(wo, { current_stage: next }); }}>
+        <SelectTrigger className="h-7 w-24 text-xs border-0 bg-transparent px-1" title="Stage">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {stageOptions.map((s) => <SelectItem key={s} value={s}>{stageDisplayNames[s] || s}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 export default function MyWorkflow() {
   const { currentUser, isRegistered } = useAuth();
@@ -736,63 +792,12 @@ export default function MyWorkflow() {
                             <div key={idx} className="group">
                               {/* Job-level assignment: the job itself acts like a task */}
                               {item.type === 'job_assignment' && (
-                                <div className="flex items-center gap-1 p-1 rounded border bg-purple-50 border-purple-200">
-                                  <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
-                                  <Input
-                                    defaultValue={wo.current_task_description || ""}
-                                    placeholder="Task description"
-                                    title="Task description"
-                                    className="h-6 flex-1 min-w-0 text-xs bg-white/70"
-                                    onBlur={(e) => {
-                                      const next = e.target.value.trim();
-                                      if (next !== String(wo.current_task_description || "")) {
-                                        saveJobField(wo, { current_task_description: next });
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.currentTarget.blur();
-                                      if (e.key === 'Escape') { e.currentTarget.value = wo.current_task_description || ""; e.currentTarget.blur(); }
-                                    }}
-                                  />
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <button type="button" title="Deadline" className="h-6 inline-flex items-center gap-1 rounded border border-purple-200 bg-white/70 px-1.5 text-[10px] font-medium text-gray-700 hover:bg-white">
-                                        <CalendarDays className="w-3 h-3 text-purple-500" />
-                                        {wo.due_date ? format(parseLocalDate(wo.due_date), "M/d/yy") : "No date"}
-                                      </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                      <Calendar
-                                        mode="single"
-                                        selected={wo.due_date ? parseLocalDate(wo.due_date) : undefined}
-                                        onSelect={(day) => {
-                                          if (day) saveJobField(wo, { due_date: format(day, "yyyy-MM-dd") });
-                                        }}
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
-                                  <Select value="" onValueChange={(name) => setAssigneeConfirm({ wo, nextAssignee: name })}>
-                                    <SelectTrigger className="h-6 w-28 text-xs bg-white/70" title="Assigned to">
-                                      <SelectValue placeholder={wo.assigned_to || "Assign"} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {allUsers.map(u => {
-                                        const name = u.full_name || u.email;
-                                        return <SelectItem key={u.id || u.email} value={name}>{name}</SelectItem>;
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                  <Select value={wo.current_stage || ""} onValueChange={(next) => { if (next !== wo.current_stage) saveJobField(wo, { current_stage: next }); }}>
-                                    <SelectTrigger className="h-6 w-28 text-xs bg-white/70" title="Stage">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Object.keys(stageDisplayNames).map(s => (
-                                        <SelectItem key={s} value={s}>{stageDisplayNames[s]}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
+                                <JobAssignmentInlineRow
+                                  wo={wo}
+                                  users={allUsers}
+                                  onSaveField={saveJobField}
+                                  onAssigneeChange={(target, name) => setAssigneeConfirm({ wo: target, nextAssignee: name })}
+                                />
                               )}
                               {/* Task with my subtasks/details - show parent as context */}
                               {item.type === 'task_with_my_items' && (
