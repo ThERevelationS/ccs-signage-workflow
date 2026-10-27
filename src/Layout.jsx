@@ -90,7 +90,7 @@ const meetingsDropdownItems = [
   { title: "Purchase Orders", url: createPageUrl("PurchaseOrders"), icon: Package, accent: "#0EA5E9" },
   { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
   { title: "Inventory", url: createPageUrl("Inventory"), icon: Package, accent: "#84CC16" },
-  
+  { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
 
 ];
 
@@ -1390,7 +1390,7 @@ function LayoutContent({ children }) {
                     transition={{ duration: 0.18, ease: 'easeInOut' }}
                     style={{ minHeight: '100%' }}
                   >
-                    <LoginGate exempt={["/timeclock","/newusersetup","/privacypolicy","/resetpassword"].includes(location.pathname.replace(/\/+$/, "").toLowerCase())}>{children}</LoginGate>
+                    <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
                   </motion.div>
                 </AnimatePresence>
               ) : (
@@ -1401,7 +1401,7 @@ function LayoutContent({ children }) {
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   style={{ minHeight: "100%" }}
                 >
-                  <LoginGate exempt={["/timeclock","/newusersetup","/privacypolicy","/resetpassword"].includes(location.pathname.replace(/\/+$/, "").toLowerCase())}>{children}</LoginGate>
+                  <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
                 </motion.div>
               )}
             </MultiPageContainer>
