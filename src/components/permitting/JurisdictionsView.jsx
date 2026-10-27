@@ -42,7 +42,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
 
   useEffect(() => {
     loadJurisdictions();
-    const interval = setInterval(loadJurisdictions, 300000);
+    const interval = setInterval(() => { if (!document.hidden) loadJurisdictions(); }, 300000);
     return () => clearInterval(interval);
   }, []);
 
