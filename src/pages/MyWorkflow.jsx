@@ -160,20 +160,28 @@ export default function MyWorkflow() {
   }, [currentUser]);
 
   const loadUsers = async () => {
-    const [users, dropdownsSetting] = await Promise.all([
-      loadAllEntityRows({
-        entity: AuthorizedEmail,
-        sort: null,
-        label: "My Workflow authorized users",
-      }),
-      loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
-        settingKey: "dropdownConditions",
-        label: "My Workflow dropdown conditions",
-      }),
-    ]);
-    setAllUsers(users);
-    setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+    try {
+      const [users, dropdownsSetting] = await Promise.all([
+        loadAllEntityRows({
+          entity: AuthorizedEmail,
+          sort: null,
+          label: "My Workflow authorized users",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "dropdownConditions",
+          label: "My Workflow dropdown conditions",
+        }),
+      ]);
+      setAllUsers(users);
+      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+    } catch (error) {
+      // Assignee lists are a convenience for the pickers below; a refused
+      // identity read must not take the page down. A rejected session is
+      // reported through the session layer, which reverifies it and reopens
+      // sign-in when it is truly gone.
+      console.error("Error loading authorized users:", error);
+    }
   };
 
   const loadMyWorkOrders = async () => {

@@ -22,6 +22,12 @@ export async function invokeFleet(name, payload = {}) {
       session_token: getSessionToken(),
       ...(payload || {}),
     });
+  } catch (error) {
+    // A 401 means this tab's signed-in identity was refused. Report it so the
+    // session layer can reverify once — recovering a live session, or dropping
+    // a dead one and reopening sign-in — while callers keep their own handling.
+    if (Number(error?.response?.status ?? error?.status) === 401) notifySessionRejected();
+    throw error;
   } finally {
     if (!READ_ONLY_FUNCTIONS.has(name)) mutationEpoch += 1;
   }

@@ -88,19 +88,26 @@ export default function PermitClientGroup({
     <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
       {/* CLIENT INFO HEADER ROW */}
       <div
-        className="bg-gradient-to-r from-purple-50 to-white border-b px-3 py-2 cursor-pointer hover:from-purple-100 transition-colors flex flex-wrap items-center gap-x-3 gap-y-2"
+        className="bg-gradient-to-r from-purple-50 to-white border-b px-3 py-2 cursor-pointer hover:from-purple-100 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        {expanded ? <ChevronDown className="w-4 h-4 text-purple-600 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-purple-600 flex-shrink-0" />}
-
-        {/* Name */}
-        <div
-          className="font-bold text-sm text-purple-900 hover:underline min-w-0 w-[calc(100%-2rem)] sm:w-auto sm:max-w-[180px] truncate"
-          onClick={(e) => { e.stopPropagation(); onOpenWorkOrder(group.work_order_id); }}
-          title={wo?.client_name}
-        >
-          {wo?.client_name || "—"}
+        {/* Row 1: client name gets the full width — no truncation */}
+        <div className="flex items-center gap-2">
+          {expanded ? <ChevronDown className="w-4 h-4 text-purple-600 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-purple-600 flex-shrink-0" />}
+          <div
+            className="font-bold text-sm text-purple-900 hover:underline min-w-0 flex-1 leading-snug"
+            onClick={(e) => { e.stopPropagation(); onOpenWorkOrder(group.work_order_id); }}
+            title={wo?.client_name}
+          >
+            {wo?.client_name || "—"}
+          </div>
+          <div className="text-[10px] text-gray-400 flex-shrink-0">
+            {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : 'No lines'}
+          </div>
         </div>
+
+        {/* Row 2: job metadata — fields wrap onto their own line instead of clipping */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 pl-6">
 
         {/* Est/Inv # — editable text + external link */}
         <div className="flex items-center gap-1 text-[11px] flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -172,8 +179,6 @@ export default function PermitClientGroup({
           maxWidth={200}
         />
 
-        <div className="text-[10px] text-gray-400 flex-shrink-0 ml-auto">
-          {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : 'No lines'}
         </div>
       </div>
 
