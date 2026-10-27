@@ -1,3 +1,4 @@
+import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
@@ -17,7 +18,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const PO_STATUSES = ["draft", "sent", "partially_received", "received", "cancelled"];
 
 const EDITABLE_FIELDS = [
-  "po_number", "vendor_name", "vendor_contact", "vendor_email", "vendor_phone",
+  "vendor_name", "vendor_contact", "vendor_email", "vendor_phone",
   "work_order_id", "estimate_id", "opportunity_id",
   "line_items", "shipping_fee", "order_date", "expected_date",
   "ship_to", "vendor_reference", "notes", "internal_notes",
@@ -60,13 +61,8 @@ function computeTotals(fields: any) {
   return { subtotal, shipping_fee: shipping, total: money(subtotal + shipping) };
 }
 
-async function nextPoNumber(PurchaseOrder: any) {
-  const rows = await PurchaseOrder.filter({});
-  if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
-  let seq = rows.length + 1001;
-  const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
-  while (existing.has(`PO-${seq}`)) seq += 1;
-  return `PO-${seq}`;
+async function nextPoNumber(PurchaseOrder: any, svc: any) {
+  return allocateDocNumber({ svc, configName: 'purchase_order', prefix: 'PO-', seedEntity: PurchaseOrder, seedField: 'po_number' });
 }
 
 function poSnapshot(row: any) {
