@@ -399,19 +399,24 @@ export default function WorkOrderDetailsDialog({
     const taskText = task.text;
     const wasCompleted = !!task.completed;
     const targetCompleted = !wasCompleted;
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => ({ ...currentTask, completed: targetCompleted }),
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
-    if (wasCompleted) {
-      await ActivityActions.taskUncompleted(workOrder, taskText);
-    } else {
-      await ActivityActions.taskCompleted(workOrder, taskText);
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => ({ ...currentTask, completed: targetCompleted }),
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+      if (wasCompleted) {
+        await ActivityActions.taskUncompleted(workOrder, taskText);
+      } else {
+        await ActivityActions.taskCompleted(workOrder, taskText);
+      }
+    } catch (error) {
+      console.error('Failed to toggle task:', error);
+      alert('Failed to toggle task: ' + (error?.message || error));
     }
   };
 
@@ -462,22 +467,27 @@ export default function WorkOrderDetailsDialog({
       assigned_to: newSubTaskAssignedTo || "",
       additional_assignees: newSubTaskAdditionalAssignees || []
     };
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => ({
-        ...currentTask,
-        sub_tasks: [...(currentTask.sub_tasks || []), newSubTask],
-      }),
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    setNewSubTaskText("");
-    setNewSubTaskAssignedTo("");
-    setNewSubTaskAdditionalAssignees([]);
-    setAddingSubTaskFor(null);
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => ({
+          ...currentTask,
+          sub_tasks: [...(currentTask.sub_tasks || []), newSubTask],
+        }),
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      setNewSubTaskText("");
+      setNewSubTaskAssignedTo("");
+      setNewSubTaskAdditionalAssignees([]);
+      setAddingSubTaskFor(null);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to add subtask:', error);
+      alert('Failed to add subtask: ' + (error?.message || error));
+    }
   };
 
   const handleToggleTaskSubTask = async (taskIndex, subTaskIndex) => {
@@ -486,24 +496,29 @@ export default function WorkOrderDetailsDialog({
     if (!task || !subTask) return;
     const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
     const targetCompleted = !subTask.completed;
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => {
-        const currentSubTasks = currentTask.sub_tasks || [];
-        const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
-        return {
-          ...currentTask,
-          sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
-            ? { ...currentSubTask, completed: targetCompleted }
-            : currentSubTask),
-        };
-      },
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => {
+          const currentSubTasks = currentTask.sub_tasks || [];
+          const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
+          return {
+            ...currentTask,
+            sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
+              ? { ...currentSubTask, completed: targetCompleted }
+              : currentSubTask),
+          };
+        },
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to toggle subtask:', error);
+      alert('Failed to toggle subtask: ' + (error?.message || error));
+    }
   };
 
   const handleAddTaskDetail = async (taskIndex, subTaskIndex) => {
@@ -518,28 +533,33 @@ export default function WorkOrderDetailsDialog({
       assigned_to: newDetailAssignedTo || "",
       additional_assignees: newDetailAdditionalAssignees || []
     };
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => {
-        const currentSubTasks = currentTask.sub_tasks || [];
-        const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
-        return {
-          ...currentTask,
-          sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
-            ? { ...currentSubTask, details: [...(currentSubTask.details || []), newDetail] }
-            : currentSubTask),
-        };
-      },
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    setNewDetailText("");
-    setNewDetailAssignedTo("");
-    setNewDetailAdditionalAssignees([]);
-    setAddingDetailFor(null);
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => {
+          const currentSubTasks = currentTask.sub_tasks || [];
+          const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
+          return {
+            ...currentTask,
+            sub_tasks: currentSubTasks.map((currentSubTask, index) => index === currentSubTaskIndex
+              ? { ...currentSubTask, details: [...(currentSubTask.details || []), newDetail] }
+              : currentSubTask),
+          };
+        },
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      setNewDetailText("");
+      setNewDetailAssignedTo("");
+      setNewDetailAdditionalAssignees([]);
+      setAddingDetailFor(null);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to add detail:', error);
+      alert('Failed to add detail: ' + (error?.message || error));
+    }
   };
 
   const handleToggleTaskDetail = async (taskIndex, subTaskIndex, detailIndex) => {
@@ -550,32 +570,37 @@ export default function WorkOrderDetailsDialog({
     const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
     const detailLocator = createWorkOrderArrayItemLocator(detail);
     const targetCompleted = !detail.completed;
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => {
-        const currentSubTasks = currentTask.sub_tasks || [];
-        const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
-        return {
-          ...currentTask,
-          sub_tasks: currentSubTasks.map((currentSubTask, index) => {
-            if (index !== currentSubTaskIndex) return currentSubTask;
-            const currentDetails = currentSubTask.details || [];
-            const currentDetailIndex = findWorkOrderArrayItemIndex(currentDetails, detailLocator, "Work Order task detail");
-            return {
-              ...currentSubTask,
-              details: currentDetails.map((currentDetail, currentIndex) => currentIndex === currentDetailIndex
-                ? { ...currentDetail, completed: targetCompleted }
-                : currentDetail),
-            };
-          }),
-        };
-      },
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => {
+          const currentSubTasks = currentTask.sub_tasks || [];
+          const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
+          return {
+            ...currentTask,
+            sub_tasks: currentSubTasks.map((currentSubTask, index) => {
+              if (index !== currentSubTaskIndex) return currentSubTask;
+              const currentDetails = currentSubTask.details || [];
+              const currentDetailIndex = findWorkOrderArrayItemIndex(currentDetails, detailLocator, "Work Order task detail");
+              return {
+                ...currentSubTask,
+                details: currentDetails.map((currentDetail, currentIndex) => currentIndex === currentDetailIndex
+                  ? { ...currentDetail, completed: targetCompleted }
+                  : currentDetail),
+              };
+            }),
+          };
+        },
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to toggle detail:', error);
+      alert('Failed to toggle detail: ' + (error?.message || error));
+    }
   };
 
   const handleDeleteTaskDetail = async (taskIndex, subTaskIndex, detailIndex) => {
@@ -585,27 +610,32 @@ export default function WorkOrderDetailsDialog({
     if (!task || !subTask || !detail) return;
     const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
     const detailLocator = createWorkOrderArrayItemLocator(detail);
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => {
-        const currentSubTasks = currentTask.sub_tasks || [];
-        const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
-        return {
-          ...currentTask,
-          sub_tasks: currentSubTasks.map((currentSubTask, index) => {
-            if (index !== currentSubTaskIndex) return currentSubTask;
-            const currentDetails = currentSubTask.details || [];
-            const currentDetailIndex = findWorkOrderArrayItemIndex(currentDetails, detailLocator, "Work Order task detail");
-            return { ...currentSubTask, details: currentDetails.filter((_, currentIndex) => currentIndex !== currentDetailIndex) };
-          }),
-        };
-      },
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => {
+          const currentSubTasks = currentTask.sub_tasks || [];
+          const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
+          return {
+            ...currentTask,
+            sub_tasks: currentSubTasks.map((currentSubTask, index) => {
+              if (index !== currentSubTaskIndex) return currentSubTask;
+              const currentDetails = currentSubTask.details || [];
+              const currentDetailIndex = findWorkOrderArrayItemIndex(currentDetails, detailLocator, "Work Order task detail");
+              return { ...currentSubTask, details: currentDetails.filter((_, currentIndex) => currentIndex !== currentDetailIndex) };
+            }),
+          };
+        },
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to delete detail:', error);
+      alert('Failed to delete detail: ' + (error?.message || error));
+    }
   };
 
   const handleDeleteTaskSubTask = async (taskIndex, subTaskIndex) => {
@@ -613,19 +643,24 @@ export default function WorkOrderDetailsDialog({
     const subTask = task?.sub_tasks?.[subTaskIndex];
     if (!task || !subTask) return;
     const subTaskLocator = createWorkOrderArrayItemLocator(subTask);
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => {
-        const currentSubTasks = currentTask.sub_tasks || [];
-        const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
-        return { ...currentTask, sub_tasks: currentSubTasks.filter((_, index) => index !== currentSubTaskIndex) };
-      },
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => {
+          const currentSubTasks = currentTask.sub_tasks || [];
+          const currentSubTaskIndex = findWorkOrderArrayItemIndex(currentSubTasks, subTaskLocator, "Work Order subtask");
+          return { ...currentTask, sub_tasks: currentSubTasks.filter((_, index) => index !== currentSubTaskIndex) };
+        },
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('Failed to delete subtask:', error);
+      alert('Failed to delete subtask: ' + (error?.message || error));
+    }
   };
 
   const handleEditTask = async (taskIndex) => {
@@ -633,40 +668,50 @@ export default function WorkOrderDetailsDialog({
     const task = tasks[taskIndex];
     if (!task) return;
     const oldText = task.text;
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      mutateItem: (currentTask) => ({
-        ...currentTask,
-        text: editedTaskText,
-        assigned_to: editedTaskAssignedTo,
-        additional_assignees: editedTaskAdditionalAssignees,
-      }),
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    setEditingTaskIndex(null);
-    setEditedTaskText("");
-    setEditedTaskAssignedTo("");
-    setEditedTaskAdditionalAssignees([]);
-    if (onUpdate) onUpdate();
-    await ActivityActions.taskEdited(workOrder, oldText, editedTaskText);
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        mutateItem: (currentTask) => ({
+          ...currentTask,
+          text: editedTaskText,
+          assigned_to: editedTaskAssignedTo,
+          additional_assignees: editedTaskAdditionalAssignees,
+        }),
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      setEditingTaskIndex(null);
+      setEditedTaskText("");
+      setEditedTaskAssignedTo("");
+      setEditedTaskAdditionalAssignees([]);
+      if (onUpdate) onUpdate();
+      await ActivityActions.taskEdited(workOrder, oldText, editedTaskText);
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      alert('Failed to update task: ' + (error?.message || error));
+    }
   };
 
   const handleDeleteTask = async (taskIndex) => {
     const task = tasks[taskIndex];
     if (!task) return;
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: workOrder.id,
-      field: "notes",
-      item: task,
-      label: "Work Order task",
-      remove: true,
-    });
-    Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-    if (onUpdate) onUpdate();
-    await ActivityActions.taskDeleted(workOrder);
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: workOrder.id,
+        field: "notes",
+        item: task,
+        label: "Work Order task",
+        remove: true,
+      });
+      Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+      if (onUpdate) onUpdate();
+      await ActivityActions.taskDeleted(workOrder);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      alert('Failed to delete task: ' + (error?.message || error));
+    }
   };
 
   const handleAddWorkNote = async (noteData) => {
@@ -1257,15 +1302,20 @@ export default function WorkOrderDetailsDialog({
                                       currentTaskId={task.id}
                                       currentTaskIndex={actualIndex}
                                       onUpdateDependencies={async (newDeps) => {
-                                        const saved = await mutateLocatedWorkOrderArrayItem({
-                                          workOrderId: workOrder.id,
-                                          field: "notes",
-                                          item: task,
-                                          label: "Work Order task",
-                                          mutateItem: (currentTask) => ({ ...currentTask, depends_on: newDeps }),
-                                        });
-                                        Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
-                                        if (onUpdate) onUpdate();
+                                        try {
+                                          const saved = await mutateLocatedWorkOrderArrayItem({
+                                            workOrderId: workOrder.id,
+                                            field: "notes",
+                                            item: task,
+                                            label: "Work Order task",
+                                            mutateItem: (currentTask) => ({ ...currentTask, depends_on: newDeps }),
+                                          });
+                                          Object.assign(workOrder, { notes: saved.notes || [], updated_date: saved.updated_date });
+                                          if (onUpdate) onUpdate();
+                                        } catch (error) {
+                                          console.error('Failed to update task dependencies:', error);
+                                          alert('Failed to update task dependencies: ' + (error?.message || error));
+                                        }
                                       }}
                                       compact
                                     />
