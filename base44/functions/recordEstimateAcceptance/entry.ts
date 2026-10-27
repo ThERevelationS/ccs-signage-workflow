@@ -52,6 +52,14 @@ Deno.serve(async (req) => {
     if (!Number.isFinite(Date.parse(acceptedAt))) {
       return Response.json({ error: 'Acceptance date/time is invalid.' }, { status: 400 });
     }
+    const acceptedMs = Date.parse(acceptedAt);
+    const nowMs = Date.now();
+    if (acceptedMs > nowMs + 15 * 60 * 1000) {
+      return Response.json({ error: 'Acceptance date/time cannot be in the future.' }, { status: 400 });
+    }
+    if (acceptedMs < nowMs - 10 * 365 * 24 * 60 * 60 * 1000) {
+      return Response.json({ error: 'Acceptance date/time is unreasonably old.' }, { status: 400 });
+    }
 
     const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
     const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;
