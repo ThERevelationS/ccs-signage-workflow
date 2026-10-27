@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import ProductRow from "./ProductRow";
 import { ESTIMATOR_MODULES, getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 
 export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, readOnly = false }) {
@@ -33,6 +34,11 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         getModuleLabel(line.module_key).toLowerCase().includes(q)
       );
     });
+
+  const visibleSubtotal = visible.reduce((sum, { line }) => {
+    const quantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
+    return sum + acceptedCustomerUnitPrice(line) * quantity * (1 + Number(line.adjustment_percent || 0) / 100);
+  }, 0);
 
   return (
     <div className="bg-white border border-gray-200 rounded-md">
@@ -99,6 +105,17 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               allLines={lines}
             />
           ))}
+        </div>
+      )}
+
+      {visible.length > 0 && (
+        <div className="px-4 py-2 border-t border-gray-200 flex items-center justify-between gap-2">
+          <span className="text-[10px] text-gray-400 whitespace-nowrap">
+            {visible.length === lines.length ? `${visible.length} products` : `${visible.length} of ${lines.length} products shown`}
+          </span>
+          <span className="text-[11px] font-semibold text-gray-600 whitespace-nowrap">
+            Sections subtotal: <span className="font-bold text-gray-900 tabular-nums">{money(visibleSubtotal)}</span>
+          </span>
         </div>
       )}
     </div>
