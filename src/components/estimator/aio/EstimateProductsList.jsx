@@ -81,7 +81,9 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
 
       {visible.length === 0 ? (
         <div className="py-10 text-center text-[12px] text-gray-400">
-          No products yet — add one above to start pricing this estimate.
+          {lines.length === 0
+            ? "No products yet — add one above to start pricing this estimate."
+            : "No products match this search or filter."}
         </div>
       ) : (
         <div className="p-2 space-y-2 bg-gray-50">
