@@ -94,7 +94,7 @@ export default function FoundationCatalog() {
             <Input
               placeholder="Search name, description, supplier…"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { const v = e.target.value; setSearch(v); writeParam("q", v); }}
               className="pl-9 h-9"
             />
           </div>
@@ -119,7 +119,7 @@ export default function FoundationCatalog() {
           {MATERIAL_TYPES.map((t) => (
             <button
               key={t.value}
-              onClick={() => setActiveType(t.value)}
+              onClick={() => { const v = t.value; setActiveType(v); writeParam("type", v, "concrete_service"); }}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border ${
                 activeType === t.value
                   ? "bg-red-600 text-white border-red-600"
