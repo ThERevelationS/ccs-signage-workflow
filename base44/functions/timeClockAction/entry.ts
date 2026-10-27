@@ -1295,12 +1295,12 @@ function defaultTrackerPrefs(email: string, name: string) {
     show_pace: true,
     accent_color: 'indigo',
     privacy_blur: false,
-    size: 'compact',
+    size: 'expanded',
     location: 'both',
     scale: 1,
     opacity: 1,
     font: 'default',
-    background_style: 'glass',
+    background_style: 'minimal',
     update_interval_seconds: 60,
     animation_style: 'smooth',
     time_format: 'hh_mm_ss',
@@ -9217,7 +9217,7 @@ Deno.serve(async (req) => {
         if (!Array.isArray(directAudits) || directAudits.length !== 1) return false;
         return correctionAuditMatchesRecord(directAudits[0], record);
       };
-      if (decision === 'approve' && actorEmail === target.email && actor.is_full_admin !== true) {
+      if (decision === 'approve' && actorEmail === target.email) {
         return Response.json({
           success: false,
           error: 'You cannot approve your own Time Clock shift. Another administrator must review and approve this shift.',
