@@ -31,6 +31,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
   const [tierLoadError, setTierLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [existingNames, setExistingNames] = useState(new Set());
   const savingRef = useRef(false);
   const createAttemptRef = useRef({ signature: "", key: "" });
 
@@ -59,6 +60,21 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         setTierLoadError(err?.message || "Pricing tiers could not be verified.");
       })
       .finally(() => active && setTierLoading(false));
+    setExistingNames(new Set());
+    loadAllEntityRows({ entity: base44.entities.Customer, sort: "created_date", label: "New Customer existing customers" })
+      .then((rows) => {
+        if (!active) return;
+        const names = new Set();
+        (rows || []).forEach((c) => {
+          const name = String(c?.company_name || "").trim().toLowerCase();
+          if (name) names.add(name);
+        });
+        setExistingNames(names);
+      })
+      .catch(() => {
+        if (!active) return;
+        setExistingNames(new Set());
+      });
     return () => { active = false; };
   }, [open]);
 
@@ -108,6 +124,9 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     }
   };
 
+  const normalizedName = String(data.company_name || "").trim().toLowerCase();
+  const duplicateName = normalizedName !== "" && existingNames.has(normalizedName);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-[600px]">
@@ -118,6 +137,12 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         {error && (
           <div className="px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
             {error}
+          </div>
+        )}
+
+        {duplicateName && (
+          <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded text-[12px] text-amber-700">
+            A customer with this name already exists
           </div>
         )}
 
@@ -156,12 +181,14 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
 
         <div className="flex justify-end gap-2 pt-1">
           <button
+            type="button"
             onClick={onClose}
             className="h-[30px] px-3 rounded border border-gray-300 text-[12px] font-semibold text-gray-600"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={saving || tierLoading || !!tierLoadError}
             className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-60"
