@@ -85,7 +85,7 @@ export default function AdminPermittingSettings() {
       const record = await base44.functions.invoke('permittingProxy',
  {
         action: 'poll',
-        payload: { id: request.id }
+        payload: { id: request?.data?.id || request?.id }
       });
       const data = record.data || record;
       if (data.status === 'completed') return true;
@@ -121,12 +121,18 @@ export default function AdminPermittingSettings() {
       setBatchProgress(p => ({ ...p, done: p.done + 1 }));
     }
 
+    try {
     const refreshed = await loadAllEntityRows({
       entity: staffEntities.JurisdictionProfile,
       sort: null,
       label: "Permitting admin jurisdiction refresh",
     });
     setJurisdictions(Array.isArray(refreshed) ? refreshed : []);
+    } catch (refreshError) {
+      console.error("Permitting jurisdiction refresh failed:", refreshError);
+    } finally {
+      setBatchUpdating(false);
+    }
     setSelectedJurisdictions(new Set());
     setBatchProgress({ done: 0, total: 0, current: "" });
 
