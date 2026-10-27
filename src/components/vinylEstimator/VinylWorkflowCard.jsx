@@ -57,7 +57,7 @@ export default function VinylWorkflowCard({
   useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
 
   // Load vinyl labor roles (rates) from the Labor Inventory once.
-  useEffect(() => { loadVinylLaborRoles().then(setRoleOptions); }, []);
+  useEffect(() => { loadVinylLaborRoles().then(setRoleOptions).catch((e) => console.error("Vinyl labor roles failed to load:", e)); }, []);
 
   const set = (patch) => onChange({ ...workflow, ...patch });
 
