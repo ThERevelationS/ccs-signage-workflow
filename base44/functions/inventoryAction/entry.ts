@@ -39,6 +39,15 @@ function stockSnapshot(row: any) {
   };
 }
 
+async function nextPoNumber(PurchaseOrder: any) {
+  const rows = await PurchaseOrder.filter({});
+  if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
+  let seq = rows.length + 1001;
+  const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
+  while (existing.has(`PO-${seq}`)) seq += 1;
+  return `PO-${seq}`;
+}
+
 async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, note, actor, key }: any) {
   const current = num(item?.quantity_on_hand);
   const next = money(current + delta);
@@ -86,6 +95,7 @@ Deno.serve(async (req) => {
     const Inventory = base44.asServiceRole.entities.Inventory;
     const Movement = base44.asServiceRole.entities.InventoryMovement;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
 
     if (action === "list_stock") {
       const rows = await Inventory.filter({});
@@ -118,6 +128,78 @@ Deno.serve(async (req) => {
       const rows = await Movement.filter(query, "-created_date", 200);
       if (!Array.isArray(rows)) throw bad("Movement lookup failed.", 500);
       return Response.json({ success: true, action, movements: rows.slice(0, 200) });
+    }
+
+    if (action === "create_reorder_po") {
+      const itemIds = [...new Set(
+        (Array.isArray(body?.item_ids) ? body.item_ids : []).map((v: any) => clean(v)).filter(Boolean),
+      )];
+      if (itemIds.length === 0) throw bad("Select at least one inventory item to reorder.");
+
+      const lines: any[] = [];
+      const skipped: string[] = [];
+      const suppliers: string[] = [];
+      for (const id of itemIds) {
+        const item = await Inventory.get(id).catch(() => null);
+        const reorderPoint = num(item?.reorder_point, NaN);
+        if (!item?.id || item?.legacy_compatibility === true || item?.deleted === true
+          || !Number.isFinite(reorderPoint)) {
+          skipped.push(id);
+          continue;
+        }
+        let suggested = Math.max(reorderPoint * 2 - num(item.quantity_on_hand), reorderPoint);
+        if (clean(item.unit_type) === "per_piece") suggested = Math.ceil(suggested);
+        suggested = money(suggested);
+        if (!(suggested > 0)) { skipped.push(id); continue; }
+        const unitCost = Math.max(0, money(num(item.cost_per_unit)));
+        suppliers.push(clean(item.supplier));
+        lines.push({
+          description: itemLabel(item),
+          quantity: suggested,
+          unit_cost: unitCost,
+          quantity_received: 0,
+          inventory_item_id: clean(item.id),
+          line_total: money(suggested * unitCost),
+        });
+      }
+      if (lines.length === 0) {
+        throw bad("None of the selected items could be reordered (missing item or reorder point).", 409);
+      }
+
+      const sharedVendor = suppliers.every((s) => s && s === suppliers[0]) ? suppliers[0] : "";
+      const vendorName = sharedVendor
+        || (new Set(suppliers.filter(Boolean)).size > 1 ? "Multiple vendors" : "Unspecified vendor");
+      const subtotal = money(lines.reduce((sum: number, r: any) => sum + num(r.line_total), 0));
+      const key = `reorder-po:${clean(body?.creation_request_key) || Date.now()}`;
+
+      const result = await createFoundationRecordWithRecovery({
+        entity: PurchaseOrder,
+        data: {
+          creation_request_key: key,
+          po_number: await nextPoNumber(PurchaseOrder),
+          status: "draft",
+          vendor_name: vendorName,
+          line_items: lines,
+          subtotal,
+          shipping_fee: 0,
+          total: subtotal,
+          notes: "Auto-generated from low-stock reorder",
+          created_by: actor,
+          updated_by: actor,
+          source_summary: { source: "low_stock_reorder", item_ids: itemIds },
+        },
+        readMatches: async () => PurchaseOrder.filter({ creation_request_key: key }),
+        label: "Reorder purchase order",
+      });
+      const record = result?.record || {};
+      return Response.json({
+        success: true,
+        action,
+        purchase_order_id: clean(record?.id),
+        po_number: clean(record?.po_number),
+        line_count: lines.length,
+        skipped_item_ids: skipped,
+      });
     }
 
     if (["receive_stock", "issue_to_job", "adjust_stock", "return_stock"].includes(action)) {
