@@ -98,6 +98,7 @@ async function ptoScenario() {
   const PTOBalanceView = loadComponent('../src/components/timeclock/PTOBalanceView.jsx', {
     ...uiMocks,
     '@/api/base44Client': { base44: base44Mock },
+    '@/components/staff/staffEntities': { staffEntities: entitiesProxy },
     '@/components/estimator/loadAllEntityRows': {
       loadAllEntityRows: (args) => { loaderCalls.push(args); const d = deferred(); loaderQueue.push(d); return d.promise; },
     },
@@ -148,6 +149,7 @@ async function ptoStaleAfterApplyScenario() {
   const PTOBalanceView = loadComponent('../src/components/timeclock/PTOBalanceView.jsx', {
     ...uiMocks,
     '@/api/base44Client': { base44: { entities: entitiesProxy } },
+    '@/components/staff/staffEntities': { staffEntities: entitiesProxy },
     '@/components/estimator/loadAllEntityRows': {
       loadAllEntityRows: () => { const d = deferred(); loaderQueue.push(d); return d.promise; },
     },
@@ -184,6 +186,7 @@ async function shiftDetailScenario() {
   const ShiftDetail = loadComponent('../src/components/timeclock/TimeClockShiftDetail.jsx', {
     ...uiMocks,
     '@/api/base44Client': { base44: { entities: entitiesProxy } },
+    '@/components/staff/staffEntities': { staffEntities: entitiesProxy },
   });
   let renderer;
   await act(async () => {
