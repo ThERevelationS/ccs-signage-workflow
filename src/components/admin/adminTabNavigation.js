@@ -161,7 +161,9 @@ const ADMIN_SEARCH_KEYWORDS = {
 export function getAccessibleAdminSubtab(parentTab, requestedSubtab, user) {
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
   const tabs = permittedSubtabs(parentTab, permissions);
-  if (!tabs) return null;
+  // A tab with no nested settings, or a permission set that grants none, has no
+  // subtab to select. An empty list must resolve to null, never to tabs[0].
+  if (!Array.isArray(tabs) || tabs.length === 0) return null;
   return tabs.find((tab) => tab.value === requestedSubtab)?.value || tabs[0].value;
 }
 
