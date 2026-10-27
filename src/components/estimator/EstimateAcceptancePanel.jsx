@@ -210,6 +210,23 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             ))}
           </div>
         )}
+        {sectionRows.length > 0 && (
+          <div className="mt-3">
+            <div className="text-[9px] font-bold tracking-wide text-gray-500 uppercase mb-1.5">Per-section responses</div>
+            <div className="border border-gray-200 rounded overflow-hidden">
+              {sectionRows.slice(0, 10).map((row) => (
+                <div key={row.id} className="px-3 py-2 border-b border-gray-100 last:border-b-0 bg-white flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold text-gray-900">{row.section_label || row.section_key}</div>
+                    <div className="text-[9px] text-gray-400">{row.decided_by_name || row.decided_by_email || "Customer"}{row.decided_at ? ` · ${new Date(row.decided_at).toLocaleString()}` : ""}</div>
+                    {row.note && <div className="mt-0.5 text-[9px] text-gray-500">{row.note}</div>}
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${row.decision === "accepted" ? "bg-emerald-100 text-emerald-800" : row.decision === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>{row.decision === "accepted" ? "Accepted" : row.decision === "rejected" ? "Declined" : "Question"}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {isRegistered && persistedStatus === "sent" && portalCustomerId && (
           <div className="mt-3 rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-center justify-between gap-3">
             <div className="text-[10px] text-blue-800"><strong>Share the customer portal link</strong> so the customer can review and approve Quote Version {quoteVersion} online.</div>
