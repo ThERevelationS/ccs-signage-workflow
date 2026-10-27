@@ -786,7 +786,7 @@ export default function WorkOrderCard({
   const getPageNameForStage = (stage) => {
     const stagePageMap = {
       'estimating': 'Estimating', // Added Estimating page
-      'sales': 'Sales', // Added Sales page
+      'sales': 'SalesPipeline', // Added Sales page
       'permitting': 'Permitting',
       'design': 'Design',
       'production': 'Production',
