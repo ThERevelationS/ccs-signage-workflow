@@ -78,6 +78,7 @@ try {
 export const base44 = {
   entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }),
   functions: { async invoke(name, payload) {
+    if (name === "staffDataRead") return { data: { items: [], item: null } };
     if (name !== "timeClockAction") throw new Error("Unexpected function: " + name);
     const response = await fetch("/__timeclock_fixture", { method:"POST",
       headers:{"content-type":"application/json"}, body:JSON.stringify({payload}) });
