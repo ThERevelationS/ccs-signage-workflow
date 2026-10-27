@@ -35,8 +35,8 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
-const WorkOrder = staffEntities.WorkOrder;
-const GeneralTask = staffEntities.GeneralTask;
+const WorkOrder = base44.entities.WorkOrder;
+const GeneralTask = base44.entities.GeneralTask;
 
 const stageColors = {
   estimating: { bg: "#FEF3C7", text: "#92400E" },
@@ -140,7 +140,7 @@ export default function MyWorkflow() {
   const [taskDescriptions, setTaskDescriptions] = useState([]);
 
   useEffect(() => {
-    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
+    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
       .then((s) => setTaskDescriptions((s?.setting_value?.items || []).map((i) => i.text || i)))
       .catch(() => {});
   }, []);
@@ -168,7 +168,7 @@ export default function MyWorkflow() {
           label: "My Workflow authorized users",
         }),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "My Workflow dropdown conditions",
         }),
@@ -329,25 +329,18 @@ export default function MyWorkflow() {
       }
     }
 
-    try {
-      const saved = await mutateLocatedWorkOrderArrayItem({
-        workOrderId: wo.id,
-        field: "notes",
-        item: task,
-        label: "My Workflow task",
-        mutateItem,
-      });
-      const savedNotes = saved.notes || [];
-      setWorkOrders(prev => prev.map(w => w.id === wo.id
-        ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
-        : w));
-      return savedNotes;
-    } catch (error) {
-      console.error("Work order task update blocked:", error);
-      await loadMyWorkOrders();
-      alert(error?.message || "This task changed in another session. The latest work orders were reloaded.");
-      return null;
-    }
+    const saved = await mutateLocatedWorkOrderArrayItem({
+      workOrderId: wo.id,
+      field: "notes",
+      item: task,
+      label: "My Workflow task",
+      mutateItem,
+    });
+    const savedNotes = saved.notes || [];
+    setWorkOrders(prev => prev.map(w => w.id === wo.id
+      ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
+      : w));
+    return savedNotes;
   };
 
   const toggleTaskComplete = async (workOrderId, taskIndex) => {
