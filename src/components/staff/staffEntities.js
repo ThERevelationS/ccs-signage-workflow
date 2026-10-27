@@ -12,6 +12,8 @@ const METHODS = {
     invokeFleet("staffDataRead", { entity, sort, limit, skip }).then((r) => r?.items || []),
   get: (entity, id) =>
     invokeFleet("staffDataRead", { entity, id }).then((r) => r?.item ?? null),
+  count: (entity, query, sort, limit, skip) =>
+    invokeFleet("staffDataRead", { entity, query, sort, limit, skip, count: true }).then((r) => r?.count ?? 0),
 };
 
 const proxy = (name) => new Proxy({}, {

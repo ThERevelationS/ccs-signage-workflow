@@ -30,6 +30,60 @@ const STAFF_READABLE = new Set([
   'TimeEntry',
   'TimeOffRequest',
   'UserPTOBalance',
+
+  // Staff-tier entities migrated off anonymous entity access (RLS is now
+  // backend-only). Staff keep the same read breadth they had before — the
+  // difference is a valid session is now required and writes stay on
+  // dedicated action functions.
+  'AllInOneEstimate',
+  'BrickStoneInventory',
+  'BrickStoneProject',
+  'BuilderPart',
+  'BuilderPartGroup',
+  'BuilderProduct',
+  'CNCProject',
+  'CellHistory',
+  'ChannelLetterInstallEquipment',
+  'ChannelLetterInstallInventory',
+  'ChannelLetterInstallation',
+  'ChecklistSubItem',
+  'Customer',
+  'CustomerLocation',
+  'DimensionalLetterMaterial',
+  'EstimateOption',
+  'FoundationInventory',
+  'FoundationProject',
+  'GeneralTask',
+  'GlobalSettings',
+  'Inventory',
+  'JurisdictionProfile',
+  'LaborServiceInventory',
+  'LaserProject',
+  'MaintenanceActionRate',
+  'MaintenanceInventory',
+  'MaintenanceProject',
+  'MarkupCategory',
+  'MarkupTier',
+  'MetalProject',
+  'Order',
+  'PermitLineItem',
+  'PermitLocality',
+  'Project',
+  'QuoteDefaults',
+  'RegulationAlert',
+  'Settings',
+  'SignHardwareInventory',
+  'SignLightingInventory',
+  'SignPartsSuppliesInventory',
+  'SipChecklistTemplate',
+  'TaskTemplate',
+  'TaxGroup',
+  'VinylInventory',
+  'VinylMachine',
+  'VinylPartTemplate',
+  'VinylProject',
+  'VinylWorkflowTemplate',
+  'WorkOrder',
 ]);
 
 // Nothing is admin-only today; AuthorizedEmail is staff-readable because
@@ -192,6 +246,9 @@ Deno.serve(async (req) => {
     const scopedRows = OWNER_SCOPED.has(entityName) && ownerEmail
       ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
       : rows;
+    if (body?.count === true) {
+      return Response.json({ success: true, count: scopedRows.length });
+    }
     return Response.json({ success: true, items: scopedRows.map((row) => projectItem(entityName, row)) });
   } catch (error: any) {
     const status = Number(error?.status || 500);
