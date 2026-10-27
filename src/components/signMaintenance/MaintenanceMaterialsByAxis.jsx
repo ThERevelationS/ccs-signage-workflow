@@ -7,7 +7,7 @@
 // specific sign types AND specific actions).
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { MaintenanceInventory } from "@/entities/all";
+import { MaintenanceInventory } from "@/api/gatedEntities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

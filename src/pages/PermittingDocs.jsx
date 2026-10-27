@@ -59,7 +59,7 @@ function SavedPhysicalTextAcceptance() {
   useEffect(() => {
     let active = true;
     loadAllEntityRows({
-      entity: base44.entities.JurisdictionProfile,
+      entity: staffEntities.JurisdictionProfile,
       sort: null,
       label: "Permitting text reader jurisdiction catalog",
     }).then(rows => {

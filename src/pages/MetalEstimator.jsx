@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MetalProject, Settings, Inventory as InventoryEntity } from "@/entities/all";
+import { MetalProject, Settings, Inventory as InventoryEntity } from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
 // materialTypes is not directly used in the current structure for display, but could be for filtering
@@ -63,7 +64,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           loadAllEntityRows({ entity: InventoryEntity, sort: "created_date", label: "Metal inventory" }),
           editId ? MetalProject.get(editId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
 

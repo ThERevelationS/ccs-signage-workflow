@@ -8,6 +8,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { deleteBuilderEntityIfUnchanged, expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { createBuilderProductWithRecovery } from "./builderProductPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -88,12 +89,12 @@ export function sourceProjectTotal(line, record) {
 
 async function findBuilderProduct(line, estimateId) {
   if (line?.builder_product_id) {
-    const direct = await base44.entities.BuilderProduct.get(line.builder_product_id).catch(() => null);
+    const direct = await staffEntities.BuilderProduct.get(line.builder_product_id).catch(() => null);
     if (direct) return direct;
   }
 
   if (line?.project_id) {
-    const bySource = await base44.entities.BuilderProduct.filter({
+    const bySource = await staffEntities.BuilderProduct.filter({
       estimate_id: estimateId,
       source_project_id: line.project_id,
     });
@@ -101,7 +102,7 @@ async function findBuilderProduct(line, estimateId) {
   }
 
   if (line?.line_id) {
-    const byLine = await base44.entities.BuilderProduct.filter({
+    const byLine = await staffEntities.BuilderProduct.filter({
       estimate_id: estimateId,
       estimate_line_id: line.line_id,
     });
@@ -202,7 +203,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       // final Estimate-line removal. Preserve the durable marker even when those
       // records are already gone so the user can safely resume cleanup.
       const pendingBuilder = line.builder_product_id
-        ? await base44.entities.BuilderProduct.get(line.builder_product_id).catch(() => null)
+        ? await staffEntities.BuilderProduct.get(line.builder_product_id).catch(() => null)
         : null;
       if (pendingBuilder?.estimate_id && pendingBuilder.estimate_id !== estimateId) {
         throw new Error("A pending Product removal found a Builder Product owned by another estimate. The saved recovery marker was retained.");
@@ -213,7 +214,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
       return { line, builderProduct: null, changed: false, partSyncInputs: null };
     }
     if (line.builder_product_id) {
-      const pendingBuilder = await base44.entities.BuilderProduct.get(line.builder_product_id);
+      const pendingBuilder = await staffEntities.BuilderProduct.get(line.builder_product_id);
       if (!pendingBuilder?.id || (pendingBuilder.estimate_id && pendingBuilder.estimate_id !== estimateId)) {
         throw new Error("A pending Builder mutation could not verify its Builder Product. The saved recovery marker was retained.");
       }
@@ -293,7 +294,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
         : "Backfilled from an existing estimate line. Existing total_snapshot remains the authoritative legacy frozen price.",
     };
     const createResult = await createBuilderProductWithRecovery({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       data: builderProductData,
       label: `Builder Product “${clientName || builderName || lineId}”`,
     });
@@ -351,7 +352,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
     if (!skipUnchangedWrites || patchDiffers(builderProduct, productPatch)) {
       const writePatch = { ...productPatch, last_price_check_at: timestamp };
       builderProduct = await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderProduct,
+        entity: staffEntities.BuilderProduct,
         id: builderProduct.id,
         expectedUpdatedAt: builderProduct.updated_date || "",
         expectedFields: expectedBuilderEntityFields(builderProduct, writePatch),
@@ -441,7 +442,7 @@ export async function ensureBuilderProductForLine({ estimate, line, isNew = fals
         ? { ...partProductPatch, last_price_check_at: timestamp }
         : partProductPatch;
       builderProduct = await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderProduct,
+        entity: staffEntities.BuilderProduct,
         id: builderProduct.id,
         expectedUpdatedAt: builderProduct.updated_date || "",
         expectedFields: expectedBuilderEntityFields(builderProduct, writePatch),
@@ -546,7 +547,7 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
 
   if (changed) {
     const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-      entity: base44.entities.AllInOneEstimate,
+      entity: staffEntities.AllInOneEstimate,
       estimateId: estimate.id,
       expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
       nextFields: { line_items: lineItems },
@@ -562,7 +563,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
   if (!sourceProject || typeof sourceProject !== "object") {
     throw new Error("The saved Builder source could not be verified. Product pricing and Parts were not synchronized.");
   }
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be verified before synchronizing this Builder save.");
   const currentLine = (estimate.line_items || []).find(
     (item) => item.builder_product_id === line.builder_product_id || item.project_id === line.project_id
@@ -575,8 +576,8 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     }
     const pendingBuilderId = currentLine.builder_product_id || existingPending.builder_product_id || "";
     const [pendingBuilder, pendingParts] = await Promise.all([
-      pendingBuilderId ? base44.entities.BuilderProduct.get(pendingBuilderId) : Promise.resolve(null),
-      pendingBuilderId ? loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: pendingBuilderId }, sort: "sort_order", label: "Builder Parts" }) : Promise.resolve([]),
+      pendingBuilderId ? staffEntities.BuilderProduct.get(pendingBuilderId) : Promise.resolve(null),
+      pendingBuilderId ? loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: pendingBuilderId }, sort: "sort_order", label: "Builder Parts" }) : Promise.resolve([]),
     ]);
     if (!pendingBuilder?.id || !Array.isArray(pendingParts)) {
       throw new Error("The pending initial price acceptance could not verify its Builder Product or Parts. The recovery marker was retained.");
@@ -763,7 +764,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
         revision,
       };
 
-      const preMarkerEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+      const preMarkerEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
       if (!preMarkerEstimate) throw new Error("Estimate could not be verified before starting the initial price freeze.");
       if (
         estimate.updated_date &&
@@ -791,7 +792,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
           : item
       );
       await replaceEstimateFieldsIfUnchanged({
-        entity: base44.entities.AllInOneEstimate,
+        entity: staffEntities.AllInOneEstimate,
         estimateId,
         expectedFields: expectedEstimateFields(preMarkerEstimate, { line_items: markedLines }),
         nextFields: { line_items: markedLines },
@@ -799,9 +800,9 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       });
 
       const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
-        base44.entities.AllInOneEstimate.get(estimateId),
-        base44.entities.BuilderProduct.get(builder.id),
-        loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+        staffEntities.AllInOneEstimate.get(estimateId),
+        staffEntities.BuilderProduct.get(builder.id),
+        loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
       ]);
       const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
       const canonicalPending = pendingBuilderMutation(markedLine);
@@ -858,7 +859,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
       needs_reattach_review: partSummary.detachedCount > 0,
     };
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: builder.id,
       expectedUpdatedAt: builder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(builder, builderSavePatch),
@@ -892,7 +893,7 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
     };
   });
   const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(estimate, { line_items: nextLines }),
     nextFields: { line_items: nextLines },
@@ -904,12 +905,12 @@ export async function recordBuilderSave({ estimateId, line, sourceProject, liveT
 
 export async function deleteBuilderProductCascade(builderProductId) {
   if (!builderProductId) return { deleted: false, reason: "missing_builder_product_id" };
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id) return { deleted: true, alreadyDeleted: true };
 
   const [parts, groups, revisions] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Part Groups" }),
     loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: builderProductId }, sort: "revision_number", label: "Builder price revisions" }),
   ]);
   if (!Array.isArray(parts) || !Array.isArray(groups) || !Array.isArray(revisions)) {
@@ -921,7 +922,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
   let revisionDeletes = 0;
   for (const row of parts) {
     await deleteBuilderEntityIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       record: row,
       guardFields: { builder_product_id: builderProductId },
       label: `Builder Part “${row.part_name || "Part"}” cascade delete`,
@@ -930,7 +931,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
   }
   for (const row of groups) {
     await deleteBuilderEntityIfUnchanged({
-      entity: base44.entities.BuilderPartGroup,
+      entity: staffEntities.BuilderPartGroup,
       record: row,
       guardFields: { builder_product_id: builderProductId },
       label: `Builder Part Group “${row.group_name || "Part Group"}” cascade delete`,
@@ -947,7 +948,7 @@ export async function deleteBuilderProductCascade(builderProductId) {
     revisionDeletes += 1;
   }
   await deleteBuilderEntityIfUnchanged({
-    entity: base44.entities.BuilderProduct,
+    entity: staffEntities.BuilderProduct,
     record: builder,
     label: "Builder Product cascade delete",
   });
@@ -958,9 +959,9 @@ export async function deleteBuilderProductCascade(builderProductId) {
 export async function acceptBuilderPrice({ estimateId, line, note = "Price updated from current builder calculation.", expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) return null;
   const [estimate, builder, parts] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimateId),
-    base44.entities.BuilderProduct.get(line.builder_product_id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Builder Parts" }),
+    staffEntities.AllInOneEstimate.get(estimateId),
+    staffEntities.BuilderProduct.get(line.builder_product_id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Builder Parts" }),
   ]);
   if (!estimate || !builder) throw new Error("Estimate pricing could not be verified. Reload before updating this Product price.");
   if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified. No price was accepted.");
@@ -1020,7 +1021,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
       last_price_check_at: blockedTimestamp,
     };
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: builder.id,
       expectedUpdatedAt: builder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(builder, detachedBuilderPatch),
@@ -1040,7 +1041,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
         : item
     );
     const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-      entity: base44.entities.AllInOneEstimate,
+      entity: staffEntities.AllInOneEstimate,
       estimateId,
       expectedFields: expectedEstimateFields(estimate, { line_items: blockedLines }),
       nextFields: { line_items: blockedLines },
@@ -1066,7 +1067,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
       last_price_check_at: blockedTimestamp,
     };
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: builder.id,
       expectedUpdatedAt: builder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(builder, recalcBuilderPatch),
@@ -1086,7 +1087,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
         : item
     );
     const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-      entity: base44.entities.AllInOneEstimate,
+      entity: staffEntities.AllInOneEstimate,
       estimateId,
       expectedFields: expectedEstimateFields(estimate, { line_items: blockedLines }),
       nextFields: { line_items: blockedLines },
@@ -1195,7 +1196,7 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
       : item
   );
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(estimate, { line_items: markedLines }),
     nextFields: { line_items: markedLines },
@@ -1206,9 +1207,9 @@ export async function acceptBuilderPrice({ estimateId, line, note = "Price updat
   // won the race, the stored expected versions make recovery fail closed rather
   // than mixing two Product states.
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimateId),
-    base44.entities.BuilderProduct.get(builder.id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    staffEntities.AllInOneEstimate.get(estimateId),
+    staffEntities.BuilderProduct.get(builder.id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.builder_product_id === builder.id);
   const canonicalPending = pendingBuilderMutation(markedLine);

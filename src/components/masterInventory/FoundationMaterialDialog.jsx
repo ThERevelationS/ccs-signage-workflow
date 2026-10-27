@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { MATERIAL_TYPES, fieldsFor } from "./foundationFieldSchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function FoundationMaterialDialog({ open, record, defaultType, onClose, onSaved }) {
   const [form, setForm] = useState({});
@@ -33,7 +34,7 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
       data.material_type = type;
       data.show_in_foundation = true;
       if (id) {
-        const live = await base44.entities.FoundationInventory.get(id);
+        const live = await staffEntities.FoundationInventory.get(id);
         if (!live) {
           alert("This Foundation Catalog item no longer exists. The catalog will reload.");
           onSaved();
@@ -45,7 +46,7 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
           return;
         }
         await replaceEntityFieldsIfUnchanged({
-          entity: base44.entities.FoundationInventory,
+          entity: staffEntities.FoundationInventory,
           id,
           expectedUpdatedAt: live.updated_date || "",
           expectedFields: expectedEntityFields(live, data),
@@ -54,7 +55,7 @@ export default function FoundationMaterialDialog({ open, record, defaultType, on
         });
       } else {
         await createInventoryRecordWithRecovery({
-          entity: base44.entities.FoundationInventory,
+          entity: staffEntities.FoundationInventory,
           data,
           nameField: "material_name",
           label: `Foundation Catalog item “${data.material_name || "Material"}”`,

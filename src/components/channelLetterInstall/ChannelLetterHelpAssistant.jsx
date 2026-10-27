@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bot, X, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { User } from '@/entities/all';
+import { User } from '@/api/gatedEntities';
 
 /**
  * Detailed walkthrough for the Channel & Dimensional Letters | Lobby Signs estimator.

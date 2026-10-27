@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const FIELDS = [
   { key: "company_name", label: "Company name *" },
@@ -41,7 +42,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     createAttemptRef.current = { signature: "", key: "" };
     setTierLoading(true);
     setTierLoadError("");
-    loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "New Customer markup tiers" })
+    loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "New Customer markup tiers" })
       .then((rows) => {
         if (!active) return;
         const loaded = rows || [];
@@ -61,7 +62,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
       })
       .finally(() => active && setTierLoading(false));
     setExistingNames(new Set());
-    loadAllEntityRows({ entity: base44.entities.Customer, sort: "created_date", label: "New Customer existing customers" })
+    loadAllEntityRows({ entity: staffEntities.Customer, sort: "created_date", label: "New Customer existing customers" })
       .then((rows) => {
         if (!active) return;
         const names = new Set();

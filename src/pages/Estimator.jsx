@@ -10,6 +10,7 @@ import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/his
 import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomReconcile";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -55,7 +56,7 @@ export default function Estimator() {
   const load = async () => {
     try {
       const rows = await loadAllEntityRows({
-        entity: base44.entities.AllInOneEstimate,
+        entity: staffEntities.AllInOneEstimate,
         sort: "-created_date",
         label: "Estimates",
       });

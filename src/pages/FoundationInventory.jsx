@@ -14,8 +14,9 @@ import WallCapsInventoryTab from '@/components/foundation/WallCapsInventoryTab';
 import { loadAllEntityRows } from '@/components/estimator/loadAllEntityRows';
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from '@/components/estimator/builder/builderEntityPersistence';
 import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
 // ─── Wall Material constants ───────────────────────────────────────────────
 const WALL_SUBTYPES = [

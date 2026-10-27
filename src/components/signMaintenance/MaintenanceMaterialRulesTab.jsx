@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Boxes, Edit3, Link2, Plus, Save, ShieldCheck } from "lucide-react";
-import { MaintenanceInventory } from "@/entities/all";
+import { MaintenanceInventory } from "@/api/gatedEntities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

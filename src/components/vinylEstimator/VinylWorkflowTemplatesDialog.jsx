@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { VinylWorkflowTemplate } from "@/entities/all";
+import { VinylWorkflowTemplate } from "@/api/gatedEntities";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";

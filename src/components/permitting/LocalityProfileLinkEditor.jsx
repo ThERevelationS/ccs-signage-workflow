@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { normalizeAddressState } from '../../shared/permittingAddressState.js';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const PAGE_SIZE = 50;
-const Profile = base44.entities.JurisdictionProfile;
+const Profile = staffEntities.JurisdictionProfile;
 const exactId = value => typeof value === 'string' && value.length > 0 && value.trim() === value;
 const stateCode = value => normalizeAddressState(value).toUpperCase();
 const displayId = value => typeof value === 'string' && value.trim()

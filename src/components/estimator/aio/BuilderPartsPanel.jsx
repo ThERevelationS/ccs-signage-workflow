@@ -33,6 +33,7 @@ import MovePartGroupModal from "./MovePartGroupModal";
 import SavePartTemplateModal from "@/components/estimator/parts/SavePartTemplateModal";
 import PartLibraryPickerModal from "@/components/estimator/parts/PartLibraryPickerModal";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -278,11 +279,11 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
     const next = !open;
     setOpen(next);
     if (!readOnly) {
-      const current = await base44.entities.BuilderPartGroup.get(group.id).catch(() => null);
+      const current = await staffEntities.BuilderPartGroup.get(group.id).catch(() => null);
       if (!current?.id || current.builder_product_id !== builderProductId) return;
       const collapsePatch = { is_collapsed: !next };
       const updated = await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderPartGroup,
+        entity: staffEntities.BuilderPartGroup,
         id: group.id,
         expectedUpdatedAt: current.updated_date || "",
         expectedFields: expectedBuilderEntityFields(current, collapsePatch),
@@ -539,8 +540,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       setLoading(true);
       try {
         const [partRows, groupRows] = await Promise.all([
-          loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Parts" }),
-          loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Groups" }),
+          loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Parts" }),
+          loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts panel Groups" }),
         ]);
         if (!active) return;
         const activeParts = (partRows || [])

@@ -5,8 +5,9 @@ import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const GeneralTask = base44.entities.GeneralTask;
+const GeneralTask = staffEntities.GeneralTask;
 
 // Displays general office tasks assigned to a specific workflow stage page,
 // so the team working that stage sees stage-tagged tasks alongside their work orders.

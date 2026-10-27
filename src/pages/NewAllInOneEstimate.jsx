@@ -10,6 +10,7 @@ import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -90,9 +91,9 @@ export default function NewAllInOneEstimate() {
 
   useEffect(() => {
     loadAllCustomers().then((r) => setCustomers(r || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
-    loadAllEntityRows({ entity: base44.entities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || "Tax groups could not be loaded."));
+    loadAllEntityRows({ entity: staffEntities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || "Tax groups could not be loaded."));
     loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || [])).catch((err) => setError(err?.message || "Users could not be loaded."));
-    loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
+    loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
     base44.auth.me().then(setMe).catch(() => {});
   }, []);
 
@@ -196,7 +197,7 @@ export default function NewAllInOneEstimate() {
               pipeline_sync_error: syncMessage,
             };
             await replaceEstimateFieldsIfUnchanged({
-              entity: base44.entities.AllInOneEstimate,
+              entity: staffEntities.AllInOneEstimate,
               estimateId: estimate.id,
               expectedFields: expectedEstimateFields(estimate, recoveryPatch),
               nextFields: recoveryPatch,

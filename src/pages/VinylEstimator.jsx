@@ -8,7 +8,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   VinylProject, VinylInventory, VinylMachine,
   Settings, ChannelLetterInstallEquipment,
-} from "@/entities/all";
+} from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import VinylMoveToWorkflowMenu from "@/components/vinylEstimator/VinylMoveToWork
 import {
   blankVinylProject, blankWorkflow, migrateProject, rollupVinylProject,
 } from "@/components/vinylEstimator/vinylProjectHelpers";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
@@ -87,7 +88,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Installation equipment" }),
           projectId ? VinylProject.get(projectId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         setVinyls(vList || []);
         setMachines(mList || []);

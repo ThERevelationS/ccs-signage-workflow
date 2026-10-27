@@ -35,8 +35,8 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
-const WorkOrder = base44.entities.WorkOrder;
-const GeneralTask = base44.entities.GeneralTask;
+const WorkOrder = staffEntities.WorkOrder;
+const GeneralTask = staffEntities.GeneralTask;
 
 const stageColors = {
   estimating: { bg: "#FEF3C7", text: "#92400E" },
@@ -140,7 +140,7 @@ export default function MyWorkflow() {
   const [taskDescriptions, setTaskDescriptions] = useState([]);
 
   useEffect(() => {
-    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
       .then((s) => setTaskDescriptions((s?.setting_value?.items || []).map((i) => i.text || i)))
       .catch(() => {});
   }, []);
@@ -168,7 +168,7 @@ export default function MyWorkflow() {
           label: "My Workflow authorized users",
         }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "My Workflow dropdown conditions",
         }),

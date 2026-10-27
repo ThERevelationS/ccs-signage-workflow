@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { MaintenanceProject, MaintenanceActionRate, Settings } from "@/entities/all";
+import { MaintenanceProject, MaintenanceActionRate, Settings } from "@/api/gatedEntities";
 import { useSearchParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/component
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMaintenanceProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
@@ -76,10 +77,10 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       const [s, inv, equipInv, r, existing, estimate] = await Promise.all([
         loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         loadMaintenanceMaterialRules({ includeInactive: true }).then((data) => data.rules),
-        loadAllEntityRows({ entity: base44.entities.ChannelLetterInstallEquipment, sort: "sort_order", label: "Maintenance equipment" }),
+        loadAllEntityRows({ entity: staffEntities.ChannelLetterInstallEquipment, sort: "sort_order", label: "Maintenance equipment" }),
         loadAllEntityRows({ entity: MaintenanceActionRate, sort: "created_date", label: "Maintenance action rates" }),
         editId ? MaintenanceProject.get(editId) : Promise.resolve(null),
-        estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+        estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
       const sObj = {};
       (s || []).forEach(x => { sObj[x.setting_name] = x.setting_value; });

@@ -19,8 +19,9 @@ import {
   CheckCircle
 } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 const DEFAULT_OT_SETTINGS = {
   enabled: true,

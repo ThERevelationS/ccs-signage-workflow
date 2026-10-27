@@ -34,6 +34,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const TEAM_MEMBERS = [
   "Carl",
@@ -296,7 +297,7 @@ export default function WorkOrderForm({
   const loadProductTypes = async () => {
     try {
       const setting = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         settingKey: "productTypes",
         label: "Work Order product types",
       });

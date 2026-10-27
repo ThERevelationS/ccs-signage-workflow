@@ -42,6 +42,7 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const blankItem = (type) => ({
   // Defaults mirror SignEstimate Pro `newItem()` exactly. CCS still lets the
@@ -116,10 +117,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     setLoading(true);
     setLoadError("");
     Promise.all([
-      base44.entities.FoundationProject.get(id),
-      loadAllEntityRows({ entity: base44.entities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
-      loadAllEntityRows({ entity: base44.entities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
-      loadAllEntityRows({ entity: base44.entities.Settings, sort: "created_date", label: "Estimator Settings" }),
+      staffEntities.FoundationProject.get(id),
+      loadAllEntityRows({ entity: staffEntities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
+      loadAllEntityRows({ entity: staffEntities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
+      loadAllEntityRows({ entity: staffEntities.Settings, sort: "created_date", label: "Estimator Settings" }),
     ])
       .then(([proj, inv, concreteServices, settingRows]) => {
         if (!active) return;
@@ -298,7 +299,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         : project.customer_pricing;
       const dataToSave = { ...basePayload, customer_pricing: customerPricing };
       const savedProject = await updateBuilderSourceProject({
-        entity: base44.entities.FoundationProject,
+        entity: staffEntities.FoundationProject,
         sourceId: project.id,
         expectedUpdatedAt: project.updated_date,
         data: dataToSave,
@@ -366,7 +367,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         };
       }
       const copy = await ensureIdempotentEntityCreate({
-        entity: base44.entities.FoundationProject,
+        entity: staffEntities.FoundationProject,
         keyField: "creation_request_key",
         key: copyAttemptRef.current.key,
         data: copyData,

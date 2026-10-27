@@ -19,8 +19,9 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
 import { normalizePermitJurisdictionName } from "@/components/permitting/jurisdictionPermitBridge";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const JurisdictionProfile = base44.entities.JurisdictionProfile;
+const JurisdictionProfile = staffEntities.JurisdictionProfile;
 
 export default function JurisdictionsView({ focusJurisdiction = null }) {
   const { currentUser } = useAuth();

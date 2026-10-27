@@ -24,9 +24,9 @@ import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffec
 import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "@/shared/permittingAddressLocality.js";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
-const PermitLineItem = base44.entities.PermitLineItem;
-const PermitLocality = base44.entities.PermitLocality;
+const WorkOrder = staffEntities.WorkOrder;
+const PermitLineItem = staffEntities.PermitLineItem;
+const PermitLocality = staffEntities.PermitLocality;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 function localDateKey(date = new Date()) {
@@ -125,12 +125,12 @@ export default function Permitting() {
         }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "permitOfficeTypes",
           label: "Permitting office types",
         }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "Permitting sales task descriptions",
         })

@@ -8,6 +8,7 @@ import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundati
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function FoundationCatalog() {
   const [rows, setRows] = useState([]);
@@ -23,7 +24,7 @@ export default function FoundationCatalog() {
     setLoading(true);
     setLoadError("");
     try {
-      const res = await loadAllEntityRows({ entity: base44.entities.FoundationInventory, sort: "-created_date", label: "Foundation Catalog inventory" });
+      const res = await loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: "-created_date", label: "Foundation Catalog inventory" });
       setRows(res || []);
     } catch (error) {
       console.error("Foundation catalog load failed:", error);
@@ -53,14 +54,14 @@ export default function FoundationCatalog() {
       return;
     }
     try {
-      const live = await base44.entities.FoundationInventory.get(row.id);
+      const live = await staffEntities.FoundationInventory.get(row.id);
       if (row.updated_date && live?.updated_date && row.updated_date !== live.updated_date) {
         alert("This Foundation Catalog item changed in another session and was not deleted. The latest catalog will be reloaded first.");
         await load();
         return;
       }
       await deleteEntityIfUnchanged({
-        entity: base44.entities.FoundationInventory,
+        entity: staffEntities.FoundationInventory,
         record: live,
         label: `Foundation Catalog item “${live.material_name || row.material_name || "Material"}”`,
       });

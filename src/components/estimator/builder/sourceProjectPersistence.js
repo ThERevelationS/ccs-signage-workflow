@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -29,7 +30,7 @@ export function sourcePatchMatches(record, patch) {
 
 export async function preflightBuilderSourceMutation({ estimateId = "" } = {}) {
   if (!estimateId) return null;
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate?.id) throw new Error("Estimate could not be verified before saving this Builder source.");
   await assertEstimateProductMutationAllowed(estimate);
   return estimate;

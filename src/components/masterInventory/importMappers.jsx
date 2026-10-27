@@ -18,7 +18,7 @@ import {
   SignHardwareInventory,
   LaborServiceInventory,
   SignPartsSuppliesInventory,
-} from "@/entities/all";
+} from "@/api/gatedEntities";
 
 // ----------------------------------------------------------------------------
 // Helpers

@@ -10,6 +10,7 @@ import { AlertCircle, Clock, RefreshCw, Loader2, Plus, X, Mail } from "lucide-re
 import { format } from "date-fns";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function JurisdictionMonitoringSettings() {
   const { sessionToken } = useAuth();
@@ -49,7 +50,7 @@ export default function JurisdictionMonitoringSettings() {
   const loadSettings = async () => {
     try {
       const saved = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         settingKey: 'jurisdiction_monitoring',
         label: 'Jurisdiction Monitoring settings',
       });
@@ -64,7 +65,7 @@ export default function JurisdictionMonitoringSettings() {
 
   const loadAlerts = async () => {
     try {
-      const recentAlerts = await base44.entities.RegulationAlert?.list?.("-detected_at", 5) || [];
+      const recentAlerts = await staffEntities.RegulationAlert?.list?.("-detected_at", 5) || [];
       setAlerts(Array.isArray(recentAlerts) ? recentAlerts : []);
     } catch (e) {
       console.error("Load alerts error:", e);
@@ -77,7 +78,7 @@ export default function JurisdictionMonitoringSettings() {
     setSettingsSaveError("");
     try {
       const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         loadedRecord: monitoringSettingRecord,
         settingKey: 'jurisdiction_monitoring',
         nextValue: monitoringSettings,

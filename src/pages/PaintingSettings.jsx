@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Settings as SettingsEntity } from "@/entities/all";
+import { Settings as SettingsEntity } from "@/api/gatedEntities";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, Save, Scissors, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

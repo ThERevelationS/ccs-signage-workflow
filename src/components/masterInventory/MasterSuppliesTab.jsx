@@ -24,9 +24,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Trash2, Edit, Plus, Wrench } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createInventoryRecordWithRecovery } from "@/components/masterInventory/inventoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const ChannelLetterInstallInventoryEntity = base44.entities.ChannelLetterInstallInventory;
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const ChannelLetterInstallInventoryEntity = staffEntities.ChannelLetterInstallInventory;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
 const FOUNDATION_SUPPLY_TYPES = [
   "concrete_service", "bagged_concrete", "rebar", "forming_material",

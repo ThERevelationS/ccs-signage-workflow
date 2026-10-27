@@ -29,9 +29,10 @@ import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, S
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./equipmentPersistence";
 import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
-const ChannelLetterInstallEquipmentEntity = base44.entities.ChannelLetterInstallEquipment;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
+const ChannelLetterInstallEquipmentEntity = staffEntities.ChannelLetterInstallEquipment;
 
 // ── small helpers ──────────────────────────────────────────────────────────
 const FOUNDATION_EQUIPMENT_TYPES = ["excavation_equipment", "attachment", "sub_attachment"];

@@ -45,7 +45,7 @@ export default function ReportingDashboard() {
     try {
       const [wos, us] = await Promise.all([
         loadAllEntityRows({
-          entity: base44.entities.WorkOrder,
+          entity: staffEntities.WorkOrder,
           query: { deleted: false },
           sort: "created_date",
           label: "Reporting Dashboard Work Orders",

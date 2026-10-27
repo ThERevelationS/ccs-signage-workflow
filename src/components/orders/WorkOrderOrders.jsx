@@ -58,9 +58,9 @@ import {
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const Order = base44.entities.Order;
+const Order = staffEntities.Order;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {

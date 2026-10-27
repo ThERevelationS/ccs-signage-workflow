@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle2, Clock, Trash2, Loader2, RefreshCw, Bell } fr
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 import { usePolling } from "@/lib/usePolling";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function RegulationAlertPanel() {
   const { sessionToken } = useAuth();
@@ -23,7 +24,7 @@ export default function RegulationAlertPanel() {
   const loadAlerts = async () => {
     try {
       const query = filter === "unread" ? { is_read: false } : filter === "critical" ? { severity: "critical" } : filter === "high" ? { severity: "high" } : {};
-      const loaded = await base44.entities.RegulationAlert.filter(query, "-detected_at", 100);
+      const loaded = await staffEntities.RegulationAlert.filter(query, "-detected_at", 100);
       setAlerts(Array.isArray(loaded) ? loaded : []);
     } catch (e) {
       console.error("Load alerts error:", e);
@@ -46,7 +47,7 @@ export default function RegulationAlertPanel() {
 
   const handleMarkAsRead = async (alertId) => {
     try {
-      await base44.entities.RegulationAlert.update(alertId, {
+      await staffEntities.RegulationAlert.update(alertId, {
         is_read: true,
         read_at: new Date().toISOString(),
         read_by: (await base44.auth.me()).email
@@ -59,7 +60,7 @@ export default function RegulationAlertPanel() {
 
   const handleDelete = async (alertId) => {
     try {
-      await base44.entities.RegulationAlert.delete(alertId);
+      await staffEntities.RegulationAlert.delete(alertId);
       setAlerts(alerts.filter(a => a.id !== alertId));
     } catch (e) {
       console.error("Delete error:", e);

@@ -8,6 +8,7 @@
 
 import { base44 } from "@/api/base44Client";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // Full, non-abbreviated role names. NOTE: no "Installer".
 export const VINYL_ROLE_NAMES = [
@@ -42,7 +43,7 @@ const num = (v, d = 0) => {
 // Returns [{ role, hourly_rate }] in VINYL_ROLE_NAMES order.
 export async function loadVinylLaborRoles() {
   const rows = await loadAllEntityRows({
-    entity: base44.entities.LaborServiceInventory,
+    entity: staffEntities.LaborServiceInventory,
     query: { service_category: "shop_labor" },
     sort: "service_name",
     label: "Vinyl labor roles",

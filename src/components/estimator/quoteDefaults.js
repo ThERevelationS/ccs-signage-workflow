@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export const QUOTE_DEFAULT_KEYS = [
   "company_name", "company_phone", "company_email", "company_address", "company_website", "company_license", "company_logo_url",
@@ -71,6 +72,6 @@ export function canonicalQuoteDefaults(rows = []) {
 }
 
 export async function loadQuoteDefaults() {
-  const rows = await base44.entities.QuoteDefaults.filter({ config_name: "default" });
+  const rows = await staffEntities.QuoteDefaults.filter({ config_name: "default" });
   return canonicalQuoteDefaults(rows || []);
 }

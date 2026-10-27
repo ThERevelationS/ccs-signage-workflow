@@ -24,8 +24,9 @@ import {
   permanentlyDeleteTrashWorkOrderFromLoadedSnapshot,
   permanentlyDeleteWorkOrderFromLoadedSnapshot,
 } from "@/components/admin/projectTrashPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const SYSTEM_RESET_CONFIRMATION = "DELETE ALL CLIENTS";
 
 async function requireCurrentAdmin(label) {

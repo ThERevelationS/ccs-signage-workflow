@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const INHOUSE_TASKS = [
   "Fabrication",

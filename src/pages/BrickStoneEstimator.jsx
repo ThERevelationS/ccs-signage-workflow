@@ -13,6 +13,7 @@ import { updateBuilderSourceProject } from "@/components/estimator/builder/sourc
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
@@ -31,11 +32,11 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
       setLoadError("");
       try {
         const [p, legacyMats, foundationMats] = await Promise.all([
-          id ? base44.entities.BrickStoneProject.get(id) : Promise.resolve(null),
+          id ? staffEntities.BrickStoneProject.get(id) : Promise.resolve(null),
           // Legacy entity is optional compatibility data; the modern Foundation
           // inventory below is the authoritative masonry catalog and is strict.
-          loadAllEntityRows({ entity: base44.entities.BrickStoneInventory, sort: "material_name", label: "Legacy Brick & Stone inventory" }).catch(() => []),
-          loadAllEntityRows({ entity: base44.entities.FoundationInventory, sort: "material_name", label: "Foundation masonry inventory" }),
+          loadAllEntityRows({ entity: staffEntities.BrickStoneInventory, sort: "material_name", label: "Legacy Brick & Stone inventory" }).catch(() => []),
+          loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: "material_name", label: "Foundation masonry inventory" }),
         ]);
 
       // The committed SignEstimate Pro repo defined BrickStoneInventory but never
@@ -139,7 +140,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         customer_pricing: customerPricing,
       };
       const savedProject = await updateBuilderSourceProject({
-        entity: base44.entities.BrickStoneProject,
+        entity: staffEntities.BrickStoneProject,
         sourceId: project.id,
         expectedUpdatedAt: project.updated_date,
         data: dataToSave,

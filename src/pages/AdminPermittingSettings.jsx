@@ -10,6 +10,7 @@ import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonit
 import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRewriteAuthorityAdmin";
 import PermittingResearchDispatchSettings from "@/components/admin/PermittingResearchDispatchSettings";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function AdminPermittingSettings() {
   const [activeTab, setActiveTab] = useState("batch");
@@ -33,7 +34,7 @@ export default function AdminPermittingSettings() {
     const load = async () => {
       try {
         const res = await loadAllEntityRows({
-          entity: base44.entities.JurisdictionProfile,
+          entity: staffEntities.JurisdictionProfile,
           sort: null,
           label: "Permitting admin jurisdiction catalog",
         });
@@ -121,7 +122,7 @@ export default function AdminPermittingSettings() {
     }
 
     const refreshed = await loadAllEntityRows({
-      entity: base44.entities.JurisdictionProfile,
+      entity: staffEntities.JurisdictionProfile,
       sort: null,
       label: "Permitting admin jurisdiction refresh",
     });

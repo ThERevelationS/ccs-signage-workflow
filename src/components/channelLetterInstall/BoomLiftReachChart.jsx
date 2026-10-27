@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { ChannelLetterInstallEquipment } from "@/entities/all";
+import { ChannelLetterInstallEquipment } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";

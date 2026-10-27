@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -64,7 +65,7 @@ export default function EstimatorQueues() {
     const load = async () => {
       try {
         const rows = await loadAllEntityRows({
-          entity: base44.entities.AllInOneEstimate,
+          entity: staffEntities.AllInOneEstimate,
           sort: "-created_date",
           label: "Estimate queues",
         });

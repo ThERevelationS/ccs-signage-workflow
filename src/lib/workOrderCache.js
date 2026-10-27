@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { queryClientInstance } from "@/lib/query-client";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export const ALL_WORK_ORDERS_KEY = ["workOrders", "all"];
 
 export function fetchAllWorkOrders() {
   return loadAllEntityRows({
-    entity: base44.entities.WorkOrder,
+    entity: staffEntities.WorkOrder,
     sort: "-updated_date",
     label: "Work Orders",
   });
@@ -38,7 +39,7 @@ function retainWorkOrderSubscription() {
   subscriptionCount += 1;
   if (unsubscribeWorkOrders || subscriptionCount > 1) return;
   try {
-    unsubscribeWorkOrders = base44.entities.WorkOrder.subscribe((event) => {
+    unsubscribeWorkOrders = staffEntities.WorkOrder.subscribe((event) => {
       queryClientInstance.setQueryData(ALL_WORK_ORDERS_KEY, (rows) => applyWorkOrderEvent(rows, event));
     });
   } catch {

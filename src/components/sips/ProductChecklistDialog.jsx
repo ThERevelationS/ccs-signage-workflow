@@ -20,7 +20,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseDateOnly = (dateString) => {
@@ -267,17 +267,17 @@ export default function ProductChecklistDialog({
         WorkOrder.filter({ id: workOrder.id }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Product checklist authorized users" }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "Product checklist dropdown conditions",
         }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "productTypes",
           label: "Product checklist product types",
         }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "Product checklist SIPS task eligibility",
         })

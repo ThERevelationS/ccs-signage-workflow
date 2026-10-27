@@ -188,7 +188,7 @@ async function deactivateParts(parts, reason) {
       notes: appendNote(part.notes, reason),
     };
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       id: part.id,
       expectedUpdatedAt: part.updated_date || "",
       expectedFields: expectedBuilderEntityFields(part, deactivatePatch),
@@ -203,7 +203,7 @@ async function createAggregatePart({ builder, category, amount, represented, met
   if (amount <= TOLERANCE) return null;
   const timestamp = nowIso();
   const info = meta[category] || { label: `Legacy ${category}`, type: "other", subtype: `legacy_${category}`, sourceFields: [] };
-  return base44.entities.BuilderPart.create({
+  return staffEntities.BuilderPart.create({
     builder_product_id: builder.id,
     part_key: `legacy-reconcile:${builder.module_key}:${category}`,
     sort_order: sortOrder,
@@ -326,7 +326,7 @@ async function reconcileSupportedBuilder(builder, project, parts) {
     }
   }
 
-  const refreshed = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const refreshed = await staffEntities.BuilderPart.filter({ builder_product_id: builder.id });
   const finalSum = frozenSum(refreshed);
   if (!moneyClose(finalSum, frozenTotal)) {
     throw new Error(`Product ${builder.id} reconciliation failed: active frozen Parts=${finalSum}, frozen Product=${frozenTotal}.`);
@@ -337,7 +337,7 @@ async function reconcileSupportedBuilder(builder, project, parts) {
 
 async function markBuilderComplete(builder, result) {
   const timestamp = nowIso();
-  const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+  const parts = await staffEntities.BuilderPart.filter({ builder_product_id: builder.id });
   const active = activeParts(parts);
   const finalSum = frozenSum(active);
   if (!moneyClose(finalSum, num(builder.frozen_cost))) {
@@ -352,7 +352,7 @@ async function markBuilderComplete(builder, result) {
     notes: appendNote(builder.notes, `Historical BOM reconciled by ${LEGACY_BOM_RECONCILE_BATCH}; frozen Product price remained ${builder.frozen_cost}.`),
   };
   await replaceBuilderEntityFieldsIfUnchanged({
-    entity: base44.entities.BuilderProduct,
+    entity: staffEntities.BuilderProduct,
     id: builder.id,
     expectedUpdatedAt: builder.updated_date || "",
     expectedFields: expectedBuilderEntityFields(builder, reconcilePatch),
@@ -392,13 +392,13 @@ async function migrationRows() {
 }
 
 export async function verifyLegacyBomReconciliation() {
-  const builders = await base44.entities.BuilderProduct.filter({ price_state: "legacy_frozen" });
+  const builders = await staffEntities.BuilderProduct.filter({ price_state: "legacy_frozen" });
   if (!Array.isArray(builders)) {
     throw new Error("Legacy BOM verification could not load the Builder Product set.");
   }
   const results = [];
   for (const builder of builders) {
-    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const parts = await staffEntities.BuilderPart.filter({ builder_product_id: builder.id });
     if (!Array.isArray(parts)) {
       throw new Error(`Legacy BOM verification could not load Parts for Product ${builder.id}.`);
     }
@@ -433,14 +433,14 @@ export async function runLegacyBomReconcile() {
   }
 
   const completedIds = new Set((rows || []).filter((row) => row.source_entity === "BuilderProduct").map((row) => row.source_id));
-  const builders = await base44.entities.BuilderProduct.filter({ price_state: "legacy_frozen" });
+  const builders = await staffEntities.BuilderProduct.filter({ price_state: "legacy_frozen" });
   let processed = 0;
   let aggregatePartsCreated = 0;
   let generatedPartsDeactivated = 0;
 
   for (const builder of builders || []) {
     if (completedIds.has(builder.id) || builder.legacy_bom_reconciled) continue;
-    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    const parts = await staffEntities.BuilderPart.filter({ builder_product_id: builder.id });
     if (!Array.isArray(parts)) {
       throw new Error(`Legacy BOM reconciliation could not load Parts for Product ${builder.id}.`);
     }

@@ -32,8 +32,9 @@ import {
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {

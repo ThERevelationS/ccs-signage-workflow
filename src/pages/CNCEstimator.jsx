@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { CNCProject, Settings } from "@/entities/all";
+import { CNCProject, Settings } from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -67,7 +68,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       const [settingsData, existing, estimate] = await Promise.all([
         loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         editId ? CNCProject.get(editId) : Promise.resolve(null),
-        estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+        estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
       const settingsObj = {};
       (settingsData || []).forEach(s => { settingsObj[s.setting_name] = s.setting_value; });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/entities/all";
+import { ChannelLetterInstallInventory, ChannelLetterInstallation } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { User } from "@/api/entities";
 import { Button } from "@/components/ui/button";

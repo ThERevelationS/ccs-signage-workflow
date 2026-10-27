@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Project, Settings } from "@/entities/all";
+import { Project, Settings } from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
@@ -21,6 +21,7 @@ import {
   calculatePaintingProject,
   normalizePaintingItem,
 } from "@/components/estimator/paint/paintCalc";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const money = (value) => Number(value || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const number = (value, digits = 2) => Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: digits });
@@ -56,7 +57,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         const [settingsRows, existing, estimate] = await Promise.all([
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           editId ? Project.get(editId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (!active) return;
         const settingsMap = {};

@@ -5,6 +5,7 @@ import StatCards from "@/components/estimator/home/StatCards";
 import FadeIn from "@/components/motion/FadeIn";
 import RecentActivity from "@/components/estimator/home/RecentActivity";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function SalesHome() {
   const [estimates, setEstimates] = useState([]);
@@ -15,7 +16,7 @@ export default function SalesHome() {
     const load = async () => {
       try {
         const rows = await loadAllEntityRows({
-          entity: base44.entities.AllInOneEstimate,
+          entity: staffEntities.AllInOneEstimate,
           sort: "-created_date",
           label: "Sales Home estimates",
         });

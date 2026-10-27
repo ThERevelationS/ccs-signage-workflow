@@ -27,7 +27,7 @@ function searchText(values) {
 
 export async function savePartTemplate({ estimateId = "", builderProductId = "", part, options = {} }) {
   if (!part?.id) throw new Error("Part is required.");
-  const livePart = await base44.entities.BuilderPart.get(part.id);
+  const livePart = await staffEntities.BuilderPart.get(part.id);
   if (!livePart) throw new Error("This Part no longer exists. Reload the Product before saving it to the Part Library.");
   if (part.updated_date && livePart.updated_date && part.updated_date !== livePart.updated_date) {
     throw new Error("This Part changed in another session. Reload the Product and review the latest Part before saving it to the Part Library.");
@@ -75,8 +75,8 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
   if (!loadedActiveParts.length) throw new Error("Part Group does not contain any active Parts.");
 
   const [liveGroup, liveRows] = await Promise.all([
-    base44.entities.BuilderPartGroup.get(group.id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { part_group_id: group.id }, sort: "sort_order", label: "Saved Part Group members" }),
+    staffEntities.BuilderPartGroup.get(group.id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { part_group_id: group.id }, sort: "sort_order", label: "Saved Part Group members" }),
   ]);
   if (!liveGroup) throw new Error("This Part Group no longer exists. Reload the Product before saving it to the Part Library.");
   if (group.updated_date && liveGroup.updated_date && group.updated_date !== liveGroup.updated_date) {

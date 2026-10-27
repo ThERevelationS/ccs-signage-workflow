@@ -15,7 +15,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function SipChecklistSection({ workOrder, onUpdate }) {
@@ -43,7 +43,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
         WorkOrder.filter({ id: workOrder.id }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIP checklist authorized users" }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "SIP checklist dropdown conditions",
         })

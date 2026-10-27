@@ -13,9 +13,10 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 import { createGeneralTaskWithRecovery } from "@/components/workflow/generalTaskPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
-const GeneralTask = base44.entities.GeneralTask;
+const WorkOrder = staffEntities.WorkOrder;
+const GeneralTask = staffEntities.GeneralTask;
 
 const STAGE_OPTIONS = [
   { value: "", label: "General / No stage" },

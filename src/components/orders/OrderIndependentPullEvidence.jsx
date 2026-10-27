@@ -7,6 +7,7 @@ import {
 } from './orderIndependentPullEvidenceModel.mjs';
 import { startOrderBatchReview, appendOrderBatchReviewPage } from './orderBatchReviewSummary.mjs';
 import { usePolling } from '@/lib/usePolling';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // Order Form ONLY: read-only admin review. The shared Sales coordinator can
 // change without affecting this independent permanent-ID evidence.
@@ -50,7 +51,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
       if (inFlight) return;
       inFlight = true;
       try {
-        const rows = await base44.entities.GlobalSettings.filter({
+        const rows = await staffEntities.GlobalSettings.filter({
           setting_key: ORDER_PULL_EVIDENCE_KEY,
         });
         if (active) {

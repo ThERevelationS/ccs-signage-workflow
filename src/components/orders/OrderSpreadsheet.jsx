@@ -130,10 +130,10 @@ import {
 } from "@/components/orders/orderPersistence";
 
 
-const Order = base44.entities.Order;
-const WorkOrder = base44.entities.WorkOrder;
+const Order = staffEntities.Order;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 const ORDER_REQUEST_TYPES_SETTING_KEY = "orderRequestTypes";
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];

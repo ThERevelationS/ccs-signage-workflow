@@ -16,7 +16,7 @@ function fullyBackfilled(estimate) {
 
 async function verifyBuilderLinks(estimate) {
   if (!fullyBackfilled(estimate)) return false;
-  const products = await base44.entities.BuilderProduct.filter({ estimate_id: estimate.id }).catch(() => []);
+  const products = await staffEntities.BuilderProduct.filter({ estimate_id: estimate.id }).catch(() => []);
   const productIds = new Set((products || []).map((product) => product.id));
   return (estimate?.line_items || []).every((line) => productIds.has(line.builder_product_id));
 }
@@ -117,7 +117,7 @@ export async function runHistoricalBuilderBackfill({ seedEstimates = [] } = {}) 
     let processedCount = 0;
     let latestEstimates = seedEstimates?.length
       ? seedEstimates
-      : await base44.entities.AllInOneEstimate.list("-created_date", 200);
+      : await staffEntities.AllInOneEstimate.list("-created_date", 200);
 
     // Two passes are intentional. The first handles the snapshot loaded with the
     // Estimator page. The second catches an estimate created while the first pass
@@ -130,7 +130,7 @@ export async function runHistoricalBuilderBackfill({ seedEstimates = [] } = {}) 
       if (!pending.length) break;
 
       for (const estimate of pending) {
-        const fresh = await base44.entities.AllInOneEstimate.get(estimate.id);
+        const fresh = await staffEntities.AllInOneEstimate.get(estimate.id);
         const converted = await ensureEstimateBuilderProducts(fresh);
         if (!(await verifyBuilderLinks(converted))) {
           throw new Error(`Historical Product/BOM backfill did not fully materialize estimate ${estimate.id}.`);
@@ -139,12 +139,12 @@ export async function runHistoricalBuilderBackfill({ seedEstimates = [] } = {}) 
         processedCount += 1;
       }
 
-      latestEstimates = await base44.entities.AllInOneEstimate.list("-created_date", 200);
+      latestEstimates = await staffEntities.AllInOneEstimate.list("-created_date", 200);
     }
 
     rows = await migrationRows();
     const doneIds = completedEstimateIds(rows);
-    latestEstimates = await base44.entities.AllInOneEstimate.list("-created_date", 200);
+    latestEstimates = await staffEntities.AllInOneEstimate.list("-created_date", 200);
     const outstanding = (latestEstimates || []).filter((estimate) => !doneIds.has(estimate.id));
     if (outstanding.length) {
       throw new Error(`Historical Product/BOM backfill still has ${outstanding.length} estimate(s) pending.`);

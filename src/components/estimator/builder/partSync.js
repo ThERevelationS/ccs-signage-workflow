@@ -9,6 +9,7 @@ import { assertEstimateProductMutationAllowed } from "@/components/estimator/est
 import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation, resumeBuilderMutation } from "./builderMutationRecovery";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "./builderEntityPersistence";
 import { createBuilderPartWithRecovery } from "./builderPartPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -249,7 +250,7 @@ export async function loadVerifiedBuilderPartSyncInputs({ builderProduct = null,
   const [catalogs, existingParts] = await Promise.all([
     loadBuilderCatalogs(moduleKey || builderProduct?.module_key || "", { strict: true }),
     builderProduct?.id
-      ? loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" })
+      ? loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" })
       : Promise.resolve([]),
   ]);
   const inventoryRowsOverride = new Map();
@@ -2938,7 +2939,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
   const catalogs = catalogsOverride || await loadBuilderCatalogs(builderProduct.module_key, { strict: strictCatalogs });
   const descriptors = extractBuilderParts(builderProduct.module_key, sourceProject, catalogs, { legacyMode });
-  const existing = existingPartsOverride || await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" });
+  const existing = existingPartsOverride || await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProduct.id }, sort: "sort_order", label: "Builder Parts" });
   const byKey = new Map((existing || []).map((part) => [part.part_key, part]));
   const seen = new Set();
   const synced = [];
@@ -2964,7 +2965,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     partWritePlan.push(step);
     if (planOnly) return { ...old, ...patch };
     const saved = await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       id: old.id,
       expectedUpdatedAt: old.updated_date || "",
       expectedFields: expectedBuilderEntityFields(old, patch),
@@ -2985,7 +2986,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     partWritePlan.push(step);
     if (planOnly) return { ...data, id: `planned:${data.part_key}`, updated_date: "" };
     const { record: created, status } = await createBuilderPartWithRecovery({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       data,
       label: `Builder Part “${data.part_name || data.part_key || "Part"}” synchronization`,
     });
@@ -3359,7 +3360,7 @@ function assertUniqueBuilderPartKeys(parts, builderProductId, label = "Builder P
 export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan, { partsOverride = undefined } = {}) {
   const parts = partsOverride !== undefined
     ? partsOverride
-    : await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
+    : await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   assertUniqueBuilderPartKeys(parts, builderProductId);
   const byId = new Map(parts.map((part) => [part.id, part]));
   const byKey = new Map(parts.map((part) => [part.part_key, part]));
@@ -3380,7 +3381,7 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
         continue;
       }
       const { record: created, status } = await createBuilderPartWithRecovery({
-        entity: base44.entities.BuilderPart,
+        entity: staffEntities.BuilderPart,
         data,
         label: `Builder Part “${data.part_name || data.part_key || "Part"}” recovery create`,
       });
@@ -3405,7 +3406,7 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
       throw new Error(`Part “${part.part_name || "Part"}” changed while a Builder mutation was pending. No unrelated Part edit was overwritten.`);
     }
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       id: part.id,
       expectedUpdatedAt: part.updated_date || "",
       expectedFields: expectedBuilderEntityFields(part, targetPatch),
@@ -3418,7 +3419,7 @@ export async function applyBuilderPartPriceAcceptancePlan(builderProductId, plan
 
   if (createdAny) {
     const verifiedParts = await loadAllEntityRows({
-      entity: base44.entities.BuilderPart,
+      entity: staffEntities.BuilderPart,
       query: { builder_product_id: builderProductId },
       sort: "sort_order",
       label: "Builder Parts post-create verification",
@@ -3438,10 +3439,10 @@ export async function acceptBuilderPartPrices(builderProductId, {
   const [parts, builder] = await Promise.all([
     partsOverride !== undefined
       ? Promise.resolve(partsOverride)
-      : loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+      : loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     builderOverride !== undefined
       ? Promise.resolve(builderOverride)
-      : base44.entities.BuilderProduct.get(builderProductId),
+      : staffEntities.BuilderProduct.get(builderProductId),
   ]);
   if (!builder?.id || builder.id !== builderProductId) {
     throw new Error("Builder Product could not be verified before accepting Part prices.");
@@ -3580,7 +3581,7 @@ export async function acceptBuilderPartPrices(builderProductId, {
 
 export async function getDetachedBuilderParts(builderProductId) {
   if (!builderProductId) return [];
-  const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
+  const parts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   return (parts || [])
     .filter(requiresBuilderReattach)
     .sort((a, b) => num(a.sort_order) - num(b.sort_order))
@@ -3603,11 +3604,11 @@ function estimateBuilderLine(estimate, builderProductId) {
 }
 
 async function loadPendingAwarePartMutationContext(partId, options = {}, allowedKinds = []) {
-  const part = await base44.entities.BuilderPart.get(partId);
+  const part = await staffEntities.BuilderPart.get(partId);
   if (!part?.id) throw new Error("The Part could not be loaded.");
-  const builder = await base44.entities.BuilderProduct.get(part.builder_product_id);
+  const builder = await staffEntities.BuilderProduct.get(part.builder_product_id);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const line = estimateBuilderLine(estimate, builder.id);
   if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
@@ -3643,7 +3644,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
   const { part, builder, estimate, line, pending, alreadyComplete } = context;
 
   if (pending) {
-    const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3661,7 +3662,7 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     throw new Error("Independent manual Parts do not need to be detached from a Builder.");
   }
 
-  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before detaching this Part.");
   }
@@ -3798,7 +3799,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
   const { part, builder, estimate, line, pending, alreadyComplete } = context;
 
   if (pending) {
-    const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -3816,7 +3817,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
     throw new Error("This Part must be detached from its Builder before it can be overridden independently.");
   }
 
-  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before updating this detached override.");
   }
@@ -3984,9 +3985,9 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     return { reattached: [], remainingDetached: await getDetachedBuilderParts(builderProductId) };
   }
 
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Builder Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const line = estimateBuilderLine(estimate, builder.id);
   if (!line) throw new Error("This Product is no longer part of the estimate. Reload before reattaching Parts.");
@@ -3996,7 +3997,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     if (existingPending.kind !== "builder_reattach_parts" || String(existingPending.builder_product_id || "") !== String(builder.id)) {
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before reattaching Parts.");
     }
-    const currentParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const currentParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     await resumeBuilderMutation({
       estimateId: estimate.id,
       estimate,
@@ -4014,7 +4015,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
     };
   }
 
-  const allParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const allParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(allParts) || allParts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before reattachment.");
   }

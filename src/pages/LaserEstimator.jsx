@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { LaserProject, Settings } from "@/entities/all";
+import { LaserProject, Settings } from "@/api/gatedEntities";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/co
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { TrendingUp } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
 const materials = ["Acrylic", "Wood", "Leather"];
@@ -93,7 +94,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         const [settingsData, existing, estimate] = await Promise.all([
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           editId ? LaserProject.get(editId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
 

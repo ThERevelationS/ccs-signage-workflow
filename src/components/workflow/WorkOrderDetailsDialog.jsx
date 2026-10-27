@@ -75,6 +75,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import {
+import { staffEntities } from "@/components/staff/staffEntities";
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
   findWorkOrderArrayItemIndex,
@@ -84,7 +85,7 @@ import {
   replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const stageColors = {
   estimating: "#FFF9C4",

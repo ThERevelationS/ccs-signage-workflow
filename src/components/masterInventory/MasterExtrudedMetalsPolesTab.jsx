@@ -15,7 +15,7 @@
 // migrated.
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Inventory, FoundationInventory } from "@/entities/all";
+import { Inventory, FoundationInventory } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

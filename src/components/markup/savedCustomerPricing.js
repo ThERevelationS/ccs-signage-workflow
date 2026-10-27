@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { applyMarkups, parseVolumeDiscountBrackets, parseVolumeDiscountCategories } from "./markupEngine";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -28,13 +29,13 @@ export async function loadCustomerPricingConfig(project = {}) {
     const [tiers, categories, settings, customer] = await Promise.all([
       // Tier definitions and pricing Settings directly change customer selling
       // price, so a read failure must never masquerade as "not configured".
-      loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "Customer pricing markup tiers" }),
+      loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer pricing markup tiers" }),
       // Category records only provide display labels; pricing lines already carry
       // their category keys, so this metadata may remain non-blocking.
-      loadAllEntityRows({ entity: base44.entities.MarkupCategory, sort: "sort_order", label: "Customer pricing markup categories" }).catch(() => []),
-      loadAllEntityRows({ entity: base44.entities.Settings, query: { category: "pricing" }, sort: null, label: "Customer pricing settings" }),
+      loadAllEntityRows({ entity: staffEntities.MarkupCategory, sort: "sort_order", label: "Customer pricing markup categories" }).catch(() => []),
+      loadAllEntityRows({ entity: staffEntities.Settings, query: { category: "pricing" }, sort: null, label: "Customer pricing settings" }),
       project?.customer_id
-        ? base44.entities.Customer.get(project.customer_id).catch((error) => {
+        ? staffEntities.Customer.get(project.customer_id).catch((error) => {
             // Preserve legacy projects whose historical Customer record no longer
             // exists, but fail closed on permission/network/service read errors.
             if (isNotFoundError(error)) return null;

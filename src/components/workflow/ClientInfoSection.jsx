@@ -19,12 +19,13 @@ import {
 import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, Plus, Trash2, Loader2 } from "lucide-react";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
 ];
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 export default function ClientInfoSection({ workOrder, onUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -78,7 +79,7 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
   const loadProductTypes = async () => {
     try {
       const setting = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         settingKey: "productTypes",
         label: "Client info product types",
       });

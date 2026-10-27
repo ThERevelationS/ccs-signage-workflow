@@ -9,6 +9,7 @@ import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
 import { usePolling } from "@/lib/usePolling";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUS_KEYS = {
   orders: 'smartsheetOrderSyncStatus',
@@ -65,7 +66,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
 
   const loadStatus = useCallback(async () => {
     try {
-      const records = await base44.entities.GlobalSettings.filter({
+      const records = await staffEntities.GlobalSettings.filter({
         setting_key: { $in: WATCHED_KEYS },
       });
       const map = new Map();
@@ -87,7 +88,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   useEffect(() => {
     let unsubscribe = null;
     try {
-      unsubscribe = base44.entities.GlobalSettings.subscribe((event) => {
+      unsubscribe = staffEntities.GlobalSettings.subscribe((event) => {
         const key = String(event?.data?.setting_key || event?.setting_key || "");
         if (!WATCHED_KEYS.includes(key)) return;
         if (event?.type === "delete" || event?.data?.deleted === true) {

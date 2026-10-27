@@ -22,6 +22,7 @@ import { isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -180,7 +181,7 @@ export default function PermitSpreadsheetRow({
     setJurisdictionPreviewError("");
     try {
       const rows = await loadAllEntityRows({
-        entity: base44.entities.JurisdictionProfile,
+        entity: staffEntities.JurisdictionProfile,
         sort: "name",
         label: `Jurisdiction preview ${lineItem.locality_name}`,
       });

@@ -42,8 +42,8 @@ export default function PermittingResearchDispatchSettings() {
     setLoading(true);
     try {
       const [configRecord, stateRecord, backlog, sourceDiscovery] = await Promise.all([
-        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CONFIG_KEY, label: "Permitting research dispatch settings" }),
-        loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATE_KEY, label: "Permitting research dispatch state" }),
+        loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: CONFIG_KEY, label: "Permitting research dispatch settings" }),
+        loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: STATE_KEY, label: "Permitting research dispatch state" }),
         staffEntities.SourceCollectionQueue.count({ state: { $in: ["OH", "KY"] }, status: "not_started" }),
         staffEntities.SourceCollectionQueue.count({ state: { $in: ["OH", "KY"] }, status: "source_discovery" }),
       ]);
@@ -77,7 +77,7 @@ export default function PermittingResearchDispatchSettings() {
         retry_limit: clampInt(settings.retry_limit, 3, 1, 10),
       };
       const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         loadedRecord,
         settingKey: CONFIG_KEY,
         nextValue: normalized,

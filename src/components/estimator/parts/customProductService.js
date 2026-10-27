@@ -8,6 +8,7 @@ import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -19,9 +20,9 @@ function estimateLineForBuilder(estimate, builderProductId) {
 
 async function loadManualMutationContext(builderProductId, expectedEstimateUpdatedAt = "") {
   if (!builderProductId) throw new Error("Product is required.");
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const line = estimateLineForBuilder(estimate, builder.id);
@@ -31,9 +32,9 @@ async function loadManualMutationContext(builderProductId, expectedEstimateUpdat
 
 async function loadRawManualMutationContext(builderProductId) {
   if (!builderProductId) throw new Error("Product is required.");
-  const builder = await base44.entities.BuilderProduct.get(builderProductId);
+  const builder = await staffEntities.BuilderProduct.get(builderProductId);
   if (!builder?.id || !builder.estimate_id) throw new Error("The Product could not be verified against an estimate.");
-  const estimate = await base44.entities.AllInOneEstimate.get(builder.estimate_id);
+  const estimate = await staffEntities.AllInOneEstimate.get(builder.estimate_id);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const line = estimateLineForBuilder(estimate, builder.id);
   if (!line) throw new Error("This Product is no longer part of the estimate. Reload before changing its Parts.");
@@ -41,7 +42,7 @@ async function loadRawManualMutationContext(builderProductId) {
 }
 
 async function resumeStoredManualPartMutation({ builder, estimate, line, pending }) {
-  const parts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const parts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(parts)) throw new Error("Builder Parts could not be verified while resuming the manual Part mutation.");
   return resumeBuilderMutation({
     estimateId: estimate.id,
@@ -77,7 +78,7 @@ function patchedEstimateLines(estimate, builderProductId, patch) {
 async function patchVerifiedEstimateLine(estimate, builder, patch) {
   const lineItems = patchedEstimateLines(estimate, builder.id, patch);
   const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId: estimate.id,
     expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -115,7 +116,7 @@ async function verifyCatalogItem(catalogItem) {
 
 export async function createCustomProduct({ estimate, name = "Custom Product", expectedEstimateUpdatedAt = "" }) {
   if (!estimate?.id) throw new Error("Estimate is required.");
-  const currentEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  const currentEstimate = await staffEntities.AllInOneEstimate.get(estimate.id);
   if (!currentEstimate) throw new Error("Estimate could not be loaded.");
   await assertEstimateProductMutationAllowed(currentEstimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const provisionalLine = {
@@ -151,7 +152,7 @@ export async function createCustomProduct({ estimate, name = "Custom Product", e
     notes: "Blank / Custom Product. Pricing is driven directly by its Parts rather than a dedicated estimator Builder.",
   };
   await replaceBuilderEntityFieldsIfUnchanged({
-    entity: base44.entities.BuilderProduct,
+    entity: staffEntities.BuilderProduct,
     id: result.builderProduct.id,
     expectedUpdatedAt: result.builderProduct.updated_date || "",
     expectedFields: expectedBuilderEntityFields(result.builderProduct, customBuilderPatch),
@@ -171,7 +172,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before adding a Part.");
     }
     await resumeStoredManualPartMutation(context);
-    const completedParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+    const completedParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
     const completed = (completedParts || []).find((part) => part.part_key === pending.target_part_key);
     if (!completed) throw new Error("The recovered manual Part could not be verified after completion.");
     return completed;
@@ -187,7 +188,7 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     quantity: qty,
   });
   const partKey = `manual-${requestHash}`;
-  const existingParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
+  const existingParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" });
   if (!Array.isArray(existingParts) || existingParts.some((part) => part?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before adding this Part.");
   }
@@ -309,14 +310,14 @@ export async function addCatalogPartToProduct({ builderProductId, catalogItem, q
     pending: marked.canonicalPending,
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
-  const completedParts = await loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
+  const completedParts = await loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" });
   const completed = (completedParts || []).find((part) => part.part_key === partKey);
   if (!completed) throw new Error("The added manual Part could not be verified after completion.");
   return completed;
 }
 
 export async function updateManualProductPart(partId, changes = {}, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
-  const part = await base44.entities.BuilderPart.get(partId);
+  const part = await staffEntities.BuilderPart.get(partId);
   if (!part) throw new Error("Part not found.");
   if (!["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be edited directly here.");
   const context = await loadRawManualMutationContext(part.builder_product_id);
@@ -326,7 +327,7 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before editing this Part.");
     }
     await resumeStoredManualPartMutation(context);
-    return base44.entities.BuilderPart.get(part.id);
+    return staffEntities.BuilderPart.get(part.id);
   }
   if (manualPartChangesAlreadyApplied(part, changes)) return part;
   assertLoadedPartVersion(part, expectedPartUpdatedAt);
@@ -432,12 +433,12 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
     pending: marked.canonicalPending,
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
-  return base44.entities.BuilderPart.get(part.id);
+  return staffEntities.BuilderPart.get(part.id);
 }
 
 export async function switchManualProductPart(partId, catalogItem, { expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
   if (!partId || !catalogItem?.inventoryId) throw new Error("Select a replacement Master Inventory Part.");
-  const part = await base44.entities.BuilderPart.get(partId);
+  const part = await staffEntities.BuilderPart.get(partId);
   if (!part || !["manual", "manual_addon"].includes(part.builder_sync_state)) throw new Error("Only independent manual Parts can be switched directly.");
   const context = await loadRawManualMutationContext(part.builder_product_id);
   const { builder, estimate, line, pending } = context;
@@ -446,7 +447,7 @@ export async function switchManualProductPart(partId, catalogItem, { expectedEst
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before switching this Part.");
     }
     await resumeStoredManualPartMutation(context);
-    return base44.entities.BuilderPart.get(part.id);
+    return staffEntities.BuilderPart.get(part.id);
   }
   const targetInventoryMatches =
     String(part.inventory_entity || "") === String(catalogItem.entity || "") &&
@@ -575,12 +576,12 @@ export async function switchManualProductPart(partId, catalogItem, { expectedEst
     pending: marked.canonicalPending,
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
-  return base44.entities.BuilderPart.get(part.id);
+  return staffEntities.BuilderPart.get(part.id);
 }
 
 export async function removeManualProductPart(partId, { builderProductId = "", expectedEstimateUpdatedAt = "", expectedPartUpdatedAt = "" } = {}) {
   if (!partId) throw new Error("Part is required.");
-  const part = await base44.entities.BuilderPart.get(partId);
+  const part = await staffEntities.BuilderPart.get(partId);
   const resolvedBuilderProductId = builderProductId || part?.builder_product_id || "";
   if (!resolvedBuilderProductId) {
     throw new Error("The Product for this Part could not be verified. Reload before removing it.");
@@ -621,8 +622,8 @@ export async function removeManualProductPart(partId, { builderProductId = "", e
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
 
   const [allParts, allGroups] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Builder Part Groups" }),
   ]);
   if (!Array.isArray(allParts) || allParts.some((row) => row?.builder_product_id !== builder.id)) {
     throw new Error("Builder Parts could not be verified before removing this Part.");
@@ -720,7 +721,7 @@ export async function refreshManualProductPricing(builderProductId) {
   if (!builderProductId) return null;
   const [{ builder, estimate }, parts, catalog] = await Promise.all([
     loadManualMutationContext(builderProductId),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Builder Parts" }),
     loadMasterPartCatalog(),
   ]);
   const active = (parts || []).filter((part) => part.is_active !== false);
@@ -785,7 +786,7 @@ export async function refreshManualProductPricing(builderProductId) {
         last_price_check_at: timestamp,
       };
       await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderPart,
+        entity: staffEntities.BuilderPart,
         id: part.id,
         expectedUpdatedAt: part.updated_date || "",
         expectedFields: expectedBuilderEntityFields(part, partRefreshPatch),
@@ -821,7 +822,7 @@ export async function refreshManualProductPricing(builderProductId) {
       last_price_check_at: timestamp,
     };
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: builderProductId,
       expectedUpdatedAt: builder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(builder, builderRefreshPatch),

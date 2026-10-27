@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const CellHistory = base44.entities.CellHistory;
+const CellHistory = staffEntities.CellHistory;
 const ActivityLog = staffEntities.ActivityLog;
 
 export default function ActivityFeed() {

@@ -20,8 +20,9 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const stageOrder = ['permitting', 'design', 'production', 'fabrication', 'installation'];
 

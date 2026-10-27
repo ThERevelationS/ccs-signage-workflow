@@ -38,6 +38,7 @@ import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcu
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
   1: "Estimate Details",
@@ -124,7 +125,7 @@ export default function EstimateDetail() {
       setLoading(false);
       return;
     }
-    base44.entities.AllInOneEstimate.get(id).then(async (res) => {
+    staffEntities.AllInOneEstimate.get(id).then(async (res) => {
       const warnings = [];
       const withBuilders = await ensureEstimateBuilderProducts(res, {
         strictReconciliation: true,
@@ -143,7 +144,7 @@ export default function EstimateDetail() {
           }
         }
       }
-      const current = await base44.entities.AllInOneEstimate.get(id);
+      const current = await staffEntities.AllInOneEstimate.get(id);
       const line_items = await refreshSectionSnapshots(current.line_items);
       const loaded = { ...current, line_items };
       const revision = await getOpenEstimateRevision(id);
@@ -185,7 +186,7 @@ export default function EstimateDetail() {
 
   const rememberServerVersion = async (record = null) => {
     let current = record;
-    if (!current?.updated_date) current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (!current?.updated_date) current = await staffEntities.AllInOneEstimate.get(estimate.id);
     if (current?.updated_date) serverUpdatedAtRef.current = current.updated_date;
     return current;
   };
@@ -197,7 +198,7 @@ export default function EstimateDetail() {
 
   const saveEstimateFieldsSafely = ({ baseline, nextFields, label, guardWholeVersion = false }) =>
     replaceEstimateFieldsIfUnchanged({
-      entity: base44.entities.AllInOneEstimate,
+      entity: staffEntities.AllInOneEstimate,
       estimateId: estimate.id,
       expectedFields: expectedEstimateFields(baseline, nextFields),
       guardFields: guardWholeVersion ? { updated_date: baseline?.updated_date } : {},
@@ -206,14 +207,14 @@ export default function EstimateDetail() {
     });
 
   const loadCurrentProductMutationEstimate = async () => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     if (!current) throw new Error("This estimate no longer exists.");
     await assertEstimateProductMutationAllowed(current, { expectedUpdatedAt: serverUpdatedAtRef.current });
     return current;
   };
 
   const refreshProducts = async () => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     const warnings = [];
     const withBuilders = await ensureEstimateBuilderProducts(current, {
       strictReconciliation: true,
@@ -232,7 +233,7 @@ export default function EstimateDetail() {
         }
       }
     }
-    const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const refreshed = await staffEntities.AllInOneEstimate.get(estimate.id);
     const line_items = await refreshSectionSnapshots(refreshed.line_items);
     serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
@@ -336,7 +337,7 @@ export default function EstimateDetail() {
   };
 
   const createQuickProduct = async (line, options) => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     if (!current) throw new Error("This estimate no longer exists.");
     if (hasServerConflict(current)) {
       throw new Error("This estimate changed in another session. Reload it before saving a Quick Product so the reusable snapshot cannot mix old and new Product state.");
@@ -412,7 +413,7 @@ export default function EstimateDetail() {
   };
 
   const handleStartRevision = async (reason) => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(current, "starting an Estimate Revision");
     if (hasServerConflict(current)) {
       throw new Error("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
@@ -450,7 +451,7 @@ export default function EstimateDetail() {
 
     setSaving(true);
     try {
-      const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const before = await staffEntities.AllInOneEstimate.get(estimate.id);
       assertNoPendingPriceAcceptance(before, "saving the estimate");
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
@@ -614,7 +615,7 @@ export default function EstimateDetail() {
     if (!estimate?.pipeline_sync_pending || saving) return;
     setSaving(true);
     try {
-      const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const current = await staffEntities.AllInOneEstimate.get(estimate.id);
       if (hasServerConflict(current)) {
         window.alert("This estimate changed in another session. Reload before retrying Sales Pipeline synchronization.");
         return;
@@ -634,7 +635,7 @@ export default function EstimateDetail() {
             pipeline_sync_error: message,
           },
           label: "Estimate pipeline retry failure marker",
-        }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => current);
+        }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => current);
         const failedState = { ...current, ...(failed || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
         await rememberServerVersion(failedState);
         setEstimate(failedState);
@@ -665,10 +666,10 @@ export default function EstimateDetail() {
     if (!estimate?.work_order_id || repairingConversionTracking) return;
     setRepairingConversionTracking(true);
     try {
-      const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const current = await staffEntities.AllInOneEstimate.get(estimate.id);
       if (!current?.work_order_id) throw new Error("This estimate is no longer linked to a Work Order. Reload the estimate before repairing conversion tracking.");
       if (current.work_order_id !== estimate.work_order_id) throw new Error("The linked Work Order changed in another session. Reload before repairing conversion tracking.");
-      const workOrder = await base44.entities.WorkOrder.get(current.work_order_id).catch(() => null);
+      const workOrder = await staffEntities.WorkOrder.get(current.work_order_id).catch(() => null);
       if (!workOrder?.id) throw new Error("The linked Work Order could not be found. Conversion tracking was not changed.");
 
       const internalCost = Number.isFinite(Number(current.total_cost))
@@ -702,7 +703,7 @@ export default function EstimateDetail() {
   const handleQuoteDelivered = async ({ recipientEmail, issueMetadata, quoteVersion, gmailMessageId, sentAt, deliveryId, archive }) => {
     // Re-read after Gmail accepts the message so a concurrent lifecycle change
     // cannot silently be overwritten by the delivery finalization.
-    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(before, "finalizing quote delivery");
     const sourceStatus = before.status || "draft";
     const issuingNewQuote = ["draft", "calculated"].includes(sourceStatus);
@@ -801,7 +802,7 @@ export default function EstimateDetail() {
           pipeline_sync_error: message,
         },
         label: "Quote delivery pipeline recovery marker",
-      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => saved);
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => saved);
       saved = { ...saved, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(saved);
       warnings.push(`The quote is issued, but Sales Pipeline synchronization is pending: ${message}`);
@@ -845,7 +846,7 @@ export default function EstimateDetail() {
     notes,
     deliveryId,
   }) => {
-    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(before, "recording customer acceptance");
     if (hasServerConflict(before)) {
       throw new Error("This estimate changed in another session. Reload before recording customer acceptance.");
@@ -917,7 +918,7 @@ export default function EstimateDetail() {
         workOrderId: after.work_order_id || "",
       });
     } catch (error) {
-      const reflected = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      const reflected = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
       const reflectedState = { ...after, ...(reflected || {}) };
       await rememberServerVersion(reflectedState);
       setEstimate(reflectedState);
@@ -950,13 +951,13 @@ export default function EstimateDetail() {
           pipeline_sync_error: message,
         },
         label: "Customer acceptance pipeline recovery marker",
-      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
       after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(after);
       syncWarning = `Customer acceptance and approval are saved, but Sales Pipeline synchronization is pending: ${message}`;
     }
 
-    const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+    const refreshed = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
     const savedAfter = { ...after, ...(refreshed || {}), status: "approved", edit_reason: "" };
     if (savedAfter.updated_date) serverUpdatedAtRef.current = savedAfter.updated_date;
     setEstimate(savedAfter);
@@ -971,7 +972,7 @@ export default function EstimateDetail() {
       window.alert("Save the open estimate revision before cancelling the estimate.");
       return;
     }
-    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(before, "cancelling the estimate");
     if (hasServerConflict(before)) {
       window.alert("This estimate changed in another session. Reload before cancelling so newer work is not cancelled from a stale page.");
@@ -1030,7 +1031,7 @@ export default function EstimateDetail() {
           pipeline_sync_error: message,
         },
         label: "Estimate cancellation pipeline recovery marker",
-      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
       after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(after);
       setEstimate(after);

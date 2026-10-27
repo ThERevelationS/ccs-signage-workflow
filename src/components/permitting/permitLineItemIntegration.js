@@ -17,6 +17,7 @@
  */
 
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // ── Deterministic hash (djb2 — synchronous, no crypto needed) ──
 
@@ -86,7 +87,7 @@ export function buildLineNotes(idempotencyKey, citations, additionalNotes = "") 
  */
 export async function findExistingLines(workOrderId, rowNames) {
   if (!workOrderId || !rowNames.length) return {};
-  const { items } = await base44.entities.PermitLineItem.filter(
+  const { items } = await staffEntities.PermitLineItem.filter(
     { work_order_id: workOrderId, row_name: { $in: rowNames } },
     { limit: 100, fields: ["id", "row_name", "status", "notes", "office_types", "locality_name"] },
   );
@@ -237,7 +238,7 @@ export async function createPermitLinesFromDraft(draft, workOrder, signIdentity 
     }
 
     const payload = mapDraftStepToPermitLineItem(step, draft, workOrder, idempotencyKey, rowName);
-    const record = await base44.entities.PermitLineItem.create(payload);
+    const record = await staffEntities.PermitLineItem.create(payload);
     created.push({ id: record.id, rowName, step });
   }
 
@@ -259,7 +260,7 @@ export async function createPermitLinesFromDraft(draft, workOrder, signIdentity 
 export async function generateReviewSuggestions(workOrderId, affectedSourceDocIds) {
   if (!workOrderId || !affectedSourceDocIds?.length) return [];
 
-  const { items } = await base44.entities.PermitLineItem.filter(
+  const { items } = await staffEntities.PermitLineItem.filter(
     { work_order_id: workOrderId },
     { limit: 100, fields: ["id", "row_name", "notes", "status", "office_types", "locality_name", "steps"] },
   );

@@ -37,7 +37,7 @@ function WorkflowReportingTab() {
     setLoading(true);
     setReadError("");
     loadAllEntityRows({
-      entity: base44.entities.WorkOrder,
+      entity: staffEntities.WorkOrder,
       query: { deleted: false },
       sort: "created_date",
       label: "Workflow reporting Work Orders",
@@ -204,7 +204,7 @@ import TeamLeaderboard from "@/components/financials/TeamLeaderboard";
 import PerformanceSummaryReport from "@/components/financials/PerformanceSummaryReport";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function Financials() {

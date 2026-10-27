@@ -8,6 +8,7 @@ import { builderMutationHash, markBuilderMutationPending, pendingBuilderMutation
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { expectedBuilderEntityFields, replaceBuilderEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -37,10 +38,10 @@ function manualProductPriceOperationKey({ estimateId, builderProductId, lineId, 
 export async function cloneProductInEstimate({ estimateId, line, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record to clone.");
   const [estimate, builder, parts, groups] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimateId),
-    base44.entities.BuilderProduct.get(line.builder_product_id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Part Groups" }),
+    staffEntities.AllInOneEstimate.get(estimateId),
+    staffEntities.BuilderProduct.get(line.builder_product_id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Product clone Part Groups" }),
   ]);
   if (!estimate || !builder || !Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product could not be fully loaded for cloning.");
   const currentLine = (estimate.line_items || []).find((item) =>
@@ -115,7 +116,7 @@ export async function cloneProductInEstimate({ estimateId, line, expectedEstimat
 
 export async function saveProductSettings({ estimateId, line, patch = {}, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line) return null;
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const matches = (item) =>
     (line.line_id && item.line_id === line.line_id) ||
@@ -140,8 +141,8 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
       throw new Error("Another Builder mutation is still being recovered for this Product. Resume that operation before changing Product settings.");
     }
     const [builder, parts] = await Promise.all([
-      base44.entities.BuilderProduct.get(builderProductId),
-      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product price Builder Parts" }),
+      staffEntities.BuilderProduct.get(builderProductId),
+      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builderProductId }, sort: "sort_order", label: "Product price Builder Parts" }),
     ]);
     if (!builder?.id || !Array.isArray(parts)) throw new Error("The pending Product price adjustment could not verify its Builder Product or Parts.");
     const recovered = await resumeBuilderMutation({
@@ -158,7 +159,7 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
 
   let builder = null;
   if (builderProductId) {
-    builder = await base44.entities.BuilderProduct.get(builderProductId);
+    builder = await staffEntities.BuilderProduct.get(builderProductId);
     if (!builder?.id || (builder.estimate_id && builder.estimate_id !== estimateId)) {
       throw new Error("This Product's Builder record could not be verified. Reload before changing Product settings.");
     }
@@ -272,7 +273,7 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
   // metadata ahead of an unchanged Estimate line.
   const lineItems = (estimate.line_items || []).map((item) => matches(item) ? { ...item, ...nextPatch } : item);
   const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -280,7 +281,7 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
   });
   if (builder && Object.keys(builderPatch).length) {
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: builder.id,
       expectedUpdatedAt: builder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(builder, builderPatch),
@@ -295,7 +296,7 @@ export async function saveProductSettings({ estimateId, line, patch = {}, expect
 
 export async function saveProductNotes({ estimateId, line, notes, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !line) return;
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
   const exists = (estimate.line_items || []).some((item) =>
@@ -308,20 +309,20 @@ export async function saveProductNotes({ estimateId, line, notes, expectedEstima
       : item
   );
   const savedEstimate = await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId,
     expectedFields: expectedEstimateFields(estimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
     label: "Product notes Estimate line update",
   });
   if (line.builder_product_id) {
-    const currentBuilder = await base44.entities.BuilderProduct.get(line.builder_product_id);
+    const currentBuilder = await staffEntities.BuilderProduct.get(line.builder_product_id);
     if (!currentBuilder?.id || String(currentBuilder.estimate_id || "") !== String(estimateId)) {
       throw new Error("The Product Builder changed ownership before its notes could be mirrored.");
     }
     const builderNotesPatch = { product_notes: notes };
     await replaceBuilderEntityFieldsIfUnchanged({
-      entity: base44.entities.BuilderProduct,
+      entity: staffEntities.BuilderProduct,
       id: currentBuilder.id,
       expectedUpdatedAt: currentBuilder.updated_date || "",
       expectedFields: expectedBuilderEntityFields(currentBuilder, builderNotesPatch),

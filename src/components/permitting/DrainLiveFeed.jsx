@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Radio } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const Q = base44.entities.SourceCollectionQueue;
+const Q = staffEntities.SourceCollectionQueue;
 const POLL_MS = 10000;
 
 const OUTCOME_STYLE = {

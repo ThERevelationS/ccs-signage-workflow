@@ -32,9 +32,9 @@ function sourceMeta(estimate, line) {
 
 async function captureProductPayload({ line }) {
   const [builder, parts, groups] = await Promise.all([
-    base44.entities.BuilderProduct.get(line.builder_product_id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Part Groups" }),
+    staffEntities.BuilderProduct.get(line.builder_product_id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Clipboard Product Part Groups" }),
   ]);
   if (!builder) throw new Error("Product could not be loaded for clipboard copy.");
   const activeParts = (parts || []).filter((part) => part.is_active !== false).sort((a, b) => num(a.sort_order) - num(b.sort_order));
@@ -131,7 +131,7 @@ async function createClipboardRecord(data) {
 
 export async function copyProductToClipboard({ estimateId, line }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("Product is not ready to copy.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const payload = await captureProductPayload({ line });
   return createClipboardRecord({
     item_type: "product",
@@ -144,7 +144,7 @@ export async function copyProductToClipboard({ estimateId, line }) {
 
 export async function copyPartToClipboard({ estimateId, builderProductId, part }) {
   if (!estimateId || !builderProductId || !part) throw new Error("Part is not ready to copy.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const line = await getEstimateLine(estimate, builderProductId);
   return createClipboardRecord({
     item_type: "part",
@@ -158,7 +158,7 @@ export async function copyPartToClipboard({ estimateId, builderProductId, part }
 
 export async function copyPartGroupToClipboard({ estimateId, builderProductId, group, parts }) {
   if (!estimateId || !builderProductId || !group) throw new Error("Part Group is not ready to copy.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const line = await getEstimateLine(estimate, builderProductId);
   return createClipboardRecord({
     item_type: "part_group",

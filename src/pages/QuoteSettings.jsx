@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createQuoteDefaultsSingletonWithRecovery } from "@/components/estimator/quoteDefaultsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const DISPLAY_OPTIONS = [
   ["hide_section_prices", "Bundle Product pricing"],
@@ -79,7 +80,7 @@ export default function QuoteSettings() {
       let createStatus = "";
       if (record?.id) {
         saved = await replaceEntityFieldsIfUnchanged({
-          entity: base44.entities.QuoteDefaults,
+          entity: staffEntities.QuoteDefaults,
           id: record.id,
           expectedUpdatedAt: current?.updated_date || record.updated_date || "",
           expectedFields: expectedEntityFields(current || record, payload),
@@ -89,7 +90,7 @@ export default function QuoteSettings() {
         });
       } else {
         const createResult = await createQuoteDefaultsSingletonWithRecovery({
-          entity: base44.entities.QuoteDefaults,
+          entity: staffEntities.QuoteDefaults,
           data: payload,
           label: "Quote Defaults",
         });

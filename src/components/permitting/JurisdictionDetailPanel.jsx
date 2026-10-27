@@ -40,6 +40,7 @@ import PermitWorkflowDesigner from "./PermitWorkflowDesigner";
 import { createElectricalPlanningHandoff } from "./permitWorkflowDesigner";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
@@ -240,7 +241,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
       for (const doc of batch) {
         if (activeArchiveJurisdictionRef.current !== targetId) break;
         try {
-          const latest = await base44.entities.JurisdictionProfile.get(targetId);
+          const latest = await staffEntities.JurisdictionProfile.get(targetId);
           const current = (latest.documents || []).find(item => item.id === doc.id && item.url === doc.url);
           if (!current) {
             progress.skipped++;
@@ -251,7 +252,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
             throw new Error("Official source fingerprint changed; recheck before uploading");
           } else {
             await runAction('downloadPermitPDF',{jurisdiction_id:targetId,document_url:doc.url,document_title:doc.title},`Download ${doc.title} — ${jurisdiction.name}`);
-            const saved = await base44.entities.JurisdictionProfile.get(targetId);
+            const saved = await staffEntities.JurisdictionProfile.get(targetId);
             const stored = (saved.documents || []).find(item => item.id === doc.id && item.url === doc.url);
             if (!isVerifiedPermitPDFArchive(stored)) throw new Error("Stored PDF checksum or byte count could not be verified");
             progress.stored++;
@@ -259,7 +260,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           }
         } catch (error) {
           // One re-read recovers an upload that succeeded despite a network timeout.
-          const saved = await base44.entities.JurisdictionProfile.get(targetId).catch(() => null);
+          const saved = await staffEntities.JurisdictionProfile.get(targetId).catch(() => null);
           const stored = (saved?.documents || []).find(item => item.id === doc.id && item.url === doc.url);
           if (isVerifiedPermitPDFArchive(stored)) {
             progress.stored++;
@@ -504,7 +505,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           changes: {}
         };
         const savedWithActivity = await appendJurisdictionActivitySafely({
-          entity: base44.entities.JurisdictionProfile,
+          entity: staffEntities.JurisdictionProfile,
           jurisdictionId: jurisdiction.id,
           entry: newEntry,
           label: `Jurisdiction research activity ${jurisdiction.name || jurisdiction.id}`,
@@ -573,7 +574,7 @@ Answer only from the provided excerpts and cite the document title and official 
       if (res.data?.jurisdiction?.id) {
         onUpdate(res.data.jurisdiction);
       } else if (res.data?.file_url) {
-        const latest = await base44.entities.JurisdictionProfile.get(jurisdiction.id).catch(() => null);
+        const latest = await staffEntities.JurisdictionProfile.get(jurisdiction.id).catch(() => null);
         if (latest?.id) onUpdate(latest);
       }
     } catch (e) {

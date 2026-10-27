@@ -13,9 +13,9 @@ import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/co
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const SETTING_KEY = "taskAssignmentRules";
 

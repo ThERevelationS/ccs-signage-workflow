@@ -1,6 +1,7 @@
 import {ResearchProgressContext} from "./ResearchProgressContext";
 import { useEffect, useRef, useState,useContext } from 'react';
 import { base44 } from '@/api/base44Client';
+import { staffEntities } from "@/components/staff/staffEntities";
 const labels={downloadable_document:'Document',online_form:'Online form',code_publisher:'Code publisher',department_reference:'Department',other_permitting_resource:'Other resource'};
 function webLink(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch{return null;}}
 export default function ExternalPermittingReferrals({jurisdiction,isAdmin,onUpdate,disabled=false}){
@@ -17,7 +18,7 @@ export default function ExternalPermittingReferrals({jurisdiction,isAdmin,onUpda
   let result,error;
   try{result=(await (activity?.runAction || base44.functions.invoke.bind(base44.functions))('continueJurisdictionArchives',{jurisdiction_id:id,external_referral:{url:row.url,source_page_url:row.source_page_url}},`Collect ${row.title || row.url} — ${jurisdiction.name}`)).data;}catch(e){error=e?.response?.data?.error || e?.message || 'Collection could not complete.';}
   // Refresh durable receipts even when the request acknowledgement was lost.
-  let latest;try{latest=await base44.entities.JurisdictionProfile.get(id);}catch{error=error || 'Could not reload the saved document status. Refresh this locality before retrying.';}
+  let latest;try{latest=await staffEntities.JurisdictionProfile.get(id);}catch{error=error || 'Could not reload the saved document status. Refresh this locality before retrying.';}
   if(alive.current&&identity.current===id){
    if(latest?.id===id)onUpdate(latest);
    const doc=latest?.documents?.find(d=>d.url===row.url);

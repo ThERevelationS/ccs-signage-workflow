@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Printer } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const clean = (v) => String(v ?? "").trim();
 const listRows = (v) => (Array.isArray(v) ? v : Array.isArray(v?.items) ? v.items : []);
@@ -63,14 +64,14 @@ export default function WorkOrderTraveler() {
     (async () => {
       if (!woId) { setError("No work order specified."); setLoading(false); return; }
       try {
-        const record = await base44.entities.WorkOrder.get(woId);
+        const record = await staffEntities.WorkOrder.get(woId);
         if (cancelled) return;
         if (!record?.id) throw new Error("Work order not found.");
         setWo(record);
         document.title = `Traveler — ${clean(record.title) || woId}`;
         const [kids, permitItems, pulls] = await Promise.all([
-          base44.entities.WorkOrder.filter({ parent_work_order_id: woId }).catch(() => []),
-          base44.entities.PermitLineItem.filter({ work_order_id: woId }).catch(() => []),
+          staffEntities.WorkOrder.filter({ parent_work_order_id: woId }).catch(() => []),
+          staffEntities.PermitLineItem.filter({ work_order_id: woId }).catch(() => []),
           base44.entities.InventoryMovement.filter({ work_order_id: woId }).catch(() => []),
         ]);
         if (!cancelled) {

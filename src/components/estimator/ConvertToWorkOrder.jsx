@@ -19,6 +19,7 @@ import {
   mergeWorkOrderProducts,
   selectExistingEstimateWorkOrder,
 } from "./workOrderConversion";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
@@ -33,7 +34,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       setWorkOrderId("");
       return () => { active = false; };
     }
-    base44.entities.WorkOrder.get(linkedId)
+    staffEntities.WorkOrder.get(linkedId)
       .then((row) => {
         if (!active) return;
         setWorkOrderId(row?.id && row.deleted !== true ? row.id : "");
@@ -52,7 +53,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         .map((l) => `• ${getModuleLabel(l.module_key)} — ${l.project_name}`)
         .join("\n");
 
-      const estimateBefore = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const estimateBefore = await staffEntities.AllInOneEstimate.get(estimate.id);
       const pendingPrice = getPendingEstimatePriceAcceptance(estimateBefore);
       if (pendingPrice) {
         const name = pendingPrice.line?.client_product_name || pendingPrice.line?.project_name || "Product";
@@ -106,7 +107,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       ) {
         throw new Error("This estimate changed in another session. Reload before converting so newer approved pricing/details are not overwritten.");
       }
-      const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
+      const matches = await staffEntities.WorkOrder.filter({ estimate_id: estimate.id });
       const activeMatches = (matches || []).filter((row) => row?.deleted !== true);
       const existing = selectExistingEstimateWorkOrder(activeMatches, estimate.work_order_id);
       if (!existing && (matches || []).some((row) => row?.deleted === true)) {
@@ -152,7 +153,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         });
       } else {
         workOrder = await createEstimateLinkedWorkOrderWithRecovery({
-          entity: base44.entities.WorkOrder,
+          entity: staffEntities.WorkOrder,
           estimateId: estimate.id,
           data: workOrderFields,
           label: "Approved estimate Work Order conversion",
@@ -181,7 +182,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         ...conversionEstimateFields,
       };
       await replaceEstimateFieldsIfUnchanged({
-        entity: base44.entities.AllInOneEstimate,
+        entity: staffEntities.AllInOneEstimate,
         estimateId: estimate.id,
         expectedFields: expectedEstimateFields(estimateBefore, conversionEstimateFields),
         guardFields: { updated_date: estimateBefore.updated_date },

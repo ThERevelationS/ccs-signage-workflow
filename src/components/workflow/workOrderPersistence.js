@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
 import { stripInheritedWorkOrderSyncIdentity } from './workOrderCreationIdentity.mjs';
 import { NotificationTriggers } from "./NotificationService";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const SYSTEM_FIELDS = new Set([
   "id",
@@ -41,7 +42,7 @@ export function workOrderPatchMatches(record, patch) {
   return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
 }
 
-export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = base44.entities.WorkOrder } = {}) {
+export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = staffEntities.WorkOrder } = {}) {
   // All UI-driven new WorkOrders, including Duplicate Client, must start
   // unlinked. Never copy an existing job's permanent Smartsheet row ownership
   // or durable POST/import evidence into a newly created record.
@@ -192,7 +193,7 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
   label = "Work Order array",
   maxAttempts = 3,
 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrderId || "").trim();
   const fieldName = String(field || "").trim();
   const expected = expectedArray == null ? [] : expectedArray;
@@ -237,7 +238,7 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
 }
 
 export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, label = "Work Order", maxAttempts = 3 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrderId || "").trim();
   const fieldName = String(field || "").trim();
   if (!id || !fieldName || typeof mutate !== "function" || !entity?.updateMany || !entity?.get) {
@@ -297,7 +298,7 @@ export async function softDeleteWorkOrderFromLoadedSnapshot({
   deletedBy = "unknown",
   label = "Work Order delete",
 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
   const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
   const actor = String(deletedBy || "unknown").trim() || "unknown";
@@ -343,7 +344,7 @@ export async function restoreWorkOrderFromLoadedTrashSnapshot({
   workOrder,
   label = "Work Order recovery",
 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
   const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
   if (!id || !expectedUpdatedAt || !entity?.updateMany || !entity?.get) {
@@ -389,7 +390,7 @@ export async function restoreWorkOrderFromLoadedTrashSnapshot({
 }
 
 export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, label = "Work Order" }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
   const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
   if (!id || !entity?.updateMany || !entity?.get) {

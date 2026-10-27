@@ -3,8 +3,9 @@ import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, History, Loader2, RefreshCw } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const CellHistory = base44.entities.CellHistory;
+const CellHistory = staffEntities.CellHistory;
 
 const FIELD_LABELS = {
   row_name: "Permit line name",

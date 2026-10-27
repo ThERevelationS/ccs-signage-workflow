@@ -9,8 +9,9 @@ import {
   Check, X, Plus, Trash2, Pencil, Save, 
   ClipboardList, FileText, Copy, Star 
 } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
+const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
 
 // Default checklist items if no template exists
 const DEFAULT_CHECKLIST = [

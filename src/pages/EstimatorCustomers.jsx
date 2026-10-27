@@ -9,6 +9,7 @@ import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/custome
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from "@/components/portal/PortalPanel";
 import SavedViews from "@/components/workflow/SavedViews";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -240,7 +241,7 @@ export default function EstimatorCustomers() {
     const load = async () => {
       const [res, tierRows, user] = await Promise.all([
         loadAllCustomers(),
-        loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
+        loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
         base44.auth.me().catch(() => null),
       ]);
       setCustomers(res || []);
@@ -292,7 +293,7 @@ export default function EstimatorCustomers() {
     setSavingTierId(customerId);
     try {
       const saved = await replaceCustomerFieldsIfUnchanged({
-        entity: base44.entities.Customer,
+        entity: staffEntities.Customer,
         customerId,
         expectedFields: { pricing_tier: loadedCustomer.pricing_tier },
         nextFields: { pricing_tier: nextTier },
@@ -300,7 +301,7 @@ export default function EstimatorCustomers() {
       });
       setCustomers((rows) => rows.map((customer) => customer.id === customerId ? saved : customer));
     } catch (error) {
-      const refreshed = await base44.entities.Customer.get(customerId).catch(() => null);
+      const refreshed = await staffEntities.Customer.get(customerId).catch(() => null);
       if (refreshed) {
         setCustomers((rows) => rows.map((customer) => customer.id === customerId ? refreshed : customer));
       }

@@ -22,7 +22,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Helper to parse date string as local date
@@ -255,12 +255,12 @@ export default function SIPs() {
         }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIPs authorized users" }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "SIPs sales task descriptions",
         }),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "SIPs checklist dropdown conditions",
         })

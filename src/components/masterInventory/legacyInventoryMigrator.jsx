@@ -22,7 +22,7 @@ import {
   DimensionalLetterMaterial,
   Inventory,
   LegacyMigrationMap,
-} from "@/entities/all";
+} from "@/api/gatedEntities";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const VALID_MATERIAL_TYPES = new Set([

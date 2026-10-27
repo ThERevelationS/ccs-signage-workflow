@@ -25,9 +25,10 @@ import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
 import { copyCatalogOfficeToLocality, resolveCatalogOfficeProvenance } from "./localityOfficeCatalogBridge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const PermitLocality = base44.entities.PermitLocality;
-const GlobalSettings = base44.entities.GlobalSettings;
+const PermitLocality = staffEntities.PermitLocality;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 // Catalog office verification is distinct from an office's legal authority for a locality.
 function OfficeSourceStatus({ provenance }) {

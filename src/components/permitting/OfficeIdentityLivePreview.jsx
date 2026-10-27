@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { officeCandidateEvidence } from "./officeCandidateEvidence.mjs";
 import { loadOfficeIdentityPreview, officePreviewSelectionKey } from "./officeIdentityPreviewRequest.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function OfficeIdentityLivePreview({ office }) {
   const selection = officePreviewSelectionKey(office);
@@ -25,7 +26,7 @@ export default function OfficeIdentityLivePreview({ office }) {
     setView({ selection, ticket, busy: true });
     try {
       const result = await loadOfficeIdentityPreview({ office: JSON.parse(JSON.stringify(office)),
-        settingsEntity: base44.entities.GlobalSettings, invoke: (name, body) => base44.functions.invoke(name, body),
+        settingsEntity: staffEntities.GlobalSettings, invoke: (name, body) => base44.functions.invoke(name, body),
         isCurrent: () => mounted.current && current.current === selection && generation.current === ticket });
       if (mounted.current && current.current === selection && generation.current === ticket)
         setView({ selection, ticket, result, receivedAt: new Date().toISOString() });

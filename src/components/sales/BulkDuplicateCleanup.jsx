@@ -8,8 +8,9 @@ import { softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/wor
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 function scoreRecord(wo) {
   // Higher score = more data = better to keep

@@ -21,6 +21,7 @@ import {
   X,
   History,
 } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const STAGES = [
   { key: "new", label: "New" },
@@ -381,12 +382,12 @@ function PermitPanel({ sessionToken, detail, opportunity, onLinked }) {
     setError("");
     try {
       const a = clean(address);
-      const existing = await base44.entities.CustomerLocation.filter({
+      const existing = await staffEntities.CustomerLocation.filter({
         customer_id: clean(opportunity.customer_id),
         jurisdiction_profile_id: clean(suggested.jurisdiction_profile_id),
       }).catch(() => []);
       let created = (Array.isArray(existing) ? existing : []).find((l) => clean(l?.address_line_1).toLowerCase() === a.toLowerCase()) || null;
-      if (!created) created = await base44.entities.CustomerLocation.create({
+      if (!created) created = await staffEntities.CustomerLocation.create({
         customer_id: clean(opportunity.customer_id),
         label: a,
         address_line_1: a,

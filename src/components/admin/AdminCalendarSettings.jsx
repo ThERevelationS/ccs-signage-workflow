@@ -22,6 +22,7 @@ import {
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
@@ -47,7 +48,7 @@ export default function AdminCalendarSettings() {
       const [evs, savedSettings] = await Promise.all([
         base44.entities.CalendarEvent.list("-start_datetime", 200),
         loadSingleGlobalSetting({
-          entity: base44.entities.GlobalSettings,
+          entity: staffEntities.GlobalSettings,
           settingKey: "calendarSettings",
           label: "Calendar settings",
         }),
@@ -76,7 +77,7 @@ export default function AdminCalendarSettings() {
     const newVal = { ...current, ...updates };
     try {
       const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: base44.entities.GlobalSettings,
+        entity: staffEntities.GlobalSettings,
         loadedRecord: globalSettings,
         settingKey: "calendarSettings",
         nextValue: newVal,

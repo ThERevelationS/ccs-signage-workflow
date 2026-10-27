@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useReducer, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 
-const GlobalSettings = base44.entities.GlobalSettings;
+const GlobalSettings = staffEntities.GlobalSettings;
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings
 import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual } from "@/components/sales/salesColumnEditorDraft.mjs";
 import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 import { hasRetiredSalesStageCondition } from "@/components/sales/salesStageTrust.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },

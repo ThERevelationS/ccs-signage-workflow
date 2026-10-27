@@ -6,6 +6,7 @@ import { loadAllEntityRows } from "./loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { createEstimateLinkedWorkOrderWithRecovery, deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
 import { expectedCustomerFields, replaceCustomerFieldsIfUnchanged } from "./customerPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const norm = (s) => String(s || "").trim().toLowerCase();
 const firstNonBlank = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== "") ?? "";
@@ -18,7 +19,7 @@ export const loadAllCustomers = async ({ pageSize = CUSTOMER_PAGE_SIZE, maxRows 
   const seen = new Set();
   let skip = 0;
   while (skip < maxRows) {
-    const page = await base44.entities.Customer.list("created_date", pageSize, skip);
+    const page = await staffEntities.Customer.list("created_date", pageSize, skip);
     if (!Array.isArray(page)) throw new Error("The Customer catalog could not be loaded safely.");
     for (const customer of page) {
       if (!customer?.id || seen.has(customer.id)) continue;
@@ -50,13 +51,13 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
   if (!estimateId || !created?.id) return created || null;
   await new Promise((resolve) => setTimeout(resolve, 50));
   const canonical = canonicalEstimateWorkOrder(
-    (await base44.entities.WorkOrder.filter({ estimate_id: estimateId })).filter((row) => row?.deleted !== true)
+    (await staffEntities.WorkOrder.filter({ estimate_id: estimateId })).filter((row) => row?.deleted !== true)
   ) || created;
 
   if (canonical?.id && canonical.id !== created.id) {
     try {
       await deleteCreatedDuplicateWorkOrderIfUnchanged({
-        entity: base44.entities.WorkOrder,
+        entity: staffEntities.WorkOrder,
         created,
         sessionToken,
         label: `Duplicate ${duplicateLabel}`,
@@ -119,7 +120,7 @@ export const resolveCustomerForEstimate = async (form, customers = []) => {
   if (linkedId) {
     const linked = customers.find((customer) => customer.id === linkedId);
     if (linked) return linked;
-    const fetched = await base44.entities.Customer.get(linkedId).catch(() => null);
+    const fetched = await staffEntities.Customer.get(linkedId).catch(() => null);
     if (fetched) return fetched;
   }
   return findCustomerByName(customers, form?.client_name);
@@ -132,7 +133,7 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
   if (existing) {
     if (Object.keys(fields).length) {
       return replaceCustomerFieldsIfUnchanged({
-        entity: base44.entities.Customer,
+        entity: staffEntities.Customer,
         customerId: existing.id,
         expectedFields: expectedCustomerFields(existing, fields),
         nextFields: fields,
@@ -157,7 +158,7 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
  * carrying over every piece of contact/project info we have.
  */
 export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "", sessionToken = "" } = {}) => {
-  const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
+  const existingRows = await staffEntities.WorkOrder.filter({ estimate_id: estimate.id });
   const activeExistingRows = (existingRows || []).filter((row) => row?.deleted !== true);
   let existing = canonicalEstimateWorkOrder(activeExistingRows);
   if (!existing && (existingRows || []).some((row) => row?.deleted === true)) {
@@ -170,8 +171,8 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
   const estimateRequestId = String(estimate.estimating_request_id || "").trim();
   if (!existing && (estimateOpportunityId || estimateRequestId)) {
     const [byRequest, byOpportunity] = await Promise.all([
-      estimateRequestId ? base44.entities.WorkOrder.filter({ estimating_request_id: estimateRequestId }) : Promise.resolve([]),
-      estimateOpportunityId ? base44.entities.WorkOrder.filter({ opportunity_id: estimateOpportunityId }) : Promise.resolve([]),
+      estimateRequestId ? staffEntities.WorkOrder.filter({ estimating_request_id: estimateRequestId }) : Promise.resolve([]),
+      estimateOpportunityId ? staffEntities.WorkOrder.filter({ opportunity_id: estimateOpportunityId }) : Promise.resolve([]),
     ]);
     const seen = new Set();
     const candidates = [...(byRequest || []), ...(byOpportunity || [])]
@@ -249,7 +250,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     // Preserve the existing estimate-ID convergence behavior, but also recover a
     // durable create whose response was lost before the convergence step could run.
     workOrder = await createEstimateLinkedWorkOrderWithRecovery({
-      entity: base44.entities.WorkOrder,
+      entity: staffEntities.WorkOrder,
       estimateId: estimate.id,
       data: createFields,
       label: "Sales Pipeline estimate synchronization",
@@ -302,7 +303,7 @@ export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus 
  */
 export const backfillCustomersFromWorkOrders = async (customers, { sessionToken = "" } = {}) => {
   const workOrders = await loadAllEntityRows({
-    entity: base44.entities.WorkOrder,
+    entity: staffEntities.WorkOrder,
     sort: "-created_date",
     label: "Workflow Work Orders",
   });

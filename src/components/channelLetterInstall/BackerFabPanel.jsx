@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/entities/all";
+import { DimensionalLetterMaterial, Settings as SettingsEntity } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   getActiveRates, getPaintRates, lookupCutSpeed, lookupCutMultiplier,

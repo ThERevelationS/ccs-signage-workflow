@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings as SettingsEntity, User } from "@/entities/all";
+import { Settings as SettingsEntity, User } from "@/api/gatedEntities";
 import { ArrowLeft, Building2, DollarSign, Layers, Lock, Ruler, Save, TriangleAlert, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

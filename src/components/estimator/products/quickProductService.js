@@ -29,9 +29,9 @@ export async function saveProductAsQuickProduct({
 }) {
   if (!estimateId || !line?.builder_product_id) throw new Error("This Product does not have a persistent Product record yet.");
   const [builder, parts, groups] = await Promise.all([
-    base44.entities.BuilderProduct.get(line.builder_product_id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Part Groups" }),
+    staffEntities.BuilderProduct.get(line.builder_product_id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Part Groups" }),
   ]);
   if (!builder) throw new Error("The Product could not be loaded.");
   if (!Array.isArray(parts) || !Array.isArray(groups)) throw new Error("The Product Parts / Part Groups could not be fully verified before saving this Quick Product.");
@@ -172,9 +172,9 @@ function findCompletedQuickInsertLine(estimate, operationKey) {
 async function completedQuickInsertResult(estimate, line, flags = {}) {
   if (!line?.builder_product_id) throw new Error("The completed Quick Product line is missing its Builder Product link.");
   const [builder, parts, groups] = await Promise.all([
-    base44.entities.BuilderProduct.get(line.builder_product_id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Builder Parts" }),
-    loadAllEntityRows({ entity: base44.entities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Part Groups" }),
+    staffEntities.BuilderProduct.get(line.builder_product_id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Builder Parts" }),
+    loadAllEntityRows({ entity: staffEntities.BuilderPartGroup, query: { builder_product_id: line.builder_product_id }, sort: "sort_order", label: "Quick Product Part Groups" }),
   ]);
   if (!builder?.id || !Array.isArray(parts) || !Array.isArray(groups)) {
     throw new Error("The completed Quick Product could not be fully verified. Reload before continuing.");
@@ -550,7 +550,7 @@ function quickBuilderOwnershipPatch(blueprint, estimateId, lineId) {
 
 async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
   const readMatches = async () => {
-    const rows = await base44.entities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
+    const rows = await staffEntities.BuilderProduct.filter({ estimate_id: estimateId, estimate_line_id: lineId });
     if (!Array.isArray(rows)) throw new Error("Builder Products could not be verified while recovering Quick Product insertion.");
     return rows;
   };
@@ -570,7 +570,7 @@ async function ensureQuickInsertBuilder({ estimateId, lineId, blueprint }) {
   let created = null;
   let createError = null;
   try {
-    created = await base44.entities.BuilderProduct.create(blueprint.builderCreateData);
+    created = await staffEntities.BuilderProduct.create(blueprint.builderCreateData);
   } catch (error) {
     createError = error;
   }
@@ -702,7 +702,7 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
     }
     if (!sourceProject?.id) throw new Error("Quick Product source project could not be verified after creation.");
 
-    const latestBuilder = await base44.entities.BuilderProduct.get(builder.id);
+    const latestBuilder = await staffEntities.BuilderProduct.get(builder.id);
     if (!latestBuilder?.id) throw new Error("Quick Product Builder could not be reloaded before linking its source project.");
     if (latestBuilder.source_project_id && latestBuilder.source_project_id !== sourceProject.id) {
       throw new Error("The pending Quick Product Builder is already linked to a different source project.");
@@ -713,7 +713,7 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
         source_project_id: sourceProject.id,
       };
       await replaceBuilderEntityFieldsIfUnchanged({
-        entity: base44.entities.BuilderProduct,
+        entity: staffEntities.BuilderProduct,
         id: builder.id,
         expectedUpdatedAt: latestBuilder.updated_date || "",
         expectedFields: expectedBuilderEntityFields(latestBuilder, sourceLinkPatch),
@@ -722,7 +722,7 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
         label: "Quick Product Builder source link",
       });
     }
-    builder = await base44.entities.BuilderProduct.get(builder.id);
+    builder = await staffEntities.BuilderProduct.get(builder.id);
   }
 
   const currentNotes = String(sourceProject.notes || "");
@@ -740,7 +740,7 @@ async function ensureQuickInsertSource({ builder, blueprint }) {
   if (!sourceProject || sourceCoreDiffers(sourceProject, blueprint.sourceExpectedData)) {
     throw new Error("Quick Product source project could not be verified after removing its recovery token.");
   }
-  return { builder: await base44.entities.BuilderProduct.get(builder.id), sourceProject };
+  return { builder: await staffEntities.BuilderProduct.get(builder.id), sourceProject };
 }
 
 function buildPromotedQuickPending({ pending, blueprint, builder, sourceProject }) {
@@ -823,7 +823,7 @@ function buildPromotedQuickPending({ pending, blueprint, builder, sourceProject 
 
 async function promoteQuickInsertMarker({ estimate, line, pending, builder, sourceProject, blueprint }) {
   const promoted = buildPromotedQuickPending({ pending, blueprint, builder, sourceProject });
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimate.id);
   if (!latestEstimate) throw new Error("Estimate could not be verified before promoting Quick Product recovery.");
   const latestLine = (latestEstimate.line_items || []).find((item) => item.line_id === line.line_id);
   const latestPending = pendingBuilderMutation(latestLine);
@@ -840,7 +840,7 @@ async function promoteQuickInsertMarker({ estimate, line, pending, builder, sour
       }
     : item);
   await replaceEstimateFieldsIfUnchanged({
-    entity: base44.entities.AllInOneEstimate,
+    entity: staffEntities.AllInOneEstimate,
     estimateId: estimate.id,
     expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
     nextFields: { line_items: lineItems },
@@ -848,9 +848,9 @@ async function promoteQuickInsertMarker({ estimate, line, pending, builder, sour
   });
 
   const [markedEstimate, currentBuilder, currentParts] = await Promise.all([
-    base44.entities.AllInOneEstimate.get(estimate.id),
-    base44.entities.BuilderProduct.get(builder.id),
-    loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Quick Product recovery Parts" }),
+    staffEntities.AllInOneEstimate.get(estimate.id),
+    staffEntities.BuilderProduct.get(builder.id),
+    loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: builder.id }, sort: "sort_order", label: "Quick Product recovery Parts" }),
   ]);
   const markedLine = (markedEstimate?.line_items || []).find((item) => item.line_id === line.line_id);
   const canonicalPending = pendingBuilderMutation(markedLine);
@@ -862,7 +862,7 @@ async function promoteQuickInsertMarker({ estimate, line, pending, builder, sour
 
 export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
   if (!estimateId) throw new Error("Estimate is required to resume Quick Product insertion.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const line = lineId
     ? (estimate.line_items || []).find((item) => item.line_id === lineId)
@@ -889,8 +889,8 @@ export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
 
   if (pending.builder_product_id && pending.part_acceptance_plan) {
     const [builder, parts] = await Promise.all([
-      base44.entities.BuilderProduct.get(pending.builder_product_id),
-      loadAllEntityRows({ entity: base44.entities.BuilderPart, query: { builder_product_id: pending.builder_product_id }, sort: "sort_order", label: "Quick Product recovery Parts" }),
+      staffEntities.BuilderProduct.get(pending.builder_product_id),
+      loadAllEntityRows({ entity: staffEntities.BuilderPart, query: { builder_product_id: pending.builder_product_id }, sort: "sort_order", label: "Quick Product recovery Parts" }),
     ]);
     if (!builder?.id || !Array.isArray(parts)) throw new Error("Quick Product recovery could not verify its promoted Builder Product or Parts.");
     const result = await resumeBuilderMutation({
@@ -902,7 +902,7 @@ export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
       pending,
       applyPartPlan: applyBuilderPartPriceAcceptancePlan,
     });
-    const completedEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+    const completedEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
     const completedLine = (completedEstimate?.line_items || []).find((item) => item.line_id === line.line_id) || result.line;
     return completedQuickInsertResult(completedEstimate, completedLine, { recovered: true });
   }
@@ -923,7 +923,7 @@ export async function resumeQuickProductInsertion({ estimateId, lineId = "" }) {
     pending: promoted.canonicalPending,
     applyPartPlan: applyBuilderPartPriceAcceptancePlan,
   });
-  const completedEstimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const completedEstimate = await staffEntities.AllInOneEstimate.get(estimateId);
   const completedLine = (completedEstimate?.line_items || []).find((item) => item.line_id === line.line_id) || result.line;
   return completedQuickInsertResult(completedEstimate, completedLine, { recovered: true });
 }
@@ -966,7 +966,7 @@ async function startQuickProductInsertion({ estimate, productPayload, sourceType
   };
 
   await assertEstimateProductMutationAllowed(estimate, { expectedUpdatedAt: expectedEstimateUpdatedAt });
-  const latestEstimate = await base44.entities.AllInOneEstimate.get(estimate.id);
+  const latestEstimate = await staffEntities.AllInOneEstimate.get(estimate.id);
   if (!latestEstimate) throw new Error("Estimate could not be verified before adding the Quick Product recovery marker.");
   if (estimate.updated_date && latestEstimate.updated_date && estimate.updated_date !== latestEstimate.updated_date) {
     throw new Error("This estimate changed in another session before Quick Product insertion started. No Product records were created.");
@@ -978,7 +978,7 @@ async function startQuickProductInsertion({ estimate, productPayload, sourceType
   } else {
     const lineItems = [...(latestEstimate.line_items || []), provisionalQuickLine(blueprint, pending)];
     await replaceEstimateFieldsIfUnchanged({
-      entity: base44.entities.AllInOneEstimate,
+      entity: staffEntities.AllInOneEstimate,
       estimateId: estimate.id,
       expectedFields: expectedEstimateFields(latestEstimate, { line_items: lineItems }),
       nextFields: { line_items: lineItems },
@@ -991,7 +991,7 @@ async function startQuickProductInsertion({ estimate, productPayload, sourceType
 
 export async function instantiateQuickProduct({ estimateId, quickProduct, expectedEstimateUpdatedAt = "" }) {
   if (!estimateId || !quickProduct?.id) throw new Error("Estimate and Quick Product are required.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
 
   const pendingLine = findPendingQuickInsertLine(estimate);
@@ -1038,7 +1038,7 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
 
 export async function instantiateProductSnapshot({ estimateId, productSnapshot, expectedEstimateUpdatedAt = "", sourceId = "", sourceType = "clipboard_product" }) {
   if (!estimateId || !productSnapshot) throw new Error("Estimate and Product snapshot are required.");
-  const estimate = await base44.entities.AllInOneEstimate.get(estimateId);
+  const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
   if (!estimate) throw new Error("Estimate could not be loaded.");
   const payloadHash = quickPayloadFingerprint(productSnapshot);
   const pendingLine = findPendingQuickInsertLine(estimate);

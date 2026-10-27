@@ -1,8 +1,9 @@
 import {useEffect,useRef,useState} from 'react';
 import {useAuth} from '@/components/auth/EmailGate';
 import {base44} from '@/api/base44Client';
+import { staffEntities } from "@/components/staff/staffEntities";
 
-export async function readExactLocalityForReview(id,entity=base44.entities.PermitLocality){
+export async function readExactLocalityForReview(id,entity=staffEntities.PermitLocality){
  if(typeof id!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(id))throw Error('Saved locality reference is invalid.');
  let row;try{row=await entity.get(id);}catch{throw Error('This saved locality could not be read. Refresh coverage and try again.');}
  if(!row||row.id!==id)throw Error('Saved locality identity could not be confirmed. Refresh coverage and try again.');

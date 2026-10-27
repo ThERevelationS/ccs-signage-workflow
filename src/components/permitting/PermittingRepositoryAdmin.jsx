@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { assertJurisdictionCatalogStable, createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const PDF_DOWNLOAD_BATCH_LIMIT = 25;
 const needsPDFArchive = (doc) => Boolean(doc?.url && !doc.file_url && /\.pdf(?:[?#]|$)/i.test(doc.url)
@@ -60,7 +61,7 @@ export default function PermittingRepositoryAdmin() {
     setIsLoading(true);
     try {
       const all = await loadAllEntityRows({
-        entity: base44.entities.JurisdictionProfile,
+        entity: staffEntities.JurisdictionProfile,
         sort: "-created_date",
         label: "Permitting Repository admin catalog",
       });
@@ -107,7 +108,7 @@ export default function PermittingRepositoryAdmin() {
           const [name, state, type = 'county', parentCounty = ''] = parts;
           try {
             const result = await createJurisdictionIfAbsent({
-              entity: base44.entities.JurisdictionProfile,
+              entity: staffEntities.JurisdictionProfile,
               data: {
                 name,
                 state,
@@ -202,7 +203,7 @@ export default function PermittingRepositoryAdmin() {
     try {
       for (const [index, item] of batch.entries()) {
         try {
-          const latest = await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
+          const latest = await staffEntities.JurisdictionProfile.get(item.jurisdictionId);
           const currentDoc = (latest.documents || []).find(doc => doc.id === item.documentId && doc.url === item.url);
           if (!currentDoc) {
             skipped++;
@@ -215,7 +216,7 @@ export default function PermittingRepositoryAdmin() {
             const res = await runAction('downloadPermitPDF',{jurisdiction_id:item.jurisdictionId,document_url:item.url,document_title:item.title},`Download ${item.title}`);
             // A returned URL alone is not enough: confirm the correct source now
             // has a stored file in the latest record before counting a success.
-            const saved = await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
+            const saved = await staffEntities.JurisdictionProfile.get(item.jurisdictionId);
             const archived = (saved.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && isVerifiedPermitPDFArchive(doc));
             if (!archived) throw new Error('Upload was not confirmed against the matching document');
             uploaded++;
@@ -223,7 +224,7 @@ export default function PermittingRepositoryAdmin() {
         } catch (error) {
           // A timeout may have committed the upload; inspect it once before
           // reporting failure so an operator can safely rerun the remainder.
-          const latest = await base44.entities.JurisdictionProfile.get(item.jurisdictionId).catch(() => null);
+          const latest = await staffEntities.JurisdictionProfile.get(item.jurisdictionId).catch(() => null);
           const recovered = (latest?.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && isVerifiedPermitPDFArchive(doc));
           if (recovered) uploaded++;
           else {
@@ -310,7 +311,7 @@ export default function PermittingRepositoryAdmin() {
       // lost, or changed any Jurisdiction since this page loaded before deleting
       // the first row. Individual deletes are still version-guarded afterward.
       const verifiedCatalog = await loadAllEntityRows({
-        entity: base44.entities.JurisdictionProfile,
+        entity: staffEntities.JurisdictionProfile,
         sort: "-created_date",
         label: "Permitting Repository delete-all preflight",
       });
@@ -330,7 +331,7 @@ export default function PermittingRepositoryAdmin() {
 
         try {
           await deleteJurisdictionFromLoadedSnapshot({
-            entity: base44.entities.JurisdictionProfile,
+            entity: staffEntities.JurisdictionProfile,
             jurisdiction,
             label: `Admin delete ${jurisdiction.name || jurisdiction.id}`,
           });

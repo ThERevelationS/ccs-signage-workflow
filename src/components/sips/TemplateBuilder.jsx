@@ -22,8 +22,8 @@ import {
 } from "./templateBuilderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const ChecklistSubItem = base44.entities.ChecklistSubItem;
-const GlobalSettings = base44.entities.GlobalSettings;
+const ChecklistSubItem = staffEntities.ChecklistSubItem;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 // Keep the condition menu inside the visible viewport, including above the
 // trigger when there is more room there (e.g. near the bottom of a phone).

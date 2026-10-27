@@ -15,8 +15,9 @@ import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnc
 import { replaceRelationshipIdsIfUnchanged } from '@/components/masterInventory/equipmentPersistence';
 import { reorderFoundationItemsSafely } from './foundationInventoryPersistence';
 import { createInventoryRecordWithRecovery } from '@/components/masterInventory/inventoryPersistence';
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const FoundationInventoryEntity = staffEntities.FoundationInventory;
 
 // MultiSelect dropdown component for linking items
 function MultiSelectDropdown({ label, options, selectedIds, onChange }) {

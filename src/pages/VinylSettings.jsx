@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { VinylMachine, User } from "@/entities/all";
+import { VinylMachine, User } from "@/api/gatedEntities";
 import { ArrowLeft, Layers, Lock, Plus, Printer, Save, Scissors, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -8,8 +8,9 @@ import { base44 } from "@/api/base44Client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createTaskTemplateIfAbsent, deleteTaskTemplateIfUnchanged, updateTaskTemplateIfUnchanged } from "@/components/workflow/taskTemplatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TaskTemplate = base44.entities.TaskTemplate;
+const TaskTemplate = staffEntities.TaskTemplate;
 
 export default function TaskTemplateDialog({ isOpen, onClose, onUseTemplate }) {
   const [templates, setTemplates] = useState([]);

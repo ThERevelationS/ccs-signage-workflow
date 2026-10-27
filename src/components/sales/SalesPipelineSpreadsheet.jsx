@@ -65,9 +65,10 @@ import { salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
 import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskStatusAudit.mjs";
 import { salesReviewQueueFilterKey, canKeepLocallyResolvedSalesReview, keepLocallyResolvedSalesReviewDetails, nextSalesReviewQueueIndex } from "@/components/sales/salesReviewQueueExit.mjs";
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, planExistingSalesTaskStatusReconciliation, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
-const GlobalSettings = base44.entities.GlobalSettings;
+const WorkOrder = staffEntities.WorkOrder;
+const GlobalSettings = staffEntities.GlobalSettings;
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100" },

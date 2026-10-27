@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { DimensionalLetterMaterial } from "@/entities/all";
+import { DimensionalLetterMaterial } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

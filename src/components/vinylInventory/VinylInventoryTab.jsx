@@ -10,7 +10,7 @@
 //   - Save in dialog persists the full draft through guarded VinylInventory persistence.
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { VinylInventory, User } from "@/entities/all";
+import { VinylInventory, User } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

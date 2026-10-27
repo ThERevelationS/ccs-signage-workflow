@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
-import { User, FoundationProject } from '@/entities/all';
+import { User, FoundationProject } from '@/api/gatedEntities';
 import { Loader2, Clock } from 'lucide-react';
 
 export default function ClientSearchInput({ value, onChange, onSelectProject, className, placeholder }) {

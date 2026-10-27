@@ -1,4 +1,4 @@
-import { MaintenanceInventory } from "@/entities/all";
+import { MaintenanceInventory } from "@/api/gatedEntities";
 import { loadMasterPartCatalog } from "@/components/estimator/parts/partCatalog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
