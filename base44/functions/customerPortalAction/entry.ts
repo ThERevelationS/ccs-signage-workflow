@@ -119,7 +119,7 @@ function estimatePortalView(estimate: any) {
 }
 
 function jobPortalView(order: any) {
-  const tasks = Array.isArray(order?.notes) ? order.notes : [];
+  const tasks = Array.isArray(order?.sub_tasks) ? order.sub_tasks : [];
   const done = tasks.filter((t: any) => t?.completed === true || clean(t?.status) === "completed").length;
   return {
     id: clean(order?.id),
