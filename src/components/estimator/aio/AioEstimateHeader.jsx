@@ -1,4 +1,4 @@
-import { Layers, Link2, Save, RefreshCw } from "lucide-react";
+import { Layers, Link2, Save, RefreshCw, Copy } from "lucide-react";
 
 export default function AioEstimateHeader({
   status = "draft",
@@ -9,6 +9,8 @@ export default function AioEstimateHeader({
   subtitle = "One page, one set of project info, every estimator.",
   metaRight,
   readOnly = false,
+  onDuplicate,
+  duplicating = false,
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
@@ -46,6 +48,16 @@ export default function AioEstimateHeader({
         >
           <Link2 className="w-4 h-4" />
         </button>
+        {onDuplicate && (
+          <button
+            onClick={onDuplicate}
+            disabled={duplicating}
+            title="Duplicate this estimate as a new draft"
+            className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={onSave}
           disabled={saving || readOnly}
