@@ -97,9 +97,15 @@ export default function FeatureReports() {
 
   const loadReports = async () => {
     setIsLoading(true);
-    const allReports = await listFeatureReports({ scope: "open", sessionToken });
-    setReports(allReports);
-    setIsLoading(false);
+    try {
+      const allReports = await listFeatureReports({ scope: "open", sessionToken });
+      setReports(allReports);
+    } catch (error) {
+      console.error("Feature reports load failed:", error);
+      setReadError(error?.message || "Reports could not be loaded.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openNewReport = () => {
