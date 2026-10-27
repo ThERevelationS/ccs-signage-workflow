@@ -430,3 +430,18 @@ assert.match(dashboard, /AttentionFeed/, 'dashboard must mount the attention fee
 assert.match(invoicesPage, /remindAllOverdue/, 'invoices must offer bulk overdue reminders');
 
 console.log('PASS opportunity workspace contracts (backend-only entities, guarded handoff, idempotent creates, routing)');
+assert.match(coPage2, /bulkApprove/, 'change orders must offer batch approval');
+assert.match(coPage2, /bulkReject/, 'change orders must offer batch rejection');
+assert.match(invoicesPage, /bulkIssue/, 'invoices must offer batch draft issuing');
+assert.match(entry, /low_stock/, 'attention feed must expose low stock');
+assert.match(entry, /overdue_jobs/, 'attention feed must expose overdue jobs');
+assert.match(entry, /expiring_permits/, 'attention feed must expose expiring permits');
+assert.match(entry, /permit_fees_due/, 'attention feed must expose permit fees due');
+assert.match(attentionFeed, /low_stock/, 'attention feed UI must show low stock');
+assert.match(attentionFeed, /overdue_jobs/, 'attention feed UI must show overdue jobs');
+assert.match(attentionFeed, /expiring_permits/, 'attention feed UI must show expiring permits');
+assert.match(attentionFeed, /permit_fees_due/, 'attention feed UI must show permit fees due');
+assert.match(invoicing, /email_statement/, 'invoicing must expose statement emails');
+assert.match(invoicesPage, /email_statement/, 'invoice detail must offer email statement');
+const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
+assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
