@@ -159,6 +159,8 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         });
       }
       onSaved?.();
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
