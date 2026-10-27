@@ -20,6 +20,7 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  replaceWorkOrderFieldsIfUnchanged,
   softDeleteWorkOrderFromLoadedSnapshot,
   transitionWorkOrderFromLoadedSnapshot,
 } from "@/components/workflow/workOrderPersistence";
@@ -78,6 +79,10 @@ export default function MyWorkflow() {
   const [editTaskDue, setEditTaskDue] = useState("");
   const [editTaskAssignees, setEditTaskAssignees] = useState([]);
   const [addTaskForWo, setAddTaskForWo] = useState(null);
+  const [editingJobId, setEditingJobId] = useState(null);
+  const [jobEditDesc, setJobEditDesc] = useState("");
+  const [jobEditDue, setJobEditDue] = useState("");
+  const [jobEditAssignee, setJobEditAssignee] = useState([]);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [stageFilter, setStageFilter] = useState("all");
@@ -436,6 +441,30 @@ export default function MyWorkflow() {
     clearEditTask();
   };
 
+  const handleEditJob = async (wo) => {
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: wo.id,
+        expectedFields: {
+          current_task_description: wo.current_task_description || "",
+          due_date: wo.due_date || "",
+          assigned_to: wo.assigned_to || "",
+        },
+        nextFields: {
+          current_task_description: jobEditDesc.trim(),
+          due_date: jobEditDue || "",
+          assigned_to: jobEditAssignee[0] || "",
+        },
+      });
+      setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, ...saved } : w));
+    } catch (error) {
+      console.error("Job assignment update blocked:", error);
+      await loadMyWorkOrders();
+      alert(error?.message || "This job changed in another session. The latest version was reloaded.");
+    }
+    setEditingJobId(null);
+  };
+
   const handleEditSubTask = async (workOrderId, taskIndex, subTaskIndex, newText) => {
     if (!newText.trim()) return;
     const wo = workOrders.find(w => w.id === workOrderId);
@@ -711,17 +740,51 @@ export default function MyWorkflow() {
                           return (
                             <div key={idx} className="group">
                               {/* Job-level assignment: the job itself acts like a task */}
-                              {item.type === 'job_assignment' && (
-                                <button
-                                  onClick={() => setSelectedWorkOrder(wo)}
-                                  className="w-full flex items-center gap-1 p-1 rounded border bg-purple-50 border-purple-200 text-left hover:bg-purple-100"
-                                >
-                                  <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
-                                  <p className="text-xs font-medium text-purple-700 truncate">
-                                    Job assigned to you{wo.current_task_description ? ` — ${wo.current_task_description}` : ""}
-                                  </p>
-                                </button>
-                              )}
+                              {item.type === 'job_assignment' && (editingJobId === wo.id ? (
+                                <div className="flex flex-col gap-1 p-1 rounded border border-purple-200 bg-purple-50">
+                                  <Input
+                                    value={jobEditDesc}
+                                    onChange={(e) => setJobEditDesc(e.target.value)}
+                                    className="h-6 text-xs"
+                                    autoFocus
+                                    placeholder="Task description"
+                                    onKeyDown={(e) => { if (e.key === 'Escape') setEditingJobId(null); }}
+                                  />
+                                  <div className="flex items-center gap-1">
+                                    <Input type="date" value={jobEditDue} onChange={(e) => setJobEditDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
+                                    <div className="flex-1 min-w-0">
+                                      <MultiUserSelectInline users={allUsers} selectedUsers={jobEditAssignee} onSelectionChange={(v) => setJobEditAssignee(v.slice(-1))} placeholder="Assign..." className="h-6 w-full" />
+                                    </div>
+                                    <Button size="sm" onClick={() => handleEditJob(wo)} className="h-6 px-1"><Check className="w-2.5 h-2.5" /></Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingJobId(null)} className="h-6 px-1"><X className="w-2.5 h-2.5" /></Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setSelectedWorkOrder(wo)}
+                                    className="flex-1 flex items-center gap-1 p-1 rounded border bg-purple-50 border-purple-200 text-left hover:bg-purple-100"
+                                  >
+                                    <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
+                                    <p className="text-xs font-medium text-purple-700 truncate">
+                                      Job assigned to you{wo.current_task_description ? ` — ${wo.current_task_description}` : ""}
+                                    </p>
+                                  </button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      setEditingJobId(wo.id);
+                                      setJobEditDesc(wo.current_task_description || "");
+                                      setJobEditDue(String(wo.due_date || "").slice(0, 10));
+                                      setJobEditAssignee(wo.assigned_to ? [wo.assigned_to] : []);
+                                    }}
+                                    className="h-4 w-4 opacity-0 group-hover:opacity-100"
+                                  >
+                                    <Pencil className="w-2.5 h-2.5 text-blue-500" />
+                                  </Button>
+                                </div>
+                              ))}
                               {/* Task with my subtasks/details - show parent as context */}
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
