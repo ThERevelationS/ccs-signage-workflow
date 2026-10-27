@@ -514,7 +514,7 @@ Deno.serve(async (req) => {
       if (!note) throw bad("Describe the change you'd like so the team can scope it.");
       const order = await WorkOrder.get(workOrderId).catch(() => null);
       if (!order?.id || clean(order.customer_id) !== customerId) throw bad("Job not found.", 404);
-      if (order.deleted === true || ["cancelled", "completed"].includes(clean(order.current_stage))) throw bad("This job is no longer active.", 409);
+      if (order.deleted === true || ["cancelled", "completed"].includes(clean(order.current_stage)) || clean(order.sales_status) === "cancelled") throw bad("This job is no longer active.", 409);
       const woLabel = clean(order.est_inv_at || order.work_order_number) || clean(order.title) || "Job";
 
       // Draft a proposed change order so the request lands in the CO queue.
