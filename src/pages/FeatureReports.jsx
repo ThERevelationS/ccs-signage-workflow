@@ -102,7 +102,7 @@ export default function FeatureReports() {
       setReports(allReports);
     } catch (error) {
       console.error("Feature reports load failed:", error);
-      setReadError(error?.message || "Reports could not be loaded.");
+      setMutationError(error?.message || "Reports could not be loaded.");
     } finally {
       setIsLoading(false);
     }
