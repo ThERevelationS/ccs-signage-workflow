@@ -18,11 +18,27 @@
       "type": "string",
       "description": "Hashed password for time clock login",
       "rls": {
-    "create": { "user_condition": { "role": "__authorizedemail_backend_only__" } },
-    "read": { "user_condition": { "role": "__authorizedemail_backend_only__" } },
-    "update": { "user_condition": { "role": "__authorizedemail_backend_only__" } },
-    "delete": { "user_condition": { "role": "__authorizedemail_backend_only__" } }
-  }
+        "create": {
+          "user_condition": {
+            "role": "__authorizedemail_backend_only__"
+          }
+        },
+        "read": {
+          "user_condition": {
+            "role": "__authorizedemail_backend_only__"
+          }
+        },
+        "update": {
+          "user_condition": {
+            "role": "__authorizedemail_backend_only__"
+          }
+        },
+        "delete": {
+          "user_condition": {
+            "role": "__authorizedemail_backend_only__"
+          }
+        }
+      }
     },
     "password_reset_token": {
       "type": "string",
@@ -133,6 +149,11 @@
       "type": "boolean",
       "default": false,
       "description": "Whether this user can view the Resources page"
+    },
+    "can_approve_quotes": {
+      "type": "boolean",
+      "default": false,
+      "description": "User can approve quotes above the internal approval threshold."
     },
     "employment_type": {
       "type": "string",
