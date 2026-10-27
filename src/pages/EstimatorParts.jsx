@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { AlertTriangle, Boxes, Edit3, Layers3, Package, Search, ShieldCheck, UserRound } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { AlertTriangle, Boxes, Download, Edit3, Layers3, Package, Search, ShieldCheck, UserRound } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { listPartTemplates } from "@/components/estimator/parts/partTemplateService";
 import { money } from "@/components/estimator/aioPricing";
@@ -8,6 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+
+const csvCell = (value) => {
+  const text = value === undefined || value === null ? "" : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const downloadCsv = (filename, headers, rows) => {
+  const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
 
 function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
   const [draft, setDraft] = useState(null);
@@ -115,12 +133,14 @@ function EditTemplateDialog({ template, user, open, onClose, onSaved }) {
 }
 
 export default function EstimatorParts() {
+  const [searchParams] = useSearchParams();
   const [templates, setTemplates] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => searchParams.get("q") || "");
   const [scope, setScope] = useState("all");
   const [type, setType] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [status, setStatus] = useState("active");
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
@@ -139,25 +159,45 @@ export default function EstimatorParts() {
     return () => { active = false; };
   }, [reloadKey]);
 
+  const categories = useMemo(() => [...new Set(templates.map((template) => template.category).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b))), [templates]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return templates.filter((template) => {
       const group = template.product_group === "global" ? "global" : "my";
       if (scope !== "all" && group !== scope) return false;
       if (type !== "all" && template.template_type !== type) return false;
+      if (categoryFilter !== "all" && (template.category || "") !== categoryFilter) return false;
       if (status === "active" && template.is_active === false) return false;
       if (status === "inactive" && template.is_active !== false) return false;
       if (!q) return true;
       const haystack = [template.template_name, template.category, template.description, template.notes, template.search_text, template.source_module_key, template.source_part_type, template.source_part_subtype, ...(template.tags || [])].filter(Boolean).join(" ").toLowerCase();
       return q.split(/\s+/).every((term) => haystack.includes(term));
     });
-  }, [templates, query, scope, type, status]);
+  }, [templates, query, scope, type, categoryFilter, status]);
 
   const updateLocal = (updated) => setTemplates((current) => current.map((row) => row.id === updated.id ? { ...row, ...updated } : row));
   const active = templates.filter((row) => row.is_active !== false);
   const myCount = active.filter((row) => row.product_group !== "global").length;
   const globalCount = active.filter((row) => row.product_group === "global").length;
   const groupCount = active.filter((row) => row.template_type === "part_group").length;
+
+  const exportCsv = () => {
+    downloadCsv("part-library.csv",
+      ["Saved Part", "Category", "Type", "Parts", "Source", "Source Part Type", "Frozen Cost", "Current Cost", "Library", "Status"],
+      visible.map((template) => [
+        template.template_name,
+        template.category || (template.tags || []).join(" · "),
+        template.template_type === "part_group" ? "Part Group" : "Part",
+        Number(template.part_count || 1),
+        template.source_module_key || "Custom / Manual",
+        template.source_part_type ? String(template.source_part_type).replaceAll("_", " ") : "component",
+        Number(template.frozen_cost || 0).toFixed(2),
+        Number(template.current_cost || 0).toFixed(2),
+        template.product_group === "global" ? "Global" : "My",
+        template.is_active === false ? "Inactive" : "Active",
+      ]));
+  };
 
   const toggleActive = async (template) => {
     const canEdit = user?.role === "admin" || !template.created_by_id || template.created_by_id === user?.id;
@@ -200,7 +240,7 @@ export default function EstimatorParts() {
         <div className="grid grid-cols-3 gap-2"><div className="bg-white border border-gray-200 rounded px-3 py-2"><div className="text-[9px] font-bold tracking-wider text-gray-400">MY PARTS</div><div className="text-[18px] font-bold text-gray-900">{myCount}</div></div><div className="bg-white border border-gray-200 rounded px-3 py-2"><div className="text-[9px] font-bold tracking-wider text-gray-400">GLOBAL PARTS</div><div className="text-[18px] font-bold text-gray-900">{globalCount}</div></div><div className="bg-white border border-gray-200 rounded px-3 py-2"><div className="text-[9px] font-bold tracking-wider text-gray-400">COMPONENT ASSEMBLIES</div><div className="text-[18px] font-bold text-gray-900">{groupCount}</div></div></div>
 
         <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 flex flex-col xl:flex-row xl:items-center gap-3"><div className="min-w-0 xl:flex-1"><h2 className="text-[13px] font-bold text-gray-900">Part Library</h2><p className="text-[10px] text-gray-500">Save a Part or Part Group from any estimate Product. Reusing it creates a new independent copy and never changes the saved template or source Product.</p></div><div className="flex flex-wrap items-center gap-1.5"><div className="relative w-[240px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saved Parts..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div><select value={scope} onChange={(event) => setScope(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select><select value={type} onChange={(event) => setType(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">Parts + Groups</option><option value="part">Single Parts</option><option value="part_group">Part Groups</option></select><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select></div></div>
+          <div className="px-4 py-3 border-b border-gray-200 flex flex-col xl:flex-row xl:items-center gap-3"><div className="min-w-0 xl:flex-1"><h2 className="text-[13px] font-bold text-gray-900">Part Library</h2><p className="text-[10px] text-gray-500">Save a Part or Part Group from any estimate Product. Reusing it creates a new independent copy and never changes the saved template or source Product.</p></div><div className="flex flex-wrap items-center gap-1.5"><div className="relative w-[240px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saved Parts..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div><select value={scope} onChange={(event) => setScope(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select><select value={type} onChange={(event) => setType(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">Parts + Groups</option><option value="part">Single Parts</option><option value="part_group">Part Groups</option></select><select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">All Categories</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select><button type="button" onClick={exportCsv} disabled={visible.length === 0} className="h-[30px] px-2.5 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button></div></div>
           <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 text-[9px] text-gray-500">{visible.length} matching saved component{visible.length === 1 ? "" : "s"}</div>
 
           {loading ? <div className="py-16 text-center text-[11px] text-gray-400">Loading Part Library…</div> : libraryError ? <div className="py-12 px-6 text-center bg-red-50 border-t border-red-200"><div className="text-[12px] font-bold text-red-800">Part Library could not be verified.</div><div className="mt-1 text-[10px] text-red-600">{libraryError}</div><Button variant="outline" className="mt-3 h-[30px] text-[10px]" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button></div> : visible.length === 0 ? <div className="py-14 text-center"><Layers3 className="w-9 h-9 text-gray-300 mx-auto" /><div className="mt-2 text-[12px] font-bold text-gray-700">No saved Parts found</div><div className="mt-1 text-[10px] text-gray-400">Inside an estimate, expand a Product Part or Part Group and choose Save to Library.</div></div> : <div className="overflow-x-auto"><table className="w-full text-left"><thead className="bg-gray-50 border-b border-gray-200"><tr className="text-[9px] tracking-wide text-gray-500"><th className="px-4 py-2 font-bold">SAVED PART</th><th className="px-3 py-2 font-bold">TYPE</th><th className="px-3 py-2 font-bold">SOURCE</th><th className="px-3 py-2 font-bold text-right">FROZEN COST</th><th className="px-3 py-2 font-bold">LIBRARY</th><th className="px-3 py-2 font-bold">STATUS</th><th className="px-4 py-2 font-bold text-right">ACTIONS</th></tr></thead><tbody className="divide-y divide-gray-100">{visible.map((template) => {
