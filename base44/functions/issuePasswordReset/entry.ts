@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       to: target.email,
       subject: 'Reset Your Sign Shop Workflow Password',
       body: emailBody,
-      _workflow_capability: 'ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d',
+      _workflow_capability: 'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc',
     });
     const sendResult = sendResponse?.data || sendResponse;
     if (sendResult?.error || sendResult?.success === false) {

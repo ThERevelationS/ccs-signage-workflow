@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
       const attempts = Number(item.attempts || 0) + 1;
       await Queue.update(item.id, { status: 'sending', attempts, last_attempt_at: now });
       try {
-        const { data } = await base44.asServiceRole.functions.invoke('sendGmail', { to: item.recipient_email, subject: item.subject, body: item.body_html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d' });
+        const { data } = await base44.asServiceRole.functions.invoke('sendGmail', { to: item.recipient_email, subject: item.subject, body: item.body_html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc' });
         if (data?.error) throw new Error(data.error);
         const stamp = nowIso();
         await Queue.update(item.id, { status: 'sent', sent_at: stamp, last_error: '' });

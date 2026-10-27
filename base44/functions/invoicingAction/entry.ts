@@ -657,7 +657,7 @@ Deno.serve(async (req) => {
         <p style="font-size:12px;color:#64748b;text-align:center">Your portal link is valid for 90 days — view the invoice, message us, or let us know a payment is on the way.</p>` : ""}
       </div>`;
       const sent = await base44.asServiceRole.functions
-        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d" })
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc" })
         .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
       const sendResult = sent?.data || sent;
       if (sendResult?.error || sendResult?.success === false) {
@@ -738,7 +738,7 @@ Deno.serve(async (req) => {
         <p style="font-size:12px;color:#64748b;text-align:center">Your portal link is valid for 90 days — view invoices, message us, or let us know a payment is on the way.</p>` : ""}
       </div>`;
       const sent = await base44.asServiceRole.functions
-        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d" })
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc" })
         .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
       const sendResult = sent?.data || sent;
       if (sendResult?.error || sendResult?.success === false) {

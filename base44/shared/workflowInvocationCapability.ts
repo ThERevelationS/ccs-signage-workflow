@@ -8,7 +8,7 @@ const WORKFLOW_CAPABILITY_HASHES: Record<string, string> = {
   refreshJurisdictionTargeted: '1ff5bab9cc29af44a548b7f0355d630b30112fa980e2ac063cc998e373f34cc0',
   detectSalesDuplicates: '35a68624dd682c8fffccf75d44f04ab35333ac8005868410caca045faa911ac1',
   smartsheetSyncAction: '75e3ff6d0862cc68a2694148436e3849e7b9c700a67380676f809de47b6da509',
-  sendGmail: 'bfd7c0e515c830b3ea600fe62d32039f98e7fa92de0928787ecdbc69d15d4e45',
+  sendGmail: '11a4e004a291fbc881f4009f67e3ad97f55b0243527fb75ce793f50012605af7',
 };
 
 function constantTimeEqual(a: string, b: string) {
