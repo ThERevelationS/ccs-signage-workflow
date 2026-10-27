@@ -680,7 +680,7 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
     setClearing(row.id);
     setError("");
     try {
-      const due = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+      const due = localDateStamp(new Date(Date.now() + days * 86400000));
       await invoke(sessionToken, {
         action: "update_opportunity",
         opportunity_id: row.id,
