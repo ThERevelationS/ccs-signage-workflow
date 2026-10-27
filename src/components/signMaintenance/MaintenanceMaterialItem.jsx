@@ -75,7 +75,7 @@ export default function MaintenanceMaterialItem({
         </div>
         <div className="flex items-center gap-1">
           <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-8 w-8 p-0 text-slate-500"><Copy className="w-4 h-4" /></Button>
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onRemove(); }} className="h-8 w-8 p-0 text-red-500"><Trash2 className="w-4 h-4" /></Button>
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); if (!confirm(`Delete "${item.item_name || "this item"}"?`)) return; onRemove(); }} className="h-8 w-8 p-0 text-red-500"><Trash2 className="w-4 h-4" /></Button>
         </div>
       </div>
 
