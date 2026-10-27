@@ -18,12 +18,11 @@
       "type": "string",
       "description": "Hashed password for time clock login",
       "rls": {
-        "read": {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      }
+    "create": { "user_condition": { "role": "__authorizedemail_backend_only__" } },
+    "read": { "user_condition": { "role": "__authorizedemail_backend_only__" } },
+    "update": { "user_condition": { "role": "__authorizedemail_backend_only__" } },
+    "delete": { "user_condition": { "role": "__authorizedemail_backend_only__" } }
+  }
     },
     "password_reset_token": {
       "type": "string",

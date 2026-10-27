@@ -4,25 +4,9 @@
   "properties": {},
   "required": [],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "__disabled__"
-      }
-    },
-    "read": {
-      "user_condition": {
-        "role": "__disabled__"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "__disabled__"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "__disabled__"
-      }
-    }
+    "create": { "user_condition": { "role": "___noop_should_not_create_backend_only__" } },
+    "read": { "user_condition": { "role": "___noop_should_not_create_backend_only__" } },
+    "update": { "user_condition": { "role": "___noop_should_not_create_backend_only__" } },
+    "delete": { "user_condition": { "role": "___noop_should_not_create_backend_only__" } }
   }
 }

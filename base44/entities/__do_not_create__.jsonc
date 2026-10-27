@@ -4,10 +4,10 @@
   "description": "Inert accidental empty schema retained only because no exact schema-delete action is exposed by the current Base44 connector. Do not use.",
   "properties": {},
   "rls": {
-    "create": false,
-    "read": false,
-    "update": false,
-    "delete": false
+    "create": { "user_condition": { "role": "____do_not_create___backend_only__" } },
+    "read": { "user_condition": { "role": "____do_not_create___backend_only__" } },
+    "update": { "user_condition": { "role": "____do_not_create___backend_only__" } },
+    "delete": { "user_condition": { "role": "____do_not_create___backend_only__" } }
   },
   "required": []
 }

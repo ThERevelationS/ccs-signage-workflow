@@ -4,25 +4,9 @@
   "required": [],
   "name": "__invalid_placeholder",
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "__disabled_placeholder__"
-      }
-    },
-    "read": {
-      "user_condition": {
-        "role": "__disabled_placeholder__"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "__disabled_placeholder__"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "__disabled_placeholder__"
-      }
-    }
+    "create": { "user_condition": { "role": "____invalid_placeholder_backend_only__" } },
+    "read": { "user_condition": { "role": "____invalid_placeholder_backend_only__" } },
+    "update": { "user_condition": { "role": "____invalid_placeholder_backend_only__" } },
+    "delete": { "user_condition": { "role": "____invalid_placeholder_backend_only__" } }
   }
 }

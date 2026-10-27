@@ -2,26 +2,10 @@
   "type": "object",
   "properties": {},
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    },
-    "read": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "__disabled_noop__"
-      }
-    }
+    "create": { "user_condition": { "role": "____noop_backend_only__" } },
+    "read": { "user_condition": { "role": "____noop_backend_only__" } },
+    "update": { "user_condition": { "role": "____noop_backend_only__" } },
+    "delete": { "user_condition": { "role": "____noop_backend_only__" } }
   },
   "required": [],
   "name": "__noop"

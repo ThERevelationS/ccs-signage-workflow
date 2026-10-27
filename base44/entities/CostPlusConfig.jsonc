@@ -37,21 +37,9 @@
     "config_name"
   ],
   "rls": {
-    "read": {},
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__costplusconfig_backend_only__" } },
+    "read": { "user_condition": { "role": "__costplusconfig_backend_only__" } },
+    "update": { "user_condition": { "role": "__costplusconfig_backend_only__" } },
+    "delete": { "user_condition": { "role": "__costplusconfig_backend_only__" } }
   }
 }
