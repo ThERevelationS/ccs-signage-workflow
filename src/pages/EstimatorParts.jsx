@@ -139,9 +139,14 @@ export default function EstimatorParts() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState(() => searchParams.get("q") || "");
   const [scope, setScope] = useState("all");
-  const [type, setType] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [status, setStatus] = useState("active");
+  const [type, setType] = useState(() => searchParams.get("type") || "all");
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category") || "all");
+  const [status, setStatus] = useState(() => searchParams.get("status") || "active");
+  const writeParam = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value && value !== "all") next.set(key, value); else next.delete(key);
+    setSearchParams(next, { replace: true });
+  };
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
   const [libraryError, setLibraryError] = useState("");
