@@ -251,36 +251,11 @@ export default function TimeTracker({ position = "top" } = {}) {
     }
   }, [enabled, live, progress, overtime, overtimeMinutes, milestoneThresholds, prefs, email, snapshot?.company_day, displayMinutes, toast]);
 
-  // Location gate: hidden everywhere, or restricted to a bar.
-  const locationPref = prefs?.location || "both";
-  const visibleHere = enabled && locationPref !== "hidden" &&
-    (locationPref === "both" ||
-     (locationPref === "top" && position !== "side") ||
-     (locationPref === "side" && position === "side"));
-
-  if (!visibleHere) return null;
-
-  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
-  const ringColor = TONE_RING[tone] || accent.ring;
   const clockedIn = snapshot?.status === "clocked_in";
-  const frozen = live?.frozen === true;
-  const animClass = prefs?.animation_style === "pulse"
-    ? (pulse ? "tracker-pulse" : "")
-    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
-      ? `tracker-${prefs.animation_style}`
-      : "";
 
-  const ringSize = prefs?.size === "expanded" ? 34 : 26;
-  const circumference = 2 * Math.PI * 100;
-  const ringFraction = Math.min(1, progress);
-
-  const popoverStats = snapshot ? [
-    { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
-    { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
-    { label: "Unpaid break", value: formatMinutes(Math.round((snapshot.break_minutes || 0) - (snapshot.paid_break_minutes || 0) + (snapshot.on_unpaid_break_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
-    { label: "Work Pause", value: formatMinutes(Math.round((snapshot.pause_minutes || 0) + (snapshot.paused_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
-  ] : [];
-
+  // These hooks must stay above the visibility gate below: the pill mounts and
+  // unmounts as the snapshot arrives, and a conditionally skipped hook crashes
+  // the entire navigation shell.
   const projectedFinish = useMemo(() => {
     if (!snapshot || !live || !clockedIn || overtime) return null;
     const remaining = goalMinutes - live.paid;
@@ -302,6 +277,35 @@ export default function TimeTracker({ position = "top" } = {}) {
       ? { label: `${formatMinutes(Math.round(diff))} ahead of pace`, minutes: diff }
       : { label: `${formatMinutes(Math.round(-diff))} behind pace`, minutes: diff };
   }, [snapshot, live, clockedIn, goalMinutes]);
+
+  // Location gate: hidden everywhere, or restricted to a bar.
+  const locationPref = prefs?.location || "both";
+  const visibleHere = enabled && locationPref !== "hidden" &&
+    (locationPref === "both" ||
+     (locationPref === "top" && position !== "side") ||
+     (locationPref === "side" && position === "side"));
+
+  if (!visibleHere) return null;
+
+  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
+  const ringColor = TONE_RING[tone] || accent.ring;
+  const frozen = live?.frozen === true;
+  const animClass = prefs?.animation_style === "pulse"
+    ? (pulse ? "tracker-pulse" : "")
+    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
+      ? `tracker-${prefs.animation_style}`
+      : "";
+
+  const ringSize = prefs?.size === "expanded" ? 34 : 26;
+  const circumference = 2 * Math.PI * 100;
+  const ringFraction = Math.min(1, progress);
+
+  const popoverStats = snapshot ? [
+    { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
+    { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
+    { label: "Unpaid break", value: formatMinutes(Math.round((snapshot.break_minutes || 0) - (snapshot.paid_break_minutes || 0) + (snapshot.on_unpaid_break_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
+    { label: "Work Pause", value: formatMinutes(Math.round((snapshot.pause_minutes || 0) + (snapshot.paused_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
+  ] : [];
 
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);

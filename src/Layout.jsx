@@ -44,6 +44,7 @@ import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import LoginGate from "@/components/auth/LoginGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
+import AttentionBell from "@/components/workflow/AttentionBell";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiPageView";
 import { ImportProgressProvider } from "@/components/shared/ImportProgressContext";
@@ -1044,7 +1045,10 @@ function LayoutContent({ children }) {
                   </button>
                 </div>
 
-                <GlobalSearch className="w-full justify-center" compact={compactView} shellGlass />
+                <div className="flex items-center gap-1.5">
+                  <GlobalSearch className="w-full justify-center" compact={compactView} shellGlass />
+                  <AttentionBell compact={compactView} shellGlass />
+                </div>
               </div>
             </div>
 
@@ -1288,7 +1292,10 @@ function LayoutContent({ children }) {
                     </button>
                   </div>
 
-                  <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
+                  <div className="flex items-center gap-1.5">
+                    <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
+                    <AttentionBell compact={compactView} shellGlass />
+                  </div>
                 </div>
               </div>
 
