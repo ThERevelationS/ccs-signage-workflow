@@ -802,7 +802,7 @@ export default function WorkOrderDetailsDialog({
   const getPageNameForStage = (stage) => {
     const stagePageMap = {
       'estimating': 'Estimating',
-      'sales': 'Sales',
+      'sales': 'SalesPipeline',
       'permitting': 'Permitting',
       'design': 'Design',
       'production': 'Production',
