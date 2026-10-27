@@ -294,7 +294,7 @@ function LocalityPickerSession({
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[420px_minmax(0,1fr)] lg:overflow-hidden">
           <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
-            {result?.suggested_locality&&<section aria-label="Selected jurisdiction" className="rounded-lg border bg-white p-3"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality.name}{result.suggested_locality.state?", "+result.suggested_locality.state:""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Saved jurisdiction ready. Confirm office notes below, then use it.":"Location matched as a workflow reference — office review still required."}</p></section>}
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-lg border bg-white p-3"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Saved jurisdiction ready. Confirm office notes below, then use it.":"Location matched as a workflow reference — office review still required."}</p></section>}
             <details className="rounded-lg border bg-white"><summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
@@ -425,8 +425,8 @@ function LocalityPickerSession({
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? 'The map location service needs attention.' : result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
-                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'Website research started automatically. An administrator needs to review the results.' : 'No automatic research result was returned. Check scan activity before retrying.'} You do not need to choose a place or guess.</p>
+                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'The primary map service was unavailable — a backup locator found an approximate position.' : 'The map location service needs attention.') : result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
+                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'Website research started automatically. An administrator needs to review the results.' : 'Website research is available in the tools below when an administrator wants it.'} You do not need to choose a place or guess.</p>
                       {result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
