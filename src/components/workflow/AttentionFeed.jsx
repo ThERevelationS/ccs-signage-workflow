@@ -41,6 +41,18 @@ export default function AttentionFeed() {
 
   useEffect(() => { load(); }, [load]);
 
+  const markAllRead = async () => {
+    if (!sessionToken) return;
+    setLoading(true);
+    try {
+      await base44.functions.invoke("customerPortalAction", {
+        session_token: sessionToken,
+        action: "mark_all_read",
+      });
+    } catch { /* non-fatal */ }
+    await load();
+  };
+
   const categories = feed ? [
     {
       key: "portal",
@@ -160,6 +172,12 @@ export default function AttentionFeed() {
           ))}
           {active.count > active.items.length && (
             <div className="px-3 py-1.5 text-xs text-slate-400">+{active.count - active.items.length} more</div>
+          )}
+          {active.key === "portal" && (
+            <button type="button" onClick={markAllRead} disabled={loading}
+              className="w-full border-t border-slate-100 px-3 py-1.5 text-left text-xs font-semibold text-violet-600 hover:bg-violet-50 disabled:opacity-50 dark:border-slate-800 dark:text-violet-300 dark:hover:bg-slate-800">
+              Mark all portal messages read
+            </button>
           )}
         </div>
       )}
