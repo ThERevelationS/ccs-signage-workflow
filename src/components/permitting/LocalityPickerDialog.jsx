@@ -151,10 +151,32 @@ function LocalityPickerSession({
     setResult(null);
     try {
       const invoke=runAction;
-      const { data } = await invoke('resolvePermittingAddress', {
+      let { data } = await invoke('resolvePermittingAddress', {
         address: address.trim(),
         session_token: sessionToken,
       },`Find jurisdiction for ${address.trim()}`);
+      // The worker cannot reach external geocoders reliably; when its lookups
+      // all fail, geocode from the browser and resubmit the coordinates.
+      if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
+        try {
+          const q = encodeURIComponent(address.trim());
+          const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=${q}`);
+          const hit = (await r.json())?.[0];
+          const st = hit?.address?.state || hit?.address?.state_district || '';
+          if (hit?.lat && hit?.lon && /ohio|kentucky/i.test(st)) {
+            const retry = await invoke('resolvePermittingAddress', {
+              address: address.trim(),
+              session_token: sessionToken,
+              census_hint: {
+                lat: Number(hit.lat), lng: Number(hit.lon),
+                matched_address: hit.display_name,
+                address_parts: { state: st, city: hit.address?.city || hit.address?.town || hit.address?.village || '', zip: hit.address?.postcode || '' },
+              },
+            },`Find jurisdiction for ${address.trim()}`);
+            if (retry?.data?.success !== false) data = retry.data;
+          }
+        } catch { /* browser geocode is best-effort */ }
+      }
       if(version!==searchVersion.current||!openRef.current)return;
       if (data?.success === false) {
         setError(data.error || "Search failed");
