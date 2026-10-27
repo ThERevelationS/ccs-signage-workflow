@@ -396,6 +396,37 @@ Deno.serve(async (req) => {
           readMatches: () => PortalMessage.filter({ creation_request_key: key }),
           label: "Portal estimate approval message",
         });
+        // Immutable acceptance audit so portal approvals carry the same
+        // evidence trail as staff-recorded acceptances
+        // (recordEstimateAcceptance). Deduped by estimate+version; an existing
+        // canonical row is never modified or duplicated.
+        const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;
+        const quoteVersion = Math.max(1, whole(saved?.quote_version ?? estimate?.quote_version, 1));
+        const existingAcceptance = await Acceptance.filter({ estimate_id: estimateId, quote_version: quoteVersion }).catch(() => []);
+        if (!Array.isArray(existingAcceptance) || existingAcceptance.length === 0) {
+          try {
+            await Acceptance.create({
+              estimate_id: estimateId,
+              work_order_id: clean(saved?.work_order_id || estimate?.work_order_id),
+              delivery_id: "",
+              quote_issue_key: `estimate:${estimateId}:quote:v${quoteVersion}`,
+              quote_version: quoteVersion,
+              quote_issue_date: clean(estimate?.quote_issue_date),
+              quote_expiration_date: quoteValidUntil(estimate),
+              quote_total: num(saved?.quote_total ?? estimate?.quote_total),
+              accepted_at: new Date().toISOString(),
+              accepted_by_name: clean(estimate?.order_contact) || clean(estimate?.contact_name),
+              accepted_by_email: clean(estimate?.contact_email),
+              acceptance_method: "other",
+              evidence_reference: "Customer portal approval",
+              notes: note || `Customer approved ${quoteLabel} via the customer portal.`,
+              recorded_by_email: "customer_portal",
+              recorded_by_name: "Customer Portal",
+            });
+          } catch (acceptanceError: any) {
+            console.error("Portal approval saved but its acceptance audit failed:", acceptanceError?.message || acceptanceError);
+          }
+        }
         logPortalOpportunityActivity(OpportunityActivity, {
           opportunityId: await opportunityIdForEstimate(estimateId),
           eventType: "note",
