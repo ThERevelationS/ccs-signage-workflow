@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict';
+import { buildSync } from 'esbuild';
+import { writeFileSync, rmSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const stub = resolve(here, '.tmp-b44-stub.mjs');
+writeFileSync(stub, `
+export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), functions: { invoke: async () => ({}) }, auth: { me: async () => null }, asServiceRole: { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }) } };
+`);
+const bundlePath = resolve(here, '.tmp-dup-est.mjs');
+buildSync({
+  entryPoints: [resolve(here, '../src/components/estimator/estimateCreationService.js')],
+  bundle: true, format: 'esm', outfile: bundlePath, logLevel: 'silent',
+  alias: { '@/api/base44Client': stub },
+});
+const { buildDuplicateEstimate } = await import(pathToFileURL(bundlePath).href);
+
+const source = {
+  id: 'est-1',
+  created_date: '2026-01-01T00:00:00Z',
+  updated_date: '2026-01-02T00:00:00Z',
+  created_by: 'a@b.com',
+  estimate_number: 'EST-1042',
+  status: 'sent',
+  quote_version: 3,
+  work_order_id: 'wo-9',
+  internal_approval: { approved_by_email: 'm@x.com' },
+  deleted: false,
+  sent_at: '2026-01-05T00:00:00Z',
+  accepted_at: '2026-01-06T00:00:00Z',
+  quote_issue_date: '2026-01-05',
+  quote_issue_key: 'estimate:est-1:quote:v3',
+  pipeline_sync_pending: false,
+  creation_request_key: 'k-abc',
+  project_name: 'Monument sign — Riverside',
+  client_name: 'Riverside Properties',
+  customer_id: 'cust-7',
+  quote_total: 14250,
+  line_items: [{ key: 'sec-1', client_product_name: 'Channel letters', total_snapshot: 9000 }],
+  tax_rate: 0.0875,
+  discount_percent: 5,
+  terms: 'Net 30',
+};
+
+const clone = buildDuplicateEstimate(source);
+
+for (const k of ['id','created_date','updated_date','created_by','work_order_id','internal_approval','deleted','sent_at','accepted_at','quote_issue_date','quote_issue_key','pipeline_sync_pending','creation_request_key','quote_version']) {
+  assert.equal(clone[k], undefined, `${k} must be dropped (got ${clone[k]})`);
+}
+assert.equal(clone.status, 'draft', 'clone is a fresh draft');
+assert.equal(clone.estimate_number, '', 'new number assigned server-side');
+
+assert.equal(clone.project_name, 'Monument sign — Riverside');
+assert.equal(clone.customer_id, 'cust-7');
+assert.equal(clone.quote_total, 14250);
+assert.deepEqual(clone.line_items, source.line_items, 'sections cloned');
+assert.equal(clone.tax_rate, 0.0875);
+assert.equal(clone.discount_percent, 5);
+
+const c2 = buildDuplicateEstimate({ ...source, _server: { x: 1 }, _row: { y: 2 } });
+assert.equal(c2._server, undefined); assert.equal(c2._row, undefined);
+
+rmSync(stub, { force: true });
+rmSync(bundlePath, { force: true });
+console.log('PASS duplicate estimate builder (24 cases)');
+process.exit(0);
