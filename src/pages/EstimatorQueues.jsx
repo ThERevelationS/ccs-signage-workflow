@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUSES = [
@@ -26,7 +27,7 @@ const SORTS = [
 
 const money0 = (n) => `$${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const compact = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : money0(n));
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDateStamp();
 
 function expiryOf(e) {
   const validDays = e.quote_valid_days ?? e.valid_days;
@@ -34,7 +35,7 @@ function expiryOf(e) {
   const d = new Date(e.quote_issue_date);
   if (Number.isNaN(d.getTime())) return null;
   d.setDate(d.getDate() + Number(validDays));
-  return d.toISOString().slice(0, 10);
+  return localDateStamp(d);
 }
 
 function daysSince(dateStr) {
