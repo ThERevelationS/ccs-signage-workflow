@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, FileCheck2, Loader2 } from "lucide-react";
+import { CheckCircle2, FileCheck2, Link2, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import { invokePortal } from "@/components/portal/PortalPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
@@ -36,6 +38,10 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [evidenceReference, setEvidenceReference] = useState("");
   const [notes, setNotes] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalCopied, setPortalCopied] = useState(false);
+  const [portalError, setPortalError] = useState("");
+  const { sessionToken } = useAuth();
 
   const loadRows = async () => {
     if (!estimate?.id) return false;
@@ -91,6 +97,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const repairingApprovedAcceptance = persistedStatus === "approved" && !!currentAcceptance && !approvalRevisionRecorded;
   const canAct = isRegistered && !auditLoading && !auditReadError && (canRecord || repairingApprovedAcceptance);
   const recoveringRecordedAcceptance = !!currentAcceptance;
+  const portalCustomerId = String(estimate?.customer_id || persistedEstimate?.customer_id || "").trim();
 
   const openDialog = () => {
     if (!canAct) return;
@@ -138,6 +145,24 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     }
   };
 
+  const copyPortalLink = async () => {
+    if (!portalCustomerId || !sessionToken || portalBusy) return;
+    setPortalBusy(true);
+    setPortalError("");
+    try {
+      const data = await invokePortal(sessionToken, { action: "create_link", kind: "customer", customer_id: portalCustomerId, creation_request_key: crypto.randomUUID() });
+      const token = String(data?.token || data?.link?.token || "").trim();
+      if (!token) throw new Error("No customer portal link is available for this customer.");
+      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);
+      setPortalCopied(true);
+      window.setTimeout(() => setPortalCopied(false), 2500);
+    } catch (err) {
+      setPortalError(err?.message || "The customer portal link could not be prepared.");
+    } finally {
+      setPortalBusy(false);
+    }
+  };
+
   return (
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
@@ -177,6 +202,15 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             ))}
           </div>
         )}
+        {isRegistered && persistedStatus === "sent" && portalCustomerId && (
+          <div className="mt-3 rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-center justify-between gap-3">
+            <div className="text-[10px] text-blue-800"><strong>Share the customer portal link</strong> so the customer can review and approve Quote Version {quoteVersion} online.</div>
+            <button type="button" onClick={copyPortalLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+              {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />} {portalCopied ? "Link Copied" : "Copy Approval Link"}
+            </button>
+          </div>
+        )}
+        {portalError && <div className="mt-2 text-[9px] text-red-600">{portalError}</div>}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(next) => !saving && setDialogOpen(next)}>
