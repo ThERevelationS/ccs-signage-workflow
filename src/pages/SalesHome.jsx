@@ -20,7 +20,9 @@ export default function SalesHome() {
           sort: "-created_date",
           label: "Sales Home estimates",
         });
-        setEstimates(rows);
+        // Trashed estimates are excluded from every stat card and the recent
+        // activity feed; they only surface again through Estimate Queues Trash.
+        setEstimates((rows || []).filter((e) => e?.deleted !== true));
       } catch (err) {
         console.error("Sales Home estimates could not be loaded:", err);
         setLoadError(err?.message || "Estimates could not be loaded.");
