@@ -1611,7 +1611,7 @@ export default function UserManagement() {
       {/* Account Deletion Requests */}
       <div className="clay-card p-4">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="p-2 rounded-xl bg-red-50">
               <ShieldAlert className="w-5 h-5 text-red-700" />
             </div>
@@ -1780,7 +1780,7 @@ export default function UserManagement() {
             {users.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
+                className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -1805,7 +1805,7 @@ export default function UserManagement() {
                       <span className="text-xs text-purple-600">@{user.username}</span>
                     )}
                     {user.sales_roles && user.sales_roles.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex flex-wrap items-center gap-1 mt-1">
                         <Briefcase className="w-3 h-3 text-gray-400" />
                         {user.sales_roles.map(role => (
                           <Badge key={role} variant="outline" className="text-xs">
@@ -1817,7 +1817,7 @@ export default function UserManagement() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   <UserQRCode user={user} />
                   <Button
                     variant="ghost"
