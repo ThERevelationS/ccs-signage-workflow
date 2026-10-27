@@ -55,15 +55,20 @@ export default function LetterPurchasesPanel({ project, purchases, totals, onCha
           />
           <span className="text-sm text-gray-700 w-20 text-right">{money(p.line_total)}</span>
           <button
-            onClick={() =>
-              onChange({ letter_purchases: project.letter_purchases.filter((_, i) => i !== idx) })
-            }
+            onClick={() => {
+              if (!window.confirm(`Remove "${p.description || "this letter line"}"?`)) return;
+              onChange({ letter_purchases: project.letter_purchases.filter((_, i) => i !== idx) });
+            }}
             className="text-gray-400 hover:text-red-600 p-1"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
       ))}
+
+      {purchases.length === 0 && (
+        <p className="text-xs text-gray-400">No letter lines yet.</p>
+      )}
 
       <Button
         variant="outline"
