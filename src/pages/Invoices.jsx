@@ -520,6 +520,12 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                     {busy === "email" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}Email to customer
                   </button>
                 )}
+                {!["draft", "void"].includes(inv.status) && (
+                  <button type="button" onClick={() => run("stmt", { action: "email_statement", invoice_id: invoiceId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setNotice(`Statement emailed to ${d.sent_to} (${d.open_invoices} open · $${Number(d.open_total || 0).toFixed(2)}).`); })} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-sky-300 px-4 text-sm font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60 dark:border-sky-800 dark:text-sky-400">
+                    {busy === "stmt" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}Email statement
+                  </button>
+                )}
                 {Number(inv.balance_due) > 0 && ["sent", "partially_paid"].includes(inv.status) && inv.due_date && inv.due_date < today() && (
                   <button type="button" onClick={() => run("remind", { action: "send_past_due_reminder", invoice_id: invoiceId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setNotice(`Past-due reminder sent to ${d.sent_to}.`); })} disabled={Boolean(busy)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-amber-300 px-4 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-800 dark:text-amber-400">
