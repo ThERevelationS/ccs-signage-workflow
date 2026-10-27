@@ -46,3 +46,6 @@ assert.deepEqual(extractBuilderParts('vinyl', {}, {}), []);
 }
 
 console.log('PASS extract builder parts (8 cases)');
+// The window shim makes the transitively bundled @base44/sdk take the browser
+// code path, which leaves a handle alive — exit explicitly like customerSync.
+process.exit(0);
