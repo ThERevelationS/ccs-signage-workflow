@@ -1,3 +1,4 @@
+import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
@@ -91,13 +92,8 @@ function invoiceSnapshot(row: any) {
   };
 }
 
-async function nextInvoiceNumber(Invoice: any) {
-  const rows = await Invoice.filter({});
-  if (!Array.isArray(rows)) throw bad("Invoice numbering lookup failed.", 500);
-  let seq = rows.length + 1001;
-  const existing = new Set(rows.map((r: any) => clean(r?.invoice_number)));
-  while (existing.has(`INV-${seq}`)) seq += 1;
-  return `INV-${seq}`;
+async function nextInvoiceNumber(Invoice: any, svc: any) {
+  return allocateDocNumber({ svc, configName: 'invoice', prefix: 'INV-', seedEntity: Invoice, seedField: 'invoice_number' });
 }
 
 async function findByCreationKey(entity: any, key: string) {
@@ -423,7 +419,7 @@ Deno.serve(async (req) => {
         const customer = await Customer.get(customerId).catch(() => null);
         if (customer?.id) customerDisplayName = clean(customer.company_name) || customerDisplayName;
       }
-      const invoiceNumber = await nextInvoiceNumber(Invoice);
+      const invoiceNumber = await nextInvoiceNumber(Invoice, base44.asServiceRole);
       const invoiceKey = clean(body?.creation_request_key)
         || `invoice-from-estimate:${estimateId}:${mode}:${Date.now()}`;
       const totals = computeTotals({
@@ -492,7 +488,7 @@ Deno.serve(async (req) => {
         }
       }
       const totals = computeTotals({ ...fields, line_items: lineItems });
-      const invoiceNumber = clean(fields.invoice_number) || await nextInvoiceNumber(Invoice);
+      const invoiceNumber = clean(fields.invoice_number) || await nextInvoiceNumber(Invoice, base44.asServiceRole);
       const invoiceKey = clean(body?.creation_request_key) || `invoice:${customerId}:${Date.now()}`;
       const createdResult = await createFoundationRecordWithRecovery({
         entity: Invoice,

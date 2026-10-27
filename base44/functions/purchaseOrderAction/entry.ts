@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
         entity: PurchaseOrder,
         data: {
           creation_request_key: key,
-          po_number: clean(fields.po_number) || await nextPoNumber(PurchaseOrder),
+          po_number: clean(fields.po_number) || await nextPoNumber(PurchaseOrder, base44.asServiceRole),
           status: "draft",
           vendor_name: vendorName,
           vendor_contact: clean(fields.vendor_contact),

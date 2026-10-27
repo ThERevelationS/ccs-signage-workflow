@@ -1,3 +1,4 @@
+import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
@@ -39,13 +40,8 @@ function stockSnapshot(row: any) {
   };
 }
 
-async function nextPoNumber(PurchaseOrder: any) {
-  const rows = await PurchaseOrder.filter({});
-  if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
-  let seq = rows.length + 1001;
-  const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
-  while (existing.has(`PO-${seq}`)) seq += 1;
-  return `PO-${seq}`;
+async function nextPoNumber(PurchaseOrder: any, svc: any) {
+  return allocateDocNumber({ svc, configName: 'purchase_order', prefix: 'PO-', seedEntity: PurchaseOrder, seedField: 'po_number' });
 }
 
 async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, note, actor, key }: any) {
@@ -176,7 +172,7 @@ Deno.serve(async (req) => {
         entity: PurchaseOrder,
         data: {
           creation_request_key: key,
-          po_number: await nextPoNumber(PurchaseOrder),
+          po_number: await nextPoNumber(PurchaseOrder, base44.asServiceRole),
           status: "draft",
           vendor_name: vendorName,
           line_items: lines,
