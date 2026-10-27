@@ -59,9 +59,7 @@ function newRequestId() {
 
 export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) {
   const email = String(currentUser?.email || "").trim().toLowerCase();
-  const isSalary = currentUser?.employment_type === "salary";
   const [prefs, setPrefs] = useState(null);
-  const [employmentType, setEmploymentType] = useState(currentUser?.employment_type || "");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(0);
@@ -83,7 +81,6 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Time Tracker settings could not be loaded.");
       setPrefs({ ...DEFAULT_PREFS, ...(data.prefs || {}) });
-      setEmploymentType(String(data.employment_type || ""));
     } catch (err) {
       setError(err?.message || "Time Tracker settings could not be loaded.");
       setPrefs({ ...DEFAULT_PREFS });
@@ -129,20 +126,6 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
       setSaving(false);
     }
   };
-
-  if (!isSalary && employmentType && employmentType !== "salary") {
-    return (
-      <div className="clay-card p-5">
-        <h3 className="font-semibold mb-2 flex items-center gap-2">
-          <Hourglass className="w-5 h-5 text-indigo-600" />
-          Time Tracker
-        </h3>
-        <p className="text-sm text-gray-600">
-          The Time Tracker toolbar display is available to salary employees.
-        </p>
-      </div>
-    );
-  }
 
   const p = prefs || DEFAULT_PREFS;
   const set = (key) => (value) => update(key, value);
