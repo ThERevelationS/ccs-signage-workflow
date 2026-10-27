@@ -335,6 +335,8 @@ export default function ChangeOrders() {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("co") || "");
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -354,6 +356,30 @@ export default function ChangeOrders() {
     const t = setTimeout(load, 200);
     return () => clearTimeout(t);
   }, [load]);
+
+  useEffect(() => {
+    setSelected((s) => new Set([...s].filter((id) => changeOrders.some((c) => c.id === id))));
+  }, [changeOrders]);
+
+  const proposedIds = changeOrders.filter((c) => clean(c.status) === "proposed").map((c) => c.id);
+  const toggleSelect = (id, on) =>
+    setSelected((s) => { const n = new Set(s); on ? n.add(id) : n.delete(id); return n; });
+
+  const bulkApprove = async () => {
+    const ids = [...selected].filter((id) => proposedIds.includes(id));
+    if (!ids.length) return;
+    if (!window.confirm(`Approve ${ids.length} proposed change order${ids.length === 1 ? "" : "s"}?`)) return;
+    setBulkBusy(true);
+    let ok = 0, failed = 0;
+    for (const id of ids) {
+      try { await invokeAction(sessionToken, { action: "approve_change_order", change_order_id: id }); ok++; }
+      catch { failed++; }
+    }
+    setBulkBusy(false);
+    setSelected(new Set());
+    if (failed) setError(`Approved ${ok}; ${failed} failed (may no longer be proposed).`);
+    load();
+  };
 
   if (!isRegistered) return null;
 
@@ -396,6 +422,13 @@ export default function ChangeOrders() {
           activeName={viewName}
           onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
         />
+        {selected.size > 0 && (
+          <button type="button" onClick={bulkApprove} disabled={bulkBusy}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+            {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Approve selected ({selected.size})
+          </button>
+        )}
       </div>
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
@@ -412,6 +445,11 @@ export default function ChangeOrders() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
+                <th className="w-8 px-2 py-2.5">
+                  <input type="checkbox" title="Select all proposed" className="h-4 w-4 align-middle accent-emerald-600"
+                    checked={proposedIds.length > 0 && proposedIds.every((id) => selected.has(id))}
+                    onChange={(e) => setSelected(e.target.checked ? new Set(proposedIds) : new Set())} />
+                </th>
                 <th className="px-4 py-2.5">CO #</th><th className="px-4 py-2.5">Title</th>
                 <th className="px-4 py-2.5">Customer</th><th className="px-4 py-2.5 text-right">Delta</th>
                 <th className="px-4 py-2.5">Status</th><th className="px-2 py-2.5" />
@@ -420,6 +458,12 @@ export default function ChangeOrders() {
             <tbody>
               {changeOrders.map((co) => (
                 <tr key={co.id} onClick={() => setOpenId(co.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
+                  <td className="w-8 px-2 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    {clean(co.status) === "proposed" ? (
+                      <input type="checkbox" className="h-4 w-4 accent-emerald-600" checked={selected.has(co.id)}
+                        onChange={(e) => toggleSelect(co.id, e.target.checked)} />
+                    ) : null}
+                  </td>
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{co.change_order_number}</td>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{co.title}</td>
                   <td className="px-4 py-2.5 text-slate-500">{co.customer_display_name || "—"}</td>
