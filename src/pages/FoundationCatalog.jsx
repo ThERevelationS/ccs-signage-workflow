@@ -13,8 +13,15 @@ import { staffEntities } from "@/components/staff/staffEntities";
 export default function FoundationCatalog() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeType, setActiveType] = useState("concrete_service");
+  const [activeType, setActiveType] = useState(() => new URLSearchParams(window.location.search).get("type") || "concrete_service");
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
+  const writeParam = (key, value, defaultValue = "") => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== defaultValue) next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadError, setLoadError] = useState("");
