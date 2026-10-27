@@ -67,6 +67,9 @@ const DEFAULT_PREFS = {
   hide_when_unfocused: false,
   timeclock_page_only: false,
   goal_celebrate: true,
+  device_scope: "all",
+  custom_label: "",
+  alert_minutes: [],
   time_format: "hh_mm_ss",
 };
 
@@ -381,6 +384,30 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
             ))}
           </div>
 
+          {/* Label + reminders */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Custom label</Label>
+              <Input
+                value={p.custom_label || ""}
+                onChange={(e) => update("custom_label", e.target.value.slice(0, 24))}
+                placeholder='e.g. "On the clock"'
+                className="mt-1"
+                disabled={saving}
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Reminders (minutes on clock)</Label>
+              <Input
+                value={(p.alert_minutes || []).join(", ")}
+                onChange={(e) => update("alert_minutes", e.target.value.split(",").map((v) => parseFloat(v.trim())).filter((v) => Number.isFinite(v) && v > 0).slice(0, 6))}
+                placeholder="e.g. 240, 480"
+                className="mt-1"
+                disabled={saving}
+              />
+            </div>
+          </div>
+
           {/* Placement + sizing */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
@@ -416,6 +443,17 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                   <SelectItem value="breathe">Breathe</SelectItem>
                   <SelectItem value="sweep">Sweep</SelectItem>
                   <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Show on</Label>
+              <Select value={p.device_scope} onValueChange={set("device_scope")} disabled={saving}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All devices</SelectItem>
+                  <SelectItem value="desktop_only">Desktop only</SelectItem>
+                  <SelectItem value="mobile_only">Mobile only</SelectItem>
                 </SelectContent>
               </Select>
             </div>

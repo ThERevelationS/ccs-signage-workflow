@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/EmailGate";
 import { useToast } from "@/components/ui/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -93,6 +93,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const location = useLocation();
   const onTimeClock = String(location?.pathname || "").toLowerCase().includes("timeclock");
   const [focused, setFocused] = useState(() => typeof document === "undefined" || document.visibilityState === "visible");
+  const navigate = useNavigate();
+  const [isMobileView, setIsMobileView] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(max-width: 767px)").matches
+      : false);
   const { toast } = useToast();
   const email = String(currentUser?.email || "").trim().toLowerCase();
   const scopeKey = `${email}|${sessionToken ? "t" : ""}`;
@@ -261,6 +266,26 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     }
   }, [enabled, live, progress, overtime, overtimeMinutes, milestoneThresholds, prefs, email, snapshot?.company_day, displayMinutes, toast]);
 
+  // Time-of-day reminders: one toast per configured elapsed-minute mark.
+  useEffect(() => {
+    if (!enabled || !live || !snapshot?.company_day) return;
+    const marks = Array.isArray(prefs?.alert_minutes) ? prefs.alert_minutes : [];
+    if (!marks.length) return;
+    const fired = readMilestones(email, snapshot.company_day);
+    const next = [...fired];
+    for (const m of marks) {
+      const minute = Number(m);
+      if (!Number.isFinite(minute) || minute <= 0) continue;
+      const marker = 10000 + minute;
+      if (displayMinutes >= minute && !next.includes(marker)) {
+        next.push(marker);
+        toast({ description: `Time Tracker reminder: ${formatClock(minute, "hours_minutes")} on the clock` });
+        if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
+      }
+    }
+    if (next.length !== fired.length) writeMilestones(email, snapshot.company_day, next);
+  }, [enabled, live, displayMinutes, prefs, email, snapshot?.company_day, toast]);
+
   // Location gate: hidden everywhere, or restricted to a bar.
   const locationPref = prefs?.location || "both";
   useEffect(() => {
@@ -268,7 +293,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     document.addEventListener("visibilitychange", mark);
     window.addEventListener("blur", mark);
     window.addEventListener("focus", mark);
-    return () => { document.removeEventListener("visibilitychange", mark); window.removeEventListener("blur", mark); window.removeEventListener("focus", mark); };
+    const mq = typeof window.matchMedia === "function" ? window.matchMedia("(max-width: 767px)") : null;
+    const onMq = (event) => setIsMobileView(event.matches);
+    mq?.addEventListener?.("change", onMq);
+    return () => { document.removeEventListener("visibilitychange", mark); window.removeEventListener("blur", mark); window.removeEventListener("focus", mark); mq?.removeEventListener?.("change", onMq); };
   }, []);
 
   const matchesPref = locationPref === "both" ||
@@ -278,6 +306,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     !(prefs?.show_only_clocked_in === true && snapshot?.status !== "clocked_in") &&
     !(prefs?.hide_when_unfocused === true && !focused) &&
     !(prefs?.timeclock_page_only === true && !onTimeClock) &&
+    !(prefs?.device_scope === "desktop_only" && isMobileView) &&
+    !(prefs?.device_scope === "mobile_only" && !isMobileView) &&
     (matchesPref ||
      (locationPref === "top" && !hasTopBar) ||
      (locationPref === "side" && !hasSideBar));
@@ -338,7 +368,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   })();
 
   const trackerLabel = clockedIn
-    ? (prefs?.direction === "down" && !overtime ? "Remaining" : "Today")
+    ? (String(prefs?.custom_label || "").trim() || (prefs?.direction === "down" && !overtime ? "Remaining" : "Today"))
     : "";
   const trackerTime = clockedIn
     ? (prefs?.show_seconds === false
@@ -496,6 +526,13 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
+            <button
+              type="button"
+              onClick={() => navigate("/TimeClock")}
+              className="mt-3 w-full rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
+            >
+              Open Time Clock
+            </button>
             <p className="mt-3 text-[10px] leading-relaxed text-slate-400">
               Counts {prefs?.count_mode === "elapsed" ? "elapsed" : "paid"} time against a {formatClock(goalMinutes, "hours_minutes")} daily goal, in {TIME_CLOCK_COMPANY_TIME_LABEL}. Configure in Time Clock → Settings.
             </p>
