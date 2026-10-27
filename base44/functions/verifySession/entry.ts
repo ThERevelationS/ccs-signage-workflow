@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
         can_order_export: user.role === 'admin' && user.can_order_export === true,
         can_view_resources: user.can_view_resources,
         order_form_filter: user.order_form_filter,
+        is_full_admin: user.is_full_admin === true,
+        admin_permissions: user.admin_permissions && typeof user.admin_permissions === "object" && !Array.isArray(user.admin_permissions) ? user.admin_permissions : {},
       },
     });
   } catch (error) {
