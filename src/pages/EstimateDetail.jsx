@@ -38,6 +38,7 @@ import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcu
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
+import { duplicateEstimate } from "@/components/estimator/estimateCreationService";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -112,6 +113,7 @@ export default function EstimateDetail() {
   const [clipboardOpen, setClipboardOpen] = useState(false);
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   const [trashing, setTrashing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   // Tracks the exact server version this browser session last read or wrote.
   // Keep it separate from persistedEstimate because Product operations may save
   // immediately while the lifecycle baseline intentionally remains older.
@@ -146,6 +148,23 @@ export default function EstimateDetail() {
       window.alert(error?.message || "The estimate could not be moved to Trash.");
     } finally {
       setTrashing(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (duplicating || !estimate?.id) return;
+    if (openRevision) {
+      window.alert("Save the open estimate revision before duplicating this estimate.");
+      return;
+    }
+    setDuplicating(true);
+    try {
+      const created = await duplicateEstimate({ source: estimate, sessionToken });
+      navigate(`/EstimateDetail?id=${created.id}`);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be duplicated.");
+    } finally {
+      setDuplicating(false);
     }
   };
 
@@ -1182,6 +1201,8 @@ export default function EstimateDetail() {
         onSave={handleSave}
         saving={saving}
         readOnly={readOnly}
+        onDuplicate={handleDuplicate}
+        duplicating={duplicating}
       />
 
       <div className="flex gap-3 px-3 pb-6">
