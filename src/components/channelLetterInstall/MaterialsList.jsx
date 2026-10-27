@@ -45,6 +45,7 @@ export default function MaterialsList({ item, inventory, onChange }) {
   };
 
   const removeMaterial = (idx) => {
+    if (!confirm(`Remove "${materials[idx]?.item_name || "this material"}"?`)) return;
     const next = [...materials];
     next.splice(idx, 1);
     onChange(next);
