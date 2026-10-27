@@ -583,7 +583,7 @@ export default function QuickClockSection({
 
   useEffect(() => {
     if (!authoritativeTransition || !authoritativeSessionToken || !authoritativeSessionUser?.email) return undefined;
-    const poll = setInterval(() => refreshAuthoritativeSessionState({ quiet: true }), 3000);
+    const poll = setInterval(() => { if (!document.hidden) refreshAuthoritativeSessionState({ quiet: true }); }, 3000);
     return () => clearInterval(poll);
   }, [authoritativeTransition, authoritativeSessionToken, authoritativeSessionUser?.email, refreshAuthoritativeSessionState]);
 
