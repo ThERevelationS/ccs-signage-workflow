@@ -256,6 +256,8 @@ export default function TimeTracker({ position = "top" } = {}) {
      (locationPref === "top" && position !== "side") ||
      (locationPref === "side" && position === "side"));
 
+  if (!visibleHere) return null;
+
   const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
   const ringColor = TONE_RING[tone] || accent.ring;
   const clockedIn = snapshot?.status === "clocked_in";
@@ -303,13 +305,11 @@ export default function TimeTracker({ position = "top" } = {}) {
     return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
   })();
 
-  const pillLabel = clockedIn
-    ? `${prefs?.direction === "down" && !overtime ? "Remaining" : "Today"}: ${formatClockSeconds(shown, prefs?.time_format)}`
-    : "Off the clock";
-
-  // Location gate: hidden everywhere, or restricted to a bar.
-  // Kept after every hook in this component so the hook count never changes.
-  if (!visibleHere) return null;
+  const trackerLabel = clockedIn
+    ? (prefs?.direction === "down" && !overtime ? "Remaining" : "Today")
+    : "";
+  const trackerTime = clockedIn ? formatClockSeconds(shown, prefs?.time_format) : "Off the clock";
+  const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -318,7 +318,7 @@ export default function TimeTracker({ position = "top" } = {}) {
           type="button"
           data-time-tracker
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
-          className={`tracker-pill group relative flex items-center gap-2 rounded-2xl border text-left shadow-sm outline-none transition-[transform,box-shadow,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${accent.pill} ${prefs?.background_style === "minimal" ? "border-transparent bg-transparent shadow-none" : ""} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"} ${prefs?.size === "expanded" ? "px-3 py-1.5" : "px-2.5 py-1"} ${animClass}`}
+          className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animClass}`}
           style={{
             transform: `scale(${prefs?.scale || 1})`,
             opacity: prefs?.opacity ?? 1,
@@ -338,13 +338,14 @@ export default function TimeTracker({ position = "top" } = {}) {
               />
             </svg>
           )}
-          {frozen ? <Pause className="h-3.5 w-3.5 shrink-0 opacity-70" /> : <Timer className="h-3.5 w-3.5 shrink-0 opacity-70" />}
+          {frozen ? <Pause className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"}`} /> : <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"}`} />}
           <span className={`flex flex-col leading-none ${FONTS[prefs?.font] || ""}`}>
             <span
-              className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-sm" : "text-xs"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : ""}`}
+              className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : ""}`}
               key={prefs?.display_style === "flip" ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
             >
-              {pillLabel}
+              {trackerLabel && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
+              {trackerTime}
             </span>
             {prefs?.display_style === "bar" && (
               <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">

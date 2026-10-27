@@ -41,12 +41,12 @@ const DEFAULT_PREFS = {
   show_pace: true,
   accent_color: "indigo",
   privacy_blur: false,
-  size: "compact",
+  size: "expanded",
   location: "both",
   scale: 1,
   opacity: 1,
   font: "default",
-  background_style: "glass",
+  background_style: "minimal",
   update_interval_seconds: 60,
   animation_style: "smooth",
   time_format: "hh_mm_ss",
@@ -242,9 +242,9 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               <Select value={p.background_style} onValueChange={set("background_style")} disabled={saving}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="minimal">Blend (no bubble)</SelectItem>
                   <SelectItem value="glass">Glass</SelectItem>
                   <SelectItem value="solid">Solid</SelectItem>
-                  <SelectItem value="minimal">Minimal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
