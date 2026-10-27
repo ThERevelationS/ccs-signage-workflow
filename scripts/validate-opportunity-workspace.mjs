@@ -458,3 +458,6 @@ for (const t of ['test-aio-pricing.mjs','test-quote-lifecycle.mjs','test-custome
 for (const t of ['test-nav-wiring.mjs','test-mutation-guard.mjs','test-quick-price-persistence.mjs','test-customer-persistence.mjs','test-builder-service.mjs','test-builder-recovery.mjs','test-sales-activity.mjs','test-module-registry.mjs','test-profitability.mjs']) {
   assert.ok(existsSync(`scripts/${t}`), `hardening test ${t} must exist`);
 }
+for (const t of ['test-estimate-cas.mjs','test-estimate-lifecycle.mjs','test-estimate-save-recovery.mjs','test-customer-sync.mjs','test-mutation-guard.mjs','test-builder-persistence.mjs','test-builder-recovery.mjs','test-builder-service.mjs','test-builder-product.mjs','test-quick-price-persistence.mjs','test-customer-persistence.mjs','test-module-registry.mjs','test-sales-activity.mjs','test-profitability.mjs','test-quote-defaults.mjs','test-nav-wiring.mjs','test-extract-parts.mjs','test-foundation-schema.mjs','test-inventory-persistence.mjs','test-exclusive-toggle.mjs','test-import-mappers.mjs','test-inventory-sources.mjs','test-labor-schema.mjs','test-priority-reorder.mjs','test-revision-service.mjs']) {
+  assert.ok(existsSync(`scripts/${t}`), `hardening test ${t} must exist`);
+}
