@@ -6,6 +6,7 @@ import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {summarizeMatchedLocalityAuthority} from '../../shared/permittingAddressLocality.js';
 import {strictGeocode,resolveSpatialLocation,exactConfiguredLocality} from '../../shared/permittingSpatialResolution.mjs';
 import {normalizeAddressState} from '../../shared/permittingAddressState.js';
+import {withEntityRateLimitRetry} from '../../shared/entityRateLimitRetry.ts';
 
 
 
