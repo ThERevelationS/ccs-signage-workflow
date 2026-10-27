@@ -423,7 +423,7 @@ tr.mmm-focus-row > td :where(*) {
 @media (prefers-reduced-motion: reduce) {
   .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
   .check-draw { stroke-dashoffset: 0; }
-  .tracker-pulse, .tracker-flip, .tracker-today-bar, .tracker-glow, .tracker-breathe, .tracker-sweep::after, .punch-sheen, .mci-time-pop { animation: none !important; }
+  .tracker-pulse, .tracker-flip, .tracker-today-bar, .tracker-glow, .tracker-breathe, .tracker-sweep::after, .tracker-blink, .punch-sheen, .mci-time-pop { animation: none !important; }
 }
 
 /* Time Tracker pill animations */
@@ -518,4 +518,11 @@ tr.mmm-focus-row > td :where(*) {
   0% { transform: translateX(-120%); }
   55%, 100% { transform: translateX(120%); }
 }
+
+
+@keyframes trackerBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.tracker-blink { animation: trackerBlink 1.8s ease-in-out infinite; }
 

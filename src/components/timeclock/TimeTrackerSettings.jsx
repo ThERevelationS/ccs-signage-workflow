@@ -50,6 +50,14 @@ const DEFAULT_PREFS = {
   background_style: "minimal",
   update_interval_seconds: 60,
   animation_style: "smooth",
+  animation_target: "all",
+  show_label: true,
+  show_icon: true,
+  show_seconds: true,
+  show_percent: false,
+  show_only_clocked_in: false,
+  progressive_colors: true,
+  blink_separator: false,
   time_format: "hh_mm_ss",
 };
 
@@ -345,6 +353,13 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               ["show_pace", "Pace indicator"],
               ["show_week_strip", "Week strip"],
               ["privacy_blur", "Privacy blur"],
+              ["show_label", "Label"],
+              ["show_icon", "Icon"],
+              ["show_seconds", "Seconds"],
+              ["show_percent", "% badge"],
+              ["show_only_clocked_in", "Only when clocked in"],
+              ["progressive_colors", "Progressive colors"],
+              ["blink_separator", "Blinking separator"],
             ].map(([key, label]) => (
               <label key={key} className="flex items-center justify-between gap-2 text-sm">
                 <span>{label}</span>
@@ -388,6 +403,18 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                   <SelectItem value="breathe">Breathe</SelectItem>
                   <SelectItem value="sweep">Sweep</SelectItem>
                   <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Animate</Label>
+              <Select value={p.animation_target} onValueChange={set("animation_target")} disabled={saving}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Whole tracker</SelectItem>
+                  <SelectItem value="digits">Digits only</SelectItem>
+                  <SelectItem value="ring">Ring only</SelectItem>
+                  <SelectItem value="icon">Icon only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
