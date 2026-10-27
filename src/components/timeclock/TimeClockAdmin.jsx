@@ -715,7 +715,7 @@ export default function TimeClockAdmin() {
       "Paid Break (min)": entry.tracked_paid_break_minutes || 0,
       "Unpaid Break (min)": entry.tracked_unpaid_break_minutes || 0,
       "Work Pause (min)": entry.tracked_work_pause_minutes || 0,
-      "Total Hours": entry.total_hours?.toFixed(2) || "0.00",
+      "Total Hours": Number(entry.total_hours ?? 0).toFixed(2),
       "Approval Status": entry.approval_status || "unreviewed",
       "Approved At": entry.approved_at ? safeFormat(entry.approved_at, "yyyy-MM-dd h:mm a") : "",
       "Approved By": entry.approved_by || "",
@@ -991,7 +991,7 @@ export default function TimeClockAdmin() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium text-purple-600">
-                      {entry.total_hours?.toFixed(2) || "-"} hrs
+                      {Number(entry.total_hours ?? 0).toFixed(2)} hrs
                     </td>
                     <td className="px-4 py-3">
                       {entry.status === "needs_resolution" ? (
@@ -1039,7 +1039,7 @@ export default function TimeClockAdmin() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {entry.job_allocations?.length > 0 ? (
+                      {Array.isArray(entry.job_allocations) && entry.job_allocations.length > 0 ? (
                         <div className="space-y-1">
                           {entry.job_allocations.slice(0, 2).map((job, i) => (
                             <div key={i} className="flex items-center gap-1 text-xs">
@@ -1051,7 +1051,7 @@ export default function TimeClockAdmin() {
                               <span className="truncate max-w-[100px]">
                                 {job.is_inhouse ? job.inhouse_task : job.client_name}
                               </span>
-                              <span className="text-gray-500">{(job.hours || (job.minutes ? job.minutes / 60 : 0)).toFixed(2)}h</span>
+                              <span className="text-gray-500">{Number(job.hours ?? (job.minutes ? job.minutes / 60 : 0)).toFixed(2)}h</span>
                             </div>
                           ))}
                           {entry.job_allocations.length > 2 && (
