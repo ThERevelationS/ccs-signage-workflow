@@ -138,10 +138,11 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Time Tracker settings were not saved.");
-      setPrefs({ ...DEFAULT_PREFS, ...(data.prefs || {}) });
+      const saved = { ...DEFAULT_PREFS, ...(data.prefs || {}) };
+      setPrefs(saved);
       saveRequestRef.current = { id: "", fingerprint: "" };
       setSavedAt(Date.now());
-      try { window.dispatchEvent(new CustomEvent("ccs:timeTrackerRefresh", { detail: { prefs: next } })); } catch {}
+      try { window.dispatchEvent(new CustomEvent("ccs:timeTrackerRefresh", { detail: { prefs: saved } })); } catch {}
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Time Tracker settings were not saved.");
     } finally {
