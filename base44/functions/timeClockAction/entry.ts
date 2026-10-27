@@ -307,7 +307,7 @@ const FULL_SHIFT_HOURS = 8; // Clocking out under a full worked day counts as ea
 const LONG_SHIFT_HOURS = 10; // Worked length that raises the long-shift event.
 const PTO_LOW_HOURS_THRESHOLD = 8; // Available balance under one workday counts as low.
 const PTO_LOW_ALERT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // At most one low-balance alert per type per week.
-const STALE_SHIFT_MONITOR_CAPABILITY_HASH = '5228d94ea9970926dcb7f6365da6f336f9b8c633c109991da94feba223ccfe17';
+const STALE_SHIFT_MONITOR_CAPABILITY_HASH = 'f63c5b792d82c0fade5324f96447480a3530b9e8459dc141909ae16782096ed0';
 
 function dateKeyInCompanyTime(value: any) {
   const date = new Date(String(value || ''));
@@ -1318,11 +1318,13 @@ function defaultTrackerPrefs(email: string, name: string) {
     device_scope: 'all',
     custom_label: '',
     alert_minutes: [],
+    reminders: [],
+    weekly_celebrate: true,
   };
 }
 
 const TRACKER_ENUMS: Record<string, string[]> = {
-  display_style: ['ring', 'bar', 'minimal', 'flip', 'roll'],
+  display_style: ['ring', 'bar', 'minimal', 'flip', 'roll', 'donut', 'arc', 'badge'],
   count_mode: ['paid', 'elapsed'],
   direction: ['up', 'down'],
   milestones_mode: ['off', 'goal', 'custom'],
@@ -1331,16 +1333,16 @@ const TRACKER_ENUMS: Record<string, string[]> = {
   accent_color: ['indigo', 'emerald', 'amber', 'violet', 'rose', 'sky', 'cyan', 'teal', 'lime', 'orange', 'fuchsia', 'slate'],
   size: ['compact', 'expanded'],
   location: ['both', 'top', 'side', 'hidden'],
-  font: ['default', 'mono', 'rounded', 'serif'],
-  background_style: ['glass', 'solid', 'minimal'],
-  animation_style: ['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'none'],
+  font: ['default', 'mono', 'rounded', 'serif', 'light', 'heavy'],
+  background_style: ['minimal', 'glass', 'solid', 'outline', 'soft', 'accent', 'halo', 'dotted', 'striped', 'elevated', 'inset', 'neon', 'pearl', 'carbon', 'mesh', 'aurora', 'dusk', 'forest', 'ocean', 'sunset', 'berry', 'mono'],
+  animation_style: ['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'wave', 'sparkle', 'float', 'flicker', 'rainbow', 'pop', 'wobble', 'ripple', 'shake', 'gradient', 'none'],
   animation_target: ['all', 'digits', 'ring', 'icon'],
   device_scope: ['all', 'desktop_only', 'mobile_only'],
   time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
 };
 
-const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate'];
-const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes'];
+const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate', 'weekly_celebrate'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes', 'reminders'];
 
 function trackerClamp(value: any, min: number, max: number, fallback: number) {
   const n = Number(value);
@@ -1369,6 +1371,19 @@ function normalizeTrackerPrefs(row: any, target: any) {
     .slice(0, 8);
   if (!out.milestone_thresholds.length) out.milestone_thresholds = [...base.milestone_thresholds];
   out.custom_label = String(row.custom_label || '').slice(0, 24).trim();
+  const rawAccent = String(row.accent_color || '');
+  if (/^#[0-9a-fA-F]{6}$/.test(rawAccent)) out.accent_color = rawAccent.toLowerCase();
+  const reminderSource = Array.isArray(row.reminders) ? row.reminders
+    : (Array.isArray(row.alert_minutes) ? row.alert_minutes : []);
+  out.reminders = reminderSource
+    .map((r: any) => {
+      const minutes = Math.round(Number(typeof r === 'object' && r !== null ? r.minutes : r));
+      const label = typeof r === 'object' && r !== null ? String(r.label || '').slice(0, 60).trim() : '';
+      return Number.isFinite(minutes) && minutes > 0 && minutes <= 1440 ? { minutes, label } : null;
+    })
+    .filter(Boolean)
+    .filter((r: any, i: number, arr: any[]) => arr.findIndex((o: any) => o.minutes === r.minutes) === i)
+    .slice(0, 12);
   out.alert_minutes = (Array.isArray(row.alert_minutes) ? row.alert_minutes : [])
     .map((m: any) => Math.round(Number(m)))
     .filter((m: number) => Number.isFinite(m) && m > 0 && m <= 1440)
