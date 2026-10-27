@@ -71,10 +71,10 @@ function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAs
   const stageOptions = Object.keys(stageDisplayNames);
   if (wo.current_stage && !stageOptions.includes(wo.current_stage)) stageOptions.push(wo.current_stage);
   return (
-    <div className="flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
+    <div className="inline-flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
       <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
       <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onSaveField(wo, { current_task_description: next }); }}>
-        <SelectTrigger className="h-7 w-44 min-w-0 flex-1 text-xs border-0 bg-transparent px-1" title="Task description">
+        <SelectTrigger className="h-7 w-40 text-xs border-0 bg-transparent px-1 truncate" title="Task description">
           <SelectValue placeholder="Task" />
         </SelectTrigger>
         <SelectContent>
@@ -103,11 +103,11 @@ function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAs
         value={wo.current_task_assigned_to || ""}
         users={users}
         onChange={(name) => onAssigneeChange(wo, name)}
-        className="h-7 w-28 text-xs border-0 bg-transparent px-1"
+        className="h-7 w-24 text-xs border-0 bg-transparent px-1"
         context={wo.client_name || "this job"}
       />
       <Select value={wo.current_stage || ""} onValueChange={(next) => { if (next !== wo.current_stage) onSaveField(wo, { current_stage: next }); }}>
-        <SelectTrigger className="h-7 w-24 text-xs border-0 bg-transparent px-1" title="Stage">
+        <SelectTrigger className="h-7 w-20 text-xs border-0 bg-transparent px-1" title="Stage">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
