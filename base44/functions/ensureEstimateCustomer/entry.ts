@@ -85,7 +85,7 @@ async function updateCustomerFieldsIfUnchanged(CustomerUser: any, loaded: any, f
 
     let result;
     try {
-      result = await CustomerUser.updateMany(
+      result = await CustomerService.updateMany(
         { id: loaded.id, updated_date: version },
         { $set: fields },
       );
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
     let created: any = null;
     let createError: any = null;
     try {
-      created = await CustomerUser.create(createPayload);
+      created = await CustomerService.create(createPayload);
     } catch (error) {
       createError = error;
     }
