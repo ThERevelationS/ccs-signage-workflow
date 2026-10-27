@@ -125,7 +125,11 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
   };
 
   const addItem = () => patchProject({ items: [...(project.items || []), emptyItem()] });
-  const removeItem = (index) => patchProject({ items: project.items.filter((_, i) => i !== index) });
+  const removeItem = (index) => {
+    const label = project.items?.[index]?.description || `item ${index + 1}`;
+    if (!window.confirm(`Delete "${label}"?`)) return;
+    patchProject({ items: project.items.filter((_, i) => i !== index) });
+  };
 
   const updateColor = (itemIndex, colorIndex, value) => {
     const colors = [...(project.items[itemIndex].paint_colors || [])];
@@ -246,7 +250,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
               <ArrowLeft className="w-4 h-4" /> Back to estimator
             </Link>
           )}
-          <Button onClick={saveProject} disabled={saving} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
+          <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
             <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : "Save Painting"}
           </Button>
         </div>
