@@ -230,7 +230,7 @@ function QuoteCard({ quote, onRespond, busy }) {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="text-sm font-medium text-slate-700">{money(s.amount)}</span>
-                      {quote.can_respond && s.section_key && !s.decision && (
+                      {quote.can_respond && quote.section_acceptance_mode !== false && s.section_key && !s.decision && (
                         <span className="flex gap-1">
                           <button type="button" onClick={() => onRespond(quote, "accepted", "", { key: s.section_key, label: s.name })} disabled={busy} title="Accept this section" className="rounded-md border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100">✓</button>
                           <button type="button" onClick={() => onRespond(quote, "rejected", "", { key: s.section_key, label: s.name })} disabled={busy} title="Decline this section" className="rounded-md border border-red-300 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-100">✗</button>
