@@ -1,5 +1,5 @@
 import { base44 } from "@/api/base44Client";
-import { getSessionToken } from "@/components/auth/EmailGate";
+import { getSessionToken, notifySessionRejected } from "@/components/auth/EmailGate";
 
 // A read issued while a pre-mutation fetch is in flight must not consume that
 // fetch's stale snapshot — so every completed fleet* invoke advances a mutation

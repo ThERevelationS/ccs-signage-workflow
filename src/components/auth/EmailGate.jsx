@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,22 @@ export function getSessionToken() {
 let lastSessionUser = null;
 export function getSessionUser() {
   return lastSessionUser;
+}
+
+// A staff-facing read can be rejected as unauthenticated while this tab still
+// holds a signed-in identity: the token was cleared in another tab, browser
+// storage was evicted, or a password reset revoked the session. Loaders only
+// see a raw 401, so rejections are reported here and resolved once by the
+// session layer — reverifying the stored token, and only dropping a session
+// that is genuinely gone (which reopens sign-in). Failures here never replace
+// the original request error.
+let sessionRejectionListener = null;
+export function notifySessionRejected() {
+  try {
+    sessionRejectionListener?.();
+  } catch {
+    // Recovery is best-effort; the caller keeps its own error handling.
+  }
 }
 
 export function clearAdminSettingsAuthorization() {
@@ -130,6 +146,50 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
+
+  // Resolve a rejected read once per wave of 401s. The token is reverified
+  // rather than trusted or blindly discarded: only a session that is actually
+  // gone ends here — a transient service failure keeps it so the next load can
+  // recover without a pointless re-sign-in.
+  const sessionRecheckInFlight = useRef(false);
+  const resolveSessionRejection = useCallback(async () => {
+    if (sessionRecheckInFlight.current) return;
+    // Guests hold no identity to recover; their reads are expected to be refused.
+    if (!getSessionUser()) return;
+    sessionRecheckInFlight.current = true;
+    const endSession = () => {
+      localStorage.removeItem(TOKEN_KEY);
+      clearAdminSettingsAuthorization();
+      setCurrentUser(null);
+      setBrowseOnly(false);
+    };
+    try {
+      const token = getSessionToken();
+      if (!token) {
+        endSession();
+        return;
+      }
+      const res = await base44.functions.invoke("verifySession", { token });
+      const data = res?.data || res;
+      if (data?.valid && data.user) {
+        setCurrentUser(data.user);
+        return;
+      }
+      endSession();
+    } catch (error) {
+      const status = Number(error?.response?.status ?? error?.status);
+      if (status === 401 || status === 409) endSession();
+    } finally {
+      sessionRecheckInFlight.current = false;
+    }
+  }, [setCurrentUser]);
+
+  useEffect(() => {
+    sessionRejectionListener = resolveSessionRejection;
+    return () => {
+      if (sessionRejectionListener === resolveSessionRejection) sessionRejectionListener = null;
+    };
+  }, [resolveSessionRejection]);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
