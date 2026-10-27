@@ -19,6 +19,7 @@ export default function QuantityTiersEditor({ tiers, onChange, disabled }) {
   };
 
   const removeTier = (idx) => {
+    if (!confirm("Remove this price tier?")) return;
     onChange(list.filter((_, i) => i !== idx));
   };
 
