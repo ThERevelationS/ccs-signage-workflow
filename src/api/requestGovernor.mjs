@@ -54,7 +54,7 @@ export function createRequestGovernor({
     if (next) next();
   };
 
-  const run = async (label, fn, { limitConcurrency = true, retryOnRateLimit = false } = {}) => {
+  const run = async (label, fn, { limitConcurrency = true, retryOnRateLimit = false, shouldRetry = null, maxAttempts = maxRetries } = {}) => {
     stats.total += 1;
     stats.byLabel[label] = (stats.byLabel[label] || 0) + 1;
     for (let attempt = 0; ; attempt += 1) {
@@ -67,7 +67,9 @@ export function createRequestGovernor({
         if (limitConcurrency) release();
         const limited = isPlatformRateLimit(err);
         if (limited) stats.rateLimited += 1;
-        if (limited && retryOnRateLimit && attempt < maxRetries) {
+        const retryable = (limited && retryOnRateLimit)
+          || (typeof shouldRetry === 'function' && shouldRetry(err, attempt));
+        if (retryable && attempt < maxAttempts) {
           stats.retries += 1;
           await sleep(Math.min(maxDelayMs, baseDelayMs * 2 ** attempt) * (0.5 + rand()));
           continue;

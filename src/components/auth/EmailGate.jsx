@@ -153,7 +153,13 @@ export function AuthProvider({ children }) {
       }
       return { success: false, error: data?.error || "Invalid username or password" };
     } catch (err) {
+      const status = err?.response?.status ?? err?.status;
       const apiError = err?.response?.data?.error;
+      // A 5xx (or a request that never completed) means sign-in was never
+      // evaluated — say so plainly instead of showing a raw server error name.
+      if (typeof status !== "number" || status >= 500) {
+        return { success: false, error: "Sign in hit a temporary server problem. Please try again." };
+      }
       return { success: false, error: apiError || "Invalid username or password" };
     }
   }, [setCurrentUser]);

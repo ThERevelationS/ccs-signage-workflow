@@ -26,6 +26,16 @@ function isRetryableFunction(fnName, payload) {
   return false;
 }
 
+// Sign-in can fail before any credential is checked — a transient server-side
+// failure (5xx) or a request that never got a response. Only those are retried:
+// a 400/401/403/409/429 response means the request was processed and must be
+// reported to the user as-is. The server never counts a failed login it did not
+// evaluate, so these retries cannot lock an account out.
+function isUnprocessedSignInFailure(err) {
+  const status = err?.response?.status ?? err?.status;
+  return typeof status === 'number' ? status >= 500 : true;
+}
+
 const entityWrappers = new Map();
 function wrapEntity(name, target) {
   if (!target || typeof target !== 'object') return target;
@@ -56,6 +66,9 @@ const functionsProxy = new Proxy(rawClient.functions, {
       return (fnName, payload) => governor.run(`fn:${fnName}`, () => value.call(t, fnName, payload), {
         limitConcurrency: false,
         retryOnRateLimit: isRetryableFunction(fnName, payload),
+        shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
+        // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
+        maxAttempts: fnName === 'verifyLogin' ? 2 : undefined,
       });
     }
     return value;
