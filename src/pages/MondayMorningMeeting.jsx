@@ -21,7 +21,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, mutateWorkOrderArrayField, mutateLocatedWorkOrderArrayItem } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Helper to parse date string as local date
@@ -346,7 +346,7 @@ export default function MondayMorningMeeting() {
         }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Monday Morning Meeting authorized users" }),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "Monday Morning Meeting sales task descriptions",
         })
