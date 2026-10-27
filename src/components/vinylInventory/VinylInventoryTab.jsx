@@ -240,18 +240,18 @@ export default function VinylInventoryTab({ scope = "master" }) {
               <Input
                 placeholder="Search vinyl…"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { const v = e.target.value; setSearch(v); writeParam("q", v, ""); }}
                 className="pl-9 h-9 text-sm"
               />
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); writeParam("category", v); }}>
               <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {VINYL_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={useCaseFilter} onValueChange={setUseCaseFilter}>
+            <Select value={useCaseFilter} onValueChange={(v) => { setUseCaseFilter(v); writeParam("use_case", v); }}>
               <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Use Case" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Use Cases</SelectItem>
