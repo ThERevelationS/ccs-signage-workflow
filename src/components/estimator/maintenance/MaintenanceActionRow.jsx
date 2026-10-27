@@ -35,7 +35,12 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
             onChange={(e) => set({ unit_count: parseFloat(e.target.value) || 0 })}
           />
         )}
-        <button onClick={onRemove} className="text-gray-400 hover:text-red-600 p-1">
+        <button
+          onClick={() => {
+            if (window.confirm("Remove this action and its materials?")) onRemove();
+          }}
+          className="text-gray-400 hover:text-red-600 p-1"
+        >
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -61,7 +66,11 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
             onChange={(e) => setMaterial(idx, { quantity: parseFloat(e.target.value) || 0 })}
           />
           <button
-            onClick={() => set({ materials: action.materials.filter((_, i) => i !== idx) })}
+            onClick={() => {
+              if (window.confirm("Remove this material?")) {
+                set({ materials: action.materials.filter((_, i) => i !== idx) });
+              }
+            }}
             className="text-gray-400 hover:text-red-600"
           >
             <Trash2 className="w-3.5 h-3.5" />
