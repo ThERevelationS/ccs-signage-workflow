@@ -183,6 +183,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const removeItem = (index) => {
+    if (!window.confirm("Remove this item?")) return;
     setProject((prev) => ({
       ...prev,
       items: prev.items.filter((_, i) => i !== index)
@@ -1852,7 +1853,7 @@ Best regards`;
                   </Button>
                 </div>
 
-                <Button onClick={saveProject} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
+                <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
                   {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> {isEditing ? 'Update Estimate' : 'Save Estimate'}</>}
                 </Button>
               </CardContent>
