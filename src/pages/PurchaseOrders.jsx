@@ -296,7 +296,11 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
                     <th className="px-3 py-2">Item</th><th className="px-3 py-2 text-right">Ordered</th>
                     <th className="px-3 py-2 text-right">Received</th><th className="px-3 py-2 text-right">Cost</th>
                     <th className="px-3 py-2 text-right">Total</th>
-                    {canReceive && <th className="px-3 py-2 text-right">Receive qty</th>}
+                    {canReceive && <th className="px-3 py-2 text-right">Receive qty
+                      <button type="button" title="Fill every line with its full open quantity"
+                        onClick={() => setReceiveQtys(Object.fromEntries((po.line_items || []).map((r, i) => [i, Math.max(0, (Number(r.quantity) || 0) - (Number(r.quantity_received) || 0))])))}
+                        className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold normal-case text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-300">ALL</button>
+                    </th>}
                   </tr>
                 </thead>
                 <tbody>
