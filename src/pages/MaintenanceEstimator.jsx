@@ -152,6 +152,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   };
 
   const removeItem = (idx) => {
+    if (!confirm("Remove this service item and all its materials?")) return;
     const next = [...project.items];
     next.splice(idx, 1);
     setProject(prev => ({ ...prev, items: next }));
@@ -477,6 +478,17 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                   }}
                   autoTriggerKey={activeTab === "labor" ? "labor" : null}
                 />
+                {equipmentInventory.length === 0 && (
+                  <Card className="bg-amber-50 border-amber-200">
+                    <CardContent className="p-3 text-xs text-amber-900">
+                      Your equipment inventory is empty.{" "}
+                      <Link to="/MasterInventory" className="underline font-medium">
+                        Add equipment in Master Inventory
+                      </Link>{" "}
+                      to enable selection.
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               {/* SUMMARY TAB */}
