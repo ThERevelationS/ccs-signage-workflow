@@ -1960,6 +1960,19 @@ Deno.serve(async (req) => {
       if (!geocodingService) serviceFailure("UNAVAILABLE", "The map location service could not be reached. Try again later; no jurisdiction has been selected.");
       await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}` });
     }
+    if (!geocode) {
+      // Free fallback: US Census Bureau geocoder needs no API key. Covers
+      // Google Geocoding denials (billing/API access) so addresses still work.
+      try {
+        await reporter.emit({ kind: "geocode_lookup", url: "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress", detail: `Census geocoder fallback for ${address}.` });
+        const census = await fixedJSON(`https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(address)}&benchmark=Public_AR_Current&format=json`);
+        const m = census?.result?.addressMatches?.[0];
+        if (m?.coordinates) {
+          geocode = { lat: m.coordinates.y, lon: m.coordinates.x, display_name: m.matchedAddress || address, location_exact: true, address_parts: {}, fallback: "us_census" };
+          await reporter.emit({ kind: "geocode_service_result", detail: `Census geocoder matched: ${m.matchedAddress || address}.` });
+        }
+      } catch { /* fallback failure is non-fatal; the Google diagnostic stands */ }
+    }
     if (diagnostic) return addressResponse({ success: true, diagnostic_only: true, geocode, geocoding_service: geocodingService, authority_established: false, apply_allowed: false, llm_calls: 0, record_writes: 0 });
     await reporter.emit({ kind: "geocode_result", detail: geocode ? `Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact ? "Street and building coordinates matched." : "Approximate or corrected address; review required."}` : "No map location found." }, { stage: "Checking government boundaries", indeterminate: true });
     const resolution = await resolveSpatialLocation({ geocode, fetchJSON: fixedJSON, onProgress: progress });
