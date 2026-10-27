@@ -11,6 +11,7 @@ const SECTION_KEYS = [
   "proposed_cos",
   "overdue_follow_ups",
   "open_estimating_requests",
+  "stale_sent_estimates",
   "low_stock",
   "overdue_jobs",
   "expiring_permits",
