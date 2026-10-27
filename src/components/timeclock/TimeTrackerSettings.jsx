@@ -22,6 +22,12 @@ const ACCENT_CHOICES = [
   { value: "violet", label: "Violet", swatch: "bg-violet-500" },
   { value: "rose", label: "Rose", swatch: "bg-rose-500" },
   { value: "sky", label: "Sky", swatch: "bg-sky-500" },
+  { value: "cyan", label: "Cyan", swatch: "bg-cyan-500" },
+  { value: "teal", label: "Teal", swatch: "bg-teal-500" },
+  { value: "lime", label: "Lime", swatch: "bg-lime-500" },
+  { value: "orange", label: "Orange", swatch: "bg-orange-500" },
+  { value: "fuchsia", label: "Fuchsia", swatch: "bg-fuchsia-500" },
+  { value: "slate", label: "Slate", swatch: "bg-slate-500" },
 ];
 
 const DEFAULT_PREFS = {

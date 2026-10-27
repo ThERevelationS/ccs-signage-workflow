@@ -1012,7 +1012,7 @@ function LayoutContent({ children }) {
 
                 {currentUser && (
                   <div className="mt-2 flex justify-center">
-                    <TimeTracker position="side" />
+                    <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
                   </div>
                 )}
 
@@ -1263,7 +1263,7 @@ function LayoutContent({ children }) {
                     )}
 
                     {currentUser && <FocusPausePair currentUser={currentUser} compact={compactView} />}
-                    {currentUser && <TimeTracker position="top" />}
+                    {currentUser && <TimeTracker position="top" hasTopBar hasSideBar={isSideNav || isMobile} />}
 
                     {/* Announcement button - admin only, square, two rows tall */}
                     {isUserAdmin(currentUser) && (
@@ -1587,7 +1587,7 @@ function LayoutContent({ children }) {
                     <div className="mb-3 space-y-2">
                       <FocusPausePair currentUser={currentUser} fullWidth compact />
                       <div className="flex justify-center">
-                        <TimeTracker position="side" />
+                        <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
                       </div>
                     </div>
                   )}
