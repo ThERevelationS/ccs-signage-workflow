@@ -1390,7 +1390,7 @@ function LayoutContent({ children }) {
                     transition={{ duration: 0.18, ease: 'easeInOut' }}
                     style={{ minHeight: '100%' }}
                   >
-                    <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
+                    <LoginGate exempt={["/timeclock","/newusersetup","/privacypolicy","/resetpassword"].includes(location.pathname.replace(/\/+$/, "").toLowerCase())}>{children}</LoginGate>
                   </motion.div>
                 </AnimatePresence>
               ) : (
@@ -1401,7 +1401,7 @@ function LayoutContent({ children }) {
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   style={{ minHeight: "100%" }}
                 >
-                  <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
+                  <LoginGate exempt={["/timeclock","/newusersetup","/privacypolicy","/resetpassword"].includes(location.pathname.replace(/\/+$/, "").toLowerCase())}>{children}</LoginGate>
                 </motion.div>
               )}
             </MultiPageContainer>
