@@ -130,6 +130,7 @@ ${rawText}` : "(No written notes — rely entirely on the mockup image(s).)"}`,
 
   const apply = () => {
     if (!result?.items?.length) return;
+    if (mode === "replace" && !confirm("Replace all existing line items with the AI-generated items?")) return;
     onApply(result.items, mode);
     setRawText("");
     setMockups([]);
