@@ -8,6 +8,7 @@ import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/
 import { replaceCustomerFieldsIfUnchanged } from "@/components/estimator/customerPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from "@/components/portal/PortalPanel";
+import SavedViews from "@/components/workflow/SavedViews";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -224,6 +225,7 @@ export default function EstimatorCustomers() {
   const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [viewName, setViewName] = useState("");
   const [savingTierId, setSavingTierId] = useState(null);
   const [detailId, setDetailId] = useState("");
   const [portalInbox, setPortalInbox] = useState([]);
@@ -393,13 +395,21 @@ export default function EstimatorCustomers() {
         )}
 
         {!linkedCustomerId && (
-          <div className="relative">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search customers"
-              className="pl-9 bg-white border-none h-11"
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                value={search}
+                onChange={(e) => { setViewName(""); setSearch(e.target.value); }}
+                placeholder="Search customers"
+                className="pl-9 bg-white border-none h-11"
+              />
+            </div>
+            <SavedViews
+              storageKey="views.estimator_customers"
+              getState={() => ({ search })}
+              activeName={viewName}
+              onApply={(s, name) => { setSearch(s.search || ""); setViewName(name || ""); }}
             />
           </div>
         )}
