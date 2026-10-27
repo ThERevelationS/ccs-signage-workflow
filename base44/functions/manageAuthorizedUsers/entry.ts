@@ -64,6 +64,7 @@ function adminUserView(row: any) {
     can_import_export: row?.can_import_export === true,
     can_order_export: row?.role === 'admin' && row?.can_order_export === true,
     can_view_resources: row?.can_view_resources === true,
+    can_approve_quotes: row?.can_approve_quotes === true,
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
     is_full_admin: row?.is_full_admin === true,
@@ -108,6 +109,7 @@ function cleanManagedFields(value: any) {
   if (Object.prototype.hasOwnProperty.call(input, 'can_import_export')) out.can_import_export = input.can_import_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_order_export')) out.can_order_export = input.can_order_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_view_resources')) out.can_view_resources = input.can_view_resources === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'can_approve_quotes')) out.can_approve_quotes = input.can_approve_quotes === true;
   if (Object.prototype.hasOwnProperty.call(input, 'employment_type')) {
     const employmentType = String(input.employment_type || '');
     if (!EMPLOYMENT_TYPES.has(employmentType)) throw Object.assign(new Error('Employment type is invalid.'), { status: 400 });
@@ -471,6 +473,7 @@ async function createUser(AuthorizedEmail: any, input: any) {
     can_view_resources: role === 'admin' ? true : input?.can_view_resources === true,
     employment_type: EMPLOYMENT_TYPES.has(String(input?.employment_type || 'hourly')) ? String(input.employment_type || 'hourly') : 'hourly',
     can_work_pause: input?.can_work_pause === true,
+    can_approve_quotes: input?.can_approve_quotes === true,
     onboarding_complete: false,
   };
 
