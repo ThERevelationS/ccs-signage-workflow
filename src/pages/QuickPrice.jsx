@@ -7,6 +7,28 @@ import { Zap } from "lucide-react";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { createQuickPriceProjectWithRecovery } from "@/components/estimator/quickPricePersistence";
 
+const HISTORY_KEY = "ccs_quick_price_history";
+const HISTORY_LIMIT = 8;
+
+function readHistory() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    return Array.isArray(rows)
+      ? rows.filter((row) => row && row.id && row.module_key).slice(0, HISTORY_LIMIT)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHistory(rows) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(rows.slice(0, HISTORY_LIMIT)));
+  } catch {
+    // localStorage unavailable (private mode, quota) — history is best-effort.
+  }
+}
+
 export default function QuickPrice() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,7 +39,36 @@ export default function QuickPrice() {
   const [clientName, setClientName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [history, setHistory] = useState(readHistory);
   const createRef = useRef(false);
+
+  const recordHistory = (entry) => {
+    const next = [entry, ...history.filter((row) => row.id !== entry.id)].slice(0, HISTORY_LIMIT);
+    writeHistory(next);
+    setHistory(next);
+  };
+
+  const clearHistory = () => {
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      // best-effort
+    }
+    setHistory([]);
+  };
+
+  const reuseEntry = (entry) => {
+    if (ESTIMATOR_MODULES.some((m) => m.key === entry.module_key)) {
+      setModuleKey(entry.module_key);
+    }
+    setProjectName(`${entry.project_name || ""} copy`.trim());
+    setClientName(entry.client_name || "");
+  };
+
+  const openEntry = (entry) => {
+    const mod = ESTIMATOR_MODULES.find((m) => m.key === entry.module_key);
+    if (mod && entry.id) navigate(`/${mod.page}?id=${entry.id}`);
+  };
 
   const start = async () => {
     const mod = ESTIMATOR_MODULES.find((m) => m.key === moduleKey);
@@ -34,6 +85,14 @@ export default function QuickPrice() {
           status: "draft",
         },
         label: `${mod.label} Quick Price project`,
+      });
+      recordHistory({
+        module_key: mod.key,
+        module_label: mod.label,
+        project_name: projectName.trim(),
+        client_name: clientName.trim(),
+        id: result.record.id,
+        created: new Date().toISOString(),
       });
       navigate(`/${mod.page}?id=${result.record.id}`);
     } catch (e) {
@@ -98,6 +157,50 @@ export default function QuickPrice() {
             {creating ? "Opening…" : "Start Quick Price"}
           </Button>
         </div>
+
+        {history.length > 0 && (
+          <div className="bg-white p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold tracking-wide text-gray-600">RECENT QUICK PRICES</h2>
+              <button
+                onClick={clearHistory}
+                className="text-xs font-medium text-red-600 hover:text-red-700"
+              >
+                Clear history
+              </button>
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {history.map((entry) => {
+                const mod = ESTIMATOR_MODULES.find((m) => m.key === entry.module_key);
+                return (
+                  <li key={entry.id} className="py-2 flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-gray-700 truncate">{entry.project_name}</div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {entry.client_name} · {entry.module_label || mod?.label || entry.module_key}
+                        {entry.created ? ` · ${new Date(entry.created).toLocaleDateString()}` : ""}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => reuseEntry(entry)}
+                      className="px-2 py-1 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-700"
+                    >
+                      Reuse
+                    </button>
+                    {mod && (
+                      <button
+                        onClick={() => openEntry(entry)}
+                        className="px-2 py-1 rounded-lg text-xs font-bold border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                      >
+                        Open
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
