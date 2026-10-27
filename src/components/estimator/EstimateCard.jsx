@@ -17,12 +17,13 @@ export default function EstimateCard({ estimate }) {
   const total = Number(estimate.quote_total || estimate.total_cost || 0);
   const sections = (estimate.line_items || []).length;
 
+  const validDays = estimate.quote_valid_days ?? estimate.valid_days;
   const sentWithQuote =
-    (estimate.status || "draft") === "sent" && estimate.quote_issue_date && estimate.valid_days;
+    (estimate.status || "draft") === "sent" && estimate.quote_issue_date && validDays;
   const expires = sentWithQuote
-    ? quoteExpirationDate(estimate.quote_issue_date, estimate.valid_days)
+    ? quoteExpirationDate(estimate.quote_issue_date, validDays)
     : "";
-  const expired = !!expires && isQuoteExpired(estimate.quote_issue_date, estimate.valid_days);
+  const expired = !!expires && isQuoteExpired(estimate.quote_issue_date, validDays);
   const expiringSoon =
     !!expires && !expired && expires <= localDateStamp(new Date(Date.now() + 7 * 86400000));
 
