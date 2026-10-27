@@ -28,7 +28,7 @@ const STAGE_OPTIONS = [
   { value: "installation", label: "Installation" },
 ];
 
-export default function AddTaskDialog({ isOpen, onClose }) {
+export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = null }) {
   const { currentUser, sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -49,8 +49,9 @@ export default function AddTaskDialog({ isOpen, onClose }) {
     if (isOpen) {
       loadData();
       resetForm();
+      if (lockedWorkOrderId) setSelectedWorkOrder(lockedWorkOrderId);
     }
-  }, [isOpen, sessionToken]);
+  }, [isOpen, sessionToken, lockedWorkOrderId]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -268,7 +269,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
                   <Briefcase className="w-4 h-4" />
                   Select Work Order *
                 </Label>
-                <Select value={selectedWorkOrder} onValueChange={(v) => { setSelectedWorkOrder(v); if (!stage) { const wo = workOrders.find(w => w.id === v); if (wo?.current_stage) setStage(wo.current_stage); } }}>
+                <Select value={selectedWorkOrder} onValueChange={(v) => { setSelectedWorkOrder(v); if (!stage) { const wo = workOrders.find(w => w.id === v); if (wo?.current_stage) setStage(wo.current_stage); } }} disabled={!!lockedWorkOrderId}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Choose a work order..." />
                   </SelectTrigger>
