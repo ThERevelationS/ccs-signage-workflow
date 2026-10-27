@@ -1222,7 +1222,10 @@ export default function Opportunities() {
   const [includeClosed, setIncludeClosed] = useState(false);
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [view, setView] = useState("pipeline");
+  const [view, setView] = useState(() => {
+    const v = new URLSearchParams(window.location.search).get("view");
+    return ["pipeline", "board", "queue", "follow_ups"].includes(v) ? v : "pipeline";
+  });
   const [funnel, setFunnel] = useState(null);
   const [viewName, setViewName] = useState("");
 
