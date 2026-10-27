@@ -201,7 +201,27 @@ export default function QuickClockSection({
   const clockOutAttemptRef = useRef(null);
   // A dismissed Clock Out stays dismissed until the employee re-identifies.
   // Passive status refresh must never steal the page back.
-  const clockOutDismissedRef = useRef(false);
+  // Clock Out dismissal is persisted per TimeEntry so remounts and passive
+  // refreshes can never resurrect the dialog the employee already closed.
+  const clockOutDismissalKey = (entryId) => (entryId ? `qcs-clockout-dismissed:${entryId}` : null);
+  const setClockOutDismissed = (entryId, dismissed) => {
+    try {
+      const key = clockOutDismissalKey(entryId);
+      if (!key) return;
+      if (dismissed) {
+        // One dismissed shift at a time keeps storage bounded on shared kiosks.
+        const stale = [];
+        for (let i = 0; i < sessionStorage.length; i += 1) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith("qcs-clockout-dismissed:") && k !== key) stale.push(k);
+        }
+        stale.forEach((k) => sessionStorage.removeItem(k));
+        sessionStorage.setItem(key, "1");
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch {}
+  };
   const notificationTimerRef = useRef(null);
   const displayResetTimerRef = useRef(null);
   // Passive refreshes may return out of order, after a session switch, or
@@ -450,9 +470,14 @@ export default function QuickClockSection({
     if (status?.status === "clocked_in" && status?.entry?.id) {
       setAuthoritativeTransition(null);
       setActiveEntry(status.entry);
+      // Status loads never auto-open the Clock Out dialog and never close an
+      // already-open one. Only a deliberate identification or an explicit
+      // Clock Out action may surface it; the clocked-in summary card carries
+      // the persistent state otherwise.
       if (status?.work_pause_status === "paused") {
         setShowClockOut(false);
-      } else if (!clockOutDismissedRef.current) {
+      } else if (pendingClockOut && pendingClockOut.entryId === String(status.entry.id)) {
+        // An interrupted Clock Out must resurface so its exact retry finishes.
         setShowClockOut(true);
       }
       setIsRecognizing(false);
@@ -655,7 +680,7 @@ export default function QuickClockSection({
 
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Clock-in confirmed by server.");
-      clockOutDismissedRef.current = true;
+      setClockOutDismissed(data.entry?.id, true);
       scheduleDisplayReset(5000);
       return data;
     } catch (err) {
@@ -675,7 +700,6 @@ export default function QuickClockSection({
   const resolveVerifiedIdentity = async ({ user = null, credential }) => {
     setIsLoading(true);
     setPersistenceError("");
-    clockOutDismissedRef.current = false;
     try {
       const status = await invokeTimeClock({
         action: "status",
@@ -689,11 +713,15 @@ export default function QuickClockSection({
       if (resolvedStatus === "clocked_in") {
         if (identifyIntentRef.current === "missed_clock_in") {
           identifyIntentRef.current = "clock_in";
-          clockOutDismissedRef.current = true;
+          setClockOutDismissed(status?.entry?.id, true);
           setShowClockOut(false);
           setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in — no missed Clock In to report.`);
           return;
         }
+        // Deliberate identification while clocked in is the Clock Out path:
+        // surface the shift panel once even if it was dismissed before.
+        setClockOutDismissed(status?.entry?.id, false);
+        setShowClockOut(true);
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}! Active shift restored.`);
         return;
       }
@@ -1443,6 +1471,7 @@ export default function QuickClockSection({
       if (stillCurrent()) {
         showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
         setShowClockOut(false);
+        setActiveEntry(null);
         setRecognitionStatus("Clock-out confirmed by server.");
         scheduleDisplayReset(2500);
       }
@@ -1573,7 +1602,7 @@ export default function QuickClockSection({
         )}
 
         {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && selectedUser && activeEntry && (
-          <div className="flex flex-col items-center gap-4 w-64">
+          <div className="flex flex-col items-center gap-4 w-64" data-summary-entry-id={activeEntry.id}>
             <div className="w-full rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <span className="relative flex h-2.5 w-2.5">
@@ -1586,13 +1615,13 @@ export default function QuickClockSection({
                 {selectedUser.full_name || selectedUser.email}
               </p>
               <p className="text-xs text-emerald-700/80">
-                Since {format(new Date(activeEntry.clock_in), "h:mm a")}
+                {Number.isFinite(new Date(activeEntry.clock_in).getTime()) && `Since ${format(new Date(activeEntry.clock_in), "h:mm a")}`}
                 {activeEntry.approval_status === "needs_review" && " - pending manager review"}
               </p>
             </div>
             <button
               type="button"
-              onClick={() => { clockOutDismissedRef.current = false; setShowClockOut(true); }}
+              onClick={() => { setClockOutDismissed(activeEntry?.id, false); setShowClockOut(true); }}
               disabled={isLoading}
               className="w-64 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-900/25 transition-[transform,box-shadow] duration-200 hover:shadow-xl motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/60"
             >
@@ -1758,7 +1787,7 @@ export default function QuickClockSection({
         <ClockOutDialog
           isOpen={showClockOut}
           onClose={() => {
-            clockOutDismissedRef.current = true;
+            setClockOutDismissed(activeEntry?.id, true);
             void resetState();
           }}
           timeEntry={activeEntry}

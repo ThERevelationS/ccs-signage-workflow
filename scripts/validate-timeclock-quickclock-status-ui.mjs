@@ -108,6 +108,27 @@ const status = (user, id) => ({
   }, break_status: 'working', work_pause_status: 'working', work_pause_allowed: false },
 });
 const visible = (tree) => JSON.stringify(tree.toJSON());
+// The clocked-in summary card opens the Clock Out dialog on demand; status
+// loads must never auto-open it. Tests that need the dialog click through it.
+const textOf = (value) => {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map(textOf).join(' ');
+  if (typeof value === 'object') return textOf(value.props?.children);
+  return '';
+};
+const openClockOutDialog = async (target = renderer) => {
+  const mounted = () => target.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+  if (mounted()) return mounted();
+  await act(async () => {
+    const trigger = target.root.findAll((node) =>
+      node.type === 'button' && textOf(node.props?.children).includes('Clock Out')
+    )[0];
+    assert.ok(trigger, 'Expected the clocked-in summary card Clock Out button');
+    trigger.props.onClick();
+  });
+  return mounted();
+};
 let renderer;
 await act(async () => {
   renderer = TestRenderer.create(React.createElement(QuickClockSection, {
@@ -150,7 +171,7 @@ await act(async () => { events.get('focus')(); });
 assert.equal(calls.length, 5);
 await act(async () => { calls[4].resolve(status(second, 'shift-ready-to-close')); });
 assert.match(visible(renderer), /shift-ready-to-close/);
-const dialog = renderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const dialog = await openClockOutDialog();
 assert.ok(dialog, 'Expected a clock-out dialog connected to the authoritative active shift');
 
 await act(async () => { events.get('focus')(); });
@@ -191,8 +212,7 @@ assert.match(visible(renderer), /freshly-restored-new-active-shift/,
   'Cleanup from a previous Clock Out must not clear a newer server-restored active shift');
 console.log('PASS delayed prior punch cleanup preserves newly restored authoritative shift');
 
-const restoredDialog = renderer.root.findAll((node) =>
-  typeof node.props?.onClockOut === 'function')[0];
+const restoredDialog = await openClockOutDialog();
 assert.ok(restoredDialog);
 const secondOut = restoredDialog.props.onClockOut({
   lunchMinutes: 0, jobAllocations: [], notes: 'Synthetic normal cleanup acceptance',
@@ -222,6 +242,7 @@ assert.equal(calls[secondRecoveryStatusIndex].payload.action, 'status');
 await act(async () => {
   calls[secondRecoveryStatusIndex].resolve(status(second, 'break-in-flight-second'));
 });
+await openClockOutDialog();
 const secondBreakDialog = renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.ok(secondBreakDialog);
@@ -245,6 +266,7 @@ assert.equal(calls.at(-1).payload.action, 'status',
 assert.equal(calls.at(-1).payload.target_email, first.email);
 const firstStatusIndex = calls.length - 1;
 await act(async () => { calls[firstStatusIndex].resolve(status(first, 'first-current-shift')); });
+await openClockOutDialog();
 const firstBreakDialog = renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.ok(firstBreakDialog);
@@ -258,6 +280,7 @@ await act(async () => {
   } });
   await interruptedBreak;
 });
+await openClockOutDialog();
 const currentDialog = renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.ok(currentDialog);
@@ -267,6 +290,7 @@ assert.equal(currentDialog.props.breakStatus, 'working',
 assert.equal(currentDialog.props.activeBreak, null);
 console.log('PASS previous employee break completion never contaminates new employee state');
 
+await openClockOutDialog();
 const firstDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.equal(firstDialog().props.breakStatus, 'working');
@@ -461,6 +485,7 @@ await act(async () => {
   await finishNewerPaidBreak;
 });
 
+await openClockOutDialog();
 const laborDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartLabor === 'function')[0];
 assert.ok(laborDialog());
@@ -647,8 +672,7 @@ assert.equal(laborDialog().props.activeLabor, null);
 assert.equal(laborDialog().props.laborSummary.total_minutes, 0);
 console.log('PASS prior employee Current Work acknowledgement cannot replace new session data');
 
-const oldClockOutDialog = renderer.root.findAll((node) =>
-  typeof node.props?.onClockOut === 'function')[0];
+const oldClockOutDialog = await openClockOutDialog();
 assert.ok(oldClockOutDialog);
 const originalPayload = {
   lunchMinutes: 0,
@@ -686,7 +710,7 @@ await act(async () => { events.get('focus')(); });
 const statusAfterRetryIndex = calls.length - 1;
 assert.equal(calls[statusAfterRetryIndex].payload.action, 'status');
 await act(async () => { calls[statusAfterRetryIndex].resolve(status(first, 'first-new-shift')); });
-const pendingDialog = renderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const pendingDialog = await openClockOutDialog();
 assert.ok(pendingDialog);
 let olderClockOut;
 await act(async () => { olderClockOut = pendingDialog.props.onClockOut(originalPayload); });
@@ -724,6 +748,7 @@ await act(async () => {
 const freshStatusIndex = calls.length - 1;
 assert.equal(calls[freshStatusIndex].payload.action, 'status');
 await act(async () => { calls[freshStatusIndex].resolve(status(first, 'reloaded-uncertain-shift')); });
+await openClockOutDialog(reloadRenderer);
 const reloadedDialog = () => reloadRenderer.root.findAll((node) =>
   typeof node.props?.onClockOut === 'function')[0];
 assert.ok(reloadedDialog());
@@ -800,7 +825,7 @@ let completedRenderer;
 await act(async () => { completedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
 const completeInitIndex = calls.length - 1;
 await act(async () => { calls[completeInitIndex].resolve(status(first, 'already-complete-shift')); });
-const completedDialog = completedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const completedDialog = await openClockOutDialog(completedRenderer);
 assert.ok(completedDialog);
 let lostAfterCommit;
 await act(async () => { lostAfterCommit = completedDialog.props.onClockOut(reloadPayload); });
@@ -827,7 +852,7 @@ let blockedRenderer;
 await act(async () => { blockedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
 const storageStatusIndex = calls.length - 1;
 await act(async () => { calls[storageStatusIndex].resolve(status(first, 'browser-storage-blocked-shift')); });
-const blockedDialog = blockedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const blockedDialog = await openClockOutDialog(blockedRenderer);
 assert.ok(blockedDialog);
 const beforeStorageBlock = calls.length;
 blockClockOutRecoveryStorage = true;
@@ -856,6 +881,7 @@ const changeInitialStatusIndex = calls.length - 1;
 await act(async () => {
   calls[changeInitialStatusIndex].resolve(status(second, 'second-old-uncertain-entry'));
 });
+await openClockOutDialog(shiftChangeRenderer);
 const shiftChangeDialog = () => shiftChangeRenderer.root.findAll((node) =>
   typeof node.props?.onClockOut === 'function')[0];
 const shiftChangePayload = {
@@ -907,6 +933,7 @@ await act(async () => {
 });
 const overlapInitialIndex = calls.length - 1;
 await act(async () => { calls[overlapInitialIndex].resolve(status(second,'first-overlap-entry')); });
+await openClockOutDialog(overlapRenderer);
 const overlapDialog = () => overlapRenderer.root.findAll((node) =>
   typeof node.props?.onClockOut === 'function')[0];
 let oldOverlapOut;
@@ -966,8 +993,7 @@ await act(async () => {
 });
 const malformedInitialStatus = calls.length - 1;
 await act(async () => { calls[malformedInitialStatus].resolve(status(first,'malformed-snapshot-shift')); });
-const malformedDialog = malformedSnapshotRenderer.root.findAll((node) =>
-  typeof node.props?.onClockOut === 'function')[0];
+const malformedDialog = await openClockOutDialog(malformedSnapshotRenderer);
 let malformedCleanupOut;
 await act(async () => {
   malformedCleanupOut = malformedDialog.props.onClockOut({
@@ -1000,6 +1026,7 @@ await act(async () => {
 });
 const breakIdentityStatusIndex = calls.length - 1;
 await act(async () => { calls[breakIdentityStatusIndex].resolve(status(first,'break-identity-shift')); });
+await openClockOutDialog(breakIdentityRenderer);
 const breakIdentityDialog = () => breakIdentityRenderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 let mismatchedBreakStart;
@@ -1069,6 +1096,7 @@ await act(async () => {
 });
 const laborIdentityStatusIndex = calls.length - 1;
 await act(async () => { calls[laborIdentityStatusIndex].resolve(status(first,'labor-identity-shift')); });
+await openClockOutDialog(laborIdentityRenderer);
 const laborIdentityDialog = () => laborIdentityRenderer.root.findAll((node) =>
   typeof node.props?.onStartLabor === 'function')[0];
 let mismatchedLaborStart;
