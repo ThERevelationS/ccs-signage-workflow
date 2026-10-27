@@ -17,9 +17,16 @@ function sameValue(a, b) {
 }
 
 export function expectedEstimateFields(record = {}, nextFields = {}) {
-  return Object.fromEntries(
+  const expected = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
+  // Guard the trash flag unconditionally — a CAS write that doesn't itself
+  // touch `deleted` must still fail when the loaded row has since been
+  // trashed, so a status change can't resurrect or overwrite a trashed row.
+  if (!Object.prototype.hasOwnProperty.call(expected, "deleted")) {
+    expected.deleted = record?.deleted;
+  }
+  return expected;
 }
 
 export async function replaceEstimateFieldsIfUnchanged({
