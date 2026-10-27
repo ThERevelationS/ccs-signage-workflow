@@ -14,6 +14,46 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
 
+// Header-level fields copied when the user picks a "duplicate from" source
+// estimate. Every key is a real AllInOneEstimate schema field. Some are not
+// rendered by Step 1 (site_address, payment_terms, quote_valid_days,
+// deposit_percent, scope_*, hide_section_prices, company_*) — they still ride
+// through handleSave's `...form` spread into the created estimate. Schema has
+// no separate tax group id: tax_group is the TaxGroup name and pairs with
+// tax_percent.
+// Identity fields (project_name, estimate_number, po_number) and the
+// line_items sections are intentionally NOT copied: each new estimate keeps
+// its own description/number/PO and starts with no sections.
+const DUPLICATE_PREFILL_FIELDS = [
+  "customer_id",
+  "client_name",
+  "order_contact",
+  "contact_name",
+  "contact_email",
+  "contact_phone",
+  "office_phone",
+  "office_phone_ext",
+  "site_address",
+  "terms",
+  "payment_terms",
+  "quote_valid_days",
+  "deposit_percent",
+  "tax_group",
+  "tax_percent",
+  "scope_inclusions",
+  "scope_exclusions",
+  "hide_section_prices",
+  "company_name",
+  "company_email",
+  "company_phone",
+  "company_address",
+  "company_website",
+  "company_license",
+  "company_logo_url",
+  "salesperson",
+  "sales_center",
+];
+
 const EMPTY = {
   client_name: "",
   project_name: "",
@@ -43,15 +83,48 @@ export default function NewAllInOneEstimate() {
   const createAttemptRef = useRef({ signature: "", key: "" });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [dupSources, setDupSources] = useState([]);
+  const [dupQuery, setDupQuery] = useState("");
+  const [dupOpen, setDupOpen] = useState(false);
+  const [dupSource, setDupSource] = useState(null);
 
   useEffect(() => {
     loadAllCustomers().then((r) => setCustomers(r || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
     loadAllEntityRows({ entity: base44.entities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || []));
     loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || []));
+    loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
     base44.auth.me().then(setMe).catch(() => {});
   }, []);
 
   const patch = (changes) => setForm((prev) => ({ ...prev, ...changes }));
+
+  const dupQueryNorm = dupQuery.trim().toLowerCase();
+  const dupMatches = dupSources
+    .filter((e) =>
+      !dupQueryNorm ||
+      String(e.estimate_number || "").toLowerCase().includes(dupQueryNorm) ||
+      String(e.client_name || "").toLowerCase().includes(dupQueryNorm) ||
+      String(e.project_name || "").toLowerCase().includes(dupQueryNorm)
+    )
+    .slice(0, 20);
+
+  const applyDuplicateSource = (src) => {
+    const changes = {};
+    DUPLICATE_PREFILL_FIELDS.forEach((f) => {
+      if (src[f] !== undefined && src[f] !== null) changes[f] = src[f];
+    });
+    setForm((prev) => ({ ...prev, ...changes }));
+    setDupSource(src);
+    setDupQuery("");
+    setDupOpen(false);
+  };
+
+  const resetDuplicateSource = () => {
+    setForm(EMPTY);
+    setDupSource(null);
+    setDupQuery("");
+    setDupOpen(false);
+  };
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -165,6 +238,66 @@ export default function NewAllInOneEstimate() {
         />
 
         <div className="flex-1 min-w-0">
+          <div className="bg-white border border-gray-200 rounded-md px-3 py-2 mb-2 max-w-4xl">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-700 whitespace-nowrap">Duplicate from existing…</span>
+              <div className="relative flex-1">
+                <input
+                  value={dupQuery}
+                  onChange={(e) => {
+                    setDupQuery(e.target.value);
+                    setDupOpen(true);
+                  }}
+                  onFocus={() => setDupOpen(true)}
+                  onBlur={() => setTimeout(() => setDupOpen(false), 150)}
+                  placeholder="Search estimate #, customer, or description"
+                  className="w-full h-7 px-2 border border-slate-300 bg-white rounded-sm text-[12px] focus:outline-none focus:border-lime-500"
+                />
+                {dupOpen && (
+                  <div className="absolute z-30 left-0 right-0 mt-1 max-h-56 overflow-auto bg-white border border-slate-300 rounded-sm shadow-md">
+                    {dupMatches.length === 0 ? (
+                      <div className="px-2 py-1.5 text-[11px] text-slate-400">No matching estimates</div>
+                    ) : (
+                      dupMatches.map((e) => (
+                        <button
+                          key={e.id}
+                          type="button"
+                          onMouseDown={(ev) => {
+                            ev.preventDefault();
+                            applyDuplicateSource(e);
+                          }}
+                          className="w-full text-left px-2 py-1.5 text-[12px] hover:bg-lime-50 border-b border-slate-100 last:border-0"
+                        >
+                          <span className="font-semibold text-gray-800">#{e.estimate_number || "—"}</span>
+                          <span className="text-slate-600"> · {e.client_name || "No customer"}</span>
+                          <span className="text-slate-400"> · {e.project_name || ""}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              {(dupSource || dupQuery) && (
+                <button
+                  type="button"
+                  onClick={resetDuplicateSource}
+                  className="h-[24px] px-2 border border-gray-300 rounded-sm text-[11px] text-gray-600 hover:bg-gray-50"
+                >
+                  Start blank
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">
+              Prefills customer &amp; quote settings — sections are not copied.
+              {dupSource && (
+                <span className="text-slate-500">
+                  {" "}Source: #{dupSource.estimate_number || "—"}
+                  {dupSource.client_name ? ` — ${dupSource.client_name}` : ""}
+                </span>
+              )}
+            </p>
+          </div>
+
           {error && (
             <div className="mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
               {error}
