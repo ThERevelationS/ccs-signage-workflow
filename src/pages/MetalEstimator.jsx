@@ -135,6 +135,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const removeItem = (index) => {
+    if (!window.confirm("Remove this item?")) return;
     setProject(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
   };
 
@@ -1243,6 +1244,11 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
             <Card className="bg-white border-0 shadow-sm">
                 <CardHeader><div className="flex justify-between items-center"><CardTitle>Project Items</CardTitle><Button onClick={addItem} size="sm"><Plus className="w-4 h-4 mr-2" />Add Item</Button></div></CardHeader>
                 <CardContent className="space-y-6">
+                    {project.items.length === 0 && (
+                      <div className="text-center py-8 text-slate-500">
+                        <p>No items added yet. Click "Add Item" to get started.</p>
+                      </div>
+                    )}
                     {project.items.map((item, index) => (
                       <div key={index} className="p-6 border rounded-xl bg-slate-25">
                         <div className="flex justify-between items-start mb-4"><h4 className="font-medium">Item {index + 1}</h4><Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button></div>
@@ -1339,7 +1345,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
           </div>
           <div className="space-y-6">
             <Card className="bg-white border-0 shadow-sm sticky top-8"><CardHeader><CardTitle>Cost Summary</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><div className="flex justify-between"><span className="text-slate-600">Total Material Cost:</span><span className="font-medium text-slate-900">${totalMaterialsCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Supplies Cost:</span><span className="font-medium text-slate-900">${totalSuppliesCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Fabrication Cost:</span><span className="font-medium text-slate-900">${totalFabricationCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Welding Cost:</span><span className="font-medium text-slate-900">${totalWeldingCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Finishing Cost:</span><span className="font-medium text-slate-900">${totalFinishingCost.toFixed(2)}</span></div><div className="mt-4 pt-4 border-t"><div className="flex justify-between items-center"><span className="font-bold text-lg text-slate-900">Grand Total:</span><span className="font-bold text-2xl text-blue-600">${grandTotal.toFixed(2)}</span></div></div></CardContent></Card>
-            <Button onClick={saveProject} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
+            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
             <div className="grid grid-cols-2 gap-4">
               <Button onClick={downloadEstimate} variant="outline" className="w-full"><Download className="w-4 h-4 mr-2" /> Download</Button>
               <Button onClick={printEstimate} variant="outline" className="w-full"><Printer className="w-4 h-4 mr-2" /> Print</Button>
