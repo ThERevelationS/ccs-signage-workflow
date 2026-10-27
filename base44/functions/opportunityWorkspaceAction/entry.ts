@@ -213,12 +213,13 @@ Deno.serve(async (req) => {
     const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
     const Payment = base44.asServiceRole.entities.Payment;
     const Inventory = base44.asServiceRole.entities.Inventory;
+    const PermitLineItem = base44.asServiceRole.entities.PermitLineItem;
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
     const PortalMessage = base44.asServiceRole.entities.PortalMessage;
 
     if (action === "attention_feed") {
       const today = new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders] = await Promise.all([
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 500).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 500).catch(() => []),
@@ -227,6 +228,7 @@ Deno.serve(async (req) => {
         EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
         Inventory.filter({}, "-updated_date", 500).catch(() => []),
         WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
+        PermitLineItem.filter({}, "-updated_date", 500).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -321,6 +323,32 @@ Deno.serve(async (req) => {
             client_name: clean(w?.client_name),
             current_stage: clean(w?.current_stage),
             due_date: clean(w?.due_date),
+          })),
+        expiring_permits: (() => {
+          const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+          return list(permits)
+            .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.expiration_date) && clean(p?.expiration_date) <= soon)
+            .sort((a: any, b: any) => clean(a?.expiration_date).localeCompare(clean(b?.expiration_date)))
+            .slice(0, 50)
+            .map((p: any) => ({
+              id: clean(p?.id),
+              row_name: clean(p?.row_name),
+              locality_name: clean(p?.locality_name),
+              work_order_id: clean(p?.work_order_id),
+              work_order_title: clean(p?.work_order_title),
+              expiration_date: clean(p?.expiration_date),
+              expired: clean(p?.expiration_date) < today,
+            }));
+        })(),
+        permit_fees_due: list(permits)
+          .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.jurisdiction_fee_status) === "due")
+          .map((p: any) => ({
+            id: clean(p?.id),
+            row_name: clean(p?.row_name),
+            locality_name: clean(p?.locality_name),
+            work_order_id: clean(p?.work_order_id),
+            work_order_title: clean(p?.work_order_title),
+            fee_amount: money(num(p?.jurisdiction_fee_amount)),
           })),
       });
     }
