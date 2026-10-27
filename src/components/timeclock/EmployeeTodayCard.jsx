@@ -68,7 +68,7 @@ export default function EmployeeTodayCard({
 
   useEffect(() => {
     loadStatus();
-    const poll = setInterval(loadStatus, 30000);
+    const poll = setInterval(() => { if (!document.hidden) loadStatus(); }, 30000);
     const tick = setInterval(() => setNow(new Date()), 1000);
     const onPauseChanged = () => loadStatus();
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
