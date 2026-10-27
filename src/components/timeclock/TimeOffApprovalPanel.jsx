@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,8 +37,10 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
   const [busy, setBusy] = useState(false);
   const [retryDecision, setRetryDecision] = useState(null);
 
+  const loadSeqRef = useRef(0);
   const loadRequests = useCallback(async () => {
     if (!sessionToken) { setRequests([]); return; }
+    const seq = ++loadSeqRef.current;
     setLoading(true);
     setError("");
     try {
@@ -49,12 +51,14 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
         request_id: newRequestId(),
       });
       const data = response?.data || response;
+      if (seq !== loadSeqRef.current) return;
       if (!data?.success) throw new Error(data?.error || "Time-off requests could not be loaded.");
       setRequests(Array.isArray(data.requests) ? data.requests : []);
     } catch (err) {
+      if (seq !== loadSeqRef.current) return;
       setError(err?.response?.data?.error || err?.message || "Time-off requests could not be loaded.");
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [sessionToken]);
 

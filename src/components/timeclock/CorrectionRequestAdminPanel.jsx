@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,8 +65,10 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const [busy, setBusy] = useState(false);
   const [retryReview, setRetryReview] = useState(null);
 
+  const loadSeqRef = useRef(0);
   const loadRequests = useCallback(async () => {
     if (!sessionToken) { setRequests([]); return; }
+    const seq = ++loadSeqRef.current;
     setLoading(true);
     setError("");
     try {
@@ -77,6 +79,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         request_id: newRequestId(),
       });
       const data = response?.data || response;
+      if (seq !== loadSeqRef.current) return;
       if (!data?.success) throw new Error(data?.error || "Correction requests could not be loaded.");
       const rows = Array.isArray(data.requests) ? data.requests : [];
       setRequests(rows);
@@ -93,9 +96,10 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         }
       }
     } catch (err) {
+      if (seq !== loadSeqRef.current) return;
       setError(err?.response?.data?.error || err?.message || "Correction requests could not be loaded.");
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [sessionToken]);
 
