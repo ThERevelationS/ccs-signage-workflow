@@ -61,9 +61,11 @@ export default function AioEstimateHeader({
         <button
           onClick={onSave}
           disabled={saving || readOnly}
+          aria-busy={saving}
+          aria-live="polite"
           className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
         >
-          <Save className="w-4 h-4" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
+          <Save className="w-4 h-4" aria-hidden="true" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
         </button>
       </div>
     </div>
