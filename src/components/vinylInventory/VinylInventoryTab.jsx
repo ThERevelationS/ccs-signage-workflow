@@ -56,7 +56,9 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [useCaseFilter, setUseCaseFilter] = useState("all");
   const [editingVinyl, setEditingVinyl] = useState(null);
