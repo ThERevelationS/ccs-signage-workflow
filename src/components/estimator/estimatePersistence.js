@@ -96,3 +96,87 @@ export async function replaceEstimateFieldsIfUnchanged({
 
   throw new Error(`${label} Estimate changed repeatedly while saving. Reload and try again.`);
 }
+
+/**
+ * Soft-delete an Estimate through the same field-level CAS used for ordinary
+ * saves. The loaded record supplies both the expected field baselines and the
+ * whole-version guard, so a concurrent edit cannot be trashed unnoticed.
+ */
+export async function softDeleteEstimateFromLoadedSnapshot({
+  entity,
+  estimate,
+  deletedBy = "unknown",
+  label = "Estimate delete",
+} = {}) {
+  const id = String(estimate?.id || "").trim();
+  const actor = String(deletedBy || "unknown").trim() || "unknown";
+  if (!id) throw new Error(`${label} is missing its loaded Estimate. Reload before deleting.`);
+  const nextFields = {
+    deleted: true,
+    deleted_at: new Date().toISOString(),
+    deleted_by: actor,
+  };
+  return replaceEstimateFieldsIfUnchanged({
+    entity,
+    estimateId: id,
+    expectedFields: expectedEstimateFields(estimate, nextFields),
+    guardFields: { updated_date: estimate?.updated_date },
+    nextFields,
+    label,
+  });
+}
+
+/**
+ * Restore a trashed Estimate. The prior status is preserved automatically
+ * because soft-delete never touched it — only the trash markers are cleared.
+ */
+export async function restoreEstimateFromLoadedTrashSnapshot({
+  entity,
+  estimate,
+  label = "Estimate recovery",
+} = {}) {
+  const id = String(estimate?.id || "").trim();
+  if (!id) throw new Error(`${label} is missing its loaded Estimate. Reload trash before recovering.`);
+  const nextFields = { deleted: false, deleted_at: null, deleted_by: null };
+  return replaceEstimateFieldsIfUnchanged({
+    entity,
+    estimateId: id,
+    expectedFields: expectedEstimateFields(estimate, nextFields),
+    guardFields: { updated_date: estimate?.updated_date },
+    nextFields,
+    label,
+  });
+}
+
+/**
+ * Permanently delete an Estimate that is already in Trash. The record is
+ * re-verified as trashed before deleting, and the delete is confirmed absent
+ * afterward — a response loss or concurrent restore fails closed.
+ */
+export async function permanentlyDeleteTrashedEstimate({
+  entity,
+  estimate,
+  label = "Estimate permanent delete",
+} = {}) {
+  const id = String(estimate?.id || "").trim();
+  if (!id || typeof entity?.get !== "function" || typeof entity?.delete !== "function") {
+    throw new Error(`${label} could not initialize its verified permanent delete.`);
+  }
+  const current = await entity.get(id).catch(() => null);
+  if (!current?.id) return { deleted: true, alreadyDeleted: true };
+  if (current.deleted !== true) {
+    throw new Error(`${label} was blocked because this Estimate is no longer in Trash. Reload before deleting.`);
+  }
+  try {
+    await entity.delete(id);
+  } catch (error) {
+    const afterError = await entity.get(id).catch(() => null);
+    if (!afterError?.id) return { deleted: true, convergedAfterResponseLoss: true };
+    throw error;
+  }
+  const after = await entity.get(id).catch(() => null);
+  if (after?.id) {
+    throw new Error(`${label} could not be verified — the Estimate still exists. Reload Trash before retrying.`);
+  }
+  return { deleted: true };
+}
