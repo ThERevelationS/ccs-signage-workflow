@@ -117,8 +117,13 @@ async function consumeThrottleRow(Throttle:any, row:any, now:Date) {
 }
 
 async function consumeThrottle(base44:any, req:Request) {
-  const fingerprint = await requestFingerprint(req);
-  if (!fingerprint) return {limited:false,tracked:false};
+  let fingerprint = await requestFingerprint(req);
+  // Fail closed: requests with no trusted client identity share one global
+  // bucket instead of bypassing the throttle entirely.
+  if (!fingerprint) {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('unidentified-client-origin'));
+    fingerprint = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
   const Throttle = base44.asServiceRole.entities.FleetPublicReportThrottle;
   const now = new Date();
   const rows = await Throttle.filter({fingerprint_hash:fingerprint});
