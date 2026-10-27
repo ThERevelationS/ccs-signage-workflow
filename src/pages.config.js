@@ -116,7 +116,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "MainWorkflow",
+    mainPage: "MyWorkflow",
     Pages: PAGES,
     Layout: __Layout,
 };
