@@ -690,6 +690,7 @@ Deno.serve(async (req) => {
             record_id: clean(l?.record_id),
             label: clean(l?.label),
             token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
+            revoked: l?.revoked === true,
             usable: linkIsUsable(l),
             expires_at: clean(l?.expires_at),
             open_count: num(l?.open_count),
