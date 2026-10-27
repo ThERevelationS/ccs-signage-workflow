@@ -260,13 +260,9 @@
     "company_name"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__customer_backend_only__" } },
+    "read": { "user_condition": { "role": "__customer_backend_only__" } },
+    "update": { "user_condition": { "role": "__customer_backend_only__" } },
+    "delete": { "user_condition": { "role": "__customer_backend_only__" } }
   }
 }

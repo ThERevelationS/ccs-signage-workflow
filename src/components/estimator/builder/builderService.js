@@ -50,7 +50,7 @@ export function snapshotHash(value) {
 export async function getSourceProject(line) {
   const mod = getModule(line?.module_key);
   if (!mod || !line?.project_id) return null;
-  return base44.entities[mod.entity].get(line.project_id).catch(() => null);
+  return staffEntities[mod.entity].get(line.project_id).catch(() => null);
 }
 
 export function sourceProjectTotal(line, record) {
@@ -513,7 +513,7 @@ export async function ensureEstimateBuilderProducts(estimate, { strictReconcilia
         const mod = getModule(line?.module_key);
         if (mod && line?.project_id) {
           try {
-            sourceProjectOverride = await base44.entities[mod.entity].get(line.project_id);
+            sourceProjectOverride = await staffEntities[mod.entity].get(line.project_id);
           } catch (error) {
             throw new Error(`${getModuleLabel(line.module_key) || "Builder"} source could not be verified: ${error?.message || "read failed"}`);
           }

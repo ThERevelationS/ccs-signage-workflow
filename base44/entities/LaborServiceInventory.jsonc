@@ -716,21 +716,9 @@
     "service_category"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": {},
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__laborserviceinventory_backend_only__" } },
+    "read": { "user_condition": { "role": "__laborserviceinventory_backend_only__" } },
+    "update": { "user_condition": { "role": "__laborserviceinventory_backend_only__" } },
+    "delete": { "user_condition": { "role": "__laborserviceinventory_backend_only__" } }
   }
 }

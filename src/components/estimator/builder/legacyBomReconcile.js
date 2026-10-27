@@ -455,7 +455,7 @@ export async function runLegacyBomReconcile() {
       if (!builder.source_entity || !builder.source_project_id) {
         throw new Error(`Non-zero legacy Product ${builder.id} has no source project for authoritative BOM reconciliation.`);
       }
-      const project = await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null);
+      const project = await staffEntities[builder.source_entity].get(builder.source_project_id).catch(() => null);
       if (!project) throw new Error(`Could not load ${builder.source_entity} ${builder.source_project_id} for Product ${builder.id}.`);
       result = await reconcileSupportedBuilder(builder, project, parts);
     }

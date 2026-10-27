@@ -179,7 +179,7 @@ function independentPartUnitCost(part, row) {
 async function loadCatalog(entity, sort = null, { strict = false } = {}) {
   try {
     return await loadAllEntityRows({
-      entity: base44.entities[entity],
+      entity: staffEntities[entity],
       sort: sort || "created_date",
       label: `${entity} catalog`,
     });
@@ -258,7 +258,7 @@ export async function loadVerifiedBuilderPartSyncInputs({ builderProduct = null,
     if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
     let row;
     try {
-      row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
+      row = await staffEntities[part.inventory_entity].get(part.inventory_item_id);
     } catch (error) {
       throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”: ${error?.message || "read failed"}`);
     }
@@ -3213,7 +3213,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           currentRow = inventoryRowsOverride.get(inventoryKey);
         } else {
           try {
-            currentRow = await base44.entities[old.inventory_entity].get(old.inventory_item_id);
+            currentRow = await staffEntities[old.inventory_entity].get(old.inventory_item_id);
           } catch (error) {
             if (strictCatalogs) {
               throw new Error(`${old.inventory_entity} inventory could not be verified for Part “${old.part_name || "Part"}”: ${error?.message || "read failed"}`);
@@ -4033,7 +4033,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
       reattached: requestedParts.map((part) => ({ part_id: part.id, part_key: part.part_key, part_name: part.part_name })),
       remainingDetached: await getDetachedBuilderParts(builder.id),
       builderProject: builder.source_entity && builder.source_project_id
-        ? await base44.entities[builder.source_entity].get(builder.source_project_id).catch(() => null)
+        ? await staffEntities[builder.source_entity].get(builder.source_project_id).catch(() => null)
         : null,
       alreadyCompleted: true,
     };
@@ -4047,7 +4047,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
   }
 
   const [source, catalogs] = await Promise.all([
-    base44.entities[builder.source_entity].get(builder.source_project_id),
+    staffEntities[builder.source_entity].get(builder.source_project_id),
     loadBuilderCatalogs(builder.module_key, { strict: true }),
   ]);
   if (!source) throw new Error("The Builder source project could not be loaded.");
@@ -4112,7 +4112,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
   const inventoryRowsOverride = new Map();
   for (const part of allParts) {
     if (part.builder_sync_state !== "manual_addon" || !part.inventory_entity || !part.inventory_item_id || part.manual_cost_override) continue;
-    const row = await base44.entities[part.inventory_entity].get(part.inventory_item_id);
+    const row = await staffEntities[part.inventory_entity].get(part.inventory_item_id);
     if (!row) throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”.`);
     inventoryRowsOverride.set(`${part.inventory_entity}:${part.inventory_item_id}`, row);
   }
@@ -4213,7 +4213,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
 
   // Re-read the source immediately before taking the durable Estimate marker so
   // a pre-existing concurrent source edit aborts before any recovery state exists.
-  const latestSource = await base44.entities[builder.source_entity].get(builder.source_project_id);
+  const latestSource = await staffEntities[builder.source_entity].get(builder.source_project_id);
   if (!latestSource) throw new Error("The Builder source project could not be verified before starting reattachment.");
   if (source.updated_date && latestSource.updated_date && source.updated_date !== latestSource.updated_date) {
     throw new Error("The Builder source project changed in another session before reattachment started. No source or Part changes were written.");

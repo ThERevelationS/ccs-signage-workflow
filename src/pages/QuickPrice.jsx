@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { createQuickPriceProjectWithRecovery } from "@/components/estimator/quickPricePersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const HISTORY_KEY = "ccs_quick_price_history";
 const HISTORY_LIMIT = 8;
@@ -78,7 +79,7 @@ export default function QuickPrice() {
     setError("");
     try {
       const result = await createQuickPriceProjectWithRecovery({
-        entity: base44.entities[mod.entity],
+        entity: staffEntities[mod.entity],
         data: {
           project_name: projectName.trim(),
           client_name: clientName.trim(),

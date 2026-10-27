@@ -130,7 +130,7 @@ async function applyPendingSourcePatch(pending) {
   const sourceProjectId = String(pending?.source_project_id || "").trim();
   const sourcePatch = pending?.source_patch && typeof pending.source_patch === "object" ? pending.source_patch : null;
   if (!sourceEntity || !sourceProjectId || !sourcePatch || Object.keys(sourcePatch).length === 0) return null;
-  const entity = base44.entities[sourceEntity];
+  const entity = staffEntities[sourceEntity];
   if (!entity?.get || !entity?.updateMany) throw new Error("The Builder source entity needed for recovery is unavailable.");
   const current = await entity.get(sourceProjectId);
   if (!current) throw new Error("The Builder source project could not be verified while recovering the pending mutation.");

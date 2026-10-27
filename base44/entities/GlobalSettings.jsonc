@@ -15,21 +15,9 @@
     "setting_key"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": null,
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "__globalsettings_backend_only__" } },
+    "read": { "user_condition": { "role": "__globalsettings_backend_only__" } },
+    "update": { "user_condition": { "role": "__globalsettings_backend_only__" } },
+    "delete": { "user_condition": { "role": "__globalsettings_backend_only__" } }
   }
 }
