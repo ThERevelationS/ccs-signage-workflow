@@ -23,12 +23,12 @@ const groupSum = (rows: any[], keyFn: (r: any) => string, valFn: (r: any) => num
 
 async function loadCostInputs({ Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment, Movement }: any) {
   const [invoices, payments, purchaseOrders, changeOrders, segments, movements] = await Promise.all([
-    Invoice.filter({}),
-    Payment.filter({}),
-    PurchaseOrder.filter({}),
-    ChangeOrder.filter({}),
-    LaborSegment.filter({}),
-    Movement.filter({}),
+    loadAllEntityRows({ entity: Invoice, label: "Invoice cost inputs" }),
+    loadAllEntityRows({ entity: Payment, label: "Payment cost inputs" }),
+    loadAllEntityRows({ entity: PurchaseOrder, label: "Purchase order cost inputs" }),
+    loadAllEntityRows({ entity: ChangeOrder, label: "Change order cost inputs" }),
+    loadAllEntityRows({ entity: LaborSegment, label: "Labor segment cost inputs" }),
+    loadAllEntityRows({ entity: Movement, label: "Inventory movement cost inputs" }),
   ]);
   for (const [label, rows] of [["Invoice", invoices], ["Payment", payments], ["PurchaseOrder", purchaseOrders], ["ChangeOrder", changeOrders], ["TimeClockLaborSegment", segments], ["InventoryMovement", movements]] as const) {
     if (!Array.isArray(rows)) throw bad(`${label} lookup failed.`, 500);
