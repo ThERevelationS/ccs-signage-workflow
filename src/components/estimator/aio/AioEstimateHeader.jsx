@@ -39,7 +39,11 @@ export default function AioEstimateHeader({
         <button className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
           <RefreshCw className="w-4 h-4" />
         </button>
-        <button className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
+        <button
+          onClick={() => navigator.clipboard?.writeText(window.location.href)}
+          title="Copy estimate link"
+          className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
+        >
           <Link2 className="w-4 h-4" />
         </button>
         <button
