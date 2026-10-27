@@ -195,8 +195,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       items: prev.items.map((it, i) => (i === index ? { ...it, ...changes } : it)),
     }));
 
-  const removeItem = (index) =>
+  const removeItem = (index) => {
+    const label = project.items?.[index]?.description || `item ${index + 1}`;
+    if (!window.confirm(`Delete "${label}"?`)) return;
     commit((prev) => ({ items: prev.items.filter((_, i) => i !== index) }));
+  };
 
   const duplicateItem = (index) =>
     commit((prev) => {
