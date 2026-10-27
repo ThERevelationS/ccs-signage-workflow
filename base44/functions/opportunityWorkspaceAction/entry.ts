@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
         .map((i: any) => ({
           id: clean(i?.id),
           invoice_number: clean(i?.invoice_number),
-          customer_name: clean(i?.customer_name),
+          customer_name: clean(i?.customer_display_name || i?.customer_name),
           due_date: clean(i?.due_date),
           balance_due: money(num(i?.balance_due)),
         }));
@@ -478,9 +478,9 @@ Deno.serve(async (req) => {
             .slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date) })),
           orders: (Array.isArray(orders) ? orders : [])
-            .filter((r: any) => !r?.deleted && has(r, ["customer_name", "description", "vendor", "requestor_name", "request_type"]))
+            .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"]))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name), description: clean(r?.description), vendor: clean(r?.vendor), status: clean(r?.status) })),
+            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status) })),
         },
       });
     }
