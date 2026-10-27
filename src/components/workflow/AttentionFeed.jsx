@@ -138,6 +138,19 @@ export default function AttentionFeed() {
       })),
     },
     {
+      key: "staleQuotes",
+      label: "stale sent quotes",
+      count: (feed.stale_sent_estimates || []).length,
+      icon: Bell,
+      tone: "text-blue-700 bg-blue-50 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+      items: (feed.stale_sent_estimates || []).slice(0, 6).map((e) => ({
+        id: e.id,
+        primary: `${e.project_name || "Estimate"}${e.estimate_number ? ` · #${e.estimate_number}` : ""}`,
+        secondary: `${e.client_name || ""}${e.days_sent ? ` · sent ${e.days_sent}d ago` : ""}${e.quote_total ? ` · $${Number(e.quote_total).toLocaleString()}` : ""}`,
+        href: `/EstimateDetail?id=${e.id}`,
+      })),
+    },
+    {
       key: "stock",
       label: "low stock",
       count: (feed.low_stock || []).length,
