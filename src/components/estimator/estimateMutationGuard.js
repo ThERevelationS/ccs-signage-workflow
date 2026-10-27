@@ -28,6 +28,9 @@ export async function assertEstimateProductMutationAllowed(estimate, { expectedU
   if (pendingKey && pendingKey !== allowedKey) {
     throw new Error("A Builder mutation is still being recovered for this Product. Resume that operation before changing Products or Parts.");
   }
+  if (estimate.deleted === true) {
+    throw new Error("This estimate is in Trash. Restore it before changing Products or Parts.");
+  }
   const status = String(estimate.status || "draft");
   if (status === "cancelled") {
     throw new Error("This estimate is cancelled and permanently locked. Product or Part changes cannot be added.");
