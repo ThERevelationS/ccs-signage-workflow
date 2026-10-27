@@ -140,8 +140,10 @@ export default function PaintingSettings() {
     patch(settingName, JSON.stringify([...tiers, { min_quantity: min, max_quantity: min + 9, labor_multiplier: 1 }]));
   };
   const removeTier = (settingName, index) => {
-    const tiers = parseJsonArray(values[settingName]).filter((_, i) => i !== index);
-    patch(settingName, JSON.stringify(tiers));
+    const tiers = parseJsonArray(values[settingName]);
+    const label = TIER_SETTINGS.find((tier) => tier.key === settingName)?.label || "labor tiers";
+    if (!window.confirm(`Remove tier ${index + 1} from ${label}? The change applies only after you click Save.`)) return;
+    patch(settingName, JSON.stringify(tiers.filter((_, i) => i !== index)));
   };
 
   const updateConsumable = (index, field, value) => {
@@ -150,7 +152,11 @@ export default function PaintingSettings() {
     patch("paint_consumables_inventory", JSON.stringify(items));
   };
   const addConsumable = () => patch("paint_consumables_inventory", JSON.stringify([...consumables, { name: "New Consumable", cost: 0, qty: 1 }]));
-  const removeConsumable = (index) => patch("paint_consumables_inventory", JSON.stringify(consumables.filter((_, i) => i !== index)));
+  const removeConsumable = (index) => {
+    const item = consumables[index];
+    if (!window.confirm(`Remove "${item?.name || "this consumable"}" from the consumables list? The change applies only after you click Save.`)) return;
+    patch("paint_consumables_inventory", JSON.stringify(consumables.filter((_, i) => i !== index)));
+  };
 
   const handleSave = async () => {
     if (settingsSaveRef.current) return;
