@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Calculator, Plus, Search } from "lucide-react";
+import { ArrowUpDown, Calculator, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import EstimateCard from "@/components/estimator/EstimateCard";
@@ -9,9 +9,39 @@ import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
 import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/historicalBackfill";
 import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomReconcile";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
+
+const STATUSES = [
+  { key: "", label: "All" },
+  { key: "draft", label: "In Draft" },
+  { key: "calculated", label: "Calculated" },
+  { key: "sent", label: "Awaiting Approval" },
+  { key: "approved", label: "Approved" },
+  { key: "archived", label: "Archived" },
+  { key: "cancelled", label: "Cancelled" },
+  { key: "sync_issues", label: "Sync Issues" },
+];
+
+const SORTS = [
+  { key: "newest", label: "Newest" },
+  { key: "oldest", label: "Oldest" },
+  { key: "value_desc", label: "$ high → low" },
+  { key: "expiring", label: "Expiring first" },
+];
+
+const money0 = (n) => `$${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+const compact = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : money0(n));
+
+function expiryOf(e) {
+  if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !e.valid_days) return null;
+  return quoteExpirationDate(e.quote_issue_date, e.valid_days) || null;
+}
 
 export default function Estimator() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const status = searchParams.get("status") || "";
+  const sort = searchParams.get("sort") || "newest";
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -49,14 +79,50 @@ export default function Estimator() {
     load();
   }, []);
 
+  const setParam = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setSearchParams(next, { replace: true });
+  };
+
+  const buckets = useMemo(() => {
+    const by = {};
+    for (const s of STATUSES) by[s.key] = { count: 0, total: 0 };
+    for (const e of estimates) {
+      const bucketKey = e.pipeline_sync_pending === true ? "sync_issues" : (e.status || "draft");
+      if (by[bucketKey]) { by[bucketKey].count += 1; by[bucketKey].total += Number(e.quote_total || e.total_cost || 0); }
+      by[""].count += 1;
+      by[""].total += Number(e.quote_total || e.total_cost || 0);
+    }
+    return by;
+  }, [estimates]);
+
   const term = search.trim().toLowerCase();
-  const filtered = term
-    ? estimates.filter((e) =>
+  const filtered = useMemo(() => {
+    let list = status === "sync_issues"
+      ? estimates.filter((e) => e.pipeline_sync_pending === true)
+      : status
+        ? estimates.filter((e) => (e.status || "draft") === status)
+        : estimates;
+    if (term) {
+      list = list.filter((e) =>
         [e.project_name, e.client_name, e.estimate_number]
           .filter(Boolean)
           .some((v) => String(v).toLowerCase().includes(term))
-      )
-    : estimates;
+      );
+    }
+    const val = (e) => Number(e.quote_total || e.total_cost || 0);
+    const exp = (e) => expiryOf(e) || "9999-12-31";
+    const sorted = [...list];
+    if (sort === "oldest") sorted.sort((a, b) => String(a.created_date).localeCompare(String(b.created_date)));
+    else if (sort === "value_desc") sorted.sort((a, b) => val(b) - val(a));
+    else if (sort === "expiring") sorted.sort((a, b) => exp(a).localeCompare(exp(b)));
+    else sorted.sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)));
+    return sorted;
+  }, [estimates, status, term, sort]);
+
+  const visibleTotal = filtered.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
 
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
@@ -82,14 +148,53 @@ export default function Estimator() {
           </Button>
         </div>
 
-        <div className="relative mb-5">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by description, client or estimate number"
-            className="pl-9 clay-card border-none h-11"
-          />
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {STATUSES.map((s) => {
+            const b = buckets[s.key] || { count: 0, total: 0 };
+            return (
+              <button
+                key={s.key || "all"}
+                type="button"
+                onClick={() => setParam("status", s.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                  status === s.key
+                    ? "bg-red-600 text-white border-red-600"
+                    : "bg-white/70 text-gray-600 border-gray-200 hover:border-red-300"
+                }`}
+                title={`${b.count} · ${money0(b.total)}`}
+              >
+                {s.label}
+                <span className={`ml-1.5 ${status === s.key ? "text-red-100" : "text-gray-400"}`}>
+                  {b.count}{b.total > 0 ? ` · ${compact(b.total)}` : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <div className="relative flex-1 min-w-48">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by description, client or estimate number"
+              className="pl-9 clay-card border-none h-11"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+            <select
+              value={sort}
+              onChange={(e) => setParam("sort", e.target.value === "newest" ? "" : e.target.value)}
+              className="clay-card border-none h-11 px-2 text-xs font-semibold text-gray-600 outline-none"
+            >
+              {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+            </select>
+          </div>
+          <span className="text-xs text-gray-400">
+            {filtered.length} estimate{filtered.length === 1 ? "" : "s"} · {compact(visibleTotal)}
+          </span>
         </div>
 
         {loading ? (
