@@ -356,7 +356,7 @@ function addressResponse(data, init = {}) {
 Deno.serve(async (req) => {
   let reporter = silentScanReporter;
   try {
-    const base44 = createClientFromRequest(req), body = await req.json();
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req)), body = await req.json();
     const diagnostic = body?.action === "geocode_diagnostic";
     const actor = diagnostic ? await base44.auth.me().catch(() => null) : await authenticateSignShopSession(base44, body?.session_token);
     if (diagnostic && actor?.role !== "admin") return addressResponse({ success: false, error: "Admin access required." }, { status: 403 });
@@ -400,6 +400,16 @@ Deno.serve(async (req) => {
       if (!geocodingService) serviceFailure("UNAVAILABLE", "The map location service could not be reached. Try again later; no jurisdiction has been selected.");
       await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}` });
     }
+    const hint = body?.census_hint;
+    if (!geocode && hint && Number.isFinite(Number(hint.lat)) && Number.isFinite(Number(hint.lng))) {
+      const hp = hint.address_parts || {};
+      const hs = normalizeAddressState(hp.state || "");
+      if (["oh", "ky"].includes(hs)) {
+        geocode = { lat: Number(hint.lat), lon: Number(hint.lng), display_name: hint.matched_address || address, location_exact: false, approximate_source: "browser_us_census", address_parts: { administrative_area_level_1: hs, locality: hp.city || "", postal_code: hp.zip || "" } };
+        await reporter.emit({ kind: "geocode_service_result", detail: "Browser Census locator matched " + geocode.display_name + " as an approximate map location." });
+        if (geocodingService?.issue) geocodingService = { ...geocodingService, fallback_used: "us_census", fallback_message: "The public Census locator found an approximate map position after Google rejected the lookup." };
+      }
+    }
     if (!geocode) {
       try {
         await reporter.emit({ kind: "geocode_lookup", url: "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress", detail: "Trying the public US Census address locator." });
@@ -430,8 +440,11 @@ Deno.serve(async (req) => {
     const hasServiceIssue = Boolean(geocodingService?.issue && resolution.status !== "location_verified");
     if (hasServiceIssue) resolution.reason = geocodingService.message;
     await reporter.emit({ kind: "location_result", detail: resolution.reason }, { stage: "Checking saved jurisdictions", indeterminate: true });
-    const localities = await loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, sort: "created_date", label: "Location matching catalog" });
-    const profiles = await loadAllEntityRows({ entity: base44.asServiceRole.entities.JurisdictionProfile, sort: "created_date", label: "Location county identities" });
+    const stateFilter = resolution.state ? { state: resolution.state } : null;
+    const [localities, profiles] = await Promise.all([
+      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: "created_date", label: "Location matching catalog" }),
+      loadAllEntityRows({ entity: base44.asServiceRole.entities.JurisdictionProfile, query: stateFilter, sort: "created_date", label: "Location county identities" })
+    ]);
     const matched = exactConfiguredLocality(localities, resolution, profiles);
     await reporter.emit({ kind: "catalog_check", detail: `Checked ${localities.length} saved jurisdictions. ${matched ? `Unique location match: ${matched.name}. ${matched.offices?.some((office) => office.authority_verification_status === "staff_verified") ? "Checking reviewed office roles." : "Office setup needs review; website research stays in the review tools."}` : "No unique confirmed match. Website research stays available in the review tools."}` });
     const authority = summarizeMatchedLocalityAuthority(matched);
