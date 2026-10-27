@@ -15,7 +15,7 @@ export default function HoldDownAdvisor({ advice }) {
         Hold-Down Advisor
       </div>
       <p>{advice.recommendation}</p>
-      {advice.reasons.length > 0 && (
+      {advice.reasons?.length > 0 && (
         <ul className="list-disc list-inside mt-1 space-y-0.5 opacity-80">
           {advice.reasons.map((r, i) => (
             <li key={i}>{r}</li>
