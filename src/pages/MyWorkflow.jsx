@@ -329,18 +329,25 @@ export default function MyWorkflow() {
       }
     }
 
-    const saved = await mutateLocatedWorkOrderArrayItem({
-      workOrderId: wo.id,
-      field: "notes",
-      item: task,
-      label: "My Workflow task",
-      mutateItem,
-    });
-    const savedNotes = saved.notes || [];
-    setWorkOrders(prev => prev.map(w => w.id === wo.id
-      ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
-      : w));
-    return savedNotes;
+    try {
+      const saved = await mutateLocatedWorkOrderArrayItem({
+        workOrderId: wo.id,
+        field: "notes",
+        item: task,
+        label: "My Workflow task",
+        mutateItem,
+      });
+      const savedNotes = saved.notes || [];
+      setWorkOrders(prev => prev.map(w => w.id === wo.id
+        ? { ...w, notes: savedNotes, updated_date: saved.updated_date }
+        : w));
+      return savedNotes;
+    } catch (error) {
+      console.error("Work order task update blocked:", error);
+      await loadMyWorkOrders();
+      alert(error?.message || "This task changed in another session. The latest work orders were reloaded.");
+      return null;
+    }
   };
 
   const toggleTaskComplete = async (workOrderId, taskIndex) => {
