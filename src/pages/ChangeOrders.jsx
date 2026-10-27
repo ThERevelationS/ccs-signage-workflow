@@ -381,6 +381,23 @@ export default function ChangeOrders() {
     load();
   };
 
+  const bulkReject = async () => {
+    const ids = [...selected].filter((id) => proposedIds.includes(id));
+    if (!ids.length) return;
+    const reason = window.prompt(`Reject ${ids.length} proposed change order${ids.length === 1 ? "" : "s"} — reason sent to all:`, "");
+    if (reason === null) return;
+    setBulkBusy(true);
+    let ok = 0, failed = 0;
+    for (const id of ids) {
+      try { await invokeAction(sessionToken, { action: "reject_change_order", change_order_id: id, rejection_reason: clean(reason) }); ok++; }
+      catch { failed++; }
+    }
+    setBulkBusy(false);
+    setSelected(new Set());
+    if (failed) setError(`Rejected ${ok}; ${failed} failed (may no longer be proposed).`);
+    load();
+  };
+
   if (!isRegistered) return null;
 
   return (
@@ -427,6 +444,13 @@ export default function ChangeOrders() {
             className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
             {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             Approve selected ({selected.size})
+          </button>
+        )}
+        {selected.size > 0 && (
+          <button type="button" onClick={bulkReject} disabled={bulkBusy}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-red-600 px-3 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+            {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+            Reject selected ({selected.size})
           </button>
         )}
       </div>
