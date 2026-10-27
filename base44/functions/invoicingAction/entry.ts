@@ -20,7 +20,7 @@ const OPEN_AR_STATUSES = new Set(["sent", "partially_paid"]);
 const PAYMENT_METHODS = ["cash", "check", "card", "ach", "financing", "other"];
 
 const EDITABLE_INVOICE_FIELDS = [
-  "invoice_number", "customer_id", "customer_display_name",
+  "customer_id", "customer_display_name",
   "opportunity_id", "estimating_request_id", "estimate_id", "work_order_id",
   "contact_id", "location_id", "billing_type",
   "line_items", "discount_amount", "tax_rate", "deposit_applied",
@@ -601,9 +601,12 @@ Deno.serve(async (req) => {
       const customer = clean(invoice.customer_id)
         ? await Customer.get(clean(invoice.customer_id)).catch(() => null)
         : null;
-      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email);
+      const onFile = [customer?.email, customer?.contact_email, customer?.billing_email, customer?.contact_office_email, customer?.billing_contact_email]
+        .map((v: any) => clean(v).toLowerCase()).filter((v: string) => v.includes("@"));
+      const requested = clean(body?.email).toLowerCase();
+      const to = (requested && onFile.includes(requested)) ? requested : (onFile[0] || '');
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
-      const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
+      const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
 
       // Reuse or mint an invoice-scoped portal link so the recipient can view/pay online.
       const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
@@ -686,7 +689,7 @@ Deno.serve(async (req) => {
       const total = open.reduce((s: number, i: any) => s + num(i?.balance_due), 0);
       const overdue = open.filter((i: any) => clean(i?.due_date) && clean(i?.due_date) < today);
 
-      const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
+      const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
       const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
       let portalUrl = "";
       const existing = await PortalLink.filter({ kind: "customer", record_id: cid }).catch(() => []);
