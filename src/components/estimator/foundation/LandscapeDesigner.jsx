@@ -33,7 +33,10 @@ export default function LandscapeDesigner({ landscape, onChange }) {
           </p>
         </div>
         <button
-          onClick={() => onChange({ cell_size_inches: 12, cells: {} })}
+          onClick={() => {
+            if (!window.confirm("Clear all landscaping from the canvas?")) return;
+            onChange({ cell_size_inches: 12, cells: {} });
+          }}
           className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-600 hover:bg-gray-50"
         >
           <Trash2 className="w-3 h-3" /> Clear
