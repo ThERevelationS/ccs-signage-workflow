@@ -1315,6 +1315,9 @@ function defaultTrackerPrefs(email: string, name: string) {
     hide_when_unfocused: false,
     timeclock_page_only: false,
     goal_celebrate: true,
+    device_scope: 'all',
+    custom_label: '',
+    alert_minutes: [],
   };
 }
 
@@ -1332,11 +1335,12 @@ const TRACKER_ENUMS: Record<string, string[]> = {
   background_style: ['glass', 'solid', 'minimal'],
   animation_style: ['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'none'],
   animation_target: ['all', 'digits', 'ring', 'icon'],
+  device_scope: ['all', 'desktop_only', 'mobile_only'],
   time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
 };
 
 const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate'];
-const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes'];
 
 function trackerClamp(value: any, min: number, max: number, fallback: number) {
   const n = Number(value);
@@ -1364,6 +1368,11 @@ function normalizeTrackerPrefs(row: any, target: any) {
     .filter((t: number) => Number.isFinite(t) && t > 0 && t <= 1.5)
     .slice(0, 8);
   if (!out.milestone_thresholds.length) out.milestone_thresholds = [...base.milestone_thresholds];
+  out.custom_label = String(row.custom_label || '').slice(0, 24).trim();
+  out.alert_minutes = (Array.isArray(row.alert_minutes) ? row.alert_minutes : [])
+    .map((m: any) => Math.round(Number(m)))
+    .filter((m: number) => Number.isFinite(m) && m > 0 && m <= 1440)
+    .slice(0, 6);
   return out;
 }
 
