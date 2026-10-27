@@ -13,36 +13,16 @@
     <link type="text/css" rel="Stylesheet" href="tablestyles.aspx" media="all" />
  <link rel="StyleSheet" type="text/css" href="/common/font-awesome/css/font-awesome.min.css">
     <link type="text/css" rel="Stylesheet" href="css/docprint.css" media="print" />
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-    <script type="text/javascript" src="jqueryui/js/jquery-ui-1.8.21.custom.min.js"></script>
-    <script type="text/javascript" src="js/doc-view.js?_t=269"></script>
-    <script type="text/javascript" src="js/tabletools.js"></script>
-       <script type="text/javascript" src="js/tabs.js"></script>
-	<script type="text/javascript">
-			var iframeReady = false;
-	</script>	
+    <!-- external script removed: archived evidence snapshot -->
+    <!-- external script removed: archived evidence snapshot -->
+    <!-- external script removed: archived evidence snapshot -->
+    <!-- external script removed: archived evidence snapshot -->
+       <!-- external script removed: archived evidence snapshot -->
+	<!-- external script removed: archived evidence snapshot -->	
     
 </head>
 <body class='doc-view' >
-<script type="text/javascript">
-    $(document).ready(function () {
-        ZP.DocView.InitDef();
-        ZP.DocView.OpenDefinitionPage = null;
-        ZP.DocView.OpenDefinitionMode = '_self';
-        ZP.DocView.OpenXRefPage = 'doc-viewer.aspx#$2-';
-        ZP.DocView.OpenXRefMode = '_blank';
-        $(window).bind('hashchange', ZP.DocView.HashChanged);
-        
-        if (typeof  ZP.DocView.ZoomClasses == 'undefined') {
-            ZP.DocView.ZoomClasses = ["Unzoom1", "", "Zoom1", "Zoom2", "Zoom3", "Zoom4"];
-        }
-        ZP.DocView.InitializeZoom();
-        EC.SortedTable.Init(".ord-tbl, .stat-tbl");
-        EC.Tabs.PositionLeftTabs();
-    });
-
-    
-</script>  
+<!-- external script removed: archived evidence snapshot -->  
 
 
     <div id="doc-viewer">
@@ -51,24 +31,17 @@
 <div id="doc-view-content">
     
 <div id="pageControls">
-<script type="text/javascript" >
-    function clearEffDate() {
-        jQuery.get("doc-view-helper.aspx?task=currentversion", function () {
-            window.location.reload();
-        });
-        return false;
-    }
-</script>
+<!-- external script removed: archived evidence snapshot -->
      <div class="pageControls psuedoTable" role="navigation" aria-label="Document Navigation">  
         <div class="psuedoTableBody" >     
             <div class="psuedoTableRow">         
                 <div class="pageControls_outer" ></div>
                 <div class="pageControls_inner left">
-                    <a id='button1' onclick='ZP.DocView.PrintDoc("002.034.009.007",false);return false;' href="#" title="Print" role="button"> 
+                    <a id='button1' href="#" title="Print" role="button"> 
                         <img alt="Print" src="resources/btn-print-white.png" /></a>
-                    <a id='Button2' onclick='ZP.DocView.OpenPDF("002.034.009.007",false);return false;' href="#" title="Export PDF" role="button">
+                    <a id='Button2' href="#" title="Export PDF" role="button">
                         <img alt="Generate PDF" src="resources/btn-makepdf-white.png" /></a>
-                        <a class="popup" params="toobar=0,menubar=0,scrollbars=1,height=436,width=626" href="https://www.facebook.com/sharer/sharer.php?s=100&p[title]=BOONE+COUNTY+ZONING+REGULATIONS&p[summary]=Boone+County%2c+KY+Zoning+Ordinance&p[url]=https%3a%2f%2fonline.encodeplus.com%2fregs%2fboonecounty-ky%2fdoc-viewer.aspx%3fsecid%3d2005" title="Click to Share this page" style="text-decoration:none;border:none;" ><img src="resources/share-icon-white.png" alt="Click to Share this page on facebook" /></a>     
+                        <a class="popup" params="toobar=0,menubar=0,scrollbars=1,height=436,width=626" href="#" title="Click to Share this page" style="text-decoration:none;border:none;" ><img src="resources/share-icon-white.png" alt="Click to Share this page on facebook" /></a>     
                 </div>
                 <div  class="pageControls_inner breadCrumbs" title="Navigation 'breadcrumbs'">
                      <div class='breadCrumbs'><a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002' >BOONE COUNTY ZONING REGULATIONS</a> &gt; <a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002.034' >ARTICLE 34 SIGNS</a> &gt; <a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002.034.009' >SECTION 3408 REGULATIONS BY TYPE OF SIGN</a> &gt; <a href='/regs/boonecounty-ky/doc-viewer.aspx?tocid=002.034.009.007' >Section 3408.7 Entrance Signs</a></div>
@@ -76,22 +49,22 @@
                  <div  class="pageControls_inner right">       
                      <ul >  
                          <li>
-                            <a id='button3' class="nav" onclick="ZP.DocView.LoadPrevDoc('002.034.009.007');return false;" href="#"  title="Previous Section" accesskey="," role="button"><img alt="Go to Previous Section" src="resources/btn-back-white.png" /></a>
+                            <a id='button3' class="nav" href="#"  title="Previous Section" accesskey="," role="button"><img alt="Go to Previous Section" src="resources/btn-back-white.png" /></a>
                          </li>  
                          <li>
-                             <a id='Button4'  class="nav" onclick="ZP.DocView.LoadNextDoc('002.034.009.007');return false;" href="#"  title="Next Section" accesskey="." role="button"> <img alt="Go to Next Section" src="resources/btn-forward-white.png" /></a>
+                             <a id='Button4'  class="nav" href="#"  title="Next Section" accesskey="." role="button"> <img alt="Go to Next Section" src="resources/btn-forward-white.png" /></a>
                          </li>   
                          <li>
-                             <a id="pageControls-overflow" onclick="ZP.DocView.PgCntrlOverflowClick(event);return false;" href="#" title="Click for more options" role="button" >
+                             <a id="pageControls-overflow" href="#" title="Click for more options" role="button" >
                             <img src="resources/overflow-btn-white.png" alt="Click for more options" /></a>
                                
   <ul class="submenu" role="dialog">
-            <li><a href="/regs/boonecounty-ky/doc-viewer.aspx?secid=2005" onclick="javascript:alert('Right click this icon and select \'add to favorites\' or \'Bookmark this Link\' to bookmark this page');return false;" title="Bookmark this page" >Bookmark</a></li>
+            <li><a href="/regs/boonecounty-ky/doc-viewer.aspx?secid=2005" title="Bookmark this page" >Bookmark</a></li>
             <li>
                                         
-                <a id="zoomMinus" onclick="ZP.DocView.DecreaseZoom();return false;" href="#" title="Decrease Zoom" class="zoomLink glyphicon" >&#x2212;</a>
-                <a onclick="ZP.DocView.DefaultZoom();return false;"  href="#" title="Default Zoom"  class="zoomLink" >100%</a>
-                <a id="zoomPlus" onclick="ZP.DocView.IncreaseZoom();return false;" href="#" title="Increase Zoom"  class="zoomLink glyphicon" > &#x2b; </a>
+                <a id="zoomMinus" href="#" title="Decrease Zoom" class="zoomLink glyphicon" >&#x2212;</a>
+                <a  href="#" title="Default Zoom"  class="zoomLink" >100%</a>
+                <a id="zoomPlus" href="#" title="Increase Zoom"  class="zoomLink glyphicon" > &#x2b; </a>
             </li>
            
                            
@@ -119,7 +92,7 @@
             <div id="thePage" class="textPage " tocid="002.034.009.007" secid="3392" role="main" aria-label="Document">
                 <img id="sectionBanner" title="Document text banner" src="resources/docbanner.png" width="720" valign="Top"  alt="Document text banner">
                 
-                <!--div id="MicrosoftTranslatorWidget" style="width: 200px; min-height: 83px; border-color: #3A5770; background-color: #78ADD0;"><noscript><a href="http://www.microsofttranslator.com/bv.aspx?a=http%3a%2f%2fwww.fast-forward-it.com%2f">Translate this page</a><br />Powered by <a href="http://www.bing.com/translator">Microsoft® Translator</a></noscript></div> <script type="text/javascript"> /* <![CDATA[ */ setTimeout(function() { var s = document.createElement("script"); s.type = "text/javascript"; s.charset = "UTF-8"; s.src = ((location && location.href && location.href.indexOf('https') == 0) ? "https://ssl.microsofttranslator.com" : "http://www.microsofttranslator.com" ) + "/ajax/v2/widget.aspx?mode=manual&from=en&layout=ts"; var p = document.getElementsByTagName('head')[0] || document.documentElement; p.insertBefore(s, p.firstChild); }, 0); /* ]]> */ </script>--> 
+                <!--div id="MicrosoftTranslatorWidget" style="width: 200px; min-height: 83px; border-color: #3A5770; background-color: #78ADD0;"><noscript><a href="#">Translate this page</a><br />Powered by <a href="#">Microsoft® Translator</a></noscript></div> <!-- external script removed: archived evidence snapshot -->--> 
                 
                 <section id='secid-2005' class='secLvl1 _002' tabindex='-1' data-secid='2005'> 
 <h1>BOONE COUNTY ZONING REGULATIONS</h1>
@@ -261,7 +234,7 @@
     </div>
 </div>
 </div>
-<iframe style="width:1px;height:1px" src=""  id="printiframe" name="printiframe" onload="ZP.DocView.IFrameReady();" title="Print frame" aria-hidden="true" role="presentation"></iframe>
+
     </div>
 
 
