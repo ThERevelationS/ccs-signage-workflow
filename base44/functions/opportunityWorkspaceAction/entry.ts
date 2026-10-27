@@ -87,7 +87,9 @@ async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request
   const estimateId = clean(request?.estimate_id);
   if (!estimateId) return { request, completed: false };
   const estimate = await Estimate.get(estimateId).catch(() => null);
-  if (!estimate?.id || !QUOTE_OUT_STATUSES.has(clean(estimate.status))) return { request, completed: false };
+  // A trashed estimate never closes an open estimating request — the request
+  // stays open until a live estimate actually goes to the customer.
+  if (!estimate?.id || estimate?.deleted === true || !QUOTE_OUT_STATUSES.has(clean(estimate.status))) return { request, completed: false };
   const now = new Date().toISOString();
   const desired = { status: "completed", completed_at: now };
   const saved = await replaceEstimatingRequestFieldsIfUnchanged({
@@ -558,7 +560,7 @@ Deno.serve(async (req) => {
         intakes: Array.isArray(intakes) ? intakes : [],
         estimating_requests: reconciledRequests,
         work_order: workOrder || null,
-        estimates: Array.isArray(estimates) ? estimates : [],
+        estimates: (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true),
         invoices: Array.isArray(invoices) ? invoices : [],
         purchase_orders: Array.isArray(purchaseOrders) ? purchaseOrders : [],
         change_orders: Array.isArray(changeOrders) ? changeOrders : [],
@@ -660,7 +662,7 @@ Deno.serve(async (req) => {
         const estId = estimateIdByOpp.get(clean(o?.id));
         if (!estId) continue;
         const est = await Estimate.get(estId).catch(() => null);
-        if (!est || clean(est?.status) !== "sent") continue;
+        if (!est || est?.deleted === true || clean(est?.status) !== "sent") continue;
         const issued = clean(est?.quote_issue_date) || clean(est?.updated_date).slice(0, 10);
         const issuedMs = Date.parse(issued);
         if (!Number.isFinite(issuedMs)) continue;
