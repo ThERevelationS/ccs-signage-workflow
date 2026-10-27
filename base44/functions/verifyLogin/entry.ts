@@ -86,17 +86,19 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
-    // Support both bcrypt hashes ($2a/$2b/$2y) and legacy plaintext passwords.
-    // Once a legacy credential successfully authenticates, upgrade it in place
-    // before issuing the session so plaintext storage disappears naturally as
-    // users sign in. Never expose the plaintext or generated hash in logs.
+    // Only bcrypt hashes ($2a/$2b/$2y) are accepted. Legacy plaintext storage
+    // is rejected outright — a non-bcrypt stored value can never match, and
+    // the dummy compare keeps the timing profile identical to a wrong
+    // password. Affected users must complete a password reset.
     const isBcrypt = /^\$2[aby]\$/.test(stored);
-    let match = isBcrypt ? await bcrypt.compare(password, stored) : password === stored;
+    let match = false;
+    if (isBcrypt) {
+      match = await bcrypt.compare(password, stored);
+    } else {
+      await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
+    }
 
     if (!match) {
-      if (!isBcrypt) {
-        await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
-      }
       const failures = (Number.isFinite(Number(user.failed_login_count)) ? Number(user.failed_login_count) : 0) + 1;
       const nextFields: Record<string, unknown> = { failed_login_count: failures };
       if (failures >= MAX_FAILED_LOGINS) {
@@ -104,30 +106,6 @@ Deno.serve(async (req) => {
       }
       await persistLoginSecurityFields(authorized, user, nextFields);
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
-    }
-
-    if (!isBcrypt) {
-      const upgradedHash = await bcrypt.hash(password, 10);
-      try {
-        await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
-          entity: authorized,
-          user,
-          nextFields: { password_hash: upgradedHash },
-          guardFields: { email: user.email },
-          label: `Legacy password hash upgrade for ${user.email}`,
-        });
-      } catch (upgradeError) {
-        // A simultaneous successful login may have upgraded the same plaintext
-        // credential with a different bcrypt salt. Accept that convergence only
-        // if the freshly stored bcrypt hash still verifies this password.
-        const current = await authorized.get(user.id).catch(() => null);
-        const currentStored = String(current?.password_hash || '');
-        const concurrentlyUpgraded = /^\$2[aby]\$/.test(currentStored) && await bcrypt.compare(password, currentStored).catch(() => false);
-        if (!concurrentlyUpgraded) {
-          console.error('Legacy password upgrade could not be verified for user id:', user.id);
-          return Response.json({ success: false, error: 'Credential security upgrade could not be verified. Please retry sign in.' }, { status: 409 });
-        }
-      }
     }
 
     if (Number(user.failed_login_count) > 0 || user.login_locked_until) {
