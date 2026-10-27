@@ -35,7 +35,7 @@ async function reset() {
     action: "clock_out", target_email: worker.email,
     request_id: "synthetic-admin-co-1", notes: "Synthetic admin smoke shift",
     lunch_minutes: 30,
-    job_allocations: [{ is_inhouse: true, inhouse_task: "Shop", minutes: 480 }] });
+    job_allocations: [{ is_inhouse: true, inhouse_task: "Shop", minutes: 540 }] });
   assert.equal(clockOut.body.success, true, JSON.stringify(clockOut.body));
   fixture = { h, invokes: [] };
 }
