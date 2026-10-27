@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
 
     if (action === "attention_feed") {
       const today = text(body?.today) || new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits] = await Promise.all([
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 500).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 500).catch(() => []),
@@ -231,6 +231,7 @@ Deno.serve(async (req) => {
         Inventory.filter({}, "-updated_date", 500).catch(() => []),
         WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
         PermitLineItem.filter({}, "-updated_date", 500).catch(() => []),
+        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
