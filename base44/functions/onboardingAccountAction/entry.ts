@@ -36,8 +36,8 @@ function sanitizedUser(user: any) {
     sales_roles: Array.isArray(user.sales_roles) ? user.sales_roles : [],
     can_import_export: user.can_import_export === true,
     can_view_resources: user.can_view_resources === true,
-    face_descriptors: Array.isArray(user.face_descriptors) ? user.face_descriptors : [],
-    hr_data: user.hr_data && typeof user.hr_data === 'object' && !Array.isArray(user.hr_data) ? user.hr_data : {},
+    // face_descriptors and hr_data intentionally omitted — credentials/PII
+    // must never be returned to a link holder.
     onboarding_complete: user.onboarding_complete === true,
     updated_date: user.updated_date || '',
   };
