@@ -17,7 +17,7 @@ const safeUrl = (value: unknown, max = MAX_URL) => {
   if (!raw) return '';
   try {
     const url = new URL(raw);
-    return ['http:', 'https:'].includes(url.protocol) ? url.toString().slice(0, max) : '';
+    return ['https:'].includes(url.protocol) ? url.toString().slice(0, max) : '';
   } catch {
     return '';
   }
@@ -71,12 +71,23 @@ Deno.serve(async (req) => {
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified for quote delivery history.' }, { status: 404 });
     }
+    // The recorded delivery must describe the estimate's current issued quote —
+    // an arbitrary version or foreign work order would let a session forge the
+    // immutable delivery/audit trail.
+    const issuedVersion = Math.max(0, whole(estimate.quote_version));
+    if (!quoteVersion || quoteVersion !== issuedVersion) {
+      return Response.json({ error: 'Quote delivery does not match the issued quote version.' }, { status: 409 });
+    }
+    const claimedWo = cleanText(input.work_order_id, 128);
+    if (claimedWo && String(estimate.work_order_id || '') !== claimedWo) {
+      return Response.json({ error: 'Quote delivery work order does not match the estimate.' }, { status: 409 });
+    }
 
     const idempotencyKey = `quote_delivery:gmail:${gmailMessageId}`;
     const normalized = {
       estimate_id: estimateId,
       idempotency_key: idempotencyKey,
-      work_order_id: cleanText(input.work_order_id, 128),
+      work_order_id: cleanText(estimate.work_order_id || input.work_order_id, 128),
       quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion),
       quote_version: quoteVersion,
       quote_issue_date: cleanText(input.quote_issue_date, 32),
