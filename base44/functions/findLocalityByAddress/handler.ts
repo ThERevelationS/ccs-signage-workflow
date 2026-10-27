@@ -37,7 +37,7 @@ function addressResponse(data:any,init:any={}){
 Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
  try{
-  const base44=createClientFromRequest(req),body=await req.json();
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json();
   // Admin diagnostics use normal platform authentication; ordinary searches keep
   // the existing Sign Shop session requirement and authority gates.
   const diagnostic=body?.action==='geocode_diagnostic';
@@ -67,7 +67,18 @@ Deno.serve(async req=>{
    if(geocodingService)await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});
    if(data.status==='OK'&&data.results?.length){const g=data.results[0];geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:strictGeocode(data.results,address),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
   }catch{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}
-  // Free fallback: US Census geocoder needs no API key. It gives coordinates and
+  // Browser-resolved Census hint: the worker cannot reach census.gov (its fetch
+ // hangs until abort), so the client geocodes via the browser and resubmits.
+ const hint=body?.census_hint;
+ if(!geocode&&hint&&Number.isFinite(Number(hint.lat))&&Number.isFinite(Number(hint.lng))){
+  const hp=hint.address_parts||{};const hs=normalizeAddressState(hp.state||'');
+  if(['oh','ky'].includes(hs)){
+   geocode={lat:Number(hint.lat),lon:Number(hint.lng),display_name:hint.matched_address||address,location_exact:false,approximate_source:'browser_us_census',address_parts:{administrative_area_level_1:hs,locality:hp.city||'',postal_code:hp.zip||''}};
+   await reporter.emit({kind:'geocode_service_result',detail:'Browser Census locator matched '+geocode.display_name+' as an approximate map location.'});
+   if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'us_census',fallback_message:'The public Census locator found an approximate map position after Google rejected the lookup.'};
+  }
+ }
+ // Free fallback: US Census geocoder needs no API key. It gives coordinates and
  // a normalized address but not Google-style components; resolve state from the
  // matched address and never treat its output as parcel-exact proof.
  if(!geocode){
@@ -95,8 +106,10 @@ Deno.serve(async req=>{
   const hasServiceIssue=Boolean(geocodingService?.issue&&resolution.status!=='location_verified');
   if(hasServiceIssue)resolution.reason=geocodingService.message;
   await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
-  const localities=await loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,sort:'created_date',label:'Location matching catalog'});
-  const profiles=await loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,sort:'created_date',label:'Location county identities'});
+  const stateFilter=resolution.state?{state:resolution.state}:null;
+  const [localities,profiles]=await Promise.all([
+   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
+   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'})]);
   const matched=exactConfiguredLocality(localities,resolution,profiles);
   await reporter.emit({kind:'catalog_check',detail:`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`});
   // Never ask an LLM to choose a locality ID; never write research into approved
