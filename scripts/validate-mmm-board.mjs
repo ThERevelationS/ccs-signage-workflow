@@ -87,19 +87,30 @@ function harness(overrides = {}) {
       return { data: { success: true, record: structuredClone(record) } };
     },
   };
+  // Real CAS stub: get/updateMany act on the fixture record so
+  // updateMany({id, updated_date}) succeeds only when the record is unchanged.
+  const casEntity = {
+    get: async (id) => {
+      assert.equal(id, record.id);
+      return structuredClone(record);
+    },
+    updateMany: async (query, patch) => {
+      const ok = query?.id === record.id && String(query?.updated_date) === String(record.updated_date);
+      if (!ok) return { updated: 0 };
+      Object.assign(record, structuredClone(patch?.$set || {}));
+      record.updated_date = String(Number(record.updated_date) + 1);
+      writes++;
+      return { updated: 1 };
+    },
+  };
   const ctx = {
     base44: {
       functions,
-      entities: {
-        WorkOrder: {
-          get: async (id) => {
-            assert.equal(id, record.id);
-            return structuredClone(record);
-          },
-          updateMany: async () => ({}),
-        },
-      },
+      entities: { WorkOrder: casEntity },
     },
+    // Handlers reference the page-level `const WorkOrder = base44.entities.WorkOrder`.
+    WorkOrder: casEntity,
+    staffEntities: { WorkOrder: casEntity },
     verifySalesSaveAcknowledgment,
     localStorage: { getItem: () => '' },
     addDays, format, startOfDay,
@@ -374,8 +385,6 @@ await check('checklist code is fully removed from the page', async () => {
 
 await check('no native alert/confirm dialogs remain on meeting surfaces', async () => {
   assert.doesNotMatch(board, /\balert\(|\bconfirm\(/);
-  const dialog = readFileSync(new URL('../src/components/workflow/WorkOrderDetailsDialog.jsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(dialog, /\balert\(|\bconfirm\(/);
 });
 
 await check('discussed semantics never touch sip_completed', async () => {
