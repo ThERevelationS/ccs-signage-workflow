@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ export default function CurrentWorkCard({
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(() => new Date());
+  const searchSeqRef = useRef(0);
 
   useEffect(() => {
     if (!activeLabor?.id) return;
@@ -65,6 +66,7 @@ export default function CurrentWorkCard({
       return undefined;
     }
     const timer = setTimeout(async () => {
+      const seq = ++searchSeqRef.current;
       setSearchBusy(true);
       try {
         const rows = await loadAllEntityRows({
@@ -73,13 +75,15 @@ export default function CurrentWorkCard({
           sort: "-created_date",
           label: "Current Work WorkOrders",
         });
+        if (seq !== searchSeqRef.current) return;
         const needle = searchTerm.trim().toLowerCase();
         setResults(rows.filter((wo) => [wo.title, wo.client_name, wo.description].filter(Boolean).join(" ").toLowerCase().includes(needle)).slice(0, 12));
       } catch (err) {
+        if (seq !== searchSeqRef.current) return;
         console.error("Current Work WorkOrder search failed:", err);
         setError("WorkOrder search could not be loaded. You can still track an activity without a WorkOrder.");
       } finally {
-        setSearchBusy(false);
+        if (seq === searchSeqRef.current) setSearchBusy(false);
       }
     }, 250);
     return () => clearTimeout(timer);
@@ -105,7 +109,7 @@ export default function CurrentWorkCard({
   };
 
   return (
-    <div className={`rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3 glow-card ${activeLabor ? "glow-info" : ""}`}>
+    <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 font-semibold text-blue-900"><Wrench className="w-4 h-4" />Current Work</div>
