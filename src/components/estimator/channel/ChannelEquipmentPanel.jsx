@@ -36,9 +36,10 @@ export default function ChannelEquipmentPanel({ project, selections, catalog, on
                 ))}
               </select>
               <button
-                onClick={() =>
-                  onChange({ selected_equipment: project.selected_equipment.filter((_, i) => i !== idx) })
-                }
+                onClick={() => {
+                  if (!window.confirm("Remove this equipment?")) return;
+                  onChange({ selected_equipment: project.selected_equipment.filter((_, i) => i !== idx) });
+                }}
                 className="text-gray-400 hover:text-red-600 p-1"
               >
                 <Trash2 className="w-4 h-4" />
@@ -80,6 +81,10 @@ export default function ChannelEquipmentPanel({ project, selections, catalog, on
           </div>
         );
       })}
+
+      {selections.length === 0 && (
+        <p className="text-xs text-gray-400">No equipment added yet.</p>
+      )}
 
       <Button
         variant="outline"
