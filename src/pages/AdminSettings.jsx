@@ -1911,7 +1911,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <div ref={adminScrollRef} data-admin-scroll-area className="h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
+    <div ref={adminScrollRef} data-admin-scroll-area className="min-h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>

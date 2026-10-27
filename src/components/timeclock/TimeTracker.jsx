@@ -160,10 +160,12 @@ export default function TimeTracker({ position = "top" } = {}) {
     const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") onChange(); };
     const onVisible = () => { if (document.visibilityState === "visible") onChange(); };
     window.addEventListener("ccs-timeclock-work-pause-changed", onChange);
+    window.addEventListener("ccs:timeTrackerRefresh", onChange);
     window.addEventListener("storage", onStorage);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("ccs-timeclock-work-pause-changed", onChange);
+      window.removeEventListener("ccs:timeTrackerRefresh", onChange);
       window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVisible);
     };
@@ -256,11 +258,17 @@ export default function TimeTracker({ position = "top" } = {}) {
      (locationPref === "top" && position !== "side") ||
      (locationPref === "side" && position === "side"));
 
+  if (!visibleHere) return null;
+
   const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
   const ringColor = TONE_RING[tone] || accent.ring;
   const clockedIn = snapshot?.status === "clocked_in";
   const frozen = live?.frozen === true;
-  const animClass = prefs?.animation_style === "none" ? "" : pulse ? "tracker-pulse" : "";
+  const animClass = prefs?.animation_style === "pulse"
+    ? (pulse ? "tracker-pulse" : "")
+    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
+      ? `tracker-${prefs.animation_style}`
+      : "";
 
   const ringSize = prefs?.size === "expanded" ? 34 : 26;
   const circumference = 2 * Math.PI * 100;
@@ -309,11 +317,6 @@ export default function TimeTracker({ position = "top" } = {}) {
   const trackerTime = clockedIn ? formatClockSeconds(shown, prefs?.time_format) : "Off the clock";
   const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
 
-  // Every hook above must run on every render. Bailing out before the later
-  // useMemo calls changes the hook count between renders and crashes React,
-  // so hide the pill only after all hooks have run.
-  if (!visibleHere) return null;
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -324,6 +327,7 @@ export default function TimeTracker({ position = "top" } = {}) {
           className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animClass}`}
           style={{
             transform: `scale(${prefs?.scale || 1})`,
+            transformOrigin: position === "side" ? "top center" : "left center",
             opacity: prefs?.opacity ?? 1,
           }}
         >
@@ -469,5 +473,51 @@ export default function TimeTracker({ position = "top" } = {}) {
         )}
       </PopoverContent>
     </Popover>
+  );
+}
+
+// Static face preview � renders the tracker trigger with synthetic data so the
+// settings card can preview draft prefs without saving or polling.
+export function TimeTrackerPreview({ prefs }) {
+  const accent = ACCENTS[prefs?.accent_color] || ACCENTS.indigo;
+  const hasBubble = prefs?.background_style === "glass" || prefs?.background_style === "solid";
+  const ringSize = prefs?.size === "expanded" ? 34 : 26;
+  const circumference = 2 * Math.PI * 100;
+  const ringFraction = 0.63;
+  const ringColor = accent.ring;
+  const animClass = prefs?.animation_style === "pulse"
+    ? ""
+    : ["glow", "breathe", "sweep"].includes(prefs?.animation_style)
+      ? `tracker-${prefs.animation_style}`
+      : "";
+  const label = prefs?.direction === "down" ? "Remaining" : "Today";
+  const timeText = formatClockSeconds(prefs?.direction === "down" ? 187.35 : 247.8, prefs?.time_format);
+  return (
+    <button
+      type="button"
+      aria-hidden="true"
+      tabIndex={-1}
+      className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none pointer-events-none ${hasBubble ? `rounded-2xl border shadow-sm ${accent.pill} ${prefs?.background_style === "solid" ? "backdrop-blur-none" : "backdrop-blur-md"}` : "border-transparent bg-transparent shadow-none text-slate-900 dark:text-slate-100"} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animClass}`}
+      style={{ transform: `scale(${prefs?.scale || 1})`, transformOrigin: "left center", opacity: prefs?.opacity ?? 1 }}
+    >
+      {prefs?.display_style !== "minimal" && prefs?.display_style !== "flip" && prefs?.display_style !== "bar" && (
+        <svg viewBox="0 0 240 240" style={{ width: ringSize, height: ringSize }} className="shrink-0">
+          <circle cx="120" cy="120" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="26" />
+          <circle cx="120" cy="120" r="100" fill="none" stroke={ringColor} strokeWidth="26" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ringFraction)} transform="rotate(-90 120 120)" />
+        </svg>
+      )}
+      <Timer className={`shrink-0 opacity-70 ${prefs?.size === "expanded" ? "h-4 w-4" : "h-3.5 w-3.5"}`} />
+      <span className={`flex flex-col leading-none ${FONTS[prefs?.font] || ""}`}>
+        <span className={`font-bold tabular-nums ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${prefs?.display_style === "flip" ? "tracker-flip" : ""}`}>
+          <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{label}</span>
+          {timeText}
+        </span>
+        {prefs?.display_style === "bar" && (
+          <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+            <span className={`block h-full rounded-full bg-gradient-to-r ${accent.bar}`} style={{ width: "63%" }} />
+          </span>
+        )}
+      </span>
+    </button>
   );
 }

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Hourglass, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { TimeTrackerPreview } from "@/components/timeclock/TimeTracker";
 
 const ACCENT_CHOICES = [
   { value: "indigo", label: "Indigo", swatch: "bg-indigo-500" },
@@ -120,6 +121,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
       setPrefs({ ...DEFAULT_PREFS, ...(data.prefs || {}) });
       saveRequestRef.current = { id: "", fingerprint: "" };
       setSavedAt(Date.now());
+      try { window.dispatchEvent(new Event("ccs:timeTrackerRefresh")); } catch {}
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Time Tracker settings were not saved.");
     } finally {
@@ -149,6 +151,15 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
       <p className="text-sm text-gray-600 mb-4">
         A live count-up timer on your top and side navigation bars showing today's time against your daily goal.
       </p>
+
+      {!loading && (
+        <div className="mb-5">
+          <Label className="text-xs font-semibold text-gray-500">Live preview</Label>
+          <div className="mt-2 flex min-h-[52px] items-center rounded-lg border border-dashed border-gray-300 bg-white/60 px-3 py-2 overflow-hidden">
+            <TimeTrackerPreview prefs={p} />
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
@@ -373,6 +384,9 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 <SelectContent>
                   <SelectItem value="smooth">Smooth</SelectItem>
                   <SelectItem value="pulse">Pulse</SelectItem>
+                  <SelectItem value="glow">Glow</SelectItem>
+                  <SelectItem value="breathe">Breathe</SelectItem>
+                  <SelectItem value="sweep">Sweep</SelectItem>
                   <SelectItem value="none">None</SelectItem>
                 </SelectContent>
               </Select>
@@ -393,7 +407,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               <Label className="text-xs font-semibold">Scale — {Math.round((p.scale || 1) * 100)}%</Label>
               <Slider
                 value={[Math.round((p.scale || 1) * 100)]}
-                min={80} max={130} step={5}
+                min={50} max={200} step={5}
                 onValueChange={([v]) => update("scale", v / 100)}
                 disabled={saving}
                 className="mt-2"

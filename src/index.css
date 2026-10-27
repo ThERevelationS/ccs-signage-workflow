@@ -423,7 +423,7 @@ tr.mmm-focus-row > td :where(*) {
 @media (prefers-reduced-motion: reduce) {
   .scan-line, .scan-oval, .success-burst, .check-draw { animation: none !important; }
   .check-draw { stroke-dashoffset: 0; }
-  .tracker-pulse, .tracker-flip, .tracker-today-bar, .punch-sheen, .mci-time-pop { animation: none !important; }
+  .tracker-pulse, .tracker-flip, .tracker-today-bar, .tracker-glow, .tracker-breathe, .tracker-sweep::after, .punch-sheen, .mci-time-pop { animation: none !important; }
 }
 
 /* Time Tracker pill animations */
@@ -494,3 +494,28 @@ tr.mmm-focus-row > td :where(*) {
 .mci-slider::-moz-range-thumb:hover { transform: scale(1.12); }
 .mci-slider:active::-moz-range-thumb { cursor: grabbing; transform: scale(1.18); }
 .mci-slider::-moz-range-track { background: transparent; }
+@keyframes trackerGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 14px 4px rgba(99, 102, 241, 0.5); }
+}
+.tracker-glow { animation: trackerGlow 2.4s ease-in-out infinite; }
+@keyframes trackerBreathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); }
+}
+.tracker-breathe { animation: trackerBreathe 3.2s ease-in-out infinite; }
+.tracker-sweep { position: relative; overflow: hidden; }
+.tracker-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: trackerSweep 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes trackerSweep {
+  0% { transform: translateX(-120%); }
+  55%, 100% { transform: translateX(120%); }
+}
+
