@@ -360,9 +360,62 @@ Deno.serve(async (req) => {
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const estimateId = clean(body?.estimate_id);
       const decision = clean(body?.decision);
-      if (!["approve", "request_changes"].includes(decision)) throw bad("decision must be approve or request_changes.");
+      const sectionKey = clean(body?.section_key);
       const estimate = await Estimate.get(estimateId).catch(() => null);
       if (!estimate?.id || clean(estimate.customer_id) !== customerId) throw bad("Quote not found.", 404);
+      if (sectionKey) {
+        if (clean(estimate.status) !== "sent") throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can receive section responses.`, 409);
+        if (!["accepted", "rejected", "question"].includes(decision)) throw bad("section decision must be accepted, rejected, or question.");
+        const sectionNote = clean(body?.note).slice(0, MESSAGE_MAX);
+        const sectionLabel = clean(body?.section_label).slice(0, 200);
+        const quoteVersion = Math.max(1, whole(estimate?.quote_version, 1));
+        const sectionItem = (Array.isArray(estimate.line_items) ? estimate.line_items : []).find((i: any) => clean(i?.key || i?.id) === sectionKey);
+        const SectionAcceptance = base44.asServiceRole.entities.EstimateSectionAcceptance;
+        const secKey = `portal-sec-resp:${estimateId}:${sectionKey}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+        await createFoundationRecordWithRecovery({
+          entity: SectionAcceptance,
+          data: {
+            estimate_id: estimateId,
+            quote_issue_key: `estimate:${estimateId}:quote:v${quoteVersion}`,
+            quote_version: quoteVersion,
+            section_key: sectionKey,
+            section_label: sectionLabel || clean(sectionItem?.client_product_name) || clean(sectionItem?.project_name),
+            section_module: clean(sectionItem?.module) || clean(sectionItem?.template_type),
+            section_quote_total: num(sectionItem?.customer_price_total ?? sectionItem?.total_price),
+            decision,
+            note: sectionNote,
+            decided_at: new Date().toISOString(),
+            decided_by_name: clean(estimate?.order_contact) || clean(estimate?.contact_name),
+            decided_by_email: clean(estimate?.contact_email),
+            method: "portal",
+            delivery_id: "",
+            creation_request_key: secKey,
+          },
+          readMatches: () => SectionAcceptance.filter({ creation_request_key: secKey }),
+          label: "Portal section decision",
+        });
+        const secMsgKey = `portal-sec-msg:${estimateId}:${sectionKey}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+        await createFoundationRecordWithRecovery({
+          entity: PortalMessage,
+          data: {
+            creation_request_key: secMsgKey,
+            customer_id: customerId,
+            portal_link_id: clean(link.id),
+            author_side: "customer",
+            kind: decision === "accepted" ? "estimate_approved" : decision === "rejected" ? "estimate_revision" : "estimate_revision",
+            body: sectionNote || `${decision === "accepted" ? "Accepted" : decision === "rejected" ? "Declined" : "Asked about"} section “${sectionLabel || sectionKey}”.`,
+            related_kind: "estimate",
+            related_id: estimateId,
+            related_label: clean(estimate.estimate_number) || clean(estimate.quote_title) || "Quote",
+            read_by_staff: false,
+            read_by_customer: true,
+          },
+          readMatches: () => PortalMessage.filter({ creation_request_key: secMsgKey }),
+          label: "Portal section message",
+        });
+        return ok({ responded: true, decision, section_key: sectionKey });
+      }
+      if (!["approve", "request_changes"].includes(decision)) throw bad("decision must be approve or request_changes.");
       const note = clean(body?.note).slice(0, MESSAGE_MAX);
       const quoteLabel = clean(estimate.estimate_number) || clean(estimate.quote_title) || "Quote";
       const key = `portal-est-resp:${estimateId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
