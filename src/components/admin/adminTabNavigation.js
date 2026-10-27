@@ -49,22 +49,51 @@ export const ADMIN_TAB_GROUPS = [
   },
 ];
 
-export function getAccessibleAdminGroups(isAdmin) {
+// Per-user Admin page permissions. admin_permissions = {
+//   sections: [groupId...], tabs: { tabValue: true }, subtabs: { tabValue: [subtabValue...] }
+// }. Missing/empty sections or tabs entries default to allowed so partially
+// configured users keep the behavior their role already grants.
+function isTabPermitted(tab, permissions) {
+  if (!permissions) return true;
+  const sections = Array.isArray(permissions.sections) ? permissions.sections : null;
+  const tabs = permissions.tabs && typeof permissions.tabs === 'object' && !Array.isArray(permissions.tabs) ? permissions.tabs : null;
+  if (!sections && !tabs) return true;
+  if (tabs) return tabs[tab.value] === true;
+  return true;
+}
+
+function isGroupPermitted(groupId, permissions) {
+  if (!permissions) return true;
+  const sections = Array.isArray(permissions.sections) ? permissions.sections : null;
+  if (!sections) return true;
+  return sections.includes(groupId);
+}
+
+function permittedSubtabs(parentTab, permissions) {
+  const nested = ADMIN_NESTED_TABS[parentTab] || [];
+  const subtabs = permissions?.subtabs && typeof permissions.subtabs === 'object' && !Array.isArray(permissions.subtabs) ? permissions.subtabs : null;
+  if (!subtabs || !Object.prototype.hasOwnProperty.call(subtabs, parentTab)) return nested;
+  const allowed = Array.isArray(subtabs[parentTab]) ? subtabs[parentTab] : [];
+  return nested.filter((subtab) => allowed.includes(subtab.value));
+}
+
+export function getAccessibleAdminGroups(isAdmin, user) {
+  const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
   return ADMIN_TAB_GROUPS.map((group) => ({
     ...group,
-    tabs: group.tabs.filter((tab) => !tab.adminOnly || isAdmin),
+    tabs: group.tabs.filter((tab) => (!tab.adminOnly || isAdmin) && isGroupPermitted(group.id, permissions) && isTabPermitted(tab, permissions)),
   })).filter((group) => group.tabs.length > 0);
 }
 
-export function getAccessibleAdminTab(requestedTab, isAdmin) {
-  const available = getAccessibleAdminGroups(isAdmin);
+export function getAccessibleAdminTab(requestedTab, isAdmin, user) {
+  const available = getAccessibleAdminGroups(isAdmin, user);
   return available.some((group) => group.tabs.some((tab) => tab.value === requestedTab))
     ? requestedTab
     : 'automations';
 }
 
-export function getAdminGroupForTab(tabValue, isAdmin) {
-  return getAccessibleAdminGroups(isAdmin).find(
+export function getAdminGroupForTab(tabValue, isAdmin, user) {
+  return getAccessibleAdminGroups(isAdmin, user).find(
     (group) => group.tabs.some((tab) => tab.value === tabValue),
   )?.id || 'workflow';
 }
@@ -129,8 +158,9 @@ const ADMIN_SEARCH_KEYWORDS = {
   fleet: 'fleet settings bouncie notifications reminders maintenance mechanic portal public report',
 };
 
-export function getAccessibleAdminSubtab(parentTab, requestedSubtab) {
-  const tabs = ADMIN_NESTED_TABS[parentTab];
+export function getAccessibleAdminSubtab(parentTab, requestedSubtab, user) {
+  const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+  const tabs = permittedSubtabs(parentTab, permissions);
   if (!tabs) return null;
   return tabs.find((tab) => tab.value === requestedSubtab)?.value || tabs[0].value;
 }
@@ -152,11 +182,12 @@ export function getAdminSearchKeyboardIndex(key, index, resultCount) {
   return null;
 }
 
-export function searchAdminSettings(input, isAdmin, limit = 8) {
+export function searchAdminSettings(input, isAdmin, limit = 8, user) {
   const query = normalizedSearch(input);
   if (!query) return [];
   const terms = query.split(' ');
-  const destinations = getAccessibleAdminGroups(isAdmin).flatMap((group) =>
+  const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+  const destinations = getAccessibleAdminGroups(isAdmin, user).flatMap((group) =>
     group.tabs.flatMap((tab) => [
       {
         id: tab.value,
@@ -165,7 +196,7 @@ export function searchAdminSettings(input, isAdmin, limit = 8) {
         tab: tab.value,
         keywords: ADMIN_SEARCH_KEYWORDS[tab.value] || '',
       },
-      ...(ADMIN_NESTED_TABS[tab.value] || []).map((nested) => ({
+      ...permittedSubtabs(tab.value, permissions).map((nested) => ({
         id: `${tab.value}:${nested.value}`,
         label: nested.label,
         group: group.label,
