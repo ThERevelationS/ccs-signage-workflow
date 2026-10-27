@@ -8,6 +8,8 @@ import {
 import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import AttentionFeed from "@/components/workflow/AttentionFeed";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
 const STAGE_COLORS = {
@@ -48,7 +50,7 @@ export default function ReportingDashboard() {
           sort: "created_date",
           label: "Reporting Dashboard Work Orders",
         }),
-        loadAllEntityRows({ entity: base44.entities.AuthorizedEmail, sort: null, label: "Reporting Dashboard authorized users" })
+        loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, label: "Reporting Dashboard authorized users" })
       ]);
       setWorkOrders(wos || []);
       setUsers(us || []);
@@ -178,6 +180,8 @@ export default function ReportingDashboard() {
             <p className="text-gray-500 text-sm">Key performance metrics at a glance</p>
           </div>
         </div>
+
+        <AttentionFeed />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
