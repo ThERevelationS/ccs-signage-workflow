@@ -19,6 +19,9 @@ Deno.serve(async (req) => {
     }
 
     const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)));
+    // action === 'logout': revoke the server-side session (not just the
+    // client token) by bumping session_not_before past this token's issue.
+    const isLogout = String(body?.action || '') === 'logout';
     let user;
     try {
       user = await authenticateSignShopSession(base44, token);
@@ -43,6 +46,12 @@ Deno.serve(async (req) => {
       // The shared verifier already validated this payload; keep a safe fallback.
     }
 
+    if (isLogout) {
+      await base44.asServiceRole.entities.AuthorizedEmail.update(user.id, {
+        session_not_before: new Date().toISOString(),
+      }).catch(() => null);
+      return Response.json({ valid: true, logged_out: true });
+    }
     return Response.json({
       valid: true,
       user: {

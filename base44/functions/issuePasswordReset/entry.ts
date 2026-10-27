@@ -74,6 +74,13 @@ Deno.serve(async (req) => {
     }
     const target = targetRows[0];
 
+    // Cooldown: if an unexpired reset token was already issued, don't mint a
+    // new one (or resend email) — rapid repeated requests are email bombing.
+    const existingExpiry = Date.parse(String(target?.password_reset_expires || '')) || 0;
+    if (existingExpiry > Date.now()) {
+      return Response.json({ success: true, cooldown: true, message: 'A reset link was already issued recently — check your email or wait for it to expire before requesting another.' });
+    }
+
     const resetToken = secureToken();
     const resetTokenHash = await hashBearerToken(resetToken);
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();

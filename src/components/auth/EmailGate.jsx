@@ -192,6 +192,13 @@ export function AuthProvider({ children }) {
   }, [resolveSessionRejection]);
 
   const logout = useCallback(() => {
+    // Server-side revoke: invalidate the session token so it can't be reused
+    // from a copied/localStorage token. Fire-and-forget — logout proceeds
+    // locally even if the network call fails.
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      base44.functions.invoke("verifySession", { token, action: "logout" }).catch(() => {});
+    }
     localStorage.removeItem(TOKEN_KEY);
     clearAdminSettingsAuthorization();
     setCurrentUser(null);
