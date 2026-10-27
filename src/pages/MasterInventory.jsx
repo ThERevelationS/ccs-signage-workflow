@@ -263,7 +263,7 @@ export default function MasterInventory() {
                           <Input
                             placeholder="Search items..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => { const v = e.target.value; setSearch(v); try { const next = new URLSearchParams(window.location.search); if (v) next.set("q", v); else next.delete("q"); window.history.replaceState(null, "", `${window.location.pathname}?${next}`); } catch {} }}
                             className="pl-9"
                           />
                         </div>
