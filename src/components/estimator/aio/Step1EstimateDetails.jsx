@@ -29,6 +29,8 @@ export default function Step1EstimateDetails({
   form,
   patch,
   customers,
+  recentCustomers = [],
+  onCustomerSelected,
   taxGroups,
   users,
   termsOptions,
@@ -86,6 +88,7 @@ export default function Step1EstimateDetails({
       order_contact:
         `${c.contact_first_name || ""} ${c.contact_last_name || ""}`.trim() || form.order_contact,
     });
+    onCustomerSelected?.(c);
   };
 
   const locationOptions = (() => {
@@ -242,6 +245,22 @@ export default function Step1EstimateDetails({
             </span>
           )}
         </Row>
+        {recentCustomers.length > 0 && (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px]" aria-label="Recent customers">
+            <span className="mr-1 text-slate-500">Recent:</span>
+            {recentCustomers.map((customer) => (
+              <button
+                key={customer.id}
+                type="button"
+                onClick={() => applyCustomer(customer)}
+                aria-label={`Use recent customer ${customer.company_name}`}
+                className="min-h-7 max-w-full truncate rounded-full border border-slate-300 bg-white px-2.5 font-medium text-slate-700 hover:border-lime-500 hover:bg-lime-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500"
+              >
+                {customer.company_name || customer.contact_email || "Customer"}
+              </button>
+            ))}
+          </div>
+        )}
 
         <Row label="Estimate Description" hint>
           <input
