@@ -281,31 +281,36 @@ function cleanSkip(value: unknown) {
   return parsed;
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
-    const body = await req.json().catch(() => ({}));
-    const user = await resolveFleetStaffUser(base44, body?.session_token);
-    if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
+const isRateLimited = (error: any) => Number(error?.status) === 429
+  || /rate limit|too many requests/i.test(String(error?.message || error));
 
+const MAX_BATCH = 20;
+const BATCH_CONCURRENCY = 4;
+
+// One read for an already-authenticated staff user. Returns {status, body} so a
+// batch can report each read independently; the single-read path wraps it as a
+// normal Response. Authorization, owner scoping and field projection are
+// identical for both paths.
+async function readOne(base44: any, user: any, body: any) {
+  try {
     const entityName = String(body?.entity || '').trim();
     if (!STAFF_READABLE.has(entityName) && !ADMIN_READABLE.has(entityName)) {
-      return Response.json({ error: 'This record type cannot be read here.' }, { status: 403 });
+      return { status: 403, body: { error: 'This record type cannot be read here.' } };
     }
     if (ADMIN_READABLE.has(entityName) && user.role !== 'admin') {
-      return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
+      return { status: 403, body: { error: 'This record type requires a CCS admin.' } };
     }
 
     const entity = base44.asServiceRole.entities[entityName];
     const ownerEmail = user.role === 'admin' ? '' : String(user.email).trim().toLowerCase();
     const id = String(body?.id || '').trim();
     if (id) {
-      const item = await entity.get(id).catch(() => null);
-      if (!item) return Response.json({ error: 'Record not found.' }, { status: 404 });
+      const item = await entity.get(id).catch((e: any) => (Number(e?.status) === 404 ? null : Promise.reject(e)));
+      if (!item) return { status: 404, body: { error: 'Record not found.' } };
       if (OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail) {
-        return Response.json({ error: 'Record not found.' }, { status: 404 });
+        return { status: 404, body: { error: 'Record not found.' } };
       }
-      return Response.json({ success: true, item: projectItem(entityName, item) });
+      return { status: 200, body: { success: true, item: projectItem(entityName, item) } };
     }
 
     const query = cleanQuery(body?.query, entityName);
@@ -324,20 +329,66 @@ Deno.serve(async (req) => {
       ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
       : rows;
     if (body?.count === true) {
-      return Response.json({ success: true, count: scopedRows.length });
+      return { status: 200, body: { success: true, count: scopedRows.length } };
     }
-    return Response.json({ success: true, items: scopedRows.map((row) => projectItem(entityName, row)) });
+    return { status: 200, body: { success: true, items: scopedRows.map((row) => projectItem(entityName, row)) } };
+  } catch (error: any) {
+    const status = Number(error?.status || 500);
+    if ([400, 401, 403].includes(status)) {
+      return { status, body: { error: error?.message || 'Staff read failed.' } };
+    }
+    const message = String(error?.message || error);
+    // A platform rate limit is transient: hand it back as 429 so the browser
+    // backs off and retries instead of surfacing a hard failure.
+    if (isRateLimited(error)) {
+      return { status: 429, body: { error: 'Data could not be loaded. Try again.', detail: message, retry_after_ms: 3000 } };
+    }
+    console.error('staffDataRead error:', error);
+    return { status: 500, body: { error: 'Data could not be loaded. Try again.', detail: message } };
+  }
+}
+
+function toResponse(result: { status: number, body: any }) {
+  const headers: Record<string, string> = result.status === 429 ? { 'Retry-After': '3' } : {};
+  return Response.json(result.body, { status: result.status, headers });
+}
+
+Deno.serve(async (req) => {
+  try {
+    // One quick server-side retry at most: longer backoff belongs to the
+    // browser, which honors Retry-After and coordinates every open request.
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
+    const body = await req.json().catch(() => ({}));
+    const user = await resolveFleetStaffUser(base44, body?.session_token);
+    if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
+
+    // Batch: many reads behind a single session verification. Each read keeps
+    // its own authorization, scoping and status; one failure never hides the
+    // others' results.
+    if (Array.isArray(body?.requests)) {
+      const requests = body.requests;
+      if (requests.length === 0 || requests.length > MAX_BATCH) {
+        return Response.json({ error: `Staff read batch needs 1 to ${MAX_BATCH} reads.` }, { status: 400 });
+      }
+      const results: any[] = new Array(requests.length);
+      for (let start = 0; start < requests.length; start += BATCH_CONCURRENCY) {
+        const slice = requests.slice(start, start + BATCH_CONCURRENCY);
+        const settled = await Promise.all(slice.map((request: any) => readOne(base44, user, request)));
+        settled.forEach((result, offset) => { results[start + offset] = result; });
+      }
+      return Response.json({ success: true, results });
+    }
+
+    return toResponse(await readOne(base44, user, body));
   } catch (error: any) {
     const status = Number(error?.status || 500);
     if ([400, 401, 403].includes(status)) {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
     }
     const message = String(error?.message || error);
-    // A platform rate limit is transient: hand it back as 429 so the client
-    // governor retries with backoff instead of surfacing a hard 500.
-    if (status === 429 || /rate limit|too many requests/i.test(message)) {
+    if (isRateLimited(error)) {
       return Response.json(
-        { error: 'Data could not be loaded. Try again.', detail: message },
+        { error: 'Data could not be loaded. Try again.', detail: message, retry_after_ms: 3000 },
         { status: 429, headers: { 'Retry-After': '3' } },
       );
     }

@@ -13,7 +13,9 @@ const rawClient = createClient({
   requiresAuth: false
 });
 
-const governor = createRequestGovernor();
+// Read-only backend functions share their own concurrency pool so a page
+// burst queues in the browser instead of tripping the platform allowance.
+const governor = createRequestGovernor({ pools: { read: 6 } });
 
 // Only read-only functions may retry on rate limit. Backend functions return
 // their own 429s after doing real work (login lockouts, sync budget), so
@@ -27,6 +29,22 @@ function isRetryableFunction(fnName, payload) {
   if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
   return false;
 }
+
+// Pure reads: concurrency-limited, cooldown-aware and de-duplicated while in
+// flight. Everything else is treated as a write: it is never de-duplicated,
+// never queued behind reads, and it advances the read epoch.
+function isReadInvocation(fnName, payload) {
+  if (['staffDataRead', 'fleetDataRead', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  if (fnName === 'timeClockAction') return ['status', 'status_lite'].includes(payload?.action);
+  if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
+  return false;
+}
+
+const cloneValue = (value) => {
+  if (value == null || typeof value !== 'object') return value;
+  try { return structuredClone(value); } catch { return JSON.parse(JSON.stringify(value)); }
+};
+const copyResponse = (res) => (res && typeof res === 'object' && 'data' in res ? { ...res, data: cloneValue(res.data) } : cloneValue(res));
 
 // Sign-in can fail before any credential is checked — a transient server-side
 // failure (5xx) or a request that never got a response. Only those are retried:
@@ -91,14 +109,24 @@ function wrapEntity(name, target) {
             return paged && Array.isArray(result)
               ? { items: result, has_more: false, next_cursor: null }
               : result;
-          } catch {
-            return value.apply(t, args);
+          } catch (error) {
+            // Only a missing staff session (e.g. the builder preview signed in
+            // as a platform user) falls back to a direct read. A rate limit or
+            // server failure must surface, not turn into a silently empty list.
+            const status = Number(error?.response?.status ?? error?.status);
+            if (status === 401) return value.apply(t, args);
+            throw error;
           }
         };
       }
       // A platform 429 means the request was never processed, so retrying
       // writes here is safe.
-      return (...args) => governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true });
+      const isWrite = !READ_METHODS.has(String(prop));
+      return (...args) => {
+        if (isWrite) governor.bumpEpoch();
+        const pending = governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite });
+        return isWrite ? pending.finally(governor.bumpEpoch) : pending;
+      };
     },
   });
   entityWrappers.set(name, wrapped);
@@ -115,13 +143,23 @@ const functionsProxy = new Proxy(rawClient.functions, {
   get(t, prop) {
     const value = Reflect.get(t, prop);
     if (prop === 'invoke' && typeof value === 'function') {
-      return (fnName, payload) => governor.run(`fn:${fnName}`, () => value.call(t, fnName, payload), {
-        limitConcurrency: false,
-        retryOnRateLimit: isRetryableFunction(fnName, payload),
-        shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
-        // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
-        maxAttempts: fnName === 'verifyLogin' ? 2 : undefined,
-      });
+      return (fnName, payload) => {
+        const read = isReadInvocation(fnName, payload);
+        const exec = () => governor.run(`fn:${fnName}`, () => value.call(t, fnName, payload), {
+          limitConcurrency: read,
+          pool: 'read',
+          respectCooldown: read,
+          retryOnRateLimit: isRetryableFunction(fnName, payload),
+          shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
+          // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
+          maxAttempts: fnName === 'verifyLogin' ? 2 : undefined,
+        });
+        if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, exec, copyResponse);
+        // A write may commit even when its response is lost, so reads requested
+        // after it settles must never reuse a response fetched before it.
+        governor.bumpEpoch();
+        return exec().finally(governor.bumpEpoch);
+      };
     }
     return value;
   },
@@ -136,4 +174,19 @@ export const base44 = new Proxy(rawClient, {
   },
 });
 
-if (typeof window !== 'undefined') window.__ccsRequestStats = governor.stats;
+export const requestGovernor = governor;
+
+// Developer diagnostics only: counts, timings and labels (entity/function
+// names). Never payloads, tokens or record contents.
+if (typeof window !== 'undefined') {
+  governor.stats.scriptReadyMs = typeof performance !== 'undefined' ? Math.round(performance.now()) : null;
+  window.__ccsRequestStats = governor.stats;
+  window.__ccsRequestReport = () => {
+    const rows = Object.entries(governor.stats.detail)
+      .map(([label, d]) => ({ label, count: d.count, errors: d.errors, avgMs: Math.round(d.totalMs / d.count), maxMs: Math.round(d.maxMs) }))
+      .sort((a, b) => b.count - a.count);
+    const minutes = Math.max(1 / 60, (Date.now() - governor.stats.startedAt) / 60000);
+    console.table(rows);
+    return { perMinute: Math.round(governor.stats.total / minutes), peakInFlight: governor.stats.peakInFlight, rateLimited: governor.stats.rateLimited, retries: governor.stats.retries, deduped: governor.stats.deduped, slow: governor.stats.slow, rows };
+  };
+}
