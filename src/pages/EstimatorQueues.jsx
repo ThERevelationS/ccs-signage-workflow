@@ -320,11 +320,18 @@ export default function EstimatorQueues() {
                   );
                 }
                 return (
-                  <Link
-                    key={e.id}
-                    to={`/EstimateDetail?id=${e.id}`}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-red-50/50"
-                  >
+                  <div key={e.id} className="flex items-center gap-2 px-4 py-3 hover:bg-red-50/50">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(e.id)}
+                      onChange={() => toggleSelected(e.id)}
+                      aria-label={`Select ${e.project_name || "estimate"}`}
+                      className="w-4 h-4 shrink-0 accent-red-600"
+                    />
+                    <Link
+                      to={`/EstimateDetail?id=${e.id}`}
+                      className="flex items-center gap-3 min-w-0 flex-1"
+                    >
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-gray-800 truncate">{e.project_name}</div>
                       <div className="text-xs text-gray-500 truncate">
@@ -348,7 +355,8 @@ export default function EstimatorQueues() {
                     <div className="text-xs text-gray-400 w-16 text-right hidden sm:block flex-shrink-0">
                       {e.created_date ? format(new Date(e.created_date), "MMM d") : ""}
                     </div>
-                  </Link>
+                    </Link>
+                  </div>
                 );
               })}
             </div>
