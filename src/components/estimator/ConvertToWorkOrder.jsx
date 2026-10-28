@@ -144,8 +144,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
 
       // Pre-commit gate: conversion writes the Work Order before the estimate
       // link, so confirm intent up front rather than alerting on a partial
-      // state afterwards.
-      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline${existing?.id ? " (updating the existing linked record)" : ""}?`)) return;
+      // state afterwards. Preview shows the expected WO number/stage when
+      // updating an existing record; new records are numbered by the pipeline.
+      const preview = existing?.id
+        ? `WO ${existing.work_order_number || existing.id.slice(0, 8)} · stage ${existing.current_stage || "estimating"}`
+        : "new record · stage estimating";
+      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline? (${preview})`)) return;
 
       let workOrder;
       if (existing?.id) {
