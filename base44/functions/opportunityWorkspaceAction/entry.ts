@@ -456,13 +456,20 @@ Deno.serve(async (req) => {
       const agingBuckets: any = { expired: 0, expiring_7d: 0, valid_14d: 0, valid_30d: 0, valid_30d_plus: 0 };
       const agingRows: any[] = [];
       const estimateBySalesperson: any = {};
+      const estimateLostReasonMap: any = {};
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
         if (row?.deleted === true) continue;
         const status = clean(row?.status) || "draft";
         estimateStatusCounts[status] = (estimateStatusCounts[status] || 0) + 1;
         const total = num(row?.quote_total);
         if (status === "approved") { estimateWonCount += 1; estimateDecidedCount += 1; estimateWonValue += total; estimateDecidedValue += total; }
-        if (status === "archived" || status === "cancelled") { estimateDecidedCount += 1; estimateDecidedValue += total; }
+        if (status === "archived" || status === "cancelled") {
+          estimateDecidedCount += 1; estimateDecidedValue += total;
+          const rawReason = clean(row?.cancel_reason || row?.archived_reason).slice(0, 120) || "No reason given";
+          const reasonKey = rawReason.toLowerCase();
+          const slot2 = estimateLostReasonMap[reasonKey] || (estimateLostReasonMap[reasonKey] = { reason: rawReason, count: 0, lost_value: 0 });
+          slot2.count += 1; slot2.lost_value += total;
+        }
         if (status === "sent") {
           const until = clean(row?.quote_valid_until) || clean(row?.quote_expiration_date);
           const days = until ? Math.round((Date.parse(until) - Date.parse(today)) / 86400000) : null;
@@ -495,6 +502,7 @@ Deno.serve(async (req) => {
         aging_buckets: agingBuckets,
         aging_rows: agingRows.sort((a: any, b: any) => a.days_to_expiry - b.days_to_expiry).slice(0, 15),
         by_salesperson: Object.values(estimateBySalesperson).map((s: any) => ({ ...s, avg_quote_value: s.count > 0 ? Math.round((s.quote_value / s.count) * 100) / 100 : 0 })).sort((a: any, b: any) => b.quote_value - a.quote_value).slice(0, 12),
+        lost_reasons: Object.values(estimateLostReasonMap).map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 })).sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value).slice(0, 10),
       };
       const funnel = {
         estimate_funnel: estimateFunnel,
