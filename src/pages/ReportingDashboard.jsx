@@ -339,6 +339,18 @@ export default function ReportingDashboard() {
                     )}
                   </div>
                 )}
+                {pipeline.estimate_funnel.markup_usage && Object.values(pipeline.estimate_funnel.markup_usage).some((c) => c > 0) && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Adjustment usage</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(pipeline.estimate_funnel.markup_usage).filter(([, count]) => count > 0).map(([bucket, count]) => (
+                        <span key={bucket} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
+                          {bucket} <b>×{count}</b>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {Array.isArray(pipeline.estimate_funnel.lost_reasons) && pipeline.estimate_funnel.lost_reasons.length > 0 && (
                   <div className="mt-3 border-t border-gray-100 pt-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Lost / cancelled reasons</div>
