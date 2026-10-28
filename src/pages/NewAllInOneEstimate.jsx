@@ -9,6 +9,7 @@ import { loadAllCustomers, upsertCustomerFromEstimate, syncEstimateToPipeline } 
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { addRecentCustomerId, loadRecentCustomerIds, resolveRecentCustomers, saveRecentCustomerIds } from "@/components/estimator/recentCustomerHistory";
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
+import { ensureEstimateCustomerLocation } from "@/components/estimator/customerLocationService";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -88,6 +89,7 @@ export default function NewAllInOneEstimate() {
   const [users, setUsers] = useState([]);
   const [me, setMe] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [saveSiteAsLocation, setSaveSiteAsLocation] = useState(false);
   const savingRef = useRef(false);
   const createAttemptRef = useRef({ signature: "", key: "" });
   const [generating, setGenerating] = useState(false);
@@ -194,6 +196,18 @@ export default function NewAllInOneEstimate() {
           status: "draft",
         },
       });
+      if (saveSiteAsLocation && customer?.id && String(form.site_address || "").trim()) {
+        try {
+          await ensureEstimateCustomerLocation({
+            entity: staffEntities.CustomerLocation,
+            customerId: customer.id,
+            siteAddress: form.site_address,
+            estimateId: estimate.id,
+          });
+        } catch (locationError) {
+          window.alert(`Estimate was created, but its Customer location could not be saved: ${locationError?.message || "unknown error"}`);
+        }
+      }
       if (customer) {
         try {
           await syncEstimateToPipeline(estimate, customer, { sessionToken });
@@ -339,6 +353,8 @@ export default function NewAllInOneEstimate() {
             generating={generating}
             enteredBy={me?.full_name || me?.email}
             onCustomerCreated={(c) => setCustomers((prev) => [c, ...prev])}
+            saveSiteAsLocation={saveSiteAsLocation}
+            onSaveSiteAsLocationChange={setSaveSiteAsLocation}
           />
           <div className="flex justify-end mt-3">
             <button
