@@ -1295,7 +1295,6 @@ Deno.serve(async (req) => {
         contact_phone: clean(snapshot.captured_contact_phone),
         office_phone: clean(snapshot.captured_contact_phone || customer?.company_phone),
         target_install_date: clean(snapshot.desired_install_date || snapshot.desired_completion_date),
-        priority: clean(opportunity.priority) || "normal",
         notes: notesText,
         status: "draft",
       };
