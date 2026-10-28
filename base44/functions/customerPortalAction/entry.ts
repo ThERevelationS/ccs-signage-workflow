@@ -297,7 +297,6 @@ Deno.serve(async (req) => {
       const customer = await Customer.get(customerId).catch(() => null);
       const [estimates, orders, invoices, payments, thread, announcements] = await Promise.all([
         Estimate.filter({ customer_id: customerId }).catch(() => []),
-        base44.asServiceRole.entities.QuoteDefaults.filter({ config_name: "default" }).catch(() => []),
         WorkOrder.filter({ customer_id: customerId }).catch(() => []),
         Invoice.filter({ customer_id: customerId }).catch(() => []),
         Payment.filter({ customer_id: customerId }).catch(() => []),
