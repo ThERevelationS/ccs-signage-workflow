@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { WorkOrder } from "@/entities/WorkOrder";
+import { staffEntities } from "@/components/staff/staffEntities";
 import DragDropList from "../components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
@@ -10,6 +10,8 @@ import { usePolling } from "@/lib/usePolling";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
+
+const WorkOrder = staffEntities.WorkOrder;
 
 export default function Fabrication() {
   const [workOrders, setWorkOrders] = useState([]);
