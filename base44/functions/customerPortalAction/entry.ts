@@ -129,6 +129,8 @@ async function estimatePortalView(estimate: any) {
     company_name: clean(estimate?.company_name),
     company_logo_url: clean(estimate?.company_logo_url),
     quote_valid_days: num(estimate?.quote_valid_days),
+    accepted_at: clean(estimate?.accepted_at),
+    accepted_by_name: clean(estimate?.accepted_by_name),
     quote_issue_date: clean(estimate?.quote_issue_date),
     quote_valid_until: quoteValidUntil(estimate),
     updated_date: clean(estimate?.updated_date),
