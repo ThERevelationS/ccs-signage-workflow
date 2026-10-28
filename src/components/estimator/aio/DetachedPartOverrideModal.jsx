@@ -32,6 +32,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
       quantity: Number(part.quantity || 1),
       unit: part.unit || "",
       frozen_unit_cost: Number(part.frozen_unit_cost || 0),
+      manual_cost_override_reason: part.manual_cost_override_reason || "",
       notes: part.notes || "",
       detail_overrides: { ...(part.detail_overrides || {}) },
     });
@@ -114,6 +115,16 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
               <label className="text-[10px] font-bold tracking-wide text-gray-500">UNIT<input value={form.unit || ""} onChange={(e) => set("unit", e.target.value)} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
               <label className="text-[10px] font-bold tracking-wide text-gray-500">FROZEN UNIT COST<input type="number" step="any" min="0" value={form.frozen_unit_cost ?? 0} onChange={(e) => set("frozen_unit_cost", Number(e.target.value))} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
               <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2"><div className="text-[9px] font-bold tracking-wide text-gray-400">NEW FROZEN EXTENDED</div><div className="text-[15px] font-bold text-gray-900 mt-1">{money(extended)}</div>{(Number(form.quantity) < 0 || Number(form.frozen_unit_cost) < 0) && <div className="text-[9px] font-semibold text-amber-600 mt-1">Negative quantity or cost reduces the frozen total.</div>}</div>
+              {(part?.manual_cost_override || Number(form.frozen_unit_cost) !== Number(part?.frozen_unit_cost)) && (
+                <label className="text-[10px] font-bold tracking-wide text-amber-700 sm:col-span-2 lg:col-span-4">COST OVERRIDE REASON
+                  <input
+                    value={form.manual_cost_override_reason || ""}
+                    onChange={(e) => set("manual_cost_override_reason", e.target.value)}
+                    placeholder="Why is this cost being overridden? (e.g. negotiated price, damaged stock credit)"
+                    className="mt-1 h-[32px] w-full border border-amber-300 rounded px-2 text-[12px] bg-white"
+                  />
+                </label>
+              )}
             </div>
           </section>
 
