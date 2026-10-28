@@ -63,6 +63,7 @@ const EXTRUDED_METALS_SOURCE = {
       options: ["per_foot", "per_piece", "per_pound", "per_sqft"], table: true },
     { name: "is_pole", label: "Use as Pole", type: "boolean", table: true },
     { name: "supplier", label: "Supplier", type: "text", table: true },
+    { name: "barcode", label: "Barcode", type: "text" },
     { name: "notes", label: "Notes", type: "textarea" },
   ],
 };
