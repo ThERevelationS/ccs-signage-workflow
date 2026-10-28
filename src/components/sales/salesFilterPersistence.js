@@ -66,13 +66,37 @@ export async function saveSalesDefaultSortSafely({ sessionToken, record, value, 
   return result;
 }
 
+// Several Sales screens need the same roster at once. Share one request and
+// reuse the answer briefly, and wait out "busy" responses instead of failing.
+const ROSTER_TTL_MS = 60000;
+let rosterCache = { token: "", at: 0, promise: null };
+const isBusyError = (error) => /busy|rate limit|429|too many/i.test(String(error?.message || ""));
+
+async function fetchRoster(token, label) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      const result = await invokeSalesFilter({ action: "roster", session_token: token });
+      if (!Array.isArray(result?.users)) throw new Error(`${label} could not be verified.`);
+      return result.users;
+    } catch (error) {
+      if (!isBusyError(error) || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 1500 * 2 ** attempt + Math.random() * 500));
+    }
+  }
+}
+
 export async function loadSalesPersonRosterSafely({ sessionToken, label = "Sales person roster" } = {}) {
-  const result = await invokeSalesFilter({
-    action: "roster",
-    session_token: requireSessionToken(sessionToken, label),
-  });
-  if (!Array.isArray(result?.users)) throw new Error(`${label} could not be verified.`);
-  return result.users;
+  const token = requireSessionToken(sessionToken, label);
+  const fresh = rosterCache.promise && rosterCache.token === token && Date.now() - rosterCache.at < ROSTER_TTL_MS;
+  if (!fresh) {
+    const promise = fetchRoster(token, label);
+    rosterCache = { token, at: Date.now(), promise };
+    promise.catch(() => {
+      if (rosterCache.promise === promise) rosterCache = { token: "", at: 0, promise: null };
+    });
+  }
+  const users = await rosterCache.promise;
+  return users.map((user) => ({ ...user }));
 }
 
 export async function createSalesFilterIfAbsent({ data, sessionToken, label = "Sales filter" } = {}) {
