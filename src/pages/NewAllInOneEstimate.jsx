@@ -246,6 +246,16 @@ export default function NewAllInOneEstimate() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-700 whitespace-nowrap">Duplicate from existing…</span>
               <div className="relative flex-1">
+                {dupSources.some((e) => e?.is_template === true && e?.deleted !== true) && (
+                  <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mr-1">Templates</span>
+                    {dupSources.filter((e) => e?.is_template === true && e?.deleted !== true).slice(0, 8).map((t) => (
+                      <button key={t.id} type="button" onClick={() => applyDuplicateSource(t)} className="h-6 px-2 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-semibold hover:border-indigo-300">
+                        {t.project_name || `#${t.estimate_number || "—"}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <input
                   value={dupQuery}
                   onChange={(e) => {
