@@ -334,6 +334,14 @@ try {
     assert.match(panel, /detachBuilderPartOverride\(part\.id/, 'per-part detach uses the recovery-aware service');
     assert.match(panel, /Detach Selected/, 'toolbar exposes the bulk detach');
   });
+  await test('product row cost trend sparkline loads revisions lazily on hover', () => {
+    const row = readFileSync(resolve(here, '../src/components/estimator/aio/ProductRow.jsx'), 'utf8');
+    assert.match(row, /BuilderPriceRevision/, 'trend reads price revisions');
+    assert.match(row, /onMouseEnter=\{loadCostTrend\}/, 'trend loads lazily on hover');
+    assert.match(row, /costTrend !== null \|\| !line\.builder_product_id/, 'trend fetch is guarded and deduplicated');
+    assert.match(row, /polyline points=\{sparkPoints\}/, 'sparkline renders revision points');
+    assert.match(row, /aria-label=\{`Part cost history/, 'sparkline is accessible');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
