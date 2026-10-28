@@ -361,6 +361,13 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isSaving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!isSaving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isSaving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
