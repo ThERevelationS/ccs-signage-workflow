@@ -532,6 +532,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [partSearch, setPartSearch] = useState("");
+  const [bulkRemoving, setBulkRemoving] = useState(false);
   const groupCreateRef = useRef(false);
 
   useEffect(() => {
@@ -583,6 +584,41 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     setSelectionMode(false);
     setSelectedIds(new Set());
     setGroupModalOpen(false);
+  };
+
+  const removableSelected = parts.filter((part) => selectedIds.has(part.id) && ["manual", "manual_addon"].includes(part.builder_sync_state));
+
+  const bulkRemoveSelected = async () => {
+    if (!builderProductId || bulkRemoving || !removableSelected.length) return;
+    const skipped = selectedIds.size - removableSelected.length;
+    const message = skipped > 0
+      ? `Remove ${removableSelected.length} independent Part${removableSelected.length === 1 ? "" : "s"}? ${skipped} Builder-linked Part${skipped === 1 ? "" : "s"} will be kept (remove those through the Builder).`
+      : `Remove ${removableSelected.length} independent Part${removableSelected.length === 1 ? "" : "s"} from this Product?`;
+    if (!window.confirm(message)) return;
+    setBulkRemoving(true);
+    const failures = [];
+    try {
+      for (const part of removableSelected) {
+        try {
+          await removeManualProductPart(part.id, { builderProductId, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
+        } catch (error) {
+          failures.push(`${part.part_name || "Part"}: ${error?.message || "remove failed"}`);
+        }
+      }
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      setRefreshNonce((value) => value + 1);
+      await onProductRefresh?.();
+      if (failures.length) {
+        window.alert(`${failures.length} Part${failures.length === 1 ? "" : "s"} could not be removed:
+${failures.join("
+")}
+
+The Product was refreshed. If a removal had already started, use Resume Part Remove to safely continue it.`);
+      }
+    } finally {
+      setBulkRemoving(false);
+    }
   };
 
   const createGroup = async (groupName) => {
@@ -710,6 +746,15 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40"
             >
               Group Selected Parts
+            </button>
+            <button
+              type="button"
+              disabled={bulkRemoving || removableSelected.length === 0}
+              onClick={bulkRemoveSelected}
+              title={removableSelected.length === 0 ? "Only independent (non-Builder) Parts can be removed here" : "Remove the selected independent Parts"}
+              className="h-[28px] px-3 rounded border border-red-300 bg-white text-[11px] font-bold text-red-600 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> {bulkRemoving ? "Removing…" : `Delete Selected (${removableSelected.length})`}
             </button>
           </div>
         ) : (
