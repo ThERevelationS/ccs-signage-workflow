@@ -14,6 +14,10 @@
       "type": "number",
       "default": 1
     },
+    "template_family_key": {
+      "type": "string",
+      "description": "Stable lineage key shared by every saved revision of the same source Part/Part Group name. Each new save appends the next template_version; prior versions remain immutable snapshots."
+    },
     "template_type": {
       "type": "string",
       "enum": [
