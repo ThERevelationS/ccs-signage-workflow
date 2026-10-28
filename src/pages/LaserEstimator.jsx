@@ -162,6 +162,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   }, [editId, estimateId]);
 
   const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
     const newItem = {
       builder_item_id: newBuilderItemId("laser-item"),
       item_type: "panel",
@@ -1565,6 +1566,7 @@ Best regards`;
                         <div className="md:col-span-2">
                           <Label>Description</Label>
                           <Input
+                        data-item-desc={index}
                         value={item.description}
                         onChange={(e) => updateItem(index, 'description', e.target.value)}
                         placeholder="Brief description"
