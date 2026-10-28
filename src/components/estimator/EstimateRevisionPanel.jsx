@@ -74,6 +74,23 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
     snapshotDiffLines = [];
   }
 
+  const exportCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = ["revision_number", "type", "status", "reason", "previous_status", "new_status", "quote_version", "previous_quote_total", "new_quote_total", "created_by", "completed_at"];
+    const lines = [header.join(",")].concat(rows.map((r) => [
+      r.revision_number, r.revision_type, r.revision_status, r.reason,
+      r.previous_status, r.new_status, r.quote_version,
+      r.previous_quote_total, r.new_quote_total, r.created_by,
+      r.completed_at || r.started_at || "",
+    ].map(esc).join(",")));
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `estimate-${estimate?.estimate_number || estimate?.id || "revisions"}-revisions.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   const start = async () => {
     if (!reason.trim() || starting) return;
     setStarting(true);
@@ -172,6 +189,10 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
           <div className="py-3 text-center text-[10px] text-gray-400">No estimate-level revisions have been recorded yet.</div>
         ) : (
           <div className="border border-gray-200 rounded overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 border-b border-gray-200">
+              <span className="text-[9px] font-bold tracking-wide text-gray-500">REVISION HISTORY · {rows.length}</span>
+              <button type="button" onClick={exportCsv} className="h-[22px] px-2 rounded border border-gray-300 bg-white text-[9px] font-semibold text-gray-600 hover:border-lime-400 hover:text-gray-900">Export CSV</button>
+            </div>
             {rows.slice(0, 6).map((row) => (
               <div key={row.id} className="px-3 py-2.5 border-b border-gray-100 last:border-b-0 bg-white">
                 <div className="flex items-center justify-between gap-3">
