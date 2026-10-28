@@ -335,6 +335,14 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                           <button type="button" onClick={() => removeItem(index)} className="w-8 h-8 inline-flex items-center justify-center rounded text-red-500 hover:bg-red-50" aria-label="Remove item"><Trash2 className="w-4 h-4" /></button>
                         </div>
 
+                        {!lettering && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[9px] font-bold tracking-wide text-gray-400">SURFACE PRESETS</span>
+                            {[["4′×8′ face", 48, 96], ["8′×4′ face", 96, 48], ["2′×4′ face", 24, 48], ["4′×4′ face", 48, 48]].map(([label, l, w]) => (
+                              <button key={label} type="button" onClick={() => patchItem(index, { length: l, width: w }, { autoMask: true })} className="px-2 h-[24px] rounded border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50">{label}</button>
+                            ))}
+                          </div>
+                        )}
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                           <Field label="Type">
                             <Select value={rawItem.item_type || "panel"} onValueChange={(value) => patchItem(index, { item_type: value }, { autoMask: true })}>
