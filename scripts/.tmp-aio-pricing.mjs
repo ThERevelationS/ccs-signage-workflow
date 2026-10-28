@@ -25,7 +25,7 @@ function computePricing(estimate) {
   const fees = Number(estimate.shipping_fee || 0) + Number(estimate.permit_fee || 0);
   const taxableBase = afterDiscount + contingency + fees;
   const tax = taxableBase * (Number(estimate.tax_percent || 0) / 100);
-  const quoteTotal = taxableBase + tax;
+  const quoteTotal = estimate.round_quote_total ? Math.round(taxableBase + tax) : taxableBase + tax;
   const deposit = quoteTotal * (Number(estimate.deposit_percent || 0) / 100);
   return {
     sections,
