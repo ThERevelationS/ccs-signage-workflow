@@ -202,6 +202,10 @@
     "default_tax_group": {
       "type": "string"
     },
+    "quote_valid_days": {
+      "type": "number",
+      "description": "Per-customer quote validity window in days (overrides the estimate default of 30 when set)."
+    },
     "customer_origination": {
       "type": "string"
     },
