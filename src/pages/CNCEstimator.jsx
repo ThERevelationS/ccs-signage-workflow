@@ -117,6 +117,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   };
 
   const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
     setProject(prev => ({
       ...prev,
       items: [...prev.items, {
@@ -1267,7 +1268,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                   <div key={index} className="p-6 border rounded-xl bg-slate-25">
                     <div className="flex justify-between items-start mb-4"><h4 className="font-medium">Item {index + 1}</h4><Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button></div>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="md:col-span-3"><Label>Description</Label><Input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
+                      <div className="md:col-span-3"><Label>Description</Label><Input data-item-desc={index} value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
                       <div><Label>Job Type</Label><Select value={item.item_type} onValueChange={(v) => updateItem(index, 'item_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="panel">Panel Cut</SelectItem><SelectItem value="lettering">Lettering Cut</SelectItem><SelectItem value="3d_carving">3D Carving</SelectItem></SelectContent></Select></div>
                       <div><Label>Material Type</Label><Select value={item.material_type} onValueChange={(v) => updateItem(index, 'material_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{materials.map(mat => <SelectItem key={mat} value={mat}>{mat}</SelectItem>)}</SelectContent></Select></div>
                       <div><Label>Material Thickness</Label><Select value={item.material_thickness} onValueChange={(v) => updateItem(index, 'material_thickness', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{imperialSizes.map(size => <SelectItem key={size} value={size}>{size}"</SelectItem>)}</SelectContent></Select></div>
