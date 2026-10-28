@@ -1287,6 +1287,7 @@ Deno.serve(async (req) => {
         opportunity_id: opportunityId,
         estimating_request_id: clean(request.id),
         priority: clean(request?.priority) || "normal",
+        attachment_refs: Array.isArray(opportunity.attachment_refs) ? opportunity.attachment_refs : [],
         salesperson: clean(opportunity.salesperson),
         site_address: clean(snapshot.captured_site_address),
         contact_name: clean(snapshot.captured_contact_name),
