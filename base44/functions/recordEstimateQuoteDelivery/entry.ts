@@ -212,6 +212,8 @@ Deno.serve(async (req) => {
       quote_expiration_date: cleanText(input.quote_expiration_date, 32),
       quote_total: Number.isFinite(Number(input.quote_total)) ? Number(input.quote_total) : 0,
       recipient_email: recipientEmail,
+      cc_emails: cleanText(input.cc_emails, 998),
+      bcc_emails: cleanText(input.bcc_emails, 998),
       subject: cleanText(input.subject, 998),
       delivery_method: 'email',
       delivery_status: 'sent',
