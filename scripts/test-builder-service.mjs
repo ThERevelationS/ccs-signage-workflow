@@ -1,14 +1,18 @@
 import assert from 'node:assert/strict';
 import { buildSync } from 'esbuild';
+import { rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, '.tmp-builder-service.mjs');
+const stub = resolve(here, '.tmp-builder-service-sdk.mjs');
+writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/builderService.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
   define: { 'import.meta.env': '{}' },
+  alias: { '@/api/base44Client': stub },
 });
 globalThis.window = { location: { href: 'http://test.local' }, addEventListener() {}, removeEventListener() {}, history: { replaceState() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } };
 globalThis.document = { title: '', createElement: () => ({}), querySelector: () => null };
@@ -43,3 +47,6 @@ assert.equal(sourceProjectTotal({ module_key: 'vinyl', total_snapshot: 66 }, nul
 assert.equal(sourceProjectTotal({ module_key: 'vinyl' }, null), 0);
 
 console.log('PASS builder service totals (12 cases)');
+rmSync(out, { force: true });
+rmSync(stub, { force: true });
+process.exit(0);
