@@ -231,6 +231,17 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     });
   };
 
+  // Ctrl+S / Cmd+S saves the project without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) save();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
   const save = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert("Please fill in Project Name and Client Name.");
