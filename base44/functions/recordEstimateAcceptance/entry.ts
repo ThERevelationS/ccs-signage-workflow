@@ -172,6 +172,26 @@ Deno.serve(async (req) => {
       return Response.json({ acceptance: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
+    // Notify the estimate owner (salesperson) that the customer accepted —
+    // fire-and-forget so a Gmail outage never blocks the acceptance write.
+    try {
+      const ownerEmail = String(estimate.created_by || estimate.salesperson_email || '').trim();
+      if (ownerEmail && ownerEmail !== String(user.email || '').trim()) {
+        const projectName = String(estimate.project_name || estimate.estimate_number || 'estimate').trim();
+        await base44.asServiceRole.functions.invoke('sendGmail', {
+          to: ownerEmail,
+          subject: `Quote accepted: ${projectName}`,
+          body: `${acceptedByName} accepted quote version ${quoteVersion} on ${projectName}
+
+Total: $${Number(estimate.quote_total || 0).toFixed(2)}
+Method: ${acceptanceMethod}
+${notes ? `Notes: ${notes}` : ''}`.trim(),
+          _workflow_capability: 'ccs-sendGmail-acceptance-notify',
+        });
+      }
+    } catch (notifyError) {
+      console.error('Acceptance salesperson notify failed:', notifyError?.message || notifyError);
+    }
     return Response.json({ acceptance: canonical, reused: false });
   } catch (error) {
     const status = Number(error?.status || 500);
