@@ -96,6 +96,10 @@
     "image_url": {
       "type": "string",
       "description": "Optional image URL for this inventory item."
+    },
+    "barcode": {
+      "type": "string",
+      "description": "Optional barcode/UPC value for scan-to-lookup on the Inventory page."
     }
   },
   "required": [
