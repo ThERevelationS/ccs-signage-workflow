@@ -1423,6 +1423,7 @@ Deno.serve(async (req) => {
         estimates: custEstimates.slice(0, 50).map((e: any) => ({
           id: clean(e?.id), estimate_number: clean(e?.estimate_number), project_name: clean(e?.project_name),
           status: clean(e?.status), quote_total: num(e?.quote_total), quote_version: num(e?.quote_version),
+          opportunity_id: clean(e?.opportunity_id), estimating_request_id: clean(e?.estimating_request_id),
           quote_valid_until: clean(e?.quote_valid_until || e?.quote_expiration_date), created_date: clean(e?.created_date),
         })),
         estimate_funnel: estimateStatusCounts,
