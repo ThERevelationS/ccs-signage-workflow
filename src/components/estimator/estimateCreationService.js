@@ -31,7 +31,10 @@ const DUPLICATE_EXCLUDE = new Set([
   "accepted_at", "accepted_by_name", "accepted_by_email",
   "sent_at", "sent_to_email", "delivery_id",
   "quote_issue_date", "quote_issue_key", "quote_expiration_date",
-  "revision_reason", "closed_revision_id",
+  "revision_reason", "closed_revision_id", "edit_reason",
+  "cancel_reason", "cancelled_at", "archived_at", "archived_reason",
+  "is_template", "split_from_estimate_id",
+  "last_product_removal_key", "last_product_removal_line_id", "last_product_removal_at",
   "pipeline_sync_pending", "pipeline_sync_error",
   "creation_request_key",
 ]);
