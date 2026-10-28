@@ -1,7 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
 import { stripInheritedWorkOrderSyncIdentity } from './workOrderCreationIdentity.mjs';
-import { NotificationTriggers } from "./NotificationService";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const SYSTEM_FIELDS = new Set([
