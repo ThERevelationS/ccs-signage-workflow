@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     const quoteVersion = Math.max(0, whole(body?.quote_version));
     const acceptedByName = String(body?.accepted_by_name || '').trim();
     const acceptedByEmail = String(body?.accepted_by_email || '').trim();
-    if (acceptedByEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(acceptedByEmail)) {
+    if (acceptedByEmail && !/^[^@ ]+@[^@ ]+[.][^@ ]+$/.test(acceptedByEmail)) {
       return Response.json({ error: 'accepted_by_email is not a valid email address.' }, { status: 400 });
     }
     const acceptanceMethod = String(body?.acceptance_method || '').trim();
