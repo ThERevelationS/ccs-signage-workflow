@@ -23,6 +23,10 @@
       "type": "string",
       "description": "Optional canonical Opportunity link. Blank is valid for legacy/direct-created Estimates."
     },
+    "split_from_estimate_id": {
+      "type": "string",
+      "description": "Parent estimate id when this estimate was created via Split \u2014 links the child back to its source for traceability."
+    },
     "estimating_request_id": {
       "type": "string",
       "description": "Optional EstimatingRequest link preserving the pre-estimate handoff identity."
