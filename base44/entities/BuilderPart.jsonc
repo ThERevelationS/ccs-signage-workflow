@@ -34,6 +34,18 @@
     "source_module_key": {
       "type": "string"
     },
+    "source_template_id": {
+      "type": "string",
+      "description": "PartTemplate record this independent copy was instantiated from. Blank for Builder-produced, manual, and clipboard Parts."
+    },
+    "source_template_name": {
+      "type": "string"
+    },
+    "source_template_version": {
+      "type": "number",
+      "default": 0,
+      "description": "template_version of the source PartTemplate snapshot; 0 when the Part did not come from the Part Library."
+    },
     "source_path": {
       "type": "string",
       "description": "Path inside the detailed builder snapshot that produced this part, e.g. items[0].materials[2]."
@@ -194,9 +206,25 @@
     "part_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__builderpart_backend_only__" } },
-    "read": { "user_condition": { "role": "__builderpart_backend_only__" } },
-    "update": { "user_condition": { "role": "__builderpart_backend_only__" } },
-    "delete": { "user_condition": { "role": "__builderpart_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__builderpart_backend_only__"
+      }
+    }
   }
 }
