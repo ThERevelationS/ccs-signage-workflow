@@ -94,6 +94,11 @@
       "default": false,
       "description": "True when an already-issued quote version is delivered again without creating a new customer quote version."
     },
+    "delivery_n": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Ordinal count of deliveries for this quote issue \u2014 1 on first send, then 2, 3... on resends."
+    },
     "source_status": {
       "type": "string",
       "description": "Persisted estimate status immediately before this delivery."
