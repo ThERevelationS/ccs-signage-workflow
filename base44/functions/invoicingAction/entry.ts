@@ -636,7 +636,8 @@ Deno.serve(async (req) => {
             customer_id: clean(invoice.customer_id),
             label: `Invoice ${clean(invoice.invoice_number) || invoiceId}`,
             created_by: actor,
-            expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+            // Per-link expiry override: caller may pass expires_days (clamped 1-365); default stays 90.
+            expires_at: new Date(Date.now() + Math.min(365, Math.max(1, Math.floor(Number(body?.expires_days || 0)) || 90)) * 24 * 60 * 60 * 1000).toISOString(),
             revoked: false,
             open_count: 0,
           },
@@ -717,7 +718,8 @@ Deno.serve(async (req) => {
             customer_id: cid,
             label: `${clean(customer.company_name) || clean(customer.name) || "Customer"} portal`,
             created_by: actor,
-            expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+            // Per-link expiry override: caller may pass expires_days (clamped 1-365); default stays 90.
+            expires_at: new Date(Date.now() + Math.min(365, Math.max(1, Math.floor(Number(body?.expires_days || 0)) || 90)) * 24 * 60 * 60 * 1000).toISOString(),
             revoked: false,
             open_count: 0,
           },
