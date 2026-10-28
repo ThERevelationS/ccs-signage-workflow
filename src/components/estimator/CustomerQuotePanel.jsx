@@ -529,6 +529,10 @@ export default function CustomerQuotePanel({
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">TO<input autoFocus type="email" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" placeholder="customer@example.com" /></label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[10px] font-bold tracking-wide text-gray-500">CC<input value={ccEmails} onChange={(event) => setCcEmails(event.target.value)} className="mt-1 w-full h-[30px] rounded border border-gray-300 px-2 text-[12px] font-normal text-gray-800" placeholder="cc@example.com" /></label>
+              <label className="block text-[10px] font-bold tracking-wide text-gray-500">BCC<input value={bccEmails} onChange={(event) => setBccEmails(event.target.value)} className="mt-1 w-full h-[30px] rounded border border-gray-300 px-2 text-[12px] font-normal text-gray-800" placeholder="bcc@example.com" /></label>
+            </div>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">SUBJECT<input value={emailSubject} onChange={(event) => setEmailSubject(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" /></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">MESSAGE<textarea value={emailMessage} onChange={(event) => setEmailMessage(event.target.value)} rows={7} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y" /></label>
             <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
