@@ -16,12 +16,14 @@ export default function NavPageLink({
 }) {
   const Icon = item.icon;
   const isTop = variant === "top";
+  // Drop the library's role="button" override so these stay real links.
+  const { role: _dragRole, ...handleProps } = dragHandleProps || {};
 
   return (
     <Link
       ref={dragRef}
       {...dragProps}
-      {...dragHandleProps}
+      {...handleProps}
       to={item.url}
       onClick={onNavigate}
       className={`ccs-glass-nav-item flex items-center border ${

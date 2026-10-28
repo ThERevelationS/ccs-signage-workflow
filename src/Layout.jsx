@@ -1229,31 +1229,31 @@ function LayoutContent({ children }) {
                             </Draggable>
                           ))}
                           {provided.placeholder}
+
+                          <NavFlyoutMenu
+                            label="Meetings"
+                            icon={Calendar}
+                            accent="#FACC15"
+                            items={meetingsNavItems}
+                            compactView={compactView}
+                            activePath={location.pathname}
+                            isInSplitUrl={isInSplitView}
+                            onNavigate={handleNavClick}
+                          />
+                          <NavFlyoutMenu
+                            label="Reports"
+                            icon={BarChart3}
+                            accent="#8B5CF6"
+                            items={reportsNavItems}
+                            compactView={compactView}
+                            activePath={location.pathname}
+                            isInSplitUrl={isInSplitView}
+                            onNavigate={handleNavClick}
+                          />
                         </div>
                       )}
                     </Droppable>
                   </DragDropContext>
-
-                  <NavFlyoutMenu
-                    label="Meetings"
-                    icon={Calendar}
-                    accent="#FACC15"
-                    items={meetingsNavItems}
-                    compactView={compactView}
-                    activePath={location.pathname}
-                    isInSplitUrl={isInSplitView}
-                    onNavigate={handleNavClick}
-                  />
-                  <NavFlyoutMenu
-                    label="Reports"
-                    icon={BarChart3}
-                    accent="#8B5CF6"
-                    items={reportsNavItems}
-                    compactView={compactView}
-                    activePath={location.pathname}
-                    isInSplitUrl={isInSplitView}
-                    onNavigate={handleNavClick}
-                  />
                 </div>
 
                 {/* Utility controls stay within the same glass material as the navigation shell. */}
