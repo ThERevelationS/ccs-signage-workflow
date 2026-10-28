@@ -119,6 +119,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: error?.message || 'Write failed.' }, { status });
     }
     console.error('staffEntityWrite error:', error);
-    return Response.json({ error: 'The record could not be saved. Try again.' }, { status: 500 });
+    return Response.json({ error: 'The record could not be saved. Try again.', detail: String(error?.message || error) }, { status: 500 });
   }
 });

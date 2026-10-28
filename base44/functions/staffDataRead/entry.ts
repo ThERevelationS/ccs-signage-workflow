@@ -331,6 +331,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
     }
     console.error('staffDataRead error:', error);
-    return Response.json({ error: 'Data could not be loaded. Try again.' }, { status: 500 });
+    return Response.json({ error: 'Data could not be loaded. Try again.', detail: String(error?.message || error) }, { status: 500 });
   }
 });

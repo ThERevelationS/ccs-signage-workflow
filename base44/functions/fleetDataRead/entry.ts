@@ -127,6 +127,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: error?.message || 'Fleet read failed.' }, { status });
     }
     console.error('fleetDataRead error:', error);
-    return Response.json({ error: 'Fleet data could not be loaded. Try again.' }, { status: 500 });
+    return Response.json({ error: 'Fleet data could not be loaded. Try again.', detail: String(error?.message || error) }, { status: 500 });
   }
 });
