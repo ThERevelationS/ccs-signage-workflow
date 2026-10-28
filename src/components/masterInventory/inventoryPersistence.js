@@ -1,4 +1,5 @@
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { base44 } from "@/api/base44Client";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -88,4 +89,20 @@ export async function deleteInventoryRecordIfUnchanged({
     guardFields,
     label,
   });
+}
+
+// Cascade-check before inventory delete: estimate Parts link to inventory rows
+// via inventory_item_id. Deleting a referenced row would orphan those links, so
+// callers must run this first and block the delete when references exist.
+export async function findInventoryPartReferences(recordId) {
+  const id = String(recordId || "");
+  if (!id || typeof base44?.entities?.BuilderPart?.filter !== "function") {
+    throw new Error("Estimate Part references could not be verified.");
+  }
+  const rows = await base44.entities.BuilderPart.filter({ inventory_item_id: id });
+  const list = Array.isArray(rows) ? rows : [];
+  return {
+    count: list.length,
+    names: list.map((p) => p.part_name || p.part_key || "Part").slice(0, 5),
+  };
 }
