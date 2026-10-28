@@ -14,6 +14,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Search,
   Trash2,
   Unlink,
 } from "lucide-react";
@@ -525,6 +526,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [partPickerOpen, setPartPickerOpen] = useState(false);
   const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [partSearch, setPartSearch] = useState("");
   const groupCreateRef = useRef(false);
 
   useEffect(() => {
@@ -604,16 +606,26 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     }
   };
 
+  const partQuery = partSearch.trim().toLowerCase();
+  const visibleParts = useMemo(() => {
+    if (!partQuery) return parts;
+    return parts.filter((part) =>
+      [part.part_name, part.client_label, part.inventory_item_name, part.part_type, part.part_subtype]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(partQuery))
+    );
+  }, [parts, partQuery]);
+
   const grouped = useMemo(() => {
     const byGroup = new Map();
     groups.forEach((group) => byGroup.set(group.id, []));
     const ungrouped = [];
-    parts.forEach((part) => {
+    visibleParts.forEach((part) => {
       if (part.part_group_id && byGroup.has(part.part_group_id)) byGroup.get(part.part_group_id).push(part);
       else ungrouped.push(part);
     });
     return { byGroup, ungrouped };
-  }, [parts, groups]);
+  }, [visibleParts, groups]);
 
   if (!builderProductId) {
     return <div className="px-4 py-4 text-[11px] text-gray-400">This legacy Product does not have Builder Parts yet.</div>;
@@ -661,7 +673,21 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   return (
     <div className="border-t border-gray-300 bg-[#f6f6f6] px-3 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2 pb-1">
-        <div className="text-[10px] font-bold tracking-widest text-gray-500">PRODUCT PARTS · {parts.length}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="text-[10px] font-bold tracking-widest text-gray-500 whitespace-nowrap">PRODUCT PARTS · {partQuery ? `${visibleParts.length}/${parts.length}` : parts.length}</div>
+          {parts.length > 10 && (
+            <div className="relative">
+              <Search className="w-3 h-3 text-gray-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                value={partSearch}
+                onChange={(event) => setPartSearch(event.target.value)}
+                placeholder="Search parts…"
+                aria-label="Search parts in this product"
+                className="h-[26px] w-[150px] pl-6 pr-1.5 border border-gray-300 rounded bg-white text-[11px] focus:outline-none focus:border-lime-400"
+              />
+            </div>
+          )}
+        </div>
         {selectionMode ? (
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500">{selectedIds.size} selected</span>
@@ -745,6 +771,9 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           readOnly={readOnly}
         />
       ))}
+      {partQuery && !visibleParts.length && (
+        <div className="py-4 text-center text-[11px] text-gray-400">No Parts match "{partSearch}".</div>
+      )}
 
       <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200">
         <div className="text-[10px] font-bold tracking-widest text-gray-500">PARTS TOTAL</div>
