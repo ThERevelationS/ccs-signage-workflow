@@ -10,63 +10,68 @@ import PageNotFound from './lib/PageNotFound';
 import CommandPalette from '@/components/CommandPalette';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import Estimator from './pages/Estimator';
-import EstimateDetail from './pages/EstimateDetail';
-import FoundationEstimator from './pages/FoundationEstimator';
-import FoundationCatalog from './pages/FoundationCatalog';
-import VinylEstimator from './pages/VinylEstimator';
-import MaintenanceEstimator from './pages/MaintenanceEstimator';
-import ChannelLetterEstimator from './pages/ChannelLetterEstimator';
-import CNCEstimator from './pages/CNCEstimator';
-import LaserEstimator from './pages/LaserEstimator';
-import MetalEstimator from './pages/MetalEstimator';
-import BrickStoneEstimator from './pages/BrickStoneEstimator';
-import PaintingEstimator from './pages/PaintingEstimator';
-import FoundationSettings from './pages/FoundationSettings';
-import PaintingSettings from './pages/PaintingSettings';
-import CNCSettings from './pages/CNCSettings';
-import LaserSettings from './pages/LaserSettings';
-import MetalSettings from './pages/MetalSettings';
-import MaintenanceSettings from './pages/MaintenanceSettings';
-import InstallationSettings from './pages/InstallationSettings';
-import VinylSettings from './pages/VinylSettings';
-import VinylInventory from './pages/VinylInventory';
-import SalesHome from './pages/SalesHome';
-import EstimatorQueues from './pages/EstimatorQueues';
-import EstimatorCustomers from './pages/EstimatorCustomers';
-import QuickPrice from './pages/QuickPrice';
-import EstimatorProducts from './pages/EstimatorProducts';
-import EstimatorParts from './pages/EstimatorParts';
-import EstimatorSettings from './pages/EstimatorSettings';
-import EstimatorTools from './pages/EstimatorTools';
+import { Suspense } from 'react';
+import { lazyPage } from '@/lib/lazyPage';
+import PageLoading from '@/components/layout/PageLoading';
 import EstimatorShell from './components/estimator/EstimatorShell';
-import NewAllInOneEstimate from './pages/NewAllInOneEstimate';
-import MasterInventory from './pages/MasterInventory';
-import QuoteSettings from './pages/QuoteSettings';
-import FleetTracking from './pages/FleetTracking';
-import FleetOverview from './pages/FleetOverview';
-import FleetSearch from './pages/FleetSearch';
-import FleetNotifications from './pages/FleetNotifications';
-import FleetEquipment from './pages/FleetEquipment';
-import FleetEquipmentDetail from './pages/FleetEquipmentDetail';
-import FleetMaintenance from './pages/FleetMaintenance';
-import FleetInspections from './pages/FleetInspections';
-import FleetWorkOrders from './pages/FleetWorkOrders';
-import FleetParts from './pages/FleetParts';
-import FleetFluids from './pages/FleetFluids';
-import FleetFuel from './pages/FleetFuel';
-import FleetWarranties from './pages/FleetWarranties';
-import FleetReservations from './pages/FleetReservations';
-import FleetRequests from './pages/FleetRequests';
-import FleetHistory from './pages/FleetHistory';
-import FleetAnalytics from './pages/FleetAnalytics';
-import FleetPublicReport from './pages/FleetPublicReport';
-import FleetMechanic from './pages/FleetMechanic';
-import CustomerPortal from './pages/CustomerPortal';
-import NewUserSetup from './pages/NewUserSetup';
-import PermittingDocs from './pages/PermittingDocs';
-import WorkOrderTraveler from './pages/WorkOrderTraveler';
-import ProductionSchedule from './pages/ProductionSchedule';
+
+// Every page loads on first visit instead of shipping in the startup bundle.
+const Estimator = lazyPage(() => import('./pages/Estimator'));
+const EstimateDetail = lazyPage(() => import('./pages/EstimateDetail'));
+const FoundationEstimator = lazyPage(() => import('./pages/FoundationEstimator'));
+const FoundationCatalog = lazyPage(() => import('./pages/FoundationCatalog'));
+const VinylEstimator = lazyPage(() => import('./pages/VinylEstimator'));
+const MaintenanceEstimator = lazyPage(() => import('./pages/MaintenanceEstimator'));
+const ChannelLetterEstimator = lazyPage(() => import('./pages/ChannelLetterEstimator'));
+const CNCEstimator = lazyPage(() => import('./pages/CNCEstimator'));
+const LaserEstimator = lazyPage(() => import('./pages/LaserEstimator'));
+const MetalEstimator = lazyPage(() => import('./pages/MetalEstimator'));
+const BrickStoneEstimator = lazyPage(() => import('./pages/BrickStoneEstimator'));
+const PaintingEstimator = lazyPage(() => import('./pages/PaintingEstimator'));
+const FoundationSettings = lazyPage(() => import('./pages/FoundationSettings'));
+const PaintingSettings = lazyPage(() => import('./pages/PaintingSettings'));
+const CNCSettings = lazyPage(() => import('./pages/CNCSettings'));
+const LaserSettings = lazyPage(() => import('./pages/LaserSettings'));
+const MetalSettings = lazyPage(() => import('./pages/MetalSettings'));
+const MaintenanceSettings = lazyPage(() => import('./pages/MaintenanceSettings'));
+const InstallationSettings = lazyPage(() => import('./pages/InstallationSettings'));
+const VinylSettings = lazyPage(() => import('./pages/VinylSettings'));
+const VinylInventory = lazyPage(() => import('./pages/VinylInventory'));
+const SalesHome = lazyPage(() => import('./pages/SalesHome'));
+const EstimatorQueues = lazyPage(() => import('./pages/EstimatorQueues'));
+const EstimatorCustomers = lazyPage(() => import('./pages/EstimatorCustomers'));
+const QuickPrice = lazyPage(() => import('./pages/QuickPrice'));
+const EstimatorProducts = lazyPage(() => import('./pages/EstimatorProducts'));
+const EstimatorParts = lazyPage(() => import('./pages/EstimatorParts'));
+const EstimatorSettings = lazyPage(() => import('./pages/EstimatorSettings'));
+const EstimatorTools = lazyPage(() => import('./pages/EstimatorTools'));
+const NewAllInOneEstimate = lazyPage(() => import('./pages/NewAllInOneEstimate'));
+const MasterInventory = lazyPage(() => import('./pages/MasterInventory'));
+const QuoteSettings = lazyPage(() => import('./pages/QuoteSettings'));
+const FleetTracking = lazyPage(() => import('./pages/FleetTracking'));
+const FleetOverview = lazyPage(() => import('./pages/FleetOverview'));
+const FleetSearch = lazyPage(() => import('./pages/FleetSearch'));
+const FleetNotifications = lazyPage(() => import('./pages/FleetNotifications'));
+const FleetEquipment = lazyPage(() => import('./pages/FleetEquipment'));
+const FleetEquipmentDetail = lazyPage(() => import('./pages/FleetEquipmentDetail'));
+const FleetMaintenance = lazyPage(() => import('./pages/FleetMaintenance'));
+const FleetInspections = lazyPage(() => import('./pages/FleetInspections'));
+const FleetWorkOrders = lazyPage(() => import('./pages/FleetWorkOrders'));
+const FleetParts = lazyPage(() => import('./pages/FleetParts'));
+const FleetFluids = lazyPage(() => import('./pages/FleetFluids'));
+const FleetFuel = lazyPage(() => import('./pages/FleetFuel'));
+const FleetWarranties = lazyPage(() => import('./pages/FleetWarranties'));
+const FleetReservations = lazyPage(() => import('./pages/FleetReservations'));
+const FleetRequests = lazyPage(() => import('./pages/FleetRequests'));
+const FleetHistory = lazyPage(() => import('./pages/FleetHistory'));
+const FleetAnalytics = lazyPage(() => import('./pages/FleetAnalytics'));
+const FleetPublicReport = lazyPage(() => import('./pages/FleetPublicReport'));
+const FleetMechanic = lazyPage(() => import('./pages/FleetMechanic'));
+const CustomerPortal = lazyPage(() => import('./pages/CustomerPortal'));
+const NewUserSetup = lazyPage(() => import('./pages/NewUserSetup'));
+const PermittingDocs = lazyPage(() => import('./pages/PermittingDocs'));
+const WorkOrderTraveler = lazyPage(() => import('./pages/WorkOrderTraveler'));
+const ProductionSchedule = lazyPage(() => import('./pages/ProductionSchedule'));
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -127,9 +132,11 @@ const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 
-const LayoutWrapper = ({ children, currentPageName }) => Layout ?
-  <Layout currentPageName={currentPageName}>{children}</Layout>
-  : <>{children}</>;
+// The navigation shell stays on screen while a page's code is loading.
+const LayoutWrapper = ({ children, currentPageName }) => {
+  const page = <Suspense fallback={<PageLoading />}>{children}</Suspense>;
+  return Layout ? <Layout currentPageName={currentPageName}>{page}</Layout> : page;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
@@ -158,6 +165,7 @@ const AuthenticatedApp = () => {
   return (
     <>
     <CommandPalette />
+    <Suspense fallback={<PageLoading />}>
     <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -219,6 +227,7 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </Suspense>
     </>
   );
 };
@@ -242,7 +251,9 @@ function App() {
   if (StandaloneFleetPage) {
     return (
       <QueryClientProvider client={queryClientInstance}>
-        <StandaloneFleetPage />
+        <Suspense fallback={<PageLoading />}>
+          <StandaloneFleetPage />
+        </Suspense>
         <Toaster />
       </QueryClientProvider>
     );
