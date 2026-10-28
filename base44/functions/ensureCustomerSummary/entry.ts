@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
     };
     const estimateNumber = String(sourceProject.estimate_number || '').trim();
     const summaryKey = summaryKeyFor(normalizedName);
-    const Summary = base44.entities.CustomerSummary;
+    const Summary = base44.asServiceRole.entities.CustomerSummary;
 
     let candidates = await loadCandidates(Summary, normalizedName, summaryKey);
     const keyCollisions = candidates.filter((row: any) =>
