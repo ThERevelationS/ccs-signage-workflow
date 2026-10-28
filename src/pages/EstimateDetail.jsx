@@ -38,7 +38,7 @@ import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcu
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
-import { duplicateEstimate } from "@/components/estimator/estimateCreationService";
+import { duplicateEstimate, splitEstimate } from "@/components/estimator/estimateCreationService";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -165,6 +165,16 @@ export default function EstimateDetail() {
       window.alert(error?.message || "The estimate could not be duplicated.");
     } finally {
       setDuplicating(false);
+    }
+  };
+
+  const handleSplit = async (lineIds) => {
+    if (!estimate?.id || !lineIds?.length) return;
+    try {
+      const created = await splitEstimate({ source: estimate, lineItemIds: lineIds, sessionToken });
+      navigate(`/EstimateDetail?id=${created.id}`);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be split.");
     }
   };
 
@@ -1300,6 +1310,7 @@ export default function EstimateDetail() {
                   onSaveNotes={updateProductNotes}
                   onCreateQuickProduct={createQuickProduct}
                   onPersistSettings={persistProductSettings}
+                  onSplit={handleSplit}
                   readOnly={readOnly}
                 />
                 <div className="flex items-center justify-between gap-2 pt-1">
