@@ -23,6 +23,7 @@
         "linked_work_order",
         "estimate_requested",
         "estimate_attached",
+        "estimate_status_changed",
         "estimator_assigned",
         "reconciled",
         "note"
