@@ -23,6 +23,11 @@ const bad = (message: string, status = 400) => {
 };
 
 const LINK_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+// Configurable link expiry — a `link_days` body param (7–365, default 90)
+// overrides the static TTL so admins can shorten links for sensitive customers
+// or lengthen them for long-cycle B2B work without a code change.
+const linkDays = (body: any) => Math.min(365, Math.max(7, whole(body?.link_days, 90)));
+const linkExpiry = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 const MESSAGE_MAX = 4000;
 
 function linkIsUsable(link: any) {
@@ -704,7 +709,7 @@ Deno.serve(async (req) => {
           customer_id: customerId,
           label,
           created_by: actor,
-          expires_at: new Date(Date.now() + LINK_TTL_MS).toISOString(),
+          expires_at: linkExpiry(linkDays(body)),
           revoked: false,
           open_count: 0,
         },
@@ -881,7 +886,7 @@ Deno.serve(async (req) => {
         <p style="text-align:center;margin:28px 0">
           <a href="${url}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">Open your portal</a>
         </p>
-        <p style="font-size:12px;color:#64748b">No account or password needed — this link is yours alone and works for 90 days. Bookmark it or keep this email.</p>
+        <p style="font-size:12px;color:#64748b">No account or password needed — this link is yours alone and works for ${linkDays(body)} days. Bookmark it or keep this email.</p>
         <p style="font-size:12px;color:#94a3b8">If the button does not work, paste this into your browser:<br><span style="word-break:break-all">${url}</span></p>
       </div>`;
       const sent = await base44.asServiceRole.functions
