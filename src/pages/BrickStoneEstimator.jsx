@@ -90,6 +90,17 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
 
   const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
   const handleSave = async () => {
     if (!(Number(totals?.calculated_surface_area) > 0)) {
       window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
