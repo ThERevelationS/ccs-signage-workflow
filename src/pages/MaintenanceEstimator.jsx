@@ -557,6 +557,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 <div className="border-t-2 border-cyan-200 pt-2 mt-2 flex justify-between text-lg font-bold text-cyan-700">
                   <span>Total</span><span className="tabular-nums">{fmt(recalculated.total_cost)}</span>
                 </div>
+                {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
                 <Button onClick={saveProject} disabled={saving} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white mt-2">
                   {saving ? "Saving…" : (isEditing ? "Save Changes" : "Save Estimate")}
                 </Button>
