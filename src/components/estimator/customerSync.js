@@ -63,7 +63,13 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
         label: `Duplicate ${duplicateLabel}`,
       });
     } catch (error) {
-      throw new Error(`A duplicate ${duplicateLabel} was detected for this estimate and the losing duplicate could not be removed safely: ${error?.message || "unknown error"}`);
+      if (!sessionToken) {
+        // The backend delete needs a session; without one the duplicate is
+        // left for reconciliation rather than failing the whole pipeline sync.
+        console.warn(`${duplicateLabel} duplicate cleanup skipped — no session token; reconciliation will repair the duplicate. (${error?.message || "unknown"})`);
+      } else {
+        throw new Error(`A duplicate ${duplicateLabel} was detected for this estimate and the losing duplicate could not be removed safely: ${error?.message || "unknown error"}`);
+      }
     }
     if (Object.keys(fields || {}).length) {
       // Convergence is dedupe, not a content sync: only force linkage fields
