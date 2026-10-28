@@ -70,6 +70,7 @@ export function calculateCustomerPricingFromConfig({ project, categorize, tierNu
     applied: true,
     tier_number: num(selectedTier.tier_number, resolvedTierNumber),
     tier_name: selectedTier.tier_name || `Tier ${resolvedTierNumber}`,
+    tier_updated_date: String(selectedTier?.updated_date || ""),
     customer_default_tier: num(customer?.pricing_tier, 1),
     raw_subtotal: num(result?.totals?.raw_subtotal),
     marked_subtotal: num(result?.totals?.marked_subtotal),
