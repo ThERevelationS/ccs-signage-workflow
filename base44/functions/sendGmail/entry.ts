@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         const base44 = createClientFromRequest(req);
 
         const payload = await req.json();
-        const { to, subject, body, attachments = [] } = payload;
+        const { to, cc = '', bcc = '', subject, body, attachments = [] } = payload;
 
         // Require authentication for direct HTTP requests. Internal service
         // invocations from other backend functions carry a capability token
@@ -69,6 +69,8 @@ Deno.serve(async (req) => {
         const boundary = `base44_${crypto.randomUUID().replace(/-/g, '')}`;
         const emailLines = [
             `To: ${cleanHeader(to)}`,
+            ...(cc ? [`Cc: ${cleanHeader(cc)}`] : []),
+            ...(bcc ? [`Bcc: ${cleanHeader(bcc)}`] : []),
             `Subject: =?UTF-8?B?${utf8ToBase64(cleanHeader(subject))}?=`,
             'MIME-Version: 1.0',
             `Content-Type: multipart/mixed; boundary="${boundary}"`,
