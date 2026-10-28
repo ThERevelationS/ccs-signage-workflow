@@ -292,6 +292,7 @@ export default function ReportingDashboard() {
                     ["Win rate", pipeline.estimate_funnel.win_rate == null ? "—" : `${pipeline.estimate_funnel.win_rate}%`, "text-emerald-600"],
                     ["Avg margin", pipeline.estimate_funnel.avg_margin_pct == null ? "—" : `${pipeline.estimate_funnel.avg_margin_pct}%`, "text-blue-600"],
                     ["Margin $", `$${Number(pipeline.estimate_funnel.total_margin || 0).toLocaleString()}`, "text-blue-600"],
+                    ["Parts %", pipeline.estimate_funnel.avg_part_cost_ratio == null ? "—" : `${pipeline.estimate_funnel.avg_part_cost_ratio}%`, "text-indigo-600"],
                   ].map(([label, val, cls]) => (
                     <div key={label} className="rounded-lg border border-gray-100 p-2.5">
                       <div className={`text-lg font-bold ${cls}`}>{val}</div>
