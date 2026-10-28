@@ -59,7 +59,8 @@ export function getVolumeDiscountPct(eligibleSubtotal, brackets) {
  * @returns {Object} { lines: [...withMarkupApplied], totals: {...} }
  */
 export function applyMarkups(lines, tier, settings) {
-  const { brackets = [], eligibleCategoryKeys = [] } = settings || {};
+  const { brackets = [], eligibleCategoryKeys = [], categoryFlags = {} } = settings || {};
+  const isDiscountEligible = (key) => eligibleCategoryKeys.includes(key) && categoryFlags[key] !== false;
 
   // First pass: compute marked-up cost per line (no volume discount yet)
   const marked = lines.map(line => {
@@ -76,7 +77,7 @@ export function applyMarkups(lines, tier, settings) {
 
   // Compute eligible subtotal for volume discount
   const eligibleSubtotal = marked
-    .filter(l => eligibleCategoryKeys.includes(l.category_key))
+    .filter(l => isDiscountEligible(l.category_key))
     .reduce((sum, l) => sum + l.marked_up_cost, 0);
 
   const volumeDiscountPct = getVolumeDiscountPct(eligibleSubtotal, brackets);
@@ -84,7 +85,7 @@ export function applyMarkups(lines, tier, settings) {
 
   // Second pass: apply volume discount only to eligible lines
   const finalLines = marked.map(line => {
-    const isEligible = eligibleCategoryKeys.includes(line.category_key);
+    const isEligible = isDiscountEligible(line.category_key);
     const final = isEligible ? line.marked_up_cost * volumeDiscountFactor : line.marked_up_cost;
     return {
       ...line,
