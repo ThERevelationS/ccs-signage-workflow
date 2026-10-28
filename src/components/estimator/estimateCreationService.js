@@ -53,7 +53,12 @@ export function buildDuplicateEstimate(source = {}) {
 export function buildSplitEstimate(source = {}, { lineItemIds = [] } = {}) {
   const clone = buildDuplicateEstimate(source);
   const keep = new Set(lineItemIds);
-  clone.line_items = (Array.isArray(source?.line_items) ? source.line_items : []).filter((li) => keep.has(li?.id));
+  const lines = Array.isArray(source?.line_items) ? source.line_items : [];
+  const selectedKeys = lines.map((line, index) => line?.line_id || line?.builder_product_id || line?.project_id || `i${index}`);
+  if (!keep.size || [...keep].some((key) => selectedKeys.filter((candidate) => candidate === key).length !== 1)) {
+    throw new Error("The selected products changed or have ambiguous identifiers. Reload and select them again.");
+  }
+  clone.line_items = lines.filter((line, index) => keep.has(selectedKeys[index]));
   clone.split_from_estimate_id = source.id || "";
   clone.project_name = `${source.project_name || source.estimate_number || "Estimate"} (split)`;
   return clone;
