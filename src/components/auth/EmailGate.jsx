@@ -134,7 +134,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       // A temporary service failure is not session revocation. Keep the token
       // for the next verification, but do not grant access without verification.
-      if ([401, 409].includes(Number(error?.response?.status))) {
+      if ([401, 409].includes(Number(error?.response?.status ?? error?.status))) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
         setCurrentUser(null);
@@ -177,7 +177,7 @@ export function AuthProvider({ children }) {
       }
       endSession();
     } catch (error) {
-      const status = Number(error?.response?.status ?? error?.status);
+      const status = Number(error?.response?.status ?? error?.status ?? error?.originalError?.response?.status);
       if (status === 401 || status === 409) endSession();
     } finally {
       sessionRecheckInFlight.current = false;
