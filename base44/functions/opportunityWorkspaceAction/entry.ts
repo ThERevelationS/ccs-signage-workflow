@@ -450,6 +450,9 @@ Deno.serve(async (req) => {
       let estimateDecidedCount = 0;
       let estimateWonValue = 0;
       let estimateDecidedValue = 0;
+      let estimateMarginSum = 0;
+      let estimateMarginCount = 0;
+      let estimateMarginTotal = 0;
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
         if (row?.deleted === true) continue;
         const status = clean(row?.status) || "draft";
@@ -457,6 +460,12 @@ Deno.serve(async (req) => {
         const total = num(row?.quote_total);
         if (status === "approved") { estimateWonCount += 1; estimateDecidedCount += 1; estimateWonValue += total; estimateDecidedValue += total; }
         if (status === "archived" || status === "cancelled") { estimateDecidedCount += 1; estimateDecidedValue += total; }
+        const internal = num(row?.total_cost);
+        if (total > 0 && internal > 0) {
+          estimateMarginSum += (total - internal) / total;
+          estimateMarginTotal += total - internal;
+          estimateMarginCount += 1;
+        }
       }
       const estimateFunnel = {
         status_counts: estimateStatusCounts,
@@ -466,6 +475,8 @@ Deno.serve(async (req) => {
         win_rate: estimateDecidedCount > 0 ? Math.round((estimateWonCount / estimateDecidedCount) * 1000) / 10 : null,
         won_value: Math.round(estimateWonValue * 100) / 100,
         decided_value: Math.round(estimateDecidedValue * 100) / 100,
+        avg_margin_pct: estimateMarginCount > 0 ? Math.round((estimateMarginSum / estimateMarginCount) * 1000) / 10 : null,
+        total_margin: Math.round(estimateMarginTotal * 100) / 100,
       };
       const funnel = {
         estimate_funnel: estimateFunnel,
