@@ -63,7 +63,10 @@ Deno.serve(async (req) => {
     const acceptanceMethod = String(body?.acceptance_method || '').trim();
     const acceptedAt = String(body?.accepted_at || '').trim();
     const deliveryId = String(body?.delivery_id || '').trim();
-    const evidenceReference = String(body?.evidence_reference || '').trim();
+    const rawEvidence = String(body?.evidence_reference || '').trim();
+    // evidence_reference is free text (PO number, "signed quote", etc.), but a
+    // javascript:/data:/vbscript: scheme must never be persisted as a reference.
+    const evidenceReference = /^(javascript|data|vbscript)[ ]*:/i.test(rawEvidence) ? '' : rawEvidence;
     const notes = String(body?.notes || '').trim();
 
     if (!estimateId || quoteVersion <= 0) {
