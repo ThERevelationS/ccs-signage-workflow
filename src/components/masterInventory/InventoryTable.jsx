@@ -5,11 +5,14 @@ import { Switch } from "@/components/ui/switch";
 import { ArrowDown, ArrowUp, ArrowUpDown, Edit, Trash2, Package } from "lucide-react";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { findInventoryEstimateUsage } from "./inventoryPersistence";
+import { base44 } from "@/api/base44Client";
 
 // Lazily resolves how many estimates consume this item's inventory row via
-// BuilderPart → BuilderProduct joins. Renders nothing until usage is confirmed.
+// BuilderPart → BuilderProduct joins. Clicking expands which estimates.
 function UsageBadge({ itemId }) {
   const [usage, setUsage] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+  const [names, setNames] = useState(null);
   useEffect(() => {
     let active = true;
     findInventoryEstimateUsage(itemId)
@@ -17,11 +20,35 @@ function UsageBadge({ itemId }) {
       .catch(() => {});
     return () => { active = false; };
   }, [itemId]);
+  useEffect(() => {
+    if (!expanded || names !== null || !usage?.estimateIds?.length) return;
+    let active = true;
+    (async () => {
+      const out = [];
+      for (const id of usage.estimateIds) {
+        const row = await base44.entities.AllInOneEstimate.get(id).catch(() => null);
+        out.push(row?.estimate_name || row?.name || row?.project_name || id);
+      }
+      if (active) setNames(out);
+    })();
+    return () => { active = false; };
+  }, [expanded, names, usage]);
   if (!usage) return null;
   return (
-    <span className="ml-1.5 inline-flex items-center rounded bg-sky-100 px-1 py-0.5 text-[9px] font-semibold text-sky-800 align-middle"
-      title={`Used in ${usage.estimates} estimate${usage.estimates === 1 ? "" : "s"} across ${usage.products} product${usage.products === 1 ? "" : "s"}`}>
-      {usage.estimates} est
+    <span className="relative inline-block">
+      <button type="button" onClick={() => setExpanded(!expanded)}
+        className="ml-1.5 inline-flex items-center rounded bg-sky-100 px-1 py-0.5 text-[9px] font-semibold text-sky-800 align-middle hover:bg-sky-200"
+        title={`Used in ${usage.estimates} estimate${usage.estimates === 1 ? "" : "s"} across ${usage.products} product${usage.products === 1 ? "" : "s"} — click to list`}>
+        {usage.estimates} est
+      </button>
+      {expanded && (
+        <span className="absolute left-0 top-full z-20 mt-1 block w-52 rounded border border-slate-200 bg-white p-2 text-[10px] text-slate-700 shadow-lg normal-case">
+          <span className="block font-semibold mb-1">Estimates using this item:</span>
+          {names === null
+            ? <span className="text-slate-400">Resolving…</span>
+            : <span className="block space-y-0.5">{names.map((n, i) => <span key={i} className="block truncate">• {n}</span>)}</span>}
+        </span>
+      )}
     </span>
   );
 }
