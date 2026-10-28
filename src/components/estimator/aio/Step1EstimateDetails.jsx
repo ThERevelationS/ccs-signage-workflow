@@ -230,6 +230,11 @@ export default function Step1EstimateDetails({
           >
             <Plus className="w-4 h-4" />
           </button>
+          {linkedCustomer?.credit_hold === true && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 border border-red-200">
+              CREDIT HOLD — new work needs a deposit or manager override
+            </span>
+          )}
         </Row>
 
         <Row label="Estimate Description" hint>
