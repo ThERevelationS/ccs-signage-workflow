@@ -64,6 +64,9 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
 
   const selected = items.find((item) => item.id === selectedId) || filtered[0] || null;
   const details = selected ? typeDetails(selected.entity, selected.row) : [];
+  const requestedQty = Math.max(0, Number(mode === "switch" ? initialQuantity : quantity || 0));
+  const onHand = Number(selected?.row?.quantity_on_hand);
+  const stockShortfall = mode !== "select" && Number.isFinite(onHand) && onHand >= 0 && requestedQty > onHand;
 
   const add = async () => {
     if (!selected || loadError || addRef.current) return;
@@ -161,6 +164,11 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
                     <label className="text-[10px] font-bold tracking-wide text-gray-500 block">QUANTITY<input type="number" min="0" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="mt-1 w-full h-[34px] px-2 border border-gray-300 rounded bg-white text-[12px]" /></label>
                   ) : null}
                   {mode !== "select" && <div className="rounded border border-lime-300 bg-lime-50 px-3 py-2 flex justify-between"><span className="text-[10px] font-bold text-gray-600">FROZEN EXTENDED COST</span><strong className="text-[13px]">{money(Number(mode === "switch" ? initialQuantity : quantity || 0) * selected.unitCost)}</strong></div>}
+                  {stockShortfall && (
+                    <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-800">
+                      Requested {requestedQty.toLocaleString()} {selected.unit || "units"} but only {onHand.toLocaleString()} on hand in Master Inventory. The Part can still be added — purchasing must cover the difference.
+                    </div>
+                  )}
                   <div className="flex justify-end gap-2">
                     <button type="button" disabled={adding} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
                     <button type="button" disabled={adding} onClick={add} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">{adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}{adding ? (mode === "switch" ? "Switching…" : mode === "select" ? "Selecting…" : "Adding…") : (mode === "switch" ? "Switch Part" : mode === "select" ? "Select Resource" : "Add Part")}</button>
