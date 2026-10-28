@@ -10,6 +10,7 @@ import CreateQuickProductModal from "./CreateQuickProductModal";
 import { copyProductToClipboard } from "@/components/estimator/products/clipboardService";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { addCatalogPartToProduct } from "@/components/estimator/parts/customProductService";
+import { pendingBuilderMutationIsStale } from "@/components/estimator/builder/builderMutationRecovery";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -143,6 +144,7 @@ export default function ProductRow({
   const meta = priceMeta(line);
   const pendingPriceAcceptance = line.price_acceptance_pending?.key ? line.price_acceptance_pending : null;
   const priceAcceptancePending = !!pendingPriceAcceptance;
+  const pendingStale = pendingBuilderMutationIsStale(line);
   const pendingPriceLabel = pendingPriceAcceptance?.kind === "builder_initial_freeze"
     ? "Resume Initial Price"
     : pendingPriceAcceptance?.kind === "builder_detach_override"
@@ -293,7 +295,7 @@ export default function ProductRow({
               type="button"
               onClick={handleUpdatePrice}
               disabled={updatingPrice || readOnly}
-              className="h-[28px] px-3 border border-orange-300 bg-orange-50 rounded flex items-center gap-1 text-[12px] font-semibold text-orange-800 hover:bg-orange-100 disabled:opacity-50"
+              className={`h-[28px] px-3 border rounded flex items-center gap-1 text-[12px] font-semibold disabled:opacity-50 ${pendingStale ? "border-red-300 bg-red-50 text-red-800 hover:bg-red-100" : "border-orange-300 bg-orange-50 text-orange-800 hover:bg-orange-100"}`}
               title={pendingPriceAcceptance?.kind === "builder_initial_freeze"
                 ? "Resume the previously started initial Builder price freeze from its saved recovery marker."
                 : pendingPriceAcceptance?.kind === "builder_detach_override"
@@ -333,7 +335,7 @@ export default function ProductRow({
                                     : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
-              {updatingPrice ? "Recovering…" : pendingPriceLabel}
+              {updatingPrice ? "Recovering…" : pendingPriceLabel}{pendingStale ? " · stale >24h" : ""}
             </button>
           ) : line.needs_reattach_review || line.price_state === "detached_parts" ? (
             <button
