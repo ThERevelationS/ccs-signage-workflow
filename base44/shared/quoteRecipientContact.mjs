@@ -11,7 +11,7 @@ export function buildQuoteRecipientContact({ estimate = {}, delivery = {} } = {}
   const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
 
   return {
-    creation_request_key: `quote-contact:${customerId}:${email}`.slice(0, 256),
+    creation_request_key: `quote-contact:${customerId}:${email}`, 
     customer_id: customerId,
     first_name: firstName,
     last_name: lastName,
