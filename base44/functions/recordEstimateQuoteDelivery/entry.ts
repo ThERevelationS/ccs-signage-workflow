@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
+import { createFoundationRecordWithRecovery } from '../../shared/opportunityFoundationPersistence.mjs';
+import { ensureQuoteRecipientContact } from '../../shared/quoteRecipientContact.mjs';
 
 const MAX_TEXT = 1000;
 const MAX_URL = 4096;
@@ -184,6 +186,7 @@ Deno.serve(async (req) => {
     }
 
     const Delivery = base44.asServiceRole.entities.EstimateQuoteDelivery;
+    const CustomerContact = base44.asServiceRole.entities.CustomerContact;
     const estimate = await Estimate.get(estimateId).catch(() => null);
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified for quote delivery history.' }, { status: 404 });
@@ -231,6 +234,22 @@ Deno.serve(async (req) => {
     // then 2, 3... on resends so the audit reads 'sent 3 times' not just 'resent'.
     const prior = await Delivery.filter({ quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion) }).catch(() => []);
     normalized.delivery_n = (Array.isArray(prior) ? prior.filter((r: any) => r?.deleted !== true).length : 0) + 1;
+
+    const respondWithDelivery = async (payload: Record<string, unknown>) => {
+      try {
+        await ensureQuoteRecipientContact({
+          customerContact: CustomerContact,
+          estimate,
+          delivery: normalized,
+          createWithRecovery: createFoundationRecordWithRecovery,
+        });
+      } catch (error: any) {
+        // Delivery is already verified; a contact-sync failure must not make a sent quote appear unsent.
+        console.error("Quote recipient CustomerContact sync failed:", error?.message || error);
+        payload.contact_warning = "Quote delivery is recorded, but the recipient could not be added to Customer Contacts.";
+      }
+      return Response.json(payload);
+    };
 
     let rows = await Delivery.filter({ idempotency_key: idempotencyKey });
     if (!Array.isArray(rows)) throw new Error('Quote delivery audit lookup did not return a delivery list.');
