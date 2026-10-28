@@ -239,6 +239,10 @@
       "type": "number",
       "default": 0
     },
+    "credit_hold": {
+      "type": "boolean",
+      "description": "When true, new estimates warn that the customer is on credit hold \u2014 a visible badge on the new-estimate and detail views."
+    },
     "pricing_tier": {
       "type": "number",
       "default": 1,
