@@ -405,13 +405,15 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
 
 function Thread({ messages, onSend, busy, customerName }) {
   const [draft, setDraft] = useState("");
+  const [attachment, setAttachment] = useState(null);
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
   const send = () => {
     const text = draft.trim();
-    if (!text) return;
-    onSend(text);
+    if (!text && !attachment?.base64) return;
+    onSend(text, attachment);
     setDraft("");
+    setAttachment(null);
   };
   return (
     <div className="flex min-h-[420px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -457,7 +459,7 @@ function Thread({ messages, onSend, busy, customerName }) {
               reader.onload = () => setAttachment({ name: file.name, mime: file.type || "application/octet-stream", base64: String(reader.result || "").split(",")[1] || "" });
               reader.readAsDataURL(file);
             }} />
-            📎 {attachment ? attachment.name : "Attach file"}
+            {attachment ? attachment.name : "Attach file"}
             {attachment && <button type="button" onClick={(e) => { e.preventDefault(); setAttachment(null); }} className="ml-1 text-slate-400 hover:text-red-500">×</button>}
           </label>
           </div>
