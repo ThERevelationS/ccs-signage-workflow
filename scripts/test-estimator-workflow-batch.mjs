@@ -172,6 +172,36 @@ try {
   });
 
   const { default: Details } = await load('src/components/estimator/aio/Step1EstimateDetails.jsx');
+  await test('recent customer chips reapply the customer and record the selection', async () => {
+    let patch;
+    let selected;
+    let tree;
+    const customer = { id: 'recent-a', company_name: 'Synthetic A', contact_email: 'a@example.test' };
+    await act(async () => { tree = create(React.createElement(Details, {
+      form: { client_name: '', tax_group: '', tax_percent: 0 },
+      patch: (value) => { patch = value; },
+      customers: [customer],
+      recentCustomers: [customer],
+      onCustomerSelected: (value) => { selected = value; },
+      taxGroups: [], users: [], termsOptions: [], salesCenters: [],
+    })); });
+    try {
+      const chip = tree.root.findByProps({ 'aria-label': 'Use recent customer Synthetic A' });
+      await act(async () => { chip.props.onClick(); });
+      assert.equal(patch.customer_id, 'recent-a');
+      assert.equal(patch.client_name, 'Synthetic A');
+      assert.equal(selected, customer);
+    } finally {
+      await act(async () => { tree.unmount(); });
+    }
+  });
+  await test('new estimate screen wires a bounded local recent-customer preference', () => {
+    const page = readFileSync(resolve(here, '../src/pages/NewAllInOneEstimate.jsx'), 'utf8');
+    assert.match(page, /loadRecentCustomerIds/);
+    assert.match(page, /saveRecentCustomerIds\(next\)/);
+    assert.match(page, /recentCustomers=\{recentCustomers\}/);
+    assert.match(page, /onCustomerSelected=\{rememberCustomer\}/);
+  });
   for (const [name, group, expected] of [
     ['standard', { name: 'Standard', tax_percent: 7.25 }, { tax_group: 'Standard', tax_percent: 7.25 }],
     ['tax-exempt', { name: 'Standard', tax_percent: 0 }, { tax_group: 'Standard', tax_percent: 0 }],
