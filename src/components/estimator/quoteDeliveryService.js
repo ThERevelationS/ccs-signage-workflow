@@ -22,8 +22,10 @@ export function defaultQuoteEmailMessage(estimate = {}) {
   return `${greeting}\n\nPlease find the attached estimate for ${estimate.project_name || "your project"}. Please let us know if you have any questions or if there is anything you would like us to review.\n\nThank you,\n${company}`;
 }
 
-export function quoteEmailBodyHtml(message) {
-  return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;white-space:pre-line;">${escapeHtml(message)}</div>`;
+export function quoteEmailBodyHtml(message, signature = "") {
+  const sig = String(signature || "").trim();
+  const sigHtml = sig ? `<div style="font-family:Arial,sans-serif;font-size:13px;line-height:1.55;color:#555;white-space:pre-line;border-top:1px solid #ddd;margin-top:16px;padding-top:12px;">${escapeHtml(sig)}</div>` : "";
+  return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;white-space:pre-line;">${escapeHtml(message)}</div>${sigHtml}`;
 }
 
 
@@ -113,6 +115,7 @@ export async function deliverEstimateQuote({
   recipientEmail,
   subject,
   message,
+  emailSignature = "",
   attachment,
   quoteVersion,
   quoteIssueDate,
@@ -132,7 +135,7 @@ export async function deliverEstimateQuote({
   const response = await sendGmail({
     to: recipientEmail,
     subject,
-    body: quoteEmailBodyHtml(message),
+    body: quoteEmailBodyHtml(message, emailSignature),
     attachments: [attachment],
   });
   const payload = response?.data || response || {};
