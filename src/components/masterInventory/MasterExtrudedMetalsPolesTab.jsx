@@ -30,7 +30,7 @@ import {
   previewLegacyMigration,
   migrateLegacyInventoryRows,
 } from "./legacyInventoryMigrator";
-import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { findInventoryPartReferences } from "./inventoryPersistence";
 
 // True if this Inventory row is a real extrusion (not legacy junk and not
@@ -390,6 +390,28 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
             canEdit={isAdmin}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            bulkField={{ name: "material_type", label: "Material", options: EXTRUDED_METALS_SOURCE.fields.find((f) => f.name === "material_type")?.options || [] }}
+            onBulkMove={async (ids, field, value) => {
+              const targets = ids.map((id) => combined.find((it) => it.id === id)).filter((it) => it && it._kind !== "Pole");
+              const skippedPoles = ids.length - targets.length;
+              const failures = [];
+              for (const item of targets) {
+                try {
+                  const live = await item._entity.get(item.id);
+                  if (!live?.id) { failures.push(item.id); continue; }
+                  await replaceEntityFieldsIfUnchanged({
+                    entity: item._entity,
+                    id: item.id,
+                    expectedFields: expectedEntityFields(live, { [field]: value }),
+                    nextFields: { [field]: value },
+                    label: `${item._kind || "Inventory"} item “${item._displayName || item.id}”`,
+                  });
+                } catch { failures.push(item.id); }
+              }
+              if (skippedPoles) alert(`${skippedPoles} pole row(s) skipped — poles are not metal material types.`);
+              if (failures.length) alert(`${failures.length} item(s) could not be moved. Reload the catalog and try again.`);
+              await load();
+            }}
             onInlineToggle={(itemId, fieldName, next) => {
               // Update local state for the Extruded row whose is_pole toggle changed.
               if (fieldName === "is_pole") {
