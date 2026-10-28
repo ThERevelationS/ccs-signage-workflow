@@ -448,6 +448,8 @@ assert.match(quoteDelivery, /safeUrl/, 'quote delivery must route attachment_fil
 assert.match(quoteDelivery, /attachment_file_url:\s*safeUrl/, 'attachment_file_url must be URL-safe-filtered');
 const revAudit = readFileSync('base44/functions/updateEstimateRevisionAudit/entry.ts', 'utf8');
 assert.match(revAudit, /https\?:/, 'delivery evidence must gate attachment_file_url to http(s) schemes');
+const acceptFn = readFileSync('base44/functions/recordEstimateAcceptance/entry.ts', 'utf8');
+assert.match(acceptFn, /javascript\|data\|vbscript/, 'acceptance evidence_reference must reject dangerous URL schemes');
 
 const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
 assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
