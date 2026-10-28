@@ -195,3 +195,16 @@ export function applyCostPlus(lines, config) {
     },
   };
 }
+/**
+ * Target-margin price calculator ("price for X% margin").
+ * margin% is the share of the SALE that is profit: price = cost / (1 - margin).
+ * Differs from markup-on-cost: a 50% margin requires a 100% markup.
+ * Returns 0 for a non-positive cost; null for invalid margins (>=100 or <0).
+ */
+export function priceForTargetMargin(cost, marginPct) {
+  const c = Number(cost);
+  const m = Number(marginPct);
+  if (!Number.isFinite(c) || c <= 0) return 0;
+  if (!Number.isFinite(m) || m < 0 || m >= 100) return null;
+  return c / (1 - m / 100);
+}
