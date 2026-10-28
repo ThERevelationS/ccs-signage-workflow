@@ -107,6 +107,10 @@
       "type": "boolean",
       "default": false,
       "description": "Show in Sign Maintenance \u2014 Replace Face action material picker"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image URL for this material."
     }
   },
   "required": [
@@ -114,9 +118,21 @@
     "material_type"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__dimensionallettermaterial_backend_only__" } },
-    "read": { "user_condition": { "role": "__dimensionallettermaterial_backend_only__" } },
-    "update": { "user_condition": { "role": "__dimensionallettermaterial_backend_only__" } },
-    "delete": { "user_condition": { "role": "__dimensionallettermaterial_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
   }
 }
