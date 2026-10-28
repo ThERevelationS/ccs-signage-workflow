@@ -28,6 +28,26 @@ const canonicalAcceptance = (rows: any[] = []) => rows.slice().sort((a, b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
+// Mirror the canonical acceptance onto the Estimate record itself so
+// accepted_at/accepted_by_* is queryable without joining EstimateAcceptance.
+// CAS on the loaded updated_date; failures never fail the acceptance write.
+async function patchEstimateAcceptanceFields(Estimate: any, estimateId: string, estimate: any, acceptance: any) {
+  if (!acceptance?.id) return;
+  const patch = {
+    accepted_at: String(acceptance.accepted_at || '').trim() || new Date().toISOString(),
+    accepted_by_name: String(acceptance.accepted_by_name || '').trim(),
+    accepted_by_email: String(acceptance.accepted_by_email || '').trim(),
+  };
+  const filter: any = { id: estimateId };
+  const version = String(estimate?.updated_date || '').trim();
+  if (version) filter.updated_date = version;
+  try {
+    await Estimate.updateMany(filter, { $set: patch });
+  } catch (e: any) {
+    console.error('Estimate acceptance field mirror failed:', e?.message || e);
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -96,7 +116,10 @@ Deno.serve(async (req) => {
       throw new Error('Multiple immutable acceptance records already exist for this Quote Version. No acceptance was changed; review the acceptance history before continuing.');
     }
     const existing = canonicalAcceptance(existingRows);
-    if (existing) return Response.json({ acceptance: existing, reused: true });
+    if (existing) {
+      await patchEstimateAcceptanceFields(Estimate, estimateId, estimate, existing);
+      return Response.json({ acceptance: existing, reused: true });
+    }
     if (estimate.status === 'approved') {
       return Response.json({ error: 'This estimate is already Approved, but no immutable acceptance record exists for the current Quote Version. Acceptance cannot be reconstructed automatically.' }, { status: 409 });
     }
@@ -152,6 +175,7 @@ Deno.serve(async (req) => {
     }
     if (!created?.id) {
       if (afterCreateRows.length === 1) {
+        await patchEstimateAcceptanceFields(Estimate, estimateId, estimate, afterCreateRows[0]);
         return Response.json({ acceptance: afterCreateRows[0], reused: true, recovered_after_create_error: true });
       }
       if (afterCreateRows.length > 1) {
@@ -204,6 +228,7 @@ ${notes ? `Notes: ${notes}` : ''}`.trim(),
     } catch (notifyError) {
       console.error('Acceptance salesperson notify failed:', notifyError?.message || notifyError);
     }
+    await patchEstimateAcceptanceFields(Estimate, estimateId, estimate, canonical);
     return Response.json({ acceptance: canonical, reused: false });
   } catch (error) {
     const status = Number(error?.status || 500);
