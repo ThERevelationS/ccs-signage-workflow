@@ -149,7 +149,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       const preview = existing?.id
         ? `WO ${existing.work_order_number || existing.id.slice(0, 8)} · stage ${existing.current_stage || "estimating"}`
         : "new record · stage estimating";
-      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline? (${preview})`)) return;
+      const sectionNames = (Array.isArray(estimate.line_items) ? estimate.line_items : [])
+        .map((l) => l?.client_product_name || l?.builder_name || l?.module_key).filter(Boolean);
+      const sectionsPreview = sectionNames.length
+        ? `\n\nSections → WO checklist (${sectionNames.length}): ${sectionNames.slice(0, 6).join(", ")}${sectionNames.length > 6 ? ` +${sectionNames.length - 6} more` : ""}`
+        : "";
+      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline? (${preview})${sectionsPreview}`)) return;
 
       let workOrder;
       if (existing?.id) {
