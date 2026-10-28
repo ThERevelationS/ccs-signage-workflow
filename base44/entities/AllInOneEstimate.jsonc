@@ -328,6 +328,10 @@
       ],
       "default": "draft"
     },
+    "is_template": {
+      "type": "boolean",
+      "description": "Marks the estimate as a reusable template \u2014 duplicated into new estimates via the New Estimate template picker."
+    },
     "cancel_reason": {
       "type": "string",
       "description": "Reason captured when the estimate is cancelled (from the Cancel Estimate modal)."
