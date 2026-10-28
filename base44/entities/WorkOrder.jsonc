@@ -470,6 +470,10 @@
     "estimate_amount": {
       "type": "number"
     },
+    "estimate_revision_required": {
+      "type": "boolean",
+      "description": "Set when the linked estimate's quote total diverges from the amount this Work Order was built on. Sticky until manually reviewed."
+    },
     "current_task_description": {
       "type": "string"
     },
@@ -872,9 +876,13 @@
     "client_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__workorder_backend_only__" } },
-    "read": { "user_condition": { "role": "__workorder_backend_only__" } },
-    "update": { "user_condition": { "role": "__workorder_backend_only__" } },
-    "delete": { "user_condition": { "role": "__workorder_backend_only__" } }
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
   }
 }
