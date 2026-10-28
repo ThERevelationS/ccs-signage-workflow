@@ -477,6 +477,12 @@ Deno.serve(async (req) => {
       const key = `portal-est-resp:${estimateId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
 
       if (decision === "approve") {
+        // Expired-quote gate: portal approval is disabled past the quote's
+        // validity window — the customer should request a revised quote.
+        const quoteExp = quoteValidUntil(estimate);
+        if (quoteExp && quoteExp < new Date().toISOString().slice(0, 10)) {
+          throw bad("This quote has expired — please request an updated quote.", 409);
+        }
         if (clean(estimate.status) !== "sent") {
           throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can be approved.`, 409);
         }
