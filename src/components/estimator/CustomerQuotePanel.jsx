@@ -217,8 +217,9 @@ export default function CustomerQuotePanel({
       } catch {}
     }
     setRecipientEmail(recipient);
-    setEmailSubject(defaultQuoteEmailSubject(estimate));
-    setEmailMessage(defaultQuoteEmailMessage(estimate));
+    const emailEstimate = { ...estimate, quote_total: quoteTotalNow };
+    setEmailSubject(defaultQuoteEmailSubject(emailEstimate));
+    setEmailMessage(defaultQuoteEmailMessage(emailEstimate));
     setSendError("");
     setSendOpen(true);
   };
