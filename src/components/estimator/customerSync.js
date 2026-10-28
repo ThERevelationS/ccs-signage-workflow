@@ -227,6 +227,10 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     // estimating stage so a manual later-stage move is never rewound.
     ...(estimate.status === "approved" && String(existing?.current_stage || "estimating").trim() === "estimating"
       ? { current_stage: "production" } : {}),
+    // Quote changed after conversion: flag the job for re-review. The flag is
+    // sticky — once set it is only cleared by a human, not by later syncs.
+    ...(Number(existing?.estimate_amount || 0) > 0 && Number(existing.estimate_amount) !== Number(estimate.quote_total || 0)
+      ? { estimate_revision_required: true } : {}),
     // Due-date prefill: the estimate's target install date is the pipeline's
     // commitment date. An existing WO due date is preserved when the estimate
     // doesn't carry one; it is never cleared by a sync.
