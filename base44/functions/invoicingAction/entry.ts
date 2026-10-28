@@ -85,7 +85,7 @@ function invoiceSnapshot(row: any) {
     status: clean(row?.status),
     billing_type: clean(row?.billing_type),
     customer_id: clean(row?.customer_id),
-    customer_display_name: clean(row?.customer_display_name),
+    customer_display_name: clean(row?.customer_display_name || row?.customer_name),
     opportunity_id: clean(row?.opportunity_id),
     estimate_id: clean(row?.estimate_id),
     work_order_id: clean(row?.work_order_id),
@@ -285,14 +285,14 @@ Deno.serve(async (req) => {
       const invoices = rows
         .filter((r: any) => (!query
           || clean(r?.invoice_number).toLowerCase().includes(query)
-          || clean(r?.customer_display_name).toLowerCase().includes(query)) && inRange(r))
+          || clean(r?.customer_display_name || r?.customer_name).toLowerCase().includes(query)) && inRange(r))
         .sort((a: any, b: any) => clean(a?.invoice_number).localeCompare(clean(b?.invoice_number)));
       const invoiceLines = [
         csvRow(["Invoice Number", "Customer", "Issue Date", "Due Date", "Terms", "Item Description", "Qty", "Rate", "Line Total", "Subtotal", "Discount", "Tax", "Deposit Applied", "Total", "Amount Paid", "Balance Due", "Status"]),
         ...invoices.flatMap((inv: any) => {
           const items = Array.isArray(inv?.line_items) && inv.line_items.length ? inv.line_items : [{}];
           return items.map((li: any, i: number) => csvRow([
-            inv.invoice_number, inv.customer_display_name, inv.issue_date, inv.due_date, inv.terms,
+            inv.invoice_number, inv.customer_display_name || inv.customer_name, inv.issue_date, inv.due_date, inv.terms,
             li.description || "", li.quantity ?? "", li.unit_price ?? "",
             li.description ? money(num(li.quantity) * num(li.unit_price)) : "",
             i === 0 ? inv.subtotal : "", i === 0 ? inv.discount_amount : "", i === 0 ? inv.tax_amount : "",
@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
           .sort((a: any, b: any) => clean(a?.paid_date).localeCompare(clean(b?.paid_date)))
           .map((p: any) => {
             const inv = invoiceById.get(clean(p?.invoice_id));
-            return csvRow([p.paid_date, inv?.invoice_number, inv?.customer_display_name || p.customer_id, p.amount, p.method, p.reference_number, p.status, p.notes]);
+            return csvRow([p.paid_date, inv?.invoice_number, inv?.customer_display_name || inv?.customer_name || p.customer_id, p.amount, p.method, p.reference_number, p.status, p.notes]);
           }),
       ];
       return Response.json({
@@ -335,10 +335,11 @@ Deno.serve(async (req) => {
         clean(invoice.opportunity_id) ? Opportunity.get(clean(invoice.opportunity_id)).catch(() => null) : null,
       ]);
       if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const invoiceForView = { ...invoice, customer_display_name: clean(invoice.customer_display_name || invoice.customer_name || customer?.company_name) };
       return Response.json({
         success: true,
         action,
-        invoice,
+        invoice: invoiceForView,
         payments: payments.sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date))),
         customer: customer || null,
         estimate: estimate || null,
