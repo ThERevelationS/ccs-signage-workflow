@@ -293,6 +293,11 @@ Deno.serve(async (req) => {
         if (!paidByInvoice.has(key)) paidByInvoice.set(key, []);
         paidByInvoice.get(key).push({ paid_at: clean(p?.paid_date || p?.paid_at || p?.created_date).slice(0, 10), amount: num(p?.amount), method: clean(p?.method) });
       }
+      const viewEstimates = await Promise.all(
+        (Array.isArray(estimates) ? estimates : [])
+          .filter((e: any) => e?.deleted !== true)
+          .map((e: any) => estimatePortalView(e))
+      );
       return Response.json({
         success: true,
         action,
