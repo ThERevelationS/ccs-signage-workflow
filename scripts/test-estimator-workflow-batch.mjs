@@ -317,6 +317,15 @@ try {
     assert.match(picker, /mode !== "select"/, 'resource-select mode skips the stock warning');
     assert.match(picker, /purchasing must cover the difference/, 'warning explains the shortfall consequence');
   });
+  await test('bulk delete removes only independent parts in selection mode', () => {
+    const panel = readFileSync(resolve(here, '../src/components/estimator/aio/BuilderPartsPanel.jsx'), 'utf8');
+    assert.match(panel, /removableSelected = parts\.filter/, 'bulk delete filters the selection');
+    assert.match(panel, /\["manual", "manual_addon"\]\.includes\(part\.builder_sync_state\)/, 'only manual/manual_addon parts are removable');
+    assert.match(panel, /Builder-linked Part.*will be kept/, 'skipped builder-linked parts are explained');
+    assert.match(panel, /bulkRemoveSelected/, 'bulk remove handler is wired');
+    assert.match(panel, /removeManualProductPart\(part\.id/, 'per-part removal uses the recovery-aware service');
+    assert.match(panel, /Delete Selected/, 'toolbar exposes the bulk delete');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
