@@ -92,6 +92,10 @@
     "reorder_point": {
       "type": "number",
       "description": "On-hand level at or below which the item is flagged for reorder."
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image URL for this inventory item."
     }
   },
   "required": [
@@ -101,9 +105,21 @@
     "cost_per_unit"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__inventory_backend_only__" } },
-    "read": { "user_condition": { "role": "__inventory_backend_only__" } },
-    "update": { "user_condition": { "role": "__inventory_backend_only__" } },
-    "delete": { "user_condition": { "role": "__inventory_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
   }
 }
