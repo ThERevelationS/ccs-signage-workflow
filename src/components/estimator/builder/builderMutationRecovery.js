@@ -46,6 +46,22 @@ export function pendingBuilderMutation(line) {
   return pending && typeof pending === "object" && String(pending.key || "").trim() ? pending : null;
 }
 
+// Recovery markers are durable: the only safe way to clear one is to resume it
+// and verify its writes completed. Stale markers are therefore surfaced, never
+// silently deleted — a >24h marker means a mutation needs explicit resume review.
+export const STALE_PENDING_BUILDER_MUTATION_MS = 24 * 60 * 60 * 1000;
+
+export function pendingBuilderMutationAge(line, now = Date.now()) {
+  const pending = pendingBuilderMutation(line);
+  const started = Date.parse(pending?.started_at || "");
+  return Number.isFinite(started) ? Math.max(0, Number(now) - started) : null;
+}
+
+export function pendingBuilderMutationIsStale(line, olderThanMs = STALE_PENDING_BUILDER_MUTATION_MS, now = Date.now()) {
+  const age = pendingBuilderMutationAge(line, now);
+  return age !== null && age >= Math.max(0, Number(olderThanMs) || 0);
+}
+
 export async function markBuilderMutationPending({ estimate, builder, pending }) {
   if (!estimate?.id || !builder?.id || !pending?.key) {
     throw new Error("Builder mutation recovery could not be initialized.");
