@@ -81,6 +81,7 @@ export default function VinylProjectSummaryCard({ rollup, project, onUpdateProje
           </div>
         </div>
 
+        {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
         <Button onClick={onSave} disabled={isSaving} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-3">
           {isSaving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
           Save Estimate
