@@ -86,6 +86,18 @@
       "type": "string",
       "description": "Target install/completion date (YYYY-MM-DD)."
     },
+    "accepted_at": {
+      "type": "string",
+      "description": "ISO timestamp of the canonical customer acceptance (mirrors the EstimateAcceptance row)."
+    },
+    "accepted_by_name": {
+      "type": "string",
+      "description": "Name recorded on the canonical customer acceptance."
+    },
+    "accepted_by_email": {
+      "type": "string",
+      "description": "Email recorded on the canonical customer acceptance."
+    },
     "attachment_refs": {
       "type": "array",
       "description": "References to files/photos carried from the opportunity handoff (no binary copies).",
