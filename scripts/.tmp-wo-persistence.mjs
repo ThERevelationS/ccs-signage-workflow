@@ -42718,6 +42718,9 @@ async function transitionWorkOrderFromLoadedSnapshot({
   if (typeof completed === "boolean") {
     expectedFields.completed = workOrder.completed;
     nextFields.completed = completed;
+  } else if (workOrder.completed === true && stage !== "completed") {
+    expectedFields.completed = true;
+    nextFields.completed = false;
   }
   if (normalizeLegacyNotes && typeof workOrder.notes === "string" && workOrder.notes.trim()) {
     expectedFields.notes = workOrder.notes;
