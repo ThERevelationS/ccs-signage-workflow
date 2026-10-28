@@ -332,6 +332,11 @@
       "type": "string",
       "description": "Reason captured when the estimate is cancelled (from the Cancel Estimate modal)."
     },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp of the cancellation. The cancelling actor is recorded on the lifecycle EstimateRevision."
+    },
     "line_items": {
       "type": "array",
       "description": "Estimate sections. Totals are refreshed from the source projects whenever the estimate is opened, and in real time while it is open.",
