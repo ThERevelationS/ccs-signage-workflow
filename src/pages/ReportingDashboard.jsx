@@ -346,7 +346,7 @@ export default function ReportingDashboard() {
                       {pipeline.estimate_funnel.by_salesperson.slice(0, 6).map((s) => (
                         <div key={s.salesperson} className="flex items-center justify-between text-[11px] rounded border border-gray-100 px-2 py-1">
                           <span className="truncate text-gray-700">{s.salesperson}</span>
-                          <span className="shrink-0 ml-2 text-gray-600">{s.count} est · avg <b className="text-gray-800">${Number(s.avg_quote_value || 0).toLocaleString()}</b>{s.won_count > 0 ? ` · <span class="text-emerald-600">${s.won_count} won</span>` : ""}</span>
+                          <span className="shrink-0 ml-2 text-gray-600">{s.count} est · avg <b className="text-gray-800">${Number(s.avg_quote_value || 0).toLocaleString()}</b>{s.won_count > 0 ? <span className="text-emerald-600"> · {s.won_count} won</span> : ""}</span>
                         </div>
                       ))}
                     </div>
