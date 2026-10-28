@@ -202,7 +202,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     let cancelled = false;
     const run = () => { if (!cancelled) refresh({ force: true }).catch(() => {}); };
     run();
-    const id = window.setInterval(run, intervalSeconds * 1000);
+    // Hidden tabs skip the poll; the visibility handler refreshes on return.
+    const id = window.setInterval(() => { if (!document.hidden) run(); }, intervalSeconds * 1000);
     return () => { cancelled = true; window.clearInterval(id); };
   }, [sessionToken, email, intervalSeconds, refresh]);
 

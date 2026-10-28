@@ -75,12 +75,16 @@ const METHODS = {
     if (typeof callback !== "function") return () => {};
     let stopped = false;
     let last = "";
+    // Only the most recently changed row is read: any create, update or delete
+    // of the newest row changes its identity/updated_date, so a one-row probe
+    // detects change without downloading the whole entity every minute.
     const check = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
-        const r = await invokeFleet("staffDataRead", { entity, limit: 500 });
+        const r = await invokeFleet("staffDataRead", { entity, sort: "-updated_date", limit: 1 });
         const items = bodyOf(r).items;
-        const rows = Array.isArray(items) ? items : [];
-        const stamp = JSON.stringify(rows);
+        const top = Array.isArray(items) ? items[0] : null;
+        const stamp = top ? `${top.id}|${top.updated_date}` : "empty";
         if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
         last = stamp;
       } catch {

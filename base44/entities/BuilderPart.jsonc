@@ -197,6 +197,10 @@
     "manual_cost": {
       "type": "number"
     },
+    "manual_cost_override_reason": {
+      "type": "string",
+      "description": "User-entered reason recorded when a manual/detached Part cost was overridden."
+    },
     "is_active": {
       "type": "boolean",
       "default": true

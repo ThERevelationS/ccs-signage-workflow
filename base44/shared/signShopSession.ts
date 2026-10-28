@@ -64,6 +64,13 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
+  // Every staff request verifies its session against AuthorizedEmail, and all of
+  // those reads share one service-role rate budget. Reuse a verified identity
+  // briefly within this warm function instance so page bursts do not spend half
+  // the budget re-reading the same user record.
+  const cached = verifiedSessions.get(rawToken);
+  if (cached && cached.until > Date.now()) return { ...cached.user };
+
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
@@ -79,5 +86,11 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
+  if (verifiedSessions.size >= SESSION_CACHE_MAX) verifiedSessions.clear();
+  verifiedSessions.set(rawToken, { user: { ...user }, until: Math.min(Date.now() + SESSION_CACHE_MS, expiresAt) });
   return user;
 }
+
+const SESSION_CACHE_MS = 20000;
+const SESSION_CACHE_MAX = 500;
+const verifiedSessions = new Map<string, { user: any, until: number }>();

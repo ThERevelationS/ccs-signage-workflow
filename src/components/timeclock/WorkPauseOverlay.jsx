@@ -137,7 +137,8 @@ export default function WorkPauseOverlay({
     setShowResumePrompt(false);
     setError("");
     loadStatus({ preservePausedOnError: false });
-    const interval = setInterval(() => loadStatus(), 15000);
+    // Hidden tabs skip the poll; the visibility handler refreshes on return.
+    const interval = setInterval(() => { if (!document.hidden) loadStatus(); }, 15000);
     const onFocus = () => loadStatus();
     const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
     const onPauseChanged = (event) => {
