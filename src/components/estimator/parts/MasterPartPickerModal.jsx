@@ -122,6 +122,9 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
                     <div className="min-w-0">
                       <div className="text-[12px] font-bold text-gray-900 truncate">{item.name}</div>
                       <div className="text-[10px] text-gray-500 mt-0.5">{item.categoryLabel} · {String(item.subtype || "").replace(/_/g, " ")}{item.supplier ? ` · ${item.supplier}` : ""}</div>
+                      {Number.isFinite(Number(item.row?.quantity_on_hand)) && Number(item.row?.reorder_point) > 0 && Number(item.row.quantity_on_hand) <= Number(item.row.reorder_point) && (
+                        <span className="mt-1 inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold" title={`On-hand ${Number(item.row.quantity_on_hand)} is at or below reorder point ${Number(item.row.reorder_point)}`}>LOW STOCK · {Number(item.row.quantity_on_hand)} on hand</span>
+                      )}
                     </div>
                     <div className="text-right flex-shrink-0"><div className="text-[11px] font-bold text-gray-800">{money(item.unitCost)}</div><div className="text-[9px] text-gray-400">per {item.unit}</div></div>
                   </div>
