@@ -857,7 +857,7 @@ Deno.serve(async (req) => {
             customer_id: customerId,
             label: clean(customer.name) || clean(customer.company_name) || "Customer portal",
             created_by: actor,
-            expires_at: new Date(Date.now() + LINK_TTL_MS).toISOString(),
+            expires_at: linkExpiry(linkDays(body)),
             revoked: false,
             open_count: 0,
           },
