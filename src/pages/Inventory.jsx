@@ -131,6 +131,27 @@ export default function Inventory() {
     }
   };
 
+  const saveReorderPoint = async (item, raw) => {
+    const next = raw === "" ? 0 : Number(raw);
+    const prev = Number(item.reorder_point ?? 0);
+    if (busy || !Number.isFinite(next) || next < 0 || next === prev) return;
+    setBusy(`${item.id}:reorder_point`);
+    setError("");
+    try {
+      await invokeAction(sessionToken, {
+        action: "set_reorder_point",
+        item_id: item.id,
+        reorder_point: next,
+        expected_updated_date: item.updated_date,
+      });
+      await load();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Reorder point update failed.");
+    } finally {
+      setBusy("");
+    }
+  };
+
   const createReorderPo = async () => {
     if (busy) return;
     setBusy("reorder-po");
@@ -237,7 +258,15 @@ export default function Inventory() {
                       <span className={`font-bold ${it.low_stock ? "text-amber-600" : "text-slate-900 dark:text-slate-100"}`}>{it.quantity_on_hand}</span>
                       {it.low_stock && <AlertTriangle className="ml-1 inline h-3.5 w-3.5 text-amber-500" />}
                     </td>
-                    <td className="px-4 py-2.5 text-right text-slate-500">{it.reorder_point ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <input className="w-16 rounded border border-slate-200 px-1 py-0.5 text-right text-xs dark:border-slate-600 dark:bg-slate-800"
+                        type="number" min="0" step="any" key={`${it.id}:${it.reorder_point}`}
+                        defaultValue={it.reorder_point ?? ""} placeholder="—"
+                        title="Reorder point — edit and leave the field to save"
+                        disabled={busy === `${it.id}:reorder_point`}
+                        onBlur={(e) => saveReorderPoint(it, e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+                    </td>
                     <td className="px-4 py-2.5 text-center">
                       <input className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-800"
                         type="number" step="any" placeholder="0"
