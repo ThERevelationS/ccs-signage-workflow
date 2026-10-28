@@ -275,6 +275,9 @@ Deno.serve(async (req) => {
       }
 
       // Account-level link: one call returns the whole customer workspace.
+      // Only 'customer' links reach here — an estimate-scoped link must never
+      // escalate into the full customer workspace.
+      if (clean(link.kind) !== "customer") throw bad("This portal link does not open the customer workspace.", 403);
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const customer = await Customer.get(customerId).catch(() => null);
       const [estimates, orders, invoices, payments, thread, announcements] = await Promise.all([
