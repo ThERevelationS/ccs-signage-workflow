@@ -134,6 +134,27 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
               </div>
             )}
 
+            {(Array.isArray(data.estimates) && data.estimates.length > 0) || Object.keys(data.estimate_funnel || {}).length > 0 ? (
+              <div className="mt-4 rounded-lg border border-gray-200 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Estimates</h3>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {Object.entries(data.estimate_funnel || {}).map(([status, count]) => (
+                    <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 capitalize">
+                      {status} <b>×{count}</b>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-2 space-y-1">
+                  {(data.estimates || []).slice(0, 6).map((e) => (
+                    <Link key={e.id} to={`/EstimateDetail?id=${e.id}`} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1 text-[11px] hover:border-red-300 hover:bg-red-50/40">
+                      <span className="truncate text-gray-700">{e.project_name || e.estimate_number || e.id}</span>
+                      <span className="ml-2 shrink-0 text-gray-500 capitalize">{e.status} · ${Number(e.quote_total || 0).toLocaleString()}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-gray-200 p-3">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Contacts</h3>
