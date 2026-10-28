@@ -101,6 +101,13 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
   const handleSave = async () => {
     if (!(Number(totals?.calculated_surface_area) > 0)) {
       window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
