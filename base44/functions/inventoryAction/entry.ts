@@ -1,4 +1,3 @@
-import { allocateDocNumber } from '../../shared/docNumberAllocation.ts';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
@@ -34,14 +33,20 @@ function stockSnapshot(row: any) {
     cost_per_unit: num(row?.cost_per_unit),
     supplier: clean(row?.supplier),
     quantity_on_hand: onHand,
+    barcode: clean(row?.barcode),
     reorder_point: Number.isFinite(reorderPoint) ? reorderPoint : null,
     low_stock: Number.isFinite(reorderPoint) && onHand <= reorderPoint,
     updated_date: clean(row?.updated_date),
   };
 }
 
-async function nextPoNumber(PurchaseOrder: any, svc: any) {
-  return allocateDocNumber({ svc, configName: 'purchase_order', prefix: 'PO-', seedEntity: PurchaseOrder, seedField: 'po_number' });
+async function nextPoNumber(PurchaseOrder: any) {
+  const rows = await PurchaseOrder.filter({});
+  if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
+  let seq = rows.length + 1001;
+  const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
+  while (existing.has(`PO-${seq}`)) seq += 1;
+  return `PO-${seq}`;
 }
 
 async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, note, actor, key }: any) {
@@ -172,7 +177,7 @@ Deno.serve(async (req) => {
         entity: PurchaseOrder,
         data: {
           creation_request_key: key,
-          po_number: await nextPoNumber(PurchaseOrder, base44.asServiceRole),
+          po_number: await nextPoNumber(PurchaseOrder),
           status: "draft",
           vendor_name: vendorName,
           line_items: lines,
@@ -231,26 +236,6 @@ Deno.serve(async (req) => {
         note: clean(body?.note), actor, key,
       });
       return Response.json({ success: true, action, ...result });
-    }
-
-    if (action === "set_reorder_point") {
-      const itemId = clean(body?.item_id);
-      const item = await Inventory.get(itemId).catch(() => null);
-      if (!item?.id || item?.legacy_compatibility === true) throw bad("Inventory item not found.", 404);
-      const reorderPoint = num(body?.reorder_point, NaN);
-      if (!Number.isFinite(reorderPoint) || reorderPoint < 0) throw bad("Reorder point must be a non-negative number.");
-      const expectedUpdatedAt = clean(body?.expected_updated_date);
-      if (expectedUpdatedAt && clean(item.updated_date) !== expectedUpdatedAt) {
-        throw bad("This inventory item changed in another session. Reload before editing its reorder point.", 409);
-      }
-      const saved = await Inventory.update(item.id, { reorder_point: reorderPoint });
-      return Response.json({
-        success: true,
-        action,
-        item_id: clean(item.id),
-        reorder_point: num(saved?.reorder_point, reorderPoint),
-        updated_date: clean(saved?.updated_date),
-      });
     }
 
     throw bad(`Unsupported action "${action}".`);
