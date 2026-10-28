@@ -130,6 +130,11 @@
       "default": 0,
       "description": "Flat project-level permit/admin fee added before tax."
     },
+    "round_quote_total": {
+      "type": "boolean",
+      "default": false,
+      "description": "Round the computed quote total to the nearest whole dollar."
+    },
     "quote_valid_days": {
       "type": "number",
       "default": 30,
