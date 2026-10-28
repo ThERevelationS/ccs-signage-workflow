@@ -19,7 +19,6 @@ import {
   mergeWorkOrderProducts,
   selectExistingEstimateWorkOrder,
 } from "./workOrderConversion";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
@@ -34,7 +33,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       setWorkOrderId("");
       return () => { active = false; };
     }
-    staffEntities.WorkOrder.get(linkedId)
+    base44.entities.WorkOrder.get(linkedId)
       .then((row) => {
         if (!active) return;
         setWorkOrderId(row?.id && row.deleted !== true ? row.id : "");
@@ -53,7 +52,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         .map((l) => `• ${getModuleLabel(l.module_key)} — ${l.project_name}`)
         .join("\n");
 
-      const estimateBefore = await staffEntities.AllInOneEstimate.get(estimate.id);
+      const estimateBefore = await base44.entities.AllInOneEstimate.get(estimate.id);
       const pendingPrice = getPendingEstimatePriceAcceptance(estimateBefore);
       if (pendingPrice) {
         const name = pendingPrice.line?.client_product_name || pendingPrice.line?.project_name || "Product";
@@ -107,7 +106,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       ) {
         throw new Error("This estimate changed in another session. Reload before converting so newer approved pricing/details are not overwritten.");
       }
-      const matches = await staffEntities.WorkOrder.filter({ estimate_id: estimate.id });
+      const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
       const activeMatches = (matches || []).filter((row) => row?.deleted !== true);
       const existing = selectExistingEstimateWorkOrder(activeMatches, estimate.work_order_id);
       if (!existing && (matches || []).some((row) => row?.deleted === true)) {
@@ -143,6 +142,11 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         ...(existing?.sales_status !== "won" ? { sales_stage_changed_at: conversionActivityStamp } : {}),
       };
 
+      // Pre-commit gate: conversion writes the Work Order before the estimate
+      // link, so confirm intent up front rather than alerting on a partial
+      // state afterwards.
+      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline${existing?.id ? " (updating the existing linked record)" : ""}?`)) return;
+
       let workOrder;
       if (existing?.id) {
         workOrder = await replaceWorkOrderFieldsIfUnchanged({
@@ -153,7 +157,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         });
       } else {
         workOrder = await createEstimateLinkedWorkOrderWithRecovery({
-          entity: staffEntities.WorkOrder,
+          entity: base44.entities.WorkOrder,
           estimateId: estimate.id,
           data: workOrderFields,
           label: "Approved estimate Work Order conversion",
@@ -182,7 +186,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         ...conversionEstimateFields,
       };
       await replaceEstimateFieldsIfUnchanged({
-        entity: staffEntities.AllInOneEstimate,
+        entity: base44.entities.AllInOneEstimate,
         estimateId: estimate.id,
         expectedFields: expectedEstimateFields(estimateBefore, conversionEstimateFields),
         guardFields: { updated_date: estimateBefore.updated_date },
@@ -206,7 +210,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       setWorkOrderId(workOrder.id);
       onConverted?.(workOrder.id);
     } catch (error) {
-      window.alert(error?.message || "The Work Order could not be created.");
+      // The Work Order may already be committed (a later step failed after
+      // the link). Re-read so the alert reflects real state instead of
+      // claiming nothing was created.
+      const post = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => null);
+      const suffix = post?.work_order_id ? "\n\nA Work Order may already be linked to this estimate — reload before retrying." : "";
+      window.alert(`${error?.message || "The Work Order could not be created."}${suffix}`);
     } finally {
       setBusy(false);
     }
