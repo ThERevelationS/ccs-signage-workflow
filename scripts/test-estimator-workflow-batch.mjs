@@ -287,6 +287,19 @@ try {
     assert.match(panel, /by \$\{part\.builder_detached_by\}/, 'part row renders who detached');
     assert.match(panel, /part\.builder_detached_reason/, 'part row renders the detach reason');
   });
+  await test('manual part cost override captures a reason', () => {
+    const schema = readFileSync(resolve(here, '../base44/entities/BuilderPart.jsonc'), 'utf8');
+    const partSync = readFileSync(resolve(here, '../src/components/estimator/builder/partSync.js'), 'utf8');
+    const custom = readFileSync(resolve(here, '../src/components/estimator/parts/customProductService.js'), 'utf8');
+    const modal = readFileSync(resolve(here, '../src/components/estimator/aio/DetachedPartOverrideModal.jsx'), 'utf8');
+    assert.match(schema, /"manual_cost_override_reason"/, 'BuilderPart stores the override reason');
+    assert.match(partSync, /manual_cost_override_reason: changes\.manual_cost_override_reason/, 'detached override update persists the reason');
+    assert.match(custom, /manual_cost_override_reason: changes\.manual_cost_override_reason/, 'manual part update persists the reason');
+    assert.match(partSync, /changes\.manual_cost_override_reason !== undefined[\s\S]{0,120}return false/, 'detached already-applied check compares the reason');
+    assert.match(custom, /changes\.manual_cost_override_reason !== undefined[\s\S]{0,120}return false/, 'manual already-applied check compares the reason');
+    assert.match(modal, /COST OVERRIDE REASON/, 'override editor exposes the reason input');
+    assert.match(modal, /manual_cost_override_reason/, 'modal submits the reason');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
