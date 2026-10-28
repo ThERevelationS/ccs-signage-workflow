@@ -9,22 +9,32 @@ const stub = resolve(here, '.tmp-b44-wo.mjs');
 writeFileSync(stub, `
 globalThis.__wo = null;
 globalThis.__failSave = false;
-export const base44 = { entities: { WorkOrder: {
+const workOrderEntity = {
   get: async (id) => globalThis.__wo,
   updateMany: async () => ({ updated: 0 }),
-}}, functions: { invoke: async (name, payload) => {
+};
+export const base44 = { entities: { WorkOrder: workOrderEntity }, functions: { invoke: async (name, payload) => {
   if (globalThis.__failSave) return { data: { success: false, error: 'conflict' } };
   const r = globalThis.__wo;
   const set = payload?.fields || payload?.next_fields || payload?.nextFields || {};
   Object.assign(r, set); r.updated_date = 'v2';
   return { data: { success: true, record: r } };
 }} };
+export const staffEntities = { WorkOrder: workOrderEntity };
+export const NotificationTriggers = {
+  workOrderRestored: async () => {},
+  workOrderFieldsChanged: async () => {},
+};
 `);
 const out = resolve(here, '.tmp-wo-item.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/workflow/workOrderPersistence.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
-  alias: { '@/api/base44Client': stub },
+  alias: {
+    '@/api/base44Client': stub,
+    '@/components/staff/staffEntities': stub,
+    '@/components/workflow/NotificationService': stub,
+  },
   define: { 'import.meta.env': '{}' },
 });
 globalThis.window = { location: { href: 'http://t' }, addEventListener() {}, removeEventListener() {}, history: { replaceState() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, self: null, top: {} };
