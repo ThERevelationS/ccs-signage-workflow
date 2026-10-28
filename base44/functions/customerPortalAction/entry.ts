@@ -76,6 +76,8 @@ function invoicePortalView(invoice: any) {
     total: num(invoice?.total),
     amount_paid: num(invoice?.amount_paid),
     balance_due: num(invoice?.balance_due),
+    pay_url: clean(invoice?.pay_url),
+    can_pay_online: Boolean(clean(invoice?.pay_url)) && num(invoice?.balance_due) > 0,
   };
 }
 
