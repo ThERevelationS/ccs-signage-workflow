@@ -242,6 +242,13 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
   const save = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert("Please fill in Project Name and Client Name.");
