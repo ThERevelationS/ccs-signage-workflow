@@ -96,6 +96,12 @@ Deno.serve(async (req) => {
     if (!currentVersion || currentVersion !== quoteVersion) {
       return Response.json({ error: 'The issued Quote Version changed. Reload the estimate before recording acceptance.' }, { status: 409 });
     }
+    // Expired-quote gate: acceptance is disabled once the quote's validity
+    // window has passed — issue a revised quote (new quote_version) instead.
+    const expirationDate = quoteExpirationDate(estimate.quote_issue_date, estimate.quote_valid_days ?? 30);
+    if (expirationDate && expirationDate < new Date().toISOString().slice(0, 10)) {
+      return Response.json({ error: 'This quote is expired. Issue a revised quote before recording acceptance.' }, { status: 409 });
+    }
     // accepted_by fallback: when the caller omits the name, resolve it from the
     // estimate's customer contact (first+last, then order_contact/contact_name).
     const resolvedByName = acceptedByName
