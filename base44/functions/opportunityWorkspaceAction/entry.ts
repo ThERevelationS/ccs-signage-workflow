@@ -1330,14 +1330,19 @@ Deno.serve(async (req) => {
       const customerId = clean(body?.customer_id);
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const [contacts, locations, opportunities, invoices, workOrders, payments] = await Promise.all([
+      const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = await Promise.all([
         CustomerContact.filter({ customer_id: customerId }).catch(() => []),
         CustomerLocation.filter({ customer_id: customerId }).catch(() => []),
         Opportunity.filter({ customer_id: customerId }).catch(() => []),
         Invoice.filter({ customer_id: customerId }).catch(() => []),
         WorkOrder.filter({ customer_id: customerId }).catch(() => []),
         Payment.filter({ customer_id: customerId }).catch(() => []),
+        Estimate.filter({ customer_id: customerId }).catch(() => []),
       ]);
+      const custEstimates = (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true)
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const estimateStatusCounts: any = {};
+      for (const e of custEstimates) { const st = clean(e?.status) || "draft"; estimateStatusCounts[st] = (estimateStatusCounts[st] || 0) + 1; }
       const inv = Array.isArray(invoices) ? invoices : [];
       const liveInvoices = inv.filter((i: any) => !["draft", "void"].includes(clean(i?.status)));
       const opps = (Array.isArray(opportunities) ? opportunities : [])
