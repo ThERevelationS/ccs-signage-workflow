@@ -1,9 +1,30 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ArrowDown, ArrowUp, ArrowUpDown, Edit, Trash2, Package } from "lucide-react";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { findInventoryEstimateUsage } from "./inventoryPersistence";
+
+// Lazily resolves how many estimates consume this item's inventory row via
+// BuilderPart → BuilderProduct joins. Renders nothing until usage is confirmed.
+function UsageBadge({ itemId }) {
+  const [usage, setUsage] = useState(null);
+  useEffect(() => {
+    let active = true;
+    findInventoryEstimateUsage(itemId)
+      .then((u) => { if (active && u?.estimates > 0) setUsage(u); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [itemId]);
+  if (!usage) return null;
+  return (
+    <span className="ml-1.5 inline-flex items-center rounded bg-sky-100 px-1 py-0.5 text-[9px] font-semibold text-sky-800 align-middle"
+      title={`Used in ${usage.estimates} estimate${usage.estimates === 1 ? "" : "s"} across ${usage.products} product${usage.products === 1 ? "" : "s"}`}>
+      {usage.estimates} est
+    </span>
+  );
+}
 
 const formatCell = (val, field) => {
   if (val === null || val === undefined || val === "") return "—";
@@ -119,7 +140,7 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
               {tableFields.map((f, idx) => (
                 <td key={f.name} className="px-2 py-3 align-top">
                   {idx === 0 ? (
-                    <span className="font-medium text-slate-900">{formatCell(item[f.name], f)}</span>
+                    <span className="font-medium text-slate-900">{formatCell(item[f.name], f)}<UsageBadge itemId={item.id} /></span>
                   ) : f.type === "boolean" ? (
                     canEdit ? (
                       <Switch
