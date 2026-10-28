@@ -156,6 +156,9 @@ export default function QuoteSettings() {
             <TextField label="Lead time" value={form.lead_time_text} onChange={(value) => patch({ lead_time_text: value })} wide />
             <TextField label="Footer text" value={form.quote_footer_text} onChange={(value) => patch({ quote_footer_text: value })} textarea wide />
             <TextField label="Email signature" value={form.email_signature} onChange={(value) => patch({ email_signature: value })} textarea wide />
+            <TextField label="Email subject template" value={form.email_subject_template} onChange={(value) => patch({ email_subject_template: value })} wide />
+            <TextField label="Email body template" value={form.email_message_template} onChange={(value) => patch({ email_message_template: value })} textarea wide />
+            <p className="text-[10px] text-gray-400 -mt-1">Placeholders: {estimate_number} {project_name} {client_name} {contact_name} {company_name} {quote_total} {quote_valid_until}</p>
           </SettingsSection>
         </div>
 
