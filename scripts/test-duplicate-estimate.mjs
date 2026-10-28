@@ -15,7 +15,7 @@ buildSync({
   bundle: true, format: 'esm', outfile: bundlePath, logLevel: 'silent',
   alias: { '@/api/base44Client': stub },
 });
-const { buildDuplicateEstimate } = await import(pathToFileURL(bundlePath).href);
+const { buildDuplicateEstimate, buildSplitEstimate, splitEstimate } = await import(pathToFileURL(bundlePath).href);
 
 const source = {
   id: 'est-1',
@@ -62,7 +62,36 @@ assert.equal(clone.discount_percent, 5);
 const c2 = buildDuplicateEstimate({ ...source, _server: { x: 1 }, _row: { y: 2 } });
 assert.equal(c2._server, undefined); assert.equal(c2._row, undefined);
 
+const splitSource = {
+  ...source,
+  line_items: [
+    { line_id: 'line-1', id: 'different-id', client_product_name: 'Letters' },
+    { builder_product_id: 'builder-2' },
+    { project_id: 'project-3' },
+    { client_product_name: 'Legacy line' },
+  ],
+};
+const beforeSplit = JSON.stringify(splitSource);
+for (const [index, key] of ['line-1', 'builder-2', 'project-3', 'i3'].entries()) {
+  const split = buildSplitEstimate(splitSource, { lineItemIds: [key] });
+  assert.deepEqual(split.line_items, [splitSource.line_items[index]]);
+  assert.equal(split.status, 'draft');
+  assert.equal(split.estimate_number, '');
+  assert.equal(split.split_from_estimate_id, source.id);
+}
+assert.equal(JSON.stringify(splitSource), beforeSplit, 'split leaves the source unchanged');
+assert.throws(() => buildSplitEstimate(splitSource, { lineItemIds: ['missing'] }), /Reload/);
+assert.throws(() => buildSplitEstimate(splitSource), /Reload/);
+assert.throws(() => buildSplitEstimate({
+  ...source, line_items: [{ line_id: 'same' }, { line_id: 'same' }],
+}, { lineItemIds: ['same'] }), /ambiguous/);
+await assert.rejects(
+  splitEstimate({ source: splitSource, lineItemIds: ['missing'], sessionToken: 'synthetic' }),
+  /Reload/,
+  'invalid selection must fail before calling the creation API',
+);
+
 rmSync(stub, { force: true });
 rmSync(bundlePath, { force: true });
-console.log('PASS duplicate estimate builder (24 cases)');
+console.log('PASS duplicate estimate builder and split selection regression cases');
 process.exit(0);
