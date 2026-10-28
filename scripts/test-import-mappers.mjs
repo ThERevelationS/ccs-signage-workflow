@@ -18,7 +18,7 @@ const out = resolve(here, '.tmp-import-mappers.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/masterInventory/importMappers.jsx')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
-  alias: { '@/entities/all': stub },
+  alias: { '@/entities/all': stub, '@/api/gatedEntities': stub },
 });
 const { nameKey, groupKey, detectTarget, routeRow, validateColumns } = await import(pathToFileURL(out).href);
 rmSync(stub, { force: true });
