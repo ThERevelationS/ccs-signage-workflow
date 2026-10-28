@@ -114,6 +114,11 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="text-[10px] text-gray-500">
               {isManual ? "Custom Product Part — edit directly or keep tracking its Master Inventory price." : isManualAddon ? "Independent add-on Part — not controlled by this Builder and safe from Builder recalculation." : isDetachedOverride ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
+              {isDetachedOverride && part.builder_detached_at && (
+                <div className="text-[10px] text-amber-700 mt-0.5">
+                  Detached {new Date(part.builder_detached_at).toLocaleString()}{part.builder_detached_by ? ` by ${part.builder_detached_by}` : ""}{part.builder_detached_reason ? ` — ${part.builder_detached_reason}` : ""}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1.5">
               {estimateId && (
