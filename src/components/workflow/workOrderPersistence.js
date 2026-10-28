@@ -166,6 +166,11 @@ export async function transitionWorkOrderFromLoadedSnapshot({
   if (typeof completed === "boolean") {
     expectedFields.completed = workOrder.completed;
     nextFields.completed = completed;
+  } else if (workOrder.completed === true && stage !== "completed") {
+    // Reopen: a stage move away from "completed" must not leave a stale
+    // completed flag on the record when the caller did not pass one.
+    expectedFields.completed = true;
+    nextFields.completed = false;
   }
 
   if (normalizeLegacyNotes && typeof workOrder.notes === "string" && workOrder.notes.trim()) {
