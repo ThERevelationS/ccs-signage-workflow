@@ -273,6 +273,17 @@ export default function EstimatorQueues() {
             <div className="px-4 py-10 text-center text-sm text-gray-500">Nothing in this queue.</div>
           ) : (
             <div className="divide-y divide-gray-100">
+              {selectedIds.size > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-red-50/60 border-b border-red-100">
+                  <span className="text-[11px] font-bold text-red-700">{selectedIds.size} selected</span>
+                  <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="h-7 rounded border border-gray-300 bg-white px-2 text-[11px] font-semibold text-gray-700">
+                    {["draft", "calculated", "sent", "approved", "archived"].map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applying…" : "Apply status"}</button>
+                  <button type="button" onClick={() => setSelectedIds(new Set())} className="h-7 px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-red-300">Clear</button>
+                  {bulkError && <span className="text-[10px] text-red-600">{bulkError}</span>}
+                </div>
+              )}
               {rows.map((e) => {
                 const expires = expiryOf(e);
                 const expired = expires && expires < today();
