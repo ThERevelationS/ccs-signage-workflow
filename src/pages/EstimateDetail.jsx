@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -114,6 +114,7 @@ export default function EstimateDetail() {
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   const [trashing, setTrashing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const copyingRef = useRef(false);
   const copyAttemptRef = useRef(null);
   const copyCreationKey = (kind, lineIds = []) => {
@@ -369,6 +370,18 @@ export default function EstimateDetail() {
     serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
     setReconciliationWarnings(warnings);
+  };
+
+  const repriceAllProducts = async () => {
+    if (readOnly || saving || trashing || duplicating || copyingRef.current || refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshProducts();
+    } catch (error) {
+      window.alert(error?.message || "Products could not be repriced. Reload the estimate before trying again.");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const removeLine = async (index) => {
@@ -1341,6 +1354,17 @@ export default function EstimateDetail() {
                     title="Open 30-day estimator clipboard"
                   >
                     <ClipboardPaste className="w-3.5 h-3.5 text-gray-500" /> Clipboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={repriceAllProducts}
+                    disabled={readOnly || saving || trashing || duplicating || refreshing}
+                    aria-label="Reprice all products against current Master Inventory"
+                    title="Re-run current live pricing across every Product in this estimate"
+                    className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${refreshing ? "animate-spin" : ""}`} />
+                    {refreshing ? "Repricing…" : "Reprice products"}
                   </button>
                   {!readOnly && <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />}
                 </div>
