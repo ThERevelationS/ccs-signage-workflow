@@ -7,7 +7,7 @@ import NewCustomerDialog from "./NewCustomerDialog";
 const Row = ({ label, hint, children }) => (
   <div className="flex items-center gap-2 mb-2">
     <label className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
-      {label}: {hint && <span className="text-blue-500">ⓘ</span>}
+      {label}: {hint && <span className="text-blue-500">â“˜</span>}
     </label>
     <div className="flex-1 flex items-center gap-1">{children}</div>
   </div>
@@ -204,11 +204,11 @@ export default function Step1EstimateDetails({
       <div className="bg-white border border-gray-200 rounded-md px-4 py-2 flex items-center justify-between mb-1">
         <h2 className="text-[13px] font-bold text-gray-800">Step 1: Estimate Details</h2>
         <button className="h-[26px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800">
-          Next Step →
+          Next Step â†’
         </button>
       </div>
       <div className="text-right text-[11px] italic text-slate-500 mb-2">
-        Entered by: {enteredBy || "—"}
+        Entered by: {enteredBy || "â€”"}
       </div>
 
       <div className="bg-slate-100 border border-slate-300 rounded-sm p-4 mb-3 max-w-4xl">
@@ -243,7 +243,7 @@ export default function Step1EstimateDetails({
           </button>
           {linkedCustomer?.credit_hold === true && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 border border-red-200">
-              CREDIT HOLD — new work needs a deposit or manager override
+              CREDIT HOLD â€” new work needs a deposit or manager override
             </span>
           )}
         </Row>
@@ -334,7 +334,7 @@ export default function Step1EstimateDetails({
                 title="Fill contact fields from a saved customer contact"
                 className={pickerCls}
               >
-                <option value="">Saved…</option>
+                <option value="">Savedâ€¦</option>
                 {contactOptions.map((c) => (
                   <option key={c.key} value={c.key}>
                     {c.label}
@@ -377,7 +377,7 @@ export default function Step1EstimateDetails({
                 title="Fill site address from a saved customer location"
                 className={pickerCls}
               >
-                <option value="">Saved…</option>
+                <option value="">Savedâ€¦</option>
                 {locationOptions.map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.label}
@@ -447,6 +447,15 @@ export default function Step1EstimateDetails({
           <p className="text-[10px] text-gray-400 text-center mt-1">
             Tax applied to this estimate: {Number(form.tax_percent || 0)}%
           </p>
+          <label className="mt-1 flex items-start gap-2 text-[11px] text-slate-600">
+            <input
+              type="checkbox"
+              checked={form.round_quote_total === true}
+              onChange={(event) => patch({ round_quote_total: event.target.checked })}
+              className="mt-0.5 accent-lime-600"
+            />
+            <span>Round the quote total to the nearest whole dollar</span>
+          </label>
         </div>
       </div>
 
