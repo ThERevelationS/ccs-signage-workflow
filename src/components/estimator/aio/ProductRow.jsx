@@ -11,6 +11,8 @@ import { copyProductToClipboard } from "@/components/estimator/products/clipboar
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { addCatalogPartToProduct } from "@/components/estimator/parts/customProductService";
 import { pendingBuilderMutationIsStale } from "@/components/estimator/builder/builderMutationRecovery";
+import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -145,6 +147,22 @@ export default function ProductRow({
   const pendingPriceAcceptance = line.price_acceptance_pending?.key ? line.price_acceptance_pending : null;
   const priceAcceptancePending = !!pendingPriceAcceptance;
   const pendingStale = pendingBuilderMutationIsStale(line);
+  const [costTrend, setCostTrend] = useState(null);
+  const loadCostTrend = async () => {
+    if (costTrend !== null || !line.builder_product_id) return;
+    try {
+      const rows = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: "revision_number", label: "Product cost trend" });
+      setCostTrend((rows || []).map((row) => Number(row.new_total_cost ?? row.total_cost ?? row.new_customer_price ?? 0)).filter((v) => Number.isFinite(v)));
+    } catch {
+      setCostTrend([]);
+    }
+  };
+  const sparkPoints = (() => {
+    if (!costTrend || costTrend.length < 2) return "";
+    const min = Math.min(...costTrend), max = Math.max(...costTrend), span = max - min || 1;
+    const w = 56, h = 14;
+    return costTrend.map((v, i) => `${((i / (costTrend.length - 1)) * w).toFixed(1)},${(h - ((v - min) / span) * h).toFixed(1)}`).join(" ");
+  })();
   const pendingPriceLabel = pendingPriceAcceptance?.kind === "builder_initial_freeze"
     ? "Resume Initial Price"
     : pendingPriceAcceptance?.kind === "builder_detach_override"
@@ -277,11 +295,16 @@ export default function ProductRow({
               </div>
             )}
           </div>
-          <div className="min-w-0 text-right">
+          <div className="min-w-0 text-right" onMouseEnter={loadCostTrend} onFocus={loadCostTrend}>
             <div className="text-[8px] leading-none font-extrabold tracking-wider text-gray-400 mb-1">TOTAL</div>
             <div className="h-[28px] px-2 rounded-sm border border-gray-200 bg-gray-50 flex items-center justify-end text-[12px] font-bold tabular-nums text-gray-900">
               {money(amount)}
             </div>
+            {sparkPoints && (
+              <svg width="56" height="14" viewBox="0 0 56 14" className="ml-auto mt-0.5" role="img" aria-label={`Part cost history across ${costTrend.length} revisions`} title={`Cost history (${costTrend.length} revisions): ${money(costTrend[0])} → ${money(costTrend[costTrend.length - 1])}`}>
+                <polyline points={sparkPoints} fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+              </svg>
+            )}
             <div className="text-[8px] leading-3 text-gray-400 mt-0.5 whitespace-nowrap">
               {Number(line.adjustment_percent || 0) !== 0 ? `${Number(line.adjustment_percent || 0) > 0 ? "+" : ""}${Number(line.adjustment_percent || 0)}% adj · ` : ""}
               {percentOfTotal != null ? `${percentOfTotal.toFixed(0)}% of estimate` : ""}
