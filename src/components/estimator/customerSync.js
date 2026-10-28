@@ -222,6 +222,11 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: estimate.quote_total || 0,
+    // Attachment carry-over: handoff refs on the estimate follow the job into
+    // the pipeline; an existing WO list is preserved when the estimate has none.
+    attachment_refs: Array.isArray(estimate.attachment_refs) && estimate.attachment_refs.length
+      ? estimate.attachment_refs
+      : existing?.attachment_refs || [],
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
     // Estimate approval advances the job into production — but only from the
     // estimating stage so a manual later-stage move is never rewound.
