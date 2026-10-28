@@ -64,6 +64,8 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
     builder_product_id: builderProductId || livePart.builder_product_id || "",
     meta,
   })}`;
+  const familyKey = templateFamilyKey({ templateType: "part", sourceId: livePart.id, meta });
+  const templateVersion = await resolveTemplateVersion({ familyKey, idempotencyKey });
   return ensureReusableRecord({
     entity: staffEntities.PartTemplate,
     idempotencyKey,
@@ -128,6 +130,8 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
     builder_product_id: builderProductId || liveGroup.builder_product_id || "",
     meta,
   })}`;
+  const familyKey = templateFamilyKey({ templateType: "part_group", sourceId: liveGroup.id, meta });
+  const templateVersion = await resolveTemplateVersion({ familyKey, idempotencyKey });
   return ensureReusableRecord({
     entity: staffEntities.PartTemplate,
     idempotencyKey,
