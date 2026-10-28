@@ -299,7 +299,7 @@ Deno.serve(async (req) => {
         Invoice.filter({ customer_id: customerId }).catch(() => []),
         Payment.filter({ customer_id: customerId }).catch(() => []),
         loadCustomerThread(PortalMessage, customerId, true),
-        loadPortalAnnouncements(),
+        loadPortalAnnouncements(customerId),
       ]);
       const invoiceList = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const paidByInvoice = new Map();
