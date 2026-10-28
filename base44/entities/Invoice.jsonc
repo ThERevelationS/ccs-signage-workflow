@@ -114,6 +114,10 @@
       "type": "number",
       "default": 0
     },
+    "pay_url": {
+      "type": "string",
+      "description": "Online payment link for this invoice (Stripe-integration-ready placeholder \u2014 populated when a payment provider is wired)."
+    },
     "amount_paid": {
       "type": "number",
       "default": 0,
