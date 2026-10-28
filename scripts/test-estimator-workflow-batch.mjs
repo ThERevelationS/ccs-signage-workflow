@@ -267,6 +267,15 @@ try {
     assert.match(detail, /disabled=\{readOnly \|\| saving \|\| trashing \|\| duplicating \|\| refreshing\}/, 'button disables while busy');
     assert.match(detail, /refreshing \? "animate-spin"/, 'button shows progress');
   });
+  await test('builder parts panel search filters visible parts', () => {
+    const panel = readFileSync(resolve(here, '../src/components/estimator/aio/BuilderPartsPanel.jsx'), 'utf8');
+    assert.match(panel, /parts\.length > 10 && \(/, 'search only renders for long part lists');
+    assert.match(panel, /partSearch\.trim\(\)\.toLowerCase\(\)/, 'search normalizes case and whitespace');
+    assert.match(panel, /part\.part_name, part\.client_label, part\.inventory_item_name/, 'search matches name, label, and inventory link');
+    assert.match(panel, /visibleParts\.forEach/, 'filtered parts drive grouped and ungrouped renders');
+    assert.match(panel, /aria-label="Search parts in this product"/, 'search input is accessible');
+    assert.match(panel, /No Parts match/, 'empty match state is shown');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
