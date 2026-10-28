@@ -180,7 +180,10 @@ export default function EstimateDetail() {
   };
 
   const handleSplit = async (lineIds) => {
-    if (copyingRef.current || saving || trashing || !estimate?.id || !lineIds?.length || estimate.deleted === true) return false;
+    if (!estimate?.id || !lineIds?.length) return false;
+    if (copyingRef.current) throw new Error("An estimate copy is already being created. Please wait.");
+    if (saving || trashing) throw new Error("Wait for the current estimate operation to finish before splitting.");
+    if (estimate.deleted === true) throw new Error("Restore this estimate from Trash before splitting it.");
     if (openRevision) throw new Error("Save the open estimate revision before splitting this estimate.");
     copyingRef.current = true;
     setDuplicating(true);
