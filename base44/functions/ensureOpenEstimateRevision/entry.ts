@@ -99,7 +99,13 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
+    // Revision writes were gated solely on the custom session token, which left
+    // the audit trail empty when callers ran under plain request-context auth.
+    // Fall back to auth.me() so either auth path unblocks the write.
+    let actor = null;
+    try { actor = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { actor = await base44.auth.me().catch(() => null); }
+    if (!actor?.id && !actor?.email) return Response.json({ error: 'Authentication required.' }, { status: 401 });
     const estimateId = String(body?.estimate_id || '').trim();
     const expectedUpdatedDate = String(body?.expected_estimate_updated_date || '').trim();
     const reason = String(body?.reason || '').trim();
