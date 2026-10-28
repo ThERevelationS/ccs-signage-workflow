@@ -221,7 +221,7 @@ function LineItemEditor({ items, onChange }) {
 
 function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
   const editing = Boolean(invoice?.id);
-  const [customer, setCustomer] = useState(invoice ? { id: invoice.customer_id, company_name: invoice.customer_display_name } : null);
+  const [customer, setCustomer] = useState(invoice ? { id: invoice.customer_id, company_name: invoice.customer_display_name || invoice.customer_name || "" } : null);
   const [items, setItems] = useState(
     (invoice?.line_items || []).map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_price: r.unit_price ?? "", taxable: r.taxable === true }))
       .length ? invoice.line_items.map((r) => ({ description: r.description || "", quantity: r.quantity ?? 1, unit_price: r.unit_price ?? "", taxable: r.taxable === true }))
@@ -416,7 +416,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{inv.invoice_number}</h2>
                   <StatusBadge status={inv.status} />
                 </div>
-                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{inv.customer_display_name}</div>
+                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{inv.customer_display_name || inv.customer_name || inv.customer_id || "Unknown customer"}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
                   {inv.issue_date ? `Issued ${inv.issue_date}` : "Not issued"}{inv.due_date ? ` · Due ${inv.due_date}` : ""}{inv.terms ? ` · ${inv.terms}` : ""}
                 </div>
@@ -947,7 +947,7 @@ export default function Invoices() {
                     ) : null}
                   </td>
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
-                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name}</td>
+                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name || inv.customer_name || inv.customer_id || "Unknown customer"}</td>
                   <td className="px-4 py-2.5 text-slate-500">
                     {inv.due_date || "—"}
                     {overdue && <span className="ml-1.5 inline-flex rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>}
