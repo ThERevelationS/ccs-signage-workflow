@@ -133,7 +133,7 @@ export default function AttentionFeed() {
       items: (feed.open_estimating_requests || []).slice(0, 6).map((r) => ({
         id: r.id,
         primary: `${r.request_number || "Request"}${r.opportunity_title ? ` · ${r.opportunity_title}` : ""}`,
-        secondary: `${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : " · unassigned"}`,
+        secondary: `${r.overdue ? `OVERDUE ${r.due_date} · ` : ""}${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : " · unassigned"}`,
         href: r.opportunity_id ? `/Opportunities?open=${r.opportunity_id}` : "/Opportunities",
       })),
     },
