@@ -699,6 +699,10 @@ Deno.serve(async (req) => {
       const today = new Date().toISOString().slice(0, 10);
       const total = open.reduce((s: number, i: any) => s + num(i?.balance_due), 0);
       const overdue = open.filter((i: any) => clean(i?.due_date) && clean(i?.due_date) < today);
+      // Estimate-level subtotals: resolve the linked estimate for each open
+      // invoice so the statement shows quote context, not just invoice numbers.
+      const stmtEstimates = await Estimate.filter({ customer_id: cid }).catch(() => []);
+      const estById = new Map((Array.isArray(stmtEstimates) ? stmtEstimates : []).map((e: any) => [clean(e?.id), e]));
 
       const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
       const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
@@ -735,7 +739,9 @@ Deno.serve(async (req) => {
       const custName = clean(customer.company_name) || clean(customer.name) || "Customer";
       const stmtRows = open.map((i: any) => {
         const past = clean(i?.due_date) && clean(i?.due_date) < today;
-        return `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.invoice_number) || "Invoice"}${past ? ' <span style="color:#b91c1c;font-size:11px;font-weight:700">PAST DUE</span>' : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.due_date) || "—"}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(i?.balance_due)}</td></tr>`;
+        const est = estById.get(clean(i?.estimate_id));
+        const estLabel = est ? `${clean(est?.estimate_number) || "Estimate"} (${money(est?.quote_total)})` : "";
+        return `<tr><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.invoice_number) || "Invoice"}${past ? ' <span style="color:#b91c1c;font-size:11px;font-weight:700">PAST DUE</span>' : ""}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${estLabel}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0">${clean(i?.due_date) || "—"}</td><td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right">${money(i?.balance_due)}</td></tr>`;
       }).join("");
       const subject = `${companyName} — Account statement for ${custName} (${money(total)} open)`;
       const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;color:#1e293b">
@@ -743,7 +749,7 @@ Deno.serve(async (req) => {
         <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName}</h2>
         <p style="margin-top:0;color:#64748b;font-size:13px">Account statement for ${custName} · as of ${today}</p>
         <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">
-          <tr><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">INVOICE</th><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">DUE</th><th style="text-align:right;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">BALANCE</th></tr>
+          <tr><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">INVOICE</th><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">ESTIMATE</th><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">DUE</th><th style="text-align:right;padding:6px 10px;border-bottom:2px solid #cbd5e1;color:#64748b;font-size:12px">BALANCE</th></tr>
           ${stmtRows}
         </table>
         <table style="width:100%;font-size:14px;margin-top:8px">
