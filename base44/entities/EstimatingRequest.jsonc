@@ -176,6 +176,11 @@
     },
     "cancel_reason": {
       "type": "string"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional estimate-request due date; the attention feed flags open requests past this date as overdue."
     }
   },
   "required": [
