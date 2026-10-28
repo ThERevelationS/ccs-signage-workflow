@@ -225,6 +225,11 @@ Deno.serve(async (req) => {
       source_status: cleanText(input.source_status, 64),
     };
 
+    // Per-version delivery counter — 1 for the first send of this quote issue,
+    // then 2, 3... on resends so the audit reads 'sent 3 times' not just 'resent'.
+    const prior = await Delivery.filter({ quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion) }).catch(() => []);
+    normalized.delivery_n = (Array.isArray(prior) ? prior.filter((r: any) => r?.deleted !== true).length : 0) + 1;
+
     let rows = await Delivery.filter({ idempotency_key: idempotencyKey });
     if (!Array.isArray(rows)) throw new Error('Quote delivery audit lookup did not return a delivery list.');
     if (!rows.length) {
