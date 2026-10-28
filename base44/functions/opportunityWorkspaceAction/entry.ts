@@ -1301,6 +1301,15 @@ Deno.serve(async (req) => {
           nextFields: { status: "in_progress", estimate_id: clean(estimate.id) },
           label: "Estimating Request estimate link",
         });
+        await logActivity(Activity, {
+          opportunity_id: opportunityId, actor,
+          event_type: "estimate_attached",
+          summary: `Estimate attached — ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
+          details: {
+            estimating_request_id: clean(request?.id),
+            estimate_id: clean(estimate?.id),
+          },
+        });
       }
 
       const opportunityDesired: any = {
