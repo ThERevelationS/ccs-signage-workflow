@@ -337,6 +337,15 @@
       "format": "date-time",
       "description": "UTC timestamp of the cancellation. The cancelling actor is recorded on the lifecycle EstimateRevision."
     },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp the estimate was archived."
+    },
+    "archived_reason": {
+      "type": "string",
+      "description": "Optional reason for archiving (e.g. lost, superseded, test, merged)."
+    },
     "line_items": {
       "type": "array",
       "description": "Estimate sections. Totals are refreshed from the source projects whenever the estimate is opened, and in real time while it is open.",
