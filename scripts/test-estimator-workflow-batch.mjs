@@ -257,6 +257,16 @@ try {
     const panel = readFileSync(resolve(here, '../src/components/estimator/CustomerQuotePanel.jsx'), 'utf8');
     assert.match(panel, /emailEstimate = \{ \.\.\.estimate, quote_total: quoteTotalNow \}/);
   });
+  await test('reprice-all-products action is guarded and wired to refreshProducts', () => {
+    const detail = readFileSync(resolve(here, '../src/pages/EstimateDetail.jsx'), 'utf8');
+    assert.match(detail, /const repriceAllProducts = async \(\) => \{/, 'manual reprice handler exists');
+    assert.match(detail, /if \(readOnly \|\| saving \|\| trashing \|\| duplicating \|\| copyingRef\.current \|\| refreshing\) return;/, 'reprice blocks during read-only and estimate operations');
+    assert.match(detail, /await refreshProducts\(\);/, 'reprice runs the full product pricing refresh');
+    assert.match(detail, /onClick=\{repriceAllProducts\}/, 'toolbar button triggers the reprice');
+    assert.match(detail, /aria-label="Reprice all products against current Master Inventory"/, 'button has an accessible label');
+    assert.match(detail, /disabled=\{readOnly \|\| saving \|\| trashing \|\| duplicating \|\| refreshing\}/, 'button disables while busy');
+    assert.match(detail, /refreshing \? "animate-spin"/, 'button shows progress');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
