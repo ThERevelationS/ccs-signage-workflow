@@ -445,6 +445,23 @@ Deno.serve(async (req) => {
       // keyed on the estimate lifecycle (draft -> calculated -> sent -> approved)
       // so the dashboard can show quote-side conversion separately from pipeline.
       const estimateRows = await Estimate.filter({}, "-created_date", 500).catch(() => []);
+      const requestRows = await EstimatingRequest.filter({}, "-created_date", 500).catch(() => []);
+      const thirtyDaysAgo = Date.now() - 30 * 86400000;
+      const staleRequests = (Array.isArray(requestRows) ? requestRows : []).filter((r: any) => {
+        const ts = Date.parse(clean(r?.created_date));
+        return Number.isFinite(ts) && ts < thirtyDaysAgo;
+      });
+      const requestIdsWithEstimate = new Set(
+        (Array.isArray(estimateRows) ? estimateRows : [])
+          .map((e: any) => clean(e?.estimating_request_id))
+          .filter(Boolean)
+      );
+      const staleConverted = staleRequests.filter((r: any) => requestIdsWithEstimate.has(clean(r?.id)));
+      const requestConversion = {
+        total_requests_30d: staleRequests.length,
+        converted: staleConverted.length,
+        conversion_rate: staleRequests.length > 0 ? Math.round((staleConverted.length / staleRequests.length) * 1000) / 10 : null,
+      };
       const estimateStatusCounts: any = {};
       let estimateWonCount = 0;
       let estimateDecidedCount = 0;
@@ -516,6 +533,7 @@ Deno.serve(async (req) => {
         lost_reasons: Object.values(estimateLostReasonMap).map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 })).sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value).slice(0, 10),
         markup_usage: markupUsage,
         avg_part_cost_ratio: partCostRatioCount > 0 ? Math.round((partCostRatioSum / partCostRatioCount) * 1000) / 10 : null,
+        request_conversion: requestConversion,
       };
       const funnel = {
         estimate_funnel: estimateFunnel,
