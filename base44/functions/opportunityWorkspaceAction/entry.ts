@@ -455,6 +455,7 @@ Deno.serve(async (req) => {
       let estimateMarginTotal = 0;
       const agingBuckets: any = { expired: 0, expiring_7d: 0, valid_14d: 0, valid_30d: 0, valid_30d_plus: 0 };
       const agingRows: any[] = [];
+      const estimateBySalesperson: any = {};
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
         if (row?.deleted === true) continue;
         const status = clean(row?.status) || "draft";
@@ -469,6 +470,11 @@ Deno.serve(async (req) => {
           agingBuckets[bucket] += 1;
           if (days != null && days <= 14) agingRows.push({ id: clean(row?.id), estimate_number: clean(row?.estimate_number), project_name: clean(row?.project_name), client_name: clean(row?.client_name), quote_total: total, quote_valid_until: until, days_to_expiry: days, expired: days < 0 });
         }
+        const rep = clean(row?.salesperson) || "Unassigned";
+        const slot = estimateBySalesperson[rep] || (estimateBySalesperson[rep] = { salesperson: rep, count: 0, quote_value: 0, won_count: 0 });
+        slot.count += 1;
+        slot.quote_value += total;
+        if (status === "approved") slot.won_count += 1;
         const internal = num(row?.total_cost);
         if (total > 0 && internal > 0) {
           estimateMarginSum += (total - internal) / total;
@@ -488,6 +494,7 @@ Deno.serve(async (req) => {
         total_margin: Math.round(estimateMarginTotal * 100) / 100,
         aging_buckets: agingBuckets,
         aging_rows: agingRows.sort((a: any, b: any) => a.days_to_expiry - b.days_to_expiry).slice(0, 15),
+        by_salesperson: Object.values(estimateBySalesperson).map((s: any) => ({ ...s, avg_quote_value: s.count > 0 ? Math.round((s.quote_value / s.count) * 100) / 100 : 0 })).sort((a: any, b: any) => b.quote_value - a.quote_value).slice(0, 12),
       };
       const funnel = {
         estimate_funnel: estimateFunnel,
