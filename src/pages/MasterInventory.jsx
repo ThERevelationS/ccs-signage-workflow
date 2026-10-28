@@ -16,7 +16,7 @@ import MasterExtrudedMetalsPolesTab from "@/components/masterInventory/MasterExt
 import MasterConcreteStoneTab from "@/components/masterInventory/MasterConcreteStoneTab";
 import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
-import { deleteInventoryRecordIfUnchanged } from "@/components/masterInventory/inventoryPersistence";
+import { deleteInventoryRecordIfUnchanged, findInventoryPartReferences } from "@/components/masterInventory/inventoryPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function MasterInventory() {
@@ -127,6 +127,11 @@ export default function MasterInventory() {
       return;
     }
     try {
+      const refs = await findInventoryPartReferences(item.id);
+      if (refs.count > 0) {
+        alert(`"${label}" is used by ${refs.count} estimate Part${refs.count === 1 ? "" : "s"} (${refs.names.join(", ")}${refs.count > 5 ? ", …" : ""}). Detach or remove those Parts before deleting this item.`);
+        return;
+      }
       await deleteInventoryRecordIfUnchanged({
         entity: activeSource.entity,
         record: item,
