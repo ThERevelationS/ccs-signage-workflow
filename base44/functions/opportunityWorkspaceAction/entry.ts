@@ -1286,6 +1286,7 @@ Deno.serve(async (req) => {
         customer_id: clean(customer?.id || opportunity.customer_id) || null,
         opportunity_id: opportunityId,
         estimating_request_id: clean(request.id),
+        priority: clean(request?.priority) || "normal",
         salesperson: clean(opportunity.salesperson),
         site_address: clean(snapshot.captured_site_address),
         contact_name: clean(snapshot.captured_contact_name),
