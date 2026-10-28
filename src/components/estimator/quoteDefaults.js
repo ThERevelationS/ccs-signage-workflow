@@ -18,6 +18,7 @@ export const DEFAULT_QUOTE_SETTINGS = {
   quote_title: "Project Estimate",
   quote_accent_color: "#4f46e5",
   quote_valid_days: 30,
+  email_signature: "",
   payment_terms: "",
   quote_intro_text: "",
   quote_footer_text: "",
