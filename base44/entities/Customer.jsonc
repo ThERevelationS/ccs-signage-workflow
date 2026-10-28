@@ -48,6 +48,13 @@
       "default": "prospect",
       "description": "Account status shown in the customer header."
     },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Freeform customer labels (e.g. wholesale, repeat, VIP) \u2014 filterable on the customer list."
+    },
     "contact_first_name": {
       "type": "string"
     },
@@ -260,9 +267,25 @@
     "company_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__customer_backend_only__" } },
-    "read": { "user_condition": { "role": "__customer_backend_only__" } },
-    "update": { "user_condition": { "role": "__customer_backend_only__" } },
-    "delete": { "user_condition": { "role": "__customer_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    }
   }
 }
