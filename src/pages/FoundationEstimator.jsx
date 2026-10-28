@@ -286,6 +286,17 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     total_wall_cap_cost: calc.totals.total_wall_cap_cost,
   });
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
   const handleSave = async () => {
     setSaving(true);
     try {
