@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, ArrowLeft, Wrench, FileText, ListChecks, HardHat, Calculator, MapPin, Package, ClipboardCheck, TrendingUp } from "lucide-react";
 import ServiceItemRow from "@/components/signMaintenance/ServiceItemRow";
@@ -273,7 +274,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   if (loading) {
     return (
       <div className="p-6 md:p-8 bg-slate-50 min-h-screen flex items-center justify-center">
-        <p className="text-slate-600">Loading…</p>
+        <p className="text-slate-600">Loadingâ€¦</p>
       </div>
     );
   }
@@ -346,7 +347,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                           </div>
                           <div>
                             <Label>Project Name *</Label>
-                            <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} placeholder="e.g. Main St Sign — Annual Service" className="mt-1" />
+                            <Input value={project.project_name} onChange={(e) => updateProject({ project_name: e.target.value })} placeholder="e.g. Main St Sign â€” Annual Service" className="mt-1" />
                           </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
@@ -356,7 +357,20 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                           </div>
                           <div>
                             <Label>Project Link <span className="text-xs font-normal text-slate-400">(optional)</span></Label>
-                            <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://…" className="mt-1" />
+                            <Input value={project.hyperlink} onChange={(e) => updateProject({ hyperlink: e.target.value })} placeholder="https://â€¦" className="mt-1" />
+                          </div>
+                          <div>
+                            <Label>Service interval</Label>
+                            <Select value={String(project.service_interval_months ?? 0)} onValueChange={(v) => updateProject({ service_interval_months: Number(v) })}>
+                              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="0">One-time service</SelectItem>
+                                <SelectItem value="3">Repeat every 3 months</SelectItem>
+                                <SelectItem value="6">Repeat every 6 months</SelectItem>
+                                <SelectItem value="12">Repeat every 12 months</SelectItem>
+                                <SelectItem value="24">Repeat every 24 months</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       </>
@@ -364,7 +378,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
 
                     <div>
                       <Label className="text-sm font-semibold text-slate-900">Service Environment</Label>
-                      <p className="text-xs text-slate-500 mt-1 mb-2">Interior or exterior service call — drives some labor multipliers.</p>
+                      <p className="text-xs text-slate-500 mt-1 mb-2">Interior or exterior service call â€” drives some labor multipliers.</p>
                       <div className="grid grid-cols-2 gap-2 max-w-md">
                         {[
                           { value: "exterior", label: "Exterior", desc: "Outdoor signs, monuments, pylons", color: "blue" },
@@ -400,13 +414,13 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 <Card className="bg-white border-0 shadow-sm">
                   <CardHeader className="pb-3"><CardTitle className="text-lg">Notes</CardTitle></CardHeader>
                   <CardContent>
-                    <Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Service notes, customer history, special considerations…" className="h-32" />
+                    <Textarea value={project.notes} onChange={(e) => updateProject({ notes: e.target.value })} placeholder="Service notes, customer history, special considerationsâ€¦" className="h-32" />
                   </CardContent>
                 </Card>
                 )}
 
                 <div className="flex justify-end">
-                  <Button onClick={() => setActiveTab("items")} className="bg-cyan-600 hover:bg-cyan-700 text-white">Continue to Service Items →</Button>
+                  <Button onClick={() => setActiveTab("items")} className="bg-cyan-600 hover:bg-cyan-700 text-white">Continue to Service Items â†’</Button>
                 </div>
               </TabsContent>
 
@@ -577,7 +591,7 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 </div>
                 {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
                 <Button onClick={saveProject} disabled={saving} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white mt-2">
-                  {saving ? "Saving…" : (isEditing ? "Save Changes" : "Save Estimate")}
+                  {saving ? "Savingâ€¦" : (isEditing ? "Save Changes" : "Save Estimate")}
                 </Button>
               </CardContent>
             </Card>
