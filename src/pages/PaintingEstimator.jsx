@@ -142,6 +142,17 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     paint_colors: (project.items[itemIndex].paint_colors || []).filter((_, i) => i !== colorIndex),
   });
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
   const saveProject = async () => {
     if (!project?.project_name?.trim() || !project?.client_name?.trim()) {
       setError("Project name and client name are required.");
