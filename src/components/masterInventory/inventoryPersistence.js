@@ -106,3 +106,22 @@ export async function findInventoryPartReferences(recordId) {
     names: list.map((p) => p.part_name || p.part_key || "Part").slice(0, 5),
   };
 }
+
+// Usage history: resolve estimate Parts → BuilderProducts → distinct estimates
+// so inventory rows can show a "used in N estimates" badge. Sequential product
+// reads are bounded by how many products consume the item.
+export async function findInventoryEstimateUsage(recordId) {
+  const id = String(recordId || "");
+  if (!id || typeof base44?.entities?.BuilderPart?.filter !== "function" || typeof base44?.entities?.BuilderProduct?.get !== "function") {
+    throw new Error("Estimate usage could not be verified.");
+  }
+  const rows = await base44.entities.BuilderPart.filter({ inventory_item_id: id });
+  const parts = Array.isArray(rows) ? rows : [];
+  const productIds = [...new Set(parts.map((p) => p?.builder_product_id).filter(Boolean))];
+  const estimateIds = new Set();
+  for (const productId of productIds) {
+    const product = await base44.entities.BuilderProduct.get(productId).catch(() => null);
+    if (product?.estimate_id) estimateIds.add(product.estimate_id);
+  }
+  return { parts: parts.length, products: productIds.length, estimates: estimateIds.size };
+}
