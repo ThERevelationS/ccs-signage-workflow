@@ -1379,6 +1379,12 @@ Deno.serve(async (req) => {
           current_stage: clean(w?.current_stage), sales_status: clean(w?.sales_status),
           estimate_amount: num(w?.estimate_amount), created_date: clean(w?.created_date),
         })),
+        estimates: custEstimates.slice(0, 50).map((e: any) => ({
+          id: clean(e?.id), estimate_number: clean(e?.estimate_number), project_name: clean(e?.project_name),
+          status: clean(e?.status), quote_total: num(e?.quote_total), quote_version: num(e?.quote_version),
+          quote_valid_until: clean(e?.quote_valid_until || e?.quote_expiration_date), created_date: clean(e?.created_date),
+        })),
+        estimate_funnel: estimateStatusCounts,
         invoices: inv
           .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
           .slice(0, 50)
