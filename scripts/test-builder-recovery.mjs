@@ -1,14 +1,18 @@
 import assert from 'node:assert/strict';
 import { buildSync } from 'esbuild';
+import { rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, '.tmp-builder-recovery.mjs');
+const stub = resolve(here, '.tmp-builder-recovery-sdk.mjs');
+writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/builderMutationRecovery.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
   define: { 'import.meta.env': '{}' },
+  alias: { '@/api/base44Client': stub },
 });
 globalThis.window = { location: { href: 'http://test.local' }, addEventListener() {}, removeEventListener() {}, history: { replaceState() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } };
 globalThis.document = { title: '', createElement: () => ({}), querySelector: () => null };
@@ -35,6 +39,7 @@ buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/partSync.js')],
   bundle: true, format: 'esm', outfile: out2, logLevel: 'silent',
   define: { 'import.meta.env': '{}' },
+  alias: { '@/api/base44Client': stub },
 });
 const { pricingSnapshot } = await import(pathToFileURL(out2).href);
 
@@ -51,3 +56,7 @@ assert.deepEqual(pricingSnapshot(null), {}, 'null-safe');
 assert.deepEqual(pricingSnapshot({ quantity_tiers: [1, 2] }), { quantity_tiers: [1, 2] }, 'tier list kept');
 
 console.log('PASS builder recovery + pricing snapshot (14 cases)');
+rmSync(out, { force: true });
+rmSync(out2, { force: true });
+rmSync(stub, { force: true });
+process.exit(0);
