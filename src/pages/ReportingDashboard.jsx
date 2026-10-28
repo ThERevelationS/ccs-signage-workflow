@@ -340,6 +340,15 @@ export default function ReportingDashboard() {
                     )}
                   </div>
                 )}
+                {pipeline.estimate_funnel.request_conversion?.conversion_rate != null && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Request → quote (30d+)</div>
+                    <div className="text-sm">
+                      <span className="font-bold text-emerald-600">{pipeline.estimate_funnel.request_conversion.conversion_rate}%</span>
+                      <span className="text-gray-500"> — {pipeline.estimate_funnel.request_conversion.converted}/{pipeline.estimate_funnel.request_conversion.total_requests_30d} requests quoted</span>
+                    </div>
+                  </div>
+                )}
                 {pipeline.estimate_funnel.markup_usage && Object.values(pipeline.estimate_funnel.markup_usage).some((c) => c > 0) && (
                   <div className="mt-3 border-t border-gray-100 pt-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Adjustment usage</div>
