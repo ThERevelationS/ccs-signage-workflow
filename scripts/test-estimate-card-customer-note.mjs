@@ -61,6 +61,8 @@ try {
       assert.equal(tree.root.findAllByProps({ role: "tooltip" }).length, 0);
       await act(async () => { card.props.onMouseEnter(); await new Promise((resolvePromise) => setTimeout(resolvePromise, 0)); });
       const tooltip = tree.root.findByProps({ role: "tooltip" });
+      assert.equal(card.props["aria-describedby"], "estimate-estimate-a-customer-note");
+      assert.equal(tooltip.props.id, "estimate-estimate-a-customer-note");
       assert.match(tooltip.children.join(""), /Synthetic service entrance is on the north side/);
       assert.deepEqual(calls, ["customer-a"]);
     } finally {
