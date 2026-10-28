@@ -195,12 +195,36 @@ try {
       await act(async () => { tree.unmount(); });
     }
   });
+  await test('customer-location persistence requires an explicit Step 1 opt-in', async () => {
+    let optedIn;
+    let tree;
+    await act(async () => { tree = create(React.createElement(Details, {
+      form: { client_name: 'Synthetic A', customer_id: 'recent-a', site_address: '123 Synthetic Way' },
+      patch: () => {},
+      customers: [],
+      recentCustomers: [],
+      taxGroups: [], users: [], termsOptions: [], salesCenters: [],
+      saveSiteAsLocation: false,
+      onSaveSiteAsLocationChange: (value) => { optedIn = value; },
+    })); });
+    try {
+      const checkbox = tree.root.findAllByType('input').find((input) => input.props.type === 'checkbox');
+      assert.ok(checkbox, 'opt-in is visible only with a linked customer and site address');
+      assert.equal(checkbox.props.checked, false);
+      await act(async () => { checkbox.props.onChange({ target: { checked: true } }); });
+      assert.equal(optedIn, true);
+    } finally {
+      await act(async () => { tree.unmount(); });
+    }
+  });
   await test('new estimate screen wires a bounded local recent-customer preference', () => {
     const page = readFileSync(resolve(here, '../src/pages/NewAllInOneEstimate.jsx'), 'utf8');
     assert.match(page, /loadRecentCustomerIds/);
     assert.match(page, /saveRecentCustomerIds\(next\)/);
     assert.match(page, /recentCustomers=\{recentCustomers\}/);
     assert.match(page, /onCustomerSelected=\{rememberCustomer\}/);
+    assert.match(page, /saveSiteAsLocation && customer\?\.id/);
+    assert.match(page, /ensureEstimateCustomerLocation/);
   });
   for (const [name, group, expected] of [
     ['standard', { name: 'Standard', tax_percent: 7.25 }, { tax_group: 'Standard', tax_percent: 7.25 }],
