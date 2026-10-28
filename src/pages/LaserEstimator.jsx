@@ -350,6 +350,17 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     }
   }, [calculateTotals, isLoading, project.items.length]); // Added project.items.length to dependency array to trigger recalculation when items are added/removed
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!isSaving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isSaving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
