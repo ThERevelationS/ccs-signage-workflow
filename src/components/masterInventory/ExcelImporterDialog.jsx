@@ -38,6 +38,8 @@ import {
  *  - Shows a preview with counts: New / Update / Skip per category.
  *  - Idempotent: re-running the import only updates changed prices.
  */
+const IMPORT_ROW_LIMIT = 2000;
+
 export default function ExcelImporterDialog({ onClose, onComplete }) {
   const fileInputRef = useRef(null);
   const importRef = useRef(false);
@@ -49,6 +51,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState(null); // { created, updated, skipped, errors }
   const [skippedRows, setSkippedRows] = useState(0); // spreadsheet rows dropped before preview (no routable name or merged duplicates)
+  const [cappedRows, setCappedRows] = useState(0); // unique rows beyond IMPORT_ROW_LIMIT that were not loaded
 
   // ------------------------- Step 1: Pick + validate file -------------------------
 
@@ -132,8 +135,10 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       });
 
       const unique = Array.from(seen.values());
+      const capped = unique.slice(0, IMPORT_ROW_LIMIT);
       setSkippedRows(data.length - unique.length);
-      setRows(unique);
+      setCappedRows(unique.length - capped.length);
+      setRows(capped);
     } catch (err) {
       console.error("Parse error:", err);
       setRows([]);
@@ -406,6 +411,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
                     {totalCreate} new item{totalCreate === 1 ? "" : "s"} to create
                     {totalUpdate > 0 && `, ${totalUpdate} existing item${totalUpdate === 1 ? "" : "s"} to update`}
                     {skippedRows > 0 && `, ${skippedRows} spreadsheet row${skippedRows === 1 ? "" : "s"} skipped`}.
+                    {cappedRows > 0 && ` First ${IMPORT_ROW_LIMIT} rows loaded — ${cappedRows} row${cappedRows === 1 ? "" : "s"} beyond the limit were not loaded. Split the file into smaller batches to import the rest.`}
                   </p>
                 </div>
               </div>
