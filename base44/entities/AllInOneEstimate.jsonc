@@ -86,6 +86,27 @@
       "type": "string",
       "description": "Target install/completion date (YYYY-MM-DD)."
     },
+    "attachment_refs": {
+      "type": "array",
+      "description": "References to files/photos carried from the opportunity handoff (no binary copies).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "priority": {
       "type": "string",
       "enum": [
