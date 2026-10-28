@@ -57,6 +57,33 @@ export default function EstimatorQueues() {
   const [sort, setSort] = useState(params.get("sort") || "newest");
   const [trashBusyId, setTrashBusyId] = useState("");
   const [trashError, setTrashError] = useState("");
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkStatus, setBulkStatus] = useState("sent");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+
+  const toggleSelected = (id) => setSelectedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
+  const applyBulkStatus = async () => {
+    if (!selectedIds.size || bulkBusy) return;
+    setBulkBusy(true); setBulkError("");
+    const failures = [];
+    for (const id of selectedIds) {
+      try {
+        await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });
+      } catch (error) {
+        failures.push(`${id}: ${error?.message || "update failed"}`);
+      }
+    }
+    setBulkBusy(false);
+    setSelectedIds(new Set());
+    if (failures.length) setBulkError(`Bulk update partially failed: ${failures.slice(0, 3).join(" · ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
+    try { const reloaded = await loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
+  };
 
   const writeParams = (key, value) => {
     try {
