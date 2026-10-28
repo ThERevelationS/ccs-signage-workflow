@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
       if (rows.length > 1) {
         return Response.json({ error: 'Multiple delivery audit rows already exist for this Gmail message id. No history was changed automatically.' }, { status: 409 });
       }
-      return Response.json({ delivery: rows[0], reused: true });
+      return await respondWithDelivery({ delivery: rows[0], reused: true });
     }
 
     // Internal approval gate: a quote above the configured threshold cannot be
@@ -293,7 +293,7 @@ Deno.serve(async (req) => {
 
     if (!created?.id) {
       if (afterCreate.length === 1 && sameDelivery(afterCreate[0], normalized)) {
-        return Response.json({ delivery: afterCreate[0], reused: true, recovered_after_create_error: true });
+        return await respondWithDelivery({ delivery: afterCreate[0], reused: true, recovered_after_create_error: true });
       }
       if (afterCreate.length > 0) {
         throw new Error('Quote delivery creation became ambiguous. No uncertain delivery row was deleted.');
@@ -324,10 +324,10 @@ Deno.serve(async (req) => {
       if (!deleted || deleted.deleted !== 1) {
         throw new Error('A duplicate quote delivery audit changed before cleanup. No uncertain row was deleted.');
       }
-      return Response.json({ delivery: canonical, reused: true, concurrent_duplicate_discarded: true });
+      return await respondWithDelivery({ delivery: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
-    return Response.json({ delivery: canonical, reused: false });
+    return await respondWithDelivery({ delivery: canonical, reused: false });
   } catch (error) {
     const status = Number(error?.status || 500);
     const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
