@@ -78,6 +78,10 @@ export default function Step1EstimateDetails({
     const taxDefaults = defaultTaxGroup && Number.isFinite(defaultTaxPercent) && defaultTaxPercent >= 0 && defaultTaxPercent <= 100
       ? { tax_group: defaultTaxGroup.name, tax_percent: defaultTaxPercent }
       : {};
+    const customerValidDays = Number(c.quote_valid_days);
+    const validDaysDefault = Number.isFinite(customerValidDays) && customerValidDays > 0
+      ? { quote_valid_days: Math.floor(customerValidDays) }
+      : {};
     patch({
       client_name: c.company_name || "",
       customer_id: c.id,
@@ -87,6 +91,7 @@ export default function Step1EstimateDetails({
       terms: c.terms || form.terms,
       salesperson: c.salesperson || form.salesperson,
       ...taxDefaults,
+      ...validDaysDefault,
       order_contact:
         `${c.contact_first_name || ""} ${c.contact_last_name || ""}`.trim() || form.order_contact,
     });
