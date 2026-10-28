@@ -270,13 +270,34 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
       label: "Sales Pipeline estimate synchronization",
     });
   } else {
+    // Per-module WO task templates: each estimate section contributes its
+    // module's prep tasks ahead of the section line itself.
+    const MODULE_TASK_TEMPLATES = {
+      channel_letters: ["Verify letter pattern & depth before production", "Confirm raceway/wireway routing with site"],
+      foundation: ["Confirm footing depth/diameter with site conditions", "Order concrete & schedule pour window"],
+      vinyl: ["Confirm surface prep & temperature window", "Order vinyl media and laminate"],
+      cnc: ["Approve cut file/toolpath before material pull", "Verify sheet stock on hand"],
+      laser: ["Approve cut file before material pull", "Verify sheet stock thickness on hand"],
+      metal: ["Confirm weld/finish spec with drawings", "Order metal stock & consumables"],
+      brick_stone: ["Confirm substrate/masonry anchoring spec", "Stage stone/material before install"],
+      maintenance: ["Schedule service window with customer", "Stage replacement parts/lamps"],
+      painting: ["Confirm color/sheen approval with customer", "Mask & prep surfaces before spray"],
+    };
     const seededTasks = (Array.isArray(estimate.line_items) ? estimate.line_items : [])
-      .map((line) => ({
-        id: `sec_${line?.line_id || Math.random().toString(36).slice(2, 10)}`,
-        text: `Estimate section: ${line?.client_product_name || line?.builder_name || line?.module_key || "Product"}`,
-        completed: false,
-      }))
-      .filter((task) => task.text !== "Estimate section: Product");
+      .flatMap((line) => {
+        const moduleKey = String(line?.module_key || "").trim();
+        const template = (MODULE_TASK_TEMPLATES[moduleKey] || []).map((text, i) => ({
+          id: `tpl_${moduleKey}_${line?.line_id || i}_${i}`,
+          text,
+          completed: false,
+        }));
+        const sectionTask = {
+          id: `sec_${line?.line_id || Math.random().toString(36).slice(2, 10)}`,
+          text: `Estimate section: ${line?.client_product_name || line?.builder_name || moduleKey || "Product"}`,
+          completed: false,
+        };
+        return sectionTask.text !== "Estimate section: Product" ? [...template, sectionTask] : template;
+      });
 
     const createFields = {
       ...fields,
