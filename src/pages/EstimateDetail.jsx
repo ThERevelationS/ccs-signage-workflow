@@ -38,7 +38,7 @@ import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcu
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
-import { duplicateEstimate, splitEstimate } from "@/components/estimator/estimateCreationService";
+import { duplicateEstimate, splitEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -114,6 +114,15 @@ export default function EstimateDetail() {
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   const [trashing, setTrashing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const copyingRef = useRef(false);
+  const copyAttemptRef = useRef(null);
+  const copyCreationKey = (kind, lineIds = []) => {
+    const signature = JSON.stringify([kind, estimate, [...lineIds].sort()]);
+    if (copyAttemptRef.current?.signature !== signature) {
+      copyAttemptRef.current = { signature, key: newEstimateCreationKey() };
+    }
+    return copyAttemptRef.current.key;
+  };
   // Tracks the exact server version this browser session last read or wrote.
   // Keep it separate from persistedEstimate because Product operations may save
   // immediately while the lifecycle baseline intentionally remains older.
@@ -152,29 +161,36 @@ export default function EstimateDetail() {
   };
 
   const handleDuplicate = async () => {
-    if (duplicating || !estimate?.id) return;
+    if (copyingRef.current || saving || trashing || !estimate?.id || estimate.deleted === true) return;
     if (openRevision) {
       window.alert("Save the open estimate revision before duplicating this estimate.");
       return;
     }
+    copyingRef.current = true;
     setDuplicating(true);
     try {
-      const created = await duplicateEstimate({ source: estimate, sessionToken });
+      const created = await duplicateEstimate({ source: estimate, sessionToken, creationKey: copyCreationKey("duplicate") });
       navigate(`/EstimateDetail?id=${created.id}`);
     } catch (error) {
       window.alert(error?.message || "The estimate could not be duplicated.");
     } finally {
+      copyingRef.current = false;
       setDuplicating(false);
     }
   };
 
   const handleSplit = async (lineIds) => {
-    if (!estimate?.id || !lineIds?.length) return;
+    if (copyingRef.current || saving || trashing || !estimate?.id || !lineIds?.length || estimate.deleted === true) return false;
+    if (openRevision) throw new Error("Save the open estimate revision before splitting this estimate.");
+    copyingRef.current = true;
+    setDuplicating(true);
     try {
-      const created = await splitEstimate({ source: estimate, lineItemIds: lineIds, sessionToken });
+      const created = await splitEstimate({ source: estimate, lineItemIds: lineIds, sessionToken, creationKey: copyCreationKey("split", lineIds) });
       navigate(`/EstimateDetail?id=${created.id}`);
-    } catch (error) {
-      window.alert(error?.message || "The estimate could not be split.");
+      return true;
+    } finally {
+      copyingRef.current = false;
+      setDuplicating(false);
     }
   };
 
