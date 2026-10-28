@@ -339,6 +339,18 @@ export default function ReportingDashboard() {
                     )}
                   </div>
                 )}
+                {Array.isArray(pipeline.estimate_funnel.lost_reasons) && pipeline.estimate_funnel.lost_reasons.length > 0 && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Lost / cancelled reasons</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {pipeline.estimate_funnel.lost_reasons.slice(0, 6).map((r) => (
+                        <span key={r.reason} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">
+                          {r.reason} <b>×{r.count}</b>{r.lost_value > 0 ? ` · $${Number(r.lost_value).toLocaleString()}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {Array.isArray(pipeline.estimate_funnel.by_salesperson) && pipeline.estimate_funnel.by_salesperson.length > 0 && (
                   <div className="mt-3 border-t border-gray-100 pt-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">By salesperson</div>
