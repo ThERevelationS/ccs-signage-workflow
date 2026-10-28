@@ -91,6 +91,10 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
 
   const handleSave = async () => {
+    if (!(Number(totals?.calculated_surface_area) > 0)) {
+      window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
+      return;
+    }
     setSaving(true);
     try {
       const pricingProject = {
