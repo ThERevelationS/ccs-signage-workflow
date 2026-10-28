@@ -16,9 +16,13 @@ function sameValue(a, b) {
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 function expectedEstimateFields(record = {}, nextFields = {}) {
-  return Object.fromEntries(
+  const expected = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
+  if (!Object.prototype.hasOwnProperty.call(expected, "deleted") && Object.prototype.hasOwnProperty.call(record || {}, "deleted")) {
+    expected.deleted = record?.deleted;
+  }
+  return expected;
 }
 async function replaceEstimateFieldsIfUnchanged({
   entity,
@@ -86,7 +90,77 @@ async function replaceEstimateFieldsIfUnchanged({
   }
   throw new Error(`${label} Estimate changed repeatedly while saving. Reload and try again.`);
 }
+async function softDeleteEstimateFromLoadedSnapshot({
+  entity,
+  estimate,
+  deletedBy = "unknown",
+  label = "Estimate delete"
+} = {}) {
+  const id = String(estimate?.id || "").trim();
+  const actor = String(deletedBy || "unknown").trim() || "unknown";
+  if (!id) throw new Error(`${label} is missing its loaded Estimate. Reload before deleting.`);
+  const nextFields = {
+    deleted: true,
+    deleted_at: (/* @__PURE__ */ new Date()).toISOString(),
+    deleted_by: actor
+  };
+  return replaceEstimateFieldsIfUnchanged({
+    entity,
+    estimateId: id,
+    expectedFields: expectedEstimateFields(estimate, nextFields),
+    guardFields: { updated_date: estimate?.updated_date },
+    nextFields,
+    label
+  });
+}
+async function restoreEstimateFromLoadedTrashSnapshot({
+  entity,
+  estimate,
+  label = "Estimate recovery"
+} = {}) {
+  const id = String(estimate?.id || "").trim();
+  if (!id) throw new Error(`${label} is missing its loaded Estimate. Reload trash before recovering.`);
+  const nextFields = { deleted: false, deleted_at: null, deleted_by: null };
+  return replaceEstimateFieldsIfUnchanged({
+    entity,
+    estimateId: id,
+    expectedFields: expectedEstimateFields(estimate, nextFields),
+    guardFields: { updated_date: estimate?.updated_date },
+    nextFields,
+    label
+  });
+}
+async function permanentlyDeleteTrashedEstimate({
+  entity,
+  estimate,
+  label = "Estimate permanent delete"
+} = {}) {
+  const id = String(estimate?.id || "").trim();
+  if (!id || typeof entity?.get !== "function" || typeof entity?.delete !== "function") {
+    throw new Error(`${label} could not initialize its verified permanent delete.`);
+  }
+  const current = await entity.get(id).catch(() => null);
+  if (!current?.id) return { deleted: true, alreadyDeleted: true };
+  if (current.deleted !== true) {
+    throw new Error(`${label} was blocked because this Estimate is no longer in Trash. Reload before deleting.`);
+  }
+  try {
+    await entity.delete(id);
+  } catch (error) {
+    const afterError = await entity.get(id).catch(() => null);
+    if (!afterError?.id) return { deleted: true, convergedAfterResponseLoss: true };
+    throw error;
+  }
+  const after = await entity.get(id).catch(() => null);
+  if (after?.id) {
+    throw new Error(`${label} could not be verified \u2014 the Estimate still exists. Reload Trash before retrying.`);
+  }
+  return { deleted: true };
+}
 export {
   expectedEstimateFields,
-  replaceEstimateFieldsIfUnchanged
+  permanentlyDeleteTrashedEstimate,
+  replaceEstimateFieldsIfUnchanged,
+  restoreEstimateFromLoadedTrashSnapshot,
+  softDeleteEstimateFromLoadedSnapshot
 };
