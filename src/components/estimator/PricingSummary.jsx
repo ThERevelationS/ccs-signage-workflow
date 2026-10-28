@@ -14,7 +14,7 @@ const FEE_FIELDS = [
   { key: "permit_fee", label: "Permit / admin" },
 ];
 
-export default function PricingSummary({ estimate, pricing, onChange, readOnly = false }) {
+export default function PricingSummary({ estimate, pricing, onChange, readOnly = false, openRevision = null }) {
   const profitability = computeEstimateProfitability(estimate, pricing);
   const rows = [
     ["Sections subtotal", pricing.subtotal],
@@ -71,7 +71,18 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
         ))}
         <div className="flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2">
           <span>Quote total</span>
-          <span className="text-red-600">{money(pricing.quoteTotal)}</span>
+          {/* Revision diff highlight: when an open revision's before-snapshot
+              differs from the live total, mark it so the change stands out. */}
+          {(() => {
+            const beforeTotal = Number(openRevision?.estimate_snapshot_before?.quote_total || 0);
+            const differs = openRevision && Math.abs(beforeTotal - Number(pricing.quoteTotal || 0)) > 0.005;
+            return (
+              <span className={differs ? "text-amber-700 underline decoration-amber-400 decoration-2 underline-offset-2" : "text-red-600"}>
+                {money(pricing.quoteTotal)}
+                {differs && <span className="ml-1 text-[9px] font-normal text-amber-600">was {money(beforeTotal)}</span>}
+              </span>
+            );
+          })()}
         </div>
         <div className="flex justify-between text-gray-600">
           <span>Deposit due</span>
