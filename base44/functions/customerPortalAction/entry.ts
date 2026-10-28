@@ -126,6 +126,8 @@ async function estimatePortalView(estimate: any) {
     contact_name: clean(estimate?.contact_name),
     po_number: clean(estimate?.po_number),
     quote_total: num(estimate?.quote_total),
+    company_name: clean(estimate?.company_name),
+    company_logo_url: clean(estimate?.company_logo_url),
     quote_valid_days: num(estimate?.quote_valid_days),
     quote_issue_date: clean(estimate?.quote_issue_date),
     quote_valid_until: quoteValidUntil(estimate),
@@ -295,6 +297,7 @@ Deno.serve(async (req) => {
       const customer = await Customer.get(customerId).catch(() => null);
       const [estimates, orders, invoices, payments, thread, announcements] = await Promise.all([
         Estimate.filter({ customer_id: customerId }).catch(() => []),
+        base44.asServiceRole.entities.QuoteDefaults.filter({ config_name: "default" }).catch(() => []),
         WorkOrder.filter({ customer_id: customerId }).catch(() => []),
         Invoice.filter({ customer_id: customerId }).catch(() => []),
         Payment.filter({ customer_id: customerId }).catch(() => []),
