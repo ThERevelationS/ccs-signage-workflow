@@ -150,16 +150,34 @@ export async function replaceWorkOrderFieldsIfUnchanged({ workOrderId, expectedF
   return saveTrackedFields({entityType:'WorkOrder', id:workOrderId, expectedFields, nextFields, guardFields});
 }
 
+const WO_STAGE_ORDER = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation", "completed"];
+const WO_OPEN_PERMIT_STATUSES = new Set(["active", "waiting"]);
+
 export async function transitionWorkOrderFromLoadedSnapshot({
   workOrder,
   newStage,
   completed,
   normalizeLegacyNotes = false,
+  allowPermitSkip = false,
   label = "Work Order transition",
 }) {
   const id = String(workOrder?.id || "").trim();
   const stage = String(newStage || "").trim();
   if (!id || !stage) throw new Error(`${label} is missing its Work Order or destination stage.`);
+
+  // Required-stage guard: a forward move that crosses the permitting stage is
+  // blocked while the job has open PermitLineItems. Pass allowPermitSkip for
+  // sanctioned jumps (e.g., permit handled outside the tracker).
+  const fromIdx = WO_STAGE_ORDER.indexOf(String(workOrder.current_stage || "").trim());
+  const toIdx = WO_STAGE_ORDER.indexOf(stage);
+  const permittingIdx = WO_STAGE_ORDER.indexOf("permitting");
+  if (!allowPermitSkip && fromIdx >= 0 && toIdx >= 0 && fromIdx < permittingIdx && toIdx > permittingIdx) {
+    const openPermits = (await staffEntities.PermitLineItem.filter({ work_order_id: id }).catch(() => []))
+      .filter((row) => WO_OPEN_PERMIT_STATUSES.has(String(row?.status || "").trim()));
+    if (openPermits.length) {
+      throw new Error(`${label} cannot skip the Permitting stage — this job has ${openPermits.length} open permit line item(s). Complete them or move through Permitting first.`);
+    }
+  }
 
   const expectedFields = { current_stage: workOrder.current_stage };
   const nextFields = { current_stage: stage };
