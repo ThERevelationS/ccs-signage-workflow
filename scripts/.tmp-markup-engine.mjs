@@ -129,11 +129,19 @@ function applyCostPlus(lines, config) {
     }
   };
 }
+function priceForTargetMargin(cost, marginPct) {
+  const c = Number(cost);
+  const m = Number(marginPct);
+  if (!Number.isFinite(c) || c <= 0) return 0;
+  if (!Number.isFinite(m) || m < 0 || m >= 100) return null;
+  return c / (1 - m / 100);
+}
 export {
   applyCostPlus,
   applyMarkups,
   getMarkup,
   getVolumeDiscountPct,
   parseVolumeDiscountBrackets,
-  parseVolumeDiscountCategories
+  parseVolumeDiscountCategories,
+  priceForTargetMargin
 };
