@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, '.tmp-markup-engine.mjs');
 buildSync({ entryPoints: [resolve(here, '../src/components/markup/markupEngine.jsx')], bundle: true, format: 'esm', outfile: out, logLevel: 'silent' });
-const { getMarkup, parseVolumeDiscountBrackets, parseVolumeDiscountCategories, getVolumeDiscountPct, applyMarkups } = await import(pathToFileURL(out).href);
+const { getMarkup, parseVolumeDiscountBrackets, parseVolumeDiscountCategories, getVolumeDiscountPct, applyMarkups, priceForTargetMargin } = await import(pathToFileURL(out).href);
 
 // getMarkup: configured value, missing-category fallback, missing-tier fallback.
 assert.equal(getMarkup({ markups: { mat: 1.5 } }, 'mat'), 1.5);
@@ -54,4 +54,11 @@ assert.deepEqual(parseVolumeDiscountCategories([]), []);
   assert.equal(res.lines[0].markup_multiplier, 1);
 }
 
-console.log('PASS markup engine (15 cases)');
+// priceForTargetMargin: 50% margin doubles the cost; invalid inputs guarded.
+assert.equal(Math.round(priceForTargetMargin(100, 50) * 100) / 100, 200, '50% margin prices at 2x cost');
+assert.equal(Math.round(priceForTargetMargin(60, 30) * 100) / 100, 85.71, '30% margin = cost / 0.7');
+assert.equal(priceForTargetMargin(0, 50), 0, 'zero cost returns 0');
+assert.equal(priceForTargetMargin(100, 100), null, '100% margin rejected');
+assert.equal(priceForTargetMargin(100, -5), null, 'negative margin rejected');
+
+console.log('PASS markup engine (20 cases)');
