@@ -180,6 +180,7 @@ Deno.serve(async (req) => {
       if (!deleted || deleted.deleted !== 1) {
         throw new Error('A duplicate acceptance record changed before cleanup. No uncertain acceptance was deleted; reload the acceptance history before retrying.');
       }
+      await patchEstimateAcceptanceFields(Estimate, estimateId, estimate, created || canonical);
       return Response.json({ acceptance: canonical, reused: true, concurrent_duplicate_discarded: true });
     }
 
