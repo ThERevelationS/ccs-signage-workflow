@@ -444,11 +444,24 @@ function Thread({ messages, onSend, busy, customerName }) {
       </div>
       <div className="border-t border-slate-100 p-3">
         <div className="flex items-end gap-2">
+          <div className="flex-1">
           <textarea rows={2} value={draft} onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={`Message CCS Signage about your ${customerName ? "account" : "project"}…`}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" />
-          <button onClick={send} disabled={busy || !draft.trim()}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" />
+          <label className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 cursor-pointer hover:border-blue-400">
+            <input type="file" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) { setAttachment(null); return; }
+              const reader = new FileReader();
+              reader.onload = () => setAttachment({ name: file.name, mime: file.type || "application/octet-stream", base64: String(reader.result || "").split(",")[1] || "" });
+              reader.readAsDataURL(file);
+            }} />
+            📎 {attachment ? attachment.name : "Attach file"}
+            {attachment && <button type="button" onClick={(e) => { e.preventDefault(); setAttachment(null); }} className="ml-1 text-slate-400 hover:text-red-500">×</button>}
+          </label>
+          </div>
+          <button onClick={send} disabled={busy || (!draft.trim() && !attachment)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
@@ -559,10 +572,16 @@ export default function CustomerPortal() {
     } finally { setBusy(false); }
   };
 
-  const sendMessage = async (text) => {
+  const sendMessage = async (text, attachment) => {
     setBusy(true);
     try {
-      await call({ action: "post_message", token, body: text, creation_request_key: msgKeyRef.current });
+      const payload = { action: "post_message", token, body: text, creation_request_key: msgKeyRef.current };
+      if (attachment?.base64) {
+        payload.attachment_name = attachment.name;
+        payload.attachment_mime = attachment.mime;
+        payload.attachment_base64 = attachment.base64;
+      }
+      await call(payload);
       msgKeyRef.current = crypto.randomUUID();
       await load();
     } catch (error) {
