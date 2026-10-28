@@ -139,7 +139,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
             <div key={lineId} className="relative">
               {splitMode && !readOnly && (
                 <label className="absolute left-1 top-1 z-10 flex items-center justify-center w-5 h-5 rounded border border-indigo-300 bg-white cursor-pointer">
-                  <input type="checkbox" disabled={splitting} checked={splitIds.has(lineId)} onChange={() => toggleSplitId(lineId)} className="w-3.5 h-3.5 accent-indigo-600" aria-label={`Select ${line.description || "line item"} to split`} />
+                  <input type="checkbox" disabled={splitting} checked={splitIds.has(lineId)} onChange={() => toggleSplitId(lineId)} className="w-3.5 h-3.5 accent-indigo-600" aria-label={`Select ${line.client_product_name || line.project_name || line.description || `product ${index + 1}`} to split`} />
                 </label>
               )}
             <ProductRow
