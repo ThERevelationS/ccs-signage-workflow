@@ -270,9 +270,20 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
       label: "Sales Pipeline estimate synchronization",
     });
   } else {
+    const seededTasks = (Array.isArray(estimate.line_items) ? estimate.line_items : [])
+      .map((line) => ({
+        id: `sec_${line?.line_id || Math.random().toString(36).slice(2, 10)}`,
+        text: `Estimate section: ${line?.client_product_name || line?.builder_name || line?.module_key || "Product"}`,
+        completed: false,
+      }))
+      .filter((task) => task.text !== "Estimate section: Product");
+
     const createFields = {
       ...fields,
       ...(fields.date_estimate_sent ? { sales_quote_sent_verified_at: new Date().toISOString() } : {}),
+      // Checklist seeded from the estimate's sections — create-time only, so a
+      // live WO checklist is never overwritten by later syncs.
+      ...(seededTasks.length ? { tasks: seededTasks } : {}),
       current_stage: estimate.status === "approved" ? "production" : "estimating",
       date_initial_contact: new Date().toISOString().slice(0, 10),
     };
