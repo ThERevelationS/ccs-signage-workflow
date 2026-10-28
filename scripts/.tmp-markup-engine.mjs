@@ -29,7 +29,8 @@ function getVolumeDiscountPct(eligibleSubtotal, brackets) {
   return 0;
 }
 function applyMarkups(lines, tier, settings) {
-  const { brackets = [], eligibleCategoryKeys = [] } = settings || {};
+  const { brackets = [], eligibleCategoryKeys = [], categoryFlags = {} } = settings || {};
+  const isDiscountEligible = (key) => eligibleCategoryKeys.includes(key) && categoryFlags[key] !== false;
   const marked = lines.map((line) => {
     const cost = Number(line.cost) || 0;
     const markup = getMarkup(tier, line.category_key);
@@ -41,11 +42,11 @@ function applyMarkups(lines, tier, settings) {
       marked_up_cost: markedCost
     };
   });
-  const eligibleSubtotal = marked.filter((l) => eligibleCategoryKeys.includes(l.category_key)).reduce((sum, l) => sum + l.marked_up_cost, 0);
+  const eligibleSubtotal = marked.filter((l) => isDiscountEligible(l.category_key)).reduce((sum, l) => sum + l.marked_up_cost, 0);
   const volumeDiscountPct = getVolumeDiscountPct(eligibleSubtotal, brackets);
   const volumeDiscountFactor = 1 - volumeDiscountPct / 100;
   const finalLines = marked.map((line) => {
-    const isEligible = eligibleCategoryKeys.includes(line.category_key);
+    const isEligible = isDiscountEligible(line.category_key);
     const final = isEligible ? line.marked_up_cost * volumeDiscountFactor : line.marked_up_cost;
     return {
       ...line,
