@@ -25,6 +25,29 @@ function searchText(values) {
   return values.flat().filter(Boolean).join(" ").toLowerCase();
 }
 
+function templateFamilyKey({ templateType, sourceId, meta }) {
+  return `part-template-family:${builderMutationHash({
+    template_type: templateType,
+    source_id: String(sourceId || ""),
+    product_group: meta.product_group,
+    template_name: String(meta.template_name || "").trim().toLowerCase(),
+  })}`;
+}
+
+async function resolveTemplateVersion({ familyKey, idempotencyKey }) {
+  const rows = await loadAllEntityRows({
+    entity: staffEntities.PartTemplate,
+    query: { template_family_key: familyKey },
+    sort: "created_date",
+    label: "Part Template versions",
+  });
+  if (!Array.isArray(rows)) throw new Error("Part Template version history could not be verified. Retry the save before overwriting anything.");
+  const existing = rows.find((row) => String(row?.idempotency_key || "") === idempotencyKey);
+  if (existing) return Math.max(1, Number(existing.template_version) || 1);
+  const versions = rows.map((row) => Number(row?.template_version)).filter((v) => Number.isInteger(v) && v >= 1);
+  return versions.length ? Math.max(...versions) + 1 : 1;
+}
+
 export async function savePartTemplate({ estimateId = "", builderProductId = "", part, options = {} }) {
   if (!part?.id) throw new Error("Part is required.");
   const livePart = await staffEntities.BuilderPart.get(part.id);
@@ -47,7 +70,8 @@ export async function savePartTemplate({ estimateId = "", builderProductId = "",
     label: "Saved Part",
     data: {
     ...meta,
-    template_version: 1,
+    template_family_key: familyKey,
+    template_version: templateVersion,
     template_type: "part",
     source_module_key: livePart.source_module_key || "",
     source_part_type: livePart.part_type || "",
@@ -110,7 +134,8 @@ export async function savePartGroupTemplate({ estimateId = "", builderProductId 
     label: "Saved Part Group",
     data: {
     ...meta,
-    template_version: 1,
+    template_family_key: familyKey,
+    template_version: templateVersion,
     template_type: "part_group",
     source_module_key: first.source_module_key || "",
     source_part_type: "part_group",
@@ -170,6 +195,11 @@ export async function instantiatePartTemplate({ estimateId, targetBuilderProduct
       : { part: cloneSnapshot(liveTemplate.part_snapshot || {}) },
     sourceType: "library",
     sourceId: liveTemplate.id,
+    sourceTemplate: {
+      id: liveTemplate.id,
+      name: liveTemplate.template_name || "",
+      version: Math.max(1, Number(liveTemplate.template_version) || 1),
+    },
     expectedEstimateUpdatedAt,
   });
 }
