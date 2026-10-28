@@ -84,7 +84,7 @@ assert.match(entry, /PurchaseOrder\.filter\(\{ opportunity_id: opportunityId \}\
 assert.match(entry, /financials: \{/, 'detail must return a financial rollup');
 assert.match(page, /detail\?\.financials|detail\.financials/, 'page must render the financial rollup');
 
-// Convergence: estimate→pipeline sync must locate the compatibility WorkOrder
+// Convergence: estimateâ†’pipeline sync must locate the compatibility WorkOrder
 // by stable links, carry the link fields, and back-link the Opportunity.
 const invoicing = readFileSync('base44/functions/invoicingAction/entry.ts', 'utf8');
 const invoicesPage = readFileSync('src/pages/Invoices.jsx', 'utf8');
@@ -115,7 +115,7 @@ assert.match(page, /functions\.invoke\("findLocalityByAddress", \{[\s\S]{0,300}s
 assert.match(page, /CustomerLocation\.create\(/, 'resolved sites must persist as canonical CustomerLocation');
 assert.match(page, /location_id: clean\(created\?\.id\)/, 'saved location must back-link the Opportunity');
 
-// F1/F2/F3: invoicing foundation — backend-only ledger, server-side money math,
+// F1/F2/F3: invoicing foundation â€” backend-only ledger, server-side money math,
 // payments recompute invoice state, AR aging surfaced to the UI.
 for (const entity of ['Invoice', 'Payment']) {
   const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
@@ -132,7 +132,7 @@ assert.match(invoicing, /replaceFoundationFieldsIfUnchanged/, 'invoice/payment u
 assert.match(invoicing, /exceeds the open balance/, 'overpayments must be rejected');
 assert.match(invoicing, /Void the recorded payments/, 'invoices with payments must not be voided directly');
 assert.match(invoicing, /agingSummary/, 'AR aging summary must be computed');
-// C5: progress billing — invoices generated from approved estimates.
+// C5: progress billing â€” invoices generated from approved estimates.
 for (const action of ['list_invoiceable_estimates', 'create_from_estimate']) {
   assert.ok(invoicing.includes(`action === "${action}"`), `action ${action} must be handled`);
 }
@@ -152,7 +152,7 @@ assert.ok(/import Invoices from '\.\/pages\/Invoices'/.test(config) || /const In
 assert.match(config, /"Invoices": Invoices/, 'pages.config must register the Invoices route');
 assert.match(layout, /title: "Invoices", url: createPageUrl\("Invoices"\)/, 'Layout nav must link Invoices');
 
-// C3: change orders — backend-only, server-computed delta, approval lifecycle.
+// C3: change orders â€” backend-only, server-computed delta, approval lifecycle.
 const coSchema = readFileSync('base44/entities/ChangeOrder.jsonc', 'utf8');
 assert.match(coSchema, /backend_only/, 'ChangeOrder must be backend-only');
 assert.match(coSchema, /amount_delta/, 'ChangeOrder must carry a server-computed delta');
@@ -167,7 +167,7 @@ assert.match(coPage, /functions\.invoke\("changeOrderAction"/, 'change orders pa
 assert.match(config, /"ChangeOrders": ChangeOrders/, 'pages.config must register the ChangeOrders route');
 assert.match(layout, /title: "Change Orders", url: createPageUrl\("ChangeOrders"\)/, 'Layout nav must link Change Orders');
 
-// D2/D3: purchase orders — backend-only, server totals, guarded receiving.
+// D2/D3: purchase orders â€” backend-only, server totals, guarded receiving.
 const poSchema = readFileSync('base44/entities/PurchaseOrder.jsonc', 'utf8');
 assert.match(poSchema, /backend_only/, 'PurchaseOrder must be backend-only');
 assert.match(poSchema, /quantity_received/, 'PO lines must track received quantities');
@@ -187,7 +187,7 @@ assert.match(poPage, /functions\.invoke\("purchaseOrderAction"/, 'PO page must i
 assert.match(config, /"PurchaseOrders": PurchaseOrders/, 'pages.config must register the PurchaseOrders route');
 assert.match(layout, /title: "Purchase Orders", url: createPageUrl\("PurchaseOrders"\)/, 'Layout nav must link Purchase Orders');
 
-// C4/B4: job costing — read-only rollup over existing records, service-role.
+// C4/B4: job costing â€” read-only rollup over existing records, service-role.
 const jobCosting = readFileSync('base44/functions/jobCostingAction/entry.ts', 'utf8');
 const jcPage = readFileSync('src/pages/JobCosting.jsx', 'utf8');
 assert.match(jobCosting, /authenticateSignShopSession/, 'jobCostingAction must authenticate the session');
@@ -443,6 +443,12 @@ assert.match(attentionFeed, /expiring_permits/, 'attention feed UI must show exp
 assert.match(attentionFeed, /permit_fees_due/, 'attention feed UI must show permit fees due');
 assert.match(invoicing, /email_statement/, 'invoicing must expose statement emails');
 assert.match(invoicesPage, /email_statement/, 'invoice detail must offer email statement');
+const quoteDelivery = readFileSync('base44/functions/recordEstimateQuoteDelivery/entry.ts', 'utf8');
+assert.match(quoteDelivery, /safeUrl/, 'quote delivery must route attachment_file_url through safeUrl');
+assert.match(quoteDelivery, /attachment_file_url:\s*safeUrl/, 'attachment_file_url must be URL-safe-filtered');
+const revAudit = readFileSync('base44/functions/updateEstimateRevisionAudit/entry.ts', 'utf8');
+assert.match(revAudit, /https\?:/, 'delivery evidence must gate attachment_file_url to http(s) schemes');
+
 const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
 assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
 const layoutShell = readFileSync('src/Layout.jsx', 'utf8');
