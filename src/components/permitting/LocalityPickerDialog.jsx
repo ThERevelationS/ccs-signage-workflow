@@ -156,7 +156,7 @@ function LocalityPickerSession({
       let { data } = await invoke('resolvePermittingAddress', {
         address: address.trim(),
         session_token: sessionToken,
-      },`Find jurisdiction for ${address.trim()}`);
+      },`Looking up ${address.trim()}`);
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
@@ -174,7 +174,7 @@ function LocalityPickerSession({
                 matched_address: hit.display_name,
                 address_parts: { state: st, city: hit.address?.city || hit.address?.town || hit.address?.village || '', zip: hit.address?.postcode || '' },
               },
-            },`Find jurisdiction for ${address.trim()}`);
+            },`Looking up ${address.trim()}`);
             if (retry?.data?.success !== false) data = retry.data;
           }
         } catch { /* browser geocode is best-effort */ }
@@ -332,7 +332,7 @@ function LocalityPickerSession({
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[400px_minmax(0,1fr)] lg:overflow-hidden">
           <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
-            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Saved jurisdiction ready. Confirm office notes below, then use it.":"Location matched as a workflow reference — office review still required."}</p></section>}
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this jurisdiction.":"We found the town or township — someone on the team still needs to check the offices before it can be used."}</p></section>}
             <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
