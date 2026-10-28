@@ -1856,6 +1856,7 @@ Best regards`;
                   </Button>
                 </div>
 
+                {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
                 <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
                   {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> {isEditing ? 'Update Estimate' : 'Save Estimate'}</>}
                 </Button>
