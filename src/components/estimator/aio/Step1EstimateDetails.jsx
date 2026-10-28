@@ -77,6 +77,7 @@ export default function Step1EstimateDetails({
       office_phone_ext: c.contact_office_ext || form.office_phone_ext,
       terms: c.terms || form.terms,
       salesperson: c.salesperson || form.salesperson,
+      tax_group: c.default_tax_group || form.tax_group,
       order_contact:
         `${c.contact_first_name || ""} ${c.contact_last_name || ""}`.trim() || form.order_contact,
     });
