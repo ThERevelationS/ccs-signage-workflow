@@ -435,6 +435,11 @@ function Thread({ messages, onSend, busy, customerName }) {
                 {!mine && m.author_side === "staff" && <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">{m.author_name || "CCS Signage"}</p>}
                 {m.related_label && <p className={`mb-0.5 text-[11px] ${mine ? "text-blue-200" : "text-slate-500"}`}>Re: {m.related_label}</p>}
                 <p className="whitespace-pre-wrap">{m.body}</p>
+                {m.attachment_url && (
+                  <a href={m.attachment_url} target="_blank" rel="noreferrer" className={`mt-1 inline-flex items-center gap-1 text-[11px] underline ${mine ? "text-blue-100" : "text-blue-600"}`}>
+                    {m.attachment_name || "Attachment"}
+                  </a>
+                )}
                 <p className={`mt-1 text-[10px] ${mine ? "text-blue-200" : "text-slate-400"}`}>
                   {m.created_date ? new Date(m.created_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}
                 </p>
