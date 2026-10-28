@@ -15,7 +15,7 @@
 // migrated.
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Inventory, FoundationInventory } from "@/api/gatedEntities";
+import { Inventory, FoundationInventory } from "@/entities/all";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
   migrateLegacyInventoryRows,
 } from "./legacyInventoryMigrator";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { findInventoryPartReferences } from "./inventoryPersistence";
 
 // True if this Inventory row is a real extrusion (not legacy junk and not
 // sheet/plate). Sheet/Plate belong in Substrates.
@@ -232,6 +233,11 @@ export default function MasterExtrudedMetalsPolesTab({ isAdmin }) {
       if (item.updated_date && live?.updated_date && item.updated_date !== live.updated_date) {
         alert("This inventory item changed in another session and was not deleted. The latest catalog will be reloaded first.");
         await load();
+        return;
+      }
+      const refs = await findInventoryPartReferences(item.id);
+      if (refs.count > 0) {
+        alert(`"${name}" is used by ${refs.count} estimate Part${refs.count === 1 ? "" : "s"} (${refs.names.join(", ")}${refs.count > 5 ? ", …" : ""}). Detach or remove those Parts before deleting this item.`);
         return;
       }
       await deleteEntityIfUnchanged({
