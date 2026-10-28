@@ -239,6 +239,45 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, ...result });
     }
 
+    if (action === "set_reorder_point") {
+      const itemId = clean(body?.item_id);
+      const item = await Inventory.get(itemId).catch(() => null);
+      if (!item?.id || item?.legacy_compatibility === true) throw bad("Inventory item not found.", 404);
+      const reorderPoint = num(body?.reorder_point, NaN);
+      if (!Number.isFinite(reorderPoint) || reorderPoint < 0) throw bad("Reorder point must be a non-negative number.");
+      const expectedUpdatedAt = clean(body?.expected_updated_date);
+      if (expectedUpdatedAt && clean(item.updated_date) !== expectedUpdatedAt) {
+        throw bad("This inventory item changed in another session. Reload before editing its reorder point.", 409);
+      }
+      const saved = await Inventory.update(item.id, { reorder_point: reorderPoint });
+      return Response.json({
+        success: true,
+        action,
+        item_id: clean(item.id),
+        reorder_point: num(saved?.reorder_point, reorderPoint),
+        updated_date: clean(saved?.updated_date),
+      });
+    }
+
+    if (action === "set_archived") {
+      const itemId = clean(body?.item_id);
+      const item = await Inventory.get(itemId).catch(() => null);
+      if (!item?.id || item?.legacy_compatibility === true) throw bad("Inventory item not found.", 404);
+      const archived = body?.archived !== false;
+      const expectedUpdatedAt = clean(body?.expected_updated_date);
+      if (expectedUpdatedAt && clean(item.updated_date) !== expectedUpdatedAt) {
+        throw bad("This inventory item changed in another session. Reload before archiving it.", 409);
+      }
+      const saved = await Inventory.update(item.id, { deleted: archived });
+      return Response.json({
+        success: true,
+        action,
+        item_id: clean(item.id),
+        deleted: saved?.deleted === true,
+        updated_date: clean(saved?.updated_date),
+      });
+    }
+
     throw bad(`Unsupported action "${action}".`);
   } catch (error: any) {
     const status = error?.statusCode || error?.status || 500;
