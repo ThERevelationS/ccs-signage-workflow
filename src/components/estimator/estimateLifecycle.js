@@ -39,8 +39,24 @@ export function summarizeEstimateChanges(before = {}, after = {}) {
   if (Math.abs(num(before.total_cost) - num(after.total_cost)) > 0.005) {
     changes.push(`Internal cost: ${num(before.total_cost).toFixed(2)} → ${num(after.total_cost).toFixed(2)}`);
   }
-  if (JSON.stringify(before.line_items || []) !== JSON.stringify(after.line_items || [])) {
-    changes.push("Product scope / Product pricing changed");
+  const beforeLines = Array.isArray(before.line_items) ? before.line_items : [];
+  const afterLines = Array.isArray(after.line_items) ? after.line_items : [];
+  if (JSON.stringify(beforeLines) !== JSON.stringify(afterLines)) {
+    // Section-level diff: count, added, removed, and renamed lines keyed on the
+    // stable line_id rather than a blanket "scope changed" note.
+    const lineName = (l) => l?.client_product_name || l?.builder_name || l?.module_key || "Product";
+    const beforeById = new Map(beforeLines.map((l) => [String(l?.line_id || ""), l]));
+    const afterById = new Map(afterLines.map((l) => [String(l?.line_id || ""), l]));
+    const names = (keys, map) => keys.slice(0, 3).map((k) => lineName(map.get(k))).join(", ") + (keys.length > 3 ? ` +${keys.length - 3} more` : "");
+    const added = [...afterById.keys()].filter((k) => !beforeById.has(k));
+    const removed = [...beforeById.keys()].filter((k) => !afterById.has(k));
+    const renamed = [...afterById.keys()].filter((k) => beforeById.has(k) && lineName(beforeById.get(k)) !== lineName(afterById.get(k)));
+    const parts = [];
+    if (beforeLines.length !== afterLines.length) parts.push(`sections ${beforeLines.length} → ${afterLines.length}`);
+    if (added.length) parts.push(`added: ${names(added, afterById)}`);
+    if (removed.length) parts.push(`removed: ${names(removed, beforeById)}`);
+    if (renamed.length) parts.push(`renamed: ${names(renamed, afterById)}`);
+    changes.push(parts.length ? `Product scope changed — ${parts.join("; ")}` : "Product scope / Product pricing changed");
   }
 
   const quoteKeys = [
