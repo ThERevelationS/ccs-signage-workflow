@@ -7,6 +7,7 @@ import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import Step1EstimateDetails from "@/components/estimator/aio/Step1EstimateDetails";
 import { loadAllCustomers, upsertCustomerFromEstimate, syncEstimateToPipeline } from "@/components/estimator/customerSync";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
+import { addRecentCustomerId, loadRecentCustomerIds, resolveRecentCustomers, saveRecentCustomerIds } from "@/components/estimator/recentCustomerHistory";
 import { ensureNewEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -76,6 +77,13 @@ export default function NewAllInOneEstimate() {
   const { sessionToken } = useAuth();
   const [form, setForm] = useState(EMPTY);
   const [customers, setCustomers] = useState([]);
+  const [recentCustomerIds, setRecentCustomerIds] = useState(() => loadRecentCustomerIds());
+  const recentCustomers = resolveRecentCustomers(customers, recentCustomerIds);
+  const rememberCustomer = (customer) => {
+    const next = addRecentCustomerId(recentCustomerIds, customer?.id);
+    setRecentCustomerIds(next);
+    saveRecentCustomerIds(next);
+  };
   const [taxGroups, setTaxGroups] = useState([]);
   const [users, setUsers] = useState([]);
   const [me, setMe] = useState(null);
@@ -321,6 +329,8 @@ export default function NewAllInOneEstimate() {
             form={form}
             patch={patch}
             customers={customers}
+            recentCustomers={recentCustomers}
+            onCustomerSelected={rememberCustomer}
             taxGroups={taxGroups}
             users={users}
             termsOptions={TERMS_OPTIONS}
