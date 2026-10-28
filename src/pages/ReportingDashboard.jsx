@@ -284,6 +284,33 @@ export default function ReportingDashboard() {
                 )}
               </div>
             )}
+            {pipeline?.estimate_funnel && (
+              <div className="clay-card p-5">
+                <h2 className="text-base font-semibold text-gray-700 mb-4">Estimate Funnel</h2>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  {[
+                    ["Win rate", pipeline.estimate_funnel.win_rate == null ? "—" : `${pipeline.estimate_funnel.win_rate}%`, "text-emerald-600"],
+                    ["Won", pipeline.estimate_funnel.won_count, "text-gray-800"],
+                    ["Decided", pipeline.estimate_funnel.decided_count, "text-gray-800"],
+                  ].map(([label, val, cls]) => (
+                    <div key={label} className="rounded-lg border border-gray-100 p-2.5">
+                      <div className={`text-lg font-bold ${cls}`}>{val}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-gray-400">{label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 border-t border-gray-100 pt-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">By status</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(pipeline.estimate_funnel.status_counts || {}).map(([status, count]) => (
+                      <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-0.5 text-xs text-gray-700 capitalize">
+                        {status} <b>×{count}</b>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
