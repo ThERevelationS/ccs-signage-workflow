@@ -47,6 +47,31 @@ export function buildDuplicateEstimate(source = {}) {
   return clone;
 }
 
+// A split keeps the duplicate's header/settings but carries only the selected
+// line items, and records `split_from_estimate_id` so the child can trace back
+// to its parent. The parent estimate is unchanged — the split is a new draft.
+export function buildSplitEstimate(source = {}, { lineItemIds = [] } = {}) {
+  const clone = buildDuplicateEstimate(source);
+  const keep = new Set(lineItemIds);
+  clone.line_items = (Array.isArray(source?.line_items) ? source.line_items : []).filter((li) => keep.has(li?.id));
+  clone.split_from_estimate_id = source.id || "";
+  clone.project_name = `${source.project_name || source.estimate_number || "Estimate"} (split)`;
+  return clone;
+}
+
+export async function splitEstimate({ source, lineItemIds, sessionToken }) {
+  if (!source?.id) throw new Error("The source estimate is not loaded.");
+  if (!Array.isArray(lineItemIds) || lineItemIds.length === 0) throw new Error("Select at least one line item to split.");
+  const estimate = buildSplitEstimate(source, { lineItemIds });
+  const created = await ensureNewEstimate({
+    creationKey: newEstimateCreationKey(),
+    estimate,
+    sessionToken,
+  });
+  if (!created?.id) throw new Error("The split estimate could not be verified after creation.");
+  return created;
+}
+
 export async function duplicateEstimate({ source, sessionToken }) {
   if (!source?.id) throw new Error("The source estimate is not loaded.");
   const estimate = buildDuplicateEstimate(source);
