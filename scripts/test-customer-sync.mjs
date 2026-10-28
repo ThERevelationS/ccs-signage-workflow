@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import { buildSync } from 'esbuild';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
+const stub = resolve(here, '.tmp-customer-sync-sdk.mjs');
+writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };');
 const bundle = (name) => {
   const out = resolve(here, `.tmp-${name}.mjs`);
   buildSync({ entryPoints: [resolve(here, `../src/components/estimator/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
+    alias: { '@/api/base44Client': stub },
     define: { 'import.meta.env': '{}' } });
   return out;
 };
@@ -46,6 +50,7 @@ const { getPendingEstimatePriceAcceptance } = await import(pathToFileURL(bundle(
     { id: 'c2', company_name: 'Other Co', legacy_client_names: ['Acme Signage LLC'] },
   ];
   assert.equal(findCustomerByName(customers, 'acme signs')?.id, 'c1', 'case-insensitive match');
+  assert.equal(findCustomerByName(customers, '  ACME SIGNS  ')?.id, 'c1', 'trimmed case-insensitive match');
   assert.equal(findCustomerByName(customers, 'Acme Signage LLC')?.id, 'c2', 'legacy name match');
   assert.equal(findCustomerByName(customers, 'Nope'), null);
   assert.equal(findCustomerByName(customers, ''), null, 'blank returns null');
@@ -70,4 +75,16 @@ const { getPendingEstimatePriceAcceptance } = await import(pathToFileURL(bundle(
   assert.equal(getPendingEstimatePriceAcceptance({}), null);
 }
 
-console.log('PASS customer sync + mutation guard (15 cases)');
+{
+  const picker = readFileSync(resolve(here, '../src/components/estimator/aio/CustomerSearchDialog.jsx'), 'utf8');
+  const newCustomerDialog = readFileSync(resolve(here, '../src/components/estimator/aio/NewCustomerDialog.jsx'), 'utf8');
+  assert.match(picker, /query\.trim\(\)\.toLowerCase\(\)/, 'customer search normalizes surrounding whitespace and case');
+  assert.match(newCustomerDialog, /String\(c\?\.company_name \|\| \"\"\)\.trim\(\)\.toLowerCase\(\)/, 'existing names are normalized');
+  assert.match(newCustomerDialog, /String\(data\.company_name \|\| \"\"\)\.trim\(\)\.toLowerCase\(\)/, 'new name is normalized before duplicate warning');
+}
+
+console.log('PASS customer sync, picker normalization, and mutation guard');
+rmSync(stub, { force: true });
+rmSync(resolve(here, '.tmp-customerSync.mjs'), { force: true });
+rmSync(resolve(here, '.tmp-estimateMutationGuard.mjs'), { force: true });
+process.exit(0);
