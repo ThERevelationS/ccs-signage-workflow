@@ -36,6 +36,14 @@
       "type": "string",
       "description": "URL for custom uploaded sound file"
     },
+    "customer_ids": {
+      "type": "array",
+      "description": "Restrict this announcement to these customer IDs on the customer portal (empty = all customers).",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
     "display_pages": {
       "type": "array",
       "description": "Pages to show announcement on (empty = all pages)",
