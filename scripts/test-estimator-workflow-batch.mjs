@@ -326,6 +326,14 @@ try {
     assert.match(panel, /removeManualProductPart\(part\.id/, 'per-part removal uses the recovery-aware service');
     assert.match(panel, /Delete Selected/, 'toolbar exposes the bulk delete');
   });
+  await test('bulk detach detaches only Builder-linked parts in selection mode', () => {
+    const panel = readFileSync(resolve(here, '../src/components/estimator/aio/BuilderPartsPanel.jsx'), 'utf8');
+    assert.match(panel, /detachableSelected = parts\.filter/, 'bulk detach filters the selection');
+    assert.match(panel, /part\.builder_sync_state === "linked"/, 'only Builder-linked parts are detachable');
+    assert.match(panel, /bulkDetachSelected/, 'bulk detach handler is wired');
+    assert.match(panel, /detachBuilderPartOverride\(part\.id/, 'per-part detach uses the recovery-aware service');
+    assert.match(panel, /Detach Selected/, 'toolbar exposes the bulk detach');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
