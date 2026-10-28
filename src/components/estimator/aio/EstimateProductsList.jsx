@@ -100,9 +100,17 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         </div>
       ) : (
         <div className="p-2 space-y-2 bg-gray-50">
-          {visible.map(({ line, index }) => (
+          {visible.map(({ line, index }) => {
+            const lineId = line.line_id || line.builder_product_id || line.project_id || `i${index}`;
+            return (
+            <div key={lineId} className="relative">
+              {splitMode && (
+                <label className="absolute left-1 top-1 z-10 flex items-center justify-center w-5 h-5 rounded border border-indigo-300 bg-white cursor-pointer">
+                  <input type="checkbox" checked={splitIds.has(lineId)} onChange={() => toggleSplitId(lineId)} className="w-3.5 h-3.5 accent-indigo-600" aria-label={`Select ${line.description || "line item"} to split`} />
+                </label>
+              )}
             <ProductRow
-              key={line.line_id || line.builder_product_id || line.project_id || index}
+              key={lineId}
               line={line}
               index={index}
               percentOfTotal={rawTotal > 0 ? ((acceptedCustomerUnitPrice(line) * Math.max(0, Number(line.customer_quantity ?? 1) || 0)) / rawTotal) * 100 : null}
@@ -119,7 +127,9 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
               readOnly={readOnly}
               allLines={lines}
             />
-          ))}
+            </div>
+            );
+          })}
         </div>
       )}
 
