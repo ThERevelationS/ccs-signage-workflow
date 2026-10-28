@@ -300,6 +300,16 @@ try {
     assert.match(modal, /COST OVERRIDE REASON/, 'override editor exposes the reason input');
     assert.match(modal, /manual_cost_override_reason/, 'modal submits the reason');
   });
+  await test('stale pending builder mutations surface on the product row', () => {
+    const row = readFileSync(resolve(here, '../src/components/estimator/aio/ProductRow.jsx'), 'utf8');
+    const recovery = readFileSync(resolve(here, '../src/components/estimator/builder/builderMutationRecovery.js'), 'utf8');
+    assert.match(recovery, /STALE_PENDING_BUILDER_MUTATION_MS = 24 \* 60 \* 60 \* 1000/, 'stale threshold is 24 hours');
+    assert.match(recovery, /pendingBuilderMutationAge/, 'age helper exists');
+    assert.match(recovery, /pendingBuilderMutationIsStale/, 'stale check exists');
+    assert.match(row, /pendingBuilderMutationIsStale\(line\)/, 'product row evaluates staleness');
+    assert.match(row, /pendingStale \? " · stale >24h"/, 'stale pendings are labelled');
+    assert.match(row, /border-red-300 bg-red-50 text-red-800/, 'stale pendings are visually distinct');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
