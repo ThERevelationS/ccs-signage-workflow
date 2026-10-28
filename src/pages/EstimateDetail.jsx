@@ -1092,12 +1092,13 @@ export default function EstimateDetail() {
       nextFields: {
         status: "cancelled",
         cancel_reason: reason,
+        cancelled_at: new Date().toISOString(),
         edit_reason: "",
       },
       label: "Estimate cancellation",
       guardWholeVersion: true,
     });
-    let after = { ...before, ...(cancelled || {}), status: "cancelled", cancel_reason: reason, edit_reason: "" };
+    let after = { ...before, ...(cancelled || {}), status: "cancelled", cancel_reason: reason, cancelled_at: new Date().toISOString(), edit_reason: "" };
     await rememberServerVersion(after);
 
     try {
