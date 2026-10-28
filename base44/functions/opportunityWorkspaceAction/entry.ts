@@ -506,10 +506,11 @@ Deno.serve(async (req) => {
         }
         if (total > 0 && partCost > 0) { partCostRatioSum += partCost / total; partCostRatioCount += 1; }
         const rep = clean(row?.salesperson) || "Unassigned";
-        const slot = estimateBySalesperson[rep] || (estimateBySalesperson[rep] = { salesperson: rep, count: 0, quote_value: 0, won_count: 0 });
+        const slot = estimateBySalesperson[rep] || (estimateBySalesperson[rep] = { salesperson: rep, count: 0, quote_value: 0, won_count: 0, decided_count: 0 });
         slot.count += 1;
         slot.quote_value += total;
-        if (status === "approved") slot.won_count += 1;
+        if (status === "approved") { slot.won_count += 1; slot.decided_count += 1; }
+        if (status === "archived" || status === "cancelled") slot.decided_count += 1;
         const internal = num(row?.total_cost);
         if (total > 0 && internal > 0) {
           estimateMarginSum += (total - internal) / total;
@@ -529,7 +530,7 @@ Deno.serve(async (req) => {
         total_margin: Math.round(estimateMarginTotal * 100) / 100,
         aging_buckets: agingBuckets,
         aging_rows: agingRows.sort((a: any, b: any) => a.days_to_expiry - b.days_to_expiry).slice(0, 15),
-        by_salesperson: Object.values(estimateBySalesperson).map((s: any) => ({ ...s, avg_quote_value: s.count > 0 ? Math.round((s.quote_value / s.count) * 100) / 100 : 0 })).sort((a: any, b: any) => b.quote_value - a.quote_value).slice(0, 12),
+        by_salesperson: Object.values(estimateBySalesperson).map((s: any) => ({ ...s, avg_quote_value: s.count > 0 ? Math.round((s.quote_value / s.count) * 100) / 100 : 0, win_rate: s.decided_count > 0 ? Math.round((s.won_count / s.decided_count) * 1000) / 10 : null })).sort((a: any, b: any) => b.quote_value - a.quote_value).slice(0, 12),
         lost_reasons: Object.values(estimateLostReasonMap).map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 })).sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value).slice(0, 10),
         markup_usage: markupUsage,
         avg_part_cost_ratio: partCostRatioCount > 0 ? Math.round((partCostRatioSum / partCostRatioCount) * 1000) / 10 : null,
