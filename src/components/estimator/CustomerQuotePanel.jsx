@@ -277,6 +277,7 @@ export default function CustomerQuotePanel({
         recipientEmail: recipient,
         subject,
         message,
+        emailSignature: estimate.email_signature || "",
         attachment,
         quoteVersion: deliveryVersion,
         quoteIssueDate: deliveryIssueDate,
