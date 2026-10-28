@@ -532,6 +532,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [partSearch, setPartSearch] = useState("");
   const [bulkRemoving, setBulkRemoving] = useState(false);
+  const [bulkDetaching, setBulkDetaching] = useState(false);
   const groupCreateRef = useRef(false);
 
   useEffect(() => {
@@ -613,6 +614,33 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
       }
     } finally {
       setBulkRemoving(false);
+    }
+  };
+
+  const detachableSelected = parts.filter((part) => selectedIds.has(part.id) && part.builder_sync_state === "linked");
+
+  const bulkDetachSelected = async () => {
+    if (!builderProductId || bulkDetaching || !detachableSelected.length) return;
+    if (!window.confirm(`Detach ${detachableSelected.length} Builder-linked Part${detachableSelected.length === 1 ? "" : "s"} for independent override? Frozen pricing is retained; each Part stops syncing with the Builder.`)) return;
+    setBulkDetaching(true);
+    const failures = [];
+    try {
+      for (const part of detachableSelected) {
+        try {
+          await detachBuilderPartOverride(part.id, undefined, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
+        } catch (error) {
+          failures.push(`${part.part_name || "Part"}: ${error?.message || "detach failed"}`);
+        }
+      }
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      setRefreshNonce((value) => value + 1);
+      await onProductRefresh?.();
+      if (failures.length) {
+        window.alert(`${failures.length} Part${failures.length === 1 ? "" : "s"} could not be detached:\n${failures.join("\n")}\n\nThe Product was refreshed. If a detach had already started, use Resume Part Detach to safely continue it.`);
+      }
+    } finally {
+      setBulkDetaching(false);
     }
   };
 
@@ -741,6 +769,15 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40"
             >
               Group Selected Parts
+            </button>
+            <button
+              type="button"
+              disabled={bulkDetaching || detachableSelected.length === 0}
+              onClick={bulkDetachSelected}
+              title={detachableSelected.length === 0 ? "Only Builder-linked Parts can be detached" : "Detach the selected Builder-linked Parts for independent override"}
+              className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[11px] font-bold text-amber-700 hover:bg-amber-50 disabled:opacity-40 inline-flex items-center gap-1"
+            >
+              <Unlink className="w-3.5 h-3.5" /> {bulkDetaching ? "Detaching…" : `Detach Selected (${detachableSelected.length})`}
             </button>
             <button
               type="button"
