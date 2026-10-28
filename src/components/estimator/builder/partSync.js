@@ -3787,6 +3787,7 @@ function detachedOverrideChangesAlreadyApplied(part, changes = {}) {
   if (changes.frozen_unit_cost !== undefined && Math.abs(num(part.frozen_unit_cost) - num(changes.frozen_unit_cost)) > 0.000001) return false;
   if (changes.detail_overrides !== undefined && !same(part.detail_overrides || {}, changes.detail_overrides || {})) return false;
   if (changes.notes !== undefined && String(part.notes || "") !== String(changes.notes || "")) return false;
+  if (changes.manual_cost_override_reason !== undefined && String(part.manual_cost_override_reason || "") !== String(changes.manual_cost_override_reason || "")) return false;
   return true;
 }
 
@@ -3843,6 +3844,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
     current_extended_cost: nextExtended,
     manual_cost_override: true,
     manual_cost: nextExtended,
+    manual_cost_override_reason: changes.manual_cost_override_reason !== undefined ? String(changes.manual_cost_override_reason || "") : String(part.manual_cost_override_reason || ""),
     detail_overrides: nextDetailOverrides,
     price_state: "detached",
     price_delta: 0,
