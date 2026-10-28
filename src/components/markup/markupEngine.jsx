@@ -97,8 +97,30 @@ export function applyMarkups(lines, tier, settings) {
   const markedSubtotal = finalLines.reduce((s, l) => s + l.marked_up_cost, 0);
   const grandTotal = finalLines.reduce((s, l) => s + l.final_cost, 0);
 
+  // Readability merge: collapse lines sharing a category_key into one row.
+  // Same-category lines always share markup multiplier + discount eligibility,
+  // so summing cost fields is exact. Per-item detail stays in detail_lines.
+  const mergedLines = [];
+  const byKey = new Map();
+  for (const l of finalLines) {
+    const key = l.category_key || "";
+    const existing = byKey.get(key);
+    if (!existing) {
+      const g = { ...l, merged_count: 1, base_label: l.label };
+      byKey.set(key, g);
+      mergedLines.push(g);
+    } else {
+      existing.merged_count += 1;
+      existing.cost += l.cost;
+      existing.marked_up_cost += l.marked_up_cost;
+      existing.final_cost += l.final_cost;
+      existing.label = `${existing.base_label} (+${existing.merged_count - 1} merged)`;
+    }
+  }
+
   return {
-    lines: finalLines,
+    lines: mergedLines,
+    detail_lines: finalLines,
     totals: {
       raw_subtotal: rawSubtotal,
       marked_subtotal: markedSubtotal,
