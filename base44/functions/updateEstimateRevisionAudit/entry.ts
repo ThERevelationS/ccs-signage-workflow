@@ -10,12 +10,15 @@ const whole = (value: unknown, fallback = 0) => {
 
 function safeDeliveryEvidence(input: any = {}) {
   const sentAt = text(input?.sent_at, 80);
+  const fileUrl = text(input?.attachment_file_url, 4000);
   return {
     delivery_id: text(input?.delivery_id, 128),
     gmail_message_id: text(input?.gmail_message_id, 512),
     recipient_email: text(input?.recipient_email, 320),
     sent_at: sentAt && Number.isFinite(Date.parse(sentAt)) ? new Date(sentAt).toISOString() : '',
-    attachment_file_url: text(input?.attachment_file_url, 4000),
+    // Only http(s) evidence URLs are stored — javascript:/data: and other
+    // schemes can never be persisted as delivery evidence.
+    attachment_file_url: /^https?:\/\//i.test(fileUrl) ? fileUrl : '',
     attachment_sha256: text(input?.attachment_sha256, 128),
     attachment_size_bytes: Math.max(0, Number(input?.attachment_size_bytes || 0)),
   };
