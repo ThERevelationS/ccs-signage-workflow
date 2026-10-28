@@ -98,6 +98,18 @@ same(planSalesRemoteTaskApplication(base, "Brand new task text").mode, "plain",
 same(planSalesRemoteTaskApplication({ ...base, in_pipeline: false }, "Waiting on Deposit").mode, "held",
   "Non-pipeline records cannot adopt remote tasks.");
 same(planSalesRemoteTaskApplication(
+  { ...base, current_task_description: "Closed - Did not Lose", sales_status: "lead" },
+  "Estimate - To Be Reviewed").mode, "plain",
+  "A same-stage remote task is a safe text pull even on a legacy-terminal-pattern row.");
+same(planSalesRemoteTaskApplication(
+  { ...base, current_task_description: "Closed - Did not Lose", sales_status: "lead" },
+  "WIP - Installation").mode, "held",
+  "A stage-affecting remote task on a legacy-terminal-pattern row still fails closed.");
+same(planSalesRemoteTaskApplication(
+  { ...base, sales_stage_changed_at: "2026-10-21T00:00:00Z", sales_status: "quoted" },
+  "Estimate Sent to Customer").mode, "plain",
+  "A same-stage remote text pull proceeds under an unverified local stage move.");
+same(planSalesRemoteTaskApplication(
   { ...base, sales_stage_changed_at: "2026-10-21T00:00:00Z" }, "On Hold - Follow Up with Customer").mode, "held",
   "Unverified local stage move blocks remote stage-affecting tasks.");
 
