@@ -49,8 +49,8 @@ Deno.serve(async (req) => {
     if (!estimateId || quoteVersion <= 0) {
       return Response.json({ error: 'Estimate id and issued Quote Version are required.' }, { status: 400 });
     }
-    if (!acceptedByName || !acceptedAt || !METHODS.has(acceptanceMethod)) {
-      return Response.json({ error: 'Accepted by, acceptance date/time, and a valid acceptance method are required.' }, { status: 400 });
+    if (!acceptedAt || !METHODS.has(acceptanceMethod)) {
+      return Response.json({ error: 'Acceptance date/time and a valid acceptance method are required.' }, { status: 400 });
     }
     if (!Number.isFinite(Date.parse(acceptedAt))) {
       return Response.json({ error: 'Acceptance date/time is invalid.' }, { status: 400 });
@@ -75,6 +75,14 @@ Deno.serve(async (req) => {
     const currentVersion = Math.max(0, whole(estimate.quote_version));
     if (!currentVersion || currentVersion !== quoteVersion) {
       return Response.json({ error: 'The issued Quote Version changed. Reload the estimate before recording acceptance.' }, { status: 409 });
+    }
+    // accepted_by fallback: when the caller omits the name, resolve it from the
+    // estimate's customer contact (first+last, then order_contact/contact_name).
+    const resolvedByName = acceptedByName
+      || [estimate.contact_first_name, estimate.contact_last_name].map((v: any) => String(v || '').trim()).filter(Boolean).join(' ')
+      || String(estimate.order_contact || estimate.contact_name || '').trim();
+    if (!resolvedByName) {
+      return Response.json({ error: 'Accepted by is required and no customer contact name is on file.' }, { status: 400 });
     }
 
     const existingRows = await Acceptance.filter({
@@ -119,7 +127,7 @@ Deno.serve(async (req) => {
         quote_expiration_date: quoteExpirationDate(estimate.quote_issue_date, estimate.quote_valid_days ?? 30),
         quote_total: Number(estimate.quote_total || 0),
         accepted_at: new Date(acceptedAt).toISOString(),
-        accepted_by_name: acceptedByName,
+        accepted_by_name: resolvedByName,
         accepted_by_email: acceptedByEmail,
         acceptance_method: acceptanceMethod,
         evidence_reference: evidenceReference,
