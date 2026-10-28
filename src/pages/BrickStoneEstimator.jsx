@@ -191,6 +191,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               <ArrowLeft className="w-4 h-4" /> Back to estimate
             </Link>
           )}
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
           <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
           </Button>
