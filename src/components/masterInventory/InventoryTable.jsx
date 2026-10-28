@@ -1,8 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Trash2, Package } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Edit, Trash2, Package } from "lucide-react";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
 const formatCell = (val, field) => {
@@ -22,6 +22,31 @@ const formatCell = (val, field) => {
 export default function InventoryTable({ source, items, canEdit, onEdit, onDelete, onInlineToggle }) {
   const tableFields = source.fields.filter((f) => f.table);
   const toggleRef = useRef(new Set());
+  const [sort, setSort] = useState(null);
+
+  const toggleSort = (name) => {
+    setSort((prev) => {
+      if (!prev || prev.name !== name) return { name, dir: "asc" };
+      if (prev.dir === "asc") return { name, dir: "desc" };
+      return null;
+    });
+  };
+
+  const sortedItems = !sort ? items : [...items].sort((a, b) => {
+    const field = tableFields.find((f) => f.name === sort.name);
+    const av = a[sort.name], bv = b[sort.name];
+    if (field?.type === "number") {
+      const an = parseFloat(av), bn = parseFloat(bv);
+      if (Number.isNaN(an) && Number.isNaN(bn)) return 0;
+      if (Number.isNaN(an)) return 1;
+      if (Number.isNaN(bn)) return -1;
+      return sort.dir === "asc" ? an - bn : bn - an;
+    }
+    const as = (av === null || av === undefined) ? "" : String(av);
+    const bs = (bv === null || bv === undefined) ? "" : String(bv);
+    const cmp = as.localeCompare(bs, undefined, { numeric: true, sensitivity: "base" });
+    return sort.dir === "asc" ? cmp : -cmp;
+  });
 
   const handleToggle = async (item, field, next) => {
     const lockKey = `${item.id}:${field.name}`;
@@ -77,14 +102,19 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
           <tr className="text-left">
             {tableFields.map((f) => (
               <th key={f.name} className="px-2 py-3 font-medium text-slate-600 text-xs">
-                {f.label}
+                <button type="button" onClick={() => toggleSort(f.name)} className="inline-flex items-center gap-1 hover:text-slate-900" title={`Sort by ${f.label}`}>
+                  {f.label}
+                  {sort?.name === f.name
+                    ? (sort.dir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)
+                    : <ArrowUpDown className="w-3 h-3 opacity-40" />}
+                </button>
               </th>
             ))}
             {canEdit && <th className="px-2 py-3 font-medium text-slate-600 text-right text-xs w-20">Actions</th>}
           </tr>
         </thead>
         <tbody className="divide-y">
-          {items.map((item) => (
+          {sortedItems.map((item) => (
             <tr key={item.id} className="hover:bg-slate-50 transition-colors">
               {tableFields.map((f, idx) => (
                 <td key={f.name} className="px-2 py-3 align-top">
