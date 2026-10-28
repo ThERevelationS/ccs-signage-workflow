@@ -125,7 +125,10 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     });
   };
 
-  const addItem = () => patchProject({ items: [...(project.items || []), emptyItem()] });
+  const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
+    patchProject({ items: [...(project.items || []), emptyItem()] });
+  };
   const removeItem = (index) => {
     const label = project.items?.[index]?.description || `item ${index + 1}`;
     if (!window.confirm(`Delete "${label}"?`)) return;
@@ -328,7 +331,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                       <div key={rawItem.builder_item_id || index} className="p-4 space-y-3">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold">{index + 1}</span>
-                          <Input value={rawItem.description || ""} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder="Item description" className="h-[30px] text-[12px] flex-1" />
+                          <Input data-item-desc={index} value={rawItem.description || ""} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder="Item description" className="h-[30px] text-[12px] flex-1" />
                           <button type="button" onClick={() => removeItem(index)} className="w-8 h-8 inline-flex items-center justify-center rounded text-red-500 hover:bg-red-50" aria-label="Remove item"><Trash2 className="w-4 h-4" /></button>
                         </div>
 
