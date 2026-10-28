@@ -3,6 +3,7 @@ import {
   buildQuoteRecipientContact,
   ensureQuoteRecipientContact,
 } from "../base44/shared/quoteRecipientContact.mjs";
+import { createFoundationRecordWithRecovery } from "../base44/shared/opportunityFoundationPersistence.mjs";
 
 const estimate = {
   id: "estimate-synthetic-1",
@@ -52,28 +53,31 @@ assert.equal(buildQuoteRecipientContact({ estimate, delivery: {} }), null);
 
 {
   const rows = [];
-  const calls = [];
   const customerContact = {
     filter: async (query) => rows.filter((row) => Object.entries(query).every(([key, value]) => row[key] === value)),
+    create: async (data) => {
+      const record = { ...data, id: "created-contact" };
+      rows.push(record);
+      throw new Error("Synthetic response lost after create");
+    },
+    get: async (id) => rows.find((row) => row.id === id) || null,
   };
-  const createWithRecovery = async ({ entity, data, readMatches, label }) => {
-    calls.push({ entity, data, label });
-    let matches = await readMatches();
-    if (matches.length) return { record: matches[0], status: "reused" };
-    const record = { ...data, id: "created-contact" };
-    rows.push(record);
-    matches = await readMatches();
-    assert.equal(matches.length, 1);
-    return { record: matches[0], status: "created" };
-  };
-  const first = await ensureQuoteRecipientContact({ customerContact, estimate, delivery, createWithRecovery });
-  const retry = await ensureQuoteRecipientContact({ customerContact, estimate, delivery, createWithRecovery });
-  assert.equal(first.status, "created");
+  const first = await ensureQuoteRecipientContact({
+    customerContact,
+    estimate,
+    delivery,
+    createWithRecovery: createFoundationRecordWithRecovery,
+  });
+  const retry = await ensureQuoteRecipientContact({
+    customerContact,
+    estimate,
+    delivery,
+    createWithRecovery: createFoundationRecordWithRecovery,
+  });
+  assert.equal(first.status, "recovered");
   assert.equal(retry.status, "existing");
   assert.equal(rows.length, 1);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].label, "Quote recipient CustomerContact");
-  assert.equal(calls[0].data.creation_request_key, contact.creation_request_key);
+  assert.equal(rows[0].creation_request_key, contact.creation_request_key);
 }
 
 {
