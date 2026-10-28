@@ -309,6 +309,36 @@ export default function ReportingDashboard() {
                     ))}
                   </div>
                 </div>
+                {pipeline.estimate_funnel.aging_buckets && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Quote aging</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        ["Expired", pipeline.estimate_funnel.aging_buckets.expired, "bg-red-50 text-red-700"],
+                        ["≤7d", pipeline.estimate_funnel.aging_buckets.expiring_7d, "bg-amber-50 text-amber-700"],
+                        ["8–14d", pipeline.estimate_funnel.aging_buckets.valid_14d, "bg-blue-50 text-blue-700"],
+                        ["15–30d", pipeline.estimate_funnel.aging_buckets.valid_30d, "bg-gray-50 text-gray-600"],
+                        ["30d+", pipeline.estimate_funnel.aging_buckets.valid_30d_plus, "bg-gray-50 text-gray-600"],
+                      ].map(([label, count, cls]) => count > 0 ? (
+                        <span key={label} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${cls}`}>
+                          {label} <b>×{count}</b>
+                        </span>
+                      ) : null)}
+                    </div>
+                    {Array.isArray(pipeline.estimate_funnel.aging_rows) && pipeline.estimate_funnel.aging_rows.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {pipeline.estimate_funnel.aging_rows.slice(0, 6).map((q) => (
+                          <div key={q.id} className="flex items-center justify-between text-[11px] rounded border border-gray-100 px-2 py-1">
+                            <span className="truncate text-gray-700">{q.project_name || q.client_name || q.estimate_number}</span>
+                            <span className={`shrink-0 ml-2 font-bold ${q.expired ? "text-red-600" : q.days_to_expiry <= 7 ? "text-amber-600" : "text-blue-600"}`}>
+                              {q.expired ? `Expired ${Math.abs(q.days_to_expiry)}d` : `${q.days_to_expiry}d`} · ${Number(q.quote_total || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
