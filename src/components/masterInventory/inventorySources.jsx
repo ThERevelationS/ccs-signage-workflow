@@ -22,7 +22,7 @@ import {
   SignHardwareInventory,
   LaborServiceInventory,
   SignPartsSuppliesInventory,
-} from "@/api/gatedEntities";
+} from "@/entities/all";
 
 import {
   Package,
@@ -80,6 +80,7 @@ export const INVENTORY_SOURCES = [
       { name: "show_in_replace_returns",     label: "Repl. Returns", type: "boolean", table: true },
       { name: "show_in_replace_face",        label: "Repl. Face",    type: "boolean", table: true },
       { name: "is_active", label: "Active", type: "boolean" },
+      { name: "image_url", label: "Image URL", type: "text" },
       { name: "notes", label: "Notes", type: "textarea" },
     ],
   },
