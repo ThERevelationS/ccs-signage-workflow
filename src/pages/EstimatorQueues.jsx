@@ -23,7 +23,7 @@ const STATUSES = [
 const SORTS = [
   { key: "newest", label: "Newest" },
   { key: "oldest", label: "Oldest" },
-  { key: "value_desc", label: "$ high → low" },
+  { key: "value_desc", label: "$ high â†’ low" },
   { key: "expiring", label: "Expiring first" },
 ];
 
@@ -81,7 +81,7 @@ export default function EstimatorQueues() {
     }
     setBulkBusy(false);
     setSelectedIds(new Set());
-    if (failures.length) setBulkError(`Bulk update partially failed: ${failures.slice(0, 3).join(" · ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
+    if (failures.length) setBulkError(`Bulk update partially failed: ${failures.slice(0, 3).join(" Â· ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
     try { const reloaded = await loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
   };
 
@@ -143,7 +143,7 @@ export default function EstimatorQueues() {
     const cascade = linked.length
       ? `\n\nWARNING: this estimate has ${linked.join(" and ")}. Linked records are NOT deleted automatically and will keep pointing at a removed estimate.`
       : "";
-    if (!window.confirm(`Permanently delete — this cannot be undone${cascade}`)) return;
+    if (!window.confirm(`Permanently delete â€” this cannot be undone${cascade}`)) return;
     setTrashBusyId(e.id);
     setTrashError("");
     try {
@@ -208,7 +208,7 @@ export default function EstimatorQueues() {
         <div className="bg-white px-4 py-3 flex items-center gap-2">
           <ListFilter className="w-4 h-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
-          <span className="ml-auto text-xs text-gray-400">{rows.length} shown · {compact(visibleTotal)}</span>
+          <span className="ml-auto text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -224,11 +224,11 @@ export default function EstimatorQueues() {
                     ? "bg-red-600 text-white border-red-600"
                     : "bg-white/70 text-gray-600 border-gray-200 hover:border-red-300"
                 }`}
-                title={`${b.count} · ${money0(b.total)}`}
+                title={`${b.count} Â· ${money0(b.total)}`}
               >
                 {s.label}
                 <span className={`ml-1.5 ${status === s.key ? "text-red-100" : "text-gray-400"}`}>
-                  {b.count}{b.total > 0 ? ` · ${compact(b.total)}` : ""}
+                  {b.count}{b.total > 0 ? ` Â· ${compact(b.total)}` : ""}
                 </span>
               </Link>
             );
@@ -241,7 +241,7 @@ export default function EstimatorQueues() {
             <input
               value={query}
               onChange={(e) => { const v = e.target.value; setQuery(v); writeParams("q", v); }}
-              placeholder="Search project, client, or estimate #…"
+              placeholder="Search project, client, or estimate #â€¦"
               className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 pl-9 pr-3 text-sm outline-none focus:border-red-300"
             />
           </div>
@@ -266,7 +266,7 @@ export default function EstimatorQueues() {
 
         <div className="bg-white">
           {loading ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-400">Loading…</div>
+            <div className="px-4 py-10 text-center text-sm text-gray-400">Loadingâ€¦</div>
           ) : loadError ? (
             <div className="px-4 py-10 text-center text-sm text-red-600">{loadError}</div>
           ) : rows.length === 0 ? (
@@ -279,7 +279,7 @@ export default function EstimatorQueues() {
                   <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="h-7 rounded border border-gray-300 bg-white px-2 text-[11px] font-semibold text-gray-700">
                     {["draft", "calculated", "sent", "approved", "archived"].map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applying…" : "Apply status"}</button>
+                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applyingâ€¦" : "Apply status"}</button>
                   <button type="button" onClick={() => setSelectedIds(new Set())} className="h-7 px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-red-300">Clear</button>
                   {bulkError && <span className="text-[10px] text-red-600">{bulkError}</span>}
                 </div>
@@ -301,8 +301,8 @@ export default function EstimatorQueues() {
                         </Link>
                         <div className="text-xs text-gray-500 truncate">
                           {e.client_name}
-                          {e.estimate_number ? ` · ${e.estimate_number}` : ""}
-                          {e.deleted_at ? ` · deleted ${format(new Date(e.deleted_at), "MMM d")}` : ""}
+                          {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
+                          {e.deleted_at ? ` Â· deleted ${format(new Date(e.deleted_at), "MMM d")}` : ""}
                           {e.deleted_by ? ` by ${e.deleted_by}` : ""}
                         </div>
                       </div>
@@ -347,8 +347,8 @@ export default function EstimatorQueues() {
                       <div className="text-sm font-semibold text-gray-800 truncate">{e.project_name}</div>
                       <div className="text-xs text-gray-500 truncate">
                         {e.client_name}
-                        {e.estimate_number ? ` · ${e.estimate_number}` : ""}
-                        {age != null ? ` · ${age}d open` : ""}
+                        {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
+                        {age != null ? ` Â· ${age}d open` : ""}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
