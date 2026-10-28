@@ -3633,12 +3633,13 @@ Deno.serve(async (req) => {
 
 
     if (action === 'status') {
-      const unresolvedPunchReview = await unresolvedPunchReviewSummary({
+      const isManagerSession = actor.role === 'admin';
+      const unresolvedPunchReview = isManagerSession ? await unresolvedPunchReviewSummary({
         entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
-      });
-      const correctedShiftReview = await correctedShiftReviewSummary({
+      }) : null;
+      const correctedShiftReview = isManagerSession ? await correctedShiftReviewSummary({
         entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
-      });
+      }) : null;
       const reviewNoticeFields = {
         ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
         ...(correctedShiftReview ? { pending_shift_review: correctedShiftReview } : {}),
