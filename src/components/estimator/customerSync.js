@@ -66,10 +66,17 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
       throw new Error(`A duplicate ${duplicateLabel} was detected for this estimate and the losing duplicate could not be removed safely: ${error?.message || "unknown error"}`);
     }
     if (Object.keys(fields || {}).length) {
+      // Convergence is dedupe, not a content sync: only force linkage fields
+      // onto the canonical row so user-edited titles/fields are never
+      // overwritten by estimate defaults here.
+      const linkFields = Object.fromEntries(
+        Object.entries(fields).filter(([k]) => ["estimate_id", "opportunity_id", "estimating_request_id", "in_pipeline"].includes(k)),
+      );
+      if (!Object.keys(linkFields).length) return canonical;
       return replaceWorkOrderFieldsIfUnchanged({
         workOrderId: canonical.id,
-        expectedFields: expectedWorkOrderFields(canonical, fields),
-        nextFields: fields,
+        expectedFields: expectedWorkOrderFields(canonical, linkFields),
+        nextFields: linkFields,
         label: `${duplicateLabel} convergence`,
       });
     }
