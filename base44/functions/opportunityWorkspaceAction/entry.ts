@@ -1167,6 +1167,17 @@ Deno.serve(async (req) => {
         details: { work_order_id: workOrderId, work_order_stage: syncedStage || clean(savedWorkOrder?.sales_status) },
       });
 
+      const statusBefore = clean(workOrder?.sales_status);
+      const statusAfter = clean(savedWorkOrder?.sales_status) || syncedStage;
+      if (statusAfter && statusAfter !== statusBefore) {
+        await logActivity(Activity, {
+          opportunity_id: opportunityId, actor,
+          event_type: "estimate_status_changed",
+          summary: `Estimate status changed — ${statusBefore || "none"} → ${statusAfter}`,
+          details: { work_order_id: workOrderId, from: statusBefore, to: statusAfter },
+        });
+      }
+
       return Response.json({
         success: true,
         action,
