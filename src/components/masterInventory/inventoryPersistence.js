@@ -125,3 +125,43 @@ export async function findInventoryEstimateUsage(recordId) {
   }
   return { parts: parts.length, products: productIds.length, estimates: estimateIds.size, estimateIds: [...estimateIds].slice(0, 25) };
 }
+
+const COST_FIELD_RX = /cost|rate|price/i;
+
+// Writes InventoryCostHistory rows for any cost/rate/price-named field whose
+// value changed between the loaded row and the saved payload. Best-effort:
+// failures are swallowed so the audit never blocks an inventory save.
+export async function recordInventoryCostChanges({ itemId, entityKey, before = {}, after = {}, fields = [], note = "Inventory edit", changedBy = "" } = {}) {
+  if (!itemId || typeof base44?.entities?.InventoryCostHistory?.create !== "function") return 0;
+  const costFields = new Set((fields || []).filter((f) => f?.name && COST_FIELD_RX.test(f.name)).map((f) => f.name));
+  const candidates = new Set([...costFields, ...Object.keys(after).filter((k) => COST_FIELD_RX.test(k))]);
+  let written = 0;
+  for (const field of candidates) {
+    const oldVal = Number(before[field]);
+    const newVal = Number(after[field]);
+    if (!Number.isFinite(oldVal) || !Number.isFinite(newVal) || Math.abs(oldVal - newVal) <= 0.000001) continue;
+    await base44.entities.InventoryCostHistory.create({
+      inventory_item_id: String(itemId),
+      entity_key: String(entityKey || ""),
+      cost_field: String(field),
+      old_cost: oldVal,
+      new_cost: newVal,
+      changed_by: String(changedBy || ""),
+      note: String(note || ""),
+    }).catch(() => { /* audit must not fail the save */ });
+    written += 1;
+  }
+  return written;
+}
+
+export async function loadInventoryCostHistory({ itemId, entityKey = "", limit = 5 } = {}) {
+  if (!itemId || typeof base44?.entities?.InventoryCostHistory?.filter !== "function") return [];
+  const query = entityKey
+    ? { inventory_item_id: String(itemId), entity_key: String(entityKey) }
+    : { inventory_item_id: String(itemId) };
+  const rows = await base44.entities.InventoryCostHistory.filter(query).catch(() => []);
+  const list = Array.isArray(rows) ? rows : [];
+  return list
+    .sort((a, b) => String(b?.created_date || "").localeCompare(String(a?.created_date || "")))
+    .slice(0, limit);
+}
