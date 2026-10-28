@@ -32,6 +32,7 @@ export async function addPartPackageToProduct({
   payload,
   sourceType = "library",
   sourceId = "",
+  sourceTemplate = null,
   expectedEstimateUpdatedAt = "",
 }) {
   if (!estimateId || !targetBuilderProductId) throw new Error("Estimate and target Product are required.");
@@ -194,6 +195,11 @@ export async function addPartPackageToProduct({
       last_price_check_at: timestamp,
       last_price_update_at: timestamp,
       is_active: true,
+      ...(sourceType === "library" && sourceTemplate?.id ? {
+        source_template_id: String(sourceTemplate.id),
+        source_template_name: String(sourceTemplate.name || ""),
+        source_template_version: Math.max(1, Number(sourceTemplate.version) || 1),
+      } : {}),
     };
   });
 
