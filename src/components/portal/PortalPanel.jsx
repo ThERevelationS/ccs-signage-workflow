@@ -112,6 +112,11 @@ export default function PortalPanel({ sessionToken, customerId }) {
                 {m.author_side === "staff" ? m.author_name || "Staff" : "Customer"}{m.related_label ? ` · re: ${m.related_label}` : ""}
               </p>
               <p className="whitespace-pre-wrap">{m.body}</p>
+              {m.attachment_url && (
+                <a href={m.attachment_url} target="_blank" rel="noreferrer" className={`mt-0.5 inline-block text-[10px] underline ${m.author_side === "staff" ? "text-blue-100" : "text-blue-600"}`}>
+                  {m.attachment_name || "Attachment"}
+                </a>
+              )}
               <p className={`mt-0.5 text-[9px] ${m.author_side === "staff" ? "text-blue-200" : "text-gray-400"}`}>
                 {m.created_date ? new Date(m.created_date).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}
               </p>
