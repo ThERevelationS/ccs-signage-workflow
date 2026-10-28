@@ -4,6 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import {
   AlertTriangle,
+  Archive,
   ArrowDownToLine,
   ArrowUpFromLine,
   History,
@@ -148,6 +149,26 @@ export default function Inventory() {
       await load();
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Reorder point update failed.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const archiveItem = async (item) => {
+    if (busy) return;
+    if (!window.confirm(`Archive "${[item.material_type, item.product_type, item.size].filter(Boolean).join(" · ") || "this item"}"? It will be hidden from stock lists, pickers, and reorder suggestions (restorable by an admin).`)) return;
+    setBusy(`${item.id}:archive`);
+    setError("");
+    try {
+      await invokeAction(sessionToken, {
+        action: "set_archived",
+        item_id: item.id,
+        archived: true,
+        expected_updated_date: item.updated_date,
+      });
+      await load();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Archive failed.");
     } finally {
       setBusy("");
     }
@@ -306,6 +327,10 @@ export default function Inventory() {
                         <button title="Movement history" onClick={() => setLogItem({ id: it.id, label })}
                           className="rounded-lg bg-slate-100 p-1.5 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
                           <History className="h-4 w-4" />
+                        </button>
+                        <button title="Archive item" onClick={() => archiveItem(it)} disabled={Boolean(busy)}
+                          className="rounded-lg bg-red-50 p-1.5 text-red-500 hover:bg-red-100 disabled:opacity-50 dark:bg-red-950/40 dark:text-red-300">
+                          {b("archive") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
                         </button>
                       </div>
                     </td>
