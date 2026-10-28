@@ -42599,9 +42599,6 @@ function sameValue(a, b) {
       return Math.abs(Number(a) - Number(b)) <= 1e-6;
     }
   }
-  if (typeof a === "string" && typeof b === "string") {
-    return a.trim().replace(/\s+/g, " ") === b.trim().replace(/\s+/g, " ");
-  }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 function sanitizeWorkOrderFormPatch(formData = {}) {
