@@ -28,11 +28,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Edit, Plus, Wrench, Link2, Settings2, Truck, ArrowUpFromLine, Star } from "lucide-react";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./equipmentPersistence";
-import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
-import { staffEntities } from "@/components/staff/staffEntities";
+import { createInventoryRecordWithRecovery, findInventoryPartReferences } from "./inventoryPersistence";
 
-const FoundationInventoryEntity = staffEntities.FoundationInventory;
-const ChannelLetterInstallEquipmentEntity = staffEntities.ChannelLetterInstallEquipment;
+const FoundationInventoryEntity = base44.entities.FoundationInventory;
+const ChannelLetterInstallEquipmentEntity = base44.entities.ChannelLetterInstallEquipment;
 
 // ── small helpers ──────────────────────────────────────────────────────────
 const FOUNDATION_EQUIPMENT_TYPES = ["excavation_equipment", "attachment", "sub_attachment"];
@@ -170,6 +169,11 @@ export default function MasterEquipmentTab({ isAdmin }) {
       if (row.raw?.updated_date && live?.updated_date && row.raw.updated_date !== live.updated_date) {
         alert("This equipment item changed in another session and was not deleted. The latest equipment inventory will be reloaded first.");
         await load();
+        return;
+      }
+      const refs = await findInventoryPartReferences(row.id);
+      if (refs.count > 0) {
+        alert(`"${row.name}" is used by ${refs.count} estimate Part${refs.count === 1 ? "" : "s"} (${refs.names.join(", ")}${refs.count > 5 ? ", …" : ""}). Detach or remove those Parts before deleting this item.`);
         return;
       }
       await deleteEntityIfUnchanged({
