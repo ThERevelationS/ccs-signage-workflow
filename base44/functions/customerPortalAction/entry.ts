@@ -552,6 +552,25 @@ Deno.serve(async (req) => {
         readMatches: () => PortalMessage.filter({ creation_request_key: key }),
         label: "Portal revision request",
       });
+      // Revision request task: an open EstimatingRequest row puts the
+      // customer's change request on the estimator queue (not just the message
+      // thread), keyed idempotently on the portal message.
+      try {
+        await createFoundationRecordWithRecovery({
+          entity: EstimatingRequest,
+          data: {
+            creation_request_key: `portal-rev-request:${estimateId}:${clean(msg.record?.id) || key}`,
+            estimate_id: estimateId,
+            opportunity_id: await opportunityIdForEstimate(estimateId),
+            status: "open",
+            description: `Customer requested revisions via the portal: ${note.slice(0, 500)}`,
+          },
+          readMatches: () => EstimatingRequest.filter({ creation_request_key: `portal-rev-request:${estimateId}:${clean(msg.record?.id) || key}` }),
+          label: "Portal revision request task",
+        });
+      } catch (reqError: any) {
+        console.error("Portal revision request message saved but its queue task failed:", reqError?.message || reqError);
+      }
       logPortalOpportunityActivity(OpportunityActivity, {
         opportunityId: await opportunityIdForEstimate(estimateId),
         eventType: "note",
