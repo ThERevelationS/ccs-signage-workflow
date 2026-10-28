@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
         const invoice = await Invoice.get(clean(link.record_id)).catch(() => null);
         if (!invoice?.id) throw bad("The linked record is no longer available.", 404);
         const payments = await Payment.filter({ invoice_id: clean(invoice.id) }).catch(() => []);
-        const announcements = await loadPortalAnnouncements(customerId);
+        const announcements = await loadPortalAnnouncements(clean(link.customer_id) || clean(invoice.customer_id) || "");
         return Response.json({
           success: true,
           action,
