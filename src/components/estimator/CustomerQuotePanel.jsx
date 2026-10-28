@@ -105,6 +105,8 @@ export default function CustomerQuotePanel({
   const sendingRef = useRef(false);
   const [sendError, setSendError] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [ccEmails, setCcEmails] = useState("");
+  const [bccEmails, setBccEmails] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [currentVersionDelivered, setCurrentVersionDelivered] = useState(false);
@@ -275,6 +277,8 @@ export default function CustomerQuotePanel({
       const deliveryResult = await deliverEstimateQuote({
         estimate,
         recipientEmail: recipient,
+        ccEmails: String(ccEmails || "").trim(),
+        bccEmails: String(bccEmails || "").trim(),
         subject,
         message,
         emailSignature: estimate.email_signature || "",
