@@ -67,6 +67,10 @@
     "builder_detached_reason": {
       "type": "string"
     },
+    "builder_detached_by": {
+      "type": "string",
+      "description": "Display name or email of the user who detached this Part from its Builder. Cleared on reattach."
+    },
     "builder_detached_snapshot": {
       "type": "object",
       "description": "Builder-produced Part state captured when an override was detached, used for audit and reattachment review.",
