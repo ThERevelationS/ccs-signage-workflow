@@ -86,7 +86,7 @@ const TAB_CLASS =
 
 export default function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
-  const id = embeddedProjectId || params.get("id");
+  const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
   const navigate = useNavigate();
 
