@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const SOUND_TYPES = new Set(['none', 'chime', 'bell', 'alert', 'fanfare', 'ding', 'custom']);
@@ -161,7 +162,7 @@ async function convergeSingleLive(Announcement: any, maxPasses = 4) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     // Anonymous viewers may read the live feed and acknowledge banners;
     // only the admin actions below require a verified actor.
