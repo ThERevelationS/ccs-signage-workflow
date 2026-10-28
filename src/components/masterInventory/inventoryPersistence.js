@@ -123,5 +123,5 @@ export async function findInventoryEstimateUsage(recordId) {
     const product = await base44.entities.BuilderProduct.get(productId).catch(() => null);
     if (product?.estimate_id) estimateIds.add(product.estimate_id);
   }
-  return { parts: parts.length, products: productIds.length, estimates: estimateIds.size };
+  return { parts: parts.length, products: productIds.length, estimates: estimateIds.size, estimateIds: [...estimateIds].slice(0, 25) };
 }
