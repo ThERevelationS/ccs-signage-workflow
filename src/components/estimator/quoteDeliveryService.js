@@ -27,12 +27,22 @@ function interpolateEmailTemplate(template, estimate = {}) {
 }
 
 export function defaultQuoteEmailSubject(estimate = {}) {
+  const subjectTemplate = String(estimate.email_subject_template || "").trim();
+  if (subjectTemplate) {
+    const out = interpolateEmailTemplate(subjectTemplate, estimate).trim();
+    if (out) return out;
+  }
   const number = String(estimate.estimate_number || "").trim();
   const project = String(estimate.project_name || "").trim();
   return [number ? `Estimate #${number}` : "Project Estimate", project].filter(Boolean).join(" — ");
 }
 
 export function defaultQuoteEmailMessage(estimate = {}) {
+  const messageTemplate = String(estimate.email_message_template || "").trim();
+  if (messageTemplate) {
+    const out = interpolateEmailTemplate(messageTemplate, estimate).trim();
+    if (out) return out;
+  }
   const contact = String(estimate.order_contact || estimate.contact_name || "").trim();
   const greeting = contact ? `Good afternoon ${contact},` : "Good afternoon,";
   const company = String(estimate.company_name || "Cincinnati Custom Signs").trim();
