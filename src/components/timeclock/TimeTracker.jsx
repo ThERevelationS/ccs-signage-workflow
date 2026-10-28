@@ -452,8 +452,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
           className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${bgClass} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
           style={{
-            zoom: prefs?.scale || 1,
+            // Docked in the vertical sidebar the pill must stay inside the rail,
+            // so its scale is capped and it can never spill into the content.
+            zoom: position === "side" ? Math.min(prefs?.scale || 1, 0.72) : (prefs?.scale || 1),
             opacity: prefs?.opacity ?? 1,
+            maxWidth: "100%",
             ...accentVars,
           }}
         >
@@ -496,7 +499,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : prefs?.display_style === "roll" ? "tracker-roll" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}
               key={["flip","roll"].includes(prefs?.display_style) ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
             >
-              {trackerLabel && prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
+              {trackerLabel && prefs?.show_label !== false && position !== "side" && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
               {prefs?.display_style === "badge"
                 ? <span className="rounded-md px-1.5 py-0.5 text-white" style={{ background: accent.ring }}>{trackerTime}</span>
                 : trackerTime}
