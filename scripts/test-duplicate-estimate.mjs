@@ -44,7 +44,23 @@ const source = {
   terms: 'Net 30',
 };
 
+const lifecycleFields = {
+  cancel_reason: 'Customer cancelled',
+  cancelled_at: '2026-01-07T00:00:00Z',
+  archived_at: '2026-01-08T00:00:00Z',
+  archived_reason: 'Superseded',
+  is_template: true,
+  split_from_estimate_id: 'older-parent',
+  edit_reason: 'Previous revision',
+  last_product_removal_key: 'old-receipt',
+  last_product_removal_line_id: 'removed-line',
+  last_product_removal_at: '2026-01-06T00:00:00Z',
+};
+Object.assign(source, lifecycleFields);
 const clone = buildDuplicateEstimate(source);
+for (const key of Object.keys(lifecycleFields)) {
+  assert.equal(clone[key], undefined, `${key} must not leak into a fresh draft`);
+}
 
 for (const k of ['id','created_date','updated_date','created_by','work_order_id','internal_approval','deleted','sent_at','accepted_at','quote_issue_date','quote_issue_key','pipeline_sync_pending','creation_request_key','quote_version']) {
   assert.equal(clone[k], undefined, `${k} must be dropped (got ${clone[k]})`);
