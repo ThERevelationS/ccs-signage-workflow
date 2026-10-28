@@ -106,8 +106,8 @@ export default function InstallSummaryCard({
 
         {/* Actions */}
         <div className="space-y-2 pt-1">
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
           <Button
-{project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
             onClick={onSave}
             disabled={isSaving}
             className="w-full bg-green-500 hover:bg-green-600 text-white h-11 shadow-md"
