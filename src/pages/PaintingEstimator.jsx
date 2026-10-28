@@ -251,6 +251,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
               <ArrowLeft className="w-4 h-4" /> Back to estimator
             </Link>
           )}
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
           <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
             <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : "Save Painting"}
           </Button>
