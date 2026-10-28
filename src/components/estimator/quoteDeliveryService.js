@@ -113,6 +113,8 @@ export async function approveEstimateQuote({ estimateId, quoteTotal, sessionToke
 export async function deliverEstimateQuote({
   estimate,
   recipientEmail,
+  ccEmails = "",
+  bccEmails = "",
   subject,
   message,
   emailSignature = "",
@@ -134,6 +136,8 @@ export async function deliverEstimateQuote({
   const archive = await archiveQuoteAttachment(attachment);
   const response = await sendGmail({
     to: recipientEmail,
+    cc: ccEmails || "",
+    bcc: bccEmails || "",
     subject,
     body: quoteEmailBodyHtml(message, emailSignature),
     attachments: [attachment],
@@ -158,6 +162,8 @@ export async function deliverEstimateQuote({
     quote_expiration_date: quoteExpirationDate(quoteIssueDate, quoteValidDays),
     quote_total: Number(quoteTotal || 0),
     recipient_email: recipientEmail,
+    cc_emails: String(ccEmails || ""),
+    bcc_emails: String(bccEmails || ""),
     subject,
     delivery_method: "email",
     delivery_status: "sent",
