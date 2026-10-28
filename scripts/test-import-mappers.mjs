@@ -48,6 +48,18 @@ assert.equal(catchall, 'sign_parts_supplies', 'unmapped falls to catch-all');
 const lighting = detectTarget({ 'Part Name': 'LED Module', 'Part Group': '' });
 assert.equal(lighting, 'sign_lighting', 'LED keyword routes to lighting');
 
+// "plastic" precedence: Part Group map hits first, sheet/plate keywords route to
+// substrate, and a bare "plastic" name without a keyword must NOT jump ahead of
+// the keyword rules — it falls through to the catch-all.
+const plasticSheet = detectTarget({ 'Part Name': 'Clear plastic sheet 4x8', 'Part Group': '' });
+assert.equal(plasticSheet, 'substrate', 'plastic sheet keyword routes to substrate');
+const plasticGroup = detectTarget({ 'Part Name': 'Sheet goods', 'Part Group': 'plastic' });
+assert.equal(plasticGroup, 'substrate', 'plastic Part Group maps to substrate');
+const barePlastic = detectTarget({ 'Part Name': 'Misc plastic fastener', 'Part Group': '' });
+assert.equal(barePlastic, 'sign_parts_supplies', 'bare plastic name falls to catch-all, not substrate');
+const vinylGroupPlasticName = detectTarget({ 'Part Name': 'Plastic sheet', 'Part Group': 'Vinyl' });
+assert.equal(vinylGroupPlasticName, 'vinyl', 'Part Group mapping outranks plastic keywords');
+
 // routeRow returns target metadata + payload name.
 {
   const r = routeRow({ 'Part Name': 'Cast Vinyl 54', 'Part Group': 'Vinyl', 'Part Cost': '10', 'Is Active': 'yes' });
@@ -57,4 +69,4 @@ assert.equal(lighting, 'sign_lighting', 'LED keyword routes to lighting');
   assert.ok(r.payload && typeof r.payload === 'object');
 }
 
-console.log('PASS import mappers (12 cases)');
+console.log('PASS import mappers (16 cases)');
