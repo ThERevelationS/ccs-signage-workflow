@@ -34,6 +34,27 @@
       "type": "string",
       "description": "URL of the work order image"
     },
+    "attachment_refs": {
+      "type": "array",
+      "description": "References to files/photos carried over from the linked estimate (no binary copies).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "files": {
       "type": "array",
       "description": "Uploaded files for this work order",
