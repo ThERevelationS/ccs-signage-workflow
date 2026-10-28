@@ -69,6 +69,11 @@ export default function Step1EstimateDetails({
   }, [form.customer_id]);
 
   const applyCustomer = (c) => {
+    const defaultTaxGroup = taxGroups.find((group) => group.name === c.default_tax_group);
+    const defaultTaxPercent = Number(defaultTaxGroup?.tax_percent);
+    const taxDefaults = defaultTaxGroup && Number.isFinite(defaultTaxPercent) && defaultTaxPercent >= 0 && defaultTaxPercent <= 100
+      ? { tax_group: defaultTaxGroup.name, tax_percent: defaultTaxPercent }
+      : {};
     patch({
       client_name: c.company_name || "",
       customer_id: c.id,
@@ -77,7 +82,7 @@ export default function Step1EstimateDetails({
       office_phone_ext: c.contact_office_ext || form.office_phone_ext,
       terms: c.terms || form.terms,
       salesperson: c.salesperson || form.salesperson,
-      tax_group: c.default_tax_group || form.tax_group,
+      ...taxDefaults,
       order_contact:
         `${c.contact_first_name || ""} ${c.contact_last_name || ""}`.trim() || form.order_contact,
     });
