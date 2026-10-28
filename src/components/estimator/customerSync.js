@@ -217,6 +217,10 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: estimate.quote_total || 0,
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
+    // Estimate approval advances the job into production — but only from the
+    // estimating stage so a manual later-stage move is never rewound.
+    ...(estimate.status === "approved" && String(existing?.current_stage || "estimating").trim() === "estimating"
+      ? { current_stage: "production" } : {}),
     // Due-date prefill: the estimate's target install date is the pipeline's
     // commitment date. An existing WO due date is preserved when the estimate
     // doesn't carry one; it is never cleared by a sync.
@@ -254,7 +258,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     const createFields = {
       ...fields,
       ...(fields.date_estimate_sent ? { sales_quote_sent_verified_at: new Date().toISOString() } : {}),
-      current_stage: "estimating",
+      current_stage: estimate.status === "approved" ? "production" : "estimating",
       date_initial_contact: new Date().toISOString().slice(0, 10),
     };
 
