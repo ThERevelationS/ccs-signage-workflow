@@ -556,6 +556,11 @@ export default function CustomerQuotePanel({
             <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
               <strong>Internal approval threshold:</strong> {approvalThresholdLabel}{overApprovalThreshold ? (quoteApprovalSatisfied ? ` â€” approval recorded${quoteApproval?.approved_by_email ? ` by ${quoteApproval.approved_by_email}` : ""}` : " â€” manager approval required") : ""}
             </div>
+            {belowMarginFloor && (
+              <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-800">
+                Gross margin {profitability.grossMarginPercent.toFixed(1)}% — below the {marginFloorPct}% internal floor.
+              </div>
+            )}
             {sendError && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{sendError}</div>}
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={sending} onClick={() => setSendOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
