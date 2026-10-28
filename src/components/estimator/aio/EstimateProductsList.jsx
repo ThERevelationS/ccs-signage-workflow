@@ -6,8 +6,11 @@ import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricin
 import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 
-export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, readOnly = false }) {
+export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, onSplit, readOnly = false }) {
   const [query, setQuery] = useState("");
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitIds, setSplitIds] = useState(() => new Set());
+  const toggleSplitId = (id) => setSplitIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const [moduleFilter, setModuleFilter] = useState("all");
   const [productionProductTypes, setProductionProductTypes] = useState([]);
 
@@ -77,6 +80,16 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         <span className="text-[10px] text-gray-400 whitespace-nowrap">
           {complete}/{lines.length} products complete
         </span>
+        {typeof onSplit === "function" && !readOnly && (
+          splitMode ? (
+            <span className="flex items-center gap-1.5">
+              <button type="button" onClick={() => { onSplit([...splitIds]); setSplitMode(false); setSplitIds(new Set()); }} disabled={splitIds.size === 0} className="h-[30px] px-2 rounded bg-indigo-600 text-white text-[11px] font-bold hover:bg-indigo-700 disabled:opacity-40">Split {splitIds.size > 0 ? splitIds.size : ""}</button>
+              <button type="button" onClick={() => { setSplitMode(false); setSplitIds(new Set()); }} className="h-[30px] px-2 rounded border border-gray-300 bg-white text-[11px] text-gray-600">Cancel</button>
+            </span>
+          ) : (
+            <button type="button" onClick={() => setSplitMode(true)} className="h-[30px] px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-indigo-300">Split…</button>
+          )
+        )}
       </div>
 
       {visible.length === 0 ? (
