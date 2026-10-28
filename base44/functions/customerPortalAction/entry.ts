@@ -353,6 +353,21 @@ Deno.serve(async (req) => {
               : false;
         if (!owned) throw bad("That record cannot be referenced from this portal.", 403);
       }
+      // Optional file attachment — the customer uploads via the portal composer;
+      // stored server-side via UploadFile so the staff thread shows a download link.
+      let attachmentUrl = "";
+      const attachmentName = clean(body?.attachment_name).slice(0, 255);
+      const attachmentB64 = clean(body?.attachment_base64);
+      if (attachmentB64) {
+        if (!attachmentName) throw bad("An attached file needs a filename.");
+        try {
+          const file = new File([Uint8Array.from(atob(attachmentB64), (c) => c.charCodeAt(0))], attachmentName, { type: clean(body?.attachment_mime) || "application/octet-stream" });
+          const upload = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+          attachmentUrl = clean(upload?.file_url || upload?.url);
+        } catch (uploadError) {
+          throw bad(`The attached file could not be uploaded: ${uploadError?.message || "upload failed"}`);
+        }
+      }
       const key = `portal-msg:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
       const result = await createFoundationRecordWithRecovery({
         entity: PortalMessage,
@@ -364,6 +379,9 @@ Deno.serve(async (req) => {
           author_name: clean(body?.author_name).slice(0, 120) || "Customer",
           kind: "message",
           body: text,
+          attachment_name: attachmentName,
+          attachment_url: attachmentUrl,
+          attachment_mime: clean(body?.attachment_mime),
           related_kind: ["estimate", "invoice", "work_order"].includes(relatedKind) ? relatedKind : "none",
           related_id: relatedId,
           related_label: relatedLabel,
