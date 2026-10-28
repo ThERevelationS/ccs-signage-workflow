@@ -166,6 +166,17 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
     setProject(prev => ({ ...prev, items: next }));
   };
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert("Please fill in Project Name and Client Name.");
