@@ -22,6 +22,32 @@ const METHODS = {
     invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => r?.result),
   delete: (entity, id) =>
     invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => r?.deleted === true),
+  // Staff sessions cannot use platform live-subscriptions (entity RLS is
+  // backend-only), so subscribe polls staffDataRead and emits a synthetic
+  // change event when the row set changes. Returns an unsubscribe function,
+  // matching the SDK contract: `unsub = entity.subscribe(cb)`.
+  subscribe: (entity, callback) => {
+    if (typeof callback !== "function") return () => {};
+    let stopped = false;
+    let last = "";
+    const check = async () => {
+      try {
+        const r = await invokeFleet("staffDataRead", { entity, limit: 500 });
+        const rows = Array.isArray(r?.items) ? r.items : [];
+        const stamp = JSON.stringify(rows);
+        if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
+        last = stamp;
+      } catch {
+        // Transient gateway/rate-limit failure — retry on the next tick.
+      }
+    };
+    check();
+    const timer = setInterval(check, 60000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  },
 };
 
 const proxy = (name) => new Proxy({}, {
