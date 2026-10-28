@@ -39,6 +39,12 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
         </div>
       </div>
 
+      {profitability.internalCost > 0 && Number(pricing.quoteTotal || 0) > 0 && profitability.internalCost > Number(pricing.quoteTotal) && (
+        <div className="mb-4 rounded border border-red-300 bg-red-50 p-2.5 text-[10px] font-semibold text-red-700">
+          Cost ceiling exceeded — internal product cost ({money(profitability.internalCost)}) exceeds the customer quote total ({money(Number(pricing.quoteTotal))}). Review product pricing or markup before sending this quote.
+        </div>
+      )}
+
       <div className="text-[11px] font-bold tracking-wider text-red-600 mb-3">CUSTOMER PRICING</div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
