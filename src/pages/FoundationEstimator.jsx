@@ -394,6 +394,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           total={sectionTotal}
           saving={saving}
           dirty={dirty}
+          lastSavedAt={project?.updated_date}
           autoSave={autoSave}
           onToggleAutoSave={() => setAutoSave((v) => !v)}
           canUndo={history.past.length > 0}
