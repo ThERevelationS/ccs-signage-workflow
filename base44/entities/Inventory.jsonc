@@ -100,6 +100,11 @@
     "barcode": {
       "type": "string",
       "description": "Optional barcode/UPC value for scan-to-lookup on the Inventory page."
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Soft-delete flag \u2014 archived items are hidden from stock lists, pickers, and reorder suggestions."
     }
   },
   "required": [
