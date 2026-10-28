@@ -75,6 +75,7 @@ export default function Inventory() {
   const [lowCount, setLowCount] = useState(0);
   const [query, setQuery] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
+  const [scanHit, setScanHit] = useState(""); // row id isolated by a barcode scan
   const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -211,6 +212,22 @@ export default function Inventory() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search material, type, size, supplier…" />
         </div>
+        <input className={`${inputCls} w-44`} placeholder="Scan barcode + Enter"
+          title="Scan or type a barcode and press Enter to isolate the matching item"
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            const code = e.currentTarget.value.trim();
+            if (!code) { setScanHit(""); return; }
+            const hit = items.find((it) => String(it.barcode || "") === code);
+            if (hit) { setScanHit(hit.id); setError(""); }
+            else setError(`No inventory item matches barcode "${code}".`);
+          }} />
+        {scanHit && (
+          <button type="button" onClick={() => setScanHit("")}
+            className="rounded-lg bg-sky-100 px-2.5 py-2 text-xs font-semibold text-sky-800 hover:bg-sky-200">
+            Barcode match — clear
+          </button>
+        )}
         <SavedViews
           storageKey="views.inventory"
           getState={() => ({ query, lowOnly })}
@@ -244,7 +261,7 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => {
+              {(scanHit ? items.filter((it) => it.id === scanHit) : items).map((it) => {
                 const label = [it.material_type, it.product_type, it.size].filter(Boolean).join(" · ");
                 const b = (a) => busy === `${it.id}:${a}`;
                 return (
