@@ -160,6 +160,7 @@ Deno.serve(async (req) => {
           unit_cost: unitCost,
           quantity_received: 0,
           inventory_item_id: clean(item.id),
+          supplier: clean(item.supplier),
           line_total: money(suggested * unitCost),
         });
       }
