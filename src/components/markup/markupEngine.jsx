@@ -3,7 +3,9 @@
 
 /**
  * Get a tier's markup multiplier for a given category_key.
- * Falls back to 1.0 (no markup) if not configured.
+ * Falls back to 1.0 (no markup) when the value is missing or non-positive.
+ * Values between 0 and 1 are valid discount markups and are honored — only
+ * ≤0 and non-numeric entries are treated as "not configured".
  */
 export function getMarkup(tier, categoryKey) {
   if (!tier || !tier.markups) return 1.0;
