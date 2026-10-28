@@ -303,6 +303,11 @@ Deno.serve(async (req) => {
         loadCustomerThread(PortalMessage, customerId, true),
         loadPortalAnnouncements(customerId),
       ]);
+      // Company branding from QuoteDefaults so portal quote/invoice views can
+      // render the shop logo/name (estimate-level fields override per quote).
+      const quoteDefaults = await base44.asServiceRole.entities.QuoteDefaults.filter({ config_name: "default" }).catch(() => []);
+      const qd = (Array.isArray(quoteDefaults) ? quoteDefaults : [])[0] || {};
+      const companyBranding = { name: clean(qd?.company_name) || "CCS Signage", logo_url: clean(qd?.company_logo_url) };
       const invoiceList = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const paidByInvoice = new Map();
       for (const p of Array.isArray(payments) ? payments : []) {
@@ -323,6 +328,7 @@ Deno.serve(async (req) => {
         label: clean(link.label),
         expires_at: clean(link.expires_at),
         announcements,
+        company: companyBranding,
         customer: {
           name: clean(customer?.name) || clean(customer?.company_name) || clean(link.label) || "Customer",
           contact_name: clean(customer?.contact_name) || [customer?.contact_first_name, customer?.contact_last_name].filter(Boolean).join(" "),
