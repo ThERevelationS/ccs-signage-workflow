@@ -64,6 +64,7 @@ function manualPartChangesAlreadyApplied(part, changes = {}) {
   if (changes.frozen_unit_cost !== undefined && Math.abs(num(part.frozen_unit_cost) - num(changes.frozen_unit_cost)) > 0.000001) return false;
   if (changes.detail_overrides !== undefined && stable(part.detail_overrides || {}) !== stable(changes.detail_overrides || {})) return false;
   if (changes.notes !== undefined && String(part.notes || "") !== String(changes.notes || "")) return false;
+  if (changes.manual_cost_override_reason !== undefined && String(part.manual_cost_override_reason || "") !== String(changes.manual_cost_override_reason || "")) return false;
   return true;
 }
 
@@ -353,6 +354,7 @@ export async function updateManualProductPart(partId, changes = {}, { expectedEs
     current_extended_cost: costWasManuallyChanged ? extended : num(part.current_unit_cost, unitCost) * quantity,
     manual_cost_override: part.manual_cost_override || costWasManuallyChanged,
     manual_cost: (part.manual_cost_override || costWasManuallyChanged) ? extended : undefined,
+    manual_cost_override_reason: changes.manual_cost_override_reason !== undefined ? String(changes.manual_cost_override_reason || "") : String(part.manual_cost_override_reason || ""),
     detail_overrides: nextDetailOverrides,
     price_state: costWasManuallyChanged ? "manual" : part.price_state,
     notes: changes.notes !== undefined ? String(changes.notes || "") : part.notes,
