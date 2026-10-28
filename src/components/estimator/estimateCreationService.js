@@ -53,11 +53,15 @@ export function buildDuplicateEstimate(source = {}) {
 // A split keeps the duplicate's header/settings but carries only the selected
 // line items, and records `split_from_estimate_id` so the child can trace back
 // to its parent. The parent estimate is unchanged — the split is a new draft.
+export function estimateLineSelectionKey(line, index) {
+  return line?.line_id || line?.builder_product_id || line?.project_id || `i${index}`;
+}
+
 export function buildSplitEstimate(source = {}, { lineItemIds = [] } = {}) {
   const clone = buildDuplicateEstimate(source);
   const keep = new Set(lineItemIds);
   const lines = Array.isArray(source?.line_items) ? source.line_items : [];
-  const selectedKeys = lines.map((line, index) => line?.line_id || line?.builder_product_id || line?.project_id || `i${index}`);
+  const selectedKeys = lines.map(estimateLineSelectionKey);
   if (!keep.size || [...keep].some((key) => selectedKeys.filter((candidate) => candidate === key).length !== 1)) {
     throw new Error("The selected products changed or have ambiguous identifiers. Reload and select them again.");
   }
@@ -67,12 +71,12 @@ export function buildSplitEstimate(source = {}, { lineItemIds = [] } = {}) {
   return clone;
 }
 
-export async function splitEstimate({ source, lineItemIds, sessionToken }) {
+export async function splitEstimate({ source, lineItemIds, sessionToken, creationKey = newEstimateCreationKey() }) {
   if (!source?.id) throw new Error("The source estimate is not loaded.");
   if (!Array.isArray(lineItemIds) || lineItemIds.length === 0) throw new Error("Select at least one line item to split.");
   const estimate = buildSplitEstimate(source, { lineItemIds });
   const created = await ensureNewEstimate({
-    creationKey: newEstimateCreationKey(),
+    creationKey,
     estimate,
     sessionToken,
   });
@@ -80,11 +84,11 @@ export async function splitEstimate({ source, lineItemIds, sessionToken }) {
   return created;
 }
 
-export async function duplicateEstimate({ source, sessionToken }) {
+export async function duplicateEstimate({ source, sessionToken, creationKey = newEstimateCreationKey() }) {
   if (!source?.id) throw new Error("The source estimate is not loaded.");
   const estimate = buildDuplicateEstimate(source);
   const created = await ensureNewEstimate({
-    creationKey: newEstimateCreationKey(),
+    creationKey,
     estimate,
     sessionToken,
   });
