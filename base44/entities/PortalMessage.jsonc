@@ -46,6 +46,15 @@
     "body": {
       "type": "string"
     },
+    "attachment_name": {
+      "type": "string"
+    },
+    "attachment_url": {
+      "type": "string"
+    },
+    "attachment_mime": {
+      "type": "string"
+    },
     "related_kind": {
       "type": "string",
       "enum": [
