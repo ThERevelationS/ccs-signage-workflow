@@ -310,6 +310,8 @@ Deno.serve(async (req) => {
           status: clean(r?.status),
           assigned_estimator: clean(r?.assigned_estimator) || clean(r?.estimator),
           created_date: clean(r?.created_date),
+          due_date: clean(r?.due_date),
+          overdue: !!clean(r?.due_date) && clean(r?.due_date) < today,
         }));
 
       const lowStock = list(stock)
