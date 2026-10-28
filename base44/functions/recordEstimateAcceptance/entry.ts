@@ -237,6 +237,21 @@ ${notes ? `Notes: ${notes}` : ''}`.trim(),
     } catch (notifyError) {
       console.error('Acceptance salesperson notify failed:', notifyError?.message || notifyError);
     }
+    // Confirmation to the customer that their acceptance was recorded —
+    // same fire-and-forget pattern; a Gmail outage never blocks the write.
+    try {
+      if (acceptedByEmail) {
+        const custProject = String(estimate.project_name || estimate.estimate_number || 'your estimate').trim();
+        await base44.asServiceRole.functions.invoke('sendGmail', {
+          to: acceptedByEmail,
+          subject: `Quote acceptance confirmed: ${custProject}`,
+          body: `Thank you${acceptedByName ? `, ${acceptedByName}` : ''} — your approval of quote version ${quoteVersion} for ${custProject} ($${Number(estimate.quote_total || 0).toFixed(2)}) has been recorded. We'll be in touch about next steps.`,
+          _workflow_capability: 'ccs-sendGmail-acceptance-confirm',
+        });
+      }
+    } catch (confirmError) {
+      console.error('Acceptance customer confirm failed:', confirmError?.message || confirmError);
+    }
     await patchEstimateAcceptanceFields(Estimate, estimateId, estimate, canonical);
     return Response.json({ acceptance: canonical, reused: false });
   } catch (error) {
