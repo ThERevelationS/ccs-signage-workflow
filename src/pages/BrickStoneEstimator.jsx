@@ -17,7 +17,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
-  const id = embeddedProjectId || params.get("id");
+  const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
 
   const [project, setProject] = useState(null);
