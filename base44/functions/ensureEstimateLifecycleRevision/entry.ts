@@ -95,7 +95,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // plain request-context auth can write audit rows too.
+    let actor = null;
+    try { actor = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { actor = await base44.auth.me().catch(() => null); }
+    if (!actor?.id && !actor?.email) return Response.json({ error: 'Authentication required.' }, { status: 401 });
     const idempotencyKey = String(body?.idempotency_key || '').trim();
     const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
     const estimateId = String(revision?.estimate_id || '').trim();
