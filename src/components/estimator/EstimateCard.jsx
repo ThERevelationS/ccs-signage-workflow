@@ -72,6 +72,7 @@ export default function EstimateCard({ estimate }) {
       onMouseLeave={() => setNoteOpen(false)}
       onFocus={openCustomerNote}
       onBlur={closeCustomerNote}
+      aria-describedby={noteOpen && customerId ? `estimate-${estimate.id}-customer-note` : undefined}
       className="clay-card relative p-4 border-l-4 border-l-red-400 block hover:shadow-lg transition-shadow cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
@@ -130,9 +131,10 @@ export default function EstimateCard({ estimate }) {
       </div>
       {noteOpen && customerId && (
         <div
+          id={`estimate-${estimate.id}-customer-note`}
           role="tooltip"
           aria-live="polite"
-          className="pointer-events-none absolute bottom-12 left-3 right-3 z-20 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 shadow-lg"
+          className="pointer-events-none absolute bottom-12 left-3 right-3 z-20 max-h-32 overflow-y-auto break-words rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 shadow-lg"
         >
           <span className="font-semibold">Customer note: </span>
           {noteState.status === "loading" && "Loading..."}
