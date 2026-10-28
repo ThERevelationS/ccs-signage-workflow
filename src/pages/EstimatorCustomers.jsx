@@ -342,7 +342,7 @@ export default function EstimatorCustomers() {
       linkedCustomerId
         ? true
         : term
-          ? [c.company_name, c.contact_first_name, c.contact_last_name, c.contact_email]
+          ? [c.company_name, c.contact_first_name, c.contact_last_name, c.contact_email, ...(Array.isArray(c.tags) ? c.tags : [])]
               .filter(Boolean)
               .some((v) => String(v).toLowerCase().includes(term))
           : true
