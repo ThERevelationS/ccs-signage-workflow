@@ -526,7 +526,7 @@ Deno.serve(async (req) => {
               accepted_at: new Date().toISOString(),
               accepted_by_name: clean(estimate?.order_contact) || clean(estimate?.contact_name),
               accepted_by_email: clean(estimate?.contact_email),
-              acceptance_method: "other",
+              acceptance_method: "portal",
               evidence_reference: "Customer portal approval",
               notes: note || `Customer approved ${quoteLabel} via the customer portal.`,
               recorded_by_email: "customer_portal",
