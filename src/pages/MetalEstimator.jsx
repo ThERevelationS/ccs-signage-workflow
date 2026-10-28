@@ -241,6 +241,13 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   }, [project.items, inventory, calculateTotals]);
 
 
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!isSaving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isSaving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
