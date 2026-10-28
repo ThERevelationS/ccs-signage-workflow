@@ -53,6 +53,16 @@ export default function EstimateHeaderForm({ estimate, onChange, readOnly = fals
             ))}
           </select>
         </label>
+        <label className="text-xs text-gray-500 flex items-center gap-1.5">
+          <input
+            type="checkbox"
+            checked={!!estimate.is_template}
+            onChange={(e) => onChange({ is_template: e.target.checked })}
+            disabled={readOnly}
+            className="w-3.5 h-3.5 accent-red-600"
+          />
+          Reusable template
+        </label>
         <label className="text-xs text-gray-500">
           Priority
           <select
