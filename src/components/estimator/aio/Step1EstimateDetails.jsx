@@ -386,22 +386,21 @@ export default function Step1EstimateDetails({
               </select>
             )}
           </Row>
+          {form.customer_id && String(form.site_address || "").trim() && (
+            <label className="mb-2 flex items-start gap-2 pl-0 text-[11px] text-slate-600 sm:pl-36">
+              <input
+                type="checkbox"
+                checked={saveSiteAsLocation === true}
+                onChange={(event) => onSaveSiteAsLocationChange?.(event.target.checked)}
+                className="mt-0.5 accent-lime-600"
+              />
+              <span>Save this address to the customer's locations</span>
+            </label>
+          )}
         </div>
 
         <div className="md:pl-4 pt-4 md:pt-0">
-          {form.customer_id && String(form.site_address || "").trim() && (
-          <label className="mb-2 ml-0 flex items-start gap-2 text-[11px] text-slate-600 sm:ml-36">
-            <input
-              type="checkbox"
-              checked={saveSiteAsLocation === true}
-              onChange={(event) => onSaveSiteAsLocationChange?.(event.target.checked)}
-              className="mt-0.5 accent-lime-600"
-            />
-            <span>Save this address to the customer's locations</span>
-          </label>
-        )}
-
-        <Row label="Salesperson">
+          <Row label="Salesperson">
             <select
               value={form.salesperson}
               onChange={(e) => patch({ salesperson: e.target.value })}
