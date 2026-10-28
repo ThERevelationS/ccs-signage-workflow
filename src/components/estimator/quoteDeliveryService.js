@@ -9,6 +9,23 @@ const escapeHtml = (value) => String(value || "")
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#039;");
 
+const EMAIL_TEMPLATE_KEYS = ["estimate_number", "project_name", "client_name", "contact_name", "company_name", "quote_total", "quote_valid_until"];
+
+function interpolateEmailTemplate(template, estimate = {}) {
+  const values = {
+    estimate_number: String(estimate.estimate_number || "").trim(),
+    project_name: String(estimate.project_name || "").trim(),
+    client_name: String(estimate.client_name || "").trim(),
+    contact_name: String(estimate.order_contact || estimate.contact_name || "").trim(),
+    company_name: String(estimate.company_name || "Cincinnati Custom Signs").trim(),
+    quote_total: `$${Number(estimate.quote_total || 0).toFixed(2)}`,
+    quote_valid_until: String(estimate.quote_valid_until || estimate.quote_expiration_date || "").trim(),
+  };
+  let out = String(template || "");
+  for (const key of EMAIL_TEMPLATE_KEYS) out = out.split(`{${key}}`).join(values[key]);
+  return out;
+}
+
 export function defaultQuoteEmailSubject(estimate = {}) {
   const number = String(estimate.estimate_number || "").trim();
   const project = String(estimate.project_name || "").trim();
