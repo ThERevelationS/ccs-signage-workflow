@@ -437,8 +437,8 @@ export default function Step1EstimateDetails({
               className={inputCls}
             >
               <option value="">select</option>
-              {taxGroups.map((t) => (
-                <option key={t.id} value={t.name}>
+              {taxGroups.map((t, i) => (
+                <option key={t.id || `tax-group-${t.name}-${i}`} value={t.name}>
                   {t.name} ({t.tax_percent}%)
                 </option>
               ))}
