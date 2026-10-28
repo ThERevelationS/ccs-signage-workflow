@@ -310,6 +310,13 @@ try {
     assert.match(row, /pendingStale \? " · stale >24h"/, 'stale pendings are labelled');
     assert.match(row, /border-red-300 bg-red-50 text-red-800/, 'stale pendings are visually distinct');
   });
+  await test('part picker warns when requested quantity exceeds on-hand stock', () => {
+    const picker = readFileSync(resolve(here, '../src/components/estimator/parts/MasterPartPickerModal.jsx'), 'utf8');
+    assert.match(picker, /quantity_on_hand/, 'picker reads the inventory on-hand field');
+    assert.match(picker, /requestedQty > onHand/, 'shortfall compares requested quantity to stock');
+    assert.match(picker, /mode !== "select"/, 'resource-select mode skips the stock warning');
+    assert.match(picker, /purchasing must cover the difference/, 'warning explains the shortfall consequence');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
