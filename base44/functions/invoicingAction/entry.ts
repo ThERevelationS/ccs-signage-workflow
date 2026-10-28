@@ -16,6 +16,19 @@ const num = (value: any, fallback = 0) => {
 const money = (value: number) => Math.round(value * 100) / 100;
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Derive a due_date from freeform payment terms ("Net 30", "Net 45 days", "Due on receipt", "COD").
+const dueDateFromTerms = (terms: string, baseDate: string): string => {
+  const t = clean(terms).toLowerCase();
+  if (!t || !baseDate) return "";
+  const base = new Date(`${baseDate}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return "";
+  const net = t.match(/net\s*(\d{1,3})/);
+  if (net) base.setUTCDate(base.getUTCDate() + parseInt(net[1], 10));
+  else if (/due on receipt|cod|cash on delivery|due now|immediate/.test(t)) { /* base date as-is */ }
+  else return "";
+  return base.toISOString().slice(0, 10);
+};
+
 const INVOICE_STATUSES = ["draft", "sent", "partially_paid", "paid", "void"];
 const OPEN_AR_STATUSES = new Set(["sent", "partially_paid"]);
 const PAYMENT_METHODS = ["cash", "check", "card", "ach", "financing", "other"];
@@ -444,8 +457,8 @@ Deno.serve(async (req) => {
           amount_paid: 0,
           balance_due: totals.total,
           issue_date: clean(body?.issue_date) || today(),
-          due_date: clean(body?.due_date),
-          terms: clean(body?.terms),
+          due_date: clean(body?.due_date) || dueDateFromTerms(clean(body?.terms) || clean(estimate?.terms), clean(body?.issue_date) || today()),
+          terms: clean(body?.terms) || clean(estimate?.terms),
           notes: clean(body?.notes),
           internal_notes: clean(body?.internal_notes),
           created_by: actor,
