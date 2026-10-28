@@ -276,6 +276,17 @@ try {
     assert.match(panel, /aria-label="Search parts in this product"/, 'search input is accessible');
     assert.match(panel, /No Parts match/, 'empty match state is shown');
   });
+  await test('detached-override audit shows who detached and when', () => {
+    const partSync = readFileSync(resolve(here, '../src/components/estimator/builder/partSync.js'), 'utf8');
+    const panel = readFileSync(resolve(here, '../src/components/estimator/aio/BuilderPartsPanel.jsx'), 'utf8');
+    const schema = readFileSync(resolve(here, '../base44/entities/BuilderPart.jsonc'), 'utf8');
+    assert.match(schema, /"builder_detached_by"/, 'BuilderPart stores who detached it');
+    assert.match(partSync, /builder_detached_by: detachedBy/, 'detach writes the acting user');
+    assert.match(partSync, /builder_detached_by: "",/, 'reattach clears the detached-by audit');
+    assert.match(panel, /Detached \{new Date\(part\.builder_detached_at\)\.toLocaleString\(\)\}/, 'part row renders the detach timestamp');
+    assert.match(panel, /by \$\{part\.builder_detached_by\}/, 'part row renders who detached');
+    assert.match(panel, /part\.builder_detached_reason/, 'part row renders the detach reason');
+  });
 } finally {
   delete globalThis.__estimatorBatchInvoke;
   rmSync(temp, { recursive: true, force: true });
