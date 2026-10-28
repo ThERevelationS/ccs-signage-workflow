@@ -234,11 +234,14 @@ Deno.serve(async (req) => {
     // Announcements reach the portal only when staff explicitly targets the
     // "customerportal" display page — empty display_pages means "all staff app
     // pages", which must never leak into the customer-facing surface.
-    const loadPortalAnnouncements = async () => {
+    const loadPortalAnnouncements = async (customerId = "") => {
       const rows = await Announcement.filter({ is_active: true }).catch(() => []);
       const rank: any = { urgent: 0, high: 1, normal: 2, low: 3 };
       return (Array.isArray(rows) ? rows : [])
         .filter((a: any) => Array.isArray(a?.display_pages) && a.display_pages.some((p: any) => clean(p).toLowerCase() === "customerportal"))
+        // Customer targeting: an empty customer_ids list broadcasts to all;
+        // a non-empty list restricts the announcement to those customers.
+        .filter((a: any) => !Array.isArray(a?.customer_ids) || a.customer_ids.length === 0 || a.customer_ids.some((id: any) => clean(id) === customerId))
         .sort((a: any, b: any) => (rank[clean(a?.priority)] ?? 2) - (rank[clean(b?.priority)] ?? 2))
         .slice(0, 5)
         .map((a: any) => ({
@@ -264,7 +267,7 @@ Deno.serve(async (req) => {
         const invoice = await Invoice.get(clean(link.record_id)).catch(() => null);
         if (!invoice?.id) throw bad("The linked record is no longer available.", 404);
         const payments = await Payment.filter({ invoice_id: clean(invoice.id) }).catch(() => []);
-        const announcements = await loadPortalAnnouncements();
+        const announcements = await loadPortalAnnouncements(customerId);
         return Response.json({
           success: true,
           action,
