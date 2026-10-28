@@ -137,9 +137,12 @@ const legacyTerminal = {
   sales_stage_changed_at: "",
   sales_last_activity_at: "",
 };
-const legacy = held(legacyTerminal, "Complete Estimate for Review");
+const legacy = held(legacyTerminal, "WIP - Installation");
 check(legacy.held.includes("current_task_description"),
-  "A historical terminal row cannot be silently reopened as modern Lead by pull.");
+  "A historical terminal row cannot be silently re-staged by pull.");
+const legacySameStage = held(legacyTerminal, "Complete Estimate for Review");
+same(legacySameStage.fields.current_task_description, "Complete Estimate for Review",
+  "A same-stage remote task is a safe text pull even on a legacy-pattern row.");
 
 const won = { ...base, sales_status: "won", current_task_description: "WIP - Designing",
   smartsheet_sync_snapshot: { [taskColumn]: "WIP - Designing", [amountColumn]: 100 } };
