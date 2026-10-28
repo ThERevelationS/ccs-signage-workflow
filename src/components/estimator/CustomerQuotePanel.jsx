@@ -58,6 +58,13 @@ const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefi
 const DEFAULT_QUOTE_APPROVAL_THRESHOLD = 5000;
 const QUOTE_APPROVAL_THRESHOLD_KEY = "quote_approval_threshold";
 const MARGIN_FLOOR_KEY = "margin_floor_percent";
+const MIN_QUOTE_FLOOR_KEY = "minimum_quote_total";
+
+const minQuoteFromSetting = (record) => {
+  const raw = record?.setting_value;
+  const parsed = Number(raw?.minimum ?? raw?.value ?? raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+};
 
 const marginFloorFromSetting = (record) => {
   const raw = record?.setting_value;
@@ -121,6 +128,7 @@ export default function CustomerQuotePanel({
   const [applyingDefaults, setApplyingDefaults] = useState(false);
   const [quoteApprovalThreshold, setQuoteApprovalThreshold] = useState(DEFAULT_QUOTE_APPROVAL_THRESHOLD);
   const [marginFloorPct, setMarginFloorPct] = useState(DEFAULT_MARGIN_FLOOR_PERCENT);
+  const [minQuoteFloor, setMinQuoteFloor] = useState(0);
   const [sessionCanApproveQuotes, setSessionCanApproveQuotes] = useState(false);
   const [approvingQuote, setApprovingQuote] = useState(false);
 
@@ -153,11 +161,13 @@ export default function CustomerQuotePanel({
     Promise.all([
       loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: QUOTE_APPROVAL_THRESHOLD_KEY, label: "Quote approval threshold" }).catch(() => null),
       loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: MARGIN_FLOOR_KEY, label: "Margin floor percent" }).catch(() => null),
+      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: MIN_QUOTE_FLOOR_KEY, label: "Minimum quote total" }).catch(() => null),
       sessionEmail ? staffEntities.AuthorizedEmail.filter({ email: sessionEmail }).catch(() => []) : Promise.resolve([]),
-    ]).then(([setting, marginSetting, users]) => {
+    ]).then(([setting, marginSetting, minQuoteSetting, users]) => {
       if (!active) return;
       setQuoteApprovalThreshold(thresholdFromSetting(setting));
       setMarginFloorPct(marginFloorFromSetting(marginSetting));
+      setMinQuoteFloor(minQuoteFromSetting(minQuoteSetting));
       setSessionCanApproveQuotes((users || []).some((row) => row?.can_approve_quotes === true));
     });
     return () => { active = false; };
@@ -167,6 +177,7 @@ export default function CustomerQuotePanel({
   const quoteTotalNow = Number(pricing?.quoteTotal ?? estimate.quote_total ?? 0);
   const profitability = computeEstimateProfitability(estimate, pricing || {});
   const belowMarginFloor = profitability.internalCost > 0 && profitability.grossMarginPercent < marginFloorPct;
+  const belowMinQuote = minQuoteFloor > 0 && quoteTotalNow > 0 && quoteTotalNow < minQuoteFloor;
   const overApprovalThreshold = quoteTotalNow > quoteApprovalThreshold;
   const quoteApproval = recordedApproval(estimate);
   const quoteApprovalSatisfied = approvalCoversQuote(estimate, quoteTotalNow);
@@ -234,6 +245,10 @@ export default function CustomerQuotePanel({
     setEmailSubject(defaultQuoteEmailSubject(emailEstimate));
     setEmailMessage(defaultQuoteEmailMessage(emailEstimate));
     setSendError("");
+    if (belowMinQuote) {
+      window.alert(`This quote total (${fmt(quoteTotalNow)}) is below the configured minimum of ${fmt(minQuoteFloor, true)}. Raise the pricing before sending a customer quote.`);
+      return;
+    }
     if (belowMarginFloor && !window.confirm(`This quote's gross margin is ${profitability.grossMarginPercent.toFixed(1)}% — below the ${marginFloorPct}% internal floor. Send it anyway?`)) return;
     setSendOpen(true);
   };
@@ -559,6 +574,11 @@ export default function CustomerQuotePanel({
             {belowMarginFloor && (
               <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-800">
                 Gross margin {profitability.grossMarginPercent.toFixed(1)}% — below the {marginFloorPct}% internal floor.
+              </div>
+            )}
+            {minQuoteFloor > 0 && (
+              <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
+                <strong>Minimum quote floor:</strong> {fmt(minQuoteFloor, true)}{belowMinQuote ? ` — this quote (${fmt(quoteTotalNow)}) is below the floor` : ""}
               </div>
             )}
             {sendError && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{sendError}</div>}
