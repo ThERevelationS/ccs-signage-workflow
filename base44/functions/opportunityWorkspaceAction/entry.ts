@@ -441,7 +441,34 @@ Deno.serve(async (req) => {
         .map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 }))
         .sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value)
         .slice(0, 12);
+      // Estimate-status funnel — the same shape as the opportunity funnel but
+      // keyed on the estimate lifecycle (draft -> calculated -> sent -> approved)
+      // so the dashboard can show quote-side conversion separately from pipeline.
+      const estimateRows = await Estimate.filter({}, "-created_date", 500).catch(() => []);
+      const estimateStatusCounts: any = {};
+      let estimateWonCount = 0;
+      let estimateDecidedCount = 0;
+      let estimateWonValue = 0;
+      let estimateDecidedValue = 0;
+      for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
+        if (row?.deleted === true) continue;
+        const status = clean(row?.status) || "draft";
+        estimateStatusCounts[status] = (estimateStatusCounts[status] || 0) + 1;
+        const total = num(row?.quote_total);
+        if (status === "approved") { estimateWonCount += 1; estimateDecidedCount += 1; estimateWonValue += total; estimateDecidedValue += total; }
+        if (status === "archived" || status === "cancelled") { estimateDecidedCount += 1; estimateDecidedValue += total; }
+      }
+      const estimateFunnel = {
+        status_counts: estimateStatusCounts,
+        total: estimateStatusCounts.draft + estimateStatusCounts.calculated + estimateStatusCounts.sent + estimateStatusCounts.approved + estimateStatusCounts.archived + estimateStatusCounts.cancelled,
+        won_count: estimateWonCount,
+        decided_count: estimateDecidedCount,
+        win_rate: estimateDecidedCount > 0 ? Math.round((estimateWonCount / estimateDecidedCount) * 1000) / 10 : null,
+        won_value: Math.round(estimateWonValue * 100) / 100,
+        decided_value: Math.round(estimateDecidedValue * 100) / 100,
+      };
       const funnel = {
+        estimate_funnel: estimateFunnel,
         stage_counts: stageCounts,
         total: rows.length,
         open_pipeline_value: Math.round(openPipelineValue * 100) / 100,
