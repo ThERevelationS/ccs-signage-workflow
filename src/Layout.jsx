@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -60,6 +60,18 @@ import FocusPausePair from "@/components/timeclock/FocusPausePair";
 import TimeTracker from "@/components/timeclock/TimeTracker";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 import SyncConflictAlert from '@/components/admin/SyncConflictAlert';
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import NavPageLink from "@/components/layout/NavPageLink";
+import NavFlyoutMenu from "@/components/layout/NavFlyoutMenu";
+import SidebarNavGroup from "@/components/layout/SidebarNavGroup";
+import {
+  applyNavOrder,
+  hexToRgbTuple,
+  loadCollapsedGroups,
+  loadNavOrder,
+  saveCollapsedGroups,
+  saveNavOrder,
+} from "@/components/layout/navPreferences";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -81,9 +93,12 @@ const navigationItems = [
   { title: "Fleet", url: createPageUrl("FleetOverview"), icon: NavigationIcon, accent: "#22D3EE" },
 ];
 
-const meetingsDropdownItems = [
+const meetingsNavItems = [
   { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, accent: "#FACC15" },
   { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, accent: "#A3E635" },
+];
+
+const reportsNavItems = [
   { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, accent: "#3B82F6" },
   { title: "Invoices", url: createPageUrl("Invoices"), icon: Receipt, accent: "#10B981" },
   { title: "Change Orders", url: createPageUrl("ChangeOrders"), icon: FileDiff, accent: "#F97316" },
@@ -91,7 +106,6 @@ const meetingsDropdownItems = [
   { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
   { title: "Inventory", url: createPageUrl("Inventory"), icon: Package, accent: "#84CC16" },
   { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
-
 ];
 
 
@@ -105,13 +119,6 @@ const SHELL_SPRING = {
   stiffness: 210,
   damping: 30,
   mass: 0.82,
-};
-
-const hexToRgbTuple = (hex) => {
-  const normalized = String(hex || "").replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return "148 163 184";
-  const value = Number.parseInt(normalized, 16);
-  return `${(value >> 16) & 255} ${(value >> 8) & 255} ${value & 255}`;
 };
 
 function ShellViewControls({
@@ -221,13 +228,45 @@ function LayoutContent({ children }) {
   const [compactView, setCompactView] = useState(() => localStorage.getItem("ccsShellCompact") === "true");
   const [isHovered, setIsHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
   const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
   
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView, orientation, toggleOrientation } = useMultiPageView();
+
+  // Per-user page-button order (drag and drop) and collapsed nav groups.
+  const [navOrder, setNavOrder] = useState(() => loadNavOrder(currentUser?.email));
+  const [collapsedGroups, setCollapsedGroups] = useState(() => loadCollapsedGroups());
+
+  useEffect(() => {
+    setNavOrder(loadNavOrder(currentUser?.email));
+  }, [currentUser?.email]);
+
+  const orderedNavItems = useMemo(() => applyNavOrder(navigationItems, navOrder), [navOrder]);
+
+  const isInSplitView = useCallback(
+    (item) => Boolean(additionalPages.find((p) => item.url.includes(p.name))),
+    [additionalPages]
+  );
+
+  const handleNavReorder = (result) => {
+    if (!result.destination) return;
+    const urls = orderedNavItems.map((item) => item.url);
+    const [moved] = urls.splice(result.source.index, 1);
+    if (!moved) return;
+    urls.splice(result.destination.index, 0, moved);
+    setNavOrder(urls);
+    saveNavOrder(currentUser?.email, urls);
+  };
+
+  const toggleNavGroup = (key) => {
+    setCollapsedGroups((previous) => {
+      const next = { ...previous, [key]: !previous[key] };
+      saveCollapsedGroups(next);
+      return next;
+    });
+  };
   
   // Detect mobile
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -1011,7 +1050,7 @@ function LayoutContent({ children }) {
                 {currentUser && <FocusPausePair currentUser={currentUser} fullWidth compact={compactView} />}
 
                 {currentUser && (
-                  <div className="mt-2 flex justify-center">
+                  <div className="mt-2 flex w-full min-w-0 justify-center overflow-hidden">
                     <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
                   </div>
                 )}
@@ -1054,57 +1093,57 @@ function LayoutContent({ children }) {
 
             {/* Navigation Links */}
             <div className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}>
-              <div className={compactView ? "space-y-0.5" : "space-y-1"}>
-                {navigationItems.map((item) => {
-                  const isActive = location.pathname === item.url;
-                  const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                  return (
-                    <Link
-                      key={item.title}
-                      to={item.url}
-                      onClick={(e) => handleNavClick(e, item)}
-                      className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
-                        isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
-                      }`}
-                      style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                      title="Ctrl+Click to open in split view"
+              <DragDropContext onDragEnd={handleNavReorder}>
+                <Droppable droppableId="page-nav-side" direction="vertical">
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={compactView ? "space-y-0.5" : "space-y-1"}
                     >
-                      <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                        {item.title}
-                      </span>
-                      {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                      </Link>
-                      );
-                      })}
+                      {orderedNavItems.map((item, index) => (
+                        <Draggable key={item.url} draggableId={`side-${item.url}`} index={index}>
+                          {(dragProvided) => (
+                            <NavPageLink
+                              item={item}
+                              variant="side"
+                              compactView={compactView}
+                              isActive={location.pathname === item.url}
+                              isInSplit={isInSplitView(item)}
+                              onNavigate={(event) => handleNavClick(event, item)}
+                              dragRef={dragProvided.innerRef}
+                              dragProps={dragProvided.draggableProps}
+                              dragHandleProps={dragProvided.dragHandleProps}
+                            />
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
 
-                      {/* Meetings Section */}
-                <div className={`${compactView ? "mt-1 pt-1" : "mt-2 pt-2"} border-t border-gray-200/50 dark:border-white/10`}>
-                  <span className={`${compactView ? "px-1.5 text-[10px]" : "px-3 text-xs"} font-medium text-slate-300`}>Meetings</span>
-                  {meetingsDropdownItems.map((item) => {
-                    const isActive = location.pathname === item.url;
-                    const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                    return (
-                      <Link
-                        key={item.title}
-                        to={item.url}
-                        onClick={(e) => handleNavClick(e, item)}
-                        className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
-                          isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
-                        }`}
-                        style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                        title="Ctrl+Click to open in split view"
-                      >
-                        <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                          {item.title}
-                        </span>
-                        {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+              <SidebarNavGroup
+                label="Meetings"
+                items={meetingsNavItems}
+                collapsed={!!collapsedGroups.meetings}
+                onToggle={() => toggleNavGroup("meetings")}
+                compactView={compactView}
+                activePath={location.pathname}
+                isInSplitUrl={isInSplitView}
+                onNavigate={handleNavClick}
+              />
+              <SidebarNavGroup
+                label="Reports"
+                items={reportsNavItems}
+                collapsed={!!collapsedGroups.reports}
+                onToggle={() => toggleNavGroup("reports")}
+                compactView={compactView}
+                activePath={location.pathname}
+                isInSplitUrl={isInSplitView}
+                onNavigate={handleNavClick}
+              />
             </div>
           </motion.nav>
         )}
@@ -1162,78 +1201,59 @@ function LayoutContent({ children }) {
                 {/* Desktop Navigation Links */}
                 <div
                   data-top-navigation-links
-                  className={`hidden lg:flex self-center items-center flex-nowrap overflow-x-auto flex-1 [scrollbar-width:thin] ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
+                  className={`hidden lg:flex min-w-0 flex-1 flex-wrap items-center self-center ${compactView ? "ml-2 gap-0.5" : "ml-4 gap-1"}`}
                 >
-                  {navigationItems.map((item) => {
-                    const isActive = location.pathname === item.url;
-                    const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                    return (
-                      <Link
-                        key={item.title}
-                        to={item.url}
-                        onClick={(e) => handleNavClick(e, item)}
-                        className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"} ${
-                          isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
-                        }`}
-                        style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                        title="Ctrl+Click to open in split view"
-                      >
-                        <item.icon className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                        <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                          {item.title}
-                        </span>
-                        {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                        </Link>
-                        );
-                        })}
+                  <DragDropContext onDragEnd={handleNavReorder}>
+                    <Droppable droppableId="page-nav-top" direction="horizontal">
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`flex flex-wrap items-center ${compactView ? "gap-0.5" : "gap-1"}`}
+                        >
+                          {orderedNavItems.map((item, index) => (
+                            <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
+                              {(dragProvided) => (
+                                <NavPageLink
+                                  item={item}
+                                  variant="top"
+                                  compactView={compactView}
+                                  isActive={location.pathname === item.url}
+                                  isInSplit={isInSplitView(item)}
+                                  onNavigate={(event) => handleNavClick(event, item)}
+                                  dragRef={dragProvided.innerRef}
+                                  dragProps={dragProvided.draggableProps}
+                                  dragHandleProps={dragProvided.dragHandleProps}
+                                />
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
 
-                        {/* Meetings Dropdown */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setMeetingsDropdownOpen(!meetingsDropdownOpen)}
-                      onBlur={() => setTimeout(() => setMeetingsDropdownOpen(false), 150)}
-                      className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"}`}
-                      style={{ "--glass-accent-rgb": hexToRgbTuple("#FACC15") }}
-                    >
-                      <Calendar className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: "#FACC15" }} />
-                      <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100`}>
-                        Meetings
-                      </span>
-                      <ChevronDown className={`w-3 h-3 transition-transform ${meetingsDropdownOpen ? 'rotate-180' : ''}`} style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
-                    </button>
-                    
-                    {meetingsDropdownOpen && (
-                      <div className="ccs-glass-panel absolute left-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl p-1 text-slate-100">
-                        {meetingsDropdownItems.map((item) => {
-                          const isActive = location.pathname === item.url;
-                          const isInSplit = additionalPages.find(p => item.url.includes(p.name));
-                          return (
-                            <Link
-                              key={item.title}
-                              to={item.url}
-                              onClick={(e) => {
-                                if (e.ctrlKey || e.metaKey) {
-                                  e.preventDefault();
-                                  const pageName = item.url.split('/').pop();
-                                  addPage(pageName, item.title);
-                                }
-                                setMeetingsDropdownOpen(false);
-                              }}
-                              className={`ccs-glass-nav-item flex items-center gap-2 rounded-lg px-3 py-2 ${isActive ? "font-bold" : ""}`}
-                              style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
-                              title="Ctrl+Click to open in split view"
-                            >
-                              <item.icon className="h-4 w-4" style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
-                              <span className={`text-sm font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
-                                {item.title}
-                              </span>
-                              {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <NavFlyoutMenu
+                    label="Meetings"
+                    icon={Calendar}
+                    accent="#FACC15"
+                    items={meetingsNavItems}
+                    compactView={compactView}
+                    activePath={location.pathname}
+                    isInSplitUrl={isInSplitView}
+                    onNavigate={handleNavClick}
+                  />
+                  <NavFlyoutMenu
+                    label="Reports"
+                    icon={BarChart3}
+                    accent="#8B5CF6"
+                    items={reportsNavItems}
+                    compactView={compactView}
+                    activePath={location.pathname}
+                    isInSplitUrl={isInSplitView}
+                    onNavigate={handleNavClick}
+                  />
                 </div>
 
                 {/* Utility controls stay within the same glass material as the navigation shell. */}
@@ -1303,7 +1323,7 @@ function LayoutContent({ children }) {
               {mobileMenuOpen && (
                 <div className="lg:hidden mt-2 pb-4 border-t border-gray-200 pt-4 max-h-[calc(100vh-120px)] overflow-y-auto">
                   <div className="grid grid-cols-1 gap-2 px-2">
-                    {[...navigationItems, ...meetingsDropdownItems].map((item) => {
+                    {[...orderedNavItems, ...meetingsNavItems, ...reportsNavItems].map((item) => {
                       const isActive = location.pathname === item.url;
                       const isInSplit = additionalPages.find(p => item.url.includes(p.name));
                       return (
@@ -1586,7 +1606,7 @@ function LayoutContent({ children }) {
                   {currentUser && (
                     <div className="mb-3 space-y-2">
                       <FocusPausePair currentUser={currentUser} fullWidth compact />
-                      <div className="flex justify-center">
+                      <div className="flex w-full min-w-0 justify-center overflow-hidden">
                         <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
                       </div>
                     </div>
@@ -1612,7 +1632,7 @@ function LayoutContent({ children }) {
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-2">
-                    {[...navigationItems, ...meetingsDropdownItems].map((item) => {
+                    {[...orderedNavItems, ...meetingsNavItems, ...reportsNavItems].map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <Link
