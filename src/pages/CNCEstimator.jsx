@@ -1364,6 +1364,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                 </div>
               </CardContent>
             </Card>
+            {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
             <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
             <Button onClick={downloadEstimate} variant="outline" className="w-full">Download Estimate (HTML)</Button>
             <Button onClick={printEstimate} variant="outline" className="w-full">Print Estimate</Button>
