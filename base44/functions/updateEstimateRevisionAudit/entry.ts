@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
     if (action === 'complete_manual_revision') {
       const revisionId = text(body?.revision_id, 128);
       const expectedRevisionUpdatedDate = text(body?.expected_revision_updated_date, 100);
+      const expectedEstimateUpdatedDate = text(body?.expected_estimate_updated_date, 100);
       if (!revisionId) return Response.json({ error: 'Revision id is required.' }, { status: 400 });
 
       const revision = await RevisionService.get(revisionId).catch(() => null);
@@ -54,6 +55,9 @@ Deno.serve(async (req) => {
 
       const estimate = await EstimateUser.get(estimateId).catch(() => null);
       if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified before completing its revision.' }, { status: 404 });
+      if (expectedEstimateUpdatedDate && String(estimate.updated_date || '') !== expectedEstimateUpdatedDate) {
+        return Response.json({ error: 'This estimate changed in another session. Reload before completing its revision.' }, { status: 409 });
+      }
 
       const before = revision.estimate_snapshot_before && typeof revision.estimate_snapshot_before === 'object'
         ? JSON.parse(JSON.stringify(revision.estimate_snapshot_before))
