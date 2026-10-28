@@ -70,14 +70,15 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
 export function planSalesRemoteTaskApplication(record, remoteTask) {
   const task = String(remoteTask ?? '').trim();
   const status = String(record?.sales_status || 'lead').trim().toLowerCase();
-  if (!task || record?.in_pipeline !== true ||
-      // A legacy terminal row's saved status is not trustworthy evidence —
-      // never let a remote task reopen it silently, same-stage or otherwise.
-      isLegacyTerminalSmartsheetSalesRecord(record)) return { mode: 'held' };
+  if (!task || record?.in_pipeline !== true) return { mode: 'held' };
   const mapped = mapSalesTaskToStage(task);
   // A same-stage remote task only changes text, never the stage outcome: it
-  // may pull even while a local stage move still awaits sync verification.
+  // may pull even while a local stage move still awaits sync verification,
+  // and on a legacy-terminal-pattern row it cannot reopen anything either.
   if (mapped.kind === 'stage' && mapped.status === status) return { mode: 'plain' };
+  // A legacy terminal row's saved status is not trustworthy evidence — never
+  // let a remote task reopen or re-stage it silently.
+  if (isLegacyTerminalSmartsheetSalesRecord(record)) return { mode: 'held' };
   // Stage-affecting or unclassifiable remote tasks stay held while a verified
   // local stage move is unconfirmed.
   if (hasUnverifiedSalesStageChangeSinceSync(record)) {
