@@ -17,15 +17,48 @@ function bodyOf(response) {
   return body && typeof body === "object" ? body : {};
 }
 
+// Callers use both the SDK-style options object ({sort, limit, skip}) and the
+// positional (sort, limit, skip) contract. An options object must never land in
+// the gateway's sort slot, and an options call answers with a page shape
+// ({items, has_more, next_cursor}) like the platform SDK, while a positional
+// call keeps returning a plain array.
+function readArgs(sortOrOptions, limit, skip) {
+  if (sortOrOptions && typeof sortOrOptions === "object" && !Array.isArray(sortOrOptions)) {
+    return {
+      paged: true,
+      sort: sortOrOptions.sort,
+      limit: sortOrOptions.limit,
+      skip: sortOrOptions.skip ?? sortOrOptions.offset,
+    };
+  }
+  return { paged: false, sort: sortOrOptions, limit, skip };
+}
+
+function asRows(response) {
+  const rows = bodyOf(response).items;
+  return Array.isArray(rows) ? rows : [];
+}
+
+const page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
+
 const METHODS = {
-  filter: (entity, query, sort, limit, skip) =>
-    invokeFleet("staffDataRead", { entity, query, sort, limit, skip }).then((r) => bodyOf(r).items || []),
-  list: (entity, sort, limit, skip) =>
-    invokeFleet("staffDataRead", { entity, sort, limit, skip }).then((r) => bodyOf(r).items || []),
+  filter: (entity, query, sortOrOptions, limit, skip) => {
+    const args = readArgs(sortOrOptions, limit, skip);
+    return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip })
+      .then((r) => (args.paged ? page(asRows(r)) : asRows(r)));
+  },
+  list: (entity, sortOrOptions, limit, skip) => {
+    const args = readArgs(sortOrOptions, limit, skip);
+    return invokeFleet("staffDataRead", { entity, sort: args.sort, limit: args.limit, skip: args.skip })
+      .then((r) => (args.paged ? page(asRows(r)) : asRows(r)));
+  },
   get: (entity, id) =>
     invokeFleet("staffDataRead", { entity, id }).then((r) => bodyOf(r).item ?? null),
-  count: (entity, query, sort, limit, skip) =>
-    invokeFleet("staffDataRead", { entity, query, sort, limit, skip, count: true }).then((r) => bodyOf(r).count ?? 0),
+  count: (entity, query, sortOrOptions, limit, skip) => {
+    const args = readArgs(sortOrOptions, limit, skip);
+    return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true })
+      .then((r) => bodyOf(r).count ?? 0);
+  },
   create: (entity, data) =>
     invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => bodyOf(r).record),
   update: (entity, id, data) =>

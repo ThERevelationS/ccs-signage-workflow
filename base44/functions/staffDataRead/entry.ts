@@ -264,10 +264,12 @@ function cleanQuery(value: unknown, entityName: string) {
 function cleanLimit(value: unknown, fallback: number) {
   if (value == null || value === '') return fallback;
   const parsed = Math.floor(Number(value));
-  if (!Number.isFinite(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
+  if (!Number.isFinite(parsed) || parsed < 1) {
     throw Object.assign(new Error(`Staff read limit must be between 1 and ${MAX_LIMIT}.`), { status: 400 });
   }
-  return parsed;
+  // A caller asking for more than one page gets the page maximum rather than a
+  // failed read; callers that need every row page with skip.
+  return Math.min(parsed, MAX_LIMIT);
 }
 
 function cleanSkip(value: unknown) {
@@ -330,7 +332,16 @@ Deno.serve(async (req) => {
     if ([400, 401, 403].includes(status)) {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
     }
+    const message = String(error?.message || error);
+    // A platform rate limit is transient: hand it back as 429 so the client
+    // governor retries with backoff instead of surfacing a hard 500.
+    if (status === 429 || /rate limit|too many requests/i.test(message)) {
+      return Response.json(
+        { error: 'Data could not be loaded. Try again.', detail: message },
+        { status: 429, headers: { 'Retry-After': '3' } },
+      );
+    }
     console.error('staffDataRead error:', error);
-    return Response.json({ error: 'Data could not be loaded. Try again.', detail: String(error?.message || error) }, { status: 500 });
+    return Response.json({ error: 'Data could not be loaded. Try again.', detail: message }, { status: 500 });
   }
 });

@@ -21,6 +21,8 @@ const governor = createRequestGovernor();
 function isRetryableFunction(fnName, payload) {
   if (fnName === 'verifySession') return true;
   if (fnName === 'permittingScanStatus') return true;
+  // Read gateways never mutate, so a platform 429 can be retried safely.
+  if (fnName === 'staffDataRead' || fnName === 'fleetDataRead') return true;
   if (fnName === 'timeClockAction') return ['status', 'status_lite'].includes(payload?.action);
   if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
   return false;
