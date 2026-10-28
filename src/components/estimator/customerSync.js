@@ -326,6 +326,25 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     });
   }
 
+  // Permit line auto-seed: a brand-new job with a site address gets one open
+  // PermitLineItem so permitting work has a tracked home; jurisdiction
+  // resolution stays in the review tools. Never blocks the sync.
+  if (workOrder?.id && !existing && String(estimate.site_address || "").trim()) {
+    try {
+      const parts = String(estimate.site_address).split(",").map((s) => s.trim()).filter(Boolean);
+      const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0] || "";
+      await staffEntities.PermitLineItem.create({
+        work_order_id: workOrder.id,
+        work_order_title: workOrder.title || fields.title,
+        row_name: `Site permit — ${city || "site"}`,
+        locality_name: city,
+        status: "active",
+      });
+    } catch (e) {
+      console.warn("Permit line auto-seed skipped:", e?.message || e);
+    }
+  }
+
   // The canonical Opportunity is backend-only; keep its compatibility link in
   // step through the workspace function. Failure leaves a held (not duplicated)
   // bridge row that reconciliation can repair, so never fail the pipeline sync.
