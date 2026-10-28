@@ -1435,7 +1435,7 @@ export default function EstimateDetail() {
                 isRegistered={isRegistered}
               />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
+                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} openRevision={openRevision} />
                 <ConvertToWorkOrder
                   estimate={estimate}
                   pricing={pricing}
