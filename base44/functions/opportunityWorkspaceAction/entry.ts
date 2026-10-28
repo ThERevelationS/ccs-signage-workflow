@@ -457,6 +457,7 @@ Deno.serve(async (req) => {
       const agingRows: any[] = [];
       const estimateBySalesperson: any = {};
       const estimateLostReasonMap: any = {};
+      const markupUsage: any = { discount: 0, none: 0, "0-10%": 0, "10-25%": 0, "25-50%": 0, "50%+": 0 };
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
         if (row?.deleted === true) continue;
         const status = clean(row?.status) || "draft";
@@ -476,6 +477,11 @@ Deno.serve(async (req) => {
           const bucket = days == null ? "valid_30d_plus" : days < 0 ? "expired" : days <= 7 ? "expiring_7d" : days <= 14 ? "valid_14d" : days <= 30 ? "valid_30d" : "valid_30d_plus";
           agingBuckets[bucket] += 1;
           if (days != null && days <= 14) agingRows.push({ id: clean(row?.id), estimate_number: clean(row?.estimate_number), project_name: clean(row?.project_name), client_name: clean(row?.client_name), quote_total: total, quote_valid_until: until, days_to_expiry: days, expired: days < 0 });
+        }
+        for (const li of Array.isArray(row?.line_items) ? row.line_items : []) {
+          const adj = num(li?.adjustment_percent);
+          const bucket = adj < 0 ? "discount" : adj === 0 ? "none" : adj <= 10 ? "0-10%" : adj <= 25 ? "10-25%" : adj <= 50 ? "25-50%" : "50%+";
+          markupUsage[bucket] += 1;
         }
         const rep = clean(row?.salesperson) || "Unassigned";
         const slot = estimateBySalesperson[rep] || (estimateBySalesperson[rep] = { salesperson: rep, count: 0, quote_value: 0, won_count: 0 });
@@ -503,6 +509,7 @@ Deno.serve(async (req) => {
         aging_rows: agingRows.sort((a: any, b: any) => a.days_to_expiry - b.days_to_expiry).slice(0, 15),
         by_salesperson: Object.values(estimateBySalesperson).map((s: any) => ({ ...s, avg_quote_value: s.count > 0 ? Math.round((s.quote_value / s.count) * 100) / 100 : 0 })).sort((a: any, b: any) => b.quote_value - a.quote_value).slice(0, 12),
         lost_reasons: Object.values(estimateLostReasonMap).map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 })).sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value).slice(0, 10),
+        markup_usage: markupUsage,
       };
       const funnel = {
         estimate_funnel: estimateFunnel,
