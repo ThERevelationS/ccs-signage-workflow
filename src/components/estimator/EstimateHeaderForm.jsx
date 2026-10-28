@@ -34,7 +34,15 @@ export default function EstimateHeaderForm({ estimate, onChange, readOnly = fals
           Status
           <select
             value={estimate.status || "draft"}
-            onChange={(e) => onChange({ status: e.target.value })}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (next === "archived" && estimate.status !== "archived") {
+                const reason = window.prompt("Optional: why is this estimate being archived? (e.g. lost, superseded, test)", estimate.archived_reason || "") || "";
+                onChange({ status: next, archived_at: new Date().toISOString(), archived_reason: reason });
+              } else {
+                onChange({ status: next });
+              }
+            }}
             disabled={readOnly}
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm disabled:bg-gray-50 disabled:text-gray-500"
           >
