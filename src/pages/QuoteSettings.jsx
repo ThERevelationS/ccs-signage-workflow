@@ -155,6 +155,7 @@ export default function QuoteSettings() {
             <TextField label="Warranty" value={form.warranty_text} onChange={(value) => patch({ warranty_text: value })} textarea wide />
             <TextField label="Lead time" value={form.lead_time_text} onChange={(value) => patch({ lead_time_text: value })} wide />
             <TextField label="Footer text" value={form.quote_footer_text} onChange={(value) => patch({ quote_footer_text: value })} textarea wide />
+            <TextField label="Email signature" value={form.email_signature} onChange={(value) => patch({ email_signature: value })} textarea wide />
           </SettingsSection>
         </div>
 
