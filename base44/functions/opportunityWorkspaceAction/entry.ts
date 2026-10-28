@@ -453,6 +453,8 @@ Deno.serve(async (req) => {
       let estimateMarginSum = 0;
       let estimateMarginCount = 0;
       let estimateMarginTotal = 0;
+      const agingBuckets: any = { expired: 0, expiring_7d: 0, valid_14d: 0, valid_30d: 0, valid_30d_plus: 0 };
+      const agingRows: any[] = [];
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
         if (row?.deleted === true) continue;
         const status = clean(row?.status) || "draft";
@@ -460,6 +462,13 @@ Deno.serve(async (req) => {
         const total = num(row?.quote_total);
         if (status === "approved") { estimateWonCount += 1; estimateDecidedCount += 1; estimateWonValue += total; estimateDecidedValue += total; }
         if (status === "archived" || status === "cancelled") { estimateDecidedCount += 1; estimateDecidedValue += total; }
+        if (status === "sent") {
+          const until = clean(row?.quote_valid_until) || clean(row?.quote_expiration_date);
+          const days = until ? Math.round((Date.parse(until) - Date.parse(today)) / 86400000) : null;
+          const bucket = days == null ? "valid_30d_plus" : days < 0 ? "expired" : days <= 7 ? "expiring_7d" : days <= 14 ? "valid_14d" : days <= 30 ? "valid_30d" : "valid_30d_plus";
+          agingBuckets[bucket] += 1;
+          if (days != null && days <= 14) agingRows.push({ id: clean(row?.id), estimate_number: clean(row?.estimate_number), project_name: clean(row?.project_name), client_name: clean(row?.client_name), quote_total: total, quote_valid_until: until, days_to_expiry: days, expired: days < 0 });
+        }
         const internal = num(row?.total_cost);
         if (total > 0 && internal > 0) {
           estimateMarginSum += (total - internal) / total;
@@ -477,6 +486,8 @@ Deno.serve(async (req) => {
         decided_value: Math.round(estimateDecidedValue * 100) / 100,
         avg_margin_pct: estimateMarginCount > 0 ? Math.round((estimateMarginSum / estimateMarginCount) * 1000) / 10 : null,
         total_margin: Math.round(estimateMarginTotal * 100) / 100,
+        aging_buckets: agingBuckets,
+        aging_rows: agingRows.sort((a: any, b: any) => a.days_to_expiry - b.days_to_expiry).slice(0, 15),
       };
       const funnel = {
         estimate_funnel: estimateFunnel,
