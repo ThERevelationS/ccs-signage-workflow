@@ -2,17 +2,21 @@ import assert from 'node:assert/strict';
 import { buildSync } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const out = resolve(here, '.tmp-quote-defaults.mjs');
+const temp = mkdtempSync(resolve(tmpdir(), 'ccs-quote-defaults-'));
+process.on('exit', () => rmSync(temp, { recursive: true, force: true }));
+const out = resolve(temp, 'quote-defaults.mjs');
+const stub = resolve(temp, 'sdk-stub.mjs');
+writeFileSync(stub, 'export const base44 = {}; export const staffEntities = {};');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/quoteDefaults.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
-  define: { 'import.meta.env': '{}' },
+  alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub },
 });
-globalThis.window = { location: { href: 'http://test.local' }, addEventListener() {}, removeEventListener() {}, history: { replaceState() {} }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} } };
-globalThis.document = { title: '', createElement: () => ({}), querySelector: () => null };
-globalThis.localStorage = window.localStorage;
+// Pure helper tests must not initialize the live SDK or issue network requests.
 const { QUOTE_DEFAULT_KEYS, DEFAULT_QUOTE_SETTINGS, quoteDefaultsPayload, quoteDefaultsForm, canonicalQuoteDefaults } =
   await import(pathToFileURL(out).href);
 
