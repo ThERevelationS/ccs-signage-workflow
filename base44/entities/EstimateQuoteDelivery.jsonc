@@ -48,6 +48,12 @@
     "recipient_email": {
       "type": "string"
     },
+    "cc_emails": {
+      "type": "string"
+    },
+    "bcc_emails": {
+      "type": "string"
+    },
     "subject": {
       "type": "string"
     },
