@@ -210,6 +210,10 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: estimate.quote_total || 0,
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
+    // Due-date prefill: the estimate's target install date is the pipeline's
+    // commitment date. An existing WO due date is preserved when the estimate
+    // doesn't carry one; it is never cleared by a sync.
+    due_date: firstNonBlank(estimate.target_install_date, existing?.due_date),
     ...lifecycleDates,
   };
 
@@ -352,7 +356,7 @@ export const backfillCustomersFromWorkOrders = async (customers, { sessionToken 
     const result = response?.data || response;
     if (result?.error) throw new Error(result.error);
     if (!result?.customer?.id) {
-      throw new Error(`Workflow Customer “${company_name}” could not be verified after creation.`);
+      throw new Error(`Workflow Customer â€œ${company_name}â€� could not be verified after creation.`);
     }
     if (!knownIds.has(result.customer.id)) {
       knownIds.add(result.customer.id);
