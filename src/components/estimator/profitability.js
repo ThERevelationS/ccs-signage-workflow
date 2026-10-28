@@ -2,6 +2,10 @@ import { acceptedInternalEstimateCost } from "./customerPricing";
 
 const num = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
+// Default gross-margin floor used by the quote send gate + pricing badges.
+// A GlobalSettings record with key "margin_floor_percent" overrides it.
+export const DEFAULT_MARGIN_FLOOR_PERCENT = 15;
+
 // Internal profitability view for the All-In-One estimator.
 //
 // Cost basis:
