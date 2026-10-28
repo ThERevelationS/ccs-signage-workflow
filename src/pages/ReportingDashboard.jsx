@@ -339,6 +339,19 @@ export default function ReportingDashboard() {
                     )}
                   </div>
                 )}
+                {Array.isArray(pipeline.estimate_funnel.by_salesperson) && pipeline.estimate_funnel.by_salesperson.length > 0 && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">By salesperson</div>
+                    <div className="space-y-1">
+                      {pipeline.estimate_funnel.by_salesperson.slice(0, 6).map((s) => (
+                        <div key={s.salesperson} className="flex items-center justify-between text-[11px] rounded border border-gray-100 px-2 py-1">
+                          <span className="truncate text-gray-700">{s.salesperson}</span>
+                          <span className="shrink-0 ml-2 text-gray-600">{s.count} est · avg <b className="text-gray-800">${Number(s.avg_quote_value || 0).toLocaleString()}</b>{s.won_count > 0 ? ` · <span class="text-emerald-600">${s.won_count} won</span>` : ""}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
