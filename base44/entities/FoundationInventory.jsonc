@@ -369,6 +369,10 @@
       "type": "boolean",
       "default": false,
       "description": "Show this item in the Sign Maintenance estimator's equipment / supplies pickers."
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image URL for this catalog material."
     }
   },
   "required": [
@@ -376,9 +380,21 @@
     "material_type"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__foundationinventory_backend_only__" } },
-    "read": { "user_condition": { "role": "__foundationinventory_backend_only__" } },
-    "update": { "user_condition": { "role": "__foundationinventory_backend_only__" } },
-    "delete": { "user_condition": { "role": "__foundationinventory_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
   }
 }
