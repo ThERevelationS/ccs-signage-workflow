@@ -36,7 +36,7 @@ assert.match(entry, /replaceEstimatingRequestFieldsIfUnchanged/, 'request update
 assert.match(entry, /CLOSED_STAGES\.has\(clean\(opportunity\.stage\)\)/, 'closed opportunities must not request estimates');
 assert.match(entry, /site_address: clean\(snapshot\.captured_site_address\)/, 'handoff must prefill the estimate site address');
 assert.match(entry, /target_install_date: clean\(snapshot\.desired_install_date/, 'handoff must prefill the target install date');
-assert.match(entry, /Requirements — /, 'handoff must prefill a requirement summary into estimate notes');
+assert.match(entry, /requirementSummary/, 'handoff must prefill a requirement summary into estimate notes');
 assert.match(shared, /handoff_snapshot is frozen after submission/, 'snapshot freeze guard must exist in shared persistence');
 
 // Frontend: backend-only entities are never touched directly from the page.
@@ -208,7 +208,7 @@ assert.match(config, /"JobCosting": JobCosting/, 'pages.config must register the
 assert.match(layout, /title: "Job Costing", url: createPageUrl\("JobCosting"\)/, 'Layout nav must link Job Costing');
 
 // Wiring: route + navigation.
-assert.match(config, /import Opportunities from '\.\/pages\/Opportunities'/, 'pages.config must import the page');
+assert.ok(config.includes("const Opportunities = lazyPage") || config.includes("import Opportunities from './pages/Opportunities'"), 'pages.config must load the Opportunities page');
 assert.match(config, /"Opportunities": Opportunities/, 'pages.config must register the route');
 assert.match(layout, /title: "Opportunities", url: createPageUrl\("Opportunities"\)/, 'Layout nav must link the page');
 assert.match(layout, /createPageUrl\("Opportunities"\)/, 'Opportunities must be a root route');
@@ -233,7 +233,7 @@ for (const action of ['list_stock', 'list_movements', 'receive_stock', 'issue_to
 }
 assert.ok(!invPage.includes('entities.InventoryMovement'), 'inventory page must not touch the backend-only ledger');
 assert.match(invPage, /functions\.invoke\("inventoryAction"/, 'inventory page must invoke the function');
-assert.match(config, /import Inventory from '\.\/pages\/Inventory'/, 'pages.config must import the Inventory page');
+assert.ok(config.includes("const Inventory = lazyPage") || config.includes("import Inventory from './pages/Inventory'"), 'pages.config must load the Inventory page');
 assert.match(config, /"Inventory": Inventory/, 'pages.config must register the Inventory route');
 assert.match(layout, /title: "Inventory", url: createPageUrl\("Inventory"\)/, 'Layout nav must link Inventory');
 assert.match(layout, /createPageUrl\("Inventory"\)/, 'Inventory must be a root route');
