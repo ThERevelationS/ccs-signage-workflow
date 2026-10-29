@@ -17,11 +17,11 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 7. **[H][DONE]** `requestGovernor.mjs` was dead code — wired into `invokeFleet` (6-concurrency cap + 4 backoff retries).
 8. **[H][DONE]** `resolvePermittingAddress`, `findLocalityByAddress`, `permittingScanStatus`, `staffDataRead`, `staffEntityWrite`, `manageAnnouncements`, `opportunityWorkspaceAction` wrapped with `withEntityRateLimitRetry`.
 9. **[H][DONE]** `processWorkflowTriggers` + `permittingOfficeAuthorityReview` wrapped with `withEntityRateLimitRetry`.
-10. **[H]** Verify remaining permitting functions are all retry-wrapped (`checkPermitFollowupReminders`, `scanPermittingOffice`, `permittingOfficeCandidate`, `downloadPermitPDF`, etc. — audit all ~158 functions for the wrapper).
+10. **[H][DONE]** Verify remaining permitting functions are all retry-wrapped (`checkPermitFollowupReminders`, `scanPermittingOffice`, `permittingOfficeCandidate`, `downloadPermitPDF`, etc. — audit all ~158 functions for the wrapper).
 
 ## A — One-field address entry (the core UX)
 
-11. **[F]** Single primary input: the job-address field is THE control — everything else (map, candidates, apply) is consequence, not separate steps.
+11. **[F][DONE]** Single primary input: the job-address field is THE control — everything else (map, candidates, apply) is consequence, not separate steps.
 12. **[F][DONE]** Auto-load the client/job address into the search field on open — zero typing when the client already has an address.
 13. **[F][DONE]** Auto-search once a prefilled address lands — the user opens the picker and the lookup already ran.
 14. **[F][DONE]** Paste-and-parse: pasting "914 Lila Ave, Milford OH 45150" from anywhere should populate and auto-search without clicking.
@@ -29,7 +29,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 16. **[UX][DONE]** Recent-address list per user — last 5 searches one-click re-runnable.
 17. **[F]** "Same as another job" — copy a jurisdiction from a recent job by client name (reuses verified localities).
 18. **[UX][DONE]** Validation before search: warn if the address lacks a city/ZIP/state instead of failing silently ("That address is missing a city — try adding one").
-19. **[UX]** If the geocoder returns a corrected address, show "Did you mean…" and let the user accept the correction in one click.
+19. **[UX][DONE]** If the geocoder returns a corrected address, show "Did you mean…" and let the user accept the correction in one click.
 20. **[F]** Saved/favorite addresses per client — a client with recurring job sites should remember them.
 
 ## B — Search progress + feedback
@@ -81,7 +81,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## F — Repository (saved jurisdictions)
 
-56. **[UX]** The repository list needs a big search box: type "milford" → city, township, county rows labeled separately — no conflation.
+56. **[UX][DONE]** The repository list needs a big search box: type "milford" → city, township, county rows labeled separately — no conflation.
 57. **[F]** Filter chips: verified / draft / needs-review / with-electrical-data — staff should find gaps in one click.
 58. **[UX]** Duplicate/ambiguous rows get a visible warning chip — "Milford appears twice — a staff member should review".
 59. **[F]** Merge flow for true duplicates with a relink preview (like the customer merge) — never silently collapse city/township pairs that merely share a name.
@@ -136,7 +136,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## J — Search quality / matching
 
-99. **[H]** Boundary-fallback ladder: Google → Census → Census-Places → address-level → manual city-entry — the user never hits a dead end.
+99. **[H][DONE]** Boundary-fallback ladder: Google → Census → Census-Places → address-level → manual city-entry — the user never hits a dead end.
 100. **[F][DONE]** Manual-entry escape hatch: "Can't find the address? Type the city/village/township name directly" — never blocks on a geocoder.
 101. **[H][DONE]** Same-name ambiguity resolution: "Milford, OH" appears as city AND township — candidates labeled by type (city/township/county), never merged.
 102. **[H]** Multi-state handling: an address on a state line should surface BOTH states' candidates — current logic prefers the geocoded one.
@@ -151,7 +151,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 108. **[F]** When a jurisdiction's authority review completes, surface it on the job card — "Milford office details verified".
 109. **[F]** When an office's data goes stale, flag it — "Milford office info last verified 6 months ago".
 110. **[F]** Reminder when a job has had a jurisdiction picked but no permit-applied status in N days — permits age without tracking.
-111. **[F]** Internal note/activity feed per job-line for permit status changes ("applied on Oct 22", "approved on Oct 30").
+111. **[F][DONE]** Internal note/activity feed per job-line for permit status changes ("applied on Oct 22", "approved on Oct 30").
 112. **[F]** If a jurisdiction's repository row gets merged/updated, jobs linked to the old row get flagged for re-verify — never silently linked to stale data.
 113. **[F]** One-click "re-check this jurisdiction" per job — re-runs the address pipeline and shows what changed.
 114. **[F][DONE]** Show the original search that produced the applied locality — the audit trail on the job.
