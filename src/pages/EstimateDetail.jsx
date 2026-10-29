@@ -1440,6 +1440,26 @@ export default function EstimateDetail() {
             className="ml-2 inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-50" title="Export this estimate + parts + audit as re-importable JSON (#451)">
             Export JSON
           </button>
+          <button type="button" onClick={async () => {
+            const raw = window.prompt("Copy BOM (parts + products) from which estimate id or number?", "");
+            const q = String(raw || "").trim();
+            if (!q) return;
+            try {
+              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              // Resolve an estimate_number or raw id to a source estimate.
+              let src = await staffEntities.AllInOneEstimate.filter({ estimate_number: q }, undefined, 1).catch(() => []);
+              if (!Array.isArray(src) || !src.length) src = await staffEntities.AllInOneEstimate.get(q).catch(() => null);
+              const srcRow = Array.isArray(src) ? src[0] : src;
+              if (!srcRow?.id) throw new Error("No estimate found with that id or number.");
+              if (!window.confirm(`Copy ${srcRow.project_name || srcRow.id}'s BOM (products + parts) into this estimate?`)) return;
+              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "copy_bom", from_estimate_id: srcRow.id, to_estimate_id: estimate.id });
+              const d = res?.data || res;
+              window.alert(d?.success ? `Copied ${d.copied_products || 0} products + ${d.copied_parts || 0} parts.` : (d?.error || "Copy failed."));
+            } catch (e) { window.alert(e?.message || "Copy failed."); }
+          }}
+            className="ml-2 inline-flex items-center gap-1 rounded border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100" title="Copy this estimate's BOM (products + parts) from another estimate (#464)">
+            Copy BOM from…
+          </button>
         </div>
       )}
 
