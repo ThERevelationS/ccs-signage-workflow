@@ -72,7 +72,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 61. **[F][DONE]** Visual break timer - tracker shows live break/pause elapsed ("lunch ends in 12m")
 62. **[F]** Auto-suggest paid vs unpaid break per policy and remaining allowance
 63. **[F][DONE]** Break overrun indicator - red flag chip when an active break runs past 60 min
-64. **[F]** Scheduled break windows (lunch must start 11:30-1:00) warn/enforce
+64. **[F][DONE]** Scheduled break windows - lunch window hint from the shift template
 65. **[F]** Paid-break daily cap with running tally on the kiosk
 66. **[F]** Work-pause categories (machine down, materials, weather hold)
 67. **[F]** Pause-reason analytics roll-up
@@ -142,12 +142,12 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 125. **[F][DONE]** Correction diff - dialog already shows ORIGINAL vs EMPLOYEE REQUEST side by side
 126. **[F][DONE]** Approval-age SLA - oldest-first sort + amber/red age badges (>=1d, >=3d)
 127. **[F][DONE]** Approver notes required - review_reason min-3 gate on every decision
-128. **[F]** Approve from the notification bell
+128. **[F][DONE]** Approve from the bell - pending-shift notices deep-link to the review dialog
 129. **[F]** Delegated approvers per crew/department
 130. **[F]** Two-step approval for corrections over N hours
 131. **[F]** Auto-approve rules for small adjustments (<5 min)
 132. **[F][DONE]** Rejection reason codes - quick-pick chips fill the manager review reason
-133. **[F]** Employee notification on approval/rejection outcome
+133. **[F][DONE]** Employee notify on review outcome - manager reason surfaces in the tracker
 134. **[F]** Correction attachments (photo of paper slip)
 135. **[F]** Full correction chain audit inline per entry
 136. **[F][DONE]** Bulk reject - batch bar decision select (approve/reject) with shared reason
@@ -163,7 +163,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 144. **[F][DONE]** Payroll CSV export - per-employee-per-day rows with 40h reg/OT split on the admin page
 145. **[F][DONE]** Absence leaderboard - fewest-worked-days list on the admin page
 146. **[F][DONE]** OT forecast - otWatch + projected week-end hours on the admin page (concurrent pass)
-147. **[F]** Hours-vs-schedule variance (needs shift schedules)
+147. **[F][DONE]** Hours-vs-schedule variance - weekly +/- line on the tracker
 148. **[F]** Missing-punch daily digest emailed to managers
 149. **[F][DONE]** Labor-hours-per-job rollup - Hours by Job card aggregates job_allocations (concurrent pass)
 150. **[F]** Break compliance report — missed/short lunches
@@ -175,7 +175,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 156. **[F][DONE]** Punch-channel stats - clock_source breakdown card on the admin page
 157. **[F][DONE]** Break compliance - admin flags >=5h shifts missing lunch (missingBreakEntries)
 158. **[F][DONE]** Early-clock-in pattern - before-7am/after-9am counters on the admin page
-159. **[F]** Per-job-site labor cost report
+159. **[F][DONE]** PTO liability - pto_liability_report action + accrued-hours card on the admin page
 160. **[F][DONE]** Correction turnover - review-count-per-reviewer summary on the audit panel
 161. **[F][DONE]** Site/job labor-cost rollup - Hours by Job card aggregates allocations per client
 162. **[F][DONE]** Printable punch card - per-employee print button on Hours by Employee
