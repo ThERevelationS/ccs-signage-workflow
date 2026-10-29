@@ -405,10 +405,12 @@ export default function TimeClockAdmin() {
   const userSummary = filteredEntries.reduce((acc, entry) => {
     const key = entry.user_email;
     if (!acc[key]) {
-      acc[key] = { name: entry.user_name, email: key, hours: 0, entries: 0 };
+      acc[key] = { name: entry.user_name, email: key, hours: 0, entries: 0, daily: {} };
     }
     acc[key].hours += entry.total_hours || 0;
     acc[key].entries += 1;
+    const dayKey = safeFormat(entry.clock_in, "yyyy-MM-dd");
+    if (dayKey !== "-") acc[key].daily[dayKey] = (acc[key].daily[dayKey] || 0) + (entry.total_hours || 0);
     return acc;
   }, {});
 
@@ -1015,6 +1017,18 @@ export default function TimeClockAdmin() {
                 <p className="font-medium text-sm">{user.name}</p>
                 <p className="text-lg font-bold text-purple-600">{user.hours.toFixed(2)} hrs</p>
                 <p className="text-xs text-gray-500">{user.entries} entries</p>
+                {(() => {
+                  const points = Object.keys(user.daily).sort().map(d => user.daily[d]);
+                  if (points.length < 2) return null;
+                  const max = Math.max(...points, 0.01);
+                  const w = 96, h = 24;
+                  const coords = points.map((v, i) => `${((i / (points.length - 1)) * w).toFixed(1)},${(h - (v / max) * (h - 3)).toFixed(1)}`);
+                  return (
+                    <svg width={w} height={h} className="mt-1" aria-hidden="true">
+                      <polyline points={coords.join(" ")} fill="none" stroke="#9333EA" strokeWidth="1.5" />
+                    </svg>
+                  );
+                })()}
               </div>
             ))}
           </div>
