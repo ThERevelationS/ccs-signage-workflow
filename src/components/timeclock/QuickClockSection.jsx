@@ -21,13 +21,9 @@ import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDia
 import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import {
-  FACE_QUALITY,
   createFaceMatcher,
-  createMatchVoter,
-  detectDetailedFace,
-  estimateFaceBrightness,
+  createFaceScanSession,
   loadFaceModelsOnce,
-  passesFaceQualityGate,
 } from '@/components/timeclock/faceScanRuntime';
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -37,6 +33,14 @@ function newRequestId() {
   }
   return `tc-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
 }
+
+const FACE_SCAN_STATUS_TEXT = {
+  "no-face": "Look directly at the camera in even lighting.",
+  "low-quality": "Move closer and face the light for a clearer scan.",
+  dim: "Lighting is dim. Move to better light or face the light source.",
+  "no-match": "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.",
+  verifying: "Hold still - verifying your identity...",
+};
 
 function apiErrorFrom(err, fallback) {
   const data = err?.response?.data;
@@ -186,8 +190,7 @@ export default function QuickClockSection({
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
-  const scanIntervalRef = useRef(null);
-  const faceDetectionBusyRef = useRef(false);
+  const faceScanSessionRef = useRef(null);
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
@@ -345,11 +348,8 @@ export default function QuickClockSection({
 
   const stopFaceCamera = () => {
     faceRunRef.current += 1;
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
-    faceDetectionBusyRef.current = false;
+    faceScanSessionRef.current?.stop();
+    faceScanSessionRef.current = null;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -715,7 +715,7 @@ export default function QuickClockSection({
           identifyIntentRef.current = "clock_in";
           setClockOutDismissed(status?.entry?.id, true);
           setShowClockOut(false);
-          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in — no missed Clock In to report.`);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in ?????? no missed Clock In to report.`);
           return;
         }
         // Deliberate identification while clocked in is the Clock Out path:
@@ -826,40 +826,28 @@ export default function QuickClockSection({
       if (faceRun !== faceRunRef.current) return;
       setRecognitionStatus("Look directly at the camera...");
 
-      const voter = createMatchVoter({ required: 3, window: 5 });
-      scanIntervalRef.current = setInterval(async () => {
-        if (!videoRef.current || faceDetectionBusyRef.current || recognitionLockedRef.current) return;
-        faceDetectionBusyRef.current = true;
-        try {
-          const detection = await detectDetailedFace(videoRef.current);
-          if (faceRun !== faceRunRef.current) return;
-          if (!detection || !passesFaceQualityGate(detection)) {
-            voter(null);
-            setRecognitionStatus(detection
-              ? "Move closer and face the light for a clearer scan."
-              : "Look directly at the camera in even lighting.");
+      // Same shared scan session as the reusable FaceRecognition component ???
+      // one cadence, quality gate, brightness check, and voter for every
+      // face-recognition surface in the app.
+      const session = createFaceScanSession({
+        getVideo: () => videoRef.current,
+        matchFace: (descriptor) => findMatchingUser(descriptor),
+        isActive: () => !recognitionLockedRef.current,
+        onFrame: ({ status, winner }) => {
+          if (faceRun !== faceRunRef.current) {
+            session.stop();
             return;
           }
-          const dim = estimateFaceBrightness(videoRef.current, detection.detection.box);
-          const matched = dim !== null && dim < FACE_QUALITY.minBrightness
-            ? null
-            : findMatchingUser(detection.descriptor);
-          const winner = voter(matched);
-          if (dim !== null && dim < FACE_QUALITY.minBrightness) {
-            setRecognitionStatus("Lighting is dim. Move to better light or face the light source.");
-          } else if (winner) {
-            await handleFaceRecognized(winner);
-          } else {
-            setRecognitionStatus(matched
-              ? "Hold still - verifying your identity..."
-              : "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
+          if (status === "recognized" && winner) {
+            session.stop();
+            void handleFaceRecognized(winner);
+            return;
           }
-        } catch (err) {
-          console.warn("Face scan warning:", err);
-        } finally {
-          if (faceRun === faceRunRef.current) faceDetectionBusyRef.current = false;
-        }
-      }, 120);
+          setRecognitionStatus(FACE_SCAN_STATUS_TEXT[status] || "Look directly at the camera in even lighting.");
+        },
+      });
+      faceScanSessionRef.current = session;
+      session.start();
     } catch (err) {
       console.error("Camera error:", err);
       stopFaceCamera();
