@@ -401,6 +401,7 @@ export default function TimeClockAdmin() {
   }, {});
   const duplicateActiveEmails = Object.keys(activeEntryCounts).filter(email => activeEntryCounts[email] > 1);
   const duplicateActiveEntries = timeEntries.filter(entry => entry.status === "clocked_in" && duplicateActiveEmails.includes(entry.user_email));
+  const missingBreakEntries = completedEntries.filter(entry => (entry.total_hours || 0) >= 5 && !entry.lunch_minutes && !entry.pay_period_id);
 
   // Group by user for summary
   const userSummary = filteredEntries.reduce((acc, entry) => {
@@ -1243,7 +1244,31 @@ export default function TimeClockAdmin() {
 
       <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
         subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
-        count={staleActiveEntries.length + duplicateActiveEmails.length + needsReviewEntries.length + unreviewedEntries.length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
+        count={staleActiveEntries.length + duplicateActiveEmails.length + missingBreakEntries.length + needsReviewEntries.length + unreviewedEntries.length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
+      {missingBreakEntries.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-semibold text-amber-900">
+                {missingBreakEntries.length} shift{missingBreakEntries.length === 1 ? "" : "s"} over 5 hours with no lunch recorded
+              </div>
+              <div className="mt-3 space-y-2">
+                {missingBreakEntries.slice(0, 10).map(entry => (
+                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-900">{entry.user_name || entry.user_email}</span>
+                      <span className="text-xs text-gray-600 ml-2">{safeFormat(entry.clock_in, "MMM d")} · {Number(entry.total_hours).toFixed(1)}h</span>
+                    </div>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setDetailEntry(entry)} className="bg-white/80">Review</Button>
+                  </div>
+                ))}
+                {missingBreakEntries.length > 10 && <p className="text-xs text-amber-700">…and {missingBreakEntries.length - 10} more</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {duplicateActiveEmails.length > 0 && (
         <div className="rounded-xl border border-red-300 bg-red-50 p-4">
           <div className="flex items-start gap-3">
