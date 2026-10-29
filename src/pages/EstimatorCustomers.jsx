@@ -277,7 +277,9 @@ export default function EstimatorCustomers() {
   const pricingTierSaveRef = useRef(false);
   const inboxReloadRef = useRef(null);
   const importInputRef = useRef(null);
+  const tierImportRef = useRef(null);
   const [importing, setImporting] = useState(false);
+  const [tierImporting, setTierImporting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -368,6 +370,7 @@ export default function EstimatorCustomers() {
     } finally {
       setImporting(false);
       if (importInputRef.current) importInputRef.current.value = "";
+      if (tierImportRef.current) tierImportRef.current.value = "";
     }
   };
 
