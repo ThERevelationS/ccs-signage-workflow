@@ -43,6 +43,7 @@ export default function DataExportPanel() {
   const [busy, setBusy] = useState(false);
   const [connections, setConnections] = useState(null);
   const [pending, setPending] = useState(null);
+  const [security, setSecurity] = useState(null);
   const [counts, setCounts] = useState(null);
   useEffect(() => {
     let alive = true;
@@ -58,6 +59,18 @@ export default function DataExportPanel() {
       staffEntities.FeatureReport.count({ status: "open" }).catch(() => null),
       staffEntities.SyncConflict.count({ status: "open" }).catch(() => null),
     ]).then(([pto, corr, del, feat, conf]) => { if (alive) setPending({ pto, corr, del, feat, conf }); });
+    Promise.all([
+      staffEntities.AdminAuditLog.list("-at", 12).catch(() => []),
+      staffEntities.FailedAdminAttempt.list("-at", 12).catch(() => []),
+    ]).then(([audit, failed]) => {
+      if (!alive) return;
+      const thirtyDaysAgo = Date.now() - 30 * 86400000;
+      setSecurity({
+        audit: Array.isArray(audit) ? audit : [],
+        failed: Array.isArray(failed) ? failed : [],
+        recentGrants: (Array.isArray(audit) ? audit : []).filter((r) => new Date(r.at).getTime() > thirtyDaysAgo).length,
+      });
+    });
     return () => { alive = false; };
   }, []);
   useEffect(() => {
@@ -129,6 +142,28 @@ export default function DataExportPanel() {
             <li className="flex items-center justify-between"><span>Sync conflicts</span><b className={pending.conf > 0 ? "text-amber-700" : "text-gray-400"}>{pending.conf ?? "—"}</b></li>
           </ul>
           <p className="mt-1 text-[10px] text-gray-400">Work each queue on its own tab — People → PTO, Time Clock → corrections, Users → deletions.</p>
+        </div>
+      )}
+
+      {security && (security.audit.length > 0 || security.failed.length > 0) && (
+        <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Security activity">
+          <p className="font-semibold text-gray-700">Security activity</p>
+          {security.recentGrants > 0 && (
+            <p className="mt-0.5 font-medium text-indigo-700">{security.recentGrants} permission change{security.recentGrants === 1 ? "" : "s"} in the last 30 days</p>
+          )}
+          {security.audit.length > 0 && (
+            <ul className="mt-1 space-y-0.5">
+              {security.audit.slice(0, 6).map((r) => (
+                <li key={r.id} className="flex items-baseline justify-between gap-2">
+                  <span className="truncate"><b>{r.actor_email || "?"}</b> {r.action} {r.target_email ? `→ ${r.target_email}` : ""}</span>
+                  <span className="shrink-0 text-gray-400">{r.at ? new Date(r.at).toLocaleDateString() : ""}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {security.failed.length > 0 && (
+            <p className="mt-1.5 font-medium text-red-700">{security.failed.length} failed sign-in attempt{security.failed.length === 1 ? "" : "s"} recorded — latest {security.failed[0]?.at ? new Date(security.failed[0].at).toLocaleString() : ""}</p>
+          )}
         </div>
       )}
 
