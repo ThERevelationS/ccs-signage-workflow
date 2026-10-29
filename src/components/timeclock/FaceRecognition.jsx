@@ -21,7 +21,7 @@ import {
 
 const ENROLL_TARGET = 10;
 const ENROLL_TICK_MS = 250;
-// Captures closer than this distance are near-duplicates of the same pose ???
+// Captures closer than this distance are near-duplicates of the same pose —
 // rejecting them forces the template set to cover different angles and
 // distances, which is what makes recognition robust on other cameras.
 const ENROLL_MIN_POSE_DISTANCE = 0.08;
@@ -62,7 +62,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const [cameraReady, setCameraReady] = useState(false);
   const [autoCapturing, setAutoCapturing] = useState(false);
 
-  // Start the camera and load the models in parallel ??? the old flow waited for
+  // Start the camera and load the models in parallel — the old flow waited for
   // the camera before even starting the model download, which added seconds to
   // every open of this component.
   useEffect(() => {
@@ -173,7 +173,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     try {
       const detection = await detectDetailedFace(videoRef.current);
       if (!detection || !passesFaceQualityGate(detection)) {
-        setScanStatus("No clear face ??? look at the camera.");
+        setScanStatus("No clear face — look at the camera.");
         return;
       }
       const brightness = estimateFaceBrightness(videoRef.current, detection.detection.box);
@@ -187,7 +187,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       const duplicate = prev.some(d => descriptorDistance(d, descriptor) < ENROLL_MIN_POSE_DISTANCE);
       if (duplicate && enrollStallRef.current < ENROLL_MAX_STALL) {
         enrollStallRef.current += 1;
-        setScanStatus(`Captured ${prev.length}/${ENROLL_TARGET} ??? turn your head slightly for a new angle.`);
+        setScanStatus(`Captured ${prev.length}/${ENROLL_TARGET} — turn your head slightly for a new angle.`);
         return;
       }
       enrollStallRef.current = 0;
@@ -199,7 +199,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         setScanStatus("Ready to save!");
         enrollCaptureRef.current?.(next);
       } else {
-        setScanStatus(`Captured ${next.length}/${ENROLL_TARGET} ??? turn slightly for the next angle.`);
+        setScanStatus(`Captured ${next.length}/${ENROLL_TARGET} — turn slightly for the next angle.`);
       }
     } catch (err) {
       console.warn("Enrollment capture warning:", err);
@@ -213,7 +213,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setCapturedDescriptors([]);
     enrollStallRef.current = 0;
     setAutoCapturing(true);
-    setScanStatus("Capturing automatically ??? hold still, then turn your head slightly between captures.");
+    setScanStatus("Capturing automatically — hold still, then turn your head slightly between captures.");
     enrollIntervalRef.current = setInterval(captureEnrollmentTick, ENROLL_TICK_MS);
   };
 
@@ -233,7 +233,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("Camera ready.");
   };
 
-  // Reticle color tracks the live scan state ??? indigo scanning, amber
+  // Reticle color tracks the live scan state — indigo scanning, amber
   // verifying or dim-light, green on a confirmed identity.
   const scanTone = recognizedUser ? "success"
     : scanStatus.toLowerCase().includes("verifying") ? "verifying"
@@ -384,4 +384,3 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     </div>
   );
 }
-
