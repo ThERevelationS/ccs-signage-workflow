@@ -464,6 +464,17 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const circumference = 2 * Math.PI * 100;
   const ringFraction = Math.min(1, progress);
 
+  const schedule = snapshot?.todays_schedule || null;
+  const scheduleLabel = schedule?.start_time ? `Scheduled ${schedule.start_time}${schedule.end_time ? `-${schedule.end_time}` : ""}${schedule.label ? ` · ${schedule.label}` : ""}` : "";
+  const punchVariance = (() => {
+    if (!clockedIn || !schedule?.start_time || !snapshot?.clock_in) return null;
+    const [hh, mm] = schedule.start_time.split(":").map(Number);
+    const sched = new Date(snapshot.clock_in); sched.setHours(hh || 0, mm || 0, 0, 0);
+    const diff = Math.round((new Date(snapshot.clock_in) - sched) / 60000);
+    if (Math.abs(diff) < 1) return null;
+    return { minutes: Math.abs(diff), early: diff < 0 };
+  })();
+
   const popoverStats = snapshot ? [
     { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
     { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
@@ -781,7 +792,18 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
-            {myPendingCorrections > 0 && (
+            {scheduleLabel && (
+          <p className="mt-3 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] text-slate-600">
+            <span>{scheduleLabel}</span>
+            {punchVariance && (
+              <span className={`font-semibold ${punchVariance.early ? "text-sky-700" : "text-amber-700"}`}>
+                {punchVariance.minutes}m {punchVariance.early ? "early" : "late"}
+              </span>
+            )}
+          </p>
+        )}
+
+        {myPendingCorrections > 0 && (
               <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-800">
                 {myPendingCorrections} correction{myPendingCorrections === 1 ? "" : "s"} awaiting manager review
               </p>
