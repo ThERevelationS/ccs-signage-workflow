@@ -137,41 +137,6 @@
       "format": "date",
       "description": "Expiration date for this individual permit/office line, when provided by the issuing authority."
     },
-    "drafted_date": {
-      "type": "string",
-      "format": "date",
-      "description": "Staff-recorded date the application package was drafted. Application timeline only."
-    },
-    "acknowledged_date": {
-      "type": "string",
-      "format": "date",
-      "description": "Staff-recorded date the office acknowledged receiving the application. Application timeline only."
-    },
-    "under_review_date": {
-      "type": "string",
-      "format": "date",
-      "description": "Staff-recorded date the office reported the application as under review. Application timeline only."
-    },
-    "required_documents": {
-      "type": "array",
-      "description": "Staff-maintained checklist of documents this office needs for the application (drawings, site plan, license, etc.).",
-      "default": [],
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "done": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      }
-    },
     "jurisdiction_fee_amount": {
       "type": "number",
       "description": "Actual known jurisdiction/permit-office fee for this individual line, entered or reconciled by staff. Never auto-filled from repository fee guidance or estimator permit_fee."
@@ -307,6 +272,21 @@
       "type": "string",
       "format": "date",
       "description": "Appeal/resubmission deadline after a denial, when one applies."
+    },
+    "correction_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "Office issued a correction notice \u2014 something must be fixed before the permit clears."
+    },
+    "correction_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Deadline to fix the correction notice before the application lapses."
+    },
+    "correction_resolved_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the correction was fixed and resubmitted."
     },
     "confirmation_number": {
       "type": "string",
