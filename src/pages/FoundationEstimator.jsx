@@ -23,6 +23,7 @@ import FoundationWallsPanel from "@/components/estimator/foundation/FoundationWa
 import FoundationWallCapsPanel from "@/components/estimator/foundation/FoundationWallCapsPanel";
 import FoundationPolesPanel from "@/components/estimator/foundation/FoundationPolesPanel";
 import FoundationToolbar from "@/components/estimator/foundation/FoundationToolbar";
+import { convertFoundationToBrickStone } from "@/components/estimator/foundation/convertToBrickStone";
 import FoundationSectionBanner from "@/components/estimator/foundation/FoundationSectionBanner";
 import AiEngineeringAssistant from "@/components/estimator/foundation/AiEngineeringAssistant";
 import Foundation3DPreview from "@/components/estimator/foundation/Foundation3DPreview";
@@ -362,6 +363,18 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
   const backTo = estimateId ? `/EstimateDetail?id=${estimateId}` : "/Estimator";
 
+  const handleConvertToBrickStone = async () => {
+    setSaving(true);
+    try {
+      const converted = await convertFoundationToBrickStone({ project });
+      navigate("/BrickStoneEstimator?id=" + converted.id);
+    } catch (e) {
+      console.error(e); alert("Convert failed: " + (e?.message || e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveAndExit = async () => {
     await handleSave();
     if (embedded) onClose?.();
@@ -422,6 +435,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           onSave={handleSave}
           onSaveAndExit={handleSaveAndExit}
           onSaveAsCopy={handleSaveAsCopy}
+          onConvertToBrickStone={handleConvertToBrickStone}
           onSaveAsTemplate={() => setTemplateMode("save")}
           onTemplates={() => setTemplateMode("load")}
           onHelp={() => setShowHelp((v) => !v)}
