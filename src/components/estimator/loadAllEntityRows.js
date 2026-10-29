@@ -69,6 +69,12 @@ export async function withRateLimitRetry(fn) {
 const readCache = new Map();
 const CACHE_MAX_AGE_MS = 30000;
 
+// Seed the short-TTL cache with rows fetched through a batch read so the
+// per-entity loaders skip their own network call on the next mount.
+export const primeEntityRowsCache = (label, query, sort, rows) => {
+  readCache.set(JSON.stringify([label, query ?? null, sort, DEFAULT_PAGE_SIZE, DEFAULT_MAX_ROWS]), { at: Date.now(), rows });
+};
+
 export async function loadAllEntityRows({
   entity,
   query = null,
@@ -78,7 +84,7 @@ export async function loadAllEntityRows({
   label = "Estimator prerequisite catalog",
   cacheTtlMs = 0,
 } = {}) {
-  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([entity?.name || entity, query, sort, pageSize, maxRows]) : null;
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, maxRows]) : null;
   if (cacheKey) {
     const hit = readCache.get(cacheKey);
     if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
