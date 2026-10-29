@@ -301,7 +301,9 @@ export default function PermittingCompletenessDashboard() {
               const overdue = f.next_followup_date < new Date().toISOString().slice(0, 10);
               return (
                 <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-1.5 text-xs">
-                  <span className="font-medium text-gray-800">{f.row_name || f.work_order_title || "Permit"}</span>
+                  <span className="font-medium text-gray-800">{f.work_order_id
+                    ? <a href={`/MainWorkflow?wo=${f.work_order_id}`} className="underline hover:text-indigo-800" title="Open this work order">{f.row_name || f.work_order_title || "Permit"}</a>
+                    : (f.row_name || f.work_order_title || "Permit")}</span>
                   <span className="text-gray-500">{f.locality_name || ""}</span>
                   <span className={`font-medium ${overdue ? "text-red-600" : "text-gray-600"}`}>{overdue ? "overdue " : "due "}{f.next_followup_date}</span>
                   <Button type="button" size="sm" variant="ghost" disabled={taskBusy === f.id || taskDone.has(f.id)}
