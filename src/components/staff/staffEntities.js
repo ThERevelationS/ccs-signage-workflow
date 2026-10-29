@@ -32,7 +32,10 @@ const METHODS = {
     let last = "";
     const check = async () => {
       try {
-        const r = await invokeFleet("staffDataRead", { entity, limit: 500 });
+        // -updated_date puts mutations into the 500-row window — an unsorted
+        // default order would cap the digest to the oldest rows and silently
+        // drop change events for anything past position 500.
+        const r = await invokeFleet("staffDataRead", { entity, limit: 500, sort: "-updated_date" });
         const rows = Array.isArray(r?.items) ? r.items : [];
         const stamp = JSON.stringify(rows);
         if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
