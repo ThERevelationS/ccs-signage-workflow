@@ -51,7 +51,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import AdminAccessDialog from "@/components/admin/AdminAccessDialog";
-import { getAdminAccessSummary } from "@/components/admin/adminTabNavigation";
+import { getAdminAccessSummary, getAccessibleAdminTab, ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
@@ -336,6 +336,27 @@ export default function UserManagement() {
     const a = document.createElement("a");
     a.href = url; a.download = "users.csv"; a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportAccessMatrixCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const tabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ label: `${g.label}: ${t.label}`, value: t.value })));
+    const rows = [
+      ["Name", "Email", "Role", "Full Admin", ...tabs.map(t => t.label)],
+      ...visibleUsers.map((u) => [
+        u.full_name || "", u.email || "", u.role || "",
+        u.is_full_admin === true ? "yes" : "",
+        ...tabs.map((t) => {
+          if (u.is_full_admin === true) return "yes";
+          if (u.role !== "admin") return "";
+          return getAccessibleAdminTab(t.value, true, u) ? "yes" : "no";
+        }),
+      ]),
+    ].map((r) => r.map(esc).join(",")).join(String.fromCharCode(10));
+    const blob = new Blob([rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "access-matrix.csv"; a.click(); URL.revokeObjectURL(url);
   };
 
   const userSearchQ = userSearch.trim().toLowerCase();
@@ -2019,6 +2040,10 @@ export default function UserManagement() {
                   <SelectItem value="role">Role</SelectItem>
                 </SelectContent>
               </Select>
+              <Button type="button" size="sm" variant="outline" onClick={exportAccessMatrixCsv}
+                className="h-7 text-xs" title="Export every user's page access as a matrix">
+                Access matrix
+              </Button>
               <Button type="button" size="sm" variant="outline" onClick={exportUsersCsv}
                 className="h-7 text-xs" title="Export the filtered user list to CSV">
                 Export
