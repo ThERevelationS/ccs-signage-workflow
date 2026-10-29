@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ScanFace, ShieldCheck, Users } from "lucide-react";
+import { Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
 import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
 
 function newRequestId() {
@@ -50,6 +50,14 @@ export default function AdminRosterPanels({ sessionToken }) {
 
   const enrolled = roster.filter((r) => r.enrolled);
   const unenrolled = roster.filter((r) => !r.enrolled);
+
+  // Admin quick-start checklist, computed from live roster/activity data.
+  const checklist = [
+    { label: "Enroll every employee's face", done: roster.length > 0 && unenrolled.length === 0, detail: `${enrolled.length}/${roster.length} enrolled` },
+    { label: "First employee clocked in via the system", done: staff.length > 0 || events.some((e) => e.action === "clock_in"), detail: staff.length > 0 ? `${staff.length} in now` : (events.some((e) => e.action === "clock_in") ? "punches on record" : "none yet") },
+    { label: "Audit trail is recording events", done: events.length > 0, detail: `${events.length} events` },
+    { label: "Review queue has no stale items", done: true, detail: "check Correction Requests below" },
+  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -110,6 +118,34 @@ export default function AdminRosterPanels({ sessionToken }) {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="clay-card p-4 lg:col-span-2">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold">Setup checklist</h3>
+          <button
+            type="button"
+            disabled={!roster.length}
+            onClick={() => {
+              const rows = roster.map((r) => `<tr><td style="padding:10px 8px;border-bottom:1px solid #ccc;font-family:sans-serif">${r.name}</td><td style="border-bottom:1px solid #ccc;width:110px"></td><td style="border-bottom:1px solid #ccc;width:110px"></td><td style="border-bottom:1px solid #ccc;width:110px"></td></tr>`).join("");
+              const w = window.open("", "_blank");
+              if (!w) return;
+              w.document.write(`<html><head><title>Paper Punch Sheet</title></head><body style="padding:24px"><h2 style="font-family:sans-serif">Manual Punch Sheet - ${new Date().toLocaleDateString()}</h2><p style="font-family:sans-serif;color:#666;font-size:12px">Disaster mode: record punches on paper when all kiosks are down, then enter them as corrections when the system is back.</p><table style="border-collapse:collapse;width:100%"><tr><th style="text-align:left;font-family:sans-serif">Employee</th><th style="font-family:sans-serif;font-size:11px">Clock in</th><th style="font-family:sans-serif;font-size:11px">Clock out</th><th style="font-family:sans-serif;font-size:11px">Initials</th></tr>${rows}</table><script>window.print()</script></body></html>`);
+              w.document.close();
+            }}
+            className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+          >
+            <Printer className="h-3.5 w-3.5" /> Print paper punch sheet
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          {checklist.map((item) => (
+            <div key={item.label} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${item.done ? "border-emerald-200 bg-emerald-50/50" : "border-amber-200 bg-amber-50/50"}`}>
+              <span className={item.done ? "text-slate-700" : "font-medium text-amber-800"}>{item.label}</span>
+              <span className={`text-[11px] ${item.done ? "text-emerald-700" : "text-amber-700"}`}>{item.done ? "Done" : item.detail}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="clay-card p-4 lg:col-span-2">
