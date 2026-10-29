@@ -4,14 +4,14 @@ import { getAdminSearchKeyboardIndex, searchAdminSettings } from "@/components/a
 
 // Search is deliberately inline rather than an unbounded dropdown overlay:
 // results remain within the Admin navigation card on narrow viewports.
-export default function AdminSettingsSearch({ isAdmin, onNavigate }) {
+export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const resultsListRef = useRef(null);
   const searchStatusId = useId();
   const resultsListId = useId();
-  const results = searchAdminSettings(query, isAdmin);
+  const results = searchAdminSettings(query, isAdmin, 8, currentUser);
   const hasQuery = Boolean(query.trim());
   const selectedResult = activeIndex >= 0 ? results[activeIndex] : null;
   const hasResults = hasQuery && results.length > 0;

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
@@ -240,9 +239,9 @@ export default function FleetEquipmentTimeline({ equipment, workOrders = [], log
     setExtraLoading(true);
     setExtraError("");
     Promise.all([
-      filterAllFleetRows(base44.entities.FleetFuelEntry, { equipment_id: equipment?.id || "" }, "-fueled_at", { label: `${equipment?.name || "Fleet equipment"} fuel timeline` }).catch(() => []),
-      filterAllFleetRows(base44.entities.FleetWarranty, { equipment_id: equipment?.id || "" }, "-created_date", { label: `${equipment?.name || "Fleet equipment"} warranty timeline` }).catch(() => []),
-      filterAllFleetRows(base44.entities.FleetReservation, { equipment_id: equipment?.id || "" }, "-created_date", { label: `${equipment?.name || "Fleet equipment"} assignment timeline` }).catch(() => []),
+      filterAllFleetRows("FleetFuelEntry", { equipment_id: equipment?.id || "" }, "-fueled_at", { label: `${equipment?.name || "Fleet equipment"} fuel timeline` }).catch(() => []),
+      filterAllFleetRows("FleetWarranty", { equipment_id: equipment?.id || "" }, "-created_date", { label: `${equipment?.name || "Fleet equipment"} warranty timeline` }).catch(() => []),
+      filterAllFleetRows("FleetReservation", { equipment_id: equipment?.id || "" }, "-created_date", { label: `${equipment?.name || "Fleet equipment"} assignment timeline` }).catch(() => []),
     ]).then(([fuelEntries, warranties, reservations]) => {
       if (!mounted) return;
       setExtraActivity({ fuelEntries: fuelEntries || [], warranties: warranties || [], reservations: reservations || [] });

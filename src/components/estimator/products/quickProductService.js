@@ -10,6 +10,7 @@ import { ensureReusableRecord } from "@/components/estimator/products/reusableSa
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { expectedBuilderEntityFields, expectedEntityFields, replaceBuilderEntityFieldsIfUnchanged, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const nowIso = () => new Date().toISOString();
@@ -66,7 +67,7 @@ export async function saveProductAsQuickProduct({
   })}`;
 
   return ensureReusableRecord({
-    entity: base44.entities.QuickProduct,
+    entity: staffEntities.QuickProduct,
     idempotencyKey,
     label: "Quick Product",
     data: {
@@ -1014,7 +1015,7 @@ export async function instantiateQuickProduct({ estimateId, quickProduct, expect
   if (alreadyCompleted) return completedQuickInsertResult(estimate, alreadyCompleted, { alreadyCompleted: true });
 
   const [liveQuickProduct, me] = await Promise.all([
-    base44.entities.QuickProduct.get(quickProduct.id),
+    staffEntities.QuickProduct.get(quickProduct.id),
     base44.auth.me().catch(() => null),
   ]);
   if (!liveQuickProduct) throw new Error("This Quick Product no longer exists. Reopen Add Product to refresh the library.");
@@ -1072,7 +1073,7 @@ export async function instantiateProductSnapshot({ estimateId, productSnapshot, 
 
 export async function listQuickProducts() {
   const [rows, me] = await Promise.all([
-    loadAllEntityRows({ entity: base44.entities.QuickProduct, sort: "product_name", label: "Quick Product library" }),
+    loadAllEntityRows({ entity: staffEntities.QuickProduct, sort: "product_name", label: "Quick Product library" }),
     base44.auth.me().catch(() => null),
   ]);
   return (rows || [])

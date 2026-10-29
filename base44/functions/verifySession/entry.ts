@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 function b64urlDecode(str) {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -17,7 +18,10 @@ Deno.serve(async (req) => {
       return Response.json({ valid: false, error: 'No token provided' }, { status: 400 });
     }
 
-    const base44 = withEmployeeAccessReads(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)));
+    // action === 'logout': revoke the server-side session (not just the
+    // client token) by bumping session_not_before past this token's issue.
+    const isLogout = String(body?.action || '') === 'logout';
     let user;
     try {
       user = await authenticateSignShopSession(base44, token);
@@ -42,6 +46,12 @@ Deno.serve(async (req) => {
       // The shared verifier already validated this payload; keep a safe fallback.
     }
 
+    if (isLogout) {
+      await base44.asServiceRole.entities.AuthorizedEmail.update(user.id, {
+        session_not_before: new Date().toISOString(),
+      }).catch(() => null);
+      return Response.json({ valid: true, logged_out: true });
+    }
     return Response.json({
       valid: true,
       user: {
@@ -54,7 +64,10 @@ Deno.serve(async (req) => {
         can_import_export: user.can_import_export,
         can_order_export: user.role === 'admin' && user.can_order_export === true,
         can_view_resources: user.can_view_resources,
+        can_approve_quotes: user.can_approve_quotes === true,
         order_form_filter: user.order_form_filter,
+        is_full_admin: user.is_full_admin === true,
+        admin_permissions: user.admin_permissions && typeof user.admin_permissions === "object" && !Array.isArray(user.admin_permissions) ? user.admin_permissions : {},
       },
     });
   } catch (error) {

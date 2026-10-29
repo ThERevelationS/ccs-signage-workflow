@@ -1,6 +1,8 @@
 import { base44 } from "@/api/base44Client";
 import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
 import { stripInheritedWorkOrderSyncIdentity } from './workOrderCreationIdentity.mjs';
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const SYSTEM_FIELDS = new Set([
   "id",
@@ -40,7 +42,7 @@ export function workOrderPatchMatches(record, patch) {
   return Object.entries(patch).every(([key, value]) => sameValue(record?.[key], value));
 }
 
-export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = base44.entities.WorkOrder } = {}) {
+export async function createWorkOrderWithRecovery({ data, label = "Work Order", entity = staffEntities.WorkOrder } = {}) {
   // All UI-driven new WorkOrders, including Duplicate Client, must start
   // unlinked. Never copy an existing job's permanent Smartsheet row ownership
   // or durable POST/import evidence into a newly created record.
@@ -148,22 +150,45 @@ export async function replaceWorkOrderFieldsIfUnchanged({ workOrderId, expectedF
   return saveTrackedFields({entityType:'WorkOrder', id:workOrderId, expectedFields, nextFields, guardFields});
 }
 
+const WO_STAGE_ORDER = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation", "completed"];
+const WO_OPEN_PERMIT_STATUSES = new Set(["active", "waiting"]);
+
 export async function transitionWorkOrderFromLoadedSnapshot({
   workOrder,
   newStage,
   completed,
   normalizeLegacyNotes = false,
+  allowPermitSkip = false,
   label = "Work Order transition",
 }) {
   const id = String(workOrder?.id || "").trim();
   const stage = String(newStage || "").trim();
   if (!id || !stage) throw new Error(`${label} is missing its Work Order or destination stage.`);
 
+  // Required-stage guard: a forward move that crosses the permitting stage is
+  // blocked while the job has open PermitLineItems. Pass allowPermitSkip for
+  // sanctioned jumps (e.g., permit handled outside the tracker).
+  const fromIdx = WO_STAGE_ORDER.indexOf(String(workOrder.current_stage || "").trim());
+  const toIdx = WO_STAGE_ORDER.indexOf(stage);
+  const permittingIdx = WO_STAGE_ORDER.indexOf("permitting");
+  if (!allowPermitSkip && fromIdx >= 0 && toIdx >= 0 && fromIdx < permittingIdx && toIdx > permittingIdx) {
+    const openPermits = (await staffEntities.PermitLineItem.filter({ work_order_id: id }).catch(() => []))
+      .filter((row) => WO_OPEN_PERMIT_STATUSES.has(String(row?.status || "").trim()));
+    if (openPermits.length) {
+      throw new Error(`${label} cannot skip the Permitting stage — this job has ${openPermits.length} open permit line item(s). Complete them or move through Permitting first.`);
+    }
+  }
+
   const expectedFields = { current_stage: workOrder.current_stage };
   const nextFields = { current_stage: stage };
   if (typeof completed === "boolean") {
     expectedFields.completed = workOrder.completed;
     nextFields.completed = completed;
+  } else if (workOrder.completed === true && stage !== "completed") {
+    // Reopen: a stage move away from "completed" must not leave a stale
+    // completed flag on the record when the caller did not pass one.
+    expectedFields.completed = true;
+    nextFields.completed = false;
   }
 
   if (normalizeLegacyNotes && typeof workOrder.notes === "string" && workOrder.notes.trim()) {
@@ -191,7 +216,7 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
   label = "Work Order array",
   maxAttempts = 3,
 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrderId || "").trim();
   const fieldName = String(field || "").trim();
   const expected = expectedArray == null ? [] : expectedArray;
@@ -236,7 +261,7 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
 }
 
 export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, label = "Work Order", maxAttempts = 3 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrderId || "").trim();
   const fieldName = String(field || "").trim();
   if (!id || !fieldName || typeof mutate !== "function" || !entity?.updateMany || !entity?.get) {
@@ -296,7 +321,7 @@ export async function softDeleteWorkOrderFromLoadedSnapshot({
   deletedBy = "unknown",
   label = "Work Order delete",
 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
   const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
   const actor = String(deletedBy || "unknown").trim() || "unknown";
@@ -342,7 +367,7 @@ export async function restoreWorkOrderFromLoadedTrashSnapshot({
   workOrder,
   label = "Work Order recovery",
 }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
   const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
   if (!id || !expectedUpdatedAt || !entity?.updateMany || !entity?.get) {
@@ -374,6 +399,11 @@ export async function restoreWorkOrderFromLoadedTrashSnapshot({
   if (result.updated === 1) {
     const saved = await entity.get(id).catch(() => null);
     if (!saved) throw new Error(`${label} succeeded but the recovered Work Order could not be re-read.`);
+    try {
+      await NotificationTriggers.workOrderRestored(saved);
+    } catch (notificationError) {
+      console.error(`${label} succeeded but its restore notification failed:`, notificationError);
+    }
     return saved;
   }
 
@@ -383,7 +413,7 @@ export async function restoreWorkOrderFromLoadedTrashSnapshot({
 }
 
 export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, label = "Work Order" }) {
-  const entity = base44.entities.WorkOrder;
+  const entity = staffEntities.WorkOrder;
   const id = String(workOrder?.id || "").trim();
   const expectedUpdatedAt = String(workOrder?.updated_date || "").trim();
   if (!id || !entity?.updateMany || !entity?.get) {
@@ -420,6 +450,11 @@ export async function updateWorkOrderFromLoadedSnapshot({ workOrder, formData, l
   if (result.updated === 1) {
     const saved = await entity.get(id).catch(() => null);
     if (!saved) throw new Error(`${label} was updated but could not be re-read.`);
+    try {
+      await NotificationTriggers.workOrderFieldsChanged(saved, workOrder);
+    } catch (notificationError) {
+      console.error(`${label} succeeded but its field-change notifications failed:`, notificationError);
+    }
     return saved;
   }
 

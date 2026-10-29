@@ -2,16 +2,26 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundationFieldSchema";
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function FoundationCatalog() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeType, setActiveType] = useState("concrete_service");
+  const [activeType, setActiveType] = useState(() => new URLSearchParams(window.location.search).get("type") || "concrete_service");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
+  const writeParam = (key, value, defaultValue = "") => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== defaultValue) next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -21,7 +31,7 @@ export default function FoundationCatalog() {
     setLoading(true);
     setLoadError("");
     try {
-      const res = await loadAllEntityRows({ entity: base44.entities.FoundationInventory, sort: "-created_date", label: "Foundation Catalog inventory" });
+      const res = await loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: "-created_date", label: "Foundation Catalog inventory" });
       setRows(res || []);
     } catch (error) {
       console.error("Foundation catalog load failed:", error);
@@ -35,7 +45,13 @@ export default function FoundationCatalog() {
     load();
   }, []);
 
-  const visible = rows.filter((r) => r.material_type === activeType);
+  const q = search.trim().toLowerCase();
+  const visible = rows.filter((r) => {
+    if (r.material_type !== activeType) return false;
+    if (!q) return true;
+    return [r.material_name, r.material_description, r.supplier, r.unit]
+      .filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
 
   const handleDelete = async (row) => {
     if (!row?.id || loadError || deleteRef.current.has(row.id)) return;
@@ -45,14 +61,14 @@ export default function FoundationCatalog() {
       return;
     }
     try {
-      const live = await base44.entities.FoundationInventory.get(row.id);
+      const live = await staffEntities.FoundationInventory.get(row.id);
       if (row.updated_date && live?.updated_date && row.updated_date !== live.updated_date) {
         alert("This Foundation Catalog item changed in another session and was not deleted. The latest catalog will be reloaded first.");
         await load();
         return;
       }
       await deleteEntityIfUnchanged({
-        entity: base44.entities.FoundationInventory,
+        entity: staffEntities.FoundationInventory,
         record: live,
         label: `Foundation Catalog item “${live.material_name || row.material_name || "Material"}”`,
       });
@@ -73,6 +89,15 @@ export default function FoundationCatalog() {
           <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
             <ArrowLeft className="w-4 h-4" /> Estimator
           </Link>
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search name, description, supplier…"
+              value={search}
+              onChange={(e) => { const v = e.target.value; setSearch(v); writeParam("q", v); }}
+              className="pl-9 h-9"
+            />
+          </div>
           <Button
             disabled={!!loadError}
             onClick={() => {
@@ -94,7 +119,7 @@ export default function FoundationCatalog() {
           {MATERIAL_TYPES.map((t) => (
             <button
               key={t.value}
-              onClick={() => setActiveType(t.value)}
+              onClick={() => { const v = t.value; setActiveType(v); writeParam("type", v, "concrete_service"); }}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border ${
                 activeType === t.value
                   ? "bg-red-600 text-white border-red-600"

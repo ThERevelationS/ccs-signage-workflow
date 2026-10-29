@@ -1,0 +1,10 @@
+const rows = await base44.entities.GlobalSettings.filter({ setting_key: "smartsheetSalesSyncStatus" });
+const v = rows?.[0]?.setting_value;
+const r = v?.results?.[0] || {};
+console.log("status:", v?.status, "| run:", v?.started_at, "→", v?.completed_at);
+console.log("needs_review:", v?.needs_review, "| rows:", r.rows_examined, "| errors:", r.errors, "| pending:", r.local_pending_preserved, "| newly:", r.local_pending_newly_reported, "| localWins:", r.local_wins_silent, "| write_failures:", r.business_field_write_failures);
+const open = await base44.entities.SyncConflict.filter({ status: "open" });
+console.log("open conflicts:", open.length);
+const alert = await base44.entities.GlobalSettings.filter({ setting_key: "smartsheet_sync_alert_config" });
+const av = alert?.[0]?.setting_value;
+console.log("alert last_sent:", av?.last_sent_at, "| sig:", JSON.stringify(av?.last_signature||"").slice(0,150));

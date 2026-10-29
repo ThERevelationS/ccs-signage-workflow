@@ -96,8 +96,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const idempotencyKey = String(body?.idempotency_key || '').trim();
     const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
     const estimateId = String(revision?.estimate_id || '').trim();

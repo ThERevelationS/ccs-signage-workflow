@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,14 +11,25 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const attemptSeqRef = useRef(0);
+  const openRef = useRef(isOpen);
+
+  // Closing the dialog invalidates any in-flight attempt — a late verifyLogin
+  // response after dismissal must never sign the employee in.
+  useEffect(() => {
+    openRef.current = isOpen;
+    attemptSeqRef.current += 1;
+  }, [isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
+    const attempt = ++attemptSeqRef.current;
     try {
       const res = await base44.functions.invoke("verifyLogin", { username: username.trim(), password });
       const data = res?.data || res;
+      if (!openRef.current || attempt !== attemptSeqRef.current) return;
       if (data?.success && data.user) {
         // Find matching full user record from allUsers list so the page has everything it expects
         const full = (allUsers || []).find(
@@ -31,10 +42,11 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
         setError(data?.error || "Invalid username or password");
       }
     } catch (err) {
+      if (!openRef.current || attempt !== attemptSeqRef.current) return;
       const apiError = err?.response?.data?.error;
       setError(apiError || err?.message || "Login failed");
     }
-    setSubmitting(false);
+    if (attempt === attemptSeqRef.current) setSubmitting(false);
   };
 
   return (

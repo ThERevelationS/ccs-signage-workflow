@@ -2,8 +2,9 @@ import { base44 } from "@/api/base44Client";
 import { NotificationTriggers } from "./NotificationService";
 import { createActivityLogBestEffort } from "./activityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const ActivityLog = base44.entities.ActivityLog;
+const ActivityLog = staffEntities.ActivityLog;
 
 export async function getCurrentUser() {
   // Get user from localStorage (set by EmailGate)
@@ -11,7 +12,7 @@ export async function getCurrentUser() {
   if (storedEmail) {
     try {
       const users = await loadAllEntityRows({
-        entity: base44.entities.AuthorizedEmail,
+        entity: staffEntities.AuthorizedEmail,
         sort: null,
         label: "Activity logger authorized users",
       });
@@ -156,21 +157,27 @@ export const ActivityActions = {
   },
 
   subNoteAdded: async (wo, text) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "sub_note_added",
       actionDetails: `Added sub-note to "${wo.title}": "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`
     });
+    await NotificationTriggers.subNoteAdded(wo, text, displayName);
   },
 
   subNoteDeleted: async (wo) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "sub_note_deleted",
       actionDetails: `Deleted a sub-note from "${wo.title}"`
     });
+    await NotificationTriggers.subNoteDeleted(wo, displayName);
   },
 
   taskAdded: async (wo, taskText) => {
@@ -198,12 +205,15 @@ export const ActivityActions = {
   },
 
   taskUncompleted: async (wo, taskText) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
       actionType: "task_uncompleted",
       actionDetails: `Uncompleted task on "${wo.title}": "${taskText.substring(0, 50)}${taskText.length > 50 ? '...' : ''}"`
     });
+    await NotificationTriggers.taskUncompleted(wo, taskText, displayName);
   },
 
   taskDeleted: async (wo) => {
@@ -219,6 +229,8 @@ export const ActivityActions = {
   },
 
   taskEdited: async (wo, oldText, newText) => {
+    const user = await getCurrentUser();
+    const displayName = getUserDisplayName(user);
     await logActivity({
       workOrderId: wo.id,
       workOrderTitle: wo.title,
@@ -227,6 +239,7 @@ export const ActivityActions = {
       previousValue: oldText,
       newValue: newText
     });
+    await NotificationTriggers.taskEdited(wo, oldText, newText, displayName);
   },
 
   imageUploaded: async (wo) => {

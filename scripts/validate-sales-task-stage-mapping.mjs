@@ -30,6 +30,7 @@ const expected = {
   "WIP - In Final Design Queue": "won",
   "WIP - Designing": "won",
   "WIP - Prepare/Submit Permit": "won",
+  "WIP - Prepare Permit Docs for Customer": "won",
   "WIP - Follow Up On Status of Accepted Permit": "won",
   "WIP - Permitting Follow-ups": "won",
   "WIP - Production/Fabrication": "won",
@@ -55,8 +56,8 @@ const same = (actual, expectedValue, message) => {
 };
 const check = (value, message) => { assert.ok(value, message); checks++; };
 
-same(Object.keys(SALES_TASK_STAGE_MAP).length, 36,
-  "All 35 configured non-neutral tasks plus the new Estimate Sent option are mapped.");
+same(Object.keys(SALES_TASK_STAGE_MAP).length, 37,
+  "All configured non-neutral tasks plus the Estimate Sent and Prepare Permit Docs options are mapped.");
 for (const [task, status] of Object.entries(expected)) {
   same(mapSalesTaskToStage(task), { kind: "stage", status }, "Exact task maps correctly: " + task);
 }

@@ -1,0 +1,531 @@
+{
+  "matches": [
+    {
+      "path": "src/api/gatedEntities.js",
+      "line": 30,
+      "text": "export const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 33,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 143,
+      "text": "    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 170,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/pages/MyWorkflow.jsx",
+      "line": 171,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 21,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 257,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 258,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 262,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/pages/SIPs.jsx",
+      "line": 263,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 20,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 348,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/pages/MondayMorningMeeting.jsx",
+      "line": 349,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 18,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 127,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 128,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 132,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/pages/Permitting.jsx",
+      "line": 133,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/shared/globalSettingsPersistence.js",
+      "line": 16,
+      "text": "export async function loadSingleGlobalSetting({ entity, settingKey, label = \"Global setting\" } = {}) {"
+    },
+    {
+      "path": "src/components/shared/globalSettingsPersistence.js",
+      "line": 29,
+      "text": "export async function saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/shared/globalSettingsPersistence.js",
+      "line": 56,
+      "text": "  const before = await loadSingleGlobalSetting({ entity, settingKey: key, label });"
+    },
+    {
+      "path": "src/components/permitting/OfficeIdentityLivePreview.jsx",
+      "line": 29,
+      "text": "        settingsEntity: staffEntities.GlobalSettings, invoke: (name, body) => base44.functions.invoke(name, body),"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 23,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"./permitGlobalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 31,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 78,
+      "text": "          loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'permitOfficeCatalog', label: 'Permit Office Catalog' }),"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 79,
+      "text": "          loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'permitOfficeTypes', label: 'Permit Office Types' }),"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 379,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/permitting/PermitSettingsDialog.jsx",
+      "line": 392,
+      "text": "          const latest = await loadSingleGlobalSetting({ entity: GlobalSettings, settingKey, label: `${label} recovery` });"
+    },
+    {
+      "path": "src/components/permitting/permitGlobalSettingsPersistence.js",
+      "line": 4,
+      "text": "  loadSingleGlobalSetting,"
+    },
+    {
+      "path": "src/components/permitting/permitGlobalSettingsPersistence.js",
+      "line": 5,
+      "text": "  saveGlobalSettingValueIfUnchanged,"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 55,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 71,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 567,
+      "text": "      const setting = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 588,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'salesLeadSources', label: 'Sales lead sources' }),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 589,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' }),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 590,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'deadlineGradientSettings', label: 'Deadline gradient settings' }),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 591,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'salesPipelineDefaultSort', label: 'Sales Pipeline default sort' }),"
+    },
+    {
+      "path": "src/components/sales/SalesPipelineSpreadsheet.jsx",
+      "line": 652,
+      "text": "        const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 5,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 15,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 159,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: \"salesLeadSources\", label: \"Sales custom-filter lead sources\" }),"
+    },
+    {
+      "path": "src/components/sales/CustomFilterDialog.jsx",
+      "line": 160,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: \"salesTaskDescriptions\", label: \"Sales custom-filter task descriptions\" }),"
+    },
+    {
+      "path": "src/components/workflow/SipChecklistSection.jsx",
+      "line": 15,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/workflow/SipChecklistSection.jsx",
+      "line": 45,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/workflow/SipChecklistSection.jsx",
+      "line": 46,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/workflow/ClientInfoSection.jsx",
+      "line": 21,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/workflow/ClientInfoSection.jsx",
+      "line": 81,
+      "text": "      const setting = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/workflow/ClientInfoSection.jsx",
+      "line": 82,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 35,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 299,
+      "text": "      const setting = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/workflow/WorkOrderForm.jsx",
+      "line": 300,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/PermittingResearchDispatchSettings.jsx",
+      "line": 11,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/PermittingResearchDispatchSettings.jsx",
+      "line": 45,
+      "text": "        loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: CONFIG_KEY, label: \"Permitting research dispatch settings\" }),"
+    },
+    {
+      "path": "src/components/admin/PermittingResearchDispatchSettings.jsx",
+      "line": 46,
+      "text": "        loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: STATE_KEY, label: \"Permitting research dispatch state\" }),"
+    },
+    {
+      "path": "src/components/admin/PermittingResearchDispatchSettings.jsx",
+      "line": 79,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/PermittingResearchDispatchSettings.jsx",
+      "line": 80,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/customAssigneeReviewPersistence.js",
+      "line": 2,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/customAssigneeReviewPersistence.js",
+      "line": 12,
+      "text": "    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: \"smartsheetSyncConfig\" }),"
+    },
+    {
+      "path": "src/components/admin/customAssigneeReviewPersistence.js",
+      "line": 38,
+      "text": "  const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/customAssigneeReviewPersistence.js",
+      "line": 39,
+      "text": "    entity: staffEntities.GlobalSettings, loadedRecord, settingKey: CUSTOM_ASSIGNEE_SETTING_KEY,"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 69,
+      "text": "      const records = await staffEntities.GlobalSettings.filter({"
+    },
+    {
+      "path": "src/components/admin/SmartsheetSyncWidget.jsx",
+      "line": 91,
+      "text": "      unsubscribe = staffEntities.GlobalSettings.subscribe((event) => {"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 12,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 16,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 253,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: SETTING_KEY, label: \"Task assignment rules\" }),"
+    },
+    {
+      "path": "src/components/admin/TaskAssignmentRules.jsx",
+      "line": 273,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/OvertimeRulesManager.jsx",
+      "line": 21,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/OvertimeRulesManager.jsx",
+      "line": 24,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/admin/OvertimeRulesManager.jsx",
+      "line": 53,
+      "text": "      const record = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/admin/OvertimeRulesManager.jsx",
+      "line": 72,
+      "text": "      const savedRecord = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/JurisdictionAccuracyAudit.jsx",
+      "line": 12,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/permitting/permitGlobalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/JurisdictionAccuracyAudit.jsx",
+      "line": 47,
+      "text": "      const stored = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/admin/JurisdictionAccuracyAudit.jsx",
+      "line": 48,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/JurisdictionAccuracyAudit.jsx",
+      "line": 76,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/JurisdictionAccuracyAudit.jsx",
+      "line": 77,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 17,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 50,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 51,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 79,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/AdminCalendarSettings.jsx",
+      "line": 80,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 11,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/permitting/permitGlobalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 52,
+      "text": "      const saved = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 53,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 80,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/admin/JurisdictionMonitoringSettings.jsx",
+      "line": 81,
+      "text": "        entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 20,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 269,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 270,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 274,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 275,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 279,
+      "text": "        loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/sips/ProductChecklistDialog.jsx",
+      "line": 280,
+      "text": "          entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 14,
+      "text": "import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from \"@/components/permitting/permitGlobalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 26,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 220,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'productTypes', label: 'SIP Product Types' }),"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 221,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'productTypeTemplates', label: 'SIP Product Type Templates' }),"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 222,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'subTemplateItems', label: 'SIP Sub-Template Items' }),"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 223,
+      "text": "        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'dropdownConditions', label: 'SIP Dropdown Conditions' }),"
+    },
+    {
+      "path": "src/components/sips/TemplateBuilder.jsx",
+      "line": 257,
+      "text": "      const saved = await saveGlobalSettingValueIfUnchanged({"
+    },
+    {
+      "path": "src/components/estimator/productionProductTypes.js",
+      "line": 2,
+      "text": "import { loadSingleGlobalSetting } from \"@/components/shared/globalSettingsPersistence\";"
+    },
+    {
+      "path": "src/components/estimator/productionProductTypes.js",
+      "line": 8,
+      "text": "  const setting = await loadSingleGlobalSetting({"
+    },
+    {
+      "path": "src/components/estimator/productionProductTypes.js",
+      "line": 9,
+      "text": "    entity: staffEntities.GlobalSettings,"
+    },
+    {
+      "path": "src/components/orders/OrderIndependentPullEvidence.jsx",
+      "line": 54,
+      "text": "        const rows = await staffEntities.GlobalSettings.filter({"
+    },
+    {
+      "path": "src/components/orders/OrderSpreadsheet.jsx",
+      "line": 136,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    },
+    {
+      "path": "src/components/orders/WorkOrderOrders.jsx",
+      "line": 63,
+      "text": "const GlobalSettings = staffEntities.GlobalSettings;"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 105
+}

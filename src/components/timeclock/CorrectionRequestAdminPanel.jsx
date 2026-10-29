@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,32 @@ import {
   parseCompanyDateTimeInput,
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
+
+function reviewRetryStorageKey(correctionRequestId) {
+  return `ccs_timeclock_review_retry:${String(correctionRequestId || "").trim().toLowerCase()}`;
+}
+
+function storedReviewRetry(correctionRequestId) {
+  try {
+    const raw = sessionStorage.getItem(reviewRetryStorageKey(correctionRequestId));
+    const stored = raw ? JSON.parse(raw) : null;
+    if (stored?.payload && stored.payload.correction_request_id !== correctionRequestId) return null;
+    return stored;
+  } catch { return null; }
+}
+
+function persistReviewRetry(correctionRequestId, requestId, decision, payload) {
+  try {
+    sessionStorage.setItem(reviewRetryStorageKey(correctionRequestId), JSON.stringify({ request_id: requestId, decision, payload }));
+  } catch {}
+}
+
+function clearReviewRetry(correctionRequestId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId && storedReviewRetry(correctionRequestId)?.request_id !== expectedRequestId) return;
+    sessionStorage.removeItem(reviewRetryStorageKey(correctionRequestId));
+  } catch {}
+}
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -39,8 +65,10 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const [busy, setBusy] = useState(false);
   const [retryReview, setRetryReview] = useState(null);
 
+  const loadSeqRef = useRef(0);
   const loadRequests = useCallback(async () => {
     if (!sessionToken) { setRequests([]); return; }
+    const seq = ++loadSeqRef.current;
     setLoading(true);
     setError("");
     try {
@@ -51,12 +79,27 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         request_id: newRequestId(),
       });
       const data = response?.data || response;
+      if (seq !== loadSeqRef.current) return;
       if (!data?.success) throw new Error(data?.error || "Correction requests could not be loaded.");
-      setRequests(Array.isArray(data.requests) ? data.requests : []);
+      const rows = Array.isArray(data.requests) ? data.requests : [];
+      setRequests(rows);
+      for (const request of rows) {
+        const storedRetry = storedReviewRetry(request.id);
+        if (storedRetry?.request_id && storedRetry?.payload) {
+          setRetryReview({
+            correctionRequestId: request.id,
+            decision: storedRetry.payload.decision || "",
+            requestId: storedRetry.request_id,
+            payload: storedRetry.payload,
+          });
+          break;
+        }
+      }
     } catch (err) {
+      if (seq !== loadSeqRef.current) return;
       setError(err?.response?.data?.error || err?.message || "Correction requests could not be loaded.");
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [sessionToken]);
 
@@ -135,6 +178,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         serverError.retrySameRequest = data?.retry_same_request === true;
         throw serverError;
       }
+      clearReviewRetry(selected.id, payload.request_id);
       setRetryReview(null);
       setSelected(null);
       await Promise.all([loadRequests(), onEntriesChanged?.()]);
@@ -144,6 +188,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
       if (retrySameRequest) {
         const { session_token, ...frozenPayload } = payload;
         void session_token;
+        persistReviewRetry(selected.id, payload.request_id, decision, frozenPayload);
         setRetryReview({
           correctionRequestId: selected.id,
           decision,
@@ -152,6 +197,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         });
         setError(`${responseData?.error || err?.message || "The manager review was interrupted."} Retry the same manager decision to recover safely.`);
       } else {
+        clearReviewRetry(selected.id, payload.request_id);
         setRetryReview(null);
         setError(responseData?.error || err?.message || "The manager decision could not be completed safely.");
       }

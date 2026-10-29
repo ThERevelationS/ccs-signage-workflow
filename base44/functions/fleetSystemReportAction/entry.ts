@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 const STATUSES = new Set(['new', 'in_review', 'in_progress', 'completed', 'declined']);
 const TYPES = new Set(['bug_report', 'feature_request', 'change_request']);
@@ -19,8 +20,8 @@ const sameFeedbackCreate = (row: any, desired: any) =>
   && String(row?.submitted_by_email || '').toLowerCase() === String(desired?.submitted_by_email || '').toLowerCase()
   && JSON.stringify(Array.isArray(row?.attachment_urls) ? row.attachment_urls : []) === JSON.stringify(Array.isArray(desired?.attachment_urls) ? desired.attachment_urls : []);
 
-async function requireAdmin(base44: any) {
-  const user = await base44.auth.me().catch(() => null);
+async function requireAdmin(base44: any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -31,9 +32,10 @@ async function requireAdmin(base44: any) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await requireAdmin(base44);
-    if (auth.error) return auth.error;
     const body = await req.json().catch(() => ({}));
+    const auth = await requireAdmin(base44, body?.session_token);
+    if (auth.error) return auth.error;
+
     const action = String(body?.action || '').trim();
     const Report = base44.asServiceRole.entities.FleetSystemReport;
 

@@ -9,6 +9,7 @@ import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
 import { useAuth } from "@/components/auth/EmailGate";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, ChevronDown, ChevronUp, Gauge, GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
@@ -75,38 +76,47 @@ export default function FleetTracking() {
   const [connecting, setConnecting] = useState(false);
   const refreshTimer = useRef(null);
   const tripLoadGeneration = useRef(0);
+  const statusLoadGeneration = useRef(0);
+  const vehicleLoadGeneration = useRef(0);
+  const notificationLoadGeneration = useRef(0);
 
   const loadStatus = useCallback(async () => {
+    const loadId = ++statusLoadGeneration.current;
     try {
       const { data } = await base44.functions.invoke("bouncieStatus", { session_token: sessionToken });
-      setStatus(data);
+      if (loadId === statusLoadGeneration.current) setStatus(data);
       return data;
     } catch (e) {
-      setStatus({ connected: false, error: e.message });
+      const fallback = { connected: false, error: e.message };
+      if (loadId === statusLoadGeneration.current) setStatus(fallback);
+      return fallback;
     }
   }, [sessionToken]);
 
   const loadVehicles = useCallback(async () => {
+    const loadId = ++vehicleLoadGeneration.current;
     try {
       setVehiclesLoading(true);
       const { data } = await base44.functions.invoke("bouncieApi", {
         session_token: sessionToken,
         method: "GET", path: "/v1/vehicles", query: {}
       });
+      if (loadId !== vehicleLoadGeneration.current) return;
       setVehicles(data?.data || []);
       setError("");
     } catch (e) {
-      setError(e.message || "Failed to load vehicles");
+      if (loadId === vehicleLoadGeneration.current) setError(e.message || "Failed to load vehicles");
     } finally {
-      setVehiclesLoading(false);
+      if (loadId === vehicleLoadGeneration.current) setVehiclesLoading(false);
     }
   }, [sessionToken]);
 
   const loadNotifications = useCallback(async () => {
+    const loadId = ++notificationLoadGeneration.current;
     try {
-      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "list", session_token: sessionToken });
+      const { data } = await invokeFleet("fleetBouncieNotificationAction", { action: "list", session_token: sessionToken });
       if (data?.error) throw new Error(data.error);
-      setNotifications(data?.notifications || []);
+      if (loadId === notificationLoadGeneration.current) setNotifications(data?.notifications || []);
     } catch {
       // Keep the map usable if notification history is temporarily unavailable.
     }
@@ -114,7 +124,7 @@ export default function FleetTracking() {
 
   const syncNotifications = useCallback(async () => {
     try {
-      await base44.functions.invoke("bouncieSyncNotifications", {});
+      await invokeFleet("bouncieSyncNotifications", {});
       loadNotifications();
     } catch {
       // silent
@@ -152,14 +162,12 @@ export default function FleetTracking() {
   useEffect(() => {
     let mounted = true;
     Promise.all([
-      listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "open" }, "-created_date", { label: "Open Fleet work orders" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "assigned" }, "-created_date", { label: "Assigned Fleet work orders" }),
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "in_progress" }, "-created_date", { label: "In-progress Fleet work orders" }),
-    ]).then(([equipmentRows, openRows, assignedRows, inProgressRows]) => {
+      listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+      filterAllFleetRows("FleetMaintenanceWorkOrder", { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work orders" }),
+    ]).then(([equipmentRows, activeRows]) => {
       if (!mounted) return;
       setFleetEquipment(equipmentRows || []);
-      setFleetWorkOrders([...(openRows || []), ...(assignedRows || []), ...(inProgressRows || [])]);
+      setFleetWorkOrders(activeRows || []);
     }).catch(() => {});
     return () => { mounted = false; };
   }, []);
@@ -264,7 +272,7 @@ export default function FleetTracking() {
   const handleMarkRead = async (id) => {
     setNotifications(n => n.map(x => x.id === id ? { ...x, is_read: true } : x));
     try {
-      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_read", id, session_token: sessionToken });
+      const { data } = await invokeFleet("fleetBouncieNotificationAction", { action: "mark_read", id, session_token: sessionToken });
       if (data?.error) throw new Error(data.error);
     } catch (e) {
       setError(e?.message || "Unable to mark Bouncie notification read.");
@@ -289,7 +297,7 @@ export default function FleetTracking() {
   const handleClearNotifications = async () => {
     if (!selectedNotificationVins.length) return;
     try {
-      const results = await Promise.all(selectedNotificationVins.map((vin) => base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin, session_token: sessionToken })));
+      const results = await Promise.all(selectedNotificationVins.map((vin) => invokeFleet("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin, session_token: sessionToken })));
       const failed = results.find((result) => result?.data?.error);
       if (failed?.data?.error) throw new Error(failed.data.error);
       const selectedSet = new Set(selectedNotificationVins);
@@ -316,8 +324,8 @@ export default function FleetTracking() {
 
     setFleetMaintenanceLoading(true);
     Promise.all([
-      filterAllFleetRows(base44.entities.FleetMaintenanceTask, { equipment_id: equipmentId }, "start_date", { label: "Selected Fleet equipment maintenance schedules" }),
-      filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: equipmentId }, "-created_date", { label: "Selected Fleet equipment usage history" }),
+      filterAllFleetRows("FleetMaintenanceTask", { equipment_id: equipmentId }, "start_date", { label: "Selected Fleet equipment maintenance schedules" }),
+      filterAllFleetRows("FleetEquipmentLog", { equipment_id: equipmentId }, "-created_date", { label: "Selected Fleet equipment usage history" }),
     ]).then(([taskRows, logRows]) => {
       if (!mounted) return;
       setFleetMaintenanceTasks(taskRows || []);

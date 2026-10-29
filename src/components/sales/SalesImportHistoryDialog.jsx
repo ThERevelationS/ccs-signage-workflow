@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Clock3, FileSpreadsheet, Loader2, RefreshCw } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const durationLabel = (ms) => {
   const value = Number(ms || 0);
@@ -27,7 +27,7 @@ export default function SalesImportHistoryDialog({ open, onClose }) {
     setLoading(true);
     setError("");
     try {
-      const rows = await base44.entities.ImportJob.filter(
+      const rows = await staffEntities.ImportJob.filter(
         { import_type: "sales_pipeline" },
         "-started_at",
         50,

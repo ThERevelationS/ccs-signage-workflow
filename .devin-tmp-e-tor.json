@@ -1,0 +1,1 @@
+[{"old_text":"      \"enum\": [\n        \"pending\",\n        \"approved\",\n        \"denied\"\n      ],","new_text":"      \"enum\": [\n        \"pending\",\n        \"approved\",\n        \"denied\",\n        \"cancelled\"\n      ],"}]

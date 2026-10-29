@@ -3,14 +3,20 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { mkdtemp, symlink, readFile, readdir, copyFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, symlink, readFile, readdir, copyFile, writeFile, rm, realpath } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const appRoot = process.cwd();
+// Canonical paths keep Vite's fs.allow check working when os.tmpdir() or the
+// shell cwd resolve through an 8.3 short name on Windows.
+const appRoot = realpathSync(process.cwd());
+// Vite /@fs/ URLs take an absolute filesystem path with forward slashes,
+// including the drive letter on Windows ("/@fs/C:/...").
+const viteFsPath = p => '/' + p.replace(/\\/g, '/');
 const { chromium } = await import(process.env.ADMIN_PLAYWRIGHT_PATH ||
   '/tmp/fleet-browser-check/node_modules/playwright/index.mjs');
-const scratch = await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-'));
+const scratch = await realpath(await mkdtemp(path.join(tmpdir(), 'ccs-admin-nav-')));
 let server, browser, passed = 0;
 
 const syntheticPanels = [
@@ -87,7 +93,7 @@ async function check(name, width, urlSuffix, fn, { allowSyntheticPanelError = fa
 
 let origin;
 try {
-  await symlink(path.join(appRoot, 'node_modules'), path.join(scratch, 'node_modules'), 'dir');
+  await symlink(path.join(appRoot, 'node_modules'), path.join(scratch, 'node_modules'), process.platform==='win32'?'junction':'dir');
   const css = (await readdir(path.join(appRoot, 'dist/assets'))).find(name => name.endsWith('.css'));
   assert.ok(css, 'Build the app first to provide actual Tailwind CSS');
   await copyFile(path.join(appRoot, 'dist/assets', css), path.join(scratch, 'styles.css'));
@@ -99,7 +105,7 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { BrowserRouter } from "react-router-dom";',
-    'import AdminSettings from "/@fs' + path.join(appRoot, 'src/pages/AdminSettings.jsx') + '";',
+    'import AdminSettings from "/@fs' + viteFsPath(path.join(appRoot, 'src/pages/AdminSettings.jsx')) + '";',
     'createRoot(document.getElementById("root")).render(<BrowserRouter><AdminSettings /></BrowserRouter>);',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockData.js'), [
@@ -119,12 +125,15 @@ try {
     'React.useEffect(()=>{const refresh=()=>setToken(window.__adminSyntheticSessionToken||"synthetic");',
     'window.addEventListener("admin-synthetic-session-change",refresh);return ()=>window.removeEventListener("admin-synthetic-session-change",refresh);},[]);',
     'return {currentUser:{id:params.get("user")||"synthetic-admin-user",role:params.get("role")==="basic"?"user":"admin"},sessionToken:token};}',
-    'export function getStoredAdminSettingsCapability(){return "synthetic";}',
+    'export function getStoredAdminSettingsCapability(){return window.__adminCapabilityExpired?"":"synthetic";}',
+    'export function getStoredAdminSettingsCapabilityExpiry(){',
+    'const m=window.location.search.match(/admin_cap_expire_ms=(\\d+)/);return m?Date.now()+Number(m[1]):null;}',
     'export function hasStoredAdminSettingsAuthorization(){return true;}',
     'export function storeAdminSettingsAuthorization(){throw Error("Unexpected write to synthetic auth");}',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockPersistence.js'), [
     'async function syntheticWrite(kind,record,data){',
+    'if(window.__adminAutomationPreDispatch===kind||window.__adminAutomationPreDispatch===true)throw Object.assign(new Error("synthetic-pre-dispatch-"+kind),{automationPreDispatch:true});',
     'if(window.__adminAutomationAllowSyntheticWrite!==true)throw Error("Unexpected synthetic automation write");',
     '(window.__adminAutomationWriteCalls??=[]).push({kind,id:record?.id,name:data?.name});',
     'if(window.__adminAutomationHoldWrite)await new Promise(resolve=>{window.__adminAutomationPendingWrite=resolve;});',
@@ -146,15 +155,29 @@ try {
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockAutomationReadDeadline.js'), [
     'import {AutomationReadTimeoutError,withAutomationReadDeadline as actual} from "/@fs' +
-      path.join(appRoot,'src/components/admin/automationReadDeadline.js') + '";',
+      viteFsPath(path.join(appRoot,'src/components/admin/automationReadDeadline.js')) + '";',
     'export {AutomationReadTimeoutError};',
     'export const withAutomationReadDeadline=(operation)=>actual(operation,',
     ' new URLSearchParams(location.search).get("automation_timeout")==="1"?160:25000);',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockEmailGroupPersistence.js'), [
-    'export async function createEmailGroupIfAbsent(){throw Error("Unexpected email group write");}',
-    'export async function updateEmailGroupIfUnchanged(){throw Error("Unexpected email group write");}',
-    'export async function deleteEmailGroupIfUnused(){throw Error("Unexpected email group write");}',
+    'function requireCapability(adminCapability,label){',
+    'const capability=String(adminCapability||"").trim();',
+    'if(!capability)throw new Error(`${label} requires a current Admin Settings authorization. Lock and unlock Admin Settings before retrying.`);',
+    'return capability;}',
+    'function dispatch(kind,args){const capability=requireCapability(args.adminCapability,args.label||"Email group");',
+    '(window.__adminEmailGroupWriteCalls??=[]).push({kind,capability});',
+    'throw Error("Unexpected email group write");}',
+    'export async function createEmailGroupIfAbsent(args={}){const name=String(args?.data?.name||"").trim();',
+    'if(!name||!Array.isArray(args?.data?.emails)||args.data.emails.length===0)',
+    'throw new Error(`${args.label||"Email group"} requires a name and at least one email address.`);',
+    'dispatch("create",args);}',
+    'export async function updateEmailGroupIfUnchanged(args={}){',
+    'if(!args?.group?.id)throw new Error(`${args.label||"Email group"} is no longer loaded. Reload before saving.`);',
+    'dispatch("update",args);}',
+    'export async function deleteEmailGroupIfUnused(args={}){',
+    'if(!args?.group?.id)throw new Error(`${args.label||"Email group deletion"} is no longer loaded. Reload before deleting.`);',
+    'dispatch("delete",args);}',
   ].join('\n'));
   await writeFile(path.join(scratch, 'mockLogin.js'), 'export async function verifyLogin(){throw Error("Unexpected login");}');
   await writeFile(path.join(scratch, 'mockEntityList.js'),
@@ -166,7 +189,7 @@ try {
   }
   await writeFile(path.join(scratch, 'mock-UserManagement.jsx'), [
     'import React from "react";',
-    'import RealUserManagement from "/@fs' + path.join(appRoot, 'src/components/admin/UserManagement.jsx') + '";',
+    'import RealUserManagement from "/@fs' + viteFsPath(path.join(appRoot, 'src/components/admin/UserManagement.jsx')) + '";',
     'export default function UserManagement(){',
     'if(window.__adminPanelFailures?.includes("UserManagement"))throw Error("synthetic-private-panel-error");',
     'return new URLSearchParams(location.search).get("real_users")==="1"?<RealUserManagement />:',
@@ -178,8 +201,8 @@ try {
       'import React from "react";export default function '+name+'(){return <div data-testid="synthetic-'+name+'"/>;}');
   }
   await writeFile(path.join(scratch, 'mockAuthorizedUserPersistence.js'), [
-    'import { validateDeletionImpactReport } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactValidation.js') + '";',
-    'import { runCoordinatedDeletionImpact } from "/@fs' + path.join(appRoot, 'src/components/admin/deletionImpactRetryCoordinator.js') + '";',
+    'import { validateDeletionImpactReport } from "/@fs' + viteFsPath(path.join(appRoot, 'src/components/admin/deletionImpactValidation.js')) + '";',
+    'import { runCoordinatedDeletionImpact } from "/@fs' + viteFsPath(path.join(appRoot, 'src/components/admin/deletionImpactRetryCoordinator.js')) + '";',
     'const fail=()=>{throw Error("Unexpected synthetic user mutation");};',
     'export const deleteAuthorizedUserAdmin=fail;',
     'export const updateAuthorizedUserHrAdmin=fail;',
@@ -2310,6 +2333,113 @@ try {
         assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
       });
   }
+
+  await check('Pre-dispatch toggle validation releases the operation lock without uncertain review', 375,
+    '/?tab=automations&automation_rows=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationPreDispatch='update';});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      await page.getByText('synthetic-pre-dispatch-update',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+      // The lock is released: a valid retry dispatches once, clears the error
+      // and never enters the uncertain-operation recovery.
+      await page.evaluate(()=>{window.__adminAutomationPreDispatch=null;});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      await page.waitForFunction(()=>(window.__adminAutomationWriteCalls||[]).length===1);
+      await page.waitForFunction(()=>!document.querySelector('[aria-label="Toggle Synthetic rule"]').disabled);
+      assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+      assert.equal(await page.getByText('synthetic-pre-dispatch-update',{exact:true}).count(),0);
+    });
+
+  await check('Pre-dispatch save validation keeps the editor draft without uncertain review', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page => {
+      await page.getByRole('button',{name:'Edit Synthetic rule',exact:true}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Pre-dispatch draft');
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminAutomationPreDispatch='update';});
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await editor.getByText('synthetic-pre-dispatch-update',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+      // The draft stays editable and a valid retry saves exactly once.
+      assert.equal(await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').inputValue(),'Pre-dispatch draft');
+      await page.evaluate(()=>{window.__adminAutomationPreDispatch=null;});
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await editor.waitFor({state:'detached'});
+      assert.equal(await page.evaluate(()=>window.__adminAutomationWriteCalls.length),1);
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+    });
+
+  await check('Expired Admin capability re-locks instead of dispatching a stale credential', 375,
+    '/?tab=automations&automation_rows=1', async page => {
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminCapabilityExpired=true;});
+      await page.getByRole('switch',{name:'Toggle Synthetic rule'}).click();
+      // The write was never dispatched and no uncertain fence was created;
+      // the unlock gate returns with an actionable expired-session message.
+      await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor();
+      await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation operation requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+    });
+
+  await check('Expired Admin capability re-locks an editor save without dispatching', 375,
+    '/?tab=automations&automation_rows=1&automation_editable=1', async page => {
+      await page.getByRole('button',{name:'Edit Synthetic rule',exact:true}).click();
+      const editor=page.getByRole('dialog',{name:/Edit Automation/});
+      await editor.getByPlaceholder('e.g., Auto-assign fabrication jobs').fill('Expiry draft');
+      await page.evaluate(()=>{window.__adminAutomationAllowSyntheticWrite=true;window.__adminCapabilityExpired=true;});
+      await editor.getByRole('button',{name:'Update Automation'}).click();
+      await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor();
+      await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
+      assert.equal(await page.getByRole('alert',{name:'Automation save outcome requires review'}).count(),0);
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+    });
+
+  await check('Admin re-locks itself at the moment the stored capability expires', 375,
+    '/?tab=automations&automation_rows=1&admin_cap_expire_ms=1500', async page => {
+      // No interaction: the mounted expiry timer re-locks on its own.
+      await page.getByText('Your Admin Settings authorization expired. Sign in again to continue.',{exact:true}).waitFor({timeout:15000});
+      await page.getByRole('button',{name:'Unlock Admin Settings'}).waitFor();
+      assert.equal(await page.evaluate(()=>(window.__adminAutomationWriteCalls||[]).length),0);
+    });
+
+  await check('Admin shows the stored capability expiry time while unlocked', 376,
+    '/?tab=automations&automation_rows=1&admin_cap_expire_ms=600000', async page => {
+      const expiry = page.locator('[data-admin-capability-expiry]');
+      await expiry.waitFor();
+      assert.match(await expiry.innerText(),/Admin authorization expires at \d/);
+    });
+
+  await check('Email Groups forwards the current stored capability at write time', 377,
+    '/?tab=automations', async page => {
+      await page.getByRole('button',{name:'New Group'}).click();
+      const dialog=page.getByRole('dialog',{name:'Create Email Group'});
+      await dialog.getByPlaceholder('e.g., Sales Team').fill('Dispatch Check');
+      await dialog.getByPlaceholder('email@example.com').fill('check@example.invalid');
+      await dialog.getByPlaceholder('email@example.com').press('Enter');
+      await dialog.getByRole('button',{name:'Create Group'}).click();
+      await page.getByText('Unexpected email group write').waitFor();
+      const calls=await page.evaluate(()=>window.__adminEmailGroupWriteCalls||[]);
+      assert.equal(calls.length,1);
+      assert.equal(calls[0].kind,'create');
+      assert.equal(calls[0].capability,'synthetic');
+    });
+
+  await check('Email Groups capability expiring mid-draft fails before dispatch and keeps the draft', 378,
+    '/?tab=automations', async page => {
+      await page.getByRole('button',{name:'New Group'}).click();
+      const dialog=page.getByRole('dialog',{name:'Create Email Group'});
+      await dialog.getByPlaceholder('e.g., Sales Team').fill('Expiry Check');
+      await dialog.getByPlaceholder('email@example.com').fill('expiry@example.invalid');
+      await dialog.getByPlaceholder('email@example.com').press('Enter');
+      // Unlock happened before this draft existed: a stale snapshot would still
+      // dispatch "synthetic", so the fresh read must see the expired storage.
+      await page.evaluate(()=>{window.__adminCapabilityExpired=true;});
+      await dialog.getByRole('button',{name:'Create Group'}).click();
+      await page.getByText('requires a current Admin Settings authorization. Lock and unlock Admin Settings').waitFor();
+      assert.equal(await page.evaluate(()=>(window.__adminEmailGroupWriteCalls||[]).length),0);
+      await dialog.getByRole('button',{name:'Create Group'}).waitFor();
+    });
   console.log('Admin real-page synthetic Chromium acceptance: '+passed+'/'+passed+' PASS');
 } finally {
   if(browser) await browser.close();

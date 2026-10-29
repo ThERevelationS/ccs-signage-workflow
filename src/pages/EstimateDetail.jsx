@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardPaste, FileMinus, LockKeyhole } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -9,6 +9,7 @@ import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
 import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
 import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import CustomerQuotePanel from "@/components/estimator/CustomerQuotePanel";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
@@ -32,12 +33,17 @@ import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel"
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
+import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
-import { localDateStamp, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
+import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
-import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
+import { duplicateEstimate, splitEstimate, newEstimateCreationKey, estimateLineSelectionKey } from "@/components/estimator/estimateCreationService";
+import MergeEstimateDialog from "@/components/estimator/aio/MergeEstimateDialog";
+import EstimateNotesTimeline from "@/components/estimator/aio/EstimateNotesTimeline";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
   1: "Estimate Details",
@@ -90,13 +96,14 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                                   : entry.pending?.kind === "builder_quick_product_insert"
                         ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
-  throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
+  throw new Error(`â€œ${name}â€� has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
 export default function EstimateDetail() {
   const navigate = useNavigate();
-  const { sessionToken, isRegistered } = useAuth();
-  const id = new URLSearchParams(window.location.search).get("id");
+  const { sessionToken, isRegistered, currentUser } = useAuth();
+  const _params = new URLSearchParams(window.location.search);
+  const id = _params.get("id") || _params.get("estimate");
   const [estimate, setEstimate] = useState(null);
   const [persistedEstimate, setPersistedEstimate] = useState(null);
   const [openRevision, setOpenRevision] = useState(null);
@@ -110,6 +117,20 @@ export default function EstimateDetail() {
   const [activeProduct, setActiveProduct] = useState(null);
   const [clipboardOpen, setClipboardOpen] = useState(false);
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
+  const [trashing, setTrashing] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const [duplicateChoiceOpen, setDuplicateChoiceOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const copyingRef = useRef(false);
+  const copyAttemptRef = useRef(null);
+  const copyCreationKey = (kind, lineIds = [], variant = "") => {
+    const signature = JSON.stringify([kind, variant, estimate, [...lineIds].sort()]);
+    if (copyAttemptRef.current?.signature !== signature) {
+      copyAttemptRef.current = { signature, key: newEstimateCreationKey() };
+    }
+    return copyAttemptRef.current.key;
+  };
   // Tracks the exact server version this browser session last read or wrote.
   // Keep it separate from persistedEstimate because Product operations may save
   // immediately while the lifecycle baseline intentionally remains older.
@@ -119,12 +140,187 @@ export default function EstimateDetail() {
   // pre-transition snapshot and a stable idempotency key across retries.
   const pendingLifecycleBaselineRef = useRef(null);
 
+  const handleMoveToTrash = async () => {
+    if (!estimate?.id || trashing) return;
+    if (openRevision) {
+      window.alert("Save the open estimate revision before moving this estimate to Trash.");
+      return;
+    }
+    if (estimate.work_order_id) {
+      window.alert("This estimate is linked to a Work Order. Close or manage the job from the workflow before trashing the source estimate.");
+      return;
+    }
+    if (!window.confirm("Move this estimate to Trash? It will be hidden from all estimate lists until it is restored.")) return;
+    setTrashing(true);
+    try {
+      const saved = await softDeleteEstimateFromLoadedSnapshot({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: persistedEstimate || estimate,
+        deletedBy: currentUser?.email || "unknown",
+        label: "Estimate trash",
+      });
+      setEstimate(saved);
+      setPersistedEstimate(saved);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be moved to Trash.");
+    } finally {
+      setTrashing(false);
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (copyingRef.current || saving || trashing || !estimate?.id || estimate.deleted === true) return;
+    if (openRevision) {
+      window.alert("Save the open estimate revision before duplicating this estimate.");
+      return;
+    }
+    setDuplicateChoiceOpen(true);
+  };
+
+  const runDuplicate = async (keepEstimateNumber) => {
+    setDuplicateChoiceOpen(false);
+    copyingRef.current = true;
+    setDuplicating(true);
+    try {
+      const created = await duplicateEstimate({ source: estimate, sessionToken, creationKey: copyCreationKey("duplicate", [], keepEstimateNumber ? "same" : "new"), keepEstimateNumber });
+      navigate(`/EstimateDetail?id=${created.id}`);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be duplicated.");
+    } finally {
+      copyingRef.current = false;
+      setDuplicating(false);
+    }
+  };
+
+  const handleSplit = async (lineIds) => {
+    if (!estimate?.id || !lineIds?.length) return false;
+    if (copyingRef.current) throw new Error("An estimate copy is already being created. Please wait.");
+    if (saving || trashing) throw new Error("Wait for the current estimate operation to finish before splitting.");
+    if (estimate.deleted === true) throw new Error("Restore this estimate from Trash before splitting it.");
+    if (openRevision) throw new Error("Save the open estimate revision before splitting this estimate.");
+    copyingRef.current = true;
+    setDuplicating(true);
+    try {
+      const created = await splitEstimate({ source: estimate, lineItemIds: lineIds, sessionToken, creationKey: copyCreationKey("split", lineIds) });
+      navigate(`/EstimateDetail?id=${created.id}`);
+      return true;
+    } finally {
+      copyingRef.current = false;
+      setDuplicating(false);
+    }
+  };
+
+  const handleMerge = async ({ secondary, lineItemIds }) => {
+    if (!estimate?.id || estimate.deleted === true) throw new Error("This estimate is in Trash — restore it before merging.");
+    if (isEstimateProtected(estimate.status)) throw new Error("This estimate is protected — merge is only allowed on Draft or Calculated estimates.");
+    if (openRevision) throw new Error("Save the open estimate revision before merging.");
+    if (saving || duplicating || trashing) throw new Error("Wait for the current operation to finish before merging.");
+
+    const keep = new Set(lineItemIds || []);
+    const secondaryLines = Array.isArray(secondary?.line_items) ? secondary.line_items : [];
+    const secondaryKeys = secondaryLines.map(estimateLineSelectionKey);
+    if (!keep.size || [...keep].some((key) => secondaryKeys.filter((k) => k === key).length !== 1)) {
+      throw new Error("The selected sections changed or have ambiguous identifiers. Reload the merge dialog and select them again.");
+    }
+    const picked = secondaryLines.filter((_, index) => keep.has(secondaryKeys[index]));
+
+    // Section keys must stay unique on the merged estimate — a merged section
+    // that collides with an existing key gets a fresh line_id.
+    const existingKeys = new Set((estimate.line_items || []).map(estimateLineSelectionKey));
+    const mergedLines = [...(estimate.line_items || [])];
+    for (const line of picked) {
+      const copy = { ...line };
+      if (existingKeys.has(estimateLineSelectionKey(copy, mergedLines.length))) {
+        copy.line_id = globalThis.crypto?.randomUUID
+          ? globalThis.crypto.randomUUID()
+          : `merged-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+      mergedLines.push(copy);
+      existingKeys.add(estimateLineSelectionKey(copy, mergedLines.length));
+    }
+
+    const mergedEstimate = { ...estimate, line_items: mergedLines };
+    const mergedPricing = computePricing(mergedEstimate);
+    setSaving(true);
+    try {
+      const before = await staffEntities.AllInOneEstimate.get(estimate.id);
+      assertNoPendingPriceAcceptance(before, "merging sections into the estimate");
+      const nextFields = {
+        line_items: mergedLines,
+        total_cost: acceptedInternalEstimateCost(mergedLines),
+        quote_total: mergedPricing.quoteTotal,
+      };
+      const saved = await saveEstimateFieldsSafely({
+        baseline: before,
+        nextFields,
+        label: "Estimate merge",
+        guardWholeVersion: true,
+      });
+      const after = { ...mergedEstimate, ...(saved || {}), id: estimate.id };
+      setEstimate(after);
+      setPersistedEstimate(saved || after);
+      await rememberServerVersion(saved);
+
+      const secondaryLabel = secondary.estimate_number ? `#${secondary.estimate_number}` : (secondary.project_name || "the other estimate");
+      const primaryLabel = estimate.estimate_number ? `#${estimate.estimate_number}` : (estimate.project_name || "this estimate");
+      const secondaryAfter = {
+        ...secondary,
+        status: "archived",
+        archived_at: new Date().toISOString(),
+        archived_reason: `Merged into ${primaryLabel} (${picked.length} section${picked.length === 1 ? "" : "s"} moved)`,
+      };
+      try {
+        await staffEntities.AllInOneEstimate.update(secondary.id, {
+          status: secondaryAfter.status,
+          archived_at: secondaryAfter.archived_at,
+          archived_reason: secondaryAfter.archived_reason,
+        });
+        await ensureEstimateLifecycleRevision({
+          idempotencyKey: `estimate_merge:${secondary.id}:${estimate.id}:${picked.length}`,
+          sessionToken,
+          estimateBefore: secondary,
+          estimateAfter: secondaryAfter,
+          reason: `Merged into ${primaryLabel}`,
+          revisionType: "status_transition",
+          quoteTotalBefore: secondary.quote_total,
+          quoteTotalAfter: secondary.quote_total,
+          internalCostBefore: secondary.total_cost,
+          internalCostAfter: secondary.total_cost,
+        });
+      } catch {
+        window.alert(`The sections were merged, but ${secondaryLabel} could not be archived. Archive it manually so it is not edited twice.`);
+      }
+      setMergeOpen(false);
+      window.alert(`${picked.length} section${picked.length === 1 ? "" : "s"} merged from ${secondaryLabel}. The other estimate was archived.`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRestoreFromTrash = async () => {
+    if (!estimate?.id || trashing) return;
+    setTrashing(true);
+    try {
+      const saved = await restoreEstimateFromLoadedTrashSnapshot({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: persistedEstimate || estimate,
+        label: "Estimate restore",
+      });
+      setEstimate(saved);
+      setPersistedEstimate(saved);
+    } catch (error) {
+      window.alert(error?.message || "The estimate could not be restored. Reload before retrying.");
+    } finally {
+      setTrashing(false);
+    }
+  };
+
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-    base44.entities.AllInOneEstimate.get(id).then(async (res) => {
+    staffEntities.AllInOneEstimate.get(id).then(async (res) => {
       const warnings = [];
       const withBuilders = await ensureEstimateBuilderProducts(res, {
         strictReconciliation: true,
@@ -143,7 +339,7 @@ export default function EstimateDetail() {
           }
         }
       }
-      const current = await base44.entities.AllInOneEstimate.get(id);
+      const current = await staffEntities.AllInOneEstimate.get(id);
       const line_items = await refreshSectionSnapshots(current.line_items);
       const loaded = { ...current, line_items };
       const revision = await getOpenEstimateRevision(id);
@@ -156,13 +352,60 @@ export default function EstimateDetail() {
     });
   }, [id]);
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading estimate…</div>;
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading estimateâ€¦</div>;
   if (!estimate) return <div className="p-10 text-center text-gray-500">Estimate not found.</div>;
+
+  if (estimate.deleted === true) {
+    return (
+      <div className="min-h-full bg-gray-50 flex items-start justify-center p-8">
+        <div className="w-full max-w-lg rounded border border-red-300 bg-red-50 px-4 py-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-bold text-red-800">
+            <Trash2 className="w-4 h-4" /> In Trash â€” {estimate.project_name || "Estimate"}
+          </div>
+          <div className="text-xs text-red-700">
+            {estimate.deleted_at ? `Deleted ${new Date(estimate.deleted_at).toLocaleString()}` : "Deleted"}
+            {estimate.deleted_by ? ` by ${estimate.deleted_by}` : ""}
+          </div>
+          <div className="text-[11px] text-red-700">
+            This estimate is hidden from all estimate lists and cannot be edited until it is restored.
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRestoreFromTrash}
+              disabled={trashing}
+              className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-emerald-300 bg-white text-emerald-700 text-[12px] font-semibold hover:bg-emerald-50 disabled:opacity-40"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> {trashing ? "Restoringâ€¦" : "Restore Estimate"}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/EstimatorQueues?status=trash")}
+              className="h-[32px] px-3 rounded-sm border border-gray-300 bg-white text-gray-600 text-[12px] font-semibold hover:bg-gray-100"
+            >
+              Open Estimate Trash
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const pricing = computePricing(estimate);
   const lines = estimate.line_items || [];
   const persistedStatus = persistedEstimate?.status || estimate.status || "draft";
   const readOnly = isEstimateProtected(persistedStatus) && !openRevision;
+
+  // Stale-quote guardrail: quote validity only applies once the estimate is
+  // sent and both the issue date and validity window exist.
+  const validDays = estimate.quote_valid_days ?? estimate.valid_days;
+  const expiresOn =
+    estimate.status === "sent" && estimate.quote_issue_date && Number(validDays) > 0
+      ? quoteExpirationDate(estimate.quote_issue_date, validDays)
+      : "";
+  const quoteDaysLeft = expiresOn
+    ? Math.round((new Date(`${expiresOn}T00:00:00`) - new Date(`${localDateStamp()}T00:00:00`)) / 86400000)
+    : null;
 
   const patch = (changes) => setEstimate((prev) => ({ ...prev, ...changes }));
 
@@ -174,7 +417,7 @@ export default function EstimateDetail() {
 
   const rememberServerVersion = async (record = null) => {
     let current = record;
-    if (!current?.updated_date) current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    if (!current?.updated_date) current = await staffEntities.AllInOneEstimate.get(estimate.id);
     if (current?.updated_date) serverUpdatedAtRef.current = current.updated_date;
     return current;
   };
@@ -186,7 +429,7 @@ export default function EstimateDetail() {
 
   const saveEstimateFieldsSafely = ({ baseline, nextFields, label, guardWholeVersion = false }) =>
     replaceEstimateFieldsIfUnchanged({
-      entity: base44.entities.AllInOneEstimate,
+      entity: staffEntities.AllInOneEstimate,
       estimateId: estimate.id,
       expectedFields: expectedEstimateFields(baseline, nextFields),
       guardFields: guardWholeVersion ? { updated_date: baseline?.updated_date } : {},
@@ -195,14 +438,14 @@ export default function EstimateDetail() {
     });
 
   const loadCurrentProductMutationEstimate = async () => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     if (!current) throw new Error("This estimate no longer exists.");
     await assertEstimateProductMutationAllowed(current, { expectedUpdatedAt: serverUpdatedAtRef.current });
     return current;
   };
 
   const refreshProducts = async () => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     const warnings = [];
     const withBuilders = await ensureEstimateBuilderProducts(current, {
       strictReconciliation: true,
@@ -221,11 +464,23 @@ export default function EstimateDetail() {
         }
       }
     }
-    const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const refreshed = await staffEntities.AllInOneEstimate.get(estimate.id);
     const line_items = await refreshSectionSnapshots(refreshed.line_items);
     serverUpdatedAtRef.current = refreshed.updated_date || serverUpdatedAtRef.current;
     setEstimate((prev) => ({ ...prev, ...refreshed, line_items }));
     setReconciliationWarnings(warnings);
+  };
+
+  const repriceAllProducts = async () => {
+    if (readOnly || saving || trashing || duplicating || copyingRef.current || refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshProducts();
+    } catch (error) {
+      window.alert(error?.message || "Products could not be repriced. Reload the estimate before trying again.");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const removeLine = async (index) => {
@@ -248,7 +503,7 @@ export default function EstimateDetail() {
   const addSection = async (mod) => {
     if (readOnly) return;
     const current = await loadCurrentProductMutationEstimate();
-    const sectionName = `${current.project_name} — ${mod.label}`;
+    const sectionName = `${current.project_name} â€” ${mod.label}`;
     try {
       const result = await addBlankProduct({
         estimateId: estimate.id,
@@ -325,7 +580,7 @@ export default function EstimateDetail() {
   };
 
   const createQuickProduct = async (line, options) => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     if (!current) throw new Error("This estimate no longer exists.");
     if (hasServerConflict(current)) {
       throw new Error("This estimate changed in another session. Reload it before saving a Quick Product so the reusable snapshot cannot mix old and new Product state.");
@@ -367,7 +622,7 @@ export default function EstimateDetail() {
           .map((part) => part.part_name || part.inventory_item_name)
           .filter(Boolean);
         window.alert(
-          `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `• ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
+          `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `â€¢ ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
         );
       } else if (result?.blocked && result.reason === "recalc_required") {
         window.alert(
@@ -401,7 +656,7 @@ export default function EstimateDetail() {
   };
 
   const handleStartRevision = async (reason) => {
-    const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const current = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(current, "starting an Estimate Revision");
     if (hasServerConflict(current)) {
       throw new Error("This estimate changed in another session. Reload before starting a revision so the revision snapshot does not overwrite or omit newer work.");
@@ -439,8 +694,12 @@ export default function EstimateDetail() {
 
     setSaving(true);
     try {
-      const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const before = await staffEntities.AllInOneEstimate.get(estimate.id);
       assertNoPendingPriceAcceptance(before, "saving the estimate");
+      if (!isEstimateStatusTransitionAllowed(before.status, estimate.status)) {
+        window.alert(`An estimate cannot go from ${before.status || "draft"} to ${estimate.status || "draft"} directly. Send it first — approval is only allowed after the quote has been sent.`);
+        return;
+      }
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       const pendingTransition = pendingLifecycleBaselineRef.current;
@@ -603,7 +862,7 @@ export default function EstimateDetail() {
     if (!estimate?.pipeline_sync_pending || saving) return;
     setSaving(true);
     try {
-      const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const current = await staffEntities.AllInOneEstimate.get(estimate.id);
       if (hasServerConflict(current)) {
         window.alert("This estimate changed in another session. Reload before retrying Sales Pipeline synchronization.");
         return;
@@ -623,7 +882,7 @@ export default function EstimateDetail() {
             pipeline_sync_error: message,
           },
           label: "Estimate pipeline retry failure marker",
-        }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => current);
+        }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => current);
         const failedState = { ...current, ...(failed || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
         await rememberServerVersion(failedState);
         setEstimate(failedState);
@@ -654,10 +913,10 @@ export default function EstimateDetail() {
     if (!estimate?.work_order_id || repairingConversionTracking) return;
     setRepairingConversionTracking(true);
     try {
-      const current = await base44.entities.AllInOneEstimate.get(estimate.id);
+      const current = await staffEntities.AllInOneEstimate.get(estimate.id);
       if (!current?.work_order_id) throw new Error("This estimate is no longer linked to a Work Order. Reload the estimate before repairing conversion tracking.");
       if (current.work_order_id !== estimate.work_order_id) throw new Error("The linked Work Order changed in another session. Reload before repairing conversion tracking.");
-      const workOrder = await base44.entities.WorkOrder.get(current.work_order_id).catch(() => null);
+      const workOrder = await staffEntities.WorkOrder.get(current.work_order_id).catch(() => null);
       if (!workOrder?.id) throw new Error("The linked Work Order could not be found. Conversion tracking was not changed.");
 
       const internalCost = Number.isFinite(Number(current.total_cost))
@@ -691,7 +950,7 @@ export default function EstimateDetail() {
   const handleQuoteDelivered = async ({ recipientEmail, issueMetadata, quoteVersion, gmailMessageId, sentAt, deliveryId, archive }) => {
     // Re-read after Gmail accepts the message so a concurrent lifecycle change
     // cannot silently be overwritten by the delivery finalization.
-    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(before, "finalizing quote delivery");
     const sourceStatus = before.status || "draft";
     const issuingNewQuote = ["draft", "calculated"].includes(sourceStatus);
@@ -790,7 +1049,7 @@ export default function EstimateDetail() {
           pipeline_sync_error: message,
         },
         label: "Quote delivery pipeline recovery marker",
-      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => saved);
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => saved);
       saved = { ...saved, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(saved);
       warnings.push(`The quote is issued, but Sales Pipeline synchronization is pending: ${message}`);
@@ -834,7 +1093,7 @@ export default function EstimateDetail() {
     notes,
     deliveryId,
   }) => {
-    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(before, "recording customer acceptance");
     if (hasServerConflict(before)) {
       throw new Error("This estimate changed in another session. Reload before recording customer acceptance.");
@@ -891,7 +1150,7 @@ export default function EstimateDetail() {
       }
 
       // The immutable acceptance is the idempotency anchor for exactly one
-      // Sent → Approved lifecycle revision.
+      // Sent â†’ Approved lifecycle revision.
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `customer_acceptance:${acceptance.id}`,
         sessionToken,
@@ -906,7 +1165,7 @@ export default function EstimateDetail() {
         workOrderId: after.work_order_id || "",
       });
     } catch (error) {
-      const reflected = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      const reflected = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
       const reflectedState = { ...after, ...(reflected || {}) };
       await rememberServerVersion(reflectedState);
       setEstimate(reflectedState);
@@ -939,13 +1198,13 @@ export default function EstimateDetail() {
           pipeline_sync_error: message,
         },
         label: "Customer acceptance pipeline recovery marker",
-      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
       after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(after);
       syncWarning = `Customer acceptance and approval are saved, but Sales Pipeline synchronization is pending: ${message}`;
     }
 
-    const refreshed = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+    const refreshed = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
     const savedAfter = { ...after, ...(refreshed || {}), status: "approved", edit_reason: "" };
     if (savedAfter.updated_date) serverUpdatedAtRef.current = savedAfter.updated_date;
     setEstimate(savedAfter);
@@ -960,7 +1219,7 @@ export default function EstimateDetail() {
       window.alert("Save the open estimate revision before cancelling the estimate.");
       return;
     }
-    const before = await base44.entities.AllInOneEstimate.get(estimate.id);
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
     assertNoPendingPriceAcceptance(before, "cancelling the estimate");
     if (hasServerConflict(before)) {
       window.alert("This estimate changed in another session. Reload before cancelling so newer work is not cancelled from a stale page.");
@@ -978,12 +1237,13 @@ export default function EstimateDetail() {
       nextFields: {
         status: "cancelled",
         cancel_reason: reason,
+        cancelled_at: new Date().toISOString(),
         edit_reason: "",
       },
       label: "Estimate cancellation",
       guardWholeVersion: true,
     });
-    let after = { ...before, ...(cancelled || {}), status: "cancelled", cancel_reason: reason, edit_reason: "" };
+    let after = { ...before, ...(cancelled || {}), status: "cancelled", cancel_reason: reason, cancelled_at: new Date().toISOString(), edit_reason: "" };
     await rememberServerVersion(after);
 
     try {
@@ -1019,7 +1279,7 @@ export default function EstimateDetail() {
           pipeline_sync_error: message,
         },
         label: "Estimate cancellation pipeline recovery marker",
-      }).catch(() => null) || await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
       after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
       await rememberServerVersion(after);
       setEstimate(after);
@@ -1081,13 +1341,25 @@ export default function EstimateDetail() {
     <div className="min-h-full bg-gray-50">
       <AioEstimateHeader
         title={estimate.project_name || "Estimate"}
-        subtitle={`One page, one set of project info, every estimator. · Totals synced ${new Date().toLocaleTimeString()}`}
+        subtitle={`One page, one set of project info, every estimator. Â· Totals synced ${new Date().toLocaleTimeString()}`}
         status={estimate.status || "draft"}
         quoteTotal={pricing.quoteTotal}
         onSave={handleSave}
         saving={saving}
         readOnly={readOnly}
+        onDuplicate={handleDuplicate}
+        duplicating={duplicating}
+        onMerge={() => setMergeOpen(true)}
       />
+
+      {estimate.opportunity_id && (
+        <div className="px-3 pb-2">
+          <a href={`/Opportunities?open=${estimate.opportunity_id}`}
+            className="inline-flex items-center gap-1.5 rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-100">
+            From opportunity{estimate.estimating_request_id ? " via estimating request" : ""} — open pipeline record
+          </a>
+        </div>
+      )}
 
       <div className="flex gap-3 px-3 pb-6">
         <AioStepRail
@@ -1128,7 +1400,7 @@ export default function EstimateDetail() {
               <div className="font-bold">Live Product pricing could not be fully verified.</div>
               <div className="mt-0.5">Saved estimate pricing was retained for {reconciliationWarnings.length} Product{reconciliationWarnings.length === 1 ? "" : "s"}. Reload to retry before accepting new pricing.</div>
               <div className="mt-1 text-[9px] text-amber-700 truncate" title={reconciliationWarnings.map((item) => `${item.product_name}: ${item.message}`).join("\n")}>
-                {reconciliationWarnings.map((item) => item.product_name).join(" · ")}
+                {reconciliationWarnings.map((item) => item.product_name).join(" Â· ")}
               </div>
             </div>
           )}
@@ -1140,12 +1412,26 @@ export default function EstimateDetail() {
             </div>
           )}
 
+          {quoteDaysLeft !== null && quoteDaysLeft < 0 && (
+            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 flex items-center gap-2 text-[11px] text-red-800">
+              <AlertTriangle className="w-4 h-4" /><span><strong>Quote EXPIRED {formatQuoteIssueDate(expiresOn)}</strong> â€” re-issue or request a revision.</span>
+            </div>
+          )}
+
+          {quoteDaysLeft !== null && quoteDaysLeft >= 0 && quoteDaysLeft <= 7 && (
+            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 flex items-center gap-2 text-[11px] text-amber-800">
+              <Clock className="w-4 h-4" /><span><strong>Quote expires {formatQuoteIssueDate(expiresOn)}</strong> ({quoteDaysLeft} days left)</span>
+            </div>
+          )}
+
           {step === 1 && <EstimateHeaderForm estimate={estimate} onChange={patch} readOnly={readOnly} />}
+          {step === 1 && <div className="mt-3"><EstimateNotesTimeline estimate={estimate} onChange={patch} readOnly={readOnly} /></div>}
 
           {step === 2 && (
             activeProduct ? (
               <InlineProductEditor
                 line={activeProduct}
+                lines={lines}
                 estimateId={estimate.id}
                 expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
                 onClose={async () => {
@@ -1153,6 +1439,7 @@ export default function EstimateDetail() {
                   setActiveProduct(null);
                 }}
                 onSaved={refreshProducts}
+                onSwitchLine={(next) => setActiveProduct(next)}
               />
             ) : (
               <>
@@ -1171,6 +1458,7 @@ export default function EstimateDetail() {
                   onSaveNotes={updateProductNotes}
                   onCreateQuickProduct={createQuickProduct}
                   onPersistSettings={persistProductSettings}
+                  onSplit={handleSplit}
                   readOnly={readOnly}
                 />
                 <div className="flex items-center justify-between gap-2 pt-1">
@@ -1182,6 +1470,17 @@ export default function EstimateDetail() {
                     title="Open 30-day estimator clipboard"
                   >
                     <ClipboardPaste className="w-3.5 h-3.5 text-gray-500" /> Clipboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={repriceAllProducts}
+                    disabled={readOnly || saving || trashing || duplicating || refreshing}
+                    aria-label="Reprice all products against current Master Inventory"
+                    title="Re-run current live pricing across every Product in this estimate"
+                    className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${refreshing ? "animate-spin" : ""}`} />
+                    {refreshing ? "Repricing…" : "Reprice products"}
                   </button>
                   {!readOnly && <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />}
                 </div>
@@ -1200,6 +1499,17 @@ export default function EstimateDetail() {
                 >
                   <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} />
                   <span className="text-sm font-medium text-gray-800">{openRevision ? "Save Revision Before Cancelling" : "Cancel Estimate"}</span>
+                </button>
+              )}
+              {estimate.status !== "cancelled" && !estimate.work_order_id && (
+                <button
+                  onClick={handleMoveToTrash}
+                  disabled={!!openRevision || trashing}
+                  className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-red-200 rounded-sm hover:bg-red-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={openRevision ? "Save the open revision before moving this estimate to Trash." : "Move to Trash"}
+                >
+                  <Trash2 className="w-4 h-4" style={{ color: "#8b1e1e" }} />
+                  <span className="text-sm font-medium text-gray-800">{trashing ? "Moving to Trashâ€¦" : "Move to Trash"}</span>
                 </button>
               )}
               {estimate.status !== "cancelled" && estimate.work_order_id && (
@@ -1282,6 +1592,29 @@ export default function EstimateDetail() {
         onConfirm={handleCancel}
         estimateName={estimate.project_name}
       />
+
+      <MergeEstimateDialog
+        open={mergeOpen}
+        currentEstimateId={estimate.id}
+        onClose={() => setMergeOpen(false)}
+        onMerge={handleMerge}
+      />
+
+      <AlertDialog open={duplicateChoiceOpen} onOpenChange={setDuplicateChoiceOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate this estimate?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose whether the copy gets a new estimate number or keeps {estimate.estimate_number ? `#${estimate.estimate_number}` : "the same number"} (useful when reworking the same quote). Either way it starts as a new draft and the original is unchanged.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => runDuplicate(true)}>Keep same number</AlertDialogAction>
+            <AlertDialogAction onClick={() => runDuplicate(false)}>New number</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mail, Printer, RefreshCw, Settings2 } from "lucide-react";
+import { Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
-import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
+import { computeEstimateProfitability, DEFAULT_MARGIN_FLOOR_PERCENT } from "./profitability";
+import { estimateQuoteExpiration, formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
 import { generateCustomerQuotePdf } from "./quotePdf";
-import { defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
+import { approveEstimateQuote, defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "./quoteDefaults";
 import { loadAllEntityRows } from "./loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -51,6 +55,46 @@ const TOGGLES = [
 
 const defaultBool = (estimate, key, fallback = true) => estimate[key] === undefined || estimate[key] === null ? fallback : estimate[key] !== false;
 
+const DEFAULT_QUOTE_APPROVAL_THRESHOLD = 5000;
+const QUOTE_APPROVAL_THRESHOLD_KEY = "quote_approval_threshold";
+const MARGIN_FLOOR_KEY = "margin_floor_percent";
+const MIN_QUOTE_FLOOR_KEY = "minimum_quote_total";
+
+const minQuoteFromSetting = (record) => {
+  const raw = record?.setting_value;
+  const parsed = Number(raw?.minimum ?? raw?.value ?? raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+};
+
+const marginFloorFromSetting = (record) => {
+  const raw = record?.setting_value;
+  const parsed = Number(raw?.floor ?? raw?.percent ?? raw?.value ?? raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_MARGIN_FLOOR_PERCENT;
+};
+
+const thresholdFromSetting = (record) => {
+  const raw = record?.setting_value;
+  const parsed = Number(raw?.threshold ?? raw?.value ?? raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_QUOTE_APPROVAL_THRESHOLD;
+};
+
+const recordedApproval = (estimate) => {
+  const approval = estimate?.internal_approval;
+  if (!approval || typeof approval !== "object" || Array.isArray(approval)) return null;
+  if (!approval.approved_at && !approval.approved_by_email && !approval.approved_by_user_id) return null;
+  return approval;
+};
+
+// An approval recorded at a lower total does not cover a quote whose total has
+// since grown past the approved amount; it must be approved again.
+const approvalCoversQuote = (estimate, total) => {
+  const approval = recordedApproval(estimate);
+  if (!approval) return false;
+  const approvedTotal = Number(approval?.quote_total_at_approval);
+  if (Number.isFinite(approvedTotal) && approvedTotal > 0 && total > approvedTotal + 0.005) return false;
+  return true;
+};
+
 export default function CustomerQuotePanel({
   estimate,
   pricing,
@@ -67,7 +111,7 @@ export default function CustomerQuotePanel({
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
   const quoteDate = formatQuoteIssueDate(estimate.quote_issue_date);
   const quoteVersion = Math.max(0, Math.floor(Number(estimate.quote_version || 0)));
-  const quoteExpiration = quoteExpirationDate(estimate.quote_issue_date || localDateStamp(), estimate.quote_valid_days ?? 30);
+  const quoteExpiration = estimateQuoteExpiration(estimate);
   const quoteExpirationLabel = quoteExpiration ? formatQuoteIssueDate(quoteExpiration) : "";
   const issuingNewQuote = ["draft", "calculated"].includes(String(persistedStatus || "draft"));
   const canEmailQuote = !revisionInProgress && persistedStatus !== "cancelled" && (issuingNewQuote || quoteVersion > 0);
@@ -76,10 +120,17 @@ export default function CustomerQuotePanel({
   const sendingRef = useRef(false);
   const [sendError, setSendError] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [ccEmails, setCcEmails] = useState("");
+  const [bccEmails, setBccEmails] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [currentVersionDelivered, setCurrentVersionDelivered] = useState(false);
   const [applyingDefaults, setApplyingDefaults] = useState(false);
+  const [quoteApprovalThreshold, setQuoteApprovalThreshold] = useState(DEFAULT_QUOTE_APPROVAL_THRESHOLD);
+  const [marginFloorPct, setMarginFloorPct] = useState(DEFAULT_MARGIN_FLOOR_PERCENT);
+  const [minQuoteFloor, setMinQuoteFloor] = useState(0);
+  const [sessionCanApproveQuotes, setSessionCanApproveQuotes] = useState(false);
+  const [approvingQuote, setApprovingQuote] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -101,7 +152,40 @@ export default function CustomerQuotePanel({
     return () => { active = false; };
   }, [estimate?.id, quoteVersion, issuingNewQuote]);
 
+  // Load the internal quote-approval threshold and whether the signed-in user
+  // may approve over-threshold quotes. The gate is enforced server-side; these
+  // reads only drive the send button state and the Approve control.
+  useEffect(() => {
+    let active = true;
+    const sessionEmail = String(getSessionUser()?.email || "").trim().toLowerCase();
+    Promise.all([
+      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: QUOTE_APPROVAL_THRESHOLD_KEY, label: "Quote approval threshold" }).catch(() => null),
+      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: MARGIN_FLOOR_KEY, label: "Margin floor percent" }).catch(() => null),
+      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: MIN_QUOTE_FLOOR_KEY, label: "Minimum quote total" }).catch(() => null),
+      sessionEmail ? staffEntities.AuthorizedEmail.filter({ email: sessionEmail }).catch(() => []) : Promise.resolve([]),
+    ]).then(([setting, marginSetting, minQuoteSetting, users]) => {
+      if (!active) return;
+      setQuoteApprovalThreshold(thresholdFromSetting(setting));
+      setMarginFloorPct(marginFloorFromSetting(marginSetting));
+      setMinQuoteFloor(minQuoteFromSetting(minQuoteSetting));
+      setSessionCanApproveQuotes((users || []).some((row) => row?.can_approve_quotes === true));
+    });
+    return () => { active = false; };
+  }, []);
+
   const emailActionLabel = issuingNewQuote || !currentVersionDelivered ? "Send Quote" : "Resend Quote";
+  const quoteTotalNow = Number(pricing?.quoteTotal ?? estimate.quote_total ?? 0);
+  const profitability = computeEstimateProfitability(estimate, pricing || {});
+  const belowMarginFloor = profitability.internalCost > 0 && profitability.grossMarginPercent < marginFloorPct;
+  const belowMinQuote = minQuoteFloor > 0 && quoteTotalNow > 0 && quoteTotalNow < minQuoteFloor;
+  const overApprovalThreshold = quoteTotalNow > quoteApprovalThreshold;
+  const quoteApproval = recordedApproval(estimate);
+  const quoteApprovalSatisfied = approvalCoversQuote(estimate, quoteTotalNow);
+  const sendNeedsApproval = overApprovalThreshold && !quoteApprovalSatisfied;
+  const approvalThresholdLabel = fmt(quoteApprovalThreshold, true);
+  const approvalWhenLabel = quoteApproval?.approved_at && Number.isFinite(Date.parse(quoteApproval.approved_at))
+    ? new Date(quoteApproval.approved_at).toLocaleString()
+    : "";
 
   const printQuote = () => {
     window.print();
@@ -116,7 +200,7 @@ export default function CustomerQuotePanel({
     try {
       const defaults = await loadQuoteDefaults();
       if (!defaults?.id) {
-        throw new Error("No company Quote Defaults have been saved yet. Open Estimator Settings → Quote Defaults and save them first.");
+        throw new Error("No company Quote Defaults have been saved yet. Open Estimator Settings â†’ Quote Defaults and save them first.");
       }
       onChange?.(quoteDefaultsPayload(defaults));
       window.alert("Company Quote Defaults applied to this estimate. Save the estimate or revision to persist the changes.");
@@ -127,14 +211,45 @@ export default function CustomerQuotePanel({
     }
   };
 
+  const approveQuote = async () => {
+    if (approvingQuote || !sessionCanApproveQuotes || !sendNeedsApproval) return;
+    setApprovingQuote(true);
+    try {
+      if (!String(sessionToken || "").trim()) {
+        throw new Error("Your sign-shop session is no longer available. Sign in again before approving a quote.");
+      }
+      const result = await approveEstimateQuote({ estimateId: estimate.id, quoteTotal: quoteTotalNow, sessionToken });
+      const approval = result?.internal_approval;
+      if (!approval?.approved_at) throw new Error("Quote approval could not be verified.");
+      onChange?.({ internal_approval: approval });
+    } catch (error) {
+      window.alert(error?.message || "Quote approval could not be recorded.");
+    } finally {
+      setApprovingQuote(false);
+    }
+  };
+
   const set = (key, value) => onChange?.({ [key]: value });
 
-  const openSendDialog = () => {
+  const openSendDialog = async () => {
     if (!canEmailQuote) return;
-    setRecipientEmail(estimate.contact_email || "");
-    setEmailSubject(defaultQuoteEmailSubject(estimate));
-    setEmailMessage(defaultQuoteEmailMessage(estimate));
+    let recipient = estimate.contact_email || "";
+    if (!recipient && estimate.customer_id) {
+      try {
+        const customer = await base44.entities.Customer.get(estimate.customer_id).catch(() => null);
+        recipient = customer?.email || customer?.contact_email || customer?.billing_email || customer?.billing_contact_email || "";
+      } catch {}
+    }
+    setRecipientEmail(recipient);
+    const emailEstimate = { ...estimate, quote_total: quoteTotalNow };
+    setEmailSubject(defaultQuoteEmailSubject(emailEstimate));
+    setEmailMessage(defaultQuoteEmailMessage(emailEstimate));
     setSendError("");
+    if (belowMinQuote) {
+      window.alert(`This quote total (${fmt(quoteTotalNow)}) is below the configured minimum of ${fmt(minQuoteFloor, true)}. Raise the pricing before sending a customer quote.`);
+      return;
+    }
+    if (belowMarginFloor && !window.confirm(`This quote's gross margin is ${profitability.grossMarginPercent.toFixed(1)}% — below the ${marginFloorPct}% internal floor. Send it anyway?`)) return;
     setSendOpen(true);
   };
 
@@ -192,8 +307,11 @@ export default function CustomerQuotePanel({
       const deliveryResult = await deliverEstimateQuote({
         estimate,
         recipientEmail: recipient,
+        ccEmails: String(ccEmails || "").trim(),
+        bccEmails: String(bccEmails || "").trim(),
         subject,
         message,
+        emailSignature: estimate.email_signature || "",
         attachment,
         quoteVersion: deliveryVersion,
         quoteIssueDate: deliveryIssueDate,
@@ -257,13 +375,26 @@ export default function CustomerQuotePanel({
             className="h-[31px] text-[11px]"
           >
             {applyingDefaults ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
-            {applyingDefaults ? "Applying…" : "Apply Company Defaults"}
+            {applyingDefaults ? "Applyingâ€¦" : "Apply Company Defaults"}
           </Button>
+          {sendNeedsApproval && sessionCanApproveQuotes && !readOnly && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={approveQuote}
+              disabled={approvingQuote}
+              title={`Record your manager approval for this ${fmt(quoteTotalNow)} quote so it can be emailed.`}
+              className="h-[31px] text-[11px]"
+            >
+              {approvingQuote ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />}
+              {approvingQuote ? "Approvingâ€¦" : "Approve Quote"}
+            </Button>
+          )}
           <Button
             type="button"
-            onClick={openSendDialog}
-            disabled={!canEmailQuote || sending}
-            title={revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to send." : issuingNewQuote ? "Email this quote as the next issued customer version." : currentVersionDelivered ? "Email the currently issued quote version again." : "Email the currently issued quote version for the first time."}
+            onClick={() => openSendDialog().catch((e) => setSendError(e?.message || "Could not open the send dialog."))}
+            disabled={!canEmailQuote || sending || sendNeedsApproval}
+            title={sendNeedsApproval ? `Over ${approvalThresholdLabel} â€” manager approval required` : revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to send." : issuingNewQuote ? "Email this quote as the next issued customer version." : currentVersionDelivered ? "Email the currently issued quote version again." : "Email the currently issued quote version for the first time."}
             className="h-[31px] text-[11px] bg-gray-800 hover:bg-gray-900 text-white"
           >
             <Mail className="w-3.5 h-3.5 mr-1.5" />
@@ -273,6 +404,13 @@ export default function CustomerQuotePanel({
         </div>
       </div>
 
+      {quoteApproval && (
+        <div className="no-print px-4 py-2 border-b border-emerald-200 bg-emerald-50 text-[10px] text-emerald-800 flex items-center gap-2">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Manager approval recorded{quoteApproval.approved_by_email ? ` by ${quoteApproval.approved_by_email}` : ""}{approvalWhenLabel ? ` on ${approvalWhenLabel}` : ""}{Number(quoteApproval.threshold_at_approval) > 0 ? ` (threshold ${fmt(quoteApproval.threshold_at_approval, true)})` : ""}.</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-[390px_minmax(0,1fr)]">
         <div className={`no-print border-r border-gray-200 p-4 space-y-4 bg-white ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
           <div>
@@ -280,14 +418,15 @@ export default function CustomerQuotePanel({
             <div className="space-y-2">
               <Field label="Quote title" value={estimate.quote_title ?? "Project Estimate"} onChange={(value) => set("quote_title", value)} />
               <Field label="Intro text" value={estimate.quote_intro_text || ""} onChange={(value) => set("quote_intro_text", value)} textarea />
-              <Field label="Scope inclusions — one per line" value={estimate.scope_inclusions || ""} onChange={(value) => set("scope_inclusions", value)} textarea />
-              <Field label="Scope exclusions — one per line" value={estimate.scope_exclusions || ""} onChange={(value) => set("scope_exclusions", value)} textarea />
+              <Field label="Scope inclusions â€” one per line" value={estimate.scope_inclusions || ""} onChange={(value) => set("scope_inclusions", value)} textarea />
+              <Field label="Scope exclusions â€” one per line" value={estimate.scope_exclusions || ""} onChange={(value) => set("scope_exclusions", value)} textarea />
               <Field label="Lead time" value={estimate.lead_time_text || ""} onChange={(value) => set("lead_time_text", value)} />
               <Field label="Warranty" value={estimate.warranty_text || ""} onChange={(value) => set("warranty_text", value)} textarea />
               <Field label="Payment terms" value={estimate.payment_terms || estimate.terms || ""} onChange={(value) => set("payment_terms", value)} textarea />
               <Field label="Terms & conditions" value={estimate.quote_terms_conditions || ""} onChange={(value) => set("quote_terms_conditions", value)} textarea />
               <Field label="Footer text" value={estimate.quote_footer_text || ""} onChange={(value) => set("quote_footer_text", value)} textarea />
               <label className="text-[10px] font-bold tracking-wide text-gray-500 block">QUOTE VALID DAYS<input type="number" min="0" value={estimate.quote_valid_days ?? 30} onChange={(event) => set("quote_valid_days", Math.max(0, Number(event.target.value || 0)))} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
+              <label className="text-[10px] font-bold tracking-wide text-gray-500 block">EXPIRATION OVERRIDE<input type="date" value={estimate.quote_expiration_date || ""} onChange={(event) => set("quote_expiration_date", event.target.value || "")} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
             </div>
           </div>
 
@@ -331,7 +470,7 @@ export default function CustomerQuotePanel({
                     {defaultBool(estimate, "show_logo", false) && estimate.company_logo_url && <img src={estimate.company_logo_url} alt="Company logo" className="max-h-12 max-w-[190px] object-contain object-left mb-2" />}
                     <div className="text-[21px] font-extrabold tracking-tight">{estimate.company_name || "Company Name"}</div>
                     {estimate.company_address && <div className="mt-1 text-[10px] whitespace-pre-line text-gray-600">{estimate.company_address}</div>}
-                    <div className="mt-1 text-[10px] text-gray-600">{[estimate.company_phone, estimate.company_email, estimate.company_website].filter(Boolean).join(" · ")}</div>
+                    <div className="mt-1 text-[10px] text-gray-600">{[estimate.company_phone, estimate.company_email, estimate.company_website].filter(Boolean).join(" Â· ")}</div>
                     {estimate.company_license && <div className="mt-1 text-[9px] text-gray-500">{estimate.company_license}</div>}
                   </>
                 )}
@@ -349,7 +488,7 @@ export default function CustomerQuotePanel({
               <div>
                 <div className="text-[8px] font-bold tracking-widest text-gray-400">PREPARED FOR</div>
                 <div className="mt-1 text-[13px] font-bold">{estimate.client_name || "Customer"}</div>
-                {defaultBool(estimate, "show_contact_block") && <div className="mt-1 text-[10px] text-gray-600">{[estimate.order_contact || estimate.contact_name, estimate.contact_email, estimate.office_phone || estimate.contact_phone].filter(Boolean).join(" · ")}</div>}
+                {defaultBool(estimate, "show_contact_block") && <div className="mt-1 text-[10px] text-gray-600">{[estimate.order_contact || estimate.contact_name, estimate.contact_email, estimate.office_phone || estimate.contact_phone].filter(Boolean).join(" Â· ")}</div>}
               </div>
               <div>
                 <div className="text-[8px] font-bold tracking-widest text-gray-400">PROJECT</div>
@@ -421,16 +560,33 @@ export default function CustomerQuotePanel({
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">TO<input autoFocus type="email" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" placeholder="customer@example.com" /></label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[10px] font-bold tracking-wide text-gray-500">CC<input value={ccEmails} onChange={(event) => setCcEmails(event.target.value)} className="mt-1 w-full h-[30px] rounded border border-gray-300 px-2 text-[12px] font-normal text-gray-800" placeholder="cc@example.com" /></label>
+              <label className="block text-[10px] font-bold tracking-wide text-gray-500">BCC<input value={bccEmails} onChange={(event) => setBccEmails(event.target.value)} className="mt-1 w-full h-[30px] rounded border border-gray-300 px-2 text-[12px] font-normal text-gray-800" placeholder="bcc@example.com" /></label>
+            </div>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">SUBJECT<input value={emailSubject} onChange={(event) => setEmailSubject(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800" /></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">MESSAGE<textarea value={emailMessage} onChange={(event) => setEmailMessage(event.target.value)} rows={7} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y" /></label>
             <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
-              <strong>Attachment:</strong> Customer quote PDF · {issuingNewQuote ? `next version ${Math.max(1, quoteVersion + 1)}` : `Version ${quoteVersion}`}
+              <strong>Attachment:</strong> Customer quote PDF Â· {issuingNewQuote ? `next version ${Math.max(1, quoteVersion + 1)}` : `Version ${quoteVersion}`}
             </div>
+            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
+              <strong>Internal approval threshold:</strong> {approvalThresholdLabel}{overApprovalThreshold ? (quoteApprovalSatisfied ? ` â€” approval recorded${quoteApproval?.approved_by_email ? ` by ${quoteApproval.approved_by_email}` : ""}` : " â€” manager approval required") : ""}
+            </div>
+            {belowMarginFloor && (
+              <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-800">
+                Gross margin {profitability.grossMarginPercent.toFixed(1)}% — below the {marginFloorPct}% internal floor.
+              </div>
+            )}
+            {minQuoteFloor > 0 && (
+              <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[10px] text-gray-600">
+                <strong>Minimum quote floor:</strong> {fmt(minQuoteFloor, true)}{belowMinQuote ? ` — this quote (${fmt(quoteTotalNow)}) is below the floor` : ""}
+              </div>
+            )}
             {sendError && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{sendError}</div>}
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={sending} onClick={() => setSendOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
               <button type="button" disabled={sending || !recipientEmail.trim() || !emailSubject.trim() || !emailMessage.trim()} onClick={sendQuote} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">
-                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} {sending ? "Generating & Sending…" : emailActionLabel}
+                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} {sending ? "Generating & Sendingâ€¦" : emailActionLabel}
               </button>
             </div>
           </div>
@@ -445,7 +601,7 @@ function Field({ label, value, onChange, textarea = false, className = "" }) {
 }
 
 function QuoteRow({ estimate, name, category, quantity, description, amount, round }) {
-  return <tr className="align-top text-[10px]"><td className="px-3 py-2.5"><div className="font-bold text-gray-900">{name}</div>{defaultBool(estimate, "show_section_descriptions") && description && <div className="mt-0.5 text-[9px] text-gray-500 whitespace-pre-line">{description}</div>}</td>{defaultBool(estimate, "show_category_column") && <td className="px-3 py-2.5 text-gray-600">{category || "—"}</td>}{defaultBool(estimate, "show_quantity_column", false) && <td className="px-3 py-2.5 text-right text-gray-600">{quantity || "—"}</td>}<td className="px-3 py-2.5 text-right font-semibold whitespace-nowrap">{fmt(amount, round)}</td></tr>;
+  return <tr className="align-top text-[10px]"><td className="px-3 py-2.5"><div className="font-bold text-gray-900">{name}</div>{defaultBool(estimate, "show_section_descriptions") && description && <div className="mt-0.5 text-[9px] text-gray-500 whitespace-pre-line">{description}</div>}</td>{defaultBool(estimate, "show_category_column") && <td className="px-3 py-2.5 text-gray-600">{category || "â€”"}</td>}{defaultBool(estimate, "show_quantity_column", false) && <td className="px-3 py-2.5 text-right text-gray-600">{quantity || "â€”"}</td>}<td className="px-3 py-2.5 text-right font-semibold whitespace-nowrap">{fmt(amount, round)}</td></tr>;
 }
 
 function TotalRow({ label, value, round }) {

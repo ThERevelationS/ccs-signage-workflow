@@ -74,9 +74,10 @@ assert.match(persistence, /const protectedOrders = Array\.isArray\(loaded\) \? l
 assert.match(persistence, /Nothing was permanently deleted\. Linked Order history must remain available as a permanent-ID tombstone/);
 console.log('PASS single permanent delete and Order System Reset both protect Smartsheet relationship tombstones');
 
-assert.match(sheet, /pendingSyncIdsRef\.current\.delete\(target\.id\)/);
-assert.match(sheet, /pendingSyncVersionRef\.current\.delete\(target\.id\)/);
+assert.match(sheet, /pendingSyncIdsRef\.current\.delete\(id\)/);
+assert.match(sheet, /pendingSyncVersionRef\.current\.delete\(id\)/);
 assert.match(sheet, /setPendingSyncCount\(pendingSyncIdsRef\.current\.size\)/);
+assert.match(sheet, /removeOrdersFromState\(\[target\.id\]\)/);
 console.log('PASS soft-deleting an Order immediately removes it from the in-memory Retry Sync queue without erasing durable link evidence');
 
 assert.match(trash, /Smartsheet identity preserved/);

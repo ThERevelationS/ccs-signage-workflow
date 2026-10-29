@@ -29,6 +29,7 @@ import UserHRDataForm from "@/components/user/UserHRDataForm";
 import DeleteAccountSection from "@/components/user/DeleteAccountSection";
 import { updateOwnHrData, updateOwnUsername } from "@/components/user/ownProfilePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function UserSettings() {
   const { currentUser, sessionToken } = useAuth();
@@ -54,7 +55,7 @@ export default function UserSettings() {
     setIsLoading(true);
     try {
       const users = await loadAllEntityRows({
-        entity: base44.entities.AuthorizedEmail,
+        entity: staffEntities.AuthorizedEmail,
         sort: null,
         label: "User Settings authorized users",
       });

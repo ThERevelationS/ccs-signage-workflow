@@ -31,6 +31,9 @@ import {
   Megaphone,
   LogIn,
   GitBranch,
+  Receipt,
+  FileDiff,
+  Package,
   Minimize2,
   ChevronsLeft,
   ChevronsRight,
@@ -41,6 +44,7 @@ import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
 import LoginGate from "@/components/auth/LoginGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
+import AttentionBell from "@/components/workflow/AttentionBell";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiPageView";
 import { ImportProgressProvider } from "@/components/shared/ImportProgressContext";
@@ -51,7 +55,9 @@ import AnnouncementManager from "@/components/announcements/AnnouncementManager"
 import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
+import { TimeClockStatusProvider } from "@/components/timeclock/TimeClockStatusContext";
 import FocusPausePair from "@/components/timeclock/FocusPausePair";
+import TimeTracker from "@/components/timeclock/TimeTracker";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 import SyncConflictAlert from '@/components/admin/SyncConflictAlert';
 
@@ -63,6 +69,7 @@ const navigationItems = [
   { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, accent: "#A78BFA" },
   { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, accent: "#38BDF8" },
   { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, accent: "#2DD4BF" },
+  { title: "Opportunities", url: createPageUrl("Opportunities"), icon: GitBranch, accent: "#A855F7" },
   { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, accent: "#FBBF24" },
   { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, accent: "#FB7185" },
   { title: "Design", url: createPageUrl("Design"), icon: Pencil, accent: "#60A5FA" },
@@ -78,6 +85,11 @@ const meetingsDropdownItems = [
   { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, accent: "#FACC15" },
   { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, accent: "#A3E635" },
   { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, accent: "#3B82F6" },
+  { title: "Invoices", url: createPageUrl("Invoices"), icon: Receipt, accent: "#10B981" },
+  { title: "Change Orders", url: createPageUrl("ChangeOrders"), icon: FileDiff, accent: "#F97316" },
+  { title: "Purchase Orders", url: createPageUrl("PurchaseOrders"), icon: Package, accent: "#0EA5E9" },
+  { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
+  { title: "Inventory", url: createPageUrl("Inventory"), icon: Package, accent: "#84CC16" },
   { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
 
 ];
@@ -187,6 +199,12 @@ const ROOT_ROUTES = [
   createPageUrl("MainWorkflow"),
   createPageUrl("MyWorkflow"),
   createPageUrl("SalesPipeline"),
+  createPageUrl("Opportunities"),
+  createPageUrl("Invoices"),
+  createPageUrl("ChangeOrders"),
+  createPageUrl("PurchaseOrders"),
+  createPageUrl("JobCosting"),
+  createPageUrl("Inventory"),
   createPageUrl("OrderForm"),
   createPageUrl("TimeClock"),
   createPageUrl("AdminSettings"),
@@ -209,7 +227,7 @@ function LayoutContent({ children }) {
   const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
   
   // Multi-page view state
-  const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
+  const { additionalPages, addPage, removePage, clearPages, isInMultiView, orientation, toggleOrientation } = useMultiPageView();
   
   // Detect mobile
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -242,8 +260,6 @@ function LayoutContent({ children }) {
       prevPathnameRef.current = curr;
     }
   }, [location.pathname, isMobile]);
-
-
 
   // Navigation layout preference - "top" or "side"
   const [darkMode, setDarkMode] = useState(() => {
@@ -994,6 +1010,12 @@ function LayoutContent({ children }) {
 
                 {currentUser && <FocusPausePair currentUser={currentUser} fullWidth compact={compactView} />}
 
+                {currentUser && (
+                  <div className="mt-2 flex justify-center">
+                    <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
+                  </div>
+                )}
+
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
                   <button
@@ -1023,7 +1045,10 @@ function LayoutContent({ children }) {
                   </button>
                 </div>
 
-                <GlobalSearch className="w-full justify-center" compact={compactView} shellGlass />
+                <div className="flex items-center gap-1.5">
+                  <GlobalSearch className="w-full justify-center" compact={compactView} shellGlass />
+                  <AttentionBell compact={compactView} shellGlass />
+                </div>
               </div>
             </div>
 
@@ -1137,7 +1162,7 @@ function LayoutContent({ children }) {
                 {/* Desktop Navigation Links */}
                 <div
                   data-top-navigation-links
-                  className={`hidden lg:flex self-center items-center flex-wrap flex-1 ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
+                  className={`hidden lg:flex self-center items-center flex-nowrap overflow-x-auto flex-1 [scrollbar-width:thin] ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
                 >
                   {navigationItems.map((item) => {
                     const isActive = location.pathname === item.url;
@@ -1238,6 +1263,7 @@ function LayoutContent({ children }) {
                     )}
 
                     {currentUser && <FocusPausePair currentUser={currentUser} compact={compactView} />}
+                    {currentUser && <TimeTracker position="top" hasTopBar hasSideBar={isSideNav || isMobile} />}
 
                     {/* Announcement button - admin only, square, two rows tall */}
                     {isUserAdmin(currentUser) && (
@@ -1266,7 +1292,10 @@ function LayoutContent({ children }) {
                     </button>
                   </div>
 
-                  <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
+                  <div className="flex items-center gap-1.5">
+                    <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
+                    <AttentionBell compact={compactView} shellGlass />
+                  </div>
                 </div>
               </div>
 
@@ -1348,6 +1377,8 @@ function LayoutContent({ children }) {
               additionalPages={isMobile ? [] : additionalPages} 
               onRemovePage={removePage}
               onClearAll={clearPages}
+              orientation={orientation}
+              onToggleOrientation={toggleOrientation}
             >
               {isMobile ? (
                 <AnimatePresence mode="wait" initial={false}>
@@ -1359,10 +1390,20 @@ function LayoutContent({ children }) {
                     transition={{ duration: 0.18, ease: 'easeInOut' }}
                     style={{ minHeight: '100%' }}
                   >
-                    <LoginGate>{children}</LoginGate>
+                    <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
                   </motion.div>
                 </AnimatePresence>
-              ) : <LoginGate>{children}</LoginGate>}
+              ) : (
+                <motion.div
+                  key={location.pathname}
+                  initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ minHeight: "100%" }}
+                >
+                  <LoginGate exempt={location.pathname.replace(/\/+$/, "").toLowerCase() === "/timeclock"}>{children}</LoginGate>
+                </motion.div>
+              )}
             </MultiPageContainer>
           </MultiPageContext.Provider>
         </motion.main>
@@ -1543,8 +1584,11 @@ function LayoutContent({ children }) {
                     </button>
                   </div>
                   {currentUser && (
-                    <div className="mb-3">
+                    <div className="mb-3 space-y-2">
                       <FocusPausePair currentUser={currentUser} fullWidth compact />
+                      <div className="flex justify-center">
+                        <TimeTracker position="side" hasSideBar hasTopBar={!isSideNav} />
+                      </div>
                     </div>
                   )}
                   {isUserAdmin(currentUser) && (
@@ -1609,14 +1653,16 @@ function LayoutContentWrapper({ children, currentPageName }) {
   ) : children;
   return (
     <ImportProgressProvider currentUserEmail={currentUser?.email}>
-      <ResearchProgressProvider>
-        <MultiImportProvider>
-          <AnnouncementProvider currentPageName={currentPageName}>
-            <LayoutContent>{protectedChildren}</LayoutContent>
-            <ResearchProgressBar />
-          </AnnouncementProvider>
-        </MultiImportProvider>
-      </ResearchProgressProvider>
+      <TimeClockStatusProvider>
+        <ResearchProgressProvider>
+          <MultiImportProvider>
+            <AnnouncementProvider currentPageName={currentPageName}>
+              <LayoutContent>{protectedChildren}</LayoutContent>
+              <ResearchProgressBar />
+            </AnnouncementProvider>
+          </MultiImportProvider>
+        </ResearchProgressProvider>
+      </TimeClockStatusProvider>
     </ImportProgressProvider>
   );
 }

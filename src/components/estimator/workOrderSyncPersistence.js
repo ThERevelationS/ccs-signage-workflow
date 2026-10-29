@@ -114,7 +114,13 @@ export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
 }
 
 export function expectedWorkOrderFields(record = {}, nextFields = {}) {
-  return Object.fromEntries(
+  const out = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
+  // Anchor the CAS on the WO's durable number too: a stale "existing" row
+  // must never write onto a different-numbered WorkOrder.
+  if (record?.work_order_number != null && !("work_order_number" in out)) {
+    out.work_order_number = record.work_order_number;
+  }
+  return out;
 }

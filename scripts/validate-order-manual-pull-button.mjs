@@ -47,8 +47,8 @@ assert.match(helper, /results\.length !== 1 \|\| results\[0\]\?\.dataset !== "or
 assert.match(helper, /results\[0\]\?\.direction !== "pull"/);
 assert.match(helper, /if \(results\[0\]\?\.skipped\)/);
 assert.match(backend, /allowedOrderManualPull = action === 'pull_dataset' && body\?\.dataset === 'orders' && Boolean\(actor\?\.id\)/);
-assert.match(backend, /action === 'pull_dataset' \|\| \(action === 'run_sync' && profile\.pull_enabled\)/);
-assert.match(backend, /dataset !== 'orders' && profile\.push_enabled/);
+assert.match(backend, /action === 'pull_dataset' \|\| \(isRunAction && profile\.pull_enabled\)/);
+assert.match(backend, /action === 'push_dataset' \|\| \(isRunAction && profile\.push_enabled\)/);
 console.log("PASS authorized manual Order pull uses existing permanent-ID pull and cannot trigger Sales or Order push");
 
 assert.equal(orderSaveSyncStatus({ isSyncing: true, isPulling: true }).text, "Checking Smartsheet…");

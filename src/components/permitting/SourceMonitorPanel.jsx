@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Activity } from 'lucide-react';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const safeLink = value => { try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch { return ''; } };
 const dateLabel = value => { const date = new Date(value); return value && Number.isFinite(date.getTime()) ? date.toLocaleString() : 'Not recorded'; };
@@ -16,7 +17,7 @@ function SourceChangeReview({ monitor, jurisdictionId, onNavigate }) {
     let active = true; setLoading(true); setSource(null); setError('');
     const query = { id: monitor.source_document_id, ...(jurisdictionId ? { jurisdiction_id: jurisdictionId } : { jurisdiction_name: monitor.jurisdiction_name }) };
     if (!monitor.source_document_id) { setLoading(false); return () => { active = false; }; }
-    base44.entities.PermittingSourceDocument.filter(query, { limit: 1 }).then(result => {
+    staffEntities.PermittingSourceDocument.filter(query, { limit: 1 }).then(result => {
       if (active) setSource((Array.isArray(result) ? result : result.items || [])[0] || null);
     }).catch(() => { if (active) setError('Retained evidence could not be loaded. Retry or check Documents.'); })
       .finally(() => { if (active) setLoading(false); });
@@ -58,7 +59,7 @@ export default function SourceMonitorPanel({ jurisdictionName, jurisdictionId, o
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     let active = true; setLoading(true); setError(''); setMonitors([]); setSelected(null);
-    base44.entities.SourceMonitorState.filter({ ...(jurisdictionId ? {jurisdiction_id: jurisdictionId} : {jurisdiction_name: jurisdictionName}), monitor_enabled: true }, {sort: '-last_changed', limit: 100}).then(result => {
+    staffEntities.SourceMonitorState.filter({ ...(jurisdictionId ? {jurisdiction_id: jurisdictionId} : {jurisdiction_name: jurisdictionName}), monitor_enabled: true }, {sort: '-last_changed', limit: 100}).then(result => {
       if (active) setMonitors(Array.isArray(result) ? result : result.items || []);
     }).catch(() => { if (active) setError('Monitor data could not be loaded. Refresh to try again.'); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };

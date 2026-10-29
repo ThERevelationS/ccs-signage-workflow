@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Settings as SettingsEntity } from "@/entities/all";
+import { Settings as SettingsEntity } from "@/api/gatedEntities";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, Save, Scissors, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { saveSettingsRowsSafely } from "@/components/estimator/settings/settings
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { liquidPaintRatePerSqft } from "@/components/estimator/paint/paintCalc";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
 
 const PAINT_CATEGORIES = new Set(["painting_pricing", "painting_labor", "painting_supplies"]);
 const UNIT_OPTIONS = ["oz", "pint", "quart", "liter", "gallon"];
@@ -140,8 +141,10 @@ export default function PaintingSettings() {
     patch(settingName, JSON.stringify([...tiers, { min_quantity: min, max_quantity: min + 9, labor_multiplier: 1 }]));
   };
   const removeTier = (settingName, index) => {
-    const tiers = parseJsonArray(values[settingName]).filter((_, i) => i !== index);
-    patch(settingName, JSON.stringify(tiers));
+    const tiers = parseJsonArray(values[settingName]);
+    const label = TIER_SETTINGS.find((tier) => tier.key === settingName)?.label || "labor tiers";
+    if (!window.confirm(`Remove tier ${index + 1} from ${label}? The change applies only after you click Save.`)) return;
+    patch(settingName, JSON.stringify(tiers.filter((_, i) => i !== index)));
   };
 
   const updateConsumable = (index, field, value) => {
@@ -150,7 +153,11 @@ export default function PaintingSettings() {
     patch("paint_consumables_inventory", JSON.stringify(items));
   };
   const addConsumable = () => patch("paint_consumables_inventory", JSON.stringify([...consumables, { name: "New Consumable", cost: 0, qty: 1 }]));
-  const removeConsumable = (index) => patch("paint_consumables_inventory", JSON.stringify(consumables.filter((_, i) => i !== index)));
+  const removeConsumable = (index) => {
+    const item = consumables[index];
+    if (!window.confirm(`Remove "${item?.name || "this consumable"}" from the consumables list? The change applies only after you click Save.`)) return;
+    patch("paint_consumables_inventory", JSON.stringify(consumables.filter((_, i) => i !== index)));
+  };
 
   const handleSave = async () => {
     if (settingsSaveRef.current) return;
@@ -183,7 +190,7 @@ export default function PaintingSettings() {
       <div className="max-w-[1180px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <Button onClick={handleSave} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="painting-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button onClick={handleSave} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3 flex items-center gap-3">

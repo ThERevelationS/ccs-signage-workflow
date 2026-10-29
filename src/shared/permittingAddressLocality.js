@@ -17,9 +17,25 @@ function placeIdentity(value) {
 
 // Mirrors the explicit locality-office authority roles, never descriptive office types.
 const AUTHORITY_ROLES = new Set([
-  'sign_permit', 'zoning', 'building', 'electrical', 'right_of_way',
+  'sign_permit', 'zoning', 'building', 'electrical', 'electrical_permit', 'electrical_inspection', 'right_of_way',
   'historic_review', 'planning', 'transportation', 'other',
 ]);
+
+/** Separate configured-role checks, never a claim of legal applicability or statewide completeness. */
+export function summarizeElectricalRoleCoverage(verifiedRoles = [], reviewRoles = []) {
+  const verified = new Set(verifiedRoles), pending = new Set(reviewRoles);
+  const roles = ['electrical_permit', 'electrical_inspection'];
+  const missing = roles.filter(role => !verified.has(role));
+  return {
+    status: missing.length === 0 ? 'specific_roles_reviewed' : 'specific_role_gaps',
+    roles: Object.fromEntries(roles.map(role => [role,
+      verified.has(role) ? 'staff_verified' : pending.has(role) ? 'needs_review' : 'missing'])),
+    missing_roles: missing,
+    legacy_broad_role_present: verified.has('electrical') || pending.has('electrical'),
+    applicability_verified: false,
+    complete_legal_coverage: false,
+  };
+}
 
 /** Geography and staff-reviewed permitting authority are independent facts.
  * Only complete, recognized, staff-verified role relationships are reported.
@@ -28,6 +44,7 @@ export function summarizeMatchedLocalityAuthority(locality) {
   if (!locality?.id) return {
     status: 'unresolved', verified_roles: [], verified_office_count: 0, other_office_count: 0,
     coverage_status: 'unresolved', roles_needing_review: [],
+    electrical_coverage: summarizeElectricalRoleCoverage(),
   };
   const offices = Array.isArray(locality.offices) ? locality.offices : [];
   const verified = offices.filter(office =>
@@ -51,6 +68,7 @@ export function summarizeMatchedLocalityAuthority(locality) {
       : verified.length === 0 ? 'not_verified'
         : needsReview.length > 0 ? 'partial' : 'configured_offices_reviewed',
     roles_needing_review: [...new Set(rolesNeedingReview)],
+    electrical_coverage: summarizeElectricalRoleCoverage(verified.flatMap(office => office.authority_roles), rolesNeedingReview),
   };
 }
 

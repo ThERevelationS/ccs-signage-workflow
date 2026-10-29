@@ -20,7 +20,7 @@ try {
   await writeFile(path.join(scratch, "main.jsx"), [
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
-    'import FleetMechanic from "/@fs/app/src/pages/FleetMechanic.jsx";',
+    `import FleetMechanic from "/@fs/${appRoot.replace(/\\/g, "/")}/src/pages/FleetMechanic.jsx";`,
     'createRoot(document.getElementById("root")).render(<FleetMechanic />);',
   ].join("\n"));
 
@@ -83,7 +83,7 @@ try {
       {find:"@/api/base44Client",replacement:path.join(scratch,"mockBase44.js")},
       {find:/^@\//,replacement:path.join(appRoot,"src")+"/"},
     ]},
-    server:{host:"127.0.0.1",port:0,strictPort:false,fs:{allow:[appRoot,scratch]}},
+    server:{host:"127.0.0.1",port:0,strictPort:false,fs:{allow:[appRoot,scratch],strict:false}},
     logLevel:"error",
   });
   await vite.listen();

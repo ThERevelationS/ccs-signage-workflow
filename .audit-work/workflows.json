@@ -1,0 +1,202 @@
+{
+  "workflows": [
+    {
+      "id": "6adb06046dfb85c90782c9f9",
+      "name": "Smartsheet Scheduled Order Sync",
+      "description": "Runs every 15 minutes server-side, offset 8 minutes after the Sales Pipeline sync so the two pipelines do not compete for the Smartsheet read budget. Order Form follows its enabled pull/push directions: pull may create Base44 Orders from new verified Smartsheet rows; push writes only Orders durably marked for sync and may create a linked Smartsheet row for a new pending Order when creation is enabled. Save & Sync remains available for immediate explicit writes. Only runs when global sync is enabled and observation mode is off.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 394,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T09:30:34.453000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6ac1cf43d675a2ad12567324",
+      "name": "Permitting Research Backlog Refill",
+      "description": "Runs every 15 minutes and invokes the cost-controlled permitting research dispatcher. Runtime admin settings can pause dispatch, reduce batch size, cap active research, or impose a daily release limit without shrinking the statewide backlog.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 2210,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T09:35:03.969000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6ac199bd87791ae0a845a6a6",
+      "name": "Permitting Operational Alerts",
+      "description": "Deduped operational automations: missing-document warnings for PermitLineItems whose locality has verified requirements. Respects existing WorkOrder/PermitLineItem semantics — recommends, never rewrites active permit processes.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 14,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-26T11:06:12.310000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6ac199bd87791ae0a845a6a4",
+      "name": "Source Monitor Scan",
+      "description": "Cheap programmatic source monitoring: fetches monitored source URLs and compares hash/headers. AI is only invoked when a change is detected. Flags affected approved rules for re-review and creates deduped alerts. Never erases archives or auto-promotes drafts.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 21,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-26T10:04:01.676000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6abf090602bcc7d210392a20",
+      "name": "Time Clock Stale Shift Monitor",
+      "description": "Hourly Time Clock stale-shift detection. Creates an auditable open Punch Exception after the existing 18-hour cross-date threshold without changing any punch time.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 515,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T09:19:15.542000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6ab4353160fa5a31d3dc5618",
+      "name": "Smartsheet Scheduled Sales Sync",
+      "description": "Runs every 15 minutes server-side. Sales Pipeline follows its enabled pull/push directions and reports to its own smartsheetSalesSyncStatus coordinator. Order Form sync runs separately on its own schedule. Only runs when global sync is enabled and observation mode is off.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 567,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T09:25:13.225000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6aa28ec86a7a1c1e050a555b",
+      "name": "Fleet Bouncie Alert Sync",
+      "description": "Evaluates CCS-local Fleet alert thresholds from Bouncie vehicle stats every 5 minutes. Uses durable per-vehicle runtime state so persistent threshold breaches do not create repeated alerts. Does not modify Bouncie-owned settings or webhooks.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 11376,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T09:37:03.210000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6aa084ca6817e3419b405f5f",
+      "name": "Fleet Scheduled Maintenance Generation",
+      "description": "Checks due Fleet maintenance schedules every morning at 6:45am Eastern. Safe before cutover because FleetSettings.maintenance_generation_enabled defaults to false.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 44,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-26T10:49:26.082000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6aa0842d006e1c6d2c7da492",
+      "name": "Fleet Scheduled Reminders",
+      "description": "Production Fleet reminder digest check at 7:00 AM Eastern. Server-gated by FleetCutoverState and idempotent per recipient/day; the notification worker provides a configured-day fallback after 7:10 AM if the primary heartbeat is absent.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 41,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-26T11:06:51.935000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6aa08411031928cc610a13b2",
+      "name": "Fleet Notification Queue Worker",
+      "description": "Processes due Fleet email notifications every 10 minutes. Safe before cutover because FleetSettings.notifications_enabled defaults to false.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 6937,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T09:30:34.225000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6a9eb124f340ddc83f3bd0c6",
+      "name": "Permit Follow-up Reminders",
+      "description": "Daily scan of permit line items — fires permit_followup_due / permit_followup_overdue automation triggers based on next_followup_date.",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 188,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-27T08:03:30.748000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6a9eb124f340ddc83f3bd0c5",
+      "name": "Weekly Sales Duplicate Detection",
+      "description": "",
+      "status": "inactive",
+      "statusReason": "consecutive_failures",
+      "totalRuns": 35,
+      "consecutiveFailures": 5,
+      "lastRunAt": "2026-10-24T13:04:32.567000Z",
+      "lastRunStatus": "failed"
+    },
+    {
+      "id": "6a9eb124062848d428527ff2",
+      "name": "Weekly Jurisdiction Accuracy Audit",
+      "description": "AI cross-references jurisdiction data against official government sources weekly and flags potential inaccuracies for review",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 31,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-20T14:05:16.853000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6a9eb124738a5dea6cc3aed4",
+      "name": "Daily Jurisdiction Regulation Monitoring",
+      "description": "Automatically monitor all jurisdictions for regulation changes and send alerts to users\"",
+      "status": "inactive",
+      "statusReason": null,
+      "totalRuns": 43,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-04-14T14:03:15.579000Z",
+      "lastRunStatus": "failed"
+    },
+    {
+      "id": "6a9eb124a65a692cade4cde6",
+      "name": "Weekly Jurisdiction Refresh",
+      "description": "",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 34,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-19T06:06:17.779000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6a9eb15b27a31b1a14a536a3",
+      "name": "Process CoreBridge Emails",
+      "description": "Checks Gmail every 10 minutes for CoreBridge estimate/invoice emails and auto-creates or updates work orders in the Sales Pipeline",
+      "status": "inactive",
+      "statusReason": null,
+      "totalRuns": 6171,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-05-21T20:15:08.290000Z",
+      "lastRunStatus": "failed"
+    },
+    {
+      "id": "6a9eb15ba65a692cade4d044",
+      "name": "Daily Deadline Reminder Check",
+      "description": "Checks for approaching and overdue deadlines daily at 8am and triggers notifications",
+      "status": "active",
+      "statusReason": null,
+      "totalRuns": 281,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-10-26T13:02:59.359000Z",
+      "lastRunStatus": "success"
+    },
+    {
+      "id": "6a9eb15b738a5dea6cc3b136",
+      "name": "Scheduled Google Drive Backup",
+      "description": "Runs daily backup to Google Drive at 2am",
+      "status": "inactive",
+      "statusReason": null,
+      "totalRuns": 134,
+      "consecutiveFailures": 0,
+      "lastRunAt": "2026-05-27T07:00:59.553000Z",
+      "lastRunStatus": "failed"
+    }
+  ]
+}

@@ -20,7 +20,10 @@ export default function VinylWorkflowPersonnel({ personnel = [], onChange, sugge
     next[idx].total_cost = num(next[idx].hourly_rate) * num(next[idx].hours);
     onChange(next);
   };
-  const remove = (idx) => onChange(personnel.filter((_, i) => i !== idx));
+  const remove = (idx) => {
+    if (!confirm(`Remove role "${personnel[idx]?.role || "this role"}" from this workflow?`)) return;
+    onChange(personnel.filter((_, i) => i !== idx));
+  };
   const add = (role) => {
     const preset = roleOptions.find(r => r.role === role) || { role, hourly_rate: 50 };
     onChange([...(personnel || []), {

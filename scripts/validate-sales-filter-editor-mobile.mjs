@@ -21,9 +21,9 @@ const row = section('<div key={index} className="mt-2 grid', '                  
 
 check(shell.includes('className="clay-card min-w-0 border-none p-3 sm:p-5 dark:border dark:border-slate-700 dark:bg-slate-950 [&>button]:hidden"'),
   "Shared dialog must use compact phone padding and a restrained desktop/dark-mode shell");
-check(shell.includes('maxWidth: activeTab === "columns" ? "96vw" : "90vw"') &&
-      shell.includes('width: activeTab === "columns" ? "1400px" : "1100px"') &&
-      shell.includes('maxHeight: "92vh", overflow: "hidden", display: "flex", flexDirection: "column"'),
+check(shell.includes('maxWidth: "98vw"') &&
+      shell.includes('width: activeTab === "columns" ? "1780px" : "1500px"') &&
+      shell.includes('maxHeight: "94vh", overflow: "hidden", display: "flex", flexDirection: "column"'),
   "Column editor may widen toward full-screen while dialog bounds remain capped");
 check(shell.includes('<DialogHeader className="shrink-0">') &&
       shell.includes('flex flex-wrap items-start justify-between gap-2') &&
@@ -92,7 +92,7 @@ check(row.includes('updateCondition(index, "field", value)') &&
   "Responsive markup must preserve existing condition-field, operator and remove actions");
 check(editor.includes('dispatchColumnDraft({ type: "undo" })') &&
       editor.includes('dispatchColumnDraft({ type: "redo" })') &&
-      editor.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
+      editor.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7') &&
       editor.includes('aria-label="Horizontal Sales Pipeline column preview"'),
   "Compact always-visible column grid, Undo/Redo and horizontal preview must remain intact");
 check(editor.includes('setSalesFilterSelectionSafely') &&

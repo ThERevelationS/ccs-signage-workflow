@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { classifyOrderPermanentRowIdentity } from '../base44/shared/smartsheetOrderPermanentRowSafety.mjs';
 import { auditOrderDateParity } from '../base44/shared/smartsheetOrderDateTranslation.mjs';
 import { orderRunRequiresReview } from '../base44/shared/smartsheetOrderRunSafety.mjs';
-import { ORDER_BACKGROUND_SYNC_POLICY } from '../base44/shared/smartsheetOrderBackgroundPolicy.mjs';
 
 const SHEET = '4963691473987460';
 const originalOrder = {
@@ -44,7 +43,6 @@ assert.equal(audit.counts.unlinked_smartsheet_rows, 1);
 assert.deepEqual(audit.samples.unlinked_rows, [{ row_id: '222' }]);
 console.log('PASS recreated row B remains an unlinked Smartsheet row requiring review');
 
-assert.equal(ORDER_BACKGROUND_SYNC_POLICY.create_base44_from_smartsheet, false);
 assert.equal(orderRunRequiresReview([{
   dataset: 'orders',
   direction: 'pull',
@@ -60,7 +58,9 @@ const engine = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'u
 
 assert.match(engine, /else if \(dataset === 'sales' && profile\?\.create_base44_from_smartsheet\)/);
 assert.doesNotMatch(engine, /else if \(profile\?\.create_base44_from_smartsheet\)/);
-console.log('PASS Order pull cannot auto-create Base44 Orders even if stale stored config tries to enable it');
+assert.match(engine, /else if \(dataset === 'orders' && profile\?\.create_base44_from_smartsheet === true\)[\s\S]*?classification\.kind !== 'populated_unlinked_order'/,
+  'Order pull auto-create requires the explicit toggle and a verified populated unlinked row');
+console.log('PASS Order pull auto-create is gated on the admin toggle plus populated-row classification');
 
 assert.match(engine, /classifyOrderPermanentRowIdentity\(record, sheetId, smartsheetRowIds\)/);
 assert.match(engine, /\.filter\(\(item: any\) => item\.identity\.state === 'missing_permanent_row'\)/);
@@ -69,5 +69,5 @@ assert.match(engine, /missing_permanent_row_record_ids:/);
 assert.match(engine, /missing_permanent_smartsheet_row_ids:/);
 assert.match(engine, /permanent_row_matching_strategy: 'configured_sheet_and_permanent_row_id_only'/);
 assert.match(engine, /automatic_relink_attempted: false/);
-assert.match(engine, /automatic_smartsheet_to_base44_create_allowed: false/);
+assert.match(engine, /automatic_smartsheet_to_base44_create_allowed: profile\?\.create_base44_from_smartsheet === true/);
 console.log('PASS Order pull reports permanent-ID delete/recreate evidence explicitly and never relinks by visible values');

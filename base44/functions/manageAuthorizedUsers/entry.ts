@@ -64,8 +64,11 @@ function adminUserView(row: any) {
     can_import_export: row?.can_import_export === true,
     can_order_export: row?.role === 'admin' && row?.can_order_export === true,
     can_view_resources: row?.can_view_resources === true,
+    can_approve_quotes: row?.can_approve_quotes === true,
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
+    is_full_admin: row?.is_full_admin === true,
+    admin_permissions: row?.admin_permissions && typeof row.admin_permissions === 'object' && !Array.isArray(row.admin_permissions) ? row.admin_permissions : {},
     hr_data: row?.hr_data && typeof row.hr_data === 'object' && !Array.isArray(row.hr_data) ? row.hr_data : {},
     onboarding_complete: row?.onboarding_complete === true,
     has_face_enrollment: Array.isArray(row?.face_descriptors) && row.face_descriptors.length > 0,
@@ -106,12 +109,21 @@ function cleanManagedFields(value: any) {
   if (Object.prototype.hasOwnProperty.call(input, 'can_import_export')) out.can_import_export = input.can_import_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_order_export')) out.can_order_export = input.can_order_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_view_resources')) out.can_view_resources = input.can_view_resources === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'can_approve_quotes')) out.can_approve_quotes = input.can_approve_quotes === true;
   if (Object.prototype.hasOwnProperty.call(input, 'employment_type')) {
     const employmentType = String(input.employment_type || '');
     if (!EMPLOYMENT_TYPES.has(employmentType)) throw Object.assign(new Error('Employment type is invalid.'), { status: 400 });
     out.employment_type = employmentType;
   }
   if (Object.prototype.hasOwnProperty.call(input, 'can_work_pause')) out.can_work_pause = input.can_work_pause === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'is_full_admin')) out.is_full_admin = input.is_full_admin === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'admin_permissions')) {
+    const perms = input.admin_permissions;
+    if (!perms || typeof perms !== 'object' || Array.isArray(perms) || JSON.stringify(perms).length > 20000) {
+      throw Object.assign(new Error('Admin permissions are invalid.'), { status: 400 });
+    }
+    out.admin_permissions = perms;
+  }
 
   if (!Object.keys(out).length) throw Object.assign(new Error('No supported user fields were supplied.'), { status: 400 });
   if (out.role === 'admin') out.can_view_resources = true;
@@ -461,6 +473,7 @@ async function createUser(AuthorizedEmail: any, input: any) {
     can_view_resources: role === 'admin' ? true : input?.can_view_resources === true,
     employment_type: EMPLOYMENT_TYPES.has(String(input?.employment_type || 'hourly')) ? String(input.employment_type || 'hourly') : 'hourly',
     can_work_pause: input?.can_work_pause === true,
+    can_approve_quotes: input?.can_approve_quotes === true,
     onboarding_complete: false,
   };
 
@@ -529,6 +542,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'create') {
+      const createWantsAdmin = String(body?.data?.role || '') === 'admin' || body?.data?.is_full_admin === true || Object.prototype.hasOwnProperty.call(body?.data || {}, 'admin_permissions');
+      if (createWantsAdmin && actor?.is_full_admin !== true) {
+        return Response.json({ error: 'Only a full admin can create administrator accounts.' }, { status: 403 });
+      }
       const result = await createUser(AuthorizedEmail, body?.data);
       return Response.json({ success: true, ...result });
     }
@@ -539,6 +556,12 @@ Deno.serve(async (req) => {
 
     if (action === 'update') {
       const desired = cleanManagedFields(body?.next_fields);
+      const touchesPrivilege = Object.prototype.hasOwnProperty.call(desired, 'role') ||
+        Object.prototype.hasOwnProperty.call(desired, 'is_full_admin') ||
+        Object.prototype.hasOwnProperty.call(desired, 'admin_permissions');
+      if (touchesPrivilege && actor?.is_full_admin !== true) {
+        return Response.json({ error: 'Only a full admin can change roles or admin privileges.' }, { status: 403 });
+      }
       const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
         Object.prototype.hasOwnProperty.call(desired, 'can_view_resources');
       // Existing clients may not supply expected_role. They still receive a

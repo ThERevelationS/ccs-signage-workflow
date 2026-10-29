@@ -23,6 +23,14 @@
       "type": "string",
       "description": "Optional canonical Opportunity link. Blank is valid for legacy/direct-created Estimates."
     },
+    "split_from_estimate_id": {
+      "type": "string",
+      "description": "Parent estimate id when this estimate was created via Split \u2014 links the child back to its source for traceability."
+    },
+    "duplicated_from_estimate_id": {
+      "type": "string",
+      "description": "Source estimate id when this estimate was created via Duplicate \u2014 links the clone back to its source for traceability."
+    },
     "estimating_request_id": {
       "type": "string",
       "description": "Optional EstimatingRequest link preserving the pre-estimate handoff identity."
@@ -82,6 +90,31 @@
       "type": "string",
       "description": "Target install/completion date (YYYY-MM-DD)."
     },
+    "accepted_at": {
+      "type": "string",
+      "description": "ISO timestamp of the canonical customer acceptance (mirrors the EstimateAcceptance row)."
+    },
+    "accepted_by_name": {
+      "type": "string",
+      "description": "Name recorded on the canonical customer acceptance."
+    },
+    "accepted_by_email": {
+      "type": "string",
+      "description": "Email recorded on the canonical customer acceptance."
+    },
+    "attachment_refs": {
+      "type": "array",
+      "description": "References to files/photos carried from the opportunity handoff (no binary copies).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "source": { "type": "string" }
+        }
+      }
+    },
     "priority": {
       "type": "string",
       "enum": [
@@ -126,6 +159,11 @@
       "default": 0,
       "description": "Flat project-level permit/admin fee added before tax."
     },
+    "round_quote_total": {
+      "type": "boolean",
+      "default": false,
+      "description": "Round the computed quote total to the nearest whole dollar."
+    },
     "quote_valid_days": {
       "type": "number",
       "default": 30,
@@ -135,6 +173,16 @@
       "type": "string",
       "format": "date",
       "description": "Customer-facing issue date of the currently issued quote version. Updated when the estimate transitions into sent or when an intentional revision is completed while remaining sent; historical sent estimates are not automatically backfilled."
+    },
+    "quote_expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional per-estimate override of the quote expiration date. When blank, expiry is computed as quote_issue_date + quote_valid_days."
+    },
+    "quote_expired": {
+      "type": "boolean",
+      "default": false,
+      "description": "Persisted mirror of the computed expiry check (sent past quote_issue_date + quote_valid_days) so expired quotes are reportable by filter without recomputing per row."
     },
     "quote_version": {
       "type": "number",
@@ -163,6 +211,11 @@
       "type": "boolean",
       "default": false,
       "description": "When true the customer quote shows ONE bundled project price instead of per-section pricing."
+    },
+    "section_acceptance_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true the customer portal lets the customer accept, decline, or question each quote section individually rather than only approving the whole quote."
     },
     "company_name": {
       "type": "string",
@@ -323,9 +376,27 @@
       ],
       "default": "draft"
     },
+    "is_template": {
+      "type": "boolean",
+      "description": "Marks the estimate as a reusable template \u2014 duplicated into new estimates via the New Estimate template picker."
+    },
     "cancel_reason": {
       "type": "string",
       "description": "Reason captured when the estimate is cancelled (from the Cancel Estimate modal)."
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp of the cancellation. The cancelling actor is recorded on the lifecycle EstimateRevision."
+    },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp the estimate was archived."
+    },
+    "archived_reason": {
+      "type": "string",
+      "description": "Optional reason for archiving (e.g. lost, superseded, test, merged)."
     },
     "line_items": {
       "type": "array",
@@ -509,8 +580,69 @@
       "default": 0,
       "description": "Customer-facing quote total after the full pricing waterfall (adjustments, discount, contingency, fees, tax)."
     },
+    "internal_approval": {
+      "type": "object",
+      "description": "Manager sign-off recorded when the quote total exceeds the internal approval threshold (GlobalSettings key quote_approval_threshold). Written by the approve_quote action before a quote can be sent.",
+      "properties": {
+        "approved_by_user_id": {
+          "type": "string"
+        },
+        "approved_by_email": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "threshold_at_approval": {
+          "type": "number"
+        },
+        "quote_total_at_approval": {
+          "type": "number"
+        },
+        "quote_version": {
+          "type": "number"
+        }
+      }
+    },
+    "volume_discount_tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "min_subtotal": { "type": "number" },
+          "discount_percent": { "type": "number" }
+        }
+      },
+      "description": "Snapshot of the linked customer's volume discount tiers captured at customer-select time."
+    },
+    "category_adjustments": {
+      "type": "object",
+      "description": "Per-category price adjustments for this estimate only — {"Category": percent} stacked on top of each section's own adjustment_percent."
+    },
+    "pricing_tier": {
+      "type": "number",
+      "default": 1,
+      "description": "Markup pricing tier auto-applied from the linked Customer (Customer.pricing_tier)."
+    },
+    "personal_tags": {
+      "type": "object",
+      "description": "Per-user color/label tags for personal organization — keyed by staff email, e.g. {"brett@cincisigns.com": {"color": "red"}}. Not customer-visible; each user only sees their own tag."
+    },
     "notes": {
       "type": "string"
+    },
+    "notes_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" },
+          "by": { "type": "string" },
+          "at": { "type": "string" }
+        }
+      },
+      "description": "Timestamped internal note entries appended over the estimate's life — the single notes field stays the freeform scratch field."
     },
     "edit_reason": {
       "type": "string",
@@ -536,26 +668,42 @@
     "last_product_removal_at": {
       "type": "string",
       "description": "Timestamp of the most recently completed Product removal."
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted_by": {
+      "type": "string"
     }
   },
   "required": [
     "project_name"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
+    "create": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
+    },
     "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__allinoneestimate_backend_only__"
+      }
     }
   }
 }

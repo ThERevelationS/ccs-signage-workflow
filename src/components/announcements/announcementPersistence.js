@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { getSessionToken } from "@/components/auth/EmailGate";
 
 function requireSessionToken(sessionToken, label) {
   const token = String(sessionToken || "").trim();
@@ -13,6 +14,16 @@ async function invokeAnnouncement(payload) {
   } catch (error) {
     throw new Error(error?.response?.data?.error || error?.message || "Announcement could not be changed safely.");
   }
+}
+
+export async function fetchActiveAnnouncementFeed() {
+  const result = await invokeAnnouncement({ action: "active_feed", session_token: getSessionToken() });
+  return Array.isArray(result?.announcements) ? result.announcements : [];
+}
+
+export async function acknowledgeAnnouncement({ id, viewerKey } = {}) {
+  if (!id || !viewerKey) return null;
+  return invokeAnnouncement({ action: "acknowledge", id, viewer_key: viewerKey, session_token: getSessionToken() });
 }
 
 export async function createAnnouncementWithRecovery({ data, sessionToken, label = "Announcement" } = {}) {

@@ -32,6 +32,7 @@ function harness(action){
     portalRequestRef:{current:10},
     photoDraftEpochRef:{current:0},
     base44:{functions:{invoke:async (_name,payload)=>{events.requests=(events.requests||[]).concat(payload);return response.promise;}}},
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     setWorkRecovery:value=>{currentRecovery=typeof value==="function"?value(currentRecovery):value;events.recoveries.push(currentRecovery);},
     setBusy:value=>events.busy.push(value),
     setRefreshing:value=>events.refreshing.push(value),

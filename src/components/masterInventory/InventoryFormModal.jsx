@@ -14,7 +14,7 @@ import {
   LABOR_SERVICE_CATEGORY_FIELD_NAMES,
 } from "./laborServiceCategorySchema";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
-import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
+import { createInventoryRecordWithRecovery, recordInventoryCostChanges, loadInventoryCostHistory } from "./inventoryPersistence";
 
 /**
  * Generic inventory add/edit modal driven by a `source` config object.
@@ -22,6 +22,7 @@ import { createInventoryRecordWithRecovery } from "./inventoryPersistence";
 export default function InventoryFormModal({ source, editingItem, onCancel, onSaved }) {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [costHistory, setCostHistory] = useState([]);
   const saveRef = useRef(false);
 
   // Is this the Labor & Services source? If so we drive category-specific
@@ -50,6 +51,15 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
     setFormData(initial);
   }, [source, editingItem]);
 
+  useEffect(() => {
+    if (!editingItem?.id) { setCostHistory([]); return; }
+    let active = true;
+    loadInventoryCostHistory({ itemId: editingItem.id, entityKey: source?.key || "" })
+      .then((rows) => active && setCostHistory(rows))
+      .catch(() => {});
+    return () => { active = false; };
+  }, [editingItem?.id, source?.key]);
+
   const update = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -62,7 +72,7 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
     for (const f of source.fields) {
       if (f.required) {
         const v = formData[f.name];
-        if (v === undefined || v === null || v === "") {
+        if (v === undefined || v === null || String(v).trim() === "") {
           alert(`Please fill in "${f.label}"`);
           return;
         }
@@ -123,6 +133,14 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
           nextFields: payload,
           label: `${source.label || "Inventory"} item`,
         });
+        await recordInventoryCostChanges({
+          itemId: editingItem.id,
+          entityKey: source?.key || "",
+          before: live,
+          after: payload,
+          fields: source.fields || [],
+          note: `${source.label || "Inventory"} item edit`,
+        });
       } else {
         await createInventoryRecordWithRecovery({
           entity: source.entity,
@@ -150,7 +168,7 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
               {source.icon && <source.icon className={`w-5 h-5 ${source.color}`} />}
               {editingItem?.id ? "Edit" : "Add"} {source.label}
             </CardTitle>
-            <Button variant="ghost" size="icon" onClick={onCancel}>
+            <Button variant="ghost" size="icon" onClick={onCancel} disabled={saving}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -304,6 +322,19 @@ export default function InventoryFormModal({ source, editingItem, onCancel, onSa
               </div>
             ))}
 
+            {editingItem?.id && costHistory.length > 0 && (
+              <div className="pt-4 border-t">
+                <p className="text-xs font-semibold text-slate-500 mb-1.5">Cost history</p>
+                <ul className="text-xs text-slate-600 space-y-1">
+                  {costHistory.map((h, i) => (
+                    <li key={h.id || i} className="flex justify-between gap-3">
+                      <span>{String(h.cost_field || "").replace(/_/g, " ")} — ${Number(h.old_cost || 0).toFixed(2)} → ${Number(h.new_cost || 0).toFixed(2)}</span>
+                      <span className="text-slate-400 whitespace-nowrap">{String(h.created_date || "").slice(0, 10)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
                 Cancel

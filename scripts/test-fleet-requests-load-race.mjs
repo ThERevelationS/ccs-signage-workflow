@@ -24,6 +24,7 @@ function harness(){
       auth:{me:async()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"})},
       entities:{FleetPartFluidRequest:entity,FleetEquipment:entity,FleetPart:entity,FleetFluid:entity},
     },
+    getSessionUser:()=>({id:"synthetic-admin",email:"admin@example.test",role:"admin"}),
     listAllFleetRows:(_entity,_sort,options)=>{
       const gate=defer(),group=Math.floor(calls.length/4);
       calls.push({group,label:options.label,gate});

@@ -14,6 +14,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Search,
   Trash2,
   Unlink,
 } from "lucide-react";
@@ -112,6 +113,11 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="text-[10px] text-gray-500">
               {isManual ? "Custom Product Part — edit directly or keep tracking its Master Inventory price." : isManualAddon ? "Independent add-on Part — not controlled by this Builder and safe from Builder recalculation." : isDetachedOverride ? "Independent override — Builder synchronization is disabled." : "Builder-linked Part — edit through the Builder or detach it first."}
+              {isDetachedOverride && part.builder_detached_at && (
+                <div className="text-[10px] text-amber-700 mt-0.5">
+                  Detached {new Date(part.builder_detached_at).toLocaleString()}{part.builder_detached_by ? ` by ${part.builder_detached_by}` : ""}{part.builder_detached_reason ? ` — ${part.builder_detached_reason}` : ""}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1.5">
               {estimateId && (
@@ -243,6 +249,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         <MasterPartPickerModal
           open={switchOpen}
           mode="switch"
+          suggestQuery={part.part_name || part.inventory_item_name || ""}
           initialQuantity={part.quantity || 1}
           onClose={() => setSwitchOpen(false)}
           onAdd={async (item) => {
@@ -518,12 +525,17 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [dragGroupIdx, setDragGroupIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [partPickerOpen, setPartPickerOpen] = useState(false);
   const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [partSearch, setPartSearch] = useState("");
+  const [bulkRemoving, setBulkRemoving] = useState(false);
+  const [bulkDetaching, setBulkDetaching] = useState(false);
   const groupCreateRef = useRef(false);
 
   useEffect(() => {
@@ -577,6 +589,64 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     setGroupModalOpen(false);
   };
 
+  const removableSelected = parts.filter((part) => selectedIds.has(part.id) && ["manual", "manual_addon"].includes(part.builder_sync_state));
+
+  const bulkRemoveSelected = async () => {
+    if (!builderProductId || bulkRemoving || !removableSelected.length) return;
+    const skipped = selectedIds.size - removableSelected.length;
+    const message = skipped > 0
+      ? `Remove ${removableSelected.length} independent Part${removableSelected.length === 1 ? "" : "s"}? ${skipped} Builder-linked Part${skipped === 1 ? "" : "s"} will be kept (remove those through the Builder).`
+      : `Remove ${removableSelected.length} independent Part${removableSelected.length === 1 ? "" : "s"} from this Product?`;
+    if (!window.confirm(message)) return;
+    setBulkRemoving(true);
+    const failures = [];
+    try {
+      for (const part of removableSelected) {
+        try {
+          await removeManualProductPart(part.id, { builderProductId, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
+        } catch (error) {
+          failures.push(`${part.part_name || "Part"}: ${error?.message || "remove failed"}`);
+        }
+      }
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      setRefreshNonce((value) => value + 1);
+      await onProductRefresh?.();
+      if (failures.length) {
+        window.alert(`${failures.length} Part${failures.length === 1 ? "" : "s"} could not be removed:\n${failures.join("\n")}\n\nThe Product was refreshed. If a removal had already started, use Resume Part Remove to safely continue it.`);
+      }
+    } finally {
+      setBulkRemoving(false);
+    }
+  };
+
+  const detachableSelected = parts.filter((part) => selectedIds.has(part.id) && part.builder_sync_state === "linked");
+
+  const bulkDetachSelected = async () => {
+    if (!builderProductId || bulkDetaching || !detachableSelected.length) return;
+    if (!window.confirm(`Detach ${detachableSelected.length} Builder-linked Part${detachableSelected.length === 1 ? "" : "s"} for independent override? Frozen pricing is retained; each Part stops syncing with the Builder.`)) return;
+    setBulkDetaching(true);
+    const failures = [];
+    try {
+      for (const part of detachableSelected) {
+        try {
+          await detachBuilderPartOverride(part.id, undefined, { expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" });
+        } catch (error) {
+          failures.push(`${part.part_name || "Part"}: ${error?.message || "detach failed"}`);
+        }
+      }
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      setRefreshNonce((value) => value + 1);
+      await onProductRefresh?.();
+      if (failures.length) {
+        window.alert(`${failures.length} Part${failures.length === 1 ? "" : "s"} could not be detached:\n${failures.join("\n")}\n\nThe Product was refreshed. If a detach had already started, use Resume Part Detach to safely continue it.`);
+      }
+    } finally {
+      setBulkDetaching(false);
+    }
+  };
+
   const createGroup = async (groupName) => {
     const selectedParts = parts.filter((part) => selectedIds.has(part.id));
     if (!builderProductId || selectedParts.length < 2 || groupCreateRef.current) return;
@@ -603,16 +673,26 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     }
   };
 
+  const partQuery = partSearch.trim().toLowerCase();
+  const visibleParts = useMemo(() => {
+    if (!partQuery) return parts;
+    return parts.filter((part) =>
+      [part.part_name, part.client_label, part.inventory_item_name, part.part_type, part.part_subtype]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(partQuery))
+    );
+  }, [parts, partQuery]);
+
   const grouped = useMemo(() => {
     const byGroup = new Map();
     groups.forEach((group) => byGroup.set(group.id, []));
     const ungrouped = [];
-    parts.forEach((part) => {
+    visibleParts.forEach((part) => {
       if (part.part_group_id && byGroup.has(part.part_group_id)) byGroup.get(part.part_group_id).push(part);
       else ungrouped.push(part);
     });
     return { byGroup, ungrouped };
-  }, [parts, groups]);
+  }, [visibleParts, groups]);
 
   if (!builderProductId) {
     return <div className="px-4 py-4 text-[11px] text-gray-400">This legacy Product does not have Builder Parts yet.</div>;
@@ -656,10 +736,35 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   }
 
   let offset = 0;
+  const partsFrozenTotal = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+  const persistGroupOrder = async (nextGroups) => {
+    for (let i = 0; i < nextGroups.length; i++) {
+      const g = nextGroups[i];
+      if (Number(g.sort_order) !== i) {
+        await base44.entities.BuilderPartGroup.update(g.id, { sort_order: i }).catch(() => null);
+      }
+    }
+  };
+
+
   return (
     <div className="border-t border-gray-300 bg-[#f6f6f6] px-3 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2 pb-1">
-        <div className="text-[10px] font-bold tracking-widest text-gray-500">PRODUCT PARTS · {parts.length}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="text-[10px] font-bold tracking-widest text-gray-500 whitespace-nowrap">PRODUCT PARTS · {partQuery ? `${visibleParts.length}/${parts.length}` : parts.length}</div>
+          {parts.length > 10 && (
+            <div className="relative">
+              <Search className="w-3 h-3 text-gray-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                value={partSearch}
+                onChange={(event) => setPartSearch(event.target.value)}
+                placeholder="Search parts…"
+                aria-label="Search parts in this product"
+                className="h-[26px] w-[150px] pl-6 pr-1.5 border border-gray-300 rounded bg-white text-[11px] focus:outline-none focus:border-lime-400"
+              />
+            </div>
+          )}
+        </div>
         {selectionMode ? (
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-500">{selectedIds.size} selected</span>
@@ -677,6 +782,24 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40"
             >
               Group Selected Parts
+            </button>
+            <button
+              type="button"
+              disabled={bulkDetaching || detachableSelected.length === 0}
+              onClick={bulkDetachSelected}
+              title={detachableSelected.length === 0 ? "Only Builder-linked Parts can be detached" : "Detach the selected Builder-linked Parts for independent override"}
+              className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[11px] font-bold text-amber-700 hover:bg-amber-50 disabled:opacity-40 inline-flex items-center gap-1"
+            >
+              <Unlink className="w-3.5 h-3.5" /> {bulkDetaching ? "Detaching…" : `Detach Selected (${detachableSelected.length})`}
+            </button>
+            <button
+              type="button"
+              disabled={bulkRemoving || removableSelected.length === 0}
+              onClick={bulkRemoveSelected}
+              title={removableSelected.length === 0 ? "Only independent (non-Builder) Parts can be removed here" : "Remove the selected independent Parts"}
+              className="h-[28px] px-3 rounded border border-red-300 bg-white text-[11px] font-bold text-red-600 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> {bulkRemoving ? "Removing…" : `Delete Selected (${removableSelected.length})`}
             </button>
           </div>
         ) : (
@@ -723,7 +846,32 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           />
         );
         offset += groupParts.length;
-        return node;
+        return readOnly ? node : (
+          <div
+            key={group.id}
+            draggable
+            onDragStart={() => setDragGroupIdx(groups.indexOf(group))}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIdx(groups.indexOf(group)); }}
+            onDragLeave={() => setDragOverIdx(null)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              if (dragGroupIdx === null) return;
+              const target = groups.indexOf(group);
+              const next = [...groups];
+              const [moved] = next.splice(dragGroupIdx, 1);
+              next.splice(target, 0, moved);
+              setGroups(next);
+              setDragGroupIdx(null);
+              setDragOverIdx(null);
+              await persistGroupOrder(next);
+              setRefreshNonce((v) => v + 1);
+            }}
+            onDragEnd={() => { setDragGroupIdx(null); setDragOverIdx(null); }}
+            className={`${dragOverIdx === groups.indexOf(group) ? "ring-2 ring-emerald-400 rounded" : ""}`}
+          >
+            {node}
+          </div>
+        );
       })}
       {grouped.ungrouped.map((part, index) => (
         <PartRow
@@ -743,6 +891,14 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           readOnly={readOnly}
         />
       ))}
+      {partQuery && !visibleParts.length && (
+        <div className="py-4 text-center text-[11px] text-gray-400">No Parts match "{partSearch}".</div>
+      )}
+
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200">
+        <div className="text-[10px] font-bold tracking-widest text-gray-500">PARTS TOTAL</div>
+        <div className="text-[11px] font-bold text-gray-800">{money(partsFrozenTotal)}</div>
+      </div>
 
       <CreatePartGroupModal
         open={groupModalOpen}

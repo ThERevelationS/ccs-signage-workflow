@@ -37,8 +37,14 @@ function persistCorrectionSubmission(entryId, requestId, payload) {
   try { sessionStorage.setItem(correctionSubmissionKey(entryId), JSON.stringify({ request_id: requestId, payload })); } catch {}
 }
 
-function clearCorrectionSubmission(entryId) {
-  try { sessionStorage.removeItem(correctionSubmissionKey(entryId)); } catch {}
+function clearCorrectionSubmission(entryId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId) {
+      const stored = storedCorrectionSubmission(entryId);
+      if (!stored || stored.request_id !== expectedRequestId) return;
+    }
+    sessionStorage.removeItem(correctionSubmissionKey(entryId));
+  } catch {}
 }
 
 function shouldRetainCorrectionRequest(err) {
@@ -122,12 +128,12 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
         err.confirmedServerResponse = true;
         throw err;
       }
-      clearCorrectionSubmission(entry.id);
+      clearCorrectionSubmission(entry.id, activeRequestId);
       onOpenChange(false);
       await onSubmitted?.();
     } catch (err) {
       if (!shouldRetainCorrectionRequest(err)) {
-        clearCorrectionSubmission(entry.id);
+        clearCorrectionSubmission(entry.id, activeRequestId);
         setRequestId(newRequestId());
       }
       setError(err?.response?.data?.error || err?.message || "The correction request could not be submitted safely.");

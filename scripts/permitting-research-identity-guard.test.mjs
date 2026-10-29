@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { transformSync } from 'esbuild';
 import { resolveResearchProfile, classifyBacklogRows, jurisdictionProfileTypeForQueueRow } from '../base44/shared/permittingResearchBacklog.mjs';
+import { assessOfficialQueueIdentity } from '../base44/shared/permittingSourceIdentity.mjs';
 const source=fs.readFileSync(new URL('../base44/functions/permittingResearchBacklogDispatch/entry.ts',import.meta.url),'utf8');
 const start=source.indexOf('async function ensureProfileForQueueRow(');
 const end=source.indexOf('Deno.serve',start);
 const compiled=transformSync(source.slice(start,end),{loader:'ts',format:'cjs'}).code;
-const ensure=new Function('resolveResearchProfile','jurisdictionProfileTypeForQueueRow',compiled+';return ensureProfileForQueueRow;')(resolveResearchProfile,jurisdictionProfileTypeForQueueRow);
+const ensure=new Function('resolveResearchProfile','jurisdictionProfileTypeForQueueRow','assessOfficialQueueIdentity',compiled+';return ensureProfileForQueueRow;')(resolveResearchProfile,jurisdictionProfileTypeForQueueRow,assessOfficialQueueIdentity);
 const row={id:'q',jurisdiction_name:'Union',state:'OH',jurisdiction_type:'city',parent_county_name:'Adams County'};
 const profile=(type='city',county='Adams County',id='p')=>({id,name:'Union',state:'OH',type,parent_county:{name:county},website_url:'https://example.gov'});
 

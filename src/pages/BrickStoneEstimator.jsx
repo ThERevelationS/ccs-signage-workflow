@@ -13,10 +13,11 @@ import { updateBuilderSourceProject } from "@/components/estimator/builder/sourc
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function BrickStoneEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
-  const id = embeddedProjectId || params.get("id");
+  const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
 
   const [project, setProject] = useState(null);
@@ -31,11 +32,11 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
       setLoadError("");
       try {
         const [p, legacyMats, foundationMats] = await Promise.all([
-          id ? base44.entities.BrickStoneProject.get(id) : Promise.resolve(null),
+          id ? staffEntities.BrickStoneProject.get(id) : Promise.resolve(null),
           // Legacy entity is optional compatibility data; the modern Foundation
           // inventory below is the authoritative masonry catalog and is strict.
-          loadAllEntityRows({ entity: base44.entities.BrickStoneInventory, sort: "material_name", label: "Legacy Brick & Stone inventory" }).catch(() => []),
-          loadAllEntityRows({ entity: base44.entities.FoundationInventory, sort: "material_name", label: "Foundation masonry inventory" }),
+          loadAllEntityRows({ entity: staffEntities.BrickStoneInventory, sort: "material_name", label: "Legacy Brick & Stone inventory" }).catch(() => []),
+          loadAllEntityRows({ entity: staffEntities.FoundationInventory, sort: "material_name", label: "Foundation masonry inventory" }),
         ]);
 
       // The committed SignEstimate Pro repo defined BrickStoneInventory but never
@@ -83,13 +84,35 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     [project, material]
   );
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading sectionâ€¦</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
 
   const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
   const handleSave = async () => {
+    if (!(Number(totals?.calculated_surface_area) > 0)) {
+      window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");
+      return;
+    }
     setSaving(true);
     try {
       const pricingProject = {
@@ -139,7 +162,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         customer_pricing: customerPricing,
       };
       const savedProject = await updateBuilderSourceProject({
-        entity: base44.entities.BrickStoneProject,
+        entity: staffEntities.BrickStoneProject,
         sourceId: project.id,
         expectedUpdatedAt: project.updated_date,
         data: dataToSave,
@@ -159,6 +182,8 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
         });
       }
       onSaved?.();
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -184,8 +209,9 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               <ArrowLeft className="w-4 h-4" /> Back to estimate
             </Link>
           )}
-          <Button onClick={handleSave} disabled={saving} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
-            <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+          <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
+            <Save className="w-4 h-4" /> {saving ? "Savingâ€¦" : "Save Section"}
           </Button>
         </div>
 
@@ -212,6 +238,15 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
               derived={totals}
               onChange={patch}
             />
+
+            {materials.length === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-700">
+                No masonry materials in the catalog yet.{" "}
+                <Link to="/FoundationCatalog" className="font-semibold underline hover:text-amber-900">
+                  Add brick or stone in the foundation catalog â†’
+                </Link>
+              </div>
+            )}
           </div>
 
           <div>

@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { 
   UserPlus, 
   Save, 
-  Loader2,
-  CheckCircle2
+  Loader2
 } from "lucide-react";
 import FaceRecognition from "./FaceRecognition";
 import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
+import { triggerNotification } from "@/components/workflow/NotificationService";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess }) {
   const [faceDescriptors, setFaceDescriptors] = useState([]);
@@ -19,6 +20,12 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   const [saved, setSaved] = useState(false);
   const [cameraKey, setCameraKey] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const saveSeqRef = useRef(0);
+  const capturedForRef = useRef("");
+  const completionTimerRef = useRef(null);
+
+  // A pending completion callback must not outlive an unmounted dialog.
+  useEffect(() => () => clearTimeout(completionTimerRef.current), []);
 
   // Reset camera key when dialog opens to force fresh mount
   useEffect(() => {
@@ -28,12 +35,21 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
   }, [isOpen]);
 
   const handleCapture = (descriptors) => {
+    // Descriptors belong to the employee shown when they were captured.
+    capturedForRef.current = String(user?.email || "").toLowerCase();
     setFaceDescriptors(descriptors);
   };
 
   const handleSave = async () => {
-    if (faceDescriptors.length < 3) return;
-    
+    const recordEmail = String(user?.email || "").toLowerCase();
+    if (faceDescriptors.length < 3 || !recordEmail) return;
+    // Never bind a face captured for one employee to another record.
+    if (capturedForRef.current !== recordEmail) {
+      setSaveError("The captured face data was recorded for a different employee. Close and recapture before saving.");
+      return;
+    }
+    const requestSeq = ++saveSeqRef.current;
+    const current = () => requestSeq === saveSeqRef.current;
     setIsSaving(true);
     setSaveError("");
     try {
@@ -45,19 +61,33 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
         enforceIdentity: false,
         label: `Face enrollment for ${user?.full_name || user?.email || user?.id}`
       });
+      if (!current()) return;
+      triggerNotification("user_face_enrolled", null, {
+        recordData: user,
+        eventDescription: "User face ID enrolled",
+      });
       setSaved(true);
-      setTimeout(() => {
+      completionTimerRef.current = setTimeout(() => {
+        if (!current()) return;
         onSuccess?.();
         onClose();
       }, 1500);
     } catch (err) {
       console.error("Error saving face data:", err);
-      setSaveError(err?.message || "Face enrollment could not be saved safely. Reload the user and try again.");
+      if (current()) {
+        setSaveError(err?.message || "Face enrollment could not be saved safely. Reload the user and try again.");
+      }
     }
-    setIsSaving(false);
+    if (current()) setIsSaving(false);
   };
 
   const handleClose = () => {
+    // Invalidate in-flight saves and any pending completion callback so a
+    // stale acknowledgement cannot act on the next enrollment.
+    saveSeqRef.current += 1;
+    clearTimeout(completionTimerRef.current);
+    completionTimerRef.current = null;
+    capturedForRef.current = "";
     setFaceDescriptors([]);
     setSaved(false);
     onClose();
@@ -75,7 +105,13 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
 
         {saved ? (
           <div className="flex flex-col items-center py-8">
-            <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+            <div className="relative mb-4 h-16 w-16">
+              <span className="success-burst" />
+              <svg className="h-16 w-16 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path className="check-draw" d="m8 12.5 2.5 2.5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <p className="text-lg font-medium text-green-600">Face Enrolled Successfully!</p>
             <p className="text-sm text-gray-500 mt-1">
               {user?.full_name} can now clock in using facial recognition.

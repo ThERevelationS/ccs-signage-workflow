@@ -38,7 +38,7 @@ const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', '
 assert.match(backend, /const expectedOrderSnapshot = buildOrderPullSnapshot\(row, bindings\)/);
 assert.match(backend, /_remoteSnapshot: buildOrderPullSnapshot\(row, bindings\)/);
 assert.match(backend, /const snapshot = _remoteSnapshot;/);
-assert.match(backend, /orderPulledFieldsUnchanged\(existing, fieldValues\) &&[\s\S]*?orderPullSnapshotAligned\(existing, expectedOrderSnapshot\)[\s\S]*?unchangedSkipped\+\+[\s\S]*?continue/);
+assert.match(backend, /orderPulledFieldsUnchanged\(existing, fieldValues\)\) \{[\s\S]*?!orderPullSnapshotAligned\(existing, expectedOrderSnapshot\)[\s\S]*?unchangedSkipped\+\+;\s*continue;/);
 assert.ok(backend.indexOf("orderPulledFieldsUnchanged(existing, fieldValues)") < backend.indexOf("toUpdate.push({ id: existing.id"));
 assert.match(backend, /unchanged_skipped: unchangedSkipped/);
 console.log('PASS exact Order pulls skip business-field writes only with a verified nonempty snapshot and sync timestamp');

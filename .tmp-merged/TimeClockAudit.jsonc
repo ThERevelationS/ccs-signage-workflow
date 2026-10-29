@@ -1,0 +1,123 @@
+{
+  "name": "TimeClockAudit",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "clock_in",
+        "clock_out",
+        "state_recovery",
+        "admin_correction",
+        "admin_archive",
+        "notes_update",
+        "delete",
+        "reset",
+        "badge_issue",
+        "badge_rotate",
+        "correction_request",
+        "correction_review",
+        "break_start",
+        "break_end",
+        "work_pause_start",
+        "work_pause_resume",
+        "work_pause_report_missed",
+        "time_approval",
+        "pay_period_create",
+        "pay_period_status",
+        "labor_start",
+        "labor_change",
+        "labor_stop",
+        "time_off_request_create",
+        "time_off_request_update",
+        "pto_balance_assign",
+        "pto_policy_delete",
+        "pto_policy_update",
+        "pto_policy_create",
+        "punch_exception"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "reused",
+        "blocked",
+        "recovered"
+      ]
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string"
+    },
+    "authentication_method": {
+      "type": "string",
+      "enum": [
+        "session",
+        "admin_kiosk",
+        "badge",
+        "system"
+      ]
+    },
+    "server_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "time_entry_id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "action",
+    "outcome",
+    "user_email",
+    "server_timestamp"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}

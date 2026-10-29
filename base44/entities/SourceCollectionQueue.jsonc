@@ -103,6 +103,10 @@
       "type": "integer",
       "default": 0,
       "description": "Number of automated attempts to hand this queue row to the Permitting Research app."
+    },
+    "dispatch_rank": {
+      "type": "number",
+      "description": "Dispatch ordering key: miles from downtown Cincinnati (Census gazetteer centroid). Lower ranks dispatch first; rows without a rank fall back to the Ohio-first ordering."
     }
   },
   "required": [

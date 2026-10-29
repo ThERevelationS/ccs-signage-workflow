@@ -62,7 +62,11 @@
     "summary_name"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
+    },
     "read": {
       "$or": [
         {
@@ -76,28 +80,14 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
     },
     "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__admin_settings_backend_only__"
+      }
     }
   }
 }

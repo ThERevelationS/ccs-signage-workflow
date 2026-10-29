@@ -20,7 +20,7 @@ const source = [
   block(board, 'const parseLocalDate = ', '\n};') + '\n};',
   block(board, '  const saveBoardFields = async (options) => {', '\n  // Set document title'),
   block(board, '  const updateWorkOrder = async (orderId, field, value) => {', '\n  // Check if a work order is a WIP item'),
-  block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
+  block(board, '  const isRevisitFuture = useCallback((wo) => {', '\n  // Completion must'),
   block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
   block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
   trackedPersistence.slice(trackedPersistence.indexOf('export async function saveTrackedFields(')).replace(/^export /, ''),
@@ -92,7 +92,13 @@ function harness(initialDate = tomorrow) {
     base44: { functions },
     localStorage: { getItem: () => '' },
     verifySalesSaveAcknowledgment,
+    NotificationTriggers: { sipItemRevisitSet: async () => {} },
+    currentUser: { email: 'test@example.com' },
     today,
+    todayMs: today.getTime(),
+    wipTaskDescriptions: [],
+    useMemo: (fn) => fn(),
+    useCallback: (fn) => fn,
     boardLoadSequenceRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
@@ -466,7 +472,13 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
       base44: { functions },
       localStorage: { getItem: () => '' },
       verifySalesSaveAcknowledgment,
+      NotificationTriggers: { sipItemRevisitSet: async () => {} },
+      currentUser: { email: 'test@example.com' },
       today,
+      todayMs: today.getTime(),
+      wipTaskDescriptions: [],
+      useMemo: (fn) => fn(),
+      useCallback: (fn) => fn,
       boardLoadSequenceRef: { current: 0 },
       boardSaveEpochRef: { current: 0 },
       boardSavesPendingRef: { current: 0 },
@@ -765,7 +777,7 @@ await check('clear confirmation renders inline accessible failure and requires r
 });
 
 await check('an open checklist cannot be replaced by another Work Order', async () => {
-  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const getChecklistProgress');
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
   const makeOpen = new Function('checklistDialog', 'setChecklistDialog', 'setActionError',
     handler + '\nreturn openChecklist;');
   let current = { open: false, workOrder: null };
@@ -802,8 +814,145 @@ await check('an open checklist cannot be replaced by another Work Order', async 
   assert.strictEqual(current.workOrder, other);
   makeOpen(current, update, warn)(null);
   assert.strictEqual(current.workOrder, other);
-  assert.match(board, /onClose=\{\(\) => setChecklistDialog\(\{ open: false, workOrder: null \}\)\}/);
+  assert.match(board, /onClose=\{\(\) => closeChecklistDialog\(checklistDialog\.workOrder\)\}/);
   assert.match(board, /<ProductChecklistDialog[\s\S]*?workOrder=\{checklistDialog\.workOrder\}/);
+});
+
+await check('checklist close returns focus to the job or the board heading when the opener is gone', async () => {
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
+  const makeClose = new Function('setChecklistDialog', 'setSelectedWorkOrder', 'document', 'requestAnimationFrame', 'revisitClearBoardRef',
+    handler + '\nreturn closeChecklistDialog;');
+  const wo = { id: 'W1' };
+
+  // Radix restored focus to the still-mounted opener: leave it alone.
+  const connected = { isConnected: true, focus() { this.focused = true; } };
+  let closedWith = null;
+  const calls = [];
+  const docRestored = {
+    activeElement: connected,
+    body: {},
+    querySelectorAll: () => [],
+  };
+  makeClose((v) => { closedWith = v; }, () => {}, docRestored, (fn) => calls.push(fn), { current: null })(wo);
+  assert.deepEqual(closedWith, { open: false, workOrder: null });
+  calls.shift()();
+  assert.equal(connected.focused, undefined, 'a successful Radix restore must not be overridden');
+
+  // Opener detached after the row moved sections: focus the job's visible control.
+  const visible = {
+    isConnected: true,
+    dataset: { sipsActiveFocusId: 'W1' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const hidden = {
+    isConnected: true,
+    dataset: { sipsActiveFocusId: 'W2' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const docDetached = {
+    activeElement: { isConnected: false },
+    body: {},
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [hidden, visible] : [],
+  };
+  const calls2 = [];
+  makeClose(() => {}, () => {}, docDetached, (fn) => calls2.push(fn), { current: null })(wo);
+  calls2.shift()();
+  assert.equal(visible.focused, true);
+  assert.equal(hidden.focused, undefined);
+
+  const heading = { focus() { this.focused = true; } };
+
+  // A job in Revisit Later or Completed WIP has no active-section control —
+  // its per-section focus anchor still receives focus before the heading.
+  const jobAnchor = {
+    isConnected: true,
+    dataset: { sipsJobFocusId: 'W1' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const docSection = {
+    activeElement: null,
+    body: {},
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [jobAnchor] : [],
+  };
+  const callsSection = [];
+  makeClose(() => {}, () => {}, docSection, (fn) => callsSection.push(fn), { current: heading })(wo);
+  callsSection.shift()();
+  assert.equal(jobAnchor.focused, true, 'a non-active row must land on its own section anchor');
+  assert.equal(heading.focused, undefined);
+
+  // Job filtered out everywhere: the board heading is the safe fallback.
+  const docGone = {
+    activeElement: null,
+    body: {},
+    querySelectorAll: () => [],
+  };
+  const calls3 = [];
+  makeClose(() => {}, () => {}, docGone, (fn) => calls3.push(fn), { current: heading })(wo);
+  calls3.shift()();
+  assert.equal(heading.focused, true);
+});
+
+await check('details dialog close uses the same job-anchor focus fallback', async () => {
+  const handler = block(board, '  const openChecklist = (wo) => {', '\n  const dropdownConditionByName');
+  const makeCloseDetails = new Function('setChecklistDialog', 'setSelectedWorkOrder', 'document', 'requestAnimationFrame', 'revisitClearBoardRef',
+    handler + '\nreturn closeDetailsDialog;');
+  const wo = { id: 'W1' };
+  assert.match(board, /onClose=\{\(\) => closeDetailsDialog\(selectedWorkOrder\)\}/);
+
+  // Clears the selection and does not override a successful Radix restore.
+  let closedWith = undefined;
+  const connected = { isConnected: true, focus() { this.focused = true; } };
+  const docRestored = { activeElement: connected, body: {}, querySelectorAll: () => [] };
+  const calls = [];
+  makeCloseDetails(() => {}, (v) => { closedWith = v; }, docRestored, (fn) => calls.push(fn), { current: null })(wo);
+  assert.equal(closedWith, null);
+  calls.shift()();
+  assert.equal(connected.focused, undefined, 'a successful Radix restore must not be overridden');
+
+  // Opener detached after the row moved sections: the job anchor still wins.
+  const jobAnchor = {
+    isConnected: true,
+    dataset: { sipsJobFocusId: 'W1' },
+    getClientRects: () => [1],
+    focus() { this.focused = true; },
+  };
+  const docSection = {
+    activeElement: { isConnected: false },
+    body: {},
+    querySelectorAll: (sel) => sel === '[data-sips-active-focus-id],[data-sips-job-focus-id]' ? [jobAnchor] : [],
+  };
+  const calls2 = [];
+  makeCloseDetails(() => {}, () => {}, docSection, (fn) => calls2.push(fn), { current: null })(wo);
+  calls2.shift()();
+  assert.equal(jobAnchor.focused, true, 'details close must land on the same job anchor');
+
+  // Job filtered out everywhere: the board heading remains the fallback.
+  const heading = { focus() { this.focused = true; } };
+  const docGone = { activeElement: null, body: {}, querySelectorAll: () => [] };
+  const calls3 = [];
+  makeCloseDetails(() => {}, () => {}, docGone, (fn) => calls3.push(fn), { current: heading })(wo);
+  calls3.shift()();
+  assert.equal(heading.focused, true);
+});
+
+await check('details dialog delete confirm cannot double-submit', async () => {
+  const details = readFileSync('src/components/workflow/WorkOrderDetailsDialog.jsx', 'utf8');
+  const confirm = block(details, '  const confirmDelete = async () => {', '\n  };');
+  assert.match(confirm, /if \(deletingWorkOrder\) return;/, 'a second confirm while the delete is in flight must be ignored');
+  assert.match(confirm, /setDeletingWorkOrder\(true\)[\s\S]*?await onDelete\(workOrder\)/, 'the in-flight flag must be set before the write begins');
+  assert.match(confirm, /finally \{\s*setDeletingWorkOrder\(false\);/, 'the flag must reset even when the delete throws');
+  assert.match(details, /AlertDialogAction onClick=\{confirmDelete\} disabled=\{deletingWorkOrder\}/, 'the confirm action must be disabled while deleting');
+});
+
+await check('details dialog inline field save cannot double-submit its own CAS', async () => {
+  const details = readFileSync('src/components/workflow/WorkOrderDetailsDialog.jsx', 'utf8');
+  const save = block(details, '  const saveEdit = async (field) => {', '\n  const cancelEdit');
+  assert.match(save, /if \(inlineEditSavingRef\.current\.has\(field\)\) return;/, 'a second save while one is in flight must be ignored');
+  assert.match(save, /inlineEditSavingRef\.current\.add\(field\)[\s\S]*?replaceWorkOrderFieldsIfUnchanged/, 'the in-flight flag must be set before the conditional write');
+  assert.match(save, /finally \{\s*inlineEditSavingRef\.current\.delete\(field\);/, 'the flag must reset even when the save throws');
 });
 
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');

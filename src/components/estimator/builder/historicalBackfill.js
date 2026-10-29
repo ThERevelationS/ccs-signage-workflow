@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
 import { ensureEstimateBuilderProducts } from "@/components/estimator/builder/builderService";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const APP_ID = "68dfcc5e57bbbc35387da97c";
 const MIGRATION_BATCH = "builder_bom_backfill_v1";
@@ -44,7 +45,7 @@ function releaseLocalLock() {
 }
 
 async function migrationRows() {
-  const rows = await base44.entities.LegacyMigrationMap.filter({ migration_batch: MIGRATION_BATCH });
+  const rows = await staffEntities.LegacyMigrationMap.filter({ migration_batch: MIGRATION_BATCH });
   if (!Array.isArray(rows)) {
     throw new Error("Historical Product/BOM migration status could not be verified. Migration was paused without writing anything.");
   }
@@ -65,7 +66,7 @@ function hasCompleteMarker(rows) {
 
 async function markEstimateComplete(estimate) {
   const builderIds = (estimate?.line_items || []).map((line) => line.builder_product_id).filter(Boolean);
-  await base44.entities.LegacyMigrationMap.create({
+  await staffEntities.LegacyMigrationMap.create({
     source_app_id: APP_ID,
     source_entity: "AllInOneEstimate",
     source_id: estimate.id,
@@ -84,7 +85,7 @@ async function markEstimateComplete(estimate) {
 }
 
 async function markBatchComplete(estimates, processedCount) {
-  await base44.entities.LegacyMigrationMap.create({
+  await staffEntities.LegacyMigrationMap.create({
     source_app_id: APP_ID,
     source_entity: "AllInOneEstimate",
     source_id: COMPLETE_SENTINEL,

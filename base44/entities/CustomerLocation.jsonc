@@ -1,0 +1,109 @@
+{
+  "name": "CustomerLocation",
+  "type": "object",
+  "description": "Canonical reusable physical location/site belonging to a shared Customer. Owns site identity, addressing and jurisdiction hints. Opportunity, EstimatingRequest, Orders and future installation/permitting flows link here by location_id once resolved.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one location create."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Owning canonical Customer id."
+    },
+    "label": {
+      "type": "string",
+      "description": "Human label such as 'Main Office', 'Storefront', or the street address."
+    },
+    "address_line_1": {
+      "type": "string"
+    },
+    "address_line_2": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "postal_code": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "default": "US"
+    },
+    "site_type": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "install",
+        "billing",
+        "install_and_billing",
+        "mailing",
+        "other"
+      ],
+      "default": "unknown"
+    },
+    "is_primary_site": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_billing_address": {
+      "type": "boolean",
+      "default": false
+    },
+    "jurisdiction_profile_id": {
+      "type": "string",
+      "description": "Resolved Permitting JurisdictionProfile id when known. Nullable until jurisdiction resolution runs; never fabricate."
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Display jurisdiction name captured with the resolution evidence."
+    },
+    "county": {
+      "type": "string"
+    },
+    "parcel_id": {
+      "type": "string"
+    },
+    "property_owner_name": {
+      "type": "string",
+      "description": "Property owner of record when different from the customer; permitting evidence."
+    },
+    "access_notes": {
+      "type": "string",
+      "description": "Gate codes, entry instructions, site contact details."
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Provenance: which record/import promoted this location (e.g. WorkOrder install_location, Customer billing address, OpportunityIntake capture)."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "customer_id"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

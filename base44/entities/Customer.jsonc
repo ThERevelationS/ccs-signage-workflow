@@ -38,6 +38,25 @@
       ],
       "default": ""
     },
+    "volume_discount_tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "min_subtotal": { "type": "number" },
+          "discount_percent": { "type": "number" }
+        }
+      },
+      "description": "Per-customer volume discount tiers — when an estimate's adjusted subtotal reaches min_subtotal, discount_percent applies on top of the estimate's manual discount."
+    },
+    "last_contacted_at": {
+      "type": "string",
+      "description": "UTC timestamp of the most recent real customer contact (quote sent, portal message)."
+    },
+    "merged_into_customer_id": {
+      "type": "string",
+      "description": "Set when this Customer was merged into another canonical Customer — linked records were relinked and this row is kept for audit."
+    },
     "customer_status": {
       "type": "string",
       "enum": [
@@ -47,6 +66,13 @@
       ],
       "default": "prospect",
       "description": "Account status shown in the customer header."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Freeform customer labels (e.g. wholesale, repeat, VIP) \u2014 filterable on the customer list."
     },
     "contact_first_name": {
       "type": "string"
@@ -195,6 +221,10 @@
     "default_tax_group": {
       "type": "string"
     },
+    "quote_valid_days": {
+      "type": "number",
+      "description": "Per-customer quote validity window in days (overrides the estimate default of 30 when set)."
+    },
     "customer_origination": {
       "type": "string"
     },
@@ -232,6 +262,10 @@
       "type": "number",
       "default": 0
     },
+    "credit_hold": {
+      "type": "boolean",
+      "description": "When true, new estimates warn that the customer is on credit hold \u2014 a visible badge on the new-estimate and detail views."
+    },
     "pricing_tier": {
       "type": "number",
       "default": 1,
@@ -260,12 +294,24 @@
     "company_name"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
+    "create": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__customer_backend_only__"
+      }
+    },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__customer_backend_only__"
       }
     }
   }

@@ -1,0 +1,36 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 13,
+      "text": "import CustomerQuotePanel from \"@/components/estimator/CustomerQuotePanel\";"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1275,
+      "text": "              <CustomerQuotePanel"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1283,
+      "text": "                onQuoteDelivered={handleQuoteDelivered}"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 54,
+      "text": "export default function CustomerQuotePanel({"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 62,
+      "text": "  onQuoteDelivered,"
+    },
+    {
+      "path": "src/components/estimator/CustomerQuotePanel.jsx",
+      "line": 217,
+      "text": "        ? await onQuoteDelivered?.({"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 6
+}

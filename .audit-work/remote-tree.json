@@ -1,0 +1,5973 @@
+{
+  "entries": [
+    {
+      "name": "tailwind.config.js",
+      "path": "tailwind.config.js",
+      "type": "file",
+      "size": 2429
+    },
+    {
+      "name": "components.json",
+      "path": "components.json",
+      "type": "file",
+      "size": 444
+    },
+    {
+      "name": "README.md",
+      "path": "README.md",
+      "type": "file",
+      "size": 13
+    },
+    {
+      "name": "postcss.config.js",
+      "path": "postcss.config.js",
+      "type": "file",
+      "size": 80
+    },
+    {
+      "name": "vite.config.js",
+      "path": "vite.config.js",
+      "type": "file",
+      "size": 1063
+    },
+    {
+      "name": ".gitignore",
+      "path": ".gitignore",
+      "type": "file",
+      "size": 306
+    },
+    {
+      "name": "eslint.config.js",
+      "path": "eslint.config.js",
+      "type": "file",
+      "size": 1482
+    },
+    {
+      "name": "jsconfig.json",
+      "path": "jsconfig.json",
+      "type": "file",
+      "size": 583
+    },
+    {
+      "name": "index.html",
+      "path": "index.html",
+      "type": "file",
+      "size": 430
+    },
+    {
+      "name": "package.json",
+      "path": "package.json",
+      "type": "file",
+      "size": 3541
+    },
+    {
+      "name": "AGENTS.md",
+      "path": "AGENTS.md",
+      "type": "file",
+      "size": 1984
+    },
+    {
+      "name": "docs",
+      "path": "docs",
+      "type": "directory"
+    },
+    {
+      "name": "admin-automation-ordinary-operation-recovery-2026-10-22.md",
+      "path": "docs/admin-automation-ordinary-operation-recovery-2026-10-22.md",
+      "type": "file",
+      "size": 2144
+    },
+    {
+      "name": "admin-automation-pre-dispatch-and-capability-freshness-2026-10-22.md",
+      "path": "docs/admin-automation-pre-dispatch-and-capability-freshness-2026-10-22.md",
+      "type": "file",
+      "size": 15877
+    },
+    {
+      "name": "bouncie-connection-singleton-race-review.md",
+      "path": "docs/bouncie-connection-singleton-race-review.md",
+      "type": "file",
+      "size": 2226
+    },
+    {
+      "name": "fiscal-court-agenda-2026-10-06-extracted-text-2026-10-03.txt",
+      "path": "docs/fiscal-court-agenda-2026-10-06-extracted-text-2026-10-03.txt",
+      "type": "file",
+      "size": 4199
+    },
+    {
+      "name": "fleet-analytics-detail-load-fencing-review.md",
+      "path": "docs/fleet-analytics-detail-load-fencing-review.md",
+      "type": "file",
+      "size": 3926
+    },
+    {
+      "name": "fleet-component-load-fencing-review.md",
+      "path": "docs/fleet-component-load-fencing-review.md",
+      "type": "file",
+      "size": 3180
+    },
+    {
+      "name": "fleet-cutover-reader-election-review.md",
+      "path": "docs/fleet-cutover-reader-election-review.md",
+      "type": "file",
+      "size": 2700
+    },
+    {
+      "name": "fleet-cutover-singleton-race-review.md",
+      "path": "docs/fleet-cutover-singleton-race-review.md",
+      "type": "file",
+      "size": 2941
+    },
+    {
+      "name": "fleet-equipment-scoped-load-fencing-review.md",
+      "path": "docs/fleet-equipment-scoped-load-fencing-review.md",
+      "type": "file",
+      "size": 1828
+    },
+    {
+      "name": "fleet-history-equipment-load-fencing-review.md",
+      "path": "docs/fleet-history-equipment-load-fencing-review.md",
+      "type": "file",
+      "size": 3714
+    },
+    {
+      "name": "fleet-history-status-mutation-review.md",
+      "path": "docs/fleet-history-status-mutation-review.md",
+      "type": "file",
+      "size": 2732
+    },
+    {
+      "name": "fleet-inspections-refresh-response-fencing-review.md",
+      "path": "docs/fleet-inspections-refresh-response-fencing-review.md",
+      "type": "file",
+      "size": 2430
+    },
+    {
+      "name": "fleet-inventory-edit-version-review.md",
+      "path": "docs/fleet-inventory-edit-version-review.md",
+      "type": "file",
+      "size": 1133
+    },
+    {
+      "name": "fleet-inventory-load-fencing-review.md",
+      "path": "docs/fleet-inventory-load-fencing-review.md",
+      "type": "file",
+      "size": 1745
+    },
+    {
+      "name": "fleet-maintenance-refresh-response-fencing-review.md",
+      "path": "docs/fleet-maintenance-refresh-response-fencing-review.md",
+      "type": "file",
+      "size": 2254
+    },
+    {
+      "name": "fleet-mechanic-authorization-atomicity-review.md",
+      "path": "docs/fleet-mechanic-authorization-atomicity-review.md",
+      "type": "file",
+      "size": 46950
+    },
+    {
+      "name": "fleet-part-finder-upgrade-review.md",
+      "path": "docs/fleet-part-finder-upgrade-review.md",
+      "type": "file",
+      "size": 3827
+    },
+    {
+      "name": "fleet-request-unit-cost-validation-review.md",
+      "path": "docs/fleet-request-unit-cost-validation-review.md",
+      "type": "file",
+      "size": 959
+    },
+    {
+      "name": "fleet-requests-refresh-response-fencing-review.md",
+      "path": "docs/fleet-requests-refresh-response-fencing-review.md",
+      "type": "file",
+      "size": 1310
+    },
+    {
+      "name": "fleet-settings-load-fencing-review.md",
+      "path": "docs/fleet-settings-load-fencing-review.md",
+      "type": "file",
+      "size": 3139
+    },
+    {
+      "name": "fleet-settings-reader-election-review.md",
+      "path": "docs/fleet-settings-reader-election-review.md",
+      "type": "file",
+      "size": 2549
+    },
+    {
+      "name": "fleet-tracking-load-fencing-review.md",
+      "path": "docs/fleet-tracking-load-fencing-review.md",
+      "type": "file",
+      "size": 3489
+    },
+    {
+      "name": "fleet-work-order-list-refresh-review.md",
+      "path": "docs/fleet-work-order-list-refresh-review.md",
+      "type": "file",
+      "size": 2184
+    },
+    {
+      "name": "order-form-duplicate-row-owner-review-2026-10-18.csv",
+      "path": "docs/order-form-duplicate-row-owner-review-2026-10-18.csv",
+      "type": "file",
+      "size": 14767
+    },
+    {
+      "name": "order-form-duplicate-row-owner-review-2026-10-18.md",
+      "path": "docs/order-form-duplicate-row-owner-review-2026-10-18.md",
+      "type": "file",
+      "size": 35421
+    },
+    {
+      "name": "order-form-historical-import-reconciliation-audit-2026-10-17.md",
+      "path": "docs/order-form-historical-import-reconciliation-audit-2026-10-17.md",
+      "type": "file",
+      "size": 16094
+    },
+    {
+      "name": "order-form-smartsheet-rowids-readonly-audit-2026-10-10.md",
+      "path": "docs/order-form-smartsheet-rowids-readonly-audit-2026-10-10.md",
+      "type": "file",
+      "size": 3603
+    },
+    {
+      "name": "permitting-10-1-coverage-audit.md",
+      "path": "docs/permitting-10-1-coverage-audit.md",
+      "type": "file",
+      "size": 208634
+    },
+    {
+      "name": "permitting-6-2-live-readiness-2026-10-05.json",
+      "path": "docs/permitting-6-2-live-readiness-2026-10-05.json",
+      "type": "file",
+      "size": 3546
+    },
+    {
+      "name": "permitting-6-3-applicability-2026-10-05.md",
+      "path": "docs/permitting-6-3-applicability-2026-10-05.md",
+      "type": "file",
+      "size": 1283
+    },
+    {
+      "name": "permitting-6-4-numeric-citations-2026-10-05.md",
+      "path": "docs/permitting-6-4-numeric-citations-2026-10-05.md",
+      "type": "file",
+      "size": 1089
+    },
+    {
+      "name": "permitting-6-5-receipt-reconciliation-2026-10-05.md",
+      "path": "docs/permitting-6-5-receipt-reconciliation-2026-10-05.md",
+      "type": "file",
+      "size": 1236
+    },
+    {
+      "name": "permitting-6-6-conflict-history-2026-10-05.md",
+      "path": "docs/permitting-6-6-conflict-history-2026-10-05.md",
+      "type": "file",
+      "size": 959
+    },
+    {
+      "name": "permitting-6-7-authenticated-2026-10-05.json",
+      "path": "docs/permitting-6-7-authenticated-2026-10-05.json",
+      "type": "file",
+      "size": 763
+    },
+    {
+      "name": "permitting-6-7-integration-usage-2026-10-05.json",
+      "path": "docs/permitting-6-7-integration-usage-2026-10-05.json",
+      "type": "file",
+      "size": 683
+    },
+    {
+      "name": "permitting-6-7-live-json-acceptance-2026-10-06.json",
+      "path": "docs/permitting-6-7-live-json-acceptance-2026-10-06.json",
+      "type": "file",
+      "size": 13905
+    },
+    {
+      "name": "permitting-6-7-provider-diagnosis-2026-10-05.json",
+      "path": "docs/permitting-6-7-provider-diagnosis-2026-10-05.json",
+      "type": "file",
+      "size": 759
+    },
+    {
+      "name": "permitting-6-7-snapshot-acceptance-2026-10-05.json",
+      "path": "docs/permitting-6-7-snapshot-acceptance-2026-10-05.json",
+      "type": "file",
+      "size": 1319
+    },
+    {
+      "name": "permitting-6-8-browser-handoff-2026-10-06.json",
+      "path": "docs/permitting-6-8-browser-handoff-2026-10-06.json",
+      "type": "file",
+      "size": 793
+    },
+    {
+      "name": "permitting-6-8-live-handoff-2026-10-06.json",
+      "path": "docs/permitting-6-8-live-handoff-2026-10-06.json",
+      "type": "file",
+      "size": 772
+    },
+    {
+      "name": "permitting-6-8-record-reconciliation-2026-10-06.json",
+      "path": "docs/permitting-6-8-record-reconciliation-2026-10-06.json",
+      "type": "file",
+      "size": 545
+    },
+    {
+      "name": "permitting-6-9-acceptance-matrix.md",
+      "path": "docs/permitting-6-9-acceptance-matrix.md",
+      "type": "file",
+      "size": 2450
+    },
+    {
+      "name": "permitting-6-9-live-category-2026-10-06.json",
+      "path": "docs/permitting-6-9-live-category-2026-10-06.json",
+      "type": "file",
+      "size": 728
+    },
+    {
+      "name": "permitting-6-9-live-exception-repair-2026-10-06.json",
+      "path": "docs/permitting-6-9-live-exception-repair-2026-10-06.json",
+      "type": "file",
+      "size": 501
+    },
+    {
+      "name": "permitting-7-3-8-3-browser-acceptance-2026-10-06.json",
+      "path": "docs/permitting-7-3-8-3-browser-acceptance-2026-10-06.json",
+      "type": "file",
+      "size": 1646
+    },
+    {
+      "name": "permitting-7-3-review-acceptance.md",
+      "path": "docs/permitting-7-3-review-acceptance.md",
+      "type": "file",
+      "size": 3099
+    },
+    {
+      "name": "permitting-8-3-search-acceptance.md",
+      "path": "docs/permitting-8-3-search-acceptance.md",
+      "type": "file",
+      "size": 6730
+    },
+    {
+      "name": "permitting-9-1-locality-evidence.md",
+      "path": "docs/permitting-9-1-locality-evidence.md",
+      "type": "file",
+      "size": 2084
+    },
+    {
+      "name": "permitting-9-2-submission-context.md",
+      "path": "docs/permitting-9-2-submission-context.md",
+      "type": "file",
+      "size": 5462
+    },
+    {
+      "name": "permitting-9-3-locality-acceptance.md",
+      "path": "docs/permitting-9-3-locality-acceptance.md",
+      "type": "file",
+      "size": 4024
+    },
+    {
+      "name": "permitting-address-archive-verification-2026-10-11.json",
+      "path": "docs/permitting-address-archive-verification-2026-10-11.json",
+      "type": "file",
+      "size": 881
+    },
+    {
+      "name": "permitting-address-document-link-verification-2026-10-11.json",
+      "path": "docs/permitting-address-document-link-verification-2026-10-11.json",
+      "type": "file",
+      "size": 758
+    },
+    {
+      "name": "permitting-address-external-originals-verification-2026-10-11.json",
+      "path": "docs/permitting-address-external-originals-verification-2026-10-11.json",
+      "type": "file",
+      "size": 539
+    },
+    {
+      "name": "permitting-address-file-status-verification-2026-10-11.json",
+      "path": "docs/permitting-address-file-status-verification-2026-10-11.json",
+      "type": "file",
+      "size": 488
+    },
+    {
+      "name": "permitting-address-map-prototype-2026-10-14.md",
+      "path": "docs/permitting-address-map-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 3215
+    },
+    {
+      "name": "permitting-address-original-batch-verification-2026-10-11.json",
+      "path": "docs/permitting-address-original-batch-verification-2026-10-11.json",
+      "type": "file",
+      "size": 537
+    },
+    {
+      "name": "permitting-address-page-continuation-verification-2026-10-11.json",
+      "path": "docs/permitting-address-page-continuation-verification-2026-10-11.json",
+      "type": "file",
+      "size": 743
+    },
+    {
+      "name": "permitting-address-page-retry-batch-verification-2026-10-11.json",
+      "path": "docs/permitting-address-page-retry-batch-verification-2026-10-11.json",
+      "type": "file",
+      "size": 705
+    },
+    {
+      "name": "permitting-address-page-retry-verification-2026-10-11.json",
+      "path": "docs/permitting-address-page-retry-verification-2026-10-11.json",
+      "type": "file",
+      "size": 866
+    },
+    {
+      "name": "permitting-address-queue-verification-2026-10-11.json",
+      "path": "docs/permitting-address-queue-verification-2026-10-11.json",
+      "type": "file",
+      "size": 846
+    },
+    {
+      "name": "permitting-address-selector-plan-2026-10-10.md",
+      "path": "docs/permitting-address-selector-plan-2026-10-10.md",
+      "type": "file",
+      "size": 15353
+    },
+    {
+      "name": "permitting-admin-research-review-verification-2026-10-11.json",
+      "path": "docs/permitting-admin-research-review-verification-2026-10-11.json",
+      "type": "file",
+      "size": 410
+    },
+    {
+      "name": "permitting-archive-catalog-bridge.md",
+      "path": "docs/permitting-archive-catalog-bridge.md",
+      "type": "file",
+      "size": 4880
+    },
+    {
+      "name": "permitting-archive-catalog-live-verification-2026-10-04.json",
+      "path": "docs/permitting-archive-catalog-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 6124
+    },
+    {
+      "name": "permitting-archive-continuation-live-verification-2026-10-04.json",
+      "path": "docs/permitting-archive-continuation-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 3153
+    },
+    {
+      "name": "permitting-backlog-dispatch-completion-2026-10-26.json",
+      "path": "docs/permitting-backlog-dispatch-completion-2026-10-26.json",
+      "type": "file",
+      "size": 3682
+    },
+    {
+      "name": "permitting-boone-ky-2026-rewrite-adoption-status-matrix-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-2026-rewrite-adoption-status-matrix-2026-10-03.json",
+      "type": "file",
+      "size": 9013
+    },
+    {
+      "name": "permitting-boone-ky-2026-zoning-rewrite-meetings-evidence-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-2026-zoning-rewrite-meetings-evidence-2026-10-03.json",
+      "type": "file",
+      "size": 1932
+    },
+    {
+      "name": "permitting-boone-ky-2026-zoning-rewrite-schedule-evidence-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-2026-zoning-rewrite-schedule-evidence-2026-10-02.json",
+      "type": "file",
+      "size": 2231
+    },
+    {
+      "name": "permitting-boone-ky-2026-zoning-update-status-evidence-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-2026-zoning-update-status-evidence-2026-10-02.json",
+      "type": "file",
+      "size": 1623
+    },
+    {
+      "name": "permitting-boone-ky-applications-baseline-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-applications-baseline-2026-10-02.json",
+      "type": "file",
+      "size": 9768
+    },
+    {
+      "name": "permitting-boone-ky-applications-forms-page-baseline-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-applications-forms-page-baseline-2026-10-02.json",
+      "type": "file",
+      "size": 2316
+    },
+    {
+      "name": "permitting-boone-ky-article34-live-index-audit-2026-09-26.json",
+      "path": "docs/permitting-boone-ky-article34-live-index-audit-2026-09-26.json",
+      "type": "file",
+      "size": 9471
+    },
+    {
+      "name": "permitting-boone-ky-article34-manifest-2026-09-26.json",
+      "path": "docs/permitting-boone-ky-article34-manifest-2026-09-26.json",
+      "type": "file",
+      "size": 10188
+    },
+    {
+      "name": "permitting-boone-ky-article34-text-2026-09-26.json",
+      "path": "docs/permitting-boone-ky-article34-text-2026-09-26.json",
+      "type": "file",
+      "size": 543983
+    },
+    {
+      "name": "permitting-boone-ky-board-of-adjustment-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-board-of-adjustment-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1515
+    },
+    {
+      "name": "permitting-boone-ky-certificate-of-appropriateness-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-certificate-of-appropriateness-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1673
+    },
+    {
+      "name": "permitting-boone-ky-change-nonconforming-use-appeals-checklist-evidence-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-change-nonconforming-use-appeals-checklist-evidence-2026-10-02.json",
+      "type": "file",
+      "size": 1815
+    },
+    {
+      "name": "permitting-boone-ky-checklists-baseline-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-checklists-baseline-2026-10-02.json",
+      "type": "file",
+      "size": 3036
+    },
+    {
+      "name": "permitting-boone-ky-concept-development-plan-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-concept-development-plan-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1452
+    },
+    {
+      "name": "permitting-boone-ky-conditional-use-permit-checklist-evidence-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-conditional-use-permit-checklist-evidence-2026-10-02.json",
+      "type": "file",
+      "size": 1734
+    },
+    {
+      "name": "permitting-boone-ky-conveyance-plat-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-conveyance-plat-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1433
+    },
+    {
+      "name": "permitting-boone-ky-design-review-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-design-review-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1420
+    },
+    {
+      "name": "permitting-boone-ky-download-manifest-2026-09-26.json",
+      "path": "docs/permitting-boone-ky-download-manifest-2026-09-26.json",
+      "type": "file",
+      "size": 15252
+    },
+    {
+      "name": "permitting-boone-ky-enacted-ordinances-2026-authority-check-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-enacted-ordinances-2026-authority-check-2026-10-03.json",
+      "type": "file",
+      "size": 3836
+    },
+    {
+      "name": "permitting-boone-ky-enacted-ordinances-authority-boundary-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-enacted-ordinances-authority-boundary-2026-10-03.json",
+      "type": "file",
+      "size": 5007
+    },
+    {
+      "name": "permitting-boone-ky-extension-of-time-site-plan-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-extension-of-time-site-plan-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1558
+    },
+    {
+      "name": "permitting-boone-ky-extracted-text-2026-09-26.json",
+      "path": "docs/permitting-boone-ky-extracted-text-2026-09-26.json",
+      "type": "file",
+      "size": 50504
+    },
+    {
+      "name": "permitting-boone-ky-final-plat-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-final-plat-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1387
+    },
+    {
+      "name": "permitting-boone-ky-fiscal-court-oct06-authority-check-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-fiscal-court-oct06-authority-check-2026-10-03.json",
+      "type": "file",
+      "size": 2969
+    },
+    {
+      "name": "permitting-boone-ky-florence-2026-enacted-ordinances-authority-check-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-florence-2026-enacted-ordinances-authority-check-2026-10-03.json",
+      "type": "file",
+      "size": 2967
+    },
+    {
+      "name": "permitting-boone-ky-forms-baseline-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-forms-baseline-2026-10-02.json",
+      "type": "file",
+      "size": 2323
+    },
+    {
+      "name": "permitting-boone-ky-grading-plan-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-grading-plan-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1414
+    },
+    {
+      "name": "permitting-boone-ky-home-occupation-permit-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-home-occupation-permit-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1480
+    },
+    {
+      "name": "permitting-boone-ky-improvement-plan-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-improvement-plan-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1447
+    },
+    {
+      "name": "permitting-boone-ky-oct07-minutes-index-recheck-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-oct07-minutes-index-recheck-2026-10-03.json",
+      "type": "file",
+      "size": 1902
+    },
+    {
+      "name": "permitting-boone-ky-planning-applications-forms-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-planning-applications-forms-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1075
+    },
+    {
+      "name": "permitting-boone-ky-planning-home-fee-schedule-evidence-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-planning-home-fee-schedule-evidence-2026-10-02.json",
+      "type": "file",
+      "size": 1801
+    },
+    {
+      "name": "permitting-boone-ky-planning-unit-legislative-authority-map-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-planning-unit-legislative-authority-map-2026-10-03.json",
+      "type": "file",
+      "size": 4040
+    },
+    {
+      "name": "permitting-boone-ky-preliminary-plat-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-preliminary-plat-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1436
+    },
+    {
+      "name": "permitting-boone-ky-primary-sources-2026-09-26.json",
+      "path": "docs/permitting-boone-ky-primary-sources-2026-09-26.json",
+      "type": "file",
+      "size": 6940
+    },
+    {
+      "name": "permitting-boone-ky-public-records-request-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-public-records-request-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1488
+    },
+    {
+      "name": "permitting-boone-ky-sign-permit-application-change-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-sign-permit-application-change-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1856
+    },
+    {
+      "name": "permitting-boone-ky-sign-permit-application-current-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-sign-permit-application-current-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1672
+    },
+    {
+      "name": "permitting-boone-ky-sign-permit-checklist-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-sign-permit-checklist-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1323
+    },
+    {
+      "name": "permitting-boone-ky-sign-permit-drawing-copy-corroboration-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-sign-permit-drawing-copy-corroboration-2026-09-28.json",
+      "type": "file",
+      "size": 1467
+    },
+    {
+      "name": "permitting-boone-ky-site-plan-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-site-plan-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1516
+    },
+    {
+      "name": "permitting-boone-ky-special-business-meeting-source-gap-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-special-business-meeting-source-gap-2026-10-02.json",
+      "type": "file",
+      "size": 1609
+    },
+    {
+      "name": "permitting-boone-ky-surface-mining-special-use-permit-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-surface-mining-special-use-permit-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1535
+    },
+    {
+      "name": "permitting-boone-ky-temporary-advertising-display-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-temporary-advertising-display-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1184
+    },
+    {
+      "name": "permitting-boone-ky-temporary-commercial-display-incorporated-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-temporary-commercial-display-incorporated-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1408
+    },
+    {
+      "name": "permitting-comparison-return-2026-10-14.md",
+      "path": "docs/permitting-comparison-return-2026-10-14.md",
+      "type": "file",
+      "size": 1956
+    },
+    {
+      "name": "permitting-boone-ky-temporary-commercial-display-seasonal-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-temporary-commercial-display-seasonal-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1433
+    },
+    {
+      "name": "permitting-boone-ky-temporary-commercial-display-seasonal-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-temporary-commercial-display-seasonal-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1375
+    },
+    {
+      "name": "permitting-boone-ky-temporary-commercial-display-unincorporated-evidence-2026-09-28.json",
+      "path": "docs/permitting-boone-ky-temporary-commercial-display-unincorporated-evidence-2026-09-28.json",
+      "type": "file",
+      "size": 1592
+    },
+    {
+      "name": "permitting-boone-ky-temporary-storage-trailer-evidence-2026-09-29.json",
+      "path": "docs/permitting-boone-ky-temporary-storage-trailer-evidence-2026-09-29.json",
+      "type": "file",
+      "size": 1382
+    },
+    {
+      "name": "permitting-boone-ky-temporary-use-permit-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-temporary-use-permit-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1413
+    },
+    {
+      "name": "permitting-boone-ky-tenant-finish-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-tenant-finish-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1406
+    },
+    {
+      "name": "permitting-boone-ky-time-limit-waiver-45-days-source-gap-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-time-limit-waiver-45-days-source-gap-2026-10-02.json",
+      "type": "file",
+      "size": 1648
+    },
+    {
+      "name": "permitting-boone-ky-uniform-wireless-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-uniform-wireless-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1426
+    },
+    {
+      "name": "permitting-boone-ky-union-2026-rewrite-authority-check-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-union-2026-rewrite-authority-check-2026-10-03.json",
+      "type": "file",
+      "size": 3918
+    },
+    {
+      "name": "permitting-boone-ky-variance-checklist-source-gap-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-variance-checklist-source-gap-2026-10-02.json",
+      "type": "file",
+      "size": 1492
+    },
+    {
+      "name": "permitting-boone-ky-waiver-of-requirements-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-waiver-of-requirements-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1480
+    },
+    {
+      "name": "permitting-boone-ky-walton-2026-rewrite-authority-check-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-walton-2026-rewrite-authority-check-2026-10-03.json",
+      "type": "file",
+      "size": 4623
+    },
+    {
+      "name": "permitting-boone-ky-zoning-certification-request-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-zoning-certification-request-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1496
+    },
+    {
+      "name": "permitting-boone-ky-zoning-map-amendment-checklist-evidence-2026-10-02.json",
+      "path": "docs/permitting-boone-ky-zoning-map-amendment-checklist-evidence-2026-10-02.json",
+      "type": "file",
+      "size": 1716
+    },
+    {
+      "name": "permitting-boone-ky-zoning-map-amendment-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-zoning-map-amendment-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1417
+    },
+    {
+      "name": "permitting-boone-ky-zoning-permit-accessory-structures-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-zoning-permit-accessory-structures-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1520
+    },
+    {
+      "name": "permitting-boone-ky-zoning-permit-residential-dwelling-unit-evidence-2026-10-01.json",
+      "path": "docs/permitting-boone-ky-zoning-permit-residential-dwelling-unit-evidence-2026-10-01.json",
+      "type": "file",
+      "size": 1544
+    },
+    {
+      "name": "permitting-boone-ky-zoning-rewrite-adoption-records-archive-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-zoning-rewrite-adoption-records-archive-2026-10-03.json",
+      "type": "file",
+      "size": 6690
+    },
+    {
+      "name": "permitting-boone-ky-zoning-rewrite-adoption-records-target-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-zoning-rewrite-adoption-records-target-2026-10-03.json",
+      "type": "file",
+      "size": 1552
+    },
+    {
+      "name": "permitting-boone-ky-zoning-rewrite-oct07-agendas-content-review-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-zoning-rewrite-oct07-agendas-content-review-2026-10-03.json",
+      "type": "file",
+      "size": 4349
+    },
+    {
+      "name": "permitting-boone-ky-zoning-rewrite-sep02-sep16-content-review-2026-10-03.json",
+      "path": "docs/permitting-boone-ky-zoning-rewrite-sep02-sep16-content-review-2026-10-03.json",
+      "type": "file",
+      "size": 4108
+    },
+    {
+      "name": "permitting-candidate-verification-toggle-guard-2026-10-14.md",
+      "path": "docs/permitting-candidate-verification-toggle-guard-2026-10-14.md",
+      "type": "file",
+      "size": 3223
+    },
+    {
+      "name": "permitting-cincinnati-currentness-review-2026-10-05.json",
+      "path": "docs/permitting-cincinnati-currentness-review-2026-10-05.json",
+      "type": "file",
+      "size": 3382
+    },
+    {
+      "name": "permitting-cincinnati-document-registration-live-2026-10-05.json",
+      "path": "docs/permitting-cincinnati-document-registration-live-2026-10-05.json",
+      "type": "file",
+      "size": 1619
+    },
+    {
+      "name": "permitting-cincinnati-pdf-page-evidence-live-2026-10-05.json",
+      "path": "docs/permitting-cincinnati-pdf-page-evidence-live-2026-10-05.json",
+      "type": "file",
+      "size": 13075
+    },
+    {
+      "name": "permitting-cincinnati-sign-handout-lineage-audit-2026-10-13.md",
+      "path": "docs/permitting-cincinnati-sign-handout-lineage-audit-2026-10-13.md",
+      "type": "file",
+      "size": 4774
+    },
+    {
+      "name": "permitting-cincinnati-sign-pages-phase410.json",
+      "path": "docs/permitting-cincinnati-sign-pages-phase410.json",
+      "type": "file",
+      "size": 12996
+    },
+    {
+      "name": "permitting-cincinnati-sign-source-preparation-phase410-live.json",
+      "path": "docs/permitting-cincinnati-sign-source-preparation-phase410-live.json",
+      "type": "file",
+      "size": 1009
+    },
+    {
+      "name": "permitting-cincinnati-sign-source-preparation-phase410.md",
+      "path": "docs/permitting-cincinnati-sign-source-preparation-phase410.md",
+      "type": "file",
+      "size": 2232
+    },
+    {
+      "name": "permitting-cincinnati-submission-forms-live-2026-10-05.json",
+      "path": "docs/permitting-cincinnati-submission-forms-live-2026-10-05.json",
+      "type": "file",
+      "size": 3743
+    },
+    {
+      "name": "permitting-cincinnati-submission-text-html-live-2026-10-05.json",
+      "path": "docs/permitting-cincinnati-submission-text-html-live-2026-10-05.json",
+      "type": "file",
+      "size": 5385
+    },
+    {
+      "name": "permitting-collection-expansion-2026-10-23.json",
+      "path": "docs/permitting-collection-expansion-2026-10-23.json",
+      "type": "file",
+      "size": 37837
+    },
+    {
+      "name": "permitting-comparison-catalog-navigation-2026-10-14.md",
+      "path": "docs/permitting-comparison-catalog-navigation-2026-10-14.md",
+      "type": "file",
+      "size": 1914
+    },
+    {
+      "name": "permitting-completeness-seed-2026-10-26.json",
+      "path": "docs/permitting-completeness-seed-2026-10-26.json",
+      "type": "file",
+      "size": 1427
+    },
+    {
+      "name": "permitting-continuation-handoff-2026-10-17.md",
+      "path": "docs/permitting-continuation-handoff-2026-10-17.md",
+      "type": "file",
+      "size": 163818
+    },
+    {
+      "name": "permitting-county-retrieval-gaps-2026-10-10.json",
+      "path": "docs/permitting-county-retrieval-gaps-2026-10-10.json",
+      "type": "file",
+      "size": 15593
+    },
+    {
+      "name": "permitting-county-retrieval-gaps-2026-10-10.md",
+      "path": "docs/permitting-county-retrieval-gaps-2026-10-10.md",
+      "type": "file",
+      "size": 5930
+    },
+    {
+      "name": "permitting-coverage-promotion-2026-10-27.json",
+      "path": "docs/permitting-coverage-promotion-2026-10-27.json",
+      "type": "file",
+      "size": 1134
+    },
+    {
+      "name": "permitting-development-authorization-2026-10-14.md",
+      "path": "docs/permitting-development-authorization-2026-10-14.md",
+      "type": "file",
+      "size": 2556
+    },
+    {
+      "name": "permitting-discovery-timestamp-provenance-2026-10-22.json",
+      "path": "docs/permitting-discovery-timestamp-provenance-2026-10-22.json",
+      "type": "file",
+      "size": 4461
+    },
+    {
+      "name": "permitting-document-availability-2026-10-14.md",
+      "path": "docs/permitting-document-availability-2026-10-14.md",
+      "type": "file",
+      "size": 2465
+    },
+    {
+      "name": "permitting-document-repository-prototype-2026-10-14.md",
+      "path": "docs/permitting-document-repository-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 4442
+    },
+    {
+      "name": "permitting-documents-browser-2026-10-14.json",
+      "path": "docs/permitting-documents-browser-2026-10-14.json",
+      "type": "file",
+      "size": 2636
+    },
+    {
+      "name": "permitting-downloader-live-readiness-2026-10-10.json",
+      "path": "docs/permitting-downloader-live-readiness-2026-10-10.json",
+      "type": "file",
+      "size": 1426
+    },
+    {
+      "name": "permitting-downloader-shared-pipeline-2026-10-10.md",
+      "path": "docs/permitting-downloader-shared-pipeline-2026-10-10.md",
+      "type": "file",
+      "size": 21796
+    },
+    {
+      "name": "permitting-draft-follow-up-browser-2026-10-17.json",
+      "path": "docs/permitting-draft-follow-up-browser-2026-10-17.json",
+      "type": "file",
+      "size": 1599
+    },
+    {
+      "name": "permitting-draft-follow-up-validation-2026-10-17.json",
+      "path": "docs/permitting-draft-follow-up-validation-2026-10-17.json",
+      "type": "file",
+      "size": 267
+    },
+    {
+      "name": "permitting-draft-library-browser-2026-10-14.json",
+      "path": "docs/permitting-draft-library-browser-2026-10-14.json",
+      "type": "file",
+      "size": 803
+    },
+    {
+      "name": "permitting-draft-library-pagination-browser-2026-10-17.json",
+      "path": "docs/permitting-draft-library-pagination-browser-2026-10-17.json",
+      "type": "file",
+      "size": 1253
+    },
+    {
+      "name": "permitting-draft-library-prototype-2026-10-14.md",
+      "path": "docs/permitting-draft-library-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 2161
+    },
+    {
+      "name": "permitting-draft-revision-browser-2026-10-17.json",
+      "path": "docs/permitting-draft-revision-browser-2026-10-17.json",
+      "type": "file",
+      "size": 1961
+    },
+    {
+      "name": "permitting-electrical-identity-browser-2026-10-18.json",
+      "path": "docs/permitting-electrical-identity-browser-2026-10-18.json",
+      "type": "file",
+      "size": 1068
+    },
+    {
+      "name": "permitting-electrical-identity-validation-2026-10-18.json",
+      "path": "docs/permitting-electrical-identity-validation-2026-10-18.json",
+      "type": "file",
+      "size": 14092
+    },
+    {
+      "name": "permitting-electrical-inquiry-browser-2026-10-18.json",
+      "path": "docs/permitting-electrical-inquiry-browser-2026-10-18.json",
+      "type": "file",
+      "size": 972
+    },
+    {
+      "name": "permitting-electrical-inquiry-validation-2026-10-18.json",
+      "path": "docs/permitting-electrical-inquiry-validation-2026-10-18.json",
+      "type": "file",
+      "size": 1385
+    },
+    {
+      "name": "permitting-electrical-review-acceptance-2026-10-13.md",
+      "path": "docs/permitting-electrical-review-acceptance-2026-10-13.md",
+      "type": "file",
+      "size": 3615
+    },
+    {
+      "name": "permitting-electrical-task-view-2026-10-14.md",
+      "path": "docs/permitting-electrical-task-view-2026-10-14.md",
+      "type": "file",
+      "size": 2369
+    },
+    {
+      "name": "permitting-electrical-workflow-handoff-2026-10-15.md",
+      "path": "docs/permitting-electrical-workflow-handoff-2026-10-15.md",
+      "type": "file",
+      "size": 2114
+    },
+    {
+      "name": "permitting-electrical-workflow-handoff-browser-2026-10-15.json",
+      "path": "docs/permitting-electrical-workflow-handoff-browser-2026-10-15.json",
+      "type": "file",
+      "size": 3147
+    },
+    {
+      "name": "permitting-external-referral-browser-verification-2026-10-10.json",
+      "path": "docs/permitting-external-referral-browser-verification-2026-10-10.json",
+      "type": "file",
+      "size": 999
+    },
+    {
+      "name": "permitting-external-referral-replay-2026-10-10.json",
+      "path": "docs/permitting-external-referral-replay-2026-10-10.json",
+      "type": "file",
+      "size": 8973
+    },
+    {
+      "name": "permitting-failed-seed-diagnosis-2026-10-26.json",
+      "path": "docs/permitting-failed-seed-diagnosis-2026-10-26.json",
+      "type": "file",
+      "size": 18791
+    },
+    {
+      "name": "permitting-hollow-profile-audit-2026-10-27.json",
+      "path": "docs/permitting-hollow-profile-audit-2026-10-27.json",
+      "type": "file",
+      "size": 2733
+    },
+    {
+      "name": "permitting-intelligence-numbered-progress-2026-10-05.md",
+      "path": "docs/permitting-intelligence-numbered-progress-2026-10-05.md",
+      "type": "file",
+      "size": 289401
+    },
+    {
+      "name": "permitting-intelligence-phased-roadmap.md",
+      "path": "docs/permitting-intelligence-phased-roadmap.md",
+      "type": "file",
+      "size": 14394
+    },
+    {
+      "name": "permitting-jurisdiction-workspace-prototype-2026-10-14.md",
+      "path": "docs/permitting-jurisdiction-workspace-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 3332
+    },
+    {
+      "name": "permitting-kenton-ky-primary-sources-2026-09-26.json",
+      "path": "docs/permitting-kenton-ky-primary-sources-2026-09-26.json",
+      "type": "file",
+      "size": 2571
+    },
+    {
+      "name": "permitting-kenton-ky-research-import-2026-09-26.json",
+      "path": "docs/permitting-kenton-ky-research-import-2026-09-26.json",
+      "type": "file",
+      "size": 93962
+    },
+    {
+      "name": "permitting-live-acceptance-2026-10-11.json",
+      "path": "docs/permitting-live-acceptance-2026-10-11.json",
+      "type": "file",
+      "size": 29861
+    },
+    {
+      "name": "permitting-live-gis-verification-2026-10-11.json",
+      "path": "docs/permitting-live-gis-verification-2026-10-11.json",
+      "type": "file",
+      "size": 8857
+    },
+    {
+      "name": "permitting-map-browser-verification-2026-10-11.json",
+      "path": "docs/permitting-map-browser-verification-2026-10-11.json",
+      "type": "file",
+      "size": 1167
+    },
+    {
+      "name": "permitting-map-browser-verification-2026-10-14.json",
+      "path": "docs/permitting-map-browser-verification-2026-10-14.json",
+      "type": "file",
+      "size": 1606
+    },
+    {
+      "name": "permitting-map-recovery-verification-2026-10-12.json",
+      "path": "docs/permitting-map-recovery-verification-2026-10-12.json",
+      "type": "file",
+      "size": 1382
+    },
+    {
+      "name": "permitting-milestone1-live-acceptance-2026-10-22.json",
+      "path": "docs/permitting-milestone1-live-acceptance-2026-10-22.json",
+      "type": "file",
+      "size": 4425
+    },
+    {
+      "name": "permitting-morrow-forms-live-verification-2026-10-04.json",
+      "path": "docs/permitting-morrow-forms-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 6140
+    },
+    {
+      "name": "permitting-office-authority-live-verification-2026-10-04.json",
+      "path": "docs/permitting-office-authority-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 2539
+    },
+    {
+      "name": "permitting-office-authority.md",
+      "path": "docs/permitting-office-authority.md",
+      "type": "file",
+      "size": 9425
+    },
+    {
+      "name": "permitting-office-candidate-evidence-panel-2026-10-14.md",
+      "path": "docs/permitting-office-candidate-evidence-panel-2026-10-14.md",
+      "type": "file",
+      "size": 2585
+    },
+    {
+      "name": "permitting-office-candidate-live-verification-2026-10-04.json",
+      "path": "docs/permitting-office-candidate-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 4852
+    },
+    {
+      "name": "permitting-office-candidate.md",
+      "path": "docs/permitting-office-candidate.md",
+      "type": "file",
+      "size": 3975
+    },
+    {
+      "name": "permitting-office-identity-browser-2026-10-14.json",
+      "path": "docs/permitting-office-identity-browser-2026-10-14.json",
+      "type": "file",
+      "size": 1503
+    },
+    {
+      "name": "permitting-office-identity-browser-acceptance-2026-10-14.md",
+      "path": "docs/permitting-office-identity-browser-acceptance-2026-10-14.md",
+      "type": "file",
+      "size": 3518
+    },
+    {
+      "name": "permitting-office-identity-browser-before-2026-10-14.json",
+      "path": "docs/permitting-office-identity-browser-before-2026-10-14.json",
+      "type": "file",
+      "size": 1713
+    },
+    {
+      "name": "permitting-office-identity-comparison-panel-2026-10-14.md",
+      "path": "docs/permitting-office-identity-comparison-panel-2026-10-14.md",
+      "type": "file",
+      "size": 3273
+    },
+    {
+      "name": "permitting-office-identity-live-verification-2026-10-04.json",
+      "path": "docs/permitting-office-identity-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 10862
+    },
+    {
+      "name": "permitting-office-identity-phase49-live-verification.json",
+      "path": "docs/permitting-office-identity-phase49-live-verification.json",
+      "type": "file",
+      "size": 2002
+    },
+    {
+      "name": "permitting-office-identity-phase49-proposal.json",
+      "path": "docs/permitting-office-identity-phase49-proposal.json",
+      "type": "file",
+      "size": 29169
+    },
+    {
+      "name": "permitting-office-identity-phase49.md",
+      "path": "docs/permitting-office-identity-phase49.md",
+      "type": "file",
+      "size": 3733
+    },
+    {
+      "name": "permitting-office-identity-preview-2026-10-14.md",
+      "path": "docs/permitting-office-identity-preview-2026-10-14.md",
+      "type": "file",
+      "size": 3436
+    },
+    {
+      "name": "permitting-office-identity-preview-live-2026-10-14.md",
+      "path": "docs/permitting-office-identity-preview-live-2026-10-14.md",
+      "type": "file",
+      "size": 2904
+    },
+    {
+      "name": "permitting-office-identity-preview-ui-2026-10-14.md",
+      "path": "docs/permitting-office-identity-preview-ui-2026-10-14.md",
+      "type": "file",
+      "size": 3823
+    },
+    {
+      "name": "permitting-office-identity.md",
+      "path": "docs/permitting-office-identity.md",
+      "type": "file",
+      "size": 4036
+    },
+    {
+      "name": "permitting-office-research-prototype-2026-10-14.md",
+      "path": "docs/permitting-office-research-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 2813
+    },
+    {
+      "name": "permitting-office-response-browser-2026-10-18.json",
+      "path": "docs/permitting-office-response-browser-2026-10-18.json",
+      "type": "file",
+      "size": 1317
+    },
+    {
+      "name": "permitting-office-response-handoff-browser-2026-10-21.json",
+      "path": "docs/permitting-office-response-handoff-browser-2026-10-21.json",
+      "type": "file",
+      "size": 1763
+    },
+    {
+      "name": "permitting-office-response-handoff-validation-2026-10-21.json",
+      "path": "docs/permitting-office-response-handoff-validation-2026-10-21.json",
+      "type": "file",
+      "size": 2357
+    },
+    {
+      "name": "permitting-office-response-validation-2026-10-18.json",
+      "path": "docs/permitting-office-response-validation-2026-10-18.json",
+      "type": "file",
+      "size": 1488
+    },
+    {
+      "name": "permitting-office-role-overview-2026-10-14.md",
+      "path": "docs/permitting-office-role-overview-2026-10-14.md",
+      "type": "file",
+      "size": 3008
+    },
+    {
+      "name": "permitting-ohio-document-access-audit-2026-10-08.json",
+      "path": "docs/permitting-ohio-document-access-audit-2026-10-08.json",
+      "type": "file",
+      "size": 38838
+    },
+    {
+      "name": "permitting-ohio-document-access-audit-2026-10-08.md",
+      "path": "docs/permitting-ohio-document-access-audit-2026-10-08.md",
+      "type": "file",
+      "size": 1427
+    },
+    {
+      "name": "permitting-ohio-document-access-audit-2026-10-09.json",
+      "path": "docs/permitting-ohio-document-access-audit-2026-10-09.json",
+      "type": "file",
+      "size": 38769
+    },
+    {
+      "name": "permitting-ohio-document-access-audit-2026-10-09.md",
+      "path": "docs/permitting-ohio-document-access-audit-2026-10-09.md",
+      "type": "file",
+      "size": 784
+    },
+    {
+      "name": "permitting-ohio-frontier-drain-2026-10-22.json",
+      "path": "docs/permitting-ohio-frontier-drain-2026-10-22.json",
+      "type": "file",
+      "size": 4156
+    },
+    {
+      "name": "permitting-ohio-locality-link-evidence-audit-2026-10-13.md",
+      "path": "docs/permitting-ohio-locality-link-evidence-audit-2026-10-13.md",
+      "type": "file",
+      "size": 6219
+    },
+    {
+      "name": "permitting-ohio-saved-electrical-gap-audit-2026-10-13.md",
+      "path": "docs/permitting-ohio-saved-electrical-gap-audit-2026-10-13.md",
+      "type": "file",
+      "size": 13270
+    },
+    {
+      "name": "permitting-pdf-rendering-verified-2026-10-14.md",
+      "path": "docs/permitting-pdf-rendering-verified-2026-10-14.md",
+      "type": "file",
+      "size": 4305
+    },
+    {
+      "name": "permitting-phase4-5-campbell-authority-2026-10-04.md",
+      "path": "docs/permitting-phase4-5-campbell-authority-2026-10-04.md",
+      "type": "file",
+      "size": 5510
+    },
+    {
+      "name": "permitting-phase4-5-campbell-authority-validation-2026-10-04.json",
+      "path": "docs/permitting-phase4-5-campbell-authority-validation-2026-10-04.json",
+      "type": "file",
+      "size": 6328
+    },
+    {
+      "name": "permitting-phase4-6-alexandria-authority-2026-10-04.md",
+      "path": "docs/permitting-phase4-6-alexandria-authority-2026-10-04.md",
+      "type": "file",
+      "size": 4455
+    },
+    {
+      "name": "permitting-phase4-6-alexandria-authority-validation-2026-10-04.json",
+      "path": "docs/permitting-phase4-6-alexandria-authority-validation-2026-10-04.json",
+      "type": "file",
+      "size": 11906
+    },
+    {
+      "name": "permitting-phase4-7-html-evidence-2026-10-04.md",
+      "path": "docs/permitting-phase4-7-html-evidence-2026-10-04.md",
+      "type": "file",
+      "size": 5538
+    },
+    {
+      "name": "timeclock-focus-timer.md",
+      "path": "docs/timeclock-focus-timer.md",
+      "type": "file",
+      "size": 2435
+    },
+    {
+      "name": "permitting-phase4-7-html-evidence-validation-2026-10-04.json",
+      "path": "docs/permitting-phase4-7-html-evidence-validation-2026-10-04.json",
+      "type": "file",
+      "size": 7243
+    },
+    {
+      "name": "permitting-phase4-8-html-office-delegation-2026-10-05.md",
+      "path": "docs/permitting-phase4-8-html-office-delegation-2026-10-05.md",
+      "type": "file",
+      "size": 4851
+    },
+    {
+      "name": "permitting-phase4-8-html-office-delegation-validation-2026-10-05.json",
+      "path": "docs/permitting-phase4-8-html-office-delegation-validation-2026-10-05.json",
+      "type": "file",
+      "size": 3002
+    },
+    {
+      "name": "permitting-phase5-capped-page-recovery-2026-10-05.md",
+      "path": "docs/permitting-phase5-capped-page-recovery-2026-10-05.md",
+      "type": "file",
+      "size": 1592
+    },
+    {
+      "name": "permitting-phase5-cincinnati-app-registration-live-2026-10-05.json",
+      "path": "docs/permitting-phase5-cincinnati-app-registration-live-2026-10-05.json",
+      "type": "file",
+      "size": 54969
+    },
+    {
+      "name": "permitting-phase5-cincinnati-applicability-review-2026-10-05.json",
+      "path": "docs/permitting-phase5-cincinnati-applicability-review-2026-10-05.json",
+      "type": "file",
+      "size": 25169
+    },
+    {
+      "name": "permitting-phase5-cincinnati-applicability-review.md",
+      "path": "docs/permitting-phase5-cincinnati-applicability-review.md",
+      "type": "file",
+      "size": 5010
+    },
+    {
+      "name": "permitting-phase5-cincinnati-code-authority-live-2026-10-05.json",
+      "path": "docs/permitting-phase5-cincinnati-code-authority-live-2026-10-05.json",
+      "type": "file",
+      "size": 1718
+    },
+    {
+      "name": "permitting-phase5-cincinnati-guide-ocr-live-2026-10-05.json",
+      "path": "docs/permitting-phase5-cincinnati-guide-ocr-live-2026-10-05.json",
+      "type": "file",
+      "size": 4642
+    },
+    {
+      "name": "permitting-phase5-discovery-scanner-replay-2026-10-05.json",
+      "path": "docs/permitting-phase5-discovery-scanner-replay-2026-10-05.json",
+      "type": "file",
+      "size": 71703
+    },
+    {
+      "name": "permitting-phase5-extensionless-pdf-pipeline-2026-10-05.md",
+      "path": "docs/permitting-phase5-extensionless-pdf-pipeline-2026-10-05.md",
+      "type": "file",
+      "size": 3073
+    },
+    {
+      "name": "permitting-phase5-live-capped-recovery-2026-10-05.md",
+      "path": "docs/permitting-phase5-live-capped-recovery-2026-10-05.md",
+      "type": "file",
+      "size": 2054
+    },
+    {
+      "name": "permitting-phase5-live-scanner-acceptance-2026-10-05.json",
+      "path": "docs/permitting-phase5-live-scanner-acceptance-2026-10-05.json",
+      "type": "file",
+      "size": 920
+    },
+    {
+      "name": "permitting-phase5-ocr-evidence-live-2026-10-05.json",
+      "path": "docs/permitting-phase5-ocr-evidence-live-2026-10-05.json",
+      "type": "file",
+      "size": 3325
+    },
+    {
+      "name": "permitting-phase5-ocr-evidence.md",
+      "path": "docs/permitting-phase5-ocr-evidence.md",
+      "type": "file",
+      "size": 3567
+    },
+    {
+      "name": "permitting-phase5-resumable-discovery-2026-10-05.md",
+      "path": "docs/permitting-phase5-resumable-discovery-2026-10-05.md",
+      "type": "file",
+      "size": 3350
+    },
+    {
+      "name": "permitting-phase5-reusable-scanner-2026-10-05.md",
+      "path": "docs/permitting-phase5-reusable-scanner-2026-10-05.md",
+      "type": "file",
+      "size": 4479
+    },
+    {
+      "name": "permitting-phase5-sign-resource-selection-2026-10-05.md",
+      "path": "docs/permitting-phase5-sign-resource-selection-2026-10-05.md",
+      "type": "file",
+      "size": 1783
+    },
+    {
+      "name": "permitting-phase5-visual-transcription-live-2026-10-05.json",
+      "path": "docs/permitting-phase5-visual-transcription-live-2026-10-05.json",
+      "type": "file",
+      "size": 3379
+    },
+    {
+      "name": "permitting-phase5-visual-transcription.md",
+      "path": "docs/permitting-phase5-visual-transcription.md",
+      "type": "file",
+      "size": 3359
+    },
+    {
+      "name": "permitting-picker-overview-browser-2026-10-14.json",
+      "path": "docs/permitting-picker-overview-browser-2026-10-14.json",
+      "type": "file",
+      "size": 1521
+    },
+    {
+      "name": "permitting-picker-overview-prototype-2026-10-14.md",
+      "path": "docs/permitting-picker-overview-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 3045
+    },
+    {
+      "name": "permitting-portland-approved-cleanup-2026-10-23.json",
+      "path": "docs/permitting-portland-approved-cleanup-2026-10-23.json",
+      "type": "file",
+      "size": 3057
+    },
+    {
+      "name": "permitting-portland-full-precleanup-backup-2026-10-23.json",
+      "path": "docs/permitting-portland-full-precleanup-backup-2026-10-23.json",
+      "type": "file",
+      "size": 1373483
+    },
+    {
+      "name": "permitting-portland-remediation-manifest-2026-10-23.json",
+      "path": "docs/permitting-portland-remediation-manifest-2026-10-23.json",
+      "type": "file",
+      "size": 811081
+    },
+    {
+      "name": "permitting-portland-remediation-plan-2026-10-23.json",
+      "path": "docs/permitting-portland-remediation-plan-2026-10-23.json",
+      "type": "file",
+      "size": 8465
+    },
+    {
+      "name": "permitting-portland-source-identity-block-2026-10-23.json",
+      "path": "docs/permitting-portland-source-identity-block-2026-10-23.json",
+      "type": "file",
+      "size": 6261
+    },
+    {
+      "name": "permitting-preview-full-restart-verification-2026-10-12.json",
+      "path": "docs/permitting-preview-full-restart-verification-2026-10-12.json",
+      "type": "file",
+      "size": 2127
+    },
+    {
+      "name": "permitting-preview-routing-support-2026-10-12.md",
+      "path": "docs/permitting-preview-routing-support-2026-10-12.md",
+      "type": "file",
+      "size": 4138
+    },
+    {
+      "name": "permitting-requirements-browser-2026-10-14.json",
+      "path": "docs/permitting-requirements-browser-2026-10-14.json",
+      "type": "file",
+      "size": 1154
+    },
+    {
+      "name": "permitting-requirements-prototype-2026-10-14.md",
+      "path": "docs/permitting-requirements-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 2802
+    },
+    {
+      "name": "permitting-rule-page-evidence-live-verification-2026-10-04.json",
+      "path": "docs/permitting-rule-page-evidence-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 3417
+    },
+    {
+      "name": "permitting-rule-page-evidence.md",
+      "path": "docs/permitting-rule-page-evidence.md",
+      "type": "file",
+      "size": 10694
+    },
+    {
+      "name": "permitting-saved-research-verification-2026-10-11.json",
+      "path": "docs/permitting-saved-research-verification-2026-10-11.json",
+      "type": "file",
+      "size": 325
+    },
+    {
+      "name": "permitting-scan-activity-browser-verification-2026-10-11.json",
+      "path": "docs/permitting-scan-activity-browser-verification-2026-10-11.json",
+      "type": "file",
+      "size": 1044
+    },
+    {
+      "name": "permitting-selector-scan-browser-verification-2026-10-11.json",
+      "path": "docs/permitting-selector-scan-browser-verification-2026-10-11.json",
+      "type": "file",
+      "size": 5556
+    },
+    {
+      "name": "permitting-sentinel-url-cleanup-manifest-2026-10-26.json",
+      "path": "docs/permitting-sentinel-url-cleanup-manifest-2026-10-26.json",
+      "type": "file",
+      "size": 367137
+    },
+    {
+      "name": "permitting-sharonville-current-publisher-listing-2026-10-14.md",
+      "path": "docs/permitting-sharonville-current-publisher-listing-2026-10-14.md",
+      "type": "file",
+      "size": 3403
+    },
+    {
+      "name": "permitting-sharonville-discovery-access-2026-10-21.json",
+      "path": "docs/permitting-sharonville-discovery-access-2026-10-21.json",
+      "type": "file",
+      "size": 4735
+    },
+    {
+      "name": "permitting-sharonville-discovery-live-2026-10-21.json",
+      "path": "docs/permitting-sharonville-discovery-live-2026-10-21.json",
+      "type": "file",
+      "size": 13304
+    },
+    {
+      "name": "permitting-sharonville-electrical-readiness-audit-2026-10-13.md",
+      "path": "docs/permitting-sharonville-electrical-readiness-audit-2026-10-13.md",
+      "type": "file",
+      "size": 5734
+    },
+    {
+      "name": "permitting-sharonville-faq-access-2026-10-21.json",
+      "path": "docs/permitting-sharonville-faq-access-2026-10-21.json",
+      "type": "file",
+      "size": 3110
+    },
+    {
+      "name": "permitting-sharonville-faq-live-2026-10-21.json",
+      "path": "docs/permitting-sharonville-faq-live-2026-10-21.json",
+      "type": "file",
+      "size": 9659
+    },
+    {
+      "name": "permitting-sharonville-guide-archive-verification-2026-10-14.md",
+      "path": "docs/permitting-sharonville-guide-archive-verification-2026-10-14.md",
+      "type": "file",
+      "size": 2954
+    },
+    {
+      "name": "permitting-sharonville-guide-page7-format-reconciliation-2026-10-14.md",
+      "path": "docs/permitting-sharonville-guide-page7-format-reconciliation-2026-10-14.md",
+      "type": "file",
+      "size": 2852
+    },
+    {
+      "name": "permitting-sharonville-guide-purpose-classification-2026-10-14.md",
+      "path": "docs/permitting-sharonville-guide-purpose-classification-2026-10-14.md",
+      "type": "file",
+      "size": 3478
+    },
+    {
+      "name": "permitting-sharonville-guide-registration-readiness-2026-10-13.md",
+      "path": "docs/permitting-sharonville-guide-registration-readiness-2026-10-13.md",
+      "type": "file",
+      "size": 4702
+    },
+    {
+      "name": "permitting-sharonville-guide-second-batch-2026-10-14.md",
+      "path": "docs/permitting-sharonville-guide-second-batch-2026-10-14.md",
+      "type": "file",
+      "size": 2599
+    },
+    {
+      "name": "permitting-sharonville-guide-second-batch-blocker-2026-10-14.md",
+      "path": "docs/permitting-sharonville-guide-second-batch-blocker-2026-10-14.md",
+      "type": "file",
+      "size": 2673
+    },
+    {
+      "name": "permitting-sharonville-guide-text-first-batch-2026-10-14.md",
+      "path": "docs/permitting-sharonville-guide-text-first-batch-2026-10-14.md",
+      "type": "file",
+      "size": 3298
+    },
+    {
+      "name": "permitting-sharonville-live-seed-discovery-2026-10-13.md",
+      "path": "docs/permitting-sharonville-live-seed-discovery-2026-10-13.md",
+      "type": "file",
+      "size": 2559
+    },
+    {
+      "name": "permitting-sharonville-office-identity-audit-2026-10-13.md",
+      "path": "docs/permitting-sharonville-office-identity-audit-2026-10-13.md",
+      "type": "file",
+      "size": 3606
+    },
+    {
+      "name": "permitting-sharonville-office-identity-review-2026-10-14.md",
+      "path": "docs/permitting-sharonville-office-identity-review-2026-10-14.md",
+      "type": "file",
+      "size": 8343
+    },
+    {
+      "name": "permitting-sharonville-permits-access-2026-10-22.json",
+      "path": "docs/permitting-sharonville-permits-access-2026-10-22.json",
+      "type": "file",
+      "size": 3595
+    },
+    {
+      "name": "permitting-sharonville-permits-live-2026-10-22.json",
+      "path": "docs/permitting-sharonville-permits-live-2026-10-22.json",
+      "type": "file",
+      "size": 9285
+    },
+    {
+      "name": "permitting-sharonville-publisher-candidate-registration-2026-10-14.md",
+      "path": "docs/permitting-sharonville-publisher-candidate-registration-2026-10-14.md",
+      "type": "file",
+      "size": 3178
+    },
+    {
+      "name": "permitting-source-text-segments.md",
+      "path": "docs/permitting-source-text-segments.md",
+      "type": "file",
+      "size": 8405
+    },
+    {
+      "name": "permitting-sharonville-publisher-identity-readiness-2026-10-13.md",
+      "path": "docs/permitting-sharonville-publisher-identity-readiness-2026-10-13.md",
+      "type": "file",
+      "size": 5188
+    },
+    {
+      "name": "permitting-sharonville-publisher-live-preview-2026-10-14.md",
+      "path": "docs/permitting-sharonville-publisher-live-preview-2026-10-14.md",
+      "type": "file",
+      "size": 2978
+    },
+    {
+      "name": "permitting-sharonville-publisher-source-readiness-2026-10-14.md",
+      "path": "docs/permitting-sharonville-publisher-source-readiness-2026-10-14.md",
+      "type": "file",
+      "size": 4168
+    },
+    {
+      "name": "permitting-sharonville-refresh-deployment-verification-2026-10-13.md",
+      "path": "docs/permitting-sharonville-refresh-deployment-verification-2026-10-13.md",
+      "type": "file",
+      "size": 2488
+    },
+    {
+      "name": "permitting-sharonville-saved-department-discovery-2026-10-14.md",
+      "path": "docs/permitting-sharonville-saved-department-discovery-2026-10-14.md",
+      "type": "file",
+      "size": 3893
+    },
+    {
+      "name": "permitting-source-authority-review-live-verification-2026-10-04.json",
+      "path": "docs/permitting-source-authority-review-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 3648
+    },
+    {
+      "name": "permitting-source-authority-review.md",
+      "path": "docs/permitting-source-authority-review.md",
+      "type": "file",
+      "size": 9310
+    },
+    {
+      "name": "permitting-source-navigation-browser-2026-10-14.json",
+      "path": "docs/permitting-source-navigation-browser-2026-10-14.json",
+      "type": "file",
+      "size": 1524
+    },
+    {
+      "name": "permitting-source-navigation-prototype-2026-10-14.md",
+      "path": "docs/permitting-source-navigation-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 4315
+    },
+    {
+      "name": "permitting-source-pdf-browser-2026-10-14.json",
+      "path": "docs/permitting-source-pdf-browser-2026-10-14.json",
+      "type": "file",
+      "size": 1987
+    },
+    {
+      "name": "permitting-source-pdf-prototype-2026-10-14.md",
+      "path": "docs/permitting-source-pdf-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 5562
+    },
+    {
+      "name": "permitting-source-review-browser-2026-10-14.json",
+      "path": "docs/permitting-source-review-browser-2026-10-14.json",
+      "type": "file",
+      "size": 1043
+    },
+    {
+      "name": "permitting-source-review-prototype-2026-10-14.md",
+      "path": "docs/permitting-source-review-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 2927
+    },
+    {
+      "name": "permitting-source-text-continuation.md",
+      "path": "docs/permitting-source-text-continuation.md",
+      "type": "file",
+      "size": 7175
+    },
+    {
+      "name": "permitting-source-text-live-verification-2026-10-04.json",
+      "path": "docs/permitting-source-text-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 5779
+    },
+    {
+      "name": "permitting-source-text-navigation-2026-10-14.md",
+      "path": "docs/permitting-source-text-navigation-2026-10-14.md",
+      "type": "file",
+      "size": 2301
+    },
+    {
+      "name": "permitting-source-text-prototype-2026-10-14.md",
+      "path": "docs/permitting-source-text-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 5369
+    },
+    {
+      "name": "permitting-source-text-segments-live-verification-2026-10-04.json",
+      "path": "docs/permitting-source-text-segments-live-verification-2026-10-04.json",
+      "type": "file",
+      "size": 5890
+    },
+    {
+      "name": "permitting-source-version-comparison-2026-10-15.md",
+      "path": "docs/permitting-source-version-comparison-2026-10-15.md",
+      "type": "file",
+      "size": 2418
+    },
+    {
+      "name": "permitting-task4-sdk-browser-acceptance-2026-10-07.md",
+      "path": "docs/permitting-task4-sdk-browser-acceptance-2026-10-07.md",
+      "type": "file",
+      "size": 1569
+    },
+    {
+      "name": "permitting-workflow-draft-browser-2026-10-14.json",
+      "path": "docs/permitting-workflow-draft-browser-2026-10-14.json",
+      "type": "file",
+      "size": 827
+    },
+    {
+      "name": "permitting-workflow-draft-browser-2026-10-15.json",
+      "path": "docs/permitting-workflow-draft-browser-2026-10-15.json",
+      "type": "file",
+      "size": 1145
+    },
+    {
+      "name": "permitting-workflow-draft-prototype-2026-10-14.md",
+      "path": "docs/permitting-workflow-draft-prototype-2026-10-14.md",
+      "type": "file",
+      "size": 2869
+    },
+    {
+      "name": "permitting-workflow-planning-overrides-2026-10-15.md",
+      "path": "docs/permitting-workflow-planning-overrides-2026-10-15.md",
+      "type": "file",
+      "size": 1601
+    },
+    {
+      "name": "permitting-workflow-planning-review-browser-2026-10-17.json",
+      "path": "docs/permitting-workflow-planning-review-browser-2026-10-17.json",
+      "type": "file",
+      "size": 1827
+    },
+    {
+      "name": "permitting-workflow-review-overrides-2026-10-15.md",
+      "path": "docs/permitting-workflow-review-overrides-2026-10-15.md",
+      "type": "file",
+      "size": 1893
+    },
+    {
+      "name": "permitting-workflow-review-packet-browser-2026-10-17.json",
+      "path": "docs/permitting-workflow-review-packet-browser-2026-10-17.json",
+      "type": "file",
+      "size": 1639
+    },
+    {
+      "name": "permitting-workflow-source-evidence-browser-2026-10-17.json",
+      "path": "docs/permitting-workflow-source-evidence-browser-2026-10-17.json",
+      "type": "file",
+      "size": 1447
+    },
+    {
+      "name": "permitting-workspace-browser-2026-10-14.json",
+      "path": "docs/permitting-workspace-browser-2026-10-14.json",
+      "type": "file",
+      "size": 919
+    },
+    {
+      "name": "planning-commission-2026-09-02-business-minutes-extracted-text-2026-10-03.txt",
+      "path": "docs/planning-commission-2026-09-02-business-minutes-extracted-text-2026-10-03.txt",
+      "type": "file",
+      "size": 30407
+    },
+    {
+      "name": "planning-commission-2026-09-16-business-agenda-annotated-extracted-text-2026-10-03.txt",
+      "path": "docs/planning-commission-2026-09-16-business-agenda-annotated-extracted-text-2026-10-03.txt",
+      "type": "file",
+      "size": 1482
+    },
+    {
+      "name": "planning-commission-2026-10-07-business-agenda-extracted-text-2026-10-03.txt",
+      "path": "docs/planning-commission-2026-10-07-business-agenda-extracted-text-2026-10-03.txt",
+      "type": "file",
+      "size": 4267
+    },
+    {
+      "name": "planning-commission-2026-10-07-public-hearing-agenda-extracted-text-2026-10-03.txt",
+      "path": "docs/planning-commission-2026-10-07-public-hearing-agenda-extracted-text-2026-10-03.txt",
+      "type": "file",
+      "size": 3256
+    },
+    {
+      "name": "sales-pipeline-phase6-canonical-person-dropdowns.md",
+      "path": "docs/sales-pipeline-phase6-canonical-person-dropdowns.md",
+      "type": "file",
+      "size": 3167
+    },
+    {
+      "name": "sales-pipeline-phase6-column-manager-review.md",
+      "path": "docs/sales-pipeline-phase6-column-manager-review.md",
+      "type": "file",
+      "size": 1746
+    },
+    {
+      "name": "sales-pipeline-phase6-column-manager-visual-rebuild.md",
+      "path": "docs/sales-pipeline-phase6-column-manager-visual-rebuild.md",
+      "type": "file",
+      "size": 3057
+    },
+    {
+      "name": "sales-pipeline-phase6-date-filter-correction.md",
+      "path": "docs/sales-pipeline-phase6-date-filter-correction.md",
+      "type": "file",
+      "size": 3369
+    },
+    {
+      "name": "sales-pipeline-phase6-date-filter-equality.md",
+      "path": "docs/sales-pipeline-phase6-date-filter-equality.md",
+      "type": "file",
+      "size": 2219
+    },
+    {
+      "name": "sales-pipeline-phase6-duplicate-single-flight.md",
+      "path": "docs/sales-pipeline-phase6-duplicate-single-flight.md",
+      "type": "file",
+      "size": 1865
+    },
+    {
+      "name": "sales-pipeline-phase6-filter-save-lock.md",
+      "path": "docs/sales-pipeline-phase6-filter-save-lock.md",
+      "type": "file",
+      "size": 1984
+    },
+    {
+      "name": "sales-pipeline-phase6-import-export-session-permission.md",
+      "path": "docs/sales-pipeline-phase6-import-export-session-permission.md",
+      "type": "file",
+      "size": 2296
+    },
+    {
+      "name": "sales-pipeline-phase6-mobile-filter-editor.md",
+      "path": "docs/sales-pipeline-phase6-mobile-filter-editor.md",
+      "type": "file",
+      "size": 3444
+    },
+    {
+      "name": "sales-pipeline-phase6-person-assignee-smartsheet-translation.md",
+      "path": "docs/sales-pipeline-phase6-person-assignee-smartsheet-translation.md",
+      "type": "file",
+      "size": 5820
+    },
+    {
+      "name": "sales-pipeline-phase6-pool-accessibility.md",
+      "path": "docs/sales-pipeline-phase6-pool-accessibility.md",
+      "type": "file",
+      "size": 2378
+    },
+    {
+      "name": "sales-pipeline-phase6-public-ui-references.md",
+      "path": "docs/sales-pipeline-phase6-public-ui-references.md",
+      "type": "file",
+      "size": 2031
+    },
+    {
+      "name": "sales-pipeline-phase6-published-roster-access.md",
+      "path": "docs/sales-pipeline-phase6-published-roster-access.md",
+      "type": "file",
+      "size": 3285
+    },
+    {
+      "name": "sales-pipeline-phase6-save-and-sync.md",
+      "path": "docs/sales-pipeline-phase6-save-and-sync.md",
+      "type": "file",
+      "size": 3400
+    },
+    {
+      "name": "sales-pipeline-phase6-save-single-flight.md",
+      "path": "docs/sales-pipeline-phase6-save-single-flight.md",
+      "type": "file",
+      "size": 1812
+    },
+    {
+      "name": "sales-pipeline-phase6-smartsheet-unknown-shells.md",
+      "path": "docs/sales-pipeline-phase6-smartsheet-unknown-shells.md",
+      "type": "file",
+      "size": 2634
+    },
+    {
+      "name": "sales-pipeline-phase6-user-filter-preferences.md",
+      "path": "docs/sales-pipeline-phase6-user-filter-preferences.md",
+      "type": "file",
+      "size": 2424
+    },
+    {
+      "name": "sales-pipeline-responsive-browser-acceptance.md",
+      "path": "docs/sales-pipeline-responsive-browser-acceptance.md",
+      "type": "file",
+      "size": 4090
+    },
+    {
+      "name": "sales-pipeline-top-menu-phases.md",
+      "path": "docs/sales-pipeline-top-menu-phases.md",
+      "type": "file",
+      "size": 5745
+    },
+    {
+      "name": "sales-smartsheet-conditional-write-assessment-2026-10-12.md",
+      "path": "docs/sales-smartsheet-conditional-write-assessment-2026-10-12.md",
+      "type": "file",
+      "size": 3394
+    },
+    {
+      "name": "sips-two-session-browser-acceptance.md",
+      "path": "docs/sips-two-session-browser-acceptance.md",
+      "type": "file",
+      "size": 5534
+    },
+    {
+      "name": "smartsheet-sync-settings-save-persistence.md",
+      "path": "docs/smartsheet-sync-settings-save-persistence.md",
+      "type": "file",
+      "size": 4523
+    },
+    {
+      "name": "timeclock-pay-period-coordinator-runbook.md",
+      "path": "docs/timeclock-pay-period-coordinator-runbook.md",
+      "type": "file",
+      "size": 5054
+    },
+    {
+      "name": "timeclock-prepublication-acceptance.md",
+      "path": "docs/timeclock-prepublication-acceptance.md",
+      "type": "file",
+      "size": 17721
+    },
+    {
+      "name": "corebridge",
+      "path": "docs/corebridge",
+      "type": "directory"
+    },
+    {
+      "name": "API_INVENTORY.md",
+      "path": "docs/corebridge/API_INVENTORY.md",
+      "type": "file",
+      "size": 3192
+    },
+    {
+      "name": "PHASE_0I_OPPORTUNITY_INTAKE_ARCHITECTURE.md",
+      "path": "docs/corebridge/PHASE_0I_OPPORTUNITY_INTAKE_ARCHITECTURE.md",
+      "type": "file",
+      "size": 22626
+    },
+    {
+      "name": "PHASE_0J_OPPORTUNITY_FOUNDATION.md",
+      "path": "docs/corebridge/PHASE_0J_OPPORTUNITY_FOUNDATION.md",
+      "type": "file",
+      "size": 6034
+    },
+    {
+      "name": "PHASE_0K_OPPORTUNITY_BRIDGE_DRY_RUN.md",
+      "path": "docs/corebridge/PHASE_0K_OPPORTUNITY_BRIDGE_DRY_RUN.md",
+      "type": "file",
+      "size": 8788
+    },
+    {
+      "name": "PHASE_0L_HISTORICAL_SALES_RECONCILIATION.md",
+      "path": "docs/corebridge/PHASE_0L_HISTORICAL_SALES_RECONCILIATION.md",
+      "type": "file",
+      "size": 8092
+    },
+    {
+      "name": "PHASE_0M_OPPORTUNITY_BRIDGE_EXECUTION_CONTRACT.md",
+      "path": "docs/corebridge/PHASE_0M_OPPORTUNITY_BRIDGE_EXECUTION_CONTRACT.md",
+      "type": "file",
+      "size": 4665
+    },
+    {
+      "name": "PHASE_0N_OPPORTUNITY_BRIDGE_DRY_RUN_PLANNER.md",
+      "path": "docs/corebridge/PHASE_0N_OPPORTUNITY_BRIDGE_DRY_RUN_PLANNER.md",
+      "type": "file",
+      "size": 6233
+    },
+    {
+      "name": "PHASE_0O_OPPORTUNITY_BRIDGE_APPLY_ENGINE.md",
+      "path": "docs/corebridge/PHASE_0O_OPPORTUNITY_BRIDGE_APPLY_ENGINE.md",
+      "type": "file",
+      "size": 7827
+    },
+    {
+      "name": "PHASE_0P_OPPORTUNITY_BRIDGE_SIMULATION_ENDPOINT.md",
+      "path": "docs/corebridge/PHASE_0P_OPPORTUNITY_BRIDGE_SIMULATION_ENDPOINT.md",
+      "type": "file",
+      "size": 4765
+    },
+    {
+      "name": "PHASE_0Q_OPPORTUNITY_BRIDGE_REVIEW_UX.md",
+      "path": "docs/corebridge/PHASE_0Q_OPPORTUNITY_BRIDGE_REVIEW_UX.md",
+      "type": "file",
+      "size": 4986
+    },
+    {
+      "name": "PHASE_0R_OPPORTUNITY_BRIDGE_PRODUCTION_READINESS.md",
+      "path": "docs/corebridge/PHASE_0R_OPPORTUNITY_BRIDGE_PRODUCTION_READINESS.md",
+      "type": "file",
+      "size": 8404
+    },
+    {
+      "name": "PHASE_0S_OPPORTUNITY_BRIDGE_RECEIPT_CONFIRMATION_FOUNDATION.md",
+      "path": "docs/corebridge/PHASE_0S_OPPORTUNITY_BRIDGE_RECEIPT_CONFIRMATION_FOUNDATION.md",
+      "type": "file",
+      "size": 5702
+    },
+    {
+      "name": "PHASE_0T_OPPORTUNITY_BRIDGE_GUARDED_PRODUCTION_EXECUTOR.md",
+      "path": "docs/corebridge/PHASE_0T_OPPORTUNITY_BRIDGE_GUARDED_PRODUCTION_EXECUTOR.md",
+      "type": "file",
+      "size": 6059
+    },
+    {
+      "name": "PHASE_0U_OPPORTUNITY_BRIDGE_FINAL_PILOT_REVIEW.md",
+      "path": "docs/corebridge/PHASE_0U_OPPORTUNITY_BRIDGE_FINAL_PILOT_REVIEW.md",
+      "type": "file",
+      "size": 9636
+    },
+    {
+      "name": "proposed",
+      "path": "docs/corebridge/proposed",
+      "type": "directory"
+    },
+    {
+      "name": "official-evidence",
+      "path": "docs/official-evidence",
+      "type": "directory"
+    },
+    {
+      "name": "alexandria-zoning-2026-10-04.html",
+      "path": "docs/official-evidence/alexandria-zoning-2026-10-04.html",
+      "type": "file",
+      "size": 165415
+    },
+    {
+      "name": "campbell-forms-2026-10-04.html",
+      "path": "docs/official-evidence/campbell-forms-2026-10-04.html",
+      "type": "file",
+      "size": 30963
+    },
+    {
+      "name": "campbell-office-2026-10-04.html",
+      "path": "docs/official-evidence/campbell-office-2026-10-04.html",
+      "type": "file",
+      "size": 28739
+    },
+    {
+      "name": "campbell-office-2026-10-04.txt",
+      "path": "docs/official-evidence/campbell-office-2026-10-04.txt",
+      "type": "file",
+      "size": 4723
+    },
+    {
+      "name": "cincinnati-2026-10-05",
+      "path": "docs/official-evidence/cincinnati-2026-10-05",
+      "type": "directory"
+    },
+    {
+      "name": "cincinnati-applicability-2026-10-05",
+      "path": "docs/official-evidence/cincinnati-applicability-2026-10-05",
+      "type": "directory"
+    },
+    {
+      "name": "cincinnati-code-authority-2026-10-05",
+      "path": "docs/official-evidence/cincinnati-code-authority-2026-10-05",
+      "type": "directory"
+    },
+    {
+      "name": "cincinnati-currentness-2026-10-05",
+      "path": "docs/official-evidence/cincinnati-currentness-2026-10-05",
+      "type": "directory"
+    },
+    {
+      "name": "cincinnati-submission-2026-10-05",
+      "path": "docs/official-evidence/cincinnati-submission-2026-10-05",
+      "type": "directory"
+    },
+    {
+      "name": "oh-ky-geography-2026",
+      "path": "docs/official-evidence/oh-ky-geography-2026",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-building-directory-2026-10-06",
+      "path": "docs/official-evidence/ohio-building-directory-2026-10-06",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-electrical-application-review-2026-10-07",
+      "path": "docs/official-evidence/ohio-electrical-application-review-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-electrical-discovery-2026-10-06",
+      "path": "docs/official-evidence/ohio-electrical-discovery-2026-10-06",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-elmwoodplace-2026-10-07",
+      "path": "docs/official-evidence/ohio-elmwoodplace-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-green-delhi-2026-10-07",
+      "path": "docs/official-evidence/ohio-green-delhi-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-grfc-2026",
+      "path": "docs/official-evidence/ohio-grfc-2026",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-harrison-addyston-2026-10-07",
+      "path": "docs/official-evidence/ohio-harrison-addyston-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-harrison-symmes-townships-2026-10-07",
+      "path": "docs/official-evidence/ohio-harrison-symmes-townships-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-live-reconciliation-2026-10-06",
+      "path": "docs/official-evidence/ohio-live-reconciliation-2026-10-06",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-locality-type-evidence-2026-10-06",
+      "path": "docs/official-evidence/ohio-locality-type-evidence-2026-10-06",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-miami-crosby-2026-10-07",
+      "path": "docs/official-evidence/ohio-miami-crosby-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-nearby-offices-2026-10-07",
+      "path": "docs/official-evidence/ohio-nearby-offices-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-northbend-whitewater-2026-10-07",
+      "path": "docs/official-evidence/ohio-northbend-whitewater-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-reading-2026-10-08",
+      "path": "docs/official-evidence/ohio-reading-2026-10-08",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-reference-2026",
+      "path": "docs/official-evidence/ohio-reference-2026",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-sharonville-2026-10-07",
+      "path": "docs/official-evidence/ohio-sharonville-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-springdale-2026-10-07",
+      "path": "docs/official-evidence/ohio-springdale-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-stbernard-2026-10-07",
+      "path": "docs/official-evidence/ohio-stbernard-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-west-offices-2026-10-07",
+      "path": "docs/official-evidence/ohio-west-offices-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "ohio-woodlawn-2026-10-07",
+      "path": "docs/official-evidence/ohio-woodlawn-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "task2-inventory-closeout-2026-10-07",
+      "path": "docs/official-evidence/task2-inventory-closeout-2026-10-07",
+      "type": "directory"
+    },
+    {
+      "name": "scripts",
+      "path": "scripts",
+      "type": "directory"
+    },
+    {
+      "name": "app-error-boundary.test.mjs",
+      "path": "scripts/app-error-boundary.test.mjs",
+      "type": "file",
+      "size": 1924
+    },
+    {
+      "name": "archive-boone-ky-adopted-sign-ordinance.py",
+      "path": "scripts/archive-boone-ky-adopted-sign-ordinance.py",
+      "type": "file",
+      "size": 7423
+    },
+    {
+      "name": "archive-kenton-ky-fee-schedules.mjs",
+      "path": "scripts/archive-kenton-ky-fee-schedules.mjs",
+      "type": "file",
+      "size": 4228
+    },
+    {
+      "name": "archive-kenton-ky-permit-pilot.mjs",
+      "path": "scripts/archive-kenton-ky-permit-pilot.mjs",
+      "type": "file",
+      "size": 7325
+    },
+    {
+      "name": "audit-cincinnati-electrical-review.mjs",
+      "path": "scripts/audit-cincinnati-electrical-review.mjs",
+      "type": "file",
+      "size": 3972
+    },
+    {
+      "name": "audit-cincinnati-electrical-review.test.mjs",
+      "path": "scripts/audit-cincinnati-electrical-review.test.mjs",
+      "type": "file",
+      "size": 2059
+    },
+    {
+      "name": "audit-cincinnati-publisher-provenance.mjs",
+      "path": "scripts/audit-cincinnati-publisher-provenance.mjs",
+      "type": "file",
+      "size": 5261
+    },
+    {
+      "name": "audit-cincinnati-publisher-provenance.test.mjs",
+      "path": "scripts/audit-cincinnati-publisher-provenance.test.mjs",
+      "type": "file",
+      "size": 1686
+    },
+    {
+      "name": "audit-permitting-county-retrieval-gaps.py",
+      "path": "scripts/audit-permitting-county-retrieval-gaps.py",
+      "type": "file",
+      "size": 3298
+    },
+    {
+      "name": "audit-permitting-ohio-document-access.py",
+      "path": "scripts/audit-permitting-ohio-document-access.py",
+      "type": "file",
+      "size": 3871
+    },
+    {
+      "name": "boone-2026-rewrite-adoption-status-matrix.test.mjs",
+      "path": "scripts/boone-2026-rewrite-adoption-status-matrix.test.mjs",
+      "type": "file",
+      "size": 2927
+    },
+    {
+      "name": "boone-2026-zoning-rewrite-meetings-evidence.test.mjs",
+      "path": "scripts/boone-2026-zoning-rewrite-meetings-evidence.test.mjs",
+      "type": "file",
+      "size": 1205
+    },
+    {
+      "name": "boone-2026-zoning-rewrite-schedule-evidence.test.mjs",
+      "path": "scripts/boone-2026-zoning-rewrite-schedule-evidence.test.mjs",
+      "type": "file",
+      "size": 1553
+    },
+    {
+      "name": "boone-2026-zoning-update-status-evidence.test.mjs",
+      "path": "scripts/boone-2026-zoning-update-status-evidence.test.mjs",
+      "type": "file",
+      "size": 1218
+    },
+    {
+      "name": "boone-applications-baseline.test.mjs",
+      "path": "scripts/boone-applications-baseline.test.mjs",
+      "type": "file",
+      "size": 2289
+    },
+    {
+      "name": "boone-applications-forms-page-baseline.test.mjs",
+      "path": "scripts/boone-applications-forms-page-baseline.test.mjs",
+      "type": "file",
+      "size": 1634
+    },
+    {
+      "name": "boone-board-of-adjustment-evidence.test.mjs",
+      "path": "scripts/boone-board-of-adjustment-evidence.test.mjs",
+      "type": "file",
+      "size": 1554
+    },
+    {
+      "name": "boone-certificate-of-appropriateness-evidence.test.mjs",
+      "path": "scripts/boone-certificate-of-appropriateness-evidence.test.mjs",
+      "type": "file",
+      "size": 1619
+    },
+    {
+      "name": "boone-change-nonconforming-use-appeals-checklist-evidence.test.mjs",
+      "path": "scripts/boone-change-nonconforming-use-appeals-checklist-evidence.test.mjs",
+      "type": "file",
+      "size": 1563
+    },
+    {
+      "name": "boone-checklists-baseline.test.mjs",
+      "path": "scripts/boone-checklists-baseline.test.mjs",
+      "type": "file",
+      "size": 1966
+    },
+    {
+      "name": "boone-concept-development-plan-evidence.test.mjs",
+      "path": "scripts/boone-concept-development-plan-evidence.test.mjs",
+      "type": "file",
+      "size": 1488
+    },
+    {
+      "name": "boone-conditional-use-permit-checklist-evidence.test.mjs",
+      "path": "scripts/boone-conditional-use-permit-checklist-evidence.test.mjs",
+      "type": "file",
+      "size": 1471
+    },
+    {
+      "name": "boone-conveyance-plat-evidence.test.mjs",
+      "path": "scripts/boone-conveyance-plat-evidence.test.mjs",
+      "type": "file",
+      "size": 1454
+    },
+    {
+      "name": "boone-design-review-evidence.test.mjs",
+      "path": "scripts/boone-design-review-evidence.test.mjs",
+      "type": "file",
+      "size": 1440
+    },
+    {
+      "name": "boone-enacted-ordinances-2026-authority-check.test.mjs",
+      "path": "scripts/boone-enacted-ordinances-2026-authority-check.test.mjs",
+      "type": "file",
+      "size": 2771
+    },
+    {
+      "name": "boone-enacted-ordinances-authority-boundary.test.mjs",
+      "path": "scripts/boone-enacted-ordinances-authority-boundary.test.mjs",
+      "type": "file",
+      "size": 1713
+    },
+    {
+      "name": "boone-extension-of-time-site-plan-evidence.test.mjs",
+      "path": "scripts/boone-extension-of-time-site-plan-evidence.test.mjs",
+      "type": "file",
+      "size": 1638
+    },
+    {
+      "name": "boone-final-plat-evidence.test.mjs",
+      "path": "scripts/boone-final-plat-evidence.test.mjs",
+      "type": "file",
+      "size": 1423
+    },
+    {
+      "name": "boone-fiscal-court-oct06-authority-check.test.mjs",
+      "path": "scripts/boone-fiscal-court-oct06-authority-check.test.mjs",
+      "type": "file",
+      "size": 2359
+    },
+    {
+      "name": "boone-florence-2026-enacted-ordinances-authority-check.test.mjs",
+      "path": "scripts/boone-florence-2026-enacted-ordinances-authority-check.test.mjs",
+      "type": "file",
+      "size": 2001
+    },
+    {
+      "name": "boone-forms-baseline.test.mjs",
+      "path": "scripts/boone-forms-baseline.test.mjs",
+      "type": "file",
+      "size": 2312
+    },
+    {
+      "name": "boone-grading-plan-evidence.test.mjs",
+      "path": "scripts/boone-grading-plan-evidence.test.mjs",
+      "type": "file",
+      "size": 1436
+    },
+    {
+      "name": "boone-home-occupation-permit-evidence.test.mjs",
+      "path": "scripts/boone-home-occupation-permit-evidence.test.mjs",
+      "type": "file",
+      "size": 1489
+    },
+    {
+      "name": "boone-improvement-plan-evidence.test.mjs",
+      "path": "scripts/boone-improvement-plan-evidence.test.mjs",
+      "type": "file",
+      "size": 1461
+    },
+    {
+      "name": "boone-oct07-minutes-index-recheck.test.mjs",
+      "path": "scripts/boone-oct07-minutes-index-recheck.test.mjs",
+      "type": "file",
+      "size": 2115
+    },
+    {
+      "name": "boone-planning-applications-forms-evidence.test.mjs",
+      "path": "scripts/boone-planning-applications-forms-evidence.test.mjs",
+      "type": "file",
+      "size": 1486
+    },
+    {
+      "name": "boone-planning-home-fee-schedule-evidence.test.mjs",
+      "path": "scripts/boone-planning-home-fee-schedule-evidence.test.mjs",
+      "type": "file",
+      "size": 1499
+    },
+    {
+      "name": "boone-planning-unit-legislative-authority-map.test.mjs",
+      "path": "scripts/boone-planning-unit-legislative-authority-map.test.mjs",
+      "type": "file",
+      "size": 2210
+    },
+    {
+      "name": "boone-preliminary-plat-evidence.test.mjs",
+      "path": "scripts/boone-preliminary-plat-evidence.test.mjs",
+      "type": "file",
+      "size": 1460
+    },
+    {
+      "name": "boone-public-records-request-evidence.test.mjs",
+      "path": "scripts/boone-public-records-request-evidence.test.mjs",
+      "type": "file",
+      "size": 1549
+    },
+    {
+      "name": "boone-sign-permit-application-change-evidence.test.mjs",
+      "path": "scripts/boone-sign-permit-application-change-evidence.test.mjs",
+      "type": "file",
+      "size": 2400
+    },
+    {
+      "name": "boone-sign-permit-application-current-evidence.test.mjs",
+      "path": "scripts/boone-sign-permit-application-current-evidence.test.mjs",
+      "type": "file",
+      "size": 1772
+    },
+    {
+      "name": "boone-sign-permit-checklist-evidence.test.mjs",
+      "path": "scripts/boone-sign-permit-checklist-evidence.test.mjs",
+      "type": "file",
+      "size": 1336
+    },
+    {
+      "name": "boone-sign-permit-drawing-copy-corroboration.test.mjs",
+      "path": "scripts/boone-sign-permit-drawing-copy-corroboration.test.mjs",
+      "type": "file",
+      "size": 1266
+    },
+    {
+      "name": "boone-site-plan-evidence.test.mjs",
+      "path": "scripts/boone-site-plan-evidence.test.mjs",
+      "type": "file",
+      "size": 1527
+    },
+    {
+      "name": "boone-special-business-meeting-source-gap.test.mjs",
+      "path": "scripts/boone-special-business-meeting-source-gap.test.mjs",
+      "type": "file",
+      "size": 1389
+    },
+    {
+      "name": "boone-surface-mining-special-use-permit-evidence.test.mjs",
+      "path": "scripts/boone-surface-mining-special-use-permit-evidence.test.mjs",
+      "type": "file",
+      "size": 1543
+    },
+    {
+      "name": "boone-temporary-advertising-display-evidence.test.mjs",
+      "path": "scripts/boone-temporary-advertising-display-evidence.test.mjs",
+      "type": "file",
+      "size": 1342
+    },
+    {
+      "name": "boone-temporary-commercial-display-incorporated-evidence.test.mjs",
+      "path": "scripts/boone-temporary-commercial-display-incorporated-evidence.test.mjs",
+      "type": "file",
+      "size": 1493
+    },
+    {
+      "name": "boone-temporary-commercial-display-seasonal-archive-2026-10-01.test.mjs",
+      "path": "scripts/boone-temporary-commercial-display-seasonal-archive-2026-10-01.test.mjs",
+      "type": "file",
+      "size": 1595
+    },
+    {
+      "name": "boone-temporary-commercial-display-seasonal-evidence.test.mjs",
+      "path": "scripts/boone-temporary-commercial-display-seasonal-evidence.test.mjs",
+      "type": "file",
+      "size": 1424
+    },
+    {
+      "name": "boone-temporary-commercial-display-unincorporated-evidence.test.mjs",
+      "path": "scripts/boone-temporary-commercial-display-unincorporated-evidence.test.mjs",
+      "type": "file",
+      "size": 1744
+    },
+    {
+      "name": "boone-temporary-storage-trailer-evidence.test.mjs",
+      "path": "scripts/boone-temporary-storage-trailer-evidence.test.mjs",
+      "type": "file",
+      "size": 1476
+    },
+    {
+      "name": "boone-temporary-use-permit-evidence.test.mjs",
+      "path": "scripts/boone-temporary-use-permit-evidence.test.mjs",
+      "type": "file",
+      "size": 1441
+    },
+    {
+      "name": "boone-tenant-finish-evidence.test.mjs",
+      "path": "scripts/boone-tenant-finish-evidence.test.mjs",
+      "type": "file",
+      "size": 1453
+    },
+    {
+      "name": "boone-time-limit-waiver-45-days-source-gap.test.mjs",
+      "path": "scripts/boone-time-limit-waiver-45-days-source-gap.test.mjs",
+      "type": "file",
+      "size": 1401
+    },
+    {
+      "name": "boone-uniform-wireless-evidence.test.mjs",
+      "path": "scripts/boone-uniform-wireless-evidence.test.mjs",
+      "type": "file",
+      "size": 1457
+    },
+    {
+      "name": "boone-union-2026-rewrite-authority-check.test.mjs",
+      "path": "scripts/boone-union-2026-rewrite-authority-check.test.mjs",
+      "type": "file",
+      "size": 1424
+    },
+    {
+      "name": "boone-variance-checklist-source-gap.test.mjs",
+      "path": "scripts/boone-variance-checklist-source-gap.test.mjs",
+      "type": "file",
+      "size": 1413
+    },
+    {
+      "name": "boone-waiver-of-requirements-evidence.test.mjs",
+      "path": "scripts/boone-waiver-of-requirements-evidence.test.mjs",
+      "type": "file",
+      "size": 1506
+    },
+    {
+      "name": "boone-walton-2026-rewrite-authority-check.test.mjs",
+      "path": "scripts/boone-walton-2026-rewrite-authority-check.test.mjs",
+      "type": "file",
+      "size": 1424
+    },
+    {
+      "name": "boone-zoning-certification-request-evidence.test.mjs",
+      "path": "scripts/boone-zoning-certification-request-evidence.test.mjs",
+      "type": "file",
+      "size": 1522
+    },
+    {
+      "name": "boone-zoning-map-amendment-checklist-evidence.test.mjs",
+      "path": "scripts/boone-zoning-map-amendment-checklist-evidence.test.mjs",
+      "type": "file",
+      "size": 1319
+    },
+    {
+      "name": "capture-mmm-board.mjs",
+      "path": "scripts/capture-mmm-board.mjs",
+      "type": "file",
+      "size": 12951
+    },
+    {
+      "name": "boone-zoning-map-amendment-evidence.test.mjs",
+      "path": "scripts/boone-zoning-map-amendment-evidence.test.mjs",
+      "type": "file",
+      "size": 1468
+    },
+    {
+      "name": "boone-zoning-permit-accessory-structures-evidence.test.mjs",
+      "path": "scripts/boone-zoning-permit-accessory-structures-evidence.test.mjs",
+      "type": "file",
+      "size": 1556
+    },
+    {
+      "name": "boone-zoning-permit-residential-dwelling-unit-evidence.test.mjs",
+      "path": "scripts/boone-zoning-permit-residential-dwelling-unit-evidence.test.mjs",
+      "type": "file",
+      "size": 1576
+    },
+    {
+      "name": "boone-zoning-rewrite-adoption-records-archive.test.mjs",
+      "path": "scripts/boone-zoning-rewrite-adoption-records-archive.test.mjs",
+      "type": "file",
+      "size": 1990
+    },
+    {
+      "name": "boone-zoning-rewrite-adoption-records-target.test.mjs",
+      "path": "scripts/boone-zoning-rewrite-adoption-records-target.test.mjs",
+      "type": "file",
+      "size": 989
+    },
+    {
+      "name": "boone-zoning-rewrite-oct07-agendas-content-review.test.mjs",
+      "path": "scripts/boone-zoning-rewrite-oct07-agendas-content-review.test.mjs",
+      "type": "file",
+      "size": 2505
+    },
+    {
+      "name": "boone-zoning-rewrite-sep02-sep16-content-review.test.mjs",
+      "path": "scripts/boone-zoning-rewrite-sep02-sep16-content-review.test.mjs",
+      "type": "file",
+      "size": 2351
+    },
+    {
+      "name": "build-ohio-county-relationship-candidates.py",
+      "path": "scripts/build-ohio-county-relationship-candidates.py",
+      "type": "file",
+      "size": 4630
+    },
+    {
+      "name": "build-ohio-identity-correction-review.py",
+      "path": "scripts/build-ohio-identity-correction-review.py",
+      "type": "file",
+      "size": 6072
+    },
+    {
+      "name": "build-permitting-address-runtime.mjs",
+      "path": "scripts/build-permitting-address-runtime.mjs",
+      "type": "file",
+      "size": 978
+    },
+    {
+      "name": "build-permitting-official-inventory.py",
+      "path": "scripts/build-permitting-official-inventory.py",
+      "type": "file",
+      "size": 1947
+    },
+    {
+      "name": "build-permitting-ohio-reference.py",
+      "path": "scripts/build-permitting-ohio-reference.py",
+      "type": "file",
+      "size": 3923
+    },
+    {
+      "name": "capture-cincinnati-electronic-guide-20261005.mjs",
+      "path": "scripts/capture-cincinnati-electronic-guide-20261005.mjs",
+      "type": "file",
+      "size": 2957
+    },
+    {
+      "name": "capture-cincinnati-office-evidence-phase49.mjs",
+      "path": "scripts/capture-cincinnati-office-evidence-phase49.mjs",
+      "type": "file",
+      "size": 3418
+    },
+    {
+      "name": "capture-cincinnati-source-review-20261005.mjs",
+      "path": "scripts/capture-cincinnati-source-review-20261005.mjs",
+      "type": "file",
+      "size": 1456
+    },
+    {
+      "name": "capture-cincinnati-submission-sources-20261005.mjs",
+      "path": "scripts/capture-cincinnati-submission-sources-20261005.mjs",
+      "type": "file",
+      "size": 2672
+    },
+    {
+      "name": "capture-ohio-building-directory.py",
+      "path": "scripts/capture-ohio-building-directory.py",
+      "type": "file",
+      "size": 4955
+    },
+    {
+      "name": "capture-ohio-grfc-relationships.py",
+      "path": "scripts/capture-ohio-grfc-relationships.py",
+      "type": "file",
+      "size": 7812
+    },
+    {
+      "name": "capture-permitting-geography.py",
+      "path": "scripts/capture-permitting-geography.py",
+      "type": "file",
+      "size": 5487
+    },
+    {
+      "name": "check-timeclock-prepublish.mjs",
+      "path": "scripts/check-timeclock-prepublish.mjs",
+      "type": "file",
+      "size": 5990
+    },
+    {
+      "name": "classify-ohio-identity-gaps.py",
+      "path": "scripts/classify-ohio-identity-gaps.py",
+      "type": "file",
+      "size": 3813
+    },
+    {
+      "name": "cron-schedule.test.mjs",
+      "path": "scripts/cron-schedule.test.mjs",
+      "type": "file",
+      "size": 5908
+    },
+    {
+      "name": "deploy-smartsheet-sync-fn.mjs",
+      "path": "scripts/deploy-smartsheet-sync-fn.mjs",
+      "type": "file",
+      "size": 1016
+    },
+    {
+      "name": "extract-boone-ky-permit-text.mjs",
+      "path": "scripts/extract-boone-ky-permit-text.mjs",
+      "type": "file",
+      "size": 3047
+    },
+    {
+      "name": "extract-elmwoodplace-pdf-text.mjs",
+      "path": "scripts/extract-elmwoodplace-pdf-text.mjs",
+      "type": "file",
+      "size": 2337
+    },
+    {
+      "name": "extract-green-delhi-pdf-text.mjs",
+      "path": "scripts/extract-green-delhi-pdf-text.mjs",
+      "type": "file",
+      "size": 2336
+    },
+    {
+      "name": "extract-harrison-addyston-pdf-text.mjs",
+      "path": "scripts/extract-harrison-addyston-pdf-text.mjs",
+      "type": "file",
+      "size": 2319
+    },
+    {
+      "name": "extract-harrison-symmes-township-pdf-text.mjs",
+      "path": "scripts/extract-harrison-symmes-township-pdf-text.mjs",
+      "type": "file",
+      "size": 2350
+    },
+    {
+      "name": "extract-miami-crosby-pdf-text.mjs",
+      "path": "scripts/extract-miami-crosby-pdf-text.mjs",
+      "type": "file",
+      "size": 2337
+    },
+    {
+      "name": "extract-northbend-whitewater-pdf-text.mjs",
+      "path": "scripts/extract-northbend-whitewater-pdf-text.mjs",
+      "type": "file",
+      "size": 2345
+    },
+    {
+      "name": "extract-reading-minutes-text.mjs",
+      "path": "scripts/extract-reading-minutes-text.mjs",
+      "type": "file",
+      "size": 2159
+    },
+    {
+      "name": "extract-reading-pdf-text.mjs",
+      "path": "scripts/extract-reading-pdf-text.mjs",
+      "type": "file",
+      "size": 2127
+    },
+    {
+      "name": "extract-sharonville-pdf-text.mjs",
+      "path": "scripts/extract-sharonville-pdf-text.mjs",
+      "type": "file",
+      "size": 2336
+    },
+    {
+      "name": "extract-stbernard-pdf-text.mjs",
+      "path": "scripts/extract-stbernard-pdf-text.mjs",
+      "type": "file",
+      "size": 2334
+    },
+    {
+      "name": "extract-symmes-resolution-recovery.mjs",
+      "path": "scripts/extract-symmes-resolution-recovery.mjs",
+      "type": "file",
+      "size": 2370
+    },
+    {
+      "name": "extract-woodlawn-pdf-text.mjs",
+      "path": "scripts/extract-woodlawn-pdf-text.mjs",
+      "type": "file",
+      "size": 2333
+    },
+    {
+      "name": "frontend-shared-modules.mjs",
+      "path": "scripts/frontend-shared-modules.mjs",
+      "type": "file",
+      "size": 2368
+    },
+    {
+      "name": "frontend-shared-modules.test.mjs",
+      "path": "scripts/frontend-shared-modules.test.mjs",
+      "type": "file",
+      "size": 4258
+    },
+    {
+      "name": "jurisdiction-archive-catalog.test.mjs",
+      "path": "scripts/jurisdiction-archive-catalog.test.mjs",
+      "type": "file",
+      "size": 11043
+    },
+    {
+      "name": "jurisdiction-archive-continuation.test.mjs",
+      "path": "scripts/jurisdiction-archive-continuation.test.mjs",
+      "type": "file",
+      "size": 9640
+    },
+    {
+      "name": "jurisdiction-archive-worker.test.mjs",
+      "path": "scripts/jurisdiction-archive-worker.test.mjs",
+      "type": "file",
+      "size": 9131
+    },
+    {
+      "name": "jurisdiction-authority-gate.test.mjs",
+      "path": "scripts/jurisdiction-authority-gate.test.mjs",
+      "type": "file",
+      "size": 2673
+    },
+    {
+      "name": "jurisdiction-discovery-refresh.test.mjs",
+      "path": "scripts/jurisdiction-discovery-refresh.test.mjs",
+      "type": "file",
+      "size": 7542
+    },
+    {
+      "name": "jurisdiction-identity-correction-action.test.mjs",
+      "path": "scripts/jurisdiction-identity-correction-action.test.mjs",
+      "type": "file",
+      "size": 4068
+    },
+    {
+      "name": "jurisdiction-identity-correction.test.mjs",
+      "path": "scripts/jurisdiction-identity-correction.test.mjs",
+      "type": "file",
+      "size": 4294
+    },
+    {
+      "name": "jurisdiction-permitting-link-discovery.test.mjs",
+      "path": "scripts/jurisdiction-permitting-link-discovery.test.mjs",
+      "type": "file",
+      "size": 7296
+    },
+    {
+      "name": "jurisdiction-research-archive-budget.test.mjs",
+      "path": "scripts/jurisdiction-research-archive-budget.test.mjs",
+      "type": "file",
+      "size": 1664
+    },
+    {
+      "name": "jurisdiction-research-authority-gate.test.mjs",
+      "path": "scripts/jurisdiction-research-authority-gate.test.mjs",
+      "type": "file",
+      "size": 3316
+    },
+    {
+      "name": "jurisdiction-research-document-merge.test.mjs",
+      "path": "scripts/jurisdiction-research-document-merge.test.mjs",
+      "type": "file",
+      "size": 20646
+    },
+    {
+      "name": "jurisdiction-rewrite-authority-admin-path.test.mjs",
+      "path": "scripts/jurisdiction-rewrite-authority-admin-path.test.mjs",
+      "type": "file",
+      "size": 3345
+    },
+    {
+      "name": "jurisdiction-rewrite-authority-schema-contract.test.mjs",
+      "path": "scripts/jurisdiction-rewrite-authority-schema-contract.test.mjs",
+      "type": "file",
+      "size": 2699
+    },
+    {
+      "name": "jurisdiction-rewrite-source-classifier.test.mjs",
+      "path": "scripts/jurisdiction-rewrite-source-classifier.test.mjs",
+      "type": "file",
+      "size": 4359
+    },
+    {
+      "name": "jurisdiction-selected-pdf-archive.test.mjs",
+      "path": "scripts/jurisdiction-selected-pdf-archive.test.mjs",
+      "type": "file",
+      "size": 9928
+    },
+    {
+      "name": "jurisdiction-source-pdf-text.test.mjs",
+      "path": "scripts/jurisdiction-source-pdf-text.test.mjs",
+      "type": "file",
+      "size": 2806
+    },
+    {
+      "name": "jurisdiction-source-text-continuation.test.mjs",
+      "path": "scripts/jurisdiction-source-text-continuation.test.mjs",
+      "type": "file",
+      "size": 10675
+    },
+    {
+      "name": "jurisdiction-source-text-pages-worker.test.mjs",
+      "path": "scripts/jurisdiction-source-text-pages-worker.test.mjs",
+      "type": "file",
+      "size": 4289
+    },
+    {
+      "name": "jurisdiction-source-text-runtime.test.mjs",
+      "path": "scripts/jurisdiction-source-text-runtime.test.mjs",
+      "type": "file",
+      "size": 1833
+    },
+    {
+      "name": "jurisdiction-source-text-segments.test.mjs",
+      "path": "scripts/jurisdiction-source-text-segments.test.mjs",
+      "type": "file",
+      "size": 14364
+    },
+    {
+      "name": "jurisdiction-source-text-worker.test.mjs",
+      "path": "scripts/jurisdiction-source-text-worker.test.mjs",
+      "type": "file",
+      "size": 5771
+    },
+    {
+      "name": "manage-workflow-schedules.test.mjs",
+      "path": "scripts/manage-workflow-schedules.test.mjs",
+      "type": "file",
+      "size": 10602
+    },
+    {
+      "name": "patch-fleet-session-auth.cjs",
+      "path": "scripts/patch-fleet-session-auth.cjs",
+      "type": "file",
+      "size": 7058
+    },
+    {
+      "name": "permitting-address-archive.test.mjs",
+      "path": "scripts/permitting-address-archive.test.mjs",
+      "type": "file",
+      "size": 22131
+    },
+    {
+      "name": "permitting-address-document-link-ui.test.mjs",
+      "path": "scripts/permitting-address-document-link-ui.test.mjs",
+      "type": "file",
+      "size": 4858
+    },
+    {
+      "name": "permitting-address-document-link.test.mjs",
+      "path": "scripts/permitting-address-document-link.test.mjs",
+      "type": "file",
+      "size": 8595
+    },
+    {
+      "name": "permitting-address-original-batch.test.mjs",
+      "path": "scripts/permitting-address-original-batch.test.mjs",
+      "type": "file",
+      "size": 6408
+    },
+    {
+      "name": "permitting-address-page-continuation.test.mjs",
+      "path": "scripts/permitting-address-page-continuation.test.mjs",
+      "type": "file",
+      "size": 15091
+    },
+    {
+      "name": "permitting-candidate-verification-guard.test.mjs",
+      "path": "scripts/permitting-candidate-verification-guard.test.mjs",
+      "type": "file",
+      "size": 6326
+    },
+    {
+      "name": "permitting-collection-cycle-ui.test.mjs",
+      "path": "scripts/permitting-collection-cycle-ui.test.mjs",
+      "type": "file",
+      "size": 1894
+    },
+    {
+      "name": "permitting-collection-cycle.test.mjs",
+      "path": "scripts/permitting-collection-cycle.test.mjs",
+      "type": "file",
+      "size": 3704
+    },
+    {
+      "name": "permitting-discovery-continuation.test.mjs",
+      "path": "scripts/permitting-discovery-continuation.test.mjs",
+      "type": "file",
+      "size": 6188
+    },
+    {
+      "name": "permitting-discovery-frontier.test.mjs",
+      "path": "scripts/permitting-discovery-frontier.test.mjs",
+      "type": "file",
+      "size": 6049
+    },
+    {
+      "name": "permitting-discovery-refresh.test.mjs",
+      "path": "scripts/permitting-discovery-refresh.test.mjs",
+      "type": "file",
+      "size": 12105
+    },
+    {
+      "name": "permitting-discovery-scan.test.mjs",
+      "path": "scripts/permitting-discovery-scan.test.mjs",
+      "type": "file",
+      "size": 6417
+    },
+    {
+      "name": "permitting-discovery-session-ui.test.mjs",
+      "path": "scripts/permitting-discovery-session-ui.test.mjs",
+      "type": "file",
+      "size": 3356
+    },
+    {
+      "name": "permitting-downloader-document-validation.test.mjs",
+      "path": "scripts/permitting-downloader-document-validation.test.mjs",
+      "type": "file",
+      "size": 10032
+    },
+    {
+      "name": "permitting-draft-comparison.test.mjs",
+      "path": "scripts/permitting-draft-comparison.test.mjs",
+      "type": "file",
+      "size": 2257
+    },
+    {
+      "name": "permitting-draft-follow-up.test.mjs",
+      "path": "scripts/permitting-draft-follow-up.test.mjs",
+      "type": "file",
+      "size": 2754
+    },
+    {
+      "name": "permitting-electrical-coverage-ui.test.mjs",
+      "path": "scripts/permitting-electrical-coverage-ui.test.mjs",
+      "type": "file",
+      "size": 3814
+    },
+    {
+      "name": "permitting-electrical-gap-review.test.mjs",
+      "path": "scripts/permitting-electrical-gap-review.test.mjs",
+      "type": "file",
+      "size": 13005
+    },
+    {
+      "name": "permitting-electrical-identity-comparison.test.mjs",
+      "path": "scripts/permitting-electrical-identity-comparison.test.mjs",
+      "type": "file",
+      "size": 2333
+    },
+    {
+      "name": "permitting-electrical-office-gap-list.test.mjs",
+      "path": "scripts/permitting-electrical-office-gap-list.test.mjs",
+      "type": "file",
+      "size": 3562
+    },
+    {
+      "name": "permitting-electrical-office-inquiry.test.mjs",
+      "path": "scripts/permitting-electrical-office-inquiry.test.mjs",
+      "type": "file",
+      "size": 2789
+    },
+    {
+      "name": "permitting-electrical-recorded-coverage.test.mjs",
+      "path": "scripts/permitting-electrical-recorded-coverage.test.mjs",
+      "type": "file",
+      "size": 3032
+    },
+    {
+      "name": "permitting-electrical-research-ui.test.mjs",
+      "path": "scripts/permitting-electrical-research-ui.test.mjs",
+      "type": "file",
+      "size": 5499
+    },
+    {
+      "name": "permitting-electrical-role-coverage.test.mjs",
+      "path": "scripts/permitting-electrical-role-coverage.test.mjs",
+      "type": "file",
+      "size": 2764
+    },
+    {
+      "name": "permitting-extensionless-pipeline.test.mjs",
+      "path": "scripts/permitting-extensionless-pipeline.test.mjs",
+      "type": "file",
+      "size": 3831
+    },
+    {
+      "name": "permitting-external-fetch-scope.test.mjs",
+      "path": "scripts/permitting-external-fetch-scope.test.mjs",
+      "type": "file",
+      "size": 1717
+    },
+    {
+      "name": "permitting-external-referral-archive.test.mjs",
+      "path": "scripts/permitting-external-referral-archive.test.mjs",
+      "type": "file",
+      "size": 14091
+    },
+    {
+      "name": "permitting-external-referral-route.test.mjs",
+      "path": "scripts/permitting-external-referral-route.test.mjs",
+      "type": "file",
+      "size": 2466
+    },
+    {
+      "name": "permitting-external-referral-ui.test.mjs",
+      "path": "scripts/permitting-external-referral-ui.test.mjs",
+      "type": "file",
+      "size": 4806
+    },
+    {
+      "name": "permitting-external-referrals.test.mjs",
+      "path": "scripts/permitting-external-referrals.test.mjs",
+      "type": "file",
+      "size": 10455
+    },
+    {
+      "name": "permitting-html-evidence.test.mjs",
+      "path": "scripts/permitting-html-evidence.test.mjs",
+      "type": "file",
+      "size": 17406
+    },
+    {
+      "name": "permitting-html-office-delegation.test.mjs",
+      "path": "scripts/permitting-html-office-delegation.test.mjs",
+      "type": "file",
+      "size": 18427
+    },
+    {
+      "name": "permitting-link-recovery.test.mjs",
+      "path": "scripts/permitting-link-recovery.test.mjs",
+      "type": "file",
+      "size": 7307
+    },
+    {
+      "name": "permitting-locality-authority-reverification.test.mjs",
+      "path": "scripts/permitting-locality-authority-reverification.test.mjs",
+      "type": "file",
+      "size": 1944
+    },
+    {
+      "name": "permitting-locality-profile-link.test.mjs",
+      "path": "scripts/permitting-locality-profile-link.test.mjs",
+      "type": "file",
+      "size": 5574
+    },
+    {
+      "name": "permitting-map-auth-subscriptions.test.mjs",
+      "path": "scripts/permitting-map-auth-subscriptions.test.mjs",
+      "type": "file",
+      "size": 2733
+    },
+    {
+      "name": "permitting-map-loader-retry.test.mjs",
+      "path": "scripts/permitting-map-loader-retry.test.mjs",
+      "type": "file",
+      "size": 8199
+    },
+    {
+      "name": "permitting-map-recovery.test.mjs",
+      "path": "scripts/permitting-map-recovery.test.mjs",
+      "type": "file",
+      "size": 8050
+    },
+    {
+      "name": "permitting-office-authority.test.mjs",
+      "path": "scripts/permitting-office-authority.test.mjs",
+      "type": "file",
+      "size": 21345
+    },
+    {
+      "name": "permitting-office-candidate-panel.test.mjs",
+      "path": "scripts/permitting-office-candidate-panel.test.mjs",
+      "type": "file",
+      "size": 4476
+    },
+    {
+      "name": "permitting-office-candidate.test.mjs",
+      "path": "scripts/permitting-office-candidate.test.mjs",
+      "type": "file",
+      "size": 12199
+    },
+    {
+      "name": "permitting-office-identity-comparison.test.mjs",
+      "path": "scripts/permitting-office-identity-comparison.test.mjs",
+      "type": "file",
+      "size": 4496
+    },
+    {
+      "name": "permitting-office-identity-preview.test.mjs",
+      "path": "scripts/permitting-office-identity-preview.test.mjs",
+      "type": "file",
+      "size": 7848
+    },
+    {
+      "name": "permitting-office-live-preview-ui.test.mjs",
+      "path": "scripts/permitting-office-live-preview-ui.test.mjs",
+      "type": "file",
+      "size": 8566
+    },
+    {
+      "name": "permitting-office-research-completeness.test.mjs",
+      "path": "scripts/permitting-office-research-completeness.test.mjs",
+      "type": "file",
+      "size": 3752
+    },
+    {
+      "name": "permitting-office-research-draft-editing.test.mjs",
+      "path": "scripts/permitting-office-research-draft-editing.test.mjs",
+      "type": "file",
+      "size": 3377
+    },
+    {
+      "name": "permitting-office-research-prototype.test.mjs",
+      "path": "scripts/permitting-office-research-prototype.test.mjs",
+      "type": "file",
+      "size": 4136
+    },
+    {
+      "name": "permitting-office-response-handoff.test.mjs",
+      "path": "scripts/permitting-office-response-handoff.test.mjs",
+      "type": "file",
+      "size": 6112
+    },
+    {
+      "name": "permitting-office-responses.test.mjs",
+      "path": "scripts/permitting-office-responses.test.mjs",
+      "type": "file",
+      "size": 3906
+    },
+    {
+      "name": "permitting-office-review-evidence.test.mjs",
+      "path": "scripts/permitting-office-review-evidence.test.mjs",
+      "type": "file",
+      "size": 4082
+    },
+    {
+      "name": "permitting-ohio-municipal-research-ui.test.mjs",
+      "path": "scripts/permitting-ohio-municipal-research-ui.test.mjs",
+      "type": "file",
+      "size": 49258
+    },
+    {
+      "name": "permitting-ohio-nearby-source-catalog.test.mjs",
+      "path": "scripts/permitting-ohio-nearby-source-catalog.test.mjs",
+      "type": "file",
+      "size": 2261
+    },
+    {
+      "name": "permitting-original-refresh-ui.test.mjs",
+      "path": "scripts/permitting-original-refresh-ui.test.mjs",
+      "type": "file",
+      "size": 8226
+    },
+    {
+      "name": "permitting-pdf-office-delegation.test.mjs",
+      "path": "scripts/permitting-pdf-office-delegation.test.mjs",
+      "type": "file",
+      "size": 9683
+    },
+    {
+      "name": "permitting-picker-draft-action.test.mjs",
+      "path": "scripts/permitting-picker-draft-action.test.mjs",
+      "type": "file",
+      "size": 3264
+    },
+    {
+      "name": "permitting-picker-session-ui.test.mjs",
+      "path": "scripts/permitting-picker-session-ui.test.mjs",
+      "type": "file",
+      "size": 7933
+    },
+    {
+      "name": "permitting-preview-qa.test.mjs",
+      "path": "scripts/permitting-preview-qa.test.mjs",
+      "type": "file",
+      "size": 802
+    },
+    {
+      "name": "permitting-progress-display-recovery.test.mjs",
+      "path": "scripts/permitting-progress-display-recovery.test.mjs",
+      "type": "file",
+      "size": 4014
+    },
+    {
+      "name": "permitting-progress-session-recovery.test.mjs",
+      "path": "scripts/permitting-progress-session-recovery.test.mjs",
+      "type": "file",
+      "size": 12171
+    },
+    {
+      "name": "permitting-publisher-alias-evidence.test.mjs",
+      "path": "scripts/permitting-publisher-alias-evidence.test.mjs",
+      "type": "file",
+      "size": 2640
+    },
+    {
+      "name": "permitting-research-backlog-dispatch.test.mjs",
+      "path": "scripts/permitting-research-backlog-dispatch.test.mjs",
+      "type": "file",
+      "size": 5701
+    },
+    {
+      "name": "permitting-research-dispatch-config.test.mjs",
+      "path": "scripts/permitting-research-dispatch-config.test.mjs",
+      "type": "file",
+      "size": 2068
+    },
+    {
+      "name": "permitting-research-identity-guard.test.mjs",
+      "path": "scripts/permitting-research-identity-guard.test.mjs",
+      "type": "file",
+      "size": 3712
+    },
+    {
+      "name": "permitting-research-url-sanitize.test.mjs",
+      "path": "scripts/permitting-research-url-sanitize.test.mjs",
+      "type": "file",
+      "size": 1624
+    },
+    {
+      "name": "permitting-resource-response.test.mjs",
+      "path": "scripts/permitting-resource-response.test.mjs",
+      "type": "file",
+      "size": 3184
+    },
+    {
+      "name": "permitting-rule-evidence-fixture.mjs",
+      "path": "scripts/permitting-rule-evidence-fixture.mjs",
+      "type": "file",
+      "size": 4114
+    },
+    {
+      "name": "permitting-rule-evidence-worker.test.mjs",
+      "path": "scripts/permitting-rule-evidence-worker.test.mjs",
+      "type": "file",
+      "size": 32364
+    },
+    {
+      "name": "permitting-rule-evidence.test.mjs",
+      "path": "scripts/permitting-rule-evidence.test.mjs",
+      "type": "file",
+      "size": 25390
+    },
+    {
+      "name": "permitting-saved-document-discovery.test.mjs",
+      "path": "scripts/permitting-saved-document-discovery.test.mjs",
+      "type": "file",
+      "size": 10498
+    },
+    {
+      "name": "permitting-saved-research-session-ui.test.mjs",
+      "path": "scripts/permitting-saved-research-session-ui.test.mjs",
+      "type": "file",
+      "size": 3725
+    },
+    {
+      "name": "permitting-scan-activity.test.mjs",
+      "path": "scripts/permitting-scan-activity.test.mjs",
+      "type": "file",
+      "size": 3734
+    },
+    {
+      "name": "permitting-scan-endpoints.test.mjs",
+      "path": "scripts/permitting-scan-endpoints.test.mjs",
+      "type": "file",
+      "size": 4189
+    },
+    {
+      "name": "permitting-selector-address-progress.test.mjs",
+      "path": "scripts/permitting-selector-address-progress.test.mjs",
+      "type": "file",
+      "size": 24725
+    },
+    {
+      "name": "permitting-sharonville-guide-discovery.test.mjs",
+      "path": "scripts/permitting-sharonville-guide-discovery.test.mjs",
+      "type": "file",
+      "size": 1379
+    },
+    {
+      "name": "permitting-sharonville-guide-text-limit.test.mjs",
+      "path": "scripts/permitting-sharonville-guide-text-limit.test.mjs",
+      "type": "file",
+      "size": 1879
+    },
+    {
+      "name": "permitting-source-authority.test.mjs",
+      "path": "scripts/permitting-source-authority.test.mjs",
+      "type": "file",
+      "size": 22420
+    },
+    {
+      "name": "permitting-source-holds.test.mjs",
+      "path": "scripts/permitting-source-holds.test.mjs",
+      "type": "file",
+      "size": 2883
+    },
+    {
+      "name": "permitting-source-identity.test.mjs",
+      "path": "scripts/permitting-source-identity.test.mjs",
+      "type": "file",
+      "size": 10539
+    },
+    {
+      "name": "permitting-source-ocr-evidence.test.mjs",
+      "path": "scripts/permitting-source-ocr-evidence.test.mjs",
+      "type": "file",
+      "size": 13506
+    },
+    {
+      "name": "permitting-spatial-resolution.test.mjs",
+      "path": "scripts/permitting-spatial-resolution.test.mjs",
+      "type": "file",
+      "size": 9339
+    },
+    {
+      "name": "permitting-visual-transcription.test.mjs",
+      "path": "scripts/permitting-visual-transcription.test.mjs",
+      "type": "file",
+      "size": 10005
+    },
+    {
+      "name": "permitting-workflow-planning-review.test.mjs",
+      "path": "scripts/permitting-workflow-planning-review.test.mjs",
+      "type": "file",
+      "size": 3262
+    },
+    {
+      "name": "permitting-workflow-source-evidence.test.mjs",
+      "path": "scripts/permitting-workflow-source-evidence.test.mjs",
+      "type": "file",
+      "size": 3146
+    },
+    {
+      "name": "permitting-workflow-source-navigation.test.mjs",
+      "path": "scripts/permitting-workflow-source-navigation.test.mjs",
+      "type": "file",
+      "size": 2139
+    },
+    {
+      "name": "polling-schedule.test.mjs",
+      "path": "scripts/polling-schedule.test.mjs",
+      "type": "file",
+      "size": 1544
+    },
+    {
+      "name": "prepare-cincinnati-currentness-review.mjs",
+      "path": "scripts/prepare-cincinnati-currentness-review.mjs",
+      "type": "file",
+      "size": 4204
+    },
+    {
+      "name": "prepare-cincinnati-electrical-office-review.mjs",
+      "path": "scripts/prepare-cincinnati-electrical-office-review.mjs",
+      "type": "file",
+      "size": 3890
+    },
+    {
+      "name": "prepare-cincinnati-scope-review.mjs",
+      "path": "scripts/prepare-cincinnati-scope-review.mjs",
+      "type": "file",
+      "size": 3223
+    },
+    {
+      "name": "prepare-cincinnati-sign-pages-phase410.mjs",
+      "path": "scripts/prepare-cincinnati-sign-pages-phase410.mjs",
+      "type": "file",
+      "size": 2929
+    },
+    {
+      "name": "prepare-crosby-sign-findings.mjs",
+      "path": "scripts/prepare-crosby-sign-findings.mjs",
+      "type": "file",
+      "size": 4588
+    },
+    {
+      "name": "prepare-delhi-sign-findings.mjs",
+      "path": "scripts/prepare-delhi-sign-findings.mjs",
+      "type": "file",
+      "size": 4385
+    },
+    {
+      "name": "prepare-green-delhi-office-resources.mjs",
+      "path": "scripts/prepare-green-delhi-office-resources.mjs",
+      "type": "file",
+      "size": 4124
+    },
+    {
+      "name": "prepare-harrison-addyston-office-resources.mjs",
+      "path": "scripts/prepare-harrison-addyston-office-resources.mjs",
+      "type": "file",
+      "size": 4739
+    },
+    {
+      "name": "prepare-harrison-addyston-sign-findings.mjs",
+      "path": "scripts/prepare-harrison-addyston-sign-findings.mjs",
+      "type": "file",
+      "size": 4362
+    },
+    {
+      "name": "prepare-harrison-routing-comparison.mjs",
+      "path": "scripts/prepare-harrison-routing-comparison.mjs",
+      "type": "file",
+      "size": 3241
+    },
+    {
+      "name": "prepare-harrison-sign-ocr-findings.mjs",
+      "path": "scripts/prepare-harrison-sign-ocr-findings.mjs",
+      "type": "file",
+      "size": 3842
+    },
+    {
+      "name": "prepare-harrison-symmes-township-resources.mjs",
+      "path": "scripts/prepare-harrison-symmes-township-resources.mjs",
+      "type": "file",
+      "size": 2383
+    },
+    {
+      "name": "prepare-northbend-sign-findings.mjs",
+      "path": "scripts/prepare-northbend-sign-findings.mjs",
+      "type": "file",
+      "size": 6725
+    },
+    {
+      "name": "prepare-ohio-electrical-application-review.mjs",
+      "path": "scripts/prepare-ohio-electrical-application-review.mjs",
+      "type": "file",
+      "size": 1235
+    },
+    {
+      "name": "prepare-ohio-nearby-office-resources.mjs",
+      "path": "scripts/prepare-ohio-nearby-office-resources.mjs",
+      "type": "file",
+      "size": 3952
+    },
+    {
+      "name": "prepare-ohio-west-electrical-routing.mjs",
+      "path": "scripts/prepare-ohio-west-electrical-routing.mjs",
+      "type": "file",
+      "size": 2250
+    },
+    {
+      "name": "prepare-ohio-west-office-resources.mjs",
+      "path": "scripts/prepare-ohio-west-office-resources.mjs",
+      "type": "file",
+      "size": 4415
+    },
+    {
+      "name": "prepare-sharonville-sign-findings.mjs",
+      "path": "scripts/prepare-sharonville-sign-findings.mjs",
+      "type": "file",
+      "size": 4517
+    },
+    {
+      "name": "prepare-symmes-attachment-search.mjs",
+      "path": "scripts/prepare-symmes-attachment-search.mjs",
+      "type": "file",
+      "size": 2028
+    },
+    {
+      "name": "prepare-symmes-resolution-ocr-review.mjs",
+      "path": "scripts/prepare-symmes-resolution-ocr-review.mjs",
+      "type": "file",
+      "size": 3300
+    },
+    {
+      "name": "prepare-symmes-resolution-recovery.mjs",
+      "path": "scripts/prepare-symmes-resolution-recovery.mjs",
+      "type": "file",
+      "size": 2664
+    },
+    {
+      "name": "prepare-symmes-sign-findings.mjs",
+      "path": "scripts/prepare-symmes-sign-findings.mjs",
+      "type": "file",
+      "size": 4019
+    },
+    {
+      "name": "preview-cincinnati-handout-classification.mjs",
+      "path": "scripts/preview-cincinnati-handout-classification.mjs",
+      "type": "file",
+      "size": 2408
+    },
+    {
+      "name": "preview-cincinnati-handout-classification.test.mjs",
+      "path": "scripts/preview-cincinnati-handout-classification.test.mjs",
+      "type": "file",
+      "size": 1876
+    },
+    {
+      "name": "preview-ibi-office-identity.mjs",
+      "path": "scripts/preview-ibi-office-identity.mjs",
+      "type": "file",
+      "size": 3897
+    },
+    {
+      "name": "preview-ibi-office-identity.test.mjs",
+      "path": "scripts/preview-ibi-office-identity.test.mjs",
+      "type": "file",
+      "size": 2257
+    },
+    {
+      "name": "preview-sharonville-guide-classification.mjs",
+      "path": "scripts/preview-sharonville-guide-classification.mjs",
+      "type": "file",
+      "size": 3314
+    },
+    {
+      "name": "reconcile-ohio-nearby-source-catalog.mjs",
+      "path": "scripts/reconcile-ohio-nearby-source-catalog.mjs",
+      "type": "file",
+      "size": 3647
+    },
+    {
+      "name": "reconcile-ohio-permitting-identities.py",
+      "path": "scripts/reconcile-ohio-permitting-identities.py",
+      "type": "file",
+      "size": 4935
+    },
+    {
+      "name": "reconcile-permitting-official-inventory.mjs",
+      "path": "scripts/reconcile-permitting-official-inventory.mjs",
+      "type": "file",
+      "size": 1370
+    },
+    {
+      "name": "reconcile-sharonville-retained-electrical-research.mjs",
+      "path": "scripts/reconcile-sharonville-retained-electrical-research.mjs",
+      "type": "file",
+      "size": 7340
+    },
+    {
+      "name": "replay-permitting-external-referrals.mjs",
+      "path": "scripts/replay-permitting-external-referrals.mjs",
+      "type": "file",
+      "size": 2228
+    },
+    {
+      "name": "request-governor.test.mjs",
+      "path": "scripts/request-governor.test.mjs",
+      "type": "file",
+      "size": 3831
+    },
+    {
+      "name": "seed-locality-queue.mjs",
+      "path": "scripts/seed-locality-queue.mjs",
+      "type": "file",
+      "size": 1827
+    },
+    {
+      "name": "seed-permitting-source-evidence.mjs",
+      "path": "scripts/seed-permitting-source-evidence.mjs",
+      "type": "file",
+      "size": 12851
+    },
+    {
+      "name": "setup-timeclock-browser.mjs",
+      "path": "scripts/setup-timeclock-browser.mjs",
+      "type": "file",
+      "size": 1072
+    },
+    {
+      "name": "staff-login-dialog.test.mjs",
+      "path": "scripts/staff-login-dialog.test.mjs",
+      "type": "file",
+      "size": 4839
+    },
+    {
+      "name": "test-admin-account-changed-fields.mjs",
+      "path": "scripts/test-admin-account-changed-fields.mjs",
+      "type": "file",
+      "size": 43541
+    },
+    {
+      "name": "test-admin-account-draft-exit-guard.mjs",
+      "path": "scripts/test-admin-account-draft-exit-guard.mjs",
+      "type": "file",
+      "size": 11633
+    },
+    {
+      "name": "test-admin-account-field-resolution.mjs",
+      "path": "scripts/test-admin-account-field-resolution.mjs",
+      "type": "file",
+      "size": 8229
+    },
+    {
+      "name": "test-admin-account-password-partial-recovery.mjs",
+      "path": "scripts/test-admin-account-password-partial-recovery.mjs",
+      "type": "file",
+      "size": 12870
+    },
+    {
+      "name": "test-admin-account-server-conflict.mjs",
+      "path": "scripts/test-admin-account-server-conflict.mjs",
+      "type": "file",
+      "size": 10796
+    },
+    {
+      "name": "test-admin-automation-honesty.mjs",
+      "path": "scripts/test-admin-automation-honesty.mjs",
+      "type": "file",
+      "size": 14683
+    },
+    {
+      "name": "test-admin-automation-loading.mjs",
+      "path": "scripts/test-admin-automation-loading.mjs",
+      "type": "file",
+      "size": 1975
+    },
+    {
+      "name": "test-admin-automation-operations.mjs",
+      "path": "scripts/test-admin-automation-operations.mjs",
+      "type": "file",
+      "size": 1368
+    },
+    {
+      "name": "test-admin-automation-pre-dispatch.mjs",
+      "path": "scripts/test-admin-automation-pre-dispatch.mjs",
+      "type": "file",
+      "size": 9780
+    },
+    {
+      "name": "test-admin-automation-read-deadline.mjs",
+      "path": "scripts/test-admin-automation-read-deadline.mjs",
+      "type": "file",
+      "size": 3070
+    },
+    {
+      "name": "test-admin-automation-recovered-list.mjs",
+      "path": "scripts/test-admin-automation-recovered-list.mjs",
+      "type": "file",
+      "size": 2905
+    },
+    {
+      "name": "test-admin-automation-recovery-guidance.mjs",
+      "path": "scripts/test-admin-automation-recovery-guidance.mjs",
+      "type": "file",
+      "size": 1866
+    },
+    {
+      "name": "test-admin-automation-uncertain-save.mjs",
+      "path": "scripts/test-admin-automation-uncertain-save.mjs",
+      "type": "file",
+      "size": 9087
+    },
+    {
+      "name": "test-admin-category-keyboard.mjs",
+      "path": "scripts/test-admin-category-keyboard.mjs",
+      "type": "file",
+      "size": 3232
+    },
+    {
+      "name": "test-admin-credential-request-session-fencing.mjs",
+      "path": "scripts/test-admin-credential-request-session-fencing.mjs",
+      "type": "file",
+      "size": 8107
+    },
+    {
+      "name": "test-admin-deletion-impact-backend-parity.mjs",
+      "path": "scripts/test-admin-deletion-impact-backend-parity.mjs",
+      "type": "file",
+      "size": 12959
+    },
+    {
+      "name": "test-admin-deletion-impact-bounded-progress.mjs",
+      "path": "scripts/test-admin-deletion-impact-bounded-progress.mjs",
+      "type": "file",
+      "size": 3953
+    },
+    {
+      "name": "test-admin-deletion-impact-retry-coordination.mjs",
+      "path": "scripts/test-admin-deletion-impact-retry-coordination.mjs",
+      "type": "file",
+      "size": 4930
+    },
+    {
+      "name": "test-admin-deletion-impact-retry.mjs",
+      "path": "scripts/test-admin-deletion-impact-retry.mjs",
+      "type": "file",
+      "size": 3174
+    },
+    {
+      "name": "test-admin-deletion-impact-timeout.mjs",
+      "path": "scripts/test-admin-deletion-impact-timeout.mjs",
+      "type": "file",
+      "size": 4588
+    },
+    {
+      "name": "test-admin-deletion-impact-validation.mjs",
+      "path": "scripts/test-admin-deletion-impact-validation.mjs",
+      "type": "file",
+      "size": 6077
+    },
+    {
+      "name": "test-admin-deletion-request-loading.mjs",
+      "path": "scripts/test-admin-deletion-request-loading.mjs",
+      "type": "file",
+      "size": 3452
+    },
+    {
+      "name": "test-admin-deletion-resolution-concurrency.mjs",
+      "path": "scripts/test-admin-deletion-resolution-concurrency.mjs",
+      "type": "file",
+      "size": 9558
+    },
+    {
+      "name": "test-admin-deletion-resolution-session-fencing.mjs",
+      "path": "scripts/test-admin-deletion-resolution-session-fencing.mjs",
+      "type": "file",
+      "size": 2644
+    },
+    {
+      "name": "test-admin-email-group-loading.mjs",
+      "path": "scripts/test-admin-email-group-loading.mjs",
+      "type": "file",
+      "size": 3457
+    },
+    {
+      "name": "test-admin-hr-conflict-recovery.mjs",
+      "path": "scripts/test-admin-hr-conflict-recovery.mjs",
+      "type": "file",
+      "size": 10742
+    },
+    {
+      "name": "test-admin-hr-draft-exit-guard.mjs",
+      "path": "scripts/test-admin-hr-draft-exit-guard.mjs",
+      "type": "file",
+      "size": 11599
+    },
+    {
+      "name": "test-admin-hr-field-merge.mjs",
+      "path": "scripts/test-admin-hr-field-merge.mjs",
+      "type": "file",
+      "size": 10143
+    },
+    {
+      "name": "test-admin-hr-resolution-preview.mjs",
+      "path": "scripts/test-admin-hr-resolution-preview.mjs",
+      "type": "file",
+      "size": 9177
+    },
+    {
+      "name": "test-admin-hr-session-fencing.mjs",
+      "path": "scripts/test-admin-hr-session-fencing.mjs",
+      "type": "file",
+      "size": 16228
+    },
+    {
+      "name": "test-admin-invitation-session-fencing.mjs",
+      "path": "scripts/test-admin-invitation-session-fencing.mjs",
+      "type": "file",
+      "size": 2984
+    },
+    {
+      "name": "test-admin-navigation-browser.mjs",
+      "path": "scripts/test-admin-navigation-browser.mjs",
+      "type": "file",
+      "size": 169000
+    },
+    {
+      "name": "test-admin-navigation-persistence.mjs",
+      "path": "scripts/test-admin-navigation-persistence.mjs",
+      "type": "file",
+      "size": 5001
+    },
+    {
+      "name": "test-admin-panel-boundary.mjs",
+      "path": "scripts/test-admin-panel-boundary.mjs",
+      "type": "file",
+      "size": 2878
+    },
+    {
+      "name": "test-admin-panel-capability-freshness.mjs",
+      "path": "scripts/test-admin-panel-capability-freshness.mjs",
+      "type": "file",
+      "size": 4293
+    },
+    {
+      "name": "test-admin-search-keyboard.mjs",
+      "path": "scripts/test-admin-search-keyboard.mjs",
+      "type": "file",
+      "size": 3214
+    },
+    {
+      "name": "test-admin-settings-conflict-reload.mjs",
+      "path": "scripts/test-admin-settings-conflict-reload.mjs",
+      "type": "file",
+      "size": 3456
+    },
+    {
+      "name": "test-admin-settings-search.mjs",
+      "path": "scripts/test-admin-settings-search.mjs",
+      "type": "file",
+      "size": 4420
+    },
+    {
+      "name": "test-admin-tab-navigation.mjs",
+      "path": "scripts/test-admin-tab-navigation.mjs",
+      "type": "file",
+      "size": 6206
+    },
+    {
+      "name": "test-admin-unverified-account-save.mjs",
+      "path": "scripts/test-admin-unverified-account-save.mjs",
+      "type": "file",
+      "size": 22767
+    },
+    {
+      "name": "test-admin-user-deletion-session-fencing.mjs",
+      "path": "scripts/test-admin-user-deletion-session-fencing.mjs",
+      "type": "file",
+      "size": 8826
+    },
+    {
+      "name": "test-admin-user-directory-loading.mjs",
+      "path": "scripts/test-admin-user-directory-loading.mjs",
+      "type": "file",
+      "size": 3528
+    },
+    {
+      "name": "test-admin-user-update-session-fencing.mjs",
+      "path": "scripts/test-admin-user-update-session-fencing.mjs",
+      "type": "file",
+      "size": 3611
+    },
+    {
+      "name": "test-admin-write-authorization.mjs",
+      "path": "scripts/test-admin-write-authorization.mjs",
+      "type": "file",
+      "size": 7398
+    },
+    {
+      "name": "test-automation-behavior.mjs",
+      "path": "scripts/test-automation-behavior.mjs",
+      "type": "file",
+      "size": 13552
+    },
+    {
+      "name": "test-automation-builder-browser.mjs",
+      "path": "scripts/test-automation-builder-browser.mjs",
+      "type": "file",
+      "size": 6486
+    },
+    {
+      "name": "test-bouncie-connection-singleton-race.mjs",
+      "path": "scripts/test-bouncie-connection-singleton-race.mjs",
+      "type": "file",
+      "size": 4231
+    },
+    {
+      "name": "test-fleet-analytics-detail-load-race.mjs",
+      "path": "scripts/test-fleet-analytics-detail-load-race.mjs",
+      "type": "file",
+      "size": 13183
+    },
+    {
+      "name": "test-fleet-component-load-race.mjs",
+      "path": "scripts/test-fleet-component-load-race.mjs",
+      "type": "file",
+      "size": 10015
+    },
+    {
+      "name": "test-fleet-cutover-reader-election.mjs",
+      "path": "scripts/test-fleet-cutover-reader-election.mjs",
+      "type": "file",
+      "size": 2966
+    },
+    {
+      "name": "test-fleet-cutover-singleton-race.mjs",
+      "path": "scripts/test-fleet-cutover-singleton-race.mjs",
+      "type": "file",
+      "size": 4597
+    },
+    {
+      "name": "test-fleet-entity-loader-resilience.mjs",
+      "path": "scripts/test-fleet-entity-loader-resilience.mjs",
+      "type": "file",
+      "size": 7867
+    },
+    {
+      "name": "test-fleet-equipment-scoped-load-race.mjs",
+      "path": "scripts/test-fleet-equipment-scoped-load-race.mjs",
+      "type": "file",
+      "size": 10719
+    },
+    {
+      "name": "test-fleet-history-equipment-load-race.mjs",
+      "path": "scripts/test-fleet-history-equipment-load-race.mjs",
+      "type": "file",
+      "size": 11782
+    },
+    {
+      "name": "test-fleet-history-status-race.mjs",
+      "path": "scripts/test-fleet-history-status-race.mjs",
+      "type": "file",
+      "size": 5656
+    },
+    {
+      "name": "test-fleet-inspections-load-race.mjs",
+      "path": "scripts/test-fleet-inspections-load-race.mjs",
+      "type": "file",
+      "size": 7419
+    },
+    {
+      "name": "test-fleet-inventory-load-race.mjs",
+      "path": "scripts/test-fleet-inventory-load-race.mjs",
+      "type": "file",
+      "size": 5697
+    },
+    {
+      "name": "test-fleet-inventory-update-version-race.mjs",
+      "path": "scripts/test-fleet-inventory-update-version-race.mjs",
+      "type": "file",
+      "size": 2989
+    },
+    {
+      "name": "test-fleet-maintenance-load-race.mjs",
+      "path": "scripts/test-fleet-maintenance-load-race.mjs",
+      "type": "file",
+      "size": 7459
+    },
+    {
+      "name": "test-fleet-mechanic-bootstrap-authorization.mjs",
+      "path": "scripts/test-fleet-mechanic-bootstrap-authorization.mjs",
+      "type": "file",
+      "size": 2296
+    },
+    {
+      "name": "test-fleet-mechanic-estimate-handoff-race.mjs",
+      "path": "scripts/test-fleet-mechanic-estimate-handoff-race.mjs",
+      "type": "file",
+      "size": 27064
+    },
+    {
+      "name": "test-fleet-mechanic-estimate-response-race.mjs",
+      "path": "scripts/test-fleet-mechanic-estimate-response-race.mjs",
+      "type": "file",
+      "size": 21261
+    },
+    {
+      "name": "test-fleet-mechanic-last-save-guard.mjs",
+      "path": "scripts/test-fleet-mechanic-last-save-guard.mjs",
+      "type": "file",
+      "size": 3797
+    },
+    {
+      "name": "test-fleet-mechanic-mutation-recovery.mjs",
+      "path": "scripts/test-fleet-mechanic-mutation-recovery.mjs",
+      "type": "file",
+      "size": 8974
+    },
+    {
+      "name": "test-fleet-mechanic-post-commit-race.mjs",
+      "path": "scripts/test-fleet-mechanic-post-commit-race.mjs",
+      "type": "file",
+      "size": 5619
+    },
+    {
+      "name": "test-fleet-mechanic-recovery-selection-race.mjs",
+      "path": "scripts/test-fleet-mechanic-recovery-selection-race.mjs",
+      "type": "file",
+      "size": 11735
+    },
+    {
+      "name": "test-fleet-mechanic-repair-estimate-browser.mjs",
+      "path": "scripts/test-fleet-mechanic-repair-estimate-browser.mjs",
+      "type": "file",
+      "size": 28728
+    },
+    {
+      "name": "test-fleet-mechanic-started-receipt-race.mjs",
+      "path": "scripts/test-fleet-mechanic-started-receipt-race.mjs",
+      "type": "file",
+      "size": 100043
+    },
+    {
+      "name": "test-fleet-mechanic-status-authorization.mjs",
+      "path": "scripts/test-fleet-mechanic-status-authorization.mjs",
+      "type": "file",
+      "size": 12930
+    },
+    {
+      "name": "test-fleet-mechanic-work-handoff-race.mjs",
+      "path": "scripts/test-fleet-mechanic-work-handoff-race.mjs",
+      "type": "file",
+      "size": 5381
+    },
+    {
+      "name": "test-fleet-mechanic-work-order-commit-gate.mjs",
+      "path": "scripts/test-fleet-mechanic-work-order-commit-gate.mjs",
+      "type": "file",
+      "size": 13951
+    },
+    {
+      "name": "test-fleet-mechanic-work-recovery-browser.mjs",
+      "path": "scripts/test-fleet-mechanic-work-recovery-browser.mjs",
+      "type": "file",
+      "size": 86195
+    },
+    {
+      "name": "test-fleet-mechanic-work-recovery-selection-race.mjs",
+      "path": "scripts/test-fleet-mechanic-work-recovery-selection-race.mjs",
+      "type": "file",
+      "size": 7127
+    },
+    {
+      "name": "test-fleet-part-lookup-browser.mjs",
+      "path": "scripts/test-fleet-part-lookup-browser.mjs",
+      "type": "file",
+      "size": 17746
+    },
+    {
+      "name": "test-fleet-part-lookup-upgrade.mjs",
+      "path": "scripts/test-fleet-part-lookup-upgrade.mjs",
+      "type": "file",
+      "size": 11767
+    },
+    {
+      "name": "test-fleet-record-delete-persistence.mjs",
+      "path": "scripts/test-fleet-record-delete-persistence.mjs",
+      "type": "file",
+      "size": 2719
+    },
+    {
+      "name": "test-fleet-repair-approval-policies-browser.mjs",
+      "path": "scripts/test-fleet-repair-approval-policies-browser.mjs",
+      "type": "file",
+      "size": 14704
+    },
+    {
+      "name": "test-fleet-repair-approval-policy-create-race.mjs",
+      "path": "scripts/test-fleet-repair-approval-policy-create-race.mjs",
+      "type": "file",
+      "size": 8940
+    },
+    {
+      "name": "test-fleet-repair-estimate-browser.mjs",
+      "path": "scripts/test-fleet-repair-estimate-browser.mjs",
+      "type": "file",
+      "size": 24266
+    },
+    {
+      "name": "test-fleet-repair-estimate-create-race.mjs",
+      "path": "scripts/test-fleet-repair-estimate-create-race.mjs",
+      "type": "file",
+      "size": 12806
+    },
+    {
+      "name": "test-fleet-repair-estimate-refresh.mjs",
+      "path": "scripts/test-fleet-repair-estimate-refresh.mjs",
+      "type": "file",
+      "size": 5060
+    },
+    {
+      "name": "test-fleet-request-unit-cost-validation.mjs",
+      "path": "scripts/test-fleet-request-unit-cost-validation.mjs",
+      "type": "file",
+      "size": 3156
+    },
+    {
+      "name": "test-fleet-requests-browser.mjs",
+      "path": "scripts/test-fleet-requests-browser.mjs",
+      "type": "file",
+      "size": 9164
+    },
+    {
+      "name": "test-fleet-requests-load-race.mjs",
+      "path": "scripts/test-fleet-requests-load-race.mjs",
+      "type": "file",
+      "size": 4177
+    },
+    {
+      "name": "test-fleet-session-read-gateway.mjs",
+      "path": "scripts/test-fleet-session-read-gateway.mjs",
+      "type": "file",
+      "size": 6659
+    },
+    {
+      "name": "test-fleet-settings-load-race.mjs",
+      "path": "scripts/test-fleet-settings-load-race.mjs",
+      "type": "file",
+      "size": 7143
+    },
+    {
+      "name": "test-fleet-settings-reader-election.mjs",
+      "path": "scripts/test-fleet-settings-reader-election.mjs",
+      "type": "file",
+      "size": 3367
+    },
+    {
+      "name": "test-fleet-start-work-focus.mjs",
+      "path": "scripts/test-fleet-start-work-focus.mjs",
+      "type": "file",
+      "size": 2629
+    },
+    {
+      "name": "test-fleet-tracking-load-race.mjs",
+      "path": "scripts/test-fleet-tracking-load-race.mjs",
+      "type": "file",
+      "size": 6271
+    },
+    {
+      "name": "test-fleet-tracking-trip-race-browser.mjs",
+      "path": "scripts/test-fleet-tracking-trip-race-browser.mjs",
+      "type": "file",
+      "size": 7985
+    },
+    {
+      "name": "test-fleet-work-order-browser.mjs",
+      "path": "scripts/test-fleet-work-order-browser.mjs",
+      "type": "file",
+      "size": 17723
+    },
+    {
+      "name": "test-fleet-work-order-refresh.mjs",
+      "path": "scripts/test-fleet-work-order-refresh.mjs",
+      "type": "file",
+      "size": 2809
+    },
+    {
+      "name": "test-fleet-work-order-save-focus.mjs",
+      "path": "scripts/test-fleet-work-order-save-focus.mjs",
+      "type": "file",
+      "size": 3939
+    },
+    {
+      "name": "test-focus-layout-browser.mjs",
+      "path": "scripts/test-focus-layout-browser.mjs",
+      "type": "file",
+      "size": 25521
+    },
+    {
+      "name": "test-focus-timer-browser.mjs",
+      "path": "scripts/test-focus-timer-browser.mjs",
+      "type": "file",
+      "size": 10087
+    },
+    {
+      "name": "test-mmm-board-browser.mjs",
+      "path": "scripts/test-mmm-board-browser.mjs",
+      "type": "file",
+      "size": 25393
+    },
+    {
+      "name": "test-ohio-building-directory.py",
+      "path": "scripts/test-ohio-building-directory.py",
+      "type": "file",
+      "size": 1211
+    },
+    {
+      "name": "test-ohio-county-relationship-candidates.py",
+      "path": "scripts/test-ohio-county-relationship-candidates.py",
+      "type": "file",
+      "size": 2454
+    },
+    {
+      "name": "test-ohio-gap-classification.py",
+      "path": "scripts/test-ohio-gap-classification.py",
+      "type": "file",
+      "size": 2076
+    },
+    {
+      "name": "test-ohio-grfc-relationships.py",
+      "path": "scripts/test-ohio-grfc-relationships.py",
+      "type": "file",
+      "size": 1686
+    },
+    {
+      "name": "test-ohio-identity-correction-review.py",
+      "path": "scripts/test-ohio-identity-correction-review.py",
+      "type": "file",
+      "size": 2491
+    },
+    {
+      "name": "test-ohio-identity-reconciliation.py",
+      "path": "scripts/test-ohio-identity-reconciliation.py",
+      "type": "file",
+      "size": 2926
+    },
+    {
+      "name": "test-permitting-address-canonical-profile.mjs",
+      "path": "scripts/test-permitting-address-canonical-profile.mjs",
+      "type": "file",
+      "size": 8254
+    },
+    {
+      "name": "test-permitting-approved-evidence-search.mjs",
+      "path": "scripts/test-permitting-approved-evidence-search.mjs",
+      "type": "file",
+      "size": 5779
+    },
+    {
+      "name": "test-permitting-authority-verification.mjs",
+      "path": "scripts/test-permitting-authority-verification.mjs",
+      "type": "file",
+      "size": 15434
+    },
+    {
+      "name": "test-permitting-catalog-office-link.mjs",
+      "path": "scripts/test-permitting-catalog-office-link.mjs",
+      "type": "file",
+      "size": 6162
+    },
+    {
+      "name": "test-permitting-county-choices.mjs",
+      "path": "scripts/test-permitting-county-choices.mjs",
+      "type": "file",
+      "size": 914
+    },
+    {
+      "name": "test-permitting-coverage-reader.mjs",
+      "path": "scripts/test-permitting-coverage-reader.mjs",
+      "type": "file",
+      "size": 4135
+    },
+    {
+      "name": "test-permitting-coverage-sdk-adapter.mjs",
+      "path": "scripts/test-permitting-coverage-sdk-adapter.mjs",
+      "type": "file",
+      "size": 9673
+    },
+    {
+      "name": "test-permitting-documents-browser.mjs",
+      "path": "scripts/test-permitting-documents-browser.mjs",
+      "type": "file",
+      "size": 36132
+    },
+    {
+      "name": "test-permitting-draft-follow-up-browser.mjs",
+      "path": "scripts/test-permitting-draft-follow-up-browser.mjs",
+      "type": "file",
+      "size": 14618
+    },
+    {
+      "name": "test-permitting-draft-library-browser.mjs",
+      "path": "scripts/test-permitting-draft-library-browser.mjs",
+      "type": "file",
+      "size": 9801
+    },
+    {
+      "name": "test-permitting-draft-revision-browser.mjs",
+      "path": "scripts/test-permitting-draft-revision-browser.mjs",
+      "type": "file",
+      "size": 18061
+    },
+    {
+      "name": "test-permitting-electrical-identity-browser.mjs",
+      "path": "scripts/test-permitting-electrical-identity-browser.mjs",
+      "type": "file",
+      "size": 7014
+    },
+    {
+      "name": "test-permitting-electrical-inquiry-browser.mjs",
+      "path": "scripts/test-permitting-electrical-inquiry-browser.mjs",
+      "type": "file",
+      "size": 5972
+    },
+    {
+      "name": "test-permitting-electrical-source-audit.mjs",
+      "path": "scripts/test-permitting-electrical-source-audit.mjs",
+      "type": "file",
+      "size": 12648
+    },
+    {
+      "name": "test-permitting-external-referral-browser.mjs",
+      "path": "scripts/test-permitting-external-referral-browser.mjs",
+      "type": "file",
+      "size": 7953
+    },
+    {
+      "name": "test-permitting-geography.py",
+      "path": "scripts/test-permitting-geography.py",
+      "type": "file",
+      "size": 1446
+    },
+    {
+      "name": "test-permitting-government-office-catalog.mjs",
+      "path": "scripts/test-permitting-government-office-catalog.mjs",
+      "type": "file",
+      "size": 10657
+    },
+    {
+      "name": "test-permitting-locality-authority-selection.mjs",
+      "path": "scripts/test-permitting-locality-authority-selection.mjs",
+      "type": "file",
+      "size": 21524
+    },
+    {
+      "name": "test-permitting-locality-evidence.mjs",
+      "path": "scripts/test-permitting-locality-evidence.mjs",
+      "type": "file",
+      "size": 5588
+    },
+    {
+      "name": "test-permitting-locality-office-evidence.mjs",
+      "path": "scripts/test-permitting-locality-office-evidence.mjs",
+      "type": "file",
+      "size": 4347
+    },
+    {
+      "name": "test-permitting-map-browser.mjs",
+      "path": "scripts/test-permitting-map-browser.mjs",
+      "type": "file",
+      "size": 10350
+    },
+    {
+      "name": "test-permitting-metrics-lifecycle.mjs",
+      "path": "scripts/test-permitting-metrics-lifecycle.mjs",
+      "type": "file",
+      "size": 3423
+    },
+    {
+      "name": "test-permitting-office-evidence-reconciliation.mjs",
+      "path": "scripts/test-permitting-office-evidence-reconciliation.mjs",
+      "type": "file",
+      "size": 11810
+    },
+    {
+      "name": "test-permitting-office-identity-preservation.mjs",
+      "path": "scripts/test-permitting-office-identity-preservation.mjs",
+      "type": "file",
+      "size": 5025
+    },
+    {
+      "name": "test-permitting-office-identity-preview-browser.mjs",
+      "path": "scripts/test-permitting-office-identity-preview-browser.mjs",
+      "type": "file",
+      "size": 10191
+    },
+    {
+      "name": "test-permitting-office-response-browser.mjs",
+      "path": "scripts/test-permitting-office-response-browser.mjs",
+      "type": "file",
+      "size": 7670
+    },
+    {
+      "name": "test-permitting-office-response-handoff-browser.mjs",
+      "path": "scripts/test-permitting-office-response-handoff-browser.mjs",
+      "type": "file",
+      "size": 16917
+    },
+    {
+      "name": "test-permitting-official-inventory.mjs",
+      "path": "scripts/test-permitting-official-inventory.mjs",
+      "type": "file",
+      "size": 12415
+    },
+    {
+      "name": "test-permitting-ohio-reference.py",
+      "path": "scripts/test-permitting-ohio-reference.py",
+      "type": "file",
+      "size": 3265
+    },
+    {
+      "name": "test-permitting-pdf-delegation-ui.mjs",
+      "path": "scripts/test-permitting-pdf-delegation-ui.mjs",
+      "type": "file",
+      "size": 6897
+    },
+    {
+      "name": "test-permitting-pdf-keyboard.mjs",
+      "path": "scripts/test-permitting-pdf-keyboard.mjs",
+      "type": "file",
+      "size": 12216
+    },
+    {
+      "name": "test-permitting-picker-overview-browser.mjs",
+      "path": "scripts/test-permitting-picker-overview-browser.mjs",
+      "type": "file",
+      "size": 13638
+    },
+    {
+      "name": "test-permitting-queue-browse.mjs",
+      "path": "scripts/test-permitting-queue-browse.mjs",
+      "type": "file",
+      "size": 2171
+    },
+    {
+      "name": "test-permitting-recorded-coverage.mjs",
+      "path": "scripts/test-permitting-recorded-coverage.mjs",
+      "type": "file",
+      "size": 21417
+    },
+    {
+      "name": "test-permitting-requirements-browser.mjs",
+      "path": "scripts/test-permitting-requirements-browser.mjs",
+      "type": "file",
+      "size": 6845
+    },
+    {
+      "name": "test-permitting-retained-electrical-page-check.mjs",
+      "path": "scripts/test-permitting-retained-electrical-page-check.mjs",
+      "type": "file",
+      "size": 9497
+    },
+    {
+      "name": "test-permitting-retained-electrical-page-ui.mjs",
+      "path": "scripts/test-permitting-retained-electrical-page-ui.mjs",
+      "type": "file",
+      "size": 4760
+    },
+    {
+      "name": "test-permitting-review-event-reconciliation.mjs",
+      "path": "scripts/test-permitting-review-event-reconciliation.mjs",
+      "type": "file",
+      "size": 6610
+    },
+    {
+      "name": "test-permitting-reviewed-office-mirror.mjs",
+      "path": "scripts/test-permitting-reviewed-office-mirror.mjs",
+      "type": "file",
+      "size": 8079
+    },
+    {
+      "name": "test-permitting-rule-card-render.mjs",
+      "path": "scripts/test-permitting-rule-card-render.mjs",
+      "type": "file",
+      "size": 6993
+    },
+    {
+      "name": "test-permitting-saved-profile-links.mjs",
+      "path": "scripts/test-permitting-saved-profile-links.mjs",
+      "type": "file",
+      "size": 3752
+    },
+    {
+      "name": "test-permitting-scan-activity-browser.mjs",
+      "path": "scripts/test-permitting-scan-activity-browser.mjs",
+      "type": "file",
+      "size": 8215
+    },
+    {
+      "name": "test-permitting-selector-electrical-office-handoff.mjs",
+      "path": "scripts/test-permitting-selector-electrical-office-handoff.mjs",
+      "type": "file",
+      "size": 10674
+    },
+    {
+      "name": "test-permitting-selector-electrical-research-outcome.mjs",
+      "path": "scripts/test-permitting-selector-electrical-research-outcome.mjs",
+      "type": "file",
+      "size": 4996
+    },
+    {
+      "name": "test-permitting-selector-saved-source-review.mjs",
+      "path": "scripts/test-permitting-selector-saved-source-review.mjs",
+      "type": "file",
+      "size": 7653
+    },
+    {
+      "name": "test-permitting-selector-scan-browser.mjs",
+      "path": "scripts/test-permitting-selector-scan-browser.mjs",
+      "type": "file",
+      "size": 42677
+    },
+    {
+      "name": "test-permitting-selector-source-review-refs.mjs",
+      "path": "scripts/test-permitting-selector-source-review-refs.mjs",
+      "type": "file",
+      "size": 17435
+    },
+    {
+      "name": "test-permitting-selector-source-review-ui.mjs",
+      "path": "scripts/test-permitting-selector-source-review-ui.mjs",
+      "type": "file",
+      "size": 5354
+    },
+    {
+      "name": "test-permitting-source-navigation-browser.mjs",
+      "path": "scripts/test-permitting-source-navigation-browser.mjs",
+      "type": "file",
+      "size": 15535
+    },
+    {
+      "name": "test-permitting-source-pdf-browser.mjs",
+      "path": "scripts/test-permitting-source-pdf-browser.mjs",
+      "type": "file",
+      "size": 17661
+    },
+    {
+      "name": "test-permitting-source-review-browser.mjs",
+      "path": "scripts/test-permitting-source-review-browser.mjs",
+      "type": "file",
+      "size": 6969
+    },
+    {
+      "name": "test-permitting-workflow-draft-browser.mjs",
+      "path": "scripts/test-permitting-workflow-draft-browser.mjs",
+      "type": "file",
+      "size": 11271
+    },
+    {
+      "name": "test-permitting-workflow-planning-review-browser.mjs",
+      "path": "scripts/test-permitting-workflow-planning-review-browser.mjs",
+      "type": "file",
+      "size": 17088
+    },
+    {
+      "name": "test-permitting-workflow-review-packet-browser.mjs",
+      "path": "scripts/test-permitting-workflow-review-packet-browser.mjs",
+      "type": "file",
+      "size": 13771
+    },
+    {
+      "name": "test-permitting-workflow-source-evidence-browser.mjs",
+      "path": "scripts/test-permitting-workflow-source-evidence-browser.mjs",
+      "type": "file",
+      "size": 14014
+    },
+    {
+      "name": "test-permitting-workspace-browser.mjs",
+      "path": "scripts/test-permitting-workspace-browser.mjs",
+      "type": "file",
+      "size": 7882
+    },
+    {
+      "name": "test-sips-checklist-reload-focus-browser.mjs",
+      "path": "scripts/test-sips-checklist-reload-focus-browser.mjs",
+      "type": "file",
+      "size": 11417
+    },
+    {
+      "name": "test-sips-clear-revisit-browser.mjs",
+      "path": "scripts/test-sips-clear-revisit-browser.mjs",
+      "type": "file",
+      "size": 35792
+    },
+    {
+      "name": "test-sips-template-selection-browser.mjs",
+      "path": "scripts/test-sips-template-selection-browser.mjs",
+      "type": "file",
+      "size": 12581
+    },
+    {
+      "name": "test-sips-template-unsaved-navigation-browser.mjs",
+      "path": "scripts/test-sips-template-unsaved-navigation-browser.mjs",
+      "type": "file",
+      "size": 36060
+    },
+    {
+      "name": "test-staff-read-gateway.mjs",
+      "path": "scripts/test-staff-read-gateway.mjs",
+      "type": "file",
+      "size": 3335
+    },
+    {
+      "name": "test-timeclock-admin-browser.mjs",
+      "path": "scripts/test-timeclock-admin-browser.mjs",
+      "type": "file",
+      "size": 9992
+    },
+    {
+      "name": "test-timeclock-pay-period-browser.mjs",
+      "path": "scripts/test-timeclock-pay-period-browser.mjs",
+      "type": "file",
+      "size": 12101
+    },
+    {
+      "name": "test-timeclock-quickclock-browser.mjs",
+      "path": "scripts/test-timeclock-quickclock-browser.mjs",
+      "type": "file",
+      "size": 26267
+    },
+    {
+      "name": "test-timeclock-subtabs-browser.mjs",
+      "path": "scripts/test-timeclock-subtabs-browser.mjs",
+      "type": "file",
+      "size": 8399
+    },
+    {
+      "name": "test-timeclock-timeoff-browser.mjs",
+      "path": "scripts/test-timeclock-timeoff-browser.mjs",
+      "type": "file",
+      "size": 12560
+    },
+    {
+      "name": "test-timeclock-timeoff-decision.mjs",
+      "path": "scripts/test-timeclock-timeoff-decision.mjs",
+      "type": "file",
+      "size": 13349
+    },
+    {
+      "name": "test-verify-login-lockout.mjs",
+      "path": "scripts/test-verify-login-lockout.mjs",
+      "type": "file",
+      "size": 3786
+    },
+    {
+      "name": "time-clock-status-lite.test.mjs",
+      "path": "scripts/time-clock-status-lite.test.mjs",
+      "type": "file",
+      "size": 8695
+    },
+    {
+      "name": "validate-column-sort-identity-persistence.mjs",
+      "path": "scripts/validate-column-sort-identity-persistence.mjs",
+      "type": "file",
+      "size": 4560
+    },
+    {
+      "name": "validate-corebridge-offline.mjs",
+      "path": "scripts/validate-corebridge-offline.mjs",
+      "type": "file",
+      "size": 3056
+    },
+    {
+      "name": "validate-fleet-work-order-focus.mjs",
+      "path": "scripts/validate-fleet-work-order-focus.mjs",
+      "type": "file",
+      "size": 11521
+    },
+    {
+      "name": "validate-focus-timer.mjs",
+      "path": "scripts/validate-focus-timer.mjs",
+      "type": "file",
+      "size": 5643
+    },
+    {
+      "name": "validate-frontend-shared-mirrors.mjs",
+      "path": "scripts/validate-frontend-shared-mirrors.mjs",
+      "type": "file",
+      "size": 646
+    },
+    {
+      "name": "validate-mmm-board.mjs",
+      "path": "scripts/validate-mmm-board.mjs",
+      "type": "file",
+      "size": 19214
+    },
+    {
+      "name": "validate-historical-sales-outcome-reconciliation.mjs",
+      "path": "scripts/validate-historical-sales-outcome-reconciliation.mjs",
+      "type": "file",
+      "size": 6232
+    },
+    {
+      "name": "validate-opportunity-bridge-apply-engine.mjs",
+      "path": "scripts/validate-opportunity-bridge-apply-engine.mjs",
+      "type": "file",
+      "size": 8823
+    },
+    {
+      "name": "validate-opportunity-bridge-audit.mjs",
+      "path": "scripts/validate-opportunity-bridge-audit.mjs",
+      "type": "file",
+      "size": 9630
+    },
+    {
+      "name": "validate-opportunity-bridge-dry-run-planner.mjs",
+      "path": "scripts/validate-opportunity-bridge-dry-run-planner.mjs",
+      "type": "file",
+      "size": 6126
+    },
+    {
+      "name": "validate-opportunity-bridge-execution-contract.mjs",
+      "path": "scripts/validate-opportunity-bridge-execution-contract.mjs",
+      "type": "file",
+      "size": 1737
+    },
+    {
+      "name": "validate-opportunity-bridge-operator-review.mjs",
+      "path": "scripts/validate-opportunity-bridge-operator-review.mjs",
+      "type": "file",
+      "size": 4314
+    },
+    {
+      "name": "validate-opportunity-bridge-pilot-review-boundary.mjs",
+      "path": "scripts/validate-opportunity-bridge-pilot-review-boundary.mjs",
+      "type": "file",
+      "size": 6096
+    },
+    {
+      "name": "validate-opportunity-bridge-pilot-verification.mjs",
+      "path": "scripts/validate-opportunity-bridge-pilot-verification.mjs",
+      "type": "file",
+      "size": 7288
+    },
+    {
+      "name": "validate-opportunity-bridge-production-executor.mjs",
+      "path": "scripts/validate-opportunity-bridge-production-executor.mjs",
+      "type": "file",
+      "size": 13669
+    },
+    {
+      "name": "validate-opportunity-bridge-production-readiness.mjs",
+      "path": "scripts/validate-opportunity-bridge-production-readiness.mjs",
+      "type": "file",
+      "size": 8769
+    },
+    {
+      "name": "validate-opportunity-bridge-receipt-confirmation-foundation.mjs",
+      "path": "scripts/validate-opportunity-bridge-receipt-confirmation-foundation.mjs",
+      "type": "file",
+      "size": 10610
+    },
+    {
+      "name": "validate-opportunity-bridge-simulation-endpoint.mjs",
+      "path": "scripts/validate-opportunity-bridge-simulation-endpoint.mjs",
+      "type": "file",
+      "size": 6463
+    },
+    {
+      "name": "validate-opportunity-foundation.mjs",
+      "path": "scripts/validate-opportunity-foundation.mjs",
+      "type": "file",
+      "size": 7264
+    },
+    {
+      "name": "validate-opportunity-workspace.mjs",
+      "path": "scripts/validate-opportunity-workspace.mjs",
+      "type": "file",
+      "size": 42866
+    },
+    {
+      "name": "validate-order-429-retry-revalidation.mjs",
+      "path": "scripts/validate-order-429-retry-revalidation.mjs",
+      "type": "file",
+      "size": 8047
+    },
+    {
+      "name": "validate-order-active-customer-draft-sync-safety.mjs",
+      "path": "scripts/validate-order-active-customer-draft-sync-safety.mjs",
+      "type": "file",
+      "size": 3809
+    },
+    {
+      "name": "validate-order-add-delete-import-pull-fence.mjs",
+      "path": "scripts/validate-order-add-delete-import-pull-fence.mjs",
+      "type": "file",
+      "size": 6349
+    },
+    {
+      "name": "validate-order-association-only-sync.mjs",
+      "path": "scripts/validate-order-association-only-sync.mjs",
+      "type": "file",
+      "size": 7189
+    },
+    {
+      "name": "validate-order-background-refresh-edit-fence.mjs",
+      "path": "scripts/validate-order-background-refresh-edit-fence.mjs",
+      "type": "file",
+      "size": 4397
+    },
+    {
+      "name": "validate-order-background-sync-policy.mjs",
+      "path": "scripts/validate-order-background-sync-policy.mjs",
+      "type": "file",
+      "size": 3424
+    },
+    {
+      "name": "validate-order-backup-first-write-race.mjs",
+      "path": "scripts/validate-order-backup-first-write-race.mjs",
+      "type": "file",
+      "size": 7104
+    },
+    {
+      "name": "validate-order-backup-readiness.mjs",
+      "path": "scripts/validate-order-backup-readiness.mjs",
+      "type": "file",
+      "size": 3832
+    },
+    {
+      "name": "validate-order-batch-review-translations.mjs",
+      "path": "scripts/validate-order-batch-review-translations.mjs",
+      "type": "file",
+      "size": 2347
+    },
+    {
+      "name": "validate-order-customer-adoption-zero-put-readback.mjs",
+      "path": "scripts/validate-order-customer-adoption-zero-put-readback.mjs",
+      "type": "file",
+      "size": 6472
+    },
+    {
+      "name": "validate-order-customer-blur-after-selection.mjs",
+      "path": "scripts/validate-order-customer-blur-after-selection.mjs",
+      "type": "file",
+      "size": 3428
+    },
+    {
+      "name": "validate-order-customer-decision-commit.mjs",
+      "path": "scripts/validate-order-customer-decision-commit.mjs",
+      "type": "file",
+      "size": 7672
+    },
+    {
+      "name": "validate-order-customer-decision-readonly-preflight.mjs",
+      "path": "scripts/validate-order-customer-decision-readonly-preflight.mjs",
+      "type": "file",
+      "size": 5564
+    },
+    {
+      "name": "validate-order-customer-edit-during-pull.mjs",
+      "path": "scripts/validate-order-customer-edit-during-pull.mjs",
+      "type": "file",
+      "size": 5727
+    },
+    {
+      "name": "validate-order-customer-manual-reassociation.mjs",
+      "path": "scripts/validate-order-customer-manual-reassociation.mjs",
+      "type": "file",
+      "size": 5281
+    },
+    {
+      "name": "validate-order-customer-picker.mjs",
+      "path": "scripts/validate-order-customer-picker.mjs",
+      "type": "file",
+      "size": 10436
+    },
+    {
+      "name": "validate-order-customer-selection-lifecycle.mjs",
+      "path": "scripts/validate-order-customer-selection-lifecycle.mjs",
+      "type": "file",
+      "size": 5082
+    },
+    {
+      "name": "validate-order-date-needed-immediate.mjs",
+      "path": "scripts/validate-order-date-needed-immediate.mjs",
+      "type": "file",
+      "size": 2912
+    },
+    {
+      "name": "validate-order-date-snapshot.mjs",
+      "path": "scripts/validate-order-date-snapshot.mjs",
+      "type": "file",
+      "size": 4926
+    },
+    {
+      "name": "validate-order-delete-smartsheet-safety.mjs",
+      "path": "scripts/validate-order-delete-smartsheet-safety.mjs",
+      "type": "file",
+      "size": 5717
+    },
+    {
+      "name": "validate-order-form-history-ui.mjs",
+      "path": "scripts/validate-order-form-history-ui.mjs",
+      "type": "file",
+      "size": 4348
+    },
+    {
+      "name": "validate-order-form-improvements.mjs",
+      "path": "scripts/validate-order-form-improvements.mjs",
+      "type": "file",
+      "size": 4838
+    },
+    {
+      "name": "validate-order-historical-import-audit.mjs",
+      "path": "scripts/validate-order-historical-import-audit.mjs",
+      "type": "file",
+      "size": 6170
+    },
+    {
+      "name": "validate-order-import-ambiguous-matching.mjs",
+      "path": "scripts/validate-order-import-ambiguous-matching.mjs",
+      "type": "file",
+      "size": 9952
+    },
+    {
+      "name": "validate-order-import-completion-readback.mjs",
+      "path": "scripts/validate-order-import-completion-readback.mjs",
+      "type": "file",
+      "size": 7399
+    },
+    {
+      "name": "validate-order-import-durable-sync-queue.mjs",
+      "path": "scripts/validate-order-import-durable-sync-queue.mjs",
+      "type": "file",
+      "size": 7280
+    },
+    {
+      "name": "validate-order-import-refresh-isolation.mjs",
+      "path": "scripts/validate-order-import-refresh-isolation.mjs",
+      "type": "file",
+      "size": 7642
+    },
+    {
+      "name": "validate-order-independent-pull-evidence-ui.mjs",
+      "path": "scripts/validate-order-independent-pull-evidence-ui.mjs",
+      "type": "file",
+      "size": 4862
+    },
+    {
+      "name": "validate-order-independent-pull-evidence.mjs",
+      "path": "scripts/validate-order-independent-pull-evidence.mjs",
+      "type": "file",
+      "size": 7858
+    },
+    {
+      "name": "validate-order-inline-edit-during-pull.mjs",
+      "path": "scripts/validate-order-inline-edit-during-pull.mjs",
+      "type": "file",
+      "size": 5956
+    },
+    {
+      "name": "validate-order-linked-customer-name-pull-review.mjs",
+      "path": "scripts/validate-order-linked-customer-name-pull-review.mjs",
+      "type": "file",
+      "size": 5985
+    },
+    {
+      "name": "validate-order-linked-customer-review-ui.mjs",
+      "path": "scripts/validate-order-linked-customer-review-ui.mjs",
+      "type": "file",
+      "size": 4999
+    },
+    {
+      "name": "validate-order-manual-pull-button.mjs",
+      "path": "scripts/validate-order-manual-pull-button.mjs",
+      "type": "file",
+      "size": 5224
+    },
+    {
+      "name": "validate-order-missing-permanent-row-safety.mjs",
+      "path": "scripts/validate-order-missing-permanent-row-safety.mjs",
+      "type": "file",
+      "size": 3922
+    },
+    {
+      "name": "validate-order-mobile-date-safety.mjs",
+      "path": "scripts/validate-order-mobile-date-safety.mjs",
+      "type": "file",
+      "size": 3184
+    },
+    {
+      "name": "validate-order-multi-session-sync-completion.mjs",
+      "path": "scripts/validate-order-multi-session-sync-completion.mjs",
+      "type": "file",
+      "size": 4250
+    },
+    {
+      "name": "validate-order-partial-sync-retry.mjs",
+      "path": "scripts/validate-order-partial-sync-retry.mjs",
+      "type": "file",
+      "size": 3830
+    },
+    {
+      "name": "validate-order-pending-filter-read-failure.mjs",
+      "path": "scripts/validate-order-pending-filter-read-failure.mjs",
+      "type": "file",
+      "size": 5416
+    },
+    {
+      "name": "validate-order-pending-only-retry.mjs",
+      "path": "scripts/validate-order-pending-only-retry.mjs",
+      "type": "file",
+      "size": 5505
+    },
+    {
+      "name": "validate-order-prewrite-backup.mjs",
+      "path": "scripts/validate-order-prewrite-backup.mjs",
+      "type": "file",
+      "size": 8867
+    },
+    {
+      "name": "validate-order-prior-uncertain-pull-gate.mjs",
+      "path": "scripts/validate-order-prior-uncertain-pull-gate.mjs",
+      "type": "file",
+      "size": 5232
+    },
+    {
+      "name": "validate-order-pull-auto-create.mjs",
+      "path": "scripts/validate-order-pull-auto-create.mjs",
+      "type": "file",
+      "size": 5092
+    },
+    {
+      "name": "validate-order-pull-batch-evidence.mjs",
+      "path": "scripts/validate-order-pull-batch-evidence.mjs",
+      "type": "file",
+      "size": 5615
+    },
+    {
+      "name": "validate-order-pull-business-readback.mjs",
+      "path": "scripts/validate-order-pull-business-readback.mjs",
+      "type": "file",
+      "size": 4157
+    },
+    {
+      "name": "validate-order-pull-change-limit.mjs",
+      "path": "scripts/validate-order-pull-change-limit.mjs",
+      "type": "file",
+      "size": 2992
+    },
+    {
+      "name": "validate-order-pull-evidence-release.mjs",
+      "path": "scripts/validate-order-pull-evidence-release.mjs",
+      "type": "file",
+      "size": 2328
+    },
+    {
+      "name": "validate-order-pull-evidence-resolution.mjs",
+      "path": "scripts/validate-order-pull-evidence-resolution.mjs",
+      "type": "file",
+      "size": 7329
+    },
+    {
+      "name": "validate-order-pull-job-association-preservation.mjs",
+      "path": "scripts/validate-order-pull-job-association-preservation.mjs",
+      "type": "file",
+      "size": 7263
+    },
+    {
+      "name": "validate-order-pull-permanent-row-review-ui.mjs",
+      "path": "scripts/validate-order-pull-permanent-row-review-ui.mjs",
+      "type": "file",
+      "size": 1594
+    },
+    {
+      "name": "validate-order-pull-permanent-row-safety.mjs",
+      "path": "scripts/validate-order-pull-permanent-row-safety.mjs",
+      "type": "file",
+      "size": 3883
+    },
+    {
+      "name": "validate-order-pull-prewrite-budget.mjs",
+      "path": "scripts/validate-order-pull-prewrite-budget.mjs",
+      "type": "file",
+      "size": 6079
+    },
+    {
+      "name": "validate-order-pull-readback-efficiency.mjs",
+      "path": "scripts/validate-order-pull-readback-efficiency.mjs",
+      "type": "file",
+      "size": 4476
+    },
+    {
+      "name": "validate-order-pull-refresh.mjs",
+      "path": "scripts/validate-order-pull-refresh.mjs",
+      "type": "file",
+      "size": 1501
+    },
+    {
+      "name": "validate-order-push-date-readback.mjs",
+      "path": "scripts/validate-order-push-date-readback.mjs",
+      "type": "file",
+      "size": 3025
+    },
+    {
+      "name": "validate-order-rate-limit-serialization.mjs",
+      "path": "scripts/validate-order-rate-limit-serialization.mjs",
+      "type": "file",
+      "size": 5396
+    },
+    {
+      "name": "validate-order-read-load-throttle.mjs",
+      "path": "scripts/validate-order-read-load-throttle.mjs",
+      "type": "file",
+      "size": 3349
+    },
+    {
+      "name": "validate-order-reconnect-recovery.mjs",
+      "path": "scripts/validate-order-reconnect-recovery.mjs",
+      "type": "file",
+      "size": 4147
+    },
+    {
+      "name": "validate-order-remote-verification-recovery.mjs",
+      "path": "scripts/validate-order-remote-verification-recovery.mjs",
+      "type": "file",
+      "size": 7149
+    },
+    {
+      "name": "validate-order-request-types.mjs",
+      "path": "scripts/validate-order-request-types.mjs",
+      "type": "file",
+      "size": 3144
+    },
+    {
+      "name": "validate-order-requestor-user-sync.mjs",
+      "path": "scripts/validate-order-requestor-user-sync.mjs",
+      "type": "file",
+      "size": 3624
+    },
+    {
+      "name": "validate-order-restore-smartsheet-safety.mjs",
+      "path": "scripts/validate-order-restore-smartsheet-safety.mjs",
+      "type": "file",
+      "size": 4481
+    },
+    {
+      "name": "validate-order-retry-field-prewrite-safety.mjs",
+      "path": "scripts/validate-order-retry-field-prewrite-safety.mjs",
+      "type": "file",
+      "size": 7218
+    },
+    {
+      "name": "validate-order-save-and-sync.mjs",
+      "path": "scripts/validate-order-save-and-sync.mjs",
+      "type": "file",
+      "size": 11400
+    },
+    {
+      "name": "validate-order-save-recovery-ui.mjs",
+      "path": "scripts/validate-order-save-recovery-ui.mjs",
+      "type": "file",
+      "size": 3650
+    },
+    {
+      "name": "validate-order-save-sync-batch-limit.mjs",
+      "path": "scripts/validate-order-save-sync-batch-limit.mjs",
+      "type": "file",
+      "size": 14487
+    },
+    {
+      "name": "validate-order-save-sync-button.mjs",
+      "path": "scripts/validate-order-save-sync-button.mjs",
+      "type": "file",
+      "size": 1962
+    },
+    {
+      "name": "validate-order-save-sync-preflight-lock-recovery.mjs",
+      "path": "scripts/validate-order-save-sync-preflight-lock-recovery.mjs",
+      "type": "file",
+      "size": 9087
+    },
+    {
+      "name": "validate-order-save-sync-status.mjs",
+      "path": "scripts/validate-order-save-sync-status.mjs",
+      "type": "file",
+      "size": 2865
+    },
+    {
+      "name": "validate-order-smartsheet-hierarchy.mjs",
+      "path": "scripts/validate-order-smartsheet-hierarchy.mjs",
+      "type": "file",
+      "size": 2592
+    },
+    {
+      "name": "validate-order-sync-live-progress.mjs",
+      "path": "scripts/validate-order-sync-live-progress.mjs",
+      "type": "file",
+      "size": 8880
+    },
+    {
+      "name": "validate-order-sync-progress-phases.mjs",
+      "path": "scripts/validate-order-sync-progress-phases.mjs",
+      "type": "file",
+      "size": 4618
+    },
+    {
+      "name": "validate-order-sync-stale-recovery.mjs",
+      "path": "scripts/validate-order-sync-stale-recovery.mjs",
+      "type": "file",
+      "size": 8162
+    },
+    {
+      "name": "validate-order-sync-toast.mjs",
+      "path": "scripts/validate-order-sync-toast.mjs",
+      "type": "file",
+      "size": 3201
+    },
+    {
+      "name": "validate-order-sync-verification-failure.mjs",
+      "path": "scripts/validate-order-sync-verification-failure.mjs",
+      "type": "file",
+      "size": 1222
+    },
+    {
+      "name": "validate-order-sync-widget-relevance.mjs",
+      "path": "scripts/validate-order-sync-widget-relevance.mjs",
+      "type": "file",
+      "size": 3192
+    },
+    {
+      "name": "validate-order-toolbar-export-scroll.mjs",
+      "path": "scripts/validate-order-toolbar-export-scroll.mjs",
+      "type": "file",
+      "size": 3806
+    },
+    {
+      "name": "validate-order-uncertain-sync-readback.mjs",
+      "path": "scripts/validate-order-uncertain-sync-readback.mjs",
+      "type": "file",
+      "size": 4551
+    },
+    {
+      "name": "validate-order-unlinked-save-sync-roundtrip.mjs",
+      "path": "scripts/validate-order-unlinked-save-sync-roundtrip.mjs",
+      "type": "file",
+      "size": 6899
+    },
+    {
+      "name": "validate-order-unresolved-batch-review.mjs",
+      "path": "scripts/validate-order-unresolved-batch-review.mjs",
+      "type": "file",
+      "size": 9884
+    },
+    {
+      "name": "validate-order-unresolved-row-review.mjs",
+      "path": "scripts/validate-order-unresolved-row-review.mjs",
+      "type": "file",
+      "size": 6426
+    },
+    {
+      "name": "validate-order-write-timeout-safety.mjs",
+      "path": "scripts/validate-order-write-timeout-safety.mjs",
+      "type": "file",
+      "size": 3283
+    },
+    {
+      "name": "validate-sales-active-saved-filter-live-updates.mjs",
+      "path": "scripts/validate-sales-active-saved-filter-live-updates.mjs",
+      "type": "file",
+      "size": 4604
+    },
+    {
+      "name": "validate-sales-activity-timestamp-guard.mjs",
+      "path": "scripts/validate-sales-activity-timestamp-guard.mjs",
+      "type": "file",
+      "size": 9855
+    },
+    {
+      "name": "validate-sales-admin-pending-audit-review.mjs",
+      "path": "scripts/validate-sales-admin-pending-audit-review.mjs",
+      "type": "file",
+      "size": 10838
+    },
+    {
+      "name": "validate-sales-archive-offpage-recovery.mjs",
+      "path": "scripts/validate-sales-archive-offpage-recovery.mjs",
+      "type": "file",
+      "size": 8385
+    },
+    {
+      "name": "validate-sales-attention-menu.mjs",
+      "path": "scripts/validate-sales-attention-menu.mjs",
+      "type": "file",
+      "size": 7305
+    },
+    {
+      "name": "validate-sales-cleanup-action-safety.mjs",
+      "path": "scripts/validate-sales-cleanup-action-safety.mjs",
+      "type": "file",
+      "size": 3974
+    },
+    {
+      "name": "validate-sales-column-catalog.mjs",
+      "path": "scripts/validate-sales-column-catalog.mjs",
+      "type": "file",
+      "size": 7909
+    },
+    {
+      "name": "validate-sales-column-draft.mjs",
+      "path": "scripts/validate-sales-column-draft.mjs",
+      "type": "file",
+      "size": 10828
+    },
+    {
+      "name": "validate-sales-column-filter-visibility.mjs",
+      "path": "scripts/validate-sales-column-filter-visibility.mjs",
+      "type": "file",
+      "size": 2553
+    },
+    {
+      "name": "validate-sales-completed-sales-plural-boundary.mjs",
+      "path": "scripts/validate-sales-completed-sales-plural-boundary.mjs",
+      "type": "file",
+      "size": 4773
+    },
+    {
+      "name": "validate-sales-daily-queue-owner-display.mjs",
+      "path": "scripts/validate-sales-daily-queue-owner-display.mjs",
+      "type": "file",
+      "size": 1486
+    },
+    {
+      "name": "validate-sales-date-filters.mjs",
+      "path": "scripts/validate-sales-date-filters.mjs",
+      "type": "file",
+      "size": 7545
+    },
+    {
+      "name": "validate-sales-default-sort-persistence.mjs",
+      "path": "scripts/validate-sales-default-sort-persistence.mjs",
+      "type": "file",
+      "size": 2694
+    },
+    {
+      "name": "validate-sales-dialog-workspace-isolation.mjs",
+      "path": "scripts/validate-sales-dialog-workspace-isolation.mjs",
+      "type": "file",
+      "size": 2986
+    },
+    {
+      "name": "validate-sales-estimator-import-activity.mjs",
+      "path": "scripts/validate-sales-estimator-import-activity.mjs",
+      "type": "file",
+      "size": 9236
+    },
+    {
+      "name": "validate-sales-existing-task-reconciliation.mjs",
+      "path": "scripts/validate-sales-existing-task-reconciliation.mjs",
+      "type": "file",
+      "size": 10464
+    },
+    {
+      "name": "validate-sales-field-history-stage-timing.mjs",
+      "path": "scripts/validate-sales-field-history-stage-timing.mjs",
+      "type": "file",
+      "size": 8424
+    },
+    {
+      "name": "validate-sales-filter-condition-save.mjs",
+      "path": "scripts/validate-sales-filter-condition-save.mjs",
+      "type": "file",
+      "size": 2426
+    },
+    {
+      "name": "validate-sales-filter-delete-lock.mjs",
+      "path": "scripts/validate-sales-filter-delete-lock.mjs",
+      "type": "file",
+      "size": 2899
+    },
+    {
+      "name": "validate-sales-filter-detail-isolation.mjs",
+      "path": "scripts/validate-sales-filter-detail-isolation.mjs",
+      "type": "file",
+      "size": 1426
+    },
+    {
+      "name": "validate-sales-filter-duplicate-lock.mjs",
+      "path": "scripts/validate-sales-filter-duplicate-lock.mjs",
+      "type": "file",
+      "size": 3832
+    },
+    {
+      "name": "validate-sales-filter-editor-mobile.mjs",
+      "path": "scripts/validate-sales-filter-editor-mobile.mjs",
+      "type": "file",
+      "size": 8002
+    },
+    {
+      "name": "validate-sales-filter-preference-persistence.mjs",
+      "path": "scripts/validate-sales-filter-preference-persistence.mjs",
+      "type": "file",
+      "size": 5965
+    },
+    {
+      "name": "validate-sales-filter-preference-restore-normalization.mjs",
+      "path": "scripts/validate-sales-filter-preference-restore-normalization.mjs",
+      "type": "file",
+      "size": 4033
+    },
+    {
+      "name": "validate-sales-filter-row-mobile.mjs",
+      "path": "scripts/validate-sales-filter-row-mobile.mjs",
+      "type": "file",
+      "size": 2971
+    },
+    {
+      "name": "validate-sales-filter-save-lock.mjs",
+      "path": "scripts/validate-sales-filter-save-lock.mjs",
+      "type": "file",
+      "size": 4616
+    },
+    {
+      "name": "validate-sales-filter-selection-lock.mjs",
+      "path": "scripts/validate-sales-filter-selection-lock.mjs",
+      "type": "file",
+      "size": 3194
+    },
+    {
+      "name": "validate-sales-follow-up-completion-concurrency.mjs",
+      "path": "scripts/validate-sales-follow-up-completion-concurrency.mjs",
+      "type": "file",
+      "size": 8933
+    },
+    {
+      "name": "validate-sales-follow-up-save-recovery.mjs",
+      "path": "scripts/validate-sales-follow-up-save-recovery.mjs",
+      "type": "file",
+      "size": 9551
+    },
+    {
+      "name": "validate-sales-history-concurrent-pagination.mjs",
+      "path": "scripts/validate-sales-history-concurrent-pagination.mjs",
+      "type": "file",
+      "size": 6388
+    },
+    {
+      "name": "validate-sales-history-finalization-retry.mjs",
+      "path": "scripts/validate-sales-history-finalization-retry.mjs",
+      "type": "file",
+      "size": 7580
+    },
+    {
+      "name": "validate-sales-history-long-lived-pending.mjs",
+      "path": "scripts/validate-sales-history-long-lived-pending.mjs",
+      "type": "file",
+      "size": 7743
+    },
+    {
+      "name": "validate-sales-import-export-permission.mjs",
+      "path": "scripts/validate-sales-import-export-permission.mjs",
+      "type": "file",
+      "size": 2704
+    },
+    {
+      "name": "validate-sales-import.mjs",
+      "path": "scripts/validate-sales-import.mjs",
+      "type": "file",
+      "size": 7831
+    },
+    {
+      "name": "validate-sales-information-attention-transition.mjs",
+      "path": "scripts/validate-sales-information-attention-transition.mjs",
+      "type": "file",
+      "size": 2743
+    },
+    {
+      "name": "validate-sales-insights-outcome-period.mjs",
+      "path": "scripts/validate-sales-insights-outcome-period.mjs",
+      "type": "file",
+      "size": 2154
+    },
+    {
+      "name": "validate-sales-insights-search-state.mjs",
+      "path": "scripts/validate-sales-insights-search-state.mjs",
+      "type": "file",
+      "size": 2481
+    },
+    {
+      "name": "validate-sales-kpi-drilldown.mjs",
+      "path": "scripts/validate-sales-kpi-drilldown.mjs",
+      "type": "file",
+      "size": 2911
+    },
+    {
+      "name": "validate-sales-kpi-filter-count-clarity.mjs",
+      "path": "scripts/validate-sales-kpi-filter-count-clarity.mjs",
+      "type": "file",
+      "size": 2509
+    },
+    {
+      "name": "validate-sales-kpi-progressive.mjs",
+      "path": "scripts/validate-sales-kpi-progressive.mjs",
+      "type": "file",
+      "size": 6137
+    },
+    {
+      "name": "validate-sales-legacy-terminal-smartsheet-scope.mjs",
+      "path": "scripts/validate-sales-legacy-terminal-smartsheet-scope.mjs",
+      "type": "file",
+      "size": 4218
+    },
+    {
+      "name": "validate-sales-live-edit-view.mjs",
+      "path": "scripts/validate-sales-live-edit-view.mjs",
+      "type": "file",
+      "size": 3876
+    },
+    {
+      "name": "validate-sales-neutral-closeout.mjs",
+      "path": "scripts/validate-sales-neutral-closeout.mjs",
+      "type": "file",
+      "size": 4735
+    },
+    {
+      "name": "validate-sales-opportunity-committed-history.mjs",
+      "path": "scripts/validate-sales-opportunity-committed-history.mjs",
+      "type": "file",
+      "size": 9763
+    },
+    {
+      "name": "validate-sales-opportunity-history-pagination.mjs",
+      "path": "scripts/validate-sales-opportunity-history-pagination.mjs",
+      "type": "file",
+      "size": 8325
+    },
+    {
+      "name": "validate-sales-person-assignee-translation.mjs",
+      "path": "scripts/validate-sales-person-assignee-translation.mjs",
+      "type": "file",
+      "size": 8313
+    },
+    {
+      "name": "validate-sales-person-dropdown-canonical.mjs",
+      "path": "scripts/validate-sales-person-dropdown-canonical.mjs",
+      "type": "file",
+      "size": 6759
+    },
+    {
+      "name": "validate-sales-pipeline-toolbar.mjs",
+      "path": "scripts/validate-sales-pipeline-toolbar.mjs",
+      "type": "file",
+      "size": 3994
+    },
+    {
+      "name": "validate-sales-pool-accessibility.mjs",
+      "path": "scripts/validate-sales-pool-accessibility.mjs",
+      "type": "file",
+      "size": 4045
+    },
+    {
+      "name": "validate-sales-published-roster-access.mjs",
+      "path": "scripts/validate-sales-published-roster-access.mjs",
+      "type": "file",
+      "size": 4120
+    },
+    {
+      "name": "validate-sales-quick-edit-workspace.mjs",
+      "path": "scripts/validate-sales-quick-edit-workspace.mjs",
+      "type": "file",
+      "size": 2802
+    },
+    {
+      "name": "validate-sales-quote-date-smartsheet-protection.mjs",
+      "path": "scripts/validate-sales-quote-date-smartsheet-protection.mjs",
+      "type": "file",
+      "size": 3971
+    },
+    {
+      "name": "validate-sales-quote-date-trust.mjs",
+      "path": "scripts/validate-sales-quote-date-trust.mjs",
+      "type": "file",
+      "size": 6509
+    },
+    {
+      "name": "validate-sales-review-queue-exit.mjs",
+      "path": "scripts/validate-sales-review-queue-exit.mjs",
+      "type": "file",
+      "size": 7894
+    },
+    {
+      "name": "validate-sales-same-task-save-ack.mjs",
+      "path": "scripts/validate-sales-same-task-save-ack.mjs",
+      "type": "file",
+      "size": 8984
+    },
+    {
+      "name": "validate-sales-save-acknowledgment.mjs",
+      "path": "scripts/validate-sales-save-acknowledgment.mjs",
+      "type": "file",
+      "size": 3681
+    },
+    {
+      "name": "validate-sales-save-attempt-provenance.mjs",
+      "path": "scripts/validate-sales-save-attempt-provenance.mjs",
+      "type": "file",
+      "size": 7503
+    },
+    {
+      "name": "validate-sales-save-sync.mjs",
+      "path": "scripts/validate-sales-save-sync.mjs",
+      "type": "file",
+      "size": 5020
+    },
+    {
+      "name": "validate-sales-saved-filter-live-reconciliation.mjs",
+      "path": "scripts/validate-sales-saved-filter-live-reconciliation.mjs",
+      "type": "file",
+      "size": 4433
+    },
+    {
+      "name": "validate-sales-saved-filter-reload.mjs",
+      "path": "scripts/validate-sales-saved-filter-reload.mjs",
+      "type": "file",
+      "size": 3261
+    },
+    {
+      "name": "validate-sales-search-filter-state.mjs",
+      "path": "scripts/validate-sales-search-filter-state.mjs",
+      "type": "file",
+      "size": 2539
+    },
+    {
+      "name": "validate-sales-smartsheet-unknown-shells.mjs",
+      "path": "scripts/validate-sales-smartsheet-unknown-shells.mjs",
+      "type": "file",
+      "size": 4440
+    },
+    {
+      "name": "validate-sales-stage-trust.mjs",
+      "path": "scripts/validate-sales-stage-trust.mjs",
+      "type": "file",
+      "size": 11240
+    },
+    {
+      "name": "validate-sales-table-board-detail-continuity.mjs",
+      "path": "scripts/validate-sales-table-board-detail-continuity.mjs",
+      "type": "file",
+      "size": 2184
+    },
+    {
+      "name": "validate-sales-task-stage-mapping.mjs",
+      "path": "scripts/validate-sales-task-stage-mapping.mjs",
+      "type": "file",
+      "size": 10829
+    },
+    {
+      "name": "validate-sales-task-status-audit.mjs",
+      "path": "scripts/validate-sales-task-status-audit.mjs",
+      "type": "file",
+      "size": 6891
+    },
+    {
+      "name": "validate-sales-toolbar-mobile.mjs",
+      "path": "scripts/validate-sales-toolbar-mobile.mjs",
+      "type": "file",
+      "size": 7194
+    },
+    {
+      "name": "validate-sales-transition-atomicity.mjs",
+      "path": "scripts/validate-sales-transition-atomicity.mjs",
+      "type": "file",
+      "size": 11533
+    },
+    {
+      "name": "validate-sales-uncertain-general-save.mjs",
+      "path": "scripts/validate-sales-uncertain-general-save.mjs",
+      "type": "file",
+      "size": 8398
+    },
+    {
+      "name": "validate-sales-uncertain-reload-fence.mjs",
+      "path": "scripts/validate-sales-uncertain-reload-fence.mjs",
+      "type": "file",
+      "size": 7986
+    },
+    {
+      "name": "validate-sales-uncertain-workspace-transition.mjs",
+      "path": "scripts/validate-sales-uncertain-workspace-transition.mjs",
+      "type": "file",
+      "size": 4997
+    },
+    {
+      "name": "validate-sales-unknown-shell-display.mjs",
+      "path": "scripts/validate-sales-unknown-shell-display.mjs",
+      "type": "file",
+      "size": 3147
+    },
+    {
+      "name": "validate-sales-view-filter-transitions.mjs",
+      "path": "scripts/validate-sales-view-filter-transitions.mjs",
+      "type": "file",
+      "size": 2857
+    },
+    {
+      "name": "validate-sales-workorder-duplicate-identity.mjs",
+      "path": "scripts/validate-sales-workorder-duplicate-identity.mjs",
+      "type": "file",
+      "size": 5901
+    },
+    {
+      "name": "validate-sales-workorder-form-edit-sync-identity.mjs",
+      "path": "scripts/validate-sales-workorder-form-edit-sync-identity.mjs",
+      "type": "file",
+      "size": 6904
+    },
+    {
+      "name": "validate-sales-workspace-column-filter-isolation.mjs",
+      "path": "scripts/validate-sales-workspace-column-filter-isolation.mjs",
+      "type": "file",
+      "size": 3466
+    },
+    {
+      "name": "validate-sales-workspace-load-transition.mjs",
+      "path": "scripts/validate-sales-workspace-load-transition.mjs",
+      "type": "file",
+      "size": 2488
+    },
+    {
+      "name": "validate-sept22-workorder-backup.mjs",
+      "path": "scripts/validate-sept22-workorder-backup.mjs",
+      "type": "file",
+      "size": 5090
+    },
+    {
+      "name": "validate-sips-board-revisit.mjs",
+      "path": "scripts/validate-sips-board-revisit.mjs",
+      "type": "file",
+      "size": 41922
+    },
+    {
+      "name": "validate-sips-calendar-selection.mjs",
+      "path": "scripts/validate-sips-calendar-selection.mjs",
+      "type": "file",
+      "size": 4272
+    },
+    {
+      "name": "validate-sips-checklist-performance.mjs",
+      "path": "scripts/validate-sips-checklist-performance.mjs",
+      "type": "file",
+      "size": 122027
+    },
+    {
+      "name": "validate-sips-clear-dialog-accessibility.mjs",
+      "path": "scripts/validate-sips-clear-dialog-accessibility.mjs",
+      "type": "file",
+      "size": 3134
+    }
+  ],
+  "truncated": true
+}

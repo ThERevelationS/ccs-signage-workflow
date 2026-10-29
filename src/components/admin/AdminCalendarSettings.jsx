@@ -21,8 +21,9 @@ import {
   deleteCalendarEventIfUnchanged,
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
+import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 
-export default function AdminCalendarSettings({ adminCapability }) {
+export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
@@ -97,10 +98,13 @@ export default function AdminCalendarSettings({ adminCapability }) {
   const handleDeleteEvent = async (event) => {
     if (!event?.id) return;
     setEventError("");
+    // Current stored authorization, not a mount-time snapshot: an expired
+    // capability must fail before dispatch rather than reach the server.
+    const writeCapability = getStoredAdminSettingsCapability();
     try {
       await deleteCalendarEventIfUnchanged({
         event,
-        adminCapability,
+        adminCapability: writeCapability,
         label: `Calendar event ${event.title || event.id} deletion`,
       });
       await loadData();
@@ -330,14 +334,13 @@ export default function AdminCalendarSettings({ adminCapability }) {
           isOpen={showEventForm}
           onClose={() => setShowEventForm(false)}
           onSaved={loadData}
-          adminCapability={adminCapability}
         />
       )}
     </div>
   );
 }
 
-function AdminEventFormDialog({ event, isOpen, onClose, onSaved, adminCapability }) {
+function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
   const [form, setForm] = useState({
     title: "", description: "", start_datetime: "", end_datetime: "",
     all_day: false, event_type: "company", color: "#7C3AED",
@@ -370,6 +373,7 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved, adminCapability
     if (!form.title || !form.start_datetime || saving) return;
     setSaving(true);
     setPersistenceError("");
+    const writeCapability = getStoredAdminSettingsCapability();
     try {
       const data = calendarEventFieldsFromForm({
         ...form,
@@ -381,13 +385,13 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved, adminCapability
         await updateCalendarEventIfUnchanged({
           event,
           nextFields: data,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `Calendar event ${event.title || event.id}`,
         });
       } else {
         await createCalendarEventWithRecovery({
           data,
-          adminCapability,
+          adminCapability: writeCapability,
           label: `Calendar event ${data.title}`,
         });
       }

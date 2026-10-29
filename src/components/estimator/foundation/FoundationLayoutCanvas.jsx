@@ -31,6 +31,7 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
             <Move className="w-3 h-3" /> Move Foundation
           </span>
           <button
+            type="button"
             onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))}
             className="w-6 h-6 flex items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-50"
           >
@@ -38,6 +39,7 @@ export default function FoundationLayoutCanvas({ items = [], poles = [], onMoveI
           </button>
           <span className="w-10 text-center">{Math.round(zoom * 100)}%</span>
           <button
+            type="button"
             onClick={() => setZoom((z) => Math.min(2, +(z + 0.25).toFixed(2)))}
             className="w-6 h-6 flex items-center justify-center rounded-sm border border-gray-300 hover:bg-gray-50"
           >

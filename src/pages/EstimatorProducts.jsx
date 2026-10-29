@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Boxes,
   CheckCircle2,
+  Download,
   Edit3,
   Package,
   PackagePlus,
@@ -19,9 +20,28 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const moduleLabel = (key) => ESTIMATOR_MODULES.find((module) => module.key === key)?.label || (key === "custom" ? "Custom Product" : key || "Product");
+
+const csvCell = (value) => {
+  const text = value === undefined || value === null ? "" : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const downloadCsv = (filename, headers, rows) => {
+  const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
 
 function productPrice(product) {
   const quantity = Math.max(0, num(product.product_quantity, 1)) || 1;
@@ -65,7 +85,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
     setSaving(true);
     setError("");
     try {
-      const live = await base44.entities.QuickProduct.get(product.id);
+      const live = await staffEntities.QuickProduct.get(product.id);
       if (!live) throw new Error("This Quick Product no longer exists. Reload the library before editing it again.");
       if (product.updated_date && live.updated_date && product.updated_date !== live.updated_date) {
         onSaved?.(live);
@@ -84,7 +104,7 @@ function QuickProductEditDialog({ product, user, open, onClose, onSaved, product
         is_active: draft.is_active,
       };
       const refreshed = await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.QuickProduct,
+        entity: staffEntities.QuickProduct,
         id: product.id,
         expectedUpdatedAt: live.updated_date || "",
         expectedFields: expectedEntityFields(live, payload),
@@ -136,8 +156,9 @@ export default function EstimatorProducts() {
   const [productionProductTypes, setProductionProductTypes] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => searchParams.get("q") || "");
   const [scope, setScope] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [status, setStatus] = useState("active");
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState("");
@@ -154,7 +175,7 @@ export default function EstimatorProducts() {
     setLibraryError("");
     Promise.all([
       loadAllEntityRows({
-        entity: base44.entities.QuickProduct,
+        entity: staffEntities.QuickProduct,
         sort: "created_date",
         label: "Quick Product Library",
       }),
@@ -175,6 +196,8 @@ export default function EstimatorProducts() {
 
   const builders = useMemo(() => moduleFilter ? ESTIMATOR_MODULES.filter((module) => module.key === moduleFilter) : ESTIMATOR_MODULES, [moduleFilter]);
 
+  const productCategories = useMemo(() => [...new Set(quickProducts.map((product) => product.product_category).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b))), [quickProducts]);
+
   const visibleQuickProducts = useMemo(() => {
     const q = query.trim().toLowerCase();
     return quickProducts.filter((product) => {
@@ -186,11 +209,12 @@ export default function EstimatorProducts() {
       if (status === "active" && product.is_active === false) return false;
       if (status === "inactive" && product.is_active !== false) return false;
       if (moduleFilter && (product.source_module_key || (product.source_product_class === "custom" ? "custom" : "")) !== moduleFilter) return false;
+      if (categoryFilter !== "all" && (product.product_category || "") !== categoryFilter) return false;
       if (!q) return true;
       const haystack = [product.product_name, product.source_builder_name, product.source_module_key, product.product_category, product.production_product_type, product.client_description, product.product_notes, ...(product.categories || [])].filter(Boolean).join(" ").toLowerCase();
       return q.split(/\s+/).every((term) => haystack.includes(term));
     }).sort((a, b) => String(a.product_name || "").localeCompare(String(b.product_name || "")));
-  }, [quickProducts, query, scope, status, moduleFilter, user?.id, user?.role]);
+  }, [quickProducts, query, scope, categoryFilter, status, moduleFilter, user?.id, user?.role]);
 
   const accessibleQuickProducts = quickProducts.filter((product) => user?.role === "admin" || product.product_group === "global" || !product.created_by_id || product.created_by_id === user?.id);
   const activeCount = accessibleQuickProducts.filter((product) => product.is_active !== false).length;
@@ -206,6 +230,28 @@ export default function EstimatorProducts() {
 
   const updateLocal = (updated) => setQuickProducts((current) => current.map((row) => row.id === updated.id ? { ...row, ...updated } : row));
 
+  const exportCsv = () => {
+    downloadCsv("quick-products.csv",
+      ["Quick Product", "Category", "Production Type", "Source", "Template Version", "Parts", "Part Groups", "Quantity", "Frozen Unit Price", "Frozen Extended Price", "Library", "Status"],
+      visibleQuickProducts.map((product) => {
+        const price = productPrice(product);
+        return [
+          product.product_name || "Quick Product",
+          product.product_category || (product.categories || []).join(" · "),
+          product.production_product_type || "",
+          moduleLabel(product.source_module_key || (product.source_product_class === "custom" ? "custom" : "")),
+          num(product.template_version, 1),
+          product.parts_snapshot?.length ?? product.parts?.length ?? 0,
+          product.part_groups_snapshot?.length || 0,
+          price.quantity,
+          price.frozenUnit.toFixed(2),
+          price.extended.toFixed(2),
+          product.product_group === "global" ? "Global" : "My",
+          product.is_active === false ? "Inactive" : "Active",
+        ];
+      }));
+  };
+
   const toggleActive = async (product) => {
     const canEdit = user?.role === "admin" || !product?.created_by_id || product.created_by_id === user?.id;
     if (!canEdit) return setEditing(product);
@@ -213,7 +259,7 @@ export default function EstimatorProducts() {
     toggleRef.current.add(product.id);
     setError("");
     try {
-      const live = await base44.entities.QuickProduct.get(product.id);
+      const live = await staffEntities.QuickProduct.get(product.id);
       if (!live) throw new Error("This Quick Product no longer exists. Reload the library.");
       if ((live.is_active !== false) !== (product.is_active !== false)) {
         updateLocal(live);
@@ -222,7 +268,7 @@ export default function EstimatorProducts() {
       const next = product.is_active === false;
       const statusPatch = { is_active: next };
       const refreshed = await replaceEntityFieldsIfUnchanged({
-        entity: base44.entities.QuickProduct,
+        entity: staffEntities.QuickProduct,
         id: product.id,
         expectedFields: expectedEntityFields(live, statusPatch),
         nextFields: statusPatch,
@@ -278,9 +324,11 @@ export default function EstimatorProducts() {
             <div className="px-4 py-3 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center gap-3">
               <div className="min-w-0 lg:flex-1"><h2 className="text-[13px] font-bold text-gray-900">Quick Product Library</h2><p className="text-[10px] text-gray-500">Reusable Product snapshots saved from an estimate Product. Metadata can change here without rewriting the frozen Builder/Part package.</p></div>
               <div className="flex flex-wrap items-center gap-1.5">
-                <div className="relative w-[230px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search Quick Products..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div>
+                <div className="relative w-[230px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" /><input value={query} onChange={(event) => { const v = event.target.value; setQuery(v); const next = new URLSearchParams(searchParams); if (v) next.set("q", v); else next.delete("q"); setSearchParams(next, { replace: true }); }} placeholder="Search Quick Products..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div>
                 <select value={scope} onChange={(event) => setScope(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select>
+                <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
                 <select value={status} onChange={(event) => setStatus(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select>
+                <button type="button" onClick={exportCsv} disabled={visibleQuickProducts.length === 0} className="h-[30px] px-2.5 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
               </div>
             </div>
 

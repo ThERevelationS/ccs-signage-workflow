@@ -1,5 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+
+// Fire-and-forget automation emit — emit failures must never break a verified
+// clock/PTO write, so this swallows and logs like the permit emit.
+async function emitTimeClockEvent(base44: any, eventType: string, recordId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: recordId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Time Clock automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
+
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -284,6 +302,11 @@ function entryAuditSnapshot(entry: any) {
 const COMPANY_TIME_ZONE = 'America/New_York';
 const MISSED_PUNCH_PROMPT_MS = 18 * 60 * 60 * 1000;
 const MISSED_PUNCH_REPROMPT_MS = 8 * 60 * 60 * 1000;
+const LATE_CLOCK_IN_MINUTES = 8 * 60; // After 8:00 AM company time — matches the admin trigger label.
+const FULL_SHIFT_HOURS = 8; // Clocking out under a full worked day counts as early.
+const LONG_SHIFT_HOURS = 10; // Worked length that raises the long-shift event.
+const PTO_LOW_HOURS_THRESHOLD = 8; // Available balance under one workday counts as low.
+const PTO_LOW_ALERT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // At most one low-balance alert per type per week.
 const STALE_SHIFT_MONITOR_CAPABILITY_HASH = 'f63c5b792d82c0fade5324f96447480a3530b9e8459dc141909ae16782096ed0';
 
 function dateKeyInCompanyTime(value: any) {
@@ -1253,6 +1276,143 @@ async function canonicalLateClockInPayrollProvenance({
   };
 }
 
+function defaultTrackerPrefs(email: string, name: string) {
+  return {
+    tracker_enabled: false,
+    daily_goal_minutes: 480,
+    weekly_goal_minutes: 2400,
+    show_week_strip: true,
+    display_style: 'ring',
+    count_mode: 'paid',
+    direction: 'up',
+    milestones_mode: 'goal',
+    milestone_behavior: 'pulse',
+    milestone_thresholds: [0.5, 0.75, 1],
+    overtime_warning: false,
+    milestone_sound: 'chime',
+    show_overtime: true,
+    show_projected_finish: true,
+    show_pace: true,
+    accent_color: 'indigo',
+    privacy_blur: false,
+    size: 'expanded',
+    location: 'both',
+    scale: 1,
+    opacity: 1,
+    font: 'default',
+    background_style: 'minimal',
+    update_interval_seconds: 60,
+    animation_style: 'smooth',
+    animation_target: 'all',
+    time_format: 'hh_mm_ss',
+    show_label: true,
+    show_icon: true,
+    show_seconds: true,
+    show_percent: false,
+    show_only_clocked_in: false,
+    progressive_colors: true,
+    blink_separator: false,
+    hide_when_unfocused: false,
+    timeclock_page_only: false,
+    goal_celebrate: true,
+    device_scope: 'all',
+    custom_label: '',
+    alert_minutes: [],
+    reminders: [],
+    weekly_celebrate: true,
+  };
+}
+
+const TRACKER_ENUMS: Record<string, string[]> = {
+  display_style: ['ring', 'bar', 'minimal', 'flip', 'roll', 'donut', 'arc', 'badge'],
+  count_mode: ['paid', 'elapsed'],
+  direction: ['up', 'down'],
+  milestones_mode: ['off', 'goal', 'custom'],
+  milestone_behavior: ['silent', 'pulse', 'toast', 'toast_sound'],
+  milestone_sound: ['chime', 'bell', 'ding', 'fanfare', 'alert'],
+  accent_color: ['indigo', 'emerald', 'amber', 'violet', 'rose', 'sky', 'cyan', 'teal', 'lime', 'orange', 'fuchsia', 'slate'],
+  size: ['compact', 'expanded'],
+  location: ['both', 'top', 'side', 'hidden'],
+  font: ['default', 'mono', 'rounded', 'serif', 'light', 'heavy'],
+  background_style: ['minimal', 'glass', 'solid', 'outline', 'soft', 'accent', 'halo', 'dotted', 'striped', 'elevated', 'inset', 'neon', 'pearl', 'carbon', 'mesh', 'aurora', 'dusk', 'forest', 'ocean', 'sunset', 'berry', 'mono'],
+  animation_style: ['smooth', 'pulse', 'glow', 'breathe', 'sweep', 'wave', 'sparkle', 'float', 'flicker', 'rainbow', 'pop', 'wobble', 'ripple', 'shake', 'gradient', 'none'],
+  animation_target: ['all', 'digits', 'ring', 'icon'],
+  device_scope: ['all', 'desktop_only', 'mobile_only'],
+  time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
+};
+
+const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate', 'weekly_celebrate'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes', 'reminders'];
+
+function trackerClamp(value: any, min: number, max: number, fallback: number) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function normalizeTrackerPrefs(row: any, target: any) {
+  const base = defaultTrackerPrefs(asEmail(target?.email), target?.full_name || '');
+  if (!row || typeof row !== 'object') return base;
+  const out: any = { ...base };
+  for (const key of TRACKER_BOOL_KEYS) out[key] = row[key] === undefined ? base[key] : row[key] === true;
+  for (const [key, choices] of Object.entries(TRACKER_ENUMS)) {
+    const v = String(row?.[key] || '');
+    if (choices.includes(v)) out[key] = v;
+  }
+  out.daily_goal_minutes = Math.round(trackerClamp(row.daily_goal_minutes, 240, 840, 480));
+  out.weekly_goal_minutes = Math.round(trackerClamp(row.weekly_goal_minutes, 480, 5880, 2400));
+  out.scale = trackerClamp(row.scale, 0.5, 2, 1);
+  out.opacity = trackerClamp(row.opacity, 0.4, 1, 1);
+  out.update_interval_seconds = Math.round(trackerClamp(row.update_interval_seconds, 15, 300, 60));
+  const rawThresholds = Array.isArray(row.milestone_thresholds) ? row.milestone_thresholds : base.milestone_thresholds;
+  out.milestone_thresholds = rawThresholds
+    .map((t: any) => Number(t))
+    .filter((t: number) => Number.isFinite(t) && t > 0 && t <= 1.5)
+    .slice(0, 8);
+  if (!out.milestone_thresholds.length) out.milestone_thresholds = [...base.milestone_thresholds];
+  out.custom_label = String(row.custom_label || '').slice(0, 24).trim();
+  const rawAccent = String(row.accent_color || '');
+  if (/^#[0-9a-fA-F]{6}$/.test(rawAccent)) out.accent_color = rawAccent.toLowerCase();
+  const reminderSource = Array.isArray(row.reminders) ? row.reminders
+    : (Array.isArray(row.alert_minutes) ? row.alert_minutes : []);
+  out.reminders = reminderSource
+    .map((r: any) => {
+      const minutes = Math.round(Number(typeof r === 'object' && r !== null ? r.minutes : r));
+      const label = typeof r === 'object' && r !== null ? String(r.label || '').slice(0, 60).trim() : '';
+      return Number.isFinite(minutes) && minutes > 0 && minutes <= 1440 ? { minutes, label } : null;
+    })
+    .filter(Boolean)
+    .filter((r: any, i: number, arr: any[]) => arr.findIndex((o: any) => o.minutes === r.minutes) === i)
+    .slice(0, 12);
+  out.alert_minutes = (Array.isArray(row.alert_minutes) ? row.alert_minutes : [])
+    .map((m: any) => Math.round(Number(m)))
+    .filter((m: number) => Number.isFinite(m) && m > 0 && m <= 1440)
+    .slice(0, 6);
+  return out;
+}
+
+async function trackerPaidMinutesForEntry({ entry, breakEntity, workPauseEntity, userEmail, nowMs }: any) {
+  const startMs = new Date(String(entry?.clock_in || '')).getTime();
+  const endMs = entry?.clock_out ? new Date(String(entry.clock_out)).getTime() : nowMs;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return 0;
+  const elapsed = (endMs - startMs) / 60000;
+  const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, userEmail);
+  const pauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, userEmail);
+  const lunch = Math.max(0, Number(entry.lunch_minutes || 0));
+  return Math.max(0, elapsed - Math.max(0, Number(breakSummary?.unpaid_minutes || 0)) - Math.max(0, Number(pauseSummary?.total_minutes || 0)) - lunch);
+}
+
+function companyWeekStartKey(nowIso: string) {
+  const todayKey = dateKeyInCompanyTime(nowIso);
+  if (!todayKey) return '';
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, weekday: 'short' }).format(new Date(nowIso));
+  const dayIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday);
+  if (dayIndex < 0) return '';
+  const daysSinceMonday = (dayIndex + 6) % 7;
+  const d = new Date(`${todayKey}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - daysSinceMonday);
+  return d.toISOString().slice(0, 10);
+}
 async function ensureState(stateEntity: any, target: any) {
   const email = asEmail(target?.email);
   let rows = await stateEntity.filter({ user_email: email });
@@ -1576,7 +1736,7 @@ async function releaseCompletedCorrectionCreateLock(
   return false;
 }
 
-async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity }: any) {
+async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity, ptoBalanceEntity, base44 }: any) {
   const serverNow = new Date();
   const activeEntries = await loadAllFilteredRows(
     entryEntity,
@@ -1759,12 +1919,43 @@ async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEn
       );
       if (!released) throw new Error('Stale-shift monitor created the exception but could not verify audit/lock release.');
       summary.created += 1;
+      await emitTimeClockEvent(base44, 'time_entry_no_clock_out', entry.id, 'system');
     } catch (error) {
       summary.errors += 1;
       console.error('Stale-shift monitor entry failed:', observedEntry.id, error?.message || error);
       // Do not release an uncertain create lock here. The stable monitor request id and
       // exact payload let a later scheduled run safely recover it without duplicating a case.
     }
+  }
+
+  // Low PTO balances ride the same verified periodic scan: one alert per
+  // (employee, time-off type, week) while a balance stays under the threshold.
+  try {
+    const balanceRows = await loadAllFilteredRows(
+      ptoBalanceEntity, {}, 'user_email', 'PTO balances for the low-balance check',
+    );
+    const lowWeekKey = `w${Math.floor(serverNow.getTime() / PTO_LOW_ALERT_INTERVAL_MS)}`;
+    for (const row of balanceRows) {
+      const email = asEmail(row?.user_email);
+      if (!row?.id || !email) continue;
+      for (const bal of Array.isArray(row.balances) ? row.balances : []) {
+        const typeId = String(bal?.type_id || bal?.type_name || '').trim();
+        const available = Number(bal?.available_hours);
+        if (!typeId || !Number.isFinite(available) || available >= PTO_LOW_HOURS_THRESHOLD) continue;
+        const alertAudit = await ensureUserActionAudit(auditEntity, {
+          action: 'pto_balance_low', outcome: 'confirmed', user_email: email,
+          user_name: row.user_name || email, actor_email: 'system', actor_role: 'system',
+          authentication_method: 'system', server_timestamp: serverNow.toISOString(),
+          request_id: `pto-low-${email}-${typeId}-${lowWeekKey}`,
+          reason: `PTO balance for ${bal?.type_name || typeId} fell below ${PTO_LOW_HOURS_THRESHOLD} hours`,
+          details: { time_off_type_id: typeId, available_hours: available, pto_balance_id: row.id },
+        }, 'Low PTO balance alert audit');
+        if (alertAudit?.reused) continue;
+        await emitTimeClockEvent(base44, 'pto_balance_low', row.id, 'system');
+      }
+    }
+  } catch (error: any) {
+    console.error('Low PTO balance scan failed:', error?.message || error);
   }
 
   return summary;
@@ -3081,7 +3272,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
     const sessionToken = String(body?.session_token || '').trim();
@@ -3105,12 +3296,14 @@ Deno.serve(async (req) => {
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
+    const ptoBalanceEntity = base44.asServiceRole.entities.UserPTOBalance;
+    const prefsEntity = base44.asServiceRole.entities.TimeClockEmployeePreference;
 
     if (action === 'monitor_stale_shifts') {
       if (!(await hasStaleShiftMonitorCapability(body))) {
         return Response.json({ success: false, error: 'Verified scheduled Time Clock workflow is required.' }, { status: 403 });
       }
-      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity });
+      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity, ptoBalanceEntity, base44 });
       return Response.json(summary);
     }
 
@@ -3231,6 +3424,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // status_lite is strictly read-only and returns only steady states. It must
+    // run before ensureState and every recover* hook, for the same reason as the
+    // diagnostics block above. Anything the full status action would recover or
+    // reject comes back as requires_full_status and the caller retries 'status'.
+    if (action === 'status_lite') {
+      const liteResult = await buildStatusLite({
+        stateEntity, entryEntity, breakEntity, workPauseEntity, target,
+        helpers: {
+          publicEmployee, breakStatusOf, workPauseStatusOf, laborStatusOf,
+          breakSummaryForEntry, workPauseSummaryForEntry, dateKeyInCompanyTime,
+          MISSED_PUNCH_PROMPT_MS, MISSED_PUNCH_REPROMPT_MS, asEmail,
+        },
+      });
+      return Response.json(liteResult);
+    }
+
     if (action === 'admin_load_data') {
       if (actor.role !== 'admin' || String(actor.id).startsWith('badge:')) {
         return Response.json({ success: false, error: 'Administrator session is required to load Time Clock review data.' }, { status: 403 });
@@ -3268,6 +3477,160 @@ Deno.serve(async (req) => {
     state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
     state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
     state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, state, target);
+
+    if (action === 'time_tracker_snapshot' || action === 'time_tracker_prefs_get') {
+      // Read-only Time Tracker snapshot + preferences. Never mutates clock
+      // state; sessions read their own row and admins may read a target.
+      const prefRows = await prefsEntity.filter({ user_email: target.email });
+      if (!Array.isArray(prefRows)) throw new Error('Time Tracker preference lookup did not return a record list.');
+      if (prefRows.length > 1) return Response.json({ success: false, error: 'Time Tracker preferences are ambiguous. Admin review is required.' }, { status: 409 });
+      const prefs = normalizeTrackerPrefs(prefRows[0] || null, target);
+      const serverNow = new Date();
+      const nowMs = serverNow.getTime();
+      const employmentType = String(target.employment_type || 'hourly');
+
+      if (action === 'time_tracker_prefs_get') {
+        return Response.json({ success: true, prefs, employment_type: employmentType, server_time: serverNow.toISOString() });
+      }
+
+      const clockedIn = state.status === 'clocked_in' && !!state.active_entry_id;
+      let entry: any = null;
+      if (clockedIn) {
+        entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+        if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+          return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
+        }
+      }
+
+      let liveUnpaidMinutes = 0;
+      let onUnpaidBreakNow = false;
+      let pausedNow = false;
+      if (entry) {
+        const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
+        const safeActiveBreak = activeBreak?.id && activeBreak.status === 'active' && asEmail(activeBreak.user_email) === target.email && activeBreak.time_entry_id === entry.id ? activeBreak : null;
+        const activePause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        const safeActivePause = activePause?.id && activePause.status === 'active' && asEmail(activePause.user_email) === target.email && activePause.time_entry_id === entry.id ? activePause : null;
+        if (safeActiveBreak && safeActiveBreak.is_paid !== true) {
+          onUnpaidBreakNow = true;
+          liveUnpaidMinutes += Math.max(0, (nowMs - new Date(safeActiveBreak.started_at).getTime()) / 60000);
+        }
+        if (safeActivePause) {
+          pausedNow = true;
+          liveUnpaidMinutes += Math.max(0, (nowMs - new Date(safeActivePause.started_at).getTime()) / 60000);
+        }
+      }
+
+      let elapsedToday = 0;
+      let paidToday = 0;
+      let breakMinutes = 0;
+      let paidBreakMinutes = 0;
+      let pauseMinutes = 0;
+      if (entry) {
+        const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+        const pauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+        breakMinutes = Math.max(0, Number(breakSummary?.total_minutes || 0));
+        paidBreakMinutes = Math.max(0, Number(breakSummary?.paid_minutes || 0));
+        pauseMinutes = Math.max(0, Number(pauseSummary?.total_minutes || 0));
+        const startMs = new Date(String(entry.clock_in || '')).getTime();
+        elapsedToday = Number.isFinite(startMs) ? Math.max(0, (nowMs - startMs) / 60000) : 0;
+        paidToday = Math.max(0, elapsedToday
+          - Math.max(0, Number(breakSummary?.unpaid_minutes || 0))
+          - pauseMinutes
+          - liveUnpaidMinutes
+          - Math.max(0, Number(entry.lunch_minutes || 0)));
+      }
+
+      const weekStartKey = companyWeekStartKey(serverNow.toISOString());
+      const weeklyDaily = [0, 0, 0, 0, 0, 0, 0];
+      let weeklyPaid = 0;
+      if (weekStartKey) {
+        const recent = await entryEntity.filter({ user_email: target.email }, '-clock_in', 90);
+        if (!Array.isArray(recent)) throw new Error('Time Tracker weekly entry lookup did not return a record list.');
+        for (const row of recent) {
+          if (!row?.id || row.archived_test_data || row.archived_admin) continue;
+          const dayKey = dateKeyInCompanyTime(row.clock_in);
+          if (!dayKey || dayKey < weekStartKey) continue;
+          const dayIndex = (new Date(`${dayKey}T00:00:00Z`).getUTCDay() + 6) % 7;
+          const paid = row.id === entry?.id
+            ? paidToday
+            : await trackerPaidMinutesForEntry({ entry: row, breakEntity, workPauseEntity, userEmail: target.email, nowMs });
+          weeklyDaily[dayIndex] += paid;
+          weeklyPaid += paid;
+        }
+      }
+
+      return Response.json({
+        success: true,
+        server_time: serverNow.toISOString(),
+        employment_type: employmentType,
+        status: clockedIn ? 'clocked_in' : 'clocked_out',
+        clock_in: entry?.clock_in || null,
+        paid_minutes_today: paidToday,
+        elapsed_minutes_today: elapsedToday,
+        break_minutes: breakMinutes,
+        paid_break_minutes: paidBreakMinutes,
+        pause_minutes: pauseMinutes,
+        live_unpaid_minutes: liveUnpaidMinutes,
+        on_unpaid_break_now: onUnpaidBreakNow,
+        paused_now: pausedNow,
+        accruing_paid: Boolean(entry) && !onUnpaidBreakNow && !pausedNow,
+        weekly_paid_minutes: weeklyPaid,
+        weekly_daily_minutes: weeklyDaily,
+        company_day: dateKeyInCompanyTime(serverNow.toISOString()),
+        prefs,
+      });
+    }
+
+    if (action === 'time_tracker_prefs_update') {
+      if (!requestId) {
+        return Response.json({ success: false, error: 'A request_id is required to update Time Tracker preferences.' }, { status: 400 });
+      }
+      if (String(actor.id).startsWith('badge:') || (actor.role !== 'admin' && actorEmail !== target.email)) {
+        return Response.json({ success: false, error: 'A signed-in session can only update its own Time Tracker preferences.' }, { status: 403 });
+      }
+      const isSalary = String(target.employment_type || '') === 'salary';
+      if (!isSalary && body?.prefs?.tracker_enabled === true) {
+        return Response.json({ success: false, error: 'The Time Tracker is available to salary employees.' }, { status: 403 });
+      }
+      const requested = body?.prefs && typeof body.prefs === 'object' ? body.prefs : {};
+      const prefRows = await prefsEntity.filter({ user_email: target.email });
+      if (!Array.isArray(prefRows)) throw new Error('Time Tracker preference lookup did not return a record list.');
+      if (prefRows.length > 1) return Response.json({ success: false, error: 'Time Tracker preferences are ambiguous. Admin review is required.' }, { status: 409 });
+      const existing = prefRows[0] || null;
+      if (existing && String(existing.last_request_id || '') === requestId) {
+        return Response.json({ success: true, reused: true, prefs: normalizeTrackerPrefs(existing, target) });
+      }
+      const merged: any = { ...normalizeTrackerPrefs(existing, target) };
+      for (const key of TRACKER_EDITABLE_KEYS) {
+        if (Object.prototype.hasOwnProperty.call(requested, key)) merged[key] = requested[key];
+      }
+      const normalized = normalizeTrackerPrefs(merged, target);
+      if (!isSalary) normalized.tracker_enabled = false;
+      const write = { ...normalized, user_email: target.email, user_name: target.full_name || target.email, last_request_id: requestId };
+      if (existing?.id) {
+        const updated = await prefsEntity.updateMany(
+          { id: existing.id, updated_date: existing.updated_date },
+          { $set: write },
+        );
+        if (!updated || updated.updated !== 1) {
+          const fresh = await prefsEntity.get(existing.id).catch(() => null);
+          if (String(fresh?.last_request_id || '') === requestId) {
+            return Response.json({ success: true, reused: true, prefs: normalizeTrackerPrefs(fresh, target) });
+          }
+          return Response.json({ success: false, retry_same_request: true, error: 'Time Tracker preferences changed while saving. Reload and try again.' }, { status: 409 });
+        }
+        const fresh = await prefsEntity.get(existing.id);
+        return Response.json({ success: true, prefs: normalizeTrackerPrefs(fresh, target) });
+      }
+      await prefsEntity.create(write);
+      const verify = await prefsEntity.filter({ user_email: target.email });
+      const row = Array.isArray(verify) && verify.length === 1 ? verify[0] : null;
+      if (!row?.id || String(row.last_request_id || '') !== requestId) {
+        return Response.json({ success: false, retry_same_request: true, error: 'Time Tracker preferences were saved but could not be verified. Retry the same request.' }, { status: 409 });
+      }
+      return Response.json({ success: true, prefs: normalizeTrackerPrefs(row, target) });
+    }
+
 
     if (action === 'status') {
       const unresolvedPunchReview = await unresolvedPunchReviewSummary({
@@ -6057,6 +6420,9 @@ Deno.serve(async (req) => {
       });
       if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Current Work and its audit were saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
       const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+      if (!resumingLaborAction && segment?.id) {
+        await emitTimeClockEvent(base44, 'job_allocation_added', segment.id, actorEmail);
+      }
       return Response.json({ success: true, status: 'clocked_in', entry, active_labor: segment, labor_summary: summary, user: publicEmployee(target), reused: resumingLaborAction });
     }
 
@@ -6452,6 +6818,121 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: true, work_pause_allowed: target.can_work_pause === true });
     }
 
+    if (action === 'work_pause_report_missed') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in to report a missed Work Pause.' }, { status: 409 });
+      }
+      if (target.can_work_pause !== true) {
+        return Response.json({ success: false, error: 'Work Pause is not enabled for this employee.' }, { status: 403 });
+      }
+      if (actor.role !== 'badge' && actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees can only report their own Work Pause time.' }, { status: 403 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+      if (workPauseStatusOf(state) !== 'working') {
+        return Response.json({ success: false, error: 'Finish the active Work Pause before reporting a missed one.' }, { status: 409 });
+      }
+      if (state.active_break_id) {
+        return Response.json({ success: false, error: 'End the active break before reporting a missed Work Pause.' }, { status: 409 });
+      }
+
+      const startedIso = String(body?.started_at || '').trim();
+      const resumedIso = String(body?.resumed_at || '').trim();
+      const note = String(body?.note || '').trim().slice(0, 500);
+      const startedMs = new Date(startedIso).getTime();
+      const resumedMs = new Date(resumedIso).getTime();
+      const clockInMs = new Date(entry.clock_in).getTime();
+      const nowMs = Date.now();
+      if (!Number.isFinite(startedMs) || !Number.isFinite(resumedMs)) {
+        return Response.json({ success: false, error: 'Enter a valid pause start and end time.' }, { status: 400 });
+      }
+      if (resumedMs <= startedMs) {
+        return Response.json({ success: false, error: 'The missed Work Pause end must be after its start.' }, { status: 400 });
+      }
+      if (!Number.isFinite(clockInMs) || startedMs < clockInMs) {
+        return Response.json({ success: false, error: 'The missed Work Pause cannot start before Clock In.' }, { status: 400 });
+      }
+      if (resumedMs > nowMs + 60000) {
+        return Response.json({ success: false, error: 'The missed Work Pause cannot end in the future.' }, { status: 400 });
+      }
+      const entryDay = dateKeyInCompanyTime(entry.clock_in);
+      if (dateKeyInCompanyTime(startedIso) !== entryDay || dateKeyInCompanyTime(resumedIso) !== entryDay) {
+        return Response.json({ success: false, error: 'The missed Work Pause must stay on the same company day as this shift.' }, { status: 400 });
+      }
+      const durationMinutes = Math.max(1, Math.floor((resumedMs - startedMs) / 60000));
+      if (durationMinutes > 12 * 60) {
+        return Response.json({ success: false, error: 'A missed Work Pause cannot exceed 12 hours. Contact a manager for a correction.' }, { status: 400 });
+      }
+
+      const priorRows = await workPauseEntity.filter({ user_email: target.email, time_entry_id: entry.id, start_request_id: requestId });
+      if (!Array.isArray(priorRows)) throw new Error('Missed Work Pause lookup did not return a record list.');
+      if (priorRows.length > 1) {
+        return Response.json({ success: false, error: 'Multiple Work Pause records match this request. Admin review is required.' }, { status: 409 });
+      }
+      if (priorRows.length === 1) {
+        const prior = priorRows[0];
+        if (prior.status === 'completed' && prior.source === 'employee_attested_missed' &&
+            String(prior.started_at || '') === startedIso && String(prior.resumed_at || '') === resumedIso) {
+          const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: prior, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: true });
+        }
+        return Response.json({ success: false, error: 'This request was already used for a different Work Pause. Reload status and try again.' }, { status: 409 });
+      }
+
+      const existingPauses = await workPauseEntity.filter({ user_email: target.email, time_entry_id: entry.id });
+      if (!Array.isArray(existingPauses)) throw new Error('Work Pause overlap lookup did not return a record list.');
+      for (const row of existingPauses) {
+        const s = new Date(row.started_at).getTime();
+        const e = row.status === 'active' ? nowMs : new Date(row.resumed_at || row.started_at).getTime();
+        if (Number.isFinite(s) && Number.isFinite(e) && startedMs < e && resumedMs > s) {
+          return Response.json({ success: false, error: 'The missed Work Pause overlaps an existing Work Pause on this shift.' }, { status: 409 });
+        }
+      }
+      const existingBreaks = await breakEntity.filter({ user_email: target.email, time_entry_id: entry.id });
+      if (!Array.isArray(existingBreaks)) throw new Error('Break overlap lookup did not return a record list.');
+      for (const row of existingBreaks) {
+        const s = new Date(row.started_at).getTime();
+        const e = row.status === 'active' ? nowMs : new Date(row.ended_at || row.started_at).getTime();
+        if (Number.isFinite(s) && Number.isFinite(e) && startedMs < e && resumedMs > s) {
+          return Response.json({ success: false, error: 'The missed Work Pause overlaps a break on this shift.' }, { status: 409 });
+        }
+      }
+
+      const pauseRow = await workPauseEntity.create({
+        user_email: target.email,
+        user_name: target.full_name || target.email,
+        time_entry_id: entry.id,
+        started_at: startedIso,
+        resumed_at: resumedIso,
+        duration_minutes: durationMinutes,
+        status: 'completed',
+        start_request_id: requestId,
+        resume_request_id: requestId,
+        source: 'employee_attested_missed',
+      });
+      if (!pauseRow?.id) throw new Error('Missed Work Pause record could not be created.');
+      await ensureActionAudit(auditEntity, {
+        action: 'work_pause_report_missed', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: new Date().toISOString(),
+        request_id: requestId, time_entry_id: entry.id,
+        reason: 'Employee self-reported a missed Work Pause',
+        details: {
+          work_pause_id: pauseRow.id,
+          started_at: startedIso,
+          resumed_at: resumedIso,
+          duration_minutes: durationMinutes,
+          ...(note ? { note } : {}),
+        },
+      }, 'Missed Work Pause audit');
+      const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: true, work_pause_allowed: true });
+    }
+
     if (action === 'time_off_request_create' || action === 'time_off_request_update') {
       if (actor.role === 'badge' || actorEmail !== target.email) {
         return Response.json({ success: false, error: 'Employees must use their own signed-in Time Clock session to manage time-off requests.' }, { status: 403 });
@@ -6699,6 +7180,9 @@ Deno.serve(async (req) => {
           createAudit = await auditEntity.get(createAudit.id).catch(() => createAudit);
         }
 
+        if (finalOutcome === 'confirmed' && saved?.id) {
+          await emitTimeClockEvent(base44, 'time_off_requested', saved.id, actorEmail);
+        }
         return Response.json({
           success: true,
           request: saved,
@@ -6896,7 +7380,227 @@ Deno.serve(async (req) => {
         !updatedFieldsMatch(confirmedRecord)) {
         return Response.json({ success: false, error: 'The time-off edit and confirmed audit do not agree. Admin investigation is required.' }, { status: 409 });
       }
+      if (finalOutcome === 'confirmed' && confirmedRecord?.id) {
+        await emitTimeClockEvent(base44, 'time_off_updated', confirmedRecord.id, actorEmail);
+      }
       return Response.json({ success: true, request: confirmedRecord, audit_id: updateIntent.id, reused: finalOutcome === 'recovered' });
+    }
+
+    if (action === 'list_time_off_requests') {
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view time-off requests.' }, { status: 403 });
+      const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
+      const query = adminScope
+        ? { status: { $in: ['pending', 'approved'] }, archived_test_data: { $ne: true } }
+        : { user_email: target.email, archived_test_data: { $ne: true } };
+      const requests = await timeOffRequestEntity.filter(query);
+      if (!Array.isArray(requests)) throw new Error('Time-off request list did not return records.');
+      requests.sort((a: any, b: any) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime());
+      return Response.json({ success: true, requests });
+    }
+
+    if (action === 'time_off_decision') {
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to decide time-off requests.' }, { status: 403 });
+      const timeOffRequestId = String(body?.time_off_request_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const decision = String(body?.decision || '').trim();
+      const decisionNotes = String(body?.admin_notes || '').trim().slice(0, 1000);
+      if (!timeOffRequestId || !expectedUpdatedDate) {
+        return Response.json({ success: false, error: 'The loaded time-off request version is required before deciding it.' }, { status: 400 });
+      }
+      if (!['approved', 'denied', 'cancelled'].includes(decision)) {
+        return Response.json({ success: false, error: 'A valid time-off decision is required.' }, { status: 400 });
+      }
+      const decisionEventType = decision === 'approved' ? 'time_off_approved'
+        : decision === 'denied' ? 'time_off_denied' : 'time_off_cancelled';
+      const fromStatuses = decision === 'cancelled' ? ['pending', 'approved'] : ['pending'];
+      const decisionTimestamp = new Date().toISOString();
+
+      let requestRecord = await timeOffRequestEntity.get(timeOffRequestId).catch(() => null);
+      if (!requestRecord?.id || requestRecord.archived_test_data) {
+        return Response.json({ success: false, error: 'Time-off request was not found or is archived.' }, { status: 404 });
+      }
+      const requestOwnerEmail = asEmail(requestRecord.user_email);
+      // Admins approve, deny, or cancel; the requesting employee may only
+      // cancel their own pending/approved request.
+      const ownerCancel = decision === 'cancelled' && actorEmail === requestOwnerEmail;
+      if (actor.role !== 'admin' && !ownerCancel) {
+        return Response.json({ success: false, error: 'Only a manager can approve or deny time-off requests.' }, { status: 403 });
+      }
+
+      const decisionFields = {
+        status: decision,
+        approved_by: actorEmail,
+        approved_date: decisionTimestamp,
+        admin_notes: decisionNotes,
+      };
+      // The hash covers only the semantic decision. approved_date is generated
+      // inside decisionFields on every invocation, so including it would make an
+      // idempotent replay appear to mismatch its own audit and always fail.
+      const decisionPayloadHash = await payloadHash({
+        time_off_request_id: timeOffRequestId,
+        expected_updated_date: expectedUpdatedDate,
+        decision,
+        admin_notes: decisionNotes,
+        decided_by: actorEmail,
+      });
+      const decidedFieldsMatch = (row: any) => (
+        row?.id === timeOffRequestId &&
+        String(row.status || '') === decision &&
+        asEmail(row.approved_by) === actorEmail &&
+        String(row.admin_notes || '') === decisionNotes
+      );
+      const auditQuery = { action: 'time_off_decision', request_id: requestId, user_email: requestOwnerEmail };
+      let decisionIntent = await uniqueRow(auditEntity, auditQuery, 'Time-off decision audit');
+      if (decisionIntent?.id) {
+        const priorHash = String(decisionIntent.details?.payload_hash || '');
+        if (!priorHash || !constantTimeEqual(priorHash, decisionPayloadHash) ||
+          String(decisionIntent.details?.time_off_request_id || '') !== timeOffRequestId) {
+          return Response.json({ success: false, error: 'This time-off decision request id has mismatched or incomplete audit details. Admin investigation is required.' }, { status: 409 });
+        }
+        if (decisionIntent.outcome === 'blocked') {
+          return Response.json({ success: false, error: 'This time-off decision was previously blocked. Reload before deciding again.' }, { status: 409 });
+        }
+        if (['confirmed', 'recovered'].includes(String(decisionIntent.outcome || ''))) {
+          if (String(requestRecord.last_request_id || '') !== requestId ||
+            !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+            !decidedFieldsMatch(requestRecord)) {
+            return Response.json({ success: false, error: 'The completed time-off decision audit no longer matches the request record. Admin investigation is required.' }, { status: 409 });
+          }
+          return Response.json({ success: true, request: requestRecord, audit_id: decisionIntent.id, reused: true });
+        }
+        if (decisionIntent.outcome !== 'pending') {
+          return Response.json({ success: false, error: 'This time-off decision audit is not in a recoverable state.' }, { status: 409 });
+        }
+      }
+
+      const sameRequestSaved = String(requestRecord.last_request_id || '') === requestId;
+      if (sameRequestSaved && (
+        !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+        !decidedFieldsMatch(requestRecord)
+      )) {
+        return Response.json({ success: false, error: 'This time-off decision request id no longer matches the saved decision. Admin investigation is required.' }, { status: 409 });
+      }
+      if (!sameRequestSaved && (
+        !fromStatuses.includes(String(requestRecord.status || '')) || String(requestRecord.updated_date || '') !== expectedUpdatedDate
+      )) {
+        return Response.json({ success: false, error: `This time-off request is no longer ${fromStatuses.join('/')} at its loaded version. Reload before deciding.` }, { status: 409 });
+      }
+
+      const hadPendingAudit = decisionIntent?.outcome === 'pending';
+      if (!decisionIntent?.id) {
+        try {
+          const ensured = await ensureUserActionAudit(auditEntity, {
+            action: 'time_off_decision',
+            outcome: 'pending',
+            user_email: requestOwnerEmail,
+            user_name: requestRecord.user_name || requestOwnerEmail,
+            actor_email: actorEmail,
+            actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target),
+            server_timestamp: decisionTimestamp,
+            request_id: requestId,
+            reason: decisionNotes || `Time-off request ${decision}`,
+            details: {
+              payload_hash: decisionPayloadHash,
+              time_off_request_id: timeOffRequestId,
+              expected_updated_date: expectedUpdatedDate,
+              decision,
+              previous_status: requestRecord.status,
+            },
+          }, 'Time-off decision audit intent');
+          decisionIntent = ensured.audit;
+        } catch {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off decision audit intent could not be verified. Retry the same decision.' }, { status: 409 });
+        }
+      }
+      // Audit creation can race; never mutate while the request id has ambiguous audit evidence.
+      decisionIntent = await uniqueRow(auditEntity, auditQuery, 'Time-off decision audit intent');
+      if (!decisionIntent?.id || decisionIntent.outcome !== 'pending' ||
+        !constantTimeEqual(String(decisionIntent.details?.payload_hash || ''), decisionPayloadHash) ||
+        String(decisionIntent.details?.time_off_request_id || '') !== timeOffRequestId) {
+        return Response.json({ success: false, error: 'The time-off decision audit intent is ambiguous or no longer pending. Admin review is required.' }, { status: 409 });
+      }
+
+      if (!sameRequestSaved) {
+        if (!fromStatuses.includes(String(requestRecord.status || ''))) {
+          return Response.json({ success: false, error: `Only ${fromStatuses.join('/')} time-off requests can be ${decision === 'approved' ? 'approved' : decision === 'denied' ? 'denied' : 'cancelled'}.` }, { status: 409 });
+        }
+        if (String(requestRecord.updated_date || '') !== expectedUpdatedDate) {
+          return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before deciding it.' }, { status: 409 });
+        }
+        const updated = await timeOffRequestEntity.updateMany(
+          { id: requestRecord.id, updated_date: expectedUpdatedDate, status: { $in: fromStatuses }, archived_test_data: { $ne: true } },
+          { $set: { ...decisionFields, last_request_id: requestId, last_request_payload_hash: decisionPayloadHash } },
+        );
+        if (!updated || updated.updated !== 1) {
+          const raced = await timeOffRequestEntity.get(requestRecord.id).catch(() => null);
+          if (raced?.id && String(raced.last_request_id || '') === requestId &&
+            constantTimeEqual(String(raced.last_request_payload_hash || ''), decisionPayloadHash) &&
+            decidedFieldsMatch(raced)) {
+            requestRecord = raced; // The exact same request succeeded in another session.
+          } else {
+            await auditEntity.updateMany(
+              { id: decisionIntent.id, outcome: 'pending', request_id: requestId, user_email: requestOwnerEmail },
+              { $set: { outcome: 'blocked' } },
+            );
+            return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before deciding it.' }, { status: 409 });
+          }
+        } else {
+          requestRecord = await timeOffRequestEntity.get(requestRecord.id);
+        }
+      }
+
+      // A saved decision is never success without the exact record fields, request
+      // marker, and a confirmed/recovered audit for this request id.
+      if (!requestRecord?.id ||
+        String(requestRecord.last_request_id || '') !== requestId ||
+        !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+        !decidedFieldsMatch(requestRecord)) {
+        return Response.json({ success: false, error: 'The saved time-off decision no longer matches its audit intent. Admin investigation is required.' }, { status: 409 });
+      }
+
+      const finalOutcome = hadPendingAudit || sameRequestSaved ? 'recovered' : 'confirmed';
+      const finalized = await auditEntity.updateMany(
+        { id: decisionIntent.id, outcome: 'pending', request_id: requestId, user_email: requestOwnerEmail },
+        { $set: {
+          outcome: finalOutcome,
+          server_timestamp: new Date().toISOString(),
+          details: {
+            ...(decisionIntent.details || {}),
+            payload_hash: decisionPayloadHash,
+            time_off_request_id: timeOffRequestId,
+            saved_updated_date: requestRecord.updated_date,
+            decision,
+          },
+        } },
+      );
+      if (!finalized || finalized.updated !== 1) {
+        const fresh = await uniqueRow(auditEntity, auditQuery, 'Time-off decision audit finalization');
+        if (!fresh?.id || fresh.id !== decisionIntent.id ||
+          !['confirmed', 'recovered'].includes(String(fresh.outcome || '')) ||
+          !constantTimeEqual(String(fresh.details?.payload_hash || ''), decisionPayloadHash) ||
+          String(fresh.details?.time_off_request_id || '') !== timeOffRequestId) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off decision was saved but its audit finalization is incomplete. Retry the same decision.' }, { status: 409 });
+        }
+        decisionIntent = fresh;
+      } else {
+        decisionIntent = await uniqueRow(auditEntity, auditQuery, 'Confirmed time-off decision audit');
+      }
+
+      const confirmedRecord = await timeOffRequestEntity.get(timeOffRequestId).catch(() => null);
+      if (!decisionIntent?.id || !['confirmed', 'recovered'].includes(String(decisionIntent.outcome || '')) ||
+        !constantTimeEqual(String(decisionIntent.details?.payload_hash || ''), decisionPayloadHash) ||
+        String(decisionIntent.details?.time_off_request_id || '') !== timeOffRequestId ||
+        !confirmedRecord?.id ||
+        String(confirmedRecord.last_request_id || '') !== requestId ||
+        !constantTimeEqual(String(confirmedRecord.last_request_payload_hash || ''), decisionPayloadHash) ||
+        !decidedFieldsMatch(confirmedRecord)) {
+        return Response.json({ success: false, error: 'The time-off decision and confirmed audit do not agree. Admin investigation is required.' }, { status: 409 });
+      }
+      if (finalOutcome === 'confirmed' && confirmedRecord?.id) {
+        await emitTimeClockEvent(base44, decisionEventType, confirmedRecord.id, actorEmail);
+      }
+      return Response.json({ success: true, request: confirmedRecord, audit_id: decisionIntent.id, reused: finalOutcome === 'recovered' });
     }
 
     if (action === 'list_correction_requests') {
@@ -7123,6 +7827,7 @@ Deno.serve(async (req) => {
       if (!savedByThisRequest(savedEntry) || !auditMatchesThisRequest(intent) || !['confirmed', 'recovered'].includes(String(intent?.outcome || ''))) {
         return Response.json({ success: false, error: 'The saved notes and audit do not agree. Admin investigation is required.' }, { status: 409 });
       }
+      await emitTimeClockEvent(base44, 'time_entry_notes_updated', savedEntry.id, actorEmail);
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
 
@@ -8548,7 +9253,7 @@ Deno.serve(async (req) => {
         if (!Array.isArray(directAudits) || directAudits.length !== 1) return false;
         return correctionAuditMatchesRecord(directAudits[0], record);
       };
-      if (decision === 'approve' && actorEmail === target.email) {
+      if (decision === 'approve' && actorEmail === target.email && actor.is_full_admin !== true) {
         return Response.json({
           success: false,
           error: 'You cannot approve your own Time Clock shift. Another administrator must review and approve this shift.',
@@ -8952,10 +9657,10 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id });
     }
 
-    if (action === 'recover_missed_clock_in') {
+    if (action === 'recover_missed_clock_in' || action === 'report_missed_clock_in') {
       const serverNow = new Date();
       const companyMinutes = minutesOfDayInCompanyTime(serverNow.toISOString());
-      if (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60) {
+      if (action === 'recover_missed_clock_in' && (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60)) {
         return Response.json({ success: false, error: 'Missed Clock In recovery is only available at or after 3:00 PM company time.' }, { status: 409 });
       }
 
@@ -9123,7 +9828,9 @@ Deno.serve(async (req) => {
             claimed_clock_in: claimedClockInIso,
             submitted_at: reportedAt,
             request_id: requestId,
-            resolution_note: 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
+            resolution_note: action === 'report_missed_clock_in'
+              ? 'Employee self-reported a missed Clock In from the Quick Clock arrival-time prompt; shift requires manager review.'
+              : 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
           });
         }
         if (!punchCase?.id ||
@@ -9161,7 +9868,9 @@ Deno.serve(async (req) => {
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: reportedAt, request_id: requestId, time_entry_id: entry.id,
-          reason: 'Employee reported a missing Clock In during the late-day pre-clockout review',
+          reason: action === 'report_missed_clock_in'
+            ? 'Employee reported a missed Clock In from the Quick Clock arrival-time prompt'
+            : 'Employee reported a missing Clock In during the late-day pre-clockout review',
           details: {
             payload_hash: recoveryPayloadHash,
             punch_exception_id: punchCase.id,
@@ -9716,6 +10425,11 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, retry_same_request: true, error: 'Clock-in and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
         }
 
+        await emitTimeClockEvent(base44, 'time_clock_in', entry.id, actorEmail);
+        if ((minutesOfDayInCompanyTime(entry.clock_in) ?? 0) > LATE_CLOCK_IN_MINUTES) {
+          await emitTimeClockEvent(base44, 'time_clock_in_late', entry.id, actorEmail);
+        }
+
         return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
       } finally {
         let releaseFailed = false;
@@ -9984,6 +10698,15 @@ Deno.serve(async (req) => {
       });
       if (!finalized) {
         return Response.json({ success: false, retry_same_request: true, error: 'Clock-out and audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+      }
+
+      await emitTimeClockEvent(base44, 'time_clock_out', savedEntry.id, actorEmail);
+      const workedHours = Number(savedEntry.total_hours);
+      if (Number.isFinite(workedHours) && workedHours < FULL_SHIFT_HOURS) {
+        await emitTimeClockEvent(base44, 'time_clock_out_early', savedEntry.id, actorEmail);
+      }
+      if (Number.isFinite(workedHours) && workedHours > LONG_SHIFT_HOURS) {
+        await emitTimeClockEvent(base44, 'time_entry_long_shift', savedEntry.id, actorEmail);
       }
 
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });

@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "444c3b4c84fd878fcc6e95b24cc2bf47  base44/functions/staffEntityWrite/entry.ts\n3a1f13f376613072f4f67a89aae9514b  src/components/workflow/AttentionBell.jsx\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 823
+}

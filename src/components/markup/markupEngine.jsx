@@ -3,7 +3,9 @@
 
 /**
  * Get a tier's markup multiplier for a given category_key.
- * Falls back to 1.0 (no markup) if not configured.
+ * Falls back to 1.0 (no markup) when the value is missing or non-positive.
+ * Values between 0 and 1 are valid discount markups and are honored — only
+ * ≤0 and non-numeric entries are treated as "not configured".
  */
 export function getMarkup(tier, categoryKey) {
   if (!tier || !tier.markups) return 1.0;
@@ -57,7 +59,8 @@ export function getVolumeDiscountPct(eligibleSubtotal, brackets) {
  * @returns {Object} { lines: [...withMarkupApplied], totals: {...} }
  */
 export function applyMarkups(lines, tier, settings) {
-  const { brackets = [], eligibleCategoryKeys = [] } = settings || {};
+  const { brackets = [], eligibleCategoryKeys = [], categoryFlags = {} } = settings || {};
+  const isDiscountEligible = (key) => eligibleCategoryKeys.includes(key) && categoryFlags[key] !== false;
 
   // First pass: compute marked-up cost per line (no volume discount yet)
   const marked = lines.map(line => {
@@ -74,7 +77,7 @@ export function applyMarkups(lines, tier, settings) {
 
   // Compute eligible subtotal for volume discount
   const eligibleSubtotal = marked
-    .filter(l => eligibleCategoryKeys.includes(l.category_key))
+    .filter(l => isDiscountEligible(l.category_key))
     .reduce((sum, l) => sum + l.marked_up_cost, 0);
 
   const volumeDiscountPct = getVolumeDiscountPct(eligibleSubtotal, brackets);
@@ -82,7 +85,7 @@ export function applyMarkups(lines, tier, settings) {
 
   // Second pass: apply volume discount only to eligible lines
   const finalLines = marked.map(line => {
-    const isEligible = eligibleCategoryKeys.includes(line.category_key);
+    const isEligible = isDiscountEligible(line.category_key);
     const final = isEligible ? line.marked_up_cost * volumeDiscountFactor : line.marked_up_cost;
     return {
       ...line,
@@ -95,8 +98,30 @@ export function applyMarkups(lines, tier, settings) {
   const markedSubtotal = finalLines.reduce((s, l) => s + l.marked_up_cost, 0);
   const grandTotal = finalLines.reduce((s, l) => s + l.final_cost, 0);
 
+  // Readability merge: collapse lines sharing a category_key into one row.
+  // Same-category lines always share markup multiplier + discount eligibility,
+  // so summing cost fields is exact. Per-item detail stays in detail_lines.
+  const mergedLines = [];
+  const byKey = new Map();
+  for (const l of finalLines) {
+    const key = l.category_key || "";
+    const existing = byKey.get(key);
+    if (!existing) {
+      const g = { ...l, merged_count: 1, base_label: l.label };
+      byKey.set(key, g);
+      mergedLines.push(g);
+    } else {
+      existing.merged_count += 1;
+      existing.cost += l.cost;
+      existing.marked_up_cost += l.marked_up_cost;
+      existing.final_cost += l.final_cost;
+      existing.label = `${existing.base_label} (+${existing.merged_count - 1} merged)`;
+    }
+  }
+
   return {
-    lines: finalLines,
+    lines: mergedLines,
+    detail_lines: finalLines,
     totals: {
       raw_subtotal: rawSubtotal,
       marked_subtotal: markedSubtotal,
@@ -170,4 +195,17 @@ export function applyCostPlus(lines, config) {
       grand_total: grandTotal,
     },
   };
+}
+/**
+ * Target-margin price calculator ("price for X% margin").
+ * margin% is the share of the SALE that is profit: price = cost / (1 - margin).
+ * Differs from markup-on-cost: a 50% margin requires a 100% markup.
+ * Returns 0 for a non-positive cost; null for invalid margins (>=100 or <0).
+ */
+export function priceForTargetMargin(cost, marginPct) {
+  const c = Number(cost);
+  const m = Number(marginPct);
+  if (!Number.isFinite(c) || c <= 0) return 0;
+  if (!Number.isFinite(m) || m < 0 || m >= 100) return null;
+  return c / (1 - m / 100);
 }

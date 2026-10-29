@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -6,8 +6,10 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalPolicies";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { filterAllFleetRows, listAllFleetRows, readFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { useAuth, getSessionUser } from "@/components/auth/EmailGate";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const LEGACY_FLEET_PUBLIC_REPORT_URL = "https://app--ccsfleet-master-db95ea70.base44.app/PublicReport";
 const LEGACY_FLEET_QR_DISPLAY_SRC = "/fleet/fleetmaster-public-report-qr-200.png";
@@ -15,27 +17,24 @@ const LEGACY_FLEET_QR_DOWNLOAD_SRC = "/fleet/fleetmaster-public-report-qr-400.pn
 const AUTOMATION_SOURCES = ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "fleetReminderFallback", "bouncieSyncNotifications"];
 
 async function loadAutomationHealthData() {
-  const [maintenance, reminders, worker, reminderFallback, bouncieAlerts, queuePending, queueSending, queueFailed, receiptStarted, receiptFailed] = await Promise.all([
-    base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "fleetReminderFallback" }, "-created_date", 1),
-    base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
-    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
-    filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
+  // One $in query per entity keeps entity_list volume low; consumers already
+  // select by source/status, and the -created_date sort preserves latest-first.
+  const [logs, notifications, receipts] = await Promise.all([
+    readFleetRows("FleetSystemLog", { query: { source: { $in: AUTOMATION_SOURCES } }, sort: "-created_date", limit: 500 }),
+    filterAllFleetRows("FleetNotificationQueue", { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notifications" }),
+    filterAllFleetRows("FleetOperationReceipt", { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
   ]);
   return {
-    logs: [...(maintenance || []), ...(reminders || []), ...(worker || []), ...(reminderFallback || []), ...(bouncieAlerts || [])],
-    notifications: [...queuePending, ...queueSending, ...queueFailed],
-    receipts: [...receiptStarted, ...receiptFailed],
+    logs: logs || [],
+    notifications: notifications || [],
+    receipts: receipts || [],
   };
 }
 
-export default function FleetSettings() {
+export default function FleetSettings({ embedded = false }) {
+  const { sessionToken } = useAuth();
   const [user, setUser] = useState(null);
+  const [bouncieReconnectBusy, setBouncieReconnectBusy] = useState(false);
   const [settings, setSettings] = useState(null);
   const [connection, setConnection] = useState(null);
   const [audit, setAudit] = useState(null);
@@ -69,22 +68,24 @@ export default function FleetSettings() {
   const [mechanicCopied, setMechanicCopied] = useState(false);
   const [mechanicRevoke, setMechanicRevoke] = useState(null);
   const [loading, setLoading] = useState(true);
+  const checkSequenceRef = useRef(0);
+  const integritySequenceRef = useRef(0);
 
   useEffect(() => {
     (async () => {
       try {
-        const u = await base44.auth.me();
+        const u = getSessionUser();
         setUser(u);
         if (u?.role === "admin") {
           const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
-            base44.entities.FleetSettings.list("-updated_date", 10),
-            base44.functions.invoke("bouncieStatus", {}).catch(() => null),
-            base44.entities.FleetMigrationAudit.list("-created_date", 20),
-            base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
-            base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
+            readFleetRows("FleetSettings", { sort: "-updated_date", limit: 10 }),
+            base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
+            readFleetRows("FleetMigrationAudit", { sort: "-created_date", limit: 20 }),
+            invokeFleet("fleetCutoverControl", { action: "status" }).catch(() => null),
+            invokeFleet("fleetIntegrityAudit", {}).catch(() => null),
             loadAutomationHealthData(),
-            base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
-            listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
+            invokeFleet("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+            listAllFleetRows("FleetEquipment", "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection(bouncieStatusResult?.data || null);
@@ -232,17 +233,20 @@ export default function FleetSettings() {
   }, [integrity, mechanicLinks]);
 
   const runServerCheck = async () => {
+    const requestSequence = ++checkSequenceRef.current;
     setChecking(true);
     try {
-      const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
+      const { data } = await invokeFleet("fleetCutoverControl", { action: "status" });
+      if (requestSequence !== checkSequenceRef.current) return;
       setServerStatus(data || null);
       const [settingsRows, bouncieStatusResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
-        base44.entities.FleetSettings.list("-updated_date", 10),
-        base44.functions.invoke("bouncieStatus", {}).catch(() => null),
+        readFleetRows("FleetSettings", { sort: "-updated_date", limit: 10 }),
+        base44.functions.invoke("bouncieStatus", { session_token: sessionToken }).catch(() => null),
         loadAutomationHealthData(),
-        base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
+        invokeFleet("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
       ]);
+      if (requestSequence !== checkSequenceRef.current) return;
       setSettings((settingsRows || [])[0] || null);
       setConnection(bouncieStatusResult?.data || null);
       setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
@@ -251,17 +255,19 @@ export default function FleetSettings() {
       setMechanicLinks(mechanicResult?.data?.links || []);
       setMechanicEquipment(mechanicEquipmentRows || []);
     } finally {
-      setChecking(false);
+      if (requestSequence === checkSequenceRef.current) setChecking(false);
     }
   };
 
   const runIntegrityAudit = async () => {
+    const requestSequence = ++integritySequenceRef.current;
     setIntegrityBusy(true);
     try {
-      const { data } = await base44.functions.invoke("fleetIntegrityAudit", {});
+      const { data } = await invokeFleet("fleetIntegrityAudit", {});
+      if (requestSequence !== integritySequenceRef.current) return;
       setIntegrity(data || null);
     } finally {
-      setIntegrityBusy(false);
+      if (requestSequence === integritySequenceRef.current) setIntegrityBusy(false);
     }
   };
 
@@ -273,7 +279,7 @@ export default function FleetSettings() {
     setManualResult("");
     try {
       const functionName = action === "maintenance" ? "fleetScheduledMaintenanceGeneration" : "fleetScheduledReminders";
-      const { data } = await base44.functions.invoke(functionName, {});
+      const { data } = await invokeFleet(functionName, {});
       if (data?.error) throw new Error(data.error);
       if (action === "maintenance") {
         setManualResult(`Maintenance generation finished: ${data?.due ?? 0} due schedule(s), ${data?.created ?? 0} new Fleet work order(s).`);
@@ -313,10 +319,10 @@ export default function FleetSettings() {
     setMechanicError("");
     setGeneratedMechanicLink("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic", expires_in_days: Number(mechanicExpiryDays || 0), allow_estimates: mechanicAllowEstimates, scope_mode: mechanicScopeMode, allowed_equipment_ids: mechanicScopeMode === "selected_equipment" ? mechanicEquipmentIds : [] });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic", expires_in_days: Number(mechanicExpiryDays || 0), allow_estimates: mechanicAllowEstimates, scope_mode: mechanicScopeMode, allowed_equipment_ids: mechanicScopeMode === "selected_equipment" ? mechanicEquipmentIds : [] });
       if (data?.error || !data?.token) throw new Error(data?.error || "Mechanic access link was not generated.");
       setGeneratedMechanicLink(`${window.location.origin}/FleetMechanic#${data.token}`);
-      const listed = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" });
+      const listed = await invokeFleet("fleetMechanicPortal", { action: "admin_list_links" });
       setMechanicLinks(listed?.data?.links || []);
     } catch (error) {
       setMechanicError(error?.message || "Mechanic access link could not be created.");
@@ -330,7 +336,7 @@ export default function FleetSettings() {
     setMechanicError("");
     setMechanicNotice("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_revoke_link", id });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_revoke_link", id });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(data?.links || []);
       setGeneratedMechanicLink("");
@@ -351,7 +357,7 @@ export default function FleetSettings() {
     setMechanicError("");
     setMechanicNotice("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_reconcile_mechanic_mutation", receipt_id: receipt.id });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_reconcile_mechanic_mutation", receipt_id: receipt.id });
       if (data?.error) throw new Error(data.error);
       setMechanicNotice(data?.status === "applied"
         ? "Mechanic operation confirmed and reconciled as applied. The bearer link was not re-enabled."
@@ -369,7 +375,7 @@ export default function FleetSettings() {
     setMechanicBusy(`estimate-${link.id}`);
     setMechanicError("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_update_estimate_permission", id: link.id, allow_estimates: allowEstimates });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_update_estimate_permission", id: link.id, allow_estimates: allowEstimates });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(current => current.map(row => row.id === link.id ? data.link : row));
     } catch (error) {
@@ -384,7 +390,7 @@ export default function FleetSettings() {
     setMechanicBusy(`scope-${mechanicScopeEdit.id}`);
     setMechanicError("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_update_scope", id: mechanicScopeEdit.id, scope_mode: mechanicScopeEdit.scope_mode, allowed_equipment_ids: mechanicScopeEdit.scope_mode === "selected_equipment" ? mechanicScopeEdit.allowed_equipment_ids : [] });
+      const { data } = await invokeFleet("fleetMechanicPortal", { action: "admin_update_scope", id: mechanicScopeEdit.id, scope_mode: mechanicScopeEdit.scope_mode, allowed_equipment_ids: mechanicScopeEdit.scope_mode === "selected_equipment" ? mechanicScopeEdit.allowed_equipment_ids : [] });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(current => current.map(row => row.id === mechanicScopeEdit.id ? data.link : row));
       setMechanicScopeEdit(null);
@@ -417,7 +423,7 @@ export default function FleetSettings() {
             notes: "FleetMaster source write paths and scheduled automation were frozen after a clean final delta check on 2026-09-09.",
           }
         : { action };
-      const { data } = await base44.functions.invoke("fleetCutoverControl", payload);
+      const { data } = await invokeFleet("fleetCutoverControl", payload);
       if (data?.error) throw new Error(data.error);
       await runServerCheck();
     } catch (error) {
@@ -427,8 +433,30 @@ export default function FleetSettings() {
     }
   };
 
-  if (loading) return <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
-  if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div></div></div>;
+  const reconnectBouncie = async () => {
+    setBouncieReconnectBusy(true);
+    setActionError("");
+    try {
+      const { data } = await base44.functions.invoke("bouncieAuthInitiate", { session_token: sessionToken });
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+        return;
+      }
+      setActionError(data?.error || "Bouncie authorization could not be started. You can also reconnect from the Fleet Tracking page.");
+    } catch (error) {
+      setActionError(error?.message || "Bouncie authorization could not be started. You can also reconnect from the Fleet Tracking page.");
+    } finally {
+      setBouncieReconnectBusy(false);
+    }
+  };
+
+  if (loading) return embedded
+    ? <div className="flex min-h-[16rem] items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div>
+    : <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div></div>;
+  if (user?.role !== "admin") {
+    const gate = <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-5"><div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-200"><ShieldCheck className="w-5 h-5"/>Admin access required</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-2">Fleet administration is protected by CCS authentication and RLS. The legacy FleetMaster Settings password is not used here.</p></div>;
+    return embedded ? gate : <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-3xl mx-auto p-6">{gate}</div></div>;
+  }
 
   const oldUrl = settings?.email_body_template?.includes("ccsfleet-master") || settings?.email_body_template?.includes("68accb163a1b474cdb95ea70");
   const latestAutomation = Object.fromEntries(AUTOMATION_SOURCES.map(source => [source, automationLogs.find(row => row.source === source) || null]));
@@ -441,10 +469,10 @@ export default function FleetSettings() {
   const gates = serverStatus?.cutover || settings || {};
   const cutoverComplete = !!gates.cutover_completed_at && !!gates.notifications_enabled && !!gates.scheduled_reminders_enabled && !!gates.maintenance_generation_enabled && !!gates.public_reporting_enabled;
 
-  return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
+  return <div className={embedded ? "w-full min-w-0" : "min-h-full bg-gray-50 dark:bg-slate-950"}>{embedded ? null : <FleetModuleNav/>}<div className={embedded ? "space-y-5" : "max-w-5xl mx-auto p-4 sm:p-6 space-y-5"}>
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Settings className="w-6 h-6"/>Fleet Settings</h1><p className="text-sm text-gray-500 dark:text-slate-400">CCS Fleet operations health, production gates, notification configuration, and migration safety records.</p></div><div className="flex flex-col sm:flex-row gap-2"><button onClick={()=>setEditorOpen(true)} disabled={!settings} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-indigo-300 bg-indigo-50 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-200 dark:hover:bg-indigo-950/60"><Pencil className="w-4 h-4"/>Edit notifications & reminders</button><button onClick={runServerCheck} disabled={checking} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{checking?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh operations health</button></div></div>
 
-    <nav aria-label="Fleet Settings sections" className="sticky top-[69px] lg:top-[61px] z-20 -mx-1 rounded-xl border border-gray-200 bg-white/95 p-1.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 overflow-x-auto overscroll-x-contain">
+    <nav aria-label="Fleet Settings sections" className={`sticky ${embedded ? "top-0" : "top-[69px] lg:top-[61px]"} z-20 -mx-1 rounded-xl border border-gray-200 bg-white/95 p-1.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 overflow-x-auto overscroll-x-contain`}>
       <div className="flex min-w-max gap-1">
         <a href="#fleet-feature-setup" className="min-h-11 px-3 rounded-lg inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-800">Setup{setupNeedsCount>0&&<span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800 dark:bg-amber-950 dark:text-amber-300">{setupNeedsCount}</span>}</a>
         <a href="#fleet-production-controls" className="min-h-11 px-3 rounded-lg inline-flex items-center text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-800">Production</a>
@@ -553,7 +581,7 @@ export default function FleetSettings() {
 
     <div id="fleet-data-integrity" className="scroll-mt-36"><IntegrityPanel data={integrity} busy={integrityBusy} onRefresh={runIntegrityAudit} /></div>
 
-    {connection?.needsReconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips must be reauthorized from the Tracking page to restore full Fleet tracking.</p></div></div>}
+    {connection?.needsReconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips need a fresh authorization to restore full Fleet tracking.</p><button type="button" onClick={reconnectBouncie} disabled={bouncieReconnectBusy} className="mt-3 min-h-11 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 inline-flex items-center gap-2"><Link2 className="w-4 h-4"/>{bouncieReconnectBusy ? "Opening Bouncie…" : "Reconnect Bouncie"}</button></div></div>}
 
     {oldUrl && <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-amber-600 shrink-0"/><div><div className="font-semibold text-amber-800 dark:text-amber-200">Legacy FleetMaster URL still preserved in a template</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Notifications are live. Update this template immediately so future Fleet messages do not send users to the retired FleetMaster route.</p></div></div>}
 

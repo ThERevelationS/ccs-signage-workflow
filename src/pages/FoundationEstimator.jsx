@@ -42,6 +42,7 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const blankItem = (type) => ({
   // Defaults mirror SignEstimate Pro `newItem()` exactly. CCS still lets the
@@ -85,7 +86,7 @@ const TAB_CLASS =
 
 export default function FoundationEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const params = new URLSearchParams(window.location.search);
-  const id = embeddedProjectId || params.get("id");
+  const id = embeddedProjectId || params.get("id") || params.get("edit");
   const estimateId = embeddedEstimateId || params.get("estimateId");
   const navigate = useNavigate();
 
@@ -116,10 +117,10 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     setLoading(true);
     setLoadError("");
     Promise.all([
-      base44.entities.FoundationProject.get(id),
-      loadAllEntityRows({ entity: base44.entities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
-      loadAllEntityRows({ entity: base44.entities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
-      loadAllEntityRows({ entity: base44.entities.Settings, sort: "created_date", label: "Estimator Settings" }),
+      staffEntities.FoundationProject.get(id),
+      loadAllEntityRows({ entity: staffEntities.FoundationInventory, query: { show_in_foundation: true }, sort: "material_name", label: "Foundation inventory" }),
+      loadAllEntityRows({ entity: staffEntities.LaborServiceInventory, query: { service_category: "concrete_service", is_active: true }, sort: "service_name", label: "Concrete labor/services" }),
+      loadAllEntityRows({ entity: staffEntities.Settings, sort: "created_date", label: "Estimator Settings" }),
     ])
       .then(([proj, inv, concreteServices, settingRows]) => {
         if (!active) return;
@@ -178,7 +179,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     return () => clearTimeout(t);
   }, [autoSave, dirty, project]);
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading sectionâ€¦</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
 
@@ -195,8 +196,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       items: prev.items.map((it, i) => (i === index ? { ...it, ...changes } : it)),
     }));
 
-  const removeItem = (index) =>
+  const removeItem = (index) => {
+    const label = project.items?.[index]?.description || `item ${index + 1}`;
+    if (!window.confirm(`Delete "${label}"?`)) return;
     commit((prev) => ({ items: prev.items.filter((_, i) => i !== index) }));
+  };
 
   const duplicateItem = (index) =>
     commit((prev) => {
@@ -282,6 +286,24 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     total_wall_cap_cost: calc.totals.total_wall_cap_cost,
   });
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) handleSave();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -295,7 +317,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         : project.customer_pricing;
       const dataToSave = { ...basePayload, customer_pricing: customerPricing };
       const savedProject = await updateBuilderSourceProject({
-        entity: base44.entities.FoundationProject,
+        entity: staffEntities.FoundationProject,
         sourceId: project.id,
         expectedUpdatedAt: project.updated_date,
         data: dataToSave,
@@ -330,6 +352,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       }
       setDirty(false);
       onSaved?.();
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -361,7 +385,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
         };
       }
       const copy = await ensureIdempotentEntityCreate({
-        entity: base44.entities.FoundationProject,
+        entity: staffEntities.FoundationProject,
         keyField: "creation_request_key",
         key: copyAttemptRef.current.key,
         data: copyData,
@@ -369,6 +393,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
       });
       if (!copy?.id) throw new Error("Foundation project copy could not be verified.");
       navigate(`/FoundationEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save failed: " + e.message);
     } finally {
       setSaving(false);
     }
@@ -386,6 +412,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           total={sectionTotal}
           saving={saving}
           dirty={dirty}
+          lastSavedAt={project?.updated_date}
           autoSave={autoSave}
           onToggleAutoSave={() => setAutoSave((v) => !v)}
           canUndo={history.past.length > 0}
@@ -405,7 +432,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 mb-3 text-[12px] text-blue-900">
             Add each footing or pillar under <b>Foundation</b>, then place poles, masonry walls and caps
             in the other tabs. Concrete, rebar, excavation and labor rates come from your settings and
-            supplier inventory. The 3D preview on the right updates as you type — left drag orbits,
+            supplier inventory. The 3D preview on the right updates as you type â€” left drag orbits,
             right drag pans, scroll zooms. Save & Exit pushes the total back to the combined estimate.
           </div>
         )}
@@ -446,7 +473,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
 
                 {calc.items.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-sm border border-dashed border-gray-300 text-[12px] text-gray-500">
-                    No foundations yet — add a spread footing or pillar to start.
+                    No foundations yet â€” add a spread footing or pillar to start.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -552,7 +579,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                     to="/FoundationCatalog"
                     className="inline-block mt-3 text-[12px] text-gray-600 hover:text-red-600"
                   >
-                    Manage foundation catalog →
+                    Manage foundation catalog â†’
                   </Link>
                 </div>
               </TabsContent>

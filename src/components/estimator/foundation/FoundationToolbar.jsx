@@ -31,6 +31,7 @@ export default function FoundationToolbar({
   total,
   saving,
   dirty,
+  lastSavedAt,
   autoSave,
   onToggleAutoSave,
   canUndo,
@@ -84,7 +85,7 @@ export default function FoundationToolbar({
           disabled={saving}
           className="h-[28px] px-3 flex items-center gap-1.5 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 hover:bg-lime-200 disabled:opacity-60"
         >
-          <Save className="w-3.5 h-3.5" /> {saving ? "Saving…" : "Save & Exit"}
+          <Save className="w-3.5 h-3.5" /> {saving ? "Savingâ€¦" : "Save & Exit"}
         </button>
 
         <button
@@ -105,7 +106,7 @@ export default function FoundationToolbar({
           Auto-save
         </span>
         <span className="text-[11px] text-gray-400">
-          {saving ? "Saving…" : dirty ? "Not yet saved" : "All changes saved"}
+          {saving ? "Savingâ€¦" : dirty ? "Not yet saved" : "All changes saved"}{!saving && !dirty && lastSavedAt ? ` Â· Last saved ${new Date(lastSavedAt).toLocaleString()}` : ""}
         </span>
         <button
           type="button"

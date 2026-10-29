@@ -27,13 +27,16 @@ import {
   Lock,
   Settings,
   Pause,
-  LockKeyhole
+  LockKeyhole,
+  Ban
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
 import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
@@ -45,10 +48,11 @@ import {
   classifyTimeClockLoginStatus,
 } from "@/components/timeclock/timeClockSessionSecurity";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeEntry = base44.entities.TimeEntry;
-const TimeOffRequest = base44.entities.TimeOffRequest;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const TimeEntry = staffEntities.TimeEntry;
+const TimeOffRequest = staffEntities.TimeOffRequest;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -77,8 +81,11 @@ function persistNotesRequest(entryId, requestId, payload) {
   try { sessionStorage.setItem(notesRequestStorageKey(entryId), JSON.stringify({ request_id: requestId, payload })); } catch {}
 }
 
-function clearNotesRequest(entryId) {
-  try { sessionStorage.removeItem(notesRequestStorageKey(entryId)); } catch {}
+function clearNotesRequest(entryId, expectedRequestId = "") {
+  try {
+    if (expectedRequestId && storedNotesRequest(entryId)?.request_id !== expectedRequestId) return;
+    sessionStorage.removeItem(notesRequestStorageKey(entryId));
+  } catch {}
 }
 
 function shouldRetainNotesRequest(err) {
@@ -227,11 +234,21 @@ export default function TimeClock() {
   const [editNotesText, setEditNotesText] = useState("");
   const [savingNotesId, setSavingNotesId] = useState(null);
   const [editingTimeOff, setEditingTimeOff] = useState(null);
+  const [cancellingTimeOffId, setCancellingTimeOffId] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
   const [sessionNotice, setSessionNotice] = useState(null);
   const idleTimerRef = useRef(null);
   const lastActivityAtRef = useRef(0);
   const loginReportRunRef = useRef(0);
+  const dataSeqRef = useRef(0);
+  const dataScopeRef = useRef("");
+  // Update the data scope during render so a stale employee-session read that
+  // resolves between a session-switch render and the effect cannot apply.
+  const dataScope = `${timeClockSessionToken}|${String(loggedInUser?.email || "").toLowerCase()}`;
+  if (dataScopeRef.current !== dataScope) {
+    dataScopeRef.current = dataScope;
+    dataSeqRef.current += 1;
+  }
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -264,8 +281,14 @@ export default function TimeClock() {
   };
 
   const loadData = async () => {
-    if (!loggedInUser?.email) return;
-    
+    const requestEmail = String(loggedInUser?.email || "").toLowerCase();
+    const requestToken = timeClockSessionToken;
+    const requestScope = `${requestToken}|${requestEmail}`;
+    const requestSeq = ++dataSeqRef.current;
+    const current = () =>
+      requestSeq === dataSeqRef.current && dataScopeRef.current === requestScope;
+    if (!requestEmail) return;
+
     setIsLoading(true);
     try {
       const [entries, requests] = await Promise.all([
@@ -282,39 +305,67 @@ export default function TimeClock() {
           label: `Time off requests for ${loggedInUser.email}`,
         })
       ]);
-      
+
+      if (!current()) return;
+
       entries.sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in));
       requests.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
       
       setTimeEntries(entries);
       setTimeOffRequests(requests);
 
-      if (timeClockSessionToken) {
+      if (requestToken) {
         try {
           const correctionResponse = await base44.functions.invoke("timeClockAction", {
             action: "list_correction_requests",
-            session_token: timeClockSessionToken,
+            session_token: requestToken,
             target_email: loggedInUser.email,
             request_id: newRequestId(),
           });
+          if (!current()) return;
           const correctionData = correctionResponse?.data || correctionResponse;
           setCorrectionRequests(correctionData?.success && Array.isArray(correctionData.requests) ? correctionData.requests : []);
         } catch (correctionError) {
           console.error("Error loading correction requests:", correctionError);
-          setCorrectionRequests([]);
+          if (current()) setCorrectionRequests([]);
         }
       } else {
         setCorrectionRequests([]);
       }
       
       const activeEntries = entries.filter(e => e.status === "clocked_in");
-      if (activeEntries.length > 1) {
+      if (current() && activeEntries.length > 1) {
         setTimeEntryError(`Multiple active time entries were found for ${loggedInUser.email}. No clock-out row was selected automatically; an admin must review the duplicates.`);
       }
     } catch (err) {
       console.error("Error loading data:", err);
     }
-    setIsLoading(false);
+    if (current()) setIsLoading(false);
+  };
+
+  const cancelTimeOffRequest = async (request) => {
+    if (!request?.id || !timeClockSessionToken || cancellingTimeOffId) return;
+    if (!window.confirm(`Cancel your ${request.request_type?.replace("_", " ")} request (${request.start_date}${request.end_date !== request.start_date ? ` – ${request.end_date}` : ""})?`)) return;
+    setCancellingTimeOffId(request.id);
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "time_off_decision",
+        session_token: timeClockSessionToken,
+        target_email: loggedInUser.email,
+        request_id: newRequestId(),
+        time_off_request_id: request.id,
+        expected_updated_date: request.updated_date,
+        decision: "cancelled",
+      });
+      const data = response?.data || response;
+      if (!data?.success) throw new Error(data?.error || "The request could not be cancelled.");
+      await loadData();
+    } catch (err) {
+      setTimeEntryError(err?.response?.data?.error || err?.message || "The time-off request could not be cancelled. Reload and try again.");
+      await loadData();
+    } finally {
+      setCancellingTimeOffId("");
+    }
   };
 
   const clearEmployeeSession = useCallback(({ reason = "manual" } = {}) => {
@@ -480,13 +531,13 @@ export default function TimeClock() {
         error.confirmedServerResponse = true;
         throw error;
       }
-      clearNotesRequest(entryId);
+      clearNotesRequest(entryId, requestId);
       setEditingNotes(null);
       setEditNotesText("");
       await loadData();
     } catch (err) {
       console.error("Error saving notes:", err);
-      if (!shouldRetainNotesRequest(err)) clearNotesRequest(entryId);
+      if (!shouldRetainNotesRequest(err)) clearNotesRequest(entryId, requestId);
       setTimeEntryError(err?.response?.data?.error || err?.message || "The notes changed in another session. Latest data was reloaded.");
       await loadData();
     } finally {
@@ -502,8 +553,24 @@ export default function TimeClock() {
 
   if (isLoading && allUsers.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <div className="min-h-screen p-4 sm:p-6 ambient-mesh">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative mb-6 flex items-center justify-between overflow-hidden rounded-2xl px-3 py-2">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-36" />
+          </div>
+          <Skeleton className="mb-4 h-64 w-full rounded-2xl" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -523,10 +590,10 @@ export default function TimeClock() {
         disabled={!loggedInUser || !timeClockSessionToken || shellAlreadyGuardsThisEmployee}
       />
       <PullToRefresh onRefresh={loadData}>
-    <div className="min-h-screen p-4 sm:p-6">
+    <div className="min-h-screen p-4 sm:p-6 ambient-mesh">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="clay-card p-3">
               <Clock className="w-6 h-6 text-purple-600" />
@@ -696,7 +763,7 @@ export default function TimeClock() {
                 </div>
 
                 {/* Time Entries List */}
-                <div className="space-y-3">
+                <Stagger className="space-y-3">
                   {weeklyEntries.length === 0 ? (
                     <div className="clay-card p-6 text-center text-gray-500">
                       <Clock className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -713,7 +780,7 @@ export default function TimeClock() {
                       const entryOT = Math.max(0, entryHours - entryRegular);
                       
                       return (
-                      <div key={entry.id} className="clay-card p-4">
+                      <StaggerItem key={entry.id} className="clay-card p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -883,14 +950,14 @@ export default function TimeClock() {
                             )}
                           </div>
                         )}
-                      </div>
+                      </StaggerItem>
                     );})
                   )}
-                </div>
+                </Stagger>
               </TabsContent>
 
               <TabsContent value="timeoff">
-                <div className="space-y-3">
+                <Stagger className="space-y-3">
                   {timeOffRequests.length === 0 ? (
                     <div className="clay-card p-6 text-center text-gray-500">
                       <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -905,7 +972,7 @@ export default function TimeClock() {
                     </div>
                   ) : (
                     timeOffRequests.map(request => (
-                      <div key={request.id} className="clay-card p-4">
+                      <StaggerItem key={request.id} className="clay-card p-4">
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="font-semibold capitalize">{request.request_type.replace("_", " ")}</p>
@@ -931,6 +998,19 @@ export default function TimeClock() {
                                 <Pencil className="w-3 h-3" />
                               </Button>
                             )}
+                            {["pending", "approved"].includes(request.status) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-red-600 hover:bg-red-50"
+                                disabled={cancellingTimeOffId === request.id}
+                                onClick={() => cancelTimeOffRequest(request)}
+                              >
+                                {cancellingTimeOffId === request.id
+                                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                                  : <Ban className="w-3 h-3" />}
+                              </Button>
+                            )}
                             <Badge className={
                               request.status === "approved" ? "bg-green-100 text-green-700" :
                               request.status === "denied" ? "bg-red-100 text-red-700" :
@@ -945,10 +1025,10 @@ export default function TimeClock() {
                         {request.admin_notes && (
                           <p className="text-sm text-gray-500 mt-2 italic">Admin: {request.admin_notes}</p>
                         )}
-                      </div>
+                      </StaggerItem>
                     ))
                   )}
-                </div>
+                </Stagger>
               </TabsContent>
 
               <TabsContent value="balance">

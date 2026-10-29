@@ -258,6 +258,8 @@ export default function EquipmentTab({ foundationItems = [], inventory, selected
   };
 
   const removeEquipment = (idx) => {
+    const eq = inventory.find(i => i.id === selectedEquipmentList[idx]?.equipment_id);
+    if (!window.confirm(`Remove ${eq?.material_name || 'this equipment'}?`)) return;
     onUpdate(selectedEquipmentList.filter((_, i) => i !== idx));
     markDirty();
   };

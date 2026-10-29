@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { easternTodayText, isFluidLowStock, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
-import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { filterAllFleetRows, listAllFleetRows, readFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
   Truck,
@@ -35,6 +35,8 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const DEFAULT_DASHBOARD_ORDER = ["summary", "today", "system_health", "attention", "operations"];
 const DASHBOARD_WIDGETS = [
@@ -88,50 +90,48 @@ export default function FleetOverview() {
     let mounted = true;
     (async () => {
       try {
-        const user = await base44.auth.me().catch(() => null);
+        const user = await Promise.resolve(getSessionUser());
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, inspectionRows, parts, partIdentificationRows, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, dashboardPreferenceResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
-          listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-          listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
-          listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
-          filterAllFleetRows(base44.entities.FleetInspection, { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention" }).catch(() => []),
-          listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
-          filterAllFleetRows(base44.entities.FleetPartIdentification, { status: { $in: ["draft", "analyzed", "needs_review"] } }, "-created_date", { label: "Fleet part identification review inbox" }).catch(() => []),
-          listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
-          listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
-          base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
-          base44.functions.invoke("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
-          user?.role === "admin" ? base44.functions.invoke("fleetLifecycleAction", { action: "portfolio" }).catch(() => null) : Promise.resolve(null),
-          user?.role === "admin" ? listAllFleetRows(base44.entities.FleetRepairEstimate, "-updated_date", { label: "Fleet repair-estimate approvals" }).catch(() => []) : Promise.resolve([]),
-          base44.functions.invoke("fleetDashboardPreferenceAction", { action: "get" }).catch(() => null),
-          listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
-          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warnings" }),
-          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie alerts" }),
-          base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
+        const [equipment, tasks, workOrders, inspectionRows, parts, partIdentificationRows, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, dashboardPreferenceResult, liveState, bouncieAlertRows, bouncieVehiclesResult] = await Promise.all([
+          listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+          listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedules" }),
+          listAllFleetRows("FleetMaintenanceWorkOrder", "-created_date", { label: "Fleet work-order history" }),
+          filterAllFleetRows("FleetInspection", { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention" }).catch(() => []),
+          listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts" }),
+          filterAllFleetRows("FleetPartIdentification", { status: { $in: ["draft", "analyzed", "needs_review"] } }, "-created_date", { label: "Fleet part identification review inbox" }).catch(() => []),
+          listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluids" }),
+          listAllFleetRows("FleetPartFluidRequest", "-created_date", { label: "Fleet requests" }),
+          invokeFleet("fleetReservationAction", { action: "list" }).catch(() => null),
+          invokeFleet("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
+          user?.role === "admin" ? invokeFleet("fleetLifecycleAction", { action: "portfolio" }).catch(() => null) : Promise.resolve(null),
+          user?.role === "admin" ? listAllFleetRows("FleetRepairEstimate", "-updated_date", { label: "Fleet repair-estimate approvals" }).catch(() => []) : Promise.resolve([]),
+          invokeFleet("fleetDashboardPreferenceAction", { action: "get" }).catch(() => null),
+          listAllFleetRows("BouncieVehicleLiveState", "-last_seen_at", { label: "Bouncie live vehicle state" }),
+          filterAllFleetRows("BouncieNotification", { is_read: false, severity: { $in: ["warning", "critical"] } }, "-timestamp", { label: "Unread Bouncie alerts" }),
+          invokeFleet("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
         if (mounted) {
-          setData({ equipment, tasks, workOrders, inspections: inspectionRows || [], parts, partIdentificationRows: partIdentificationRows || [], fluids, requests, reservations: reservationResult?.data?.reservations || [], warranties: warrantyResult?.data?.rows || [], lifecycleRows: lifecycleResult?.data?.rows || [], repairEstimates: repairEstimates || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+          setData({ equipment, tasks, workOrders, inspections: inspectionRows || [], parts, partIdentificationRows: partIdentificationRows || [], fluids, requests, reservations: reservationResult?.data?.reservations || [], warranties: warrantyResult?.data?.rows || [], lifecycleRows: lifecycleResult?.data?.rows || [], repairEstimates: repairEstimates || [], liveState, bouncieFaults: bouncieAlertRows || [], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
           setDashboardPreference(normalizeDashboardPreference(dashboardPreferenceResult?.data?.preference || {}));
           setDashboardPreferenceRecord(dashboardPreferenceResult?.data?.record || null);
         }
         if (user?.role === "admin") {
-          const [maintenanceLog, reminderLog, workerLog, bouncieLog, bouncieStatusResult, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
-            base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
-            base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
-            base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
-            base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
-            base44.functions.invoke("bouncieStatus", {}).catch(() => null),
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
-            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
-            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
-            filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
+          const [systemLogRows, bouncieStatusResult, queueRows, receiptRows] = await Promise.all([
+            readFleetRows("FleetSystemLog", { query: { source: { $in: ["fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "fleetNotificationWorker", "bouncieSyncNotifications"] } }, sort: "-created_date", limit: 500 }).catch(() => []),
+            invokeFleet("bouncieStatus", {}).catch(() => null),
+            filterAllFleetRows("FleetNotificationQueue", { status: { $in: ["pending", "sending", "failed"] } }, "-created_date", { label: "Unresolved Fleet notifications" }),
+            filterAllFleetRows("FleetOperationReceipt", { status: { $in: ["started", "failed"] } }, "-created_date", { label: "Unresolved Fleet operation receipts" }),
           ]);
+          const latestBySource = new Map();
+          for (const row of systemLogRows || []) {
+            const source = String(row?.source || "");
+            if (source && !latestBySource.has(source)) latestBySource.set(source, row);
+          }
           const bouncieStatus = bouncieStatusResult?.data || null;
           const connectionFreshMs = Math.max(Date.parse(bouncieStatus?.lastSyncAt || "") || 0, Date.parse(bouncieStatus?.lastWebhookAt || "") || 0);
           if (mounted) setAdminHealth({
-            logs: [maintenanceLog?.[0], reminderLog?.[0], workerLog?.[0], bouncieLog?.[0]].filter(Boolean),
-            unresolved: (pendingQueue?.length || 0) + (sendingQueue?.length || 0) + (failedQueue?.length || 0) + (startedReceipts?.length || 0) + (failedReceipts?.length || 0),
+            logs: [...latestBySource.values()],
+            unresolved: (queueRows?.length || 0) + (receiptRows?.length || 0),
             bouncieHealthy: !!bouncieStatus?.connected && !bouncieStatus.needsReconnect && !bouncieStatus.lastError && !bouncieStatus.webhookError && bouncieStatus.webhookActive === true,
             bouncieFreshMinutes: connectionFreshMs ? Math.floor((Date.now() - connectionFreshMs) / 60000) : null,
           });
@@ -236,7 +236,7 @@ export default function FleetOverview() {
   const saveDashboardPreference = async preference => {
     setSavingDashboard(true); setError("");
     try {
-      const { data: result } = await base44.functions.invoke("fleetDashboardPreferenceAction", { action: "save", expected_updated_date: dashboardPreferenceRecord?.updated_date || "", preference });
+      const { data: result } = await invokeFleet("fleetDashboardPreferenceAction", { action: "save", expected_updated_date: dashboardPreferenceRecord?.updated_date || "", preference });
       if (result?.error) throw new Error(result.error);
       setDashboardPreference(normalizeDashboardPreference(result?.preference || preference));
       setDashboardPreferenceRecord(result?.record || null);
@@ -247,7 +247,7 @@ export default function FleetOverview() {
   const resetDashboardPreference = async () => {
     setSavingDashboard(true); setError("");
     try {
-      const { data: result } = await base44.functions.invoke("fleetDashboardPreferenceAction", { action: "reset", expected_updated_date: dashboardPreferenceRecord?.updated_date || "" });
+      const { data: result } = await invokeFleet("fleetDashboardPreferenceAction", { action: "reset", expected_updated_date: dashboardPreferenceRecord?.updated_date || "" });
       if (result?.error) throw new Error(result.error);
       setDashboardPreference(normalizeDashboardPreference(result?.preference || defaultDashboardPreference()));
       setDashboardPreferenceRecord(result?.record || null);
@@ -260,7 +260,7 @@ export default function FleetOverview() {
     return (
       <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
         <FleetModuleNav />
-        <div className="flex-1 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-4"><ListSkeleton rows={6} /></div>
       </div>
     );
   }

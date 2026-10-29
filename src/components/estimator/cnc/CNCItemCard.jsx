@@ -43,7 +43,14 @@ export default function CNCItemCard({ item, index, onChange, onRemove }) {
           placeholder="Part description"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button onClick={() => onRemove(index)} className="text-gray-400 hover:text-red-600 p-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (!window.confirm("Remove this item from this estimate?")) return;
+            onRemove(index);
+          }}
+          className="text-gray-400 hover:text-red-600 p-2"
+        >
           <Trash2 className="w-4 h-4" />
         </button>
       </div>

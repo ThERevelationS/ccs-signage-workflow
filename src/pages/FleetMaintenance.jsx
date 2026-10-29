@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
 import FleetBulkMaintenanceDialog from "@/components/fleet/FleetBulkMaintenanceDialog";
 import FleetMaintenanceCalendar from "@/components/fleet/FleetMaintenanceCalendar";
@@ -16,13 +16,14 @@ import {
   Clock3,
   LayoutGrid,
   List,
-  Loader2,
   Pencil,
   Plus,
   Search,
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 const todayText = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -56,31 +57,32 @@ export default function FleetMaintenance() {
   const [bulkPlannerOpen, setBulkPlannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const loadSequenceRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
-      const [t, e, openWos, assignedWos, inProgressWos, p, f, u] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "open" }, "-created_date", { label: "Open Fleet maintenance work orders" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "assigned" }, "-created_date", { label: "Assigned Fleet maintenance work orders" }),
-        filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: "in_progress" }, "-created_date", { label: "In-progress Fleet maintenance work orders" }),
-        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
-        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
-        base44.auth.me().catch(() => null),
+      const [t, e, activeWos, p, f, u] = await Promise.all([
+        listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedules" }),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        filterAllFleetRows("FleetMaintenanceWorkOrder", { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet maintenance work orders" }),
+        listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts" }),
+        listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluids" }),
+        Promise.resolve(getSessionUser()),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setTasks(t || []);
       setEquipment(e || []);
-      setActiveWorkOrders([...(openWos || []), ...(assignedWos || []), ...(inProgressWos || [])]);
+      setActiveWorkOrders(activeWos || []);
       setParts(p || []);
       setFluids(f || []);
       setCurrentUser(u || null);
     } catch (e) {
-      setError(e?.message || "Unable to load Fleet maintenance schedules.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet maintenance schedules.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, []);
 
@@ -218,7 +220,7 @@ export default function FleetMaintenance() {
       const body = dialog?.task
         ? { action: "update", id: dialog.task.id, expected_updated_date: dialog.task.updated_date || "", task: payload }
         : { action: "create", creation_key: dialog?.createKey || "", task: payload };
-      const { data } = await base44.functions.invoke("fleetMaintenanceAction", body);
+      const { data } = await invokeFleet("fleetMaintenanceAction", body);
       if (data?.error) throw new Error(data.error);
       setDialog(null);
       await loadData();
@@ -269,7 +271,7 @@ export default function FleetMaintenance() {
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
-        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : view === "workspace" ? (
+        {loading ? <ListSkeleton rows={6} /> : view === "workspace" ? (
           selectedEquipment ? <FleetMaintenanceWorkspace equipment={selectedEquipment} tasks={selectedTasks} isAdmin={isAdmin} initialTab={workspaceInitialTab} onBack={showEquipmentView} onEditSchedule={(task) => setDialog({ task })} onNewSchedule={() => openCreateDialog(selectedEquipment.id)} /> : <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-5 text-red-700 dark:text-red-300"><div className="font-semibold">Fleet equipment not found.</div><button type="button" onClick={showEquipmentView} className="mt-2 min-h-11 px-2 text-sm underline rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Back to Maintenance</button></div>
         ) : view === "calendar" ? (
           <FleetMaintenanceCalendar tasks={tasks.filter(task => activeEquipmentIds.has(task.equipment_id))} equipment={activeEquipment} search={search} onOpenSchedule={(task) => openEquipmentMaintenance(task.equipment_id, "schedule")} />

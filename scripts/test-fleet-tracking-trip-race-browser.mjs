@@ -36,12 +36,12 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { MemoryRouter } from "react-router-dom";',
-    'import FleetTracking from "/@fs/app/src/pages/FleetTracking.jsx";',
+    `import FleetTracking from "/@fs/${appRoot.replace(/\\/g, "/")}/src/pages/FleetTracking.jsx";`,
     'createRoot(document.getElementById("root")).render(<MemoryRouter><FleetTracking /></MemoryRouter>);',
   ].join("\n"));
   vite = await createServer({
     configFile: false, root: scratch, plugins: [react()], resolve: { alias: aliases },
-    server: { host: "127.0.0.1", port: 0, strictPort: false, fs: { allow: [appRoot, scratch] } },
+    server: { host: "127.0.0.1", port: 0, strictPort: false, fs: { allow: [appRoot, scratch], strict: false } },
     logLevel: "error",
   });
   await vite.listen();

@@ -11,13 +11,15 @@ function rowIdentity(row, index) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function isRateLimitError(error) {
+  const status = error?.status ?? error?.response?.status;
+  if (status === 429) return true;
   const message = String(
     error?.message ||
     error?.response?.data?.error ||
     error?.data?.error ||
     ""
   ).toLowerCase();
-  return message.includes("rate limit");
+  return message.includes("rate limit") || message.includes("too many requests");
 }
 
 /**
@@ -30,6 +32,9 @@ export async function withRateLimitRetry(fn) {
     try {
       return await fn();
     } catch (error) {
+      // The request governor already retried this call with backoff; a second
+      // retry loop here would multiply the delay without helping.
+      if (typeof error?.ccsGovernorRetried === "number") throw error;
       if (attempt < RATE_LIMIT_MAX_RETRIES && isRateLimitError(error)) {
         await sleep(RATE_LIMIT_BASE_DELAY_MS * Math.pow(2, attempt));
         continue;

@@ -31,7 +31,7 @@ export default function VinylProjectSummaryCard({ rollup, project, onUpdateProje
 
         <div className="border-t pt-2 space-y-1">
           <Line label="Machine Time" value={fmt(rollup.machineCost)} />
-          <Line label={`Labor · ${rollup.laborHours.toFixed(2)} hr`} value={fmt(rollup.laborCost)} />
+          <Line label={`Labor Â· ${rollup.laborHours.toFixed(2)} hr`} value={fmt(rollup.laborCost)} />
         </div>
 
         {(rollup.equipmentCost > 0 || rollup.personnelCost > 0 || rollup.travelCost > 0) && (
@@ -81,6 +81,7 @@ export default function VinylProjectSummaryCard({ rollup, project, onUpdateProje
           </div>
         </div>
 
+        {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
         <Button onClick={onSave} disabled={isSaving} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-3">
           {isSaving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
           Save Estimate

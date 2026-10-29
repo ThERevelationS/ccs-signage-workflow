@@ -50,22 +50,27 @@ export async function loadCustomerPricingConfig(project = {}) {
   }
 }
 
-export function calculateCustomerPricingFromConfig({ project, categorize, tierNumber, tiers = [], settings = [], customer = null }) {
+export function calculateCustomerPricingFromConfig({ project, categorize, tierNumber, tiers = [], settings = [], customer = null, categories = [] }) {
   if (!project || typeof categorize !== "function" || !tiers.length) return null;
   const resolvedTierNumber = resolveTierNumber({ project, customer, requestedTierNumber: tierNumber, tiers });
   const selectedTier = tiers.find((tier) => num(tier.tier_number) === resolvedTierNumber) || tiers[0];
   const lines = categorize(project) || [];
   if (!selectedTier || !lines.length) return null;
 
+  const categoryFlags = Object.fromEntries(
+    (categories || []).map((c) => [c?.category_key, c?.volume_discount_eligible]).filter(([k]) => k),
+  );
   const result = applyMarkups(lines, selectedTier, {
     brackets: parseVolumeDiscountBrackets(settings),
     eligibleCategoryKeys: parseVolumeDiscountCategories(settings),
+    categoryFlags,
   });
 
   return {
     applied: true,
     tier_number: num(selectedTier.tier_number, resolvedTierNumber),
     tier_name: selectedTier.tier_name || `Tier ${resolvedTierNumber}`,
+    tier_updated_date: String(selectedTier?.updated_date || ""),
     customer_default_tier: num(customer?.pricing_tier, 1),
     raw_subtotal: num(result?.totals?.raw_subtotal),
     marked_subtotal: num(result?.totals?.marked_subtotal),
@@ -95,5 +100,6 @@ export async function calculateSavedCustomerPricing({ project, categorize, tierN
     tiers: config.tiers,
     settings: config.settings,
     customer: config.customer,
+    categories: config.categories,
   });
 }

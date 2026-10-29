@@ -43,6 +43,10 @@
       ],
       "default": "exterior"
     },
+    "service_interval_months": {
+      "type": "number",
+      "description": "Recurring service cadence in months; 0 or omitted means a one-time service."
+    },
     "items": {
       "type": "array",
       "description": "Service items being maintained (signs being serviced + actions being performed on each).",

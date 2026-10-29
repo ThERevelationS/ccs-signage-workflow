@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { callBouncieApi } from '../../shared/bouncie.ts';
@@ -7,8 +8,8 @@ const ROAD_TRACKING_STATUSES = new Set(['unlinked', 'matched', 'ambiguous', 'man
 const EQUIPMENT_TYPES = new Set(['car','truck','boom_lift','forklift','generator','excavator','bulldozer','crane','compressor','other']);
 const EQUIPMENT_STATUSES = new Set(['operational','maintenance','down','retired']);
 
-async function requireAdmin(base44: any) {
-  const user = await base44.auth.me().catch(() => null);
+async function requireAdmin(base44: any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -87,9 +88,10 @@ async function evaluateBouncieLink(base44: any, vin: string, trackingApplicable:
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await requireAdmin(base44);
-    if (auth.error) return auth.error;
     const body = await req.json().catch(() => ({}));
+    const auth = await requireAdmin(base44, body?.session_token);
+    if (auth.error) return auth.error;
+
     const action = String(body?.action || '').trim();
 
     const Equipment = base44.asServiceRole.entities.FleetEquipment;

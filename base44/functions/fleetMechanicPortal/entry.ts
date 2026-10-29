@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
@@ -665,8 +666,8 @@ async function readJson(req: Request) {
   catch { return { payload:null, error:'Mechanic portal request must be valid JSON.', status:400 }; }
 }
 
-async function requireAdmin(base44: any) {
-  const user = await base44.auth.me().catch(()=>null);
+async function requireAdmin(base44: any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error:json({error:'Unauthorized'},{status:401}) };
   if (user.role === 'admin') return { user };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
@@ -1015,7 +1016,7 @@ Deno.serve(async (req) => {
     const Log = base44.asServiceRole.entities.FleetSystemLog;
 
     if (action.startsWith('admin_')) {
-      const auth = await requireAdmin(base44);
+      const auth = await requireAdmin(base44, body?.session_token);
       if (auth.error) return auth.error;
 
       if (action === 'admin_list_links') {

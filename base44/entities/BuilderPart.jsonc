@@ -34,6 +34,18 @@
     "source_module_key": {
       "type": "string"
     },
+    "source_template_id": {
+      "type": "string",
+      "description": "PartTemplate record this independent copy was instantiated from. Blank for Builder-produced, manual, and clipboard Parts."
+    },
+    "source_template_name": {
+      "type": "string"
+    },
+    "source_template_version": {
+      "type": "number",
+      "default": 0,
+      "description": "template_version of the source PartTemplate snapshot; 0 when the Part did not come from the Part Library."
+    },
     "source_path": {
       "type": "string",
       "description": "Path inside the detailed builder snapshot that produced this part, e.g. items[0].materials[2]."
@@ -54,6 +66,10 @@
     },
     "builder_detached_reason": {
       "type": "string"
+    },
+    "builder_detached_by": {
+      "type": "string",
+      "description": "Display name or email of the user who detached this Part from its Builder. Cleared on reattach."
     },
     "builder_detached_snapshot": {
       "type": "object",
@@ -181,6 +197,10 @@
     "manual_cost": {
       "type": "number"
     },
+    "manual_cost_override_reason": {
+      "type": "string",
+      "description": "User-entered reason recorded when a manual/detached Part cost was overridden."
+    },
     "is_active": {
       "type": "boolean",
       "default": true
@@ -194,20 +214,9 @@
     "part_name"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
+    "create": { "user_condition": { "role": "__builderpart_backend_only__" } },
+    "read": { "user_condition": { "role": "__builderpart_backend_only__" } },
+    "update": { "user_condition": { "role": "__builderpart_backend_only__" } },
+    "delete": { "user_condition": { "role": "__builderpart_backend_only__" } }
   }
 }

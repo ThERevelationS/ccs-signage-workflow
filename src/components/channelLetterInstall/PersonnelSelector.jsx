@@ -51,6 +51,7 @@ export default function PersonnelSelector({
   };
 
   const handleRemove = (idx) => {
+    if (!confirm(`Remove "${personnel[idx]?.name || "this person"}"?`)) return;
     const next = [...personnel];
     next.splice(idx, 1);
     onChange(next);

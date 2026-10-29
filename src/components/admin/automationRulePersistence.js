@@ -1,9 +1,18 @@
 import { base44 } from "@/api/base44Client";
 
+// Failures marked pre-dispatch are thrown before any request reaches the
+// server. Callers can safely release write locks and surface the message;
+// only post-dispatch failures need uncertain-outcome recovery.
+function preDispatchError(message) {
+  const error = new Error(message);
+  error.automationPreDispatch = true;
+  return error;
+}
+
 function requireCapability(adminCapability, label) {
   const capability = String(adminCapability || "").trim();
   if (!capability) {
-    throw new Error(`${label} requires a current Admin Settings authorization. Lock and unlock Admin Settings before retrying.`);
+    throw preDispatchError(`${label} requires a current Admin Settings authorization. Lock and unlock Admin Settings before retrying.`);
   }
   return capability;
 }
@@ -22,7 +31,7 @@ async function invokeMutation(payload, label) {
 
 export async function createAutomationRuleIfAbsent({ data, adminCapability, label = "Automation Rule" } = {}) {
   const name = String(data?.name || "").trim();
-  if (!name) throw new Error(`${label} requires a name.`);
+  if (!name) throw preDispatchError(`${label} requires a name.`);
   return invokeMutation({
     action: "automation_create",
     admin_capability: requireCapability(adminCapability, label),
@@ -31,12 +40,12 @@ export async function createAutomationRuleIfAbsent({ data, adminCapability, labe
 }
 
 export async function updateAutomationRuleIfUnchanged({ record, nextFields, exactVersion = true, adminCapability, label = "Automation Rule" } = {}) {
-  if (!record?.id) throw new Error(`${label} is no longer loaded. Reload before saving.`);
+  if (!record?.id) throw preDispatchError(`${label} is no longer loaded. Reload before saving.`);
   const capability = requireCapability(adminCapability, label);
 
   if (!exactVersion) {
     if (typeof record.enabled !== "boolean" || nextFields?.enabled !== !record.enabled) {
-      throw new Error(`${label} enabled-state change could not be verified locally.`);
+      throw preDispatchError(`${label} enabled-state change could not be verified locally.`);
     }
     const result = await invokeMutation({
       action: "automation_toggle",
@@ -60,7 +69,7 @@ export async function updateAutomationRuleIfUnchanged({ record, nextFields, exac
 }
 
 export async function deleteAutomationRuleIfUnchanged({ record, adminCapability, label = "Automation Rule" } = {}) {
-  if (!record?.id) throw new Error(`${label} is no longer loaded. Reload before deleting.`);
+  if (!record?.id) throw preDispatchError(`${label} is no longer loaded. Reload before deleting.`);
   return invokeMutation({
     action: "automation_delete",
     admin_capability: requireCapability(adminCapability, label),

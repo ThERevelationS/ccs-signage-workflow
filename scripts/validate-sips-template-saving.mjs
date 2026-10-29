@@ -32,6 +32,8 @@ function setup() {
   const productTypeDraftRef = { current: { id: state.selectedProductType, items: state.productTypeItems } };
   const context = {
     ...state, checklistSaveInFlight, subTemplateDraftRef, productTypeDraftRef,
+    catalogActionInFlightRef: { current: false },
+    catalogActionBlockedNotice: () => {},
     subTemplates: [{ id: 'sub1', name: 'Saved option' }],
     console: { error: () => {} },
     saveSubTemplateEntry: (...args) => {

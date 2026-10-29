@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
@@ -12,6 +11,8 @@ import { findWorkOrderFocusTarget, restoreEstimateFocusAfterChange, restoreWorkO
 import { attemptPostMutationRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List, DollarSign } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 
@@ -58,12 +59,12 @@ export default function FleetWorkOrders() {
     if (!hasLoadedRef.current) setLoading(true);
     try {
       const [w, e, t, p, f, u] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
-        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
-        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
-        base44.auth.me().catch(() => null),
+        listAllFleetRows("FleetMaintenanceWorkOrder", "-created_date", { label: "Fleet work-order history" }),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedules" }),
+        listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts" }),
+        listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluids" }),
+        Promise.resolve(getSessionUser()),
       ]);
       if (loadSequence === loadSequenceRef.current) {
         setOrders(w || []);
@@ -305,7 +306,7 @@ export default function FleetWorkOrders() {
     const payload = action === "create"
       ? { action, operation_key: dialog.createKey || "", maintenance_task_expected_updated_date: selectedTask?.updated_date || "", work_order: workOrderData }
       : { action, id: dialog.workOrder.id, expected_updated_date: dialog.workOrder.updated_date || "", work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus, equipment_expected_updated_date: selectedEquipment?.updated_date || "" } : {}) };
-    const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
+    const response = await invokeFleet("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     const refreshed = await attemptPostMutationRefresh(loadData);
     const saved = response?.data?.work_order;
@@ -339,7 +340,7 @@ export default function FleetWorkOrders() {
     try {
       const schedulingLine = planning_notes ? `Scheduling Notes: ${planning_notes}` : "";
       const notes = [startWorkOrder.notes, schedulingLine].filter(Boolean).join("\n\n");
-      const response = await base44.functions.invoke("fleetWorkOrderAction", {
+      const response = await invokeFleet("fleetWorkOrderAction", {
         action: "update",
         id: startWorkOrder.id,
         expected_updated_date: startWorkOrder.updated_date || "",
@@ -401,7 +402,7 @@ export default function FleetWorkOrders() {
     setActionError("");
     setFocusNotice("");
     try {
-      const response = await base44.functions.invoke("fleetWorkOrderAction", { action: "reopen", id: workOrder.id, expected_updated_date: workOrder.updated_date || "" });
+      const response = await invokeFleet("fleetWorkOrderAction", { action: "reopen", id: workOrder.id, expected_updated_date: workOrder.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
       const refreshed = await attemptPostMutationRefresh(loadData);
       const label = workOrder.work_order_number || workOrder.title || "work order";

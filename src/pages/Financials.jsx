@@ -11,6 +11,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { format as dateFnsFormat } from "date-fns";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // Workflow reporting constants
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
@@ -204,7 +205,7 @@ import PerformanceSummaryReport from "@/components/financials/PerformanceSummary
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function Financials() {
   const { isRegistered, currentUser } = useAuth();

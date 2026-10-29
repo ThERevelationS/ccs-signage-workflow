@@ -1,9 +1,57 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Trash2, Package } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Edit, Trash2, Package } from "lucide-react";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { findInventoryEstimateUsage } from "./inventoryPersistence";
+import { base44 } from "@/api/base44Client";
+
+// Lazily resolves how many estimates consume this item's inventory row via
+// BuilderPart → BuilderProduct joins. Clicking expands which estimates.
+function UsageBadge({ itemId }) {
+  const [usage, setUsage] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+  const [names, setNames] = useState(null);
+  useEffect(() => {
+    let active = true;
+    findInventoryEstimateUsage(itemId)
+      .then((u) => { if (active && u?.estimates > 0) setUsage(u); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [itemId]);
+  useEffect(() => {
+    if (!expanded || names !== null || !usage?.estimateIds?.length) return;
+    let active = true;
+    (async () => {
+      const out = [];
+      for (const id of usage.estimateIds) {
+        const row = await base44.entities.AllInOneEstimate.get(id).catch(() => null);
+        out.push(row?.estimate_name || row?.name || row?.project_name || id);
+      }
+      if (active) setNames(out);
+    })();
+    return () => { active = false; };
+  }, [expanded, names, usage]);
+  if (!usage) return null;
+  return (
+    <span className="relative inline-block">
+      <button type="button" onClick={() => setExpanded(!expanded)}
+        className="ml-1.5 inline-flex items-center rounded bg-sky-100 px-1 py-0.5 text-[9px] font-semibold text-sky-800 align-middle hover:bg-sky-200"
+        title={`Used in ${usage.estimates} estimate${usage.estimates === 1 ? "" : "s"} across ${usage.products} product${usage.products === 1 ? "" : "s"} — click to list`}>
+        {usage.estimates} est
+      </button>
+      {expanded && (
+        <span className="absolute left-0 top-full z-20 mt-1 block w-52 rounded border border-slate-200 bg-white p-2 text-[10px] text-slate-700 shadow-lg normal-case">
+          <span className="block font-semibold mb-1">Estimates using this item:</span>
+          {names === null
+            ? <span className="text-slate-400">Resolving…</span>
+            : <span className="block space-y-0.5">{names.map((n, i) => <span key={i} className="block truncate">• {n}</span>)}</span>}
+        </span>
+      )}
+    </span>
+  );
+}
 
 const formatCell = (val, field) => {
   if (val === null || val === undefined || val === "") return "—";
@@ -19,9 +67,49 @@ const formatCell = (val, field) => {
   return String(val).replace(/_/g, " ");
 };
 
-export default function InventoryTable({ source, items, canEdit, onEdit, onDelete, onInlineToggle }) {
+export default function InventoryTable({ source, items, canEdit, onEdit, onDelete, onInlineToggle, bulkField = null, onBulkMove }) {
   const tableFields = source.fields.filter((f) => f.table);
   const toggleRef = useRef(new Set());
+  const [sort, setSort] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkValue, setBulkValue] = useState("");
+
+  const toggleSelect = (id) => setSelectedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const allVisibleSelected = sortedItems.length > 0 && sortedItems.every((it) => selectedIds.has(it.id));
+  const toggleSelectAll = () => setSelectedIds((prev) => {
+    if (allVisibleSelected) return new Set();
+    const next = new Set(prev);
+    sortedItems.forEach((it) => next.add(it.id));
+    return next;
+  });
+
+  const toggleSort = (name) => {
+    setSort((prev) => {
+      if (!prev || prev.name !== name) return { name, dir: "asc" };
+      if (prev.dir === "asc") return { name, dir: "desc" };
+      return null;
+    });
+  };
+
+  const sortedItems = !sort ? items : [...items].sort((a, b) => {
+    const field = tableFields.find((f) => f.name === sort.name);
+    const av = a[sort.name], bv = b[sort.name];
+    if (field?.type === "number") {
+      const an = parseFloat(av), bn = parseFloat(bv);
+      if (Number.isNaN(an) && Number.isNaN(bn)) return 0;
+      if (Number.isNaN(an)) return 1;
+      if (Number.isNaN(bn)) return -1;
+      return sort.dir === "asc" ? an - bn : bn - an;
+    }
+    const as = (av === null || av === undefined) ? "" : String(av);
+    const bs = (bv === null || bv === undefined) ? "" : String(bv);
+    const cmp = as.localeCompare(bs, undefined, { numeric: true, sensitivity: "base" });
+    return sort.dir === "asc" ? cmp : -cmp;
+  });
 
   const handleToggle = async (item, field, next) => {
     const lockKey = `${item.id}:${field.name}`;
@@ -72,24 +160,61 @@ export default function InventoryTable({ source, items, canEdit, onEdit, onDelet
 
   return (
     <div className="w-full">
+      {bulkField && canEdit && (
+        <div className="flex flex-wrap items-center gap-2 border-b bg-slate-50 px-2 py-1.5 text-xs">
+          <span className="font-semibold text-slate-600">{selectedIds.size} selected</span>
+          <select value={bulkValue} onChange={(e) => setBulkValue(e.target.value)}
+            className="h-7 rounded border border-slate-300 bg-white px-1.5 text-xs">
+            <option value="">Move {bulkField.label || bulkField.name} to…</option>
+            {(bulkField.options || []).map((opt) => (
+              <option key={typeof opt === "object" ? opt.value : opt} value={typeof opt === "object" ? opt.value : opt}>{typeof opt === "object" ? (opt.label || opt.value) : String(opt).replace(/_/g, " ")}</option>
+            ))}
+          </select>
+          <button type="button" disabled={!selectedIds.size || !bulkValue}
+            onClick={() => { onBulkMove?.([...selectedIds], bulkField.name, bulkValue); setSelectedIds(new Set()); }}
+            className="h-7 rounded bg-sky-600 px-2.5 font-semibold text-white hover:bg-sky-700 disabled:opacity-40">
+            Move {selectedIds.size > 0 ? `${selectedIds.size} ` : ""}selected
+          </button>
+          {selectedIds.size > 0 && (
+            <button type="button" onClick={() => setSelectedIds(new Set())} className="text-slate-500 underline">Clear</button>
+          )}
+        </div>
+      )}
       <table className="w-full text-sm table-fixed">
         <thead className="border-b bg-slate-50">
           <tr className="text-left">
+            {bulkField && canEdit && (
+              <th className="w-8 px-2 py-3">
+                <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll}
+                  title={allVisibleSelected ? "Deselect all visible" : "Select all visible"} />
+              </th>
+            )}
             {tableFields.map((f) => (
               <th key={f.name} className="px-2 py-3 font-medium text-slate-600 text-xs">
-                {f.label}
+                <button type="button" onClick={() => toggleSort(f.name)} className="inline-flex items-center gap-1 hover:text-slate-900" title={`Sort by ${f.label}`}>
+                  {f.label}
+                  {sort?.name === f.name
+                    ? (sort.dir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)
+                    : <ArrowUpDown className="w-3 h-3 opacity-40" />}
+                </button>
               </th>
             ))}
             {canEdit && <th className="px-2 py-3 font-medium text-slate-600 text-right text-xs w-20">Actions</th>}
           </tr>
         </thead>
         <tbody className="divide-y">
-          {items.map((item) => (
+          {sortedItems.map((item) => (
             <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+              {bulkField && canEdit && (
+                <td className="w-8 px-2 py-3 align-top">
+                  <input type="checkbox" checked={selectedIds.has(item.id)} onChange={() => toggleSelect(item.id)}
+                    title="Select for bulk move" />
+                </td>
+              )}
               {tableFields.map((f, idx) => (
                 <td key={f.name} className="px-2 py-3 align-top">
                   {idx === 0 ? (
-                    <span className="font-medium text-slate-900">{formatCell(item[f.name], f)}</span>
+                    <span className="font-medium text-slate-900">{formatCell(item[f.name], f)}<UsageBadge itemId={item.id} /></span>
                   ) : f.type === "boolean" ? (
                     canEdit ? (
                       <Switch

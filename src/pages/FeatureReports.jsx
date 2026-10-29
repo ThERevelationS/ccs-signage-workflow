@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { sendGmail } from "@/functions/sendGmail";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,9 +97,15 @@ export default function FeatureReports() {
 
   const loadReports = async () => {
     setIsLoading(true);
-    const allReports = await listFeatureReports({ scope: "open", sessionToken });
-    setReports(allReports);
-    setIsLoading(false);
+    try {
+      const allReports = await listFeatureReports({ scope: "open", sessionToken });
+      setReports(allReports);
+    } catch (error) {
+      console.error("Feature reports load failed:", error);
+      setMutationError(error?.message || "Reports could not be loaded.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const openNewReport = () => {
@@ -300,9 +307,7 @@ export default function FeatureReports() {
 
         {/* Reports List */}
         {isLoading ? (
-          <div className="clay-card p-12 text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
-          </div>
+          <ListSkeleton rows={6} />
         ) : filteredReports.length === 0 ? (
           <div className="clay-card p-12 text-center">
             <Lightbulb className="w-12 h-12 text-gray-300 mx-auto mb-4" />

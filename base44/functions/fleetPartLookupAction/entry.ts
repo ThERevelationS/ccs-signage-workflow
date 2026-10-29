@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
@@ -13,8 +14,8 @@ const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
-async function authorize(base44: any, adminRequired = false) {
-  const user = await base44.auth.me().catch(() => null);
+async function authorize(base44: any, adminRequired = false, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user, admin: true };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -119,7 +120,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = norm(body?.action);
     const adminRequired = ['promote','match_existing','dismiss'].includes(action);
-    const auth = await authorize(base44, adminRequired);
+    const auth = await authorize(base44, adminRequired, body?.session_token);
     if (auth.error) return auth.error;
 
     const Identification = base44.asServiceRole.entities.FleetPartIdentification;

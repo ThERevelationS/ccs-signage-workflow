@@ -26,8 +26,9 @@ import {
   restoreOrderFromLoadedTrashSnapshot,
 } from "@/components/orders/orderPersistence";
 import { orderHasSmartsheetRelationship } from "@/components/orders/orderDeletionSmartsheetSafety.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const Order = base44.entities.Order;
+const Order = staffEntities.Order;
 const SYSTEM_RESET_CONFIRMATION = "DELETE ALL ORDERS";
 
 async function requireCurrentAdmin(label) {

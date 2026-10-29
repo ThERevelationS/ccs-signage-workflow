@@ -3685,10 +3685,13 @@ export async function detachBuilderPartOverride(partId, reason = "Detached for i
     detail_overrides: part.detail_overrides || {},
     source_path: part.source_path,
   };
+  const me = await base44.auth.me().catch(() => null);
+  const detachedBy = String(options.detachedBy || me?.full_name || me?.email || "").trim();
   const partPatch = {
     builder_sync_state: "detached_override",
     builder_detached_at: timestamp,
     builder_detached_reason: reason,
+    builder_detached_by: detachedBy,
     builder_detached_snapshot: detachedSnapshot,
     reattach_candidate_id: part.inventory_item_id || part.original_inventory_item_id || "",
     reattach_candidate_name: part.inventory_item_name || part.part_name || "",
@@ -3783,6 +3786,7 @@ function detachedOverrideChangesAlreadyApplied(part, changes = {}) {
   if (changes.frozen_unit_cost !== undefined && Math.abs(num(part.frozen_unit_cost) - num(changes.frozen_unit_cost)) > 0.000001) return false;
   if (changes.detail_overrides !== undefined && !same(part.detail_overrides || {}, changes.detail_overrides || {})) return false;
   if (changes.notes !== undefined && String(part.notes || "") !== String(changes.notes || "")) return false;
+  if (changes.manual_cost_override_reason !== undefined && String(part.manual_cost_override_reason || "") !== String(changes.manual_cost_override_reason || "")) return false;
   return true;
 }
 
@@ -3839,6 +3843,7 @@ export async function updateDetachedPartOverride(partId, changes = {}, options =
     current_extended_cost: nextExtended,
     manual_cost_override: true,
     manual_cost: nextExtended,
+    manual_cost_override_reason: changes.manual_cost_override_reason !== undefined ? String(changes.manual_cost_override_reason || "") : String(part.manual_cost_override_reason || ""),
     detail_overrides: nextDetailOverrides,
     price_state: "detached",
     price_delta: 0,
@@ -4073,6 +4078,7 @@ export async function reattachBuilderParts({ builderProductId, partIds = [], exp
         builder_sync_state: "linked",
         builder_detached_at: "",
         builder_detached_reason: "",
+        builder_detached_by: "",
         detail_overrides: {},
         price_state: "changed",
       });

@@ -34,6 +34,19 @@
       "type": "string",
       "description": "URL of the work order image"
     },
+    "attachment_refs": {
+      "type": "array",
+      "description": "References to files/photos carried over from the linked estimate (no binary copies).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "source": { "type": "string" }
+        }
+      }
+    },
     "files": {
       "type": "array",
       "description": "Uploaded files for this work order",
@@ -401,6 +414,10 @@
       "type": "object",
       "description": "Sales-only durable Smartsheet row creation reservation. Stores a pre-POST mapped snapshot and, if confirmed, a permanent row ID for verified one-time recovery. Never auto-repeat an uncertain create or infer row identity from its values."
     },
+    "automation_deadline_fired": {
+      "type": "object",
+      "description": "Durable deadline-automation claim markers. Keys are ruleId|triggerType|dueDate, values are the ISO date the rule last fired for that combination, so daily reminder runs never re-fire the same rule for the same deadline."
+    },
     "sales_status": {
       "type": "string",
       "enum": [
@@ -465,6 +482,10 @@
     },
     "estimate_amount": {
       "type": "number"
+    },
+    "estimate_revision_required": {
+      "type": "boolean",
+      "description": "Set when the linked estimate's quote total diverges from the amount this Work Order was built on. Sticky until manually reviewed."
     },
     "current_task_description": {
       "type": "string"
@@ -818,6 +839,49 @@
       "type": "string",
       "format": "date",
       "description": "Date to revisit this project in SIPs - jobs with a future date are separated from the active list"
+    },
+    "mmm_last_discussed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last Monday Morning Meeting discussion mark. Rows move to the Discussed section for the current week (Mon-Sun) and return to the active list next Monday. Independent of sip_completed."
+    },
+    "mmm_defer_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Monday Morning Meeting snooze date - rows with a future date are parked in the Discussed & Scheduled section and return automatically when it passes"
+    },
+    "mmm_tasks": {
+      "type": "array",
+      "description": "Monday Morning Meeting task list - MMM-only items shown inline under the board row until completed. Separate from the shared notes task list.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "assigned_to": {
+            "type": "string"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "completed": {
+            "type": "boolean",
+            "default": false
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
     }
   },
   "required": [

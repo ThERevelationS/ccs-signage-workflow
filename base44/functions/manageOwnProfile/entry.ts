@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'update_order_form_filter') {
-      const allowedFilters = new Set(['all_with_received', 'open_only', 'pending', 'ordered', 'received']);
+      const allowedFilters = new Set(['all_with_received', 'open_only', 'pending', 'ordered', 'received', 'overdue', 'duplicates']);
       const orderFormFilter = String(body?.order_form_filter || '').trim();
       if (!allowedFilters.has(orderFormFilter)) {
         return Response.json({ error: 'Invalid Order Form filter.' }, { status: 400 });

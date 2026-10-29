@@ -14,11 +14,12 @@ const FEE_FIELDS = [
   { key: "permit_fee", label: "Permit / admin" },
 ];
 
-export default function PricingSummary({ estimate, pricing, onChange, readOnly = false }) {
+export default function PricingSummary({ estimate, pricing, onChange, readOnly = false, openRevision = null }) {
   const profitability = computeEstimateProfitability(estimate, pricing);
   const rows = [
     ["Sections subtotal", pricing.subtotal],
     ["Discount", -pricing.discount],
+    ...(Number(pricing.volumeDiscount || 0) > 0.005 ? [[`Volume discount (${Number(pricing.volumeDiscountPercent || 0)}%)`, -pricing.volumeDiscount] ] : []),
     ["Contingency", pricing.contingency],
     ["Fees", pricing.fees],
     ["Tax", pricing.tax],
@@ -39,6 +40,12 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
         </div>
       </div>
 
+      {profitability.internalCost > 0 && Number(pricing.quoteTotal || 0) > 0 && profitability.internalCost > Number(pricing.quoteTotal) && (
+        <div className="mb-4 rounded border border-red-300 bg-red-50 p-2.5 text-[10px] font-semibold text-red-700">
+          Cost ceiling exceeded — internal product cost ({money(profitability.internalCost)}) exceeds the customer quote total ({money(Number(pricing.quoteTotal))}). Review product pricing or markup before sending this quote.
+        </div>
+      )}
+
       <div className="text-[11px] font-bold tracking-wider text-red-600 mb-3">CUSTOMER PRICING</div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -56,6 +63,31 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
         ))}
       </div>
 
+      {(() => {
+        const categories = [...new Set((estimate.line_items || []).map((l) => String(l.product_category || "").trim()).filter(Boolean))].sort();
+        if (!categories.length) return null;
+        const overrides = estimate.category_adjustments || {};
+        return (
+          <div className="mb-4">
+            <div className="text-[10px] font-bold tracking-wider text-gray-500 mb-2">PER-CATEGORY ADJUSTMENT (this estimate only)</div>
+            <div className="grid grid-cols-2 gap-3">
+              {categories.map((cat) => (
+                <label key={cat} className="text-xs text-gray-500">
+                  {cat} %
+                  <Input
+                    type="number"
+                    value={overrides[cat] ?? 0}
+                    onChange={(e) => onChange({ category_adjustments: { ...overrides, [cat]: parseFloat(e.target.value) || 0 } })}
+                    readOnly={readOnly}
+                    className={readOnly ? "bg-gray-50 text-gray-500" : ""}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="space-y-1.5 text-sm border-t border-gray-100 pt-3">
         {rows.map(([label, value]) => (
           <div key={label} className="flex justify-between text-gray-600">
@@ -65,7 +97,18 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
         ))}
         <div className="flex justify-between font-bold text-gray-900 text-base border-t border-gray-200 pt-2">
           <span>Quote total</span>
-          <span className="text-red-600">{money(pricing.quoteTotal)}</span>
+          {/* Revision diff highlight: when an open revision's before-snapshot
+              differs from the live total, mark it so the change stands out. */}
+          {(() => {
+            const beforeTotal = Number(openRevision?.estimate_snapshot_before?.quote_total || 0);
+            const differs = openRevision && Math.abs(beforeTotal - Number(pricing.quoteTotal || 0)) > 0.005;
+            return (
+              <span className={differs ? "text-amber-700 underline decoration-amber-400 decoration-2 underline-offset-2" : "text-red-600"}>
+                {money(pricing.quoteTotal)}
+                {differs && <span className="ml-1 text-[9px] font-normal text-amber-600">was {money(beforeTotal)}</span>}
+              </span>
+            );
+          })()}
         </div>
         <div className="flex justify-between text-gray-600">
           <span>Deposit due</span>

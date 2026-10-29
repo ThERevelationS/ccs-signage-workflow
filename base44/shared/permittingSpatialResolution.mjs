@@ -37,20 +37,26 @@ export async function resolveSpatialLocation({geocode,fetchJSON,onProgress=async
   base.sources.push({kind,url:source,checked_at:base.checked_at});return data.features.map(f=>({...f,...boundaryPosition(f.geometry?.rings,point),source_url:source,kind}));}
  try{
   const keys=[['county',LOCATION_SOURCES.county],['municipality',LOCATION_SOURCES.place],['state municipality',state==='OH'?LOCATION_SOURCES.oh_city:LOCATION_SOURCES.ky_city]];
-  const rows=[];for(const [kind,url] of keys)rows.push(await query(kind,url));const [counties,places,statePlaces]=rows;let townships=[],stateTownships=[];
+  const rows=await Promise.all(keys.map(([kind,url])=>query(kind,url)));const [counties,places,statePlaces]=rows;let townships=[],stateTownships=[];
   const county=counties.filter(f=>f.inside);if(county.length!==1||String(county[0].attributes.STATE)!==fips||!new RegExp('^'+fips+'[0-9]{3}$').test(String(county[0].attributes.GEOID)))throw Error('County/state location is missing or conflicting.');
   const countyRow=county[0],countyName=countyRow.attributes.NAME,countyId=countyRow.attributes.GEOID;
   const cities=places.filter(f=>f.inside),stateCities=statePlaces.filter(f=>f.inside);let target;
   if(cities.length>1||stateCities.length>1||cities.length!==stateCities.length)throw Error('Official boundary sources disagree about the municipality.');
   if(cities.length===1){const c=cities[0],s=stateCities[0],sName=s.attributes.municipality || s.attributes.NAME;if(String(c.attributes.STATE)!==fips||!new RegExp('^'+fips+'[0-9]{5}$').test(String(c.attributes.GEOID))||norm(c.attributes.NAME)!==norm(sName))throw Error('Official municipal identities disagree.');target={name:c.attributes.NAME.replace(/\s+(city|village|town)$/i,''),state,type:'municipality',geoid:c.attributes.GEOID,county:countyName,county_geoid:countyId,geometry:c.geometry,source_url:s.source_url};}
-  else if(state==='OH'){townships=await query('township',LOCATION_SOURCES.township);stateTownships=await query('state township',LOCATION_SOURCES.oh_township);const t=townships.filter(f=>f.inside&&/\btownship$/i.test(f.attributes.NAME)),s=stateTownships.filter(f=>f.inside);if(t.length!==1||s.length!==1||String(t[0].attributes.STATE)!==fips||!new RegExp('^'+countyId+'[0-9]{5}$').test(String(t[0].attributes.GEOID))||norm(t[0].attributes.NAME)!==norm(s[0].attributes.TOWNSHIP)||norm(countyName)!==norm(s[0].attributes.COUNTY))throw Error('Township location is missing or conflicting.');target={name:t[0].attributes.NAME,state,type:'township',geoid:t[0].attributes.GEOID,county:countyName,county_geoid:countyId,geometry:t[0].geometry,source_url:s[0].source_url};}
+  else if(state==='OH'){[townships,stateTownships]=await Promise.all([query('township',LOCATION_SOURCES.township),query('state township',LOCATION_SOURCES.oh_township)]);const t=townships.filter(f=>f.inside&&/\btownship$/i.test(f.attributes.NAME)),s=stateTownships.filter(f=>f.inside);if(t.length!==1||s.length!==1||String(t[0].attributes.STATE)!==fips||!new RegExp('^'+countyId+'[0-9]{5}$').test(String(t[0].attributes.GEOID))||norm(t[0].attributes.NAME)!==norm(s[0].attributes.TOWNSHIP)||norm(countyName)!==norm(s[0].attributes.COUNTY))throw Error('Township location is missing or conflicting.');target={name:t[0].attributes.NAME,state,type:'township',geoid:t[0].attributes.GEOID,county:countyName,county_geoid:countyId,geometry:t[0].geometry,source_url:s[0].source_url};}
   else target={name:countyName,state,type:'county',geoid:countyId,county:countyName,county_geoid:countyId,geometry:countyRow.geometry,source_url:countyRow.source_url};
   base.targets=[{...target,geometry:undefined},{name:countyName,state,type:'county',geoid:countyId,county:countyName}].filter((t,i,all)=>all.findIndex(other=>other.geoid===t.geoid)===i);
   // Separate LineStrings preserve multipart and hole outlines without assuming ring orientation.
   base.boundaries=[{type:'Feature',properties:{name:target.name,source_url:target.source_url},geometry:{type:'MultiLineString',coordinates:target.geometry.rings}}];
   const relevant=[...counties,...places,...statePlaces,...(cities.length===0?[...townships,...stateTownships]:[])];
-  if(!geocode.location_exact)return {...base,status:'needs_review',reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
-  if(relevant.some(f=>f.distance_m<=25))return {...base,status:'needs_review',reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
+  // Approximate geocodes (e.g. the free Census locator interpolating a street
+  // range) can still confirm jurisdiction — but only when the point sits well
+  // inside every checked boundary. The 150m guard covers street-range
+  // interpolation error; an exact provider result keeps the 25m edge check.
+  const edge=geocode.approximate_source?150:25;
+  if(!geocode.location_exact&&!geocode.approximate_source)return {...base,status:'needs_review',target:base.targets[0],reason:'The map found an approximate address. We cannot confirm its jurisdiction yet.'};
+  if(relevant.some(f=>f.distance_m<=edge))return {...base,status:'needs_review',target:base.targets[0],reason:'This address is close to a boundary. An administrator must confirm the property before it is used.'};
+  if(!geocode.location_exact)return {...base,status:'location_verified',reason:`Approximate map position is inside the checked ${target.name} government boundary. An administrator should spot-check the pin; office responsibility is checked separately.`,target:base.targets[0]};
   return {...base,status:'location_verified',reason:`Building location is inside the checked ${target.name} government boundary. Office responsibility is checked separately.`,target:base.targets[0]};
  }catch(error){await onProgress({kind:'boundary_failed',detail:String(error.message || error)});return {...base,reason:'Government location data could not confirm this address. No jurisdiction was selected.',error:String(error.message || error)};}
 }

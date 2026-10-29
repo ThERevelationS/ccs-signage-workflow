@@ -4,7 +4,14 @@ import { Wrench, ArrowRight } from "lucide-react";
 
 const LINKS = [
   { label: "Quick Price", desc: "Price one module fast", to: "/QuickPrice" },
+  { label: "New Estimate", desc: "Start a full all-in-one estimate", to: "/NewAllInOneEstimate" },
   { label: "Estimate Queues", desc: "Work through estimates by status", to: "/EstimatorQueues" },
+  { label: "Customers", desc: "Customer records, statements and portal links", to: "/EstimatorCustomers" },
+  { label: "Products", desc: "Quick-product catalog and pricing", to: "/EstimatorProducts" },
+  { label: "Parts", desc: "Part catalog used by the module estimators", to: "/EstimatorParts" },
+  { label: "Master Inventory", desc: "Stocked materials across modules", to: "/MasterInventory" },
+  { label: "Quote Settings", desc: "Customer quote branding, terms and defaults", to: "/QuoteSettings" },
+  { label: "Estimator Settings", desc: "Estimator module defaults", to: "/EstimatorSettings" },
   { label: "Main Workflow", desc: "Jump to the shop workflow board", to: "/MainWorkflow" },
   { label: "Sales Pipeline", desc: "Leads, quotes and follow-ups", to: "/SalesPipeline" },
   { label: "Reports & Requests", desc: "Submit a bug or feature request", to: "/FeatureReports" },

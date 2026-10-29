@@ -1,0 +1,45 @@
+{
+ "generated_at": "2026-10-26",
+ "unit": "Sentinel-URL cleanup, wrong-state repairs, queue type corrections, guarded backlog dispatch drain",
+ "approvals": "User approved clearing, LLM research dispatch, and repairs (standing approval for these classes).",
+ "sentinel_cleanup": {
+  "permitting_url_sentinels_cleared": 105,
+  "invalid_website_url_cleared": 34,
+  "verification": "0 invalid permitting_url and 0 invalid website_url remain",
+  "manifest": "docs/permitting-sentinel-url-cleanup-manifest-2026-10-26.json"
+ },
+ "wrong_state_repairs": {
+  "cleared_and_held_no_oh_candidate": ["Perryopolis", "Walcott", "Westville", "Lansing", "Conover"],
+  "cleared_and_retyped_township": {"Lykens": "Crawford County", "Augusta": "Carroll County"},
+  "repaired_reseeded": {"Medina County": "18 docs, county sources", "Lake County": "12 docs, canonical www URL", "Licking County": "0 docs, OpenGov JS portal honest gap"},
+  "repair_error_disclosed": "repair-wrongstate.ts used mistyped profile IDs: Blaine's honest no-source summary was cleared (annotated, unrecoverable); Westville temporarily retyped to wrong township then restored to village+Champaign County+hold; all 8 affected profiles verified in correct end states by name-keyed correction pass."
+ },
+ "queue_type_corrections": {
+  "retyped_rows": 51,
+  "method": "single official inventory candidate for the queued name; township retypes received deterministic parent_county_name; gate re-verified post-write before unblock"
+ },
+ "dispatch_drain": {
+  "batches": 17,
+  "total_ok": 342,
+  "total_held_identity": 182,
+  "threw_then_recovered": "12 township 409s (profile parent_county missing) + 7 profile-type 409s; all recovered by repairs and retried successfully",
+  "final_queue": {"total": 1775, "sources_found": 1556, "blocked": 218, "verified_current": 1, "not_started": 0},
+  "blocked_breakdown": {"identity_holds": 152, "other_blocked": 66},
+  "final_profiles": {"oh_ky": 1635, "with_permitting_url": 1119, "with_documents": 1328, "held_profiles": 7}
+ },
+ "persistent_gaps": {
+  "infrastructure": "Franklin, Greene, Montgomery county OH domains Cloudflare/WAF-blocked from sandbox egress (Franklin fetches 200 locally)",
+  "wrong_state_recurrence_hold": "Jeffersonville KY — automatic research resolves to the Indiana namesake; guard refused storage twice; held for manual verification",
+  "review_categories": {
+   "unincorporated_no_candidate": "held rows with no official inventory candidate (legitimate non-jurisdictions)",
+   "city_township_ambiguous": "same-name city+township pairs (Canton, Belpre, Hubbard, Perrysburg, Warren OH) — need a policy choice on which entity the queue intends",
+   "metro_governments": "Louisville, Lexington KY — merged city-county governments absent from the city inventory"
+  }
+ },
+ "verification": [
+  "All mutations conditional id+updated_date with get-after-write readbacks",
+  "Gate re-verified before unblocking every retyped row",
+  "0 invalid permitting_url, 0 invalid website_url, 0 wrong-state domains",
+  "17 batch receipts saved locally (C:/tmp/dispatch-*.json)"
+ ]
+}

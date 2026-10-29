@@ -118,7 +118,7 @@ console.log('PASS Order Form applies the five-minute heartbeat timeout only to O
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const widget = readFileSync('src/components/admin/SmartsheetSyncWidget.jsx', 'utf8');
 
-assert.match(backend, /onlyPendingOrderRecords: action === 'run_sync'/);
+assert.match(backend, /onlyPendingOrderRecords: isRunAction/);
 assert.match(backend, /phase: 'preflight', current: 0, total: 0/);
 assert.match(backend, /item_label: 'Loading locally changed Order records'/);
 assert.match(backend, /options\?\.onlyPendingOrderRecords[\s\S]*?\{ smartsheet_pending_local_sync: true \}/);

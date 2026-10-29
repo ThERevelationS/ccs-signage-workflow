@@ -15,6 +15,9 @@ export const ESTIMATOR_MODULES = [
 // Field on the sub-estimate record holding its grand total. Foundation projects
 // keep their totals split across several fields, so their snapshot is written by
 // the Foundation estimator itself and is not refreshed here.
+// Modules absent from this map have no single total field. sourceProjectTotal
+// handles them explicitly (e.g. painting sums its mask/supplies/labor totals,
+// foundation derives its total from grand_total or its known cost fields).
 export const MODULE_TOTAL_FIELD = {
   channel_letters: "total_cost",
   vinyl: "total_cost",

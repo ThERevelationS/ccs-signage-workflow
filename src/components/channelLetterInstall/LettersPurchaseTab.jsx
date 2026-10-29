@@ -75,6 +75,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
   };
 
   const removePurchase = (idx) => {
+    if (!confirm("Remove this letter row?")) return;
     const arr = [...purchases];
     arr.splice(idx, 1);
     onUpdateProject({ letter_purchases: arr });
@@ -148,6 +149,9 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
     const ids = new Set([target.id]);
     // If this is a parent, also remove all its children
     purchases.forEach(p => { if (p.set_parent_id === target.id) ids.add(p.id); });
+    if (!confirm(ids.size > 1
+      ? `Remove this row and its ${ids.size - 1} linked set item${ids.size - 1 === 1 ? "" : "s"}?`
+      : "Remove this letter row?")) return;
     onUpdateProject({ letter_purchases: purchases.filter(p => !ids.has(p.id)) });
   };
 

@@ -125,7 +125,13 @@ export default function MaterialsInventoryTab() {
     const item = items[idx];
     if (item.id) {
       if (!confirm(`Delete "${item.item_name || "this item"}"?`)) return;
-      await ChannelLetterInstallInventory.delete(item.id);
+      try {
+        await ChannelLetterInstallInventory.delete(item.id);
+      } catch (e) {
+        console.error("Delete failed:", e);
+        alert("Delete failed: " + (e.message || "unknown error"));
+        return;
+      }
     }
     const next = [...items];
     next.splice(idx, 1);
@@ -145,32 +151,37 @@ export default function MaterialsInventoryTab() {
 
   const saveOne = async (idx) => {
     if (readOnly) return;
-    const it = items[idx];
-    const { _new, _localKey, id, ...payload } = it;
-    // Append price history if pricing changed
-    const prevSnap = id ? savedSnapshots[id] : null;
-    const updatedHistory = buildPriceHistoryUpdate(payload, prevSnap, currentUser?.email);
-    if (updatedHistory) payload.price_history = updatedHistory;
+    try {
+      const it = items[idx];
+      const { _new, _localKey, id, ...payload } = it;
+      // Append price history if pricing changed
+      const prevSnap = id ? savedSnapshots[id] : null;
+      const updatedHistory = buildPriceHistoryUpdate(payload, prevSnap, currentUser?.email);
+      if (updatedHistory) payload.price_history = updatedHistory;
 
-    let saved;
-    if (id) saved = await ChannelLetterInstallInventory.update(id, payload);
-    else saved = await ChannelLetterInstallInventory.create(payload);
+      let saved;
+      if (id) saved = await ChannelLetterInstallInventory.update(id, payload);
+      else saved = await ChannelLetterInstallInventory.create(payload);
 
-    // Update local row with returned id and clear dirty flag
-    setItems(prev => {
-      const next = [...prev];
-      next[idx] = { ...saved };
-      return next;
-    });
-    setSavedSnapshots(prev => ({
-      ...prev,
-      [saved.id]: extractPriceSnapshot(saved),
-    }));
-    setDirtyIds(prev => {
-      const next = new Set(prev);
-      next.delete(idx);
-      return next;
-    });
+      // Update local row with returned id and clear dirty flag
+      setItems(prev => {
+        const next = [...prev];
+        next[idx] = { ...saved };
+        return next;
+      });
+      setSavedSnapshots(prev => ({
+        ...prev,
+        [saved.id]: extractPriceSnapshot(saved),
+      }));
+      setDirtyIds(prev => {
+        const next = new Set(prev);
+        next.delete(idx);
+        return next;
+      });
+    } catch (e) {
+      console.error("Save failed:", e);
+      alert("Save failed: " + (e.message || "unknown error"));
+    }
   };
 
   const saveAll = async () => {
@@ -229,7 +240,13 @@ export default function MaterialsInventoryTab() {
     if (readOnly || selectedIndices.length === 0) return;
     if (!confirm(`Delete ${selectedIndices.length} item(s)? This cannot be undone.`)) return;
     const idsToDelete = selectedIndices.map(i => items[i].id).filter(Boolean);
-    await Promise.all(idsToDelete.map(id => ChannelLetterInstallInventory.delete(id)));
+    try {
+      await Promise.all(idsToDelete.map(id => ChannelLetterInstallInventory.delete(id)));
+    } catch (e) {
+      console.error("Bulk delete failed:", e);
+      alert("Delete failed: " + (e.message || "unknown error"));
+      return;
+    }
     // Rebuild items array
     const next = items.filter((_, idx) => !selectedIndices.includes(idx));
     setItems(next);

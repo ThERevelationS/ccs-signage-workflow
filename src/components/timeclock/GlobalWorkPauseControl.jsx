@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import WorkPauseMenu from "@/components/timeclock/WorkPauseMenu";
+import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -45,6 +47,8 @@ function signalPauseChanged(data = null) {
 
 export default function GlobalWorkPauseControl({ className = "", fullWidth = false, paired = false, compact = false } = {}) {
   const { currentUser, sessionToken } = useAuth();
+  const timeClockStatus = useTimeClockStatus();
+  const refreshTimeClockStatus = timeClockStatus.refresh;
   const email = String(currentUser?.email || "").trim().toLowerCase();
   const scopeKey = JSON.stringify([email, String(sessionToken || "")]);
   const previousScopeKeyRef = useRef(scopeKey);
@@ -64,13 +68,23 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
   const [errorRecord, setErrorRecord] = useState({ scope: scopeInstanceKey, value: "" });
   const error = errorRecord.scope === scopeInstanceKey ? errorRecord.value : "";
   const setError = (value) => setErrorRecord({ scope: scopeInstanceKey, value });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportBusyRecord, setReportBusyRecord] = useState({ scope: scopeInstanceKey, value: false });
+  const reportBusy = reportBusyRecord.scope === scopeInstanceKey && reportBusyRecord.value;
+  const setReportBusy = (value) => setReportBusyRecord({ scope: scopeInstanceKey, value });
+  const [reportErrorRecord, setReportErrorRecord] = useState({ scope: scopeInstanceKey, value: "" });
+  const reportError = reportErrorRecord.scope === scopeInstanceKey ? reportErrorRecord.value : "";
+  const setReportError = (value) => setReportErrorRecord({ scope: scopeInstanceKey, value });
+  const [reportedMinutesRecord, setReportedMinutesRecord] = useState({ scope: scopeInstanceKey, value: 0 });
+  const reportedMinutes = reportedMinutesRecord.scope === scopeInstanceKey ? reportedMinutesRecord.value : 0;
+  const setReportedMinutes = (value) => setReportedMinutesRecord({ scope: scopeInstanceKey, value });
   const mountedRef = useRef(true);
   const scopeRef = useRef(scopeInstanceKey);
   scopeRef.current = scopeInstanceKey;
   const statusSequenceRef = useRef(0);
   const transitionSequenceRef = useRef(0);
 
-  const loadStatus = useCallback(async () => {
+  const loadStatus = useCallback(async ({ force = false } = {}) => {
     const requestScope = scopeInstanceKey;
     const requestSequence = ++statusSequenceRef.current;
     const requestTransition = ++transitionSequenceRef.current;
@@ -86,13 +100,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       return null;
     }
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
-        action: "status",
-        session_token: sessionToken,
-        target_email: email,
-      });
-      const data = response?.data || response;
-      if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
+      const data = await refreshTimeClockStatus({ force });
       if (!isCurrent()) return null;
       const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
       if (!responseEmail || responseEmail !== email) {
@@ -111,32 +119,28 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       setError(err?.response?.data?.error || err?.message || "Work Pause status could not be verified.");
       return null;
     }
-  }, [email, sessionToken, scopeInstanceKey]);
+  }, [email, sessionToken, scopeInstanceKey, refreshTimeClockStatus]);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [timeClockStatus.version, loadStatus]);
 
   useEffect(() => {
     mountedRef.current = true;
     loadStatus();
-    const interval = setInterval(loadStatus, 15000);
-    const onFocus = () => loadStatus();
-    const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
     // Change events can originate from another employee session or arrive late.
     // Treat them only as invalidation signals; signed-session status is authoritative.
     const onPauseChanged = () => {
-      void loadStatus();
+      void loadStatus({ force: true });
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
-    window.addEventListener("focus", onFocus);
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus({ force: true }); };
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
     window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mountedRef.current = false;
       statusSequenceRef.current += 1;
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
       window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [loadStatus]);
 
@@ -217,9 +221,80 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
       if (!retrySame) clearRequestId(action, email, requestId);
       setError(err?.response?.data?.error || err?.message || `${paused ? "Resume Work" : "Work Pause"} was not confirmed.`);
-      await loadStatus();
+      await loadStatus({ force: true });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const reportMissedPause = async ({ started_at, resumed_at, note }) => {
+    const action = "work_pause_report_missed";
+    const existingRequestId = storedRequestId(action, email);
+    const requestId = existingRequestId || newRequestId();
+    if (!existingRequestId && !persistRequestId(action, email, requestId)) {
+      const message = "The missed Work Pause was not sent because this tab could not retain the exact retry request. Enable session storage and try again.";
+      setReportError(message);
+      throw new Error(message);
+    }
+    const actionTransition = ++transitionSequenceRef.current;
+    statusSequenceRef.current += 1;
+    const isCurrentAction = () => mountedRef.current &&
+      scopeRef.current === scopeInstanceKey &&
+      transitionSequenceRef.current === actionTransition;
+    setReportBusy(true);
+    setReportError("");
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action,
+        request_id: requestId,
+        session_token: sessionToken,
+        target_email: email,
+        started_at,
+        resumed_at,
+        note,
+      });
+      const data = response?.data || response;
+      if (!data?.success) {
+        const err = new Error(data?.error || "The missed Work Pause was not confirmed by the server.");
+        err.retrySameRequest = data?.retry_same_request === true;
+        throw err;
+      }
+      if (!isCurrentAction()) {
+        signalPauseChanged();
+        return;
+      }
+      const acknowledgedEmail = String(data?.user?.email || "").trim().toLowerCase();
+      if (!acknowledgedEmail || acknowledgedEmail !== email) {
+        setReportError("The missed Work Pause confirmation did not match the signed-in employee.");
+        signalPauseChanged();
+        return;
+      }
+      clearRequestId(action, email, requestId);
+      const latestRecord = statusRecordRef.current;
+      if (latestRecord.scope === scopeInstanceKey && latestRecord.data) {
+        const merged = {
+          scope: scopeInstanceKey,
+          data: {
+            ...latestRecord.data,
+            work_pause_summary: data.work_pause_summary || latestRecord.data.work_pause_summary,
+            entry: data.entry || latestRecord.data.entry,
+          },
+        };
+        statusRecordRef.current = merged;
+        setStatusRecord(merged);
+      }
+      setReportedMinutes(Math.max(0, Number(data?.work_pause?.duration_minutes || 0)));
+      signalPauseChanged(data);
+    } catch (err) {
+      if (!isCurrentAction()) return;
+      const responseStatus = Number(err?.response?.status || 0);
+      const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
+      if (!retrySame) clearRequestId(action, email, requestId);
+      const message = err?.response?.data?.error || err?.message || "The missed Work Pause was not confirmed.";
+      setReportError(message);
+      throw err;
+    } finally {
+      if (isCurrentAction()) setReportBusy(false);
     }
   };
 
@@ -240,10 +315,11 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       : "border-purple-300 bg-purple-50 hover:bg-purple-100 dark:border-violet-500/40 dark:bg-violet-950/50 dark:hover:bg-violet-900/60"}`;
 
   return (
+    <>
     <button
       data-work-pause-trigger
       type="button"
-      onClick={runToggle}
+      onClick={() => setMenuOpen(true)}
       disabled={busy || transition || unavailable}
       aria-pressed={paused}
       title={title}
@@ -260,5 +336,23 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         {paused ? "Resume Work" : "Pause Work"}
       </span>
     </button>
+    <WorkPauseMenu
+      open={menuOpen}
+      onClose={() => setMenuOpen(false)}
+      userName={currentUser?.full_name || currentUser?.email}
+      paused={paused}
+      pausedSince={status?.active_work_pause?.started_at || ""}
+      totalPausedMinutes={status?.work_pause_summary?.total_minutes || 0}
+      canReportMissed={canPause && !paused && !onBreak && !transition}
+      toggleDisabled={busy || transition || unavailable}
+      toggleBusy={busy}
+      toggleError={error}
+      reportBusy={reportBusy}
+      reportError={reportError}
+      reportedMinutes={reportedMinutes}
+      onToggle={() => { void runToggle(); }}
+      onReportMissed={reportMissedPause}
+    />
+    </>
   );
 }

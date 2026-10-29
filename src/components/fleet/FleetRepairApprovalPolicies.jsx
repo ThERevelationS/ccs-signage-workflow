@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { AlertTriangle, DollarSign, Loader2, Pencil, Plus, ShieldCheck, Trash2, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const emptyPolicy = () => ({
   name: "",
@@ -61,39 +61,48 @@ export default function FleetRepairApprovalPolicies() {
   const uncertainRef = useRef(uncertain);
   const recoveryRef = useRef(null);
   const refreshRetryRef = useRef(null);
+  const loadSequenceRef = useRef(0);
   busyRef.current = busy;
   uncertainRef.current = uncertain;
 
   const fetchPolicies = async () => {
-    const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "policy_list" });
+    const { data } = await invokeFleet("fleetRepairEstimateAction", { action: "policy_list" });
     if (data?.error) throw responseError(data.error);
     if (!Array.isArray(data?.policies)) throw new Error("The policy list response could not be verified.");
     return data.policies;
   };
   const load = async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
       const rows = await fetchPolicies();
+      if (requestSequence !== loadSequenceRef.current) return false;
       setPolicies(rows);
       setLoadFailed(false);
       setRefreshWarning("");
       return true;
     } catch (err) {
-      setLoadFailed(true);
-      setError(err?.message || "Unable to load Fleet repair approval policies.");
+      if (requestSequence === loadSequenceRef.current) {
+        setLoadFailed(true);
+        setError(err?.message || "Unable to load Fleet repair approval policies.");
+      }
       return false;
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   };
   const refreshAfterMutation = async verb => {
+    const requestSequence = ++loadSequenceRef.current;
     try {
-      setPolicies(await fetchPolicies());
+      const rows = await fetchPolicies();
+      if (requestSequence !== loadSequenceRef.current) return true;
+      setPolicies(rows);
       setRefreshWarning("");
+      setLoading(false);
       return true;
     } catch {
-      setRefreshWarning(`${verb} succeeded, but the policy list could not refresh. Use Retry refresh; do not repeat the operation.`);
+      if (requestSequence === loadSequenceRef.current) setRefreshWarning(`${verb} succeeded, but the policy list could not refresh. Use Retry refresh; do not repeat the operation.`);
       return false;
     }
   };
@@ -285,7 +294,7 @@ export default function FleetRepairApprovalPolicies() {
         ...(existing ? { id: editor.id, expected_updated_date: expectedUpdatedDate } : { creation_key: creationKey }),
         policy: desired,
       };
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", payload);
+      const { data } = await invokeFleet("fleetRepairEstimateAction", payload);
       if (data?.error) throw responseError(data.error);
       if (!data?.policy?.id) throw new Error("The policy save response could not be verified.");
       replacePolicy(data.policy);
@@ -309,7 +318,7 @@ export default function FleetRepairApprovalPolicies() {
     const enabled = policy.enabled === false;
     setBusy(policy.id); setError(""); setNotice(""); setRefreshWarning("");
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", {
+      const { data } = await invokeFleet("fleetRepairEstimateAction", {
         action: "policy_update",
         id: policy.id,
         expected_updated_date: policy.updated_date,
@@ -336,7 +345,7 @@ export default function FleetRepairApprovalPolicies() {
     const pending = deletePolicy;
     setBusy("delete"); setError(""); setNotice(""); setRefreshWarning("");
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "policy_delete", id: pending.id, expected_updated_date: pending.updated_date });
+      const { data } = await invokeFleet("fleetRepairEstimateAction", { action: "policy_delete", id: pending.id, expected_updated_date: pending.updated_date });
       if (data?.error) throw responseError(data.error);
       if (data?.deleted !== true) throw new Error("The threshold delete response could not be verified.");
       setPolicies(current => current.filter(policy => policy.id !== pending.id));

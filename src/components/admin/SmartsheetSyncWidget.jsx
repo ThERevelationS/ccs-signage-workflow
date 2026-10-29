@@ -9,8 +9,20 @@ import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
 
-const STATUS_KEY = 'smartsheetSyncStatus';
+const STATUS_KEYS = {
+  orders: 'smartsheetOrderSyncStatus',
+  sales: 'smartsheetSalesSyncStatus',
+  legacy: 'smartsheetSyncStatus',
+};
 const CONFIG_KEY = 'smartsheetSyncConfig';
+
+// A lazily-created dataset coordinator is an empty object until its first
+// run; only records carrying real status content count as present.
+function hasStatusContent(value) {
+  return Boolean(value && typeof value === 'object' &&
+    (value.status || value.updated_at || value.started_at ||
+      (Array.isArray(value.results) && value.results.length > 0)));
+}
 
 export default function SmartsheetSyncWidget({ compactOrderForm = false, sessionToken = "", currentUser = null }) {
   const [status, setStatus] = useState(null);
@@ -25,13 +37,32 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
 
   const loadStatus = useCallback(async () => {
     try {
-      const [statusRecords, configRecords] = await Promise.all([
-        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEY }),
+      const [orderRecords, salesRecords, legacyRecords, configRecords] = await Promise.all([
+        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.orders }),
+        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.sales }),
+        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.legacy }),
         base44.entities.GlobalSettings.filter({ setting_key: CONFIG_KEY }),
       ]);
-      const statusRecord = Array.isArray(statusRecords) ? statusRecords[0] : statusRecords;
+      const orderValue = (Array.isArray(orderRecords) ? orderRecords[0] : orderRecords)?.setting_value || null;
+      const salesValue = (Array.isArray(salesRecords) ? salesRecords[0] : salesRecords)?.setting_value || null;
+      const legacyValue = (Array.isArray(legacyRecords) ? legacyRecords[0] : legacyRecords)?.setting_value || null;
       const configRecord = Array.isArray(configRecords) ? configRecords[0] : configRecords;
-      setStatus(statusRecord?.setting_value || null);
+      // Order Form reads only its own coordinator so a Sales review can never
+      // look like an Order problem. Other consumers see an active run first,
+      // otherwise the most recently updated dataset status; the legacy shared
+      // record remains the fallback until dataset runs exist.
+      let statusValue;
+      if (compactOrderForm) {
+        statusValue = hasStatusContent(orderValue) ? orderValue : legacyValue;
+      } else {
+        const datasetValues = [orderValue, salesValue].filter(hasStatusContent);
+        statusValue = datasetValues.find(value => value?.status === 'running')
+          || datasetValues.sort((a, b) =>
+            Date.parse(String(b?.updated_at || b?.started_at || '')) -
+            Date.parse(String(a?.updated_at || a?.started_at || '')))[0]
+          || legacyValue;
+      }
+      setStatus(statusValue || null);
       setConfig(configRecord?.setting_value || null);
       setStatusReadError(false);
     } catch {
@@ -41,7 +72,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [compactOrderForm]);
 
   useEffect(() => {
     loadStatus();

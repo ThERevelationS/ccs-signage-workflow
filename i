@@ -1,0 +1,1 @@
+{"error":"Error editing file \"src/components/estimator/foundation/SignageCabinetsPanel.jsx\": old_text not found in file: '  const remove = (idx) =, i) = !== idx));'","code":"API_ERROR","hints":[{"message":"The server rejected the request. Check the error message above for details."}],"statusCode":400,"requestId":"d92a8b1f-0faa-4065-b33a-55160d44eaa6"}

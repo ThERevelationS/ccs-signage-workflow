@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +7,9 @@ import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck }
 import { format, parseISO } from "date-fns";
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, classifyAuthoritativePayrollAuditIntegrity, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from "@/shared/timeClockPayrollMembershipEvidence.mjs";
 import { validateAuthoritativeAuditPage } from "@/shared/timeClockAuditPagination.mjs";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeClockAudit = base44.entities.TimeClockAudit;
+const TimeClockAudit = staffEntities.TimeClockAudit;
 
 const ACTION_LABELS = {
   clock_in: "Clock In",

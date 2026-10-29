@@ -1,5 +1,5 @@
-// Vinyl Estimator — tabbed estimator with multiple vinyl workflows + installation.
-// Tabs: Project Info → Vinyl Workflows → Installation → Travel & Crew → Summary
+// Vinyl Estimator â€” tabbed estimator with multiple vinyl workflows + installation.
+// Tabs: Project Info â†’ Vinyl Workflows â†’ Installation â†’ Travel & Crew â†’ Summary
 // Each workflow has its own vinyl + machines + parts + roll layout, so different
 // materials never get nested onto the same physical roll.
 
@@ -8,7 +8,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   VinylProject, VinylInventory, VinylMachine,
   Settings, ChannelLetterInstallEquipment,
-} from "@/entities/all";
+} from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import VinylMoveToWorkflowMenu from "@/components/vinylEstimator/VinylMoveToWork
 import {
   blankVinylProject, blankWorkflow, migrateProject, rollupVinylProject,
 } from "@/components/vinylEstimator/vinylProjectHelpers";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const fmt = (n) => `$${Number(n || 0).toFixed(2)}`;
 
@@ -87,7 +88,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           loadAllEntityRows({ entity: ChannelLetterInstallEquipment, sort: "sort_order", label: "Installation equipment" }),
           projectId ? VinylProject.get(projectId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         setVinyls(vList || []);
         setMachines(mList || []);
@@ -197,7 +198,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   // Max install height for travel/equipment suggestion compatibility
   const totalLaborHours = rollup.laborHours;
 
-  // Feature #33 — does any workflow have validation issues?
+  // Feature #33 â€” does any workflow have validation issues?
   const workflowsHaveIssues = useMemo(
     () => (project.workflows || []).some(wf => wf._hasIssues),
     [project.workflows]
@@ -230,6 +231,24 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     });
   };
 
+  // Ctrl+S / Cmd+S saves the project without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) save();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
   const save = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert("Please fill in Project Name and Client Name.");
@@ -339,7 +358,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         const refreshed = await VinylProject.get(saved.id).catch(() => saved);
         // SignEstimate Pro intentionally strips transient workflow `_calc` data
         // from VinylProject records. The Builder snapshot keeps the exact calc
-        // used for this save so the initial frozen BOM never has to infer today’s
+        // used for this save so the initial frozen BOM never has to infer todayâ€™s
         // accepted price from a later inventory state. The persisted VinylProject
         // remains source-faithful and clean.
         const builderWorkflows = (project.workflows || []).map(({ _hasIssues, ...workflow }) => workflow);
@@ -361,7 +380,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   };
 
   if (loading) {
-    return <div className="p-12 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Loading…</div>;
+    return <div className="p-12 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Loadingâ€¦</div>;
   }
   if (loadError) {
     return (
@@ -518,7 +537,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
 
                 <div className="flex justify-end">
                   <Button onClick={() => setActiveTab("workflows")} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Continue to Vinyl Workflows →
+                    Continue to Vinyl Workflows â†’
                   </Button>
                 </div>
               </TabsContent>
@@ -555,8 +574,20 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                 {workflowsHaveIssues && (
                   <div className="flex items-center gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    One or more workflows have unplaced parts or missing vinyl selections — see the red badges below.
+                    One or more workflows have unplaced parts or missing vinyl selections â€” see the red badges below.
                   </div>
+                )}
+
+                {vinyls.length === 0 && (
+                  <Card className="bg-amber-50 border-amber-200">
+                    <CardContent className="p-3 text-xs text-amber-900">
+                      Your vinyl inventory is empty.{" "}
+                      <Link to="/VinylInventory" className="underline font-medium">
+                        Add vinyl in Vinyl Inventory
+                      </Link>{" "}
+                      to enable selection.
+                    </CardContent>
+                  </Card>
                 )}
 
                 {project.workflows.map((wf, idx) => (
@@ -630,7 +661,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
                 <Card className="bg-slate-50 border-slate-200">
                   <CardContent className="p-3 text-xs text-slate-600">
                     Travel rates (shop address, fuel prices, labor rate, overhead, minimum charge) are shared with the
-                    Channel Letter Install module —{" "}
+                    Channel Letter Install module â€”{" "}
                     <Link to="/InstallationSettings" className="underline font-medium">
                       review Installation Settings
                     </Link>.
@@ -691,7 +722,7 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
         </div>
       </div>
 
-      {/* Workflow-tab dialogs — Features #15, #17, #31, #34 */}
+      {/* Workflow-tab dialogs â€” Features #15, #17, #31, #34 */}
       <VinylBulkImportDialog
         open={bulkOpen}
         onClose={() => setBulkOpen(false)}

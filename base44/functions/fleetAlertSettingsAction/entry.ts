@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 const SUPPORTED_RULES = new Set(['speed', 'fuel_level']);
 const normalizeVin = (value: unknown) => String(value || '').trim().toUpperCase();
 
-async function requireAdmin(base44: any) {
-  const user = await base44.auth.me().catch(() => null);
+async function requireAdmin(base44: any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
   if (user.role === 'admin') return { user };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
@@ -38,10 +39,11 @@ function effectiveRule(vehicleRows: any[], globalRows: any[], key: string) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await requireAdmin(base44);
+    const body = await req.json().catch(() => ({}));
+    const auth = await requireAdmin(base44, body?.session_token);
     if (auth.error) return auth.error;
 
-    const body = await req.json().catch(() => ({}));
+
     const action = String(body?.action || '').trim();
     const vin = normalizeVin(body?.vehicle_vin);
     if (!vin || vin.length > 32) return Response.json({ error: 'A valid vehicle VIN is required.' }, { status: 400 });

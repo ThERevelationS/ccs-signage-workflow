@@ -10,7 +10,10 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
   const patchPole = (index, changes) =>
     onChange(poles.map((p, i) => (i === index ? { ...p, ...changes } : p)));
 
-  const removePole = (index) => onChange(poles.filter((_, i) => i !== index));
+  const removePole = (index) => {
+    if (!window.confirm(`Remove Pole ${index + 1}?`)) return;
+    onChange(poles.filter((_, i) => i !== index));
+  };
 
   const addPole = () =>
     onChange([

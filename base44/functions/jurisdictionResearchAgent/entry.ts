@@ -1,3 +1,4 @@
+import {assertResearchSourceIdentity} from '../../shared/permittingSourceIdentity.mjs';
 import {attachScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
@@ -203,6 +204,7 @@ Before returning:
     });
 
     const data = sanitizeJurisdictionResearch(typeof result === 'string' ? JSON.parse(result) : result);
+    assertResearchSourceIdentity({name:jurisdictionName,state:jurisdictionState},data);
     data.office_research = normalizeOfficeResearch(data.office_research,{jurisdiction:{name:jurisdictionName,state:jurisdictionState,type:jurisdictionType}});
     
     return Response.json({ 
@@ -213,6 +215,7 @@ Before returning:
     });
   } catch (error) {
     console.error('jurisdictionResearchAgent error:', error?.message || error);
+    if (error?.code === 'SOURCE_IDENTITY_REVIEW_REQUIRED') return Response.json({error:error.message,code:error.code},{status:409});
     return Response.json({ error: 'Jurisdiction research could not be completed safely' }, { status: 500 });
   }
 });

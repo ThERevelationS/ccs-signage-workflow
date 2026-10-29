@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList } from "lucide-react";
+import { User, Link as LinkIcon, Plus, X, Check, ChevronDown, ChevronRight, Trash2, Pencil, ClipboardList, CalendarDays } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -18,13 +24,16 @@ import {
   findWorkOrderArrayItemIndex,
   mutateLocatedWorkOrderArrayItem,
   mutateWorkOrderArrayField,
+  replaceWorkOrderFieldsIfUnchanged,
   softDeleteWorkOrderFromLoadedSnapshot,
   transitionWorkOrderFromLoadedSnapshot,
 } from "@/components/workflow/workOrderPersistence";
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
+import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
@@ -56,6 +65,59 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
+function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAssigneeChange }) {
+  const [dateOpen, setDateOpen] = useState(false);
+  const descValue = wo.current_task_description || "";
+  const stageOptions = Object.keys(stageDisplayNames);
+  if (wo.current_stage && !stageOptions.includes(wo.current_stage)) stageOptions.push(wo.current_stage);
+  return (
+    <div className="inline-flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
+      <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
+      <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onSaveField(wo, { current_task_description: next }); }}>
+        <SelectTrigger className="h-7 w-40 text-xs border-0 bg-transparent px-1 truncate" title="Task description">
+          <SelectValue placeholder="Task" />
+        </SelectTrigger>
+        <SelectContent>
+          {descValue && !descOptions.includes(descValue) && (
+            <SelectItem value={descValue}>{descValue}</SelectItem>
+          )}
+          {descOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <Popover open={dateOpen} onOpenChange={setDateOpen}>
+        <PopoverTrigger asChild>
+          <button type="button" title="Deadline" className="h-7 inline-flex items-center gap-1 rounded px-1 text-xs text-gray-700 hover:bg-purple-100">
+            <CalendarDays className="w-3 h-3 text-purple-500" />
+            {wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "M/d/yy") : "—"}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={wo.current_task_deadline ? parseLocalDate(wo.current_task_deadline) : undefined}
+            onSelect={(day) => { if (day) onSaveField(wo, { current_task_deadline: format(day, "yyyy-MM-dd") }); setDateOpen(false); }}
+          />
+        </PopoverContent>
+      </Popover>
+      <TaskAssigneeSelect
+        value={wo.current_task_assigned_to || ""}
+        users={users}
+        onChange={(name) => onAssigneeChange(wo, name)}
+        className="h-7 w-24 text-xs border-0 bg-transparent px-1"
+        context={wo.client_name || "this job"}
+      />
+      <Select value={wo.current_stage || ""} onValueChange={(next) => { if (next !== wo.current_stage) onSaveField(wo, { current_stage: next }); }}>
+        <SelectTrigger className="h-7 w-20 text-xs border-0 bg-transparent px-1" title="Stage">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {stageOptions.map((s) => <SelectItem key={s} value={s}>{stageDisplayNames[s] || s}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export default function MyWorkflow() {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
@@ -71,6 +133,17 @@ export default function MyWorkflow() {
   const [newDetailAssignedTo, setNewDetailAssignedTo] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
   const [editTaskText, setEditTaskText] = useState("");
+  const [editTaskDue, setEditTaskDue] = useState("");
+  const [editTaskAssignees, setEditTaskAssignees] = useState([]);
+  const [addTaskForWo, setAddTaskForWo] = useState(null);
+  const [assigneeConfirm, setAssigneeConfirm] = useState(null);
+  const [taskDescriptions, setTaskDescriptions] = useState([]);
+
+  useEffect(() => {
+    loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: 'salesTaskDescriptions', label: 'Sales task descriptions' })
+      .then((s) => setTaskDescriptions((s?.setting_value?.items || []).map((i) => i.text || i)))
+      .catch(() => {});
+  }, []);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [stageFilter, setStageFilter] = useState("all");
@@ -87,20 +160,28 @@ export default function MyWorkflow() {
   }, [currentUser]);
 
   const loadUsers = async () => {
-    const [users, dropdownsSetting] = await Promise.all([
-      loadAllEntityRows({
-        entity: AuthorizedEmail,
-        sort: null,
-        label: "My Workflow authorized users",
-      }),
-      loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
-        settingKey: "dropdownConditions",
-        label: "My Workflow dropdown conditions",
-      }),
-    ]);
-    setAllUsers(users);
-    setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+    try {
+      const [users, dropdownsSetting] = await Promise.all([
+        loadAllEntityRows({
+          entity: AuthorizedEmail,
+          sort: null,
+          label: "My Workflow authorized users",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "dropdownConditions",
+          label: "My Workflow dropdown conditions",
+        }),
+      ]);
+      setAllUsers(users);
+      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+    } catch (error) {
+      // Assignee lists are a convenience for the pickers below; a refused
+      // identity read must not take the page down. A rejected session is
+      // reported through the session layer, which reverifies it and reopens
+      // sign-in when it is truly gone.
+      console.error("Error loading authorized users:", error);
+    }
   };
 
   const loadMyWorkOrders = async () => {
@@ -122,14 +203,38 @@ export default function MyWorkflow() {
       ]);
 
       const userName = currentUser?.full_name || currentUser?.email;
-      
+      // Any spelling of "me": full email, full name, first name, email local part.
+      const userKeys = new Set([
+        (currentUser?.email || "").trim().toLowerCase(),
+        String(currentUser?.full_name || "").trim().toLowerCase(),
+        String(currentUser?.full_name || "").trim().toLowerCase().split(" ")[0],
+        (currentUser?.email || "").trim().toLowerCase().split("@")[0],
+      ].filter(Boolean));
+
       const isAssignedTo = (assignedTo) => {
         const arr = Array.isArray(assignedTo) ? assignedTo : (assignedTo ? [assignedTo] : []);
         return arr.includes(userName);
       };
 
-      // Find work orders where user has tasks assigned to them (in notes array OR sip_checklist)
-      const myOrders = allOrders.filter(wo => {
+      // A job assigned to a person is treated like a task: the job-level
+      // assignee (email or name) and the current-task assignee (Smartsheet
+      // name) both place the work order on My Workflow.
+      const isJobAssignedToMe = (wo) =>
+        userKeys.has(String(wo.assigned_to || "").trim().toLowerCase())
+        || userKeys.has(String(wo.current_task_assigned_to || "").trim().toLowerCase());
+
+      // Post-WIP jobs (completed sale, lost, closed) do not belong on a
+      // personal work list even when old tasks remain assigned.
+      const POST_WIP_TASK = /^(Completed Sale|Lost$|Lost -|Closed -)/i;
+      const activeOrders = allOrders.filter(wo =>
+        wo.current_stage !== "completed" && wo.sales_status !== "lost"
+        && !POST_WIP_TASK.test(String(wo.current_task_description || "")));
+
+      // Find work orders assigned to the user or where user has tasks assigned
+      // to them (in notes array OR sip_checklist)
+      const myOrders = activeOrders.filter(wo => {
+        if (isJobAssignedToMe(wo)) return true;
+
         // Check notes array (traditional tasks)
         const hasAssignedTask = (wo.notes || []).some(task => isAssignedTo(task.assigned_to) && !task.completed);
         if (hasAssignedTask) return true;
@@ -377,14 +482,51 @@ export default function MyWorkflow() {
     });
   };
 
-  const handleEditTask = async (workOrderId, taskIndex, newText) => {
+  const startEditTask = (wo, item) => {
+    setEditingTask({ woId: wo.id, taskIndex: item.taskIndex, type: 'task' });
+    setEditTaskText(item.task.text);
+    setEditTaskDue(String(item.task.due_date || "").slice(0, 10));
+    setEditTaskAssignees(Array.isArray(item.task.assigned_to) ? item.task.assigned_to : (item.task.assigned_to ? [item.task.assigned_to] : []));
+  };
+  const clearEditTask = () => {
+    setEditingTask(null);
+    setEditTaskText("");
+    setEditTaskDue("");
+    setEditTaskAssignees([]);
+  };
+
+  const handleEditTask = async (workOrderId, taskIndex) => {
+    const newText = editTaskText;
     if (!newText.trim()) return;
     const wo = workOrders.find(w => w.id === workOrderId);
     const task = wo?.notes?.[taskIndex];
     if (!wo || !task) return;
-    await persistTaskMutation(wo, task, (currentTask) => ({ ...currentTask, text: newText }));
-    setEditingTask(null);
-    setEditTaskText("");
+    await persistTaskMutation(wo, task, (currentTask) => ({
+      ...currentTask,
+      text: newText.trim(),
+      due_date: editTaskDue || "",
+      assigned_to: editTaskAssignees,
+    }));
+    clearEditTask();
+  };
+
+  const saveJobField = async (wo, patch) => {
+    const expectedFields = {};
+    for (const key of Object.keys(patch)) expectedFields[key] = wo[key] ?? "";
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: wo.id,
+        expectedFields,
+        nextFields: patch,
+      });
+      setWorkOrders(prev => prev.map(w => w.id === wo.id ? { ...w, ...saved } : w));
+      return true;
+    } catch (error) {
+      console.error("Job field update blocked:", error);
+      await loadMyWorkOrders();
+      alert(error?.message || "This job changed in another session. The latest version was reloaded.");
+      return false;
+    }
   };
 
   const handleEditSubTask = async (workOrderId, taskIndex, subTaskIndex, newText) => {
@@ -453,8 +595,22 @@ export default function MyWorkflow() {
 
   const getMyTasksForWorkOrder = (wo) => {
     const userName = currentUser?.full_name || currentUser?.email;
+    const userKeys = new Set([
+      (currentUser?.email || "").trim().toLowerCase(),
+      String(currentUser?.full_name || "").trim().toLowerCase(),
+      String(currentUser?.full_name || "").trim().toLowerCase().split(" ")[0],
+      (currentUser?.email || "").trim().toLowerCase().split("@")[0],
+    ].filter(Boolean));
     const myTasks = [];
-    
+
+    // A job assigned to the user counts like a task of its own.
+    if (!wo._isGeneral && (
+      userKeys.has(String(wo.assigned_to || "").trim().toLowerCase())
+      || userKeys.has(String(wo.current_task_assigned_to || "").trim().toLowerCase())
+    )) {
+      myTasks.push({ type: 'job_assignment', workOrderId: wo.id });
+    }
+
     // Check traditional notes array
     (wo.notes || []).forEach((task, taskIndex) => {
       // Skip completed tasks
@@ -514,8 +670,12 @@ export default function MyWorkflow() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="p-6">
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <ListSkeleton rows={8} />
       </div>
     );
   }
@@ -631,6 +791,11 @@ export default function MyWorkflow() {
                     {/* My Assigned Tasks */}
                     <td className="px-2 py-1">
                       <div className="space-y-1">
+                        {!wo._isGeneral && (
+                          <button type="button" onClick={() => setAddTaskForWo(wo)} className="inline-flex items-center gap-0.5 rounded border border-purple-200 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 hover:bg-purple-50">
+                            <Plus className="w-2.5 h-2.5" /> Add task
+                          </button>
+                        )}
                         {myTasks.map((item, idx) => {
                           const taskKey = `${wo.id}-${item.taskIndex}`;
                           const isExpanded = expandedTasks[taskKey] !== false;
@@ -638,6 +803,16 @@ export default function MyWorkflow() {
                           
                           return (
                             <div key={idx} className="group">
+                              {/* Job-level assignment: the job itself acts like a task */}
+                              {item.type === 'job_assignment' && (
+                                <JobAssignmentInlineRow
+                                  wo={wo}
+                                  users={allUsers}
+                                  descOptions={taskDescriptions}
+                                  onSaveField={saveJobField}
+                                  onAssigneeChange={(target, name) => setAssigneeConfirm({ wo: target, nextAssignee: name })}
+                                />
+                              )}
                               {/* Task with my subtasks/details - show parent as context */}
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
@@ -687,19 +862,23 @@ export default function MyWorkflow() {
                                     />
                                     <div className="flex-1 min-w-0">
                                       {isEditingThisTask ? (
-                                        <div className="flex gap-1">
-                                          <Input 
-                                            value={editTaskText} 
-                                            onChange={(e) => setEditTaskText(e.target.value)} 
-                                            className="h-5 text-xs" 
+                                        <div className="flex flex-col gap-1">
+                                          <Input
+                                            value={editTaskText}
+                                            onChange={(e) => setEditTaskText(e.target.value)}
+                                            className="h-6 text-xs"
                                             autoFocus
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') handleEditTask(wo.id, item.taskIndex, editTaskText);
-                                              if (e.key === 'Escape') { setEditingTask(null); setEditTaskText(""); }
-                                            }}
+                                            placeholder="Task description"
+                                            onKeyDown={(e) => { if (e.key === 'Escape') clearEditTask(); }}
                                           />
-                                          <Button size="sm" onClick={() => handleEditTask(wo.id, item.taskIndex, editTaskText)} className="h-5 px-1"><Check className="w-2.5 h-2.5" /></Button>
-                                          <Button size="sm" variant="ghost" onClick={() => { setEditingTask(null); setEditTaskText(""); }} className="h-5 px-1"><X className="w-2.5 h-2.5" /></Button>
+                                          <div className="flex items-center gap-1">
+                                            <Input type="date" value={editTaskDue} onChange={(e) => setEditTaskDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
+                                            <div className="flex-1 min-w-0">
+                                              <MultiUserSelectInline users={allUsers} selectedUsers={editTaskAssignees} onSelectionChange={setEditTaskAssignees} placeholder="Assign..." className="h-6 w-full" />
+                                            </div>
+                                            <Button size="sm" onClick={() => handleEditTask(wo.id, item.taskIndex)} className="h-6 px-1"><Check className="w-2.5 h-2.5" /></Button>
+                                            <Button size="sm" variant="ghost" onClick={clearEditTask} className="h-6 px-1"><X className="w-2.5 h-2.5" /></Button>
+                                          </div>
                                         </div>
                                       ) : (
                                         <div className="flex items-center gap-1 flex-wrap">
@@ -718,7 +897,7 @@ export default function MyWorkflow() {
                                       <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        onClick={() => { setEditingTask({ woId: wo.id, taskIndex: item.taskIndex, type: 'task' }); setEditTaskText(item.task.text); }}
+                                        onClick={() => startEditTask(wo, item)}
                                         className="h-4 w-4 opacity-0 group-hover:opacity-100"
                                       >
                                         <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -895,6 +1074,29 @@ export default function MyWorkflow() {
         </div>
       </div>
       
+      <AddTaskDialog
+        isOpen={!!addTaskForWo}
+        onClose={() => { setAddTaskForWo(null); loadMyWorkOrders(); }}
+        lockedWorkOrderId={addTaskForWo?.id || null}
+      />
+      <AlertDialog open={!!assigneeConfirm} onOpenChange={(open) => { if (!open) setAssigneeConfirm(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reassign this job to {assigneeConfirm?.nextAssignee}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This job is currently assigned to you. Reassigning it moves it to {assigneeConfirm?.nextAssignee}'s workflow and removes it from your My Workflow list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it assigned to me</AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              const { wo, nextAssignee } = assigneeConfirm || {};
+              setAssigneeConfirm(null);
+              if (wo && nextAssignee) await saveJobField(wo, { current_task_assigned_to: nextAssignee });
+            }}>Reassign job</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Work Order Details Dialog */}
       {selectedWorkOrder && (
         <WorkOrderDetailsDialog

@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "base44/functions/customerPortalAction/entry.ts",
+      "content": "  };\n}\n\n// Matches quoteExpirationDate() in src/components/estimator/quoteLifecycle.js:\n// YYYY-MM-DD issue date + valid days (default 30) -> YYYY-MM-DD stamp, \"\" when no issue date.\nfunction quoteValidUntil(estimate: any) {\n  const match = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(clean(estimate?.quote_issue_date));\n  if (!match) return \"\";\n  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));\n  date.setDate(date.getDate() + Math.max(0, whole(estimate?.quote_valid_days, 30)));\n  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, \"0\")}-${String(date.getDate()).padStart(2, \"0\")}`;\n}\n\nfunction estimatePortalView(estimate: any) {\n  // Customer-facing section price = unit snapshot x customer qty x (1 + adj%).\n  // Sections flagged include_in_customer=false roll up into a single bundled line.\n  const items = Array.isArray(estimate?.line_items) ? estimate.line_items : [];\n  const priceOf = (i: any) => num(i?.total_snapshot) * (num(i?.customer_quantity) || 1) * (1 + num(i?.adjustment_percent) / 100);\n  const round2 = (n: number) => Math.round(n * 100) / 100;\n  const sections = items\n    .filter((i: any) => i?.include_in_customer !== false)\n    .map((i: any) => ({",
+      "startLine": 74,
+      "endLine": 95,
+      "totalLines": 854,
+      "truncated": false
+    }
+  ]
+}

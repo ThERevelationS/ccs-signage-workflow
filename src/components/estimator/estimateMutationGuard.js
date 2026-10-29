@@ -10,8 +10,19 @@ import { getOpenEstimateRevision } from "@/components/estimator/estimateRevision
  * sent/approved/archived: editable only while an EstimateRevision is open
  * cancelled: permanently locked
  */
+// Stale pendings must not block mutations forever — if a Builder recovery was
+// abandoned mid-operation more than 24h ago, treat its pending entry as expired
+// so the user isn't permanently locked out of the estimate.
+const PENDING_TTL_MS = 24 * 60 * 60 * 1000;
+
 export function getPendingEstimatePriceAcceptance(estimate) {
-  const line = (estimate?.line_items || []).find((item) => String(item?.price_acceptance_pending?.key || "").trim());
+  const line = (estimate?.line_items || []).find((item) => {
+    const pending = item?.price_acceptance_pending;
+    if (!String(pending?.key || "").trim()) return false;
+    const startedAt = Date.parse(pending?.started_at || "");
+    if (Number.isFinite(startedAt) && Date.now() - startedAt > PENDING_TTL_MS) return false;
+    return true;
+  });
   return line ? { line, pending: line.price_acceptance_pending } : null;
 }
 
@@ -27,6 +38,9 @@ export async function assertEstimateProductMutationAllowed(estimate, { expectedU
   const pendingKey = String(pendingEntry?.pending?.key || "").trim();
   if (pendingKey && pendingKey !== allowedKey) {
     throw new Error("A Builder mutation is still being recovered for this Product. Resume that operation before changing Products or Parts.");
+  }
+  if (estimate.deleted === true) {
+    throw new Error("This estimate is in Trash. Restore it before changing Products or Parts.");
   }
   const status = String(estimate.status || "draft");
   if (status === "cancelled") {

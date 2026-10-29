@@ -10,6 +10,9 @@ import CreateQuickProductModal from "./CreateQuickProductModal";
 import { copyProductToClipboard } from "@/components/estimator/products/clipboardService";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { addCatalogPartToProduct } from "@/components/estimator/parts/customProductService";
+import { pendingBuilderMutationIsStale } from "@/components/estimator/builder/builderMutationRecovery";
+import { base44 } from "@/api/base44Client";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const Field = ({ label, className = "", ...props }) => (
   <label className={`text-[10px] font-semibold tracking-wide text-gray-400 block ${className}`}>
@@ -143,6 +146,23 @@ export default function ProductRow({
   const meta = priceMeta(line);
   const pendingPriceAcceptance = line.price_acceptance_pending?.key ? line.price_acceptance_pending : null;
   const priceAcceptancePending = !!pendingPriceAcceptance;
+  const pendingStale = pendingBuilderMutationIsStale(line);
+  const [costTrend, setCostTrend] = useState(null);
+  const loadCostTrend = async () => {
+    if (costTrend !== null || !line.builder_product_id) return;
+    try {
+      const rows = await loadAllEntityRows({ entity: base44.entities.BuilderPriceRevision, query: { builder_product_id: line.builder_product_id }, sort: "revision_number", label: "Product cost trend" });
+      setCostTrend((rows || []).map((row) => Number(row.new_total_cost ?? row.total_cost ?? row.new_customer_price ?? 0)).filter((v) => Number.isFinite(v)));
+    } catch {
+      setCostTrend([]);
+    }
+  };
+  const sparkPoints = (() => {
+    if (!costTrend || costTrend.length < 2) return "";
+    const min = Math.min(...costTrend), max = Math.max(...costTrend), span = max - min || 1;
+    const w = 56, h = 14;
+    return costTrend.map((v, i) => `${((i / (costTrend.length - 1)) * w).toFixed(1)},${(h - ((v - min) / span) * h).toFixed(1)}`).join(" ");
+  })();
   const pendingPriceLabel = pendingPriceAcceptance?.kind === "builder_initial_freeze"
     ? "Resume Initial Price"
     : pendingPriceAcceptance?.kind === "builder_detach_override"
@@ -275,11 +295,16 @@ export default function ProductRow({
               </div>
             )}
           </div>
-          <div className="min-w-0 text-right">
+          <div className="min-w-0 text-right" onMouseEnter={loadCostTrend} onFocus={loadCostTrend}>
             <div className="text-[8px] leading-none font-extrabold tracking-wider text-gray-400 mb-1">TOTAL</div>
             <div className="h-[28px] px-2 rounded-sm border border-gray-200 bg-gray-50 flex items-center justify-end text-[12px] font-bold tabular-nums text-gray-900">
               {money(amount)}
             </div>
+            {sparkPoints && (
+              <svg width="56" height="14" viewBox="0 0 56 14" className="ml-auto mt-0.5" role="img" aria-label={`Part cost history across ${costTrend.length} revisions`} title={`Cost history (${costTrend.length} revisions): ${money(costTrend[0])} → ${money(costTrend[costTrend.length - 1])}`}>
+                <polyline points={sparkPoints} fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+              </svg>
+            )}
             <div className="text-[8px] leading-3 text-gray-400 mt-0.5 whitespace-nowrap">
               {Number(line.adjustment_percent || 0) !== 0 ? `${Number(line.adjustment_percent || 0) > 0 ? "+" : ""}${Number(line.adjustment_percent || 0)}% adj · ` : ""}
               {percentOfTotal != null ? `${percentOfTotal.toFixed(0)}% of estimate` : ""}
@@ -293,7 +318,7 @@ export default function ProductRow({
               type="button"
               onClick={handleUpdatePrice}
               disabled={updatingPrice || readOnly}
-              className="h-[28px] px-3 border border-orange-300 bg-orange-50 rounded flex items-center gap-1 text-[12px] font-semibold text-orange-800 hover:bg-orange-100 disabled:opacity-50"
+              className={`h-[28px] px-3 border rounded flex items-center gap-1 text-[12px] font-semibold disabled:opacity-50 ${pendingStale ? "border-red-300 bg-red-50 text-red-800 hover:bg-red-100" : "border-orange-300 bg-orange-50 text-orange-800 hover:bg-orange-100"}`}
               title={pendingPriceAcceptance?.kind === "builder_initial_freeze"
                 ? "Resume the previously started initial Builder price freeze from its saved recovery marker."
                 : pendingPriceAcceptance?.kind === "builder_detach_override"
@@ -333,7 +358,7 @@ export default function ProductRow({
                                     : "Resume the previously started Update Price operation from its saved recovery marker."}
             >
               <RefreshCw className={`w-3 h-3 ${updatingPrice ? "animate-spin" : ""}`} />
-              {updatingPrice ? "Recovering…" : pendingPriceLabel}
+              {updatingPrice ? "Recovering…" : pendingPriceLabel}{pendingStale ? " · stale >24h" : ""}
             </button>
           ) : line.needs_reattach_review || line.price_state === "detached_parts" ? (
             <button
@@ -457,7 +482,12 @@ export default function ProductRow({
           <Percent className="w-3 h-3" /> Pricing
         </button>
         <button
-          onClick={() => onRemove(index)}
+          type="button"
+          onClick={() => {
+            const name = line.client_product_name || line.project_name || "Product";
+            if (!window.confirm(`Remove “${name}” from this estimate?`)) return;
+            onRemove(index);
+          }}
           disabled={readOnly || priceAcceptancePending}
           title={priceAcceptancePending ? "Resume the pending Product operation before removing this Product." : "Remove product"}
           className="w-[28px] h-[28px] border border-gray-200 rounded flex items-center justify-center text-red-500 hover:bg-red-50 disabled:opacity-50"
@@ -539,13 +569,20 @@ export default function ProductRow({
             value={liveCustomerPrice}
             disabled
           />
-          <Field
-            label="ADJUSTMENT %"
-            type="number"
-            value={line.adjustment_percent ?? 0}
-            onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
-            onBlur={(e) => commit({ adjustment_percent: parseFloat(e.target.value) || 0 })}
-          />
+          <div>
+            <Field
+              label="ADJUSTMENT %"
+              type="number"
+              value={line.adjustment_percent ?? 0}
+              onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
+              onBlur={(e) => commit({ adjustment_percent: parseFloat(e.target.value) || 0 })}
+            />
+            {Number(line.adjustment_percent || 0) !== 0 && (
+              <div className="mt-0.5 text-[9px] text-emerald-700 font-semibold">
+                → {money(Number(customerPrice || 0) * (1 + Number(line.adjustment_percent || 0) / 100))} preview
+              </div>
+            )}
+          </div>
           <Field
             label="QUANTITY"
             type="number"

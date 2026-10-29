@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,34 @@ const TOKEN_KEY = "sss_session_token";
 const ADMIN_UNLOCKED_KEY = "adminUnlocked";
 const ADMIN_CAPABILITY_KEY = "adminSettingsCapability";
 const ADMIN_CAPABILITY_EXPIRES_KEY = "adminSettingsCapabilityExpires";
+
+export function getSessionToken() {
+  try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; }
+}
+
+// Mirrors the verified session user outside React so non-hook call sites
+// (entity loaders, role checks inside load callbacks) can resolve the same
+// AuthorizedEmail identity without a network round-trip.
+let lastSessionUser = null;
+export function getSessionUser() {
+  return lastSessionUser;
+}
+
+// A staff-facing read can be rejected as unauthenticated while this tab still
+// holds a signed-in identity: the token was cleared in another tab, browser
+// storage was evicted, or a password reset revoked the session. Loaders only
+// see a raw 401, so rejections are reported here and resolved once by the
+// session layer — reverifying the stored token, and only dropping a session
+// that is genuinely gone (which reopens sign-in). Failures here never replace
+// the original request error.
+let sessionRejectionListener = null;
+export function notifySessionRejected() {
+  try {
+    sessionRejectionListener?.();
+  } catch {
+    // Recovery is best-effort; the caller keeps its own error handling.
+  }
+}
 
 export function clearAdminSettingsAuthorization() {
   try {
@@ -29,6 +57,18 @@ export function getStoredAdminSettingsCapability() {
   return "";
 }
 
+// Read-only: the stored capability's expiry timestamp (ms) so callers can
+// schedule a re-lock exactly at expiry. Returns null when nothing usable is
+// stored; unlike getStoredAdminSettingsCapability it never mutates storage.
+export function getStoredAdminSettingsCapabilityExpiry() {
+  try {
+    const capability = String(sessionStorage.getItem(ADMIN_CAPABILITY_KEY) || "").trim();
+    const expiresAt = Date.parse(String(sessionStorage.getItem(ADMIN_CAPABILITY_EXPIRES_KEY) || ""));
+    if (capability && Number.isFinite(expiresAt)) return expiresAt;
+  } catch {}
+  return null;
+}
+
 export function hasStoredAdminSettingsAuthorization() {
   try {
     return sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === "true" && !!getStoredAdminSettingsCapability();
@@ -43,6 +83,17 @@ export function storeAdminSettingsAuthorization(capability, expiresAt) {
   sessionStorage.setItem(ADMIN_CAPABILITY_EXPIRES_KEY, expiresAt);
 }
 
+// The Time Clock kiosk page is guest-facing: app-level Sign In dialogs must
+// never appear there on their own (auto-pop on mount or after a sign-out).
+const isTimeClockKioskPath = () => {
+  try {
+    const path = String(window.location.pathname || "").replace(/\/+$/, "").toLowerCase();
+    return path === "/timeclock";
+  } catch {
+    return false;
+  }
+};
+
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
@@ -52,10 +103,15 @@ export const useAuth = () => {
 };
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUserState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
   const [browseOnly, setBrowseOnly] = useState(false);
+
+  const setCurrentUser = useCallback((user) => {
+    lastSessionUser = user || null;
+    setCurrentUserState(user || null);
+  }, []);
 
   // Restore session from stored token
   const restoreSession = useCallback(async () => {
@@ -73,6 +129,7 @@ export function AuthProvider({ children }) {
       } else if (data?.valid === false) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
+        setCurrentUser(null);
       }
     } catch (error) {
       // A temporary service failure is not session revocation. Keep the token
@@ -80,22 +137,74 @@ export function AuthProvider({ children }) {
       if ([401, 409].includes(Number(error?.response?.status))) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
+        setCurrentUser(null);
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [setCurrentUser]);
 
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
 
+  // Resolve a rejected read once per wave of 401s. The token is reverified
+  // rather than trusted or blindly discarded: only a session that is actually
+  // gone ends here — a transient service failure keeps it so the next load can
+  // recover without a pointless re-sign-in.
+  const sessionRecheckInFlight = useRef(false);
+  const resolveSessionRejection = useCallback(async () => {
+    if (sessionRecheckInFlight.current) return;
+    // Guests hold no identity to recover; their reads are expected to be refused.
+    if (!getSessionUser()) return;
+    sessionRecheckInFlight.current = true;
+    const endSession = () => {
+      localStorage.removeItem(TOKEN_KEY);
+      clearAdminSettingsAuthorization();
+      setCurrentUser(null);
+      setBrowseOnly(false);
+    };
+    try {
+      const token = getSessionToken();
+      if (!token) {
+        endSession();
+        return;
+      }
+      const res = await base44.functions.invoke("verifySession", { token });
+      const data = res?.data || res;
+      if (data?.valid && data.user) {
+        setCurrentUser(data.user);
+        return;
+      }
+      endSession();
+    } catch (error) {
+      const status = Number(error?.response?.status ?? error?.status);
+      if (status === 401 || status === 409) endSession();
+    } finally {
+      sessionRecheckInFlight.current = false;
+    }
+  }, [setCurrentUser]);
+
+  useEffect(() => {
+    sessionRejectionListener = resolveSessionRejection;
+    return () => {
+      if (sessionRejectionListener === resolveSessionRejection) sessionRejectionListener = null;
+    };
+  }, [resolveSessionRejection]);
+
   const logout = useCallback(() => {
+    // Server-side revoke: invalidate the session token so it can't be reused
+    // from a copied/localStorage token. Fire-and-forget — logout proceeds
+    // locally even if the network call fails.
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      base44.functions.invoke("verifySession", { token, action: "logout" }).catch(() => {});
+    }
     localStorage.removeItem(TOKEN_KEY);
     clearAdminSettingsAuthorization();
     setCurrentUser(null);
     setBrowseOnly(false);
-    setShowLogin(true);
-  }, []);
+    setShowLogin(!isTimeClockKioskPath());
+  }, [setCurrentUser]);
 
   const loginWithCredentials = useCallback(async (username, password) => {
     try {
@@ -111,19 +220,27 @@ export function AuthProvider({ children }) {
       }
       return { success: false, error: data?.error || "Invalid username or password" };
     } catch (err) {
+      const status = err?.response?.status ?? err?.status;
       const apiError = err?.response?.data?.error;
+      // A 5xx (or a request that never completed) means sign-in was never
+      // evaluated — say so plainly instead of showing a raw server error name.
+      if (typeof status !== "number" || status >= 500) {
+        return { success: false, error: "Sign in hit a temporary server problem. Please try again." };
+      }
       return { success: false, error: apiError || "Invalid username or password" };
     }
-  }, []);
+  }, [setCurrentUser]);
 
   const getUserFirstName = useCallback(() => {
     if (!currentUser?.full_name) return "";
     return currentUser.full_name.split(" ")[0];
   }, [currentUser]);
 
-  // Show login dialog automatically when not authenticated and not in browse mode
+  // Show login dialog automatically when not authenticated and not in browse
+  // mode — except on the Time Clock kiosk, where guests must be left alone.
+  // Explicit Sign In clicks still open it through showLoginDialog().
   useEffect(() => {
-    if (!isLoading && !currentUser && !browseOnly) {
+    if (!isLoading && !currentUser && !browseOnly && !isTimeClockKioskPath()) {
       setShowLogin(true);
     }
   }, [isLoading, currentUser, browseOnly]);
@@ -162,17 +279,13 @@ export function AuthProvider({ children }) {
       {children}
       <LoginDialog
         open={showLogin && !currentUser}
-        onBrowseOnly={() => {
-          setBrowseOnly(true);
-          setShowLogin(false);
-        }}
         onLogin={loginWithCredentials}
       />
     </AuthContext.Provider>
   );
 }
 
-function LoginDialog({ open, onLogin, onBrowseOnly }) {
+function LoginDialog({ open, onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -247,16 +360,7 @@ function LoginDialog({ open, onLogin, onBrowseOnly }) {
           </Button>
         </form>
 
-        <div className="border-t pt-3 space-y-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={onBrowseOnly}
-          >
-            <Eye className="w-4 h-4 mr-2" /> Continue browsing without signing in
-          </Button>
-        </div>
+
       </DialogContent>
     </Dialog>
   );

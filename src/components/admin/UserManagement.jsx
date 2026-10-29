@@ -43,12 +43,14 @@ import {
   Send,
   Camera,
   Scan,
+  ShieldCheck,
   Clock,
   ShieldAlert
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
+import AdminAccessDialog from "@/components/admin/AdminAccessDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
@@ -66,6 +68,7 @@ import {
   updateAuthorizedUserHrAdmin,
 } from "@/components/admin/authorizedUserAdminPersistence";
 import { getDeletionImpactRetryState } from "@/components/admin/deletionImpactRetryCoordinator";
+import { triggerNotification } from "@/components/workflow/NotificationService";
 
 export default function UserManagement() {
   const { sessionToken } = useAuth();
@@ -120,6 +123,7 @@ export default function UserManagement() {
   const onboardingResendInFlight = useRef(false);
   const onboardingResendOwner = useRef(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
+  const [accessUser, setAccessUser] = useState(null);
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
@@ -836,6 +840,12 @@ export default function UserManagement() {
       }
 
       verifiedAccountReceipt = true;
+      if (accountWriteSent && savedUser.role !== record.role) {
+        triggerNotification("user_role_changed", null, {
+          recordData: savedUser,
+          eventDescription: "User role changed",
+        });
+      }
       // The confirmed receipt may include remote-only field changes which
       // were never in our changed-field patch. Adopt those values instead of
       // treating the stale submitted form as fresh local edits. Keep only
@@ -1601,7 +1611,7 @@ export default function UserManagement() {
       {/* Account Deletion Requests */}
       <div className="clay-card p-4">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="p-2 rounded-xl bg-red-50">
               <ShieldAlert className="w-5 h-5 text-red-700" />
             </div>
@@ -1770,7 +1780,7 @@ export default function UserManagement() {
             {users.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
+                className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -1795,7 +1805,7 @@ export default function UserManagement() {
                       <span className="text-xs text-purple-600">@{user.username}</span>
                     )}
                     {user.sales_roles && user.sales_roles.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex flex-wrap items-center gap-1 mt-1">
                         <Briefcase className="w-3 h-3 text-gray-400" />
                         {user.sales_roles.map(role => (
                           <Badge key={role} variant="outline" className="text-xs">
@@ -1807,7 +1817,7 @@ export default function UserManagement() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   <UserQRCode user={user} />
                   <Button
                     variant="ghost"
@@ -1822,6 +1832,17 @@ export default function UserManagement() {
                       <Camera className="w-4 h-4 text-gray-400" />
                     )}
                   </Button>
+                  {user.role === 'admin' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAccessUser(user)}
+                      className="h-8 w-8"
+                      title="Admin page access"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -2617,6 +2638,17 @@ export default function UserManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Admin Access Dialog */}
+      <AdminAccessDialog
+        user={accessUser}
+        open={!!accessUser}
+        onOpenChange={(open) => { if (!open) setAccessUser(null); }}
+        sessionToken={sessionToken}
+        onSaved={(saved) => {
+          if (saved?.id) setUsers((current) => current.map((row) => (row.id === saved.id ? { ...row, ...saved } : row)));
+        }}
+      />
 
       {/* Face Enrollment Dialog */}
       <FaceEnrollmentDialog

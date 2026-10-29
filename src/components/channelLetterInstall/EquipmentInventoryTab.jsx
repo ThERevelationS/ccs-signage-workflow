@@ -131,7 +131,13 @@ export default function EquipmentInventoryTab({ scope = "construction" }) {
     const item = items[origIndex];
     if (item.id) {
       if (!confirm(`Delete "${item.equipment_name}"?`)) return;
-      await ChannelLetterInstallEquipment.delete(item.id);
+      try {
+        await ChannelLetterInstallEquipment.delete(item.id);
+      } catch (e) {
+        console.error("Delete failed:", e);
+        alert("Delete failed: " + (e.message || "unknown error"));
+        return;
+      }
     }
     const next = [...items];
     next.splice(origIndex, 1);
@@ -140,16 +146,21 @@ export default function EquipmentInventoryTab({ scope = "construction" }) {
 
   const saveAll = async () => {
     setSaving(true);
-    for (const it of items) {
-      const { _new, id, ...payload } = it;
-      // Ensure ownership is always persisted (back-fills legacy records)
-      if (!payload.ownership) {
-        payload.ownership = isOwned(it) ? "owned" : "rented";
+    try {
+      for (const it of items) {
+        const { _new, id, ...payload } = it;
+        // Ensure ownership is always persisted (back-fills legacy records)
+        if (!payload.ownership) {
+          payload.ownership = isOwned(it) ? "owned" : "rented";
+        }
+        if (id) await ChannelLetterInstallEquipment.update(id, payload);
+        else await ChannelLetterInstallEquipment.create(payload);
       }
-      if (id) await ChannelLetterInstallEquipment.update(id, payload);
-      else await ChannelLetterInstallEquipment.create(payload);
+      await load();
+    } catch (e) {
+      console.error("Save failed:", e);
+      alert("Save failed: " + (e.message || "unknown error"));
     }
-    await load();
     setSaving(false);
   };
 

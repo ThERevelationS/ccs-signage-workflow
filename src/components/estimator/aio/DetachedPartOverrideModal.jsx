@@ -32,6 +32,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
       quantity: Number(part.quantity || 1),
       unit: part.unit || "",
       frozen_unit_cost: Number(part.frozen_unit_cost || 0),
+      manual_cost_override_reason: part.manual_cost_override_reason || "",
       notes: part.notes || "",
       detail_overrides: { ...(part.detail_overrides || {}) },
     });
@@ -112,8 +113,18 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
               <label className="text-[10px] font-bold tracking-wide text-gray-500 sm:col-span-2">CLIENT LABEL<input value={form.client_label || ""} onChange={(e) => set("client_label", e.target.value)} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
               <label className="text-[10px] font-bold tracking-wide text-gray-500">QUANTITY<input type="number" step="any" min="0" value={form.quantity ?? 0} onChange={(e) => set("quantity", Number(e.target.value))} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
               <label className="text-[10px] font-bold tracking-wide text-gray-500">UNIT<input value={form.unit || ""} onChange={(e) => set("unit", e.target.value)} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
-              <label className="text-[10px] font-bold tracking-wide text-gray-500">FROZEN UNIT COST<input type="number" step="any" value={form.frozen_unit_cost ?? 0} onChange={(e) => set("frozen_unit_cost", Number(e.target.value))} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
-              <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2"><div className="text-[9px] font-bold tracking-wide text-gray-400">NEW FROZEN EXTENDED</div><div className="text-[15px] font-bold text-gray-900 mt-1">{money(extended)}</div></div>
+              <label className="text-[10px] font-bold tracking-wide text-gray-500">FROZEN UNIT COST<input type="number" step="any" min="0" value={form.frozen_unit_cost ?? 0} onChange={(e) => set("frozen_unit_cost", Number(e.target.value))} className="mt-1 h-[32px] w-full border border-gray-300 rounded px-2 text-[12px]" /></label>
+              <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2"><div className="text-[9px] font-bold tracking-wide text-gray-400">NEW FROZEN EXTENDED</div><div className="text-[15px] font-bold text-gray-900 mt-1">{money(extended)}</div>{(Number(form.quantity) < 0 || Number(form.frozen_unit_cost) < 0) && <div className="text-[9px] font-semibold text-amber-600 mt-1">Negative quantity or cost reduces the frozen total.</div>}</div>
+              {(part?.manual_cost_override || Number(form.frozen_unit_cost) !== Number(part?.frozen_unit_cost)) && (
+                <label className="text-[10px] font-bold tracking-wide text-amber-700 sm:col-span-2 lg:col-span-4">COST OVERRIDE REASON
+                  <input
+                    value={form.manual_cost_override_reason || ""}
+                    onChange={(e) => set("manual_cost_override_reason", e.target.value)}
+                    placeholder="Why is this cost being overridden? (e.g. negotiated price, damaged stock credit)"
+                    className="mt-1 h-[32px] w-full border border-amber-300 rounded px-2 text-[12px] bg-white"
+                  />
+                </label>
+              )}
             </div>
           </section>
 
@@ -127,7 +138,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
                 <button
                   type="button"
                   disabled={overrideCount === 0}
-                  onClick={() => set("detail_overrides", {})}
+                  onClick={() => { if (!window.confirm(`Reset all ${overrideCount} type-specific override${overrideCount === 1 ? "" : "s"} back to the Master Inventory values?`)) return; set("detail_overrides", {}); }}
                   className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 inline-flex items-center gap-1"
                 ><RotateCcw className="w-3 h-3" /> Reset All ({overrideCount})</button>
               </div>
@@ -176,7 +187,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
           {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
           <div className="flex justify-end gap-2 sticky bottom-0 bg-white pt-2 border-t border-gray-100">
             <button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[12px] font-semibold text-gray-700">Cancel</button>
-            <button type="submit" disabled={saving} className="h-[32px] px-4 rounded border border-amber-400 bg-amber-200 text-[12px] font-bold text-gray-900 hover:bg-amber-300 disabled:opacity-50">{saving ? "Saving…" : isManual ? "Save Part" : "Save Detached Override"}</button>
+            <button type="submit" disabled={saving || !String(form.part_name || "").trim()} className="h-[32px] px-4 rounded border border-amber-400 bg-amber-200 text-[12px] font-bold text-gray-900 hover:bg-amber-300 disabled:opacity-50">{saving ? "Saving…" : isManual ? "Save Part" : "Save Detached Override"}</button>
           </div>
         </form>
       </DialogContent>

@@ -1,0 +1,14 @@
+[
+ {"old_text":"    description: clean(invoice?.description),","new_text":"    description: clean(invoice?.notes || invoice?.description),"},
+ {"old_text":"      amount: num(item?.amount),","new_text":"      amount: num(item?.line_total ?? item?.amount),"},
+ {"old_text":"    tax: num(invoice?.tax),","new_text":"    tax: num(invoice?.tax_amount ?? invoice?.tax),"},
+ {"old_text":"function jobPortalView(order: any) {\n  const tasks = Array.isArray(order?.tasks) ? order.tasks : [];","new_text":"function jobPortalView(order: any) {\n  const tasks = Array.isArray(order?.notes) ? order.notes : [];"},
+ {"old_text":"    work_order_number: clean(order?.work_order_number),","new_text":"    work_order_number: clean(order?.est_inv_at || order?.work_order_number),"},
+ {"old_text":"    status: clean(order?.status),","new_text":"    status: order?.deleted === true ? \"deleted\" : order?.completed === true ? \"completed\" : clean(order?.current_stage || order?.status),"},
+ {"old_text":"clean(b?.paid_at || b?.created_date).localeCompare(clean(a?.paid_at || a?.created_date))","new_text":"clean(b?.paid_date || b?.paid_at || b?.created_date).localeCompare(clean(a?.paid_date || a?.paid_at || a?.created_date))","replace_all":true},
+ {"old_text":"              paid_at: clean(p?.paid_at || p?.created_date).slice(0, 10),","new_text":"              paid_at: clean(p?.paid_date || p?.paid_at || p?.created_date).slice(0, 10),"},
+ {"old_text":"paidByInvoice.get(key).push({ paid_at: clean(p?.paid_at || p?.created_date).slice(0, 10),","new_text":"paidByInvoice.get(key).push({ paid_at: clean(p?.paid_date || p?.paid_at || p?.created_date).slice(0, 10),"},
+ {"old_text":"          contact_name: clean(customer?.contact_name),\n          email: clean(customer?.email),","new_text":"          contact_name: clean(customer?.contact_name) || [customer?.contact_first_name, customer?.contact_last_name].filter(Boolean).join(\" \"),\n          email: clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_contact_email),"},
+ {"old_text":"clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_email)","new_text":"clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_contact_email) || clean(customer.billing_email)","replace_all":true},
+ {"old_text":"const woLabel = clean(order.work_order_number) || clean(order.title) || \"Job\";","new_text":"const woLabel = clean(order.est_inv_at || order.work_order_number) || clean(order.title) || \"Job\";"}
+]

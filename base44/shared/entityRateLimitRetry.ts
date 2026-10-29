@@ -3,6 +3,7 @@ import { traceDelay } from './smartsheetTraceContext.ts';
 // Base44's own database API also rate-limits ("Rate limit exceeded"). Retry those
 // calls with backoff so one burst does not skip a whole sync stage.
 export function withEntityRateLimitRetry(client: any, { paceMs = 0 } = {}) {
+  if (!client?.asServiceRole?.entities) return client;
   // One queue across all entities in this sync invocation, including parallel reads.
   let queue = Promise.resolve();
   let nextRequestAt = 0;

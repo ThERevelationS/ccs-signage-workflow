@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const FIELDS = [
   { key: "company_name", label: "Company name *" },
@@ -31,6 +32,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
   const [tierLoadError, setTierLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [existingNames, setExistingNames] = useState(new Set());
   const savingRef = useRef(false);
   const createAttemptRef = useRef({ signature: "", key: "" });
 
@@ -40,7 +42,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     createAttemptRef.current = { signature: "", key: "" };
     setTierLoading(true);
     setTierLoadError("");
-    loadAllEntityRows({ entity: base44.entities.MarkupTier, sort: "sort_order", label: "New Customer markup tiers" })
+    loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "New Customer markup tiers" })
       .then((rows) => {
         if (!active) return;
         const loaded = rows || [];
@@ -59,6 +61,21 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         setTierLoadError(err?.message || "Pricing tiers could not be verified.");
       })
       .finally(() => active && setTierLoading(false));
+    setExistingNames(new Set());
+    loadAllEntityRows({ entity: staffEntities.Customer, sort: "created_date", label: "New Customer existing customers" })
+      .then((rows) => {
+        if (!active) return;
+        const names = new Set();
+        (rows || []).forEach((c) => {
+          const name = String(c?.company_name || "").trim().toLowerCase();
+          if (name) names.add(name);
+        });
+        setExistingNames(names);
+      })
+      .catch(() => {
+        if (!active) return;
+        setExistingNames(new Set());
+      });
     return () => { active = false; };
   }, [open]);
 
@@ -108,6 +125,9 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
     }
   };
 
+  const normalizedName = String(data.company_name || "").trim().toLowerCase();
+  const duplicateName = normalizedName !== "" && existingNames.has(normalizedName);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-[600px]">
@@ -118,6 +138,12 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         {error && (
           <div className="px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
             {error}
+          </div>
+        )}
+
+        {duplicateName && (
+          <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded text-[12px] text-amber-700">
+            A customer with this name already exists
           </div>
         )}
 
@@ -140,12 +166,12 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
               onChange={(event) => setData((current) => ({ ...current, pricing_tier: Number(event.target.value) || 1 }))}
               className="w-full h-[30px] px-2 border border-gray-300 rounded-sm text-[12px] bg-white focus:outline-none focus:border-red-400 disabled:bg-gray-100 disabled:text-gray-500"
             >
-              {tierLoading && <option value="1">Loading pricing tiers…</option>}
+              {tierLoading && <option value="1">Loading pricing tiersâ€¦</option>}
               {!tierLoading && tierLoadError && <option value="1">Pricing tiers unavailable</option>}
-              {!tierLoading && !tierLoadError && tiers.length === 0 && <option value="1">Tier 1 — General Public</option>}
+              {!tierLoading && !tierLoadError && tiers.length === 0 && <option value="1">Tier 1 â€” General Public</option>}
               {!tierLoading && !tierLoadError && tiers.map((tier) => (
                 <option key={tier.id} value={String(tier.tier_number)}>
-                  Tier {tier.tier_number} — {tier.tier_name}
+                  Tier {tier.tier_number} â€” {tier.tier_name}
                 </option>
               ))}
             </select>
@@ -156,17 +182,19 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
 
         <div className="flex justify-end gap-2 pt-1">
           <button
+            type="button"
             onClick={onClose}
             className="h-[30px] px-3 rounded border border-gray-300 text-[12px] font-semibold text-gray-600"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
-            disabled={saving || tierLoading || !!tierLoadError}
+            disabled={saving || tierLoading || !!tierLoadError || !data.company_name.trim()}
             className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Create Customer"}
+            {saving ? "Savingâ€¦" : "Create Customer"}
           </button>
         </div>
       </DialogContent>

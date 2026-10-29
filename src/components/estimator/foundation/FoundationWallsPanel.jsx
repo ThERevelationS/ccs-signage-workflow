@@ -134,7 +134,11 @@ export default function FoundationWallsPanel({ walls = [], options = [], onChang
   const patchWall = (index, changes) =>
     onChange(walls.map((w, i) => (i === index ? { ...w, ...changes } : w)));
 
-  const removeWall = (index) => onChange(walls.filter((_, i) => i !== index));
+  const removeWall = (index) => {
+    const name = walls[index]?.name || `Wall ${index + 1}`;
+    if (!window.confirm(`Remove ${name}?`)) return;
+    onChange(walls.filter((_, i) => i !== index));
+  };
 
   const addWall = () =>
     onChange([

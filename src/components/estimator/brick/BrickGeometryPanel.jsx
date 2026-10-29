@@ -15,6 +15,16 @@ const FIELDS = [
 export default function BrickGeometryPanel({ project, materials, derived, onChange }) {
   const material = materials.find((m) => m.id === project.selected_material_id);
 
+  React.useEffect(() => {
+    if (project.selected_material_id) return;
+    try {
+      const last = localStorage.getItem("estimator:last_material:brick_stone");
+      const m = materials.find((x) => x.id === last);
+      if (m) onChange({ selected_material_id: m.id, material_name: m.material_name || "", material_dimensions: { length: m.length, width: m.width, height: m.height } });
+    } catch { /* storage unavailable */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
       <h2 className="font-semibold text-gray-900">Masonry Base</h2>
@@ -24,6 +34,7 @@ export default function BrickGeometryPanel({ project, materials, derived, onChan
         <select
           value={project.selected_material_id || ""}
           onChange={(e) => {
+            try { localStorage.setItem("estimator:last_material:brick_stone", e.target.value); } catch { /* storage unavailable */ }
             const m = materials.find((x) => x.id === e.target.value);
             onChange({
               selected_material_id: e.target.value,

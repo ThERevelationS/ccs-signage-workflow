@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
 import FleetQuickActions from "@/components/fleet/FleetQuickActions";
 import {
   LayoutDashboard,
@@ -20,10 +19,10 @@ import {
   ShoppingCart,
   History,
   BarChart3,
-  Settings,
   Grid3X3,
   X,
 } from "lucide-react";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const MOBILE_PRIMARY_PAGES = ["FleetOverview", "FleetTracking", "FleetEquipment", "FleetMaintenance", "FleetWorkOrders"];
 const MOBILE_LABELS = { FleetOverview: "Home", FleetTracking: "Track", FleetEquipment: "Assets", FleetMaintenance: "Service", FleetWorkOrders: "Work" };
@@ -45,7 +44,6 @@ const items = [
   { title: "Requests", page: "FleetRequests", icon: ShoppingCart },
   { title: "History", page: "FleetHistory", icon: History, adminOnly: true },
   { title: "Analytics", page: "FleetAnalytics", icon: BarChart3, adminOnly: true },
-  { title: "Fleet Settings", page: "FleetSettings", icon: Settings, adminOnly: true },
 ];
 
 export default function FleetModuleNav() {
@@ -56,7 +54,7 @@ export default function FleetModuleNav() {
 
   useEffect(() => {
     let mounted = true;
-    base44.auth.me().then((user) => {
+    Promise.resolve(getSessionUser()).then((user) => {
       if (mounted) setIsAdmin(user?.role === "admin");
     }).catch(() => {});
     return () => { mounted = false; };

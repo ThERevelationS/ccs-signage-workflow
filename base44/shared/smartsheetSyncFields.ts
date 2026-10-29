@@ -298,7 +298,10 @@ export function buildOrderPullSnapshot(
       continue;
     }
     const display = cell?.display_value != null ? cell.display_value : cell?.displayValue;
-    const value = display != null ? display : cell?.value;
+    // Smartsheet omits displayValue for DATE columns: a blank display must not
+    // mask the real 'YYYY-MM-DD' cell value or every stored snapshot records
+    // the remote date as empty and push raises false blank-side conflicts.
+    const value = (display != null && display !== '') ? display : cell?.value;
     snapshot[columnId] = value == null ? '' : (typeof value === 'number' ? value : String(value).trim());
   }
   // Smartsheet can omit empty cells from a row payload. Bound-but-absent means

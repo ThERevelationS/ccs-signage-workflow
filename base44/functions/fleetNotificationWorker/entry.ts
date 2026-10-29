@@ -1,5 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const nowIso = () => new Date().toISOString();
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -33,8 +36,7 @@ async function maybeRunReminderFallback(base44: any, cutover: any) {
   const local = easternNow();
   if (local.minutes < 7 * 60 + 10) return;
 
-  const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type: 'general' });
-  const settings = settingsRows?.[0];
+  const settings = await getCanonicalFleetSettings(base44);
   if (!settings) return;
   const configuredToday = (settings.item_order_reminder_days || []).includes(local.day) || (settings.open_work_order_reminder_days || []).includes(local.day);
   if (!configuredToday) return;
@@ -98,12 +100,11 @@ async function claimReceipt(Receipt: any, key: string, queue: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 });
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key: 'primary' });
-    const cutover = cutoverRows?.[0];
+    const cutover = await getCanonicalCutoverState(base44);
     if (!cutover?.notifications_enabled) return Response.json({ success: true, disabled: true, processed: 0 });
 
     await maybeRunReminderFallback(base44, cutover);
@@ -172,7 +173,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, processed: results.length, sent, results });
   } catch (error) {
     console.error('fleetNotificationWorker error:', error);
-    try { await logWorker(createClientFromRequest(req), 'error', 'Fleet notification worker failed.', { error: error?.message || String(error) }); } catch {}
+    try { await logWorker(withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 }), 'error', 'Fleet notification worker failed.', { error: error?.message || String(error) }); } catch {}
     return Response.json({ error: error?.message || 'Fleet notification worker failed.' }, { status: 500 });
   }
 });

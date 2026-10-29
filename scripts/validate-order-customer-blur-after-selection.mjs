@@ -44,6 +44,7 @@ const permanentId = picker.indexOf('work_order_id: latest.id', chosenPending);
 const guard = picker.indexOf('verifiedCustomerSelectionRef.current.set(order.id', permanentId);
 const close = picker.indexOf('setShowCustomerDropdown(null)', guard);
 assert.ok(chosenPending >= 0 && permanentId > chosenPending && guard > permanentId && close > guard);
-assert.match(ui, /verifiedCustomerSelectionRef\.current\.delete\(target\.id\)/);
+assert.match(ui, /verifiedCustomerSelectionRef\.current\.delete\(id\)/);
+assert.match(ui, /removeOrdersFromState\(\[target\.id\]\)/);
 assert.match(picker, /orderLocalEditGenerationRef\.current !== selectionEditGeneration/);
 console.log('PASS source writes verified pair first, ignores old blur, preserves newer edits and cleans up deleted rows');

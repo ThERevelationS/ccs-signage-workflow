@@ -52,6 +52,7 @@
         "email",
         "verbal",
         "in_person",
+        "portal",
         "other"
       ]
     },

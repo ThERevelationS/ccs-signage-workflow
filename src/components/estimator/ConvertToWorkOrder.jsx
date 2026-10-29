@@ -142,6 +142,20 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         ...(existing?.sales_status !== "won" ? { sales_stage_changed_at: conversionActivityStamp } : {}),
       };
 
+      // Pre-commit gate: conversion writes the Work Order before the estimate
+      // link, so confirm intent up front rather than alerting on a partial
+      // state afterwards. Preview shows the expected WO number/stage when
+      // updating an existing record; new records are numbered by the pipeline.
+      const preview = existing?.id
+        ? `WO ${existing.work_order_number || existing.id.slice(0, 8)} · stage ${existing.current_stage || "estimating"}`
+        : "new record · stage estimating";
+      const sectionNames = (Array.isArray(estimate.line_items) ? estimate.line_items : [])
+        .map((l) => l?.client_product_name || l?.builder_name || l?.module_key).filter(Boolean);
+      const sectionsPreview = sectionNames.length
+        ? `\n\nSections → WO checklist (${sectionNames.length}): ${sectionNames.slice(0, 6).join(", ")}${sectionNames.length > 6 ? ` +${sectionNames.length - 6} more` : ""}`
+        : "";
+      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline? (${preview})${sectionsPreview}`)) return;
+
       let workOrder;
       if (existing?.id) {
         workOrder = await replaceWorkOrderFieldsIfUnchanged({
@@ -205,7 +219,12 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       setWorkOrderId(workOrder.id);
       onConverted?.(workOrder.id);
     } catch (error) {
-      window.alert(error?.message || "The Work Order could not be created.");
+      // The Work Order may already be committed (a later step failed after
+      // the link). Re-read so the alert reflects real state instead of
+      // claiming nothing was created.
+      const post = await base44.entities.AllInOneEstimate.get(estimate.id).catch(() => null);
+      const suffix = post?.work_order_id ? "\n\nA Work Order may already be linked to this estimate — reload before retrying." : "";
+      window.alert(`${error?.message || "The Work Order could not be created."}${suffix}`);
     } finally {
       setBusy(false);
     }

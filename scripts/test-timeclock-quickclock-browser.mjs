@@ -9,8 +9,9 @@ import react from "@vitejs/plugin-react";
 import { setupSyntheticTimeClock } from "./validate-timeclock-pay-period-recovery.mjs";
 
 const root = process.cwd();
+const { pathToFileURL } = await import("node:url");
 const { chromium } = await import(process.env.TIMECLOCK_PLAYWRIGHT_PATH ||
-  path.join(tmpdir(), "timeclock-browser-check/node_modules/playwright/index.mjs"));
+  pathToFileURL(path.join(tmpdir(), "timeclock-browser-check/node_modules/playwright/index.mjs")).href);
 const scratch = await mkdtemp(path.join(tmpdir(), "timeclock-quickclock-browser-"));
 const worker = { id: "synthetic-employee", email: "worker@synthetic.invalid",
   full_name: "Synthetic Employee", role: "employee" };
@@ -232,7 +233,7 @@ createRoot(document.getElementById("root")).render(params.has("global-pause")
       ...stubImports.map((find) => ({ find, replacement: mock })),
       { find: /^@\//, replacement: path.join(root, "src") + "/" },
     ] },
-    server: { host: "127.0.0.1", port: 0, fs: { allow: [root, scratch] } }, logLevel: "error",
+    server: { host: "127.0.0.1", port: 0, fs: { strict: false, allow: [root, scratch] } }, logLevel: "error",
   });
   await vite.listen();
   const origin = "http://127.0.0.1:" + vite.httpServer.address().port;

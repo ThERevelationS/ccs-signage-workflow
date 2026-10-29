@@ -2,31 +2,31 @@
   "definition": {
     "document": {
       "dsl": "1.0.0",
-      "name": "smartsheet_scheduled_sync",
+      "name": "smartsheet_scheduled_sales_sync",
       "version": "1.0",
       "namespace": "base44"
     },
     "do": [
       {
-        "run_sync": {
+        "run_sales_sync": {
           "call": "invoke_backend_function",
           "with": {
             "function_name": "smartsheetSyncAction",
             "args": {
-              "action": "run_sync",
+              "action": "run_sales_sync",
               "_workflow_capability": "PkqkW1Iclz6ucp1fDEYC3Vxx-rxRGl6gFDbm5wiPLyr0VvCk40iucbbdS1fXHsSV"
             }
           },
           "then": "end",
           "x-base44": {
-            "title": "Run scheduled Smartsheet sync",
-            "description": "Runs configured Sales Pipeline pull/push directions and Order Form pull only. Order Form background push is locked OFF; use explicit Save & Sync for Base44 \u2192 Smartsheet Order writes."
+            "title": "Run scheduled Sales Pipeline sync",
+            "description": "Runs configured Sales Pipeline pull/push directions only, on its own coordinator. The Order Form sync runs on a separate schedule and status record."
           }
         }
       }
     ]
   },
-  "name": "Smartsheet Scheduled Sync",
+  "name": "Smartsheet Scheduled Sales Sync",
   "trigger": {
     "condition": null,
     "config": {
@@ -44,5 +44,5 @@
       "ends_after_count": null
     }
   },
-  "description": "Runs every 15 minutes server-side. Sales Pipeline follows its enabled pull/push directions. Order Form can pull automatically when enabled, but background push and automatic record creation are locked OFF; Order writes use explicit Save & Sync. Only runs when global sync is enabled and observation mode is off."
+  "description": "Runs every 15 minutes server-side. Sales Pipeline follows its enabled pull/push directions and reports to its own smartsheetSalesSyncStatus coordinator. Order Form sync runs separately on its own schedule. Only runs when global sync is enabled and observation mode is off."
 }

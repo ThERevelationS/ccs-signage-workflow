@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +17,13 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { usePolling } from "@/lib/usePolling";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -83,6 +86,36 @@ const MobileDescription = ({ value, fallback = "No description", label = "Job de
       )}
     </div>
   );
+};
+
+// Keep the clicked row pinned under the pointer while the focus gaps and
+// cell growth animate around it: re-anchor the clicked element's center on
+// screen every frame through the nearest vertical scroller.
+const anchorFocusedRow = (el) => {
+  if (!el?.isConnected) return;
+  let scroller = el.parentElement;
+  while (scroller && (!/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) || scroller.scrollHeight <= scroller.clientHeight)) {
+    scroller = scroller.parentElement;
+  }
+  const target = scroller || document.scrollingElement;
+  if (!target) return;
+  const beforeRect = el.getBoundingClientRect();
+  const beforeCenter = beforeRect.top + beforeRect.height / 2;
+  const start = performance.now();
+  const tick = () => {
+    if (!el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const drift = r.top + r.height / 2 - beforeCenter;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+    if (performance.now() - start < 220) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  setTimeout(() => {
+    if (!el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const drift = r.top + r.height / 2 - beforeCenter;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+  }, 240);
 };
 
 export default function SIPs() {
@@ -192,14 +225,14 @@ export default function SIPs() {
     document.title = "SIPs - Workflow Manager";
   }, []);
 
+  usePolling(() => {
+    // A timer tick should not compete with an in-flight load or local save.
+    // Save/conflict recovery still invokes loadWorkOrders directly.
+    if (boardSavesPendingRef.current === 0) void refreshBoardWhenIdle();
+  }, 60000, { runOnMount: false });
+
   useEffect(() => {
     loadWorkOrders();
-    const interval = setInterval(() => {
-      // A timer tick should not compete with an in-flight load or local save.
-      // Save/conflict recovery still invokes loadWorkOrders directly.
-      if (boardSavesPendingRef.current === 0) void refreshBoardWhenIdle();
-    }, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const loadWorkOrders = async (showLoading = true, { clearQuickEditErrorOnSuccess = false } = {}) => {
@@ -262,7 +295,16 @@ export default function SIPs() {
           }
         });
       }
-      setWipTaskDescriptions(wipDescs);
+      // A refresh that returns identical data must keep the existing array
+      // identities — replacing them would invalidate the memoized board
+      // sections, the checklist-progress cache, and the role pick lists on
+      // every timer tick. These states are only ever written here, and the
+      // snapshot guard above already discarded superseded loads. Functional
+      // updaters are required: the 60s interval captured this function's
+      // first-render closure, so comparing against rendered state would
+      // measure stale initial values and replace every input on every tick.
+      const sameData = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+      setWipTaskDescriptions(prev => sameData(wipDescs, prev) ? prev : wipDescs);
       setBoardError("");
       if (clearQuickEditErrorOnSuccess) setQuickEditError("");
       if (dropdownsSetting?.error) {
@@ -270,7 +312,8 @@ export default function SIPs() {
         setChecklistConfigWarning("Checklist status definitions could not refresh. Work Orders are current, but checklist progress may use the last loaded rules.");
       } else {
         setChecklistConfigWarning("");
-        setDropdownConditions(dropdownsSetting?.setting?.setting_value?.items || []);
+        const nextConditions = dropdownsSetting?.setting?.setting_value?.items || [];
+        setDropdownConditions(prev => sameData(nextConditions, prev) ? prev : nextConditions);
       }
       
       // Filter for SIPs - items where:
@@ -284,7 +327,7 @@ export default function SIPs() {
       );
       boardHasLoadedRef.current = true;
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
-      setUsers(usersData);
+      setUsers(prev => sameData(usersData, prev) ? prev : usersData);
       setLastUpdated(new Date());
       // Callers reconciling a rejected write may use only this verified,
       // current snapshot, never a stale or failed board refresh.
@@ -349,6 +392,9 @@ export default function SIPs() {
         label: `SIPs ${field}`,
       });
       applySavedBoardFields(orderId, saved, [field]);
+      if (field === "sip_revisit_date" && value && saved?.id) {
+        void NotificationTriggers.sipItemRevisitSet(saved, currentUser?.email).catch(() => {});
+      }
     } catch (error) {
       console.error("Error updating SIPs Work Order field:", error);
       setQuickEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
@@ -371,19 +417,24 @@ export default function SIPs() {
     }
   };
 
+  // The WIP description list becomes a Set once per data change instead of a
+  // linear includes() scan for every row on every render.
+  const wipTaskDescriptionSet = useMemo(() => new Set(wipTaskDescriptions), [wipTaskDescriptions]);
+
   // Check if a work order is a WIP item (has WIP task description)
-  const isWipItem = (wo) => {
-    return wo.current_task_description && wipTaskDescriptions.includes(wo.current_task_description);
-  };
+  const isWipItem = useCallback((wo) => {
+    return wo.current_task_description && wipTaskDescriptionSet.has(wo.current_task_description);
+  }, [wipTaskDescriptionSet]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
 
-  const isRevisitFuture = (wo) => {
+  const isRevisitFuture = useCallback((wo) => {
     if (!wo.sip_revisit_date) return false;
     const d = parseLocalDate(wo.sip_revisit_date);
-    return d && d > today;
-  };
+    return d && d.getTime() > todayMs;
+  }, [todayMs]);
 
   // Completion must go through the checklist dialog so approvals, statuses,
   // child tasks, and concurrency-safe completion are validated consistently.
@@ -529,10 +580,10 @@ export default function SIPs() {
   };
 
   // All non-completed active items
-  const allActive = workOrders.filter(wo => (!isWipItem(wo) || !wo.sip_completed));
+  const allActive = useMemo(() => workOrders.filter(wo => (!isWipItem(wo) || !wo.sip_completed)), [workOrders, isWipItem]);
 
   // Jobs with NO revisit date or revisit date <= today go to main active list
-  const activeWorkOrders = allActive
+  const activeWorkOrders = useMemo(() => allActive
     .filter(wo => !isRevisitFuture(wo))
     .sort((a, b) => {
       // No date => top; then sort ascending by revisit date
@@ -540,20 +591,20 @@ export default function SIPs() {
       if (!a.sip_revisit_date) return -1;
       if (!b.sip_revisit_date) return 1;
       return a.sip_revisit_date.localeCompare(b.sip_revisit_date);
-    });
+    }), [allActive, isRevisitFuture]);
 
   // Jobs with a FUTURE revisit date
-  const futureRevisitOrders = allActive
+  const futureRevisitOrders = useMemo(() => allActive
     .filter(wo => isRevisitFuture(wo))
-    .sort((a, b) => a.sip_revisit_date.localeCompare(b.sip_revisit_date));
+    .sort((a, b) => a.sip_revisit_date.localeCompare(b.sip_revisit_date)), [allActive, isRevisitFuture]);
   const nextRevisitDate = futureRevisitOrders[0]?.sip_revisit_date
     ? parseLocalDate(futureRevisitOrders[0].sip_revisit_date)
     : null;
 
-  const completedWipItems = workOrders.filter(wo => isWipItem(wo) && wo.sip_completed);
+  const completedWipItems = useMemo(() => workOrders.filter(wo => isWipItem(wo) && wo.sip_completed), [workOrders, isWipItem]);
 
-  const normalizedSearch = searchQuery.trim().toLowerCase();
-  const matchesSearch = (wo) => {
+  const normalizedSearch = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery]);
+  const matchesSearch = useCallback((wo) => {
     if (!normalizedSearch) return true;
     return [
       wo.client_name,
@@ -566,17 +617,17 @@ export default function SIPs() {
       wo.est_inv_at,
       wo.corbridge_invoice_number,
     ].some(value => String(value || "").toLowerCase().includes(normalizedSearch));
-  };
+  }, [normalizedSearch]);
 
-  const getDeadlineStatus = (dateString) => {
+  const getDeadlineStatus = useCallback((dateString) => {
     const deadline = parseLocalDate(dateString);
     if (!deadline || Number.isNaN(deadline.getTime())) return null;
-    const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+    const diffDays = Math.ceil((deadline.getTime() - todayMs) / 86400000);
     if (diffDays < 0) return { bucket: "overdue", label: `${Math.abs(diffDays)}d overdue`, className: "bg-red-100 text-red-700 border-red-200" };
     if (diffDays === 0) return { bucket: "today", label: "Due today", className: "bg-red-100 text-red-700 border-red-200" };
     if (diffDays <= 7) return { bucket: "soon", label: `${diffDays}d left`, className: "bg-amber-100 text-amber-800 border-amber-200" };
     return { bucket: "future", label: null, className: "" };
-  };
+  }, [todayMs]);
 
   const openChecklist = (wo) => {
     if (!wo?.id) return;
@@ -592,42 +643,84 @@ export default function SIPs() {
     setChecklistDialog(current => current.open ? current : { open: true, workOrder: wo });
   };
 
-  const getChecklistProgress = (wo) => {
+  // Radix restores focus to the original opener only while that element
+  // stays mounted; a save can move the row between sections or filter it
+  // out. Give keyboard users the same landing spot the WIP-reopen path uses.
+  const restoreBoardFocus = (workOrderId) => {
+    const active = document.activeElement;
+    if (active && active !== document.body && active.isConnected) return;
+    const button = Array.from(document.querySelectorAll("[data-sips-active-focus-id],[data-sips-job-focus-id]"))
+      .find(node => (node.dataset.sipsActiveFocusId || node.dataset.sipsJobFocusId) === workOrderId && node.getClientRects().length > 0);
+    (button || revisitClearBoardRef.current)?.focus();
+  };
+  const closeChecklistDialog = (wo) => {
+    const workOrderId = wo?.id;
+    setChecklistDialog({ open: false, workOrder: null });
+    requestAnimationFrame(() => restoreBoardFocus(workOrderId));
+  };
+  const closeDetailsDialog = (wo) => {
+    const workOrderId = wo?.id;
+    setSelectedWorkOrder(null);
+    requestAnimationFrame(() => restoreBoardFocus(workOrderId));
+  };
+
+  const dropdownConditionByName = useMemo(
+    () => new Map(dropdownConditions.map(condition => [condition.name, condition])),
+    [dropdownConditions]
+  );
+
+  // Progress is evaluated for every row on every board render. Cache the
+  // result per Work Order object — board refreshes deliver fresh objects, so
+  // a stale result cannot survive a real data change — and look conditions up
+  // by name instead of scanning the whole list for each checklist item.
+  const checklistProgressCacheRef = useRef({ conditions: null, results: new WeakMap() });
+  const getChecklistProgress = useCallback((wo) => {
+    const cache = checklistProgressCacheRef.current;
+    if (cache.conditions !== dropdownConditionByName) {
+      cache.conditions = dropdownConditionByName;
+      cache.results = new WeakMap();
+    }
+    // WorkOrderDetailsDialog patches the loaded row in place via
+    // Object.assign, so the same object can gain a different checklist array.
+    // The cache is only valid while the stored checklist identity matches.
+    const cached = cache.results.get(wo);
+    if (cached && cached.checklist === wo.sip_checklist) return cached.result;
     const checklist = wo.sip_checklist || [];
-    if (checklist.length === 0) return { completed: 0, total: 0 };
-    
+
     // Only count main checklist items (type === 'checklist' or no type AND no parent_id)
-    const mainChecklistItems = checklist.filter(item => 
+    const mainChecklistItems = checklist.filter(item =>
       (!item.type || item.type === 'checklist') && !item.parent_id
     );
-    
+
     if (mainChecklistItems.length === 0) return { completed: 0, total: 0 };
-    
+
     // Match ProductChecklistDialog completion semantics exactly:
     // an approver + status is required, configured Continued statuses stay open,
     // and legacy/custom statuses that are no longer configured remain complete.
     const mainCompleted = mainChecklistItems.filter(item => {
       if (!item.approved_by || !item.custom_dropdown_value) return false;
-      const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+      const condition = dropdownConditionByName.get(item.custom_dropdown_value);
       return !condition || condition.is_completed;
     }).length;
-    
-    return { 
-      completed: mainCompleted, 
-      total: mainChecklistItems.length 
-    };
-  };
 
-  const needsAttention = (wo) => {
+    const result = {
+      completed: mainCompleted,
+      total: mainChecklistItems.length
+    };
+    cache.results.set(wo, { checklist: wo.sip_checklist, result });
+    return result;
+  }, [dropdownConditionByName]);
+
+  const needsAttention = useCallback((wo) => {
     const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
     return Boolean(
       wo.asap ||
       deadlineStatus?.bucket === "overdue" ||
       ["at_risk", "delayed", "blocked"].includes(wo.project_health)
     );
-  };
+  }, [getDeadlineStatus]);
 
-  const matchesStatusFilter = (wo) => {
+  const matchesStatusFilter = useCallback((wo) => {
     if (statusFilter === "all") return true;
     const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
     if (statusFilter === "attention") return needsAttention(wo);
@@ -638,9 +731,9 @@ export default function SIPs() {
       return progress.total === 0 || progress.completed < progress.total;
     }
     return true;
-  };
+  }, [statusFilter, getDeadlineStatus, needsAttention, getChecklistProgress]);
 
-  const sortOrders = (orders) => [...orders].sort((a, b) => {
+  const sortOrders = useCallback((orders) => [...orders].sort((a, b) => {
     if (sortMode === "deadline") {
       if (!a.current_task_deadline && !b.current_task_deadline) return 0;
       if (!a.current_task_deadline) return 1;
@@ -650,21 +743,30 @@ export default function SIPs() {
     if (sortMode === "customer") return (a.client_name || "").localeCompare(b.client_name || "");
     if (sortMode === "amount") return Number(b.estimate_amount || 0) - Number(a.estimate_amount || 0);
     return 0;
-  });
+  }), [sortMode]);
 
-  const visibleActiveWorkOrders = sortOrders(
+  // Derive the visible sections and badge counts once per input change; an
+  // unrelated render (dialog flag, in-flight marker) no longer refilters and
+  // resorts every row.
+  const visibleActiveWorkOrders = useMemo(() => sortOrders(
     activeWorkOrders.filter(matchesSearch).filter(matchesStatusFilter)
-  );
-  const visibleFutureRevisitOrders = futureRevisitOrders.filter(matchesSearch);
-  const visibleCompletedWipItems = completedWipItems.filter(matchesSearch);
-  const overdueCount = activeWorkOrders.filter((wo) => getDeadlineStatus(wo.current_task_deadline)?.bucket === "overdue").length;
-  const dueSoonCount = activeWorkOrders.filter((wo) => ["today", "soon"].includes(getDeadlineStatus(wo.current_task_deadline)?.bucket)).length;
-  const attentionCount = activeWorkOrders.filter(needsAttention).length;
-  const incompleteChecklistCount = activeWorkOrders.filter((wo) => {
+  ), [activeWorkOrders, matchesSearch, matchesStatusFilter, sortOrders]);
+  const visibleFutureRevisitOrders = useMemo(() => futureRevisitOrders.filter(matchesSearch), [futureRevisitOrders, matchesSearch]);
+  const visibleCompletedWipItems = useMemo(() => completedWipItems.filter(matchesSearch), [completedWipItems, matchesSearch]);
+  const overdueCount = useMemo(() => activeWorkOrders.filter((wo) => getDeadlineStatus(wo.current_task_deadline)?.bucket === "overdue").length, [activeWorkOrders, getDeadlineStatus]);
+  const dueSoonCount = useMemo(() => activeWorkOrders.filter((wo) => ["today", "soon"].includes(getDeadlineStatus(wo.current_task_deadline)?.bucket)).length, [activeWorkOrders, getDeadlineStatus]);
+  const attentionCount = useMemo(() => activeWorkOrders.filter(needsAttention).length, [activeWorkOrders, needsAttention]);
+  const incompleteChecklistCount = useMemo(() => activeWorkOrders.filter((wo) => {
     const progress = getChecklistProgress(wo);
     return progress.total === 0 || progress.completed < progress.total;
-  }).length;
-  const activeValue = activeWorkOrders.reduce((sum, wo) => sum + Number(wo.estimate_amount || 0), 0);
+  }).length, [activeWorkOrders, getChecklistProgress]);
+  const activeValue = useMemo(() => activeWorkOrders.reduce((sum, wo) => sum + Number(wo.estimate_amount || 0), 0), [activeWorkOrders]);
+
+  // Role-filtered pick lists are shared by every row; build them once.
+  const taskAssignedUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Task Assigned")), [users]);
+  const designerUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Designer")), [users]);
+  const projectManagerUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")), [users]);
+  const estimatorUsers = useMemo(() => users.filter(u => u.sales_roles?.includes("Estimator")), [users]);
   const hasBoardViewFilters = Boolean(searchQuery || statusFilter !== "all" || sortMode !== "meeting");
   const resetBoardView = () => {
     setSearchQuery("");
@@ -893,7 +995,7 @@ export default function SIPs() {
               const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
               const isWip = isWipItem(wo);
               return (
-                <div key={wo.id} className={`rounded-xl border p-3 bg-white ${focusedRowId === wo.id ? "ring-2 ring-purple-400" : ""}`}>
+                <div key={wo.id} className={`rounded-xl border p-3 bg-white transition-all duration-300 ${focusedRowId === wo.id ? "ring-2 ring-purple-400 scale-[1.02] shadow-lg shadow-purple-300/50" : ""}`}>
                   <div className="flex items-start gap-3">
                     <button
                       type="button"
@@ -1039,20 +1141,19 @@ export default function SIPs() {
                 const isWip = isWipItem(wo);
                 const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
                 
-                return (
-                  <React.Fragment key={wo.id}>
-                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
-                  <tr 
-                    className={`border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
-                    style={{ height: '50px' }}
+                return [
+                  focusedRowId === wo.id && <tr key="focus-gap-top" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>,
+                  <tr key="row"
+                    className={`sips-board-row border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'sips-focus-row' : ''}`}
+                    style={{ height: focusedRowId === wo.id ? '62px' : '50px' }}
                   >
                     {/* Row Number - Clickable Focus Button */}
                     <td className="px-0 py-0 border-r">
                       <button
-                        onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
+                        onClick={(e) => { anchorFocusedRow(e.currentTarget); setFocusedRowId(focusedRowId === wo.id ? null : wo.id); }}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                           focusedRowId === wo.id 
-                            ? 'bg-purple-500 text-white' 
+                            ? 'sips-focus-num text-white'
                             : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
                         }`}
                         style={focusedRowId !== wo.id ? { 
@@ -1146,7 +1247,7 @@ export default function SIPs() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SIPs">SIPs</SelectItem>
-                          {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => (
+                          {taskAssignedUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1165,7 +1266,7 @@ export default function SIPs() {
                           <SelectValue placeholder="-">{wo.designer || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.sales_roles?.includes("Designer")).map(u => (
+                          {designerUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1184,7 +1285,7 @@ export default function SIPs() {
                           <SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")).map(u => (
+                          {projectManagerUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1203,7 +1304,7 @@ export default function SIPs() {
                           <SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => (
+                          {estimatorUsers.map(u => (
                             <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1299,10 +1400,9 @@ export default function SIPs() {
                         </PopoverContent>
                       </Popover>
                     </td>
-                  </tr>
-                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
-                  </React.Fragment>
-                );
+                  </tr>,
+                  focusedRowId === wo.id && <tr key="focus-gap-bottom" className="sips-focus-gap" aria-hidden="true"><td colSpan={14}><div className="sips-focus-gap-inner" /></td></tr>
+                ];
               })}
               {visibleActiveWorkOrders.length === 0 && (
                 <tr>
@@ -1344,7 +1444,7 @@ export default function SIPs() {
                         <CalendarClock className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                        <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                           <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -1451,7 +1551,7 @@ export default function SIPs() {
                         </Button>
                       </td>
                       <td className="px-2 py-2 border-r">
-                        <button onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
+                        <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate">
                           <LinkIcon className="w-3 h-3 flex-shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -1512,7 +1612,7 @@ export default function SIPs() {
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                      <button data-sips-job-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -1602,6 +1702,7 @@ export default function SIPs() {
                     </td>
                     <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
                       <button
+                        data-sips-job-focus-id={wo.id}
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full"
                       >
@@ -1631,7 +1732,7 @@ export default function SIPs() {
       {selectedWorkOrder && (
         <WorkOrderDetailsDialog
           isOpen={true}
-          onClose={() => setSelectedWorkOrder(null)}
+          onClose={() => closeDetailsDialog(selectedWorkOrder)}
           workOrder={selectedWorkOrder}
           onUpdate={() => loadWorkOrders()}
           onMove={async (wo, newStage) => {
@@ -1788,7 +1889,7 @@ export default function SIPs() {
       {checklistDialog.open && checklistDialog.workOrder && (
         <ProductChecklistDialog
           isOpen={checklistDialog.open}
-          onClose={() => setChecklistDialog({ open: false, workOrder: null })}
+          onClose={() => closeChecklistDialog(checklistDialog.workOrder)}
           workOrder={checklistDialog.workOrder}
           onUpdate={() => loadWorkOrders(false)}
           isRegistered={isRegistered}

@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "2beb802be333056fadd6968738294f59  base44/functions/opportunityWorkspaceAction/entry.ts\n592386fb3edf8b4422e9b6920565083d  base44/functions/timeClockAction/entry.ts\n86fcc9a689f53026062b3c95d951cf1c  src/Layout.jsx\n5c02bb8650a2bd15b4829f7a48cace27  src/components/timeclock/TimeTracker.jsx\n8de7c04de974f29c9e38016480a2657a  src/components/timeclock/TimeTrackerSettings.jsx\n5bbb84b6f46328822a7141e4132acd2e  src/components/workflow/AttentionFeed.jsx\n3a1f13f376613072f4f67a89aae9514b  src/components/workflow/AttentionBell.jsx\nac3483f499a9df22eb9eae6a2fa7bd90  src/pages/ChangeOrders.jsx\n5babb53fc9e0460c3c9ababc65b156e0  src/pages/MyWorkflow.jsx\ncbb4f17c9c8ff9e43a3ecc438071b1d4  scripts/permitting-selector-address-progress.test.mjs\n6cab725587e7dc5b854a6e0199329e5f  scripts/test-timeclock-admin-browser.mjs\nsrc/components/workflow/AttentionBell.jsx\n\nbase44/functions/staffEntityWrite/:\nentry.ts\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 964
+}

@@ -1,0 +1,55 @@
+{
+  "name": "InventoryCostHistory",
+  "properties": {
+    "inventory_item_id": {
+      "type": "string",
+      "required": true,
+      "description": "Referenced inventory row id (any Master Inventory entity)."
+    },
+    "entity_key": {
+      "type": "string",
+      "description": "Inventory source key (substrates, extruded_metals, labor_services, ...)."
+    },
+    "cost_field": {
+      "type": "string",
+      "description": "Field that changed (cost_per_unit, cost_per_sheet, default_rate, ...)."
+    },
+    "old_cost": {
+      "type": "number",
+      "description": "Cost before the change."
+    },
+    "new_cost": {
+      "type": "number",
+      "description": "Cost after the change."
+    },
+    "changed_by": {
+      "type": "string",
+      "description": "Email/name of the user who made the change, when known."
+    },
+    "note": {
+      "type": "string",
+      "description": "Context such as 'Master Inventory edit' or 'Quick add'."
+    }
+  },
+  "required": [
+    "inventory_item_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -71,6 +71,7 @@ ${rawText}`,
 
   const apply = () => {
     if (!result?.letter_purchases?.length) return;
+    if (mode === "replace" && !confirm("Replace all existing letter rows with the AI-generated items?")) return;
     onApply(result.letter_purchases, mode);
     setRawText("");
     setResult(null);

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, FileCheck2, Loader2 } from "lucide-react";
+import { CheckCircle2, FileCheck2, Link2, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import { invokePortal } from "@/components/portal/PortalPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
+import { estimateQuoteExpiration, formatQuoteIssueDate, isQuoteExpired, localDateStamp, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 
@@ -24,6 +26,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [rows, setRows] = useState([]);
   const [revisionRows, setRevisionRows] = useState([]);
   const [deliveryRows, setDeliveryRows] = useState([]);
+  const [sectionRows, setSectionRows] = useState([]);
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditReadError, setAuditReadError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -36,13 +39,17 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [evidenceReference, setEvidenceReference] = useState("");
   const [notes, setNotes] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalCopied, setPortalCopied] = useState(false);
+  const [portalError, setPortalError] = useState("");
+  const { sessionToken } = useAuth();
 
   const loadRows = async () => {
     if (!estimate?.id) return false;
     setAuditLoading(true);
     setAuditReadError("");
     try {
-      const [result, revisions, deliveries] = await Promise.all([
+      const [result, revisions, deliveries, sectionDecisions] = await Promise.all([
         loadAllEntityRows({
           entity: base44.entities.EstimateAcceptance,
           query: { estimate_id: estimate.id },
@@ -56,10 +63,17 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
           sort: "sent_at",
           label: "Estimate quote deliveries",
         }),
+        loadAllEntityRows({
+          entity: base44.entities.EstimateSectionAcceptance,
+          query: { estimate_id: estimate.id },
+          sort: "decided_at",
+          label: "Estimate section responses",
+        }).catch(() => []),
       ]);
       setRows((result || []).slice().sort((a, b) => new Date(b.accepted_at || 0) - new Date(a.accepted_at || 0)));
       setRevisionRows(revisions || []);
       setDeliveryRows((deliveries || []).slice().sort((a, b) => new Date(b.sent_at || 0) - new Date(a.sent_at || 0)));
+      setSectionRows((sectionDecisions || []).slice().sort((a, b) => new Date(b.decided_at || 0) - new Date(a.decided_at || 0)));
       return true;
     } catch (err) {
       setAuditReadError(err?.message || "Customer acceptance or revision history could not be verified.");
@@ -77,8 +91,8 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const quoteVersion = Math.max(0, Math.floor(Number(estimate?.quote_version || 0)));
   const currentAcceptance = rows.find((row) => Number(row.quote_version || 0) === quoteVersion) || null;
   const currentVersionDeliveries = deliveryRows.filter((row) => Number(row.quote_version || 0) === quoteVersion);
-  const currentExpirationDate = quoteExpirationDate(estimate?.quote_issue_date, estimate?.quote_valid_days ?? 30);
-  const currentQuoteExpired = quoteVersion > 0 && isQuoteExpired(estimate?.quote_issue_date, estimate?.quote_valid_days ?? 30);
+  const currentExpirationDate = estimateQuoteExpiration(estimate || {});
+  const currentQuoteExpired = quoteVersion > 0 && !!currentExpirationDate && localDateStamp() > currentExpirationDate;
   const acceptanceLifecycleKey = currentAcceptance?.id ? `customer_acceptance:${currentAcceptance.id}` : "";
   const approvalRevisionRecorded = !!acceptanceLifecycleKey && revisionRows.some((row) =>
     row.revision_status === "completed" &&
@@ -91,6 +105,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const repairingApprovedAcceptance = persistedStatus === "approved" && !!currentAcceptance && !approvalRevisionRecorded;
   const canAct = isRegistered && !auditLoading && !auditReadError && (canRecord || repairingApprovedAcceptance);
   const recoveringRecordedAcceptance = !!currentAcceptance;
+  const portalCustomerId = String(estimate?.customer_id || persistedEstimate?.customer_id || "").trim();
 
   const openDialog = () => {
     if (!canAct) return;
@@ -138,6 +153,24 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     }
   };
 
+  const copyPortalLink = async () => {
+    if (!portalCustomerId || !sessionToken || portalBusy) return;
+    setPortalBusy(true);
+    setPortalError("");
+    try {
+      const data = await invokePortal(sessionToken, { action: "create_link", kind: "customer", customer_id: portalCustomerId, creation_request_key: crypto.randomUUID() });
+      const token = String(data?.token || data?.link?.token || "").trim();
+      if (!token) throw new Error("No customer portal link is available for this customer.");
+      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);
+      setPortalCopied(true);
+      window.setTimeout(() => setPortalCopied(false), 2500);
+    } catch (err) {
+      setPortalError(err?.message || "The customer portal link could not be prepared.");
+    } finally {
+      setPortalBusy(false);
+    }
+  };
+
   return (
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
@@ -177,6 +210,32 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             ))}
           </div>
         )}
+        {sectionRows.length > 0 && (
+          <div className="mt-3">
+            <div className="text-[9px] font-bold tracking-wide text-gray-500 uppercase mb-1.5">Per-section responses</div>
+            <div className="border border-gray-200 rounded overflow-hidden">
+              {sectionRows.slice(0, 10).map((row) => (
+                <div key={row.id} className="px-3 py-2 border-b border-gray-100 last:border-b-0 bg-white flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold text-gray-900">{row.section_label || row.section_key}</div>
+                    <div className="text-[9px] text-gray-400">{row.decided_by_name || row.decided_by_email || "Customer"}{row.decided_at ? ` · ${new Date(row.decided_at).toLocaleString()}` : ""}</div>
+                    {row.note && <div className="mt-0.5 text-[9px] text-gray-500">{row.note}</div>}
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${row.decision === "accepted" ? "bg-emerald-100 text-emerald-800" : row.decision === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>{row.decision === "accepted" ? "Accepted" : row.decision === "rejected" ? "Declined" : "Question"}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {isRegistered && persistedStatus === "sent" && portalCustomerId && (
+          <div className="mt-3 rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-center justify-between gap-3">
+            <div className="text-[10px] text-blue-800"><strong>Share the customer portal link</strong> so the customer can review and approve Quote Version {quoteVersion} online.</div>
+            <button type="button" onClick={copyPortalLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+              {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />} {portalCopied ? "Link Copied" : "Copy Approval Link"}
+            </button>
+          </div>
+        )}
+        {portalError && <div className="mt-2 text-[9px] text-red-600">{portalError}</div>}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={(next) => !saving && setDialogOpen(next)}>
@@ -193,7 +252,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
               <label className="block text-[10px] font-bold tracking-wide text-gray-500">METHOD<select disabled={recoveringRecordedAcceptance} value={acceptanceMethod} onChange={(event) => setAcceptanceMethod(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500">{Object.entries(METHOD_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label className="block text-[10px] font-bold tracking-wide text-gray-500">ACCEPTED DATE / TIME<input type="datetime-local" disabled={recoveringRecordedAcceptance} value={acceptedAt} onChange={(event) => setAcceptedAt(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
             </div>
-            <label className="block text-[10px] font-bold tracking-wide text-gray-500">RELATED QUOTE DELIVERY (OPTIONAL)<select disabled={recoveringRecordedAcceptance} value={deliveryId} onChange={(event) => setDeliveryId(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"><option value="">Not tied to a specific delivery</option>{currentVersionDeliveries.map((delivery) => <option key={delivery.id} value={delivery.id}>{delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : "Sent"} · {delivery.recipient_email || "recipient not recorded"}{delivery.is_resend ? " · Resend" : ""}</option>)}</select><span className="mt-1 block text-[9px] font-normal normal-case tracking-normal text-gray-400">Choose the exact email delivery the customer accepted when known. Leave blank for verbal/in-person approval or when the specific delivery is unknown.</span></label>
+            <label className="block text-[10px] font-bold tracking-wide text-gray-500">RELATED QUOTE DELIVERY (OPTIONAL)<select disabled={recoveringRecordedAcceptance} value={deliveryId} onChange={(event) => setDeliveryId(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"><option value="">Not tied to a specific delivery</option>{currentVersionDeliveries.map((delivery) => <option key={delivery.id} value={delivery.id}>{delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : "Sent"} · {delivery.recipient_email || "recipient not recorded"}{delivery.delivery_n > 1 ? ` · Send #${delivery.delivery_n}` : delivery.is_resend ? " · Resend" : ""}</option>)}</select><span className="mt-1 block text-[9px] font-normal normal-case tracking-normal text-gray-400">Choose the exact email delivery the customer accepted when known. Leave blank for verbal/in-person approval or when the specific delivery is unknown.</span></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">EVIDENCE / REFERENCE<input disabled={recoveringRecordedAcceptance} value={evidenceReference} onChange={(event) => setEvidenceReference(event.target.value)} placeholder="e.g. Signed quote received, approval email, PO #..." className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">NOTES<textarea disabled={recoveringRecordedAcceptance} value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y disabled:bg-gray-100 disabled:text-gray-500" /></label>
             {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}

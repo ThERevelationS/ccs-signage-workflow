@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MetalProject, Settings, Inventory as InventoryEntity } from "@/entities/all";
+import { MetalProject, Settings, Inventory as InventoryEntity } from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +19,13 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
 // materialTypes is not directly used in the current structure for display, but could be for filtering
 // const materialTypes = ["Aluminum", "Steel", "Stainless_Steel", "Galvanized_Steel"];
+
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export default function MetalEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
@@ -61,7 +64,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           loadAllEntityRows({ entity: InventoryEntity, sort: "created_date", label: "Metal inventory" }),
           editId ? MetalProject.get(editId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
 
@@ -113,6 +116,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   }, [editId, estimateId]);
 
   const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
     setProject(prev => ({
       ...prev,
       items: [...prev.items, {
@@ -135,6 +139,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const removeItem = (index) => {
+    if (!window.confirm("Remove this item?")) return;
     setProject(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
   };
 
@@ -198,7 +203,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
         if (inventoryItem && inventoryItem.size) {
             dimensionsDisplay = inventoryItem.size;
             const sizeString = inventoryItem.size.toLowerCase().replace(/['"inchesftt]/g, '').trim();
-            const parts = sizeString.split(/[x×]/).map(p => p.trim());
+            const parts = sizeString.split(/[xÃ—]/).map(p => p.trim());
             if (parts.length >= 1) length = parts[0];
             if (parts.length >= 2) width = parts[1];
             if (parts.length >= 3) thickness = parts[2];
@@ -237,6 +242,13 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   }, [project.items, inventory, calculateTotals]);
 
 
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!isSaving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isSaving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
@@ -364,7 +376,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Metal Estimate - ${project.project_name}</title>
+  <title>Metal Estimate - ${escHtml(project.project_name)}</title>
   <meta charset="UTF-8">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -658,7 +670,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
 <body>
   <div class="container">
     <div class="header">
-      <h1>🔨 Metal Fabrication Estimate</h1>
+      <h1>ðŸ”¨ Metal Fabrication Estimate</h1>
       <div class="subtitle">Custom Metal Work & Fabrication</div>
     </div>
     
@@ -667,11 +679,11 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Project:</span>
-          <span class="info-value">${project.project_name}</span>
+          <span class="info-value">${escHtml(project.project_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Client:</span>
-          <span class="info-value">${project.client_name}</span>
+          <span class="info-value">${escHtml(project.client_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Date:</span>
@@ -686,25 +698,25 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       ${enrichedItems.map((item, i) => `
         <div class="item">
           <div class="item-header">
-            Item ${i + 1}: ${item.description || `Metal fabrication item`}
+            Item ${i + 1}: ${escHtml(item.description || "Metal fabrication item")}
           </div>
           
           <div class="item-details">
             <div class="detail-row">
               <span class="detail-label">Type:</span>
-              <span class="detail-value">${item.item_type_display}</span>
+              <span class="detail-value">${escHtml(item.item_type_display)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Material:</span>
-              <span class="detail-value">${item.material_type}</span>
+              <span class="detail-value">${escHtml(item.material_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Dimensions:</span>
-              <span class="detail-value">${item.dimensions_display}</span>
+              <span class="detail-value">${escHtml(item.dimensions_display)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Quantity:</span>
-              <span class="detail-value">${item.quantity}</span>
+              <span class="detail-value">${escHtml(item.quantity)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Labor Hours:</span>
@@ -753,15 +765,15 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       
       ${project.notes ? `
         <div class="notes">
-          <h3>📝 Additional Notes</h3>
-          <p>${project.notes}</p>
+          <h3>ðŸ“� Additional Notes</h3>
+          <p>${escHtml(project.notes)}</p>
         </div>
       ` : ''}
     </div>
     
     <div class="footer">
       Generated by SignEstimate Pro - Professional Estimating Suite<br>
-      © ${new Date().getFullYear()} All Rights Reserved
+      Â© ${new Date().getFullYear()} All Rights Reserved
     </div>
   </div>
 </body>
@@ -787,7 +799,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
     const printContent = `
       <html>
         <head>
-          <title>Metal Estimate - ${project.project_name}</title>
+          <title>Metal Estimate - ${escHtml(project.project_name)}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
@@ -1080,7 +1092,7 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
         <body>
           <div class="container">
             <div class="header">
-              <h1>🔨 Metal Fabrication Estimate</h1>
+              <h1>ðŸ”¨ Metal Fabrication Estimate</h1>
               <div class="subtitle">Custom Metal Work & Fabrication</div>
             </div>
             
@@ -1089,11 +1101,11 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Project:</span>
-                  <span class="info-value">${project.project_name}</span>
+                  <span class="info-value">${escHtml(project.project_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Client:</span>
-                  <span class="info-value">${project.client_name}</span>
+                  <span class="info-value">${escHtml(project.client_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Date:</span>
@@ -1108,25 +1120,25 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               ${enrichedItems.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
-                    Item ${i + 1}: ${item.description || `Metal fabrication item`}
+                    Item ${i + 1}: ${escHtml(item.description || "Metal fabrication item")}
                   </div>
                   
                   <div class="item-details">
                     <div class="detail-row">
                       <span class="detail-label">Type:</span>
-                      <span class="detail-value">${item.item_type_display}</span>
+                      <span class="detail-value">${escHtml(item.item_type_display)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Material:</span>
-                      <span class="detail-value">${item.material_type}</span>
+                      <span class="detail-value">${escHtml(item.material_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Dimensions:</span>
-                      <span class="detail-value">${item.dimensions_display}</span>
+                      <span class="detail-value">${escHtml(item.dimensions_display)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Quantity:</span>
-                      <span class="detail-value">${item.quantity}</span>
+                      <span class="detail-value">${escHtml(item.quantity)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Labor Hours:</span>
@@ -1175,15 +1187,15 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
               
               ${project.notes ? `
                 <div class="notes">
-                  <h3>📝 Additional Notes</h3>
-                  <p>${project.notes}</p>
+                  <h3>ðŸ“� Additional Notes</h3>
+                  <p>${escHtml(project.notes)}</p>
                 </div>
               ` : ''}
             </div>
             
             <div class="footer">
               Generated by SignEstimate Pro - Professional Estimating Suite<br>
-              © ${new Date().getFullYear()} All Rights Reserved
+              Â© ${new Date().getFullYear()} All Rights Reserved
             </div>
           </div>
         </body>
@@ -1197,6 +1209,23 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const { totalMaterialsCost, totalSuppliesCost, totalFabricationCost, totalWeldingCost, totalFinishingCost, grandTotal } = getProjectCalculations();
+  const stockFt = Math.max(1, Number(project.stock_length_ft) || 20);
+  const cutPlan = (() => {
+    const pieces = [];
+    (project.items || []).forEach((it) => {
+      const len = Number(it.material_length_ft) || 0;
+      const qty = Math.max(1, Number(it.quantity) || 1);
+      for (let i = 0; i < qty && len > 0; i += 1) pieces.push(len);
+    });
+    if (!pieces.length) return null;
+    const bins = [];
+    pieces.sort((a, b) => b - a).forEach((p) => {
+      const bin = bins.find((b) => b.remain >= p - 0.001);
+      if (bin) { bin.remain -= p; bin.cuts.push(p); }
+      else bins.push({ remain: Math.max(0, stockFt - p), cuts: [p], oversize: p > stockFt + 0.001 });
+    });
+    return { sticks: bins.length, wasteFt: bins.reduce((s, b) => s + b.remain, 0), oversize: bins.filter((b) => b.oversize).length };
+  })();
 
   if (isLoading) return <div className="p-8">Loading...</div>;
   if (loadError) return (
@@ -1243,11 +1272,16 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
             <Card className="bg-white border-0 shadow-sm">
                 <CardHeader><div className="flex justify-between items-center"><CardTitle>Project Items</CardTitle><Button onClick={addItem} size="sm"><Plus className="w-4 h-4 mr-2" />Add Item</Button></div></CardHeader>
                 <CardContent className="space-y-6">
+                    {project.items.length === 0 && (
+                      <div className="text-center py-8 text-slate-500">
+                        <p>No items added yet. Click "Add Item" to get started.</p>
+                      </div>
+                    )}
                     {project.items.map((item, index) => (
                       <div key={index} className="p-6 border rounded-xl bg-slate-25">
                         <div className="flex justify-between items-start mb-4"><h4 className="font-medium">Item {index + 1}</h4><Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button></div>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <div className="md:col-span-3"><Label>Description</Label><Input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
+                          <div className="md:col-span-3"><Label>Description</Label><Input data-item-desc={index} value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
                           <div><Label>Item Type</Label><Select value={item.item_type} onValueChange={(v) => updateItem(index, 'item_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{itemTypes.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, ' ')}</SelectItem>)}</SelectContent></Select></div>
                           <div className="md:col-span-2"><Label>Material</Label><Select value={item.inventory_item_id} onValueChange={(v) => updateItem(index, 'inventory_item_id', v)}><SelectTrigger><SelectValue placeholder="Select from inventory" /></SelectTrigger><SelectContent>{inventory.map(i => <SelectItem key={i.id} value={i.id}>{i.material_type} {i.product_type} {i.size} - ${i.cost_per_unit}/{i.unit_type}</SelectItem>)}</SelectContent></Select></div>
                           <div><Label>Material Length (ft)</Label><Input type="number" min="0" value={item.material_length_ft || ""} onChange={e => updateItem(index, 'material_length_ft', parseFloat(e.target.value) || 0)} /></div>
@@ -1339,7 +1373,14 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
           </div>
           <div className="space-y-6">
             <Card className="bg-white border-0 shadow-sm sticky top-8"><CardHeader><CardTitle>Cost Summary</CardTitle></CardHeader><CardContent className="space-y-2 text-sm"><div className="flex justify-between"><span className="text-slate-600">Total Material Cost:</span><span className="font-medium text-slate-900">${totalMaterialsCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Supplies Cost:</span><span className="font-medium text-slate-900">${totalSuppliesCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Fabrication Cost:</span><span className="font-medium text-slate-900">${totalFabricationCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Welding Cost:</span><span className="font-medium text-slate-900">${totalWeldingCost.toFixed(2)}</span></div><div className="flex justify-between"><span className="text-slate-600">Total Finishing Cost:</span><span className="font-medium text-slate-900">${totalFinishingCost.toFixed(2)}</span></div><div className="mt-4 pt-4 border-t"><div className="flex justify-between items-center"><span className="font-bold text-lg text-slate-900">Grand Total:</span><span className="font-bold text-2xl text-blue-600">${grandTotal.toFixed(2)}</span></div></div></CardContent></Card>
-            <Button onClick={saveProject} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
+            <Card className="bg-white border-0 shadow-sm"><CardHeader><CardTitle>Stock Cut Plan</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+              <div className="flex items-center gap-2"><Label>Stock length (ft)</Label><Input type="number" min="1" step="any" value={project.stock_length_ft ?? 20} onChange={(e) => setProject((p) => ({ ...p, stock_length_ft: Math.max(1, Number(e.target.value) || 20) }))} className="w-20 h-8" /></div>
+              {cutPlan ? (
+                <div className="text-xs text-slate-600">≈{cutPlan.sticks} stock stick{cutPlan.sticks === 1 ? "" : "s"} needed · ≈{cutPlan.wasteFt.toFixed(1)} ft waste{cutPlan.oversize ? ` · ${cutPlan.oversize} cut${cutPlan.oversize === 1 ? "" : "s"} exceed stock length` : ""}</div>
+              ) : (<div className="text-xs text-slate-400">Add items with material lengths to see a suggested cut plan.</div>)}
+            </CardContent></Card>
+            {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
             <div className="grid grid-cols-2 gap-4">
               <Button onClick={downloadEstimate} variant="outline" className="w-full"><Download className="w-4 h-4 mr-2" /> Download</Button>
               <Button onClick={printEstimate} variant="outline" className="w-full"><Printer className="w-4 h-4 mr-2" /> Print</Button>

@@ -20,6 +20,7 @@ import {
   saveSettingMapEntryIfUnchanged,
   updateChecklistSubItemIfUnchanged,
 } from "./templateBuilderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -139,7 +140,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       const loadUsers = async () => {
         try {
           const usersData = await loadAllEntityRows({
-            entity: base44.entities.AuthorizedEmail,
+            entity: staffEntities.AuthorizedEmail,
             sort: null,
             label: "SIP Template Builder authorized users",
           });
@@ -166,10 +167,40 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const builderHeadingRef = useRef(null);
   const reloadButtonRef = useRef(null);
   const checklistSaveInFlight = useRef(null);
+  // Catalog mutations (create/rename/delete/duplicate/reorder) all write the
+  // same entity rows and settings maps. Serialize them — plus checklist saves —
+  // so a repeated click cannot double-submit and two writes cannot collide on
+  // the same optimistic-concurrency record while either is still in flight.
+  const catalogActionInFlightRef = useRef(false);
+  const catalogActionBlockedNotice = () => {
+    setNoticeDialog({
+      title: "Template change still saving",
+      message: "Another template change is still saving. Wait for it to finish, then try again.",
+    });
+  };
+  const beginCatalogAction = () => {
+    if (catalogActionInFlightRef.current || checklistSaveInFlight.current) {
+      catalogActionBlockedNotice();
+      return false;
+    }
+    catalogActionInFlightRef.current = true;
+    return true;
+  };
   const subTemplateDraftRef = useRef(null);
   const productTypeDraftRef = useRef(null);
   subTemplateDraftRef.current = { id: selectedSubTemplate, items: subTemplateChecklistItems };
   productTypeDraftRef.current = { id: selectedProductType, items: productTypeItems };
+  // Rename sessions carry identity too: a late save response may only close
+  // the exact rename draft it came from, never a newer or reopened editor.
+  const renameDraftRef = useRef(null);
+  renameDraftRef.current = {
+    subTemplateId: editingSubTemplateId,
+    subTemplateName: editingSubTemplateName,
+    productTypeId: editingProductTypeName,
+    productTypeName: editingProductTypeValue,
+    conditionId: editingDropdown,
+    conditionName: editingDropdownName,
+  };
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -261,6 +292,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     return saved;
   };
 
+  // Inline condition mutations (section reorder, group move) may not overlap
+  // another catalog write or a checklist save; the lock is held until the
+  // write settles and released on failure too.
+  const saveDropdownConditionsCatalog = (nextConditions, label) => {
+    if (!beginCatalogAction()) return;
+    saveDropdownConditions(nextConditions)
+      .catch(error => {
+        console.error(`Error saving dropdown conditions (${label}):`, error);
+      })
+      .finally(() => {
+        catalogActionInFlightRef.current = false;
+      });
+  };
+
   const startDropdownRename = (condition) => {
     setEditingDropdown(condition.id);
     setEditingDropdownName(condition.name || "");
@@ -272,24 +317,35 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveDropdownRename = async (condition) => {
-    const name = editingDropdownName.trim();
-    if (!name) return;
+    const submittedDraft = editingDropdownName;
+    const name = submittedDraft.trim();
+    if (!name || !beginCatalogAction()) return;
     try {
       await saveDropdownConditions(dropdownConditions.map(item => item.id === condition.id ? { ...item, name } : item));
-      cancelDropdownRename();
+      // Only dismiss the rename editor when it still shows the draft this
+      // save came from; a newer rename session must not be closed by it.
+      if (renameDraftRef.current.conditionId === condition.id && renameDraftRef.current.conditionName === submittedDraft) {
+        cancelDropdownRename();
+      }
     } catch (error) {
       console.error("Error renaming condition:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const createDropdownCondition = async () => {
-    const name = newDropdownName.trim();
-    if (!name) return;
+    const submittedName = newDropdownName;
+    const name = submittedName.trim();
+    if (!name || !beginCatalogAction()) return;
     try {
       await saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name, is_completed: false, order: dropdownConditions.length }]);
-      setNewDropdownName("");
+      // Keep any newer name typed while the create was still in flight.
+      setNewDropdownName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating condition:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -479,8 +535,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   // Sub-template Management
   const createSubTemplate = async () => {
-    const name = newSubTemplateName.trim();
-    if (!name) return;
+    const submittedName = newSubTemplateName;
+    const name = submittedName.trim();
+    if (!name || !beginCatalogAction()) return;
     setPersistenceError("");
     try {
       const result = await createChecklistSubItemIfAbsent({
@@ -492,14 +549,18 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         setPersistenceError(`A sub-template named "${name}" already exists. The existing template was kept instead of creating a duplicate.`);
       }
       await loadData();
-      setNewSubTemplateName("");
+      // Keep any newer name typed while the create was still in flight.
+      setNewSubTemplateName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating sub-template:", error);
       setPersistenceError(error?.message || "The sub-template could not be created safely.");
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const performDeleteSubTemplate = async (subTemplate) => {
+    if (!beginCatalogAction()) return;
     setPersistenceError("");
     try {
       await deleteChecklistSubItemIfUnchanged({
@@ -524,6 +585,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       console.error("Error deleting sub-template:", error);
       setPersistenceError(error?.message || "This sub-template changed in another session and was not deleted.");
       await loadData();
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -542,10 +605,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       message: `Remove “${type}” from the SIPS Product Checklists list? Work Orders that already use this checklist keep their saved checklist rows and answers. This stops the checklist from appearing for new selections; its stored template configuration is retained internally.`,
       confirmLabel: "Remove from Builder",
       onConfirm: async () => {
-        await saveProductTypes(productTypes.filter((_, i) => i !== index));
-        if (selectedProductType === type) {
-          setSelectedProductType(null);
-          setProductTypeItems([]);
+        if (!beginCatalogAction()) return;
+        try {
+          await saveProductTypes(productTypes.filter((_, i) => i !== index));
+          if (selectedProductType === type) {
+            setSelectedProductType(null);
+            setProductTypeItems([]);
+          }
+        } catch (error) {
+          console.error("Error removing product checklist:", error);
+        } finally {
+          catalogActionInFlightRef.current = false;
         }
       },
     });
@@ -556,12 +626,25 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       title: "Delete condition?",
       message: `Delete “${condition.name}”? Existing saved checklist answers are not rewritten, but this condition will no longer be available for new selections.`,
       confirmLabel: "Delete Condition",
-      onConfirm: () => saveDropdownConditions(dropdownConditions.filter(d => d.id !== condition.id)),
+      onConfirm: async () => {
+        if (!beginCatalogAction()) return;
+        try {
+          await saveDropdownConditions(dropdownConditions.filter(d => d.id !== condition.id));
+        } catch (error) {
+          console.error("Error deleting condition:", error);
+        } finally {
+          catalogActionInFlightRef.current = false;
+        }
+      },
     });
   };
 
   const runConfirmedAction = async () => {
     if (!confirmDialog?.onConfirm || isConfirming) return;
+    if (catalogActionInFlightRef.current || checklistSaveInFlight.current) {
+      catalogActionBlockedNotice();
+      return;
+    }
     setIsConfirming(true);
     try {
       await confirmDialog.onConfirm();
@@ -575,12 +658,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const blockNavigationWhileSaving = () => {
-    if (!checklistSaveInFlight.current && !reloadInFlightRef.current) return false;
+    if (!checklistSaveInFlight.current && !catalogActionInFlightRef.current && !reloadInFlightRef.current) return false;
+    const savingChecklistNow = checklistSaveInFlight.current && !reloadInFlightRef.current;
     setNoticeDialog({
-      title: reloadInFlightRef.current ? "Checklist reload in progress" : "Checklist save in progress",
+      title: reloadInFlightRef.current ? "Checklist reload in progress"
+        : savingChecklistNow ? "Checklist save in progress"
+        : "Template change in progress",
       message: reloadInFlightRef.current
         ? "Finish reloading your checklist before switching editors, changing tabs, or closing the builder."
-        : "Finish saving your checklist before switching editors, changing tabs, or closing the builder.",
+        : savingChecklistNow
+          ? "Finish saving your checklist before switching editors, changing tabs, or closing the builder."
+          : "Finish the current save before switching editors, changing tabs, or closing the builder.",
     });
     return true;
   };
@@ -601,8 +689,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const renameSubTemplate = async (subTemplate, nextName) => {
-    const name = String(nextName || '').trim();
+    const submittedDraft = String(nextName || '');
+    const name = submittedDraft.trim();
     if (!subTemplate?.id || !name) return false;
+    if (!beginCatalogAction()) return false;
     setPersistenceError("");
     try {
       const duplicate = subTemplates.find(st => st.id !== subTemplate.id && String(st.name || '').trim().toLowerCase() === name.toLowerCase());
@@ -615,19 +705,26 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       });
       invalidatePendingTemplateLoads();
       setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
-      setEditingSubTemplateId(null);
-      setEditingSubTemplateName("");
+      // Only dismiss the rename editor when it still shows the draft this
+      // save came from; a newer rename session must not be closed by it.
+      if (renameDraftRef.current.subTemplateId === subTemplate.id && renameDraftRef.current.subTemplateName === submittedDraft) {
+        setEditingSubTemplateId(null);
+        setEditingSubTemplateName("");
+      }
       return true;
     } catch (error) {
       console.error("Sub-template rename blocked:", error);
       setPersistenceError(error?.message || "This sub-template changed in another session. Reload before renaming it.");
       await loadData();
       return false;
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const updateSubTemplateProductTypes = async (subTemplate, nextApplies) => {
     if (!subTemplate?.id) return false;
+    if (!beginCatalogAction()) return false;
     setPersistenceError("");
     try {
       const saved = await updateChecklistSubItemIfUnchanged({
@@ -644,11 +741,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       setPersistenceError(error?.message || "This sub-template changed in another session. Latest data was reloaded.");
       await loadData();
       return false;
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const saveSubTemplateChecklist = async () => {
     if (!selectedSubTemplate || checklistSaveInFlight.current) return;
+    if (catalogActionInFlightRef.current) {
+      catalogActionBlockedNotice();
+      return;
+    }
     const snapshot = { kind: 'subTemplate', id: selectedSubTemplate, items: subTemplateChecklistItems };
     checklistSaveInFlight.current = snapshot;
     setSavingChecklist(snapshot.kind);
@@ -672,6 +775,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const duplicateSubTemplate = async (subTemplate) => {
+    if (!beginCatalogAction()) return;
     setPersistenceError("");
     const names = new Set(subTemplates.map(st => String(st.name || '').trim().toLowerCase()));
     let copyName = `${subTemplate.name} (Copy)`;
@@ -710,18 +814,53 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       console.error("Error duplicating sub-template:", error);
       setPersistenceError(error?.message || "The sub-template copy could not be completed safely.");
       await loadData();
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
   // Product Type Management
   const createProductType = async () => {
-    const name = newProductTypeName.trim();
-    if (!name) return;
+    const submittedName = newProductTypeName;
+    const name = submittedName.trim();
+    if (!name || !beginCatalogAction()) return;
     try {
       await saveProductTypes([...productTypes, name]);
-      setNewProductTypeName("");
+      // Keep any newer name typed while the create was still in flight.
+      setNewProductTypeName(current => (current === submittedName ? "" : current));
     } catch (error) {
       console.error("Error creating product checklist:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
+    }
+  };
+
+  const renameProductType = async (type, nextName) => {
+    const submittedDraft = String(nextName || '');
+    const newName = submittedDraft.trim();
+    if (!type || !newName) return;
+    if (!beginCatalogAction()) return;
+    try {
+      await saveProductTypes(productTypes.map(t => (t === type ? newName : t)));
+      if (productTypeTemplates[type]) {
+        const newTemplates = { ...productTypeTemplates };
+        newTemplates[newName] = newTemplates[type];
+        delete newTemplates[type];
+        await saveProductTypeTemplates(newTemplates);
+      }
+      // Retarget the open editor only when the renamed checklist is still
+      // open; a stale save must not steal a different open checklist.
+      setSelectedProductType(current => (current === type ? newName : current));
+      // Only dismiss the rename editor when it still shows the draft this
+      // save came from; a newer rename session must not be closed by it.
+      if (renameDraftRef.current.productTypeId === type && renameDraftRef.current.productTypeName === submittedDraft) {
+        setEditingProductTypeName(null);
+        setEditingProductTypeValue("");
+      }
+    } catch (error) {
+      console.error("Error renaming product checklist:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -760,7 +899,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     || Boolean(newItemText.trim())
     || hasUnsavedNameDrafts;
   const reloadLatest = async () => {
-    if (reloadInFlightRef.current || checklistSaveInFlight.current) return;
+    if (reloadInFlightRef.current || checklistSaveInFlight.current || catalogActionInFlightRef.current) return;
     reloadInFlightRef.current = true;
     setIsReloading(true);
     try {
@@ -860,6 +999,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const saveProductTypeTemplate = async () => {
     if (!selectedProductType || checklistSaveInFlight.current) return;
+    if (catalogActionInFlightRef.current) {
+      catalogActionBlockedNotice();
+      return;
+    }
     const snapshot = { kind: 'productType', id: selectedProductType, items: productTypeItems };
     checklistSaveInFlight.current = snapshot;
     setSavingChecklist(snapshot.kind);
@@ -881,12 +1024,25 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const duplicateProductTypeTemplate = async (productType) => {
-    const newTypeName = `${productType} (Copy)`;
-    await saveProductTypes([...productTypes, newTypeName]);
-    const originalItems = productTypeTemplates[productType]?.items || [];
-    if (originalItems.length > 0) {
-      const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
-      await saveProductTypeTemplates({ ...productTypeTemplates, [newTypeName]: { items: copiedItems } });
+    if (!beginCatalogAction()) return;
+    const names = new Set(productTypes.map(t => String(t || '').trim().toLowerCase()));
+    let newTypeName = `${productType} (Copy)`;
+    let suffix = 2;
+    while (names.has(newTypeName.toLowerCase())) newTypeName = `${productType} (Copy ${suffix++})`;
+    try {
+      // Copy the item map before listing the new checklist so a failed first
+      // save leaves nothing behind and a failed name save only retains a
+      // hidden template entry, never an empty duplicate in the list.
+      const originalItems = productTypeTemplates[productType]?.items || [];
+      if (originalItems.length > 0) {
+        const copiedItems = JSON.parse(JSON.stringify(originalItems)).map(item => ({ ...item, id: Date.now().toString() + Math.random().toString(36).substr(2, 9) }));
+        await saveProductTypeTemplates({ ...productTypeTemplates, [newTypeName]: { items: copiedItems } });
+      }
+      await saveProductTypes([...productTypes, newTypeName]);
+    } catch (error) {
+      console.error("Error duplicating product checklist:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
     }
   };
 
@@ -979,6 +1135,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const handleSubTemplateDragEnd = async (result) => {
     if (isSubTemplateReordering || !result.destination || result.source.index === result.destination.index) return;
+    if (!beginCatalogAction()) return;
     const reordered = Array.from(subTemplates);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
@@ -1004,15 +1161,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       await loadData();
     } finally {
       setIsSubTemplateReordering(false);
+      catalogActionInFlightRef.current = false;
     }
   };
 
   const handleProductTypeDragEnd = async (result) => {
-    if (!result.destination) return;
+    if (!result.destination || !beginCatalogAction()) return;
     const reordered = Array.from(productTypes);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
-    await saveProductTypes(reordered);
+    try {
+      await saveProductTypes(reordered);
+    } catch (error) {
+      console.error("Error reordering product checklists:", error);
+    } finally {
+      catalogActionInFlightRef.current = false;
+    }
   };
 
   const toggleItemExpanded = (itemId) => setExpandedItems(prev => ({ ...prev, [itemId]: !prev[itemId] }));
@@ -1035,9 +1199,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const handleCreateCustomDropdown = () => {
-    if (!customDropdownValue.trim()) return;
+    if (!customDropdownValue.trim() || !beginCatalogAction()) return;
     const newDropdown = { id: Date.now().toString(), name: customDropdownValue.trim() };
-    saveDropdownConditions([...dropdownConditions, newDropdown]);
+    saveDropdownConditions([...dropdownConditions, newDropdown])
+      .catch(error => {
+        console.error("Error creating condition:", error);
+      })
+      .finally(() => {
+        catalogActionInFlightRef.current = false;
+      });
     if (showOtherPopup) handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, newDropdown.id);
     setCustomDropdownValue("");
   };
@@ -2083,41 +2253,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                       className="h-11 min-w-0 flex-1 text-sm lg:h-6 lg:text-xs"
                                       aria-label={`Rename product checklist ${type}`}
                                       autoFocus
-                                      onKeyDown={async (e) => { 
-                                        if (e.key === 'Enter' && editingProductTypeValue.trim()) { 
-                                          const newName = editingProductTypeValue.trim();
-                                          const newTypes = productTypes.map(t => t === type ? newName : t);
-                                          await saveProductTypes(newTypes);
-                                          // Update templates if the type had a template
-                                          if (productTypeTemplates[type]) {
-                                            const newTemplates = { ...productTypeTemplates };
-                                            newTemplates[newName] = newTemplates[type];
-                                            delete newTemplates[type];
-                                            await saveProductTypeTemplates(newTemplates);
-                                          }
-                                          if (selectedProductType === type) setSelectedProductType(newName);
-                                          setEditingProductTypeName(null);
-                                          setEditingProductTypeValue("");
-                                        }
-                                        if (e.key === 'Escape') { setEditingProductTypeName(null); setEditingProductTypeValue(""); } 
-                                      }} 
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') void renameProductType(type, editingProductTypeValue);
+                                        if (e.key === 'Escape') { setEditingProductTypeName(null); setEditingProductTypeValue(""); }
+                                      }}
                                     />
-                                    <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save product checklist name ${type}`} title={`Save product checklist name ${type}`} onClick={async () => { 
-                                      if (editingProductTypeValue.trim()) {
-                                        const newName = editingProductTypeValue.trim();
-                                        const newTypes = productTypes.map(t => t === type ? newName : t);
-                                        await saveProductTypes(newTypes);
-                                        if (productTypeTemplates[type]) {
-                                          const newTemplates = { ...productTypeTemplates };
-                                          newTemplates[newName] = newTemplates[type];
-                                          delete newTemplates[type];
-                                          await saveProductTypeTemplates(newTemplates);
-                                        }
-                                        if (selectedProductType === type) setSelectedProductType(newName);
-                                      }
-                                      setEditingProductTypeName(null);
-                                      setEditingProductTypeValue("");
-                                    }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
+                                    <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save product checklist name ${type}`} title={`Save product checklist name ${type}`} onClick={() => void renameProductType(type, editingProductTypeValue)}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                   </div>
                                 ) : (
                                   <>
@@ -2328,7 +2469,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       // Update order values
                       const updatedCompleted = reordered.map((item, idx) => ({ ...item, order: idx }));
                       const continuedItems = dropdownConditions.filter(d => !d.is_completed);
-                      saveDropdownConditions([...updatedCompleted, ...continuedItems]);
+                      saveDropdownConditionsCatalog([...updatedCompleted, ...continuedItems], 'completed reorder');
                     }}>
                       <Droppable droppableId="completed-conditions">
                         {(provided) => (
@@ -2351,7 +2492,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed);
                                         const completedItems = dropdownConditions.filter(d => d.is_completed && d.id !== dd.id);
                                         const movedItem = { ...dd, is_completed: false, order: continuedItems.length };
-                                        saveDropdownConditions([...completedItems, ...continuedItems, movedItem]);
+                                        saveDropdownConditionsCatalog([...completedItems, ...continuedItems, movedItem], 'mark continued');
                                       }}
                                       className="h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 lg:h-7 lg:w-7"
                                       title={`Mark ${dd.name} as Continued`}
@@ -2428,7 +2569,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       // Update order values
                       const updatedContinued = reordered.map((item, idx) => ({ ...item, order: idx }));
                       const completedItems = dropdownConditions.filter(d => d.is_completed);
-                      saveDropdownConditions([...completedItems, ...updatedContinued]);
+                      saveDropdownConditionsCatalog([...completedItems, ...updatedContinued], 'continued reorder');
                     }}>
                       <Droppable droppableId="continued-conditions">
                         {(provided) => (
@@ -2451,7 +2592,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         const completedItems = dropdownConditions.filter(d => d.is_completed);
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed && d.id !== dd.id);
                                         const movedItem = { ...dd, is_completed: true, order: completedItems.length };
-                                        saveDropdownConditions([...completedItems, movedItem, ...continuedItems]);
+                                        saveDropdownConditionsCatalog([...completedItems, movedItem, ...continuedItems], 'mark completed');
                                       }}
                                       className="h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-600 focus-visible:ring-offset-2 lg:h-7 lg:w-7"
                                       title={`Mark ${dd.name} as Completed`}

@@ -12,7 +12,7 @@ export function computePricing(estimate) {
     const unitRaw = acceptedCustomerUnitPrice(line);
     const quantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
     const raw = unitRaw * quantity;
-    const adj = Number(line.adjustment_percent || 0);
+    const adj = Number(line.adjustment_percent || 0) + Number(estimate?.category_adjustments?.[line.product_category] || 0);
     return { ...line, unitRaw, quantity, raw, adjusted: raw * (1 + adj / 100) };
   });
 
@@ -25,7 +25,7 @@ export function computePricing(estimate) {
   const fees = Number(estimate.shipping_fee || 0) + Number(estimate.permit_fee || 0);
   const taxableBase = afterDiscount + contingency + fees;
   const tax = taxableBase * (Number(estimate.tax_percent || 0) / 100);
-  const quoteTotal = taxableBase + tax;
+  const quoteTotal = estimate.round_quote_total ? Math.round(taxableBase + tax) : taxableBase + tax;
   const deposit = quoteTotal * (Number(estimate.deposit_percent || 0) / 100);
 
   return {

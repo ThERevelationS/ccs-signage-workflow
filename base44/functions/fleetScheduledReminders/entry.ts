@@ -1,5 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
+import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const weekday = () => new Intl.DateTimeFormat('en-US',{ weekday:'long', timeZone:'America/New_York' }).format(new Date()).toLowerCase();
@@ -12,15 +15,14 @@ async function logRun(base44:any, level:'info'|'warning'|'error', message:string
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
+    const requestBody = await req.json().catch(() => ({}));
+    const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);
     if (!user || user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-    const cutoverRows = await base44.asServiceRole.entities.FleetCutoverState.filter({ state_key:'primary' });
-    const cutover = cutoverRows?.[0];
+    const cutover = await getCanonicalCutoverState(base44);
     if (!cutover?.scheduled_reminders_enabled || !cutover?.notifications_enabled) return Response.json({ success:true, disabled:true, queued:0 });
 
-    const settingsRows = await base44.asServiceRole.entities.FleetSettings.filter({ setting_type:'general' });
-    const settings = settingsRows?.[0];
+    const settings = await getCanonicalFleetSettings(base44);
     if (!settings) return Response.json({ error:'FleetSettings record missing.' }, { status:409 });
 
     const Queue = base44.asServiceRole.entities.FleetNotificationQueue;

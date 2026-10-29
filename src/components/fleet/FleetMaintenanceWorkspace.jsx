@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import FleetMeterRuleDialog from "@/components/fleet/FleetMeterRuleDialog";
@@ -21,6 +20,7 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
 const pretty = value => String(value || "—").replaceAll("_", " ");
@@ -48,9 +48,9 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
     setLoading(true);
     setError("");
     Promise.all([
-      filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet work-order history` }),
-      filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet equipment usage history` }),
-      base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }),
+      filterAllFleetRows("FleetMaintenanceWorkOrder", { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet work-order history` }),
+      filterAllFleetRows("FleetEquipmentLog", { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet equipment usage history` }),
+      invokeFleet("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }),
     ]).then(([woRows, logRows, meterResponse]) => {
       if (!mounted) return;
       setWorkOrders(woRows || []);
@@ -64,6 +64,16 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
     });
     return () => { mounted = false; };
   }, [equipment.id, equipment.name, initialTab]);
+
+  const refreshMeterStatus = async () => {
+    try {
+      const { data } = await invokeFleet("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id });
+      if (data?.error) throw new Error(data.error);
+      setMeterRows(data?.rows || []);
+    } catch (err) {
+      setError(err?.message || "Unable to refresh meter maintenance status.");
+    }
+  };
 
   const activeOrders = useMemo(() => workOrders.filter(row => ACTIVE.has(row.status)), [workOrders]);
   const historicalOrders = useMemo(() => workOrders.filter(row => !ACTIVE.has(row.status)), [workOrders]);
@@ -114,7 +124,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
         {tab === "history" && <HistoryTab equipment={equipment} workOrders={historicalOrders} logs={logs} />}
         {tab === "usage" && <UsageTab plannedParts={plannedParts} plannedFluids={plannedFluids} partLogs={partLogs} fluidLogs={fluidLogs} />}
       </>}
-      <FleetMeterRuleDialog open={!!meterDialog} equipment={equipment} tasks={tasks} rule={meterDialog?.rule || null} onClose={() => setMeterDialog(null)} onSaved={async () => { const { data } = await base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }); if (data?.error) throw new Error(data.error); setMeterRows(data?.rows || []); }} />
+      <FleetMeterRuleDialog open={!!meterDialog} equipment={equipment} tasks={tasks} rule={meterDialog?.rule || null} onClose={() => setMeterDialog(null)} onSaved={refreshMeterStatus} />
     </div>
   );
 }

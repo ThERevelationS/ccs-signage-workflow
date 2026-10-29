@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const DEFAULT_ORDER = ['summary','today','system_health','attention','operations'];
@@ -14,8 +15,8 @@ function normalizedPreference(source:any,userEmail:string){
   return {user_email:userEmail,widget_order:order,hidden_widgets:hidden,density,layout_version:1};
 }
 
-async function requireUser(base44:any){
-  const user = await base44.auth.me().catch(()=>null);
+async function requireUser(base44:any, sessionToken){
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if(!user?.email) return {error:Response.json({error:'Unauthorized'},{status:401})};
   if(user.role === 'admin') return {user};
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
@@ -26,10 +27,11 @@ async function requireUser(base44:any){
 Deno.serve(async req=>{
   try{
     const base44=createClientFromRequest(req);
-    const auth=await requireUser(base44);
+    const body = await req.json().catch(()=>({}));
+    const auth = await requireUser(base44, body?.session_token);
     if(auth.error)return auth.error;
     const user=auth.user;
-    const body=await req.json().catch(()=>({}));
+
     const action=norm(body?.action || 'get');
     const Preference=base44.asServiceRole.entities.FleetDashboardPreference;
     const email=norm(user.email).toLowerCase();

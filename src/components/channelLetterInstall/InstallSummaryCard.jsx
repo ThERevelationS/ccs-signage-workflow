@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Save, Copy, FileDown, Calculator, TrendingUp } from "lucide-react";
-// Note: Markup % control intentionally removed — all markups are managed on the Customer Pricing tab.
+// Note: Markup % control intentionally removed â€” all markups are managed on the Customer Pricing tab.
 import CostBreakdownBar from "./CostBreakdownBar";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
@@ -46,7 +46,7 @@ export default function InstallSummaryCard({
             <div className="text-sm font-semibold tracking-wide">Estimate Summary</div>
             <div className="text-[11px] text-slate-300">
               {itemsCount} item{itemsCount !== 1 ? "s" : ""}
-              {(project.letter_purchases || []).length > 0 && ` · ${(project.letter_purchases).length} letter line${(project.letter_purchases).length !== 1 ? "s" : ""}`}
+              {(project.letter_purchases || []).length > 0 && ` Â· ${(project.letter_purchases).length} letter line${(project.letter_purchases).length !== 1 ? "s" : ""}`}
             </div>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function InstallSummaryCard({
           {personnel > 0 && (
             <Row
               label={laborViaCrew
-                ? `Crew Labor (${(project.personnel || []).length} crew · ${(project.labor_hours || 0).toFixed(2)} hrs)`
+                ? `Crew Labor (${(project.personnel || []).length} crew Â· ${(project.labor_hours || 0).toFixed(2)} hrs)`
                 : `Personnel (${(project.personnel || []).length})`}
               value={personnel}
               dot="bg-sky-400"
@@ -95,7 +95,7 @@ export default function InstallSummaryCard({
           </div>
         )}
 
-        {/* Total — markups live in the Customer Pricing tab */}
+        {/* Total â€” markups live in the Customer Pricing tab */}
         <div className="bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl px-4 py-3 shadow-lg border border-purple-400/30">
           <div className="text-[10px] text-purple-100 uppercase tracking-widest font-semibold">Subtotal (Before Markup)</div>
           <div className="text-3xl font-bold tabular-nums leading-tight">{fmt(subtotal || total)}</div>
@@ -106,6 +106,7 @@ export default function InstallSummaryCard({
 
         {/* Actions */}
         <div className="space-y-2 pt-1">
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
           <Button
             onClick={onSave}
             disabled={isSaving}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Project, Settings } from "@/entities/all";
+import { Project, Settings } from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Palette, Plus, Save, Trash2 } from "lucide-react";
@@ -21,6 +21,7 @@ import {
   calculatePaintingProject,
   normalizePaintingItem,
 } from "@/components/estimator/paint/paintCalc";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const money = (value) => Number(value || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const number = (value, digits = 2) => Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: digits });
@@ -56,7 +57,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
         const [settingsRows, existing, estimate] = await Promise.all([
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           editId ? Project.get(editId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (!active) return;
         const settingsMap = {};
@@ -74,7 +75,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
           });
         } else {
           setProject({
-            project_name: estimate?.project_name ? `${estimate.project_name} — Painting` : "",
+            project_name: estimate?.project_name ? `${estimate.project_name} â€” Painting` : "",
             client_name: estimate?.client_name || "",
             customer_id: estimate?.customer_id || null,
             estimate_number: estimate?.estimate_number || "",
@@ -124,8 +125,15 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     });
   };
 
-  const addItem = () => patchProject({ items: [...(project.items || []), emptyItem()] });
-  const removeItem = (index) => patchProject({ items: project.items.filter((_, i) => i !== index) });
+  const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
+    patchProject({ items: [...(project.items || []), emptyItem()] });
+  };
+  const removeItem = (index) => {
+    const label = project.items?.[index]?.description || `item ${index + 1}`;
+    if (!window.confirm(`Delete "${label}"?`)) return;
+    patchProject({ items: project.items.filter((_, i) => i !== index) });
+  };
 
   const updateColor = (itemIndex, colorIndex, value) => {
     const colors = [...(project.items[itemIndex].paint_colors || [])];
@@ -137,6 +145,24 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     paint_colors: (project.items[itemIndex].paint_colors || []).filter((_, i) => i !== colorIndex),
   });
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
   const saveProject = async () => {
     if (!project?.project_name?.trim() || !project?.client_name?.trim()) {
       setError("Project name and client name are required.");
@@ -230,7 +256,7 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     }
   };
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading Painting Builder…</div>;
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading Painting Builderâ€¦</div>;
   if (!project) return <div className="p-10 text-center text-red-600">{error || "Painting project not found."}</div>;
 
   return (
@@ -246,8 +272,9 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
               <ArrowLeft className="w-4 h-4" /> Back to estimator
             </Link>
           )}
-          <Button onClick={saveProject} disabled={saving} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
-            <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : "Save Painting"}
+          {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+          <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
+            <Save className="w-4 h-4 mr-1.5" /> {saving ? "Savingâ€¦" : "Save Painting"}
           </Button>
         </div>
 
@@ -304,10 +331,18 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                       <div key={rawItem.builder_item_id || index} className="p-4 space-y-3">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold">{index + 1}</span>
-                          <Input value={rawItem.description || ""} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder="Item description" className="h-[30px] text-[12px] flex-1" />
+                          <Input data-item-desc={index} value={rawItem.description || ""} onChange={(e) => patchItem(index, { description: e.target.value })} placeholder="Item description" className="h-[30px] text-[12px] flex-1" />
                           <button type="button" onClick={() => removeItem(index)} className="w-8 h-8 inline-flex items-center justify-center rounded text-red-500 hover:bg-red-50" aria-label="Remove item"><Trash2 className="w-4 h-4" /></button>
                         </div>
 
+                        {!lettering && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[9px] font-bold tracking-wide text-gray-400">SURFACE PRESETS</span>
+                            {[["4′×8′ face", 48, 96], ["8′×4′ face", 96, 48], ["2′×4′ face", 24, 48], ["4′×4′ face", 48, 48]].map(([label, l, w]) => (
+                              <button key={label} type="button" onClick={() => patchItem(index, { length: l, width: w }, { autoMask: true })} className="px-2 h-[24px] rounded border border-gray-300 text-[10px] text-gray-600 hover:bg-gray-50">{label}</button>
+                            ))}
+                          </div>
+                        )}
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                           <Field label="Type">
                             <Select value={rawItem.item_type || "panel"} onValueChange={(value) => patchItem(index, { item_type: value }, { autoMask: true })}>
@@ -349,12 +384,12 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
                             <div className="text-[10px] font-bold uppercase tracking-wide text-gray-500">Paint colors</div>
                             <button type="button" onClick={() => addColor(index)} className="text-[10px] font-semibold text-sky-700 hover:text-sky-900">+ Add color</button>
                           </div>
-                          {(rawItem.paint_colors || []).length === 0 ? <div className="text-[10px] text-gray-400">No colors selected — no liquid paint is charged.</div> : (
+                          {(rawItem.paint_colors || []).length === 0 ? <div className="text-[10px] text-gray-400">No colors selected â€” no liquid paint is charged.</div> : (
                             <div className="flex flex-wrap gap-2">
                               {(rawItem.paint_colors || []).map((color, colorIndex) => (
                                 <div className="flex items-center gap-1" key={colorIndex}>
                                   <Input value={color || ""} onChange={(e) => updateColor(index, colorIndex, e.target.value)} placeholder="PMS / color" className="h-[28px] w-[145px] text-[11px]" />
-                                  <button type="button" onClick={() => removeColor(index, colorIndex)} className="w-6 h-6 rounded text-gray-400 hover:text-red-600 hover:bg-white">×</button>
+                                  <button type="button" onClick={() => removeColor(index, colorIndex)} className="w-6 h-6 rounded text-gray-400 hover:text-red-600 hover:bg-white">Ã—</button>
                                 </div>
                               ))}
                             </div>

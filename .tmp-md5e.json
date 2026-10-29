@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "17b0777ed12a82f1c81deb798174458f  scripts/validate-opportunity-workspace.mjs\nd145912c2284fe446acbb780dc074580  src/components/CommandPalette.jsx\n1e5f50e6a9906596dc2969ebae6175df  src/components/orders/OrderSpreadsheet.jsx\nd46696a7b3d324f7dfafcd3e41083275  src/components/timeclock/QuickClockSection.jsx\n93d3e53089495776287e4ef1373e02a2  src/pages/Opportunities.jsx\n5b1c17299e30bf459769361b89aa34c9  src/pages/ReportingDashboard.jsx\n322ed83e92a2899881bc1db0850f9e17  src/components/workflow/AttentionFeed.jsx\nf8f4d0f6b1ed382c7cb0e314a92cee21  base44/functions/customerPortalAction/entry.ts\nf957fde4ba7f33a40c384d68cf12bc31  src/pages/Invoices.jsx\n2a8a3038f52273fa117399306e13fd35  base44/functions/invoicingAction/entry.ts\ncb143ac8bd0f476e7ce52ac93b77e193  base44/functions/opportunityWorkspaceAction/entry.ts\nae573d804e31687b8747b1a6a6d150bd  src/pages/OrderForm.jsx\n08639168aba93692134689a77fc3a17c  src/pages/MainWorkflow.jsx\nbfed4385fef1190adca0705e00ba1482  src/pages/MondayMorningMeeting.jsx\n61e81b0eef8af1fb73a936cfbf755743  src/components/workflow/NotificationService.jsx\nb9bd9cdbd8b8c897cb12975658f4e015  base44/shared/workflowTriggerEngine.ts\nc21db0edd6079b64cef064e67208dcc5  base44/functions/processWorkflowTriggers/entry.ts\n7a767a8096f337e1f1e1c6deeab955d9  base44/functions/timeClockAction/entry.ts\nd562c8bd3f49f5252a4f4adee949e047  src/pages/AdminSettings.jsx\n",
+  "stderr": "",
+  "exitCode": 0,
+  "truncated": false,
+  "durationMs": 8029
+}

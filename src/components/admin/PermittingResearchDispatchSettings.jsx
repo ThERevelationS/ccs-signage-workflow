@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle, CheckCircle, Coins, Loader2, Play, Save, ShieldAlert } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const CONFIG_KEY = "permitting_research_dispatch_config";
 const STATE_KEY = "permitting_research_dispatch_state";
@@ -43,8 +44,8 @@ export default function PermittingResearchDispatchSettings() {
       const [configRecord, stateRecord, backlog, sourceDiscovery] = await Promise.all([
         loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CONFIG_KEY, label: "Permitting research dispatch settings" }),
         loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: STATE_KEY, label: "Permitting research dispatch state" }),
-        base44.entities.SourceCollectionQueue.count({ state: { $in: ["OH", "KY"] }, status: "not_started" }),
-        base44.entities.SourceCollectionQueue.count({ state: { $in: ["OH", "KY"] }, status: "source_discovery" }),
+        staffEntities.SourceCollectionQueue.count({ state: { $in: ["OH", "KY"] }, status: "not_started" }),
+        staffEntities.SourceCollectionQueue.count({ state: { $in: ["OH", "KY"] }, status: "source_discovery" }),
       ]);
       setLoadedRecord(configRecord);
       setSettings({ ...DEFAULTS, ...(configRecord?.setting_value || {}) });

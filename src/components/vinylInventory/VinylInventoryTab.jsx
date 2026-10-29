@@ -10,7 +10,7 @@
 //   - Save in dialog persists the full draft through guarded VinylInventory persistence.
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { VinylInventory, User } from "@/entities/all";
+import { VinylInventory, User } from "@/api/gatedEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,9 +56,22 @@ export default function VinylInventoryTab({ scope = "master" }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [useCaseFilter, setUseCaseFilter] = useState("all");
+  const [search, setSearch] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
+  const [categoryFilter, setCategoryFilter] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("category") || "all"; } catch { return "all"; }
+  });
+  const [useCaseFilter, setUseCaseFilter] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("use_case") || "all"; } catch { return "all"; }
+  });
+  const writeParam = (key, value, defaultValue = "all") => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== defaultValue) next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [editingVinyl, setEditingVinyl] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [persistenceError, setPersistenceError] = useState("");
@@ -227,18 +240,18 @@ export default function VinylInventoryTab({ scope = "master" }) {
               <Input
                 placeholder="Search vinyl…"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { const v = e.target.value; setSearch(v); writeParam("q", v, ""); }}
                 className="pl-9 h-9 text-sm"
               />
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); writeParam("category", v); }}>
               <SelectTrigger className="h-9 text-sm w-40"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {VINYL_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={useCaseFilter} onValueChange={setUseCaseFilter}>
+            <Select value={useCaseFilter} onValueChange={(v) => { setUseCaseFilter(v); writeParam("use_case", v); }}>
               <SelectTrigger className="h-9 text-sm w-44"><SelectValue placeholder="Use Case" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Use Cases</SelectItem>

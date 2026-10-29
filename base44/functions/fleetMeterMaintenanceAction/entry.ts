@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { resolveFleetMeterReading, fleetMeterState } from '../../shared/fleetMeterReading.ts';
@@ -10,8 +11,8 @@ const validSources = new Set(['bouncie','manual']);
 const validModes = new Set(['meter_only','date_or_meter']);
 const canonical = (rows:any[]=[]) => rows.slice().sort((a,b)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
 
-async function authorize(base44:any, adminRequired=false) {
-  const user = await base44.auth.me().catch(()=>null);
+async function authorize(base44:any, adminRequired=false, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({error:'Unauthorized'},{status:401}) };
   if (user.role === 'admin') return { user, admin:true };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
@@ -60,7 +61,7 @@ Deno.serve(async req => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(()=>({}));
     const action = norm(body?.action);
-    const auth = await authorize(base44, ['create','update','delete'].includes(action));
+    const auth = await authorize(base44, ['create','update','delete'].includes(action, body?.session_token));
     if (auth.error) return auth.error;
     const Rule = base44.asServiceRole.entities.FleetMaintenanceMeterRule;
     const Equipment = base44.asServiceRole.entities.FleetEquipment;

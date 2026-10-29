@@ -42,6 +42,7 @@ export default function AioStepRail({
             <button
               key={section.key}
               onClick={() => onStepClick?.(section.n)}
+              aria-current={active ? "step" : undefined}
               className={`w-full text-left px-3 py-2.5 border-b border-slate-200 last:border-b-0 transition-colors ${
                 active
                   ? "bg-lime-100 border-l-4 border-l-lime-600"

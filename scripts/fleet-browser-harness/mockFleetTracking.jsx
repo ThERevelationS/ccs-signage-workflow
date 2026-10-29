@@ -2,6 +2,12 @@ import React from "react";
 export function useAuth() {
   return { currentUser: { id: "synthetic-admin", email: "synthetic@example.test", role: "admin" }, sessionToken: "synthetic-session" };
 }
+export function getSessionUser() {
+  return { id: "synthetic-admin", email: "synthetic@example.test", role: "admin" };
+}
+export function getSessionToken() {
+  return "synthetic-session";
+}
 export default function MockFleetTrackingComponent(props) {
   if (Array.isArray(props.vehicles) && Object.hasOwn(props, "totalCount")) {
     return <nav aria-label="Synthetic vehicle picker">{props.vehicles.map(vehicle =>

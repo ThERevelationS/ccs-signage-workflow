@@ -84,7 +84,15 @@ export default function WallShapeEditor({ shape, onChange }) {
         >
           <Undo2 className="w-4 h-4" /> Undo
         </Button>
-        <Button variant="ghost" size="sm" disabled={!points.length} onClick={() => onChange(makeShape([], false))}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={!points.length}
+          onClick={() => {
+            if (!window.confirm("Clear the drawn outline?")) return;
+            onChange(makeShape([], false));
+          }}
+        >
           <Trash2 className="w-4 h-4 text-red-500" /> Clear
         </Button>
       </div>

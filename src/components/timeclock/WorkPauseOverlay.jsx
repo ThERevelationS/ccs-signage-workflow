@@ -55,6 +55,7 @@ export default function WorkPauseOverlay({
   const [resumeBusy, setResumeBusy] = useState(false);
   const [error, setError] = useState("");
   const resumeRequestRef = useRef("");
+  const deferredInvalidationRef = useRef(false);
   const mountedRef = useRef(true);
   const pauseStateRef = useRef(null);
   const pauseIdRef = useRef("");
@@ -144,7 +145,9 @@ export default function WorkPauseOverlay({
       const confirmedEmail = String(confirmed?.user?.email || confirmed?.entry?.user_email || "").trim().toLowerCase();
       const matchesEmployee = confirmedEmail &&
         confirmedEmail === String(currentUser?.email || "").trim().toLowerCase();
-      if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working") {
+      // A broadcast "working" payload may be stale — while a Resume request is in
+      // flight only its own response may clear the paused overlay.
+      if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working" && !resumeInFlightRef.current) {
         statusSequenceRef.current += 1;
         pauseStateRef.current = null;
         setPauseState(null);
@@ -155,22 +158,18 @@ export default function WorkPauseOverlay({
         pauseIdRef.current = "";
         dismissedAtRef.current = 0;
       } else if (matchesEmployee && confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "paused") {
-        const activePause = confirmed.active_work_pause || confirmed.work_pause || null;
-        if (activePause?.id) {
-          statusSequenceRef.current += 1;
-          const normalized = { ...confirmed, active_work_pause: activePause };
-          pauseStateRef.current = normalized;
-          setPauseState(normalized);
-          setPauseStateScope(scopeKey);
-          if (pauseIdRef.current !== String(activePause.id)) {
-            pauseIdRef.current = String(activePause.id);
-            dismissedAtRef.current = 0;
-            lastActivityAtRef.current = Date.now();
-            setShowResumePrompt(true);
-          }
-        }
+        // A paused payload is an invalidation signal only — it may not fabricate
+        // the guard by itself. The deferred/normal status read below applies the
+        // authoritative paused state.
       }
-      void loadStatus();
+      // An event landing while Resume is in flight is an invalidation we must
+      // defer — loadStatus early-returns during the request, so record the
+      // signal and let the settled Resume drain it with a fresh status read.
+      if (resumeInFlightRef.current) {
+        deferredInvalidationRef.current = true;
+      } else {
+        void loadStatus();
+      }
     };
     const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
     window.addEventListener("focus", onFocus);
@@ -297,6 +296,10 @@ export default function WorkPauseOverlay({
       if (isCurrentScope()) {
         resumeInFlightRef.current = false;
         setResumeBusy(false);
+        if (deferredInvalidationRef.current) {
+          deferredInvalidationRef.current = false;
+          refreshAfterResume = true;
+        }
         if (refreshAfterResume) void loadStatus({ preservePausedOnError: true });
       }
     }

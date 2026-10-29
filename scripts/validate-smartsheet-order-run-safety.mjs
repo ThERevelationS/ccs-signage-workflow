@@ -33,8 +33,8 @@ assert.equal(orderRunRequiresReview(null), false);
 console.log('PASS blocked, partial and ambiguous Order sync results always require review');
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
-assert.match(backend, /const runNeedsReview = salesRunRequiresReview\(results\) \|\| orderRunRequiresReview\(results\)/);
-assert.match(backend, /status: runNeedsReview \? 'needs_review' : 'completed'/);
+assert.match(backend, /datasetNeedsReview = dataset === 'sales'\s*\?\s*salesRunRequiresReview\(datasetResults\)\s*:\s*orderRunRequiresReview\(datasetResults\)/);
+assert.match(backend, /status: datasetNeedsReview \? 'needs_review' : 'completed'/);
 assert.match(backend, /sync_complete: !runNeedsReview/);
 assert.match(backend, /\.\.\.\(activeDirection \? \{ direction: activeDirection \} : \{\}\)/);
 assert.match(backend, /snapshotWriteFailures \+= batch\.length/);

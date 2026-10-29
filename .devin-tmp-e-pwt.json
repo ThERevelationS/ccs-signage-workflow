@@ -1,0 +1,1 @@
+[{"old_text":"  'time_off_requested', 'time_off_updated', 'job_allocation_added', 'pto_balance_low',","new_text":"  'time_off_requested', 'time_off_updated', 'time_off_approved', 'time_off_denied',\n  'time_off_cancelled', 'job_allocation_added', 'pto_balance_low',"}]

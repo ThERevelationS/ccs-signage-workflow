@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { LaserProject, Settings } from "@/entities/all";
+import { LaserProject, Settings } from "@/api/gatedEntities";
 import { useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/co
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { TrendingUp } from "lucide-react";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4"]; // Updated: Removed "1"
 const materials = ["Acrylic", "Wood", "Leather"];
@@ -46,6 +47,8 @@ const parseImperialFraction = (fractionString) => {
   }
   return totalValue;
 };
+
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export default function LaserEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const [searchParams] = useSearchParams();
@@ -91,7 +94,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         const [settingsData, existing, estimate] = await Promise.all([
           loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
           editId ? LaserProject.get(editId) : Promise.resolve(null),
-          estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+          estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
         ]);
         if (cancelled) return;
 
@@ -159,6 +162,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   }, [editId, estimateId]);
 
   const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
     const newItem = {
       builder_item_id: newBuilderItemId("laser-item"),
       item_type: "panel",
@@ -183,6 +187,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   };
 
   const removeItem = (index) => {
+    if (!window.confirm("Remove this item?")) return;
     setProject((prev) => ({
       ...prev,
       items: prev.items.filter((_, i) => i !== index)
@@ -245,7 +250,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     let totalLaborCost = 0;
     let totalSuppliesCost = 0;
 
-    // Cut/engrave speeds are stored as mm/sec and mm²/sec.
+    // Cut/engrave speeds are stored as mm/sec and mmÂ²/sec.
     // Convert lengths/areas from inches to mm (1 in = 25.4 mm) before dividing.
     const MM_PER_IN = 25.4;
     const SQMM_PER_SQIN = 25.4 * 25.4;
@@ -346,6 +351,24 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     }
   }, [calculateTotals, isLoading, project.items.length]); // Added project.items.length to dependency array to trigger recalculation when items are added/removed
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!isSaving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isSaving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!isSaving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isSaving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
@@ -461,7 +484,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Laser Estimate - ${project.project_name}</title>
+  <title>Laser Estimate - ${escHtml(project.project_name)}</title>
   <meta charset="UTF-8">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -756,7 +779,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
 <body>
   <div class="container">
     <div class="header">
-      <h1>⚡ Laser Estimate</h1>
+      <h1>âš¡ Laser Estimate</h1>
       <div class="subtitle">Precision Cutting & Engraving Services</div>
     </div>
     
@@ -765,15 +788,15 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Project:</span>
-          <span class="info-value">${project.project_name}</span>
+          <span class="info-value">${escHtml(project.project_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Client:</span>
-          <span class="info-value">${project.client_name}</span>
+          <span class="info-value">${escHtml(project.client_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Estimate #:</span>
-          <span class="info-value">${project.estimate_number}</span>
+          <span class="info-value">${escHtml(project.estimate_number)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Date:</span>
@@ -788,42 +811,42 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       ${project.items.map((item, i) => `
         <div class="item">
           <div class="item-header">
-            Item ${i + 1}: ${item.description || `${item.item_type} item`}
+            Item ${i + 1}: ${escHtml(item.description || item.item_type + " item")}
           </div>
           
           <div class="item-details">
             <div class="detail-row">
               <span class="detail-label">Type:</span>
-              <span class="detail-value">${item.item_type}</span>
+              <span class="detail-value">${escHtml(item.item_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Material:</span>
-              <span class="detail-value">${item.material_type} - ${item.material_thickness}"</span>
+              <span class="detail-value">${escHtml(item.material_type)} - ${escHtml(item.material_thickness)}"</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Quantity:</span>
-              <span class="detail-value">${item.quantity}</span>
+              <span class="detail-value">${escHtml(item.quantity)}</span>
             </div>
             ${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `
             <div class="detail-row">
               <span class="detail-label">Dimensions:</span>
-              <span class="detail-value">${item.length}" × ${item.width}"</span>
+              <span class="detail-value">${escHtml(item.length)}" Ã— ${escHtml(item.width)}"</span>
             </div>
             ` : ''}
             ${item.item_type === 'lettering' ? `
             <div class="detail-row">
               <span class="detail-label">Letter Height:</span>
-              <span class="detail-value">${item.letter_height}"</span>
+              <span class="detail-value">${escHtml(item.letter_height)}"</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Letter Count:</span>
-              <span class="detail-value">${item.num_letters}</span>
+              <span class="detail-value">${escHtml(item.num_letters)}</span>
             </div>
             ` : ''}
             ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && item.engrave_area_sqin > 0 ? `
             <div class="detail-row">
               <span class="detail-label">Engrave Area:</span>
-              <span class="detail-value">${item.engrave_area_sqin} sq in</span>
+              <span class="detail-value">${escHtml(item.engrave_area_sqin)} sq in</span>
             </div>
             ` : ''}
             <div class="detail-row">
@@ -854,7 +877,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         
         <div class="summary-row">
           <span class="summary-label">Setup Hours:</span>
-          <span class="summary-value">${project.fixed_setup_hours} hrs</span>
+          <span class="summary-value">${escHtml(project.fixed_setup_hours)} hrs</span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Material Setup Cost:</span>
@@ -882,15 +905,15 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
       
       ${project.notes ? `
         <div class="notes">
-          <h3>📝 Additional Notes</h3>
-          <p>${project.notes}</p>
+          <h3>ðŸ“� Additional Notes</h3>
+          <p>${escHtml(project.notes)}</p>
         </div>
       ` : ''}
     </div>
     
     <div class="footer">
       Generated by SignEstimate Pro - Professional Estimating Suite<br>
-      © ${new Date().getFullYear()} All Rights Reserved
+      Â© ${new Date().getFullYear()} All Rights Reserved
     </div>
   </div>
 </body>
@@ -914,7 +937,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
     const printContent = `
       <html>
         <head>
-          <title>Laser Estimate - ${project.project_name}</title>
+          <title>Laser Estimate - ${escHtml(project.project_name)}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
@@ -1208,7 +1231,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
         <body>
           <div class="container">
             <div class="header">
-              <h1>⚡ Laser Estimate</h1>
+              <h1>âš¡ Laser Estimate</h1>
               <div class="subtitle">Precision Cutting & Engraving Services</div>
             </div>
             
@@ -1217,15 +1240,15 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Project:</span>
-                  <span class="info-value">${project.project_name}</span>
+                  <span class="info-value">${escHtml(project.project_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Client:</span>
-                  <span class="info-value">${project.client_name}</span>
+                  <span class="info-value">${escHtml(project.client_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Estimate #:</span>
-                  <span class="info-value">${project.estimate_number}</span>
+                  <span class="info-value">${escHtml(project.estimate_number)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Date:</span>
@@ -1240,42 +1263,42 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
               ${project.items.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
-                    Item ${i + 1}: ${item.description || `${item.item_type} item`}
+                    Item ${i + 1}: ${escHtml(item.description || item.item_type + " item")}
                   </div>
                   
                   <div class="item-details">
                     <div class="detail-row">
                       <span class="detail-label">Type:</span>
-                      <span class="detail-value">${item.item_type}</span>
+                      <span class="detail-value">${escHtml(item.item_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Material:</span>
-                      <span class="detail-value">${item.material_type} - ${item.material_thickness}"</span>
+                      <span class="detail-value">${escHtml(item.material_type)} - ${escHtml(item.material_thickness)}"</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Quantity:</span>
-                      <span class="detail-value">${item.quantity}</span>
+                      <span class="detail-value">${escHtml(item.quantity)}</span>
                     </div>
                     ${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `
                     <div class="detail-row">
                       <span class="detail-label">Dimensions:</span>
-                      <span class="detail-value">${item.length}" × ${item.width}"</span>
+                      <span class="detail-value">${escHtml(item.length)}" Ã— ${escHtml(item.width)}"</span>
                     </div>
                     ` : ''}
                     ${item.item_type === 'lettering' ? `
                     <div class="detail-row">
                       <span class="detail-label">Letter Height:</span>
-                      <span class="detail-value">${item.letter_height}"</span>
+                      <span class="detail-value">${escHtml(item.letter_height)}"</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Letter Count:</span>
-                      <span class="detail-value">${item.num_letters}</span>
+                      <span class="detail-value">${escHtml(item.num_letters)}</span>
                     </div>
                     ` : ''}
                     ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && item.engrave_area_sqin > 0 ? `
                     <div class="detail-row">
                       <span class="detail-label">Engrave Area:</span>
-                      <span class="detail-value">${item.engrave_area_sqin} sq in</span>
+                      <span class="detail-value">${escHtml(item.engrave_area_sqin)} sq in</span>
                     </div>
                     ` : ''}
                     <div class="detail-row">
@@ -1306,7 +1329,7 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
                 
                 <div class="summary-row">
                   <span class="summary-label">Setup Hours:</span>
-                  <span class="summary-value">${project.fixed_setup_hours} hrs</span>
+                  <span class="summary-value">${escHtml(project.fixed_setup_hours)} hrs</span>
                 </div>
                 <div class="summary-row">
                   <span class="summary-label">Material Setup Cost:</span>
@@ -1334,15 +1357,15 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
               
               ${project.notes ? `
                 <div class="notes">
-                  <h3>📝 Additional Notes</h3>
-                  <p>${project.notes}</p>
+                  <h3>ðŸ“� Additional Notes</h3>
+                  <p>${escHtml(project.notes)}</p>
                 </div>
               ` : ''}
             </div>
             
             <div class="footer">
               Generated by SignEstimate Pro - Professional Estimating Suite<br>
-              © ${new Date().getFullYear()} All Rights Reserved
+              Â© ${new Date().getFullYear()} All Rights Reserved
             </div>
           </div>
         </body>
@@ -1377,7 +1400,7 @@ Item ${i + 1}: ${item.description || `${item.item_type} item`}
 - Type: ${item.item_type}
 - Material: ${item.material_type} - ${item.material_thickness}"
 - Quantity: ${item.quantity}
-${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `- Dimensions: ${item.length}" × ${item.width}"` : ''}
+${item.item_type === 'panel' || item.item_type === 'engrave_and_cut' ? `- Dimensions: ${item.length}" Ã— ${item.width}"` : ''}
 ${item.item_type === 'lettering' ? `- Letter Height: ${item.letter_height}", Count: ${item.num_letters}` : ''}
 ${(item.item_type === 'engraving' || item.item_type === 'engrave_and_cut') && item.engrave_area_sqin > 0 ? `- Engrave Area: ${item.engrave_area_sqin} sq in` : ''}
 - Item Total: $${(item.machine_cost + item.labor_cost).toFixed(2)}
@@ -1543,6 +1566,7 @@ Best regards`;
                         <div className="md:col-span-2">
                           <Label>Description</Label>
                           <Input
+                        data-item-desc={index}
                         value={item.description}
                         onChange={(e) => updateItem(index, 'description', e.target.value)}
                         placeholder="Brief description"
@@ -1658,7 +1682,7 @@ Best regards`;
                     <div className="md:col-span-2 p-3 bg-blue-50 rounded-lg">
                             <p className="text-sm text-blue-800">
                               <strong>Total Cut Length:</strong> {item.total_cut_length_inches.toFixed(2)}" 
-                              <span className="mx-2">•</span>
+                              <span className="mx-2">â€¢</span>
                               <strong>Cut Speed:</strong> {item.cut_speed_ipm.toFixed(1)} mm/sec
                             </p>
                           </div>
@@ -1679,7 +1703,7 @@ Best regards`;
 
                             {item.engrave_area_sqin > 0 &&
                       <p className="text-xs text-slate-500 mt-1">
-                                Engrave Speed: {item.engrave_speed_sqipm.toFixed(1)} mm²/sec
+                                Engrave Speed: {item.engrave_speed_sqipm.toFixed(1)} mmÂ²/sec
                               </p>
                       }
                           </div>
@@ -1852,7 +1876,8 @@ Best regards`;
                   </Button>
                 </div>
 
-                <Button onClick={saveProject} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
+                {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+                <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
                   {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> {isEditing ? 'Update Estimate' : 'Save Estimate'}</>}
                 </Button>
               </CardContent>

@@ -1,4 +1,4 @@
-import { Layers, Link2, Save, RefreshCw } from "lucide-react";
+import { Layers, Link2, Save, RefreshCw, Copy, GitMerge } from "lucide-react";
 
 export default function AioEstimateHeader({
   status = "draft",
@@ -9,6 +9,9 @@ export default function AioEstimateHeader({
   subtitle = "One page, one set of project info, every estimator.",
   metaRight,
   readOnly = false,
+  onDuplicate,
+  duplicating = false,
+  onMerge,
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
@@ -36,18 +39,47 @@ export default function AioEstimateHeader({
             ${Number(quoteTotal || 0).toFixed(2)}
           </div>
         </div>
-        <button className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
-          <RefreshCw className="w-4 h-4" />
+        <button type="button" aria-label="Refresh" title="Refresh" className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
         </button>
-        <button className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50">
-          <Link2 className="w-4 h-4" />
+        <button
+          type="button"
+          onClick={() => navigator.clipboard?.writeText(window.location.href)}
+          title="Copy estimate link"
+          aria-label="Copy estimate link"
+          className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
+        >
+          <Link2 className="w-4 h-4" aria-hidden="true" />
         </button>
+        {onMerge && !readOnly && (
+          <button
+            type="button"
+            onClick={onMerge}
+            title="Merge another draft estimate into this one"
+            aria-label="Merge another estimate"
+            className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
+          >
+            <GitMerge className="w-4 h-4" />
+          </button>
+        )}
+        {onDuplicate && (
+          <button
+            onClick={onDuplicate}
+            disabled={duplicating}
+            title="Duplicate this estimate as a new draft"
+            className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={onSave}
           disabled={saving || readOnly}
+          aria-busy={saving}
+          aria-live="polite"
           className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
         >
-          <Save className="w-4 h-4" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
+          <Save className="w-4 h-4" aria-hidden="true" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
         </button>
       </div>
     </div>

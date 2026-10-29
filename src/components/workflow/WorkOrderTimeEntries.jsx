@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeEntry = base44.entities.TimeEntry;
+const TimeEntry = staffEntities.TimeEntry;
 
 export default function WorkOrderTimeEntries({ workOrderId, workOrderTitle }) {
   const [timeEntries, setTimeEntries] = useState([]);

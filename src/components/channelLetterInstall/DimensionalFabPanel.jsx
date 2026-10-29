@@ -47,11 +47,16 @@ export default function DimensionalFabPanel({ purchase, onUpdate, onReset }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const loadSettings = useCallback(async () => {
-    const list = await loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
-    const map = {};
-    list.forEach((s) => { map[s.setting_name] = s.setting_value; });
-    setSettings(map);
-    return map;
+    try {
+      const list = await loadAllEntityRows({ entity: SettingsEntity, sort: "created_date", label: "Estimator Settings" });
+      const map = {};
+      list.forEach((s) => { map[s.setting_name] = s.setting_value; });
+      setSettings(map);
+      return map;
+    } catch (e) {
+      console.error("Failed to load settings:", e);
+      return {};
+    }
   }, []);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Megaphone, AlertTriangle, Info, Zap, Volume2 } from "lucide-react";
+import { X, Megaphone, AlertTriangle, Info, Zap, Volume2, CheckCheck, Repeat2, Clock } from "lucide-react";
 import { useAnnouncements } from "./AnnouncementContext";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -83,7 +83,7 @@ function ProgressBar({ duration, priority }) {
 }
 
 export default function AnnouncementBanner() {
-  const { activeAnnouncement, dismiss } = useAnnouncements();
+  const { activeAnnouncement, dismiss, acknowledge } = useAnnouncements();
   const [hovering, setHovering] = useState(false);
 
   if (!activeAnnouncement) return null;
@@ -91,6 +91,11 @@ export default function AnnouncementBanner() {
   const config = priorityConfig[activeAnnouncement.priority || "normal"];
   const Icon = config.icon;
   const isUrgent = activeAnnouncement.priority === "urgent";
+  const expiresMs = Date.parse(activeAnnouncement.expires_at || "");
+  const expiresLabel = Number.isFinite(expiresMs)
+    ? new Date(expiresMs).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : "";
+  const isRepeat = activeAnnouncement.display_mode === "repeat";
 
   return (
     <AnimatePresence>
@@ -164,29 +169,69 @@ export default function AnnouncementBanner() {
                       transition={{ delay: 0.3 }}
                     />
                   )}
+
+                  {/* Delivery details + acknowledge */}
+                  {(activeAnnouncement.requires_ack || expiresLabel || isRepeat) && (
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      {activeAnnouncement.requires_ack && (
+                        <motion.button
+                          onClick={acknowledge}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm"
+                          style={{ background: config.iconBg, color: "#fff" }}
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          Got it
+                        </motion.button>
+                      )}
+                      {expiresLabel && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium"
+                          style={{ background: config.dismissBg, color: config.subtextColor }}
+                        >
+                          <Clock className="w-3 h-3" />
+                          Live until {expiresLabel}
+                        </span>
+                      )}
+                      {isRepeat && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium"
+                          style={{ background: config.dismissBg, color: config.subtextColor }}
+                        >
+                          <Repeat2 className="w-3 h-3" />
+                          Repeats while live
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Dismiss button */}
-                <motion.button
-                  onClick={dismiss}
-                  className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
-                  style={{
-                    background: hovering ? config.dismissHover : config.dismissBg,
-                    backdropFilter: "blur(8px)",
-                  }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <X className="w-4 h-4" style={{ color: config.textColor }} />
-                </motion.button>
+                {!activeAnnouncement.requires_ack && (
+                  <motion.button
+                    onClick={dismiss}
+                    className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                    style={{
+                      background: hovering ? config.dismissHover : config.dismissBg,
+                      backdropFilter: "blur(8px)",
+                    }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <X className="w-4 h-4" style={{ color: config.textColor }} />
+                  </motion.button>
+                )}
               </div>
             </div>
 
             {/* Auto-dismiss progress bar */}
-            <ProgressBar
-              duration={activeAnnouncement.duration_seconds}
-              priority={activeAnnouncement.priority}
-            />
+            {!activeAnnouncement.requires_ack && (
+              <ProgressBar
+                duration={activeAnnouncement.duration_seconds}
+                priority={activeAnnouncement.priority}
+              />
+            )}
           </div>
         </motion.div>
       )}

@@ -273,6 +273,21 @@ equal(pushCalls[0].query,{smartsheet_row_id:{$in:['90555']}},
   'Push ownership scan queries only exact permanent row IDs.');
 yes(pushCalls.length===2 && pushCalls[1].skip===500,
   'Push ownership scan reads all matching pages before remote writes.');
+// A scheduled push can plan thousands of linked WorkOrders; serializing them
+// all into one $in URL is rejected with HTTP 414 before any Smartsheet write.
+const bulkSelected = Array.from({length:250},(_,i)=>({id:'bulk-owner-'+i,
+  smartsheet_sheet_id:sheetId,smartsheet_row_id:String(90000+i),in_pipeline:true}));
+const bulkQueries=[];
+const bulkPaged=await readSalesPushRowOwnershipRisks({
+  async filter(query,sort,limit,skip) {
+    bulkQueries.push(query);
+    if (query?.smartsheet_row_id?.$in) throw new Error('Request failed with status code 414');
+    return bulkSelected.slice(skip,skip+limit);
+  }},sheetId,bulkSelected);
+equal(bulkPaged.count,0,'Bulk push ownership scan verifies every unique planned owner.');
+yes(bulkQueries.every(q=>q?.smartsheet_row_id?.$exists===true),
+  'Large planned ID sets page all linked rows instead of an overlong $in URL.');
+checks++;
 await assert.rejects(readSalesPushRowOwnershipRisks({
   async filter(){return {items:[]};}},sheetId,pushSelected),
   /could not be verified completely/);checks++;

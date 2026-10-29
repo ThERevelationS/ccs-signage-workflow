@@ -159,10 +159,17 @@ export async function readSalesPushRowOwnershipRisks(entity, sheetId, selectedRe
     .map(record => id(record?.smartsheet_row_id))
     .filter(rowId => /^\d+$/.test(rowId) && rowId !== '0'))];
   if (!plannedRowIds.length) return classifySalesPushRowOwnershipRisks([], sheetId, selectedRecords);
-  // Scope to exact permanent rows; still includes off-pipeline and deleted
-  // claimants. Paged reader rejects incomplete response windows.
+  // A rowIds $in query serializes every permanent ID into the request URL;
+  // thousands of queued Sales pushes exceed the platform URL limit (HTTP 414)
+  // and kill the whole push stage. Small sets keep the exact-ID scan; large
+  // sets page every linked WorkOrder instead — the classifier still restricts
+  // ownership evidence to the exact planned permanent row IDs. Same shape as
+  // the pull-side read above.
+  const query = plannedRowIds.length > 200
+    ? { smartsheet_row_id: { $exists: true } }
+    : { smartsheet_row_id: { $in: plannedRowIds } };
   const linked = await loadAllEntityRows({
-    entity, query: { smartsheet_row_id: { $in: plannedRowIds } },
+    entity, query,
     sort: 'id', label: 'Sales push permanent row ownership prewrite verification',
   });
   return classifySalesPushRowOwnershipRisks(linked, sheetId, selectedRecords);

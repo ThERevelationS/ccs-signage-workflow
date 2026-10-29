@@ -7,6 +7,7 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import CommandPalette from '@/components/CommandPalette';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Estimator from './pages/Estimator';
@@ -59,11 +60,13 @@ import FleetReservations from './pages/FleetReservations';
 import FleetRequests from './pages/FleetRequests';
 import FleetHistory from './pages/FleetHistory';
 import FleetAnalytics from './pages/FleetAnalytics';
-import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
 import FleetMechanic from './pages/FleetMechanic';
+import CustomerPortal from './pages/CustomerPortal';
 import NewUserSetup from './pages/NewUserSetup';
 import PermittingDocs from './pages/PermittingDocs';
+import WorkOrderTraveler from './pages/WorkOrderTraveler';
+import ProductionSchedule from './pages/ProductionSchedule';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -118,7 +121,6 @@ const FLEET_PAGES = {
   FleetRequests,
   FleetHistory,
   FleetAnalytics,
-  FleetSettings,
 };
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -154,6 +156,8 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <>
+    <CommandPalette />
     <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -162,9 +166,20 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/ResetPassword" element={<NewUserSetup />} />
       <Route path="/PermittingRepository" element={<Navigate to="/Permitting?view=jurisdictions" replace />} />
+      <Route path="/FleetSettings" element={<Navigate to="/AdminSettings?tab=fleet" replace />} />
       <Route path="/PermittingDocs" element={
         <LayoutWrapper currentPageName="PermittingDocs">
           <PermittingDocs />
+        </LayoutWrapper>
+      } />
+      <Route path="/WorkOrderTraveler" element={
+        <LayoutWrapper currentPageName="WorkOrderTraveler">
+          <WorkOrderTraveler />
+        </LayoutWrapper>
+      } />
+      <Route path="/ProductionSchedule" element={
+        <LayoutWrapper currentPageName="ProductionSchedule">
+          <ProductionSchedule />
         </LayoutWrapper>
       } />
       {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (
@@ -204,6 +219,7 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </>
   );
 };
 
@@ -213,6 +229,7 @@ function standaloneFleetPage() {
   const path = window.location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
   if (path === '/fleetmechanic') return FleetMechanic;
   if (path === '/fleetreport') return FleetPublicReport;
+  if (path === '/customerportal') return CustomerPortal;
   return null;
 }
 

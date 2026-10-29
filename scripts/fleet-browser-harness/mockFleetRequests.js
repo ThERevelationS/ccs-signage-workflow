@@ -1,4 +1,6 @@
 // Browser-only synthetic Fleet Requests data. No production Base44 client or records.
+import { makeFleetDataRead, verifySyntheticSession } from "./mockFleetDataRead.js";
+
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const seedRequests = [
   {
@@ -18,21 +20,21 @@ const state = {
   notifications: [],
 };
 window.__fleetRequestsFixture = state;
-const pageRows = (rows, limit = 500, skip = 0) => clone(rows.slice(skip, skip + limit));
-const listEntity = (key) => ({ list: async (_sort, limit, skip) => pageRows(state[key], limit, skip) });
+const fleetDataRead = makeFleetDataRead({
+  FleetPartFluidRequest: state.requests,
+  FleetEquipment: state.equipment,
+  FleetPart: state.parts,
+  FleetFluid: state.fluids,
+});
 export const createPageUrl = (name) => "/" + name;
 export const base44 = {
   auth: { me: async () => ({ id: "synthetic-admin", email: "synthetic@example.test", role: "admin" }) },
-  entities: {
-    FleetPartFluidRequest: listEntity("requests"),
-    FleetEquipment: listEntity("equipment"),
-    FleetPart: listEntity("parts"),
-    FleetFluid: listEntity("fluids"),
-    AuthorizedEmail: { filter: async () => [] },
-  },
+  entities: {},
   integrations: { Core: { UploadFile: async () => { throw new Error("Photo uploads are disabled in synthetic acceptance"); } } },
   functions: {
     async invoke(name, payload) {
+      if (name === "verifySession") return verifySyntheticSession(payload || {});
+      if (name === "fleetDataRead") return fleetDataRead(payload || {});
       if (name !== "fleetRequestAction") throw new Error("Unexpected synthetic function: " + name);
       state.actions.push({ name, payload: clone(payload) });
       const now = "2026-10-21T12:00:00Z";

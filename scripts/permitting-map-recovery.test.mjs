@@ -52,7 +52,7 @@ function harness({deferred=false,authOnConstruction=false}={}){
  async function refreshSession(){sessionToken='session-b';await act(async()=>renderer.update(React.createElement(Component,props)));}
  async function failAuth(){await act(async()=>window.gm_authFailure());}
  async function release(){await act(async()=>releaseMaps());}
- async function retry(){await act(async()=>window.gm_authFailure());await act(async()=>button('Try map again').props.onClick());}
+ async function retry(){await act(async()=>window.gm_authFailure());await act(async()=>button('Retry interactive map').props.onClick());}
  async function closeFirst(){await act(async()=>renderer?.unmount());}
  async function close(){await act(async()=>roots.forEach(root=>root.unmount()));}
  return {mount,mountAnother,closeFirst,getAuth:()=>window.gm_authFailure,previousAuth,previousAuthCalls:()=>previousAuthCalls,measure,updateAddress,refreshSession,failAuth,release,retry,close,button,text,mapsCreated,lines,listeners,inputs:()=>renderer.root.findAllByType('input')};
@@ -83,7 +83,7 @@ test('Google authentication failure disables map tools and stops active measurem
   const count=h.lines[0].path.length;
   await act(async()=>h.listeners[0].callback({latLng:{lat:39.4,lng:-84.4}}));
   assert.equal(h.lines[0].path.length,count);
-  assert(h.text().includes('Open Google Maps'));
+  assert(h.text().includes('Google Maps'));
  }finally{await h.close();}
 });
 test('late SDK completion cannot revive an authentication-rejected map',async()=>{

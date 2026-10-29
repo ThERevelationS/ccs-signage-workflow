@@ -10,12 +10,15 @@ const whole = (value: unknown, fallback = 0) => {
 
 function safeDeliveryEvidence(input: any = {}) {
   const sentAt = text(input?.sent_at, 80);
+  const fileUrl = text(input?.attachment_file_url, 4000);
   return {
     delivery_id: text(input?.delivery_id, 128),
     gmail_message_id: text(input?.gmail_message_id, 512),
     recipient_email: text(input?.recipient_email, 320),
     sent_at: sentAt && Number.isFinite(Date.parse(sentAt)) ? new Date(sentAt).toISOString() : '',
-    attachment_file_url: text(input?.attachment_file_url, 4000),
+    // Only http(s) evidence URLs are stored — javascript:/data: and other
+    // schemes can never be persisted as delivery evidence.
+    attachment_file_url: /^https?:\/\//i.test(fileUrl) ? fileUrl : '',
     attachment_sha256: text(input?.attachment_sha256, 128),
     attachment_size_bytes: Math.max(0, Number(input?.attachment_size_bytes || 0)),
   };
@@ -25,9 +28,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    await authenticateSignShopSession(base44, body?.session_token);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // plain request-context auth can write audit rows too.
+    let actor = null;
+    try { actor = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { actor = await base44.auth.me().catch(() => null); }
+    if (!actor?.id && !actor?.email) return Response.json({ error: 'Authentication required.' }, { status: 401 });
     const action = text(body?.action, 80);
     const estimateId = text(body?.estimate_id, 128);
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
@@ -38,6 +44,7 @@ Deno.serve(async (req) => {
     if (action === 'complete_manual_revision') {
       const revisionId = text(body?.revision_id, 128);
       const expectedRevisionUpdatedDate = text(body?.expected_revision_updated_date, 100);
+      const expectedEstimateUpdatedDate = text(body?.expected_estimate_updated_date, 100);
       if (!revisionId) return Response.json({ error: 'Revision id is required.' }, { status: 400 });
 
       const revision = await RevisionService.get(revisionId).catch(() => null);
@@ -56,6 +63,9 @@ Deno.serve(async (req) => {
 
       const estimate = await EstimateUser.get(estimateId).catch(() => null);
       if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified before completing its revision.' }, { status: 404 });
+      if (expectedEstimateUpdatedDate && String(estimate.updated_date || '') !== expectedEstimateUpdatedDate) {
+        return Response.json({ error: 'This estimate changed in another session. Reload before completing its revision.' }, { status: 409 });
+      }
 
       const before = revision.estimate_snapshot_before && typeof revision.estimate_snapshot_before === 'object'
         ? JSON.parse(JSON.stringify(revision.estimate_snapshot_before))

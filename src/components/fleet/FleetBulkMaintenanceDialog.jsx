@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { FLEET_MAINTENANCE_TEMPLATES, prettyMaintenanceFrequency } from "@/components/fleet/fleetMaintenanceTemplates";
 import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Search, Sparkles, Truck, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const EMPTY = {
   title: "",
@@ -160,7 +160,7 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
     setError("");
     setResult(null);
     try {
-      const response = await base44.functions.invoke("fleetBulkMaintenancePlan", {
+      const response = await invokeFleet("fleetBulkMaintenancePlan", {
         action: "preview",
         operation_key: operationKey,
         equipment_ids: selectedIds,
@@ -182,7 +182,7 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
     setBusy("commit");
     setError("");
     try {
-      const response = await base44.functions.invoke("fleetBulkMaintenancePlan", {
+      const response = await invokeFleet("fleetBulkMaintenancePlan", {
         action: "commit",
         operation_key: operationKey,
         preview_fingerprint: preview.preview_fingerprint,

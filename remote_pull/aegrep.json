@@ -1,0 +1,556 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/timeClockAction/entry.ts",
+      "line": 3284,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 350,
+      "text": "          entity: base44.asServiceRole.entities.AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 511,
+      "text": "          const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ full_name: work_order.assigned_to });\r"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 517,
+      "text": "          entity: base44.asServiceRole.entities.AuthorizedEmail,\r"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 736,
+      "text": "          entity: base44.asServiceRole.entities.AuthorizedEmail,\r"
+    },
+    {
+      "path": "base44/functions/checkDeadlineReminders/entry.ts",
+      "line": 853,
+      "text": "          entity: base44.asServiceRole.entities.AuthorizedEmail,\r"
+    },
+    {
+      "path": "base44/functions/findLocalityByAddress/entry.ts",
+      "line": 144,
+      "text": "  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });"
+    },
+    {
+      "path": "base44/functions/fleetAlertSettingsAction/entry.ts",
+      "line": 12,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetBulkMaintenancePlan/entry.ts",
+      "line": 17,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetDashboardPreferenceAction/entry.ts",
+      "line": 22,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentAction/entry.ts",
+      "line": 15,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetEquipmentDocumentAction/entry.ts",
+      "line": 22,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetFuelAction/entry.ts",
+      "line": 21,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetInspectionAction/entry.ts",
+      "line": 18,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetInventoryAction/entry.ts",
+      "line": 10,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetLifecycleAction/entry.ts",
+      "line": 20,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetMaintenanceAction/entry.ts",
+      "line": 28,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetMechanicPortal/entry.ts",
+      "line": 673,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetMeterMaintenanceAction/entry.ts",
+      "line": 18,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetPartLookupAction/entry.ts",
+      "line": 21,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetRepairEstimateAction/entry.ts",
+      "line": 20,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetRequestAction/entry.ts",
+      "line": 27,
+      "text": "  const matches = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetReservationAction/entry.ts",
+      "line": 22,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetSearch/entry.ts",
+      "line": 43,
+      "text": "    const staffRows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: String(user.email).trim().toLowerCase() }).catch(() => []);"
+    },
+    {
+      "path": "base44/functions/fleetSystemReportAction/entry.ts",
+      "line": 27,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/fleetWarrantyAction/entry.ts",
+      "line": 26,
+      "text": "  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});"
+    },
+    {
+      "path": "base44/functions/fleetWorkOrderAction/entry.ts",
+      "line": 76,
+      "text": "  const matches = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 2,
+      "text": "import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 43,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/issuePasswordReset/entry.ts",
+      "line": 87,
+      "text": "    await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/issueTimeClockBadge/entry.ts",
+      "line": 93,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/listAuthorizedUserDirectory/entry.ts",
+      "line": 31,
+      "text": "      entity: base44.asServiceRole.entities.AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 3,
+      "text": "import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 132,
+      "text": "async function loadTarget(AuthorizedEmail: any, id: string, email: string) {"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 134,
+      "text": "  const current = await AuthorizedEmail.get(id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 141,
+      "text": "async function ensureUsernameAvailable(AuthorizedEmail: any, username: string, exceptId = '') {"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 143,
+      "text": "  const rows = await AuthorizedEmail.filter({ username });"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 150,
+      "text": "async function ensureAnotherAdminExists(AuthorizedEmail: any, targetId: string) {"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 151,
+      "text": "  const admins = await AuthorizedEmail.filter({ role: 'admin' });"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 268,
+      "text": "  const authorized = await base44.asServiceRole.entities.AuthorizedEmail.get(authorizedId).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 320,
+      "text": "  if (!authorizedMatches) blockers.push('The AuthorizedEmail record no longer matches this request.');"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 451,
+      "text": "async function createUser(AuthorizedEmail: any, input: any) {"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 457,
+      "text": "  const existing = await AuthorizedEmail.filter({ email });"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 480,
+      "text": "    created = await AuthorizedEmail.create(payload);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 485,
+      "text": "  const after = await AuthorizedEmail.filter({ email }).catch((error: any) => {"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 511,
+      "text": "    const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 515,
+      "text": "      const rows = await loadAllEntityRows({ entity: AuthorizedEmail, sort: 'email', label: 'Authorized user administration' });"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 546,
+      "text": "      const result = await createUser(AuthorizedEmail, body?.data);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 552,
+      "text": "    const current = await loadTarget(AuthorizedEmail, id, email);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 597,
+      "text": "        await ensureUsernameAvailable(AuthorizedEmail, String(desired.username || ''), id);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 600,
+      "text": "        await ensureAnotherAdminExists(AuthorizedEmail, id);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 603,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 604,
+      "text": "        entity: AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 628,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 629,
+      "text": "        entity: AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 643,
+      "text": "      if (current.role === 'admin') await ensureAnotherAdminExists(AuthorizedEmail, id);"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 645,
+      "text": "      const result = await AuthorizedEmail.deleteMany({ id, email: current.email, updated_date: expectedUpdatedDate });"
+    },
+    {
+      "path": "base44/functions/manageAuthorizedUsers/entry.ts",
+      "line": 649,
+      "text": "      const after = await AuthorizedEmail.get(id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 3,
+      "text": "import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 34,
+      "text": "async function loadExactOwnRecord(AuthorizedEmail: any, email: string) {"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 35,
+      "text": "  const rows = await AuthorizedEmail.filter({ email });"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 55,
+      "text": "    const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 56,
+      "text": "    const user = await loadExactOwnRecord(AuthorizedEmail, actorEmail);"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 65,
+      "text": "      const matches = await AuthorizedEmail.filter({ username });"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 75,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 76,
+      "text": "        entity: AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 91,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 92,
+      "text": "        entity: AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 114,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/manageOwnProfile/entry.ts",
+      "line": 115,
+      "text": "        entity: AuthorizedEmail,"
+    },
+    {
+      "path": "base44/functions/managePTOConfig/entry.ts",
+      "line": 620,
+      "text": "    const Authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 89,
+      "text": "async function loadSalesRoster(AuthorizedEmail: any) {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 90,
+      "text": "  const rows = await loadAllEntityRows({ entity: AuthorizedEmail, sort: 'full_name', label: 'Sales person roster' });"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 110,
+      "text": "async function saveSalesPipelinePreferences(AuthorizedEmail: any, actor: any, value: any, expectedValue?: any) {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 114,
+      "text": "    const current = await AuthorizedEmail.get(actor?.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 120,
+      "text": "    const result = await AuthorizedEmail.updateMany("
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 126,
+      "text": "      const saved = await AuthorizedEmail.get(current.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 345,
+      "text": "      const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 346,
+      "text": "      return Response.json({ users: await loadSalesRoster(AuthorizedEmail) });"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 352,
+      "text": "      const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 353,
+      "text": "      return Response.json({ preferences: await saveSalesPipelinePreferences(AuthorizedEmail, actor, body?.preferences, body?.expected_preferences) });"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 3,
+      "text": "import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 28,
+      "text": "    // AuthorizedEmail is the current credential source of truth used by verifyLogin."
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 31,
+      "text": "    const entity = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 48,
+      "text": "        await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/migrateCredentials/entry.ts",
+      "line": 57,
+      "text": "        console.error('Password hash upgrade error for AuthorizedEmail id:', user.id, e);"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 60,
+      "text": "  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 3,
+      "text": "import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 77,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 106,
+      "text": "      await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 179,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 192,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/onboardingAccountAction/entry.ts",
+      "line": 203,
+      "text": "      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/resolvePermittingAddress/entry.ts",
+      "line": 144,
+      "text": "  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 7,
+      "text": "  replaceAuthorizedEmailCredentialFieldsIfUnchanged,"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 8,
+      "text": "} from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 20,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/setPassword/entry.ts",
+      "line": 112,
+      "text": "    await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 316,
+      "text": "        entity: base44.asServiceRole.entities.AuthorizedEmail,\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4599,
+      "text": "      const userResult = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: requestedEmail });\r"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 11,
+      "text": "  'AuthorizedEmail',"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 89,
+      "text": "// Nothing is admin-only today; AuthorizedEmail is staff-readable because"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 98,
+      "text": "  AuthorizedEmail: ["
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 3,
+      "text": "import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';"
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 14,
+      "text": "// and deadline live on AuthorizedEmail so they survive across invocations."
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 20,
+      "text": "    await replaceAuthorizedEmailCredentialFieldsIfUnchanged({"
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 49,
+      "text": "    // Look up the user directly on AuthorizedEmail (the credential source of truth)."
+    },
+    {
+      "path": "base44/functions/verifyLogin/entry.ts",
+      "line": 51,
+      "text": "    const authorized = base44.asServiceRole.entities.AuthorizedEmail;"
+    },
+    {
+      "path": "base44/functions/verifySession/entry.ts",
+      "line": 41,
+      "text": "    // the legacy username fallback when the AuthorizedEmail record has none."
+    },
+    {
+      "path": "base44/functions/verifySession/entry.ts",
+      "line": 50,
+      "text": "      await base44.asServiceRole.entities.AuthorizedEmail.update(user.id, {"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 110
+}

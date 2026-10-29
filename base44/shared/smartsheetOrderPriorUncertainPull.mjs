@@ -1,13 +1,22 @@
 // Order Form only. Never replace the coordinator's permanent-ID evidence with
 // a new Order pull while a previous attempted write is still unresolved.
 // A completed run has finished its read-back verification and is not blocked.
-export function classifyPriorUncertainOrderPull(previous, { orderPullRequested = false } = {}) {
+export function classifyPriorUncertainOrderPull(previous, { orderPullRequested = false, verifiedEvidence = null } = {}) {
   if (!orderPullRequested) return { blocked: false };
   if (!previous || !['failed', 'needs_review'].includes(previous.status)) return { blocked: false };
   const evidence = previous.order_pull_batch_evidence;
   const attempts = Number(evidence?.attempted_batches);
   const recent = Array.isArray(evidence?.recent_batches) ? evidence.recent_batches : [];
   if (!(Number.isFinite(attempts) && attempts > 0) && recent.length === 0) {
+    return { blocked: false };
+  }
+  // The coordinator copy of batch evidence is advisory. When independent
+  // storage proves THIS exact run's writes were read back, review-only
+  // leftovers (unlinked rows, missing links, conflicts) must not block
+  // the next pull forever.
+  if (typeof previous.started_at === 'string' && previous.started_at.length > 0 &&
+      verifiedEvidence?.state === 'verified_complete' &&
+      verifiedEvidence.run_started_at === previous.started_at) {
     return { blocked: false };
   }
   const attemptedBatches = Number.isSafeInteger(attempts) && attempts > 0

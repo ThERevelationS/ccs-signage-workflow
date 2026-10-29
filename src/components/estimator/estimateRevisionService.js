@@ -56,6 +56,13 @@ export async function completeEstimateRevision({ revision, estimate, sessionToke
   if (!revision?.id) return null;
   const estimateId = estimate?.id || revision.estimate_id || "";
   if (!estimateId) throw new Error("Estimate is required to complete a revision.");
+  if (!sessionToken) {
+    // The backend audit write needs a session; without one, skip gracefully —
+    // the open revision remains for reconciliation rather than failing the
+    // whole status transition.
+    console.warn("Revision completion skipped — no session token; audit write deferred for reconciliation.");
+    return null;
+  }
   const response = await base44.functions.invoke("updateEstimateRevisionAudit", {
     action: "complete_manual_revision",
     estimate_id: estimateId,
@@ -83,6 +90,12 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ses
 
   const cleanReason = String(payload.reason || "").trim();
   if (!cleanReason) throw new Error("A lifecycle reason is required.");
+  if (!sessionToken) {
+    // Same session fallback as completeEstimateRevision — never fail a save or
+    // transition because an audit row couldn't be written without a session.
+    console.warn("Lifecycle revision skipped — no session token; audit write deferred for reconciliation.");
+    return { id: "", skipped: true };
+  }
   const before = estimateAuditSnapshot(payload.estimateBefore || {}, {
     quoteTotal: payload.quoteTotalBefore,
     internalCost: payload.internalCostBefore,
@@ -116,6 +129,7 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ses
 export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence, sessionToken = "" }) {
   const version = Math.max(0, Math.floor(num(quoteVersion)));
   if (!estimateId || version <= 0 || !evidence) return { revision: null, warning: "" };
+  if (!sessionToken) return { revision: null, warning: "Delivery evidence attach skipped — no session token." };
 
   const response = await base44.functions.invoke("updateEstimateRevisionAudit", {
     action: "attach_delivery_evidence",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { filterAllFleetRows } from "./fleetEntityLoaders";
 import FleetConfirmDialog from "./FleetConfirmDialog";
@@ -16,6 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const DOCUMENT_TYPES = [
   ["registration", "Registration"],
@@ -85,23 +86,25 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
   const [saving, setSaving] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
   const [archiving, setArchiving] = useState(false);
+  const loadSequenceRef = useRef(0);
 
   const loadDocuments = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     if (!equipment?.id) return;
     setLoading(true);
     setError("");
     try {
-      const rows = await filterAllFleetRows(
-        base44.entities.FleetEquipmentDocument,
+      const rows = await filterAllFleetRows("FleetEquipmentDocument",
         { equipment_id: equipment.id },
         "-created_date",
         { label: `${equipment.name} Fleet documents` },
       );
+      if (requestSequence !== loadSequenceRef.current) return;
       setDocuments(rows || []);
     } catch (e) {
-      setError(e?.message || "Unable to load Fleet documents.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Unable to load Fleet documents.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, [equipment?.id, equipment?.name]);
 
@@ -176,7 +179,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
     setNotice("");
     try {
       if (dialog.mode === "edit") {
-        const { data } = await base44.functions.invoke("fleetEquipmentDocumentAction", {
+        const { data } = await invokeFleet("fleetEquipmentDocumentAction", {
           action: "update",
           id: dialog.document.id,
           expected_updated_date: dialog.document.updated_date || "",
@@ -210,7 +213,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
         setPendingUpload(uploaded);
       }
 
-      const { data } = await base44.functions.invoke("fleetEquipmentDocumentAction", {
+      const { data } = await invokeFleet("fleetEquipmentDocumentAction", {
         action: "create",
         creation_key: dialog.creationKey,
         document: {
@@ -241,7 +244,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
     setError("");
     setNotice("");
     try {
-      const { data } = await base44.functions.invoke("fleetEquipmentDocumentAction", {
+      const { data } = await invokeFleet("fleetEquipmentDocumentAction", {
         action,
         id: document.id,
         expected_updated_date: document.updated_date || "",

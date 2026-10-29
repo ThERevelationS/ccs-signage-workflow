@@ -30,7 +30,9 @@ const matchesQuery = (v, q) => {
 export default function VinylSearchPickerDialog({
   open, onOpenChange, options, selectedId, onSelect, title = "Select Vinyl", allowNone = false,
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
   const [sortKey, setSortKey] = useState("name");
 
   const filtered = useMemo(() => {

@@ -69,6 +69,36 @@ const DateCell = memo(function DateCell({ woId, field, value, popoverKey, openDa
   );
 });
 
+// Keep the clicked row pinned under the pointer while the focus gaps and
+// cell growth animate around it: re-anchor the clicked element's center on
+// screen every frame through the nearest vertical scroller.
+const anchorFocusedRow = (el) => {
+  if (!el?.isConnected) return;
+  let scroller = el.parentElement;
+  while (scroller && (!/(auto|scroll)/.test(getComputedStyle(scroller).overflowY) || scroller.scrollHeight <= scroller.clientHeight)) {
+    scroller = scroller.parentElement;
+  }
+  const target = scroller || document.scrollingElement;
+  if (!target) return;
+  const beforeRect = el.getBoundingClientRect();
+  const beforeCenter = beforeRect.top + beforeRect.height / 2;
+  const start = performance.now();
+  const tick = () => {
+    if (!el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const drift = r.top + r.height / 2 - beforeCenter;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+    if (performance.now() - start < 220) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  setTimeout(() => {
+    if (!el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const drift = r.top + r.height / 2 - beforeCenter;
+    if (Math.abs(drift) > 0.5) target.scrollTop += drift;
+  }, 240);
+};
+
 const SalesPipelineRow = memo(function SalesPipelineRow({
   wo, index, visibleColumnIds, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
@@ -111,15 +141,14 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const expectedCloseOverdue = Boolean(expectedCloseStamp && expectedCloseStamp < todayStamp && isOpen);
   const expectedCloseNear = Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp && isOpen);
 
-  return (
-    <React.Fragment>
-      {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
-      <tr className={`border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/60' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
+  return [
+      isFocused && <tr key="focus-gap-top" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>,
+      <tr key="row" className={`sales-board-row border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'sales-focus-row' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
         style={{ backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined }}>
         <td className="px-0 py-0 border-r">
           <button type="button" aria-label={`${isFocused ? 'Unfocus' : 'Focus'} sales row ${index + 1}: ${opportunityDisplayName}`} aria-pressed={isFocused}
-            onClick={() => { if (isFocused) { setFocusedRowId(null); setFocusedRowIndex(null); } else { setFocusedRowId(wo.id); setFocusedRowIndex(index); } }}
-            className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 ${isFocused ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700'}`}>
+            onClick={(e) => { anchorFocusedRow(e.currentTarget); if (isFocused) { setFocusedRowId(null); setFocusedRowIndex(null); } else { setFocusedRowId(wo.id); setFocusedRowIndex(index); } }}
+            className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600 ${isFocused ? 'sales-focus-num text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700'}`}>
             {index + 1}
           </button>
         </td>
@@ -379,10 +408,9 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
             )}
           </div>
         </td>
-      </tr>
-      {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
-    </React.Fragment>
-  );
+      </tr>,
+      isFocused && <tr key="focus-gap-bottom" className="sales-focus-gap" aria-hidden="true"><td colSpan={100}><div className="sales-focus-gap-inner" /></td></tr>
+    ];
 }, (prevProps, nextProps) => {
   // Custom comparison: only re-render if the row data or relevant props changed
   return (

@@ -7,15 +7,15 @@ import { readFileSync } from "node:fs";
 const source = readFileSync(
   new URL("../src/components/sips/ProductChecklistDialog.jsx", import.meta.url),
   "utf8"
-);
+).replace(/\r\n/g, "\n");
 const completedSource = readFileSync(
   new URL("../src/components/sips/ChecklistCompletedSection.jsx", import.meta.url),
   "utf8"
-);
+).replace(/\r\n/g, "\n");
 const revisitPopupSource = readFileSync(
   new URL("../src/components/sips/RevisitDatePopup.jsx", import.meta.url),
   "utf8"
-);
+).replace(/\r\n/g, "\n");
 
 let passed = 0;
 function check(name, run) {
@@ -1471,7 +1471,9 @@ check("Reload latest confirms unsaved edits and preserves them when cancelled", 
     "customStatusDraftsByItemIdRef", "isLoading", "checklist", "loadedUiChecklistSnapshot",
     "products", "loadedUiProductsSnapshot", "failedRevisitWorkOrderIdRef",
     "failedRevisitSelectionRef", "workOrder", "loadedRevisitDateSnapshot",
-    dirtyBody + "\nreturn hasUnsavedChanges;");
+    "const checklistDirtyFromSnapshot = JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot);\n"
+    + "const productsDirtyFromSnapshot = JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot);\n"
+    + dirtyBody + "\nreturn hasUnsavedChanges;");
   const clean = [{ id: "item-1", text: "Existing" }];
   const dirtyArgs = [ { show: false }, "", false, "", null, "",
     new Map([["item-1", clean[0]]]), null, "", { current: new Map() },

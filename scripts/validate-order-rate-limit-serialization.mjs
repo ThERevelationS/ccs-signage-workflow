@@ -46,7 +46,7 @@ const claim = backend.slice(
   backend.indexOf('const ALERT_SETTING_KEY'),
 );
 assert.match(claim, /currentIsOrderRun/);
-assert.match(claim, /current\?\.action === 'push_saved_orders'/);
+assert.match(claim, /const currentIsOrderRun = dataset === 'orders' && current\?\.status === 'running';/);
 assert.match(claim, /Another Order Save & Sync is already running/);
 assert.match(claim, /stale and must be closed for review before another sync can start/);
 assert.ok(
@@ -86,5 +86,5 @@ const savedOrdersAction = backend.slice(
   backend.indexOf("if (action === 'push_saved_sales')"),
 );
 assert.match(savedOrdersAction, /await claimInvocationRun\(/);
-assert.match(savedOrdersAction, /assertRunOwnership: async \(\) => assertSyncRunOwnership\(base44, startedAt\)/);
+assert.match(savedOrdersAction, /assertRunOwnership: async \(\) => assertSyncRunOwnership\(base44, startedAt, 'orders'\)/);
 console.log('PASS each explicit Order Save & Sync owns one backend coordinator through its write lifecycle');

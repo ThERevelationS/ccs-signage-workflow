@@ -111,18 +111,37 @@ check(spreadsheet.includes("values.some((val) => fieldValue == val)") &&
       spreadsheet.includes("fv == value"),
   "Non-user filter equality semantics must remain unchanged");
 check(filterDialog.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
-      filterDialog.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"'),
+      filterDialog.includes('grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
 check(assigneeSelect.includes("const selectedName = resolvedValue.name || value;") &&
       assigneeSelect.includes('value={selectedName ? `name:${options.indexOf(selectedName)}` : "none"}') &&
       assigneeSelect.includes('<SelectValue>{selectedName || "Unassigned"}</SelectValue>'),
   "Task assignee UI must display unique first-name aliases as their authorized canonical full name");
-check(syncAction.includes("canonicalBase44SalesAssignee(val, salesAssigneeUsers)") &&
-      syncAction.includes("fieldValues[key] = resolution.name;"),
-  "Sales Smartsheet pull must write canonical authorized full names into Base44");
+check(syncAction.includes("canonicalBase44SalesAssignee(val, salesAssigneeUsers, salesAssigneeConfirmedLabels)") &&
+      syncAction.includes("fieldValues[key] = resolution.name;") &&
+      syncAction.includes("profile?.assignee_confirmed_labels"),
+  "Sales Smartsheet pull must write canonical authorized full names into Base44 and honor confirmed labels");
+same(canonicalBase44SalesAssignee("Lorraine", users, ["Lorraine Whoberry"]).name, "Lorraine Whoberry",
+  "A confirmed historical label must resolve to its canonical stored name");
+same(canonicalBase44SalesAssignee("Lorraine Whoberry", users, ["Lorraine Whoberry"]).state, "confirmed_custom",
+  "An exact confirmed label must resolve without the roster");
+same(canonicalBase44SalesAssignee("Terri Tarter <admin@cincicustomsigns.com>", users, ["Terri Tarter"]).name, "Terri Tarter",
+  "Confirmed labels must still strip trailing <email> before matching");
+same(canonicalBase44SalesAssignee("07/30/26", users, ["Lorraine Whoberry"]).state, "unresolved",
+  "Date-like junk labels must stay unresolved even with a confirmed list");
+same(canonicalBase44SalesAssignee("Twyla", users, []).name, "Twyla Heinlein",
+  "Roster resolution must win before the confirmed list is considered");
 check(syncAction.includes("assignee_translation_review_required: salesAssigneeTranslationIssues.length") &&
       syncAction.includes("linked records keep their existing Base44 assignee") &&
-      !syncAction.includes("No Sales records were changed."),
+      syncAction.includes("salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue)"),
   "Unresolved or ambiguous historical Smartsheet assignees must be reported without freezing the entire Sales pull");
+const pendingIssueSite = syncAction.indexOf("pendingSalesAssigneeIssue = {");
+const updateIssueSite = syncAction.indexOf("salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue);", pendingIssueSite);
+const createIssueSite = syncAction.indexOf("salesAssigneeTranslationIssues.push(pendingSalesAssigneeIssue);", updateIssueSite + 1);
+const updateQueueSite = syncAction.indexOf("toUpdate.push({ id: existing.id");
+const createQueueSite = syncAction.indexOf("toCreate.push(newRecord);");
+check(pendingIssueSite >= 0 && updateIssueSite > updateQueueSite && updateQueueSite > pendingIssueSite &&
+      createIssueSite > createQueueSite && createQueueSite > updateIssueSite,
+  "Unresolved assignee labels may flag review only when their row actually queues a Sales update or create");
 
 console.log(`Sales person alias + Smartsheet first-name translation: ${checks}/${checks} PASS.`);

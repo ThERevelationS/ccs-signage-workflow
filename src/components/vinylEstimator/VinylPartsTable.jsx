@@ -37,7 +37,11 @@ export default function VinylPartsTable({
   const tableEndRef = useRef(null);
 
   const update = (idx, patch) => onChange(items.map((it, i) => i === idx ? { ...it, ...patch } : it));
-  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+  const remove = (idx) => {
+    const it = items[idx];
+    if (!confirm(`Remove "${it?.description || `part ${idx + 1}`}" from this workflow?`)) return;
+    onChange(items.filter((_, i) => i !== idx));
+  };
   const add    = ()    => onChange([...(items || []), blankItem()]);
   const duplicate = (idx) => {
     const copy = { ...items[idx], id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };

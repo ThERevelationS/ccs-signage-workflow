@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -41,6 +42,10 @@ const parseLocalDate = (dateString) => {
     return undefined;
   }
 };
+
+// Local yyyy-MM-dd for due checks and same-day quick actions.
+const localDateStr = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 // Safe format date for display
 const safeFormatDate = (dateString, formatStr) => {
@@ -65,7 +70,10 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Archive
+  Archive,
+  ShoppingCart,
+  PackageCheck,
+  AlertTriangle
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import {
@@ -94,6 +102,8 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
+import OrderMobileDetail from "@/components/orders/OrderMobileDetail";
+import OrderDuplicateReview from "@/components/orders/OrderDuplicateReview";
 import OrderLinkedCustomerReview from "@/components/orders/OrderLinkedCustomerReview";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { isStaleVerifiedOrderCustomerBlur } from "@/components/orders/orderCustomerBlurSafety.mjs";
@@ -108,6 +118,7 @@ import { canClearCompletedOrderSyncTarget } from "@/components/orders/orderSyncC
 import { canCommitOrderReload } from "@/components/orders/orderReloadSafety.mjs";
 import { canUseOrderExport } from "@/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "@/shared/smartsheetOrderReceivedState.mjs";
+import { orderDueState } from "@/shared/orderDueState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 
@@ -121,7 +132,7 @@ import {
 
 const Order = base44.entities.Order;
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
 const ORDER_REQUEST_TYPES_SETTING_KEY = "orderRequestTypes";
@@ -143,8 +154,10 @@ function normalizeOrderRequestTypes(values) {
   return normalized;
 }
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
+const ORDER_AUX_RELOAD_MS = 5 * 60 * 1000;
+const ORDER_FOCUS_RELOAD_THROTTLE_MS = 15 * 1000;
 
-const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
+const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", focusOrderId = "", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -266,6 +279,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }, [currentUser?.role]);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [expandedDescription, setExpandedDescription] = useState(null);
+  const [mobileDetailOrderId, setMobileDetailOrderId] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [validationError, setValidationError] = useState(null);
   const [editingCustomerName, setEditingCustomerName] = useState(null);
@@ -285,6 +299,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const syncInFlightRef = useRef(false);
   const manualPullInFlightRef = useRef(false);
   const orderLoadGenerationRef = useRef(0);
+  const loadInFlightRef = useRef(false); // Background loads may never stack; explicit loads may overlap.
+  const lastLoadStartedAtRef = useRef(0);
+  const cachedWorkOrdersRef = useRef(null);
+  const cachedUsersRef = useRef(null);
+  const lastAuxLoadAtRef = useRef(0); // Last successful WorkOrder + authorized-user read.
   const orderLocalEditGenerationRef = useRef(0); // Fence reads begun before a local edit/save.
   const customerNameDraftOrderRef = useRef(null); // Typing does not enter pendingChanges until blur.
   const [customerDraftActive, setCustomerDraftActive] = useState(false);
@@ -384,9 +403,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     // or rebuild their durable pending-SMARTSHEET marker queue from stale data.
     if ((manualPullInFlightRef.current && !manualPullReload) ||
         (importInFlightRef.current && !importReload) || hasActiveOrderEdits()) return false;
+    // Quiet background reloads (timers, focus/visibility/online) must never
+    // stack: while one is still paging entity rows another must not start or
+    // slow retrying pages multiply into a read avalanche. Explicit loads
+    // (loading spinner, manual pull, import, Retry) still run and may overlap;
+    // the generation fence below still discards stale commits.
+    const explicitLoad = showLoading || manualPullReload || importReload;
+    if (!explicitLoad && loadInFlightRef.current) return false;
+    const ownsLoadSlot = !loadInFlightRef.current;
+    if (ownsLoadSlot) loadInFlightRef.current = true;
+    lastLoadStartedAtRef.current = Date.now();
     const requestGeneration = ++orderLoadGenerationRef.current;
     const startedEditGeneration = orderLocalEditGenerationRef.current;
     if (showLoading && orders.length === 0) setIsLoading(true);
+    // Work Orders and authorized users change rarely; re-paging thousands of
+    // WorkOrder rows on every background reload is what tripped the entity
+    // read limit. Re-read them on explicit loads or once they are stale.
+    const reloadAux = explicitLoad ||
+      !lastAuxLoadAtRef.current || Date.now() - lastAuxLoadAtRef.current > ORDER_AUX_RELOAD_MS;
     // Keep an unverified-read error visible until a complete current reload
     // succeeds. Starting a retry must not make the toolbar Sync actionable.
     try {
@@ -399,13 +433,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           sort: "row_number",
           label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
         }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: { $ne: true }, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Order Spreadsheet Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
+        reloadAux
+          ? loadAllEntityRows({
+            entity: WorkOrder,
+            query: { completed: { $ne: true }, deleted: { $ne: true } },
+            sort: "created_date",
+            label: "Order Spreadsheet Work Orders",
+          })
+          : Promise.resolve(cachedWorkOrdersRef.current || []),
+        reloadAux
+          ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
+          : Promise.resolve(cachedUsersRef.current || [])
       ]);
       // A manual Sync or a newer refresh can start while these reads are
       // in flight. Never let the older response replace the newer snapshot.
@@ -420,6 +458,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         latestEditGeneration: orderLocalEditGenerationRef.current,
         localEditInProgress: hasActiveOrderEdits(),
       })) return false;
+      if (reloadAux) {
+        cachedWorkOrdersRef.current = workOrdersData;
+        cachedUsersRef.current = usersData;
+        lastAuxLoadAtRef.current = Date.now();
+      }
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
@@ -458,13 +501,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setReadError(error?.message || "Orders could not be verified completely.");
       setIsLoading(false);
       return false;
+    } finally {
+      if (ownsLoadSlot) loadInFlightRef.current = false;
     }
   };
 
+  // Rapid focus/visibility churn must not each start a multi-page read; one
+  // quiet reload per window is enough while a load ran moments ago.
   useEffect(() => {
-    const refreshAuthoritativeOrders = () => loadData(false);
+    const refreshAuthoritativeOrders = () => {
+      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
+      loadData(false);
+    };
     const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') loadData(false);
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastLoadStartedAtRef.current < ORDER_FOCUS_RELOAD_THROTTLE_MS) return;
+      loadData(false);
     };
     window.addEventListener('online', refreshAuthoritativeOrders);
     window.addEventListener('focus', refreshAuthoritativeOrders);
@@ -480,7 +532,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (pendingSyncCount <= 0) return undefined;
     // While durable Order markers are pending, reconcile them frequently so a
     // refreshed/reopened tab learns promptly which rows the backend completed.
-    const interval = setInterval(() => loadData(false), 5000);
+    const interval = setInterval(() => loadData(false), 30000);
     return () => clearInterval(interval);
   }, [pendingSyncCount, workOrderFilter]);
 
@@ -990,10 +1042,101 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   };
 
+  // Quick actions write the same verified fields as the date pickers.
+  const markOrderOrdered = async (order) => {
+    if (!order?.id || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') {
+      return { ok: false, fields: ["Only an open Order can be marked ordered"] };
+    }
+    const today = localDateStr();
+    await persistImmediateOrderFields(
+      order.id,
+      { date_ordered: today, date_ordered_option: "", status: orderStatusAfterOrderedDateChange(order, today) },
+      "Mark ordered today"
+    );
+    return { ok: true };
+  };
+
+  const markOrderReceived = async (order) => {
+    if (!order?.id || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') {
+      return { ok: false, fields: ["Only an open Order can be marked received"] };
+    }
+    const missingFields = validateOrderForReceived(order);
+    if (missingFields.length > 0) return { ok: false, fields: missingFields };
+    const today = localDateStr();
+    if (order.date_ordered && order.date_ordered > today) {
+      return { ok: false, fields: ["Date received cannot be before date ordered"] };
+    }
+    if (order.date_needed && order.date_needed > today) {
+      return { ok: false, fields: ["Date received cannot be before date needed"] };
+    }
+    await persistImmediateOrderFields(
+      order.id,
+      { date_received: today, receipt_option: "", status: "received" },
+      "Mark received today"
+    );
+    return { ok: true };
+  };
+
+  const runQuickOrderAction = async (order, kind) => {
+    try {
+      setSaveError("");
+      const result = kind === "ordered" ? await markOrderOrdered(order) : await markOrderReceived(order);
+      if (!result.ok) {
+        setValidationError({
+          orderId: order.id,
+          fields: result.fields || ["Unable to update this Order"],
+          type: kind === "received" ? "date_received" : "date_ordered",
+        });
+      }
+    } catch (error) {
+      setSaveError(error?.message || "This Order changed in another session. Reload before retrying.");
+    }
+  };
+
+  const orderContextActions = (order) => {
+    if (!order || !isRegistered || isPulling || isFulfilledOrder(order) ||
+        effectiveOrderStatus(order) === 'cancelled') return [];
+    const actions = [];
+    if (!order.date_ordered) {
+      actions.push({
+        label: "Mark Ordered",
+        icon: <ShoppingCart className="w-4 h-4 text-blue-600" />,
+        onSelect: () => void runQuickOrderAction(order, "ordered"),
+      });
+    }
+    actions.push({
+      label: "Mark Received",
+      icon: <PackageCheck className="w-4 h-4 text-green-600" />,
+      onSelect: () => void runQuickOrderAction(order, "received"),
+    });
+    return actions;
+  };
+
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [duplicateReviewOrderId, setDuplicateReviewOrderId] = useState(null);
+  const [duplicateReviewBusy, setDuplicateReviewBusy] = useState(false);
 
   const deleteOrder = async (order) => {
     setDeleteConfirm(order);
+  };
+
+  // Shared post-delete cleanup for the grid delete and duplicate review.
+  // Drops the row from every local edit/sync ledger so nothing tries to
+  // write a trashed Order again.
+  const removeOrdersFromState = (ids) => {
+    const idSet = new Set(ids);
+    orderLocalEditGenerationRef.current += 1;
+    setOrders((current) => current.filter(o => !idSet.has(o.id)));
+    for (const id of ids) {
+      delete pendingChangesRef.current[id];
+      delete originalOrdersRef.current[id];
+      verifiedCustomerSelectionRef.current.delete(id);
+      manuallyUnlinkedCustomerOrderIdsRef.current.delete(id);
+      pendingSyncIdsRef.current.delete(id);
+      pendingSyncVersionRef.current.delete(id);
+    }
+    setPendingSyncCount(pendingSyncIdsRef.current.size);
+    setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
   };
 
   const confirmDelete = async () => {
@@ -1010,16 +1153,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         deletedBy: currentUser?.email || "unknown",
         label: "Order Spreadsheet delete",
       });
-      orderLocalEditGenerationRef.current += 1;
-      setOrders((current) => current.filter(o => o.id !== target.id));
-      delete pendingChangesRef.current[target.id];
-      delete originalOrdersRef.current[target.id];
-      verifiedCustomerSelectionRef.current.delete(target.id);
-      manuallyUnlinkedCustomerOrderIdsRef.current.delete(target.id);
-      pendingSyncIdsRef.current.delete(target.id);
-      pendingSyncVersionRef.current.delete(target.id);
-      setPendingSyncCount(pendingSyncIdsRef.current.size);
-      setHasUnsavedChanges(Object.keys(pendingChangesRef.current).length > 0);
+      removeOrdersFromState([target.id]);
       setDeleteConfirm(null);
     } catch (error) {
       console.error("Could not delete Order safely:", error);
@@ -1027,6 +1161,68 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setDeleteConfirm(null);
     } finally {
       deleteInFlightRef.current = false;
+    }
+  };
+
+  // Duplicate review: keeping one Order trashes the rest of its group via the
+  // same guarded soft-delete as the grid (tombstones preserved; Smartsheet
+  // rows and links are never touched automatically). Fails closed like the
+  // single delete while a pull is in flight.
+  const handleDuplicateKeep = async (keepOrder) => {
+    const group = duplicateGroupsById.get(keepOrder.id) || [];
+    const others = group.filter(o => o.id !== keepOrder.id && !o.deleted);
+    if (!others.length || duplicateReviewBusy || deleteInFlightRef.current || manualPullInFlightRef.current || isPulling) return;
+    deleteInFlightRef.current = true;
+    setDuplicateReviewBusy(true);
+    setSaveError("");
+    try {
+      for (const other of others) {
+        const baseline = originalOrdersRef.current[other.id] || other;
+        await softDeleteOrderFromLoadedSnapshot({
+          entity: Order,
+          order: baseline,
+          deletedBy: currentUser?.email || "unknown",
+          label: "Order duplicate review keep",
+        });
+        removeOrdersFromState([other.id]);
+      }
+      setDuplicateReviewOrderId(null);
+    } catch (error) {
+      console.error("Could not resolve duplicate Orders safely:", error);
+      throw new Error(error?.message || "A duplicate Order changed in another session. Reload before retrying.");
+    } finally {
+      deleteInFlightRef.current = false;
+      setDuplicateReviewBusy(false);
+    }
+  };
+
+  // Verified "not duplicates" decision: Base44-only field, no pending-sync
+  // marker, so the record does not queue a Smartsheet write for a review
+  // annotation.
+  const handleDuplicateNotDuplicates = async () => {
+    const group = (duplicateGroupsById.get(duplicateReviewOrderId) || []).filter(o => !o.deleted);
+    if (!group.length || duplicateReviewBusy || manualPullInFlightRef.current || isPulling) return;
+    setDuplicateReviewBusy(true);
+    setSaveError("");
+    try {
+      for (const member of group) {
+        const baseline = originalOrdersRef.current[member.id] || member;
+        await replaceOrderFieldsIfUnchanged({
+          entity: Order,
+          order: baseline,
+          nextFields: { duplicate_review_status: 'not_duplicate' },
+          fullVersion: true,
+          label: "Order duplicate review",
+        });
+        originalOrdersRef.current[member.id] = { ...baseline, duplicate_review_status: 'not_duplicate' };
+        setOrders((current) => current.map(o => o.id === member.id ? { ...o, duplicate_review_status: 'not_duplicate' } : o));
+      }
+      setDuplicateReviewOrderId(null);
+    } catch (error) {
+      console.error("Could not record the duplicate review decision:", error);
+      throw new Error(error?.message || "A duplicate Order changed in another session. Reload before retrying.");
+    } finally {
+      setDuplicateReviewBusy(false);
     }
   };
 
@@ -1301,17 +1497,68 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   // Memoized filtered and sorted orders with optimized sorting
+  const todayStr = useMemo(() => localDateStr(), []);
+
+  const workOrdersById = useMemo(
+    () => new Map(workOrders.map(workOrder => [workOrder.id, workOrder])),
+    [workOrders]
+  );
+
+  // Open Orders sharing the same customer, description, and vendor are almost
+  // always accidental re-entries. Flag them without blocking any save.
+  const { duplicateOrderIds, duplicateGroupSizes, duplicateGroupsById } = useMemo(() => {
+    const groups = new Map();
+    for (const order of orders) {
+      if (order.deleted || isFulfilledOrder(order) || effectiveOrderStatus(order) === 'cancelled') continue;
+      // A verified "not duplicates" review decision stops flagging the Order.
+      if (order.duplicate_review_status === 'not_duplicate') continue;
+      const parts = ['customer_name', 'description', 'vendor']
+        .map(field => String(order[field] ?? '').trim().toLowerCase());
+      if (parts.some(part => !part)) continue;
+      const key = parts.join('|');
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(order);
+    }
+    const ids = new Set();
+    const sizes = new Map();
+    const byId = new Map();
+    for (const groupOrders of groups.values()) {
+      if (groupOrders.length > 1) {
+        groupOrders.forEach(order => {
+          ids.add(order.id);
+          sizes.set(order.id, groupOrders.length);
+          byId.set(order.id, groupOrders);
+        });
+      }
+    }
+    return { duplicateOrderIds: ids, duplicateGroupSizes: sizes, duplicateGroupsById: byId };
+  }, [orders]);
+
+  const duplicateReviewGroup = (duplicateGroupsById.get(duplicateReviewOrderId) || []).filter(o => !o.deleted);
+
+  const overdueCount = useMemo(
+    () => orders.filter(order => orderDueState(order, todayStr) === "overdue").length,
+    [orders, todayStr]
+  );
+
   const filteredOrders = useMemo(() => {
     let result = orders.filter(order => {
       if (!orderMatchesReceivedFilter(order, filterStatus)) return false;
+      if (filterStatus === "overdue" && orderDueState(order, todayStr) !== "overdue") return false;
+      if (filterStatus === "duplicates" && !duplicateOrderIds.has(order.id)) return false;
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
+        const linkedJob = workOrdersById.get(order.work_order_id);
         const searchable = [
           order.customer_name,
           order.description,
           order.requestor_name,
+          order.requestor_email,
           order.vendor,
-          order.request_type
+          order.request_type,
+          linkedJob?.title,
+          linkedJob?.client_name,
+          linkedJob?.est_inv_at
         ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
       }
@@ -1393,7 +1640,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     notReceived.sort(defaultSortFn);
     received.sort(defaultSortFn);
     return [...notReceived, ...received];
-  }, [orders, filterStatus, searchTerm, sortConfig]);
+  }, [orders, filterStatus, searchTerm, sortConfig, todayStr, workOrdersById, duplicateOrderIds]);
 
   const historyLayout = useMemo(() => orderHistoryLayout(filteredOrders, filterStatus), [filteredOrders, filterStatus]);
 
@@ -1405,6 +1652,26 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     estimateSize: (index) => index === historyLayout.historyVirtualIndex ? 36 : 32,
     overscan: 15,
   });
+
+  // Deep link: /OrderForm?order=<id> focuses the row on desktop or opens the
+  // mobile detail dialog. Retries until the Order finishes loading.
+  const deepLinkAppliedRef = useRef('');
+  useEffect(() => {
+    if (!focusOrderId || deepLinkAppliedRef.current === focusOrderId || !orders.length) return;
+    const order = orders.find(o => o.id === focusOrderId);
+    if (!order) return;
+    deepLinkAppliedRef.current = focusOrderId;
+    if (isMobile) {
+      setMobileDetailOrderId(order.id);
+      return;
+    }
+    const orderIndex = filteredOrders.findIndex(o => o.id === focusOrderId);
+    if (orderIndex < 0) return;
+    const virtualIndex = historyLayout.historyVirtualIndex !== null && orderIndex >= historyLayout.historyVirtualIndex
+      ? orderIndex + 1 : orderIndex;
+    rowVirtualizer.scrollToIndex(virtualIndex, { align: 'center' });
+    setFocusedRowId(order.id);
+  }, [focusOrderId, orders, filteredOrders, isMobile, historyLayout, rowVirtualizer]);
 
   const handleContextMenu = (e, order, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
@@ -1491,8 +1758,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           orders={filteredOrders}
           separateHistory={historyLayout.split}
           openCount={historyLayout.openCount}
-          onOpenDetails={(order) => alert(`Order: ${order.description}`)}
+          onOpenDetails={(order) => setMobileDetailOrderId(order.id)}
         />
+        {mobileDetailOrderId && (
+          <OrderMobileDetail
+            order={orders.find(o => o.id === mobileDetailOrderId)}
+            workOrder={workOrdersById.get(orders.find(o => o.id === mobileDetailOrderId)?.work_order_id) || null}
+            vendors={vendors}
+            requestTypes={requestTypes}
+            onUpdate={updateOrder}
+            onMarkOrdered={markOrderOrdered}
+            onMarkReceived={markOrderReceived}
+            busy={isSaving || isPulling || isSyncing}
+            isRegistered={isRegistered}
+            onClose={() => setMobileDetailOrderId(null)}
+          />
+        )}
       </>
     );
   }
@@ -1590,11 +1871,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       `}</style>
 
       {/* Compact counts and a shortcut, without adding a separate dashboard-style banner. */}
-      {historyLayout.split && (
+      {(historyLayout.split || overdueCount > 0) && (
         <div className="mb-1 flex min-h-8 items-center justify-between gap-2 px-1 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1.5" aria-label={`${historyLayout.openCount} open orders`}>
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-400" aria-hidden="true" />
-            Open <span className="font-semibold tabular-nums text-slate-700">{historyLayout.openCount}</span>
+          <span className="inline-flex items-center gap-3">
+            {historyLayout.split && (
+              <span className="inline-flex items-center gap-1.5" aria-label={`${historyLayout.openCount} open orders`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-violet-400" aria-hidden="true" />
+                Open <span className="font-semibold tabular-nums text-slate-700">{historyLayout.openCount}</span>
+              </span>
+            )}
+            {overdueCount > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-red-600" aria-label={`${overdueCount} overdue orders`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+                Overdue <span className="font-semibold tabular-nums">{overdueCount}</span>
+              </span>
+            )}
           </span>
           {historyLayout.receivedCount > 0 && (
             <button type="button"
@@ -1986,6 +2277,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         className="h-7 text-xs flex items-center gap-1 cursor-pointer hover:bg-gray-100 rounded px-1 overflow-hidden"
                         onClick={() => setExpandedDescription(order.id)}
                       >
+                        {duplicateOrderIds.has(order.id) && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setDuplicateReviewOrderId(order.id); }}
+                            title={`Possible duplicate — ${duplicateGroupSizes.get(order.id)} open orders share this customer, description, and vendor. Click to compare.`}
+                            aria-label="Review possible duplicate order"
+                            className="flex-shrink-0 rounded hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400"
+                          >
+                            <AlertTriangle className="w-3 h-3 text-amber-500" />
+                          </button>
+                        )}
                         <span className="truncate">{order.description || "Description..."}</span>
                         {order.description && order.description.length > 30 && (
                           <Expand className="w-3 h-3 text-gray-400 flex-shrink-0" />
@@ -2073,7 +2375,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}
+                      <span className="truncate">{order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}</span>
+                      {orderDueState(order, todayStr) === "overdue" && (
+                        <span className="ml-auto inline-flex shrink-0 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>
+                      )}
+                      {orderDueState(order, todayStr) === "due_soon" && (
+                        <span className="ml-auto inline-flex shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">Due soon</span>
+                      )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -2547,6 +2855,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         />
       )}
 
+      {/* Duplicate Order Review */}
+      {duplicateReviewGroup.length > 1 && (
+        <OrderDuplicateReview
+          orders={duplicateReviewGroup}
+          workOrdersById={workOrdersById}
+          onKeepOrder={handleDuplicateKeep}
+          onNotDuplicates={handleDuplicateNotDuplicates}
+          busy={duplicateReviewBusy || isPulling}
+          onClose={() => setDuplicateReviewOrderId(null)}
+        />
+      )}
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
@@ -2632,6 +2952,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         <CellContextMenu
           position={{ x: contextMenu.x, y: contextMenu.y }}
           onClose={() => setContextMenu(null)}
+          actions={orderContextActions(contextMenu.order)}
           entityType="Order"
           entityId={contextMenu.order.id}
           fieldName={contextMenu.fieldName}

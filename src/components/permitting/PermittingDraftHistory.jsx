@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { compareSavedDrafts, draftFieldLabel, validateDraftAncestor } from './permitDraftComparison.mjs';
 import { citationSourceId } from './workflowSourceEvidence.mjs';
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function SavedValue({ value }) {
   if (value === undefined || value === null || value === '') return <span className="text-gray-500">Not recorded</span>;
@@ -44,7 +45,7 @@ export default function PermittingDraftHistory({ current, onOpenCitation }) {
     pending.current = true; setLoading(true); setError('');
     try {
       if ([current, ...ancestors].some(row => row.id === parentId)) throw new Error('Revision link cycle');
-      const row = validateDraftAncestor(await base44.entities.PermittingWorkflowDraft.get(parentId), parentId, current, [current, ...ancestors]);
+      const row = validateDraftAncestor(await staffEntities.PermittingWorkflowDraft.get(parentId), parentId, current, [current, ...ancestors]);
       if (!active.current) return;
       setAncestors(previous => [...previous, row]); setSelectedId(row.id);
     } catch {

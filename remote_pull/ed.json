@@ -1,0 +1,81 @@
+{
+  "matches": [
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 35,
+      "text": "import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from \"@/components/estimator/estimateRevisionService\";"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 172,
+      "text": "    estimate.status === \"sent\" && estimate.quote_issue_date && Number(validDays) > 0"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 703,
+      "text": "  const handleQuoteDelivered = async ({ recipientEmail, issueMetadata, quoteVersion, gmailMessageId, sentAt, deliveryId, archive }) => {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 722,
+      "text": "      nextStatus: \"sent\","
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 738,
+      "text": "      status: \"sent\","
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 768,
+      "text": "        deliveryEvidence: {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 817,
+      "text": "  const handleDeliveryEvidenceReady = async ({ quoteVersion, deliveryId, gmailMessageId, recipientEmail, sentAt, archive }) => {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 819,
+      "text": "      const result = await attachQuoteDeliveryEvidenceToIssuanceRevision({"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 855,
+      "text": "    if (![\"sent\", \"approved\"].includes(before.status)) {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 888,
+      "text": "    const transitionBefore = before.status === \"approved\" ? { ...before, status: \"sent\" } : before;"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 894,
+      "text": "      if (before.status === \"sent\") {"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 932,
+      "text": "      await syncEstimateEverywhere(after, { previousEstimateStatus: \"sent\", syncCustomer: false, sessionToken });"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1112,
+      "text": "            customer: estimate.status === \"sent\" || estimate.status === \"approved\","
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1283,
+      "text": "                onQuoteDelivered={handleQuoteDelivered}"
+    },
+    {
+      "path": "src/pages/EstimateDetail.jsx",
+      "line": 1285,
+      "text": "                onDeliveryEvidenceReady={handleDeliveryEvidenceReady}"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 15
+}

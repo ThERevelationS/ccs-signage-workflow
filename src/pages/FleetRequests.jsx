@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetRequestDialog from "@/components/fleet/FleetRequestDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { ShoppingCart, Search, Loader2, ExternalLink, ShieldCheck, Plus, Pencil, PackageCheck, Truck, XCircle, Clock3, CheckCircle2 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 export default function FleetRequests() {
   const [requests, setRequests] = useState([]);
@@ -26,19 +27,15 @@ export default function FleetRequests() {
     const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     try {
-      const user = await base44.auth.me().catch(() => null);
+      const user = await Promise.resolve(getSessionUser());
       const [r, e, p, f] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
-        listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
+        listAllFleetRows("FleetPartFluidRequest", "-created_date", { label: "Fleet requests" }),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        listAllFleetRows("FleetPart", "part_name", { label: "Fleet parts" }),
+        listAllFleetRows("FleetFluid", "fluid_name", { label: "Fleet fluids" }),
       ]);
       if (requestSequence !== loadSequenceRef.current) return;
-      let admin = user?.role === "admin";
-      if (!admin && user?.email) {
-        const authRows = await base44.entities.AuthorizedEmail.filter({ email: user.email }).catch(() => []);
-        admin = authRows?.[0]?.role === "admin";
-      }
+      const admin = user?.role === "admin";
       if (requestSequence !== loadSequenceRef.current) return;
       setCurrentUser(user);
       setIsAdmin(admin);
@@ -104,7 +101,7 @@ export default function FleetRequests() {
       : action === "edit"
         ? { action: "update", id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", request: form }
         : { action, id: dialog.request.id, expected_updated_date: dialog.request.updated_date || "", ...form };
-    const response = await base44.functions.invoke("fleetRequestAction", payload);
+    const response = await invokeFleet("fleetRequestAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
     closeDialog();
@@ -116,7 +113,7 @@ export default function FleetRequests() {
     setBusyId(request.id);
     setActionError("");
     try {
-      const response = await base44.functions.invoke("fleetRequestAction", { action: "cancel", id: request.id, expected_updated_date: request.updated_date || "" });
+      const response = await invokeFleet("fleetRequestAction", { action: "cancel", id: request.id, expected_updated_date: request.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
       await loadData();
     } catch (error) {

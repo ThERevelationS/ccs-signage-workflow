@@ -8,12 +8,14 @@ import ts from 'typescript';
 import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments, applyDiscoveryFetchTimestamp } from '../base44/shared/permittingDiscoveryScan.mjs';
 import { retainOfficeResearchResponseHistory } from '../base44/shared/officeResearchResponseHistory.mjs';
 import { mergeJurisdictionResearchDocuments } from '../base44/shared/jurisdictionResearchDocumentMerge.mjs';
+import { assertOfficialProfileResearchIdentity, assertResearchSourceIdentity } from '../base44/shared/permittingSourceIdentity.mjs';
 const entry=fs.readFileSync('base44/functions/refreshJurisdiction/entry.ts','utf8');
 const compiled=ts.transpileModule(entry.slice(entry.indexOf('async function refreshJurisdictionRecord')),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText;
 function harness({profile={},ai={},pages={}}={}) {
   const initial={id:'fixture',name:'Fixture',state:'OH',type:'city',updated_date:'v1',permitting_url:'https://city.gov/permits',documents:[{id:'manual',url:'https://city.gov/old.pdf',source:'manual',file_url:'stored',extracted_text:'preserve'}],...profile};
   let written, researchCalls=0;const fetched=[];
   const deps={normalizeOfficeResearch,silentScanReporter,readPermittingResourceResponse,scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,applyDiscoveryFetchTimestamp,retainOfficeResearchResponseHistory,mergeJurisdictionResearchDocuments,
+    assertOfficialProfileResearchIdentity,assertResearchSourceIdentity,
     safeExternalFetch:async url=>{fetched.push(url);if(!(url in pages))throw Error('fixture unavailable');return new Response(pages[url],{headers:{'content-type':'text/html'}});},
     RESEARCH_FETCH_TIMEOUT_MS:12000,readResearchDocumentBytes:async response=>new Uint8Array(await response.arrayBuffer()),
     sanitizeJurisdictionResearch:v=>v,gateResearchRegulatoryPromotion:({updateData})=>({blocked:false,updateData}),

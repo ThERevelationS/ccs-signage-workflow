@@ -369,6 +369,10 @@
       "type": "boolean",
       "default": false,
       "description": "Show this item in the Sign Maintenance estimator's equipment / supplies pickers."
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image URL for this catalog material."
     }
   },
   "required": [

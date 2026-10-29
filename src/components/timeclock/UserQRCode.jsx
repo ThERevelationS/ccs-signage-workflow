@@ -44,8 +44,14 @@ function persistBadgeRotationRequest(email, requestId) {
   try { sessionStorage.setItem(badgeRotationStorageKey(email), requestId); } catch {}
 }
 
-function clearBadgeRotationRequest(email) {
-  try { sessionStorage.removeItem(badgeRotationStorageKey(email)); } catch {}
+function clearBadgeRotationRequest(email, expectedRequestId = "") {
+  try {
+    // Only clear the request id this caller persisted — a delayed ack must not
+    // wipe a newer rotation request stored after a reload or by a fresh retry.
+    if (expectedRequestId &&
+        sessionStorage.getItem(badgeRotationStorageKey(email)) !== expectedRequestId) return;
+    sessionStorage.removeItem(badgeRotationStorageKey(email));
+  } catch {}
 }
 
 function shouldRetainBadgeRotation(err) {
@@ -64,12 +70,19 @@ export default function UserQRCode({ user, sessionToken = "" }) {
   const [isReplacing, setIsReplacing] = useState(false);
   const [error, setError] = useState("");
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const badgeSeqRef = useRef(0);
+  const badgeScopeRef = useRef("");
+  badgeScopeRef.current = `${sessionToken || ""}|${String(user?.email || "").trim().toLowerCase()}`;
 
   const loadBadge = async ({ rotate = false } = {}) => {
-    if (!user?.email || !sessionToken) {
+    const requestEmail = String(user?.email || "").trim().toLowerCase();
+    if (!requestEmail || !sessionToken) {
       setError("Sign in to Time Clock before viewing or replacing your secure badge.");
       return;
     }
+    const requestScope = badgeScopeRef.current;
+    const requestSeq = ++badgeSeqRef.current;
+    const stillCurrent = () => requestSeq === badgeSeqRef.current && badgeScopeRef.current === requestScope;
 
     const requestId = rotate
       ? (storedBadgeRotationRequest(user.email) || newBadgeRequestId())
@@ -86,22 +99,28 @@ export default function UserQRCode({ user, sessionToken = "" }) {
         ...(rotate ? { request_id: requestId } : {}),
       });
       const data = response?.data || response;
+      if (!stillCurrent()) return;
       if (!data?.success || !data?.badge_code) {
         const actionError = new Error(data?.error || "Secure Time Clock badge could not be loaded.");
         actionError.retrySameRequest = data?.retry_same_request === true;
         actionError.confirmedServerResponse = true;
         throw actionError;
       }
-      if (rotate) clearBadgeRotationRequest(user.email);
+      if (String(data?.badge_owner_email || "").trim().toLowerCase() &&
+          String(data.badge_owner_email).trim().toLowerCase() !== requestEmail) return;
+      if (rotate) clearBadgeRotationRequest(user.email, requestId);
       setBadgeCode(data.badge_code);
       setBadgeVersion(data.badge_version || null);
     } catch (err) {
-      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email);
+      if (!stillCurrent()) return;
+      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email, requestId);
       const apiError = err?.response?.data?.error;
       setError(apiError || err?.message || "Secure Time Clock badge could not be loaded.");
     } finally {
-      setIsLoading(false);
-      setIsReplacing(false);
+      if (requestSeq === badgeSeqRef.current) {
+        setIsLoading(false);
+        setIsReplacing(false);
+      }
     }
   };
 
@@ -111,11 +130,16 @@ export default function UserQRCode({ user, sessionToken = "" }) {
     }
   }, [open, user?.email, sessionToken]);
 
+  // Employee/session switch: clear the previous badge and issue a fresh read
+  // when the dialog is open. Bumping the sequence also fences any in-flight
+  // response belonging to the previous employee.
   useEffect(() => {
+    badgeSeqRef.current += 1;
     setBadgeCode("");
     setBadgeVersion(null);
     setError("");
-  }, [user?.email]);
+    if (open && user?.email && sessionToken) loadBadge();
+  }, [user?.email, sessionToken]);
 
   if (!user?.email) return null;
 
@@ -252,3 +276,4 @@ export default function UserQRCode({ user, sessionToken = "" }) {
     </>
   );
 }
+

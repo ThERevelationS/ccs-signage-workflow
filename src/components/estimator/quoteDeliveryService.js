@@ -9,21 +9,48 @@ const escapeHtml = (value) => String(value || "")
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#039;");
 
+function interpolateEmailTemplate(template, estimate = {}) {
+  const values = {
+    estimate_number: String(estimate.estimate_number || "").trim(),
+    project_name: String(estimate.project_name || "").trim(),
+    client_name: String(estimate.client_name || "").trim(),
+    contact_name: String(estimate.order_contact || estimate.contact_name || "").trim(),
+    company_name: String(estimate.company_name || "Cincinnati Custom Signs").trim(),
+    quote_total: `$${(Number.isFinite(Number(estimate.quote_total)) ? Number(estimate.quote_total) : 0).toFixed(2)}`,
+    quote_valid_until: String(estimate.quote_valid_until || estimate.quote_expiration_date || "").trim(),
+  };
+  return String(template || "").replace(/\{(\w+)\}/g, (match, key) =>
+    Object.prototype.hasOwnProperty.call(values, key) ? values[key] : match
+  );
+}
+
 export function defaultQuoteEmailSubject(estimate = {}) {
-  const number = String(estimate.estimate_number || "").trim();
-  const project = String(estimate.project_name || "").trim();
-  return [number ? `Estimate #${number}` : "Project Estimate", project].filter(Boolean).join(" — ");
+  const subjectTemplate = String(estimate.email_subject_template || "").trim();
+  if (subjectTemplate) {
+    const out = interpolateEmailTemplate(subjectTemplate, estimate).trim();
+    if (out) return out.replace(/[\r\n]+/g, " ");
+  }
+  const number = String(estimate.estimate_number || "").replace(/[\r\n]+/g, " ").trim();
+  const project = String(estimate.project_name || "").replace(/[\r\n]+/g, " ").trim();
+  return [number ? `Estimate #${number}` : "Project Estimate", project].filter(Boolean).join(" â€” ");
 }
 
 export function defaultQuoteEmailMessage(estimate = {}) {
+  const messageTemplate = String(estimate.email_message_template || "").trim();
+  if (messageTemplate) {
+    const out = interpolateEmailTemplate(messageTemplate, estimate).trim();
+    if (out) return out;
+  }
   const contact = String(estimate.order_contact || estimate.contact_name || "").trim();
   const greeting = contact ? `Good afternoon ${contact},` : "Good afternoon,";
   const company = String(estimate.company_name || "Cincinnati Custom Signs").trim();
   return `${greeting}\n\nPlease find the attached estimate for ${estimate.project_name || "your project"}. Please let us know if you have any questions or if there is anything you would like us to review.\n\nThank you,\n${company}`;
 }
 
-export function quoteEmailBodyHtml(message) {
-  return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;white-space:pre-line;">${escapeHtml(message)}</div>`;
+export function quoteEmailBodyHtml(message, signature = "") {
+  const sig = String(signature || "").trim();
+  const sigHtml = sig ? `<div style="font-family:Arial,sans-serif;font-size:13px;line-height:1.55;color:#555;white-space:pre-line;border-top:1px solid #ddd;margin-top:16px;padding-top:12px;">${escapeHtml(sig)}</div>` : "";
+  return `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#222;white-space:pre-line;">${escapeHtml(message)}</div>${sigHtml}`;
 }
 
 
@@ -66,11 +93,56 @@ export async function ensureQuoteDeliveryAudit(data = {}, sessionToken = "") {
   return result.delivery;
 }
 
+export async function authorizeEstimateQuoteSend({ estimateId, quoteTotal, sessionToken }) {
+  const estimateKey = String(estimateId || "").trim();
+  if (!estimateKey) throw new Error("The estimate must be saved before its quote can be emailed.");
+  let response;
+  try {
+    response = await base44.functions.invoke("recordEstimateQuoteDelivery", {
+      session_token: sessionToken,
+      action: "authorize_send",
+      estimate_id: estimateKey,
+      quote_total: Number(quoteTotal || 0),
+    });
+  } catch (error) {
+    throw new Error(error?.response?.data?.error || error?.data?.error || error?.message || "Quote send authorization could not be verified.");
+  }
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (result?.allowed !== true) throw new Error("This quote is not approved for sending.");
+  return result;
+}
+
+export async function approveEstimateQuote({ estimateId, quoteTotal, sessionToken }) {
+  const estimateKey = String(estimateId || "").trim();
+  if (!estimateKey) throw new Error("The estimate must be saved before its quote can be approved.");
+  let response;
+  try {
+    response = await base44.functions.invoke("recordEstimateQuoteDelivery", {
+      session_token: sessionToken,
+      action: "approve_quote",
+      estimate_id: estimateKey,
+      quote_total: Number(quoteTotal || 0),
+    });
+  } catch (error) {
+    throw new Error(error?.response?.data?.error || error?.data?.error || error?.message || "Quote approval could not be recorded.");
+  }
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (!result?.success || !result?.internal_approval?.approved_at) {
+    throw new Error("Quote approval could not be verified.");
+  }
+  return result;
+}
+
 export async function deliverEstimateQuote({
   estimate,
   recipientEmail,
+  ccEmails = "",
+  bccEmails = "",
   subject,
   message,
+  emailSignature = "",
   attachment,
   quoteVersion,
   quoteIssueDate,
@@ -80,13 +152,19 @@ export async function deliverEstimateQuote({
   isResend,
   sessionToken,
 }) {
+  // Internal approval gate: a quote over the configured threshold cannot be
+  // emailed until a manager approves it. This server-side check runs before the
+  // PDF is archived and before Gmail is invoked so a blocked quote never sends.
+  await authorizeEstimateQuoteSend({ estimateId: estimate?.id, quoteTotal, sessionToken });
   // Archive the exact bytes before sending so every successful email has a
   // retrievable source artifact. If archival fails, Gmail is not called.
   const archive = await archiveQuoteAttachment(attachment);
   const response = await sendGmail({
     to: recipientEmail,
+    cc: ccEmails || "",
+    bcc: bccEmails || "",
     subject,
-    body: quoteEmailBodyHtml(message),
+    body: quoteEmailBodyHtml(message, emailSignature),
     attachments: [attachment],
   });
   const payload = response?.data || response || {};
@@ -109,6 +187,8 @@ export async function deliverEstimateQuote({
     quote_expiration_date: quoteExpirationDate(quoteIssueDate, quoteValidDays),
     quote_total: Number(quoteTotal || 0),
     recipient_email: recipientEmail,
+    cc_emails: String(ccEmails || ""),
+    bcc_emails: String(bccEmails || ""),
     subject,
     delivery_method: "email",
     delivery_status: "sent",

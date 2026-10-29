@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import FleetEquipmentDialog from "@/components/fleet/FleetEquipmentDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -15,7 +15,6 @@ import {
   CircleOff,
   ClipboardList,
   Link2,
-  Loader2,
   MapPin,
   Pencil,
   Plus,
@@ -26,6 +25,8 @@ import {
   Truck,
   Wrench,
 } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionUser } from "@/components/auth/EmailGate";
 
 const normalizeVin = value => String(value || "").trim().toUpperCase();
 const normalizeImei = value => String(value || "").trim();
@@ -79,27 +80,30 @@ export default function FleetEquipment() {
   const [reactivateTarget, setReactivateTarget] = useState(null);
   const [reactivating, setReactivating] = useState(false);
   const [error, setError] = useState("");
+  const loadSequenceRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestSequence = ++loadSequenceRef.current;
     setLoading(true);
     setError("");
     try {
       const [equipmentRows, workOrderRows, taskRows, user, bouncieResult] = await Promise.all([
-        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
-        listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
-        base44.auth.me().catch(() => null),
-        base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
+        listAllFleetRows("FleetEquipment", "name", { label: "Fleet equipment" }),
+        listAllFleetRows("FleetMaintenanceWorkOrder", "-created_date", { label: "Fleet work-order history" }),
+        listAllFleetRows("FleetMaintenanceTask", "start_date", { label: "Fleet maintenance schedules" }),
+        Promise.resolve(getSessionUser()),
+        invokeFleet("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
       ]);
+      if (requestSequence !== loadSequenceRef.current) return;
       setEquipment(equipmentRows || []);
       setWorkOrders(workOrderRows || []);
       setTasks(taskRows || []);
       setCurrentUser(user || null);
       setBouncieVehicles(bouncieResult?.data?.data || []);
     } catch (e) {
-      setError(e?.message || "Failed to load Fleet equipment.");
+      if (requestSequence === loadSequenceRef.current) setError(e?.message || "Failed to load Fleet equipment.");
     } finally {
-      setLoading(false);
+      if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
   }, []);
 
@@ -131,7 +135,7 @@ export default function FleetEquipment() {
     setReactivating(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetEquipmentAction", {
+      const { data } = await invokeFleet("fleetEquipmentAction", {
         action: "update",
         id: reactivateTarget.id,
         expected_updated_date: reactivateTarget.updated_date || "",
@@ -154,7 +158,7 @@ export default function FleetEquipment() {
       const body = dialog?.equipment
         ? { action: "update", id: dialog.equipment.id, expected_updated_date: dialog.equipment.updated_date || "", equipment: payload, tracking_applicable }
         : { action: "create", creation_key: dialog?.createKey || "", equipment: payload, tracking_applicable };
-      const { data } = await base44.functions.invoke("fleetEquipmentAction", body);
+      const { data } = await invokeFleet("fleetEquipmentAction", body);
       if (data?.error) throw new Error(data.error);
       setDialog(null);
       await loadData();
@@ -178,7 +182,7 @@ export default function FleetEquipment() {
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
-        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : (
+        {loading ? <ListSkeleton rows={6} /> : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(eq => {
               const activeOrders = workOrders.filter(order => order.equipment_id === eq.id && !["completed", "cancelled"].includes(order.status));

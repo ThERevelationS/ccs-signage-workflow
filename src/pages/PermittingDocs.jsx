@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 function DocSection({ icon: Icon, title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -77,7 +78,7 @@ function SavedPhysicalTextAcceptance() {
       return () => { active = false; };
     }
     setCatalog({ rows: [], loading: true, error: "" });
-    base44.entities.PermittingSourceDocument.filter({ jurisdiction_id: jurisdictionId }, {
+    staffEntities.PermittingSourceDocument.filter({ jurisdiction_id: jurisdictionId }, {
       sort: "-retrieval_timestamp",
       limit: 200,
       fields: sourceFields,

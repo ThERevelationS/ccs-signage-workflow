@@ -1,0 +1,13 @@
+{
+  "Stop": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .devin/stop-backlog.ps1"
+        }
+      ]
+    }
+  ]
+}

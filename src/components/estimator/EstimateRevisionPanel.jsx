@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { History, LockKeyhole, PencilLine, RefreshCw, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronRight, History, LockKeyhole, PencilLine, RefreshCw, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { isEstimateProtected, requiresEstimateLifecycleReason } from "./estimateLifecycle";
+import { isEstimateProtected, requiresEstimateLifecycleReason, summarizeEstimateChanges } from "./estimateLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
 
 const TYPE_LABELS = {
@@ -11,6 +11,22 @@ const TYPE_LABELS = {
   conversion: "Work Order conversion",
 };
 
+function SnapshotDiffToggle({ lines, expanded, onToggle, active = false }) {
+  if (!lines.length) return null;
+  return (
+    <div className="mt-1.5">
+      <button type="button" onClick={onToggle} className={`inline-flex items-center gap-1 text-[9px] font-bold ${active ? "text-blue-700 hover:text-blue-900" : "text-gray-500 hover:text-gray-700"}`}>
+        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />} Changes vs snapshot
+      </button>
+      {expanded && (
+        <ul className={`mt-1 list-disc pl-4 space-y-0.5 text-[9px] ${active ? "text-blue-800" : "text-gray-600"}`}>
+          {lines.map((line, index) => (<li key={index}>{line}</li>))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, onRepairConversionTracking, repairingConversionTracking = false, refreshKey = 0 }) {
   const [rows, setRows] = useState([]);
   const [revisionsLoading, setRevisionsLoading] = useState(true);
@@ -19,6 +35,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
   const [reason, setReason] = useState("");
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
+  const [diffExpanded, setDiffExpanded] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -43,6 +60,36 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
     (row.idempotency_key === conversionIdempotencyKey || row.notes === conversionIdempotencyKey || row.work_order_id === estimate.work_order_id)
   );
   const conversionTrackingMissing = !revisionsLoading && !revisionReadError && !!estimate?.work_order_id && !hasConversionTracking;
+
+  // Live diff preview: the open revision when one exists, otherwise the most
+  // recent history row. The snapshot is compared against the current estimate
+  // so an in-progress revision shows what has changed so far.
+  const snapshotDiffRevision = openRevision || rows[0] || null;
+  let snapshotDiffLines = [];
+  try {
+    if (snapshotDiffRevision?.estimate_snapshot_before && estimate) {
+      snapshotDiffLines = summarizeEstimateChanges(snapshotDiffRevision.estimate_snapshot_before, estimate) || [];
+    }
+  } catch (diffError) {
+    snapshotDiffLines = [];
+  }
+
+  const exportCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = ["revision_number", "type", "status", "reason", "previous_status", "new_status", "quote_version", "previous_quote_total", "new_quote_total", "created_by", "completed_at"];
+    const lines = [header.join(",")].concat(rows.map((r) => [
+      r.revision_number, r.revision_type, r.revision_status, r.reason,
+      r.previous_status, r.new_status, r.quote_version,
+      r.previous_quote_total, r.new_quote_total, r.created_by,
+      r.completed_at || r.started_at || "",
+    ].map(esc).join(",")));
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `estimate-${estimate?.estimate_number || estimate?.id || "revisions"}-revisions.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   const start = async () => {
     if (!reason.trim() || starting) return;
@@ -121,7 +168,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
         {openRevision && (
           <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-start gap-2">
             <PencilLine className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" />
-            <div className="min-w-0"><div className="text-[11px] font-bold text-blue-900">Revision #{openRevision.revision_number} in progress</div><div className="text-[10px] text-blue-800 mt-0.5">Reason: {openRevision.reason}</div><div className="text-[9px] text-blue-600 mt-1">Save the estimate when finished. The completed revision will preserve the before/after snapshots and change summary.</div></div>
+            <div className="min-w-0"><div className="text-[11px] font-bold text-blue-900">Revision #{openRevision.revision_number} in progress</div><div className="text-[10px] text-blue-800 mt-0.5">Reason: {openRevision.reason}</div><div className="text-[9px] text-blue-600 mt-1">Save the estimate when finished. The completed revision will preserve the before/after snapshots and change summary.</div><SnapshotDiffToggle lines={snapshotDiffLines} expanded={diffExpanded} onToggle={() => setDiffExpanded((value) => !value)} active /></div>
           </div>
         )}
 
@@ -142,6 +189,10 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
           <div className="py-3 text-center text-[10px] text-gray-400">No estimate-level revisions have been recorded yet.</div>
         ) : (
           <div className="border border-gray-200 rounded overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 border-b border-gray-200">
+              <span className="text-[9px] font-bold tracking-wide text-gray-500">REVISION HISTORY · {rows.length}</span>
+              <button type="button" onClick={exportCsv} className="h-[22px] px-2 rounded border border-gray-300 bg-white text-[9px] font-semibold text-gray-600 hover:border-lime-400 hover:text-gray-900">Export CSV</button>
+            </div>
             {rows.slice(0, 6).map((row) => (
               <div key={row.id} className="px-3 py-2.5 border-b border-gray-100 last:border-b-0 bg-white">
                 <div className="flex items-center justify-between gap-3">
@@ -149,8 +200,9 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.completed_at || row.started_at ? new Date(row.completed_at || row.started_at).toLocaleString() : ""}</div>
                 </div>
                 <div className="mt-1 text-[10px] text-gray-600">{row.reason}</div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span>{Number(row.quote_version || 0) > 0 && <span>Quote Version {Number(row.quote_version)}</span>}<span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Work Order linked</span>}</div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span>{Number(row.quote_version || 0) > 0 && <span>Quote Version {Number(row.quote_version)}</span>}<span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.created_by && <span>by {row.created_by}</span>}{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Work Order linked</span>}</div>
                 {(row.change_summary || []).length > 0 && <div className="mt-1 text-[9px] text-gray-500">{row.change_summary.join(" · ")}</div>}
+                {!openRevision && row.id === snapshotDiffRevision?.id && <SnapshotDiffToggle lines={snapshotDiffLines} expanded={diffExpanded} onToggle={() => setDiffExpanded((value) => !value)} />}
               </div>
             ))}
           </div>
@@ -165,6 +217,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
           </DialogHeader>
           <div className="p-5 space-y-4 bg-white">
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">REVISION REASON<textarea autoFocus value={reason} onChange={(event) => setReason(event.target.value)} rows={4} placeholder="What needs to change and why?" className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[12px] font-normal text-gray-800 resize-y" /></label>
+            <div className="flex flex-wrap gap-1.5">{["Client request", "Correction", "Scope change", "Price update", "Site conditions"].map((preset) => <button key={preset} type="button" onClick={() => setReason((current) => current.trim() ? `${current.trim().replace(/\.*$/, "")} — ${preset}` : preset)} className="px-2 py-1 rounded border border-gray-300 bg-gray-50 text-[9px] font-semibold text-gray-600 hover:border-lime-400 hover:text-gray-900">{preset}</button>)}</div>
             {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
             <div className="flex justify-end gap-2"><button type="button" disabled={starting} onClick={() => setDialogOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button><button type="button" disabled={starting || !reason.trim()} onClick={start} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{starting ? "Starting…" : "Start Revision"}</button></div>
           </div>

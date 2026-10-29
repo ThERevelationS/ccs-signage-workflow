@@ -122,7 +122,9 @@ test("Acknowledgment runs a fresh owned read and preserves the draft when stale"
 
 test("Only dispatched failed writes become uncertain; same attempt stays fenced", () => {
   assert.match(source, /let writeDispatched = false/);
-  assert.match(source, /if \(writeDispatched\) \{/);
+  // Pre-dispatch validation failures never dispatched, so they surface the
+  // real error instead of fencing the draft behind an uncertain review.
+  assert.match(source, /if \(writeDispatched && error\?\.automationPreDispatch !== true\) \{/);
   assert.match(source, /automationUncertainRef\.current = attempt/);
   assert.match(source, /if \(automationUncertainRef\.current \|\| automationSaveInFlight\.current/);
   assert.match(source, /disabled=\{!!automationUncertain \|\| automationSaving/);

@@ -64,6 +64,7 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
             CANCEL ESTIMATE
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-gray-500 hover:text-gray-800 transition-colors p-1"
             title="Close"
@@ -121,6 +122,7 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
         {/* Footer */}
         <div className="flex justify-end px-5 pb-5 pt-1">
           <button
+            type="button"
             onClick={handleConfirm}
             disabled={!canSubmit || submitting}
             className="px-5 py-2 rounded border border-gray-500 font-semibold text-sm text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:brightness-95"

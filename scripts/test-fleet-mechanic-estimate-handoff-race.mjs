@@ -304,6 +304,7 @@ function harness({holdSave=false,holdSubmit=false,autoApproved=false}={}) {
       }
       return true;
     },
+    invokeFleet:(name,args)=>ctx.base44.functions.invoke(name,args),
     base44:{functions:{invoke:async(_name,request)=>{
       calls.push(request);
       if(request.action==="estimate_save"){

@@ -31,6 +31,8 @@ import {
   findRepositoryJurisdictionMatches,
   hasDuplicateRepositoryIdentity,
   jurisdictionToDraftPermitLocality,
+  normalizePermitJurisdictionName,
+  normalizeState,
 } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 import { summarizeMatchedLocalityAuthority } from "@/shared/permittingAddressLocality.js";
@@ -70,6 +72,7 @@ function LocalityPickerSession({
   onClose,
   localities,
   onApply,  // (localityId, { excludeElectrical }) => void
+  initialAddress = "",
 }) {
   const { sessionToken,currentUser } = useAuth();
   const {runAction}=useResearchProgress();
@@ -92,10 +95,12 @@ function LocalityPickerSession({
   const [creatingDraft, setCreatingDraft] = useState(false);
   const inputRef = useRef(null);
 
+  const autoSearchRef = useRef(false);
   useEffect(() => {
     searchVersion.current++;pendingSearch.current=null;
     if (isOpen) {
-      setAddress("");
+      const preset = String(initialAddress || "").trim();
+      setAddress(preset);
       setSearching(false);
       setResult(null);
       setError("");
@@ -103,9 +108,18 @@ function LocalityPickerSession({
       setExcludeElectrical(false);
       setDraftCandidate(null);setRepositoryDraftId("");
       setDraftCreateError("");
+      autoSearchRef.current = Boolean(preset);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+  // When the dialog opens with the job/client address already known, run the
+  // jurisdiction lookup immediately instead of making the user retype it.
+  useEffect(() => {
+    if (!isOpen || !autoSearchRef.current) return;
+    if (!String(address || "").trim()) return;
+    autoSearchRef.current = false;
+    runSearch();
+  }, [isOpen, address]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -120,8 +134,8 @@ function LocalityPickerSession({
     }).then((rows) => {
       if (!cancelled) setRepositoryJurisdictions(Array.isArray(rows) ? rows : []);
     }).catch((e) => {
-      console.error("Could not load Jurisdiction Repository in locality picker:", e);
-      if (!cancelled) setRepositoryError("The Jurisdiction Repository could not be loaded. You can still use an existing configured locality.");
+      console.error("Could not load saved jurisdictions in locality picker:", e);
+      if (!cancelled) setRepositoryError("We could not load the saved jurisdictions list. You can still pick one that is already set up.");
     }).finally(() => {
       if (!cancelled) setRepositoryLoading(false);
     });
@@ -139,10 +153,32 @@ function LocalityPickerSession({
     setResult(null);
     try {
       const invoke=runAction;
-      const { data } = await invoke('resolvePermittingAddress', {
+      let { data } = await invoke('resolvePermittingAddress', {
         address: address.trim(),
         session_token: sessionToken,
-      },`Find jurisdiction for ${address.trim()}`);
+      },`Looking up ${address.trim()}`);
+      // The worker cannot reach external geocoders reliably; when its lookups
+      // all fail, geocode from the browser and resubmit the coordinates.
+      if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
+        try {
+          const q = encodeURIComponent(address.trim());
+          const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=${q}`);
+          const hit = (await r.json())?.[0];
+          const st = hit?.address?.state || hit?.address?.state_district || '';
+          if (hit?.lat && hit?.lon && /ohio|kentucky/i.test(st)) {
+            const retry = await invoke('resolvePermittingAddress', {
+              address: address.trim(),
+              session_token: sessionToken,
+              census_hint: {
+                lat: Number(hit.lat), lng: Number(hit.lon),
+                matched_address: hit.display_name,
+                address_parts: { state: st, city: hit.address?.city || hit.address?.town || hit.address?.village || '', zip: hit.address?.postcode || '' },
+              },
+            },`Looking up ${address.trim()}`);
+            if (retry?.data?.success !== false) data = retry.data;
+          }
+        } catch { /* browser geocode is best-effort */ }
+      }
       if(version!==searchVersion.current||!openRef.current)return;
       if (data?.success === false) {
         setError(data.error || "Search failed");
@@ -177,18 +213,32 @@ function LocalityPickerSession({
     ? findRepositoryJurisdictionMatches(repositoryJurisdictions, result)
     : [];
 
+  // When a boundary-verified address resolves to a jurisdiction that has no
+  // tracker locality yet, an admin may still create a draft — but only for the
+  // profile matching the detected name/type/county, never a same-name sibling.
+  const detectedTarget = result?.location_resolution?.target;
+  const isDetectedCandidate = (j) => {
+    if (!j || !detectedTarget || result?.location_resolution?.status !== 'location_verified' || result?.suggested_locality) return false;
+    const typeMap = { municipality: ['city', 'village', 'municipality'], township: ['township'], county: ['county'] };
+    const countyOf = (v) => String(v || '').toLowerCase().replace(/\s*county$/u, '').trim();
+    return (typeMap[detectedTarget.type] || [detectedTarget.type]).includes(String(j.type || '').toLowerCase())
+      && normalizePermitJurisdictionName(j.name) === normalizePermitJurisdictionName(detectedTarget.name)
+      && normalizeState(j.state) === normalizeState(detectedTarget.state)
+      && (!detectedTarget.county || !j.parent_county?.name || countyOf(j.parent_county.name) === countyOf(detectedTarget.county));
+  };
+
   const requestDraftFromRepository = (jurisdiction) => {
-    if(currentUser?.role!=="admin"||address.trim()||creatingDraft||pendingDraft.current||!openRef.current)return;
+    if(currentUser?.role!=="admin"||(address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
     if (hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction)) {
-      setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Review and resolve the duplicate profiles before creating a permit locality.`);
+      setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Someone on the team needs to clean up the matching entries first.`);
       return;
     }
     setDraftCandidate(jurisdiction);
   };
 
   const confirmDraftFromRepository = async () => {
-    if (currentUser?.role!=="admin" || !openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || address.trim()) return;
+    if (currentUser?.role!=="admin" || !openRef.current || !draftCandidate || creatingDraft || pendingDraft.current || (address.trim() && !isDetectedCandidate(draftCandidate))) return;
     const draftVersion=searchVersion.current;
     setCreatingDraft(true);
     setDraftCreateError("");
@@ -229,10 +279,10 @@ function LocalityPickerSession({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="clay-card border-none max-w-[1400px] w-[95vw] max-h-[92vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-purple-600" />
+      <DialogContent className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
+        <DialogHeader className="border-b bg-white px-5 py-3.5">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>
             Choose your jurisdiction
           </DialogTitle>
         </DialogHeader>
@@ -279,10 +329,11 @@ function LocalityPickerSession({
         )}
 
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
-        <div className="flex flex-1 flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden min-h-0 lg:h-[680px]">
-          <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto space-y-3 pr-1">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[400px_minmax(0,1fr)] lg:overflow-hidden">
+          <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
-            <ResearchProgressBar inline />
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this jurisdiction.":"We found the town or township — someone on the team still needs to check the offices before it can be used."}</p></section>}
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
@@ -307,27 +358,27 @@ function LocalityPickerSession({
                         <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
                           <div className="flex items-center gap-1 font-semibold">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            {selectedAuthority.officeCount} staff-verified authorit{selectedAuthority.officeCount === 1 ? "y" : "ies"}
+                            {selectedAuthority.officeCount} office checked by our team{selectedAuthority.officeCount === 1 ? "y" : "ies"}
                           </div>
                           <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
-                          <p className="mt-1 text-emerald-800">Only these roles are confirmed authority relationships; other configured offices remain workflow references.</p>
+                          <p className="mt-1 text-emerald-800">These offices are confirmed. Any others listed are still just our notes.</p>
                           {selectedAuthority.coverage_status === "partial" && (
                             <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                              <p className="font-semibold">Partial office-authority review: {selectedAuthority.other_office_count} configured office(s) still need review.</p>
-                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Roles on offices awaiting review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                              <p className="font-semibold">Still needs checking: {selectedAuthority.other_office_count} more office(s).</p>
+                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices still being checked: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                             </div>
                           )}
                           {selectedAuthority.coverage_status === "configured_offices_reviewed" && (
-                            <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                            <p className="mt-2 text-gray-700">Every office we know about has been checked — but there may be another office we do not know about.</p>
                           )}
                         </div>
                       ) : (
                         <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
                           <div className="flex items-center gap-1 font-semibold">
-                            <AlertTriangle className="h-3.5 w-3.5" /> No staff-verified office authority
+                            <AlertTriangle className="h-3.5 w-3.5" /> No offices checked yet
                           </div>
-                          <p className="mt-1">Configured offices can still be applied with the existing workflow, but none are confirmed here as the legal authority for this locality.</p>
-                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Configured roles awaiting staff review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                          <p className="mt-1">You can still use this place, but no one has confirmed which office handles permits there.</p>
+                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices still being checked: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                         </div>
                       )
                     )}
@@ -339,7 +390,7 @@ function LocalityPickerSession({
             {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this jurisdiction.</p>}
             {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
               <h4 className="font-semibold text-sm">Create a tracker from the repository</h4>
-              <p className="text-xs">Manual selection creates a draft workflow reference. It does not verify the job location or office authority.</p>
+              <p className="text-xs">This makes a draft — it does not confirm the address or the right office.</p>
               {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError}</p>}
               <label className="block text-xs">Repository jurisdiction
                 <select aria-label="Repository jurisdiction for draft" className="block w-full min-h-11 border rounded bg-white" value={repositoryDraftId} disabled={repositoryLoading||Boolean(repositoryError)||creatingDraft} onChange={event=>{setRepositoryDraftId(event.target.value);setDraftCandidate(null);}}>
@@ -382,38 +433,38 @@ function LocalityPickerSession({
                       <div className={`mt-2 rounded border px-2.5 py-2 text-[11px] ${addressAuthority?.status === 'staff_verified_roles' ? 'border-emerald-200 bg-white/70 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         <div className="flex items-center gap-1 font-semibold">
                           {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-                          Permitting authority: {addressAuthority?.status === 'staff_verified_roles' ? 'staff-verified roles' : 'not staff-verified'}
+                          Permit offices: {addressAuthority?.status === 'staff_verified_roles' ? 'checked by our team' : 'not checked yet'}
                         </div>
                         {addressAuthority?.status === 'staff_verified_roles' ? (
                           <>
                             <p className="mt-0.5">{addressAuthorityLabels.join(" • ")}</p>
-                            <p className="mt-1 text-emerald-800">The boundary check identifies the building location. These roles come separately from staff-reviewed office relationships.</p>
+                            <p className="mt-1 text-emerald-800">We confirmed the spot on the map. The offices above were checked separately by our team.</p>
                           </>
                         ) : (
-                          <p className="mt-1">The address can match this locality without proving which office has sign, zoning, building, or electrical authority.</p>
+                          <p className="mt-1">Finding the address does not prove which office handles sign, zoning, building, or electrical permits.</p>
                         )}
                         {addressAuthority?.coverage_status === 'partial' && (
                           <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                            <p className="font-semibold">Partial office-authority review: {addressAuthority.other_office_count} configured office(s) still need review.</p>
+                            <p className="font-semibold">Still needs checking: {addressAuthority.other_office_count} more office(s).</p>
                             {addressRolesNeedingReview.length > 0 && (
-                              <p className="mt-1">Roles on offices awaiting review: {addressRolesNeedingReview.join(" • ")}</p>
+                              <p className="mt-1">Offices still being checked: {addressRolesNeedingReview.join(" • ")}</p>
                             )}
                           </div>
                         )}
                         <ElectricalAuthorityCoverage authority={addressAuthority} selectionContext="address" />
                         {addressAuthority?.coverage_status === 'configured_offices_reviewed' && (
-                          <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                          <p className="mt-2 text-gray-700">Every office we know about has been checked — but there may be another office we do not know about.</p>
                         )}
                         {addressAuthority?.coverage_status === 'not_verified' && addressRolesNeedingReview.length > 0 && (
-                          <p className="mt-2 text-amber-900">Configured roles awaiting staff review: {addressRolesNeedingReview.join(" • ")}</p>
+                          <p className="mt-2 text-amber-900">Offices still being checked: {addressRolesNeedingReview.join(" • ")}</p>
                         )}
                       </div>
                       </details>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? 'The map location service needs attention.' : result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
-                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'Website research started automatically. An administrator needs to review the results.' : 'No automatic research result was returned. Check scan activity before retrying.'} You do not need to choose a place or guess.</p>
+                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'Our main map service was down — a backup found the general area.' : 'Our map tool had a problem.') : result.location_resolution?.status==='location_verified' ? 'Found the spot — the offices still need checking.' : 'We could not pin down the exact spot.'}</strong></p>
+                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'We started looking up info on the town’s website — someone on the team still needs to check it.' : 'Someone on the team can dig deeper using the tools below.'} You do not need to choose a place or guess.</p>
                       {result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
@@ -422,14 +473,14 @@ function LocalityPickerSession({
                 </div>
 
                 <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>
-                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">The location was found. An administrator must confirm the sign and zoning offices before you can use it.</p>}
+                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. Someone on the team needs to check the sign and zoning offices before it can be used.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
                   <div className="border rounded-lg p-3 bg-violet-50 border-violet-200 space-y-2">
                     <div>
-                      <h4 className="font-semibold text-sm text-violet-950">Jurisdiction Repository</h4>
+                      <h4 className="font-semibold text-sm text-violet-950">Saved jurisdictions</h4>
                       <p className="text-[11px] text-violet-800 mt-0.5">
-                        Repository data is reference material, not proof of permitting authority. Review it before creating a tracker locality.
+                        These are saved records — not proof of which office handles permits. Check before using one.
                       </p>
                     </div>
 
@@ -474,7 +525,7 @@ function LocalityPickerSession({
                               type="button"
                               size="sm"
                               variant="outline"
-                              disabled={duplicate || creatingDraft || Boolean(address.trim())}
+                              disabled={duplicate || creatingDraft || (Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
                               onClick={() => requestDraftFromRepository(jurisdiction)}
                               className="h-7 text-xs border-violet-300 text-violet-800 hover:bg-violet-100 flex-shrink-0"
                             >
@@ -483,7 +534,7 @@ function LocalityPickerSession({
                           </div>
                           {duplicate ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
-                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Duplicate repository profiles must be resolved before this can be used.
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Two saved entries match this place — an admin needs to clean them up first.
                             </p>
                           ) : trust.issues.length > 0 ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
@@ -540,12 +591,12 @@ function LocalityPickerSession({
                 )}
               </>
             )}
-            <SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/>
-            <SavedAddressResearch />
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review and research tools</summary><div className="p-3 pt-0"><SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/></div></details>
+            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Saved research</summary><div className="p-3 pt-0"><SavedAddressResearch /></div></details>
           </div>
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
-          <div className="rounded-lg border relative w-full min-w-0 lg:flex-1 lg:self-stretch lg:min-h-0 lg:overflow-y-auto bg-gray-100">
+          <div className="relative min-h-[360px] w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-gray-100 shadow-sm lg:min-h-0 lg:self-stretch">
             <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} />
           </div>
         </div>

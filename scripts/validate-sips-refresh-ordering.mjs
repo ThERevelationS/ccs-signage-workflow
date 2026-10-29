@@ -5,9 +5,9 @@ import { verifySalesSaveAcknowledgment } from '../base44/shared/salesSaveAcknowl
 
 // Exercise the actual SIPS board load, quick edit, save wrapper and shared
 // conditional persistence with deferred synthetic reads. No app API calls.
-const board = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8');
-const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8');
-const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8');
+const board = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 function block(source, begin, end) {
   const start = source.indexOf(begin);
   const stop = source.indexOf(end, start);
@@ -19,7 +19,7 @@ const source = [
   block(board, '  const saveBoardFields = async (options) => {', '\n  // Set document title'),
   block(board, '  const loadWorkOrders = async (showLoading = true, { clearQuickEditErrorOnSuccess = false } = {}) => {', '\n  const updateWorkOrder'),
   block(board, '  const updateWorkOrder = async (orderId, field, value) => {', '\n  // Check if a work order is a WIP item'),
-  block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
+  block(board, '  const isRevisitFuture = useCallback((wo) => {', '\n  // Completion must'),
   block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
   block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
   trackedPersistence.slice(trackedPersistence.indexOf('export async function saveTrackedFields(')).replace(/^export /, ''),
@@ -112,6 +112,11 @@ function fixture(date = yesterday, { completed = false } = {}) {
     reopenedFocusWorkOrderId: null,
     reopeningWipInFlightRef: { current: new Set() },
     today,
+    todayMs: today.getTime(),
+    wipTaskDescriptions: [],
+    dropdownConditions: [],
+    useMemo: (fn) => fn(),
+    useCallback: (fn) => fn,
     workOrders: [structuredClone(record)],
     users: [],
     boardError: '',
@@ -157,7 +162,9 @@ function fixture(date = yesterday, { completed = false } = {}) {
     'Users', 'LastUpdated',
   ]) {
     const key = prop[0].toLowerCase() + prop.slice(1);
-    ctx['set' + prop] = (value) => { ctx[key] = value; };
+    ctx['set' + prop] = (updater) => {
+      ctx[key] = typeof updater === 'function' ? updater(ctx[key]) : updater;
+    };
   }
   ctx.setWorkOrders = (updater) => {
     ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
@@ -309,7 +316,8 @@ await check('failed manual refresh releases synchronous lock and retains error u
 
 await check('60-second refresh skips pending save and in-flight board fetch', async () => {
   const h = fixture();
-  const timer = board.match(/const interval = setInterval\(\(\) => \{([\s\S]*?)\}, 60000\);/);
+  const timer = board.match(/usePolling\(\(\) => \{([\s\S]*?)\},\s*60000/) ||
+    board.match(/const interval = setInterval\(\(\) => \{([\s\S]*?)\}, 60000\);/);
   assert.ok(timer, 'Actual board interval exists');
   const tick = vm.runInNewContext('() => {' + timer[1] + '}', {
     boardSavesPendingRef: h.ctx.boardSavesPendingRef,
@@ -490,6 +498,57 @@ await check('superseded Reload latest cannot dismiss a conflict after unrelated 
   h.reads[0].finish();
   await oldReload;
   assert.match(h.ctx.quickEditError, /needs review/);
+});
+
+await check('identical refresh data keeps memo input identities; only changed data resets them', async () => {
+  const h = fixture();
+  // Seed prior committed state that differs from what the server returns,
+  // so the first load exercises the "changed" branch of each guard.
+  h.ctx.users = [{ id: 'stale-user' }];
+  h.ctx.wipTaskDescriptions = ['stale wip'];
+  h.ctx.dropdownConditions = [{ name: 'stale' }];
+  // Functional updaters are required here — the 60s interval invokes the
+  // first-render closure, so comparing rendered state would read stale
+  // initial values. Identity, not setter-call count, is the invariant:
+  // a bail-out updater still passes through the setter but returns prev.
+  assert.match(source, /setUsers\(prev => sameData\(usersData, prev\) \? prev : usersData\)/,
+    'users must update via a bail-out functional setter, not a rendered-value comparison');
+  assert.match(source, /setWipTaskDescriptions\(prev => sameData\(wipDescs, prev\) \? prev : wipDescs\)/,
+    'wipTaskDescriptions must update via a bail-out functional setter');
+  assert.match(source, /setDropdownConditions\(prev => sameData\(nextConditions, prev\) \? prev : nextConditions\)/,
+    'dropdownConditions must update via a bail-out functional setter');
+  const first = h.loadWorkOrders(false);
+  h.reads[0].finish();
+  await first;
+  assert.notEqual(h.ctx.users[0]?.id, 'stale-user', 'Changed server data must replace the memo input');
+  assert.notDeepEqual(h.ctx.wipTaskDescriptions, ['stale wip']);
+  assert.notDeepEqual(h.ctx.dropdownConditions, [{ name: 'stale' }]);
+
+  const sameUsers = h.ctx.users;
+  const sameConditions = h.ctx.dropdownConditions;
+  const sameWip = h.ctx.wipTaskDescriptions;
+  const second = h.loadWorkOrders(false);
+  h.reads[1].finish();
+  await second;
+  assert.equal(h.ctx.users, sameUsers,
+    'A timer refresh returning identical data must not invalidate memoized derivations');
+  assert.equal(h.ctx.dropdownConditions, sameConditions);
+  assert.equal(h.ctx.wipTaskDescriptions, sameWip);
+
+  const originalSettings = h.ctx.loadSingleGlobalSetting;
+  h.ctx.loadSingleGlobalSetting = async (options) => {
+    if (options.settingKey === 'dropdownConditions') {
+      return { setting_value: { items: [{ name: 'Changed condition', action: 'SIPs' }] } };
+    }
+    return originalSettings(options);
+  };
+  const third = h.loadWorkOrders(false);
+  h.reads[2].finish();
+  await third;
+  assert.notEqual(h.ctx.dropdownConditions, sameConditions,
+    'Only the actually changed memo input may be replaced');
+  assert.equal(h.ctx.users, sameUsers);
+  assert.equal(h.ctx.wipTaskDescriptions, sameWip);
 });
 
 await check('conflicted quick edit releases save lock and refreshes latest state', async () => {

@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createQuoteDefaultsSingletonWithRecovery } from "@/components/estimator/quoteDefaultsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const DISPLAY_OPTIONS = [
   ["hide_section_prices", "Bundle Product pricing"],
@@ -79,7 +80,7 @@ export default function QuoteSettings() {
       let createStatus = "";
       if (record?.id) {
         saved = await replaceEntityFieldsIfUnchanged({
-          entity: base44.entities.QuoteDefaults,
+          entity: staffEntities.QuoteDefaults,
           id: record.id,
           expectedUpdatedAt: current?.updated_date || record.updated_date || "",
           expectedFields: expectedEntityFields(current || record, payload),
@@ -89,7 +90,7 @@ export default function QuoteSettings() {
         });
       } else {
         const createResult = await createQuoteDefaultsSingletonWithRecovery({
-          entity: base44.entities.QuoteDefaults,
+          entity: staffEntities.QuoteDefaults,
           data: payload,
           label: "Quote Defaults",
         });
@@ -154,6 +155,10 @@ export default function QuoteSettings() {
             <TextField label="Warranty" value={form.warranty_text} onChange={(value) => patch({ warranty_text: value })} textarea wide />
             <TextField label="Lead time" value={form.lead_time_text} onChange={(value) => patch({ lead_time_text: value })} wide />
             <TextField label="Footer text" value={form.quote_footer_text} onChange={(value) => patch({ quote_footer_text: value })} textarea wide />
+            <TextField label="Email signature" value={form.email_signature} onChange={(value) => patch({ email_signature: value })} textarea wide />
+            <TextField label="Email subject template" value={form.email_subject_template} onChange={(value) => patch({ email_subject_template: value })} wide />
+            <TextField label="Email body template" value={form.email_message_template} onChange={(value) => patch({ email_message_template: value })} textarea wide />
+            <p className="text-[10px] text-gray-400 -mt-1">Placeholders: {"{estimate_number}"} {"{project_name}"} {"{client_name}"} {"{contact_name}"} {"{company_name}"} {"{quote_total}"} {"{quote_valid_until}"}</p>
           </SettingsSection>
         </div>
 

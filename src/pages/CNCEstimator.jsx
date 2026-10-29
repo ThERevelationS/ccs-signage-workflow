@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { CNCProject, Settings } from "@/entities/all";
+import { CNCProject, Settings } from "@/api/gatedEntities";
 import { base44 } from "@/api/base44Client";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,22 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const materials = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
+const MATERIAL_THICKNESS_PRESETS = {
+  Acrylic: ["1/8", "1/4", "3/8", "1/2"],
+  Wood: ["1/2", "3/4", "1", "1-1/2"],
+  MDF: ["1/4", "1/2", "3/4", "1"],
+  Plywood: ["1/4", "1/2", "3/4", "1"],
+  PVC: ["1/4", "1/2", "3/4", "1"],
+  HDPE: ["1/4", "1/2", "3/4", "1"],
+  Aluminum: ["1/16", "1/8", "3/16", "1/4"],
+  Corian: ["1/4", "1/2", "3/4"],
+};
+
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export default function CNCEstimator({ embedded = false, embeddedProjectId = null, embeddedEstimateId = null, onClose, onSaved }) {
   const navigate = useNavigate();
@@ -65,7 +78,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       const [settingsData, existing, estimate] = await Promise.all([
         loadAllEntityRows({ entity: Settings, sort: "created_date", label: "Estimator Settings" }),
         editId ? CNCProject.get(editId) : Promise.resolve(null),
-        estimateId ? base44.entities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
+        estimateId ? staffEntities.AllInOneEstimate.get(estimateId) : Promise.resolve(null),
       ]);
       const settingsObj = {};
       (settingsData || []).forEach(s => { settingsObj[s.setting_name] = s.setting_value; });
@@ -114,6 +127,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   };
 
   const addItem = () => {
+    setTimeout(() => document.querySelector(`input[data-item-desc="${(project.items || []).length}"]`)?.focus(), 60);
     setProject(prev => ({
       ...prev,
       items: [...prev.items, {
@@ -145,6 +159,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   };
 
   const removeItem = (index) => {
+    if (!window.confirm("Remove this item?")) return;
     setProject(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
   };
 
@@ -153,7 +168,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       const newItems = [...prev.items];
       let item = { ...newItems[index], [field]: value };
 
-      // For lettering items, "Number of Letters" IS the quantity — keep qty=1
+      // For lettering items, "Number of Letters" IS the quantity â€” keep qty=1
       // so the per-item math (which multiplies by quantity) doesn't double-count.
       if (field === 'item_type' && value === 'lettering') {
         item.quantity = 1;
@@ -230,6 +245,24 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     };
   };
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!isSaving) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isSaving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!isSaving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isSaving]);
   const saveProject = async () => {
     if (!project.project_name || !(estimateContext?.client_name || project.client_name)) {
       alert('Please fill in project name and client name');
@@ -340,7 +373,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CNC Estimate - ${project.project_name}</title>
+  <title>CNC Estimate - ${escHtml(project.project_name)}</title>
   <meta charset="UTF-8">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -628,7 +661,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
 <body>
   <div class="container">
     <div class="header">
-      <h1>🔧 CNC Routing Estimate</h1>
+      <h1>ðŸ”§ CNC Routing Estimate</h1>
       <div class="subtitle">Precision Machining Services</div>
     </div>
     
@@ -637,11 +670,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Project:</span>
-          <span class="info-value">${project.project_name}</span>
+          <span class="info-value">${escHtml(project.project_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Client:</span>
-          <span class="info-value">${project.client_name}</span>
+          <span class="info-value">${escHtml(project.client_name)}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Date:</span>
@@ -656,25 +689,25 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       ${project.items.map((item, i) => `
         <div class="item">
           <div class="item-header">
-            Item ${i + 1}: ${item.description || `CNC item`}
+            Item ${i + 1}: ${escHtml(item.description || "CNC item")}
           </div>
           
           <div class="item-details">
             <div class="detail-row">
               <span class="detail-label">Material:</span>
-              <span class="detail-value">${item.material_type}</span>
+              <span class="detail-value">${escHtml(item.material_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Dimensions:</span>
-              <span class="detail-value">${item.length}" × ${item.width}" × ${item.material_thickness}"</span>
+              <span class="detail-value">${escHtml(item.length)}" Ã— ${escHtml(item.width)}" Ã— ${escHtml(item.material_thickness)}"</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Job Type:</span>
-              <span class="detail-value">${item.item_type}</span>
+              <span class="detail-value">${escHtml(item.item_type)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Quantity:</span>
-              <span class="detail-value">${item.quantity}</span>
+              <span class="detail-value">${escHtml(item.quantity)}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Machine Time:</span>
@@ -719,15 +752,15 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
       
       ${project.notes ? `
         <div class="notes">
-          <h3>📝 Additional Notes</h3>
-          <p>${project.notes}</p>
+          <h3>ðŸ“� Additional Notes</h3>
+          <p>${escHtml(project.notes)}</p>
         </div>
       ` : ''}
     </div>
     
     <div class="footer">
       Generated by SignEstimate Pro - Professional Estimating Suite<br>
-      © ${new Date().getFullYear()} All Rights Reserved
+      Â© ${new Date().getFullYear()} All Rights Reserved
     </div>
   </div>
 </body>
@@ -752,7 +785,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     const printContent = `
       <html>
         <head>
-          <title>CNC Estimate - ${project.project_name}</title>
+          <title>CNC Estimate - ${escHtml(project.project_name)}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
@@ -1039,7 +1072,7 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
         <body>
           <div class="container">
             <div class="header">
-              <h1>🔧 CNC Routing Estimate</h1>
+              <h1>ðŸ”§ CNC Routing Estimate</h1>
               <div class="subtitle">Precision Machining Services</div>
             </div>
             
@@ -1048,11 +1081,11 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               <div class="info-grid">
                 <div class="info-item">
                   <span class="info-label">Project:</span>
-                  <span class="info-value">${project.project_name}</span>
+                  <span class="info-value">${escHtml(project.project_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Client:</span>
-                  <span class="info-value">${project.client_name}</span>
+                  <span class="info-value">${escHtml(project.client_name)}</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Date:</span>
@@ -1067,25 +1100,25 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               ${project.items.map((item, i) => `
                 <div class="item">
                   <div class="item-header">
-                    Item ${i + 1}: ${item.description || `CNC item`}
+                    Item ${i + 1}: ${escHtml(item.description || "CNC item")}
                   </div>
                   
                   <div class="item-details">
                     <div class="detail-row">
                       <span class="detail-label">Material:</span>
-                      <span class="detail-value">${item.material_type}</span>
+                      <span class="detail-value">${escHtml(item.material_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Dimensions:</span>
-                      <span class="detail-value">${item.length}" × ${item.width}" × ${item.material_thickness}"</span>
+                      <span class="detail-value">${escHtml(item.length)}" Ã— ${escHtml(item.width)}" Ã— ${escHtml(item.material_thickness)}"</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Job Type:</span>
-                      <span class="detail-value">${item.item_type}</span>
+                      <span class="detail-value">${escHtml(item.item_type)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Quantity:</span>
-                      <span class="detail-value">${item.quantity}</span>
+                      <span class="detail-value">${escHtml(item.quantity)}</span>
                     </div>
                     <div class="detail-row">
                       <span class="detail-label">Machine Time:</span>
@@ -1130,15 +1163,15 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
               
               ${project.notes ? `
                 <div class="notes">
-                  <h3>📝 Additional Notes</h3>
-                  <p>${project.notes}</p>
+                  <h3>ðŸ“� Additional Notes</h3>
+                  <p>${escHtml(project.notes)}</p>
                 </div>
               ` : ''}
             </div>
             
             <div class="footer">
               Generated by SignEstimate Pro - Professional Estimating Suite<br>
-              © ${new Date().getFullYear()} All Rights Reserved
+              Â© ${new Date().getFullYear()} All Rights Reserved
             </div>
           </div>
         </body>
@@ -1236,15 +1269,20 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {project.items.length === 0 && (
+                  <div className="text-center py-8 text-slate-500">
+                    <p>No items added yet. Click "Add Item" to get started.</p>
+                  </div>
+                )}
                 {project.items.map((item, index) => (
                   <div key={index} className="p-6 border rounded-xl bg-slate-25">
                     <div className="flex justify-between items-start mb-4"><h4 className="font-medium">Item {index + 1}</h4><Button variant="ghost" size="icon" onClick={() => removeItem(index)} className="text-red-500"><Trash2 className="w-4 h-4" /></Button></div>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="md:col-span-3"><Label>Description</Label><Input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
+                      <div className="md:col-span-3"><Label>Description</Label><Input data-item-desc={index} value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} /></div>
                       <div><Label>Job Type</Label><Select value={item.item_type} onValueChange={(v) => updateItem(index, 'item_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="panel">Panel Cut</SelectItem><SelectItem value="lettering">Lettering Cut</SelectItem><SelectItem value="3d_carving">3D Carving</SelectItem></SelectContent></Select></div>
                       <div><Label>Material Type</Label><Select value={item.material_type} onValueChange={(v) => updateItem(index, 'material_type', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{materials.map(mat => <SelectItem key={mat} value={mat}>{mat}</SelectItem>)}</SelectContent></Select></div>
-                      <div><Label>Material Thickness</Label><Select value={item.material_thickness} onValueChange={(v) => updateItem(index, 'material_thickness', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{imperialSizes.map(size => <SelectItem key={size} value={size}>{size}"</SelectItem>)}</SelectContent></Select></div>
-                      {/* Quantity field — only shown for panels & carvings. For lettering, "Number of Letters" IS the quantity. */}
+                      <div><Label>Material Thickness</Label><Select value={item.material_thickness} onValueChange={(v) => updateItem(index, 'material_thickness', v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{imperialSizes.map(size => <SelectItem key={size} value={size}>{size}"</SelectItem>)}</SelectContent></Select><div className="flex flex-wrap gap-1 mt-1">{(MATERIAL_THICKNESS_PRESETS[item.material_type] || ["1/4", "1/2", "3/4"]).map((t) => <button key={t} type="button" onClick={() => updateItem(index, 'material_thickness', t)} className={`px-1.5 h-[20px] rounded border text-[10px] ${item.material_thickness === t ? "border-red-400 bg-red-50 text-red-700" : "border-gray-300 text-gray-600 hover:bg-gray-50"}`}>{t}"</button>)}</div></div>
+                      {/* Quantity field â€” only shown for panels & carvings. For lettering, "Number of Letters" IS the quantity. */}
                       {item.item_type !== 'lettering' && (
                         <div><Label>Quantity</Label><Input type="number" min="1" value={item.quantity || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} /></div>
                       )}
@@ -1253,12 +1291,12 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                       
                       {item.item_type === 'lettering' && (<><div><Label>Letter Height (in)</Label><Input type="number" min="0" value={item.letter_height || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'letter_height', parseFloat(e.target.value) || 0)} /></div><div><Label>Number of Letters</Label><Input type="number" min="0" value={item.num_letters || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'num_letters', parseInt(e.target.value) || 0)} /></div></>)}
                       
-                      {item.item_type === '3d_carving' && (<><div><Label>Carve Area (in²)</Label><Input type="number" min="0" value={item.carve_area_sqin || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_area_sqin', parseFloat(e.target.value) || 0)} /></div><div><Label>Carve Depth (in)</Label><Input type="number" min="0" step="0.125" value={item.carve_depth || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_depth', parseFloat(e.target.value) || 0)} /></div></>)}
+                      {item.item_type === '3d_carving' && (<><div><Label>Carve Area (inÂ²)</Label><Input type="number" min="0" value={item.carve_area_sqin || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_area_sqin', parseFloat(e.target.value) || 0)} /></div><div><Label>Carve Depth (in)</Label><Input type="number" min="0" step="0.125" value={item.carve_depth || ""} onFocus={(e) => e.target.select()} onChange={e => updateItem(index, 'carve_depth', parseFloat(e.target.value) || 0)} /></div></>)}
                     </div>
                     
                     <div className="mt-4 pt-4 border-t grid md:grid-cols-2 gap-4">
                       {item.item_type !== '3d_carving' && (<div><Label>Cut Speed (in/min)</Label><Input type="number" min="0" value={item.cut_speed_ipm || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'cut_speed_ipm', parseFloat(e.target.value) || 0)} placeholder="Auto-calculated" /><p className="text-xs text-slate-500 mt-1">Auto-set by thickness, can be overridden.</p></div>)}
-                      {item.item_type === '3d_carving' && (<div><Label>Carve Speed (in²/min)</Label><Input type="number" min="0" value={item.carve_speed_sqipm || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'carve_speed_sqipm', parseFloat(e.target.value) || 0)} /></div>)}
+                      {item.item_type === '3d_carving' && (<div><Label>Carve Speed (inÂ²/min)</Label><Input type="number" min="0" value={item.carve_speed_sqipm || ""} onFocus={(e) => e.target.select()} onChange={(e) => updateItem(index, 'carve_speed_sqipm', parseFloat(e.target.value) || 0)} /></div>)}
                     </div>
                     
                     <HoldDownAdvisor
@@ -1355,7 +1393,8 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
                 </div>
               </CardContent>
             </Card>
-            <Button onClick={saveProject} disabled={isSaving} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
+            {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
+            <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
             <Button onClick={downloadEstimate} variant="outline" className="w-full">Download Estimate (HTML)</Button>
             <Button onClick={printEstimate} variant="outline" className="w-full">Print Estimate</Button>
           </div>

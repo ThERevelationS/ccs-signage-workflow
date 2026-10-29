@@ -4,13 +4,14 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getSmartsheetColumns } from "@/components/admin/smartsheetSyncPersistence";
 import { CUSTOM_ASSIGNEE_SETTING_KEY, reviewedCustomAssigneeNames, resolveSmartsheetTaskAssignee } from "@/components/admin/smartsheetTaskAssigneeModel";
 import { validateCustomAssigneeName } from "@/components/sales/customAssigneeName";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 export async function confirmSmartsheetCustomAssignee({ label, sheetId, column, loadedRecord, sessionToken }) {
   const name = validateCustomAssigneeName(label);
   const [setting, metadata, users] = await Promise.all([
     loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: "smartsheetSyncConfig" }),
     getSmartsheetColumns({ sessionToken, sheetId }),
-    loadAllEntityRows({ entity: base44.entities.AuthorizedEmail, sort: "full_name", pageSize: 200, maxRows: 1000, label: "Task-assignee review" }),
+    loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: "full_name", pageSize: 200, maxRows: 1000, label: "Task-assignee review" }),
   ]);
   const config = setting?.setting_value;
   const flags = ["mirror_enabled", "importer_enabled", "pull_enabled", "push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"];

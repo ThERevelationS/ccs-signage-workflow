@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import {
   Camera,
   Clock,
+  Clock3,
   Loader2,
   Play,
   QrCode,
@@ -17,8 +18,17 @@ import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
+import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
-import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
+import {
+  FACE_QUALITY,
+  createFaceMatcher,
+  createMatchVoter,
+  detectDetailedFace,
+  estimateFaceBrightness,
+  loadFaceModelsOnce,
+  passesFaceQualityGate,
+} from '@/components/timeclock/faceScanRuntime';
 import { Html5Qrcode } from "html5-qrcode";
 
 function newRequestId() {
@@ -168,6 +178,7 @@ export default function QuickClockSection({
   const [punchResolutionError, setPunchResolutionError] = useState("");
   const [lateClockInReview, setLateClockInReview] = useState(null);
   const [lateClockInError, setLateClockInError] = useState("");
+  const [missedClockInPrompt, setMissedClockInPrompt] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -188,6 +199,29 @@ export default function QuickClockSection({
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
+  // A dismissed Clock Out stays dismissed until the employee re-identifies.
+  // Passive status refresh must never steal the page back.
+  // Clock Out dismissal is persisted per TimeEntry so remounts and passive
+  // refreshes can never resurrect the dialog the employee already closed.
+  const clockOutDismissalKey = (entryId) => (entryId ? `qcs-clockout-dismissed:${entryId}` : null);
+  const setClockOutDismissed = (entryId, dismissed) => {
+    try {
+      const key = clockOutDismissalKey(entryId);
+      if (!key) return;
+      if (dismissed) {
+        // One dismissed shift at a time keeps storage bounded on shared kiosks.
+        const stale = [];
+        for (let i = 0; i < sessionStorage.length; i += 1) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith("qcs-clockout-dismissed:") && k !== key) stale.push(k);
+        }
+        stale.forEach((k) => sessionStorage.removeItem(k));
+        sessionStorage.setItem(key, "1");
+      } else {
+        sessionStorage.removeItem(key);
+      }
+    } catch {}
+  };
   const notificationTimerRef = useRef(null);
   const displayResetTimerRef = useRef(null);
   // Passive refreshes may return out of order, after a session switch, or
@@ -196,6 +230,10 @@ export default function QuickClockSection({
   // An acknowledged Current Work result cannot supersede a later break,
   // Work Pause, Clock Out, labor action, or authoritative status restoration.
   const workViewEpochRef = useRef(0);
+  const identifyFlowSeqRef = useRef(0);
+  // "clock_in" punches immediately after identity; "missed_clock_in" first
+  // collects the employee's reported arrival time before starting the shift.
+  const identifyIntentRef = useRef("clock_in");
   // In-flight actions are isolated by the signed Time Clock session: a slow
   // request for one employee must not block status restoration for another.
   const activeActionCountRef = useRef(new Map());
@@ -432,7 +470,16 @@ export default function QuickClockSection({
     if (status?.status === "clocked_in" && status?.entry?.id) {
       setAuthoritativeTransition(null);
       setActiveEntry(status.entry);
-      setShowClockOut(status?.work_pause_status !== "paused");
+      // Status loads never auto-open the Clock Out dialog and never close an
+      // already-open one. Only a deliberate identification or an explicit
+      // Clock Out action may surface it; the clocked-in summary card carries
+      // the persistent state otherwise.
+      if (status?.work_pause_status === "paused") {
+        setShowClockOut(false);
+      } else if (pendingClockOut && pendingClockOut.entryId === String(status.entry.id)) {
+        // An interrupted Clock Out must resurface so its exact retry finishes.
+        setShowClockOut(true);
+      }
       setIsRecognizing(false);
       return "clocked_in";
     }
@@ -536,7 +583,7 @@ export default function QuickClockSection({
 
   useEffect(() => {
     if (!authoritativeTransition || !authoritativeSessionToken || !authoritativeSessionUser?.email) return undefined;
-    const poll = setInterval(() => refreshAuthoritativeSessionState({ quiet: true }), 3000);
+    const poll = setInterval(() => { if (!document.hidden) refreshAuthoritativeSessionState({ quiet: true }); }, 3000);
     return () => clearInterval(poll);
   }, [authoritativeTransition, authoritativeSessionToken, authoritativeSessionUser?.email, refreshAuthoritativeSessionState]);
 
@@ -567,6 +614,8 @@ export default function QuickClockSection({
     setPunchResolutionError("");
     setLateClockInReview(null);
     setLateClockInError("");
+    setMissedClockInPrompt(false);
+    identifyIntentRef.current = "clock_in";
     setUsernameInput("");
     setManualPassword("");
     setUsernameError("");
@@ -591,16 +640,25 @@ export default function QuickClockSection({
     const email = user?.email;
     if (!email) throw new Error("Verified employee identity is missing an email address.");
 
+    const clockScope = currentActionScope();
+    const stillCurrent = () => clockScope === currentActionScope();
     const requestId = requestIdFor("clock_in", email);
+    let actionEpoch = workViewEpochRef.current;
     setIsLoading(true);
     setPersistenceError("");
     try {
-      const data = await invokeTimeClock({
+      // The invocation increments the transition epoch synchronously before
+      // sending; a later transition or status restore invalidates this reply.
+      const pending = invokeTimeClock({
         action: "clock_in",
         request_id: requestId,
         ...credentialPayload(credential, email),
       });
-      clearRequest("clock_in", email);
+      actionEpoch = workViewEpochRef.current;
+      const data = await pending;
+      assertEmployeeAcknowledgement(data, email, "Clock-in");
+      clearRequest("clock_in", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       credentialRef.current = credential;
       setSelectedUser(data.user || user);
       setBreakStatus(data.break_status || "working");
@@ -622,17 +680,20 @@ export default function QuickClockSection({
 
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Clock-in confirmed by server.");
+      setClockOutDismissed(data.entry?.id, true);
       scheduleDisplayReset(5000);
       return data;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("clock_in", email);
-      setPersistenceError(err.message || "Clock-in was not confirmed by the server.");
-      setRecognitionStatus(err.retrySameRequest
-        ? "Clock-in may have been saved. Retry the same action to recover safely."
-        : "Clock-in blocked. Review the message below.");
+      if (!shouldRetainRequest(err)) clearRequest("clock_in", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        setPersistenceError(err.message || "Clock-in was not confirmed by the server.");
+        setRecognitionStatus(err.retrySameRequest
+          ? "Clock-in may have been saved. Retry the same action to recover safely."
+          : "Clock-in blocked. Review the message below.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
@@ -650,6 +711,17 @@ export default function QuickClockSection({
 
       const resolvedStatus = applyAuthoritativeStatus(status, verifiedUser, credential);
       if (resolvedStatus === "clocked_in") {
+        if (identifyIntentRef.current === "missed_clock_in") {
+          identifyIntentRef.current = "clock_in";
+          setClockOutDismissed(status?.entry?.id, true);
+          setShowClockOut(false);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in — no missed Clock In to report.`);
+          return;
+        }
+        // Deliberate identification while clocked in is the Clock Out path:
+        // surface the shift panel once even if it was dismissed before.
+        setClockOutDismissed(status?.entry?.id, false);
+        setShowClockOut(true);
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}! Active shift restored.`);
         return;
       }
@@ -657,11 +729,22 @@ export default function QuickClockSection({
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
         return;
       }
+      if (resolvedStatus === "transition") return;
+
+      if (identifyIntentRef.current === "missed_clock_in") {
+        // The employee explicitly chose the missed Clock In flow; the
+        // arrival-time prompt takes priority over the late-day review gate.
+        setLateClockInReview(null);
+        setLateClockInError("");
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Enter the time you actually arrived today.`);
+        setMissedClockInPrompt(true);
+        return;
+      }
+
       if (resolvedStatus === "late_clock_in_review") {
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Confirm whether you missed Clock In before continuing.`);
         return;
       }
-      if (resolvedStatus === "transition") return;
 
       setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
       await performClockIn(verifiedUser, credential);
@@ -677,6 +760,7 @@ export default function QuickClockSection({
 
   const handleFaceRecognized = async (user) => {
     if (recognitionLockedRef.current) return;
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = true;
     stopFaceCamera();
     setIsRecognizing(false);
@@ -700,6 +784,7 @@ export default function QuickClockSection({
 
   const startFaceMode = async () => {
     await stopAllMedia();
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
     setRecognitionMethod("face");
@@ -720,7 +805,7 @@ export default function QuickClockSection({
       const [modelsReady, stream] = await Promise.all([
         loadFaceModels(),
         navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
         }),
       ]);
       if (faceRun !== faceRunRef.current) {
@@ -741,21 +826,34 @@ export default function QuickClockSection({
       if (faceRun !== faceRunRef.current) return;
       setRecognitionStatus("Look directly at the camera...");
 
+      const voter = createMatchVoter({ required: 3, window: 5 });
       scanIntervalRef.current = setInterval(async () => {
         if (!videoRef.current || faceDetectionBusyRef.current || recognitionLockedRef.current) return;
         faceDetectionBusyRef.current = true;
         try {
           const detection = await detectDetailedFace(videoRef.current);
           if (faceRun !== faceRunRef.current) return;
-          if (detection) {
-            if (detection.detection.box.width < 80 || detection.detection.score < 0.5) {
-              setRecognitionStatus("Move closer and face the light for a clearer scan.");
-              return;
-            }
-            const matched = findMatchingUser(detection.descriptor);
-            if (matched) await handleFaceRecognized(matched);
-            else setRecognitionStatus("Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
-          } else setRecognitionStatus("Look directly at the camera in even lighting.");
+          if (!detection || !passesFaceQualityGate(detection)) {
+            voter(null);
+            setRecognitionStatus(detection
+              ? "Move closer and face the light for a clearer scan."
+              : "Look directly at the camera in even lighting.");
+            return;
+          }
+          const dim = estimateFaceBrightness(videoRef.current, detection.detection.box);
+          const matched = dim !== null && dim < FACE_QUALITY.minBrightness
+            ? null
+            : findMatchingUser(detection.descriptor);
+          const winner = voter(matched);
+          if (dim !== null && dim < FACE_QUALITY.minBrightness) {
+            setRecognitionStatus("Lighting is dim. Move to better light or face the light source.");
+          } else if (winner) {
+            await handleFaceRecognized(winner);
+          } else {
+            setRecognitionStatus(matched
+              ? "Hold still - verifying your identity..."
+              : "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
+          }
         } catch (err) {
           console.warn("Face scan warning:", err);
         } finally {
@@ -771,6 +869,7 @@ export default function QuickClockSection({
 
   const handleQrDecoded = async (decodedText) => {
     if (recognitionLockedRef.current) return;
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = true;
 
     if (!String(decodedText || "").startsWith("TIMECLOCK2:")) {
@@ -804,21 +903,25 @@ export default function QuickClockSection({
 
   const startQrMode = async () => {
     await stopAllMedia();
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
     setRecognitionMethod("qr");
     setRecognitionStatus("Starting QR camera...");
     setUsernameError("");
 
+    const qrPrompt = canUseFace
+      ? "Show your face or scan your secure Time Clock QR badge."
+      : "Scan your secure Time Clock QR badge.";
     try {
       await startQrScannerWithFacingMode("environment");
-      setRecognitionStatus("Scan your secure Time Clock QR badge.");
+      setRecognitionStatus(qrPrompt);
     } catch (environmentError) {
       console.warn("Rear QR camera unavailable, trying front camera:", environmentError);
       await stopQrScanner();
       try {
         await startQrScannerWithFacingMode("user");
-        setRecognitionStatus("Scan your secure Time Clock QR badge.");
+        setRecognitionStatus(qrPrompt);
       } catch (frontError) {
         console.error("QR camera error:", frontError);
         await stopQrScanner();
@@ -829,6 +932,7 @@ export default function QuickClockSection({
 
   const startManualMode = async () => {
     await stopAllMedia();
+    identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
     setRecognitionMethod("manual");
@@ -842,6 +946,7 @@ export default function QuickClockSection({
       return;
     }
     workViewEpochRef.current += 1;
+    identifyFlowSeqRef.current += 1;
     cancelDisplayReset();
     setPersistenceError("");
     setUsernameInput("");
@@ -860,6 +965,10 @@ export default function QuickClockSection({
       setUsernameError("Enter your username and password.");
       return;
     }
+    const identifySeq = ++identifyFlowSeqRef.current;
+    const requestEpoch = workViewEpochRef.current;
+    const stillCurrent = () =>
+      identifyFlowSeqRef.current === identifySeq && workViewEpochRef.current === requestEpoch;
 
     setIsLoading(true);
     setUsernameError("");
@@ -869,6 +978,7 @@ export default function QuickClockSection({
         password: manualPassword,
       });
       const data = response?.data || response;
+      if (!stillCurrent()) return;
       if (!data?.success || !data?.user || !data?.token) {
         throw new Error(data?.error || "Invalid username or password.");
       }
@@ -878,13 +988,14 @@ export default function QuickClockSection({
       setIsRecognizing(false);
       await resolveVerifiedIdentity({ user: data.user, credential: { sessionToken: data.token } });
     } catch (err) {
+      if (!stillCurrent()) return;
       const message = err?.response?.data?.error || err?.message || "Invalid username or password.";
       setUsernameError(message);
       setIsRecognizing(true);
       setRecognitionMethod("manual");
       recognitionLockedRef.current = false;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
@@ -907,39 +1018,6 @@ export default function QuickClockSection({
     if (data?.entry?.id) setActiveEntry(data.entry);
   };
 
-  const signalWorkPauseChanged = () => {
-    window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
-    try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
-  };
-
-  const handleStartWorkPause = async () => {
-    if (!workPauseAllowed) throw new Error("Work Pause is not enabled for this employee.");
-    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
-      throw new Error("Work Pause identity is no longer verified. Close this dialog and identify again.");
-    }
-    if (breakStatus !== "working" || activeBreak?.id) throw new Error("End the active break before pausing work.");
-    const email = selectedUser.email;
-    const requestId = requestIdFor("work_pause_start", email);
-    setPersistenceError("");
-    try {
-      const result = await invokeTimeClock({
-        action: "work_pause_start",
-        request_id: requestId,
-        ...credentialPayload(credentialRef.current, email),
-      });
-      clearRequest("work_pause_start", email);
-      applyWorkPauseResponse(result);
-      setShowClockOut(false);
-      setRecognitionStatus("Work Pause confirmed by server.");
-      signalWorkPauseChanged();
-      return result;
-    } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("work_pause_start", email);
-      setPersistenceError(err?.message || "Work Pause was not confirmed by the server.");
-      throw err;
-    }
-  };
-
   const breakContextFor = (email) => {
     const scope = currentActionScope();
     const expectedEmail = String(email || "").trim().toLowerCase();
@@ -958,6 +1036,34 @@ export default function QuickClockSection({
         entryEmail === expectedEmail) return;
 
     const error = new Error("Break response could not be matched to this employee and active shift. The exact request is preserved; refresh status and retry the same action.");
+    error.retrySameRequest = true;
+    throw error;
+  };
+
+  const assertEmployeeAcknowledgement = (data, email, label) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const entryEmail = String(data?.entry?.user_email || "").trim().toLowerCase();
+    if (responseEmail === expectedEmail && (!entryEmail || entryEmail === expectedEmail)) return;
+    const error = new Error(`${label} response could not be matched to this employee. The exact request is preserved; refresh status and retry the same action.`);
+    error.retrySameRequest = true;
+    throw error;
+  };
+
+  const assertPunchResolutionAcknowledgementIdentity = (data, email, entryId) => {
+    const expectedEmail = String(email || "").trim().toLowerCase();
+    const responseEmail = String(data?.user?.email || "").trim().toLowerCase();
+    const entryMatches = !data?.entry || (
+      String(data.entry.id || "") === String(entryId || "") &&
+      (!data.entry.user_email || String(data.entry.user_email).trim().toLowerCase() === expectedEmail)
+    );
+    const punchCase = data?.punch_exception;
+    const punchCaseMatches = !punchCase || (
+      String(punchCase.user_email || "").trim().toLowerCase() === expectedEmail &&
+      String(punchCase.time_entry_id || "") === String(entryId || "")
+    );
+    if (responseEmail === expectedEmail && entryMatches && punchCaseMatches) return;
+    const error = new Error("Punch resolution response could not be matched to this employee and active shift. The exact request is preserved; refresh status and retry the same action.");
     error.retrySameRequest = true;
     throw error;
   };
@@ -1112,22 +1218,29 @@ export default function QuickClockSection({
     }
 
     const email = selectedUser.email;
+    const entryId = String(activeEntry.id);
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("resolve_punch_exception", email);
     const credential = credentialRef.current;
     const user = selectedUser;
+    let actionEpoch = workViewEpochRef.current;
     setPunchResolutionError("");
     setPersistenceError("");
     setIsLoading(true);
 
     try {
-      const result = await invokeTimeClock({
+      const pending = invokeTimeClock({
         action: "resolve_punch_exception",
         request_id: requestId,
         response,
         ...(claimedClockOut ? { claimed_clock_out: claimedClockOut } : {}),
         ...credentialPayload(credential, email),
       });
-      clearRequest("resolve_punch_exception", email);
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertPunchResolutionAcknowledgementIdentity(result, email, entryId);
+      clearRequest("resolve_punch_exception", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
 
       if (result?.worked_through === true && result?.status === "clocked_in") {
         setPunchResolution(null);
@@ -1147,15 +1260,17 @@ export default function QuickClockSection({
 
       throw new Error("Punch resolution returned an unexpected authoritative state. Reload before continuing.");
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("resolve_punch_exception", email);
-      const message = err?.message || "Punch resolution was not confirmed by the server.";
-      setPunchResolutionError(message);
-      setRecognitionStatus(err?.retrySameRequest
-        ? "Punch resolution may have been saved. Retry the same response to recover safely."
-        : "Punch resolution is blocked. Review the message in the window.");
+      if (!shouldRetainRequest(err)) clearRequest("resolve_punch_exception", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        const message = err?.message || "Punch resolution was not confirmed by the server.";
+        setPunchResolutionError(message);
+        setRecognitionStatus(err?.retrySameRequest
+          ? "Punch resolution may have been saved. Retry the same response to recover safely."
+          : "Punch resolution is blocked. Review the message in the window.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
@@ -1171,18 +1286,24 @@ export default function QuickClockSection({
     }
 
     const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
     const requestId = requestIdFor("recover_missed_clock_in", email);
+    let actionEpoch = workViewEpochRef.current;
     setLateClockInError("");
     setPersistenceError("");
     setIsLoading(true);
     try {
-      const result = await invokeTimeClock({
+      const pending = invokeTimeClock({
         action: "recover_missed_clock_in",
         request_id: requestId,
         claimed_clock_in: claimedClockIn,
         ...credentialPayload(credentialRef.current, email),
       });
-      clearRequest("recover_missed_clock_in", email);
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertEmployeeAcknowledgement(result, email, "Missed Clock In recovery");
+      clearRequest("recover_missed_clock_in", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
       if (result?.recovered_missed_clock_in !== true || result?.status !== "clocked_in" || !result?.entry?.id) {
         throw new Error("Missed Clock In recovery returned an unexpected authoritative state. Reload before continuing.");
       }
@@ -1203,15 +1324,78 @@ export default function QuickClockSection({
       setRecognitionStatus("Missing Clock In restored from your reported arrival time. Complete Clock Out now; this shift will require manager review.");
       return result;
     } catch (err) {
-      if (!shouldRetainRequest(err)) clearRequest("recover_missed_clock_in", email);
-      const message = err?.message || "Missed Clock In recovery was not confirmed by the server.";
-      setLateClockInError(message);
-      setRecognitionStatus(err?.retrySameRequest
-        ? "Missed Clock In may have been saved. Retry the same recovery to finish safely."
-        : "Missed Clock In recovery is blocked. Review the message in the window.");
+      if (!shouldRetainRequest(err)) clearRequest("recover_missed_clock_in", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        const message = err?.message || "Missed Clock In recovery was not confirmed by the server.";
+        setLateClockInError(message);
+        setRecognitionStatus(err?.retrySameRequest
+          ? "Missed Clock In may have been saved. Retry the same recovery to finish safely."
+          : "Missed Clock In recovery is blocked. Review the message in the window.");
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (stillCurrent()) setIsLoading(false);
+    }
+  };
+
+  const handleReportMissedClockIn = async (claimedClockIn) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Missed Clock In identity is no longer verified. Identify again before continuing.");
+    }
+
+    const email = selectedUser.email;
+    const stillCurrent = breakContextFor(email);
+    const requestId = requestIdFor("report_missed_clock_in", email);
+    let actionEpoch = workViewEpochRef.current;
+    setLateClockInError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const pending = invokeTimeClock({
+        action: "report_missed_clock_in",
+        request_id: requestId,
+        claimed_clock_in: claimedClockIn,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      actionEpoch = workViewEpochRef.current;
+      const result = await pending;
+      assertEmployeeAcknowledgement(result, email, "Missed Clock In report");
+      clearRequest("report_missed_clock_in", email, requestId);
+      if (!stillCurrent() || actionEpoch !== workViewEpochRef.current) return null;
+      if (result?.recovered_missed_clock_in !== true || result?.status !== "clocked_in" || !result?.entry?.id) {
+        throw new Error("Missed Clock In report returned an unexpected authoritative state. Reload before continuing.");
+      }
+
+      identifyIntentRef.current = "clock_in";
+      setMissedClockInPrompt(false);
+      setLateClockInReview(null);
+      setLateClockInError("");
+      setPunchResolution(null);
+      setActiveEntry(result.entry);
+      setBreakStatus("working");
+      setActiveBreak(null);
+      setBreakSummary({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+      setWorkPauseStatus("working");
+      setActiveWorkPause(null);
+      setWorkPauseSummary({ count: 0, total_minutes: 0 });
+      setActiveLabor(null);
+      setLaborSummary({ count: 0, total_minutes: 0 });
+      setShowClockOut(true);
+      showNotification("in", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_in || new Date().toISOString());
+      setRecognitionStatus("Shift started from your reported arrival time. A manager will review this Clock In.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("report_missed_clock_in", email, requestId);
+      if (stillCurrent() && actionEpoch === workViewEpochRef.current) {
+        const message = err?.message || "Missed Clock In report was not confirmed by the server.";
+        setLateClockInError(message);
+        setRecognitionStatus(err?.retrySameRequest
+          ? "Missed Clock In may have been saved. Retry the same report to finish safely."
+          : "Missed Clock In report is blocked. Review the message in the window.");
+      }
+      throw err;
+    } finally {
+      if (stillCurrent()) setIsLoading(false);
     }
   };
 
@@ -1287,6 +1471,7 @@ export default function QuickClockSection({
       if (stillCurrent()) {
         showNotification("out", result.user?.full_name || selectedUser.full_name || email, result.entry?.clock_out || new Date().toISOString());
         setShowClockOut(false);
+        setActiveEntry(null);
         setRecognitionStatus("Clock-out confirmed by server.");
         scheduleDisplayReset(2500);
       }
@@ -1333,6 +1518,15 @@ export default function QuickClockSection({
         onClockInNow={handleLateClockInClockInNow}
       />
 
+      <MissedClockInDialog
+        open={missedClockInPrompt && Boolean(selectedUser)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        busy={isLoading}
+        error={lateClockInError}
+        onReport={handleReportMissedClockIn}
+        onCancel={resetState}
+      />
+
       <WorkPauseOverlay
         userOverride={selectedUser}
         credentialOverride={credentialRef.current}
@@ -1346,9 +1540,18 @@ export default function QuickClockSection({
 
       {notification && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setNotification(null)}>
-          <div className={`px-12 py-10 rounded-3xl shadow-2xl text-center transform animate-in zoom-in-95 ${notification.type === "in" ? "bg-green-500 text-white" : "bg-orange-500 text-white"}`}>
+          <div className={`relative overflow-hidden px-12 py-10 rounded-3xl shadow-2xl text-center transform animate-in zoom-in-95 ${notification.type === "in" ? "bg-green-500 text-white" : "bg-orange-500 text-white"}`}>
+            <div className="success-burst" />
             <div className="flex flex-col items-center gap-4">
-              {notification.type === "in" ? <Play className="w-16 h-16" /> : <Square className="w-16 h-16" />}
+              {notification.type === "in" ? (
+                <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path className="check-draw" d="M4 12.5l5 5L20 6.5" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path className="check-draw" d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              )}
               <div>
                 <p className="text-3xl font-bold mb-2">{notification.userName}</p>
                 <p className="text-xl">Successfully Clocked {notification.type === "in" ? "In" : "Out"}</p>
@@ -1398,25 +1601,81 @@ export default function QuickClockSection({
           </div>
         )}
 
-        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && (
+        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && selectedUser && activeEntry && (
+          <div className="flex flex-col items-center gap-4 w-64" data-summary-entry-id={activeEntry.id}>
+            <div className="w-full rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <p className="text-sm font-bold text-emerald-900">You're clocked in</p>
+              </div>
+              <p className="mt-1.5 text-sm text-emerald-800/90">
+                {selectedUser.full_name || selectedUser.email}
+              </p>
+              <p className="text-xs text-emerald-700/80">
+                {Number.isFinite(new Date(activeEntry.clock_in).getTime()) && `Since ${format(new Date(activeEntry.clock_in), "h:mm a")}`}
+                {activeEntry.approval_status === "needs_review" && " - pending manager review"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setClockOutDismissed(activeEntry?.id, false); setShowClockOut(true); }}
+              disabled={isLoading}
+              className="w-64 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-900/25 transition-[transform,box-shadow] duration-200 hover:shadow-xl motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/60"
+            >
+              <Square className="w-4 h-4 fill-current" />
+              Clock Out
+            </button>
+            <button
+              type="button"
+              onClick={resetState}
+              disabled={isLoading}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded"
+            >
+              Not you? Identify a different employee
+            </button>
+          </div>
+        )}
+
+        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && !(selectedUser && activeEntry) && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
               Tap the button, then identify with face recognition, a secure QR badge, or username/password.
             </p>
             <button
+              type="button"
+              onClick={() => { identifyIntentRef.current = "missed_clock_in"; startRecognition(); }}
+              disabled={isLoading}
+              className="w-64 flex items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-md motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60"
+            >
+              <Clock3 className="w-4 h-4" />
+              Forgot to Clock In? Set arrival time
+            </button>
+            <button
               onClick={startRecognition}
               disabled={isLoading}
-              className="relative w-64 h-32 rounded-2xl shadow-lg disabled:opacity-50 overflow-hidden hover:scale-105 transition-transform"
+              className="group relative w-64 h-32 rounded-3xl shadow-xl shadow-emerald-900/25 hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-[1.04] motion-safe:active:scale-[0.96] transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
             >
-              <div className="absolute inset-0 bg-green-600" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute inset-0 bg-red-600" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-              <div className="absolute top-4 left-6 text-white flex items-center gap-2">
-                <Play className="w-6 h-6" />
-                <span className="text-xl font-bold">In</span>
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-700" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+              <div className="absolute inset-0 bg-gradient-to-tl from-rose-400 via-red-500 to-red-700" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.55) 50%, transparent calc(50% + 1px))" }} />
+              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
+              <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/25 to-transparent" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+              <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/20 to-transparent" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+              <div className="punch-sheen absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
+              <div className="absolute top-4 left-5 text-white flex items-center gap-2.5 drop-shadow-md">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
+                  <Play className="w-4 h-4 fill-current" />
+                </span>
+                <span className="text-xl font-bold tracking-wide">In</span>
               </div>
-              <div className="absolute bottom-4 right-6 text-white flex items-center gap-2">
-                <span className="text-xl font-bold">Out</span>
-                <Square className="w-6 h-6" />
+              <div className="absolute bottom-4 right-5 text-white flex items-center gap-2.5 drop-shadow-md">
+                <span className="text-xl font-bold tracking-wide">Out</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
+                  <Square className="w-4 h-4 fill-current" />
+                </span>
               </div>
             </button>
             {isLoading && <Loader2 className="w-6 h-6 animate-spin text-purple-600" />}
@@ -1428,7 +1687,14 @@ export default function QuickClockSection({
             {recognitionMethod === "face" && (
               <div className="relative mb-4">
                 <video ref={videoRef} autoPlay muted playsInline className="w-80 h-60 object-cover rounded-2xl bg-gray-900 scale-x-[-1]" />
-                <div className="absolute inset-0 border-4 border-purple-500 rounded-2xl animate-pulse pointer-events-none" />
+                <div className="scan-reticle scan-tone-scanning" aria-hidden="true">
+                  <div className="scan-bracket tl" />
+                  <div className="scan-bracket tr" />
+                  <div className="scan-bracket bl" />
+                  <div className="scan-bracket br" />
+                  <div className="scan-oval" />
+                  <div className="scan-line" />
+                </div>
                 <Button variant="ghost" size="icon" onClick={resetState} className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full">
                   <X className="w-5 h-5" />
                 </Button>
@@ -1520,17 +1786,18 @@ export default function QuickClockSection({
       {showClockOut && activeEntry && selectedUser && (
         <ClockOutDialog
           isOpen={showClockOut}
-          onClose={resetState}
+          onClose={() => {
+            setClockOutDismissed(activeEntry?.id, true);
+            void resetState();
+          }}
           timeEntry={activeEntry}
           userName={selectedUser.full_name || selectedUser.email}
           breakStatus={breakStatus}
           activeBreak={activeBreak}
           breakSummary={breakSummary}
-          workPauseAllowed={workPauseAllowed}
           workPauseSummary={workPauseSummary}
           onStartBreak={handleStartBreak}
           onEndBreak={handleEndBreak}
-          onStartWorkPause={handleStartWorkPause}
           activeLabor={activeLabor}
           laborSummary={laborSummary}
           onStartLabor={(payload) => handleLaborAction("labor_start", payload)}

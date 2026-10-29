@@ -12,6 +12,7 @@ import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import PermittingDraftLibrary from "@/components/permitting/PermittingDraftLibrary";
 import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
+import SavedViews from "@/components/workflow/SavedViews";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
@@ -21,11 +22,12 @@ import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "@/shared/permittingAddressLocality.js";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
 const PermitLocality = base44.entities.PermitLocality;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 function localDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -77,9 +79,17 @@ export default function Permitting() {
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [queueFilter, setQueueFilter] = useState("all");
+  // Deep links: /Permitting?queue=<queueKey>&wo=<workOrderId>&line=<permitLineItemId>
+  // URL params win on initial load only; SavedViews and manual filters still apply afterwards.
+  const [queueFilter, setQueueFilter] = useState(() => {
+    const queueParam = new URLSearchParams(window.location.search).get("queue");
+    return queueParam === "all" || PERMIT_QUEUE_ORDER.includes(queueParam) ? queueParam : "all";
+  });
+  const [woFilter, setWoFilter] = useState(() => new URLSearchParams(window.location.search).get("wo") || "");
+  const [highlightLineId] = useState(() => new URLSearchParams(window.location.search).get("line") || "");
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [issuesOnly, setIssuesOnly] = useState(false);
+  const [viewName, setViewName] = useState("");
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
@@ -91,6 +101,7 @@ export default function Permitting() {
   const localityCreateInFlightRef = useRef(new Set());
   const workScrollRef = useRef(null);
   const workScrollTopRef = useRef(0);
+  const highlightScrolledRef = useRef(false);
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
@@ -815,10 +826,11 @@ export default function Permitting() {
   );
 
   const filteredGroups = useMemo(() => searchedGroups.filter((group) => {
+    if (woFilter && group.work_order_id !== woFilter) return false;
     if (assignedToMeOnly && !isPermitGroupAssignedToUser(group, currentUser)) return false;
     if (issuesOnly && !getPermitGroupReadiness(group, today).hasIssues) return false;
     return true;
-  }), [searchedGroups, assignedToMeOnly, issuesOnly, currentUser, today]);
+  }), [searchedGroups, woFilter, assignedToMeOnly, issuesOnly, currentUser, today]);
 
   // Guided queue: every Work Order lands in one plain-English state so staff can
   // immediately see what needs attention without losing the detailed tracker below.
@@ -832,15 +844,26 @@ export default function Permitting() {
   const visibleGroups = queueFilter === "all"
     ? filteredGroups
     : (queueSummary[queueFilter] || []);
-  const hasActiveFilters = !!searchTerm.trim() || assignedToMeOnly || issuesOnly || queueFilter !== "all";
+  const woFilterTitle = useMemo(() => {
+    if (!woFilter) return "";
+    const wo = workOrders.find((row) => row.id === woFilter);
+    return wo?.client_name || wo?.title || lineItems.find((li) => li.work_order_id === woFilter)?.work_order_title || woFilter;
+  }, [woFilter, workOrders, lineItems]);
+  const hasActiveFilters = !!searchTerm.trim() || assignedToMeOnly || issuesOnly || queueFilter !== "all" || !!woFilter;
   const allVisibleGroupsCollapsed = visibleGroups.length > 0
     && visibleGroups.every((group) => collapsedGroupIds.has(group.work_order_id));
+
+  const clearWoFilter = () => {
+    setWoFilter("");
+    window.history.replaceState(window.history.state, "", createPageUrl("Permitting"));
+  };
 
   const clearFilters = () => {
     setSearchTerm("");
     setQueueFilter("all");
     setAssignedToMeOnly(false);
     setIssuesOnly(false);
+    if (woFilter) clearWoFilter();
   };
 
   const setGroupExpanded = (workOrderId, expanded) => {
@@ -862,6 +885,46 @@ export default function Permitting() {
       return next;
     });
   };
+
+  // ?line=<permitLineItemId> deep link: expand the line's group, then scroll to
+  // and ring the matching row (rows have no per-line detail view of their own).
+  const highlightWorkOrderId = useMemo(() => {
+    if (!highlightLineId) return "";
+    return lineItems.find((li) => li.id === highlightLineId)?.work_order_id || "";
+  }, [highlightLineId, lineItems]);
+
+  useEffect(() => {
+    if (!highlightWorkOrderId) return;
+    setCollapsedGroupIds((previous) => {
+      if (!previous.has(highlightWorkOrderId)) return previous;
+      const next = new Set(previous);
+      next.delete(highlightWorkOrderId);
+      return next;
+    });
+  }, [highlightWorkOrderId]);
+
+  useEffect(() => {
+    if (highlightScrolledRef.current || isLoading || !highlightWorkOrderId) return undefined;
+    let cancelled = false;
+    let timer = null;
+    const tryHighlight = (attemptsRemaining) => {
+      if (cancelled || highlightScrolledRef.current) return;
+      const groupEl = workScrollRef.current?.querySelector(`[data-permit-group="${highlightWorkOrderId}"]`);
+      if (!groupEl) {
+        if (attemptsRemaining > 0) timer = setTimeout(() => tryHighlight(attemptsRemaining - 1), 150);
+        return;
+      }
+      highlightScrolledRef.current = true;
+      const group = allGroups.find((g) => g.work_order_id === highlightWorkOrderId);
+      const rowIndex = group ? group.lines.findIndex((li) => li.id === highlightLineId) : -1;
+      const rowEl = rowIndex >= 0 ? groupEl.querySelectorAll(".divide-y > *")[rowIndex] : null;
+      const target = rowEl || groupEl;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (rowEl) rowEl.classList.add("ring-2", "ring-inset", "ring-purple-400", "rounded-lg", "bg-purple-50/60");
+    };
+    timer = setTimeout(() => tryHighlight(6), 200);
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [highlightWorkOrderId, highlightLineId, isLoading, allGroups]);
 
   const localityForInfo = localities.find(l => l.id === localityInfoId);
   const openJurisdictions = useCallback((focus = null) => {
@@ -929,32 +992,37 @@ export default function Permitting() {
         ) : (
           <div className="space-y-3">
             {groups.map(group => (
-              <PermitClientGroup
+              <div
                 key={group.work_order_id}
-                group={group}
-                queueState={group.queueState}
-                onUpdateStep={updateStep}
-                onUpdateField={updateField}
-                onUpdateNotes={updateNotesAndSync}
-                onUpdateLocality={updateLocality}
-                onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
-                    onLinkLegacyOffice={linkLegacyPermitLineOffice}
-                onOpenWorkOrder={openWorkOrder}
-                onShowLocalityInfo={setLocalityInfoId}
-                onShowJurisdictionInfo={openJurisdictionKnowledge}
-                onDeleteLine={deleteLineItem}
-                onUpdateWorkOrderField={updateWorkOrderField}
-                onWorkNotesChanged={() => loadData(false)}
-                onFixPermittingStage={fixPermittingStage}
-                currentUser={currentUser}
-                isRegistered={isRegistered}
-                localities={localities}
-                users={users}
-                taskDescriptions={taskDescriptions}
-                today={today}
-                expanded={!collapsedGroupIds.has(group.work_order_id)}
-                onExpandedChange={(expanded) => setGroupExpanded(group.work_order_id, expanded)}
-              />
+                data-permit-group={group.work_order_id}
+                className={group.work_order_id === highlightWorkOrderId ? "rounded-lg ring-2 ring-purple-300" : undefined}
+              >
+                <PermitClientGroup
+                  group={group}
+                  queueState={group.queueState}
+                  onUpdateStep={updateStep}
+                  onUpdateField={updateField}
+                  onUpdateNotes={updateNotesAndSync}
+                  onUpdateLocality={updateLocality}
+                  onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
+                  onLinkLegacyOffice={linkLegacyPermitLineOffice}
+                  onOpenWorkOrder={openWorkOrder}
+                  onShowLocalityInfo={setLocalityInfoId}
+                  onShowJurisdictionInfo={openJurisdictionKnowledge}
+                  onDeleteLine={deleteLineItem}
+                  onUpdateWorkOrderField={updateWorkOrderField}
+                  onWorkNotesChanged={() => loadData(false)}
+                  onFixPermittingStage={fixPermittingStage}
+                  currentUser={currentUser}
+                  isRegistered={isRegistered}
+                  localities={localities}
+                  users={users}
+                  taskDescriptions={taskDescriptions}
+                  today={today}
+                  expanded={!collapsedGroupIds.has(group.work_order_id)}
+                  onExpandedChange={(expanded) => setGroupExpanded(group.work_order_id, expanded)}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -1008,7 +1076,7 @@ export default function Permitting() {
                 <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  onChange={e => { setViewName(""); setSearchTerm(e.target.value); }}
                   placeholder="Search permits & jobs..."
                   aria-label="Search permitting jobs"
                   className="h-8 w-full pl-8 pr-8 text-sm"
@@ -1029,7 +1097,7 @@ export default function Permitting() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setAssignedToMeOnly((value) => !value)}
+                onClick={() => { setViewName(""); setAssignedToMeOnly((value) => !value); }}
                 disabled={!currentUser?.full_name && !currentUser?.email}
                 className={`gap-1 ${assignedToMeOnly ? "border-purple-400 bg-purple-50 text-purple-800" : ""}`}
                 title="Show only permitting jobs assigned to you"
@@ -1040,7 +1108,7 @@ export default function Permitting() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setIssuesOnly((value) => !value)}
+                onClick={() => { setViewName(""); setIssuesOnly((value) => !value); }}
                 className={`gap-1 ${issuesOnly ? "border-amber-400 bg-amber-50 text-amber-900" : ""}`}
                 title="Show only permitting jobs with proven setup, ownership, follow-up, or routing issues"
               >
@@ -1058,6 +1126,18 @@ export default function Permitting() {
                 {allVisibleGroupsCollapsed ? <ChevronsDown className="w-4 h-4" /> : <ChevronsUp className="w-4 h-4" />}
                 {allVisibleGroupsCollapsed ? "Expand jobs" : "Collapse jobs"}
               </Button>
+              <SavedViews
+                storageKey="views.permitting"
+                getState={() => ({ searchTerm, queueFilter, assignedToMeOnly, issuesOnly })}
+                activeName={viewName}
+                onApply={(s, name) => {
+                  setSearchTerm(s.searchTerm || "");
+                  setQueueFilter(s.queueFilter || "all");
+                  setAssignedToMeOnly(s.assignedToMeOnly === true);
+                  setIssuesOnly(s.issuesOnly === true);
+                  setViewName(name || "");
+                }}
+              />
               <Button
                 type="button"
                 size="sm"
@@ -1100,6 +1180,24 @@ export default function Permitting() {
             </div>
           )}
         </div>
+
+        {woFilter && (
+          <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 flex items-center justify-between gap-3 flex-wrap">
+            <div className="min-w-0">
+              <span className="font-semibold">Filtered to work order:</span>{" "}
+              <span className="break-words">{woFilterTitle}</span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={clearWoFilter}
+              className="shrink-0 gap-1 border-purple-300 bg-white text-purple-800"
+            >
+              <X className="h-3.5 w-3.5" /> Clear
+            </Button>
+          </div>
+        )}
 
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
           <button

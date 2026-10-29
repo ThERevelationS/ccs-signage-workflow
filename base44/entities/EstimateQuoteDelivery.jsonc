@@ -48,6 +48,12 @@
     "recipient_email": {
       "type": "string"
     },
+    "cc_emails": {
+      "type": "string"
+    },
+    "bcc_emails": {
+      "type": "string"
+    },
     "subject": {
       "type": "string"
     },
@@ -93,6 +99,11 @@
       "type": "boolean",
       "default": false,
       "description": "True when an already-issued quote version is delivered again without creating a new customer quote version."
+    },
+    "delivery_n": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Ordinal count of deliveries for this quote issue \u2014 1 on first send, then 2, 3... on resends."
     },
     "source_status": {
       "type": "string",

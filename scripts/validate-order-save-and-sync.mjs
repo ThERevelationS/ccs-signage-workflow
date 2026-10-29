@@ -61,15 +61,15 @@ for (const guard of [
   /allowExplicitOrderCreate: true/,
   /recordIds: orderIds/,
 ]) assert.match(savedOrderAction, guard);
-const genericSyncAction = backend.slice(backend.indexOf("if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset')"));
-assert.match(genericSyncAction, /action === 'run_sync' && dataset !== 'orders' && profile\.push_enabled/);
-assert.match(genericSyncAction, /action === 'run_sync' && profile\.pull_enabled/);
+const genericSyncAction = backend.slice(backend.indexOf("if (['run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset'].includes(action))"));
+assert.match(genericSyncAction, /isRunAction && profile\.push_enabled/);
+assert.match(genericSyncAction, /isRunAction && profile\.pull_enabled/);
 assert.match(genericSyncAction, /const wantPull = action === 'pull_dataset'/);
 assert.match(genericSyncAction, /const wantPush = action === 'push_dataset'/);
 assert.match(page, /hasLocalOrderChanges \? "Save & Sync" : "Sync"/);
 console.log('PASS Order Save & Sync ignores disabled background push/create flags but keeps global safety gates and exact pending-Order scope');
 assert.match(backend, /const pushResult = await pushDataset\(base44, token, dataset, profile, config,[\s\S]*?dataset === 'orders' \? \{/);
-assert.match(backend, /onlyPendingOrderRecords: action === 'run_sync'/);
+assert.match(backend, /onlyPendingOrderRecords: isRunAction/);
 assert.match(backend, /existing\?\.smartsheet_pending_local_sync === true[\s\S]*?orderLocalPendingConflicts\.push\(existing\.id\)[\s\S]*?continue/);
 assert.match(backend, /conflicts: orderLocalPendingConflicts\.length/);
 assert.match(backend, /smartsheet_pending_local_sync: unresolvedOrderFields/);

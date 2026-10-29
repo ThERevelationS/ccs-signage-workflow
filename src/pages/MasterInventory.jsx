@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { User } from "@/entities/all";
+import { User } from "@/api/gatedEntities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Boxes, Upload, ShieldAlert } from "lucide-react";
+import { Plus, Search, Boxes, Upload, ShieldAlert, Download } from "lucide-react";
 
 import { INVENTORY_SOURCES, SOURCE_BY_KEY } from "@/components/masterInventory/inventorySources";
 import InventoryFormModal from "@/components/masterInventory/InventoryFormModal";
@@ -16,15 +16,24 @@ import MasterExtrudedMetalsPolesTab from "@/components/masterInventory/MasterExt
 import MasterConcreteStoneTab from "@/components/masterInventory/MasterConcreteStoneTab";
 import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
-import { deleteInventoryRecordIfUnchanged } from "@/components/masterInventory/inventoryPersistence";
+import { deleteInventoryRecordIfUnchanged, findInventoryPartReferences } from "@/components/masterInventory/inventoryPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
-  const [activeKey, setActiveKey] = useState(INVENTORY_SOURCES[0].key);
+  const [activeKey, setActiveKey] = useState(() => {
+    try { const k = new URLSearchParams(window.location.search).get("src"); return k && INVENTORY_SOURCES.some((s) => s.key === k) ? k : INVENTORY_SOURCES[0].key; } catch { return INVENTORY_SOURCES[0].key; }
+  });
+  const writeParam = (key, value, defaultValue = "") => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      if (value && value !== defaultValue) next.set(key, value); else next.delete(key);
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  };
   const [itemsBySource, setItemsBySource] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showImporter, setShowImporter] = useState(false);
@@ -85,6 +94,24 @@ export default function MasterInventory() {
     );
   }, [items, search]);
 
+  const exportCsvFor = (source) => {
+    const cols = (source?.fields || []).filter((f) => f?.table && f?.name);
+    if (!cols.length || !filteredItems.length) return;
+    const esc = (v) => {
+      const s = v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = cols.map((c) => esc(c.label || c.name)).join(",");
+    const rows = filteredItems.map((it) => cols.map((c) => esc(it[c.name])).join(","));
+    const blob = new Blob([`${header}\n${rows.join("\n")}`], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `inventory-${source.key}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleEdit = (item) => {
     if (!isAdmin) return;
     setEditingItem(item);
@@ -100,6 +127,11 @@ export default function MasterInventory() {
       return;
     }
     try {
+      const refs = await findInventoryPartReferences(item.id);
+      if (refs.count > 0) {
+        alert(`"${label}" is used by ${refs.count} estimate Part${refs.count === 1 ? "" : "s"} (${refs.names.join(", ")}${refs.count > 5 ? ", …" : ""}). Detach or remove those Parts before deleting this item.`);
+        return;
+      }
       await deleteInventoryRecordIfUnchanged({
         entity: activeSource.entity,
         record: item,
@@ -199,7 +231,7 @@ export default function MasterInventory() {
         </div>
 
         {/* Source tabs */}
-        <Tabs value={activeKey} onValueChange={setActiveKey}>
+        <Tabs value={activeKey} onValueChange={(v) => { setActiveKey(v); writeParam("src", v, INVENTORY_SOURCES[0].key); }}>
           <div className="bg-white rounded-xl shadow-sm border p-2 mb-4 overflow-x-auto">
             <TabsList className="bg-transparent gap-1 flex-wrap h-auto">
               {INVENTORY_SOURCES.map((s) => {
@@ -245,10 +277,21 @@ export default function MasterInventory() {
                           <Input
                             placeholder="Search items..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => { const v = e.target.value; setSearch(v); try { const next = new URLSearchParams(window.location.search); if (v) next.set("q", v); else next.delete("q"); window.history.replaceState(null, "", `${window.location.pathname}?${next}`); } catch {} }}
                             className="pl-9"
                           />
                         </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => exportCsvFor(s)}
+                          disabled={!filteredItems.length}
+                          className="h-9 whitespace-nowrap"
+                          title="Export visible rows to CSV"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Export
+                        </Button>
                         {isAdmin && (
                           <Button
                             onClick={handleAdd}

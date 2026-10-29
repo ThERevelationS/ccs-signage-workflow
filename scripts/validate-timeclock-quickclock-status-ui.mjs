@@ -22,6 +22,11 @@ let blockRequestIdStorage = false;
 const fakeWindow = {
   addEventListener(name, listener) { events.set(name, listener); },
   removeEventListener(name, listener) { if (events.get(name) === listener) events.delete(name); },
+  dispatchEvent(event) {
+    const listener = events.get(event?.type);
+    if (listener) listener(event);
+    return true;
+  },
 };
 const fakeDocument = {
   visibilityState: 'visible',
@@ -50,10 +55,11 @@ vm.runInNewContext(compiled, {
     '@/components/ui/button': { Button },
     '@/components/ui/input': { Input },
     'lucide-react': Object.fromEntries(
-      ['Camera','Clock','Loader2','Play','QrCode','Square','User','X'].map((name) => [name, icon])),
+      ['Camera','Clock','Clock3','Loader2','Play','QrCode','Square','User','X'].map((name) => [name, icon])),
     '@/components/timeclock/ClockOutDialog': pop('clock_out'),
     '@/components/timeclock/MissedPunchResolutionDialog': pop('missed_punch'),
     '@/components/timeclock/LateClockInReviewDialog': pop('late_clock_in'),
+    '@/components/timeclock/MissedClockInDialog': pop('missed_clock_in'),
     '@/components/timeclock/WorkPauseOverlay': pop('work_pause'),
     '@/components/timeclock/faceScanRuntime': {
       createFaceMatcher: () => () => null,
@@ -64,6 +70,14 @@ vm.runInNewContext(compiled, {
   })[id] || require(id),
   console, Promise, Date, Math, crypto: globalThis.crypto,
   window: fakeWindow, document: fakeDocument,
+  CustomEvent: class CustomEvent {
+    constructor(type, init) { this.type = type; Object.assign(this, init || {}); }
+  },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
   setTimeout: (callback, ms) => {
     const id = ++nextTimerId;
     timers.set(id, { callback, ms });
@@ -94,6 +108,27 @@ const status = (user, id) => ({
   }, break_status: 'working', work_pause_status: 'working', work_pause_allowed: false },
 });
 const visible = (tree) => JSON.stringify(tree.toJSON());
+// The clocked-in summary card opens the Clock Out dialog on demand; status
+// loads must never auto-open it. Tests that need the dialog click through it.
+const textOf = (value) => {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map(textOf).join(' ');
+  if (typeof value === 'object') return textOf(value.props?.children);
+  return '';
+};
+const openClockOutDialog = async (target = renderer) => {
+  const mounted = () => target.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+  if (mounted()) return mounted();
+  await act(async () => {
+    const trigger = target.root.findAll((node) =>
+      node.type === 'button' && textOf(node.props?.children).includes('Clock Out')
+    )[0];
+    assert.ok(trigger, 'Expected the clocked-in summary card Clock Out button');
+    trigger.props.onClick();
+  });
+  return mounted();
+};
 let renderer;
 await act(async () => {
   renderer = TestRenderer.create(React.createElement(QuickClockSection, {
@@ -136,7 +171,7 @@ await act(async () => { events.get('focus')(); });
 assert.equal(calls.length, 5);
 await act(async () => { calls[4].resolve(status(second, 'shift-ready-to-close')); });
 assert.match(visible(renderer), /shift-ready-to-close/);
-const dialog = renderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const dialog = await openClockOutDialog();
 assert.ok(dialog, 'Expected a clock-out dialog connected to the authoritative active shift');
 
 await act(async () => { events.get('focus')(); });
@@ -177,8 +212,7 @@ assert.match(visible(renderer), /freshly-restored-new-active-shift/,
   'Cleanup from a previous Clock Out must not clear a newer server-restored active shift');
 console.log('PASS delayed prior punch cleanup preserves newly restored authoritative shift');
 
-const restoredDialog = renderer.root.findAll((node) =>
-  typeof node.props?.onClockOut === 'function')[0];
+const restoredDialog = await openClockOutDialog();
 assert.ok(restoredDialog);
 const secondOut = restoredDialog.props.onClockOut({
   lunchMinutes: 0, jobAllocations: [], notes: 'Synthetic normal cleanup acceptance',
@@ -208,6 +242,7 @@ assert.equal(calls[secondRecoveryStatusIndex].payload.action, 'status');
 await act(async () => {
   calls[secondRecoveryStatusIndex].resolve(status(second, 'break-in-flight-second'));
 });
+await openClockOutDialog();
 const secondBreakDialog = renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.ok(secondBreakDialog);
@@ -231,6 +266,7 @@ assert.equal(calls.at(-1).payload.action, 'status',
 assert.equal(calls.at(-1).payload.target_email, first.email);
 const firstStatusIndex = calls.length - 1;
 await act(async () => { calls[firstStatusIndex].resolve(status(first, 'first-current-shift')); });
+await openClockOutDialog();
 const firstBreakDialog = renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.ok(firstBreakDialog);
@@ -244,6 +280,7 @@ await act(async () => {
   } });
   await interruptedBreak;
 });
+await openClockOutDialog();
 const currentDialog = renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.ok(currentDialog);
@@ -253,6 +290,7 @@ assert.equal(currentDialog.props.breakStatus, 'working',
 assert.equal(currentDialog.props.activeBreak, null);
 console.log('PASS previous employee break completion never contaminates new employee state');
 
+await openClockOutDialog();
 const firstDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 assert.equal(firstDialog().props.breakStatus, 'working');
@@ -447,6 +485,7 @@ await act(async () => {
   await finishNewerPaidBreak;
 });
 
+await openClockOutDialog();
 const laborDialog = () => renderer.root.findAll((node) =>
   typeof node.props?.onStartLabor === 'function')[0];
 assert.ok(laborDialog());
@@ -633,8 +672,7 @@ assert.equal(laborDialog().props.activeLabor, null);
 assert.equal(laborDialog().props.laborSummary.total_minutes, 0);
 console.log('PASS prior employee Current Work acknowledgement cannot replace new session data');
 
-const oldClockOutDialog = renderer.root.findAll((node) =>
-  typeof node.props?.onClockOut === 'function')[0];
+const oldClockOutDialog = await openClockOutDialog();
 assert.ok(oldClockOutDialog);
 const originalPayload = {
   lunchMinutes: 0,
@@ -672,7 +710,7 @@ await act(async () => { events.get('focus')(); });
 const statusAfterRetryIndex = calls.length - 1;
 assert.equal(calls[statusAfterRetryIndex].payload.action, 'status');
 await act(async () => { calls[statusAfterRetryIndex].resolve(status(first, 'first-new-shift')); });
-const pendingDialog = renderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const pendingDialog = await openClockOutDialog();
 assert.ok(pendingDialog);
 let olderClockOut;
 await act(async () => { olderClockOut = pendingDialog.props.onClockOut(originalPayload); });
@@ -710,6 +748,7 @@ await act(async () => {
 const freshStatusIndex = calls.length - 1;
 assert.equal(calls[freshStatusIndex].payload.action, 'status');
 await act(async () => { calls[freshStatusIndex].resolve(status(first, 'reloaded-uncertain-shift')); });
+await openClockOutDialog(reloadRenderer);
 const reloadedDialog = () => reloadRenderer.root.findAll((node) =>
   typeof node.props?.onClockOut === 'function')[0];
 assert.ok(reloadedDialog());
@@ -786,7 +825,7 @@ let completedRenderer;
 await act(async () => { completedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
 const completeInitIndex = calls.length - 1;
 await act(async () => { calls[completeInitIndex].resolve(status(first, 'already-complete-shift')); });
-const completedDialog = completedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const completedDialog = await openClockOutDialog(completedRenderer);
 assert.ok(completedDialog);
 let lostAfterCommit;
 await act(async () => { lostAfterCommit = completedDialog.props.onClockOut(reloadPayload); });
@@ -813,7 +852,7 @@ let blockedRenderer;
 await act(async () => { blockedRenderer = TestRenderer.create(React.createElement(QuickClockSection, reloadSessionProps)); });
 const storageStatusIndex = calls.length - 1;
 await act(async () => { calls[storageStatusIndex].resolve(status(first, 'browser-storage-blocked-shift')); });
-const blockedDialog = blockedRenderer.root.findAll((node) => typeof node.props?.onClockOut === 'function')[0];
+const blockedDialog = await openClockOutDialog(blockedRenderer);
 assert.ok(blockedDialog);
 const beforeStorageBlock = calls.length;
 blockClockOutRecoveryStorage = true;
@@ -842,6 +881,7 @@ const changeInitialStatusIndex = calls.length - 1;
 await act(async () => {
   calls[changeInitialStatusIndex].resolve(status(second, 'second-old-uncertain-entry'));
 });
+await openClockOutDialog(shiftChangeRenderer);
 const shiftChangeDialog = () => shiftChangeRenderer.root.findAll((node) =>
   typeof node.props?.onClockOut === 'function')[0];
 const shiftChangePayload = {
@@ -893,6 +933,7 @@ await act(async () => {
 });
 const overlapInitialIndex = calls.length - 1;
 await act(async () => { calls[overlapInitialIndex].resolve(status(second,'first-overlap-entry')); });
+await openClockOutDialog(overlapRenderer);
 const overlapDialog = () => overlapRenderer.root.findAll((node) =>
   typeof node.props?.onClockOut === 'function')[0];
 let oldOverlapOut;
@@ -952,8 +993,7 @@ await act(async () => {
 });
 const malformedInitialStatus = calls.length - 1;
 await act(async () => { calls[malformedInitialStatus].resolve(status(first,'malformed-snapshot-shift')); });
-const malformedDialog = malformedSnapshotRenderer.root.findAll((node) =>
-  typeof node.props?.onClockOut === 'function')[0];
+const malformedDialog = await openClockOutDialog(malformedSnapshotRenderer);
 let malformedCleanupOut;
 await act(async () => {
   malformedCleanupOut = malformedDialog.props.onClockOut({
@@ -986,6 +1026,7 @@ await act(async () => {
 });
 const breakIdentityStatusIndex = calls.length - 1;
 await act(async () => { calls[breakIdentityStatusIndex].resolve(status(first,'break-identity-shift')); });
+await openClockOutDialog(breakIdentityRenderer);
 const breakIdentityDialog = () => breakIdentityRenderer.root.findAll((node) =>
   typeof node.props?.onStartBreak === 'function')[0];
 let mismatchedBreakStart;
@@ -1055,6 +1096,7 @@ await act(async () => {
 });
 const laborIdentityStatusIndex = calls.length - 1;
 await act(async () => { calls[laborIdentityStatusIndex].resolve(status(first,'labor-identity-shift')); });
+await openClockOutDialog(laborIdentityRenderer);
 const laborIdentityDialog = () => laborIdentityRenderer.root.findAll((node) =>
   typeof node.props?.onStartLabor === 'function')[0];
 let mismatchedLaborStart;
@@ -1120,4 +1162,211 @@ await act(async () => {
 assert.equal(laborIdentityDialog().props.activeLabor.id,'verified-installation');
 await act(async () => { laborIdentityRenderer.unmount(); });
 console.log('PASS mismatched Current Work employee/shift/segment acknowledgements fail closed and preserve exact retry IDs');
-console.log('PASS 27/27 Time Clock Quick Clock async status acceptance cases');
+// Work Pause initiation moved to the toolbar pause menu; the kiosk view only
+// reflects authoritative pause state. A paused status arms the Resume guard
+// and a verified resume acknowledgement releases it.
+let pauseFenceRenderer;
+await act(async () => {
+  pauseFenceRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'pause-fence-session', employeeSessionUser:first,
+  }));
+});
+const pauseFenceStatusIndex = calls.length - 1;
+await act(async () => {
+  calls[pauseFenceStatusIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_in',
+    entry:{id:'pause-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+    break_status:'working', work_pause_status:'working', work_pause_allowed:true,
+  }});
+});
+const pauseFenceOverlay = () => pauseFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onResumed === 'function')[0];
+assert.ok(pauseFenceOverlay());
+assert.equal(pauseFenceOverlay().props.disabled, true,
+  'A working employee must not see an armed pause guard');
+await act(async () => { events.get('focus')(); });
+const pauseSeedIndex = calls.length - 1;
+assert.equal(calls[pauseSeedIndex].payload.action,'status');
+await act(async () => {
+  calls[pauseSeedIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_in',
+    entry:{id:'pause-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+    break_status:'working', work_pause_status:'paused',
+    active_work_pause:{id:'wp-1',user_email:first.email,time_entry_id:'pause-fence-shift',status:'active'},
+    work_pause_summary:{count:1,total_minutes:0}, work_pause_allowed:true,
+  }});
+});
+assert.equal(pauseFenceOverlay().props.disabled, false,
+  'An authoritative paused status must arm the Resume guard');
+await act(async () => {
+  pauseFenceOverlay().props.onResumed({ success:true, user:first, status:'clocked_in',
+    work_pause_status:'working', work_pause_summary:{count:1,total_minutes:5},
+    entry:{id:'pause-fence-shift',user_email:first.email}, work_pause_allowed:true });
+});
+assert.equal(pauseFenceOverlay().props.disabled, true,
+  'A verified Resume acknowledgement must release the pause guard');
+console.log('PASS paused status arms the Work Pause overlay and a verified resume releases it');
+await act(async () => { pauseFenceRenderer.unmount(); });
+// Punch-resolution acknowledgements are fenced to the employee, shift, epoch,
+// and the exact preserved request ID.
+let punchFenceRenderer;
+await act(async () => {
+  punchFenceRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'punch-fence-session', employeeSessionUser:first,
+  }));
+});
+const punchFenceStatusIndex = calls.length - 1;
+await act(async () => { calls[punchFenceStatusIndex].resolve(status(first,'punch-fence-shift')); });
+const punchDialog = () => punchFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onWorkedThrough === 'function')[0];
+assert.ok(punchDialog());
+let earlyResolution, latestResolution;
+await act(async () => {
+  earlyResolution = punchDialog().props.onWorkedThrough();
+  latestResolution = punchDialog().props.onWorkedThrough();
+});
+const earlyResolutionIndex = calls.length - 2;
+const latestResolutionIndex = calls.length - 1;
+const sharedResolutionId = calls[earlyResolutionIndex].payload.request_id;
+assert.equal(calls[latestResolutionIndex].payload.request_id, sharedResolutionId,
+  'Rapid duplicate punch-resolution taps must share one exact request');
+const punchRequestKey = `ccs_timeclock_request:resolve_punch_exception:${first.email}`;
+const workedThroughAck = { data: {
+  success:true, user:first, status:'clocked_in', worked_through:true,
+  entry:{id:'punch-fence-shift',user_email:first.email,status:'clocked_in',clock_in:'2026-10-13T12:00:00.000Z'},
+  punch_exception:{id:'punch-case-1',user_email:first.email,time_entry_id:'punch-fence-shift'},
+}};
+await act(async () => { calls[latestResolutionIndex].resolve(workedThroughAck); await latestResolution; });
+assert.equal(savedSessionData.has(punchRequestKey), false);
+let newerResolution;
+await act(async () => { newerResolution = punchDialog().props.onWorkedThrough(); });
+const newerResolutionIndex = calls.length - 1;
+const newerResolutionId = calls[newerResolutionIndex].payload.request_id;
+assert.notEqual(newerResolutionId, sharedResolutionId);
+assert.equal(savedSessionData.get(punchRequestKey), newerResolutionId);
+await act(async () => {
+  calls[earlyResolutionIndex].resolve(workedThroughAck);
+  await earlyResolution;
+});
+assert.equal(savedSessionData.get(punchRequestKey), newerResolutionId,
+  'A delayed duplicate punch-resolution acknowledgement must not clear a newer retry ID');
+await act(async () => {
+  calls[newerResolutionIndex].resolve({ data: {
+    success:true, user:second, status:'clocked_in', worked_through:true,
+    entry:{id:'punch-fence-shift',user_email:second.email},
+    punch_exception:{id:'foreign-case',user_email:second.email,time_entry_id:'punch-fence-shift'},
+  }});
+  await assert.rejects(newerResolution, /could not be matched/);
+});
+assert.equal(savedSessionData.get(punchRequestKey), newerResolutionId,
+  'A mismatched punch-resolution acknowledgement must preserve the exact retry request');
+let recoveredResolution;
+await act(async () => { recoveredResolution = punchDialog().props.onWorkedThrough(); });
+const recoveredResolutionIndex = calls.length - 1;
+assert.equal(calls[recoveredResolutionIndex].payload.request_id, newerResolutionId,
+  'Punch-resolution retry must reuse the exact preserved request ID');
+await act(async () => { calls[recoveredResolutionIndex].resolve(workedThroughAck); await recoveredResolution; });
+assert.equal(savedSessionData.has(punchRequestKey), false);
+console.log('PASS punch-resolution acknowledgements are fenced to employee, shift, epoch, and exact request');
+// A missed-Clock-Out resolution chains the employee Clock In; a mismatched
+// Clock In acknowledgement fails closed and keeps its exact retry request.
+let pendingResolution;
+await act(async () => {
+  pendingResolution = punchDialog().props.onMissedClockOut('2026-10-14T17:30:00.000Z');
+});
+const pendingResolutionIndex = calls.length - 1;
+assert.equal(calls[pendingResolutionIndex].payload.action,'resolve_punch_exception');
+const clockInKey = `ccs_timeclock_request:clock_in:${first.email}`;
+await act(async () => {
+  calls[pendingResolutionIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_out', punch_resolution_pending:true,
+    punch_exception:{id:'pending-case',user_email:first.email,time_entry_id:'punch-fence-shift'},
+    correction_request:{id:'corr-1'},
+  }});
+});
+const chainedClockInIndex = calls.length - 1;
+assert.equal(calls[chainedClockInIndex].payload.action,'clock_in',
+  'Pending punch resolution must chain the employee Clock In');
+const chainedClockInId = calls[chainedClockInIndex].payload.request_id;
+assert.equal(savedSessionData.get(clockInKey), chainedClockInId);
+await act(async () => {
+  calls[chainedClockInIndex].resolve({ data: {
+    success:true, user:second, status:'already_clocked_in',
+    entry:{id:'foreign-entry',user_email:second.email},
+  }});
+  await assert.rejects(pendingResolution, /could not be matched/);
+});
+assert.equal(savedSessionData.get(clockInKey), chainedClockInId,
+  'A mismatched chained Clock In acknowledgement must preserve its exact retry request');
+console.log('PASS chained Clock In after punch resolution fails closed on a mismatched employee');
+await act(async () => { punchFenceRenderer.unmount(); });
+// Missed Clock In recovery acknowledgements are fenced to the employee,
+// epoch, and the exact preserved request ID.
+let recoveryFenceRenderer;
+await act(async () => {
+  recoveryFenceRenderer = TestRenderer.create(React.createElement(QuickClockSection, {
+    allUsers:[first,second], employeeSessionToken:'recovery-fence-session', employeeSessionUser:first,
+  }));
+});
+const recoveryFenceStatusIndex = calls.length - 1;
+await act(async () => {
+  calls[recoveryFenceStatusIndex].resolve({ data: {
+    success:true, user:first, status:'clocked_out',
+    break_status:'working', work_pause_status:'working', work_pause_allowed:false,
+  }});
+});
+const recoveryDialog = () => recoveryFenceRenderer.root.findAll((node) =>
+  typeof node.props?.onRecoverMissedClockIn === 'function')[0];
+assert.ok(recoveryDialog());
+const recoveryRequestKey = `ccs_timeclock_request:recover_missed_clock_in:${first.email}`;
+const claimedClockIn = '2026-10-13T08:05:00.000Z';
+const recoveryAck = (entryId) => ({ data: {
+  success:true, status:'clocked_in', recovered_missed_clock_in:true,
+  entry:{id:entryId,user_email:first.email,status:'clocked_in',clock_in:claimedClockIn},
+  punch_exception:{id:'recovery-case',user_email:first.email,time_entry_id:entryId},
+  user:first,
+}});
+let earlyRecovery, latestRecovery;
+await act(async () => {
+  earlyRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn);
+  latestRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn);
+});
+const earlyRecoveryIndex = calls.length - 2;
+const latestRecoveryIndex = calls.length - 1;
+const sharedRecoveryId = calls[earlyRecoveryIndex].payload.request_id;
+assert.equal(calls[latestRecoveryIndex].payload.request_id, sharedRecoveryId,
+  'Rapid duplicate missed-Clock-In recoveries must share one exact request');
+await act(async () => { calls[latestRecoveryIndex].resolve(recoveryAck('recovered-entry')); await latestRecovery; });
+assert.equal(savedSessionData.has(recoveryRequestKey), false);
+let newerRecovery;
+await act(async () => { newerRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn); });
+const newerRecoveryIndex = calls.length - 1;
+const newerRecoveryId = calls[newerRecoveryIndex].payload.request_id;
+assert.notEqual(newerRecoveryId, sharedRecoveryId);
+assert.equal(savedSessionData.get(recoveryRequestKey), newerRecoveryId);
+await act(async () => {
+  calls[earlyRecoveryIndex].resolve(recoveryAck('stale-recovered-entry'));
+  await earlyRecovery;
+});
+assert.equal(savedSessionData.get(recoveryRequestKey), newerRecoveryId,
+  'A delayed duplicate missed-Clock-In acknowledgement must not clear a newer retry ID');
+await act(async () => {
+  calls[newerRecoveryIndex].resolve({ data: {
+    success:true, status:'clocked_in', recovered_missed_clock_in:true,
+    entry:{id:'foreign-entry',user_email:second.email,status:'clocked_in',clock_in:claimedClockIn},
+    user:second,
+  }});
+  await assert.rejects(newerRecovery, /could not be matched/);
+});
+assert.equal(savedSessionData.get(recoveryRequestKey), newerRecoveryId,
+  'A mismatched missed-Clock-In acknowledgement must preserve the exact retry request');
+let recoveredRecovery;
+await act(async () => { recoveredRecovery = recoveryDialog().props.onRecoverMissedClockIn(claimedClockIn); });
+const recoveredRecoveryIndex = calls.length - 1;
+assert.equal(calls[recoveredRecoveryIndex].payload.request_id, newerRecoveryId,
+  'Missed-Clock-In retry must reuse the exact preserved request ID');
+await act(async () => { calls[recoveredRecoveryIndex].resolve(recoveryAck('verified-recovered-entry')); await recoveredRecovery; });
+assert.equal(savedSessionData.has(recoveryRequestKey), false);
+console.log('PASS missed Clock In recovery acknowledgements are fenced to employee, epoch, and exact request');
+await act(async () => { recoveryFenceRenderer.unmount(); });
+console.log('PASS 31/31 Time Clock Quick Clock async status acceptance cases');

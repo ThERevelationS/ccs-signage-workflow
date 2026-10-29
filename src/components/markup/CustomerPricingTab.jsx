@@ -76,8 +76,11 @@ export default function CustomerPricingTab({ project, categorize, accentColor = 
   const markupResult = useMemo(() => {
     const brackets = parseVolumeDiscountBrackets(settings);
     const eligibleCategoryKeys = parseVolumeDiscountCategories(settings);
-    return applyMarkups(lines, selectedTier, { brackets, eligibleCategoryKeys });
-  }, [lines, selectedTier, settings]);
+    const categoryFlags = Object.fromEntries(
+      (categories || []).map((c) => [c?.category_key, c?.volume_discount_eligible]).filter(([k]) => k),
+    );
+    return applyMarkups(lines, selectedTier, { brackets, eligibleCategoryKeys, categoryFlags });
+  }, [lines, selectedTier, settings, categories]);
 
   const categoryNameByKey = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.category_key, c.category_name])),

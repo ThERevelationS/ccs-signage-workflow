@@ -3,13 +3,12 @@ import { Button } from "@/components/ui/button";
 import { 
   Camera, 
   Loader2, 
-  UserCheck, 
   UserX, 
   RefreshCw,
   Scan,
   Square
 } from "lucide-react";
-import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
+import { createFaceMatcher, createMatchVoter, detectDetailedFace, estimateFaceBrightness, loadFaceModelsOnce, passesFaceQualityGate } from '@/components/timeclock/faceScanRuntime';
 
 export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
   // Support both old and new prop names
@@ -23,7 +22,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
   const matchFaceRef = useRef(matchFace);
   matchFaceRef.current = matchFace;
-  
+
   const [errorMsg, setErrorMsg] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [recognizedUser, setRecognizedUser] = useState(null);
@@ -42,7 +41,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
         });
         
         if (!mounted) {
@@ -132,11 +131,14 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     detectionBusyRef.current = true;
     try {
       const detection = await detectDetailedFace(videoRef.current);
-      if (detection && (detection.detection.score < 0.5 || detection.detection.box.width < 80)) {
-        setScanStatus("Move closer and face the light for a clearer capture.");
+      if (detection && !passesFaceQualityGate(detection)) {
         return null;
       }
-      return detection;
+      if (detection) {
+        const brightness = estimateFaceBrightness(videoRef.current, detection.detection.box);
+        return { detection, dim: Number.isFinite(brightness) && brightness < 45 };
+      }
+      return null;
     } catch (err) {
       console.error("Detection error:", err);
       return null;
@@ -151,22 +153,29 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setIsScanning(true);
     setRecognizedUser(null);
     setScanStatus("Looking for face...");
+    // Recognition requires the same identity to win 3 of the last 5 frames so
+    // single-frame jitter or a passer's face cannot trigger a punch.
+    const voter = createMatchVoter({ required: 3, window: 5 });
     
     scanIntervalRef.current = setInterval(async () => {
       if (!videoRef.current) return;
-      const detection = await detectFace();
-      if (detection) {
-        setScanStatus("Face detected, identifying...");
-        const user = findMatchingUser(detection.descriptor);
-        if (user) {
-          setRecognizedUser(user);
-          setScanStatus(`Recognized: ${user.full_name || user.email}`);
+      const frame = await detectFace();
+      if (frame) {
+        const { detection, dim } = frame;
+        const user = dim ? null : findMatchingUser(detection.descriptor);
+        const winner = voter(user);
+        if (winner) {
+          setRecognizedUser(winner);
+          setScanStatus(`Recognized: ${winner.full_name || winner.email}`);
           stopScanning();
-          onRecognized?.(user, Array.from(detection.descriptor));
+          onRecognized?.(winner, Array.from(detection.descriptor));
         } else {
-          setScanStatus("Face not recognized.");
+          setScanStatus(dim
+            ? "Lighting is dim. Move to better light or closer to the camera."
+            : "Face detected, verifying...");
         }
       } else {
+        voter(null);
         setScanStatus("No face detected. Look at camera.");
       }
     }, 300);
@@ -202,8 +211,14 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
 
   const captureForEnrollmentAuto = async (currentDescriptors) => {
     setScanStatus("Capturing...");
-    const detection = await detectFace();
+    const frame = await detectFace();
+    const detection = frame?.detection;
     
+    if (frame?.dim) {
+      setScanStatus("Lighting is too dim to enroll well. Move to better light. Retrying...");
+      setTimeout(() => startCountdown(currentDescriptors), 500);
+      return;
+    }
     if (detection) {
       const newDescriptors = [...currentDescriptors, Array.from(detection.descriptor)];
       setCapturedDescriptors(newDescriptors);
@@ -251,6 +266,12 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     setScanStatus("Camera ready.");
   };
 
+  // Reticle color tracks the live scan state — indigo scanning, amber
+  // verifying or dim-light, green on a confirmed identity.
+  const scanTone = recognizedUser ? "success"
+    : scanStatus.toLowerCase().includes("verifying") ? "verifying"
+    : scanStatus.toLowerCase().includes("dim") ? "dim" : "scanning";
+
   if (errorMsg) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -295,8 +316,15 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         )}
         <canvas ref={canvasRef} width={320} height={240} className="absolute inset-0 pointer-events-none" />
         
-        {isScanning && (
-          <div className="absolute inset-0 border-4 border-purple-500 animate-pulse rounded-2xl" />
+        {isScanning && !recognizedUser && (
+          <div className={`scan-reticle scan-tone-${scanTone}`} aria-hidden="true">
+            <div className="scan-bracket tl" />
+            <div className="scan-bracket tr" />
+            <div className="scan-bracket bl" />
+            <div className="scan-bracket br" />
+            <div className="scan-oval" />
+            <div className="scan-line" />
+          </div>
         )}
         
         {countdown !== null && (
@@ -309,8 +337,11 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
         
         {recognizedUser && (
           <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+            <div className="success-burst" />
             <div className="bg-white/90 px-4 py-2 rounded-full flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-green-600" />
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path className="check-draw" d="M4 12.5l5 5L20 6.5" />
+              </svg>
               <span className="font-medium text-green-700">{recognizedUser.full_name}</span>
             </div>
           </div>
@@ -318,7 +349,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       </div>
 
       {/* Status */}
-      <p className={`text-sm mb-4 text-center ${recognizedUser ? "text-green-600" : "text-gray-600"}`}>
+      <p className={`text-sm mb-4 text-center font-medium transition-colors duration-300 ${
+        recognizedUser ? "text-green-600"
+        : scanTone === "verifying" || scanTone === "dim" ? "text-amber-600"
+        : "text-gray-600"}`}>
         {scanStatus}
       </p>
 

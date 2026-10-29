@@ -49,6 +49,16 @@ export function salesColumnDraftReducer(state, action) {
       ? { ...column, visible: !column.visible } : column);
   } else if (action.type === "move") {
     next = moveVisibleSalesColumn(state.present, action.id, action.direction);
+  } else if (action.type === "reorder") {
+    // Drag-and-drop: pull the dragged column out and drop it onto the target's
+    // slot, shifting everything between. Order persists for hidden columns too.
+    const from = state.present.findIndex((column) => column.id === action.id);
+    const to = state.present.findIndex((column) => column.id === action.toId);
+    if (from >= 0 && to >= 0 && from !== to) {
+      next = [...state.present];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+    }
   } else if (action.type === "show_all" || action.type === "hide_optional") {
     next = state.present.map((column) => ({
       ...column,

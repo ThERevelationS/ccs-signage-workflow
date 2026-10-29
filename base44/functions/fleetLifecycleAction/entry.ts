@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { resolveFleetMeterReading } from '../../shared/fleetMeterReading.ts';
@@ -12,8 +13,8 @@ const nonNegative = (value: unknown, fallback = 0) => Math.max(0, num(value, fal
 const todayEastern = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const LIFECYCLE_STATUSES = new Set(['monitor','plan','replace_soon','approved','replaced']);
 
-async function requireAdmin(base44:any) {
-  const user = await base44.auth.me().catch(()=>null);
+async function requireAdmin(base44:any, sessionToken) {
+  const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
   if (!user?.email) return { error: Response.json({error:'Unauthorized'},{status:401}) };
   if (user.role === 'admin') return { user };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
@@ -116,10 +117,11 @@ async function lifecycleView(base44:any,equipment:any,profile:any) {
 Deno.serve(async req => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await requireAdmin(base44);
+    const body = await req.json().catch(()=>({}));
+    const auth = await requireAdmin(base44, body?.session_token);
     if (auth.error) return auth.error;
     const user = auth.user;
-    const body = await req.json().catch(()=>({}));
+
     const action = norm(body?.action);
     const id = norm(body?.equipment_id);
     const Equipment = base44.asServiceRole.entities.FleetEquipment;

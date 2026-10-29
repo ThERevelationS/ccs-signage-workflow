@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { attemptEstimateChangeRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
 import { AlertTriangle, CheckCircle2, DollarSign, Loader2, Plus, Send, ThumbsDown, Trash2, X } from "lucide-react";
+import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 const EMPTY = {
   estimated_labor_hours: "",
@@ -85,7 +85,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     setLoading(true); setError(""); setRefreshWarning("");
     if (!recheckSubmission) { setLoadedWorkOrderId(""); setLoadFailed(false); setMessage(""); }
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "get", work_order_id: workOrder.id });
+      const { data } = await invokeFleet("fleetRepairEstimateAction", { action: "get", work_order_id: workOrder.id });
       if (epoch !== loadEpochRef.current) return;
       if (data?.error) throw new Error(data.error);
       if (!data || !Object.prototype.hasOwnProperty.call(data, "estimate")) throw new Error("The server did not return an estimate status.");
@@ -177,7 +177,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     if (editBlocked) return;
     setBusy(submitAfter ? "submit" : "save"); setError(""); setMessage(""); setRefreshWarning("");
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action:"save", work_order_id:workOrder.id, expected_updated_date:estimate?.updated_date || "", estimate:form });
+      const { data } = await invokeFleet("fleetRepairEstimateAction", { action:"save", work_order_id:workOrder.id, expected_updated_date:estimate?.updated_date || "", estimate:form });
       if (data?.error) throw new Error(data.error);
       let row = data?.estimate;
       if (!row) throw new Error("The save response did not include an estimate. Refresh before attempting another save.");
@@ -185,7 +185,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
       setEstimate(row);
       if (submitAfter) {
         try {
-          const response = await base44.functions.invoke("fleetRepairEstimateAction", { action:"submit", work_order_id:workOrder.id, expected_updated_date:row.updated_date || "" });
+          const response = await invokeFleet("fleetRepairEstimateAction", { action:"submit", work_order_id:workOrder.id, expected_updated_date:row.updated_date || "" });
           if (response?.data?.error) throw new Error(response.data.error);
           if (!response?.data?.estimate) throw new Error("Submission response did not include the updated estimate.");
           row = response.data.estimate;
@@ -209,7 +209,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     const epoch = ++loadEpochRef.current;
     setLoading(true); setError(""); setRefreshWarning("");
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action:"get", work_order_id:workOrder.id });
+      const { data } = await invokeFleet("fleetRepairEstimateAction", { action:"get", work_order_id:workOrder.id });
       if (epoch !== loadEpochRef.current) return;
       if (data?.error) throw new Error(data.error);
       if (!data || !Object.prototype.hasOwnProperty.call(data, "estimate")) throw new Error("The server did not return an estimate status.");
@@ -237,7 +237,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     const expectedUpdatedDate = estimate?.updated_date || "";
     setBusy(decision); setError(""); setMessage(""); setRefreshWarning("");
     try {
-      const {data}=await base44.functions.invoke("fleetRepairEstimateAction",{action:"decide",work_order_id:workOrder.id,expected_updated_date:expectedUpdatedDate,decision,decision_notes:decisionNotes});
+      const {data}=await invokeFleet("fleetRepairEstimateAction",{action:"decide",work_order_id:workOrder.id,expected_updated_date:expectedUpdatedDate,decision,decision_notes:decisionNotes});
       if(data?.error)throw new Error(data.error);
       if (!data?.estimate) throw new Error("The approval response did not include an estimate. Refresh before retrying.");
       setEstimate(data.estimate);

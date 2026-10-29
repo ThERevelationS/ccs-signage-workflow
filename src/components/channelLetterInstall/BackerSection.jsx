@@ -50,7 +50,7 @@ export default function BackerSection({ purchase, onUpdate, onDisable }) {
           <span className="text-sm font-semibold text-orange-900">Backer Panel Configuration</span>
           <Badge className="bg-orange-200 text-orange-900 border-orange-300 text-[10px]">SWITCHES PRICING SCHEDULE</Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={onDisable} className="h-7 text-xs text-orange-700 hover:bg-orange-100">
+        <Button variant="ghost" size="sm" onClick={() => { if (confirm("Remove the backer panel and its configuration?")) onDisable(); }} className="h-7 text-xs text-orange-700 hover:bg-orange-100">
           <X className="w-3 h-3 mr-1" /> Remove Backer
         </Button>
       </div>

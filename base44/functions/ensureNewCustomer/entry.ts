@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
 
     let created;
     try {
-      created = await CustomerUser.create(customer);
+      created = await CustomerService.create(customer);
     } catch (createError) {
       try {
         rows = await readKeyedRows();

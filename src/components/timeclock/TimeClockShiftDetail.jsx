@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,13 +19,14 @@ import {
   Wrench,
 } from "lucide-react";
 import { format } from "date-fns";
+import { staffEntities } from "@/components/staff/staffEntities";
 
-const TimeClockBreak = base44.entities.TimeClockBreak;
-const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
-const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
-const TimeClockAudit = base44.entities.TimeClockAudit;
-const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
-const TimeClockLaborSegment = base44.entities.TimeClockLaborSegment;
+const TimeClockBreak = staffEntities.TimeClockBreak;
+const TimeClockWorkPause = staffEntities.TimeClockWorkPause;
+const TimeClockCorrectionRequest = staffEntities.TimeClockCorrectionRequest;
+const TimeClockAudit = staffEntities.TimeClockAudit;
+const TimeClockPayPeriod = staffEntities.TimeClockPayPeriod;
+const TimeClockLaborSegment = staffEntities.TimeClockLaborSegment;
 
 function safeDate(value) {
   if (!value) return null;
@@ -76,8 +76,14 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const detailSeqRef = useRef(0);
+  const detailScopeRef = useRef("");
   const loadDetails = async () => {
     if (!entry?.id || !open) return;
+    const seq = ++detailSeqRef.current;
+    const entryId = String(entry.id);
+    detailScopeRef.current = entryId;
+    const current = () => seq === detailSeqRef.current && detailScopeRef.current === entryId;
     setLoading(true);
     setError("");
     try {
@@ -89,6 +95,7 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
         TimeClockAudit.filter({ time_entry_id: entry.id }),
         entry.pay_period_id ? TimeClockPayPeriod.filter({ id: entry.pay_period_id }) : Promise.resolve([]),
       ]);
+      if (!current()) return;
 
       setBreaks((Array.isArray(breakRows) ? breakRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setPauses((Array.isArray(pauseRows) ? pauseRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
@@ -98,9 +105,9 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
       setPayPeriod(Array.isArray(periodRows) && periodRows.length === 1 ? periodRows[0] : null);
     } catch (err) {
       console.error("Error loading Time Clock shift detail:", err);
-      setError(err?.message || "Shift details could not be loaded.");
+      if (current()) setError(err?.message || "Shift details could not be loaded.");
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   };
 

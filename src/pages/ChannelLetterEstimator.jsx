@@ -276,6 +276,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   };
 
   const removeItem = (idx) => {
+    if (!confirm("Remove this line item and all its materials?")) return;
     const next = [...project.items];
     next.splice(idx, 1);
     setProject(prev => ({ ...prev, items: next }));

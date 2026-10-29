@@ -18,9 +18,10 @@ import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrd
 import { isDefinitiveSipsSaveRejection, reconcileInterruptedSipsSave } from "./checklistSaveRecovery";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseDateOnly = (dateString) => {
   if (!dateString) return null;
@@ -1150,6 +1151,17 @@ export default function ProductChecklistDialog({
     return groups;
   }, [checklist, checklistItemById]);
   
+  // The serialized diff only depends on the two arrays — recompute it when
+  // they change, not on every render (each keystroke used to rescan the list).
+  const checklistDirtyFromSnapshot = useMemo(
+    () => JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot),
+    [checklist, loadedUiChecklistSnapshot]
+  );
+  const productsDirtyFromSnapshot = useMemo(
+    () => JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot),
+    [products, loadedUiProductsSnapshot]
+  );
+
   // Checklist rows and product groups are expanded by default.
   const [expandedItems, setExpandedItems] = useState({});
   const [collapsedProducts, setCollapsedProducts] = useState({});
@@ -1768,9 +1780,7 @@ export default function ProductChecklistDialog({
     Array.from(customStatusDraftsByItemIdRef.current.values()).some(value => Boolean(value?.trim()))
   );
   const hasUnsavedChecklistChanges = !isLoading && (
-    JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot) ||
-    JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot) ||
-    hasUnsubmittedDrafts
+    checklistDirtyFromSnapshot || productsDirtyFromSnapshot || hasUnsubmittedDrafts
   );
   const hasPendingRevisitChoice = !isLoading &&
     failedRevisitWorkOrderIdRef.current === workOrder?.id &&

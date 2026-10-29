@@ -1,8 +1,7 @@
 import { base44 } from "@/api/base44Client";
+import { getSessionToken } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
-const AutomationRule = base44.entities.AutomationRule;
-const EmailGroup = base44.entities.EmailGroup;
 const User = base44.entities.User;
 
 // Generate AI-enhanced email content
@@ -197,170 +196,6 @@ const matchesConditions = (rule, workOrder, extraData = {}) => {
   return true;
 };
 
-// Check if automation triggers match (with AND/OR logic support)
-const checkAutomationTriggers = (automation, triggerType, workOrder, extraData = {}) => {
-  const triggers = automation.triggers || [];
-  if (triggers.length === 0) return false;
-  
-  // Check if ANY trigger matches the current trigger type
-  const hasMatchingTriggerType = triggers.some(t => t.trigger_type === triggerType);
-  if (!hasMatchingTriggerType) return false;
-  
-  // For single trigger, just check if it matches
-  if (triggers.length === 1) {
-    const trigger = triggers[0];
-    return trigger.trigger_type === triggerType && 
-      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData, triggerType);
-  }
-  
-  // For multiple triggers, evaluate with AND/OR logic
-  let result = null;
-  
-  for (let i = 0; i < triggers.length; i++) {
-    const trigger = triggers[i];
-    const triggerMatches = trigger.trigger_type === triggerType && 
-      matchesTriggerConditions(trigger.trigger_condition, workOrder, extraData, triggerType);
-    
-    if (i === 0) {
-      result = triggerMatches;
-    } else {
-      const logic = trigger.logic || "or";
-      if (logic === "and") {
-        result = result && triggerMatches;
-      } else {
-        result = result || triggerMatches;
-      }
-    }
-  }
-  
-  return result === true;
-};
-
-// Check trigger conditions for a single trigger
-const matchesTriggerConditions = (conditions, workOrder, extraData = {}, triggerType = "") => {
-  if (!conditions) return true;
-  
-  // For stage_entered, check against the NEW stage (to_stage)
-  // For stage_exited, check against the OLD stage (from_stage)
-  if (conditions.stage) {
-    if (triggerType === "stage_entered" && extraData.newStage !== conditions.stage) {
-      return false;
-    } else if (triggerType === "stage_exited" && extraData.previousStage !== conditions.stage) {
-      return false;
-    } else if (triggerType !== "stage_entered" && triggerType !== "stage_exited" && workOrder?.current_stage !== conditions.stage) {
-      return false;
-    }
-  }
-  
-  if (conditions.from_stage && extraData.previousStage !== conditions.from_stage) {
-    return false;
-  }
-  
-  if (conditions.to_stage && extraData.newStage !== conditions.to_stage) {
-    return false;
-  }
-  
-  if (conditions.assigned_to && workOrder?.assigned_to !== conditions.assigned_to) {
-    return false;
-  }
-  
-  if (conditions.is_asap === true && !workOrder?.asap) {
-    return false;
-  }
-  
-  // Rider filtering - if is_rider is explicitly set, enforce it
-  // is_rider: true means ONLY riders
-  // is_rider: false means ONLY non-riders (full work orders)
-  if (conditions.is_rider === true && !workOrder?.is_rider) {
-    return false;
-  }
-  
-  if (conditions.is_rider === false && workOrder?.is_rider) {
-    return false;
-  }
-  
-  return true;
-};
-
-// Get recipients for automation email action
-const getAutomationRecipients = async (actionConfig, workOrder) => {
-  const emails = new Set();
-  const recipients = actionConfig.recipients || [];
-  
-  for (const recipient of recipients) {
-    switch (recipient.type) {
-      case "email":
-        if (recipient.value) emails.add(recipient.value);
-        break;
-      case "assigned_user":
-        if (workOrder?.assigned_to) {
-          const users = await loadAllEntityRows({ entity: User, sort: null, label: "Notification user catalog" });
-          const user = users.find(u => 
-            u.email === workOrder.assigned_to || 
-            u.full_name === workOrder.assigned_to
-          );
-          if (user?.email) emails.add(user.email);
-        }
-        break;
-      case "creator":
-        if (workOrder?.created_by) emails.add(workOrder.created_by);
-        break;
-      case "all_admins":
-        const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
-        admins.forEach(admin => emails.add(admin.email));
-        break;
-      case "custom_list":
-        if (recipient.value) {
-          recipient.value.split(",").forEach(email => {
-            const trimmed = email.trim();
-            if (trimmed) emails.add(trimmed);
-          });
-        }
-        break;
-      case "email_group":
-        if (recipient.value) {
-          try {
-            const groups = await loadAllEntityRows({ entity: EmailGroup, sort: null, label: "Notification email groups" });
-            const group = groups.find(g => g.id === recipient.value);
-            if (group?.emails) {
-              group.emails.forEach(email => emails.add(email));
-            }
-          } catch (e) {
-            console.error("Error fetching email group:", e);
-          }
-        }
-        break;
-    }
-  }
-  
-  return Array.from(emails);
-};
-
-// Variable replacements for order templates
-const replaceOrderVariables = (template, order) => {
-  if (!template || !order) return template || "";
-  
-  const variables = {
-    "{{customer_name}}": order.customer_name || "",
-    "{{request_type}}": order.request_type || "",
-    "{{description}}": order.description || "",
-    "{{quantity}}": order.quantity || "",
-    "{{requestor_name}}": order.requestor_name || "",
-    "{{requestor_email}}": order.requestor_email || "",
-    "{{date_needed}}": order.date_needed || "Not set",
-    "{{date_ordered}}": order.date_ordered || "Not set",
-    "{{date_received}}": order.date_received || "Not set",
-    "{{vendor}}": order.vendor || "Not specified",
-    "{{status}}": order.status || "pending",
-    "{{timestamp}}": new Date().toLocaleString()
-  };
-
-  let result = template;
-  for (const [key, value] of Object.entries(variables)) {
-    result = result.replace(new RegExp(key.replace(/[{}]/g, "\\$&"), "g"), value);
-  }
-  return result;
-};
 
 // Main notification trigger function
 export const triggerNotification = async (triggerType, workOrder, extraData = {}) => {
@@ -398,59 +233,24 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
       }
     }
     
-    // Check new AutomationRule rules
-    const allAutomations = await loadAllEntityRows({ entity: AutomationRule, query: { enabled: true }, sort: null, label: "Enabled notification automations" });
-    const matchingAutomations = allAutomations
-      .filter(automation => checkAutomationTriggers(automation, triggerType, workOrder, extraData))
-      .sort((a, b) => (a.priority || 0) - (b.priority || 0));
-    
-    // Process automation rules
-    for (const automation of matchingAutomations) {
-      const actions = automation.actions || [];
-      
-      for (const action of actions) {
-        if (action.action_type === "send_email") {
-          const config = action.action_config || {};
-          const recipients = await getAutomationRecipients(config, workOrder);
-
-          if (recipients.length === 0) continue;
-
-          // Apply variable replacements based on context (order vs work order)
-          let templateSubject = config.subject || "";
-          let templateBody = config.body || "";
-          
-          if (extraData.orderData) {
-            templateSubject = replaceOrderVariables(templateSubject, extraData.orderData);
-            templateBody = replaceOrderVariables(templateBody, extraData.orderData);
-          } else {
-            templateSubject = replaceVariables(templateSubject, workOrder, extraData);
-            templateBody = replaceVariables(templateBody, workOrder, extraData);
-          }
-
-          // Check if AI generation is enabled
-          let subject, body;
-          if (config.use_ai) {
-            const aiResult = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
-            subject = aiResult.subject;
-            body = aiResult.body;
-          } else {
-            subject = templateSubject;
-            body = `<p>${templateBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
-          }
-
-          for (const email of recipients) {
-            try {
-              await base44.functions.invoke('sendGmail', {
-                to: email,
-                subject: subject,
-                body: body
-              });
-              console.log(`Automation "${automation.name}" sent email to ${email}`);
-            } catch (emailError) {
-              console.error(`Failed to send automation email to ${email}:`, emailError);
-            }
-          }
-        }
+    // AutomationRule processing runs server-side in workflowTriggerEngine via
+    // processWorkflowTriggers so every action type executes with service-role
+    // consistency — not just send_email. The endpoint re-reads the Work
+    // Order/Order itself, so only the record id and event extras cross the
+    // wire. Fire-and-forget like the rest of this module.
+    const sessionToken = getSessionToken();
+    if (sessionToken) {
+      try {
+        await base44.functions.invoke('processWorkflowTriggers', {
+          event_type: triggerType,
+          work_order: workOrder?.id ? { id: workOrder.id } : undefined,
+          order: extraData.orderData?.id ? { id: extraData.orderData.id } : undefined,
+          record: extraData.recordData?.id ? { id: extraData.recordData.id } : undefined,
+          extras: { ...extraData, orderData: undefined, recordData: undefined },
+          session_token: sessionToken,
+        });
+      } catch (automationError) {
+        console.error(`Automation processing failed for trigger "${triggerType}":`, automationError);
       }
     }
   } catch (error) {
@@ -466,10 +266,16 @@ export const NotificationTriggers = {
   
   workOrderCompleted: async (workOrder, changedBy) => {
     await triggerNotification("work_order_completed", workOrder, { changedBy, eventDescription: "Work order marked as completed" });
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_completed", workOrder, { changedBy, eventDescription: "Rider marked as completed" });
+    }
   },
   
   workOrderDeleted: async (workOrder, changedBy) => {
     await triggerNotification("work_order_deleted", workOrder, { changedBy, eventDescription: "Work order deleted" });
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_deleted", workOrder, { changedBy, eventDescription: "Rider deleted" });
+    }
   },
   
   riderCreated: async (workOrder, parentTitle, changedBy) => {
@@ -481,6 +287,25 @@ export const NotificationTriggers = {
     await triggerNotification("stage_changed", workOrder, { previousStage, newStage, changedBy, eventDescription });
     await triggerNotification("stage_exited", workOrder, { previousStage, newStage, changedBy, eventDescription: `Work order exited ${formatStageName(previousStage)} stage` });
     await triggerNotification("stage_entered", workOrder, { previousStage, newStage, changedBy, eventDescription: `Work order entered ${formatStageName(newStage)} stage` });
+    // Stage-specific convenience events so a rule can select "entered
+    // Fabrication" directly instead of configuring a stage condition.
+    const STAGE_ENTERED_TRIGGERS = {
+      estimating: "stage_estimating_entered",
+      sales: "stage_sales_entered",
+      permitting: "stage_permitting_entered",
+      design: "stage_design_entered",
+      production: "stage_production_entered",
+      fabrication: "stage_fabrication_entered",
+      installation: "stage_installation_entered",
+      completed: "stage_completed_entered",
+    };
+    const stageSpecific = STAGE_ENTERED_TRIGGERS[newStage];
+    if (stageSpecific) {
+      await triggerNotification(stageSpecific, workOrder, { previousStage, newStage, changedBy, eventDescription });
+    }
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_stage_changed", workOrder, { previousStage, newStage, changedBy, eventDescription: `Rider moved from ${formatStageName(previousStage)} to ${formatStageName(newStage)}` });
+    }
   },
   
   taskAdded: async (workOrder, taskText, changedBy) => {
@@ -489,6 +314,14 @@ export const NotificationTriggers = {
   
   taskCompleted: async (workOrder, taskText, changedBy) => {
     await triggerNotification("task_completed", workOrder, { taskText, changedBy, eventDescription: "Task completed" });
+  },
+
+  taskUncompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("task_uncompleted", workOrder, { taskText, changedBy, eventDescription: "Task marked incomplete" });
+  },
+
+  taskEdited: async (workOrder, oldText, newText, changedBy) => {
+    await triggerNotification("task_edited", workOrder, { taskText: newText, oldValue: oldText, changedBy, eventDescription: "Task text edited" });
   },
   
   taskDeleted: async (workOrder, changedBy) => {
@@ -502,6 +335,26 @@ export const NotificationTriggers = {
   noteDeleted: async (workOrder, changedBy) => {
     await triggerNotification("note_deleted", workOrder, { changedBy, eventDescription: "Note deleted" });
   },
+
+  subNoteAdded: async (workOrder, text, changedBy) => {
+    await triggerNotification("sub_note_added", workOrder, { noteText: text, changedBy, eventDescription: "Sub-note added" });
+  },
+
+  subNoteDeleted: async (workOrder, changedBy) => {
+    await triggerNotification("sub_note_deleted", workOrder, { changedBy, eventDescription: "Sub-note deleted" });
+  },
+
+  sipItemCompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("sip_item_completed", workOrder, { taskText, changedBy, eventDescription: "SIP checklist item completed" });
+  },
+
+  mmmItemCompleted: async (workOrder, taskText, changedBy) => {
+    await triggerNotification("mmm_item_completed", workOrder, { taskText, changedBy, eventDescription: "Monday Morning Meeting item completed" });
+  },
+
+  sipItemRevisitSet: async (workOrder, changedBy) => {
+    await triggerNotification("sip_item_revisit_set", workOrder, { changedBy, eventDescription: "SIP revisit date set" });
+  },
   
   imageUploaded: async (workOrder, changedBy) => {
     await triggerNotification("image_uploaded", workOrder, { changedBy, eventDescription: "Image uploaded" });
@@ -513,6 +366,9 @@ export const NotificationTriggers = {
   
   assignedToChanged: async (workOrder, previousAssignee, newAssignee, changedBy) => {
     await triggerNotification("assigned_to_changed", workOrder, { previousAssignee, newAssignee, changedBy, eventDescription: `Assignment changed from ${previousAssignee || 'unassigned'} to ${newAssignee}` });
+    if (workOrder?.is_rider) {
+      await triggerNotification("rider_assigned_to_changed", workOrder, { previousAssignee, newAssignee, changedBy, eventDescription: `Rider assignment changed to ${newAssignee}` });
+    }
   },
   
   priorityChanged: async (workOrder, changedBy) => {
@@ -591,5 +447,161 @@ export const NotificationTriggers = {
         newValue
       });
     }
-  }
+  },
+
+  orderCancelled: async (order, changedBy) => {
+    await triggerNotification("order_cancelled", null, {
+      changedBy,
+      eventDescription: "Order was cancelled",
+      orderData: order
+    });
+  },
+
+  workOrderRestored: async (workOrder, changedBy) => {
+    await triggerNotification("work_order_restored", workOrder, { changedBy, eventDescription: "Work order restored from trash" });
+  },
+
+  // Emits one event per changed field after a Work Order save, plus the
+  // generic "any field" event. Callers pass the saved record and the
+  // pre-save baseline; the endpoint re-reads the record server-side.
+  workOrderFieldsChanged: async (savedWorkOrder, baselineWorkOrder, changedBy) => {
+    if (!savedWorkOrder?.id) return;
+    const changed = (field) => {
+      const before = baselineWorkOrder?.[field];
+      const after = savedWorkOrder?.[field];
+      if (field === "files") {
+        return (Array.isArray(after) ? after.length : 0) > (Array.isArray(before) ? before.length : 0);
+      }
+      return JSON.stringify(before ?? null) !== JSON.stringify(after ?? null);
+    };
+    const emit = (type, fieldName) => triggerNotification(type, savedWorkOrder, {
+      changedBy,
+      fieldChanged: fieldName,
+      oldValue: baselineWorkOrder?.[fieldName],
+      newValue: savedWorkOrder?.[fieldName],
+      eventDescription: `Work order ${String(fieldName || "").replace(/_/g, " ")} changed`,
+    });
+
+    let anyField = false;
+    if (changed("client_name")) { await emit("work_order_client_changed", "client_name"); anyField = true; }
+    if (changed("description")) { await emit("work_order_description_changed", "description"); anyField = true; }
+    if (changed("title")) { await emit("work_order_title_changed", "title"); anyField = true; }
+    if (changed("estimate_amount")) { await emit("work_order_estimate_changed", "estimate_amount"); anyField = true; }
+    if (changed("contact_name") || changed("contact_email") || changed("contact_phone") || changed("additional_contact")) {
+      await emit("work_order_contact_changed", "contact_info"); anyField = true;
+    }
+    if (changed("install_location")) { await emit("work_order_install_location_changed", "install_location"); anyField = true; }
+    if (!baselineWorkOrder?.permit_number && savedWorkOrder?.permit_number) { await emit("work_order_permit_number_set", "permit_number"); anyField = true; }
+    if (!baselineWorkOrder?.permit_approved_date && savedWorkOrder?.permit_approved_date) { await emit("work_order_permit_approved", "permit_approved_date"); anyField = true; }
+    if (!baselineWorkOrder?.permit_submitted_date && savedWorkOrder?.permit_submitted_date) { await emit("work_order_permit_submitted", "permit_submitted_date"); anyField = true; }
+    if (!baselineWorkOrder?.est_inv_at && savedWorkOrder?.est_inv_at) { await emit("work_order_est_inv_set", "est_inv_at"); anyField = true; }
+    if (changed("project_install_date")) { await emit("work_order_install_date_set", "project_install_date"); anyField = true; }
+    if (changed("project_health")) {
+      await emit("work_order_project_health_changed", "project_health");
+      // Health-specific convenience events ("Project Health At Risk" etc.)
+      // fire the literal advertised trigger for the new health value.
+      const HEALTH_TRIGGERS = {
+        on_track: "project_health_on_track",
+        at_risk: "project_health_at_risk",
+        delayed: "project_health_delayed",
+        blocked: "project_health_blocked",
+      };
+      const healthEvent = HEALTH_TRIGGERS[savedWorkOrder?.project_health];
+      if (healthEvent) await emit(healthEvent, "project_health");
+      anyField = true;
+    }
+    if (changed("production_type")) { await emit("work_order_production_type_changed", "production_type"); anyField = true; }
+    if (changed("files")) { await emit("work_order_file_uploaded", "files"); await emit("file_attached", "files"); anyField = true; }
+    if (!baselineWorkOrder?.permit_receipt_confirmed_date && savedWorkOrder?.permit_receipt_confirmed_date) { await emit("permit_receipt_confirmed", "permit_receipt_confirmed_date"); anyField = true; }
+    if (!baselineWorkOrder?.permit_approved_date && savedWorkOrder?.permit_approved_date) { await emit("permit_approved", "permit_approved_date"); anyField = true; }
+    if (changed("due_date")) {
+      if (savedWorkOrder?.due_date) await emit("due_date_set", "due_date");
+      else await emit("due_date_cleared", "due_date");
+      anyField = true;
+    }
+    if (!baselineWorkOrder?.start_date && savedWorkOrder?.start_date) { await emit("start_date_set", "start_date"); anyField = true; }
+    if (!baselineWorkOrder?.site_survey_date && savedWorkOrder?.site_survey_date) { await emit("site_survey_scheduled", "site_survey_date"); anyField = true; }
+    if (!baselineWorkOrder?.google_drive_folder_url && savedWorkOrder?.google_drive_folder_url) { await emit("google_drive_linked", "google_drive_folder_url"); anyField = true; }
+    
+    // Item-level diffs on the notes[] (tasks) and follow_up[] arrays —
+    // one event per transition type per save, not per touched item.
+    const itemsOf = (arr) => (Array.isArray(arr) ? arr : []);
+    const tasksBefore = itemsOf(baselineWorkOrder?.notes);
+    const tasksAfter = itemsOf(savedWorkOrder?.notes);
+    const fuBefore = itemsOf(baselineWorkOrder?.follow_up);
+    const fuAfter = itemsOf(savedWorkOrder?.follow_up);
+
+    if (fuAfter.length > fuBefore.length) { await emit("follow_up_added", "follow_up"); anyField = true; }
+    if (fuAfter.some((it, i) => it?.completed && !fuBefore[i]?.completed)) {
+      await emit("follow_up_completed", "follow_up"); anyField = true;
+    }
+
+    // Tasks match by id when present, else by position — the array order is
+    // stable for in-place edits (toggles, due-date, assignee changes).
+    const beforeByKey = new Map(tasksBefore.map((t, i) => [t?.id ?? `idx:${i}`, t]));
+    let taskDueSet = false;
+    let taskAssigned = false;
+    let noteCompleted = false;
+    for (let i = 0; i < tasksAfter.length; i++) {
+      const t = tasksAfter[i];
+      const before = beforeByKey.get(t?.id ?? `idx:${i}`);
+      if (!before) continue;
+      if (!before.due_date && t?.due_date) taskDueSet = true;
+      if ((before.assigned_to || "") !== (t?.assigned_to || "") && t?.assigned_to) taskAssigned = true;
+      if (!before.completed && t?.completed) noteCompleted = true;
+    }
+    if (taskDueSet) { await emit("task_due_date_set", "notes"); anyField = true; }
+    if (taskAssigned) { await emit("task_assigned", "notes"); anyField = true; }
+    if (noteCompleted) { await emit("note_completed", "notes"); anyField = true; }
+
+    // Role assignments fire whenever the assignee field gains or changes a
+    // value — a reassignment is an assignment too.
+    const ROLE_TRIGGERS = {
+      designer: "designer_assigned",
+      surveyor: "surveyor_assigned",
+      project_manager: "project_manager_assigned",
+      estimator: "estimator_assigned",
+    };
+    for (const [field, type] of Object.entries(ROLE_TRIGGERS)) {
+      const beforeRole = String(baselineWorkOrder?.[field] || "");
+      const afterRole = String(savedWorkOrder?.[field] || "");
+      if (afterRole && afterRole !== beforeRole) { await emit(type, field); anyField = true; }
+    }
+
+    if (changed("sip_revisit_date") && savedWorkOrder?.sip_revisit_date) {
+      await emit("sip_item_revisit_set", "sip_revisit_date"); anyField = true;
+    }
+
+    // "All tasks done" fires on the transition only — completing the last
+    // open task once, not on every later save.
+    const allDone = tasksAfter.length > 0 && tasksAfter.every((t) => t?.completed);
+    const allDoneBefore = tasksBefore.length > 0 && tasksBefore.every((t) => t?.completed);
+    if (allDone && !allDoneBefore) {
+      await emit("all_tasks_completed", "notes");
+      if (savedWorkOrder?.is_rider) await emit("rider_all_tasks_completed", "notes");
+      anyField = true;
+    }
+
+if (anyField) {
+      await triggerNotification("work_order_updated", savedWorkOrder, { changedBy, eventDescription: "Work order updated" });
+    }
+  },
+
+  // Fires once per reorder for the work order that moved furthest — a drag
+  // renumbers many rows, and an event per row would flood every rule.
+  workOrderPriorityReordered: async (loadedItems, reorderedItems, changedBy) => {
+    const beforeIndex = new Map((loadedItems || []).map((wo, i) => [wo?.id, i]));
+    let moved = null;
+    let movedDelta = 0;
+    (reorderedItems || []).forEach((wo, i) => {
+      const delta = Math.abs(i - (beforeIndex.get(wo?.id) ?? i));
+      if (delta > movedDelta) { movedDelta = delta; moved = wo; }
+    });
+    if (moved) {
+      await triggerNotification("priority_changed", moved, {
+        changedBy,
+        eventDescription: `Work order moved ${movedDelta} position${movedDelta === 1 ? "" : "s"} in the list`,
+      });
+    }
+  },
 };

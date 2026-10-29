@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "src/components/fleet/fleetInvoke.js",
+      "content": "import { base44 } from \"@/api/base44Client\";\nimport { getSessionToken, notifySessionRejected } from \"@/components/auth/EmailGate\";\n\n// A read issued while a pre-mutation fetch is in flight must not consume that\n// fetch's stale snapshot — so every completed fleet* invoke advances a mutation\n// epoch that the entity loaders fold into their dedupe signatures. Even an\n// invoke that throws may have committed server-side (lost ack), so the bump is\n// unconditional for anything that is not a pure read.\nlet mutationEpoch = 0;\nexport const getFleetMutationEpoch = () => mutationEpoch;\nconst READ_ONLY_FUNCTIONS = new Set([\n  \"fleetDataRead\",\n  \"verifySession\",\n  \"bouncieStatus\",\n  \"bouncieApi\",\n  \"getGoogleMapsKey\",\n]);\n\nexport async function invokeFleet(name, payload = {}) {\n  try {\n    return await base44.functions.invoke(name, {\n      session_token: getSessionToken(),\n      ...(payload || {}),\n    });\n  } catch (error) {\n    // A 401 means this tab's signed-in identity was refused. Report it so the\n    // session layer can reverify once — recovering a live session, or dropping\n    // a dead one and reopening sign-in — while callers keep their own handling.\n    if (Number(error?.response?.status ?? error?.status) === 401) notifySessionRejected();\n    throw error;\n  } finally {\n    if (!READ_ONLY_FUNCTIONS.has(name)) mutationEpoch += 1;\n  }\n}",
+      "startLine": 1,
+      "endLine": 34,
+      "totalLines": 34,
+      "truncated": false
+    }
+  ]
+}

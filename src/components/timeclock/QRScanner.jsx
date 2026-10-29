@@ -84,12 +84,23 @@ export default function QRScanner({ onScan, inline = false }) {
         </Button>
       </div>
       
-      <div 
-        id="qr-reader" 
-        ref={scannerRef}
-        className={`rounded-xl overflow-hidden ${isScanning ? 'block' : 'hidden'}`}
-        style={{ width: '100%', maxWidth: '320px', margin: '0 auto' }}
-      />
+      <div className="relative mx-auto" style={{ width: '100%', maxWidth: '320px' }}>
+        <div 
+          id="qr-reader" 
+          ref={scannerRef}
+          className={`rounded-xl overflow-hidden ${isScanning ? 'block' : 'hidden'}`}
+        />
+        {isScanning && (
+          <div className="scan-reticle scan-tone-scanning">
+            <span className="scan-bracket tl" />
+            <span className="scan-bracket tr" />
+            <span className="scan-bracket bl" />
+            <span className="scan-bracket br" />
+            <span className="scan-oval" />
+            <span className="scan-line" />
+          </div>
+        )}
+      </div>
       
       {!isScanning && (
         <div className="bg-gray-100 rounded-xl p-8 text-center max-w-xs mx-auto">

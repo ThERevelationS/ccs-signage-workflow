@@ -100,8 +100,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const estimateId = String(body?.estimate_id || '').trim();
     const expectedUpdatedDate = String(body?.expected_estimate_updated_date || '').trim();
     const reason = String(body?.reason || '').trim();
@@ -160,7 +158,7 @@ Deno.serve(async (req) => {
       new_quote_total: num(before.quote_total),
       previous_total_cost: num(before.total_cost),
       new_total_cost: num(before.total_cost),
-      change_summary: ['Revision opened â€” changes not yet finalized'],
+      change_summary: ['Revision opened — changes not yet finalized'],
       estimate_snapshot_before: before,
       estimate_snapshot_after: {},
       work_order_id: estimate.work_order_id || '',

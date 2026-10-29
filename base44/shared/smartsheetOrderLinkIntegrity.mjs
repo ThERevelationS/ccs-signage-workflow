@@ -91,8 +91,8 @@ export function classifyRemoteUnlinkedOrderRow(summary, activeLinkedOrders = [])
   };
 }
 
-function remoteRowSummary(row, bindings, activeLinkedOrders = []) {
-  const summary = {
+export function orderRemoteRowIdentitySummary(row, bindings) {
+  return {
     row_id: numericId(row?.id),
     row_number: Number.isFinite(Number(row?.row_number)) ? Number(row.row_number) : null,
     customer_name: cellLabel(row, bindings?.customer_name, 180),
@@ -100,6 +100,10 @@ function remoteRowSummary(row, bindings, activeLinkedOrders = []) {
     description: cellLabel(row, bindings?.description, 320),
     quantity: cellLabel(row, bindings?.quantity, 80),
   };
+}
+
+function remoteRowSummary(row, bindings, activeLinkedOrders = []) {
+  const summary = orderRemoteRowIdentitySummary(row, bindings);
   const evidence = classifyRemoteUnlinkedOrderRow(summary, activeLinkedOrders);
   return { ...summary, evidence_kind: evidence.kind, evidence_reason: evidence.reason,
     candidate_links: evidence.candidate_links };

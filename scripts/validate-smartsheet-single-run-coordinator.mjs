@@ -19,9 +19,13 @@ check(backend.includes("async function claimSyncRun") &&
 check(backend.includes("existing Order sync is stale and must be closed for review") &&
       backend.includes("Another Smartsheet sync is already running."),
   "Active and stale-running states must produce explicit lock messages");
-check(backend.includes("{ id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date }") &&
+check(backend.includes("{ id: record.id, setting_key: key, updated_date: record.updated_date }") &&
       backend.includes("Another Smartsheet sync claimed the coordinator first."),
-  "Run claim must use optimistic concurrency on the singleton status record");
+  "Run claim must use optimistic concurrency on the dataset status record");
+check(backend.includes("orders: 'smartsheetOrderSyncStatus'") &&
+      backend.includes("sales: 'smartsheetSalesSyncStatus'") &&
+      backend.includes("otherValue?.status === 'running' && !otherAbandoned"),
+  "Each dataset claims its own coordinator and only an active run on the other dataset blocks");
 check(backend.includes("verified?.setting_value?.started_at !== status?.started_at") &&
       backend.includes("verified?.setting_value?.action !== status?.action"),
   "Run claim must be read back and verified by run identity");
@@ -44,7 +48,7 @@ check(backend.includes("assertRunOwnership?: () => Promise<void> | void;") &&
       count("if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();") >= 7,
   "Pull and push mutation batches must assert ownership before production writes");
 check(backend.includes("const pullResult = await pullDataset(base44, token, dataset, profile, config, {") &&
-      backend.includes("assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt)"),
+      backend.includes("assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt, dataset)"),
   "Full pull must receive the active run ownership guard");
 
 check(backend.includes("const safeStatus = [400, 401, 403, 409, 429, 502, 503]"),

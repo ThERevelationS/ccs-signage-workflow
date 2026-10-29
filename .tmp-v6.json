@@ -1,0 +1,10 @@
+Running command
+Running command
+Ran command
+{
+  "stdout": "4be05ff352986ee528a4b695dc4428e5  scripts/validate-mmm-board.mjs\n0184e1de44bd027559dd3fbf2ad32d30  src/pages/MondayMorningMeeting.jsx\n",
+  "stderr": "",
+  "exitCode": 1,
+  "truncated": false,
+  "durationMs": 799
+}

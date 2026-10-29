@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 export default function Production() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -101,6 +102,8 @@ export default function Production() {
         label: "Production priority reorder",
       });
       setWorkOrders(result.items);
+      NotificationTriggers.workOrderPriorityReordered(loadedItems, reorderedItems, currentUser?.full_name || currentUser?.email)
+        .catch((e) => console.error("Priority-change notification failed:", e));
     } catch (error) {
       console.error("Error reordering:", error);
       alert(error?.message || "The Production priority order changed in another session. Reload and try the reorder again.");

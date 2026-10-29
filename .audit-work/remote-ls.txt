@@ -1,0 +1,497 @@
+=== src ===
+13 entries
+  pages.config.js
+  Layout.jsx
+  App.jsx
+  main.jsx
+  index.css
+  App.css
+  [d] api
+  [d] utils
+  [d] shared
+  [d] hooks
+  [d] pages
+  [d] lib
+  [d] components
+=== src/pages ===
+90 entries
+  FeatureReports.jsx
+  ChannelLetterEstimator.jsx
+  ResourcePlanning.jsx
+  CustomerPortal.jsx
+  FleetHistory.jsx
+  MetalEstimator.jsx
+  BrickStoneEstimator.jsx
+  JobCosting.jsx
+  FleetTracking.jsx
+  FleetPublicReport.jsx
+  MetalSettings.jsx
+  WorkOrderTraveler.jsx
+  PermittingDocs.jsx
+  FleetFluids.jsx
+  OAuthConsent.jsx
+  PaintingEstimator.jsx
+  FoundationCatalog.jsx
+  AdminSettings.jsx
+  FleetInspections.jsx
+  FleetWorkOrders.jsx
+  FleetEquipment.jsx
+  FleetFuel.jsx
+  MainWorkflow.jsx
+  FoundationSettings.jsx
+  Design.jsx
+  MyWorkflow.jsx
+  QuickPrice.jsx
+  FoundationInventory.jsx
+  MaintenanceSettings.jsx
+  FleetEquipmentDetail.jsx
+  Inventory.jsx
+  SIPs.jsx
+  CNCSettings.jsx
+  Estimating.jsx
+  EstimatorParts.jsx
+  Home.jsx
+  SalesHome.jsx
+  ProductionSchedule.jsx
+  InstallationDeliver.jsx
+  EstimatorProducts.jsx
+  VinylSettings.jsx
+  EstimateDetail.jsx
+  Production.jsx
+  FleetReservations.jsx
+  EstimatorTools.jsx
+  MasterInventory.jsx
+  InstallationSettings.jsx
+  FleetOverview.jsx
+  AdminPermittingSettings.jsx
+  GoogleDriveCallback.jsx
+  SalesPipeline.jsx
+  EstimatorSettings.jsx
+  ChangeOrders.jsx
+  EstimatorQueues.jsx
+  LaserEstimator.jsx
+  CompletedReports.jsx
+  UserSettings.jsx
+  CNCEstimator.jsx
+  PurchaseOrders.jsx
+  Financials.jsx
+  ReportingDashboard.jsx
+  VinylEstimator.jsx
+  OrderForm.jsx
+  Fabrication.jsx
+  PrivacyPolicy.jsx
+  FoundationEstimator.jsx
+  FleetMechanic.jsx
+  VinylInventory.jsx
+  Estimator.jsx
+  PaintingSettings.jsx
+  FleetSearch.jsx
+  FleetAnalytics.jsx
+  QuoteSettings.jsx
+  FleetRequests.jsx
+  FleetNotifications.jsx
+  FleetParts.jsx
+  FleetWarranties.jsx
+  NewAllInOneEstimate.jsx
+  Opportunities.jsx
+  MondayMorningMeeting.jsx
+  EstimatorCustomers.jsx
+  Permitting.jsx
+  NewUserSetup.jsx
+  LaserSettings.jsx
+  FleetMaintenance.jsx
+  Invoices.jsx
+  TemplateBuilder.jsx
+  TimeClock.jsx
+  MaintenanceEstimator.jsx
+  FleetSettings.jsx
+=== base44 ===
+7 entries
+  config.jsonc
+  [d] entities
+  [d] workflows
+  [d] agents
+  [d] functions
+  [d] connectors
+  [d] shared
+=== base44/functions ===
+156 entries
+  [d] timeClockAction
+  [d] adminBootstrapLogin
+  [d] aiResearchOffice
+  [d] analyzeDocument
+  [d] archiveAddressResearchFile
+  [d] auditJurisdictionAccuracy
+  [d] backupPermittingRepository
+  [d] backupToGoogleDrive
+  [d] batchUpdateJurisdictions
+  [d] bouncieApi
+  [d] bouncieAuthCallback
+  [d] bouncieAuthInitiate
+  [d] bouncieRepairWebhook
+  [d] bouncieStatus
+  [d] bouncieSyncNotifications
+  [d] bouncieWebhook
+  [d] cagisSearch
+  [d] calculateTravelMiles
+  [d] callJurisdictionAgent
+  [d] changeOrderAction
+  [d] checkDeadlineReminders
+  [d] checkGmailConnection
+  [d] checkPermitFollowupReminders
+  [d] continueAddressResearchDiscovery
+  [d] continueJurisdictionArchives
+  [d] continuePermittingSourceText
+  [d] corebridgeApiAction
+  [d] correctJurisdictionIdentityType
+  [d] customerPortalAction
+  [d] deleteCreatedDuplicateWorkOrder
+  [d] detectSalesDuplicates
+  [d] downloadPermitPDF
+  [d] driveBrowseFolder
+  [d] driveOAuthCallback
+  [d] driveOAuthInitiate
+  [d] ensureBuilderPriceRevision
+  [d] ensureCustomerSummary
+  [d] ensureEstimateCustomer
+  [d] ensureEstimateLifecycleRevision
+  [d] ensureNewCustomer
+  [d] ensureNewEstimate
+  [d] ensureOpenEstimateRevision
+  [d] fieldHistoryAction
+  [d] findLocalityByAddress
+  [d] fleetAlertSettingsAction
+  [d] fleetBouncieNotificationAction
+  [d] fleetBulkMaintenancePlan
+  [d] fleetCutoverControl
+  [d] fleetDashboardPreferenceAction
+  [d] fleetDataRead
+  [d] fleetEquipmentAction
+  [d] fleetEquipmentDocumentAction
+  [d] fleetFuelAction
+  [d] fleetInspectionAction
+  [d] fleetIntegrityAudit
+  [d] fleetInventoryAction
+  [d] fleetLifecycleAction
+  [d] fleetMaintenanceAction
+  [d] fleetMechanicPortal
+  [d] fleetMeterMaintenanceAction
+  [d] fleetMeterMaintenanceGeneration
+  [d] fleetNotificationDispatcher
+  [d] fleetNotificationWorker
+  [d] fleetPartLookupAction
+  [d] fleetPublicIssueReport
+  [d] fleetRepairEstimateAction
+  [d] fleetRequestAction
+  [d] fleetReservationAction
+  [d] fleetScheduledMaintenanceGeneration
+  [d] fleetScheduledReminders
+  [d] fleetSearch
+  [d] fleetSettingsAction
+  [d] fleetSystemReportAction
+  [d] fleetWarrantyAction
+  [d] fleetWorkOrderAction
+  [d] generateDocNumber
+  [d] getAddressResearchCollections
+  [d] getGoogleMapsKey
+  [d] getPermittingSourceTextPages
+  [d] gmailAuthCallback
+  [d] gmailAuthInitiate
+  [d] googleDriveAuth
+  [d] googleDriveCustomAuth
+  [d] googleDriveCustomCallback
+  [d] googleDriveOAuth
+  [d] googleDriveOperations
+  [d] importOrders
+  [d] importSalesPipeline
+  [d] importWipSheet
+  [d] inventoryAction
+  [d] invoicingAction
+  [d] issueAdminSettingsAccess
+  [d] issuePasswordReset
+  [d] issueTimeClockBadge
+  [d] jobCostingAction
+  [d] jurisdictionResearchAgent
+  [d] linkAddressResearchDocument
+  [d] listAuthorizedUserDirectory
+  [d] manageAccountDeletionRequest
+  [d] manageAnnouncements
+  [d] manageAuthorizedUsers
+  [d] manageAutomationConfig
+  [d] manageCalendarEvents
+  [d] manageFeatureReports
+  [d] manageOwnProfile
+  [d] managePTOConfig
+  [d] manageSalesFilters
+  [d] manageUserCalendarSettings
+  [d] manageUserCapacity
+  [d] manageWorkflowSchedules
+  [d] sendEmail
+  [d] migrateCredentials
+  [d] migrateEstimatorConfig
+  [d] monitorJurisdictionChanges
+  [d] onboardingAccountAction
+  [d] opportunityBridgePilotVerification
+  [d] opportunityBridgeProductionApply
+  [d] opportunityBridgeSimulation
+  [d] opportunityWorkspaceAction
+  [d] permittingHtmlEvidence
+  [d] permittingOfficeAuthorityReview
+  [d] permittingOfficeCandidate
+  [d] permittingOperationalAlerts
+  [d] permittingProxy
+  [d] permittingResearchBacklogDispatch
+  [d] permittingRuleExtraction
+  [d] permittingRuleInvalidate
+  [d] permittingRuleReview
+  [d] permittingScanStatus
+  [d] permittingSourceAuthorityReview
+  [d] permittingSourceOcrEvidence
+  [d] processWorkflowTriggers
+  [d] propertySearch
+  [d] purchaseOrderAction
+  [d] recordEstimateAcceptance
+  [d] recordEstimateQuoteDelivery
+  [d] refreshJurisdiction
+  [d] resolvePermittingAddress
+  [d] restoreMasterInventory
+  [d] scanPermittingOffice
+  [d] searchExternalClients
+  [d] searchJurisdictions
+  [d] sendGmail
+  [d] setPassword
+  [d] smartsheetMetadataAdminAction
+  [d] smartsheetSyncAction
+  [d] smartsheetSyncTraceRead
+  [d] sourceMonitorScan
+  [d] sourceMonitorSeed
+  [d] staffDataRead
+  [d] translateSmartsheetNotes
+  [d] updateEstimateRevisionAudit
+  [d] updateJurisdictionRewriteAuthority
+  [d] validateDocumentUrl
+  [d] verifyLogin
+  [d] verifySession
+=== base44/entities ===
+191 entries
+  AccountDeletionRequest.jsonc
+  ActivityLog.jsonc
+  AllInOneEstimate.jsonc
+  Announcement.jsonc
+  AuthorizedEmail.jsonc
+  AutomationRule.jsonc
+  BackupLog.jsonc
+  BouncieConnection.jsonc
+  BouncieNotification.jsonc
+  BouncieOAuthState.jsonc
+  BouncieVehicleLiveState.jsonc
+  BrickStoneInventory.jsonc
+  BrickStoneProject.jsonc
+  BuilderPart.jsonc
+  BuilderPartGroup.jsonc
+  BuilderPriceRevision.jsonc
+  BuilderProduct.jsonc
+  CNCProject.jsonc
+  CalendarEvent.jsonc
+  CellHistory.jsonc
+  ChangeOrder.jsonc
+  ChannelLetterInstallEquipment.jsonc
+  ChannelLetterInstallInventory.jsonc
+  ChannelLetterInstallation.jsonc
+  ChecklistSubItem.jsonc
+  ChecklistTemplate.jsonc
+  CorebridgeApiAudit.jsonc
+  CorebridgeLog.jsonc
+  CostPlusConfig.jsonc
+  Customer.jsonc
+  CustomerContact.jsonc
+  CustomerInfo.jsonc
+  CustomerLocation.jsonc
+  CustomerNote.jsonc
+  CustomerPortalLink.jsonc
+  CustomerSummary.jsonc
+  DO_NOT_USE.jsonc
+  DefaultModuleSettings.jsonc
+  DimensionalLetterMaterial.jsonc
+  DocNumberCounter.jsonc
+  EmailGroup.jsonc
+  EmailNotificationSettings.jsonc
+  EstimateAcceptance.jsonc
+  EstimateClipboardItem.jsonc
+  EstimateOption.jsonc
+  EstimateQuoteDelivery.jsonc
+  EstimateRevision.jsonc
+  EstimatingRequest.jsonc
+  FeatureReport.jsonc
+  FieldAudit.jsonc
+  FleetAlertRuntimeState.jsonc
+  FleetAlertSetting.jsonc
+  FleetCutoverState.jsonc
+  FleetDashboardPreference.jsonc
+  FleetEquipment.jsonc
+  FleetEquipmentDocument.jsonc
+  FleetEquipmentLog.jsonc
+  FleetFluid.jsonc
+  FleetFuelEntry.jsonc
+  FleetInspection.jsonc
+  FleetInspectionTemplate.jsonc
+  FleetLifecycleProfile.jsonc
+  FleetMaintenanceMeterRule.jsonc
+  FleetMaintenanceTask.jsonc
+  FleetMaintenanceWorkOrder.jsonc
+  FleetMechanicAccess.jsonc
+  FleetMigrationAudit.jsonc
+  FleetMigrationMap.jsonc
+  FleetNotificationQueue.jsonc
+  FleetOperationReceipt.jsonc
+  FleetPart.jsonc
+  FleetPartFluidRequest.jsonc
+  FleetPartIdentification.jsonc
+  FleetPublicReportThrottle.jsonc
+  FleetRepairApprovalPolicy.jsonc
+  FleetRepairApprovalPolicyCreateGate.jsonc
+  FleetRepairEstimate.jsonc
+  FleetRepairEstimateCreateGate.jsonc
+  FleetReservation.jsonc
+  FleetSettings.jsonc
+  FleetSystemLog.jsonc
+  FleetSystemReport.jsonc
+  FleetVehicleMetadata.jsonc
+  FleetWarranty.jsonc
+  FoundationInventory.jsonc
+  FoundationProject.jsonc
+  GeneralTask.jsonc
+  GlobalSettings.jsonc
+  ImportJob.jsonc
+  Inventory.jsonc
+  InventoryMovement.jsonc
+  Invoice.jsonc
+  JurisdictionProfile.jsonc
+  LaborServiceInventory.jsonc
+  LaserProject.jsonc
+  LegacyMigrationMap.jsonc
+  MaintenanceActionRate.jsonc
+  MaintenanceEquipment.jsonc
+  MaintenanceInventory.jsonc
+  MaintenanceProject.jsonc
+  MarkupCategory.jsonc
+  MarkupTier.jsonc
+  MetalProject.jsonc
+  ModuleStatus.jsonc
+  Nope.jsonc
+  Nope2.jsonc
+  OopsShouldNotCreate.jsonc
+  Opportunity.jsonc
+  OpportunityActivity.jsonc
+  OpportunityBridgeOperationReceipt.jsonc
+  OpportunityIntake.jsonc
+  Order.jsonc
+  PTOPolicy.jsonc
+  PartTemplate.jsonc
+  Payment.jsonc
+  PendingImport.jsonc
+  PermitLineItem.jsonc
+  PermitLocality.jsonc
+  PermittingAddressArchive.jsonc
+  PermittingHtmlEvidence.jsonc
+  PermittingOfficeAuthorityReview.jsonc
+  PermittingRule.jsonc
+  PermittingRuleExtractionRun.jsonc
+  PermittingScanRun.jsonc
+  PermittingSourceAuthorityReview.jsonc
+  PermittingSourceDocument.jsonc
+  PermittingSourceTextSegment.jsonc
+  PermittingWorkflowDraft.jsonc
+  PortalMessage.jsonc
+  PricingMode.jsonc
+  Project.jsonc
+  ProjectTemplate.jsonc
+  PurchaseOrder.jsonc
+  QuickProduct.jsonc
+  QuickProductCategory.jsonc
+  QuoteDefaults.jsonc
+  QuoteScopeLine.jsonc
+  RegulationAlert.jsonc
+  Report.jsonc
+  SalesFilter.jsonc
+  SaveColor.jsonc
+  Settings.jsonc
+  SignHardwareInventory.jsonc
+  SignLightingInventory.jsonc
+  SignPartsSuppliesInventory.jsonc
+  SipChecklistTemplate.jsonc
+  SmartsheetSyncTrace.jsonc
+  SourceCollectionQueue.jsonc
+  SourceMonitorState.jsonc
+  SyncConflict.jsonc
+  TaskTemplate.jsonc
+  TaxGroup.jsonc
+  Temp3.jsonc
+  Temp5.jsonc
+  Temp6.jsonc
+  TempIgnore.jsonc
+  TimeClockAdminCorrectionGate.jsonc
+  TimeClockAudit.jsonc
+  TimeClockBadge.jsonc
+  TimeClockBreak.jsonc
+  TimeClockCorrectionRequest.jsonc
+  TimeClockEmployeePreference.jsonc
+  TimeClockEmployeeState.jsonc
+  TimeClockLaborSegment.jsonc
+  TimeClockPayPeriod.jsonc
+  TimeClockPayPeriodCreateGate.jsonc
+  TimeClockPunchException.jsonc
+  TimeClockWorkPause.jsonc
+  TimeEntry.jsonc
+  TimeOffRequest.jsonc
+  User.jsonc
+  UserCalendarSettings.jsonc
+  UserCapacity.jsonc
+  UserCredential.jsonc
+  UserPTOBalance.jsonc
+  VinylInventory.jsonc
+  VinylMachine.jsonc
+  VinylPartTemplate.jsonc
+  VinylProject.jsonc
+  VinylWorkflowTemplate.jsonc
+  WorkOrder.jsonc
+  WorkflowScheduleChange.jsonc
+  _CheckpointMistake.jsonc
+  _Noop.jsonc
+  __do_not_create__.jsonc
+  __invalid_placeholder.jsonc
+  __noop.jsonc
+  __noop__.jsonc
+  _never_use_checkpoint_probe.jsonc
+  _noop.jsonc
+  _noop_should_not_create.jsonc
+=== base44/workflows ===
+17 entries
+  Daily Deadline Reminder Check.jsonc
+  Daily Jurisdiction Regulation Monitoring.jsonc
+  Fleet Bouncie Alert Sync.jsonc
+  Fleet Notification Queue Worker.jsonc
+  Fleet Scheduled Maintenance Generation.jsonc
+  Fleet Scheduled Reminders.jsonc
+  Permit Follow-up Reminders.jsonc
+  Permitting Operational Alerts.jsonc
+  Permitting Research Backlog Refill.jsonc
+  Scheduled Google Drive Backup.jsonc
+  Smartsheet Scheduled Order Sync.jsonc
+  Smartsheet Scheduled Sync.jsonc
+  Source Monitor Scan.jsonc
+  Time Clock Stale Shift Monitor.jsonc
+  Weekly Jurisdiction Accuracy Audit.jsonc
+  Weekly Jurisdiction Refresh.jsonc
+  Weekly Sales Duplicate Detection.jsonc
+=== base44/agents ===
+3 entries
+  jurisdictionAccuracyAudit.jsonc
+  jurisdictionChangeMonitor.jsonc
+  jurisdictionResearch.jsonc
+=== base44/actors ===
+0 entries
+=== public ===
+2 entries
+  [d] permitting-evidence
+  [d] permitting

@@ -32,13 +32,15 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { MemoryRouter } from "react-router-dom";',
-    'import FleetRequests from "/@fs/app/src/pages/FleetRequests.jsx";',
-    'createRoot(document.getElementById("root")).render(<MemoryRouter><FleetRequests /></MemoryRouter>);',
+    `import { AuthProvider } from "/@fs/${appRoot.replace(/\\/g, "/")}/src/components/auth/EmailGate.jsx";`,
+    `import FleetRequests from "/@fs/${appRoot.replace(/\\/g, "/")}/src/pages/FleetRequests.jsx";`,
+    'localStorage.setItem("sss_session_token", "synthetic-session");',
+    'createRoot(document.getElementById("root")).render(<AuthProvider><MemoryRouter><FleetRequests /></MemoryRouter></AuthProvider>);',
   ].join("\n"));
 
   vite = await createServer({
     configFile: false, root: scratch, plugins: [react()], resolve: { alias },
-    server: { host: "127.0.0.1", port: 0, strictPort: false, fs: { allow: [appRoot, scratch] } },
+    server: { host: "127.0.0.1", port: 0, strictPort: false, fs: { allow: [appRoot, scratch], strict: false } },
     logLevel: "error",
   });
   await vite.listen();

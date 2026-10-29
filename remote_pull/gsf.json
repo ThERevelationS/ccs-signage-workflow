@@ -1,0 +1,426 @@
+{
+  "matches": [
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 4,
+      "text": "import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../../shared/globalSettingSingleton.ts';"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 88,
+      "text": "      const GlobalSettingsEntity = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 90,
+      "text": "        entity: GlobalSettingsEntity,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 108,
+      "text": "      const existing = await loadGlobalSettingSingleton({"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 109,
+      "text": "        entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 153,
+      "text": "      folderCacheSetting = await loadGlobalSettingSingleton({"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 154,
+      "text": "        entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/backupToGoogleDrive/entry.ts",
+      "line": 592,
+      "text": "          entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/continueJurisdictionArchives/entry.ts",
+      "line": 55,
+      "text": "    const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);"
+    },
+    {
+      "path": "base44/functions/continuePermittingSourceText/entry.ts",
+      "line": 20,
+      "text": "    const rows = await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:PERMITTING_RESEARCH_CONFIG_KEY},'created_date',2);"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 35,
+      "text": "  const result = await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:'salesTaskDescriptions'}, {limit:2});"
+    },
+    {
+      "path": "base44/functions/fieldHistoryAction/entry.ts",
+      "line": 189,
+      "text": "      const config=(await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:'smartsheetSyncConfig'},{limit:2})).items;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 143,
+      "text": "async function loadDefaultSortRecord(GlobalSettings: any) {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 144,
+      "text": "  const rows = await loadAllEntityRows({ entity: GlobalSettings, sort: null, label: 'Sales Pipeline default sort' });"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 150,
+      "text": "async function saveDefaultSort(GlobalSettings: any, body: any) {"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 152,
+      "text": "  const current = await loadDefaultSortRecord(GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 156,
+      "text": "    try { created = await GlobalSettings.create({ setting_key: 'salesPipelineDefaultSort', setting_value: next }); } catch (error) { createError = error; }"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 157,
+      "text": "    const verified = await loadDefaultSortRecord(GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 166,
+      "text": "  const result = await GlobalSettings.updateMany("
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 171,
+      "text": "  const saved = await GlobalSettings.get(current.id).catch(() => null);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 334,
+      "text": "      const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 335,
+      "text": "      const record = await loadDefaultSortRecord(GlobalSettings);"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 340,
+      "text": "      const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/manageSalesFilters/entry.ts",
+      "line": 341,
+      "text": "      const record = await saveDefaultSort(GlobalSettings, body);"
+    },
+    {
+      "path": "base44/functions/monitorJurisdictionChanges/entry.ts",
+      "line": 83,
+      "text": "      const settingsArr = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'jurisdiction_monitoring' });"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 14,
+      "text": "   settingsEntity:entities.GlobalSettings,segmentEntity:entities.PermittingSourceTextSegment,reviewEntity:entities.PermittingOfficeAuthorityReview,htmlEntity:entities.PermittingHtmlEvidence};"
+    },
+    {
+      "path": "base44/functions/permittingOfficeAuthorityReview/entry.ts",
+      "line": 19,
+      "text": "   const settings=await entities.GlobalSettings.filter({setting_key:'permitOfficeCatalog'},'id',2,0);"
+    },
+    {
+      "path": "base44/functions/permittingOfficeCandidate/entry.ts",
+      "line": 10,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings};"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 34,
+      "text": "  if (!Array.isArray(rows)) throw new Error(\"GlobalSettings lookup failed for \" + settingKey + \".\");"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 35,
+      "text": "  if (rows.length > 1) throw new Error(\"Duplicate GlobalSettings rows exist for \" + settingKey + \".\");"
+    },
+    {
+      "path": "base44/functions/permittingResearchBacklogDispatch/entry.ts",
+      "line": 138,
+      "text": "    const Settings = base44.asServiceRole.entities.GlobalSettings;"
+    },
+    {
+      "path": "base44/functions/permittingRuleInvalidate/entry.ts",
+      "line": 9,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 61,
+      "text": "        sourceEntity:entities.PermittingSourceDocument,settingsEntity:entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 105,
+      "text": "            segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 107,
+      "text": "            profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 139,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 141,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 150,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});"
+    },
+    {
+      "path": "base44/functions/permittingRuleReview/entry.ts",
+      "line": 152,
+      "text": "        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 24,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/permittingSourceAuthorityReview/entry.ts",
+      "line": 28,
+      "text": "   segmentEntity:entities.PermittingSourceTextSegment,settingsEntity:entities.GlobalSettings,auditEntity:entities.PermittingSourceAuthorityReview,"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 4,
+      "text": "import { loadGlobalSettingSingleton } from '../../shared/globalSettingSingleton.ts';"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 107,
+      "text": "  const setting = await loadGlobalSettingSingleton({"
+    },
+    {
+      "path": "base44/functions/smartsheetMetadataAdminAction/entry.ts",
+      "line": 108,
+      "text": "    entity: base44.asServiceRole.entities.GlobalSettings,"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1565,
+      "text": "  const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SETTING_KEY });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1640,
+      "text": "  const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1647,
+      "text": "  const saved = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1667,
+      "text": "  const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1679,
+      "text": "    const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1687,
+      "text": "  await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: key, setting_value: {} });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1702,
+      "text": "    await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1772,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1784,
+      "text": "      await assertNoUnresolvedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1798,
+      "text": "  const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1805,
+      "text": "  const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1821,
+      "text": "    const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1898,
+      "text": "      await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 1930,
+      "text": "    const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4099,
+      "text": "      const saved=await base44.asServiceRole.entities.GlobalSettings.updateMany({id:record.id,updated_date:record.updated_date},{$set:{setting_value:next}});\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4101,
+      "text": "      const verified=await base44.asServiceRole.entities.GlobalSettings.get(record.id);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4113,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4169,
+      "text": "      const current = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4190,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4260,
+      "text": "      const current = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4289,
+      "text": "      const evidenceRecord = await readOrderPullEvidenceStore(base44.asServiceRole.entities.GlobalSettings);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4350,
+      "text": "        base44.asServiceRole.entities.GlobalSettings, { startedAt: runStartedAt });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4482,
+      "text": "      const records = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SYNC_STATUS_KEYS.orders });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4509,
+      "text": "      const updateResult = await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4517,
+      "text": "      const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4561,
+      "text": "      const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4568,
+      "text": "      const saved = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4685,
+      "text": "      const settingRowsResult = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4744,
+      "text": "        const saved = await base44.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4752,
+      "text": "        savedSetting = await base44.asServiceRole.entities.GlobalSettings.get(currentSetting.id);\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4754,
+      "text": "        await base44.asServiceRole.entities.GlobalSettings.create({\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4758,
+      "text": "        const afterCreateResult = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4797,
+      "text": "      const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4801,
+      "text": "      if (rows.length > 0) await base44.asServiceRole.entities.GlobalSettings.update(rows[0].id, { setting_value: value });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 4802,
+      "text": "      else await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: ALERT_SETTING_KEY, setting_value: value });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5591,
+      "text": "                    await saveOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5616,
+      "text": "              await verifyCompletedOrderPullEvidence(base44.asServiceRole.entities.GlobalSettings, {\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5720,
+      "text": "        const record = await base44Instance.asServiceRole.entities.GlobalSettings.filter({ setting_key: key });\r"
+    },
+    {
+      "path": "base44/functions/smartsheetSyncAction/entry.ts",
+      "line": 5727,
+      "text": "          await base44Instance.asServiceRole.entities.GlobalSettings.updateMany(\r"
+    },
+    {
+      "path": "base44/functions/staffDataRead/entry.ts",
+      "line": 57,
+      "text": "  'GlobalSettings',"
+    }
+  ],
+  "truncated": false,
+  "returnedMatches": 84
+}

@@ -1,0 +1,1452 @@
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
+import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
+import { processWorkflowTriggerEvent } from "../../shared/workflowTriggerEngine.ts";
+import {
+  createFoundationRecordWithRecovery,
+  expectedFoundationFields,
+  replaceFoundationFieldsIfUnchanged,
+  replaceEstimatingRequestFieldsIfUnchanged,
+} from "../../shared/opportunityFoundationPersistence.mjs";
+
+// Emitting an automation event must never break the workspace action itself â€”
+// a failed rule evaluation is a missed notification, not a failed save.
+async function emitOpportunityAutomation(base44: any, eventType: string, opportunityId: string, actor: string) {
+  try {
+    await processWorkflowTriggerEvent({
+      base44,
+      payload: { event_type: eventType, record: { id: opportunityId } },
+      changedByOverride: actor,
+    });
+  } catch (error: any) {
+    console.error(`Opportunity automation emit failed for ${eventType}:`, error?.message || error);
+  }
+}
+
+const clean = (value: any) => String(value ?? "").trim();
+const num = (value: any, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+const money = (value: number) => Math.round(value * 100) / 100;
+
+const STAGES = ["new", "qualified", "estimating", "quoted", "follow_up", "on_hold", "won", "lost"];
+const CLOSED_STAGES = new Set(["won", "lost"]);
+const REQUIREMENT_VALUES = ["unknown", "yes", "no", "maybe", "na"];
+const PRIORITIES = ["low", "normal", "high", "rush"];
+const SOURCE_TYPES = [
+  "manual", "existing_customer", "phone", "email", "website",
+  "smartsheet", "repeat_customer", "walk_in", "historical", "integration",
+];
+const OPEN_REQUEST_STATUSES = new Set(["draft", "ready", "in_progress"]);
+const OPP_TO_WO_STAGE: Record<string, string> = {
+  new: "lead", qualified: "lead", estimating: "lead",
+  quoted: "quoted", follow_up: "follow_up", on_hold: "on_hold",
+  won: "won", lost: "lost",
+};
+
+const REQUIREMENT_FIELDS = [
+  "survey_requirement", "permit_requirement", "installation_requirement",
+  "removal_requirement", "electrical_requirement",
+];
+
+const EDITABLE_OPPORTUNITY_FIELDS = [
+  "title", "job_description", "customer_display_name", "customer_id",
+  "contact_id", "location_id",
+  "stage", "lost_reason",
+  "salesperson", "lead_source", "origination",
+  "budget_amount", "budget_note",
+  "desired_completion_date", "desired_install_date", "priority",
+  ...REQUIREMENT_FIELDS,
+  "electrical_details", "property_relationship",
+  "next_action", "next_action_due", "next_action_assignee", "notes",
+];
+
+const bad = (message: string, status = 400) =>
+  Object.assign(new Error(message), { statusCode: status });
+
+const QUOTE_OUT_STATUSES = new Set(["sent", "approved"]);
+
+async function logActivity(Activity: any, args: any) {
+  try {
+    const key = `act:${args.event_type}:${args.opportunity_id}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+    await Activity.create({
+      creation_request_key: key,
+      opportunity_id: clean(args.opportunity_id),
+      event_type: args.event_type,
+      summary: clean(args.summary),
+      actor: clean(args.actor) || "unknown",
+      details: args.details && typeof args.details === "object" ? args.details : {},
+    });
+  } catch (error: any) {
+    console.error("opportunity activity log failed:", error?.message || error);
+  }
+}
+
+async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request }: any) {
+  if (!OPEN_REQUEST_STATUSES.has(clean(request?.status))) return { request, completed: false };
+  const estimateId = clean(request?.estimate_id);
+  if (!estimateId) return { request, completed: false };
+  const estimate = await Estimate.get(estimateId).catch(() => null);
+  // A trashed estimate never closes an open estimating request â€” the request
+  // stays open until a live estimate actually goes to the customer.
+  if (!estimate?.id || estimate?.deleted === true || !QUOTE_OUT_STATUSES.has(clean(estimate.status))) return { request, completed: false };
+  const now = new Date().toISOString();
+  const desired = { status: "completed", completed_at: now };
+  const saved = await replaceEstimatingRequestFieldsIfUnchanged({
+    entity: EstimatingRequest,
+    recordId: clean(request.id),
+    expectedFields: expectedFoundationFields(request, desired),
+    nextFields: desired,
+    label: "Estimating request completion",
+  });
+  return { request: saved, completed: true, estimate_status: clean(estimate.status) };
+}
+
+async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any) {
+  const next = OPP_TO_WO_STAGE[clean(stage)];
+  const wo = await WorkOrder.get(clean(workOrderId)).catch(() => null);
+  if (!next || !wo?.id || clean(wo.sales_status) === next) return "";
+  const desired = { sales_status: next };
+  await replaceFoundationFieldsIfUnchanged({
+    entity: WorkOrder,
+    recordId: clean(wo.id),
+    expectedFields: expectedFoundationFields(wo, desired),
+    nextFields: desired,
+    label: "Work order sales status",
+  });
+  return next;
+}
+
+function requireEnum(value: any, allowed: string[], label: string) {
+  const v = clean(value);
+  if (!v) return "";
+  if (!allowed.includes(v)) throw bad(`${label} must be one of ${allowed.join(", ")}.`);
+  return v;
+}
+
+function pick(source: any, keys: string[]) {
+  const out: any = {};
+  for (const key of keys) {
+    if (source && Object.prototype.hasOwnProperty.call(source, key)) out[key] = source[key];
+  }
+  return out;
+}
+
+function expectedFor(baseline: any, current: any, desired: any) {
+  const expected: any = {};
+  for (const key of Object.keys(desired)) {
+    expected[key] = baseline && Object.prototype.hasOwnProperty.call(baseline, key)
+      ? baseline[key]
+      : current?.[key];
+  }
+  return expected;
+}
+
+async function findByCreationKey(entity: any, key: string) {
+  const rows = await entity.filter({ creation_request_key: clean(key) });
+  if (!Array.isArray(rows)) throw bad("Creation receipt lookup did not return a record list.", 409);
+  return rows;
+}
+
+function buildHandoffSnapshot({ opportunity, customer, primaryIntake }: any) {
+  const captured = primaryIntake?.captured_fields && typeof primaryIntake.captured_fields === "object"
+    ? primaryIntake.captured_fields
+    : {};
+  return {
+    snapshot_version: 1,
+    opportunity_id: clean(opportunity?.id),
+    customer_id: clean(customer?.id || opportunity?.customer_id),
+    customer_display_name: clean(customer?.company_name || opportunity?.customer_display_name),
+    customer_verified: Boolean(clean(customer?.id)),
+    contact_id: clean(opportunity?.contact_id),
+    location_id: clean(opportunity?.location_id),
+    title: clean(opportunity?.title),
+    job_description: clean(opportunity?.job_description),
+    salesperson: clean(opportunity?.salesperson),
+    lead_source: clean(opportunity?.lead_source),
+    origination: clean(opportunity?.origination),
+    budget_amount: opportunity?.budget_amount ?? null,
+    budget_note: clean(opportunity?.budget_note),
+    desired_completion_date: clean(opportunity?.desired_completion_date),
+    desired_install_date: clean(opportunity?.desired_install_date),
+    priority: clean(opportunity?.priority) || "normal",
+    survey_requirement: clean(opportunity?.survey_requirement) || "unknown",
+    permit_requirement: clean(opportunity?.permit_requirement) || "unknown",
+    installation_requirement: clean(opportunity?.installation_requirement) || "unknown",
+    removal_requirement: clean(opportunity?.removal_requirement) || "unknown",
+    electrical_requirement: clean(opportunity?.electrical_requirement) || "unknown",
+    electrical_details: clean(opportunity?.electrical_details),
+    property_relationship: clean(opportunity?.property_relationship) || "unknown",
+    next_action: clean(opportunity?.next_action),
+    next_action_due: clean(opportunity?.next_action_due),
+    next_action_assignee: clean(opportunity?.next_action_assignee),
+    notes: clean(opportunity?.notes),
+    captured_contact_name: clean(captured.contact_name),
+    captured_contact_email: clean(captured.contact_email),
+    captured_contact_phone: clean(captured.contact_phone),
+    captured_site_address: clean(captured.site_address || captured.install_location),
+    attachment_refs: Array.isArray(opportunity?.attachment_refs) ? opportunity.attachment_refs : [],
+    primary_intake_id: clean(primaryIntake?.id || opportunity?.source_primary_intake_id),
+    source_type: clean(primaryIntake?.source_type),
+    compatibility_work_order_id: clean(opportunity?.compatibility_work_order_id),
+  };
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
+    const actor = clean(user?.email) || clean(user?.id) || "unknown";
+    const action = clean(body?.action);
+    if (!action) throw bad("An action is required.");
+
+    const Opportunity = base44.asServiceRole.entities.Opportunity;
+    const Intake = base44.asServiceRole.entities.OpportunityIntake;
+    const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;
+    const Customer = base44.asServiceRole.entities.Customer;
+    const CustomerContact = base44.asServiceRole.entities.CustomerContact;
+    const CustomerLocation = base44.asServiceRole.entities.CustomerLocation;
+    const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const Order = base44.asServiceRole.entities.Order;
+    const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
+    const Invoice = base44.asServiceRole.entities.Invoice;
+    const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
+    const ChangeOrder = base44.asServiceRole.entities.ChangeOrder;
+    const Payment = base44.asServiceRole.entities.Payment;
+    const Inventory = base44.asServiceRole.entities.Inventory;
+    const PermitLineItem = base44.asServiceRole.entities.PermitLineItem;
+    const Activity = base44.asServiceRole.entities.OpportunityActivity;
+    const PortalMessage = base44.asServiceRole.entities.PortalMessage;
+
+    if (action === "attention_feed") {
+      const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates] = await Promise.all([
+        PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
+        Invoice.filter({}, "-updated_date", 200).catch(() => []),
+        PurchaseOrder.filter({}, "-updated_date", 200).catch(() => []),
+        ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(() => []),
+        Opportunity.filter({}, "-last_activity_at", 300).catch(() => []),
+        EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
+        Inventory.filter({}, "-updated_date", 300).catch(() => []),
+        WorkOrder.filter({}, "-updated_date", 300).catch(() => []),
+        PermitLineItem.filter({}, "-updated_date", 300).catch(() => []),
+        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
+      ]);
+      const list = (v: any) => (Array.isArray(v) ? v : []);
+
+      const unreadMessages = list(messages).map((m: any) => ({
+        id: clean(m?.id),
+        customer_id: clean(m?.customer_id),
+        kind: clean(m?.kind) || "message",
+        related_label: clean(m?.related_label),
+        excerpt: clean(m?.body).slice(0, 120),
+        author_name: clean(m?.author_name),
+        created_date: clean(m?.created_date),
+      }));
+
+      const overdueInvoices = list(invoices)
+        .filter((i: any) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today)
+        .map((i: any) => ({
+          id: clean(i?.id),
+          invoice_number: clean(i?.invoice_number),
+          customer_name: clean(i?.customer_display_name || i?.customer_name),
+          due_date: clean(i?.due_date),
+          balance_due: money(num(i?.balance_due)),
+        }));
+      const overdueInvoiceTotal = money(overdueInvoices.reduce((s: number, i: any) => s + i.balance_due, 0));
+
+      const overduePos = list(pos)
+        .filter((p: any) => ["sent", "partially_received"].includes(clean(p?.status)) && clean(p?.expected_date) && clean(p?.expected_date) < today)
+        .map((p: any) => ({
+          id: clean(p?.id),
+          po_number: clean(p?.po_number),
+          vendor_name: clean(p?.vendor_name),
+          expected_date: clean(p?.expected_date),
+          status: clean(p?.status),
+        }));
+
+      const proposedCos = list(cos).map((c: any) => ({
+        id: clean(c?.id),
+        change_order_number: clean(c?.change_order_number),
+        customer_display_name: clean(c?.customer_display_name),
+        amount_delta: money(num(c?.amount_delta)),
+        proposed_by: clean(c?.proposed_by),
+        created_date: clean(c?.created_date),
+      }));
+
+      // Sent estimates aging past 7 days without a response â€” surfaces quotes
+      // that aren't opportunity-linked (which list_follow_ups already covers).
+      const staleSentEstimates = list(sentEstimates)
+        .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7)
+        .map((e: any) => ({
+          id: clean(e?.id),
+          estimate_number: clean(e?.estimate_number),
+          project_name: clean(e?.project_name),
+          client_name: clean(e?.client_name),
+          quote_total: num(e?.quote_total),
+          days_sent: Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000),
+          updated_date: clean(e?.updated_date),
+        }));
+
+      const overdueFollowUps = list(opps)
+        .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today)
+        .map((o: any) => ({
+          id: clean(o?.id),
+          title: clean(o?.title),
+          customer_display_name: clean(o?.customer_display_name),
+          next_action: clean(o?.next_action),
+          next_action_due: clean(o?.next_action_due),
+          salesperson: clean(o?.salesperson),
+        }));
+
+      const openRequests = list(requests)
+        .filter((r: any) => OPEN_REQUEST_STATUSES.has(clean(r?.status)))
+        .map((r: any) => ({
+          id: clean(r?.id),
+          request_number: clean(r?.request_number),
+          opportunity_id: clean(r?.opportunity_id),
+          opportunity_title: clean(r?.opportunity_title) || clean(r?.title),
+          status: clean(r?.status),
+          assigned_estimator: clean(r?.assigned_estimator) || clean(r?.estimator),
+          created_date: clean(r?.created_date),
+        }));
+
+      const lowStock = list(stock)
+        .filter((it: any) => num(it?.reorder_point) > 0 && num(it?.quantity_on_hand) <= num(it?.reorder_point))
+        .map((it: any) => ({
+          id: clean(it?.id),
+          label: [clean(it?.material_type), clean(it?.product_type), clean(it?.size)].filter(Boolean).join(" Â· ") || "Item",
+          quantity_on_hand: num(it?.quantity_on_hand),
+          reorder_point: num(it?.reorder_point),
+          supplier: clean(it?.vendor) || clean(it?.supplier),
+        }));
+
+      return Response.json({
+        success: true, action, today,
+        unread_portal_messages: unreadMessages,
+        overdue_invoices: overdueInvoices,
+        overdue_invoice_total: overdueInvoiceTotal,
+        overdue_pos: overduePos,
+        proposed_cos: proposedCos,
+        overdue_follow_ups: overdueFollowUps,
+        stale_sent_estimates: staleSentEstimates,
+        open_estimating_requests: openRequests,
+        low_stock: lowStock,
+        overdue_jobs: list(workOrders)
+          .filter((w: any) => clean(w?.current_stage) !== "completed" && clean(w?.due_date) && clean(w?.due_date) < today)
+          .map((w: any) => ({
+            id: clean(w?.id),
+            title: clean(w?.title),
+            client_name: clean(w?.client_name),
+            current_stage: clean(w?.current_stage),
+            due_date: clean(w?.due_date),
+          })),
+        expiring_permits: (() => {
+          const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+          return list(permits)
+            .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.expiration_date) && clean(p?.expiration_date) <= soon)
+            .sort((a: any, b: any) => clean(a?.expiration_date).localeCompare(clean(b?.expiration_date)))
+            .slice(0, 50)
+            .map((p: any) => ({
+              id: clean(p?.id),
+              row_name: clean(p?.row_name),
+              locality_name: clean(p?.locality_name),
+              work_order_id: clean(p?.work_order_id),
+              work_order_title: clean(p?.work_order_title),
+              expiration_date: clean(p?.expiration_date),
+              expired: clean(p?.expiration_date) < today,
+            }));
+        })(),
+        permit_fees_due: list(permits)
+          .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.jurisdiction_fee_status) === "due")
+          .map((p: any) => ({
+            id: clean(p?.id),
+            row_name: clean(p?.row_name),
+            locality_name: clean(p?.locality_name),
+            work_order_id: clean(p?.work_order_id),
+            work_order_title: clean(p?.work_order_title),
+            fee_amount: money(num(p?.jurisdiction_fee_amount)),
+          })),
+      });
+    }
+
+    if (action === "search_customers") {
+      const query = clean(body?.query).toLowerCase();
+      const rows = await Customer.filter({});
+      if (!Array.isArray(rows)) throw bad("Customer lookup failed.", 500);
+      const matches = rows
+        .filter((row: any) => !query || clean(row?.company_name).toLowerCase().includes(query))
+        .slice(0, 25)
+        .map((row: any) => ({
+          id: clean(row?.id),
+          company_name: clean(row?.company_name),
+          contact_name: [clean(row?.contact_first_name), clean(row?.contact_last_name)].filter(Boolean).join(" "),
+          contact_email: clean(row?.contact_email),
+          contact_phone: clean(row?.company_phone),
+          customer_status: clean(row?.customer_status),
+        }));
+      return Response.json({ success: true, action, customers: matches });
+    }
+
+    if (action === "list_opportunities") {
+      const includeClosed = body?.include_closed === true;
+      const limit = Math.max(1, Math.min(200, Number(body?.limit) || 200));
+      const rows = await Opportunity.filter({}, "-last_activity_at", 500);
+      if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
+      const visible = rows
+        .filter((row: any) => includeClosed || !CLOSED_STAGES.has(clean(row?.stage)))
+        .slice(0, limit);
+      const stageCounts: any = {};
+      let openPipelineValue = 0;
+      let wonValue = 0;
+      let wonCount = 0;
+      let decidedCount = 0;
+      for (const row of rows) {
+        const stage = clean(row?.stage) || "new";
+        stageCounts[stage] = (stageCounts[stage] || 0) + 1;
+        const budget = Number(row?.budget_amount) || 0;
+        if (!CLOSED_STAGES.has(stage)) openPipelineValue += budget;
+        if (stage === "won") { wonValue += budget; wonCount += 1; decidedCount += 1; }
+        if (stage === "lost") decidedCount += 1;
+      }
+      const bySalesperson: any = {};
+      for (const row of rows) {
+        const rep = clean(row?.salesperson) || "Unassigned";
+        const slot = bySalesperson[rep] || (bySalesperson[rep] = { salesperson: rep, open_count: 0, open_value: 0, won_count: 0, won_value: 0, decided_count: 0 });
+        const stage = clean(row?.stage) || "new";
+        const budget = Number(row?.budget_amount) || 0;
+        if (!CLOSED_STAGES.has(stage)) { slot.open_count += 1; slot.open_value += budget; }
+        if (stage === "won") { slot.won_count += 1; slot.won_value += budget; slot.decided_count += 1; }
+        if (stage === "lost") slot.decided_count += 1;
+      }
+      const salespeople = Object.values(bySalesperson)
+        .map((s: any) => ({
+          ...s,
+          open_value: Math.round(s.open_value * 100) / 100,
+          won_value: Math.round(s.won_value * 100) / 100,
+          win_rate: s.decided_count > 0 ? Math.round((s.won_count / s.decided_count) * 1000) / 10 : null,
+        }))
+        .sort((a: any, b: any) => b.open_value - a.open_value || b.won_value - a.won_value);
+      const lostReasonMap: any = {};
+      for (const row of rows) {
+        if (clean(row?.stage) !== "lost") continue;
+        const raw = clean(row?.lost_reason).slice(0, 120);
+        const key = raw.toLowerCase() || "no reason given";
+        const slot = lostReasonMap[key] || (lostReasonMap[key] = { reason: raw || "No reason given", count: 0, lost_value: 0 });
+        slot.count += 1;
+        slot.lost_value += Number(row?.budget_amount) || 0;
+      }
+      const lostReasons = Object.values(lostReasonMap)
+        .map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 }))
+        .sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value)
+        .slice(0, 12);
+      // Estimate-status funnel â€” the same shape as the opportunity funnel but
+      // keyed on the estimate lifecycle (draft -> calculated -> sent -> approved)
+      // so the dashboard can show quote-side conversion separately from pipeline.
+      const estimateRows = await Estimate.filter({}, "-created_date", 500).catch(() => []);
+      const requestRows = await EstimatingRequest.filter({}, "-created_date", 500).catch(() => []);
+      const thirtyDaysAgo = Date.now() - 30 * 86400000;
+      const staleRequests = (Array.isArray(requestRows) ? requestRows : []).filter((r: any) => {
+        const ts = Date.parse(clean(r?.created_date));
+        return Number.isFinite(ts) && ts < thirtyDaysAgo;
+      });
+      const requestIdsWithEstimate = new Set(
+        (Array.isArray(estimateRows) ? estimateRows : [])
+          .map((e: any) => clean(e?.estimating_request_id))
+          .filter(Boolean)
+      );
+      const staleConverted = staleRequests.filter((r: any) => requestIdsWithEstimate.has(clean(r?.id)));
+      const requestConversion = {
+        total_requests_30d: staleRequests.length,
+        converted: staleConverted.length,
+        conversion_rate: staleRequests.length > 0 ? Math.round((staleConverted.length / staleRequests.length) * 1000) / 10 : null,
+      };
+      const estimateStatusCounts: any = {};
+      let estimateWonCount = 0;
+      let estimateDecidedCount = 0;
+      let estimateWonValue = 0;
+      let estimateDecidedValue = 0;
+      let estimateMarginSum = 0;
+      let estimateMarginCount = 0;
+      let estimateMarginTotal = 0;
+      const agingBuckets: any = { expired: 0, expiring_7d: 0, valid_14d: 0, valid_30d: 0, valid_30d_plus: 0 };
+      const agingRows: any[] = [];
+      const estimateBySalesperson: any = {};
+      const estimateLostReasonMap: any = {};
+      const markupUsage: any = { discount: 0, none: 0, "0-10%": 0, "10-25%": 0, "25-50%": 0, "50%+": 0 };
+      let partCostRatioSum = 0;
+      let partCostRatioCount = 0;
+      for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
+        if (row?.deleted === true) continue;
+        const status = clean(row?.status) || "draft";
+        estimateStatusCounts[status] = (estimateStatusCounts[status] || 0) + 1;
+        const total = num(row?.quote_total);
+        if (status === "approved") { estimateWonCount += 1; estimateDecidedCount += 1; estimateWonValue += total; estimateDecidedValue += total; }
+        if (status === "archived" || status === "cancelled") {
+          estimateDecidedCount += 1; estimateDecidedValue += total;
+          const rawReason = clean(row?.cancel_reason || row?.archived_reason).slice(0, 120) || "No reason given";
+          const reasonKey = rawReason.toLowerCase();
+          const slot2 = estimateLostReasonMap[reasonKey] || (estimateLostReasonMap[reasonKey] = { reason: rawReason, count: 0, lost_value: 0 });
+          slot2.count += 1; slot2.lost_value += total;
+        }
+        if (status === "sent") {
+          const until = clean(row?.quote_valid_until) || clean(row?.quote_expiration_date);
+          const days = until ? Math.round((Date.parse(until) - Date.parse(today)) / 86400000) : null;
+          const bucket = days == null ? "valid_30d_plus" : days < 0 ? "expired" : days <= 7 ? "expiring_7d" : days <= 14 ? "valid_14d" : days <= 30 ? "valid_30d" : "valid_30d_plus";
+          agingBuckets[bucket] += 1;
+          if (days != null && days <= 14) agingRows.push({ id: clean(row?.id), estimate_number: clean(row?.estimate_number), project_name: clean(row?.project_name), client_name: clean(row?.client_name), quote_total: total, quote_valid_until: until, days_to_expiry: days, expired: days < 0 });
+        }
+        let partCost = 0;
+        for (const li of Array.isArray(row?.line_items) ? row.line_items : []) {
+          const adj = num(li?.adjustment_percent);
+          const bucket = adj < 0 ? "discount" : adj === 0 ? "none" : adj <= 10 ? "0-10%" : adj <= 25 ? "10-25%" : adj <= 50 ? "25-50%" : "50%+";
+          markupUsage[bucket] += 1;
+          partCost += num(li?.total_snapshot) * (num(li?.customer_quantity) || 1);
+        }
+        if (total > 0 && partCost > 0) { partCostRatioSum += partCost / total; partCostRatioCount += 1; }
+        const rep = clean(row?.salesperson) || "Unassigned";
+        const slot = estimateBySalesperson[rep] || (estimateBySalesperson[rep] = { salesperson: rep, count: 0, quote_value: 0, won_count: 0, decided_count: 0 });
+        slot.count += 1;
+        slot.quote_value += total;
+        if (status === "approved") { slot.won_count += 1; slot.decided_count += 1; }
+        if (status === "archived" || status === "cancelled") slot.decided_count += 1;
+        const internal = num(row?.total_cost);
+        if (total > 0 && internal > 0) {
+          estimateMarginSum += (total - internal) / total;
+          estimateMarginTotal += total - internal;
+          estimateMarginCount += 1;
+        }
+      }
+      const estimateFunnel = {
+        status_counts: estimateStatusCounts,
+        total: estimateStatusCounts.draft + estimateStatusCounts.calculated + estimateStatusCounts.sent + estimateStatusCounts.approved + estimateStatusCounts.archived + estimateStatusCounts.cancelled,
+        won_count: estimateWonCount,
+        decided_count: estimateDecidedCount,
+        win_rate: estimateDecidedCount > 0 ? Math.round((estimateWonCount / estimateDecidedCount) * 1000) / 10 : null,
+        won_value: Math.round(estimateWonValue * 100) / 100,
+        decided_value: Math.round(estimateDecidedValue * 100) / 100,
+        avg_margin_pct: estimateMarginCount > 0 ? Math.round((estimateMarginSum / estimateMarginCount) * 1000) / 10 : null,
+        total_margin: Math.round(estimateMarginTotal * 100) / 100,
+        aging_buckets: agingBuckets,
+        aging_rows: agingRows.sort((a: any, b: any) => a.days_to_expiry - b.days_to_expiry).slice(0, 15),
+        by_salesperson: Object.values(estimateBySalesperson).map((s: any) => ({ ...s, avg_quote_value: s.count > 0 ? Math.round((s.quote_value / s.count) * 100) / 100 : 0, win_rate: s.decided_count > 0 ? Math.round((s.won_count / s.decided_count) * 1000) / 10 : null })).sort((a: any, b: any) => b.quote_value - a.quote_value).slice(0, 12),
+        lost_reasons: Object.values(estimateLostReasonMap).map((r: any) => ({ ...r, lost_value: Math.round(r.lost_value * 100) / 100 })).sort((a: any, b: any) => b.count - a.count || b.lost_value - a.lost_value).slice(0, 10),
+        markup_usage: markupUsage,
+        avg_part_cost_ratio: partCostRatioCount > 0 ? Math.round((partCostRatioSum / partCostRatioCount) * 1000) / 10 : null,
+        request_conversion: requestConversion,
+      };
+      const funnel = {
+        estimate_funnel: estimateFunnel,
+        stage_counts: stageCounts,
+        total: rows.length,
+        open_pipeline_value: Math.round(openPipelineValue * 100) / 100,
+        won_value: Math.round(wonValue * 100) / 100,
+        won_count: wonCount,
+        decided_count: decidedCount,
+        win_rate: decidedCount > 0 ? Math.round((wonCount / decidedCount) * 1000) / 10 : null,
+        by_salesperson: salespeople,
+        lost_reasons: lostReasons,
+      };
+      return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
+    }
+
+    if (action === "global_search") {
+      const query = clean(body?.query).toLowerCase();
+      const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [], work_orders: [], orders: [] };
+      if (query.length < 2) return Response.json({ success: true, action, results: empty });
+      const [opps, estimates, invoices, pos, cos, customers, wos, orders] = await Promise.all([
+        Opportunity.filter({}, "-last_activity_at", 500),
+        Estimate.filter({}, "-created_date", 500),
+        Invoice.filter({}),
+        PurchaseOrder.filter({}),
+        ChangeOrder.filter({}),
+        Customer.filter({}, "-updated_date", 500).catch(() => []),
+        WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
+        Order.filter({}, "-updated_date", 500).catch(() => []),
+      ]);
+      for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
+        if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
+      }
+      const has = (row: any, fields: string[]) => fields.some((f) => clean(row?.[f]).toLowerCase().includes(query));
+      return Response.json({
+        success: true,
+        action,
+        results: {
+          opportunities: opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage) })),
+          estimates: estimates.filter((r: any) => !r?.deleted && has(r, ["project_name", "client_name", "estimate_number"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status) })),
+          invoices: invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), invoice_number: clean(r?.invoice_number), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), total: num(r?.total) })),
+          purchase_orders: pos.filter((r: any) => has(r, ["po_number", "vendor_name"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total) })),
+          change_orders: cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"])).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status) })),
+          customers: (Array.isArray(customers) ? customers : [])
+            .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"]))
+            .slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status) })),
+          work_orders: (Array.isArray(wos) ? wos : [])
+            .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description"]))
+            .slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date) })),
+          orders: (Array.isArray(orders) ? orders : [])
+            .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"]))
+            .slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status) })),
+        },
+      });
+    }
+
+    if (action === "get_opportunity") {
+      const opportunityId = clean(body?.opportunity_id);
+      if (!opportunityId) throw bad("opportunity_id is required.");
+      const opportunity = await Opportunity.get(opportunityId).catch(() => null);
+      if (!opportunity?.id) throw bad("Opportunity not found.", 404);
+      const [intakes, requests, customer, contact, location, workOrder, estimates, invoices, purchaseOrders, changeOrders, activity] = await Promise.all([
+        Intake.filter({ opportunity_id: opportunityId }, "-captured_at", 100),
+        EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100),
+        clean(opportunity?.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
+        clean(opportunity?.contact_id) ? CustomerContact.get(clean(opportunity.contact_id)).catch(() => null) : null,
+        clean(opportunity?.location_id) ? CustomerLocation.get(clean(opportunity.location_id)).catch(() => null) : null,
+        clean(opportunity?.compatibility_work_order_id)
+          ? WorkOrder.get(clean(opportunity.compatibility_work_order_id)).catch(() => null)
+          : null,
+        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 50),
+        Invoice.filter({ opportunity_id: opportunityId }),
+        PurchaseOrder.filter({ opportunity_id: opportunityId }),
+        ChangeOrder.filter({ opportunity_id: opportunityId }),
+        Activity.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
+      ]);
+      const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
+      const billedTotal = money(liveInvoices.filter((i: any) => clean(i?.status) !== "draft").reduce((s: number, i: any) => s + num(i?.total), 0));
+      const collectedTotal = money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0));
+      const committedTotal = money((Array.isArray(purchaseOrders) ? purchaseOrders : [])
+        .filter((p: any) => clean(p?.status) !== "cancelled").reduce((s: number, p: any) => s + num(p?.total), 0));
+      const coDelta = money((Array.isArray(changeOrders) ? changeOrders : [])
+        .filter((c: any) => ["approved", "applied"].includes(clean(c?.status))).reduce((s: number, c: any) => s + num(c?.amount_delta), 0));
+
+      let finalOpportunity = opportunity;
+      const reconciledRequests: any[] = [];
+      let anyCompleted = false;
+      for (const r of Array.isArray(requests) ? requests : []) {
+        try {
+          const res = await reconcileEstimatingRequest({ EstimatingRequest, Estimate, request: r });
+          reconciledRequests.push(res.request);
+          if (res.completed) anyCompleted = true;
+        } catch {
+          reconciledRequests.push(r);
+        }
+      }
+      if (anyCompleted && clean(opportunity.stage) === "estimating") {
+        const now = new Date().toISOString();
+        const desired = { stage: "quoted", stage_changed_at: now, last_activity_at: now };
+        finalOpportunity = await replaceFoundationFieldsIfUnchanged({
+          entity: Opportunity,
+          recordId: opportunityId,
+          expectedFields: expectedFor(opportunity, opportunity, desired),
+          nextFields: desired,
+          label: "Opportunity stage advance",
+        }).catch(() => opportunity);
+        try {
+          await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted");
+        } catch {}
+        await logActivity(Activity, {
+          opportunity_id: opportunityId, actor,
+          event_type: "reconciled",
+          summary: "Stage advanced to quoted â€” linked estimate sent/approved",
+          details: { from_stage: clean(opportunity.stage), to_stage: "quoted" },
+        });
+        if (clean(finalOpportunity?.stage) === "quoted" && clean(opportunity.stage) !== "quoted") {
+          await emitOpportunityAutomation(base44, "sales_status_changed", opportunityId, actor);
+        }
+      }
+      return Response.json({
+        success: true,
+        action,
+        opportunity: finalOpportunity,
+        customer: customer || null,
+        contact: contact || null,
+        location: location || null,
+        intakes: Array.isArray(intakes) ? intakes : [],
+        estimating_requests: reconciledRequests,
+        work_order: workOrder || null,
+        estimates: (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true),
+        invoices: Array.isArray(invoices) ? invoices : [],
+        purchase_orders: Array.isArray(purchaseOrders) ? purchaseOrders : [],
+        change_orders: Array.isArray(changeOrders) ? changeOrders : [],
+        activity: Array.isArray(activity) ? activity : [],
+        financials: {
+          invoiced: billedTotal,
+          collected: collectedTotal,
+          open_ar: money(billedTotal - collectedTotal),
+          po_committed: committedTotal,
+          co_delta: coDelta,
+        },
+      });
+    }
+
+    if (action === "list_estimating_requests") {
+      const includeClosed = body?.include_closed === true;
+      let rows = await EstimatingRequest.filter({});
+      if (!Array.isArray(rows)) throw bad("Estimating request lookup failed.", 500);
+      // Close out open requests whose linked estimate has gone to the customer.
+      let reconciles = 0;
+      for (let i = 0; i < rows.length && reconciles < 60; i += 1) {
+        const r = rows[i];
+        if (!OPEN_REQUEST_STATUSES.has(clean(r?.status)) || !clean(r?.estimate_id)) continue;
+        reconciles += 1;
+        try {
+          const res = await reconcileEstimatingRequest({ EstimatingRequest, Estimate, request: r });
+          rows[i] = res.request;
+        } catch {}
+      }
+      const filtered = rows.filter((r: any) => includeClosed || OPEN_REQUEST_STATUSES.has(clean(r?.status)));
+      const opportunityIds = [...new Set(filtered.map((r: any) => clean(r?.opportunity_id)).filter(Boolean))];
+      const opportunities = new Map(
+        (await Promise.all(opportunityIds.map((id) => Opportunity.get(id).catch(() => null))))
+          .filter((o: any) => o?.id)
+          .map((o: any) => [clean(o.id), o]),
+      );
+      const rank: any = { rush: 0, high: 1, normal: 2, low: 3 };
+      const requests = filtered
+        .sort((a: any, b: any) =>
+          (rank[clean(a?.priority)] ?? 2) - (rank[clean(b?.priority)] ?? 2)
+          || clean(a?.requested_at || a?.created_date).localeCompare(clean(b?.requested_at || b?.created_date)))
+        .slice(0, 250)
+        .map((r: any) => {
+          const opp = opportunities.get(clean(r?.opportunity_id));
+          return {
+            id: clean(r?.id),
+            opportunity_id: clean(r?.opportunity_id),
+            estimate_id: clean(r?.estimate_id),
+            status: clean(r?.status),
+            priority: clean(r?.priority) || "normal",
+            assigned_estimator: clean(r?.assigned_estimator),
+            requested_at: clean(r?.requested_at || r?.created_date),
+            submitted_at: clean(r?.submitted_at),
+            opportunity_title: clean(opp?.title),
+            customer_display_name: clean(opp?.customer_display_name),
+            opportunity_stage: clean(opp?.stage),
+            updated_date: clean(r?.updated_date),
+          };
+        });
+      return Response.json({ success: true, action, estimating_requests: requests });
+    }
+
+    if (action === "list_follow_ups") {
+      const rows = await Opportunity.filter({});
+      if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
+      const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
+      const items = rows
+        .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && (clean(o?.next_action) || clean(o?.next_action_due)))
+        .map((o: any) => {
+          const due = clean(o?.next_action_due);
+          return {
+            id: clean(o?.id),
+            title: clean(o?.title),
+            customer_display_name: clean(o?.customer_display_name),
+            stage: clean(o?.stage),
+            salesperson: clean(o?.salesperson),
+            next_action: clean(o?.next_action),
+            next_action_due: due,
+            next_action_assignee: clean(o?.next_action_assignee),
+            overdue: Boolean(due) && due < today,
+            stage_changed_at: clean(o?.stage_changed_at),
+            last_activity_at: clean(o?.last_activity_at),
+          };
+        })
+        .sort((a: any, b: any) =>
+          Number(b.overdue) - Number(a.overdue)
+          || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
+
+      // Stale sent quotes on quoted-stage opportunities become implicit follow-ups:
+      // aging after 7 days without a response, "expired" past quote_valid_days.
+      const requests = await EstimatingRequest.filter({}).catch(() => []);
+      const estimateIdByOpp = new Map();
+      for (const r of Array.isArray(requests) ? requests : []) {
+        const oppId = clean(r?.opportunity_id);
+        const estId = clean(r?.estimate_id);
+        if (oppId && estId && !estimateIdByOpp.has(oppId)) estimateIdByOpp.set(oppId, estId);
+      }
+      for (const o of rows.filter((x: any) => clean(x?.stage) === "quoted").slice(0, 100)) {
+        const estId = estimateIdByOpp.get(clean(o?.id));
+        if (!estId) continue;
+        const est = await Estimate.get(estId).catch(() => null);
+        if (!est || est?.deleted === true || clean(est?.status) !== "sent") continue;
+        const issued = clean(est?.quote_issue_date) || clean(est?.updated_date).slice(0, 10);
+        const issuedMs = Date.parse(issued);
+        if (!Number.isFinite(issuedMs)) continue;
+        const ageDays = Math.floor((Date.now() - issuedMs) / 86400000);
+        if (ageDays < 7) continue;
+        const validDays = num(est?.quote_valid_days, 30);
+        const expired = ageDays >= validDays;
+        items.push({
+          id: clean(o?.id),
+          title: clean(o?.title),
+          customer_display_name: clean(o?.customer_display_name),
+          stage: "quoted",
+          salesperson: clean(o?.salesperson),
+          next_action: expired
+            ? `Quote ${clean(est?.estimate_number) || ""} expired (${validDays}d validity) â€” re-issue or follow up`
+            : `Quote ${clean(est?.estimate_number) || ""} sent ${ageDays}d ago â€” no response`,
+          next_action_due: new Date(issuedMs + Math.min(validDays, ageDays + 3) * 86400000).toISOString().slice(0, 10),
+          next_action_assignee: clean(o?.next_action_assignee),
+          overdue: expired,
+          stale_quote: true,
+          quote_age_days: ageDays,
+          quote_expired: expired,
+          stage_changed_at: clean(o?.stage_changed_at),
+          last_activity_at: clean(o?.last_activity_at),
+        });
+      }
+      items.sort((a: any, b: any) =>
+        Number(b.overdue) - Number(a.overdue)
+        || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
+      return Response.json({ success: true, action, follow_ups: items.slice(0, 200), today });
+    }
+
+    if (action === "assign_estimator") {
+      const requestId = clean(body?.estimating_request_id);
+      const current = await EstimatingRequest.get(requestId).catch(() => null);
+      if (!current?.id) throw bad("Estimating request not found.", 404);
+      if (!OPEN_REQUEST_STATUSES.has(clean(current.status))) throw bad("Only open estimating requests can be assigned.", 409);
+      const desired: any = {
+        assigned_estimator: clean(body?.assigned_estimator),
+      };
+      if (Object.prototype.hasOwnProperty.call(body || {}, "priority")) {
+        desired.priority = requireEnum(body?.priority || "normal", PRIORITIES, "priority") || "normal";
+      }
+      const baseline = body?.baseline && typeof body.baseline === "object" ? body.baseline : current;
+      const expected = expectedFoundationFields({ ...current, ...baseline }, desired);
+      const updated = await replaceEstimatingRequestFieldsIfUnchanged({
+        entity: EstimatingRequest,
+        recordId: requestId,
+        expectedFields: expected,
+        nextFields: desired,
+        label: "Estimating Request assignment",
+      });
+      await logActivity(Activity, {
+        opportunity_id: clean(current.opportunity_id), actor,
+        event_type: "estimator_assigned",
+        summary: `Estimator assigned: ${clean(desired.assigned_estimator) || "unassigned"} (${clean(desired.priority || current.priority) || "normal"})`,
+        details: { estimating_request_id: requestId, assigned_estimator: clean(desired.assigned_estimator), priority: clean(desired.priority) },
+      });
+      return Response.json({ success: true, action, estimating_request: updated });
+    }
+
+    if (action === "capture_intake") {
+      const key = clean(body?.creation_request_key);
+      if (!key || key.length > 256) throw bad("A valid creation_request_key is required.");
+      const sourceType = requireEnum(body?.source_type || "manual", SOURCE_TYPES, "source_type") || "manual";
+      const oppKey = `${key}:opportunity`.slice(0, 256);
+      const intakeKey = `${key}:intake`.slice(0, 256);
+
+      const existingIntakes = await findByCreationKey(Intake, intakeKey);
+      if (existingIntakes.length > 1) {
+        throw bad("Multiple intake records share this creation receipt; review before retrying.", 409);
+      }
+      if (existingIntakes.length === 1) {
+        const linkedId = clean(existingIntakes[0]?.opportunity_id);
+        const existing = linkedId ? await Opportunity.get(linkedId).catch(() => null) : null;
+        if (existing?.id) {
+          return Response.json({ success: true, action, opportunity: existing, intake: existingIntakes[0], reused: true });
+        }
+      }
+
+      const input = body?.fields && typeof body.fields === "object" ? body.fields : {};
+      const requirements: any = {};
+      for (const field of REQUIREMENT_FIELDS) {
+        requirements[field] = requireEnum(input[field] || "unknown", REQUIREMENT_VALUES, field) || "unknown";
+      }
+      const customerId = clean(input.customer_id);
+      let customer: any = null;
+      if (customerId) {
+        customer = await Customer.get(customerId).catch(() => null);
+        if (!customer?.id) throw bad("The selected Customer no longer exists.", 409);
+      }
+      const displayName = clean(input.customer_display_name) || clean(customer?.company_name);
+      const title = clean(input.title) || displayName || "New opportunity";
+      if (!title) throw bad("A title or customer name is required.");
+
+      const now = new Date().toISOString();
+      const opportunityData: any = {
+        creation_request_key: oppKey,
+        customer_id: customer ? clean(customer.id) : customerId,
+        customer_display_name: displayName || clean(customer?.company_name),
+        title,
+        job_description: clean(input.job_description),
+        stage: "new",
+        opened_at: now,
+        stage_changed_at: now,
+        last_activity_at: now,
+        salesperson: clean(input.salesperson),
+        lead_source: clean(input.lead_source),
+        origination: clean(input.origination),
+        budget_note: clean(input.budget_note),
+        desired_completion_date: clean(input.desired_completion_date),
+        desired_install_date: clean(input.desired_install_date),
+        priority: requireEnum(input.priority || "normal", PRIORITIES, "priority") || "normal",
+        ...requirements,
+        electrical_details: clean(input.electrical_details),
+        property_relationship: clean(input.property_relationship) || "unknown",
+        next_action: clean(input.next_action),
+        next_action_due: clean(input.next_action_due),
+        next_action_assignee: clean(input.next_action_assignee),
+        notes: clean(input.notes),
+        source_summary: { capture_source: sourceType, captured_by: actor, captured_at: now },
+      };
+      const budgetAmount = Number(input.budget_amount);
+      if (Number.isFinite(budgetAmount) && budgetAmount >= 0) opportunityData.budget_amount = budgetAmount;
+
+      const oppResult = await createFoundationRecordWithRecovery({
+        entity: Opportunity,
+        data: opportunityData,
+        readMatches: () => findByCreationKey(Opportunity, oppKey),
+        label: "Opportunity intake capture",
+      });
+      const opportunity = oppResult.record;
+
+      const intakeResult = await createFoundationRecordWithRecovery({
+        entity: Intake,
+        data: {
+          creation_request_key: intakeKey,
+          opportunity_id: clean(opportunity.id),
+          source_type: sourceType,
+          source_system: clean(input.source_system) || "ccs-app",
+          source_external_id: clean(input.source_external_id),
+          source_received_at: clean(input.source_received_at) || now,
+          captured_at: now,
+          captured_by: actor,
+          captured_fields: input,
+          resolution_status: "linked",
+          resolution_notes: "Captured and linked through the Opportunities workspace.",
+        },
+        readMatches: () => findByCreationKey(Intake, intakeKey),
+        label: "Opportunity intake event",
+      });
+      const intake = intakeResult.record;
+
+      if (!clean(opportunity.source_primary_intake_id)) {
+        await replaceFoundationFieldsIfUnchanged({
+          entity: Opportunity,
+          recordId: clean(opportunity.id),
+          expectedFields: { source_primary_intake_id: opportunity.source_primary_intake_id ?? "" },
+          nextFields: { source_primary_intake_id: clean(intake.id) },
+          label: "Opportunity primary intake link",
+        }).catch(() => null);
+      }
+
+      const fresh = await Opportunity.get(clean(opportunity.id)).catch(() => opportunity);
+      await logActivity(Activity, {
+        opportunity_id: clean(opportunity.id), actor,
+        event_type: "created",
+        summary: oppResult.status === "created"
+          ? `Opportunity captured (${sourceType})`
+          : "Intake resolved against an existing opportunity",
+        details: { source_type: sourceType, intake_id: clean(intake?.id), reused: oppResult.status !== "created" },
+      });
+      if (oppResult.status === "created") {
+        await emitOpportunityAutomation(base44, "sales_lead_created", clean(opportunity.id), actor);
+      }
+      return Response.json({
+        success: true,
+        action,
+        opportunity: fresh || opportunity,
+        intake,
+        reused: oppResult.status !== "created",
+      });
+    }
+
+    if (action === "update_opportunity") {
+      const opportunityId = clean(body?.opportunity_id);
+      if (!opportunityId) throw bad("opportunity_id is required.");
+      const baseline = body?.baseline && typeof body.baseline === "object" ? body.baseline : null;
+      const input = body?.fields && typeof body.fields === "object" ? body.fields : {};
+      const desired: any = pick(input, EDITABLE_OPPORTUNITY_FIELDS);
+      if (!Object.keys(desired).length) throw bad("No editable fields were provided.");
+
+      if (Object.prototype.hasOwnProperty.call(desired, "stage")) {
+        desired.stage = requireEnum(desired.stage, STAGES, "stage") || "new";
+      }
+      for (const field of REQUIREMENT_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(desired, field)) {
+          desired[field] = requireEnum(desired[field] || "unknown", REQUIREMENT_VALUES, field) || "unknown";
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "priority")) {
+        desired.priority = requireEnum(desired.priority || "normal", PRIORITIES, "priority") || "normal";
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "property_relationship")) {
+        const allowed = ["owner", "tenant", "agent", "unknown"];
+        desired.property_relationship = requireEnum(desired.property_relationship || "unknown", allowed, "property_relationship") || "unknown";
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "customer_id")) {
+        const cid = clean(desired.customer_id);
+        if (cid) {
+          const customer = await Customer.get(cid).catch(() => null);
+          if (!customer?.id) throw bad("The selected Customer no longer exists.", 409);
+        }
+        desired.customer_id = cid;
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "contact_id")) {
+        const cid = clean(desired.contact_id);
+        if (cid) {
+          const contact = await CustomerContact.get(cid).catch(() => null);
+          if (!contact?.id) throw bad("The selected CustomerContact no longer exists.", 409);
+        }
+        desired.contact_id = cid;
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "location_id")) {
+        const lid = clean(desired.location_id);
+        if (lid) {
+          const location = await CustomerLocation.get(lid).catch(() => null);
+          if (!location?.id) throw bad("The selected CustomerLocation no longer exists.", 409);
+        }
+        desired.location_id = lid;
+      }
+      if (Object.prototype.hasOwnProperty.call(desired, "budget_amount")) {
+        const amount = Number(desired.budget_amount);
+        desired.budget_amount = Number.isFinite(amount) && amount >= 0 ? amount : null;
+      }
+      for (const key of Object.keys(desired)) {
+        if (typeof desired[key] === "string") desired[key] = clean(desired[key]);
+      }
+
+      const now = new Date().toISOString();
+      const current = await Opportunity.get(opportunityId).catch(() => null);
+      if (!current?.id) throw bad("Opportunity not found.", 404);
+      if (Object.prototype.hasOwnProperty.call(desired, "stage") && desired.stage !== clean(current.stage)) {
+        desired.stage_changed_at = now;
+        if (CLOSED_STAGES.has(desired.stage)) desired.closed_at = now;
+        else if (Object.prototype.hasOwnProperty.call(desired, "closed_at") === false && clean(current.closed_at)) desired.closed_at = "";
+      }
+      desired.last_activity_at = now;
+
+      const expected = expectedFor(baseline, current, desired);
+      const saved = await replaceFoundationFieldsIfUnchanged({
+        entity: Opportunity,
+        recordId: opportunityId,
+        expectedFields: expected,
+        nextFields: desired,
+        label: "Opportunity fields",
+      });
+      let syncedStage = "";
+      let stageSyncWarning = "";
+      if (Object.prototype.hasOwnProperty.call(desired, "stage")) {
+        const linkedWoId = clean(saved?.compatibility_work_order_id) || clean(current?.compatibility_work_order_id);
+        if (linkedWoId) {
+          try {
+            syncedStage = await syncWorkOrderStage(WorkOrder, linkedWoId, saved?.stage);
+          } catch (e: any) {
+            stageSyncWarning = e?.message || "Work order stage sync failed.";
+          }
+        }
+      }
+      {
+        const changed = Object.keys(desired).filter((k) => !["last_activity_at", "stage_changed_at", "closed_at"].includes(k));
+        const stageChanged = changed.includes("stage") && desired.stage !== clean(current.stage);
+        await logActivity(Activity, {
+          opportunity_id: opportunityId, actor,
+          event_type: stageChanged ? "stage_changed" : "updated",
+          summary: stageChanged
+            ? `Stage ${clean(current.stage) || "new"} â†’ ${desired.stage}`
+            : `${changed.length || 1} field${(changed.length || 1) === 1 ? "" : "s"} updated: ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "â€¦" : ""}`,
+          details: { fields: changed, from_stage: clean(current.stage), to_stage: clean(saved?.stage) },
+        });
+        if (stageChanged) {
+          await emitOpportunityAutomation(base44, "sales_status_changed", opportunityId, actor);
+          const stageEvent = { won: "sales_status_won", lost: "sales_status_lost", on_hold: "sales_status_on_hold" }[clean(saved?.stage)];
+          if (stageEvent) await emitOpportunityAutomation(base44, stageEvent, opportunityId, actor);
+        }
+        if (changed.includes("salesperson") && clean(desired.salesperson) !== clean(current.salesperson)) {
+          await emitOpportunityAutomation(base44, "sales_rep_changed", opportunityId, actor);
+        }
+      }
+      return Response.json({
+        success: true, action, opportunity: saved,
+        work_order_stage: syncedStage || undefined,
+        stage_sync_warning: stageSyncWarning || undefined,
+      });
+    }
+
+    if (action === "resolve_intake") {
+      const intakeId = clean(body?.intake_id);
+      const resolutionAction = clean(body?.resolution_action);
+      if (!intakeId) throw bad("intake_id is required.");
+      if (!["link", "reject"].includes(resolutionAction)) throw bad("resolution_action must be link or reject.");
+      const intake = await Intake.get(intakeId).catch(() => null);
+      if (!intake?.id) throw bad("Intake record not found.", 404);
+
+      const desired: any = { resolution_notes: clean(body?.resolution_notes) || clean(intake.resolution_notes) };
+      if (resolutionAction === "reject") {
+        desired.resolution_status = "rejected";
+      } else {
+        const opportunityId = clean(body?.opportunity_id);
+        if (!opportunityId) throw bad("opportunity_id is required to link an intake.");
+        const opportunity = await Opportunity.get(opportunityId).catch(() => null);
+        if (!opportunity?.id) throw bad("Opportunity not found.", 404);
+        desired.resolution_status = "linked";
+        desired.opportunity_id = opportunityId;
+      }
+      const saved = await replaceFoundationFieldsIfUnchanged({
+        entity: Intake,
+        recordId: intakeId,
+        expectedFields: expectedFor(body?.baseline, intake, desired),
+        nextFields: desired,
+        label: "Opportunity intake resolution",
+      });
+      return Response.json({ success: true, action, intake: saved });
+    }
+
+    if (action === "link_work_order") {
+      const opportunityId = clean(body?.opportunity_id);
+      const workOrderId = clean(body?.work_order_id);
+      const requestId = clean(body?.estimating_request_id);
+      if (!opportunityId || !workOrderId) throw bad("opportunity_id and work_order_id are required.");
+      const [opportunity, workOrder] = await Promise.all([
+        Opportunity.get(opportunityId).catch(() => null),
+        WorkOrder.get(workOrderId).catch(() => null),
+      ]);
+      if (!opportunity?.id) throw bad("Opportunity not found.", 404);
+      if (!workOrder?.id) throw bad("WorkOrder not found.", 404);
+      if (clean(workOrder.opportunity_id) && clean(workOrder.opportunity_id) !== opportunityId) {
+        throw bad("WorkOrder already links a different Opportunity.", 409);
+      }
+      if (clean(workOrder.estimating_request_id) && requestId && clean(workOrder.estimating_request_id) !== requestId) {
+        throw bad("WorkOrder already links a different EstimatingRequest.", 409);
+      }
+      if (clean(opportunity.compatibility_work_order_id) && clean(opportunity.compatibility_work_order_id) !== workOrderId) {
+        throw bad("Opportunity already links a different compatibility WorkOrder.", 409);
+      }
+
+      const now = new Date().toISOString();
+      const woDesired: any = {};
+      if (!clean(workOrder.opportunity_id)) woDesired.opportunity_id = opportunityId;
+      if (requestId && !clean(workOrder.estimating_request_id)) woDesired.estimating_request_id = requestId;
+      let savedWorkOrder = workOrder;
+      if (Object.keys(woDesired).length) {
+        savedWorkOrder = await replaceFoundationFieldsIfUnchanged({
+          entity: WorkOrder,
+          recordId: workOrderId,
+          expectedFields: expectedFor(workOrder, workOrder, woDesired),
+          nextFields: woDesired,
+          label: "WorkOrder opportunity compatibility links",
+        });
+      }
+
+      let savedOpportunity = opportunity;
+      if (!clean(opportunity.compatibility_work_order_id)) {
+        savedOpportunity = await replaceFoundationFieldsIfUnchanged({
+          entity: Opportunity,
+          recordId: opportunityId,
+          expectedFields: expectedFor(null, opportunity, {
+            compatibility_work_order_id: workOrderId,
+            last_activity_at: now,
+          }),
+          nextFields: { compatibility_work_order_id: workOrderId, last_activity_at: now },
+          label: "Opportunity compatibility WorkOrder link",
+        });
+      }
+
+      let syncedStage = "";
+      let stageSyncWarning = "";
+      try {
+        syncedStage = await syncWorkOrderStage(WorkOrder, workOrderId, savedOpportunity?.stage);
+      } catch (e: any) {
+        stageSyncWarning = e?.message || "Work order stage sync failed.";
+      }
+
+      await logActivity(Activity, {
+        opportunity_id: opportunityId, actor,
+        event_type: "linked_work_order",
+        summary: `Linked compatibility WorkOrder ${clean(savedWorkOrder?.title) || workOrderId}`,
+        details: { work_order_id: workOrderId, work_order_stage: syncedStage || clean(savedWorkOrder?.sales_status) },
+      });
+
+      return Response.json({
+        success: true,
+        action,
+        opportunity: savedOpportunity,
+        work_order: savedWorkOrder,
+        work_order_stage: syncedStage || undefined,
+        stage_sync_warning: stageSyncWarning || undefined,
+        reused: clean(opportunity.compatibility_work_order_id) === workOrderId && !Object.keys(woDesired).length,
+      });
+    }
+
+    if (action === "request_estimate") {
+      const opportunityId = clean(body?.opportunity_id);
+      if (!opportunityId) throw bad("opportunity_id is required.");
+      const opportunity = await Opportunity.get(opportunityId).catch(() => null);
+      if (!opportunity?.id) throw bad("Opportunity not found.", 404);
+      if (CLOSED_STAGES.has(clean(opportunity.stage))) {
+        throw bad("Closed Opportunities cannot request a new estimate.", 409);
+      }
+
+      const key = clean(body?.creation_request_key);
+      if (!key || key.length > 240) throw bad("A valid creation_request_key is required.");
+      const requestKey = `${key}:request`.slice(0, 256);
+      const estimateKey = `${key}:estimate`.slice(0, 256);
+      const now = new Date().toISOString();
+
+      const existingRequests = await EstimatingRequest.filter({ opportunity_id: opportunityId }, "-created_date", 100);
+      const openRequest = (Array.isArray(existingRequests) ? existingRequests : [])
+        .find((row: any) => OPEN_REQUEST_STATUSES.has(clean(row?.status)) && clean(row?.estimate_id));
+      if (openRequest) {
+        const estimate = await Estimate.get(clean(openRequest.estimate_id)).catch(() => null);
+        if (estimate?.id) {
+          return Response.json({
+            success: true,
+            action,
+            estimating_request: openRequest,
+            estimate,
+            reused: true,
+          });
+        }
+      }
+
+      const [customer, primaryIntake] = await Promise.all([
+        clean(opportunity.customer_id) ? Customer.get(clean(opportunity.customer_id)).catch(() => null) : null,
+        clean(opportunity.source_primary_intake_id)
+          ? Intake.get(clean(opportunity.source_primary_intake_id)).catch(() => null)
+          : null,
+      ]);
+      const snapshot = buildHandoffSnapshot({ opportunity, customer, primaryIntake });
+
+      const requestData: any = {
+        creation_request_key: requestKey,
+        opportunity_id: opportunityId,
+        customer_id: clean(customer?.id || opportunity.customer_id),
+        contact_id: clean(opportunity.contact_id),
+        location_id: clean(opportunity.location_id),
+        compatibility_work_order_id: clean(opportunity.compatibility_work_order_id),
+        status: "ready",
+        requested_at: now,
+        requested_by: actor,
+        submitted_at: now,
+        assigned_estimator: clean(body?.assigned_estimator),
+        priority: requireEnum(body?.priority || opportunity.priority || "normal", PRIORITIES, "priority") || "normal",
+        desired_completion_date: clean(opportunity.desired_completion_date),
+        desired_install_date: clean(opportunity.desired_install_date),
+        request_notes: clean(body?.request_notes) || clean(opportunity.notes),
+        survey_requirement: clean(opportunity.survey_requirement) || "unknown",
+        permit_requirement: clean(opportunity.permit_requirement) || "unknown",
+        installation_requirement: clean(opportunity.installation_requirement) || "unknown",
+        removal_requirement: clean(opportunity.removal_requirement) || "unknown",
+        electrical_requirement: clean(opportunity.electrical_requirement) || "unknown",
+        handoff_snapshot_version: 1,
+        handoff_snapshot: snapshot,
+        attachment_refs: Array.isArray(opportunity.attachment_refs) ? opportunity.attachment_refs : [],
+      };
+
+      const requestResult = await createFoundationRecordWithRecovery({
+        entity: EstimatingRequest,
+        data: requestData,
+        readMatches: () => findByCreationKey(EstimatingRequest, requestKey),
+        label: "Estimating Request handoff",
+      });
+      let request = requestResult.record;
+
+      const displayName = clean(customer?.company_name || opportunity.customer_display_name) || "Customer";
+      const projectName = clean(opportunity.title) || `${displayName} â€” New estimate`;
+      const requirementSummary = [
+        ["Survey", snapshot.survey_requirement],
+        ["Permit", snapshot.permit_requirement],
+        ["Install", snapshot.installation_requirement],
+        ["Removal", snapshot.removal_requirement],
+        ["Electrical", snapshot.electrical_requirement],
+      ]
+        .filter(([, v]) => v && v !== "unknown" && v !== "na")
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(" Â· ");
+      const notesText = [
+        clean(snapshot.job_description),
+        requirementSummary ? `Requirements â€” ${requirementSummary}` : "",
+        clean(snapshot.notes),
+      ].filter(Boolean).join("\n");
+      const estimateData: any = {
+        creation_request_key: estimateKey,
+        project_name: projectName,
+        client_name: displayName,
+        customer_id: clean(customer?.id || opportunity.customer_id) || null,
+        opportunity_id: opportunityId,
+        estimating_request_id: clean(request.id),
+        salesperson: clean(opportunity.salesperson),
+        site_address: clean(snapshot.captured_site_address),
+        contact_name: clean(snapshot.captured_contact_name),
+        order_contact: clean(snapshot.captured_contact_name),
+        contact_email: clean(snapshot.captured_contact_email),
+        contact_phone: clean(snapshot.captured_contact_phone),
+        office_phone: clean(snapshot.captured_contact_phone || customer?.company_phone),
+        target_install_date: clean(snapshot.desired_install_date || snapshot.desired_completion_date),
+        priority: clean(opportunity.priority) || "normal",
+        notes: notesText,
+        status: "draft",
+      };
+      const estimateResult = await createFoundationRecordWithRecovery({
+        entity: Estimate,
+        data: estimateData,
+        readMatches: () => findByCreationKey(Estimate, estimateKey),
+        label: "Estimating Request estimate",
+      });
+      const estimate = estimateResult.record;
+
+      if (clean(request.status) !== "in_progress" || clean(request.estimate_id) !== clean(estimate.id)) {
+        request = await replaceEstimatingRequestFieldsIfUnchanged({
+          entity: EstimatingRequest,
+          recordId: clean(request.id),
+          expectedFields: { status: request.status, estimate_id: request.estimate_id ?? "" },
+          nextFields: { status: "in_progress", estimate_id: clean(estimate.id) },
+          label: "Estimating Request estimate link",
+        });
+      }
+
+      const opportunityDesired: any = {
+        primary_estimating_request_id: clean(request.id),
+        last_activity_at: now,
+      };
+      if (!["estimating", "quoted"].includes(clean(opportunity.stage))) {
+        opportunityDesired.stage = "estimating";
+        opportunityDesired.stage_changed_at = now;
+      }
+      const freshOpportunity = await replaceFoundationFieldsIfUnchanged({
+        entity: Opportunity,
+        recordId: opportunityId,
+        expectedFields: expectedFoundationFields(opportunity, opportunityDesired),
+        nextFields: opportunityDesired,
+        label: "Opportunity estimating link",
+      }).catch(() => null);
+
+      await logActivity(Activity, {
+        opportunity_id: opportunityId, actor,
+        event_type: "estimate_requested",
+        summary: `Estimate requested â€” ${clean(estimate?.project_name) || clean(estimate?.estimate_number) || clean(estimate?.id)}`,
+        details: {
+          estimating_request_id: clean(request?.id),
+          estimate_id: clean(estimate?.id),
+          priority: clean(request?.priority),
+          assigned_estimator: clean(request?.assigned_estimator),
+          reused: requestResult.status !== "created",
+        },
+      });
+      if (opportunityDesired.stage && clean(freshOpportunity?.stage) === "estimating" && clean(opportunity.stage) !== "estimating") {
+        await emitOpportunityAutomation(base44, "sales_status_changed", opportunityId, actor);
+      }
+
+      return Response.json({
+        success: true,
+        action,
+        estimating_request: request,
+        estimate,
+        opportunity: freshOpportunity || opportunity,
+        reused: requestResult.status !== "created",
+      });
+    }
+
+    if (action === "get_customer_360") {
+      const customerId = clean(body?.customer_id);
+      const customer = await Customer.get(customerId).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+      const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = await Promise.all([
+        CustomerContact.filter({ customer_id: customerId }).catch(() => []),
+        CustomerLocation.filter({ customer_id: customerId }).catch(() => []),
+        Opportunity.filter({ customer_id: customerId }).catch(() => []),
+        Invoice.filter({ customer_id: customerId }).catch(() => []),
+        WorkOrder.filter({ customer_id: customerId }).catch(() => []),
+        Payment.filter({ customer_id: customerId }).catch(() => []),
+        Estimate.filter({ customer_id: customerId }).catch(() => []),
+      ]);
+      const custEstimates = (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true)
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const estimateStatusCounts: any = {};
+      for (const e of custEstimates) { const st = clean(e?.status) || "draft"; estimateStatusCounts[st] = (estimateStatusCounts[st] || 0) + 1; }
+      const inv = Array.isArray(invoices) ? invoices : [];
+      const liveInvoices = inv.filter((i: any) => !["draft", "void"].includes(clean(i?.status)));
+      const opps = (Array.isArray(opportunities) ? opportunities : [])
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const jobs = (Array.isArray(workOrders) ? workOrders : [])
+        .filter((w: any) => w?.deleted !== true)
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const asOf = new Date().toISOString().slice(0, 10);
+      const aging = { current: 0, d1_30: 0, d31_60: 0, d61_90: 0, d90_plus: 0 };
+      for (const i of liveInvoices) {
+        const balance = num(i?.balance_due);
+        if (balance <= 0) continue;
+        const due = clean(i?.due_date) || asOf;
+        const days = Math.floor((Date.parse(asOf) - Date.parse(due)) / 86400000);
+        if (days <= 0) aging.current += balance;
+        else if (days <= 30) aging.d1_30 += balance;
+        else if (days <= 60) aging.d31_60 += balance;
+        else if (days <= 90) aging.d61_90 += balance;
+        else aging.d90_plus += balance;
+      }
+      for (const key of Object.keys(aging)) (aging as any)[key] = money((aging as any)[key]);
+      return Response.json({
+        success: true, action,
+        customer,
+        contacts: Array.isArray(contacts) ? contacts : [],
+        locations: Array.isArray(locations) ? locations : [],
+        opportunities: opps.slice(0, 50).map((o: any) => ({
+          id: clean(o?.id), title: clean(o?.title), stage: clean(o?.stage),
+          budget_amount: num(o?.budget_amount), salesperson: clean(o?.salesperson),
+          desired_install_date: clean(o?.desired_install_date), created_date: clean(o?.created_date),
+        })),
+        jobs: jobs.slice(0, 50).map((w: any) => ({
+          id: clean(w?.id), title: clean(w?.title), client_name: clean(w?.client_name),
+          current_stage: clean(w?.current_stage), sales_status: clean(w?.sales_status),
+          estimate_amount: num(w?.estimate_amount), created_date: clean(w?.created_date),
+        })),
+        estimates: custEstimates.slice(0, 50).map((e: any) => ({
+          id: clean(e?.id), estimate_number: clean(e?.estimate_number), project_name: clean(e?.project_name),
+          status: clean(e?.status), quote_total: num(e?.quote_total), quote_version: num(e?.quote_version),
+          quote_valid_until: clean(e?.quote_valid_until || e?.quote_expiration_date), created_date: clean(e?.created_date),
+        })),
+        estimate_funnel: estimateStatusCounts,
+        invoices: inv
+          .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
+          .slice(0, 50)
+          .map((i: any) => ({
+            id: clean(i?.id), invoice_number: clean(i?.invoice_number), status: clean(i?.status),
+            billing_type: clean(i?.billing_type), total: num(i?.total),
+            amount_paid: num(i?.amount_paid), balance_due: num(i?.balance_due),
+            issue_date: clean(i?.issue_date), due_date: clean(i?.due_date), terms: clean(i?.terms),
+            created_date: clean(i?.created_date),
+            days_overdue: clean(i?.due_date)
+              ? Math.max(0, Math.floor((Date.parse(asOf) - Date.parse(clean(i.due_date))) / 86400000))
+              : 0,
+          })),
+        payments: (Array.isArray(payments) ? payments : [])
+          .filter((p: any) => clean(p?.status) !== "void")
+          .sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date)))
+          .slice(0, 100)
+          .map((p: any) => ({
+            id: clean(p?.id), invoice_id: clean(p?.invoice_id), status: clean(p?.status),
+            paid_date: clean(p?.paid_date || p?.created_date).slice(0, 10),
+            amount: num(p?.amount), method: clean(p?.method), reference_number: clean(p?.reference_number),
+          })),
+        summary: {
+          open_opportunities: opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).length,
+          open_pipeline_value: money(opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).reduce((s: number, o: any) => s + num(o?.budget_amount), 0)),
+          invoiced_total: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.total), 0)),
+          collected_total: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0)),
+          open_ar: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.balance_due), 0)),
+          jobs_count: jobs.length,
+        },
+        ar_aging: { ...aging, as_of: asOf },
+      });
+    }
+
+    throw bad(`Unsupported opportunity workspace action: ${action}`);
+  } catch (error: any) {
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 423, 503].includes(status) ? status : 500;
+    console.error("opportunityWorkspaceAction error:", error?.message || error);
+    return Response.json({
+      success: false,
+      error: clean(error?.message || "Opportunity workspace action failed."),
+    }, { status: safeStatus });
+  }
+});
