@@ -76,7 +76,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 65. **[F]** Paid-break daily cap with running tally on the kiosk
 66. **[F]** Work-pause categories (machine down, materials, weather hold)
 67. **[F]** Pause-reason analytics roll-up
-68. **[F]** Labor allocation quick-pick — recent/frequent jobs pinned per employee
+68. **[F][DONE]** Labor quick-pick - my_labor_history action + recent-job chips in CurrentWorkCard
 69. **[F]** Labor allocation split — divide remaining day across jobs at once
 70. **[F]** Labor % vs estimate warning ("WO at 110% of estimate hours")
 71. **[F]** Auto-suggest labor job from last allocation
