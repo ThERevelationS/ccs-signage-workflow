@@ -215,7 +215,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
           </div>
           <div id="clp-add-letter-row" className="flex flex-wrap gap-2 pt-1">
             {QUICK_ADD.map(qa => (
-              <button
+              <button type="button"
                 key={qa.type}
                 onClick={() => addPurchase(qa.type)}
                 className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${qa.color}`}
@@ -225,7 +225,7 @@ export default function LettersPurchaseTab({ project, settings, onUpdateProject,
             ))}
             {/* Backer Panel — only visible when there's a Dimensional Letters row */}
             {hasDimensional && (
-              <button
+              <button type="button"
                 onClick={addBackerToFirstDimensional}
                 disabled={allDimensionalHaveBacker}
                 title={allDimensionalHaveBacker ? "All Dimensional Letter rows already have a backer" : "Add a backer panel to the first Dimensional Letter row"}
