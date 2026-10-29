@@ -166,8 +166,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   );
 
   // Employee self-service: count own correction requests still awaiting review.
+  // Skipped in low-data mode - it is a secondary fetch, not core clock state.
+  const lowData = prefs?.low_data_mode === true;
   useEffect(() => {
-    if (!sessionToken || !enabled) return undefined;
+    if (!sessionToken || !enabled || lowData) return undefined;
     let cancelled = false;
     const load = async () => {
       try {
@@ -224,7 +226,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   }, [currentUser?.email, sessionToken]);
 
   // Initial + interval polling at the employee's chosen cadence.
-  const intervalSeconds = Math.min(300, Math.max(15, Number(prefs?.update_interval_seconds) || 60));
+  const lowDataMode = prefs?.low_data_mode === true;
+  const intervalSeconds = lowDataMode
+    ? Math.max(120, Math.min(300, Math.max(15, Number(prefs?.update_interval_seconds) || 60)))
+    : Math.min(300, Math.max(15, Number(prefs?.update_interval_seconds) || 60));
   useEffect(() => {
     if (!sessionToken || !email) return undefined;
     let cancelled = false;
