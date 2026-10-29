@@ -97,6 +97,10 @@
       },
       "description": "Last 20 executions: { at, status, detail, actions[] }"
     },
+    "group": {
+      "type": "string",
+      "description": "Optional folder/group label for organizing rules"
+    },
     "history": {
       "type": "array",
       "items": {
