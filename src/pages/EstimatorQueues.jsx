@@ -217,7 +217,7 @@ export default function EstimatorQueues() {
             return (
               <Link
                 key={s.key || "all"}
-                to={s.key ? `/EstimatorQueues?status=${s.key}` : "/EstimatorQueues"}
+                to={`/EstimatorQueues?${(() => { const p = new URLSearchParams(); if (s.key) p.set("status", s.key); if (q) p.set("q", q); if (sort && sort !== "newest") p.set("sort", sort); return p.toString(); })()}`}
                 aria-current={status === s.key ? "true" : undefined}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
                   status === s.key
