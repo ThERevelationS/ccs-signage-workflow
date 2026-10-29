@@ -201,6 +201,15 @@ export default function QuickClockSection({
   const credentialRef = useRef(null);
   const requestRef = useRef({});
   const lastPunchRef = useRef({ email: "", at: 0 });
+  // Per-device large-text mode for shared kiosks (gloves / distance viewing).
+  const [largeText, setLargeText] = useState(() => {
+    try { return localStorage.getItem("ccs_kiosk_large_text") === "1"; } catch { return false; }
+  });
+  const toggleLargeText = () => setLargeText((v) => {
+    const next = !v;
+    try { localStorage.setItem("ccs_kiosk_large_text", next ? "1" : "0"); } catch {}
+    return next;
+  });
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
@@ -1575,10 +1584,15 @@ export default function QuickClockSection({
         </div>
       )}
 
-      <div className="clay-card p-6 mb-6">
+      <div className="clay-card p-6 mb-6" style={largeText ? { zoom: 1.18 } : undefined}>
         <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Quick Clock In/Out
+          <button
+            type="button" onClick={toggleLargeText}
+            className={`ml-auto rounded-md border px-2 py-0.5 text-[10px] font-bold ${largeText ? "border-purple-300 bg-purple-50 text-purple-700" : "border-slate-200 text-slate-400"}`}
+            title="Large text mode for the kiosk"
+          >A+</button>
         </h2>
 
         {persistenceError && (
