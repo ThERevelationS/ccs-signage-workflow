@@ -3305,6 +3305,7 @@ Deno.serve(async (req) => {
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
     const shiftTemplateEntity = base44.asServiceRole.entities.TimeClockShiftTemplate;
+    const deviceEntity = base44.asServiceRole.entities.TimeClockDevice;
     const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
     const adminCorrectionGateEntity = base44.asServiceRole.entities.TimeClockAdminCorrectionGate;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
@@ -3472,6 +3473,7 @@ Deno.serve(async (req) => {
         labor_segments: { entity: laborEntity, query: { status: 'active' }, sort: '-started_at', label: 'Time Clock active labor segments' },
         correction_requests: { entity: correctionRequestEntity, query: { status: { $in: ['pending', 'reviewing'] } }, sort: '-requested_at', label: 'Time Clock active correction requests' },
         punch_exceptions: { entity: punchExceptionEntity, query: {}, sort: '-detected_at', label: 'Time Clock punch exception reports' },
+        devices: { entity: deviceEntity, query: {}, sort: '-last_seen_at', label: 'Time Clock devices' },
       };
       const selected = collections[collection];
       if (!selected) return Response.json({ success: false, error: 'Unknown Time Clock admin data collection.' }, { status: 400 });
@@ -7866,6 +7868,46 @@ Deno.serve(async (req) => {
         .sort((a: any, b: any) => b.available_minutes - a.available_minutes);
       const totalAvailable = employees.reduce((s: number, e: any) => s + e.available_minutes, 0);
       return Response.json({ success: true, employees, total_available_minutes: totalAvailable });
+    }
+
+    if (action === 'register_device') {
+      // Idempotent kiosk heartbeat - the kiosk registers on load and on every
+      // punch so the admin sees it in the device list with a last_seen stamp.
+      const key = typeof body.device_key === 'string' && body.device_key.trim().length >= 3 && body.device_key.trim().length <= 100 ? body.device_key.trim() : '';
+      if (!key) return Response.json({ success: false, error: 'device_key is required.' }, { status: 400 });
+      const name = typeof body.device_name === 'string' ? body.device_name.trim().slice(0, 100) : '';
+      const loc = typeof body.location === 'string' ? body.location.trim().slice(0, 100) : '';
+      const ver = typeof body.firmware_version === 'string' ? body.firmware_version.trim().slice(0, 50) : '';
+      const nowIso = new Date().toISOString();
+      const existing = await deviceEntity.filter({ device_key: key }, '-updated_date', 1).catch(() => []);
+      const device = Array.isArray(existing) && existing.length > 0 ? existing[0] : null;
+      if (device?.id) {
+        await deviceEntity.update(device.id, { device_name: name || device.device_name, location: loc || device.location, firmware_version: ver || device.firmware_version, last_seen_at: nowIso, status: 'active', is_active: true }).catch(() => null);
+        return Response.json({ success: true, device_id: device.id, registered: false });
+      }
+      const created = await deviceEntity.create({ device_key: key, device_name: name || key, location: loc, device_type: 'kiosk', firmware_version: ver, status: 'active', is_active: true, last_seen_at: nowIso, provisioned_at: nowIso, provisioned_by_email: actor.email || '' }).catch(() => null);
+      if (!created?.id) return Response.json({ success: false, error: 'Device registration failed.' }, { status: 500 });
+      return Response.json({ success: true, device_id: created.id, registered: true });
+    }
+
+    if (action === 'list_devices') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view the device list.' }, { status: 403 });
+      const rows = await deviceEntity.filter({}, 'device_name', 200).catch(() => []);
+      return Response.json({ success: true, devices: Array.isArray(rows) ? rows.filter((d: any) => d.archived_test_data !== true) : [] });
+    }
+
+    if (action === 'update_device') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to manage devices.' }, { status: 403 });
+      const devId = typeof body.device_id === 'string' ? body.device_id : '';
+      if (!devId) return Response.json({ success: false, error: 'device_id is required.' }, { status: 400 });
+      const patch: Record<string, any> = {};
+      if (typeof body.device_name === 'string') patch.device_name = body.device_name.trim().slice(0, 100);
+      if (typeof body.location === 'string') patch.location = body.location.trim().slice(0, 100);
+      if (typeof body.status === 'string' && ['active', 'provisioning', 'offline', 'retired'].includes(body.status)) patch.status = body.status;
+      if (typeof body.is_active === 'boolean') patch.is_active = body.is_active;
+      if (Object.keys(patch).length === 0) return Response.json({ success: false, error: 'Nothing to update.' }, { status: 400 });
+      await deviceEntity.update(devId, patch).catch(() => null);
+      return Response.json({ success: true });
     }
 
     if (action === 'admin_period_compare') {
