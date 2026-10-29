@@ -149,6 +149,21 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const [historyBusy, setHistoryBusy] = useState(false);
   const [historyStats, setHistoryStats] = useState(null);
   const [myPendingCorrections, setMyPendingCorrections] = useState(0);
+  const [pollError, setPollError] = useState("");
+  const [open, setOpen] = useState(false);
+  const [pulse, setPulse] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const scopeRef = useRef(scopeKey);
+  scopeRef.current = scopeKey;
+  const inFlightRef = useRef(null);
+  const snapshotRef = useRef(null);
+  snapshotRef.current = snapshotRecord.scope === scopeKey ? snapshotRecord : null;
+
+  const snapshot = snapshotRecord.scope === scopeKey ? snapshotRecord.data : null;
+  const prefs = snapshot?.prefs || null;
+  const enabled = Boolean(
+    sessionToken && snapshot && prefs?.tracker_enabled === true,
+  );
 
   // Employee self-service: count own correction requests still awaiting review.
   useEffect(() => {
@@ -169,21 +184,6 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     const timer = setInterval(load, 300000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [sessionToken, enabled]);
-  const [pollError, setPollError] = useState("");
-  const [open, setOpen] = useState(false);
-  const [pulse, setPulse] = useState(false);
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const scopeRef = useRef(scopeKey);
-  scopeRef.current = scopeKey;
-  const inFlightRef = useRef(null);
-  const snapshotRef = useRef(null);
-  snapshotRef.current = snapshotRecord.scope === scopeKey ? snapshotRecord : null;
-
-  const snapshot = snapshotRecord.scope === scopeKey ? snapshotRecord.data : null;
-  const prefs = snapshot?.prefs || null;
-  const enabled = Boolean(
-    sessionToken && snapshot && prefs?.tracker_enabled === true,
-  );
 
   const refresh = useCallback(async ({ force = false } = {}) => {
     const requestScope = scopeRef.current;
