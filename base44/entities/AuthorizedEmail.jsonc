@@ -23,6 +23,10 @@
       "type": "string",
       "description": "Unique username for time clock login"
     },
+    "notification_prefs": {
+      "type": "object",
+      "description": "Per-user notification opt-outs \u2014 e.g. { automation_emails: false } skips automation send_email actions for this user."
+    },
     "is_deactivated": {
       "type": "boolean",
       "description": "When true, sign-in is refused but the account record and history are kept"
