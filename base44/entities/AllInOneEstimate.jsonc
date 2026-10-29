@@ -182,6 +182,11 @@
       "format": "date",
       "description": "Customer-facing issue date of the currently issued quote version. Updated when the estimate transitions into sent or when an intentional revision is completed while remaining sent; historical sent estimates are not automatically backfilled."
     },
+    "quote_expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional per-estimate override of the quote expiration date. When blank, expiry is computed as quote_issue_date + quote_valid_days."
+    },
     "quote_expired": {
       "type": "boolean",
       "default": false,
@@ -610,6 +615,24 @@
     },
     "notes": {
       "type": "string"
+    },
+    "notes_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Timestamped internal note entries appended over the estimate's life \u2014 the single notes field stays the freeform scratch field."
     },
     "edit_reason": {
       "type": "string",
