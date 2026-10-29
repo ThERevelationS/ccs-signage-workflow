@@ -516,11 +516,11 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 402. **[UX][FLAGGED-dedicated]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
 403. **[F][FLAGGED-dedicated]** Repeat-offender list: jurisdictions where applications keep getting rejected — process problems surface.
 404. **[UX][FLAGGED-dedicated]** Time-to-issue report: days from apply → issued per jurisdiction — realistic expectations set.
-405. **[F][FLAGGED-dedicated]** Most-applied jurisdictions: the hot-10 towns — where the permitting effort concentrates.
+405. **[F][DONE]** Most-applied jurisdictions: the hot-10 towns — where the permitting effort concentrates.
 406. **[UX][FLAGGED-dedicated]** First-try-rate: % of applications accepted first time — quality signal.
 407. **[F][FLAGGED-dedicated]** Electrical-coverage gap report: jurisdictions where electrical issuer/inspector isn't verified — a specific risk.
 408. **[UX][FLAGGED-dedicated]** New-jurisdiction velocity: how fast new towns get researched after first job — the research-lag metric.
-409. **[F][FLAGGED-dedicated]** Data-staleness report: which verified jurisdictions haven't been re-checked in 6 months — the re-verify list.
+409. **[F][DONE]** Data-staleness report: which verified jurisdictions haven't been re-checked in 6 months — the re-verify list.
 410. **[UX][FLAGGED-dedicated]** Per-client permit-health: each client's open jobs' permit status — a client-facing summary.
 411. **[F][FLAGGED-dedicated]** Fee-accuracy report: estimated fees vs actual charged — the estimator calibrates.
 412. **[UX][DONE]** Team-workload view: permits-in-flight per person — the load balance.
