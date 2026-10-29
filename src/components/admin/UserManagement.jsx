@@ -2190,6 +2190,7 @@ export default function UserManagement() {
                       const stale = days > 90;
                       return <span className={`text-[11px] font-medium ${stale ? "text-amber-600" : "text-gray-400"}`} title={`Password last changed ${user.password_changed_at.slice(0, 10)}`}>password {days}d old{stale ? " — rotate" : ""}</span>;
                     })()}
+                    {user.is_deactivated === true && <span className="text-[11px] font-semibold text-red-600">deactivated</span>}
                     {(() => {
                       if (!user.last_login_at) return <span className="text-[11px] text-gray-400">never signed in</span>;
                       const days = Math.floor((Date.now() - new Date(user.last_login_at).getTime()) / 86400000);
@@ -2469,6 +2470,15 @@ export default function UserManagement() {
                           }}
                         />
                         <label className="text-sm">Require password reset at next sign-in</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.is_deactivated === true}
+                          onCheckedChange={(checked) => {
+                            changeAccountDraft({ is_deactivated: checked === true });
+                          }}
+                        />
+                        <label className="text-sm">Account deactivated — sign-in blocked, record kept</label>
                       </div>
                       {formData.role === "admin" && (
                         <div className="flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3">
