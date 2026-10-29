@@ -11,6 +11,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from "@/components/portal/PortalPanel";
 import SavedViews from "@/components/workflow/SavedViews";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { downloadCsv } from "@/components/shared/exportCsv";
 import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerMergeDialog from "@/components/estimator/CustomerMergeDialog";
@@ -580,7 +581,7 @@ export default function EstimatorCustomers() {
 
         <div className="bg-white">
           {loading ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-400">Loading customersâ€¦</div>
+            <ListSkeleton rows={8} />
           ) : rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-gray-500">{linkedCustomerId ? "The linked Customer record is not available." : "No customers found."}</div>
           ) : (
