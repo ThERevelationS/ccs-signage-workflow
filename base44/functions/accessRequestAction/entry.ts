@@ -14,6 +14,11 @@ export async function handler(request: Request) {
       const sections = Array.isArray(body?.requested_sections)
         ? body.requested_sections.map((v: unknown) => String(v).slice(0, 80)).filter(Boolean).slice(0, 20)
         : [];
+      // Reason keywords map to grant types — 'breakglass' asks for a 4-hour
+      // time-boxed grant, 'full admin' asks for the complete role.
+      const reasonLower = reason.toLowerCase();
+      if (reasonLower.includes('breakglass') && !sections.includes('breakglass')) sections.push('breakglass');
+      if (reasonLower.includes('full admin') && !sections.includes('full_admin')) sections.push('full_admin');
       // Idempotent: one pending request per email.
       const existing = await requests.filter({ requester_email: actor.email, status: 'pending' });
       if (Array.isArray(existing) && existing.length > 0) {
