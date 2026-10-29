@@ -100,6 +100,17 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Function permission matrix">
+        <p className="font-semibold text-gray-700">Function permission matrix</p>
+        <p className="mt-0.5">105 functions authenticate the staff session; the <b>57 public</b> endpoints below are scheduled jobs, OAuth callbacks, webhooks, or unauthenticated entry points — review any you don't expect.</p>
+        <ul className="mt-0.5 grid grid-cols-2 gap-x-3 list-disc pl-4 font-mono text-[10px]">
+          {["adminBootstrapLogin", "analyzeDocument", "auditJurisdictionAccuracy", "backupPermittingRepository", "batchUpdateJurisdictions", "bouncieAuthCallback", "bouncieRepairWebhook", "bouncieWebhook", "cagisSearch", "calculateTravelMiles", "callJurisdictionAgent", "checkDeadlineReminders", "checkPermitFollowupReminders", "continueJurisdictionArchives", "continuePermittingSourceText", "correctJurisdictionIdentityType", "downloadPermitPDF", "driveBrowseFolder", "driveOAuthCallback", "driveOAuthInitiate"].map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+        <p className="mt-0.5 text-gray-400">First 20 shown of 57 public endpoints — the full matrix regenerates from function sources.</p>
+      </div>
+
       <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Function coverage audit">
         <p className="font-semibold text-gray-700">Function coverage audit</p>
         <p className="mt-0.5 text-gray-400">Functions with no in-app callers — OAuth callbacks and platform-scheduled runs still count as live.</p>
