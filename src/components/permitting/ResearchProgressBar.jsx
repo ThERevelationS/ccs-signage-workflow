@@ -3,7 +3,7 @@ export default function ResearchProgressBar({inline=false}){
  const {actions,clearProgress,refreshAction}=useResearchProgress(),rows=Object.values(actions);
  if(!rows.length)return null;
  return <aside aria-label="Scan activity" className={inline?"rounded-lg border bg-white p-3 space-y-3 min-w-0":"fixed bottom-3 right-3 z-40 w-[calc(100vw-1.5rem)] max-w-md max-h-[70vh] overflow-y-auto rounded-lg border bg-white p-3 shadow-lg space-y-3"}>
-  <h2 className="text-sm font-semibold">Scan activity · {rows.length} {rows.length===1?'action':'actions'}</h2>
+  <h2 className="text-sm font-semibold flex items-center gap-1.5">Scan activity · {rows.length} {rows.length===1?'action':'actions'}<span className="cursor-help text-gray-400" title="This shows what the system checked behind the scenes. You do not need it — it is for our team.">ⓘ</span></h2>
   {rows.map(row=>{const active=row.status==='running',stale=row.tracking_paused===true||(row.response_lost===true&&(active||row.status==='unknown')),total=row.total || 0,value=Math.min(row.processed || 0,total);return <section key={row.id} aria-label={row.label} className="min-w-0 rounded border p-2 space-y-2 text-xs">
    <div className="flex justify-between gap-2"><h3 className="font-semibold break-words">{row.label}</h3>{!active&&<button className="shrink-0 min-h-8 px-2" onClick={()=>clearProgress(row.id)} aria-label={`Dismiss ${row.label}`}>Dismiss</button>}</div>
    <p role="status">{stale?(row.tracking_paused?'Live updates paused — sign in to check this scan':'Live updates unavailable — check saved status'):(row.stage || row.status)?.replaceAll('_',' ')}</p>
