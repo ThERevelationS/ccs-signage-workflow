@@ -245,6 +245,20 @@
       "format": "date",
       "description": "Staff-set 'check back on this' date \u2014 the chase reminder."
     },
+    "denial_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office denied the application, when applicable."
+    },
+    "denial_reason": {
+      "type": "string",
+      "description": "The office's stated reason for denial \u2014 recorded verbatim so resubmission learns from it."
+    },
+    "appeal_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Appeal/resubmission deadline after a denial, when one applies."
+    },
     "confirmation_number": {
       "type": "string",
       "description": "The office's submission reference/confirmation number, recorded at submit time."
