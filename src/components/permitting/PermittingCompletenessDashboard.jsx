@@ -90,6 +90,20 @@ export default function PermittingCompletenessDashboard() {
   const [metrics, setMetrics] = useState(null);
   const [history, setHistory] = useState([]);
   const [followUps, setFollowUps] = useState([]);
+  const [taskBusy, setTaskBusy] = useState("");
+  const [taskDone, setTaskDone] = useState(new Set());
+  const createFollowupTask = async (f) => {
+    if (taskBusy === f.id || taskDone.has(f.id)) return;
+    setTaskBusy(f.id);
+    try {
+      await staffEntities.GeneralTask.create({
+        text: `Permit follow-up: ${f.row_name || f.work_order_title || "Permit"} — ${f.locality_name || "office"} due ${f.next_followup_date}`,
+        assigned_to: [], completed: false,
+      });
+      setTaskDone((cur) => new Set([...cur, f.id]));
+    } catch { /* leave button retryable */ }
+    finally { setTaskBusy(""); }
+  };
   useEffect(() => {
     let alive = true;
     loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "completenessHistory", label: "Completeness history" })
@@ -290,6 +304,10 @@ export default function PermittingCompletenessDashboard() {
                   <span className="font-medium text-gray-800">{f.row_name || f.work_order_title || "Permit"}</span>
                   <span className="text-gray-500">{f.locality_name || ""}</span>
                   <span className={`font-medium ${overdue ? "text-red-600" : "text-gray-600"}`}>{overdue ? "overdue " : "due "}{f.next_followup_date}</span>
+                  <Button type="button" size="sm" variant="ghost" disabled={taskBusy === f.id || taskDone.has(f.id)}
+                    onClick={() => createFollowupTask(f)} className="h-6 px-1.5 text-[10px] text-indigo-600">
+                    {taskDone.has(f.id) ? "Task created" : taskBusy === f.id ? "Creating…" : "Create task"}
+                  </Button>
                 </li>
               );
             })}
