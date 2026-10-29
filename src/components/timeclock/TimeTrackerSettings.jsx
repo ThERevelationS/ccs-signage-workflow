@@ -732,6 +732,9 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                   disabled={saving} className="mt-2"
                 />
               </Field>
+              <Field label="Low-data mode" hint="Polls at 2-minute minimum and skips secondary lookups on metered connections">
+                <Switch checked={p.low_data_mode === true} onCheckedChange={set("low_data_mode")} />
+              </Field>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-x-4 gap-y-3 mt-3">
               {[
