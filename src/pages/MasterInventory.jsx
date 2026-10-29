@@ -52,8 +52,7 @@ export default function MasterInventory() {
     setLinkBusy(true);
     try {
       const text = await file.text();
-      const lines = text.split(/[
-]+/).map((l) => l.trim()).filter(Boolean).slice(0, 500);
+      const lines = text.split(/[\n\r]+/).map((l) => l.trim()).filter(Boolean).slice(0, 500);
       let linked = 0, failed = 0;
       for (const line of lines) {
         const [partId, invId] = line.split(",").map((s) => s.trim());
