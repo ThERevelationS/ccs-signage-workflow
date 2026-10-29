@@ -142,6 +142,14 @@ Deno.serve(async (req) => {
     }
 
     if (op === 'delete') {
+      // A jurisdiction with linked permit lines can't be deleted — the jobs
+      // would orphan. Relink the lines to another locality first.
+      if (entityName === 'PermitLocality') {
+        const linked = await base44.asServiceRole.entities.PermitLineItem.filter({ locality_id: id, deleted: { $ne: true } }, null, 5, 0).catch(() => []);
+        if (Array.isArray(linked) && linked.length) {
+          return Response.json({ error: `This jurisdiction is still linked to ${linked.length === 5 ? '5+' : linked.length} job line(s). Relink them before deleting it.` }, { status: 409 });
+        }
+      }
       await entity.delete(id);
       return Response.json({ success: true, deleted: true });
     }
