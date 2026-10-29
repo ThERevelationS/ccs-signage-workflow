@@ -9,7 +9,6 @@ import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
 import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
 import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import CustomerQuotePanel from "@/components/estimator/CustomerQuotePanel";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
@@ -41,6 +40,7 @@ import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
 import { duplicateEstimate, splitEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
+import DuplicateEstimateDialog from "@/components/estimator/DuplicateEstimateDialog";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -120,8 +120,8 @@ export default function EstimateDetail() {
   const [refreshing, setRefreshing] = useState(false);
   const copyingRef = useRef(false);
   const copyAttemptRef = useRef(null);
-  const copyCreationKey = (kind, lineIds = [], variant = "") => {
-    const signature = JSON.stringify([kind, variant, estimate, [...lineIds].sort()]);
+  const copyCreationKey = (kind, lineIds = []) => {
+    const signature = JSON.stringify([kind, estimate, [...lineIds].sort()]);
     if (copyAttemptRef.current?.signature !== signature) {
       copyAttemptRef.current = { signature, key: newEstimateCreationKey() };
     }
@@ -173,12 +173,13 @@ export default function EstimateDetail() {
     setDuplicateChoiceOpen(true);
   };
 
-  const runDuplicate = async (keepEstimateNumber) => {
-    setDuplicateChoiceOpen(false);
+  const runDuplicate = async (numbering) => {
+    if (copyingRef.current || saving || trashing || !estimate?.id || estimate.deleted === true) return;
     copyingRef.current = true;
     setDuplicating(true);
     try {
-      const created = await duplicateEstimate({ source: estimate, sessionToken, creationKey: copyCreationKey("duplicate", [], keepEstimateNumber ? "same" : "new"), keepEstimateNumber });
+      const created = await duplicateEstimate({ source: estimate, sessionToken, numbering, creationKey: copyCreationKey(`duplicate-${numbering}`) });
+      setDuplicateChoiceOpen(false);
       navigate(`/EstimateDetail?id=${created.id}`);
     } catch (error) {
       window.alert(error?.message || "The estimate could not be duplicated.");
@@ -1259,6 +1260,13 @@ export default function EstimateDetail() {
         onDuplicate={handleDuplicate}
         duplicating={duplicating}
       />
+      <DuplicateEstimateDialog
+        open={duplicateChoiceOpen}
+        onOpenChange={setDuplicateChoiceOpen}
+        estimateNumber={estimate.estimate_number}
+        onChoose={runDuplicate}
+        busy={duplicating}
+      />
 
       {estimate.opportunity_id && (
         <div className="px-3 pb-2">
@@ -1497,22 +1505,6 @@ export default function EstimateDetail() {
         onConfirm={handleCancel}
         estimateName={estimate.project_name}
       />
-
-      <AlertDialog open={duplicateChoiceOpen} onOpenChange={setDuplicateChoiceOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Duplicate this estimate?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Choose whether the copy gets a new estimate number or keeps {estimate.estimate_number ? `#${estimate.estimate_number}` : "the same number"} (useful when reworking the same quote). Either way it starts as a new draft and the original is unchanged.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => runDuplicate(true)}>Keep same number</AlertDialogAction>
-            <AlertDialogAction onClick={() => runDuplicate(false)}>New number</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

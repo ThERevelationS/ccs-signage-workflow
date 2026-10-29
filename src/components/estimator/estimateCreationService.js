@@ -1,5 +1,4 @@
 import { base44 } from "@/api/base44Client";
-import { generateDocNumber } from "@/functions/generateDocNumber";
 
 export function newEstimateCreationKey() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -34,32 +33,28 @@ const DUPLICATE_EXCLUDE = new Set([
   "quote_issue_date", "quote_issue_key", "quote_expiration_date",
   "revision_reason", "closed_revision_id", "edit_reason",
   "cancel_reason", "cancelled_at", "archived_at", "archived_reason",
-  "is_template", "split_from_estimate_id", "duplicated_from_estimate_id",
+  "is_template", "split_from_estimate_id",
   "last_product_removal_key", "last_product_removal_line_id", "last_product_removal_at",
   "pipeline_sync_pending", "pipeline_sync_error",
   "creation_request_key",
 ]);
 
-// Issued numbers are cached per creation key: a duplicate retried after a lost
-// response must present the same estimate_number or the server's identity
-// check would treat the retry as a different create and reject it.
-const duplicateNumberByCreationKey = new Map();
-
-export function buildDuplicateEstimate(source = {}, { keepEstimateNumber = false } = {}) {
+// numbering: "new" restarts with a blank estimate number for the user to
+// assign; "same" keeps the source's number so the copy files under it.
+export function buildDuplicateEstimate(source = {}, { numbering = "new" } = {}) {
   const clone = {};
   for (const [key, value] of Object.entries(source)) {
     if (DUPLICATE_EXCLUDE.has(key) || key.startsWith("_")) continue;
     clone[key] = value;
   }
   clone.status = "draft";
-  clone.estimate_number = keepEstimateNumber ? String(source.estimate_number || "").trim() : "";
-  clone.duplicated_from_estimate_id = source.id || "";
+  clone.estimate_number = numbering === "same" ? String(source.estimate_number || "").trim() : "";
   return clone;
 }
 
 // A split keeps the duplicate's header/settings but carries only the selected
 // line items, and records `split_from_estimate_id` so the child can trace back
-// to its parent. The parent estimate is unchanged â€” the split is a new draft.
+// to its parent. The parent estimate is unchanged — the split is a new draft.
 export function estimateLineSelectionKey(line, index) {
   return line?.line_id || line?.builder_product_id || line?.project_id || `i${index}`;
 }
@@ -91,18 +86,9 @@ export async function splitEstimate({ source, lineItemIds, sessionToken, creatio
   return created;
 }
 
-export async function duplicateEstimate({ source, sessionToken, creationKey = newEstimateCreationKey(), keepEstimateNumber = false }) {
+export async function duplicateEstimate({ source, sessionToken, numbering = "new", creationKey = newEstimateCreationKey() }) {
   if (!source?.id) throw new Error("The source estimate is not loaded.");
-  const estimate = buildDuplicateEstimate(source, { keepEstimateNumber });
-  if (!keepEstimateNumber) {
-    if (!duplicateNumberByCreationKey.has(creationKey)) {
-      const res = await generateDocNumber({ doc_type: "estimate", session_token: sessionToken });
-      const number = String(res?.data?.number || res?.number || "").trim();
-      if (!number) throw new Error("A new estimate number could not be issued.");
-      duplicateNumberByCreationKey.set(creationKey, number);
-    }
-    estimate.estimate_number = duplicateNumberByCreationKey.get(creationKey);
-  }
+  const estimate = buildDuplicateEstimate(source, { numbering });
   const created = await ensureNewEstimate({
     creationKey,
     estimate,

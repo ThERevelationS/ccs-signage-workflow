@@ -9,7 +9,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 1. **[F][DONE]** Soft-delete for estimates (`deleted` flag + trash view + restore) matching WorkOrder convention
 2. **[F][DONE]** Estimate status history table (status → changed_at → changed_by) separate from revision audit
 3. **[H][DONE]** Status-transition state machine — reject `draft` → `approved` skips (require `sent` first)
-4. **[F]** "Clone as new estimate number" vs "clone into same number" choice on duplicate
+4. **[F][DONE]** "Clone as new estimate number" vs "clone into same number" choice on duplicate
 5. **[F]** Estimate merge — combine two drafts into one (section-by-section picker)
 6. **[H]** Block editing locked sections after `sent` unless revision started
 7. **[F]** `archived_reason` field — why archived (lost, superseded, test)
