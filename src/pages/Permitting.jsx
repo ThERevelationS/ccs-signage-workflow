@@ -1070,6 +1070,17 @@ export default function Permitting() {
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
               <Button variant="outline" className="min-h-11" onClick={() => setShowDraftLibrary(true)}>Workflow drafts</Button>
+              <details className="relative">
+                <summary className="min-h-11 inline-flex items-center gap-1 rounded-md border px-3 text-sm cursor-pointer select-none hover:bg-gray-50">Need help?</summary>
+                <div className="absolute right-0 z-50 mt-1 w-72 rounded-lg border bg-white p-3 text-xs text-gray-700 shadow-lg space-y-2">
+                  <p className="font-semibold">How permitting works here</p>
+                  <p>1. Open a job card → press <strong>Choose jurisdiction…</strong></p>
+                  <p>2. Type or paste the job's street address → we find the town or township.</p>
+                  <p>3. Check the offices listed (sign, zoning, electrical) — verified means our team checked them.</p>
+                  <p>4. Press <strong>Use this jurisdiction</strong> — the permit lines appear on the job.</p>
+                  <p className="text-gray-500">Nothing gets sent anywhere — this only links the permit office to the job.</p>
+                </div>
+              </details>
               <div
                 className="relative w-full sm:w-56"
                 title="Search client, job, Est/Inv, assignee, project manager, task, locality, permit number, dates, fees, status, or notes"
