@@ -299,7 +299,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 222. **[H][FLAGGED-dedicated]** Source-coverage scoring: a jurisdiction's score = verified_roles / expected_roles — surfaces thin coverage as a % bar.
 223. **[F][DONE]** Electrical-issuer vs electrical-inspector separation enforced in the model — two roles, two offices, never merged.
 224. **[H][FLAGGED-dedicated]** Cross-check boundary claims: when two sources disagree on whether the pin is in the city, surface the conflict — don't pick silently.
-225. **[F][FLAGGED-dedicated]** "Research this" request per locality: flag it for the research queue with a note — the loop from picker → backlog is one click.
+225. **[F][DONE]** "Research this" request per locality: flag it for the research queue with a note — the loop from picker → backlog is one click.
 226. **[H][DONE]** Sentinel-value sweeper: periodically flags placeholder URLs/emails/phones in jurisdiction rows (exists partially in trust-assess).
 227. **[F][FLAGGED-dedicated]** Archived-vs-current version on every document: mark a source superseded, keep it for audit, stop citing it.
 228. **[H][FLAGGED-dedicated]** Boundary-version tracking: when a town annexes land, the old boundary claim gets a "may be outdated" flag.
@@ -547,7 +547,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 430. **[UX][FLAGGED-dedicated]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
 431. **[F][FLAGGED-dedicated]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
 432. **[UX][DONE]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
-433. **[F][FLAGGED-dedicated]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
+433. **[F][DONE]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
 434. **[UX][DONE]** The picker answers "who do I call?" first — before asking for the address — the card leads with the office.
 435. **[F][DONE]** Permit-status line on the WO outside permitting: the job's main record shows "sign permit: issued" — no digging.
 436. **[UX][DONE]** Every item on this page reads at a 6th-grade level — the whole page is plain language end-to-end.
