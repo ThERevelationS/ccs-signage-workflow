@@ -337,11 +337,34 @@ export default function PermitClientGroup({
             return (loc?.offices || []).map((o) => (
               <div key={`${locality_id}-${o.id || o.name}`} className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-amber-950">
                 <span className="font-semibold">{o.name || "Office"}</span>
+                <span
+                  className="text-[9px]"
+                  title={o.authority_verification_status === 'staff_verified' ? 'Verified by our team' : o.authority_verification_status ? `Status: ${String(o.authority_verification_status).replaceAll('_', ' ')}` : 'Not verified yet'}
+                >
+                  {o.authority_verification_status === 'staff_verified' ? '●●●' : o.authority_verification_status ? '●●○' : '●○○'}
+                </span>
                 {o.contact_phone && <a className="underline" href={`tel:${String(o.contact_phone).replace(/[^+\d]/g, "")}`}>{o.contact_phone}</a>}
                 {o.contact_website && <a className="underline" href={o.contact_website} target="_blank" rel="noopener noreferrer">Permit portal ↗</a>}
                 {o.contact_address && <a className="underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(o.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a>}
+                <button
+                  type="button"
+                  className="underline"
+                  title="Read this office's details aloud"
+                  onClick={(e) => { e.stopPropagation(); try { speechSynthesis.speak(new SpeechSynthesisUtterance(`${o.name || "Office"}. Phone ${o.contact_phone || "not on file"}. ${o.contact_address || ""}`)); } catch {} }}
+                >
+                  Read aloud
+                </button>
               </div>
             ));
+          })}
+          {authorityCoverage.map(({ locality_id }) => {
+            const loc = localities?.find((l) => l.id === locality_id);
+            const last = (loc?.change_log || []).slice(-1)[0];
+            return last ? (
+              <p key={`log-${locality_id}`} className="mt-1 text-[10px] text-amber-800">
+                Updated {String(last.at || '').slice(0, 10)}{last.by ? ` by ${last.by}` : ''}: {(last.changed_fields || []).join(', ').replaceAll('_', ' ') || 'details'}
+              </p>
+            ) : null;
           })}
           <button
             type="button"
@@ -382,9 +405,14 @@ export default function PermitClientGroup({
           ) : (
             <>
               <div className="divide-y">
-                {group.lines.map(li => (
+                {[...group.lines].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((li, idx, sorted) => (
+                  <div key={li.id} className="flex items-stretch gap-0">
+                    <div className="flex flex-col justify-center pl-1 pr-0.5">
+                      <button type="button" disabled={idx === 0 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move up" onClick={() => onUpdateField(li.id, "order", (sorted[idx-1]?.order ?? idx-1) - 0.5)}>▲</button>
+                      <button type="button" disabled={idx === sorted.length - 1 || !isRegistered} className="text-[10px] text-gray-400 hover:text-purple-700 disabled:opacity-20" title="Move down" onClick={() => onUpdateField(li.id, "order", (sorted[idx+1]?.order ?? idx+1) + 0.5)}>▼</button>
+                    </div>
+                    <div className="min-w-0 flex-1">
                   <PermitSpreadsheetRow
-                    key={li.id}
                     lineItem={li}
                     onUpdateStep={onUpdateStep}
                     onUpdateField={onUpdateField}
@@ -400,6 +428,8 @@ export default function PermitClientGroup({
                     currentUser={currentUser}
                     today={today}
                   />
+                    </div>
+                  </div>
                 ))}
               </div>
 
