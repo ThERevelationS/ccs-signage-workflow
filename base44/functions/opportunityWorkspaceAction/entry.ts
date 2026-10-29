@@ -520,6 +520,17 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, estimate_id: created?.id });
     }
 
+    if (action === "status_timeline") {
+      // Bounded per-opportunity activity feed — stage/status changes, links,
+      // and handoffs from the append-only OpportunityActivity log.
+      const opportunityId = clean(body?.opportunity_id);
+      if (!opportunityId) throw bad("opportunity_id is required.", 400);
+      const rows = await base44.asServiceRole.entities.OpportunityActivity
+        .filter({ opportunity_id: opportunityId }, "-created_date", 40)
+        .catch(() => []);
+      return Response.json({ success: true, timeline: rows || [] });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
