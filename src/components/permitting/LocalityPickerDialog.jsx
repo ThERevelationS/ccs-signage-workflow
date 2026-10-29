@@ -188,7 +188,7 @@ function LocalityPickerSession({
     try {
       const invoke=runAction;
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
-      let { data };
+      let data;
       try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
       catch(firstErr){ if(/status code 5dd/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
       // The worker cannot reach external geocoders reliably; when its lookups
