@@ -698,10 +698,12 @@ export default function CustomerPortal() {
                 <p className="mt-1 text-xs text-blue-700">To pay, contact CCS Signage and reference invoice {data.invoice.invoice_number}.</p>
               </div>
             )}
+            {data.kind !== "staff_view" && (
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Read-only view — this page reflects live billing records.</span>
               <Button variant="outline" size="sm" onClick={() => window.print()}>Print / PDF</Button>
             </div>
+            )}
           </>
         )}
 
