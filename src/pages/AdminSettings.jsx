@@ -600,6 +600,16 @@ export default function AdminSettings() {
   const isAdmin = currentUser?.role === "admin";
   const [searchParams, setSearchParams] = useSearchParams();
   const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
+  const [accessRequestState, setAccessRequestState] = useState(""); // "", "busy", "sent", "error"
+  const submitAccessRequest = async () => {
+    if (!sessionToken || accessRequestState === "busy") return;
+    setAccessRequestState("busy");
+    try {
+      const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: "submit" });
+      const data = r?.data || r;
+      setAccessRequestState(data?.success ? "sent" : "error");
+    } catch { setAccessRequestState("error"); }
+  };
   const [capabilityExpiryLabel, setCapabilityExpiryLabel] = useState("");
   const navigationKey = getAdminNavigationStorageKey(currentUser);
   // Restore only after identity and Admin unlock are established; direct URLs win.
@@ -2298,6 +2308,19 @@ export default function AdminSettings() {
               {isVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Unlock Admin Settings
             </Button>
+            {currentUser && currentUser.role !== "admin" && (
+              <div className="border-t border-gray-100 pt-3 text-center">
+                <p className="text-xs text-gray-500">Signed in as {currentUser.email} — this account is not an admin.</p>
+                {accessRequestState === "sent" ? (
+                  <p className="mt-1 text-xs font-medium text-green-600">Access request sent — an admin will review it.</p>
+                ) : (
+                  <Button variant="link" size="sm" disabled={accessRequestState === "busy"} onClick={submitAccessRequest}
+                    className="text-xs text-indigo-600">
+                    {accessRequestState === "busy" ? "Sending…" : accessRequestState === "error" ? "Request failed — try again" : "Request admin access"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
