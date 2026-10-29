@@ -194,7 +194,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 138. **[F]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
 139. **[UX]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
 140. **[F]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
-141. **[UX]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
+141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
 142. **[F]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
 143. **[UX]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
 144. **[F]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
