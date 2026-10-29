@@ -36,7 +36,7 @@ export default function AddSectionDialog({ open, onClose, onAdd }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 py-2">
           {ESTIMATOR_MODULES.map((mod) => (
-            <button
+            <button type="button"
               key={mod.key}
               disabled={!!busyKey}
               onClick={() => handlePick(mod)}
