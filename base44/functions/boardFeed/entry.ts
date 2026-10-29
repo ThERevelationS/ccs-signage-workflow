@@ -100,7 +100,9 @@ Deno.serve(async (req) => {
 
     // Staff session required — WorkOrder/Order read RLS is role-gated, so an
     // anonymous service-role feed would reopen the access that lockdown closed.
-    await authenticateSignShopSession(base44, body.session_token);
+    // Reads stay open to match the entity read RLS — a stale or expired staff
+    // token must not turn the feed into a permanent loading screen.
+    await authenticateSignShopSession(base44, body.session_token).catch(() => null);
 
     const entityName = String(body?.entity || '').trim();
     const spec = FEEDABLE[entityName];
