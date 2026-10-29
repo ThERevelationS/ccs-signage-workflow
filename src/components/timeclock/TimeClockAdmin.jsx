@@ -1977,7 +1977,7 @@ export default function TimeClockAdmin() {
                     {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
                       <p className="text-xs text-blue-700 mt-1 capitalize">
                         Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
-                        {laborRow.work_order_id ? ` - ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
+                        {laborRow.work_order_id ? <>{" - "}<a href={`/MainWorkflow?wo=${laborRow.work_order_id}`} className="underline hover:text-blue-900" title="Open this work order">{laborRow.client_name || laborRow.work_order_title || "WorkOrder"}</a></> : ""}
                       </p>
                     )}
                   </div>
