@@ -173,6 +173,12 @@ export default function PermitSpreadsheetRow({
     const td = parseLocalDate(today);
     return !!(ed && td && differenceInDays(ed, td) < 0);
   })();
+  const permitExpired = (() => {
+    if (isCompleted || !today || !lineItem.permit_expiration_date) return false;
+    const ed = parseLocalDate(lineItem.permit_expiration_date);
+    const td = parseLocalDate(today);
+    return !!(ed && td && differenceInDays(ed, td) < 0);
+  })();
   const localityLabel = lineItem.locality_name || "—";
   const currentUserOwnerLabel = currentUser?.full_name || currentUser?.email || "";
   const ownerOptions = [...new Set((users || []).map((user) => user.full_name || user.email).filter(Boolean))].sort();
@@ -230,6 +236,9 @@ export default function PermitSpreadsheetRow({
         <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
           {expectedReplyOverdue && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }} title="The office's stated reply date has passed — time to call them.">PAST DUE</span>
+          )}
+          {permitExpired && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #dc2626' }} title="This permit has expired — start the renewal before the install.">RENEWAL NEEDED</span>
           )}
           {officeTypes.length === 0 ? (
             <span
