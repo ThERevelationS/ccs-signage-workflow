@@ -571,6 +571,11 @@ export default function EstimatorQueues() {
               })}
             </div>
           )}
+          {visibleCount < rows.length && (
+            <div className="border-t border-gray-100 py-2 text-center">
+              <button type="button" onClick={() => setVisibleCount((c) => c + PAGE)} className="h-[30px] px-3 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50">Show {Math.min(PAGE, rows.length - visibleCount)} more ({rows.length - visibleCount} remaining)</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
