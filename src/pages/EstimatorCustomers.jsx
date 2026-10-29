@@ -184,6 +184,17 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">Opportunities</h3>
+                {(() => {
+                  const bySource = {};
+                  (data.opportunities || []).forEach((o) => {
+                    const src = String(o.lead_source || "").trim() || "unknown";
+                    bySource[src] = (bySource[src] || 0) + 1;
+                  });
+                  const parts = Object.entries(bySource).sort((a, b) => b[1] - a[1]);
+                  return parts.length > 1 ? (
+                    <div className="mt-0.5 text-[10px] text-gray-400">By source: {parts.map(([src, n]) => `${src} ${n}`).join(" · ")}</div>
+                  ) : null;
+                })()}
                 {(data.opportunities || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
                 {(data.opportunities || []).map((o) => (
                   <div key={o.id} className="mt-1.5 flex items-center justify-between text-sm">
@@ -253,6 +264,7 @@ export default function EstimatorCustomers() {
     try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
   });
   const [viewName, setViewName] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
   const [savingTierId, setSavingTierId] = useState(null);
   const [detailId, setDetailId] = useState("");
   const [portalInbox, setPortalInbox] = useState([]);
@@ -338,9 +350,11 @@ export default function EstimatorCustomers() {
   };
 
   const term = search.trim().toLowerCase();
+  const allTags = [...new Set(customers.flatMap((c) => (Array.isArray(c.tags) ? c.tags : [])).filter(Boolean))].sort();
   const linkedCustomer = linkedCustomerId ? customers.find((customer) => customer.id === linkedCustomerId) || null : null;
   const rows = customers
     .filter((c) => (linkedCustomerId ? c.id === linkedCustomerId : status ? (c.customer_status || "prospect") === status : true))
+    .filter((c) => (tagFilter ? (Array.isArray(c.tags) && c.tags.includes(tagFilter)) : true))
     .filter((c) =>
       linkedCustomerId
         ? true
@@ -444,6 +458,29 @@ export default function EstimatorCustomers() {
               activeName={viewName}
               onApply={(s, name) => { setSearch(s.search || ""); setViewName(name || ""); }}
             />
+          </div>
+        )}
+
+        {!linkedCustomerId && allTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 px-1 py-1">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mr-1">Tags</span>
+            <button
+              type="button"
+              onClick={() => setTagFilter("")}
+              className={`h-6 px-2 rounded-full border text-[10px] font-semibold ${!tagFilter ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"}`}
+            >
+              All
+            </button>
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
+                className={`h-6 px-2 rounded-full border text-[10px] font-semibold ${tagFilter === tag ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"}`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         )}
 
