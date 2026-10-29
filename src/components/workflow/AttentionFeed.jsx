@@ -212,6 +212,19 @@ export default function AttentionFeed() {
         href: p.work_order_id ? `/MainWorkflow?wo=${p.work_order_id}` : "/Permitting",
       })),
     },
+    {
+      key: "recalc",
+      label: "needs recalc",
+      count: (feed.needs_recalc_parts || []).length,
+      icon: RotateCcw,
+      tone: "text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+      items: (feed.needs_recalc_parts || []).slice(0, 6).map((p) => ({
+        id: p.id,
+        primary: p.part_name || "Part",
+        secondary: "Flagged needs_recalc - price may be stale",
+        href: p.estimate_id ? `/EstimateDetail?id=${p.estimate_id}` : "/EstimatorQueues",
+      })),
+    },
   ].filter((c) => c.count > 0) : [];
 
   if (!feed) return null;
