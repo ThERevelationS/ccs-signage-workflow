@@ -294,6 +294,21 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     if (!lastVisit) return [];
     return (jurisdictions || []).filter((j) => String(j.updated_date || "") > lastVisit);
   }, [jurisdictions, lastVisit]);
+  const staleJurisdictions = useMemo(() => {
+    const sixMonthsAgo = Date.now() - 180 * 86400000;
+    return (jurisdictions || []).filter((j) => {
+      const verified = j.verification_status === "verified" || j.trust === "verified";
+      const updated = Date.parse(String(j.updated_date || ""));
+      return verified && Number.isFinite(updated) && updated < sixMonthsAgo;
+    });
+  }, [jurisdictions]);
+  const mostApplied = useMemo(() => {
+    return (jurisdictions || [])
+      .map((j) => ({ name: j.name, count: lineCounts[String(j.name || "").trim().toLowerCase()] || 0 }))
+      .filter((j) => j.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [jurisdictions, lineCounts]);
 
   // Users type things like "Hamilton County" or "City of Mason" while profiles
   // are stored by bare name + type. Normalize the query (strip type words) and
@@ -438,6 +453,17 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+          {staleJurisdictions.length > 0 && (
+            <div className="mb-2 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800" title="Verified jurisdictions not re-checked in over 6 months — re-verify before relying on them">
+              {staleJurisdictions.length} verified jurisdiction{staleJurisdictions.length === 1 ? "" : "s"} haven't been re-checked in 6+ months
+            </div>
+          )}
+          {mostApplied.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500" title="Where the permitting effort concentrates — jurisdictions with the most permit lines">
+              <span className="font-semibold text-slate-600">Most applied:</span>
+              {mostApplied.map((j) => <span key={j.name} className="font-medium text-slate-700">{j.name} <span className="text-indigo-600">({j.count})</span></span>)}
             </div>
           )}
           <div className="flex gap-2 items-start">
