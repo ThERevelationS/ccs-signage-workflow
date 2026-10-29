@@ -138,7 +138,7 @@ export default function UserManagement() {
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [accessUser, setAccessUser] = useState(null);
   const [userSearch, setUserSearch] = useState("");
-  const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin
+  const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin | inactive
   const [userSort, setUserSort] = useState("name"); // name | name_desc | email | role
   const [selectedUserIds, setSelectedUserIds] = useState(() => new Set());
   const [bulkRoleBusy, setBulkRoleBusy] = useState(false);
@@ -419,6 +419,11 @@ export default function UserManagement() {
     if (userFilter === "admin" && u.role !== "admin") return false;
     if (userFilter === "user" && u.role === "admin") return false;
     if (userFilter === "full_admin" && u.is_full_admin !== true) return false;
+    if (userFilter === "inactive") {
+      const ref = u.last_login_at || u.created_date;
+      const days = ref ? Math.floor((Date.now() - new Date(ref).getTime()) / 86400000) : 999;
+      if (days < 60) return false;
+    }
     if (!userSearchQ) return true;
     const hay = [u.full_name, u.email, ...(Array.isArray(u.sales_roles) ? u.sales_roles : [])]
       .filter(Boolean).join(" ").toLowerCase();
@@ -2091,7 +2096,7 @@ export default function UserManagement() {
                 aria-label="Search users"
               />
               <div className="flex gap-1">
-                {[["all", "All"], ["admin", "Admins"], ["user", "Users"], ["full_admin", "Full admins"]].map(([v, label]) => (
+                {[["all", "All"], ["admin", "Admins"], ["user", "Users"], ["full_admin", "Full admins"], ["inactive", "Inactive 60d+"]].map(([v, label]) => (
                   <Button key={v} type="button" size="sm"
                     variant={userFilter === v ? "default" : "outline"}
                     onClick={() => setUserFilter(v)}
