@@ -245,7 +245,7 @@ export default function EmailGroupsManager() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => openEditGroup(group)}
+                    aria-label={`Edit group ${group.name || ""}`} onClick={() => openEditGroup(group)}
                     className="h-7 w-7"
                   >
                     <Edit className="w-3 h-3 text-blue-600" />
@@ -253,7 +253,7 @@ export default function EmailGroupsManager() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setDeleteConfirm(group)}
+                    aria-label={`Delete group ${group.name || ""}`} onClick={() => setDeleteConfirm(group)}
                     className="h-7 w-7"
                   >
                     <Trash2 className="w-3 h-3 text-red-600" />
