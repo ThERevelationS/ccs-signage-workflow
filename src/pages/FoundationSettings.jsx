@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Settings as SettingsEntity } from "@/api/gatedEntities";
+import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
 import { ArrowLeft, BrickWall, Clock, PaintBucket, Save, Shovel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
 
 const GROUPS = [
   {
@@ -118,7 +119,7 @@ export default function FoundationSettings() {
       <div className="max-w-[1050px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <Button onClick={save} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="foundation-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button onClick={save} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3">
