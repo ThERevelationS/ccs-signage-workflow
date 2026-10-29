@@ -279,6 +279,12 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             {lineItem.urgent ? "⚠ URGENT" : "Mark urgent"}
           </button>
         </div>
+        <DateField
+          label="Check back on"
+          value={lineItem.follow_up_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("follow_up_date", value)}
+        />
         <CommitTextField
           label="Call / chase notes"
           value={lineItem.notes}
