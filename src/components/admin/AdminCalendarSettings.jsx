@@ -128,6 +128,13 @@ export default function AdminCalendarSettings() {
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
 
+  const printWeekRows = (() => {
+    const end = new Date(Date.now() + 7 * 86400000);
+    return events
+      .filter((e) => { const d = new Date(e.start_datetime || 0); return d >= new Date() && d <= end; })
+      .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+  })();
+
   const crewCapacity = (() => {
     const weekEnd = new Date(Date.now() + 7 * 86400000);
     const byPerson = {};
@@ -343,6 +350,32 @@ export default function AdminCalendarSettings() {
           </ul>
         </div>
       )}
+
+      <div className="clay-card p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-800">Print week view</h3>
+          <Button type="button" variant="outline" size="sm" onClick={() => window.print()} className="text-xs">Print</Button>
+        </div>
+        <div id="admin-calendar-print-week" className="mt-2 hidden print:block">
+          <table className="w-full text-xs">
+            <thead><tr className="border-b text-left"><th>When</th><th>Event</th><th>Type</th><th>Assigned</th><th>Location</th></tr></thead>
+            <tbody>
+              {printWeekRows.map((e) => (
+                <tr key={e.id} className="border-b border-gray-100">
+                  <td className="py-1">{String(e.start_datetime).slice(0, 16).replace("T", " ")}</td>
+                  <td className="py-1 font-medium">{e.title || "Event"}</td>
+                  <td className="py-1">{e.event_type || ""}</td>
+                  <td className="py-1">{(e.assigned_to || []).join(", ")}</td>
+                  <td className="py-1">{e.location || ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {printWeekRows.length === 0 && <p className="py-2 text-gray-500">No events in the next 7 days.</p>}
+        </div>
+        <p className="mt-1 text-xs text-gray-400 print:hidden">Prints the next 7 days as a plain table for the shop floor.</p>
+        <style>{`@media print { body * { visibility: hidden; } #admin-calendar-print-week, #admin-calendar-print-week * { visibility: visible; } #admin-calendar-print-week { position: absolute; left: 0; top: 0; width: 100%; display: block !important; } }`}</style>
+      </div>
 
       {crewCapacity.length > 0 && (
         <div className="clay-card p-4">
