@@ -55,7 +55,9 @@ export default function DataExportPanel() {
       staffEntities.TimeOffRequest.count({ status: "pending" }).catch(() => null),
       staffEntities.TimeClockCorrectionRequest.count({ status: "pending" }).catch(() => null),
       staffEntities.DeletionRequest.count({ status: "pending" }).catch(() => null),
-    ]).then(([pto, corr, del]) => { if (alive) setPending({ pto, corr, del }); });
+      staffEntities.FeatureReport.count({ status: "open" }).catch(() => null),
+      staffEntities.SyncConflict.count({ status: "open" }).catch(() => null),
+    ]).then(([pto, corr, del, feat, conf]) => { if (alive) setPending({ pto, corr, del, feat, conf }); });
     return () => { alive = false; };
   }, []);
   useEffect(() => {
@@ -123,6 +125,8 @@ export default function DataExportPanel() {
             <li className="flex items-center justify-between"><span>PTO requests</span><b className={pending.pto > 0 ? "text-amber-700" : "text-gray-400"}>{pending.pto ?? "—"}</b></li>
             <li className="flex items-center justify-between"><span>Time-clock corrections</span><b className={pending.corr > 0 ? "text-amber-700" : "text-gray-400"}>{pending.corr ?? "—"}</b></li>
             <li className="flex items-center justify-between"><span>Deletion requests</span><b className={pending.del > 0 ? "text-amber-700" : "text-gray-400"}>{pending.del ?? "—"}</b></li>
+            <li className="flex items-center justify-between"><span>Feature reports</span><b className={pending.feat > 0 ? "text-amber-700" : "text-gray-400"}>{pending.feat ?? "—"}</b></li>
+            <li className="flex items-center justify-between"><span>Sync conflicts</span><b className={pending.conf > 0 ? "text-amber-700" : "text-gray-400"}>{pending.conf ?? "—"}</b></li>
           </ul>
           <p className="mt-1 text-[10px] text-gray-400">Work each queue on its own tab — People → PTO, Time Clock → corrections, Users → deletions.</p>
         </div>
