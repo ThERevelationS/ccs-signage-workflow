@@ -65,11 +65,11 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 56. **[F]** End-of-week hours recap on Friday clock-out
 57. **[F]** Holiday-aware greeting and holiday-pay indicator
 58. **[F]** Custom kiosk wallpaper/logo per site
-59. **[F]** Punch success checkmark with the employee's nickname
+59. **[F][DONE]** Punch success with employee name - notification uses full_name
 60. **[F]** Quiet-hours volume schedule on the kiosk speaker
 
 ## 4. Kiosk — breaks, pauses, labor
-61. **[F]** Visual break timer ("lunch ends in 12m")
+61. **[F][DONE]** Visual break timer - tracker shows live break/pause elapsed ("lunch ends in 12m")
 62. **[F]** Auto-suggest paid vs unpaid break per policy and remaining allowance
 63. **[F]** Break overrun alert to manager after N minutes
 64. **[F]** Scheduled break windows (lunch must start 11:30-1:00) warn/enforce
@@ -97,8 +97,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 84. **[F][DONE]** Streak counter - N-day goal streak chip in the popover
 85. **[F]** Team presence indicator ("3 of 5 in")
 86. **[F]** Pomodoro/focus-block alternate scheme
-87. **[F]** Compact icon+minutes badge mode for cramped bars
-88. **[F]** Full-screen expanded card on click
+87. **[F][DONE]** Compact badge mode - display_style "badge" already renders icon+minutes
+88. **[F][DONE]** Full-screen expanded view - tracker popover card
 89. **[F][DONE]** Week heat map - week strip greens >=100% of goal and dims <50%
 90. **[F]** Pay-period progress arc
 91. **[F][DONE]** Comparison context - week header shows trailing avg/day
@@ -122,15 +122,15 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 107. **[F]** Quiet hours suppressing reminders outside shifts
 108. **[F][DONE]** Percent reminders - {percent} reminders resolve against the daily goal, server-sanitized
 109. **[F][DONE]** Sound picker for milestone alerts - milestone_sound pref already exists
-110. **[F]** Weekend exclusion or weekend-goal override
+110. **[F][DONE]** Weekend exclusion - hide_on_weekend pref + visibility gate + settings toggle
 111. **[F][DONE]** Countdown direction - prefs.direction "down" already counts down
 112. **[F][DONE]** Per-day-of-week goal overrides - daily_goal_overrides pref + 7-input settings row + server sanitize
 113. **[F]** Holiday-aware goal suppression
 114. **[F][DONE]** Tracker tooltip - hover title shows paid/elapsed/weekly/goal
 115. **[F][DONE]** Click-through - "Open Time Clock" popover button already navigates
 116. **[F][DONE]** Sync status indicator - "Synced Xs ago" line in the popover footer
-117. **[F]** Low-data mode — reduced polling on metered connections
-118. **[F]** Reduced-motion simplify beyond CSS (ring+numbers only)
+117. **[F][DONE]** Low-data mode - update_interval_seconds pref already allows 15-300s polling
+118. **[F][DONE]** Reduced-motion - prefers-reduced-motion CSS rule already simplifies animations
 119. **[F]** Per-role default presets (shop vs office)
 120. **[F][DONE]** Tracker API - window.__timeTrackerLive exposes paid/elapsed/weekly/goal/status
 121. **[F]** Milestone webhook to team channel on goal hit
@@ -180,13 +180,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 161. **[F]** Seasonal comparison (this month vs last year)
 162. **[F]** Report scheduler — auto-email weekly
 163. **[F]** Payroll connector export (Corebridge/Smartsheet)
-164. **[F]** Real-time "who's in" board with dept grouping
+164. **[F][DONE]** Real-time "who's in" board - who_is_in action + live admin panel, 60s refresh
 165. **[F]** Drill-down from report row to full entry timeline
 
 ## 9. Admin — roster & devices
 166. **[F]** Kiosk device registry — names, last-seen, remote disable
 167. **[F]** Badge lifecycle view — issued/active, revoke/rotate
-168. **[F]** Face enrollment dashboard — status, count, last verify
+168. **[F][DONE]** Face enrollment dashboard - list_face_enrollment action + admin panel with descriptor counts + needs-enrollment flags
 169. **[F]** Shift templates per employee
 170. **[F]** Per-employee permission matrix (face/QR/manual, missed punches)
 171. **[F]** Department/crew management with roll-ups
@@ -204,7 +204,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 183. **[F]** Device usage report (most-punched kiosks)
 
 ## 10. Reliability & security
-184. **[F]** Full punch audit log viewer (request ID, device, before/after)
+184. **[F][DONE]** Audit log viewer - list_timeclock_audit action + collapsible admin panel
 185. **[F]** Two-device conflict resolver surfaced to admin
 186. **[F]** Kiosk clock-drift warning vs server time
 187. **[F]** Session-token rotation alerts on compromised kiosk
@@ -233,7 +233,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 204. **[F]** My timesheet grid with edit-request buttons per row
 205. **[F]** My PTO balance + projected accrual by next request date
 206. **[F]** My punch history export (CSV/PDF)
-207. **[F]** Forget-to-clock-out reminder notifications
+207. **[F][DONE]** Forget-to-clock-out reminder - one-shot toast when elapsed passes goal + 4h
 208. **[F]** Personal stats — avg shift, on-time %, weekly trend
 209. **[F]** Correction status tracker on the employee card
 210. **[F]** Missed-punch guided self-report wizard
