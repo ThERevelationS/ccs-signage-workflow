@@ -419,6 +419,7 @@ function LocalityPickerSession({
             title="Use my current location to find the address (works best on-site)"
             onClick={() => {
               if (!navigator.geolocation) { setError("This device can't share its location — type the address instead."); return; }
+              if (address.trim() && !confirmOrSkip(`Use your GPS location instead of the address you typed (${address.slice(0, 40)})?`)) return;
               setError("");
               navigator.geolocation.getCurrentPosition(async (pos) => {
                 try {
