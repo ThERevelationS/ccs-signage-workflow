@@ -190,6 +190,14 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
                           </div>
                           {isOpen && nested.length > 0 && tabChecks[tab.value] !== false && (
                             <div className="ml-7 mt-1 space-y-1 border-l-2 border-gray-100 pl-3">
+                              <button type="button"
+                                onClick={() => setSubtabChecks((prev) => {
+                                  const all = nested.every((sub) => (prev[tab.value] || []).includes(sub.value));
+                                  return { ...prev, [tab.value]: all ? [] : nested.map((sub) => sub.value) };
+                                })}
+                                className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800">
+                                {(subtabChecks[tab.value] || []).length === nested.length ? "Clear all" : "Include all subtabs"}
+                              </button>
                               {nested.map((sub) => (
                                 <label key={sub.value} className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
                                   <Checkbox
