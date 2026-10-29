@@ -7701,6 +7701,27 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, staff });
     }
 
+    if (action === 'admin_archive_entry') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to archive entries.' }, { status: 403 });
+      const entryId = String(body?.entry_id || '').trim();
+      const expected = String(body?.expected_updated_date || '').trim();
+      const reason = String(body?.reason || '').slice(0, 300);
+      if (!entryId || !expected) return Response.json({ success: false, error: 'entry_id and expected_updated_date are required.' }, { status: 400 });
+      const row = await entryEntity.get(entryId).catch(() => null);
+      if (!row?.id) return Response.json({ success: false, error: 'TimeEntry not found.' }, { status: 404 });
+      if (row.archived_admin === true) return Response.json({ success: true, entry: row, already_archived: true });
+      if (String(row.updated_date || '') !== expected) {
+        return Response.json({ success: false, retry_same_request: false, error: 'The entry changed since it was loaded. Reload and retry.' }, { status: 409 });
+      }
+      const updated = await entryEntity.update(entryId, { archived_admin: true, archived_admin_reason: reason, archived_admin_by: actorEmail, archived_admin_at: new Date().toISOString() });
+      await auditEntity.create({
+        action: 'admin_archive_entry', request_id: requestId, time_entry_id: entryId,
+        user_email: row.user_email || '', actor_email: actorEmail,
+        details: { reason, expected_updated_date: expected },
+      }).catch(() => null);
+      return Response.json({ success: true, entry: updated });
+    }
+
     if (action === 'my_history') {
       // Employee self-service: own recent punches for export and stats.
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view punch history.' }, { status: 403 });
