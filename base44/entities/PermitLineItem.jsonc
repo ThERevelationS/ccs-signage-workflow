@@ -222,6 +222,23 @@
       "type": "string",
       "description": "Inspector name/phone for the scheduled inspection."
     },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "",
+        "portal",
+        "email",
+        "fax",
+        "in_person",
+        "mail",
+        "other"
+      ],
+      "description": "How the application was submitted to the office \u2014 portal / email / fax / in-person / mail."
+    },
+    "confirmation_number": {
+      "type": "string",
+      "description": "The office's submission reference/confirmation number, recorded at submit time."
+    },
     "assigned_to": {
       "type": "string",
       "description": "Person responsible"
