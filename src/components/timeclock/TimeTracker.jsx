@@ -254,7 +254,9 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     };
   }, [snapshot, snapshotRecord, nowMs]);
 
-  const goalMinutes = Math.max(60, Number(prefs?.daily_goal_minutes) || 480);
+  // Per-day-of-week goal overrides fall back to the single daily goal.
+  const dayKey = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
+  const goalMinutes = Math.max(60, Number(prefs?.daily_goal_overrides?.[dayKey]) || Number(prefs?.daily_goal_minutes) || 480);
   const displayMinutes = live ? (prefs?.count_mode === "elapsed" ? live.elapsed : live.paid) : 0;
   const progress = goalMinutes > 0 ? displayMinutes / goalMinutes : 0;
   const overtimeMinutes = Math.max(0, displayMinutes - goalMinutes);
@@ -332,7 +334,9 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     const fired = readMilestones(email, snapshot.company_day);
     const next = [...fired];
     for (const r of source) {
-      const minute = Number(typeof r === "object" && r !== null ? r.minutes : r);
+      const minute = Number(typeof r === "object" && r !== null && Number(r.percent) > 0
+        ? Number(r.percent) * goalMinutes
+        : (typeof r === "object" && r !== null ? r.minutes : r));
       if (!Number.isFinite(minute) || minute <= 0) continue;
       const label = typeof r === "object" && r !== null ? String(r.label || "").trim() : "";
       const marker = 10000 + minute;
@@ -358,12 +362,40 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     return () => { document.removeEventListener("visibilitychange", mark); window.removeEventListener("blur", mark); window.removeEventListener("focus", mark); mq?.removeEventListener?.("change", onMq); };
   }, []);
 
+  // Idle-hide preference: track real user activity and suppress the tracker
+  // after the configured idle window.
+  const lastActivityRef = useRef(0);
+  useEffect(() => {
+    lastActivityRef.current = Date.now();
+    const mark = () => { lastActivityRef.current = Date.now(); };
+    window.addEventListener("pointermove", mark);
+    window.addEventListener("pointerdown", mark);
+    window.addEventListener("keydown", mark);
+    return () => {
+      window.removeEventListener("pointermove", mark);
+      window.removeEventListener("pointerdown", mark);
+      window.removeEventListener("keydown", mark);
+    };
+  }, []);
+  const idleLimitMs = Math.max(0, Number(prefs?.hide_when_idle_minutes || 0)) * 60000;
+  const idleExpired = idleLimitMs > 0 && lastActivityRef.current > 0 && nowMs - lastActivityRef.current > idleLimitMs;
+
+  // One source of truth for other widgets/components that want the live totals.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__timeTrackerLive = live
+        ? { paid: live.paid, elapsed: live.elapsed, weekly: live.weekly, goalMinutes, status: snapshot?.status || null }
+        : null;
+    }
+  }, [live, goalMinutes, snapshot?.status]);
+
   const matchesPref = locationPref === "both" ||
     (locationPref === "top" && position !== "side") ||
     (locationPref === "side" && position === "side");
   const visibleHere = enabled && locationPref !== "hidden" &&
     !(prefs?.show_only_clocked_in === true && snapshot?.status !== "clocked_in") &&
     !(prefs?.hide_when_unfocused === true && !focused) &&
+    !idleExpired &&
     !(prefs?.timeclock_page_only === true && !onTimeClock) &&
     !(prefs?.device_scope === "desktop_only" && isMobileView) &&
     !(prefs?.device_scope === "mobile_only" && !isMobileView) &&
@@ -492,6 +524,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           type="button"
           data-time-tracker
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
+          title={live ? `Paid ${formatClock(live.paid, "hours_minutes")} · Elapsed ${formatClock(live.elapsed, "hours_minutes")} · Week ${formatClock(live.weekly, "hours_minutes")} · Goal ${formatClock(goalMinutes, "hours_minutes")}` : "Time Tracker"}
           className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${bgClass} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
           style={{
             zoom: prefs?.scale || 1,
