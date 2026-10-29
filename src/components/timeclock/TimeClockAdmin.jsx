@@ -1481,7 +1481,7 @@ export default function TimeClockAdmin() {
                               <RotateCcw className="w-3 h-3 mr-1" />Reopen
                             </Button>
                           ) : (
-                            <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs text-green-700" onClick={() => openApprovalDialog(entry, "approve")}>
+                            <Button type="button" variant="ghost" size="sm" className="min-h-10 px-3 text-xs text-green-700" onClick={() => openApprovalDialog(entry, "approve")}>
                               <CheckCircle2 className="w-3 h-3 mr-1" />Approve
                             </Button>
                           )}
@@ -1820,7 +1820,7 @@ export default function TimeClockAdmin() {
             <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
             {cleanReviewEntries.length > 0 && (
               <Button type="button" size="sm" variant="outline" disabled={bulkApproveBusy || isLoading}
-                onClick={approveAllClean} className="mt-2 h-7 w-full text-xs bg-white/80">
+                onClick={approveAllClean} className="mt-2 min-h-10 w-full text-xs bg-white/80">
                 {bulkApproveBusy ? "Approving…" : `Approve ${cleanReviewEntries.length} clean`}
               </Button>
             )}
