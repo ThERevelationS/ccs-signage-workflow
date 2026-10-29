@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { allowedEstimateStatusTransitions } from "@/components/estimator/estimateStatusTransitions";
 
 const FIELDS = [
   { key: "project_name", label: "Estimate description" },
@@ -46,7 +47,9 @@ export default function EstimateHeaderForm({ estimate, onChange, readOnly = fals
             disabled={readOnly}
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-2 text-sm shadow-sm disabled:bg-gray-50 disabled:text-gray-500"
           >
-            {["draft", "calculated", "sent", "approved", "archived"].map((s) => (
+            {[estimate.status || "draft", ...allowedEstimateStatusTransitions(estimate.status)]
+              .filter((s, i, arr) => arr.indexOf(s) === i && ["draft", "calculated", "sent", "approved", "archived"].includes(s))
+              .map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
