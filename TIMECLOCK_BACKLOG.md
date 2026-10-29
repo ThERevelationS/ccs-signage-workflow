@@ -179,7 +179,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 160. **[F][DONE]** Correction turnover - review-count-per-reviewer summary on the audit panel
 161. **[F][DONE]** Site/job labor-cost rollup - Hours by Job card aggregates allocations per client
 162. **[F][DONE]** Printable punch card - per-employee print button on Hours by Employee
-163. **[F]** Payroll connector export (Corebridge/Smartsheet)
+163. **[F][DONE]** Seasonal/monthly comparison - admin_period_compare action + month-over-month card
 164. **[F][DONE]** Real-time "who's in" board - who_is_in action + live admin panel, 60s refresh
 165. **[F][DONE]** Drill-down - TimeClockShiftDetail expands any entry row to the full timeline
 
