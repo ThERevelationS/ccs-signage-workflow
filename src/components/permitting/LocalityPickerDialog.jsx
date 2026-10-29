@@ -62,6 +62,7 @@ function verifiedAuthoritySummary(locality) {
   };
 }
 
+const normalizeAddress=(raw)=>{let a=String(raw||"").replace(/s+/g," ").trim();a=a.replace(/(unit|suite|ste|apt|apartment|#)s*[A-Za-z0-9-]+/ig,"");a=a.replace(/,s*(USA|United States|US).?$/i,"");a=a.replace(/([0-9]{5})-[0-9]{4}/g,"$1");a=a.replace(/[ 	]+,/g,",").replace(/,(?=S)/g,", ").replace(/s+/g," ").trim().replace(/^,+|,+$/g,"");return a||String(raw||"").trim();};
 export default function LocalityPickerDialog(props) {
   const {sessionToken,currentUser}=useAuth();
   if(!sessionToken||!(currentUser?.id||currentUser?.email))return null;
@@ -150,25 +151,30 @@ function LocalityPickerSession({
     const version=++searchVersion.current;pendingSearch.current=version;
     setSelectedLocalityId("");
     setSearching(true);
-    setError("");
+    // Soft warn on addresses that look incomplete — no city or ZIP signal —
+    // but still let the search run: a street+state query can still succeed.
+    const norm=normalizeAddress(address);
+    const hasSignal=/\d{5}/.test(norm)||(norm.includes(",")&&/[,]\s*[A-Za-z]{2}(\s|$)/.test(norm));
+    if(!hasSignal&&!/,\s*\S+/.test(norm))setError("That address is missing a city, state, or ZIP — adding one usually finds it faster.");
+    else setError("");
     setResult(null);
     try {
       const invoke=runAction;
-      let { data } = await invoke('resolvePermittingAddress', {
-        address: address.trim(),
-        session_token: sessionToken,
-      },`Looking up ${address.trim()}`);
+      const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
+      let { data };
+      try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
+      catch(firstErr){ if(/status code 5dd/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
         try {
-          const q = encodeURIComponent(address.trim());
+          const q = encodeURIComponent(normalizeAddress(address));
           const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=${q}`);
           const hit = (await r.json())?.[0];
           const st = hit?.address?.state || hit?.address?.state_district || '';
           if (hit?.lat && hit?.lon && /ohio|kentucky/i.test(st)) {
             const retry = await invoke('resolvePermittingAddress', {
-              address: address.trim(),
+              address: normalizeAddress(address),
               session_token: sessionToken,
               census_hint: {
                 lat: Number(hit.lat), lng: Number(hit.lon),
@@ -185,6 +191,7 @@ function LocalityPickerSession({
         setError(data.error || "Search failed");
       } else {
         setResult(data);
+        setError("");
         if (data?.suggested_locality?.id) {
           setSelectedLocalityId(data.suggested_locality.id);
         }
