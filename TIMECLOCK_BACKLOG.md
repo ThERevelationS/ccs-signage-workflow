@@ -270,7 +270,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 235. **[F]** Power-loss resilience — "last action confirmed" on boot
 
 ## 17. Onboarding & help
-236. **[F]** In-app kiosk tutorial overlay ("first punch? scan here")
+236. **[F][DONE]** Kiosk tutorial overlay - first-run 3-step strip, dismisses per device
 237. **[F]** Video walkthrough of face enrollment
 238. **[F][DONE]** Admin quick-start checklist - computed setup checklist on the admin page
 239. **[F]** Employee FAQ panel on the Time Clock page
