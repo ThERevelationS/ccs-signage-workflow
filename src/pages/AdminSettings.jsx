@@ -2144,6 +2144,24 @@ export default function AdminSettings() {
             You appear to be offline — admin changes will not save until your connection returns.
           </div>
         )}
+        {(() => {
+          const failingRules = automations.filter(r => Array.isArray(r.recent_runs) && r.recent_runs.slice(-3).length === 3 && r.recent_runs.slice(-3).every(x => x?.status === 'error'));
+          const checks = [
+            { ok: !automationsPaused, label: automationsPaused ? "Automations paused" : "Automations running" },
+            { ok: emailGroups.length > 0, label: emailGroups.length ? `${emailGroups.length} email group${emailGroups.length === 1 ? "" : "s"}` : "No email groups" },
+            { ok: uncoveredTriggerTypes.length === 0, label: uncoveredTriggerTypes.length ? `${uncoveredTriggerTypes.length} uncovered trigger type${uncoveredTriggerTypes.length === 1 ? "" : "s"}` : "All triggers covered" },
+            { ok: failingRules.length === 0, label: failingRules.length ? `${failingRules.length} rule${failingRules.length === 1 ? "" : "s"} failing` : "No failing rules" },
+          ];
+          return (
+            <div className="mb-3 flex flex-wrap gap-1.5" aria-label="Setup checks">
+              {checks.map((c) => (
+                <span key={c.label} className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${c.ok ? "border-green-300 bg-green-50 text-green-800" : "border-amber-300 bg-amber-50 text-amber-800"}`}>
+                  {c.ok ? "✓" : "⚠"} {c.label}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
