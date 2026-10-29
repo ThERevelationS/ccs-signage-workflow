@@ -5,6 +5,10 @@
       "type": "string",
       "description": "Email of the user requesting access."
     },
+    "proposer_email": {
+      "type": "string",
+      "description": "Admin who proposed the grant on someone's behalf \u2014 full_admin/breakglass approvals must come from a DIFFERENT admin."
+    },
     "requested_sections": {
       "type": "array",
       "items": {
