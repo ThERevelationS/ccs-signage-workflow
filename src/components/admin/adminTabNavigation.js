@@ -158,6 +158,20 @@ const ADMIN_SEARCH_KEYWORDS = {
   fleet: 'fleet settings bouncie notifications reminders maintenance mechanic portal public report',
 };
 
+// Standalone app pages an admin may want to jump to directly.
+const ADMIN_PAGES = [
+  { page: "FleetTracking", label: "Fleet Tracking", keywords: "fleet vehicles map gps live tracking" },
+  { page: "FleetOverview", label: "Fleet Overview", keywords: "fleet vehicles dashboard" },
+  { page: "FleetMaintenance", label: "Fleet Maintenance", keywords: "fleet service schedule overdue" },
+  { page: "FleetEquipment", label: "Fleet Equipment", keywords: "vehicles trucks assets" },
+  { page: "FleetReservations", label: "Fleet Reservations", keywords: "vehicle booking calendar" },
+  { page: "FleetNotifications", label: "Fleet Alerts", keywords: "fleet alerts notification history" },
+  { page: "SOP", label: "Procedures (SOP)", keywords: "sop procedures documentation" },
+  { page: "ResourcePlanning", label: "Resource Planning", keywords: "capacity scheduling workload" },
+  { page: "Estimator", label: "Estimator", keywords: "estimate quote sales" },
+  { page: "FeatureReports", label: "Feature Reports", keywords: "feedback feature requests" },
+];
+
 export function getAccessibleAdminSubtab(parentTab, requestedSubtab, user) {
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
   const tabs = permittedSubtabs(parentTab, permissions);
@@ -195,7 +209,14 @@ export function searchAdminSettings(input, isAdmin, limit = 8, user) {
   if (!query) return [];
   const terms = query.split(' ');
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
-  const destinations = getAccessibleAdminGroups(isAdmin, user).flatMap((group) =>
+  const pageDestinations = ADMIN_PAGES.map((p) => ({
+    id: `page:${p.page}`,
+    label: p.label,
+    group: "Pages",
+    page: p.page,
+    keywords: p.keywords,
+  }));
+  const destinations = [...pageDestinations, ...getAccessibleAdminGroups(isAdmin, user).flatMap((group) =>
     group.tabs.flatMap((tab) => [
       {
         id: tab.value,
@@ -214,7 +235,7 @@ export function searchAdminSettings(input, isAdmin, limit = 8, user) {
         keywords: nested.keywords || '',
       })),
     ])
-  );
+  )];
 
   return destinations
     .map((destination, order) => {
