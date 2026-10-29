@@ -227,7 +227,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 165. **[UX][DONE]** Copy-all-offices button: "Copy contact info" → clipboard block with every office's phone/portal for pasting into email.
 166. **[F]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
 167. **[UX]** Line reorder via drag — staff order the offices the way they actually work them.
-168. **[F]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
+168. **[F][DONE]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
 169. **[UX][DONE]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
 170. **[F]** Batch status: select multiple lines → mark them all "application submitted" in one click.
 
@@ -251,7 +251,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 ## R — Pipeline & backend, round 2
 
-186. **[H]** Warm the catalog cache on page load — one batch read fills JurisdictionProfile + PermitLocality + GlobalSettings together (uses the new batch mode).
+186. **[H][DONE]** Warm the catalog cache on page load — one batch read fills JurisdictionProfile + PermitLocality + GlobalSettings together (uses the new batch mode).
 187. **[H][DONE]** Circuit-breaker on the resolver: after 3 consecutive 5xx, show "lookup service is having trouble" instead of hammering it.
 188. **[H]** Request timing headers on the resolver response so slow paths are measurable server-side.
 189. **[H]** A `permittingHealth` probe function: geocoder + census + boundary + repository-read statuses in one call — first thing to check on a bad report.
@@ -271,7 +271,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 200. **[UX]** Spanish/other-language toggle on the picker copy — the field crew isn't all English-first.
 201. **[UX]** Dyslexia-friendly font option (OpenDyslexic or just letter-spacing bump) alongside the big-text toggle.
 202. **[UX][DONE]** Every number on a status chip also gets the unit word: "3 offices" not just "3".
-203. **[UX]** The map's "this is the pin" label: a plain "Your job is here" bubble so the visual isn't ambiguous.
+203. **[UX][DONE]** The map's "this is the pin" label: a plain "Your job is here" bubble so the visual isn't ambiguous.
 204. **[UX][DONE]** Color-blind safe status: verified=check-icon+word, needs-review=?-icon+word — shape+text, not color alone.
 205. **[UX][DONE]** Error recovery reads like a person wrote it: "That lookup hit a snag — try it again, or skip to picking from the saved list."
 206. **[UX][DONE]** Confirmation before leaving with unsaved work: closing the picker mid-search asks "leave the lookup running?".
@@ -284,8 +284,8 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 211. **[F][DONE]** "On-site now" mode: GPS + one-tap confirm the jurisdiction matches where the truck is parked.
 212. **[F]** Site-photo attach to the permit line: the posted sign photo rides with the permit for the final inspection.
-213. **[UX]** Full-screen "dialer" view per office: giant phone number, tap-to-call, plus the office's notes — built for a phone in hand.
-214. **[F]** Permit pickup directions: the office's address as a maps link — "drive to this counter".
+213. **[UX][DONE]** Full-screen "dialer" view per office: giant phone number, tap-to-call, plus the office's notes — built for a phone in hand.
+214. **[F][DONE]** Permit pickup directions: the office's address as a maps link — "drive to this counter".
 215. **[UX]** Offline-pocket card: the applied jurisdiction's offices as a cached card readable without signal.
 216. **[F][DONE]** Inspection-schedule field: date+time+inspector contact — the visit is tracked where the permit lives.
 217. **[UX][DONE]** The whole picker works at 320px wide without horizontal scroll — field phones.
