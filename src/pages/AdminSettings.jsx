@@ -1635,6 +1635,13 @@ export default function AdminSettings() {
     !automations.some((r) => r.enabled !== false && (r.triggers || []).some((tr) => tr.trigger_type === t.value))
   );
 
+  const sig = (list, key) => [...new Set((list || []).map((x) => x?.[key]).filter(Boolean))].sort().join("|");
+  const currentRuleSig = `${sig(triggers, "trigger_type")}→${sig(actions, "action_type")}`;
+  const nearDuplicateRule = currentRuleSig !== "→" ? automations.find((rule) =>
+    rule.id !== editingRule?.id &&
+    `${sig(rule.triggers, "trigger_type")}→${sig(rule.actions, "action_type")}` === currentRuleSig
+  ) : null;
+
   const visibleAutomations = sortedAutomations.filter((rule) => {
     const isEnabled = rule.enabled !== false;
     if (ruleFilter === "enabled" && !isEnabled) return false;
@@ -2769,6 +2776,15 @@ export default function AdminSettings() {
                 <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                   <p className="font-medium">Before saving:</p>
                   {builderProblems.map(problem => <p key={problem} className="mt-1">{problem}</p>)}
+                </div>
+              )}
+
+              {nearDuplicateRule && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+                  <div className="flex items-center gap-2 text-amber-700 text-sm font-medium">
+                    <AlertTriangle className="w-4 h-4" />
+                    "{nearDuplicateRule.name}" already uses this exact trigger and action combination — you may be creating a duplicate.
+                  </div>
                 </div>
               )}
 
