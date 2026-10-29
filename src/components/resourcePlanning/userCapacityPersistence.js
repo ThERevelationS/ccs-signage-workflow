@@ -4,6 +4,7 @@ const EDITABLE_FIELDS = [
   "user_name",
   "weekly_hours_capacity",
   "daily_hours_capacity",
+  "hourly_cost_rate",
   "skills",
   "role_preferences",
   "time_off_dates",
