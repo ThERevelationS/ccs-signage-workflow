@@ -42,7 +42,7 @@ function sameDelivery(row: any, data: any) {
 
 const QUOTE_APPROVAL_THRESHOLD_KEY = 'quote_approval_threshold';
 const DEFAULT_QUOTE_APPROVAL_THRESHOLD = 5000;
-const QUOTE_APPROVAL_REQUIRED_MESSAGE = 'This quote exceeds the internal approval threshold — a manager must approve it before sending.';
+const QUOTE_APPROVAL_REQUIRED_MESSAGE = 'This quote exceeds the internal approval threshold â€” a manager must approve it before sending.';
 
 const money = (value: unknown, fallback = 0) => {
   const parsed = Number(value);
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified for quote delivery history.' }, { status: 404 });
     }
-    // The recorded delivery must describe the estimate's current issued quote —
+    // The recorded delivery must describe the estimate's current issued quote â€”
     // an arbitrary version or foreign work order would let a session forge the
     // immutable delivery/audit trail.
     const issuedVersion = Math.max(0, whole(estimate.quote_version));
@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       source_status: cleanText(input.source_status, 64),
     };
 
-    // Per-version delivery counter — 1 for the first send of this quote issue,
+    // Per-version delivery counter â€” 1 for the first send of this quote issue,
     // then 2, 3... on resends so the audit reads 'sent 3 times' not just 'resent'.
     const prior = await Delivery.filter({ quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion) }).catch(() => []);
     normalized.delivery_n = (Array.isArray(prior) ? prior.filter((r: any) => r?.deleted !== true).length : 0) + 1;
@@ -247,6 +247,14 @@ Deno.serve(async (req) => {
         // Delivery is already verified; a contact-sync failure must not make a sent quote appear unsent.
         console.error("Quote recipient CustomerContact sync failed:", error?.message || error);
         payload.contact_warning = "Quote delivery is recorded, but the recipient could not be added to Customer Contacts.";
+      }
+      // last_contacted_at tracks real customer contact (quote sent) for reporting.
+      const customerId = clean(estimate?.customer_id);
+      if (customerId) {
+        await base44.asServiceRole.entities.Customer.updateMany(
+          { id: customerId },
+          { last_contacted_at: new Date().toISOString() }
+        ).catch(() => null);
       }
       return Response.json(payload);
     };
@@ -268,7 +276,7 @@ Deno.serve(async (req) => {
     }
 
     // Internal approval gate: a quote above the configured threshold cannot be
-    // recorded as sent until a manager approves it — either live (the session
+    // recorded as sent until a manager approves it â€” either live (the session
     // user carries can_approve_quotes) or through a recorded internal_approval.
     // The pre-send authorize_send action runs the same check before Gmail is
     // invoked, so this write is the enforcement backstop.
