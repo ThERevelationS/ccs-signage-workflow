@@ -1584,6 +1584,7 @@ export default function AdminSettings() {
       : updateAutomationRuleIfUnchanged({ record: rule,
           nextFields: { enabled: operation.enabled }, exactVersion: false, adminCapability: writeCapability,
           label: `Automation Rule ${operation.name} enabled state` }));
+
     // A timeout does not cancel a server write. Late receipts never release the
     // fence or overwrite a newer snapshot. They only permit a new review.
     const settled = write.then(result => {
@@ -1633,6 +1634,17 @@ export default function AdminSettings() {
   };
   const handleDelete = (rule) => runAutomationOperation("delete", rule);
   const toggleEnabled = (rule) => runAutomationOperation("toggle", rule);
+  const approveRule = async (rule) => {
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability) return;
+    try {
+      const saved = await updateAutomationRuleIfUnchanged({
+        record: rule,
+        nextFields: { approval_status: 'approved' }, exactVersion: false, adminCapability: writeCapability,
+      });
+      if (saved?.id) setAutomations(prev => prev.map(r => r.id === saved.id ? saved : r));
+    } catch { /* leave the pending badge retryable */ }
+  };
 
   const reconcileAutomationOperation = async (acknowledge = false) => {
     const operation = automationOperationRef.current;
@@ -2917,6 +2929,11 @@ export default function AdminSettings() {
                           <Badge className="text-xs" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #FFD6E8 100%)' }}>
                             {rule.actions?.length || 0} action{(rule.actions?.length || 0) !== 1 ? 's' : ''}
                           </Badge>
+                          {rule.approval_status === 'pending' && (
+                            <Badge className="text-xs bg-amber-500 text-white border border-amber-600" title="Proposed rule — never runs until approved">
+                              Pending approval
+                            </Badge>
+                          )}
                           {!ruleIsRunnable(rule) && (
                             <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300">
                               Won't run - not wired yet
@@ -2982,6 +2999,12 @@ export default function AdminSettings() {
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
+                        {rule.approval_status === 'pending' && (
+                          <Button variant="outline" size="sm" disabled={!!automationOperation || automationSaving}
+                            onClick={() => approveRule(rule)} className="h-8 text-xs text-amber-700 border-amber-300">
+                            Approve
+                          </Button>
+                        )}
                         <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
                         <Button variant="ghost" size="icon" aria-label={`Duplicate ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
