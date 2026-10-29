@@ -10,6 +10,7 @@ import { Plus, Trash2, ChevronDown, ChevronRight, Loader2, CheckCircle2, User, B
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 import { createGeneralTaskWithRecovery } from "@/components/workflow/generalTaskPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
@@ -59,12 +60,10 @@ export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = nul
     try {
       const [directory, workOrdersData] = await Promise.all([
         loadAuthorizedUserDirectory({ sessionToken }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Add Task Work Orders",
-        })
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
       ]);
       setUsers(directory.users);
       setWorkOrders(workOrdersData.sort((a, b) => (a.client_name || '').localeCompare(b.client_name || '')));
