@@ -63,11 +63,11 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         </div>
         <div className="flex items-center gap-2">
           {onDuplicate && (
-            <button onClick={() => onDuplicate(index)} className="text-gray-400 hover:text-blue-600" title="Duplicate">
+            <button type="button" onClick={() => onDuplicate(index)} className="text-gray-400 hover:text-blue-600" title="Duplicate">
               <Copy className="w-4 h-4" />
             </button>
           )}
-          <button
+          <button type="button"
             onClick={() => {
               if (!window.confirm(`Remove Foundation #${index + 1}?`)) return;
               onRemove(index);
