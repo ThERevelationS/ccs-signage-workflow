@@ -67,6 +67,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
         entity: JurisdictionProfile,
         sort: null,
         label: "Permitting Repository catalog",
+        cacheTtlMs: 15000,
       });
       setJurisdictions(data);
     } catch (e) { console.error(e); }
