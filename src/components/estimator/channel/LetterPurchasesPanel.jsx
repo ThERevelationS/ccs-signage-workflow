@@ -54,7 +54,7 @@ export default function LetterPurchasesPanel({ project, purchases, totals, onCha
             onChange={(e) => setRow(idx, { unit_cost: parseFloat(e.target.value) || 0 })}
           />
           <span className="text-sm text-gray-700 w-20 text-right">{money(p.line_total)}</span>
-          <button
+          <button type="button"
             onClick={() => {
               if (!window.confirm(`Remove "${p.description || "this letter line"}"?`)) return;
               onChange({ letter_purchases: project.letter_purchases.filter((_, i) => i !== idx) });
