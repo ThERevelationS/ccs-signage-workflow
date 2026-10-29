@@ -475,7 +475,7 @@ Deno.serve(async (req) => {
         row: plan.rowNumber,
         customer: plan.clientName,
         action: plan.kind,
-        fields: plan.kind === 'update' ? Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')) : Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')),
+        fields: Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')),
       })),
       timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: 0, total_ms: Date.now() - startedAt },
     };
