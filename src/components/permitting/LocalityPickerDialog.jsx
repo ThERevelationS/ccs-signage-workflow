@@ -96,6 +96,7 @@ function LocalityPickerSession({
   const [slowSearch, setSlowSearch] = useState(false);
   const [searchedFor, setSearchedFor] = useState("");
   const [firstRun, setFirstRun] = useState(() => { try { return localStorage.getItem("permitting_first_run_done") !== "1"; } catch { return true; } });
+  const [showOptions, setShowOptions] = useState(() => { try { return localStorage.getItem("permitting_show_options") === "1"; } catch { return false; } });
   const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
   const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
@@ -325,7 +326,7 @@ function LocalityPickerSession({
       if (searching && !window.confirm("A lookup is still running — close anyway? (It keeps running in the background.)")) return;
       onClose();
     }}>
-      <DialogContent className={"flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0 "+(bigText?"text-[115%] [&_button]:min-h-12 [&_input]:text-base [&_p]:text-sm [&_span]:text-sm":"")}>
+      <DialogContent className={"flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0 "+(bigText?"text-[115%] [&_button]:min-h-12 [&_input]:text-base [&_p]:text-sm [&_span]:text-sm [&_p]:tracking-wide [&_p]:leading-relaxed [&_button]:tracking-wide":"")}>
         <DialogHeader className="border-b bg-white px-5 py-3.5">
           <DialogTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>
@@ -397,6 +398,9 @@ function LocalityPickerSession({
             </Button>
           )}
 
+          <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-violet-700 underline self-center" onClick={() => { const v = !showOptions; setShowOptions(v); try { localStorage.setItem("permitting_show_options", v ? "1" : "0"); } catch {} }}>{showOptions ? "Fewer options" : "More options…"}</button>
+
+          {showOptions && <>
           <Button
             variant="outline"
             className="gap-1 min-h-11 w-full sm:w-auto"
@@ -431,6 +435,7 @@ function LocalityPickerSession({
             {excludeElectrical ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
             {excludeElectrical ? "Electrical: OFF" : "Electrical: ON"}
           </Button>
+          </>}
         </div>
 
         {slowSearch && searching && (
