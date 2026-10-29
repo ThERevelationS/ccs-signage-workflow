@@ -768,6 +768,11 @@ export default function AdminSettings() {
   
   const [automations, setAutomations] = useState([]);
   const [automationsPaused, setAutomationsPaused] = useState(false);
+  const [quietSettingRow, setQuietSettingRow] = useState(null);
+  const [quietEnabled, setQuietEnabled] = useState(false);
+  const [quietStart, setQuietStart] = useState("20:00");
+  const [quietEnd, setQuietEnd] = useState("07:00");
+  const [quietBusy, setQuietBusy] = useState(false);
   const [pauseSettingRow, setPauseSettingRow] = useState(null);
   const [pauseBusy, setPauseBusy] = useState(false);
   const [pauseError, setPauseError] = useState("");
@@ -1801,6 +1806,16 @@ export default function AdminSettings() {
   const loadAutomationPauseState = async () => {
     try {
       const row = await loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "automations_paused", label: "Automation pause state" });
+      loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "notificationQuietHours", label: "Notification quiet hours" })
+        .then((qh) => {
+          setQuietSettingRow(qh);
+          const v = qh?.setting_value;
+          if (v) {
+            setQuietEnabled(v.enabled === true);
+            if (v.start) setQuietStart(v.start);
+            if (v.end) setQuietEnd(v.end);
+          }
+        }).catch(() => null);
       setPauseSettingRow(row || null);
       setAutomationsPaused(row?.setting_value?.paused === true);
     } catch { /* fail open: leave current state */ }
@@ -1837,6 +1852,24 @@ export default function AdminSettings() {
     } finally {
       setPauseBusy(false);
     }
+  };
+
+  const saveQuietHours = async (patch) => {
+    if (quietBusy) return;
+    setQuietBusy(true);
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings,
+        loadedRecord: quietSettingRow,
+        settingKey: "notificationQuietHours",
+        nextValue: { enabled: patch.enabled ?? quietEnabled, start: patch.start ?? quietStart, end: patch.end ?? quietEnd },
+        label: "Notification quiet hours",
+      });
+      setQuietSettingRow(saved);
+      if (patch.enabled !== undefined) setQuietEnabled(patch.enabled);
+      if (patch.start) setQuietStart(patch.start);
+      if (patch.end) setQuietEnd(patch.end);
+    } catch { /* leave prior values */ } finally { setQuietBusy(false); }
   };
 
   const handleSort = (field) => {
@@ -2646,6 +2679,20 @@ export default function AdminSettings() {
                   aria-label={automationsPaused ? "Resume all automations" : "Pause all automations"}>
                   {pauseBusy ? "Working..." : automationsPaused ? "Resume all" : "Pause all"}
                 </Button>
+                <div className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white/70 px-2 py-1" title="During quiet hours, automation emails are skipped">
+                  <label className="flex items-center gap-1 text-xs text-gray-600">
+                    <input type="checkbox" checked={quietEnabled} disabled={quietBusy}
+                      onChange={(e) => saveQuietHours({ enabled: e.target.checked })} />
+                    Quiet hours
+                  </label>
+                  <input type="time" value={quietStart} disabled={quietBusy || !quietEnabled}
+                    onChange={(e) => saveQuietHours({ start: e.target.value })}
+                    className="h-6 rounded border border-input bg-transparent px-1 text-xs" aria-label="Quiet hours start" />
+                  <span className="text-xs text-gray-400">to</span>
+                  <input type="time" value={quietEnd} disabled={quietBusy || !quietEnabled}
+                    onChange={(e) => saveQuietHours({ end: e.target.value })}
+                    className="h-6 rounded border border-input bg-transparent px-1 text-xs" aria-label="Quiet hours end" />
+                </div>
               <Button onClick={openNewRule} disabled={isLoading || automationLoadError || emailGroupsLoading || emailGroupsLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
                 <Plus className="w-5 h-5 mr-2" /> New Automation
