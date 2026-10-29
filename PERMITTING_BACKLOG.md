@@ -409,7 +409,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 310. **[F][DONE]** Internal runbook link: "how we do Milford permits" staff-written note pinned to the jurisdiction.
 311. **[UX][DONE]** Terminology glossary: a "?" chip on words like "situs", "variance", "ETJ" opening a one-line definition.
 312. **[F][FLAGGED-dedicated]** Common-mistake warnings: "You picked the county — the city issues sign permits for this address" soft-suggest.
-313. **[UX][FLAGGED-dedicated]** Confidence-building flow: a new user's first 3 applies get a confirming message "that's right — you did it".
+313. **[UX][DONE]** Confidence-building flow: a new user's first 3 applies get a confirming message "that's right — you did it".
 314. **[F][FLAGGED-dedicated]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
 315. **[UX][FLAGGED-dedicated]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
 316. **[F][DONE]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
