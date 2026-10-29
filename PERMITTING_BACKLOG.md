@@ -40,7 +40,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 24. **[F][DONE]** Cancel a running search and keep the last result — currently cancellation leaves the dialog in limbo.
 25. **[UX][DONE]** Retry button that re-runs the last search in one click when the geocoder/network blips — no retyping.
 26. **[UX][DONE]** Error messages that say what to do next, not what broke: "We couldn't reach the map service. Try again — or type the city and state manually."
-27. **[F]** Persist the last search per work order so reopening the picker restores the in-flight context.
+27. **[F][DONE]** Persist the last search per work order so reopening the picker restores the in-flight context.
 28. **[H][DONE]** Debounce + dedupe parallel searches — double-clicking Find must not fire two scans (searchVersion ref exists; verify it covers rapid re-clicks).
 29. **[UX][DONE]** Distinguish "still looking" vs "found nothing" — the current copy merges them into one confusing state.
 
@@ -59,60 +59,60 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## D — Applying the result
 
-40. **[F]** One-button apply: "Use Milford, OH" → writes the locality to the work order and closes — the picker's only positive action.
+40. **[F][DONE]** One-button apply: "Use Milford, OH" → writes the locality to the work order and closes — the picker's only positive action.
 41. **[H][DONE]** Apply must be atomic-ish: write PermitLineItem locality_id via the CAS path (exists) and surface conflicts cleanly, not a silent 409.
 42. **[F][DONE]** After apply, show a confirmation chip on the job card: "Permit office: Milford, OH — verified" with a link to change it.
 43. **[F][DONE]** Allow applying WITHOUT a full authority review for jobs that just need the locality (show a "details still being verified" hint instead of blocking).
 44. **[F]** Bulk-apply: multiple jobs in the same town → apply one verified jurisdiction to all selected work orders.
 45. **[UX][DONE]** If apply fails, the error must name the step ("Couldn't link Milford to this job — reload and try again") — never a raw 500.
-46. **[F]** Undo an apply within a short window — users change their minds; reverting shouldn't need admin intervention.
+46. **[F][DONE]** Undo an apply within a short window — users change their minds; reverting shouldn't need admin intervention.
 
 ## E — Authority review / who to call
 
 47. **[F]** Per-locality office card: the office that issues sign permits, with phone, address, hours, permit portal link — the thing the estimator actually calls.
-48. **[F]** Electrical permit + electrical inspection authority as separate cards — NEVER combine with the sign office.
+48. **[F][DONE]** Electrical permit + electrical inspection authority as separate cards — NEVER combine with the sign office.
 49. **[UX]** "Call" / "Email" / "Open portal" buttons on each office card — the review becomes actionable in one click.
 50. **[F]** Source link on every claim — tap the claim → open the government source the data came from.
 51. **[UX]** Last-verified date on each office card, plain language: "Checked on Oct 20" → "More than 90 days old — may need a re-check".
 52. **[F]** Flag stale jurisdictions in the repository automatically (last-verified > N days) and queue them for re-verification.
 53. **[F]** Record a call outcome per office ("they said permits take 2 weeks") — the tribal knowledge stays with the jurisdiction.
-54. **[F]** Fee snapshot where known: "Sign permit ≈ $75" sourced from the office's fee schedule page.
+54. **[F][DONE]** Fee snapshot where known: "Sign permit ≈ $75" sourced from the office's fee schedule page.
 55. **[F]** Turnaround estimate where known: "Typical approval: 5–10 business days" sourced or marked unverified.
 
 ## F — Repository (saved jurisdictions)
 
 56. **[UX][DONE]** The repository list needs a big search box: type "milford" → city, township, county rows labeled separately — no conflation.
 57. **[F][DONE]** Filter chips: verified / draft / needs-review / with-electrical-data — staff should find gaps in one click.
-58. **[UX]** Duplicate/ambiguous rows get a visible warning chip — "Milford appears twice — a staff member should review".
+58. **[UX][DONE]** Duplicate/ambiguous rows get a visible warning chip — "Milford appears twice — a staff member should review".
 59. **[F]** Merge flow for true duplicates with a relink preview (like the customer merge) — never silently collapse city/township pairs that merely share a name.
 60. **[H][DONE]** Draft localities should never be silently promoted to verified — require the authority review to complete first (gated in `confirmDraftFromRepository` + `requireReviewedRepositoryProfile`).
 61. **[F]** Sort repository by "most-used" — jurisdictions touched by recent jobs float to the top.
 62. **[F][DONE]** Export the repository to CSV for offline review.
-63. **[F]** Print/share a jurisdiction summary card — the field tech wants the office address + phone, not the whole repository.
+63. **[F][DONE]** Print/share a jurisdiction summary card — the field tech wants the office address + phone, not the whole repository.
 64. **[H]** Research-backlog rows: a locality that keeps failing boundary verification needs a visible "problem" flag, not silent retries.
-65. **[F]** A jurisdiction with NO verified source evidence shows a warning badge — unverified data never looks confident.
+65. **[F][DONE]** A jurisdiction with NO verified source evidence shows a warning badge — unverified data never looks confident.
 
 ## G — Page layout + accessibility (young AND old users)
 
-66. **[UX]** Big-text mode toggle on the permitting page — 18px+ everything for older users.
+66. **[UX][DONE]** Big-text mode toggle on the permitting page — 18px+ everything for older users.
 67. **[UX]** High-contrast option — status colors get text labels too so color isn't the only signal.
-68. **[UX]** Touch targets ≥ 44px on the picker buttons/cards — small select buttons are unusable on a phone or shaky hands.
+68. **[UX][DONE]** Touch targets ≥ 44px on the picker buttons/cards — small select buttons are unusable on a phone or shaky hands.
 69. **[UX]** Keyboard navigation: Tab through candidates, Enter to select, Esc to close — the picker is currently mouse-driven.
 70. **[UX]** Screen-reader labels: every candidate card needs aria-labels reading "Milford, Ohio — verified — select this office".
 71. **[UX]** Focus management: when the search completes, focus jumps to the result card — announce it via aria-live.
 72. **[UX]** Reduced-motion mode: the map/skeleton transitions shouldn't disorient users with vestibular sensitivity.
-73. **[UX]** The picker dialog needs a visible, labeled Close button in the top-right — not an icon-only X.
-74. **[UX]** Status badges get words, not just colors: "Verified", "Needs review", "Draft" — readable without a legend.
-75. **[UX]** Font size for the picker input should be 16px+ — iOS zoom-on-focus with small inputs is a classic complaint.
+73. **[UX][DONE]** The picker dialog needs a visible, labeled Close button in the top-right — not an icon-only X.
+74. **[UX][DONE]** Status badges get words, not just colors: "Verified", "Needs review", "Draft" — readable without a legend.
+75. **[UX][DONE]** Font size for the picker input should be 16px+ — iOS zoom-on-focus with small inputs is a classic complaint.
 76. **[UX]** Plain-language sweep #3: every remaining technical string ("authority_established", "boundary_intersection", "CAS conflict") gets human copy.
-77. **[UX]** The scan-activity panel needs an explain-me tooltip — "This shows what the system checked behind the scenes. You don't need it — it's for us."
-78. **[UX]** The jurisdiction picker title should say what the user is DOING: "Which office issues permits for this address?" — not "Choose your jurisdiction" (better than it was, still jargon-y).
+77. **[UX][DONE]** The scan-activity panel needs an explain-me tooltip — "This shows what the system checked behind the scenes. You don't need it — it's for us."
+78. **[UX][DONE]** The jurisdiction picker title should say what the user is DOING: "Which office issues permits for this address?" — not "Choose your jurisdiction" (better than it was, still jargon-y).
 
 ## H — Reliability / hardening the pipeline
 
 79. **[H]** Frontend mount burst: batch page-level `staffDataRead` calls — one read returning multiple entities would cut the burst ~10x. Needs a `staffDataRead` multi-entity mode.
 80. **[H][DONE]** Silent-retry for transient 429s in loadAllEntityRows — most bursts recover in <1s; the UI shouldn't flash errors for recoverable blips.
-81. **[H]** `staffDataRead` response caching for slowly-changing catalogs (JurisdictionProfile, PermitLocality repository list) — a 30s TTL kills repeat mount storms.
+81. **[H][DONE]** `staffDataRead` response caching for slowly-changing catalogs (JurisdictionProfile, PermitLocality repository list) — a 30s TTL kills repeat mount storms.
 82. **[H][DONE]** `permittingScanStatus` poll: back off when the scan is idle (>30s with no progress → poll every 8s, not 3s).
 83. **[H]** Offline tolerance: if `staffDataRead` is unreachable, show last-cached data with a "working offline" banner instead of an empty main.
 84. **[H][DONE]** Idempotent draft-create at the SERVER layer too — client dedupe (createPermitLocalityIfAbsent) is a courtesy, not a guarantee under double-submit races.
@@ -125,14 +125,14 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## I — Job card integration
 
-91. **[F]** "Permit office" field on every job card — shows the applied locality at a glance, not buried in a line item.
-92. **[F]** Unassigned jobs get a prominent "Find the permit office →" CTA — the empty state tells the user what to do.
+91. **[F][DONE]** "Permit office" field on every job card — shows the applied locality at a glance, not buried in a line item.
+92. **[F][DONE]** Unassigned jobs get a prominent "Find the permit office →" CTA — the empty state tells the user what to do.
 93. **[F]** Jobs in the same verified jurisdiction visually group — a county/cluster header so staff see coverage at a glance.
 94. **[F]** Permit due-date/chase reminders on the job card — "Permit application due in 3 days" for jobs whose jurisdiction data is stale.
-95. **[F]** Track permit-status per job line (applied, in-review, approved, issued, inspected) — not just "locality chosen".
-96. **[UX]** A pending-permit badge on the page header — "3 jobs still need a jurisdiction chosen" — the work queue is visible.
-97. **[F]** Permit-number field per line item once issued — the clerk types it in, the history stays with the job.
-98. **[F]** Permit document upload/link on the line — the PDF lives where the permit is tracked.
+95. **[F][DONE]** Track permit-status per job line (applied, in-review, approved, issued, inspected) — not just "locality chosen".
+96. **[UX][DONE]** A pending-permit badge on the page header — "3 jobs still need a jurisdiction chosen" — the work queue is visible.
+97. **[F][DONE]** Permit-number field per line item once issued — the clerk types it in, the history stays with the job.
+98. **[F][DONE]** Permit document upload/link on the line — the PDF lives where the permit is tracked.
 
 ## J — Search quality / matching
 
@@ -142,8 +142,8 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 102. **[H]** Multi-state handling: an address on a state line should surface BOTH states' candidates — current logic prefers the geocoded one.
 103. **[F][DONE]** Auto-apply when there's exactly one verified, unambiguous match — the happy path needs zero extra clicks.
 104. **[F][DONE]** "Are you sure?" confirm for apply when the match is low-confidence — the boundary case needs one pause, not blind trust.
-105. **[H]** Preserve detected-vs-repository distinction in ALL writes — the picker's location_resolution must never overwrite a verified repository row with a weaker detected one.
-106. **[F]** Alias table for common name variants ("City of Milford" ↔ "Milford") so searches don't fail on office-name formatting.
+105. **[H][DONE]** Preserve detected-vs-repository distinction in ALL writes — the picker's location_resolution must never overwrite a verified repository row with a weaker detected one.
+106. **[F][DONE]** Alias table for common name variants ("City of Milford" ↔ "Milford") so searches don't fail on office-name formatting.
 107. **[H][DONE]** Strip/normalize ZIP+4, abbreviations ("St"↔"Street"), suite numbers — input tolerance before lookup.
 
 ## K — Notifications + follow-through
@@ -153,14 +153,14 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 110. **[F]** Reminder when a job has had a jurisdiction picked but no permit-applied status in N days — permits age without tracking.
 111. **[F][DONE]** Internal note/activity feed per job-line for permit status changes ("applied on Oct 22", "approved on Oct 30").
 112. **[F]** If a jurisdiction's repository row gets merged/updated, jobs linked to the old row get flagged for re-verify — never silently linked to stale data.
-113. **[F]** One-click "re-check this jurisdiction" per job — re-runs the address pipeline and shows what changed.
+113. **[F][DONE]** One-click "re-check this jurisdiction" per job — re-runs the address pipeline and shows what changed.
 114. **[F][DONE]** Show the original search that produced the applied locality — the audit trail on the job.
 
 ## L — Polish
 
 115. **[UX][DONE]** Empty state for the picker when no address entered: a friendly "Type the job's street address above" with an example — not a blank dialog.
 116. **[UX][DONE]** Skeleton states while cards load — never show a half-rendered empty `main` like the 429-storm case.
-117. **[UX]** The card grid's responsive behavior on a phone: one column, big buttons — the current layout was desktop-first.
+117. **[UX][DONE]** The card grid's responsive behavior on a phone: one column, big buttons — the current layout was desktop-first.
 118. **[UX][DONE]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
 119. **[F]** A "Print this jurisdiction's details" view — clerk takes a paper copy of office name/address/phone to the phone call.
 120. **[UX]** Undo/history of searches in the dialog — the back-arrow restores the previous search, not close-everything.
