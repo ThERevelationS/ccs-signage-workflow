@@ -30,6 +30,18 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [lineCounts, setLineCounts] = useState({});
+  const [onboardingDone, setOnboardingDone] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("permitting_onboarding") || "[]"); } catch { return []; }
+  });
+  const toggleOnboarding = (idx) => setOnboardingDone((prev) => {
+    const next = prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx];
+    try { localStorage.setItem("permitting_onboarding", JSON.stringify(next)); } catch {}
+    return next;
+  });
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return localStorage.getItem("permitting_onboarding_hidden") !== "1"; } catch { return true; }
+  });
+  const hideOnboarding = () => { setShowOnboarding(false); try { localStorage.setItem("permitting_onboarding_hidden", "1"); } catch {} };
   const [lastVisit] = useState(() => {
     try { const v = localStorage.getItem("permitting_jurisdictions_last_visit") || ""; localStorage.setItem("permitting_jurisdictions_last_visit", new Date().toISOString()); return v; } catch { return ""; }
   });
@@ -378,6 +390,28 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             </>
           )}
 
+          {showOnboarding && (
+            <div className="mb-3 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-bold text-indigo-900">New to permitting? Learn these 5:</p>
+                <button type="button" onClick={hideOnboarding} className="text-[10px] font-semibold text-indigo-500 hover:underline">Hide</button>
+              </div>
+              <div className="mt-1.5 space-y-1">
+                {[
+                  "County ≠ city ≠ township ≠ village — the office depends on the type, not the name",
+                  "Type the job's full street address — the tool checks the real boundaries",
+                  "Verified (green dot) means a source page confirmed it — gray means unverified",
+                  "If the office can't be found, the job goes to the county's office",
+                  "Save the office's phone + portal link on the jurisdiction after you call",
+                ].map((item, idx) => (
+                  <label key={idx} className="flex cursor-pointer items-start gap-2 text-[11px] text-indigo-800">
+                    <input type="checkbox" checked={onboardingDone.includes(idx)} onChange={() => toggleOnboarding(idx)} className="mt-0.5" />
+                    <span className={onboardingDone.includes(idx) ? "line-through opacity-60" : ""}>{item}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex gap-2 items-start">
             {recentlyChanged.length > 0 && (
               <span className="mr-2 self-center whitespace-nowrap text-[11px] font-semibold text-indigo-700" title={recentlyChanged.slice(0, 5).map(j => j.name).join(", ")}>
