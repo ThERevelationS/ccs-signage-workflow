@@ -182,6 +182,11 @@
       "format": "date",
       "description": "Customer-facing issue date of the currently issued quote version. Updated when the estimate transitions into sent or when an intentional revision is completed while remaining sent; historical sent estimates are not automatically backfilled."
     },
+    "quote_expired": {
+      "type": "boolean",
+      "default": false,
+      "description": "Persisted mirror of the computed expiry check (sent past quote_issue_date + quote_valid_days) so expired quotes are reportable by filter without recomputing per row."
+    },
     "quote_version": {
       "type": "number",
       "default": 0,
