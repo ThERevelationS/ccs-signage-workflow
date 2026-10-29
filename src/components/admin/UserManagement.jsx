@@ -86,6 +86,9 @@ export default function UserManagement() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteImpact, setDeleteImpact] = useState(null);
   const [deleteImpactError, setDeleteImpactError] = useState("");
+  const [importRows, setImportRows] = useState(null);
+  const [importBusy, setImportBusy] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
   const [lastDeletedUser, setLastDeletedUser] = useState(null);
   const [restoreBusy, setRestoreBusy] = useState(false);
   const [restoreError, setRestoreError] = useState("");
@@ -1421,6 +1424,38 @@ export default function UserManagement() {
     return () => { cancelled = true; };
   }, [deleteConfirm, sessionToken]);
 
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = String(reader.result || "").split(String.fromCharCode(10)).map(l => l.trim()).filter(Boolean);
+      const rows = [];
+      for (const line of lines.slice(0, 51)) {
+        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+        const email = (cols[0] || "").toLowerCase();
+        if (!email || !email.includes("@") || email === "email") continue;
+        rows.push({ email, full_name: cols[1] || "", role: cols[2] === "admin" ? "admin" : "user" });
+      }
+      if (!rows.length) { setImportMsg("No valid email rows found (expected: email,name,role)."); return; }
+      setImportRows(rows); setImportMsg("");
+    };
+    reader.readAsText(file);
+  };
+  const runImport = async () => {
+    if (!importRows?.length || importBusy || !sessionToken) return;
+    setImportBusy(true); setImportMsg("");
+    const failed = [];
+    for (const row of importRows) {
+      try { await createAuthorizedUserAdmin({ data: row, sessionToken }); }
+      catch (err) { failed.push(`${row.email}: ${err?.message || "failed"}`); }
+    }
+    setImportMsg(failed.length ? `${importRows.length - failed.length} imported; ${failed.length} failed (${failed.slice(0, 2).join("; ")}${failed.length > 2 ? "…" : ""})` : `${importRows.length} users imported.`);
+    setImportRows(null); setImportBusy(false);
+    await loadUsers();
+  };
+
   const restoreDeletedUser = async () => {
     if (!lastDeletedUser || restoreBusy || !sessionToken) return;
     setRestoreBusy(true); setRestoreError("");
@@ -1918,6 +1953,25 @@ export default function UserManagement() {
                 {restoreError && <span className="text-xs text-red-600">{restoreError}</span>}
               </div>
             )}
+            {importRows && (
+              <div className="mb-1 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2">
+                <p className="text-xs font-semibold text-blue-900">Import preview — {importRows.length} users</p>
+                <div className="mt-1 max-h-24 overflow-y-auto text-xs text-blue-800">
+                  {importRows.map((r, i) => <p key={i}>{r.email} · {r.full_name || "no name"} · {r.role}</p>)}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <Button type="button" size="sm" onClick={runImport} disabled={importBusy} className="h-7 text-xs">{importBusy ? "Importing…" : "Import all"}</Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setImportRows(null)} className="h-7 text-xs">Cancel</Button>
+                </div>
+              </div>
+            )}
+            {importMsg && <p className="mb-1 text-xs text-gray-600">{importMsg}</p>}
+            <div className="mb-1">
+              <label className="cursor-pointer rounded-md border border-input bg-white/70 px-3 py-1 text-xs font-medium hover:bg-gray-50">
+                Import CSV
+                <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
+              </label>
+            </div>
             {selectedUserIds.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
                 <span className="text-xs font-semibold text-indigo-900">{selectedUserIds.size} selected</span>
