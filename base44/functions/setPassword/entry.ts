@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
     const nextFields: Record<string, unknown> = {
       username: uname,
       password_hash,
+      password_changed_at: new Date().toISOString(),
       session_not_before: new Date().toISOString(),
       // A credential change is also the recovery path out of a brute-force
       // lockout; leaving the deadline in place would keep the new password
