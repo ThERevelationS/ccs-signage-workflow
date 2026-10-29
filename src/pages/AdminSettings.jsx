@@ -115,6 +115,7 @@ import { AutomationReadTimeoutError, withAutomationReadDeadline } from "@/compon
 import { reviewAutomationOperation } from "@/components/admin/automationOperationReconciliation";
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -708,6 +709,10 @@ export default function AdminSettings() {
   };
   
   const [automations, setAutomations] = useState([]);
+  const [automationsPaused, setAutomationsPaused] = useState(false);
+  const [pauseSettingRow, setPauseSettingRow] = useState(null);
+  const [pauseBusy, setPauseBusy] = useState(false);
+  const [pauseError, setPauseError] = useState("");
   const [emailGroups, setEmailGroups] = useState([]);
   const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
   const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
@@ -1648,6 +1653,37 @@ export default function AdminSettings() {
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
+  const loadAutomationPauseState = async () => {
+    try {
+      const row = await loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "automations_paused", label: "Automation pause state" });
+      setPauseSettingRow(row || null);
+      setAutomationsPaused(row?.setting_value?.paused === true);
+    } catch { /* fail open: leave current state */ }
+  };
+  useEffect(() => { if (isUnlocked) void loadAutomationPauseState(); }, [isUnlocked]);
+
+  const toggleAutomationPause = async () => {
+    if (pauseBusy) return;
+    setPauseBusy(true); setPauseError("");
+    const next = !automationsPaused;
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings,
+        loadedRecord: pauseSettingRow,
+        settingKey: "automations_paused",
+        nextValue: { paused: next, paused_at: new Date().toISOString() },
+        label: "Automation pause state",
+      });
+      setPauseSettingRow(saved);
+      setAutomationsPaused(next);
+    } catch (err) {
+      setPauseError(err?.message || "Pause state could not be saved.");
+      await loadAutomationPauseState().catch(() => null);
+    } finally {
+      setPauseBusy(false);
+    }
+  };
+
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -2237,6 +2273,12 @@ export default function AdminSettings() {
               </div>
             )}
 
+            {automationsPaused && (
+              <div className="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800" role="alert">
+                All automations are PAUSED — no rules will run until resumed.
+              </div>
+            )}
+            {pauseError && <div className="mb-2 text-xs text-red-600">{pauseError}</div>}
             {uncoveredTriggerTypes.length > 0 && (
               <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                 <span className="font-semibold">No active rule uses:</span>{" "}
@@ -2307,6 +2349,12 @@ export default function AdminSettings() {
                 <Button type="button" size="sm" variant="outline" onClick={() => { void loadAutomations(); }}
                   disabled={isLoading} aria-label="Refresh Automation rules (read-only)">
                   Refresh rules
+                </Button>
+                <Button type="button" size="sm" variant={automationsPaused ? "default" : "outline"}
+                  onClick={toggleAutomationPause} disabled={pauseBusy || automationSaving}
+                  className={automationsPaused ? "bg-red-600 text-white" : ""}
+                  aria-label={automationsPaused ? "Resume all automations" : "Pause all automations"}>
+                  {pauseBusy ? "Working…" : automationsPaused ? "Resume all" : "Pause all"}
                 </Button>
               <Button onClick={openNewRule} disabled={isLoading || automationLoadError || emailGroupsLoading || emailGroupsLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
