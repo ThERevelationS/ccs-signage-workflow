@@ -19,6 +19,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
   const [backupError, setBackupError] = useState("");
   const [backupComparison, setBackupComparison] = useState(null);
   const [logRows, setLogRows] = useState(null);
+  const [expandedLogId, setExpandedLogId] = useState(null);
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState("");
   const [logSearch, setLogSearch] = useState("");
@@ -127,7 +128,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-semibold text-gray-800 flex items-center gap-2">
             <FileSpreadsheet className="w-4 h-4 text-blue-600" />
-            CoreBridge Migration Â· CCS Native Reports
+            CoreBridge Migration · CCS Native Reports
           </h2>
           <Badge className="bg-green-100 text-green-800">API-FREE</Badge>
           <Badge variant="outline">ADMIN ONLY</Badge>
@@ -349,9 +350,9 @@ export default function CorebridgeApiSettings({ sessionToken }) {
                 <div className="mt-3 space-y-3">
                   {auditReport.review_only_name_samples.map((group, index) => (
                     <div key={index} className="border-t border-gray-100 pt-2">
-                      <div className="font-medium">{group.client} â€” {group.title} ({group.count} records)</div>
+                      <div className="font-medium">{group.client} — {group.title} ({group.count} records)</div>
                       <div className="mt-1 space-y-1 text-xs text-gray-600">
-                        {group.jobs.map(job => <div key={job.id} className="break-all">CCS {job.id} Â· Sheet row {job.sheet_row_id || "not linked"}</div>)}
+                        {group.jobs.map(job => <div key={job.id} className="break-all">CCS {job.id} · Sheet row {job.sheet_row_id || "not linked"}</div>)}
                       </div>
                     </div>
                   ))}
@@ -367,7 +368,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
           <ShieldCheck className="w-4 h-4 text-green-700" /> Existing migration paths
         </div>
         <p>
-          For an exported WIP workbook, use Backend Functions â†’ WIP Import. It already matches
+          For an exported WIP workbook, use Backend Functions → WIP Import. It already matches
           existing jobs by order number and updates descriptions and install dates.
           Sales Pipeline and Order Form have their own existing spreadsheet exports and imports.
           No automatic CoreBridge synchronization is enabled.
@@ -415,6 +416,17 @@ export default function CorebridgeApiSettings({ sessionToken }) {
                       <span className="text-gray-400">{row.emails_found ?? "—"} found · {row.processed ?? "—"} processed</span>
                     </div>
                     {row.error_message && <p className="mt-1 text-red-700">{row.error_message}</p>}
+                    {row.results && (
+                      <div className="mt-1">
+                        <button type="button" className="text-[10px] font-medium text-sky-700 underline"
+                          onClick={() => setExpandedLogId(expandedLogId === row.id ? null : row.id)}>
+                          {expandedLogId === row.id ? "Hide details" : "Show details"}
+                        </button>
+                        {expandedLogId === row.id && (
+                          <pre className="mt-1 max-h-40 overflow-auto rounded bg-gray-50 p-2 text-[10px] text-gray-700">{JSON.stringify(row.results, null, 2)}</pre>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
