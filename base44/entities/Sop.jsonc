@@ -1,0 +1,196 @@
+{
+  "name": "Sop",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "SOP title (e.g. 'Changing a router bit on the CNC')"
+    },
+    "category": {
+      "type": "string",
+      "default": "other",
+      "description": "Department key from sopModuleSettings categories (design, cnc_router, cnc_laser, painting, installation, fabrication, estimating, other, ...)"
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-paragraph overview shown on the card and top of the SOP"
+    },
+    "cover_image_url": {
+      "type": "string",
+      "description": "Card thumbnail image on the browse page"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "draft = editors only; published = visible to all staff; archived = hidden from browse"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Bumps when content changes on a published SOP; acknowledgments are per-version"
+    },
+    "steps": {
+      "type": "array",
+      "default": [],
+      "description": "Ordered procedure steps",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "description": "Rich-text HTML for the step instructions"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Photo URLs for this step"
+          },
+          "video_url": {
+            "type": "string",
+            "description": "Uploaded/recorded video file URL"
+          },
+          "external_video_url": {
+            "type": "string",
+            "description": "YouTube/Vimeo/other link to embed"
+          }
+        }
+      }
+    },
+    "safety_notes": {
+      "type": "array",
+      "default": [],
+      "description": "Highlighted safety/warning callouts shown above the steps",
+      "items": {
+        "type": "string"
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "default": [],
+      "description": "Loose files attached to the whole SOP",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "doc",
+              "other"
+            ],
+            "default": "other"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "default": [],
+      "description": "Freeform search tags",
+      "items": {
+        "type": "string"
+      }
+    },
+    "estimated_minutes": {
+      "type": "number",
+      "description": "Rough time to perform the procedure"
+    },
+    "requires_ack": {
+      "type": "boolean",
+      "default": false,
+      "description": "Staff must press 'I have read this' on the current version"
+    },
+    "acknowledged_viewers": {
+      "type": "array",
+      "default": [],
+      "description": "Per-version read receipts",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "acknowledged_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pinned SOPs sort first in their category"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Manual ordering hint inside a category"
+    },
+    "created_by_email": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "updated_by_email": {
+      "type": "string"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Client-supplied idempotency key so double-submits converge on one record"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__sop_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__sop_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__sop_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__sop_backend_only__"
+      }
+    }
+  }
+}
