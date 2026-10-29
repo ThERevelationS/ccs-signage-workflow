@@ -114,7 +114,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 80. **[H][DONE]** Silent-retry for transient 429s in loadAllEntityRows — most bursts recover in <1s; the UI shouldn't flash errors for recoverable blips.
 81. **[H][DONE]** `staffDataRead` response caching for slowly-changing catalogs (JurisdictionProfile, PermitLocality repository list) — a 30s TTL kills repeat mount storms.
 82. **[H][DONE]** `permittingScanStatus` poll: back off when the scan is idle (>30s with no progress → poll every 8s, not 3s).
-83. **[H][FLAGGED]** Offline tolerance: if `staffDataRead` is unreachable, show last-cached data with a "working offline" banner instead of an empty main.
+83. **[H][DONE]** Offline tolerance: if `staffDataRead` is unreachable, show last-cached data with a "working offline" banner instead of an empty main.
 84. **[H][DONE]** Idempotent draft-create at the SERVER layer too — client dedupe (createPermitLocalityIfAbsent) is a courtesy, not a guarantee under double-submit races.
 85. **[H][DONE]** CAS guard on PermitLocality updates (when update ops get added) — concurrent repository edits must not clobber each other.
 86. **[H][DONE]** Audit trail on jurisdiction changes: who changed a locality name/state/authority fields and when — a simple `notes_log`-style array on the entity.
@@ -405,7 +405,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 ## AA — Staff experience & training
 
-309. **[UX][FLAGGED-dedicated]** New-user mode: extra guidance copy for staff in their first N days — experienced users never see it.
+309. **[UX][DONE]** New-user mode: extra guidance copy for staff in their first N days — experienced users never see it.
 310. **[F][DONE]** Internal runbook link: "how we do Milford permits" staff-written note pinned to the jurisdiction.
 311. **[UX][DONE]** Terminology glossary: a "?" chip on words like "situs", "variance", "ETJ" opening a one-line definition.
 312. **[F][FLAGGED-dedicated]** Common-mistake warnings: "You picked the county — the city issues sign permits for this address" soft-suggest.
