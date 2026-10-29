@@ -3,7 +3,7 @@ import {useAuth} from '@/components/auth/EmailGate';
 import {loadGoogleMaps} from './googleMapsLoader';
 import {subscribeGoogleMapsAuthFailure} from './googleMapsAuthFailure';
 const DEFAULT_CENTER={lat:39.1031,lng:-84.5120};
-export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,markerTitle='',boundaries=[]}){
+export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,markerTitle='',boundaries=[],onDragEnd}){
  const {sessionToken}=useAuth(),container=useRef(null),map=useRef(null),marker=useRef(null),line=useRef(null),layers=useRef({}),measure=useRef(false),latest=useRef({position,markerTitle}),[layerState,setLayerState]=useState({}),[ready,setReady]=useState(false),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[measuring,setMeasuring]=useState(false),[distance,setDistance]=useState(''),[boundaryVisible,setBoundaryVisible]=useState(true),[preview,setPreview]=useState(false);
  useEffect(()=>setPreview(false),[position?.lat,position?.lng,markerTitle]);
  latest.current={position,markerTitle};
@@ -20,7 +20,7 @@ export default function GoogleMapView({position,defaultCenter=DEFAULT_CENTER,mar
   }).catch(()=>{if(!failed)fail('The map could not load. Try again, or open the address in Google Maps.');});
   return()=>{cancelled=true;unsubscribeAuthFailure();observer?.disconnect();listener?.remove();marker.current?.setMap(null);line.current?.setMap(null);Object.values(layers.current).forEach(layer=>layer.setMap(null));if(map.current)window.google?.maps?.event?.clearInstanceListeners(map.current);map.current=null;marker.current=null;};
  },[sessionToken,attempt,defaultCenter]);
- useEffect(()=>{if(!ready||!map.current)return;const maps=window.google.maps;if(position){map.current.panTo(position);map.current.setZoom(17);if(marker.current){marker.current.setMap(map.current);marker.current.setPosition(position);marker.current.setTitle(markerTitle);}else marker.current=new maps.Marker({position,map:map.current,title:markerTitle});}else{marker.current?.setMap(null);marker.current=null;}},[ready,position?.lat,position?.lng,markerTitle]);
+ useEffect(()=>{if(!ready||!map.current)return;const maps=window.google.maps;if(position){map.current.panTo(position);map.current.setZoom(17);if(marker.current){marker.current.setMap(map.current);marker.current.setPosition(position);marker.current.setTitle(markerTitle);}else{marker.current=new maps.Marker({position,map:map.current,title:markerTitle,draggable:!!onDragEnd});if(onDragEnd)marker.current.addListener('dragend',(e)=>onDragEnd({lat:e.latLng.lat(),lng:e.latLng.lng()}));}}else{marker.current?.setMap(null);marker.current=null;}},[ready,position?.lat,position?.lng,markerTitle]);
  useEffect(()=>{if(!ready||!map.current)return;const data=map.current.data;data.forEach(feature=>data.remove(feature));for(const feature of boundaries || [])data.addGeoJson(feature);data.setStyle({visible:boundaryVisible,strokeColor:'#7c3aed',strokeWeight:2,fillOpacity:0.08,clickable:false});},[ready,boundaries,boundaryVisible]);
  const destination=position?`${position.lat},${position.lng}`:markerTitle,external=destination?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(destination):'https://www.google.com/maps';
  const hasBoundaries=Array.isArray(boundaries)&&boundaries.length>0;
