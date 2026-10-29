@@ -64,6 +64,9 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const [reviewReason, setReviewReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [retryReview, setRetryReview] = useState(null);
+  const [checkedIds, setCheckedIds] = useState(() => new Set());
+  const [bulkReason, setBulkReason] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const loadSeqRef = useRef(0);
   const loadRequests = useCallback(async () => {
@@ -208,6 +211,46 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   };
 
   const retryingSelected = retryReview?.correctionRequestId === selected?.id;
+
+  const toggleChecked = (id) => setCheckedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const allChecked = requests.length > 0 && checkedIds.size === requests.length;
+  const toggleAll = () => setCheckedIds(allChecked ? new Set() : new Set(requests.map((r) => r.id)));
+
+  const bulkApprove = async () => {
+    if (bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3) {
+      if (bulkReason.trim().length < 3) setError("Enter a shared manager review reason (3+ characters) for the bulk approval.");
+      return;
+    }
+    setBulkBusy(true);
+    setError("");
+    const failed = [];
+    for (const request of requests.filter((r) => checkedIds.has(r.id))) {
+      try {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "review_correction_request",
+          session_token: sessionToken,
+          target_email: request.user_email,
+          request_id: newRequestId(),
+          correction_request_id: request.id,
+          expected_request_updated_date: request.updated_date,
+          decision: "approve",
+          reason: bulkReason.trim(),
+        });
+        const data = response?.data || response;
+        if (!data?.success) failed.push(`${request.user_name || request.user_email}: ${data?.error || "not confirmed"}`);
+      } catch (err) {
+        failed.push(`${request.user_name || request.user_email}: ${err?.response?.data?.error || err?.message || "failed"}`);
+      }
+    }
+    setCheckedIds(new Set());
+    if (failed.length) setError(`Bulk approval had ${failed.length} failure(s): ${failed.join("; ")}`);
+    await Promise.all([loadRequests(), onEntriesChanged?.()]);
+    setBulkBusy(false);
+  };
   const requestedDuration = useMemo(() => shiftDurationSummary(
     selected?.requested_changes?.clock_in,
     selected?.requested_changes?.clock_out,
@@ -236,6 +279,26 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           </div>
           <Badge className={requests.length ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>{requests.length} awaiting review</Badge>
         </div>
+        {requests.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-2">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+              <input type="checkbox" checked={allChecked} onChange={toggleAll} className="h-3.5 w-3.5" />
+              Select all
+            </label>
+            <Input
+              value={bulkReason}
+              onChange={(e) => setBulkReason(e.target.value)}
+              placeholder="Shared review reason (required)"
+              className="h-8 min-w-48 flex-1 text-xs"
+              maxLength={500}
+              disabled={bulkBusy || checkedIds.size === 0}
+            />
+            <Button size="sm" onClick={bulkApprove} disabled={bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3} className="gap-1.5">
+              {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              Approve {checkedIds.size || ""} selected
+            </Button>
+          </div>
+        )}
         {loading ? (
           <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
         ) : error && !selected ? (
@@ -246,7 +309,15 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           <div className="space-y-2">
             {requests.map((request) => (
               <div key={request.id} className="rounded-lg border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={checkedIds.has(request.id)}
+                    onChange={() => toggleChecked(request.id)}
+                    className="mt-1 h-4 w-4 shrink-0"
+                    aria-label={`Select ${request.user_name || request.user_email}`}
+                  />
+                  <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="font-medium text-sm">{request.user_name || request.user_email}</div>
                     {request.request_kind === "missed_clock_out" && (
@@ -255,6 +326,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   </div>
                   <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.employee_reason}</div>
+                  </div>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => openReviewFromList(request)}>Review</Button>
               </div>
