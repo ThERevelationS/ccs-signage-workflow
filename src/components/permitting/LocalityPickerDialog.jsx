@@ -397,6 +397,11 @@ function LocalityPickerSession({
                 }}
               />
             </div>
+            {/(\bp\.?o\.?\s*box\b|\brural\s*route\b|\brr\s*\d+\b)/i.test(address) && (
+              <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
+                That looks like a PO box or rural route — we found a postal area, not a physical sign location. Check the map pin before applying.
+              </p>
+            )}
             <button type="button" onClick={() => { setMultiMode(!multiMode); setMultiResults([]); }} className="text-[10px] font-semibold text-purple-600 hover:underline">
               {multiMode ? "Single address" : "Paste several addresses"}
             </button>
