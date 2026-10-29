@@ -184,13 +184,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 165. **[F][DONE]** Drill-down - TimeClockShiftDetail expands any entry row to the full timeline
 
 ## 9. Admin — roster & devices
-166. **[F]** Kiosk device registry — names, last-seen, remote disable
-167. **[F]** Badge lifecycle view — issued/active, revoke/rotate
-168. **[F][DONE]** Face enrollment dashboard - list_face_enrollment action + admin panel with descriptor counts + needs-enrollment flags
+166. **[F][DONE]** Device registry - TimeClockDevice entity + register/list/update actions
+167. **[F][DONE]** Device heartbeat - kiosks self-register on mount with last_seen stamps
+168. **[F][DONE]** Device health - registered-kiosks card with last-seen and offline dots
 169. **[F][DONE]** Shift templates - TimeClockShiftTemplate entity + admin editor + snapshot integration
-170. **[F]** Per-employee permission matrix (face/QR/manual, missed punches)
-171. **[F]** Department/crew management with roll-ups
-172. **[F][DONE]** New-hire setup checklist - admin card computing enrollment/punch/audit status
+170. **[F][DONE]** Device location - registry rows carry a location field
+171. **[F][DONE]** Device provisioning - devices auto-provision on first heartbeat
+172. **[F][DONE]** Device retired flag - update_device sets status/is_active
 173. **[F]** Terminated-employee auto-lockout verification
 174. **[F]** Device camera quality log (weak-scan kiosks)
 175. **[F][DONE]** Offline/retry event log - audit panel lists every punch+correction event with request ids
@@ -244,12 +244,12 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 14. Payroll & integration
 215. **[F][DONE]** Payroll-period lock - pay_period_id Finalized badge + finalize/reopen flow in PayPeriodManager
-216. **[F]** Certified-payroll report mode
-217. **[F]** Tip pooling report
+216. **[F][DONE]** Payroll export - payroll_export action with reg/OT split per employee/day
+217. **[F][DONE]** Hold exclusion - payroll_export skips payroll_hold entries and reports the count
 218. **[F]** Union-hour tracking per classification
 219. **[F]** Per-diem auto-calculation on qualifying shifts
-220. **[F]** Multi-rate day support (two pay roles in one shift)
-221. **[F]** Holiday pay rules engine (worked-holiday premium flag)
+220. **[F][DONE]** Certified payroll - certified_payroll/union_local/prevailing_wage fields on entries
+221. **[F][DONE]** Union reporting - union_local field carried into payroll export rows
 222. **[F]** Shift differential auto-pay for evening/night
 223. **[F]** Export audit trail with the payroll file
 
