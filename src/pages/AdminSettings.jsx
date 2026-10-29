@@ -65,7 +65,8 @@ import {
   Scale,
   FlaskConical,
   BookOpen,
-  Truck
+  Truck,
+  Braces,
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
@@ -1034,6 +1035,39 @@ export default function AdminSettings() {
     void loadEmailGroups();
     void loadAllUsers();
   }, []);
+
+  const copyRuleJson = async (rule) => {
+    const payload = JSON.stringify({
+      name: `${rule.name || ""} (imported)`, group: rule.group || "", enabled: rule.enabled !== false,
+      priority: rule.priority || 0, triggers: rule.triggers || [], actions: rule.actions || [],
+    }, null, 2);
+    try { await navigator.clipboard.writeText(payload); setRuleMessage?.("Rule JSON copied to clipboard."); }
+    catch { window.prompt("Copy this rule JSON:", payload); }
+  };
+
+  const [importJsonText, setImportJsonText] = useState(null);
+  const [importJsonError, setImportJsonError] = useState("");
+  const applyRuleJson = () => {
+    setImportJsonError("");
+    try {
+      const parsed = JSON.parse(importJsonText);
+      if (!parsed || (!parsed.name && !Array.isArray(parsed.triggers) && !Array.isArray(parsed.actions))) {
+        setImportJsonError("That doesn't look like a rule — expected { name, triggers, actions }.");
+        return;
+      }
+      setFormData({
+        name: parsed.name || "",
+        enabled: parsed.enabled !== false,
+        priority: parsed.priority || 0,
+        group: parsed.group || "",
+      });
+      if (Array.isArray(parsed.triggers) && parsed.triggers.length) setTriggers(parsed.triggers);
+      if (Array.isArray(parsed.actions) && parsed.actions.length) setActions(parsed.actions);
+      setImportJsonText("");
+    } catch {
+      setImportJsonError("Could not parse that JSON.");
+    }
+  };
 
   const openNewRule = async () => {
     if (automationSaveInFlight.current) return;
@@ -2697,6 +2731,11 @@ export default function AdminSettings() {
                             <RotateCcw className="w-4 h-4 text-purple-600" />
                           </Button>
                         )}
+                        <Button variant="ghost" size="icon" aria-label={`Copy JSON for ${rule.name}`} title="Copy rule as JSON"
+                          disabled={emailGroupsLoading || emailGroupsLoadError}
+                          onClick={() => copyRuleJson(rule)} className="h-8 w-8">
+                          <Braces className="w-4 h-4 text-indigo-600" />
+                        </Button>
                         <Button variant="ghost" size="icon" aria-label={`Edit ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
                         </Button>
@@ -2734,6 +2773,25 @@ export default function AdminSettings() {
                     setActions([{ action_type: "", action_config: {} }]);
                     setDraftRestored(false);
                   }}>Discard draft</button>
+                </div>
+              )}
+              {!editingRule && (
+                <div className="mb-2">
+                  <button type="button" className="text-xs text-indigo-700 underline"
+                    onClick={() => setImportJsonText(importJsonText === null ? "" : null)}>
+                    Import from JSON
+                  </button>
+                  {importJsonText !== null && (
+                    <div className="mt-1 space-y-1">
+                      <Textarea value={importJsonText} onChange={(e) => setImportJsonText(e.target.value)}
+                        placeholder='Paste rule JSON: {"name":"...", "triggers":[...], "actions":[...]}'
+                        className="min-h-20 text-xs font-mono" />
+                      {importJsonError && <p className="text-xs text-red-600">{importJsonError}</p>}
+                      <Button type="button" size="sm" variant="outline" onClick={applyRuleJson} className="h-7 text-xs">
+                        Apply JSON
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
               {!editingRule && !formData.name && !triggers[0]?.trigger_type && (
