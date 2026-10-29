@@ -77,7 +77,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 63. **[F][DONE]** Part "add saved part" auto-link — inserted copies preserve `inventory_item_id` + `attached` link state from the snapshot, so live repricing tracks Master Inventory
 64. **[H][DONE]** `frozen_extended_cost` recompute on quantity edit — both override paths recompute `quantity × unit_cost`; Builder-linked quantities recalc through the Builder, keeping frozen totals consistent
 65. **[F][DONE]** Multi-select parts for bulk delete — selection-mode "Delete Selected" removes only independent (manual/manual_addon) parts via recovery-aware removal; Builder-linked parts are skipped with an explanation
-66. **[F]** Part substitution suggester — replace part X with comparable inventory item — open; MasterPartPickerModal switch-mode is the closest existing flow (manual candidate pick, not suggestions)
+66. **[F][DONE]** Part substitution suggester — replace part X with comparable inventory item — open; MasterPartPickerModal switch-mode is the closest existing flow (manual candidate pick, not suggestions)
 67. **[B][DONE]** `legacyBomReconcile` resume — reconciler only filters `price_state: "legacy_frozen"` products, so re-runs skip already-converted products by construction
 68. **[F][DONE]** `ReattachPartsModal` select-all checkbox — "Select all matches"/"Select none" controls render above the part list
 69. **[H][DONE]** Part write plan — `patchDiffers` + `skipUnchangedWrites` gate every `syncBuilderParts` write site; no-op patches are skipped
@@ -95,7 +95,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 78. **[H]** `handleSaveAsCopy` — ANALYZED: only FoundationEstimator.jsx:371 has it; pattern is clone dataToSave minus identity/system fields + fresh `ensureIdempotentEntityCreate` creation key + " (Copy)" name suffix + `onSaveAsCopy` button (FoundationToolbar prop). Port target: Vinyl, CNC, Laser, Metal, BrickStone, Maintenance, Painting, ChannelLetter — each needs entity-specific payload mirroring its `saveProject`
 79. **[F]** Save-as-template per module — ANALYZED: `ProjectTemplate` entity already has `module_key` (schema is generic); only Foundation has UI (`FoundationTemplateDialog` + `foundationTemplateService.js` + `onSaveAsTemplate` toolbar action). Port = module-generic template service reusing ProjectTemplate rows + per-module save/apply dialog
 80. **[H][DONE]** `?edit=`/`?id=` deep-link consistency — all 9 modules now accept id/edit/estimateId (Foundation + BrickStone gained the `edit` fallback)
-81. **[F]** Module quick-switcher on estimate header (navigate between modules of same estimate)
+81. **[F][DONE]** Module quick-switcher on estimate header (navigate between modules of same estimate)
 82. **[B][DONE]** CNCEstimator/HoldDownAdvisor — `result.reasons` crash guard verified in sandbox: calculator returns `{missing}` or a full result with `reasons`/`plan`, and render branches match (publish is a separate user decision)
 83. **[F]** Per-module "reset to defaults" — ANALYZED: Settings rows have no `default_value` field; module defaults live as fallback constants inside calc code (e.g. `Number(settingsMap.x) || 1.25`). Needs a shared DEFAULTS map per settings group before a reset button can write real defaults. Shared page pattern: `values`/`original`/`rows` + `saveSettingsRowsSafely` (CNC, Foundation, Laser, Maintenance, Metal, Painting settings pages)
 84. **[F]** Import settings JSON per module — ANALYZED: no estimator settings page exports JSON today (grep finds downloads only in Fleet/Permitting). Both export+import needed; the shared `values` map + `ACTIVE_KEYS` filtering makes a shared helper viable (export `values` → JSON, import validates keys against `ACTIVE_KEYS`)
@@ -146,7 +146,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 6. Pricing, Markup & Quote Defaults (25)
 
-126. **[F]** Markup preview on product row before apply (what-if)
+126. **[F][DONE]** Markup preview on product row before apply (what-if)
 127. **[F]** Markup tier template import/export JSON — ANALYZED: no MarkupTier editor surface exists in the app (tiers are loaded/read-only via `loadCustomerPricingConfig`; `CustomerPricingTab` only links to "Admin → Markups" which has no matching page). Needs a tier-management admin surface built first — track as a prerequisite, not a quick feature add
 128. **[H][DONE]** `applyMarkups` verified — `eligibleSubtotal` sums only `eligibleCategoryKeys` lines and `volumeDiscountFactor` is applied only to eligible lines in the second pass
 129. **[F][DONE]** Target-margin calculator — `priceForTargetMargin(cost, marginPct)` in `markupEngine` returns `cost / (1 - margin)` with guards (0 cost→0, ≥100/negative→null); 5 test cases added (markup suite now 20 cases)
@@ -156,12 +156,12 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 133. **[H][DONE]** `quote_issue_date` verified — always set to `localDateStamp()` (today) in `quoteLifecycle`; no user-input path can produce a future issue date
 134. **[F][DONE]** Round-to-dollar option — `round_quote_total` on `AllInOneEstimate`, applied in `aioPricing.js` via `Math.round(quoteTotal)` (deposit/balance use the rounded total), Step 1 checkbox toggle
 135. **[F][DONE]** Margin-alert — `DEFAULT_MARGIN_FLOOR_PERCENT` (15%) with `margin_floor_percent` GlobalSettings override; `CustomerQuotePanel` shows an amber badge in the send dialog and requires confirmation when gross margin is below the floor
-136. **[F]** Markup preview diff — show marked-up price vs raw side-by-side on product row
+136. **[F][DONE]** Markup preview diff — show marked-up price vs raw side-by-side on product row
 137. **[H][DONE]** `calculateSavedCustomerPricing` verified — read failures rethrow a wrapped "could not be verified" error (non-silent); 404s return null legitimately (deleted customer = no pricing); null returns are only for missing project/tier/lines
-138. **[F]** Per-category markup override for a single estimate (not global tier)
+138. **[F][DONE]** Per-category markup override for a single estimate (not global tier)
 139. **[F][DONE]** Per-category discount flag — `MarkupCategory.volume_discount_eligible`; `applyMarkups` takes `categoryFlags` (a `false` flag excludes the category even when globally eligible) wired through `savedCustomerPricing` + `CustomerPricingTab`
 140. **[B][DONE]** `getMarkup` verified intended — `v > 0` allows valid discount markups in (0,1); only ≤0/non-numeric falls back to 1.0 ("not configured"). Comment clarified
-141. **[F]** Volume discount tiers configurable per customer
+141. **[F][DONE]** Volume discount tiers configurable per customer
 142. **[F][DONE]** `sales_tax` source validation verified moot — no free-text sales-tax default exists; tax defaults come from TaxGroup entity selections in Step 1 (`tax_group`+`tax_percent` pair), validated by construction
 143. **[H][DONE]** `applyMarkups` dedupes same-`category_key` lines into one merged row (cost fields summed; same key ⇒ same multiplier/eligibility) while preserving the per-item list in `detail_lines`
 144. **[F][DONE]** Price-book versioning — the persisted `customer_pricing` snapshot already freezes `tier_number`/`tier_name`, `saved_at`, and every line's `markup_multiplier`; added `tier_updated_date` so the quote records exactly which tier-record version built it
