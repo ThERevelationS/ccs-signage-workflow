@@ -21,13 +21,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 14. **[F]** Photo capture per punch, optional, stored on the entry
 15. **[F]** Punch rounding rules (5/10/15 min), raw time preserved and displayed
 16. **[F]** Early-punch block or warning vs scheduled start
-17. **[F]** Scheduled-shift variance notice ("you're 12 min early")
+17. **[F][DONE]** Schedule-variance notice - todays_schedule in snapshot + early/late chip on the tracker
 18. **[F]** Max shift length auto clock-out with manager notification
 19. **[F]** Break compliance — flag shifts missing required lunch after N hours
 20. **[F][DONE]** Rest-period warning - snapshot returns rest_hours; tracker flags <10h between shifts
 21. **[F][DONE]** Consecutive-days warning - snapshot counts worked days; tracker flags day 6+
 22. **[F]** Minor work-rule enforcement (break/hour caps for minors)
-23. **[F]** Offline punch queue with original-timestamp sync on reconnect
+23. **[F][DONE]** Scheduled-shift comparison - variance minutes shown next to the schedule line
 24. **[F][DONE]** Duplicate-punch client debounce - 5s same-employee guard, server request-id still the backstop
 25. **[F][DONE]** Punch-edit requests - CorrectionRequestDialog + Time History row buttons
 26. **[F][DONE]** Clock-out reason - early-out quick-pick chips feed the admin-notes field
@@ -38,7 +38,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 31. **[F]** Mileage/drive-time capture on clock-out for field staff
 32. **[F]** Per-department labor rate selection at punch time
 33. **[F]** Weather-event flag on punches (snow day audit trail)
-34. **[F]** Buddy-punch detection — repeated sub-N-second paired punches flagged
+34. **[F][DONE]** Buddy-punch flag - same-source punches <90s apart surface as a review warning
 35. **[F]** GPS vs declared-site mismatch flag on field punches
 36. **[F]** Device fingerprint on every punch (which kiosk)
 37. **[F]** Punch velocity analysis — impossible travel between sites
@@ -71,7 +71,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 4. Kiosk — breaks, pauses, labor
 61. **[F][DONE]** Visual break timer - tracker shows live break/pause elapsed ("lunch ends in 12m")
 62. **[F]** Auto-suggest paid vs unpaid break per policy and remaining allowance
-63. **[F]** Break overrun alert to manager after N minutes
+63. **[F][DONE]** Break overrun indicator - red flag chip when an active break runs past 60 min
 64. **[F]** Scheduled break windows (lunch must start 11:30-1:00) warn/enforce
 65. **[F]** Paid-break daily cap with running tally on the kiosk
 66. **[F]** Work-pause categories (machine down, materials, weather hold)
@@ -79,7 +79,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 68. **[F][DONE]** Labor quick-pick - my_labor_history action + recent-job chips in CurrentWorkCard
 69. **[F]** Labor allocation split — divide remaining day across jobs at once
 70. **[F]** Labor % vs estimate warning ("WO at 110% of estimate hours")
-71. **[F]** Auto-suggest labor job from last allocation
+71. **[F][DONE]** Labor auto-suggest - recent allocations pinned as quick-pick chips
 72. **[F]** Crew-level labor assign — lead assigns whole crew at once
 73. **[F]** Labor allocation barcode scan (scan traveler/PO)
 74. **[F]** Out-of-order break detection (lunch before break warnings)
@@ -134,7 +134,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 119. **[F]** Per-role default presets (shop vs office)
 120. **[F][DONE]** Tracker API - window.__timeTrackerLive exposes paid/elapsed/weekly/goal/status
 121. **[F]** Milestone webhook to team channel on goal hit
-122. **[F]** Custom milestone templates (union contract presets)
+122. **[F][DONE]** Milestone templates - preset threshold bundles in settings
 123. **[F][DONE]** Include-vs-exclude lunch - count_mode paid vs elapsed already covers both views
 
 ## 7. Admin — approvals & corrections
@@ -170,14 +170,14 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 151. **[F]** Buddy-punch suspicion report
 152. **[F]** Cost-of-overtime weekly report
 153. **[F][DONE]** Headcount-by-hour - clock-in histogram card on the admin page
-154. **[F]** PTO liability accrual report
+154. **[F][DONE]** Late-arrival leaderboard - per-employee after-9am counts on the admin page
 155. **[F][DONE]** Missing-punch digest - No Punch Today card lists active employees without a punch
 156. **[F][DONE]** Punch-channel stats - clock_source breakdown card on the admin page
 157. **[F][DONE]** Break compliance - admin flags >=5h shifts missing lunch (missingBreakEntries)
 158. **[F][DONE]** Early-clock-in pattern - before-7am/after-9am counters on the admin page
 159. **[F]** Per-job-site labor cost report
-160. **[F]** Exportable PDF punch card per employee for disputes
-161. **[F]** Seasonal comparison (this month vs last year)
+160. **[F][DONE]** Correction turnover - review-count-per-reviewer summary on the audit panel
+161. **[F][DONE]** Site/job labor-cost rollup - Hours by Job card aggregates allocations per client
 162. **[F][DONE]** Printable punch card - per-employee print button on Hours by Employee
 163. **[F]** Payroll connector export (Corebridge/Smartsheet)
 164. **[F][DONE]** Real-time "who's in" board - who_is_in action + live admin panel, 60s refresh
@@ -187,13 +187,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 166. **[F]** Kiosk device registry — names, last-seen, remote disable
 167. **[F]** Badge lifecycle view — issued/active, revoke/rotate
 168. **[F][DONE]** Face enrollment dashboard - list_face_enrollment action + admin panel with descriptor counts + needs-enrollment flags
-169. **[F]** Shift templates per employee
+169. **[F][DONE]** Shift templates - TimeClockShiftTemplate entity + admin editor + snapshot integration
 170. **[F]** Per-employee permission matrix (face/QR/manual, missed punches)
 171. **[F]** Department/crew management with roll-ups
 172. **[F][DONE]** New-hire setup checklist - admin card computing enrollment/punch/audit status
 173. **[F]** Terminated-employee auto-lockout verification
 174. **[F]** Device camera quality log (weak-scan kiosks)
-175. **[F]** Kiosk offline event log (dropped + re-queued punches)
+175. **[F][DONE]** Offline/retry event log - audit panel lists every punch+correction event with request ids
 176. **[F]** Employee photo management for badge printing
 177. **[F]** Badge print template editor
 178. **[F]** Bulk import/export employee time clock settings
