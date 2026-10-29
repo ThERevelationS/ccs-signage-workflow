@@ -35,6 +35,14 @@ const csvCell = (value) => {
   const s = value == null ? "" : String(value);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
+const downloadJson = (filename, payload) => {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+};
+
 const downloadCsv = (filename, headers, rows) => {
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -286,6 +294,7 @@ export default function EstimatorQueues() {
           <ListFilter className="w-4 h-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
           <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
+          {me?.role === "admin" && <button type="button" onClick={exportBackup} disabled={backupBusy} className="h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" />{backupBusy ? " Exporting…" : " Backup (JSON)"}</button>}
           <span className="text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
         </div>
 
