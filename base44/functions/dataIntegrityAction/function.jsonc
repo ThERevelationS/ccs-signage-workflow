@@ -1,0 +1,4 @@
+{
+  "name": "dataIntegrityAction",
+  "entry": "base44/functions/dataIntegrityAction/entry.ts"
+}
