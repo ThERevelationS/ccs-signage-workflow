@@ -785,6 +785,10 @@ export default function AdminSettings() {
     window.addEventListener("online", on); window.addEventListener("offline", off);
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
+  const RECENTLY_CHANGED_TABS = new Set(["automations", "task_assignments", "users", "timeclock", "activity", "sync_conflicts", "corebridge", "permitting_rules", "backend"]);
+  const [visitedTabs, setVisitedTabs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]"); } catch { return []; }
+  });
   const [pinnedTabs, setPinnedTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
   });
@@ -2306,7 +2310,15 @@ export default function AdminSettings() {
             </div>
           );
         })()}
-        <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
+        <Tabs value={selectedAdminTab} onValueChange={(v) => {
+          handleAdminTabChange(v);
+          setVisitedTabs((cur) => {
+            if (cur.includes(v)) return cur;
+            const next = [...cur, v];
+            try { localStorage.setItem("admin_visited_tabs_v1", JSON.stringify(next)); } catch { /* ignore */ }
+            return next;
+          });
+        }} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
             {capabilityExpiryLabel && (
@@ -2369,6 +2381,9 @@ export default function AdminSettings() {
                       className={`ml-0.5 text-[10px] leading-none ${pinnedTabs.includes(tab.value) ? "text-amber-500" : "text-gray-300 hover:text-amber-500"}`}>
                       {pinnedTabs.includes(tab.value) ? "*" : "-"}
                     </button>
+                    {RECENTLY_CHANGED_TABS.has(tab.value) && !visitedTabs.includes(tab.value) && tab.value !== selectedAdminTab && (
+                      <span className="ml-1 rounded-full bg-sky-500 px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none text-white" title="Updated recently">new</span>
+                    )}
                     {tab.value === "timeclock" && openExceptionCount > 0 && (
                       <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
                         title={`${openExceptionCount} open punch exception${openExceptionCount === 1 ? "" : "s"}`}>
