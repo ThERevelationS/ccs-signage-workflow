@@ -325,6 +325,15 @@ export default function Permitting() {
     const newSteps = (item.steps || []).map(s => s.id === stepId ? { ...s, ...updates } : s);
     const updatedStep = newSteps.find(s => s.id === stepId);
 
+    // Plain-language confirm before recording a filing — this step fires the
+    // permit_submitted automation, so it should never be a silent click.
+    if (updatedStep?.type === 'submitted_date' && updates.value && !item.submitted_date) {
+      try {
+        const skip = localStorage.getItem("permitting_skip_confirms") === "1";
+        if (!skip && !window.confirm(`Mark this application as filed with ${item.locality_name || "the office"}?`)) return;
+      } catch {}
+    }
+
     if (updatedStep?.type === 'checkbox' && updates.checked === true) {
       updatedStep.checked_date = new Date().toISOString().split('T')[0];
     }
