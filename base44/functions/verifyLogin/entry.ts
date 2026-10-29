@@ -163,6 +163,15 @@ Deno.serve(async (req) => {
       throw signError;
     }
 
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+      const tokenHash = btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      await base44.asServiceRole.entities.UserSession.create({
+        user_email: user.email, token_hash: tokenHash,
+        created_at: new Date().toISOString(), expires_at: new Date(payload.exp).toISOString(),
+      });
+    } catch { /* session stamping is best-effort — never block sign-in */ }
+
     return Response.json({
       success: true,
       token,
