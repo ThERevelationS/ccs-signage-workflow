@@ -200,7 +200,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 144. **[F][DONE]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
 145. **[UX][DONE]** Spelling-tolerant search: "Milford OH 45150" without a street still finds Milford's candidates and says so plainly.
 146. **[F][DONE]** Intersection syntax: "Lila Ave & Main St, Milford" resolves via the geocoder's free-form match.
-147. **[UX][FLAGGED-dedicated]** If the address resolves to a PO box/rural route, say it plainly ("We found a postal area, not a situs address — check the map pin").
+147. **[UX][DONE]** If the address resolves to a PO box/rural route, say it plainly ("We found a postal area, not a situs address — check the map pin").
 
 ## O — Candidate clarity, round 2
 
