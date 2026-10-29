@@ -289,12 +289,23 @@ export default function EstimatorQueues() {
           <span className="text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Estimate status filter"
+          onKeyDown={(e) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+            const tabs = [...e.currentTarget.querySelectorAll('a[role="tab"]')];
+            const i = tabs.indexOf(document.activeElement);
+            if (i < 0) return;
+            e.preventDefault();
+            const next = e.key === "Home" ? tabs[0] : e.key === "End" ? tabs[tabs.length - 1] : tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+            next?.focus();
+          }}>
           {STATUSES.map((s) => {
             const b = buckets[s.key] || { count: 0, total: 0 };
             return (
               <Link
                 key={s.key || "all"}
+                role="tab"
+                aria-selected={status === s.key}
                 to={`/EstimatorQueues?${(() => { const p = new URLSearchParams(); if (s.key) p.set("status", s.key); if (q) p.set("q", q); if (sort && sort !== "newest") p.set("sort", sort); if (mine) p.set("mine", "1"); return p.toString(); })()}`}
                 aria-current={status === s.key ? "true" : undefined}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
