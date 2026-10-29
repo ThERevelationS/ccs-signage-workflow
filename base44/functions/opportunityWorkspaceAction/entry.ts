@@ -343,6 +343,25 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, hits });
     }
 
+    // Bulk re-markup flag (#145): when a pricing tier changes, flag all open
+    // estimates on that tier as pricing-stale so they recompute on next open.
+    // A true recompute is client-side (applyMarkups) — this propagates the
+    // "your tier changed" signal; saving the estimate clears it.
+    if (action === "bulk_remarkup") {
+      if (clean(user?.role) !== "admin") throw bad("Only administrators can re-markup estimates.", 403);
+      const tier = num(body?.tier_number);
+      if (!tier) throw bad("tier_number is required.", 400);
+      const rows = await Estimate.filter({ pricing_tier: tier }, "-updated_date", 500).catch(() => []);
+      const openStatuses = new Set(["draft", "calculated", "sent"]);
+      let flagged = 0;
+      for (const e of list(rows)) {
+        if (!openStatuses.has(clean(e?.status))) continue;
+        await Estimate.update(clean(e?.id), { pricing_stale: true, pricing_stale_reason: `Pricing tier ${tier} changed — recompute before sending.` }).catch(() => {});
+        flagged += 1;
+      }
+      return Response.json({ success: true, action, tier_number: tier, flagged });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
