@@ -240,6 +240,11 @@
       "default": false,
       "description": "Staff-marked urgent \u2014 rises to the top of the permit queue."
     },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Staff-set 'check back on this' date \u2014 the chase reminder."
+    },
     "confirmation_number": {
       "type": "string",
       "description": "The office's submission reference/confirmation number, recorded at submit time."
