@@ -313,7 +313,11 @@ function LocalityPickerSession({
   const markerTitle = result?.geocode?.display_name || address.trim();
 
   return (
-    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(o) => {
+      if (o) return;
+      if (searching && !window.confirm("A lookup is still running — close anyway? (It keeps running in the background.)")) return;
+      onClose();
+    }}>
       <DialogContent className={"flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0 "+(bigText?"text-[115%] [&_button]:min-h-12 [&_input]:text-base [&_p]:text-sm [&_span]:text-sm":"")}>
         <DialogHeader className="border-b bg-white px-5 py-3.5">
           <DialogTitle className="flex items-center gap-2 text-base">
@@ -507,6 +511,12 @@ function LocalityPickerSession({
                       {result.match_reason && (
                         <p className="text-[11px] text-green-800 mt-1">{result.match_reason}</p>
                       )}
+                      {(() => {
+                        const t = result.location_resolution?.target;
+                        if (!t?.name) return null;
+                        const chain = [`${String(t.type || 'area').replace(/^\w/, (c) => c.toUpperCase())} of ${t.name}`, t.county ? `${t.county} County` : null, t.state].filter(Boolean);
+                        return <p className="text-[11px] text-green-700 mt-0.5" title="Every level stays separate — the city, the township, and the county are different offices.">{chain.join(' → ')}</p>;
+                      })()}
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
