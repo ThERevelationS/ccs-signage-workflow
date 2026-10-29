@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
+import { Download, Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
