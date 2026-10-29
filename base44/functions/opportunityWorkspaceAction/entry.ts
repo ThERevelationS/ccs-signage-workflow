@@ -286,6 +286,7 @@ Deno.serve(async (req) => {
     // Rules persist on the GlobalSettings `watch_rules` config keyed by the
     // caller's email; the dispatcher (`check_watches` — called on feed load)
     // returns matching rules so the UI can surface "watch hit" notifications.
+    const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
     const loadWatchConfig = async () => {
       const rows = await GlobalSettings.filter({ config_name: "watch_rules" }).catch(() => []);
       const row = Array.isArray(rows) && rows.length ? rows[0] : null;
