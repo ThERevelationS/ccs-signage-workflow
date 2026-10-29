@@ -10714,7 +10714,11 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({ success: false, error: 'Unsupported Time Clock action.' }, { status: 400 });
-  } catch (error) {
+    } catch (error) {
+    const status = Number(error?.status || error?.response?.status || 500);
+    if (status === 429) {
+      return Response.json({ success: false, error: 'Time Clock is busy. Try again in a moment.' }, { status: 429 });
+    }
     console.error('timeClockAction error:', error?.message || error);
     return Response.json({ success: false, error: 'Time Clock action could not be completed safely.' }, { status: 500 });
   }
