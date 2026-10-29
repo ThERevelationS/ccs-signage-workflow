@@ -82,6 +82,16 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Scheduled jobs">
+        <p className="font-semibold text-gray-700">Scheduled jobs</p>
+        <p className="mt-0.5 text-gray-400">Platform-managed timers — no next-run data is exposed to the client.</p>
+        <ul className="mt-0.5 grid grid-cols-2 gap-x-3 list-disc pl-4">
+          {["checkDeadlineReminders", "checkPermitFollowupReminders", "detectSalesDuplicates", "fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "monitorJurisdictionChanges", "smartsheetSyncAction", "sourceMonitorScan", "backupToGoogleDrive", "backupPermittingRepository", "bouncieSyncNotifications"].map((f) => (
+            <li key={f} className="font-mono text-[10px]">{f}</li>
+          ))}
+        </ul>
+      </div>
+
       <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Recent admin changes">
         <p className="font-semibold text-gray-700">Recent Admin changes</p>
         <ul className="mt-0.5 list-disc pl-4 space-y-0.5">
