@@ -26,7 +26,7 @@ const CellHistory = staffEntities.CellHistory;
 const ActivityLog = staffEntities.ActivityLog;
 
 export default function ActivityFeed() {
-  const { sessionUser } = useAuth();
+  const { currentUser } = useAuth();
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState("all"); // all, WorkOrder, Order
@@ -161,7 +161,7 @@ export default function ActivityFeed() {
 
   const visibleActivities = activities.filter((a) => {
     if (actorFilter !== "all" && a.user !== actorFilter) return false;
-    if (mineOnly && sessionUser?.email && a.userEmail !== sessionUser.email) return false;
+    if (mineOnly && currentUser?.email && a.userEmail !== currentUser.email) return false;
     const t = a.timestamp ? new Date(a.timestamp).getTime() : 0;
     if (dateFrom && t < new Date(dateFrom + "T00:00:00").getTime()) return false;
     if (dateTo && t > new Date(dateTo + "T23:59:59").getTime()) return false;
