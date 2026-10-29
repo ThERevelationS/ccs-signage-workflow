@@ -345,11 +345,11 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 301. **[F]** Global estimate search across notes/line-items, not just project_name/client
 302. **[F]** `?estimate=<id>` deep-link on all estimator pages
 303. **[B][DONE]** Verified — `scope`/`type`/`category`/`status`/`q` all init from `searchParams` and write back via `writeParam`/`setSearchParams` (EstimatorParts ~lines 136-248); no `sort` control exists to parametrize
-304. **[F]** `?customer=<id>` pre-fill on NewAllInOneEstimate
-305. **[F]** `?status=` pre-select on NewEstimateDialog (draft vs sent on create)
+304. **[F][DONE]** `?customer=<id>` pre-fill on NewAllInOneEstimate
+305. **[F][DONE]** `?status=` pre-select on NewEstimateDialog (draft vs sent on create)
 306. **[F]** Saved-search views on EstimatorQueues (name a filter combo)
 307. **[H][DONE]** Verified — `VinylInventoryTab` writes `q`/`category`/`use_case` via `writeParam` on every change (~lines 68-72, 243+) — parity already in place
-308. **[F]** `?q=` on EstimatorProducts
+308. **[F][DONE]** `?q=` on EstimatorProducts
 309. **[F]** Search in `AddProductGrid` — already has? verify `?q=` init
 310. **[B][DONE]** `?q=` write-back added — the page's only param filter is `?q=` (status/sort aren't UI features here); a replaceState effect now keeps `?q=` in sync on every change
 311. **[F]** `?open=<product_id>` deep-link on EstimateProductsList
