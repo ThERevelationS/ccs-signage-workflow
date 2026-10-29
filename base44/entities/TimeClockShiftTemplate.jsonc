@@ -1,0 +1,61 @@
+{
+  "name": "TimeClockShiftTemplate",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee email this schedule applies to"
+    },
+    "label": {
+      "type": "string",
+      "description": "Human-readable schedule name (e.g. Shop days)"
+    },
+    "days": {
+      "type": "array",
+      "description": "Weekdays this template applies to",
+      "items": {
+        "type": "string",
+        "enum": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat",
+          "sun"
+        ]
+      }
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Scheduled start in company-local HH:MM (24h)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Scheduled end in company-local HH:MM (24h)"
+    },
+    "break_minutes": {
+      "type": "number",
+      "description": "Expected break/lunch minutes inside the shift"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Inactive templates are ignored by variance checks"
+    },
+    "archived_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Soft-delete flag set by admins"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "read": "timeclock_backend_only",
+    "create": "timeclock_backend_only",
+    "update": "timeclock_backend_only",
+    "delete": "timeclock_backend_only"
+  }
+}
