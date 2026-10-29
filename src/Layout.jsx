@@ -270,10 +270,14 @@ function LayoutContent({ children }) {
     });
   };
   
-  // Detect mobile
+  // Detect mobile + narrow-desktop widths (top bar auto-compacts below 1400px)
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isNarrowShell, setIsNarrowShell] = useState(() => window.innerWidth < 1400);
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
+    const handler = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsNarrowShell(window.innerWidth < 1400);
+    };
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
@@ -370,6 +374,7 @@ function LayoutContent({ children }) {
   const isSideNav = navLayout === "side" && !isMobile;
   const effectiveCollapsed = (navCollapsed || isFullscreen) && !isMobile;
   const sideNavWidth = compactView ? 158 : 224;
+  const topBarCompact = compactView || isNarrowShell;
   const collapsedRail = 10;
   const shellTransition = reduceMotion ? { duration: 0.01 } : SHELL_SPRING;
 
@@ -1162,21 +1167,21 @@ function LayoutContent({ children }) {
             transition={shellTransition}
             className="top-nav ccs-glass-shell fixed left-0 right-0 top-0 z-50 overflow-visible"
           >
-            <div className={compactView ? "px-2 py-1" : "px-4 py-2"}>
-              <div className={`flex justify-between ${compactView ? "items-center" : "items-start"}`}>
+            <div className={topBarCompact ? "px-2 py-1" : "px-4 py-2"}>
+              <div className={`flex flex-wrap items-center justify-between ${topBarCompact ? "gap-x-2 gap-y-1" : "gap-x-3 gap-y-1.5"}`}>
                 {/* Brand + tiny shell view controls */}
-                <div className="flex-shrink-0">
-                  <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
+                <div className="order-1 flex-shrink-0">
+                  <div className={`ccs-glass-panel flex items-center ${topBarCompact ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
                     <button
                       onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                      className={`ccs-glass-control ccs-glass-purple flex items-center justify-center text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
+                      className={`ccs-glass-control ccs-glass-purple flex items-center justify-center text-violet-200 ${topBarCompact ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
                       title="Switch to Sidebar"
                     >
-                      <PanelLeft className={compactView ? "h-3.5 w-3.5" : "h-4 w-4 sm:h-5 sm:w-5"} />
+                      <PanelLeft className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4 sm:h-5 sm:w-5"} />
                     </button>
                     <div className="hidden sm:block">
-                      <h2 className={`${compactView ? "text-xs" : "text-lg"} font-bold leading-tight text-white`}>Sign Shop</h2>
-                      {!compactView && <p className="text-xs text-slate-300">Workflow Manager</p>}
+                      <h2 className={`${topBarCompact ? "text-xs" : "text-lg"} font-bold leading-tight text-white`}>Sign Shop</h2>
+                      {!topBarCompact && <p className="text-xs text-slate-300">Workflow Manager</p>}
                     </div>
                   </div>
                   <ShellViewControls
@@ -1192,18 +1197,80 @@ function LayoutContent({ children }) {
                 </div>
 
                 {/* Mobile Menu Button */}
-                <button 
-                  className="lg:hidden clay-button p-3 min-h-[48px] min-w-[48px]"
+                <button
+                  className="order-2 lg:hidden clay-button p-3 min-h-[48px] min-w-[48px]"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   title={mobileMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
 
-                {/* Desktop Navigation Links */}
+                {/* Utility controls — single row, auto-compacts under 1400px. */}
+                <div className={`order-2 hidden lg:flex items-center ${topBarCompact ? "gap-1" : "gap-2"}`}>
+                  <div className={`flex items-stretch ${topBarCompact ? "gap-1" : "gap-2"}`}>
+                    {/* Login / Logout button */}
+                    {!currentUser ? (
+                      <button
+                        data-login-gate-allow
+                        onClick={showLoginDialog}
+                        className={`ccs-glass-control ccs-glass-purple flex items-center rounded-xl text-violet-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                        title="Sign In"
+                      >
+                        <LogIn className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                        <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Sign In</span>
+                      </button>
+                    ) : (
+                      <button
+                        data-login-gate-allow
+                        onClick={logout}
+                        className={`ccs-glass-control ccs-glass-neutral flex items-center rounded-xl text-slate-100 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                        title={`Logout ${getUserFirstName()}`}
+                      >
+                        <LogOut className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                        <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Logout</span>
+                      </button>
+                    )}
+
+                    {currentUser && <FocusPausePair currentUser={currentUser} compact={topBarCompact} />}
+                    {currentUser && <TimeTracker position="top" hasTopBar hasSideBar={isSideNav || isMobile} />}
+
+                    {/* Announcement button - admin only */}
+                    {isUserAdmin(currentUser) && (
+                      <button
+                        onClick={() => setShowAnnouncementManager(true)}
+                        className={`ccs-glass-control ccs-glass-red flex flex-shrink-0 items-center justify-center rounded-xl text-red-200 ${topBarCompact ? "h-7 w-8" : "w-11 self-stretch"}`}
+                        title="Announcements (Admin)"
+                      >
+                        <Megaphone className={topBarCompact ? "h-3.5 w-3.5" : "h-5 w-5"} />
+                      </button>
+                    )}
+                    <Link
+                      to={createPageUrl("TimeClock")}
+                      className={`ccs-glass-control ccs-glass-green flex items-center rounded-xl text-emerald-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                    >
+                      <Home className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                      <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
+                    </Link>
+
+                    <button
+                      onClick={() => setShowAddTaskDialog(true)}
+                      className={`ccs-glass-control ccs-glass-blue flex items-center rounded-xl text-blue-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                    >
+                      <ClipboardList className={topBarCompact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                      <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <GlobalSearch className={topBarCompact ? "w-[116px] justify-center" : "w-56 justify-center"} compact={topBarCompact} shellGlass />
+                    <AttentionBell compact={topBarCompact} shellGlass />
+                  </div>
+                </div>
+
+                {/* Desktop Navigation Links — always on their own full-width row: wraps to extra rows, never squeezes or scrolls */}
                 <div
                   data-top-navigation-links
-                  className={`hidden lg:flex min-w-0 flex-1 flex-wrap items-center self-center ${compactView ? "ml-2 gap-0.5" : "ml-4 gap-1"}`}
+                  className={`order-3 hidden lg:flex min-w-0 basis-full flex-wrap items-center justify-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
                   <DragDropContext onDragEnd={handleNavReorder}>
                     <Droppable droppableId="page-nav-top" direction="horizontal">
@@ -1211,7 +1278,7 @@ function LayoutContent({ children }) {
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          className={`flex flex-wrap items-center ${compactView ? "gap-0.5" : "gap-1"}`}
+                          className={`flex flex-wrap items-center justify-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                         >
                           {orderedNavItems.map((item, index) => (
                             <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
@@ -1219,7 +1286,7 @@ function LayoutContent({ children }) {
                                 <NavPageLink
                                   item={item}
                                   variant="top"
-                                  compactView={compactView}
+                                  compactView={topBarCompact}
                                   isActive={location.pathname === item.url}
                                   isInSplit={isInSplitView(item)}
                                   onNavigate={(event) => handleNavClick(event, item)}
@@ -1237,7 +1304,7 @@ function LayoutContent({ children }) {
                             icon={Calendar}
                             accent="#FACC15"
                             items={meetingsNavItems}
-                            compactView={compactView}
+                            compactView={topBarCompact}
                             activePath={location.pathname}
                             isInSplitUrl={isInSplitView}
                             onNavigate={handleNavClick}
@@ -1247,7 +1314,7 @@ function LayoutContent({ children }) {
                             icon={BarChart3}
                             accent="#8B5CF6"
                             items={reportsNavItems}
-                            compactView={compactView}
+                            compactView={topBarCompact}
                             activePath={location.pathname}
                             isInSplitUrl={isInSplitView}
                             onNavigate={handleNavClick}
@@ -1256,68 +1323,6 @@ function LayoutContent({ children }) {
                       )}
                     </Droppable>
                   </DragDropContext>
-                </div>
-
-                {/* Utility controls stay within the same glass material as the navigation shell. */}
-                <div className={`hidden lg:flex ${compactView ? "flex-row items-center gap-1" : "flex-col gap-1"}`}>
-                  <div className={`flex items-stretch ${compactView ? "gap-1" : "gap-2"}`}>
-                    {/* Login / Logout button */}
-                    {!currentUser ? (
-                      <button
-                        data-login-gate-allow
-                        onClick={showLoginDialog}
-                        className={`ccs-glass-control ccs-glass-purple flex items-center rounded-xl text-violet-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
-                        title="Sign In"
-                      >
-                        <LogIn className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Sign In</span>
-                      </button>
-                    ) : (
-                      <button
-                        data-login-gate-allow
-                        onClick={logout}
-                        className={`ccs-glass-control ccs-glass-neutral flex items-center rounded-xl text-slate-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
-                        title={`Logout ${getUserFirstName()}`}
-                      >
-                        <LogOut className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Logout</span>
-                      </button>
-                    )}
-
-                    {currentUser && <FocusPausePair currentUser={currentUser} compact={compactView} />}
-                    {currentUser && <TimeTracker position="top" hasTopBar hasSideBar={isSideNav || isMobile} />}
-
-                    {/* Announcement button - admin only, square, two rows tall */}
-                    {isUserAdmin(currentUser) && (
-                      <button
-                        onClick={() => setShowAnnouncementManager(true)}
-                        className={`ccs-glass-control ccs-glass-red flex flex-shrink-0 items-center justify-center rounded-xl text-red-200 ${compactView ? "h-7 w-8" : "w-11 self-stretch"}`}
-                        title="Announcements (Admin)"
-                      >
-                        <Megaphone className={compactView ? "h-3.5 w-3.5" : "h-5 w-5"} />
-                      </button>
-                    )}
-                    <Link
-                      to={createPageUrl("TimeClock")}
-                      className={`ccs-glass-control ccs-glass-green flex items-center rounded-xl text-emerald-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
-                    >
-                      <Home className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
-                    </Link>
-                    
-                    <button
-                      onClick={() => setShowAddTaskDialog(true)}
-                      className={`ccs-glass-control ccs-glass-blue flex items-center rounded-xl text-blue-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
-                    >
-                      <ClipboardList className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
-                    <AttentionBell compact={compactView} shellGlass />
-                  </div>
                 </div>
               </div>
 
