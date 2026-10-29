@@ -305,10 +305,19 @@ function LocalityPickerSession({
               />
             </div>
           </div>
-          <Button onClick={runSearch} disabled={searching || !address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
-            {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            {searching ? "Searching…" : "Find my jurisdiction"}
-          </Button>
+          {searching ? (
+            <Button
+              variant="outline"
+              onClick={() => { searchVersion.current++; pendingSearch.current = null; setSearching(false); }}
+              className="gap-1 min-h-11 w-full sm:w-auto"
+            >
+              <Loader2 className="w-4 h-4 animate-spin" /> Cancel search
+            </Button>
+          ) : (
+            <Button onClick={runSearch} disabled={!address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
+              <Search className="w-4 h-4" /> Find my jurisdiction
+            </Button>
+          )}
 
           {/* Electrical inspector toggle */}
           <Button
@@ -325,7 +334,12 @@ function LocalityPickerSession({
         {error && (
           <div className="bg-red-50 border border-red-200 rounded p-2 text-sm text-red-700 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{error}</span>
+            <span className="flex-1">{error}</span>
+            {address.trim() && !searching && (
+              <button type="button" onClick={runSearch} className="text-xs font-semibold underline hover:no-underline whitespace-nowrap">
+                Try again
+              </button>
+            )}
           </div>
         )}
 
