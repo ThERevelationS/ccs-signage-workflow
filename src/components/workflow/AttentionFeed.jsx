@@ -308,8 +308,36 @@ export default function AttentionFeed() {
           {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
           {soundOn ? "Sound on" : "Sound off"}
         </button>
+        <div className="relative ml-auto">
+          <button type="button" onClick={() => setPrefsOpen((v) => !v)} title="Notification preferences"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+            <Settings className="h-3.5 w-3.5" />
+          </button>
+          {prefsOpen && (
+            <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Sections</p>
+              {["portal","invoices","pos","cos","follow","sent","requests","unassigned","stock","jobs","permits","fees","recalc"].map((key) => {
+                const cat = categories.find((c) => c.key === key);
+                const label = cat?.label || key;
+                const isSnoozed = snoozed[key] && snoozed[key] > Date.now();
+                return (
+                  <div key={key} className="flex items-center gap-2 px-1 py-0.5">
+                    <label className="flex flex-1 cursor-pointer items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                      <input type="checkbox" checked={!hiddenSections.has(key)} onChange={() => toggleHidden(key)} className="h-3 w-3" />
+                      {label}{isSnoozed ? " (snoozed)" : ""}
+                    </label>
+                    {!isSnoozed && (
+                      <button type="button" onClick={() => snoozeSection(key)} title="Snooze 4 hours"
+                        className="text-[9px] font-semibold text-slate-400 hover:text-amber-600">zzz</button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <button type="button" onClick={load} disabled={loading}
-          className="ml-auto rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800">
+          className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800">
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
         </button>
       </div>
