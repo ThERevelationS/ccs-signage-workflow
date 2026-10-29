@@ -52,7 +52,7 @@ export class AdminPanelErrorBoundary extends Component {
                   No changes were retried automatically.
                 </p>
               </div>
-              <button ref={this.retryButtonRef} type="button" onClick={this.retry}
+              <button type="button" ref={this.retryButtonRef} type="button" onClick={this.retry}
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-amber-500 bg-white px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 Retry panel
