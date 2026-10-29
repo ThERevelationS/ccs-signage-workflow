@@ -709,6 +709,8 @@ function TaskLoadPanel({ users }) {
     }
   }
   const blockedTasks = openTasks.filter(t => t.blocked === true);
+  const inTwoDays = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+  const dueSoon = openTasks.filter(t => t.due_date && t.due_date >= today && t.due_date <= inTwoDays);
   const toggleBlocked = async (t) => {
     const next = !t.blocked;
     const reason = next ? (prompt("Why is this task blocked?") || "").trim() : "";
@@ -790,6 +792,17 @@ function TaskLoadPanel({ users }) {
                   <p key={t.id} className="text-xs text-amber-800">· {t.text}{t.due_date ? ` (due ${t.due_date})` : ""}</p>
                 ))}
                 {unassigned.length > 5 && <p className="text-xs text-amber-700">…and {unassigned.length - 5} more</p>}
+              </div>
+            </div>
+          )}
+          {dueSoon.length > 0 && (
+            <div className="rounded-lg border border-indigo-300 bg-white/70 px-3 py-2">
+              <p className="text-xs font-semibold text-indigo-900">{dueSoon.length} task{dueSoon.length === 1 ? "" : "s"} due within 48 hours</p>
+              <div className="mt-1 space-y-1">
+                {dueSoon.slice(0, 5).map(t => (
+                  <p key={t.id} className="text-xs text-indigo-800">· {t.text} (due {t.due_date}{(t.assigned_to || []).length ? ` — ${(t.assigned_to || []).join(", ")}` : ""})</p>
+                ))}
+                {dueSoon.length > 5 && <p className="text-xs text-indigo-700">…and {dueSoon.length - 5} more</p>}
               </div>
             </div>
           )}
