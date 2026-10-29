@@ -16,7 +16,7 @@ import PermitLineNotesSection from "./PermitLineNotesSection";
 import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
-import { getPermitGroupProgress, PERMIT_QUEUE_META } from "./permitQueue";
+import { getPermitGroupProgress, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META } from "./permitQueue";
 import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority, legacyOfficeLinkOptions } from "@/shared/permittingAddressLocality.js";
 
 const LIFECYCLE_PROGRESS_TONES = {
@@ -192,6 +192,19 @@ export default function PermitClientGroup({
           </span>
           {group.lines.some(li => li.urgent) && (
             <span className="inline-flex items-center rounded-full border border-red-400 bg-red-100 px-2 py-0.5 font-bold text-red-800">⚠ URGENT</span>
+          )}
+          {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
+            <button
+              type="button"
+              className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
+              title="Mark every pending line in this job as submitted today"
+              onClick={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                for (const li of group.lines) {
+                  if (!li.submitted_date && !isPermitLineEffectivelyComplete(li)) onUpdateField(li.id, "submitted_date", today);
+                }
+              }}
+            >Mark all submitted</button>
           )}
           {queueState.timingLabel && (
             <span className={`inline-flex items-center gap-1 font-semibold ${queueState.key === "overdue" ? "text-red-700" : queueState.key === "due_today" ? "text-amber-700" : "text-gray-500"}`}>
