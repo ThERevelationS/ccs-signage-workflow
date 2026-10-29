@@ -150,10 +150,10 @@ export default function QuoteSettings() {
             <TextField label="Quote title" value={form.quote_title} onChange={(value) => patch({ quote_title: value })} />
             <label className="text-[10px] font-bold tracking-wide text-gray-500">VALID DAYS<input type="number" min="0" value={form.quote_valid_days} onChange={(event) => patch({ quote_valid_days: Math.max(0, Number(event.target.value || 0)) })} className="mt-1 h-[32px] w-full rounded border border-gray-300 px-2 text-[11px] font-normal text-gray-800" /></label>
             <TextField label="Intro text" value={form.quote_intro_text} onChange={(value) => patch({ quote_intro_text: value })} textarea wide />
-            <TextField label="Estimate # format" value={form.estimate_number_format} onChange={(value) => patch({ estimate_number_format: value })} />
-            <TextField label="Order # format" value={form.order_number_format} onChange={(value) => patch({ order_number_format: value })} />
+            <TextField label="Estimate # format" value={form.estimate_number_format} onChange={(value) => patch({ estimate_number_format: value })} describedBy="doc-format-hint" />
+            <TextField label="Order # format" value={form.order_number_format} onChange={(value) => patch({ order_number_format: value })} describedBy="doc-format-hint" />
             <label className="text-[10px] font-bold tracking-wide text-gray-500">NUMBER PADDING<input type="number" min="3" max="10" value={form.doc_number_padding} onChange={(event) => patch({ doc_number_padding: Math.max(3, Math.min(10, Number(event.target.value || 5))) })} className="mt-1 h-[32px] w-full rounded border border-gray-300 px-2 text-[11px] font-normal text-gray-800" /></label>
-            <p className="text-[10px] text-gray-400 -mt-1 sm:col-span-2">Use <code>{"{seq}"}</code> where the padded sequence goes — e.g. <code>EST-{"{seq}"}</code> or <code>26-{"{seq}"}-REV</code>.</p>
+            <p id="doc-format-hint" className="text-[10px] text-gray-400 -mt-1 sm:col-span-2">Use <code>{"{seq}"}</code> where the padded sequence goes — e.g. <code>EST-{"{seq}"}</code> or <code>26-{"{seq}"}-REV</code>.</p>
             <TextField label="Payment terms" value={form.payment_terms} onChange={(value) => patch({ payment_terms: value })} textarea wide />
             <TextField label="Terms & conditions" value={form.quote_terms_conditions} onChange={(value) => patch({ quote_terms_conditions: value })} textarea wide />
             <TextField label="Warranty" value={form.warranty_text} onChange={(value) => patch({ warranty_text: value })} textarea wide />
@@ -264,7 +264,7 @@ function TaxGroupsSection({ canEdit }) {
   );
 }
 
-function TextField({ label, value, onChange, textarea = false, wide = false }) {
+function TextField({ label, value, onChange, textarea = false, wide = false, describedBy }) {
   const className = `${wide ? "sm:col-span-2 " : ""}text-[10px] font-bold tracking-wide text-gray-500`;
-  return <label className={className}>{label.toUpperCase()}{textarea ? <textarea value={value || ""} onChange={(event) => onChange(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-[11px] font-normal text-gray-800 resize-y" /> : <input value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-1 h-[32px] w-full rounded border border-gray-300 px-2 text-[11px] font-normal text-gray-800" />}</label>;
+  return <label className={className}>{label.toUpperCase()}{textarea ? <textarea aria-describedby={describedBy} value={value || ""} onChange={(event) => onChange(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-[11px] font-normal text-gray-800 resize-y" /> : <input aria-describedby={describedBy} value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-1 h-[32px] w-full rounded border border-gray-300 px-2 text-[11px] font-normal text-gray-800" />}</label>;
 }
