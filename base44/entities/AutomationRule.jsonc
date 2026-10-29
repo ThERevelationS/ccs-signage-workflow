@@ -6,6 +6,15 @@
       "type": "string",
       "description": "Name of the automation rule"
     },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "pending"
+      ],
+      "default": "approved",
+      "description": "Pending rules are proposed but never run until an admin approves them."
+    },
     "enabled": {
       "type": "boolean",
       "default": true,
