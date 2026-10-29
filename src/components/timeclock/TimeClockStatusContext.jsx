@@ -107,7 +107,7 @@ export function TimeClockStatusProvider({ children }) {
     return launch();
   }, []);
 
-  usePolling(() => refresh({ force: true }), 60000, {
+  usePolling(() => refresh({ force: true }), 180000, {
     enabled: Boolean(email && token),
   });
 

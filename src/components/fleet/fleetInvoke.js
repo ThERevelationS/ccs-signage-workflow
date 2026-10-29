@@ -23,7 +23,7 @@ const READ_ONLY_FUNCTIONS = new Set([
 // busy page degrades to slower loads instead of failing outright.
 const invokeGovernor = createRequestGovernor({
   maxConcurrent: 6,
-  maxRetries: 4,
+  maxRetries: 1,
   baseDelayMs: 800,
   maxDelayMs: 10000,
 });
