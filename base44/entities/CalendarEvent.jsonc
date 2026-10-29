@@ -68,6 +68,10 @@
       "default": true,
       "description": "Visible to all users on the universal company calendar"
     },
+    "travel_buffer_minutes": {
+      "type": "number",
+      "description": "Travel/buffer minutes treated as busy time before and after the event for conflict checks"
+    },
     "recurrence": {
       "type": "string",
       "enum": [
@@ -121,20 +125,7 @@
         "role": "__calendar_event_backend_only__"
       }
     },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "user_condition": {
         "role": "__calendar_event_backend_only__"
