@@ -115,7 +115,7 @@ export default function MergeEstimateDialog({ open, currentEstimateId, onClose, 
           {candidates.length > 0 && (
             <div className="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded p-1 mb-3">
               {candidates.map((e) => (
-                <button
+                <button type="button"
                   key={e.id}
                   type="button"
                   onClick={() => pickSecondary(e.id)}
