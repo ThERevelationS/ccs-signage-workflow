@@ -78,6 +78,11 @@ const ANIMATION_CLASSES = new Set([
   "flicker", "rainbow", "pop", "wobble", "ripple", "shake", "gradient",
 ]);
 
+function newRequestId() {
+  try { return crypto.randomUUID(); } catch {}
+  return `tt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 const MILESTONE_STORAGE = "ccs_time_tracker_milestones";
 
 function milestoneKey(email, day) {
@@ -141,6 +146,29 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const scopeKey = `${email}|${sessionToken ? "t" : ""}`;
 
   const [snapshotRecord, setSnapshotRecord] = useState({ scope: scopeKey, data: null, receivedAt: 0, serverOffset: 0 });
+  const [historyBusy, setHistoryBusy] = useState(false);
+  const [historyStats, setHistoryStats] = useState(null);
+  const [myPendingCorrections, setMyPendingCorrections] = useState(0);
+
+  // Employee self-service: count own correction requests still awaiting review.
+  useEffect(() => {
+    if (!sessionToken || !enabled) return undefined;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await base44.functions.invoke("timeClockAction", {
+          action: "list_correction_requests", session_token: sessionToken, request_id: newRequestId(),
+        });
+        const data = res?.data || res;
+        if (!cancelled && data?.success === true && Array.isArray(data.requests)) {
+          setMyPendingCorrections(data.requests.filter((r) => r.status === "pending" || r.status === "reviewing").length);
+        }
+      } catch {}
+    };
+    load();
+    const timer = setInterval(load, 300000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [sessionToken, enabled]);
   const [pollError, setPollError] = useState("");
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -748,13 +776,82 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => navigate("/TimeClock")}
-              className="mt-3 w-full rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
-            >
-              Open Time Clock
-            </button>
+            {myPendingCorrections > 0 && (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-800">
+                {myPendingCorrections} correction{myPendingCorrections === 1 ? "" : "s"} awaiting manager review
+              </p>
+            )}
+
+            {snapshot?.next_timeoff?.start_date && (
+              <p className="mt-3 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[11px] font-medium text-sky-800">
+                Upcoming {snapshot.next_timeoff.type || "time off"}: {snapshot.next_timeoff.start_date}{snapshot.next_timeoff.end_date && snapshot.next_timeoff.end_date !== snapshot.next_timeoff.start_date ? ` - ${snapshot.next_timeoff.end_date}` : ""}
+              </p>
+            )}
+
+            {snapshot?.pay_period?.start_date && (() => {
+              const start = Date.parse(`${snapshot.pay_period.start_date}T00:00:00`);
+              const end = Date.parse(`${snapshot.pay_period.end_date}T23:59:59`);
+              const frac = Number.isFinite(start) && Number.isFinite(end) && end > start
+                ? Math.min(1, Math.max(0, (Date.now() - start) / (end - start)))
+                : 0;
+              return (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+                    <span>{snapshot.pay_period.label || "Pay period"}</span>
+                    <span>{Math.round(frac * 100)}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-black/[0.07] dark:bg-white/10">
+                    <div className="h-full rounded-full" style={{ width: `${frac * 100}%`, backgroundImage: `linear-gradient(90deg, ${accent.barStart}, ${accent.barEnd})` }} />
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => navigate("/TimeClock")}
+                className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
+              >
+                Open Time Clock
+              </button>
+              <button
+                type="button"
+                disabled={historyBusy || !sessionToken}
+                onClick={async () => {
+                  setHistoryBusy(true);
+                  try {
+                    const res = await base44.functions.invoke("timeClockAction", { action: "my_history", session_token: sessionToken, request_id: newRequestId() });
+                    const data = res?.data || res;
+                    const entries = Array.isArray(data?.entries) ? data.entries : [];
+                    if (!entries.length) { setHistoryStats({ count: 0 }); return; }
+                    // Personal stats: completed shifts only.
+                    const done = entries.filter((e) => e.clock_out);
+                    const mins = done.map((e) => (new Date(e.clock_out) - new Date(e.clock_in)) / 60000 - (Number(e.lunch_minutes) || 0)).filter((m) => m > 0);
+                    const avg = mins.length ? mins.reduce((a, b) => a + b, 0) / mins.length : 0;
+                    setHistoryStats({ count: entries.length, avgMinutes: Math.round(avg), completed: done.length });
+                    // CSV export of the same rows.
+                    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                    const csv = ["clock_in,clock_out,status,lunch_minutes,approval_status",
+                      ...entries.map((e) => [e.clock_in, e.clock_out || "", e.status || "", e.lunch_minutes || 0, e.approval_status || ""].map(esc).join(","))].join("\r\n");
+                    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                    const a = document.createElement("a");
+                    a.href = url; a.download = `punch-history-${snapshot?.company_day || "export"}.csv`; a.click();
+                    URL.revokeObjectURL(url);
+                  } catch (e) { setHistoryStats({ error: e?.message || "Export failed" }); }
+                  finally { setHistoryBusy(false); }
+                }}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {historyBusy ? "Exporting…" : "Export punches"}
+              </button>
+            </div>
+            {historyStats && !historyStats.error && historyStats.count > 0 && (
+              <p className="mt-1.5 text-center text-[10px] text-slate-400">
+                {historyStats.completed} completed shifts exported · avg {formatClock(historyStats.avgMinutes, "hours_minutes")}/shift
+              </p>
+            )}
+            {historyStats?.error && <p className="mt-1.5 text-center text-[10px] text-red-500">{historyStats.error}</p>}
             <p className="mt-3 text-[10px] leading-relaxed text-slate-400">
               Counts {prefs?.count_mode === "elapsed" ? "elapsed" : "paid"} time against a {formatClock(goalMinutes, "hours_minutes")} daily goal, in {TIME_CLOCK_COMPANY_TIME_LABEL}. Configure in Time Clock → Settings.
             </p>
