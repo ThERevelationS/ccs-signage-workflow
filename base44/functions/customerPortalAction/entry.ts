@@ -473,7 +473,7 @@ Deno.serve(async (req) => {
         });
         return ok({ responded: true, decision, section_key: sectionKey });
       }
-      if (!["approve", "request_changes"].includes(decision)) throw bad("decision must be approve or request_changes.");
+      if (!["approve", "request_changes", "declined"].includes(decision)) throw bad("decision must be approve, request_changes, or declined.");
       const note = clean(body?.note).slice(0, MESSAGE_MAX);
       const quoteLabel = clean(estimate.estimate_number) || clean(estimate.quote_title) || "Quote";
       const key = `portal-est-resp:${estimateId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
@@ -550,6 +550,66 @@ Deno.serve(async (req) => {
           summary: `Customer approved ${quoteLabel} via the portal`,
           details: { estimate_id: estimateId, quote_total: num(estimate.quote_total), source: "customer_portal" },
           key: `portal-act:approve:${estimateId}:${clean(msg.record?.id) || key}`,
+        });
+        return Response.json({ success: true, action, estimate: await estimatePortalView(saved), message: messageView(msg.record) });
+      }
+
+      if (decision === "declined") {
+        // Customer declined the whole quote — CAS the estimate to cancelled
+        // and leave the decline reason + a staff follow-up task so the loss is
+        // never silent. Staff can still reopen via a new revision.
+        const declineReason = clean(body?.note).slice(0, MESSAGE_MAX);
+        if (!declineReason) throw bad("Please tell us why the quote was declined.");
+        if (clean(estimate.status) !== "sent") {
+          throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can be declined.`, 409);
+        }
+        const saved = await replaceFoundationFieldsIfUnchanged({
+          entity: Estimate,
+          recordId: estimateId,
+          expectedFields: expectedFoundationFields(estimate, { status: "cancelled" }),
+          nextFields: { status: "cancelled" },
+          label: "Portal estimate decline",
+        });
+        const msg = await createFoundationRecordWithRecovery({
+          entity: PortalMessage,
+          data: {
+            creation_request_key: key,
+            customer_id: customerId,
+            portal_link_id: clean(link.id),
+            author_side: "customer",
+            kind: "estimate_revision",
+            body: `Declined ${quoteLabel}: ${declineReason}`,
+            related_kind: "estimate",
+            related_id: estimateId,
+            related_label: quoteLabel,
+            read_by_staff: false,
+            read_by_customer: true,
+          },
+          readMatches: () => PortalMessage.filter({ creation_request_key: key }),
+          label: "Portal decline message",
+        });
+        try {
+          await createFoundationRecordWithRecovery({
+            entity: EstimatingRequest,
+            data: {
+              creation_request_key: `portal-decline-request:${estimateId}:${clean(msg.record?.id) || key}`,
+              estimate_id: estimateId,
+              opportunity_id: await opportunityIdForEstimate(estimateId),
+              status: "open",
+              description: `Customer declined ${quoteLabel} via the portal: ${declineReason.slice(0, 500)}`,
+            },
+            readMatches: () => EstimatingRequest.filter({ creation_request_key: `portal-decline-request:${estimateId}:${clean(msg.record?.id) || key}` }),
+            label: "Portal decline follow-up task",
+          });
+        } catch (reqError: any) {
+          console.error("Portal decline message saved but its queue task failed:", reqError?.message || reqError);
+        }
+        logPortalOpportunityActivity(OpportunityActivity, {
+          opportunityId: await opportunityIdForEstimate(estimateId),
+          eventType: "note",
+          summary: `Customer declined ${quoteLabel} via the portal`,
+          details: { estimate_id: estimateId, note_preview: declineReason.slice(0, 240), source: "customer_portal" },
+          key: `portal-act:decline:${estimateId}:${clean(msg.record?.id) || key}`,
         });
         return Response.json({ success: true, action, estimate: await estimatePortalView(saved), message: messageView(msg.record) });
       }
