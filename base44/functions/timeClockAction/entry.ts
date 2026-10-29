@@ -3306,6 +3306,7 @@ Deno.serve(async (req) => {
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
     const shiftTemplateEntity = base44.asServiceRole.entities.TimeClockShiftTemplate;
     const deviceEntity = base44.asServiceRole.entities.TimeClockDevice;
+    const announcementEntity = base44.asServiceRole.entities.Announcement;
     const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
     const adminCorrectionGateEntity = base44.asServiceRole.entities.TimeClockAdminCorrectionGate;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
@@ -7868,6 +7869,50 @@ Deno.serve(async (req) => {
         .sort((a: any, b: any) => b.available_minutes - a.available_minutes);
       const totalAvailable = employees.reduce((s: number, e: any) => s + e.available_minutes, 0);
       return Response.json({ success: true, employees, total_available_minutes: totalAvailable });
+    }
+
+    if (action === 'send_timeclock_announcement') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to send announcements.' }, { status: 403 });
+      const mode = typeof body.mode === 'string' ? body.mode : '';
+      const todayKey = dateKeyInCompanyTime(new Date().toISOString());
+      const todays = await entryEntity.filter({}, '-clock_in', 1500).catch(() => []);
+      const todayRows = (Array.isArray(todays) ? todays : []).filter((e: any) => dateKeyInCompanyTime(e.clock_in) === todayKey && e.archived_test_data !== true && e.archived_admin !== true);
+      const expires = new Date(Date.now() + 8 * 3600000).toISOString();
+
+      if (mode === 'nudge_missing_clockins') {
+        const clockedIn = new Set(todayRows.map((e: any) => asEmail(e.user_email)));
+        const rosters = await authorized.filter({ timeclock_enabled: true }).catch(() => []);
+        const missing = (Array.isArray(rosters) ? rosters : []).filter((u: any) => u.archived_test_data !== true && u.is_active !== false && u.email && !clockedIn.has(asEmail(u.email))).map((u: any) => asEmail(u.email));
+        if (!missing.length) return Response.json({ success: true, sent: 0, message: 'Everyone scheduled is already clocked in.' });
+        await announcementEntity.create({ title: 'Clock-in reminder', message: `Reminder to clock in — ${missing.length} team member${missing.length === 1 ? '' : 's'} not yet on the clock today.`, target_users: missing, display_pages: ['TimeClock'], is_active: true, priority: 'normal', sent_at: new Date().toISOString(), sent_by: actor.email, expires_at: expires, sound_type: 'chime', duration_seconds: 15 }).catch(() => null);
+        return Response.json({ success: true, sent: missing.length });
+      }
+
+      if (mode === 'alert_missed_clockouts') {
+        const stillIn = todayRows.filter((e: any) => e.clock_in && !e.clock_out);
+        const late = stillIn.filter((e: any) => {
+          const hrs = (Date.now() - new Date(e.clock_in)) / 3600000;
+          return hrs > 12;
+        });
+        if (!late.length) return Response.json({ success: true, sent: 0, message: 'No one is over 12 hours without clocking out.' });
+        const emails = late.map((e: any) => asEmail(e.user_email)).filter(Boolean);
+        await announcementEntity.create({ title: 'Still on the clock?', message: `You've been clocked in for 12+ hours — if you forgot to clock out, ask a manager to correct your time.`, target_users: emails, display_pages: ['TimeClock'], is_active: true, priority: 'high', sent_at: new Date().toISOString(), sent_by: actor.email, expires_at: expires, sound_type: 'alert', duration_seconds: 20 }).catch(() => null);
+        return Response.json({ success: true, sent: emails.length });
+      }
+
+      if (mode === 'manager_digest') {
+        const admins = await authorized.filter({ role: 'admin' }).catch(() => []);
+        const adminEmails = (Array.isArray(admins) ? admins : []).filter((u: any) => u.email && u.is_active !== false).map((u: any) => asEmail(u.email));
+        if (!adminEmails.length) return Response.json({ success: false, error: 'No active managers to digest to.' }, { status: 400 });
+        const totalH = todayRows.reduce((s: number, e: any) => s + Number(e.total_hours || 0), 0);
+        const active = todayRows.filter((e: any) => !e.clock_out).length;
+        const requests = await correctionRequestEntity.filter({ status: 'pending' }, '-requested_at', 200).catch(() => []);
+        const pending = Array.isArray(requests) ? requests.length : 0;
+        await announcementEntity.create({ title: `Time Clock digest — ${todayKey}`, message: `${todayRows.length} shifts (${totalH.toFixed(1)}h), ${active} still on the clock, ${pending} correction${pending === 1 ? '' : 's'} awaiting review.`, target_users: adminEmails, display_pages: ['TimeClock', 'Dashboard'], is_active: true, priority: 'low', sent_at: new Date().toISOString(), sent_by: actor.email, expires_at: expires, sound_type: 'ding', duration_seconds: 15 }).catch(() => null);
+        return Response.json({ success: true, sent: adminEmails.length });
+      }
+
+      return Response.json({ success: false, error: 'mode must be nudge_missing_clockins, alert_missed_clockouts, or manager_digest.' }, { status: 400 });
     }
 
     if (action === 'payroll_export') {
