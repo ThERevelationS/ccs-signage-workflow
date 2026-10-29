@@ -331,7 +331,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 244. **[F][DONE]** Revision count on the line: v1, v2, v3 — how many times the office sent it back.
 245. **[UX][DONE]** "What's left to file" summary on the job card: "2 of 3 applications still unfiled" — the work left is a number.
 246. **[F][DONE]** Application fee paid-tracking per line: amount + method + date + check # — separate from the issued-permit fee.
-247. **[F]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
+247. **[F][DONE]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
 248. **[UX]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
 249. **[F][DONE]** Confirmation-number field: the portal's submission reference gets saved where staff actually look for it.
 250. **[UX]** "Resubmit" one-click: reopens the portal link + copies the last application's data — rejections recover fast.
@@ -376,13 +376,13 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 283. **[UX]** A "show me the boundary" button drawing the jurisdiction outline on the map when GeoJSON exists.
 284. **[F]** Overlapping-service districts: school districts, fire districts, water districts — separate layers, never conflated with permit offices.
 285. **[UX]** "Is this address right?" sanity check: the pin vs the typed street — a visual confirmation before apply.
-286. **[F]** Township-trustee vs municipality distinction: "Milford Township" and "City of Milford" as visually-distinct card types.
+286. **[F][DONE]** Township-trustee vs municipality distinction: "Milford Township" and "City of Milford" as visually-distinct card types.
 287. **[H]** GPS-vs-geocode agreement: when "Use my location" and the typed address disagree by >500ft, flag the mismatch.
 288. **[F]** County-level fallback: when no local office exists, the county's office surfaces with "county handles unincorporated areas" context.
 289. **[UX]** Boundary data provenance: "Boundary from US Census TIGER 2024" — staff know where the lines came from.
 290. **[F]** Overlap-zone candidates: two jurisdictions both claiming the pin → both shown with "conflicting boundary data" — never auto-picked.
 291. **[H]** Address normalization server-side too: the resolver normalizes before lookup so "St"↔"Street" variants hit the same boundary.
-292. **[UX]** Rural-route handling: addresses on a route get "mail goes to X but the land is in Y township" — the tricky case named.
+292. **[UX][DONE]** Rural-route handling: addresses on a route get "mail goes to X but the land is in Y township" — the tricky case named.
 
 ## Z — Permits & documents lifecycle
 
