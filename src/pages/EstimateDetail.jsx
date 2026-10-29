@@ -106,6 +106,8 @@ export default function EstimateDetail() {
   const id = _params.get("id") || _params.get("estimate");
   const [estimate, setEstimate] = useState(null);
   const [persistedEstimate, setPersistedEstimate] = useState(null);
+  const [celebration, setCelebration] = useState("");
+  const prevApprovedStatusRef = useRef("");
   const [openRevision, setOpenRevision] = useState(null);
   const [revisionRefreshKey, setRevisionRefreshKey] = useState(0);
   const [deliveryRefreshKey, setDeliveryRefreshKey] = useState(0);
@@ -1351,8 +1353,23 @@ export default function EstimateDetail() {
     </div>
   );
 
+  // Fire the approval celebration whenever the persisted status transitions
+  // to "approved" — covers the staff approve button, the conversion path, and
+  // a customer portal acceptance reflected on reload.
+  useEffect(() => {
+    const status = String(persistedEstimate?.status || "").trim();
+    if (prevApprovedStatusRef.current && status === "approved" && prevApprovedStatusRef.current !== "approved") {
+      setCelebration("Quote approved — the customer signed off. Great work.");
+      const t = setTimeout(() => setCelebration(""), 4500);
+      return () => clearTimeout(t);
+    }
+    if (status) prevApprovedStatusRef.current = status;
+    return undefined;
+  }, [persistedEstimate?.status]);
+
   return (
     <div className="min-h-full bg-gray-50">
+      {celebration ? <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-emerald-300 bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-xl">&#10003; {celebration}</div> : null}
       <AioEstimateHeader
         title={estimate.project_name || "Estimate"}
         subtitle={`One page, one set of project info, every estimator. Â· Totals synced ${new Date().toLocaleTimeString()}`}
