@@ -678,6 +678,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
       else triggered = trigger?.logic === 'and' ? (triggered && m) : (triggered || m);
     }
     if (triggered !== true) continue;
+    const runStampStart = triggeredActions.length;
     for (const [actionIndex, action] of rule.actions.entries()) {
       if (!action?.action_type) continue;
       try {
@@ -692,6 +693,16 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
         triggeredActions.push({ rule: rule.name, action: action.action_type, error: error?.message || 'Action failed' });
       }
     }
+    // Best-effort run stamp for the Admin list's last-run health display.
+    // A failed stamp must never break automation execution.
+    const ran = triggeredActions.slice(runStampStart);
+    const failed = ran.filter((a) => a.error).length;
+    await base44.asServiceRole.entities.AutomationRule.update(rule.id, {
+      last_run_at: new Date().toISOString(),
+      last_run_status: failed === 0 ? 'success' : failed === ran.length ? 'error' : 'partial',
+      last_run_detail: `${ran.length - failed} succeeded, ${failed} failed`,
+      run_count: (Number(rule.run_count) || 0) + 1,
+    }).catch(() => null);
   }
   return { success: true, triggered_count: triggeredActions.length, actions: triggeredActions };
 }
