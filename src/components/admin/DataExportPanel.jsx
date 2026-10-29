@@ -100,6 +100,16 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Migration runners">
+        <p className="font-semibold text-gray-700">Migration runners</p>
+        <p className="mt-0.5">Data-migration functions — run from the platform Functions console with an explicit action; never auto-run.</p>
+        <ul className="mt-0.5 list-disc pl-4 font-mono text-[10px]">
+          {["importOrders", "importSalesPipeline", "importWipSheet", "migrateCredentials", "migrateEstimatorConfig", "restoreMasterInventory", "legacyInventoryMigrator (UI)"].map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      </div>
+
       <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Function permission matrix">
         <p className="font-semibold text-gray-700">Function permission matrix</p>
         <p className="mt-0.5">105 functions authenticate the staff session; the <b>57 public</b> endpoints below are scheduled jobs, OAuth callbacks, webhooks, or unauthenticated entry points — review any you don't expect.</p>
