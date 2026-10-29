@@ -22,7 +22,10 @@ import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "@/shared/permittingAddressLocality.js";
-import { staffEntities } from "@/components/staff/staffEntities";
+import { staffEntities, loadEntitiesBatch } from "@/components/staff/staffEntities";
+import { primeEntityRowsCache } from "@/components/estimator/loadAllEntityRows";
+
+const primeAndReturn = (label, query, sort, rows) => { primeEntityRowsCache(label, query, sort, rows); return rows; };
 
 const WorkOrder = staffEntities.WorkOrder;
 const PermitLineItem = staffEntities.PermitLineItem;
@@ -114,16 +117,32 @@ export default function Permitting() {
     if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
+      // Batch the four catalog reads into one gateway call, then prime the
+      // short-TTL cache so these loaders return instantly on remount.
+      const batched = await loadEntitiesBatch([
+        { entity: "PermitLineItem", sort: "-updated_date" },
+        { entity: "PermitLocality" },
+        { entity: "WorkOrder", query: { completed: false, deleted: { $ne: true } }, sort: "created_date" },
+        { entity: "AuthorizedEmail" },
+      ]).catch(() => null);
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
-        loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
-        loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Permitting Work Orders",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
+        batched?.PermitLineItem
+          ? Promise.resolve(primeAndReturn("Permitting line items", null, "-updated_date", batched.PermitLineItem))
+          : loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
+        batched?.PermitLocality
+          ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
+          : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
+        batched?.WorkOrder
+          ? Promise.resolve(primeAndReturn("Permitting Work Orders", { completed: false, deleted: { $ne: true } }, "created_date", batched.WorkOrder))
+          : loadAllEntityRows({
+              entity: WorkOrder,
+              query: { completed: false, deleted: { $ne: true } },
+              sort: "created_date",
+              label: "Permitting Work Orders",
+            }),
+        batched?.AuthorizedEmail
+          ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
+          : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
         loadSingleGlobalSetting({
           entity: staffEntities.GlobalSettings,
           settingKey: "permitOfficeTypes",
