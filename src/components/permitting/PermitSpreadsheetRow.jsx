@@ -180,6 +180,13 @@ export default function PermitSpreadsheetRow({
     return !!(ed && td && differenceInDays(ed, td) < 0);
   })();
   const localityLabel = lineItem.locality_name || "—";
+  const appliedByLabel = (() => {
+    const who = lineItem.applied_by || lineItem.created_by || "";
+    const when = lineItem.applied_date || lineItem.created_date || "";
+    if (!who && !when) return "";
+    const date = when ? (() => { try { return format(new Date(when), "MMM d"); } catch { return when.slice(0, 10); } })() : "";
+    return `Linked by ${who || "unknown"}${date ? ` · ${date}` : ""}`;
+  })();
   const currentUserOwnerLabel = currentUser?.full_name || currentUser?.email || "";
   const ownerOptions = [...new Set((users || []).map((user) => user.full_name || user.email).filter(Boolean))].sort();
   if (currentUserOwnerLabel && !ownerOptions.includes(currentUserOwnerLabel)) ownerOptions.unshift(currentUserOwnerLabel);
@@ -308,6 +315,7 @@ export default function PermitSpreadsheetRow({
                 title={localityLabel}
               >
                 {localityLabel}
+                {appliedByLabel && <span className="block text-[9px] text-gray-400 font-normal">{appliedByLabel}</span>}
               </span>
               {lineItem.locality_id && (
                 <button
