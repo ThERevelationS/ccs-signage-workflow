@@ -123,6 +123,7 @@ const DEFAULT_PREFS = {
   time_format: "hh_mm_ss",
   hide_when_idle_minutes: 0,
   daily_goal_overrides: null,
+  hide_on_weekend: false,
 };
 
 function newRequestId() {
@@ -706,6 +707,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 ["hide_when_unfocused", "Hide when unfocused", "Tracker fades when the window loses focus"],
                 ["timeclock_page_only", "Time Clock page only", "Shows only on Time Clock routes"],
                 ["privacy_blur", "Privacy blur", "Digits blur until hover — for shared screens"],
+                ["hide_on_weekend", "Hide on weekends", "Tracker stays hidden on Saturday and Sunday"],
               ].map(([key, label, hint]) => (
                 <label key={key} className="flex items-center justify-between gap-2 text-sm">
                   <span className="flex items-center gap-1.5">{label}<InfoDot text={hint} /></span>
