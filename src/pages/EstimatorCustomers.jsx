@@ -273,6 +273,9 @@ export default function EstimatorCustomers() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const workflowSyncRef = useRef(false);
   const pricingTierSaveRef = useRef(false);
+  const inboxReloadRef = useRef(null);
+  const importInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -291,9 +294,11 @@ export default function EstimatorCustomers() {
 
   useEffect(() => {
     if (!sessionToken) return;
-    invokePortal(sessionToken, { action: "portal_inbox" })
+    const reloadInbox = () => invokePortal(sessionToken, { action: "portal_inbox" })
       .then((d) => setPortalInbox(d.customers || []))
       .catch(() => setPortalInbox([]));
+    reloadInbox();
+    inboxReloadRef.current = reloadInbox;
   }, [sessionToken]);
 
   const syncWorkflowCustomers = async () => {
@@ -314,6 +319,53 @@ export default function EstimatorCustomers() {
     } finally {
       workflowSyncRef.current = false;
       setSyncingWorkflowCustomers(false);
+    }
+  };
+
+  const importCustomersCsv = async (file) => {
+    if (!file || importing) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const parseRow = (line) => {
+        const out = []; let cur = "", inQ = false;
+        for (const ch of line) {
+          if (ch === '"') inQ = !inQ; else if (ch === "," && !inQ) { out.push(cur); cur = ""; } else cur += ch;
+        }
+        out.push(cur); return out.map((v) => v.trim());
+      };
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (!lines.length) throw new Error("The CSV file is empty.");
+      const header = parseRow(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+      const col = (row, ...names) => { for (const n of names) { const i = header.indexOf(n); if (i >= 0 && row[i]) return row[i]; } return ""; };
+      let created = 0, skipped = 0;
+      for (const line of lines.slice(1)) {
+        const row = parseRow(line);
+        const companyName = col(row, "company_name", "name", "company", "customer");
+        if (!companyName) { skipped++; continue; }
+        const fields = {
+          contact_email: col(row, "contact_email", "email"),
+          company_phone: col(row, "company_phone", "phone", "office_phone"),
+          contact_first_name: col(row, "contact_first_name", "first_name"),
+          contact_last_name: col(row, "contact_last_name", "last_name"),
+          terms: col(row, "terms", "payment_terms"),
+          default_tax_group: col(row, "tax_group"),
+        };
+        try {
+          const res = await base44.functions.invoke("ensureEstimateCustomer", { company_name: companyName, fields, session_token: sessionToken });
+          const data = res?.data || res;
+          if (data?.error) throw new Error(data.error);
+          created++;
+        } catch { skipped++; }
+      }
+      const fresh = await loadAllCustomers().catch(() => null);
+      if (fresh) setCustomers(fresh);
+      window.alert(`Import finished — ${created} customer${created === 1 ? "" : "s"} created or matched, ${skipped} row${skipped === 1 ? "" : "s"} skipped.`);
+    } catch (e) {
+      window.alert(e?.message || "The CSV import failed.");
+    } finally {
+      setImporting(false);
+      if (importInputRef.current) importInputRef.current.value = "";
     }
   };
 
@@ -342,7 +394,26 @@ export default function EstimatorCustomers() {
       if (refreshed) {
         setCustomers((rows) => rows.map((customer) => customer.id === customerId ? refreshed : customer));
       }
-      window.alert(error?.message || "Customer pricing tier could not be saved.");
+      window.alert(error?.message || "Customer pricing tier could not be saved.");  const updateVolumeTiers = async (customerId, text) => {
+    const tiers = String(text || "").split(",").map((pair) => {
+      const [min, pct] = pair.split(":").map((v) => Number(String(v).trim()));
+      return Number.isFinite(min) && min > 0 && Number.isFinite(pct) && pct > 0 ? { min_subtotal: min, discount_percent: Math.min(100, pct) } : null;
+    }).filter(Boolean).sort((a, b) => a.min_subtotal - b.min_subtotal);
+    const loaded = customers.find((c) => c.id === customerId);
+    if (!loaded) return;
+    try {
+      const saved = await replaceCustomerFieldsIfUnchanged({
+        entity: staffEntities.Customer,
+        customerId,
+        expectedFields: { volume_discount_tiers: loaded.volume_discount_tiers },
+        nextFields: { volume_discount_tiers: tiers },
+        label: "Customer volume discount tiers",
+      });
+      setCustomers((rows) => rows.map((c) => c.id === customerId ? saved : c));
+    } catch (e) {
+      window.alert(e?.message || "Volume tiers could not be saved.");
+    }
+  };
     } finally {
       pricingTierSaveRef.current = false;
       setSavingTierId(null);
@@ -384,10 +455,15 @@ export default function EstimatorCustomers() {
               {syncingWorkflowCustomers ? "Syncingâ€¦" : "Sync Workflow Customers"}
             </button>
           )}
-          {me?.role === "admin" && (
+          {me?.role === "admin" && (<>
             <button type="button" onClick={() => setMergeOpen(true)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-50" title="Merge duplicate customers — linked estimates and work orders move to the kept record">
               Merge duplicates
             </button>
+            <button type="button" onClick={() => importInputRef.current?.click()} disabled={importing} className="h-8 px-3 inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50" title="Import customers from a CSV — columns: company_name, email, phone, first_name, last_name, terms, tax_group">
+              {importing ? "Importingâ€¦" : "Import CSV"}
+            </button>
+            <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => importCustomersCsv(e.target.files?.[0])} />
+          </>)}
           )}
         </div>
 
@@ -534,6 +610,16 @@ export default function EstimatorCustomers() {
                       ))}
                     </select>
                   </label>
+                  <label className="flex-shrink-0 text-[10px] font-semibold text-gray-400" onClick={(e) => e.stopPropagation()}>
+                    VOLUME TIERS
+                    <input
+                      defaultValue={(Array.isArray(c.volume_discount_tiers) ? c.volume_discount_tiers : []).map((t) => `${t.min_subtotal}:${t.discount_percent}`).join(", ")}
+                      placeholder="min:pct, min:pct"
+                      onBlur={(e) => updateVolumeTiers(c.id, e.target.value)}
+                      className="mt-0.5 block h-8 min-w-[160px] rounded border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-700"
+                      title="Volume discount tiers — subtotal_min:percent pairs"
+                    />
+                  </label>
                   <span className="text-xs font-medium text-gray-500 capitalize flex-shrink-0">
                     {c.customer_status || "prospect"}
                   </span>
@@ -544,7 +630,7 @@ export default function EstimatorCustomers() {
         </div>
         <CustomerMergeDialog open={mergeOpen} customers={customers} onClose={() => setMergeOpen(false)} onMerged={() => { loadAllCustomers().then((rows) => setCustomers(rows || [])).catch(() => {}); }} />
         {detailId && (
-          <CustomerDetail sessionToken={sessionToken} customerId={detailId} onClose={() => setDetailId("")} />
+          <CustomerDetail sessionToken={sessionToken} customerId={detailId} onClose={() => { setDetailId(""); inboxReloadRef.current?.(); }} />
         )}
       </div>
     </div>
