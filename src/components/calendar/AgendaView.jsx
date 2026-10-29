@@ -57,7 +57,7 @@ export default function AgendaView({ events, onEventClick }) {
                 const start = new Date(ev.start_datetime);
                 const end = ev.end_datetime ? new Date(ev.end_datetime) : null;
                 return (
-                  <button
+                  <button type="button"
                     key={i}
                     onClick={() => onEventClick?.(ev)}
                     className="w-full text-left p-3 rounded-xl border hover:shadow-md transition-all group"
