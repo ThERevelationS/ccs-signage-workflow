@@ -273,6 +273,15 @@
       "format": "date",
       "description": "Appeal/resubmission deadline after a denial, when one applies."
     },
+    "applied_by": {
+      "type": "string",
+      "description": "Who applied this jurisdiction to the job \u2014 the accountability field."
+    },
+    "applied_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the jurisdiction was applied."
+    },
     "application_document_url": {
       "type": "string",
       "format": "url",
