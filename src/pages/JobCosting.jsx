@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { downloadCsv } from "@/components/shared/exportCsv";
 import {
   ArrowDown,
@@ -75,7 +76,7 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         {loading && !detail ? (
-          <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
+          <TableSkeleton columns={6} rows={8} />
         ) : !j ? (
           <div className="py-8 text-center text-sm text-red-600">{error || "Job not found."}</div>
         ) : (
