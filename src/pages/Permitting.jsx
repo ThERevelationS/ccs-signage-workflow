@@ -536,6 +536,11 @@ export default function Permitting() {
           locality_office_id: String(office.office_id || "").trim(),
           status: "active",
           assigned_to: wo.current_task_assigned_to || wo.assigned_to || "",
+          applied_by: currentUser?.full_name || currentUser?.email || "staff",
+          applied_date: new Date().toISOString().slice(0, 10),
+          ...(Array.isArray(locality.offices) && locality.offices.length === 0 && !locality.jurisdiction_profile_id ? {
+            notes: `Applied unverified — ${locality.name || "this office"} has no verified offices on file. Applied by ${currentUser?.full_name || currentUser?.email || "staff"} on ${new Date().toISOString().slice(0, 10)}.`,
+          } : {}),
           steps: office.steps,
           priority: 0
         });
