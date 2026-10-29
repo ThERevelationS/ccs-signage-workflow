@@ -715,7 +715,7 @@ export default function QuickClockSection({
           identifyIntentRef.current = "clock_in";
           setClockOutDismissed(status?.entry?.id, true);
           setShowClockOut(false);
-          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in ΓÇö no missed Clock In to report.`);
+          setRecognitionStatus(`${verifiedUser.full_name || verifiedUser.email}, you're already clocked in - no missed Clock In to report.`);
           return;
         }
         // Deliberate identification while clocked in is the Clock Out path:
@@ -826,7 +826,7 @@ export default function QuickClockSection({
       if (faceRun !== faceRunRef.current) return;
       setRecognitionStatus("Look directly at the camera...");
 
-      // Same shared scan session as the reusable FaceRecognition component —
+      // Same shared scan session as the reusable FaceRecognition component -
       // one cadence, quality gate, brightness check, and voter for every
       // face-recognition surface in the app.
       const session = createFaceScanSession({
