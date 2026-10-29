@@ -137,6 +137,27 @@ export default function ReportingDashboard() {
     return months;
   })();
 
+  // Weekly estimate throughput — submissions per ISO week over the last 8w (#279)
+  const weeklyThroughput = (() => {
+    const weeks = [];
+    const now = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 7 * 86400000);
+      const monday = new Date(d); monday.setDate(d.getDate() - d.getDay() + 1);
+      const key = monday.toISOString().slice(0, 10);
+      if (!weeks.find((w) => w.key === key)) weeks.push({ key, label: format(monday, "MMM d"), count: 0 });
+    }
+    const idx = Object.fromEntries(weeks.map((w, i) => [w.key, i]));
+    for (const o of oppRows) {
+      const when = String(o?.created_date || o?.submitted_date || "").slice(0, 10);
+      if (!when) continue;
+      const d = new Date(when); const monday = new Date(d); monday.setDate(d.getDate() - d.getDay() + 1);
+      const i = idx[monday.toISOString().slice(0, 10)];
+      if (i != null) weeks[i].count += 1;
+    }
+    return weeks;
+  })();
+
   // ASAP count
   const asapCount = active.filter(wo => wo.asap).length;
 
@@ -309,6 +330,32 @@ export default function ReportingDashboard() {
                     ))}
                   </div>
                 </div>
+                {Array.isArray(pipeline.estimate_funnel.by_module) && pipeline.estimate_funnel.by_module.length > 0 && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">By module</div>
+                    <div className="space-y-1">
+                      {pipeline.estimate_funnel.by_module.slice(0, 8).map((m) => (
+                        <div key={m.module} className="flex items-center justify-between text-[11px] rounded border border-gray-100 px-2 py-1">
+                          <span className="truncate text-gray-700 capitalize">{String(m.module).replace(/_/g, " ")}</span>
+                          <span className="text-gray-500">{m.count} items · <b>${Number(m.value || 0).toLocaleString()}</b></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {weeklyThroughput.some((w) => w.count > 0) && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Estimates per week</div>
+                    <div className="flex items-end gap-1">
+                      {weeklyThroughput.map((w) => (
+                        <div key={w.key} className="flex-1" title={`${w.label}: ${w.count}`}>
+                          <div className="rounded-t bg-indigo-300/70" style={{ height: `${Math.max(4, Math.min(40, w.count * 8))}px` }} />
+                          <div className="mt-0.5 text-center text-[9px] text-gray-400">{w.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {pipeline.estimate_funnel.aging_buckets && (
                   <div className="mt-3 border-t border-gray-100 pt-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">Quote aging</div>
