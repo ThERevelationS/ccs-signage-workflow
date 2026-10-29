@@ -218,12 +218,21 @@ function cleanSkip(value: unknown) {
   return parsed;
 }
 
+// Module-scope read cache — identical read bursts (mount storms: every
+// component's staffEntities call + subscribe checks + batch loads) collapse
+// to a single upstream entity_list read while an isolate stays warm.
+const staffReadCache = new Map();
+const STAFF_READ_CACHE_MS = 45_000;
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
+    const readCacheKey = JSON.stringify(body) + '|' + user.email + '|' + user.role;
+    const cachedRead = staffReadCache.get(readCacheKey);
+    if (cachedRead && cachedRead.expires > Date.now()) return Response.json(cachedRead.payload);
 
     // Batch mode: { entities: [{ entity, query?, sort?, limit?, skip? }] } — one
     // response carries every entity's rows, cutting page-mount bursts to a
@@ -251,7 +260,10 @@ Deno.serve(async (req) => {
           : await ent.list(sort, limit, skip);
         out[name] = (Array.isArray(rows) ? rows : []).map((r: any) => projectItem(name, r));
       }
-      return Response.json({ success: true, entities: out });
+      const batchPayload = { success: true, entities: out };
+      if (staffReadCache.size > 300) staffReadCache.clear();
+      staffReadCache.set(readCacheKey, { payload: batchPayload, expires: Date.now() + STAFF_READ_CACHE_MS });
+      return Response.json(batchPayload);
     }
 
     const entityName = String(body?.entity || '').trim();
@@ -292,9 +304,12 @@ Deno.serve(async (req) => {
     if (body?.count === true) {
       return Response.json({ success: true, count: scopedRows.length });
     }
-    return Response.json({ success: true, items: scopedRows.map((row) => projectItem(entityName, row)) });
+    const listPayload = { success: true, items: scopedRows.map((row) => projectItem(entityName, row)) };
+    if (staffReadCache.size > 300) staffReadCache.clear();
+    staffReadCache.set(readCacheKey, { payload: listPayload, expires: Date.now() + STAFF_READ_CACHE_MS });
+    return Response.json(listPayload);
   } catch (error: any) {
-    const status = Number(error?.status || 500);
+    const status = Number(error?.status || error?.response?.status || 500);
     if ([400, 401, 403, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
     }
