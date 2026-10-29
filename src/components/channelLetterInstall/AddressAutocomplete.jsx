@@ -121,7 +121,7 @@ Prefer well-known streets/cities. Be FAST — do not search the web. JSON only.`
       {open && suggestions.length > 0 && (
         <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
           {suggestions.map((s, i) => (
-            <button
+            <button type="button"
               key={i}
               type="button"
               onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
