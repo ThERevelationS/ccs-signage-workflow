@@ -291,7 +291,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 217. **[UX][DONE]** The whole picker works at 320px wide without horizontal scroll — field phones.
 218. **[F][DONE]** Mark-as-inspected from the line: final inspection passed → stamp date + photo + done.
 219. **[UX][DONE]** Big "print for the truck" sheet: job address, office address, phone, permit # — one page, taped to the dash.
-220. **[F][FLAGGED-dedicated]** A "call next" queue: which of today's jobs need an office call, sorted by age.
+220. **[F][DONE]** A "call next" queue: which of today's jobs need an office call, sorted by age.
 
 ## U — Data quality & research depth
 
@@ -309,7 +309,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## V — Team workflow & visibility
 
 231. **[F][FLAGGED-dedicated]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
-232. **[UX][FLAGGED-dedicated]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
+232. **[UX][DONE]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
 233. **[F][FLAGGED-dedicated]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
 234. **[UX][FLAGGED-dedicated]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
 235. **[F][DONE]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
@@ -334,11 +334,11 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 247. **[F][DONE]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
 248. **[UX][FLAGGED-dedicated]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
 249. **[F][DONE]** Confirmation-number field: the portal's submission reference gets saved where staff actually look for it.
-250. **[UX][FLAGGED-dedicated]** "Resubmit" one-click: reopens the portal link + copies the last application's data — rejections recover fast.
+250. **[UX][DONE]** "Resubmit" one-click: reopens the portal link + copies the last application's data — rejections recover fast.
 251. **[F][DONE]** Correspondence thread per line: emails/letters from the office linked or pasted — the paper trail.
 252. **[UX][DONE]** Days-in-status badge: "Under review · 6 days" — aging visible without opening the line.
 253. **[F][DONE]** Expected-response date: the office's stated turnaround → the line shows "expected by Oct 30" — chase when it passes.
-254. **[UX][FLAGGED-dedicated]** Escalation suggestion: overdue + no response → "Time to call — they said 2-week turnaround" hint.
+254. **[UX][DONE]** Escalation suggestion: overdue + no response → "Time to call — they said 2-week turnaround" hint.
 255. **[F][FLAGGED-dedicated]** Application packet builder: assemble drawings + forms + site plan into one zip for the office's upload.
 256. **[UX][FLAGGED-dedicated]** The submit button confirms in plain language: "Mark this application as filed with {office}?"
 
@@ -351,7 +351,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 261. **[F][FLAGGED-dedicated]** Contradiction logging: when two sources disagree on who issues permits, both get recorded + flagged — never silently resolved.
 262. **[H][FLAGGED-dedicated]** Source-dedup: the same URL on two jurisdictions gets normalized to one record — the evidence graph stays clean.
 263. **[F][FLAGGED-dedicated]** Offline source snapshots: a cached copy of the proving page so a 404 doesn't erase the evidence.
-264. **[UX][FLAGGED-dedicated]** "Why we believe this" expandable on any verified fact — the reasoning chain in plain language.
+264. **[UX][DONE]** "Why we believe this" expandable on any verified fact — the reasoning chain in plain language.
 265. **[F][FLAGGED-dedicated]** Source-type taxonomy: ordinance / fee schedule / application form / zoning map / department page — labeled, not just linked.
 266. **[H][FLAGGED-dedicated]** Source-discovery log: what the crawler tried and rejected — research failures are visible, not silent.
 267. **[F][DONE]** Citizen-verified flag: a jurisdiction whose evidence came from a human staff check vs AI research — different trust.
@@ -361,7 +361,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 271. **[F][FLAGGED-dedicated]** Ordinance section citations: "Milford Codified §153.042" stored as structured data, not just in notes.
 272. **[UX][FLAGGED-dedicated]** Fee-schedule page deep-link: the exact PDF page with the fee table, not just the department site.
 273. **[F][FLAGGED-dedicated]** Meeting-agenda links: the council agenda that changed a fee gets linked — the "why" is traceable.
-274. **[H][FLAGGED-dedicated]** Evidence-gated verification: a jurisdiction can't verify without ≥1 usable official source — enforced server-side.
+274. **[H][DONE]** Evidence-gated verification: a jurisdiction can't verify without ≥1 usable official source — enforced server-side.
 275. **[UX][FLAGGED-dedicated]** "Last checked" per source: "This page verified working Oct 15" — per-link freshness.
 
 ## Y — Boundaries & geography, deeper
@@ -381,13 +381,13 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 288. **[F][FLAGGED-dedicated]** County-level fallback: when no local office exists, the county's office surfaces with "county handles unincorporated areas" context.
 289. **[UX][FLAGGED-dedicated]** Boundary data provenance: "Boundary from US Census TIGER 2024" — staff know where the lines came from.
 290. **[F][FLAGGED-dedicated]** Overlap-zone candidates: two jurisdictions both claiming the pin → both shown with "conflicting boundary data" — never auto-picked.
-291. **[H][FLAGGED-dedicated]** Address normalization server-side too: the resolver normalizes before lookup so "St"↔"Street" variants hit the same boundary.
+291. **[H][DONE]** Address normalization server-side too: the resolver normalizes before lookup so "St"↔"Street" variants hit the same boundary.
 292. **[UX][DONE]** Rural-route handling: addresses on a route get "mail goes to X but the land is in Y township" — the tricky case named.
 
 ## Z — Permits & documents lifecycle
 
 293. **[F][DONE]** Permit-expiry alerts: a permit with expiration_date nearing → surfaces on the job + a flag 30 days out.
-294. **[UX][FLAGGED-dedicated]** Renewal shortcut: an expired permit gets a "start renewal" action copying the prior application's data.
+294. **[UX][DONE]** Renewal shortcut: an expired permit gets a "start renewal" action copying the prior application's data.
 295. **[F][FLAGGED-dedicated]** Permit-transfer tracking: when a job moves clients, the permit's owner field changes — the handoff is recorded.
 296. **[UX][FLAGGED-dedicated]** Document thumbnails: the permit PDF's first page as a preview on the line — staff recognize it without opening.
 297. **[F][FLAGGED-dedicated]** Permit-packet export: permit + application + site plan bundled as one printable packet for the inspector.
@@ -412,10 +412,10 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 313. **[UX][FLAGGED-dedicated]** Confidence-building flow: a new user's first 3 applies get a confirming message "that's right — you did it".
 314. **[F][FLAGGED-dedicated]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
 315. **[UX][FLAGGED-dedicated]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
-316. **[F][FLAGGED-dedicated]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
+316. **[F][DONE]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
 317. **[UX][FLAGGED-dedicated]** Contextual empty-states: "No applications filed yet — press the button above when you file one" — every empty area teaches.
 318. **[F][FLAGGED-dedicated]** Buddy-check: a new user's first few applies can flag "reviewed by {senior}" — a soft QA loop.
-319. **[UX][FLAGGED-dedicated]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
+319. **[UX][DONE]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
 320. **[F][FLAGGED-dedicated]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
 321. **[UX][DONE]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
 322. **[F][FLAGGED-dedicated]** Onboarding checklist for new permitting staff: the 5 things to learn — tracked as done.
