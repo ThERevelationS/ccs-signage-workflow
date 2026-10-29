@@ -86,7 +86,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 58. **[UX][DONE]** Duplicate/ambiguous rows get a visible warning chip — "Milford appears twice — a staff member should review".
 59. **[F]** Merge flow for true duplicates with a relink preview (like the customer merge) — never silently collapse city/township pairs that merely share a name.
 60. **[H][DONE]** Draft localities should never be silently promoted to verified — require the authority review to complete first (gated in `confirmDraftFromRepository` + `requireReviewedRepositoryProfile`).
-61. **[F]** Sort repository by "most-used" — jurisdictions touched by recent jobs float to the top.
+61. **[F][DONE]** Sort repository by "most-used" — jurisdictions touched by recent jobs float to the top.
 62. **[F][DONE]** Export the repository to CSV for offline review.
 63. **[F][DONE]** Print/share a jurisdiction summary card — the field tech wants the office address + phone, not the whole repository.
 64. **[H][DONE]** Research-backlog rows: a locality that keeps failing boundary verification needs a visible "problem" flag, not silent retries.
@@ -171,7 +171,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 125. **[H][DONE]** Performance audit on the picker mount — the dialog currently fires several parallel calls before the user types; the search should only run on demand.
 126. **[F][DONE]** A debug-mode toggle (staff only) showing the raw pipeline events for troubleshooting — hidden behind "Show technical details" for normal users.
 127. **[UX][DONE]** When there's literally nothing to do (empty workspace), a friendly "No permit work right now" screen with what-that-means copy.
-128. **[F]** An in-app help page for the permitting flow — the plain-language manual for the team.
+128. **[F][DONE]** An in-app help page for the permitting flow — the plain-language manual for the team.
 129. **[H][DONE]** Regression suite for the picker flow: address in → resolve → boundary match → apply — every step asserts the right entity ops fired.
 130. **[H][DONE]** Contract-check the picker's writes: every PermitLocality/PermitLineItem create/update goes through the gateway + CAS — no direct base44.entities calls remain on the page (partially fixed; sweep the rest).
 
