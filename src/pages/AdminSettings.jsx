@@ -297,6 +297,33 @@ const TRIGGER_TYPES = [
   { value: "feature_report_status_changed", label: "Feature Report Status Changed", category: "Reports" },
   { value: "feature_report_completed", label: "Feature Report Marked Complete", category: "Reports" },
 ];
+// Plain-English explanations shown when a trigger is picked — written for
+// non-technical users so they know exactly when a rule will fire.
+const TRIGGER_HELP = {
+  work_order_created: "Fires the moment a brand-new work order appears in the pipeline.",
+  work_order_completed: "Fires when a work order is marked complete.",
+  work_order_deleted: "Fires when a work order is moved to trash.",
+  work_order_client_changed: "Fires only when the client name on a work order changes.",
+  work_order_install_date_set: "Fires when an install date gets entered for the first time or changed.",
+  work_order_install_date_approaching: "Fires a few days before the install date - great reminder rules.",
+  work_order_install_date_passed: "Fires when an install date slips by without completion.",
+  work_order_permit_approved: "Fires the moment a permit gets its approved date.",
+  work_order_file_uploaded: "Fires when someone attaches a file to a work order.",
+  rider_created: "Fires when a new rider (change request) gets created.",
+  rider_completed: "Fires when a rider is finished.",
+  rider_all_tasks_completed: "Fires when every task on a rider is done - handy for notify-the-office rules.",
+  stage_entered: "Fires when a work order moves INTO the stage you pick.",
+  stage_exited: "Fires when a work order moves OUT of the stage you pick.",
+  stage_changed: "Fires on any stage move, forward or backward.",
+  asap_toggled_on: "Fires when the ASAP flag gets switched ON for a work order.",
+  asap_toggled_off: "Fires when the ASAP flag gets switched OFF.",
+  time_off_approved: "Fires when a time-off request gets approved.",
+  time_off_denied: "Fires when a time-off request gets denied.",
+  time_entry_missing_clockout: "Fires when an employee forgets to clock out.",
+  time_entry_long_shift: "Fires when a shift runs unusually long.",
+  punch_exception: "Fires when a punch problem needs admin attention.",
+};
+
 
 const ACTION_TYPES = [
   { value: "send_email", label: "Send Email", icon: Mail, color: "blue" },
@@ -2871,6 +2898,9 @@ export default function AdminSettings() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {TRIGGER_HELP[trigger.trigger_type] && (
+                        <p className="mt-1 text-xs text-blue-700">{TRIGGER_HELP[trigger.trigger_type]}</p>
+                      )}
 
                       {getTriggerNeedsStage(trigger.trigger_type) && (
                         <Select value={trigger.trigger_condition.stage || ""} onValueChange={(val) => updateTrigger(index, "stage", val)}>
