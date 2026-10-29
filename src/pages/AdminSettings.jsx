@@ -300,6 +300,20 @@ const TRIGGER_TYPES = [
 ];
 // Plain-English explanations shown when a trigger is picked — written for
 // non-technical users so they know exactly when a rule will fire.
+const TRIGGER_ENTITY = {
+  work_order: "WorkOrder", stage: "WorkOrder", task: "WorkOrder", note: "WorkOrder",
+  sub_note: "WorkOrder", follow_up: "WorkOrder", rider: "Rider", order: "Order",
+  sales: "Opportunity", opportunity: "Opportunity", general_task: "GeneralTask",
+  time_entry: "TimeEntry", permit_line: "PermitLineItem", jurisdiction_profile: "JurisdictionProfile",
+  user: "AuthorizedEmail", estimate: "Estimate", quote: "Quote", email_group: "EmailGroup",
+  automation: "AutomationRule", pending_import: "PendingImport", monitor_scan: "MonitorScanRun",
+};
+const entityForTrigger = (triggerType) => {
+  const prefix = String(triggerType || "").split("_").slice(0, 2).join("_");
+  const first = String(triggerType || "").split("_")[0];
+  return TRIGGER_ENTITY[prefix] || TRIGGER_ENTITY[first] || null;
+};
+
 const TRIGGER_HELP = {
   work_order_created: "Fires the moment a brand-new work order appears in the pipeline.",
   work_order_completed: "Fires when a work order is marked complete.",
@@ -1703,6 +1717,31 @@ export default function AdminSettings() {
 
   // Trigger helpers
   const addTrigger = () => setTriggers([...triggers, { trigger_type: "", trigger_condition: {}, logic: "or" }]);
+
+  const [condTest, setCondTest] = useState(null);
+  const [condTestBusy, setCondTestBusy] = useState(false);
+  const runConditionTest = async () => {
+    if (condTestBusy) return;
+    const t = triggers.find((x) => x?.trigger_type);
+    if (!t) { setCondTest("Pick a trigger first."); return; }
+    const entity = entityForTrigger(t.trigger_type);
+    if (!entity || !staffEntities[entity]) { setCondTest("No record list to test against for this trigger."); return; }
+    setCondTestBusy(true); setCondTest(null);
+    try {
+      const rows = await staffEntities[entity].list("-created_date", 25).catch(() => []);
+      const conds = Object.entries(t.trigger_condition || {}).filter(([, v]) => v != null && v !== "");
+      const match = (row) => conds.every(([f, v]) => {
+        const rv = row?.[f];
+        if (rv == null) return false;
+        return String(rv) === String(v) || String(rv).toLowerCase().includes(String(v).toLowerCase());
+      });
+      const hits = rows.filter(match).length;
+      setCondTest(conds.length
+        ? `${hits} of ${rows.length} recent ${entity} records match these conditions (preview only — no actions ran).`
+        : `${rows.length} recent ${entity} records would fire this trigger (no conditions set — preview only).`);
+    } catch { setCondTest("Could not load records for the test."); }
+    finally { setCondTestBusy(false); }
+  };
   const removeTrigger = (index) => triggers.length > 1 && setTriggers(triggers.filter((_, i) => i !== index));
   const updateTrigger = (index, field, value) => {
     const updated = [...triggers];
@@ -3013,10 +3052,16 @@ export default function AdminSettings() {
                           <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm">WHEN</div>
                           <span className="text-gray-600 text-sm">this happens...</span>
                         </div>
+                        <Button variant="ghost" size="sm" onClick={runConditionTest} disabled={condTestBusy} className="h-7 text-xs">
+                          {condTestBusy ? "Testing…" : "Test conditions"}
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={addTrigger} className="h-7 text-xs">
                           <Plus className="w-3 h-3 mr-1" /> Add Trigger
                         </Button>
                       </div>
+                      {condTest && (
+                        <p className="mt-2 rounded-md bg-sky-50 px-2 py-1 text-xs text-sky-800" role="status">{condTest}</p>
+                      )}
                 
                 <div className="space-y-4">
                   {triggers.map((trigger, index) => (
