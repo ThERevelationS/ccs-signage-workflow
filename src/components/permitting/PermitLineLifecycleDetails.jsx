@@ -305,6 +305,13 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           disabled={!isRegistered}
           onCommit={(value) => update("appeal_deadline", value)}
         />
+        <CommitTextField
+          label="Fee payment link"
+          value={lineItem.fee_payment_link}
+          placeholder="Office's online-pay URL"
+          disabled={!isRegistered}
+          onCommit={(value) => update("fee_payment_link", value)}
+        />
         <DateField
           label="Office reply expected"
           value={lineItem.expected_response_date}
