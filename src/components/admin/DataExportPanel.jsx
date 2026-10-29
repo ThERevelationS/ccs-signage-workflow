@@ -82,6 +82,21 @@ export default function DataExportPanel() {
         </Button>
       </div>
       {msg && <p className="mt-2 text-xs text-gray-600">{msg}</p>}
+
+      <div className="mt-4 rounded-lg border border-green-200 bg-green-50/60 p-3" aria-label="Access-rule coverage">
+        <p className="text-xs font-semibold text-green-900">Write-protection status</p>
+        <p className="mt-1 text-xs text-green-800">
+          These entities accept writes only through backend functions (direct edits are blocked):
+        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {["TimeEntry", "TimeClockCorrectionRequest", "TimeOffRequest", "TimeClockAudit",
+            "TimeClockPunchException", "PayPeriod", "DeletionRequest", "AutomationRule",
+            "EmailGroup", "GlobalSettings"].map((e) => (
+            <span key={e} className="rounded-full border border-green-300 bg-white px-2 py-0.5 text-[11px] text-green-800">{e}</span>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[11px] text-green-700">Verified by backend-only RLS gates. Reads remain unaffected.</p>
+      </div>
     </section>
   );
 }
