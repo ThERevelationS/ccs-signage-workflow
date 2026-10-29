@@ -2393,6 +2393,9 @@ export default function AdminSettings() {
                             ? <>Last run {new Date(rule.last_run_at).toLocaleString()} — <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? ` · ${rule.run_count} runs` : ''}</>
                             : 'Never run'}
                         </p>
+                        <p className="text-[11px] text-gray-400">
+                          Added by {rule.created_by || 'unknown'}{rule.created_date ? ` · ${new Date(rule.created_date).toLocaleDateString()}` : ''}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
