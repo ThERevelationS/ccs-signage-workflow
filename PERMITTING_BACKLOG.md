@@ -329,7 +329,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 242. **[UX]** "Ready to submit?" gate: the line flags what's missing before staff call it submitted — prevents bounce-backs.
 243. **[F]** Rejection-tracking: a rejected application records the office's stated reason + date — resubmissions learn from it.
 244. **[F]** Revision count on the line: v1, v2, v3 — how many times the office sent it back.
-245. **[UX]** "What's left to file" summary on the job card: "2 of 3 applications still unfiled" — the work left is a number.
+245. **[UX][DONE]** "What's left to file" summary on the job card: "2 of 3 applications still unfiled" — the work left is a number.
 246. **[F]** Application fee paid-tracking per line: amount + method + date + check # — separate from the issued-permit fee.
 247. **[F]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
 248. **[UX]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
@@ -419,7 +419,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 320. **[F]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
 321. **[UX]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
 322. **[F]** Onboarding checklist for new permitting staff: the 5 things to learn — tracked as done.
-323. **[UX]** Error messages that teach: "That didn't work because {reason} — here's how to fix it" — every error educates.
+323. **[UX][DONE]** Error messages that teach: "That didn't work because {reason} — here's how to fix it" — every error educates.
 
 ## AB — Integrations & data exchange
 
@@ -446,11 +446,11 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 342. **[H][DONE]** Write-time type guard: a PermitLineItem write carrying a township's id but typed 'city' rejects server-side.
 343. **[H][DONE]** Locality-delete guard: a locality with linked lines can't be deleted without explicit relink-first — no orphan jobs.
-344. **[H]** Boundary-source whitelist: only sanctioned boundary services may feed `location_resolution` — untrusted inputs rejected.
+344. **[H][DONE]** Boundary-source whitelist: only sanctioned boundary services may feed `location_resolution` — untrusted inputs rejected.
 345. **[F][DONE]** "Sure about that?" on electrical exclusion: excluding electrical on a job that needs it asks once — the toggle isn't silent.
 346. **[H]** Verify-then-write: apply only lands after the repository row + the detected boundary agree — mismatches halt.
 347. **[F][DONE]** Duplicate-application check before submit: the same office+job can't be filed twice accidentally.
-348. **[H]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
+348. **[H][DONE]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
 349. **[F]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
 350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
 351. **[F]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
@@ -504,7 +504,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 393. **[F]** Escalation to management: a stuck >N-day line auto-surfaces to a manager-review queue.
 394. **[UX]** Comment-thread per line: staff discuss the chase right where the work happens.
 395. **[F]** Photo-in-message: a site photo attached to a line's note — the record stays visual.
-396. **[UX]** Handoff confirmation: transferring a line's ownership asks the receiving staff to confirm — never silent.
+396. **[UX][DONE]** Handoff confirmation: transferring a line's ownership asks the receiving staff to confirm — never silent.
 
 ## AF — Reporting & insight
 
@@ -539,7 +539,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 422. **[UX]** Smart-suggest next-step: "Call them — they said 2 weeks" — the next action recommended.
 423. **[F]** Jurisdiction-diff: compare two jurisdictions' office structures side-by-side — "Milford has city zoning; Miami Township doesn't".
 424. **[UX][DONE]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
-425. **[F]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
+425. **[F][DONE]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
 426. **[UX][DONE]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
 427. **[F]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
 428. **[UX]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
