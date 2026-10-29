@@ -548,7 +548,7 @@ export default function EstimatorQueues() {
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {expired && <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">EXPIRED</span>}
                       {!expired && e.status === "sent" && age != null && age >= 7 && <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5" title={`Sent ${age} days ago without a response`}>FOLLOW UP</span>}
-                      {expiringSoon && <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">EXPIRES {format(new Date(expires), "MMM d")}</span>}
+                      {expiringSoon && <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">EXPIRES {formatInCompanyTz(expires, companyTz)}</span>}
                       {e.pipeline_sync_pending && <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">SYNC ISSUE</span>}
                       <span className="text-xs font-medium text-gray-500 capitalize">
                         {e.status || "draft"}
@@ -558,7 +558,7 @@ export default function EstimatorQueues() {
                       {money0(e.quote_total || e.total_cost)}
                     </div>
                     <div className="text-xs text-gray-400 w-16 text-right hidden sm:block flex-shrink-0">
-                      {e.created_date ? format(new Date(e.created_date), "MMM d") : ""}
+                      {e.created_date ? formatInCompanyTz(e.created_date, companyTz) : ""}
                     </div>
                     </Link>
                   </div>
