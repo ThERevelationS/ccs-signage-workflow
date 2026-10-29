@@ -1609,6 +1609,11 @@ export default function AdminSettings() {
     }
   };
 
+  const uncoveredTriggerTypes = TRIGGER_TYPES.filter((t) =>
+    getTriggerSupportedActions(t.value) &&
+    !automations.some((r) => r.enabled !== false && (r.triggers || []).some((tr) => tr.trigger_type === t.value))
+  );
+
   const visibleAutomations = sortedAutomations.filter((rule) => {
     const isEnabled = rule.enabled !== false;
     if (ruleFilter === "enabled" && !isEnabled) return false;
@@ -2170,6 +2175,12 @@ export default function AdminSettings() {
               </div>
             )}
 
+            {uncoveredTriggerTypes.length > 0 && (
+              <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <span className="font-semibold">No active rule uses:</span>{" "}
+                {uncoveredTriggerTypes.map((t) => t.label).join(", ")}
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <Input
                 value={ruleSearch}
