@@ -601,6 +601,17 @@ export default function AdminSettings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
   const [accessRequestState, setAccessRequestState] = useState(""); // "", "busy", "sent", "error"
+  const [adminSidebar, setAdminSidebar] = useState(() => {
+    try { return localStorage.getItem("admin_nav_layout") === "sidebar"; } catch { return false; }
+  });
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const toggleSidebarNav = () => {
+    setAdminSidebar((cur) => {
+      const next = !cur;
+      try { localStorage.setItem("admin_nav_layout", next ? "sidebar" : "top"); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const submitAccessRequest = async () => {
     if (!sessionToken || accessRequestState === "busy") return;
     setAccessRequestState("busy");
@@ -2453,8 +2464,8 @@ export default function AdminSettings() {
             try { localStorage.setItem("admin_visited_tabs_v1", JSON.stringify(next)); } catch { /* ignore */ }
             return next;
           });
-        }} className="w-full min-w-0 max-w-full space-y-6">
-          <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
+        }} className={`w-full min-w-0 max-w-full space-y-6 ${adminSidebar ? "lg:flex lg:items-start lg:gap-4 lg:space-y-0" : ""}`}>
+          <div className={`clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm ${adminSidebar ? "lg:w-56 lg:shrink-0" : ""}`} style={{ background: '#FEE2E2' }}>
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1"><AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} /></div>
               <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 text-xs"
@@ -2514,7 +2525,13 @@ export default function AdminSettings() {
                 </div>
               </DialogContent>
             </Dialog>
-          <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70 pb-2 [scrollbar-width:thin]">
+          <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className={`flex w-full min-w-0 max-w-full ${adminSidebar ? "flex-col items-stretch gap-1 border-b-0" : "flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70"} pb-2 [scrollbar-width:thin]`}>
+              <button type="button" onClick={toggleSidebarNav}
+                className="hidden lg:inline-flex min-h-8 items-center justify-center rounded-lg border border-transparent bg-white/30 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-white/70"
+                title="Switch navigation layout">{adminSidebar ? "⇱ Top nav" : "⇲ Sidebar"}</button>
+              <button type="button" onClick={() => setMobileNavOpen(true)}
+                className="lg:hidden inline-flex min-h-8 items-center justify-center rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700"
+                aria-label="Open all admin pages">☰ Pages</button>
               {availableAdminGroups.map((group) => (
                 <button
                   key={group.id}
@@ -2553,7 +2570,7 @@ export default function AdminSettings() {
                 })}
               </div>
             )}
-            <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className="mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 bg-transparent p-1 sm:grid-cols-3 lg:grid-cols-4">
+            <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className={`mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full items-stretch gap-1 bg-transparent p-1 ${adminSidebar ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
               {[...activeAdminGroup.tabs].sort((a, b) => (pinnedTabs.includes(b.value) ? 1 : 0) - (pinnedTabs.includes(a.value) ? 1 : 0)).map((tab) => {
                 const TabIcon = ADMIN_TAB_ICONS[tab.value];
                 return (
@@ -2590,6 +2607,32 @@ export default function AdminSettings() {
             </TabsList>
           </div>
 
+          {mobileNavOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Admin pages">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNavOpen(false)} />
+              <div className="absolute inset-x-0 bottom-0 max-h-[70vh] overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-800">All admin pages</p>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setMobileNavOpen(false)} className="h-7 text-xs">Close</Button>
+                </div>
+                {availableAdminGroups.map((group) => (
+                  <div key={group.id} className="mb-2">
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">{group.label}</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {group.tabs.map((tab) => (
+                        <button key={tab.value} type="button"
+                          onClick={() => { setMobileNavOpen(false); handleAdminTabChange(tab.value); }}
+                          className={`rounded-lg border px-2 py-2 text-left text-sm ${tab.value === selectedAdminTab ? "border-red-300 bg-red-50 font-semibold" : "border-gray-200 bg-white"}`}>
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className={adminSidebar ? "min-w-0 flex-1 space-y-6" : "contents"}>
           <AdminPanelContent value="users">
             <UserManagement />
           </AdminPanelContent>
@@ -3081,6 +3124,7 @@ export default function AdminSettings() {
               </div>
             )}
           </AdminPanelContent>
+          </div>
         </Tabs>
 
         {/* Create/Edit Dialog */}
