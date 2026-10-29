@@ -360,6 +360,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               )}
             </div>
             {isAdmin && (
+              <>
               <Button
                 onClick={() => { setEditingJurisdiction(null); setShowForm(true); }}
                 size="sm"
@@ -367,6 +368,33 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               >
                 <Plus className="w-4 h-4" /> Add
               </Button>
+              <label className="min-h-11 w-full sm:w-auto inline-flex cursor-pointer items-center justify-center gap-1 rounded-md border border-purple-200 px-3 text-xs font-semibold text-purple-800 hover:bg-purple-50" title="Import jurisdictions from CSV: name,state,type per line">
+                Import CSV
+                <input type="file" accept=".csv,text/csv" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  const text = await file.text();
+                  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                  let created = 0, skipped = 0;
+                  for (const line of lines.slice(0, 200)) {
+                    const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+                    const [name, state, type] = cols;
+                    if (!name || name.toLowerCase() === "name") continue;
+                    try {
+                      const result = await createJurisdictionIfAbsent({
+                        entity: JurisdictionProfile,
+                        data: { name, state: state || "", jurisdiction_type: type || "", type: type || "" },
+                        label: `CSV import ${name}`,
+                      });
+                      if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") skipped++; else created++;
+                      if (result.record) setJurisdictions(prev => prev.some(j => j.id === result.record.id) ? prev : [result.record, ...prev]);
+                    } catch { skipped++; }
+                  }
+                  setRepositoryNotice({ tone: skipped ? "warning" : "success", text: `Imported ${created} jurisdiction${created === 1 ? "" : "s"}; ${skipped} skipped (already existed or failed).` });
+                }} />
+              </label>
+              </>
             )}
           </div>
 
