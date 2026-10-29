@@ -63,7 +63,7 @@ export default function AioEstimateHeader({
           </button>
         )}
         {onDuplicate && (
-          <button
+          <button type="button"
             onClick={onDuplicate}
             disabled={duplicating}
             title="Duplicate this estimate as a new draft"
@@ -72,7 +72,7 @@ export default function AioEstimateHeader({
             <Copy className="w-4 h-4" />
           </button>
         )}
-        <button
+        <button type="button"
           onClick={onSave}
           disabled={saving || readOnly}
           aria-busy={saving}
