@@ -1,11 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { extractKnownSourceText, continueSourceTextBacklog, automaticSourceTextGuard } from '../../shared/jurisdictionSourceTextContinuation.mjs';
 import { readAndExtractSourcePdf } from '../../shared/jurisdictionSourceTextRuntime.ts';
 import { PERMITTING_RESEARCH_CONFIG_KEY } from '../../shared/permittingResearchDispatchConfig.mjs';
 
 Deno.serve(async req => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== 'admin') return Response.json({error:'Admin access required'},{status:403});
     const body = await req.json().catch(() => ({}));
