@@ -121,7 +121,7 @@ const EmailGroup = base44.entities.EmailGroup;
 
 
 const TRIGGER_TYPES = [
-  // ΓöÇΓöÇ Work Orders ΓöÇΓöÇ
+  // -- Work Orders --
   { value: "work_order_created", label: "Work Order Created", category: "Work Orders" },
   { value: "work_order_updated", label: "Work Order Updated (Any Field)", category: "Work Orders" },
   { value: "work_order_completed", label: "Work Order Completed", category: "Work Orders" },
@@ -144,15 +144,15 @@ const TRIGGER_TYPES = [
   { value: "work_order_production_type_changed", label: "Production Type Changed (In-house/Outsource)", category: "Work Orders" },
   { value: "work_order_file_uploaded", label: "File Uploaded to Work Order", category: "Work Orders" },
 
-  // ΓöÇΓöÇ Riders ΓöÇΓöÇ
+  // -- Riders --
   { value: "rider_created", label: "Rider Created", category: "Riders" },
   { value: "rider_completed", label: "Rider Completed", category: "Riders" },
   { value: "rider_deleted", label: "Rider Deleted", category: "Riders" },
-  { value: "rider_all_tasks_completed", label: "Rider ΓÇö All Tasks Completed", category: "Riders" },
+  { value: "rider_all_tasks_completed", label: "Rider - All Tasks Completed", category: "Riders" },
   { value: "rider_stage_changed", label: "Rider Stage Changed", category: "Riders" },
   { value: "rider_assigned_to_changed", label: "Rider Assignment Changed", category: "Riders" },
 
-  // ΓöÇΓöÇ Stage Movement ΓöÇΓöÇ
+  // -- Stage Movement --
   { value: "stage_changed", label: "Stage Changed (Any)", category: "Stage Movement" },
   { value: "stage_entered", label: "Stage Entered (Specific)", category: "Stage Movement" },
   { value: "stage_exited", label: "Stage Exited (Specific)", category: "Stage Movement" },
@@ -165,7 +165,7 @@ const TRIGGER_TYPES = [
   { value: "stage_installation_entered", label: "Entered Installation Stage", category: "Stage Movement" },
   { value: "stage_completed_entered", label: "Entered Completed Stage", category: "Stage Movement" },
 
-  // ΓöÇΓöÇ Tasks ΓöÇΓöÇ
+  // -- Tasks --
   { value: "task_added", label: "Task Added", category: "Tasks" },
   { value: "task_completed", label: "Task Completed", category: "Tasks" },
   { value: "task_uncompleted", label: "Task Marked Incomplete", category: "Tasks" },
@@ -177,7 +177,7 @@ const TRIGGER_TYPES = [
   { value: "task_assigned", label: "Task Assigned to Person", category: "Tasks" },
   { value: "all_tasks_completed", label: "All Tasks Completed on Work Order", category: "Tasks" },
 
-  // ΓöÇΓöÇ Notes ΓöÇΓöÇ
+  // -- Notes --
   { value: "note_added", label: "Note Added", category: "Notes" },
   { value: "note_deleted", label: "Note Deleted", category: "Notes" },
   { value: "note_completed", label: "Note Marked Complete", category: "Notes" },
@@ -186,7 +186,7 @@ const TRIGGER_TYPES = [
   { value: "follow_up_added", label: "Follow-Up Item Added", category: "Notes" },
   { value: "follow_up_completed", label: "Follow-Up Item Completed", category: "Notes" },
 
-  // ΓöÇΓöÇ Sales Pipeline ΓöÇΓöÇ
+  // -- Sales Pipeline --
   { value: "sales_status_changed", label: "Sales Status Changed", category: "Sales Pipeline" },
   { value: "sales_lead_created", label: "New Lead Created in Pipeline", category: "Sales Pipeline" },
   { value: "sales_status_won", label: "Status Changed to WON", category: "Sales Pipeline" },
@@ -197,27 +197,27 @@ const TRIGGER_TYPES = [
   { value: "sales_close_date_approaching", label: "Close Date Approaching", category: "Sales Pipeline" },
   { value: "sales_rep_changed", label: "Sales Rep Changed", category: "Sales Pipeline" },
 
-  // ΓöÇΓöÇ Pending Imports ΓöÇΓöÇ
+  // -- Pending Imports --
   { value: "pending_import_created", label: "New Pending Import Arrived", category: "Pending Imports" },
   { value: "duplicate_detected", label: "Duplicate Record Detected", category: "Pending Imports" },
 
-  // ΓöÇΓöÇ Priority / ASAP ΓöÇΓöÇ
+  // -- Priority / ASAP --
   { value: "asap_toggled_on", label: "ASAP Toggled ON", category: "Priority" },
   { value: "asap_toggled_off", label: "ASAP Toggled OFF", category: "Priority" },
   { value: "priority_changed", label: "Row Priority Changed", category: "Priority" },
-  { value: "project_health_at_risk", label: "Project Health ΓåÆ At Risk", category: "Priority" },
-  { value: "project_health_delayed", label: "Project Health ΓåÆ Delayed", category: "Priority" },
-  { value: "project_health_blocked", label: "Project Health ΓåÆ Blocked", category: "Priority" },
-  { value: "project_health_on_track", label: "Project Health ΓåÆ On Track", category: "Priority" },
+  { value: "project_health_at_risk", label: "Project Health -> At Risk", category: "Priority" },
+  { value: "project_health_delayed", label: "Project Health -> Delayed", category: "Priority" },
+  { value: "project_health_blocked", label: "Project Health -> Blocked", category: "Priority" },
+  { value: "project_health_on_track", label: "Project Health -> On Track", category: "Priority" },
 
-  // ΓöÇΓöÇ Assignment ΓöÇΓöÇ
+  // -- Assignment --
   { value: "assigned_to_changed", label: "Work Order Assignment Changed", category: "Assignment" },
   { value: "designer_assigned", label: "Designer Assigned", category: "Assignment" },
   { value: "surveyor_assigned", label: "Surveyor Assigned", category: "Assignment" },
   { value: "project_manager_assigned", label: "Project Manager Assigned", category: "Assignment" },
   { value: "estimator_assigned", label: "Estimator Assigned", category: "Assignment" },
 
-  // ΓöÇΓöÇ Dates ΓöÇΓöÇ
+  // -- Dates --
   { value: "due_date_approaching", label: "Due Date Approaching", category: "Dates" },
   { value: "due_date_passed", label: "Due Date Passed", category: "Dates" },
   { value: "due_date_set", label: "Due Date Set / Changed", category: "Dates" },
@@ -226,12 +226,12 @@ const TRIGGER_TYPES = [
   { value: "site_survey_scheduled", label: "Site Survey Date Scheduled", category: "Dates" },
   { value: "site_survey_approaching", label: "Site Survey Date Approaching", category: "Dates" },
 
-  // ΓöÇΓöÇ Media ΓöÇΓöÇ
+  // -- Media --
   { value: "image_uploaded", label: "Image Uploaded to Work Order", category: "Media" },
   { value: "file_attached", label: "File Attached to Work Order", category: "Media" },
   { value: "google_drive_linked", label: "Google Drive Folder Linked", category: "Media" },
 
-  // ΓöÇΓöÇ Orders ΓöÇΓöÇ
+  // -- Orders --
   { value: "order_created", label: "Order Created", category: "Orders" },
   { value: "order_ordered", label: "Order Placed (Ordered)", category: "Orders" },
   { value: "order_received", label: "Order Received", category: "Orders" },
@@ -249,7 +249,7 @@ const TRIGGER_TYPES = [
   { value: "order_vendor_changed", label: "Order Vendor Updated", category: "Order Fields" },
   { value: "order_date_received_changed", label: "Order Date Received Updated", category: "Order Fields" },
 
-  // ΓöÇΓöÇ Time Clock ΓöÇΓöÇ
+  // -- Time Clock --
   { value: "time_clock_in", label: "Employee Clocked In", category: "Time Clock" },
   { value: "time_clock_out", label: "Employee Clocked Out", category: "Time Clock" },
   { value: "time_clock_in_late", label: "Employee Clocked In Late (after 8am)", category: "Time Clock" },
@@ -265,19 +265,19 @@ const TRIGGER_TYPES = [
   { value: "time_off_cancelled", label: "Time Off Request Cancelled", category: "Time Clock" },
   { value: "pto_balance_low", label: "PTO Balance Running Low", category: "Time Clock" },
 
-  // ΓöÇΓöÇ Users / HR ΓöÇΓöÇ
+  // -- Users / HR --
   { value: "user_registered", label: "New User Registered / Onboarded", category: "Users" },
   { value: "user_role_changed", label: "User Role Changed", category: "Users" },
   { value: "user_face_enrolled", label: "User Face ID Enrolled", category: "Users" },
   { value: "user_password_reset", label: "User Password Reset Requested", category: "Users" },
 
-  // ΓöÇΓöÇ SIPs / Monday Meeting ΓöÇΓöÇ
+  // -- SIPs / Monday Meeting --
   { value: "sip_item_completed", label: "SIP Item Marked Complete", category: "SIPs / Meetings" },
   { value: "sip_item_revisit_set", label: "SIP Revisit Date Set", category: "SIPs / Meetings" },
   { value: "sip_revisit_date_approaching", label: "SIP Revisit Date Approaching", category: "SIPs / Meetings" },
   { value: "mmm_item_completed", label: "Monday Meeting Item Completed", category: "SIPs / Meetings" },
 
-  // ΓöÇΓöÇ Permitting ΓöÇΓöÇ
+  // -- Permitting --
   { value: "jurisdiction_profile_created", label: "Jurisdiction Profile Created", category: "Permitting" },
   { value: "jurisdiction_profile_updated", label: "Jurisdiction Profile Updated", category: "Permitting" },
   { value: "regulation_alert_created", label: "Regulation Alert / Change Detected", category: "Permitting" },
@@ -288,7 +288,7 @@ const TRIGGER_TYPES = [
   { value: "permit_followup_due", label: "Permit Follow-up Date Reached", category: "Permitting" },
   { value: "permit_followup_overdue", label: "Permit Follow-up Overdue", category: "Permitting" },
 
-  // ΓöÇΓöÇ Financials / Reports ΓöÇΓöÇ
+  // -- Financials / Reports --
   { value: "feature_report_submitted", label: "Feature / Bug Report Submitted", category: "Reports" },
   { value: "feature_report_status_changed", label: "Feature Report Status Changed", category: "Reports" },
   { value: "feature_report_completed", label: "Feature Report Marked Complete", category: "Reports" },
@@ -309,7 +309,7 @@ const ACTION_TYPES = [
 
 // Which advertised triggers actually fire today, and which actions can run
 // for them. Three execution paths exist with different capabilities:
-//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set ΓÇö
+//   - workflowTriggerEngine (server): fires the WORKFLOW_ENGINE set -
 //     client-emitted work-order events are routed there by
 //     NotificationService, and permit events arrive via processWorkflowTriggers
 //     and checkPermitFollowupReminders. Runs every advertised action.
@@ -317,7 +317,7 @@ const ACTION_TYPES = [
 //     only send_email can execute for them.
 //   - checkDeadlineReminders (daily job): fires the DEADLINE set and runs
 //     send_email, set_asap, add_task and add_note only.
-// Any trigger outside these sets cannot run yet ΓÇö the editor marks it so
+// Any trigger outside these sets cannot run yet - the editor marks it so
 // nobody builds a rule that silently does nothing.
 const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "work_order_created", "work_order_completed", "work_order_deleted",
@@ -376,7 +376,7 @@ const DEADLINE_TRIGGER_SET = new Set([
   "sip_revisit_date_approaching",
 ]);
 
-// Fired by checkDeadlineReminders against Orders awaiting delivery ΓÇö order
+// Fired by checkDeadlineReminders against Orders awaiting delivery - order
 // context only, so send_email is the sole supported action.
 const ORDER_DEADLINE_TRIGGER_SET = new Set([
   "order_date_needed_approaching", "order_date_needed_passed", "order_overdue",
@@ -389,14 +389,14 @@ const SALES_TRIGGER_SET = new Set([
   "sales_status_lost", "sales_status_on_hold", "sales_rep_changed",
 ]);
 
-// Fired by checkDeadlineReminders against open Opportunities ΓÇö
+// Fired by checkDeadlineReminders against open Opportunities -
 // send_email only.
 const SALES_DEADLINE_TRIGGER_SET = new Set([
   "sales_follow_up_date_approaching", "sales_follow_up_date_passed",
   "sales_close_date_approaching",
 ]);
 
-// Emitted server-side by timeClockAction after verified writes ΓÇö carries a
+// Emitted server-side by timeClockAction after verified writes - carries a
 // TimeEntry/TimeOffRequest/labor-segment record (not a Work Order), so only
 // send_email can run.
 const TIME_CLOCK_TRIGGER_SET = new Set([
@@ -413,7 +413,7 @@ const PENDING_IMPORT_TRIGGER_SET = new Set([
   "pending_import_created", "duplicate_detected",
 ]);
 
-// Emitted by manageFeatureReports after verified writes ΓÇö FeatureReport
+// Emitted by manageFeatureReports after verified writes - FeatureReport
 // record context, send_email only.
 const FEATURE_REPORT_TRIGGER_SET = new Set([
   "feature_report_submitted", "feature_report_status_changed",
@@ -421,7 +421,7 @@ const FEATURE_REPORT_TRIGGER_SET = new Set([
 ]);
 
 // Emitted by onboardingAccountAction, issuePasswordReset, the face-enroll
-// dialog, and the User Management account save ΓÇö AuthorizedEmail record
+// dialog, and the User Management account save - AuthorizedEmail record
 // context, send_email only.
 const USER_TRIGGER_SET = new Set([
   "user_registered", "user_password_reset", "user_face_enrolled",
@@ -429,7 +429,7 @@ const USER_TRIGGER_SET = new Set([
 ]);
 
 // Emitted by monitorJurisdictionChanges and the jurisdiction persistence
-// funnels ΓÇö JurisdictionProfile / RegulationAlert record context.
+// funnels - JurisdictionProfile / RegulationAlert record context.
 const JURISDICTION_TRIGGER_SET = new Set([
   "jurisdiction_profile_created", "jurisdiction_profile_updated",
   "regulation_alert_created",
@@ -1786,7 +1786,7 @@ export default function AdminSettings() {
       case "create_rider":
         return (
           <div className="space-y-2 mt-2">
-            <Input placeholder="Rider title (optional ΓÇö defaults to 'Work order title - Rider')" value={config.title || ""} onChange={(e) => updateAction(index, "title", e.target.value)} />
+            <Input placeholder="Rider title (optional - defaults to 'Work order title - Rider')" value={config.title || ""} onChange={(e) => updateAction(index, "title", e.target.value)} />
             <Select value={config.rider_stage || ""} onValueChange={(val) => updateAction(index, "rider_stage", val)}>
               <SelectTrigger><SelectValue placeholder="Rider stage (defaults to current stage)" /></SelectTrigger>
               <SelectContent>
@@ -1802,7 +1802,7 @@ export default function AdminSettings() {
         return (
           <div className="flex items-center gap-2 mt-2">
             <Input type="number" placeholder="1" value={config.priority || ""} onChange={(e) => updateAction(index, "priority", e.target.value)} className="w-24" />
-            <Label className="text-sm text-gray-600">Position in list ΓÇö lower numbers sit higher</Label>
+            <Label className="text-sm text-gray-600">Position in list - lower numbers sit higher</Label>
           </div>
         );
       
@@ -2266,7 +2266,7 @@ export default function AdminSettings() {
                           </Badge>
                           {!ruleIsRunnable(rule) && (
                             <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300">
-                              Won't run ΓÇö not wired yet
+                              Won't run - not wired yet
                             </Badge>
                           )}
                         </div>
@@ -2565,7 +2565,7 @@ export default function AdminSettings() {
 
                           {triggerHasOrderFilters(trigger.trigger_condition) && (
                             <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md p-2">
-                              Filters set ΓÇö this rule only runs for orders matching them.
+                              Filters set - this rule only runs for orders matching them.
                             </div>
                           )}
                         </div>
@@ -2581,7 +2581,7 @@ export default function AdminSettings() {
 
                   {triggers.some(t => t.logic === "and") && new Set(triggers.map(t => t.trigger_type).filter(Boolean)).size > 1 && (
                     <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                      AND only works when the triggers can happen at the same moment ΓÇö different events each happen one at a time, so this combination may never match. Use OR, or pick triggers that can match together.
+                      AND only works when the triggers can happen at the same moment - different events each happen one at a time, so this combination may never match. Use OR, or pick triggers that can match together.
                     </div>
                   )}
                 </div>
@@ -2632,7 +2632,7 @@ export default function AdminSettings() {
                         {renderActionConfig(action, index)}
                         {action.action_type && triggers.some(t => t.trigger_type) && !actionRunsForTriggers(action.action_type, triggers) && (
                           <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                            This action can't run for the selected trigger(s) yet ΓÇö it will be skipped.
+                            This action can't run for the selected trigger(s) yet - it will be skipped.
                           </div>
                         )}
                       </div>
