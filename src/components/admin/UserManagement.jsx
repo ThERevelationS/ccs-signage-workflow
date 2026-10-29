@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { setPassword as setPasswordFn } from "@/functions/setPassword";
 import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,6 +77,31 @@ import { triggerNotification } from "@/components/workflow/NotificationService";
 export default function UserManagement() {
   const { sessionToken, currentUser } = useAuth();
   const selfEmail = (currentUser?.email || "").toLowerCase();
+  const [accessReviewRow, setAccessReviewRow] = useState(null);
+  const [accessReviewBusy, setAccessReviewBusy] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "lastAccessReview", label: "Access review" })
+      .then((r) => { if (alive) setAccessReviewRow(r); }).catch(() => null);
+    return () => { alive = false; };
+  }, []);
+  const markAccessReviewed = async () => {
+    if (accessReviewBusy) return;
+    setAccessReviewBusy(true);
+    try {
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings, loadedRecord: accessReviewRow,
+        settingKey: "lastAccessReview", nextValue: { reviewed_at: new Date().toISOString(), reviewed_by: selfEmail },
+        label: "Access review",
+      });
+      setAccessReviewRow(saved);
+    } catch { /* keep prior */ } finally { setAccessReviewBusy(false); }
+  };
+  const reviewAge = (() => {
+    const at = accessReviewRow?.setting_value?.reviewed_at;
+    if (!at) return null;
+    return Math.floor((Date.now() - new Date(at).getTime()) / 86400000);
+  })();
   // Track the identity on render, before effects run, to fence late responses.
   const activeSessionToken = useRef(sessionToken);
   activeSessionToken.current = sessionToken;
@@ -2095,6 +2122,13 @@ export default function UserManagement() {
                 className="h-8 w-56 text-xs"
                 aria-label="Search users"
               />
+              {(reviewAge === null || reviewAge > 30) && (
+                <button type="button" onClick={markAccessReviewed} disabled={accessReviewBusy}
+                  className="rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
+                  title="Confirm you've reviewed the user list">
+                  {reviewAge === null ? "Access never reviewed — mark reviewed" : `Access last reviewed ${reviewAge}d ago — mark reviewed`}
+                </button>
+              )}
               <div className="flex gap-1">
                 {[["all", "All"], ["admin", "Admins"], ["user", "Users"], ["full_admin", "Full admins"], ["inactive", "Inactive 60d+"]].map(([v, label]) => (
                   <Button key={v} type="button" size="sm"
