@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Wand2, MapPin } from "lucide-react";
+import { Loader2, Plus, Wand2, MapPin, Download } from "lucide-react";
 import JurisdictionCard from "@/components/permitting/JurisdictionCard";
 import DrainLiveFeed from "@/components/permitting/DrainLiveFeed";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
@@ -355,13 +355,41 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             </>
           )}
 
-          <Input
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search jurisdictions (e.g. Hamilton County, Mason, Delhi Township)..."
-            className="min-h-11 text-sm"
-            autoFocus
-          />
+          <div className="flex gap-2 items-start">
+            <Input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search jurisdictions (e.g. Hamilton County, Mason, Delhi Township)..."
+              className="min-h-11 text-sm flex-1"
+              autoFocus
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-11 gap-1 whitespace-nowrap"
+              title="Download the current list as a spreadsheet file"
+              onClick={() => {
+                const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                const rows = [["Name", "State", "Type", "County", "Verification", "Offices", "Documents"],
+                  ...displayList.map((j) => [
+                    j.name || "", j.state || "", j.type || "",
+                    j.parent_county?.name || j.parent_county_name || "",
+                    j.verification_status || "",
+                    Array.isArray(j.offices) ? j.offices.length : 0,
+                    Array.isArray(j.documents) ? j.documents.length : 0,
+                  ])];
+                const csv = rows.map(r => r.map(esc).join(",")).join("\r\n");
+                const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = "jurisdictions.csv"; a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <Download className="w-4 h-4" /> Export
+            </Button>
+          </div>
           {isAdmin && (
           <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
             {[
