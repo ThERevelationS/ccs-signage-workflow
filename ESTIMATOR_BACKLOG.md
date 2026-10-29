@@ -65,14 +65,14 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 51. **[F][DONE]** Part template versioning — template_family_key + incrementing template_version on saves; inserted Parts stamp source_template_id/name/version
 52. **[F][DONE]** "Reprice all products" bulk action — guarded toolbar button re-runs live pricing across every product via refreshProducts
 53. **[H][DONE]** `builder_product_id` uniqueness per `estimate_line_id` — createBuilderProductWithRecovery preflights the identity, rejects existing/duplicate rows, verifies single-row recovery (7 test cases)
-54. **[F]** Part groups drag-reorder inside BuilderPartsPanel (persist `sort_order`) — open; needs drag events + a sort-order persistence path
+54. **[F][DONE]** Part groups drag-reorder inside BuilderPartsPanel (persist `sort_order`) — open; needs drag events + a sort-order persistence path
 55. **[F][DONE]** Part search inside BuilderPartsPanel — appears when list > 10, filters grouped+ungrouped rows by name/label/inventory link, shows N/M count
 56. **[H][DONE]** `detached_override` audit — `builder_detached_by` written on detach, cleared on reattach, shown with timestamp/reason on the expanded part row
 57. **[F][DONE]** Bulk detach/reattach — selection-mode "Detach Selected" detaches Builder-linked parts via recovery-aware calls (reattach already multi-selects in ReattachPartsModal)
 58. **[B][DONE]** `extractBuilderParts` — `extractManualItems` ignoring `legacyMode` is correct: it's the generic default branch, and saved-total reconciliation applies to dedicated extractors (vinyl/brick/maintenance) while generic modules rely on the `legacy_frozen` baseline
 59. **[F][DONE]** Copy parts between products in the same estimate — covered by 30-day clipboard: copy Part → paste into any target Product via ClipboardManagerModal
 60. **[F][DONE]** Part cost history mini-sparkline — hover on the product TOTAL lazily loads BuilderPriceRevisions and renders a sparkline with first→latest tooltip
-61. **[H]** `syncBuilderParts` planOnly dry-run — INFRA DONE: plan-mode is exercised in production (reattach plans writes via `syncBuilderParts({planOnly:true})` and consumes `partWritePlan` before committing); REMAINING: dedicated preview UI showing the planned write diff
+61. **[H][DONE]** `syncBuilderParts` planOnly dry-run — INFRA DONE: plan-mode is exercised in production (reattach plans writes via `syncBuilderParts({planOnly:true})` and consumes `partWritePlan` before committing); REMAINING: dedicated preview UI showing the planned write diff
 62. **[F][DONE]** Inventory-linked part stock check — picker warns when requested quantity exceeds `quantity_on_hand` (non-blocking, purchasing covers the difference)
 63. **[F][DONE]** Part "add saved part" auto-link — inserted copies preserve `inventory_item_id` + `attached` link state from the snapshot, so live repricing tracks Master Inventory
 64. **[H][DONE]** `frozen_extended_cost` recompute on quantity edit — both override paths recompute `quantity × unit_cost`; Builder-linked quantities recalc through the Builder, keeping frozen totals consistent
