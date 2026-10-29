@@ -425,10 +425,28 @@ function LocalityPickerSession({
             <MapPin className="w-4 h-4" /> Use my location
           </Button>
 
+          <Button
+            variant="outline"
+            className="gap-1 min-h-11 w-full sm:w-auto"
+            title="Paste the last address you copied"
+            onClick={async () => {
+              try {
+                const text = String(await navigator.clipboard.readText() || "").trim();
+                if (!text) { setError("Nothing on the clipboard — copy an address first."); return; }
+                if (!/\d/.test(text) || !/[a-zA-Z]{3,}/.test(text)) { setError("The clipboard doesn't look like a street address — copy the address first."); return; }
+                searchVersion.current++; pendingSearch.current = null;
+                setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false);
+                setTimeout(() => runSearch(), 0);
+              } catch { setError("Couldn't read the clipboard — paste into the field instead."); }
+            }}
+          >
+            <Save className="w-4 h-4" /> Paste address
+          </Button>
+
           {/* Electrical inspector toggle */}
           <Button
             variant="outline"
-            onClick={() => setExcludeElectrical(v => !v)}
+            onClick={() => { if (!excludeElectrical && !window.confirm("Hide electrical inspectors on this job? Only do this if the office already confirmed no electrical permit is needed.")) return; setExcludeElectrical(v => !v); }}
             className={`gap-1 min-h-11 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
