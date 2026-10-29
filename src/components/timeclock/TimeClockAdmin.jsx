@@ -889,6 +889,22 @@ export default function TimeClockAdmin() {
           />
         </div>
 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setDateRange("week");
+            setCurrentDate(new Date());
+            setCustomStartDate("");
+            setCustomEndDate("");
+            setSelectedUser("all");
+            setSearchTerm("");
+          }}
+          title="Reset all filters"
+        >
+          Reset
+        </Button>
+
         <Button onClick={exportToExcel} className="gap-2">
           <Download className="w-4 h-4" />
           Export
