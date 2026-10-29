@@ -77,6 +77,15 @@
       "type": "boolean",
       "default": false
     },
+    "blocked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Task is blocked and cannot proceed until unblocked"
+    },
+    "blocked_reason": {
+      "type": "string",
+      "description": "Why the task is blocked"
+    },
     "due_date": {
       "type": "string",
       "format": "date"
@@ -88,12 +97,27 @@
   },
   "required": [
     "text"
-  ]
-,
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "__generaltask_backend_only__" } },
-    "read": { "user_condition": { "role": "__generaltask_backend_only__" } },
-    "update": { "user_condition": { "role": "__generaltask_backend_only__" } },
-    "delete": { "user_condition": { "role": "__generaltask_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__generaltask_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__generaltask_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__generaltask_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__generaltask_backend_only__"
+      }
+    }
   }
 }
