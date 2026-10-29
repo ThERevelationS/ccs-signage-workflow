@@ -12,7 +12,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 7. **[F]** Low-light/night guidance for dim shop areas
 8. **[F]** Ambiguous-match fallback — confirm name from 2 choices instead of failing
 9. **[F]** One-tap re-punch for the same employee within a configurable window
-10. **[F]** Identification progress display ("verifying 2/3 frames")
+10. **[F][DONE]** Identification progress display - voter exposes N/required, both scanners show "Verifying X/3"
 11. **[F]** Camera health self-test — detect blurry/dirty lens and warn
 12. **[F]** Per-device camera preference persistence (front vs rear)
 
@@ -33,7 +33,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 26. **[F]** Clock-out reason prompt for early outs (appointment/site/sick)
 27. **[F]** Job-site transfer punch — "moving to WO-1234" mid-shift
 28. **[F]** Split-shift support — clock out for appointment, resume same shift
-29. **[F]** Overnight shift display ("started yesterday 10pm")
+29. **[F][DONE]** Overnight shift display - "Since 10:00 PM (Wed, Mar 5)" when clock-in isn't today
 30. **[F]** Tip declaration on clock-out for tipped roles
 31. **[F]** Mileage/drive-time capture on clock-out for field staff
 32. **[F]** Per-department labor rate selection at punch time
