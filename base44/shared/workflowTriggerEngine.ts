@@ -697,11 +697,19 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     // A failed stamp must never break automation execution.
     const ran = triggeredActions.slice(runStampStart);
     const failed = ran.filter((a) => a.error).length;
+    const ranAt = new Date().toISOString();
+    const recentRuns = [...(Array.isArray(rule.recent_runs) ? rule.recent_runs : []), {
+      at: ranAt,
+      status: failed === 0 ? 'success' : failed === ran.length ? 'error' : 'partial',
+      detail: `${ran.length - failed} succeeded, ${failed} failed`,
+      actions: ran.map((a) => a.error ? `${a.action} failed: ${a.error}` : `${a.action} ok`),
+    }].slice(-20);
     await base44.asServiceRole.entities.AutomationRule.update(rule.id, {
-      last_run_at: new Date().toISOString(),
-      last_run_status: failed === 0 ? 'success' : failed === ran.length ? 'error' : 'partial',
-      last_run_detail: `${ran.length - failed} succeeded, ${failed} failed`,
+      last_run_at: ranAt,
+      last_run_status: recentRuns[recentRuns.length - 1].status,
+      last_run_detail: recentRuns[recentRuns.length - 1].detail,
       run_count: (Number(rule.run_count) || 0) + 1,
+      recent_runs: recentRuns,
     }).catch(() => null);
   }
   return { success: true, triggered_count: triggeredActions.length, actions: triggeredActions };
