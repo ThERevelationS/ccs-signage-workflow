@@ -29,7 +29,21 @@
 
 const num = (v) => Number(v) || 0;
 
-export function categorizeChannelLetterProject(p) {
+// Per-project memoization (#412): categorize output depends only on the
+// project payload. A WeakMap keyed on the project object skips recompute when
+// React re-renders pass the same object, and entries GC with the object.
+const _catCache = new WeakMap();
+const _catMemo = (p, compute) => {
+  if (!p || typeof p !== "object") return compute(p);
+  let byFn = _catCache.get(p);
+  if (byFn && byFn.has(compute)) return byFn.get(compute);
+  const out = compute(p);
+  if (!byFn) { byFn = new Map(); _catCache.set(p, byFn); }
+  byFn.set(compute, out);
+  return out;
+};
+
+function _impl_categorizeChannelLetterProject(p) {
   if (!p) return [];
   const lines = [];
 
@@ -44,21 +58,21 @@ export function categorizeChannelLetterProject(p) {
       const matCost = num(lp.fab_config.material_cost) + num(lp.fab_config.paint_material_cost);
       const laborCost = num(lp.fab_config.cnc_labor_cost) + num(lp.fab_config.paint_labor_cost);
       if (matCost > 0) {
-        lines.push({ module: 'channel_letter', label: `Dimensional Letter Material — ${lp.description || ''}`, cost: matCost, category_key: 'substrates' });
+        lines.push({ module: 'channel_letter', label: `Dimensional Letter Material â€” ${lp.description || ''}`, cost: matCost, category_key: 'substrates' });
       }
       if (laborCost > 0) {
-        lines.push({ module: 'channel_letter', label: `Dimensional Letter Fab Labor — ${lp.description || ''}`, cost: laborCost, category_key: 'inhouse_labor' });
+        lines.push({ module: 'channel_letter', label: `Dimensional Letter Fab Labor â€” ${lp.description || ''}`, cost: laborCost, category_key: 'inhouse_labor' });
       }
       const remainder = total - matCost - laborCost;
       if (remainder > 0.01) {
-        lines.push({ module: 'channel_letter', label: `Dimensional Letter (other) — ${lp.description || ''}`, cost: remainder, category_key: 'substrates' });
+        lines.push({ module: 'channel_letter', label: `Dimensional Letter (other) â€” ${lp.description || ''}`, cost: remainder, category_key: 'substrates' });
       }
     } else if (isDimensional) {
-      // Dimensional with no fab_config breakdown — categorize whole as substrates (material side)
-      lines.push({ module: 'channel_letter', label: `Dimensional Letters — ${lp.description || ''}`, cost: total, category_key: 'substrates' });
+      // Dimensional with no fab_config breakdown â€” categorize whole as substrates (material side)
+      lines.push({ module: 'channel_letter', label: `Dimensional Letters â€” ${lp.description || ''}`, cost: total, category_key: 'substrates' });
     } else {
       // Channel / Raceway / Capsule / Logo = outsourced fab
-      lines.push({ module: 'channel_letter', label: `Letter Purchase — ${lp.description || lp.letter_type}`, cost: total, category_key: 'outsourced_fab' });
+      lines.push({ module: 'channel_letter', label: `Letter Purchase â€” ${lp.description || lp.letter_type}`, cost: total, category_key: 'outsourced_fab' });
     }
   });
 
@@ -74,7 +88,7 @@ export function categorizeChannelLetterProject(p) {
     lines.push({ module: 'channel_letter', label: 'Letter Fees (delivery/design/permit/etc.)', cost: letterFees, category_key: 'outsourced_fab' });
   }
 
-  // 2. Installation labor — when a crew is assigned, personnel pricing replaces
+  // 2. Installation labor â€” when a crew is assigned, personnel pricing replaces
   // the flat-rate labor (labor_cost_in_subtotal = 0), so labor is never double-counted.
   const baseLabor = p.labor_cost_in_subtotal !== undefined
     ? num(p.labor_cost_in_subtotal)
@@ -96,7 +110,7 @@ export function categorizeChannelLetterProject(p) {
     lines.push({ module: 'channel_letter', label: 'Equipment Rental', cost: eqCost, category_key: 'outsourced_services' });
   }
 
-  // 5. Travel — was previously missing, so categorized lines didn't sum to the subtotal
+  // 5. Travel â€” was previously missing, so categorized lines didn't sum to the subtotal
   const travelCost = num(p.total_travel_cost);
   if (travelCost > 0) {
     lines.push({ module: 'channel_letter', label: 'Travel & Fuel', cost: travelCost, category_key: 'outsourced_services' });
@@ -105,7 +119,7 @@ export function categorizeChannelLetterProject(p) {
   return lines;
 }
 
-export function categorizeFoundationProject(p) {
+function _impl_categorizeFoundationProject(p) {
   if (!p) return [];
   const lines = [];
   const concrete = num(p.total_concrete_cost) + num(p.total_rebar_cost) + num(p.total_forming_materials_cost);
@@ -140,7 +154,7 @@ export function categorizeFoundationProject(p) {
   return lines;
 }
 
-export function categorizePaintProject(p) {
+function _impl_categorizePaintProject(p) {
   if (!p) return [];
   const lines = [];
   const mats = num(p.total_paint_mask_cost) + num(p.total_liquid_paint_and_supplies_cost);
@@ -150,7 +164,7 @@ export function categorizePaintProject(p) {
   return lines;
 }
 
-export function categorizeLaserProject(p) {
+function _impl_categorizeLaserProject(p) {
   if (!p) return [];
   const lines = [];
   const machine = num(p.total_machine_cost);
@@ -162,7 +176,7 @@ export function categorizeLaserProject(p) {
   return lines;
 }
 
-export function categorizeCNCProject(p) {
+function _impl_categorizeCNCProject(p) {
   if (!p) return [];
   const lines = [];
   const machine = num(p.total_machine_cost);
@@ -172,7 +186,7 @@ export function categorizeCNCProject(p) {
   return lines;
 }
 
-export function categorizeMetalProject(p) {
+function _impl_categorizeMetalProject(p) {
   if (!p) return [];
   const lines = [];
   const mat = num(p.total_material_cost) + num(p.total_supplies_cost);
@@ -182,7 +196,7 @@ export function categorizeMetalProject(p) {
   return lines;
 }
 
-export function categorizeBrickStoneProject(p) {
+function _impl_categorizeBrickStoneProject(p) {
   if (!p) return [];
   const lines = [];
   const materials = num(p.material_cost) + num(p.mortar_cost);
@@ -192,7 +206,7 @@ export function categorizeBrickStoneProject(p) {
   return lines;
 }
 
-export function categorizeMaintenanceProject(p) {
+function _impl_categorizeMaintenanceProject(p) {
   if (!p) return [];
   const lines = [];
   const labor = num(p.labor_cost) + num(p.total_personnel_cost);
@@ -205,12 +219,12 @@ export function categorizeMaintenanceProject(p) {
 }
 
 // Vinyl Estimator:
-//   Vinyl + Laminate + Transfer Tape rolls + Ink + Blade → substrates
-//   Machine time (printer / cutter / laminator amortized $/hr) → machine_time
-//   Operator + Designer + Installer labor → inhouse_labor
-//   Install equipment rental (lifts) → outsourced_services
-//   Travel → outsourced_services
-export function categorizeVinylProject(p) {
+//   Vinyl + Laminate + Transfer Tape rolls + Ink + Blade â†’ substrates
+//   Machine time (printer / cutter / laminator amortized $/hr) â†’ machine_time
+//   Operator + Designer + Installer labor â†’ inhouse_labor
+//   Install equipment rental (lifts) â†’ outsourced_services
+//   Travel â†’ outsourced_services
+function _impl_categorizeVinylProject(p) {
   if (!p) return [];
   const lines = [];
   const materials =
@@ -245,3 +259,12 @@ export const MODULE_CATEGORIZERS = {
   brick_stone: categorizeBrickStoneProject,
   maintenance: categorizeMaintenanceProject,
 };
+export const categorizeChannelLetterProject = (p) => _catMemo(p, _impl_categorizeChannelLetterProject);
+export const categorizeFoundationProject = (p) => _catMemo(p, _impl_categorizeFoundationProject);
+export const categorizePaintProject = (p) => _catMemo(p, _impl_categorizePaintProject);
+export const categorizeLaserProject = (p) => _catMemo(p, _impl_categorizeLaserProject);
+export const categorizeCNCProject = (p) => _catMemo(p, _impl_categorizeCNCProject);
+export const categorizeMetalProject = (p) => _catMemo(p, _impl_categorizeMetalProject);
+export const categorizeBrickStoneProject = (p) => _catMemo(p, _impl_categorizeBrickStoneProject);
+export const categorizeMaintenanceProject = (p) => _catMemo(p, _impl_categorizeMaintenanceProject);
+export const categorizeVinylProject = (p) => _catMemo(p, _impl_categorizeVinylProject);
