@@ -2380,6 +2380,11 @@ export default function AdminSettings() {
                           {(rule.actions?.length || 0) > 2 && <span className="text-gray-400">+{rule.actions.length - 2} more</span>}
                         </div>
                         <p className="mt-2 text-xs text-gray-500 italic">{describeAutomationRule(rule)}</p>
+                        <p className="mt-1 text-[11px] text-gray-400">
+                          {rule.last_run_at
+                            ? <>Last run {new Date(rule.last_run_at).toLocaleString()} — <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? ` · ${rule.run_count} runs` : ''}</>
+                            : 'Never run'}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
