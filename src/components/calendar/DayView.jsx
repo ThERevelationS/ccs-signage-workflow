@@ -49,7 +49,7 @@ export default function DayView({ currentDate, events, onEventClick }) {
         {allDayEvents.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {allDayEvents.map((ev, i) => (
-              <button
+              <button type="button"
                 key={i}
                 onClick={() => onEventClick?.(ev)}
                 className="px-2 py-1 rounded-lg text-xs text-white font-medium hover:opacity-80"
@@ -94,7 +94,7 @@ export default function DayView({ currentDate, events, onEventClick }) {
             const start = new Date(ev.start_datetime);
             const end = ev.end_datetime ? new Date(ev.end_datetime) : null;
             return (
-              <button
+              <button type="button"
                 key={i}
                 onClick={() => onEventClick?.(ev)}
                 className="absolute left-16 right-3 rounded-xl px-3 py-2 text-left text-white shadow-md hover:opacity-90 transition-all hover:shadow-lg z-20"
