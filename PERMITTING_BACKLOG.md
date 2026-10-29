@@ -394,7 +394,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 298. **[H]** Document-freshness check: a permit expiring before the job's install date flags "permit may lapse — renew first".
 299. **[F]** Multi-permit coordination: when a job needs sign + electrical + zoning separately, the three tracks show as parallel rows.
 300. **[UX]** "All permits issued" completion state: the job card shows a clear done-state when every line is issued.
-301. **[F]** Denial-record: a denied permit records the reason + date + appeal deadline — the next attempt learns from it.
+301. **[F][DONE]** Denial-record: a denied permit records the reason + date + appeal deadline — the next attempt learns from it.
 302. **[UX]** Variance-tracking: when the office requires a variance, a linked variance line is auto-suggested.
 303. **[F]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
 304. **[UX]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
@@ -417,7 +417,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 318. **[F]** Buddy-check: a new user's first few applies can flag "reviewed by {senior}" — a soft QA loop.
 319. **[UX]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
 320. **[F]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
-321. **[UX]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
+321. **[UX][DONE]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
 322. **[F]** Onboarding checklist for new permitting staff: the 5 things to learn — tracked as done.
 323. **[UX][DONE]** Error messages that teach: "That didn't work because {reason} — here's how to fix it" — every error educates.
 
@@ -546,8 +546,8 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 429. **[F]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
 430. **[UX]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
 431. **[F]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
-432. **[UX]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
+432. **[UX][FLAGGED-dedicated]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
 433. **[F]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
 434. **[UX]** The picker answers "who do I call?" first — before asking for the address — the card leads with the office.
 435. **[F]** Permit-status line on the WO outside permitting: the job's main record shows "sign permit: issued" — no digging.
-436. **[UX]** Every item on this page reads at a 6th-grade level — the whole page is plain language end-to-end.
+436. **[UX][FLAGGED-dedicated]** Every item on this page reads at a 6th-grade level — the whole page is plain language end-to-end.
