@@ -217,7 +217,7 @@ export default function PermittingCompletenessDashboard() {
       .then((rows) => {
         if (!alive) return;
         setOfficeContacts((Array.isArray(rows) ? rows : [])
-          .filter((r) => r.contact_info?.phone || r.contact_info?.email || r.website_url)
+          .filter((r) => r.contact_info?.phone || r.contact_info?.email || r.website_url || r.permit_requirements?.fee_range || r.permit_requirements?.processing_time)
           .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""))));
       })
       .catch(() => null);
@@ -289,6 +289,12 @@ export default function PermittingCompletenessDashboard() {
                   {r.contact_info?.email && <span className="truncate">{r.contact_info.email}</span>}
                   {r.website_url && <span className="truncate text-sky-600">{r.website_url}</span>}
                 </div>
+                {(r.permit_requirements?.fee_range || r.permit_requirements?.processing_time) && (
+                  <div className="mt-0.5 flex flex-wrap gap-x-3 text-[11px] text-gray-400">
+                    {r.permit_requirements?.fee_range && <span>fees {r.permit_requirements.fee_range}</span>}
+                    {r.permit_requirements?.processing_time && <span>~{r.permit_requirements.processing_time} processing</span>}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
