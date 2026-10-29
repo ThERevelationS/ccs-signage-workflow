@@ -3521,6 +3521,7 @@ Deno.serve(async (req) => {
       let liveUnpaidMinutes = 0;
       let onUnpaidBreakNow = false;
       let pausedNow = false;
+      const todaysSegments: any[] = [];
       if (entry) {
         // Segment data for the timeline strip - completed + active spans.
         const [breakRows, pauseRows] = await Promise.all([
