@@ -88,8 +88,8 @@ export default function EstimatorQueues() {
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const status = params.get("status") || "";
-  // ?mine=1 scopes every bucket to the signed-in user's estimates (admin
-toggle — queues default to all rows for admins).
+  // ?mine=1 scopes every bucket to the signed-in user's estimates.
+  // Queues default to all rows; this is the admin "my estimates" toggle.
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
