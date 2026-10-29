@@ -429,7 +429,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 327. **[F]** Permit-data export to accounting: fees paid → CSV for QuickBooks — the money trail.
 328. **[H]** Estimate-integration: the estimate's permit-cost line pulls the office's actual fee where known.
 329. **[F]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
-330. **[UX]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
+330. **[UX][DONE]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
 331. **[F]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
 332. **[H][DONE]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
 333. **[F]** Office-lookup by phone: inbound call → the office's row — "who is calling".
@@ -447,9 +447,9 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 342. **[H][DONE]** Write-time type guard: a PermitLineItem write carrying a township's id but typed 'city' rejects server-side.
 343. **[H][DONE]** Locality-delete guard: a locality with linked lines can't be deleted without explicit relink-first — no orphan jobs.
 344. **[H]** Boundary-source whitelist: only sanctioned boundary services may feed `location_resolution` — untrusted inputs rejected.
-345. **[F]** "Sure about that?" on electrical exclusion: excluding electrical on a job that needs it asks once — the toggle isn't silent.
+345. **[F][DONE]** "Sure about that?" on electrical exclusion: excluding electrical on a job that needs it asks once — the toggle isn't silent.
 346. **[H]** Verify-then-write: apply only lands after the repository row + the detected boundary agree — mismatches halt.
-347. **[F]** Duplicate-application check before submit: the same office+job can't be filed twice accidentally.
+347. **[F][DONE]** Duplicate-application check before submit: the same office+job can't be filed twice accidentally.
 348. **[H]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
 349. **[F]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
 350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
@@ -463,7 +463,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 358. **[H]** Address-leak prevention: the resolver's logs don't write full street addresses to long-term records.
 359. **[F][DONE]** "Not this job" escape: if a search lands on the wrong address entirely, one click "wrong address — search again".
 360. **[H]** Tamper-evidence on verified jurisdictions: a verified→unverified transition gets logged with the reason.
-361. **[F]** Manual-override visibility: a manually-applied locality is labeled "chosen by staff" — vs "verified by map".
+361. **[F][DONE]** Manual-override visibility: a manually-applied locality is labeled "chosen by staff" — vs "verified by map".
 362. **[H]** Concurrency test: two staff applying different jurisdictions to the same job → second write flags conflict, not silent last-write-wins.
 
 ## AD — Performance & scale
@@ -478,8 +478,8 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 370. **[H][DONE]** Debounced repository search: 300ms after typing stops — not every keystroke a filter pass.
 371. **[H]** Skeleton-per-section: the page renders the header + groups progressively, not all-at-once.
 372. **[H]** Idle-time prefetch: when the page is idle, next-likely catalogs warm in the background.
-373. **[H]** Cancel-abandoned reads: leaving the picker mid-load cancels the in-flight entity calls.
-374. **[H]** Bound the event payload: scan events cap at N entries server-side — a long scan can't bloat the record.
+373. **[H][DONE]** Cancel-abandoned reads: leaving the picker mid-load cancels the in-flight entity calls.
+374. **[H][DONE]** Bound the event payload: scan events cap at N entries server-side — a long scan can't bloat the record.
 375. **[H]** Memoized list-derivations: the queue summaries + counts compute once per data-change, not per render.
 376. **[H]** Stale-while-revalidate on the repository: last-cached list shows instantly, fresh data swaps in behind.
 377. **[H]** Chunked map render: >50 boundary polygons batch-paint so the map doesn't freeze.
@@ -538,7 +538,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 421. **[F]** Permit-renewal flow: an expiring permit's renewal path — reuse the prior application's data.
 422. **[UX]** Smart-suggest next-step: "Call them — they said 2 weeks" — the next action recommended.
 423. **[F]** Jurisdiction-diff: compare two jurisdictions' office structures side-by-side — "Milford has city zoning; Miami Township doesn't".
-424. **[UX]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
+424. **[UX][DONE]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
 425. **[F]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
 426. **[UX]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
 427. **[F]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
