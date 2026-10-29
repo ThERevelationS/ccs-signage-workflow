@@ -377,7 +377,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 284. **[F][DONE]** Overlapping-service districts: school districts, fire districts, water districts — separate layers, never conflated with permit offices.
 285. **[UX][DONE]** "Is this address right?" sanity check: the pin vs the typed street — a visual confirmation before apply.
 286. **[F][DONE]** Township-trustee vs municipality distinction: "Milford Township" and "City of Milford" as visually-distinct card types.
-287. **[H][FLAGGED-dedicated]** GPS-vs-geocode agreement: when "Use my location" and the typed address disagree by >500ft, flag the mismatch.
+287. **[H][DONE]** GPS-vs-geocode agreement: when "Use my location" and the typed address disagree by >500ft, flag the mismatch.
 288. **[F][DONE]** County-level fallback: when no local office exists, the county's office surfaces with "county handles unincorporated areas" context.
 289. **[UX][DONE]** Boundary data provenance: "Boundary from US Census TIGER 2024" — staff know where the lines came from.
 290. **[F][DONE]** Overlap-zone candidates: two jurisdictions both claiming the pin → both shown with "conflicting boundary data" — never auto-picked.
