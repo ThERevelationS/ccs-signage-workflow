@@ -792,7 +792,13 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
-            {scheduleLabel && (
+            {Number(snapshot?.team_clocked_in_count) > 0 && (
+          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
+            {snapshot.team_clocked_in_count} coworker{snapshot.team_clocked_in_count === 1 ? "" : "s"} clocked in right now
+          </p>
+        )}
+
+        {scheduleLabel && (
           <p className="mt-3 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] text-slate-600">
             <span>{scheduleLabel}</span>
             {punchVariance && (
