@@ -16,7 +16,8 @@ const highlightTerms = (text, q) => {
 };
 
 export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }) {
-  const [query, setQuery] = useState("");
+    const inputRef = useRef(null);
+const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const resultsListRef = useRef(null);
@@ -26,6 +27,18 @@ export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }
   const hasQuery = Boolean(query.trim());
   const selectedResult = activeIndex >= 0 ? results[activeIndex] : null;
   const hasResults = hasQuery && results.length > 0;
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     if (selectedResult) {
@@ -65,8 +78,9 @@ export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }
             aria-controls={hasResults ? resultsListId : undefined}
             aria-activedescendant={selectedResult ? `${resultsListId}-option-${activeIndex}` : undefined}
             aria-describedby={hasQuery ? searchStatusId : undefined}
-            placeholder="Find a setting... (PTO, sync, backup)"
+            placeholder="Find a setting... (Ctrl+K)"
             maxLength={100}
+            ref={inputRef}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
