@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerSearchDialog from "./CustomerSearchDialog";
 import NewCustomerDialog from "./NewCustomerDialog";
 
 const Row = ({ label, hint, children }) => (
   <div className="flex items-center gap-2 mb-2">
     <label className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
-      {label}: {hint && <span className="text-blue-500">â“˜</span>}
+      {label}: {hint && <span className="text-blue-500">ⓘ</span>}
     </label>
     <div className="flex-1 flex items-center gap-1">{children}</div>
   </div>
@@ -76,11 +75,10 @@ export default function Step1EstimateDetails({
   }, [form.customer_id]);
 
   const applyCustomer = (c) => {
-    const taxGroupName = (g) => g?.group_name || g?.name || "";
-    const defaultTaxGroup = taxGroups.find((group) => taxGroupName(group) === c.default_tax_group);
+    const defaultTaxGroup = taxGroups.find((group) => group.name === c.default_tax_group);
     const defaultTaxPercent = Number(defaultTaxGroup?.tax_percent);
     const taxDefaults = defaultTaxGroup && Number.isFinite(defaultTaxPercent) && defaultTaxPercent >= 0 && defaultTaxPercent <= 100
-      ? { tax_group: taxGroupName(defaultTaxGroup), tax_percent: defaultTaxPercent }
+      ? { tax_group: defaultTaxGroup.name, tax_percent: defaultTaxPercent }
       : {};
     const customerValidDays = Number(c.quote_valid_days);
     const validDaysDefault = Number.isFinite(customerValidDays) && customerValidDays > 0
@@ -94,6 +92,7 @@ export default function Step1EstimateDetails({
       office_phone_ext: c.contact_office_ext || form.office_phone_ext,
       terms: c.terms || form.terms,
       pricing_tier: Number(c.pricing_tier) || form.pricing_tier || 1,
+      volume_discount_tiers: Array.isArray(c.volume_discount_tiers) ? c.volume_discount_tiers : (form.volume_discount_tiers || []),
       salesperson: c.salesperson || form.salesperson,
       ...taxDefaults,
       ...validDaysDefault,
@@ -213,12 +212,12 @@ export default function Step1EstimateDetails({
     <div className="flex-1 min-w-0">
       <div className="bg-white border border-gray-200 rounded-md px-4 py-2 flex items-center justify-between mb-1">
         <h2 className="text-[13px] font-bold text-gray-800">Step 1: Estimate Details</h2>
-        <button className="h-[26px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800">
-          Next Step â†’
+        <button type="button" className="h-[26px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800">
+          Next Step →
         </button>
       </div>
       <div className="text-right text-[11px] italic text-slate-500 mb-2">
-        Entered by: {enteredBy || "â€”"}
+        Entered by: {enteredBy || "—"}
       </div>
 
       <div className="bg-slate-100 border border-slate-300 rounded-sm p-4 mb-3 max-w-4xl">
@@ -253,7 +252,7 @@ export default function Step1EstimateDetails({
           </button>
           {linkedCustomer?.credit_hold === true && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 border border-red-200">
-              CREDIT HOLD â€” new work needs a deposit or manager override
+              CREDIT HOLD — new work needs a deposit or manager override
             </span>
           )}
           {entityFlags.map((flag) => {
@@ -274,7 +273,7 @@ export default function Step1EstimateDetails({
           <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px]" aria-label="Recent customers">
             <span className="mr-1 text-slate-500">Recent:</span>
             {recentCustomers.map((customer) => (
-              <button
+              <button type="button"
                 key={customer.id}
                 type="button"
                 onClick={() => applyCustomer(customer)}
@@ -325,7 +324,7 @@ export default function Step1EstimateDetails({
             onChange={(e) => patch({ estimate_number: e.target.value })}
             className={inputCls}
           />
-          <button
+          <button type="button"
             onClick={onGenerateNumber}
             disabled={generating}
             className="h-[26px] px-2 border border-gray-300 rounded-sm text-[12px] flex items-center gap-1 whitespace-nowrap hover:bg-gray-50 disabled:opacity-60"
@@ -357,7 +356,7 @@ export default function Step1EstimateDetails({
                 title="Fill contact fields from a saved customer contact"
                 className={pickerCls}
               >
-                <option value="">Savedâ€¦</option>
+                <option value="">Saved…</option>
                 {contactOptions.map((c) => (
                   <option key={c.key} value={c.key}>
                     {c.label}
@@ -400,7 +399,7 @@ export default function Step1EstimateDetails({
                 title="Fill site address from a saved customer location"
                 className={pickerCls}
               >
-                <option value="">Savedâ€¦</option>
+                <option value="">Saved…</option>
                 {locationOptions.map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.label}
@@ -454,17 +453,17 @@ export default function Step1EstimateDetails({
             <select
               value={form.tax_group}
               onChange={(e) => {
-                const g = taxGroups.find((t) => (t.group_name || t.name) === e.target.value);
+                const g = taxGroups.find((t) => t.name === e.target.value);
                 patch({ tax_group: e.target.value, tax_percent: g?.tax_percent || 0 });
               }}
               className={inputCls}
             >
               <option value="">select</option>
-              {taxGroups.map((t, i) => { const gn = t.group_name || t.name; return (
-                <option key={t.id || `tax-group-${gn}-${i}`} value={gn}>
-                  {gn} ({t.tax_percent}%)
+              {taxGroups.map((t, i) => (
+                <option key={t.id || `tax-group-${t.name}-${i}`} value={t.name}>
+                  {t.name} ({t.tax_percent}%)
                 </option>
-              ); })}
+              ))}
             </select>
           </Row>
           <p className="text-[10px] text-gray-400 text-center mt-1">
