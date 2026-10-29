@@ -7719,6 +7719,21 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, staff });
     }
 
+    if (action === 'toggle_payroll_hold') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to hold entries.' }, { status: 403 });
+      const entryId = String(body?.entry_id || '').trim();
+      const expected = String(body?.expected_updated_date || '').trim();
+      const hold = body?.hold !== false;
+      const reason = String(body?.reason || '').slice(0, 300);
+      if (!entryId || !expected) return Response.json({ success: false, error: 'entry_id and expected_updated_date are required.' }, { status: 400 });
+      const row = await entryEntity.get(entryId).catch(() => null);
+      if (!row?.id) return Response.json({ success: false, error: 'TimeEntry not found.' }, { status: 404 });
+      if (String(row.updated_date || '') !== expected) return Response.json({ success: false, retry_same_request: false, error: 'The entry changed since it was loaded. Reload and retry.' }, { status: 409 });
+      const updated = await entryEntity.update(entryId, { payroll_hold: hold, payroll_hold_reason: hold ? reason : '' });
+      await auditEntity.create({ action: 'toggle_payroll_hold', request_id: requestId, time_entry_id: entryId, user_email: row.user_email || '', actor_email: actorEmail, details: { hold, reason } }).catch(() => null);
+      return Response.json({ success: true, entry: updated });
+    }
+
     if (action === 'admin_archive_entry') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to archive entries.' }, { status: 403 });
       const entryId = String(body?.entry_id || '').trim();
