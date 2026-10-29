@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2 } from "lucide-react";
@@ -9,6 +9,7 @@ import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimat
 import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
+import SavedViews from "@/components/workflow/SavedViews";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -72,6 +73,7 @@ export default function EstimatorQueues() {
   const { user } = useAuth();
   const myEmail = String(user?.email || "").trim().toLowerCase();
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const status = params.get("status") || "";
   const [estimates, setEstimates] = useState([]);
@@ -222,7 +224,9 @@ export default function EstimatorQueues() {
           : estimates.filter((e) => e?.deleted !== true);
     if (q) {
       list = list.filter((e) =>
-        [e.project_name, e.client_name, e.estimate_number].some((v) => String(v || "").toLowerCase().includes(q)));
+        [e.project_name, e.client_name, e.estimate_number, e.notes, e.estimate_notes, e.contact_name, e.project_address, e.site_address,
+         ...(Array.isArray(e.line_items) ? e.line_items.map((l) => [l.name, l.product_name, l.description].join(" ")) : [])
+        ].some((v) => String(v || "").toLowerCase().includes(q)));
     }
     const val = (e) => Number(e.quote_total || e.total_cost || 0);
     const exp = (e) => expiryOf(e) || "9999-12-31";
@@ -289,6 +293,19 @@ export default function EstimatorQueues() {
               {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
             </select>
           </div>
+          <SavedViews
+            storageKey="views.estimator_queues"
+            getState={() => ({ q: query, status, sort })}
+            onApply={(s) => {
+              const nextQ = s?.q || ""; const nextSort = s?.sort || "newest"; const nextStatus = s?.status || "";
+              setQuery(nextQ); setSort(nextSort);
+              const p = new URLSearchParams();
+              if (nextStatus) p.set("status", nextStatus);
+              if (nextQ) p.set("q", nextQ);
+              if (nextSort !== "newest") p.set("sort", nextSort);
+              navigate(`/EstimatorQueues${p.size ? `?${p.toString()}` : ""}`, { replace: true });
+            }}
+          />
         </div>
 
         {trashError && (
