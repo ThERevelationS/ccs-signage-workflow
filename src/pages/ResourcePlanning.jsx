@@ -30,6 +30,7 @@ import {
   Save
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -88,12 +89,10 @@ export default function ResourcePlanning() {
     try {
       const [capacitiesData, ordersData] = await Promise.all([
         loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Planning user capacities" }),
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Resource Planning Work Orders",
-        })
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
       ]);
       setUserCapacities(capacitiesData);
       setWorkOrders(ordersData);
