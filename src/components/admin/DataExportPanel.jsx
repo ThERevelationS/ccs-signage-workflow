@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,7 +45,18 @@ export default function DataExportPanel() {
   const [busy, setBusy] = useState(false);
   const [connections, setConnections] = useState(null);
   const [pending, setPending] = useState(null);
+  const { sessionToken } = useAuth();
   const [security, setSecurity] = useState(null);
+  const [scanResults, setScanResults] = useState(null);
+  const [scanBusy, setScanBusy] = useState(false);
+  const runIntegrityScan = async () => {
+    setScanBusy(true); setScanResults(null);
+    try {
+      const r = await base44.functions.invoke("dataIntegrityAction", { session_token: sessionToken, action: "scan" });
+      setScanResults(r?.data?.results || []);
+    } catch { setScanResults([{ name: "scan", error: "Integrity scan could not run" }]); }
+    setScanBusy(false);
+  };
   const [counts, setCounts] = useState(null);
   useEffect(() => {
     let alive = true;
@@ -129,6 +142,28 @@ export default function DataExportPanel() {
             <li key={f} className="flex items-center justify-between gap-1 font-mono text-[10px]"><span className="truncate">{f}</span><span className="text-gray-400">{n}</span></li>
           ))}
         </ul>
+      </div>
+
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Data integrity scan">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-gray-700">Data integrity scan</p>
+          <Button type="button" size="sm" variant="outline" disabled={scanBusy} onClick={runIntegrityScan} className="h-6 px-2 text-[10px]">
+            {scanBusy ? "Scanning…" : "Run scan"}
+          </Button>
+        </div>
+        <p className="mt-0.5 text-gray-400">Read-only — reports orphaned rows, never repairs.</p>
+        {scanResults && (
+          <ul className="mt-1 space-y-0.5">
+            {scanResults.map((r) => (
+              <li key={r.name} className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px]">{r.name}</span>
+                <span className={r.orphans > 0 || r.error ? "font-medium text-red-600" : "text-gray-500"}>
+                  {r.error ? "check failed" : `${r.orphans ?? 0} orphan${r.orphans === 1 ? "" : "s"} / ${r.scanned ?? 0}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {pending && (
