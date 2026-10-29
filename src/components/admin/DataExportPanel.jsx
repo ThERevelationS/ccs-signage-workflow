@@ -78,6 +78,15 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Data retention policy">
+        <p className="font-semibold text-gray-700">Retention policy</p>
+        <ul className="mt-0.5 list-disc pl-4 space-y-0.5">
+          <li>Time entries: kept indefinitely; admins can archive stale rows from Time Clock → retention tools.</li>
+          <li>Deleted work orders/clients: held in Trash until permanently purged from the trash subtabs.</li>
+          <li>Activity feed: bounded history shown on the Activity tab.</li>
+          <li>Exports are on-demand snapshots — nothing is downloaded or sent automatically.</li>
+        </ul>
+      </div>
       {counts && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {EXPORTABLE.map((e) => (
