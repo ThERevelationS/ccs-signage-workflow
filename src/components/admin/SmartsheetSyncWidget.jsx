@@ -8,8 +8,6 @@ import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
-import { usePolling } from "@/lib/usePolling";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUS_KEYS = {
   orders: 'smartsheetOrderSyncStatus',
@@ -17,7 +15,6 @@ const STATUS_KEYS = {
   legacy: 'smartsheetSyncStatus',
 };
 const CONFIG_KEY = 'smartsheetSyncConfig';
-const WATCHED_KEYS = [STATUS_KEYS.orders, STATUS_KEYS.sales, STATUS_KEYS.legacy, CONFIG_KEY];
 
 // A lazily-created dataset coordinator is an empty object until its first
 // run; only records carrying real status content count as present.
@@ -38,43 +35,35 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const [recoveryError, setRecoveryError] = useState("");
   const prevRunningRef = useRef(false);
 
-  const recordsRef = useRef(new Map());
-
-  const recompute = useCallback(() => {
-    const orderValue = recordsRef.current.get(STATUS_KEYS.orders)?.setting_value || null;
-    const salesValue = recordsRef.current.get(STATUS_KEYS.sales)?.setting_value || null;
-    const legacyValue = recordsRef.current.get(STATUS_KEYS.legacy)?.setting_value || null;
-    const configRecord = recordsRef.current.get(CONFIG_KEY) || null;
-    // Order Form reads only its own coordinator so a Sales review can never
-    // look like an Order problem. Other consumers see an active run first,
-    // otherwise the most recently updated dataset status; the legacy shared
-    // record remains the fallback until dataset runs exist.
-    let statusValue;
-    if (compactOrderForm) {
-      statusValue = hasStatusContent(orderValue) ? orderValue : legacyValue;
-    } else {
-      const datasetValues = [orderValue, salesValue].filter(hasStatusContent);
-      statusValue = datasetValues.find(value => value?.status === 'running')
-        || datasetValues.sort((a, b) =>
-          Date.parse(String(b?.updated_at || b?.started_at || '')) -
-          Date.parse(String(a?.updated_at || a?.started_at || '')))[0]
-        || legacyValue;
-    }
-    setStatus(statusValue || null);
-    setConfig(configRecord?.setting_value || null);
-  }, [compactOrderForm]);
-
   const loadStatus = useCallback(async () => {
     try {
-      const records = await staffEntities.GlobalSettings.filter({
-        setting_key: { $in: WATCHED_KEYS },
-      });
-      const map = new Map();
-      for (const record of Array.isArray(records) ? records : [records]) {
-        if (record?.setting_key) map.set(record.setting_key, record);
+      const [orderRecords, salesRecords, legacyRecords, configRecords] = await Promise.all([
+        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.orders }),
+        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.sales }),
+        base44.entities.GlobalSettings.filter({ setting_key: STATUS_KEYS.legacy }),
+        base44.entities.GlobalSettings.filter({ setting_key: CONFIG_KEY }),
+      ]);
+      const orderValue = (Array.isArray(orderRecords) ? orderRecords[0] : orderRecords)?.setting_value || null;
+      const salesValue = (Array.isArray(salesRecords) ? salesRecords[0] : salesRecords)?.setting_value || null;
+      const legacyValue = (Array.isArray(legacyRecords) ? legacyRecords[0] : legacyRecords)?.setting_value || null;
+      const configRecord = Array.isArray(configRecords) ? configRecords[0] : configRecords;
+      // Order Form reads only its own coordinator so a Sales review can never
+      // look like an Order problem. Other consumers see an active run first,
+      // otherwise the most recently updated dataset status; the legacy shared
+      // record remains the fallback until dataset runs exist.
+      let statusValue;
+      if (compactOrderForm) {
+        statusValue = hasStatusContent(orderValue) ? orderValue : legacyValue;
+      } else {
+        const datasetValues = [orderValue, salesValue].filter(hasStatusContent);
+        statusValue = datasetValues.find(value => value?.status === 'running')
+          || datasetValues.sort((a, b) =>
+            Date.parse(String(b?.updated_at || b?.started_at || '')) -
+            Date.parse(String(a?.updated_at || a?.started_at || '')))[0]
+          || legacyValue;
       }
-      recordsRef.current = map;
-      recompute();
+      setStatus(statusValue || null);
+      setConfig(configRecord?.setting_value || null);
       setStatusReadError(false);
     } catch {
       // Preserve the last known authoritative state, but mark it unverified so
@@ -83,30 +72,31 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
     } finally {
       setLoading(false);
     }
-  }, [recompute]);
+  }, [compactOrderForm]);
 
   useEffect(() => {
-    let unsubscribe = null;
-    try {
-      unsubscribe = staffEntities.GlobalSettings.subscribe((event) => {
-        const key = String(event?.data?.setting_key || event?.setting_key || "");
-        if (!WATCHED_KEYS.includes(key)) return;
-        if (event?.type === "delete" || event?.data?.deleted === true) {
-          recordsRef.current.delete(key);
-        } else {
-          recordsRef.current.set(key, { ...(recordsRef.current.get(key) || {}), ...(event?.data || {}) });
-        }
-        recompute();
-      });
-    } catch {}
-    return () => {
-      if (typeof unsubscribe === "function") unsubscribe();
-    };
-  }, [recompute]);
+    loadStatus();
+    // Running Order syncs publish row-level heartbeat data. Poll quickly enough
+    // for that activity to feel live without increasing idle background traffic.
+    const interval = setInterval(loadStatus,
+      compactOrderForm && status?.status === 'running' ? 1000 : 5000);
+    return () => clearInterval(interval);
+  }, [loadStatus, compactOrderForm, status?.status]);
 
-  // Running Order syncs publish row-level heartbeat data. Poll quickly enough
-  // for that activity to feel live without increasing idle background traffic.
-  usePolling(loadStatus, compactOrderForm && status?.status === 'running' ? 3000 : 300000);
+  useEffect(() => {
+    const refresh = () => loadStatus();
+    const refreshVisible = () => {
+      if (document.visibilityState === 'visible') loadStatus();
+    };
+    window.addEventListener('online', refresh);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refreshVisible);
+    return () => {
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refreshVisible);
+    };
+  }, [loadStatus]);
 
   // Reset dismissed when a new sync starts on other pages.
   useEffect(() => {
@@ -339,7 +329,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
             </div>
           </div>
           {!isRunning && (
-            <button
+            <button type="button"
               onClick={() => compactOrderForm ? setDismissedSuccessRun(orderToast.key) : setDismissed(true)}
               className="flex-shrink-0 p-1 rounded hover:bg-gray-100"
               title="Dismiss"
