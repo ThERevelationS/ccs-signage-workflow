@@ -655,7 +655,43 @@ export default function CustomerPortal() {
 
         {!state.loading && data && !isCustomer && (
           <>
+            {data.kind === "staff_view" && data.estimate && (
+              <>
+                <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                  <span className="font-semibold">Shared read-only view</span> — this link opens one quote, view-only. Contact CCS Signage with any questions or change requests.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-lg font-bold text-slate-900">{data.estimate.estimate_number || "Estimate"}</p>
+                      <p className="text-sm text-slate-600">{data.estimate.project_name || data.estimate.quote_title || "Project"}</p>
+                      {data.estimate.client_name && <p className="mt-0.5 text-xs text-slate-500">{data.estimate.client_name}</p>}
+                    </div>
+                    <div className="text-right">
+                      {data.estimate.quote_total != null && <p className="text-lg font-bold text-slate-900">{money(data.estimate.quote_total)}</p>}
+                      <p className="text-xs text-slate-500">{data.estimate.status || ""}{data.estimate.quote_expiration_date ? ` · valid until ${data.estimate.quote_expiration_date}` : ""}</p>
+                    </div>
+                  </div>
+                  {Array.isArray(data.estimate.sections) && data.estimate.sections.length > 0 && (
+                    <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+                      {data.estimate.sections.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between gap-3 py-2">
+                          <span className="text-sm text-slate-700">{s.name || s.section_label || `Section ${i + 1}`}</span>
+                          {s.quote_total != null && <span className="text-sm font-semibold text-slate-800">{money(s.quote_total)}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Read-only view — this page reflects the live estimate.</span>
+                  <Button variant="outline" size="sm" onClick={() => window.print()}>Print / PDF</Button>
+                </div>
+              </>
+            )}
+            {data.kind !== "staff_view" && (
             <InvoiceView invoice={data.invoice} payments={data.payments} />
+            )}
             {Number(data.invoice?.balance_due) > 0 && (
               <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
                 <p className="text-sm font-medium text-blue-900">Balance due: <span className="font-bold">{money(data.invoice.balance_due)}</span></p>
