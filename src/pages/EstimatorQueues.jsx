@@ -88,6 +88,8 @@ export default function EstimatorQueues() {
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const status = params.get("status") || "";
+  // ?mine=1 scopes every bucket to the signed-in user's estimates (admin
+toggle — queues default to all rows for admins).
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -99,6 +101,9 @@ export default function EstimatorQueues() {
   const [bulkStatus, setBulkStatus] = useState("sent");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkError, setBulkError] = useState("");
+  const mine = params.get("mine") === "1";
+  const [me, setMe] = useState(null);
+  useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
 
   const toggleSelected = (id) => setSelectedIds((prev) => {
     const next = new Set(prev);
@@ -234,6 +239,10 @@ export default function EstimatorQueues() {
         : status
           ? estimates.filter((e) => e?.deleted !== true && (e.status || "draft") === status)
           : estimates.filter((e) => e?.deleted !== true);
+    if (mine && me?.email) {
+      const mineEmail = String(me.email).toLowerCase();
+      list = list.filter((e) => String(e.salesperson_email || e.created_by || "").toLowerCase() === mineEmail);
+    }
     if (q) {
       list = list.filter((e) =>
         [e.project_name, e.client_name, e.estimate_number, e.notes, e.estimate_notes, e.contact_name, e.project_address, e.site_address,
@@ -248,7 +257,7 @@ export default function EstimatorQueues() {
     else if (sort === "expiring") sorted.sort((a, b) => exp(a).localeCompare(exp(b)));
     else sorted.sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)));
     return sorted;
-  }, [estimates, status, q, sort]);
+  }, [estimates, status, q, sort, mine, me]);
 
   const visibleTotal = rows.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
 
