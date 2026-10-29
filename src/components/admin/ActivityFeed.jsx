@@ -61,7 +61,11 @@ export default function ActivityFeed() {
   // Live-tail: poll the feed every 15s while enabled (monitoring a busy sync).
   useEffect(() => {
     if (!liveTail) return undefined;
-    const id = setInterval(loadActivities, 15000);
+    // Jittered cadence + hidden-tab skip — a fleet of open tabs polling in
+    // lockstep spikes the entity read path; ~15–20s with visibility checks
+    // keeps the feed live without the thundering herd.
+    const jitteredTick = () => { if (!document.hidden) loadActivities(); };
+    const id = setInterval(jitteredTick, 15000 + Math.floor(Math.random() * 5000));
     return () => clearInterval(id);
   }, [liveTail, filterType, limit]);
 
