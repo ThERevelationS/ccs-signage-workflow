@@ -17,7 +17,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   GeneralTask: new Set(['create', 'update']),
   ImportJob: new Set(['create', 'update']),
   JurisdictionProfile: new Set(['create', 'update']),
-  PermitLocality: new Set(['create']),
+  PermitLocality: new Set(['create', 'update']),
   LegacyMigrationMap: new Set(['create']),
   PermitLineItem: new Set(['create', 'update', 'updateMany', 'delete']),
   PermittingWorkflowDraft: new Set(['create', 'update']),
@@ -54,8 +54,8 @@ Deno.serve(async (req) => {
     }
     // New jurisdiction records are created only through the admin draft flow —
     // the UI gates this already; the server must fail closed the same way.
-    if (entityName === 'PermitLocality' && op === 'create' && user.role !== 'admin') {
-      return Response.json({ error: 'Only administrators can add new jurisdictions.' }, { status: 403 });
+    if (entityName === 'PermitLocality' && (op === 'create' || op === 'update') && user.role !== 'admin') {
+      return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
     }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
@@ -96,6 +96,15 @@ Deno.serve(async (req) => {
       const expected = String(body?.expected_updated_date || '').trim();
       if (expected && expected !== String(current.updated_date || '')) {
         return Response.json({ error: 'This record changed in another session. Reload before saving.' }, { status: 409 });
+      }
+      // Jurisdiction edits keep an audit trail: who changed what, when.
+      if (entityName === 'PermitLocality') {
+        const changed = Object.keys(data).filter((f) => String(current?.[f] ?? '') !== String(data?.[f] ?? ''));
+        if (changed.length) {
+          const log = Array.isArray(current?.change_log) ? current.change_log.slice(-49) : [];
+          log.push({ at: new Date().toISOString(), by: String(user.email || ''), changed_fields: changed });
+          data.change_log = log;
+        }
       }
       const saved = await entity.update(id, data);
       return Response.json({ success: true, record: saved });
