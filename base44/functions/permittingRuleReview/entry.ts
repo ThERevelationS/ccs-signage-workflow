@@ -1,4 +1,5 @@
 import { listOfficeAuthorityReviews } from '../../shared/permittingOfficeAuthority.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import {retrieveApprovedEvidence} from '../../shared/permittingApprovedEvidence.mjs';
 import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
@@ -41,7 +42,7 @@ async function commitRule(entity:any,rule:any,fields:any,action:string,reviewer:
 }
 Deno.serve(async req => {
   try {
-    const base44=createClientFromRequest(req),body=await req.json().catch(()=>({}));
+    const base44=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json().catch(()=>({}));
     // A supplied app session must verify successfully; never fall back after an invalid session.
     const user=body.session_token
       ? await authenticateSignShopSession(base44,body.session_token)
