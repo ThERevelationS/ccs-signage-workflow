@@ -357,7 +357,7 @@ function LocalityPickerSession({
               onClick={() => { searchVersion.current++; pendingSearch.current = null; setSearching(false); }}
               className="gap-1 min-h-11 w-full sm:w-auto"
             >
-              <Loader2 className="w-4 h-4 animate-spin" /> Cancel search
+              <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> Cancel search
             </Button>
           ) : (
             <Button onClick={runSearch} disabled={!address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
@@ -565,7 +565,7 @@ function LocalityPickerSession({
 
                     {repositoryLoading && (
                       <div className="text-xs text-violet-700 flex items-center gap-1.5">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking repository…
+                        <Loader2 className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" /> Checking repository…
                       </div>
                     )}
 
@@ -706,7 +706,7 @@ function LocalityPickerSession({
                   confirmDraftFromRepository();
                 }}
               >
-                {creatingDraft ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
+                {creatingDraft ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin motion-reduce:animate-none" /> : null}
                 Create Draft & Apply
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -723,7 +723,7 @@ function LocalityPickerSession({
             </Button>
             <Button
               onClick={handleApply}
-              disabled={!selectedLocalityId || searching || !addressCanApply}
+              aria-label="Use the selected jurisdiction" disabled={!selectedLocalityId || searching || !addressCanApply}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
               <Save className="w-4 h-4" /> Use this jurisdiction
