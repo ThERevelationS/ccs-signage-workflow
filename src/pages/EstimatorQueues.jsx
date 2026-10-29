@@ -310,6 +310,16 @@ export default function EstimatorQueues() {
               </Link>
             );
           })}
+          <Link
+            to={`/EstimatorQueues?${(() => { const p = new URLSearchParams(); if (status) p.set("status", status); if (q) p.set("q", q); if (sort && sort !== "newest") p.set("sort", sort); if (!mine) p.set("mine", "1"); return p.toString(); })()}`}
+            aria-pressed={mine}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+              mine ? "bg-slate-700 text-white border-slate-700" : "bg-white/70 text-gray-600 border-gray-200 hover:border-slate-400"
+            }`}
+            title="Show only my estimates"
+          >
+            Mine
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
