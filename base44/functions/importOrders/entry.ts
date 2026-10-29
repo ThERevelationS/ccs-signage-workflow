@@ -65,6 +65,11 @@ Deno.serve(async (req) => {
   } else {
     workOrderFilter = body?.workOrderFilter || '';
     if (!body?.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
+    // Upload cap: reject oversized base64 payloads before decoding — base64
+    // inflates ~4/3, so 20MB base64 ≈ 15MB of binary + parsed row memory.
+    if (String(body.fileData).length > 20 * 1024 * 1024) {
+      return Response.json({ error: 'Import file exceeds the 15 MB limit. Split the file and import in parts.' }, { status: 413 });
+    }
     const binaryStr = atob(body.fileData);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
