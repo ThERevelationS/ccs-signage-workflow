@@ -250,6 +250,10 @@
       "format": "date",
       "description": "The office's stated turnaround \u2014 'expected reply/decision by this date'."
     },
+    "fee_payment_link": {
+      "type": "string",
+      "description": "The office's online-payment URL for this permit's fee \u2014 saved so staff never hunt it down twice."
+    },
     "application_revision": {
       "type": "number",
       "default": 1,
