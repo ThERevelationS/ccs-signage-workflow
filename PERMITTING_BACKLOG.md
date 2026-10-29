@@ -268,7 +268,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## S — Accessibility & simplicity, round 2
 
 199. **[UX][DONE]** A "one big button" mode: hide every optional control (electrical toggle, debug, repository browse) behind a "show more options" — default view is just address + find + result + apply.
-200. **[UX][FLAGGED-dedicated]** Spanish/other-language toggle on the picker copy — the field crew isn't all English-first.
+200. **[UX][DONE]** Spanish/other-language toggle on the picker copy — the field crew isn't all English-first.
 201. **[UX][DONE]** Dyslexia-friendly font option (OpenDyslexic or just letter-spacing bump) alongside the big-text toggle.
 202. **[UX][DONE]** Every number on a status chip also gets the unit word: "3 offices" not just "3".
 203. **[UX][DONE]** The map's "this is the pin" label: a plain "Your job is here" bubble so the visual isn't ambiguous.
