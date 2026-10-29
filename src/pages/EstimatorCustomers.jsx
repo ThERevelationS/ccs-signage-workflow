@@ -547,6 +547,7 @@ export default function EstimatorCustomers() {
             </div>
             <SavedViews
               storageKey="views.estimator_customers"
+              autoApply={!searchParams.get("q") && !searchParams.get("filter")}
               getState={() => ({ search })}
               activeName={viewName}
               onApply={(s, name) => { setSearch(s.search || ""); setViewName(name || ""); }}
