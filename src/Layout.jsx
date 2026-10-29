@@ -882,6 +882,36 @@ function LayoutContent({ children }) {
           will-change: transform, opacity;
         }
 
+        .ccs-topbar-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-areas: "brand menu" "utilities utilities";
+          align-items: center;
+          gap: 6px 10px;
+        }
+        .ccs-topbar-brand { grid-area: brand; justify-self: start; }
+        .ccs-topbar-menu { grid-area: menu; }
+        .ccs-topbar-utilities { grid-area: utilities; justify-self: end; min-width: 0; max-width: 100%; }
+        .ccs-topbar-utilities .ccs-glass-control > span { font-size: 12px; }
+        .ccs-topbar-links { grid-area: links; min-width: 0; }
+        .ccs-topbar-links .ccs-glass-nav-item span { font-size: 12px; }
+
+        @media (max-height: 600px) {
+          .ccs-topbar-menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1024px) {
+          .ccs-topbar-layout {
+            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-areas: "brand utilities" "links links";
+          }
+        }
+        @media (min-width: 1800px) {
+          .ccs-topbar-layout {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-areas: "brand links utilities";
+          }
+        }
+
         .side-nav {
           will-change: transform, opacity, width;
         }
@@ -1168,9 +1198,9 @@ function LayoutContent({ children }) {
             className="top-nav ccs-glass-shell fixed left-0 right-0 top-0 z-50 overflow-visible"
           >
             <div className={topBarCompact ? "px-2 py-1" : "px-4 py-2"}>
-              <div className={`flex flex-wrap items-center justify-between ${topBarCompact ? "gap-x-2 gap-y-1" : "gap-x-3 gap-y-1.5"}`}>
+              <div className="ccs-topbar-layout">
                 {/* Brand + tiny shell view controls */}
-                <div className="order-1 flex-shrink-0">
+                <div className="ccs-topbar-brand">
                   <div className={`ccs-glass-panel flex items-center ${topBarCompact ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
                     <button
                       onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
@@ -1198,16 +1228,18 @@ function LayoutContent({ children }) {
 
                 {/* Mobile Menu Button */}
                 <button
-                  className="order-2 lg:hidden clay-button p-3 min-h-[48px] min-w-[48px]"
+                  className="ccs-topbar-menu lg:hidden clay-button p-2 min-h-[40px] min-w-[40px]"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  aria-expanded={mobileMenuOpen}
+                  aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
                   title={mobileMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
 
-                {/* Utility controls — single row, auto-compacts under 1400px. */}
-                <div className={`order-2 hidden lg:flex items-center ${topBarCompact ? "gap-1" : "gap-2"}`}>
-                  <div className={`flex items-stretch ${topBarCompact ? "gap-1" : "gap-2"}`}>
+                {/* Keep utilities available at tablet widths as well as desktop. */}
+                <div className={`ccs-topbar-utilities hidden md:flex flex-wrap items-center ${topBarCompact ? "gap-1" : "gap-2"}`}>
+                  <div className={`flex flex-wrap items-stretch ${topBarCompact ? "gap-1" : "gap-2"}`}>
                     {/* Login / Logout button */}
                     {!currentUser ? (
                       <button
@@ -1267,10 +1299,10 @@ function LayoutContent({ children }) {
                   </div>
                 </div>
 
-                {/* Desktop Navigation Links — always on their own full-width row: wraps to extra rows, never squeezes or scrolls */}
+                {/* Links use the space between the brand and utilities when available. */}
                 <div
                   data-top-navigation-links
-                  className={`order-3 hidden lg:flex min-w-0 basis-full flex-wrap items-center justify-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
+                  className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
                   <DragDropContext onDragEnd={handleNavReorder}>
                     <Droppable droppableId="page-nav-top" direction="horizontal">
@@ -1278,7 +1310,7 @@ function LayoutContent({ children }) {
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          className={`flex flex-wrap items-center justify-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
+                          className={`flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                         >
                           {orderedNavItems.map((item, index) => (
                             <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
@@ -1328,8 +1360,8 @@ function LayoutContent({ children }) {
 
               {/* Mobile Navigation Menu */}
               {mobileMenuOpen && (
-                <div className="lg:hidden mt-2 pb-4 border-t border-gray-200 pt-4 max-h-[calc(100vh-120px)] overflow-y-auto">
-                  <div className="grid grid-cols-1 gap-2 px-2">
+                <div className="lg:hidden mt-2 border-t border-gray-200 pt-2">
+                  <div className="ccs-topbar-menu-grid grid grid-cols-3 gap-1">
                     {[...orderedNavItems, ...meetingsNavItems, ...reportsNavItems].map((item) => {
                       const isActive = location.pathname === item.url;
                       const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -1345,7 +1377,7 @@ function LayoutContent({ children }) {
                             }
                             setMobileMenuOpen(false);
                           }}
-                          className={`ccs-glass-nav-item flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
+                          className={`ccs-glass-nav-item flex min-h-[36px] min-w-0 items-center gap-2 rounded-xl px-2 py-1.5 ${isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""}`}
                           style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
                           title="Ctrl+Click to open in split view"
                         >
