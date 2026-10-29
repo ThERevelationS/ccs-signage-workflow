@@ -1601,6 +1601,28 @@ export default function TimeClockAdmin() {
       </div>
       </div>
 
+      {(() => {
+        const weekAgo = Date.now() - 7 * 86400000;
+        const twoWeeksAgo = Date.now() - 14 * 86400000;
+        let cur = 0, prev = 0;
+        for (const e of timeEntries || []) {
+          const t = new Date(e.clock_in || 0).getTime();
+          if (!t) continue;
+          if (t >= weekAgo) cur += Number(e.total_hours || 0);
+          else if (t >= twoWeeksAgo) prev += Number(e.total_hours || 0);
+        }
+        if (!cur && !prev) return null;
+        const delta = prev ? Math.round(((cur - prev) / prev) * 100) : 0;
+        return (
+          <div className="rounded-xl border border-gray-200 bg-white/70 px-3 py-2 text-xs text-gray-600" aria-label="Week-over-week hours">
+            This week: <b className="text-gray-900">{cur.toFixed(1)}h</b>
+            <span className="mx-1.5 text-gray-300">|</span>
+            Last week: <b>{prev.toFixed(1)}h</b>
+            {prev > 0 && <span className={`ml-1.5 font-medium ${delta > 0 ? "text-emerald-600" : delta < 0 ? "text-red-600" : "text-gray-500"}`}>{delta > 0 ? "+" : ""}{delta}%</span>}
+          </div>
+        );
+      })()}
+
       <AdminSection title="Needs Attention" icon={AlertTriangle} tone="amber" defaultOpen
         subtitle="Stale shifts, exceptions, reviews and requests that need a manager"
         count={staleActiveEntries.length + duplicateActiveEmails.length + missingBreakEntries.length + needsReviewEntries.length + unreviewedEntries.length + punchExceptions.filter((row) => ["open", "pending_manager_review", "rejected"].includes(row.status)).length}>
