@@ -23,6 +23,11 @@
       "type": "string",
       "description": "Unique username for time clock login"
     },
+    "last_login_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Most recent successful staff sign-in \u2014 drives last-active display and inactive-user flags"
+    },
     "password_changed_at": {
       "type": "string",
       "format": "date-time",
