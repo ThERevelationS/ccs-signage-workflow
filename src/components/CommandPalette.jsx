@@ -163,7 +163,7 @@ export default function CommandPalette() {
             <p className="py-8 text-center text-sm text-slate-400">{query ? "No matches." : "Type to search pages and records."}</p>
           )}
           {items.map((item, i) => (
-            <button
+            <button type="button"
               key={`${item.path}-${i}`}
               data-idx={i}
               onMouseEnter={() => setCursor(i)}
