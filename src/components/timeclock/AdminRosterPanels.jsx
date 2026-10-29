@@ -25,6 +25,19 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [ptoLiability, setPtoLiability] = useState(null);
   const [periods, setPeriods] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [announceBusy, setAnnounceBusy] = useState("");
+  const [announceMsg, setAnnounceMsg] = useState("");
+
+  const fireAnnouncement = async (mode) => {
+    if (announceBusy) return;
+    setAnnounceBusy(mode); setAnnounceMsg("");
+    try {
+      const res = await base44.functions.invoke("timeClockAction", { action: "send_timeclock_announcement", mode, session_token: sessionToken, scope: "admin", request_id: newRequestId() });
+      const data = res?.data || res;
+      setAnnounceMsg(data?.success === true ? `Sent to ${data.sent || 0} ${data.sent === 1 ? "person" : "people"}.` : (data?.error || "Failed"));
+    } catch (err) { setAnnounceMsg(err?.response?.data?.error || err?.message || "Failed"); }
+    setAnnounceBusy("");
+  };
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -261,6 +274,17 @@ export default function AdminRosterPanels({ sessionToken }) {
           )}
         </div>
       )}
+
+      <div className="clay-card p-4">
+        <h3 className="font-semibold mb-2">Time Clock nudges</h3>
+        <p className="mb-2 text-[11px] text-slate-500">Send targeted announcements straight to the kiosk — reminder for the late clock-ins, a wake-up for anyone still on the clock 12+ hours, or a manager digest.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("nudge_missing_clockins")}>{announceBusy === "nudge_missing_clockins" ? "Sending…" : "Nudge missing clock-ins"}</Button>
+          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("alert_missed_clockouts")}>{announceBusy === "alert_missed_clockouts" ? "Sending…" : "Alert 12h+ clock-outs"}</Button>
+          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("manager_digest")}>{announceBusy === "manager_digest" ? "Sending…" : "Manager digest"}</Button>
+        </div>
+        {announceMsg && <p className="mt-1.5 text-xs text-emerald-700">{announceMsg}</p>}
+      </div>
 
       {devices.length > 0 && (
         <div className="clay-card p-4 lg:col-span-2">
