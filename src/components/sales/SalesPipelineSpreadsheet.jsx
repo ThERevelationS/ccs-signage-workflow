@@ -67,7 +67,6 @@ import { salesReviewQueueFilterKey, canKeepLocallyResolvedSalesReview, keepLocal
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, planExistingSalesTaskStatusReconciliation, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
-import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 const WorkOrder = staffEntities.WorkOrder;
 const GlobalSettings = staffEntities.GlobalSettings;
@@ -736,12 +735,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       } else {
         const [activePage, modernOutcomes, completedLegacy, neutralClosed] = await Promise.all([
           readArchivePage(ALL_RECORDS_ACTIVE_QUERY, 0),
-          loadAllEntityRows({
-            entity: WorkOrder,
-            query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
-            sort: "-close_date",
-            label: "Sales Pipeline modern outcomes",
-          }),
+          fetchAllWorkOrders().then((allRows) => allRows.filter((wo) =>
+            wo.is_rider !== true && wo.in_pipeline === true &&
+            ["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
+          ).sort((a, b) => (b.close_date || "").localeCompare(a.close_date || ""))),
           loadAllEntityRows({
             entity: WorkOrder,
             query: { ...LEGACY_CLOSED_QUERY, completed: true },
