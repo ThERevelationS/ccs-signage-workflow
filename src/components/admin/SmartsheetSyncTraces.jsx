@@ -28,7 +28,7 @@ export default function SmartsheetSyncTraces({ sessionToken, refreshKey }) {
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {loading && <p role="status" className="text-xs text-muted-foreground">Loading measurements…</p>}
     {!loading && !rows.length && <p className="text-sm text-muted-foreground">No instrumented requests captured yet. Existing runs cannot be measured retroactively.</p>}
-    <div className="flex flex-wrap gap-2">{rows.map(row => <button key={row.id} type="button" onClick={() => open(row)} className="min-h-11 rounded-md border border-border px-3 py-2 text-left text-xs" aria-pressed={selected?.id === row.id}>
+    <div className="flex flex-wrap gap-2">{rows.map(row => <button type="button" key={row.id} type="button" onClick={() => open(row)} className="min-h-11 rounded-md border border-border px-3 py-2 text-left text-xs" aria-pressed={selected?.id === row.id}>
       <div className="font-semibold">{row.action} · {row.status}</div><div className="font-mono">{row.requested_at}</div><div>{row.metrics?.duration_ms ?? '—'} ms · {row.metrics?.total_sync_api_calls ?? '—'} calls</div>
     </button>)}</div>
     {cursor && <Button variant="outline" disabled={loading} onClick={() => load(cursor)}>Load more traces</Button>}
