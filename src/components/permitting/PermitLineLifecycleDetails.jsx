@@ -306,6 +306,12 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("appeal_deadline", value)}
         />
         <DateField
+          label="Office reply expected"
+          value={lineItem.expected_response_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("expected_response_date", value)}
+        />
+        <DateField
           label="Check back on"
           value={lineItem.follow_up_date}
           disabled={!isRegistered}
