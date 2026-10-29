@@ -53,7 +53,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 34. **[F][DONE]** Show the full breakdown per address: county, city/village, township, other offices — exactly as the data model intends; never conflate roles.
 35. **[F][DONE]** Show which offices do what: sign permit issuer, electrical permit issuer, electrical inspector, zoning office — as a labeled list, not a data dump.
 36. **[UX][DONE]** Color-code verified vs unverified vs needs-review candidates so the eye lands on the trustworthy one.
-37. **[F][FLAGGED]** Click any boundary candidate on the map → highlight the matching card (and vice versa) so map and list agree.
+37. **[F][DONE]** Click any boundary candidate on the map → highlight the matching card (and vice versa) so map and list agree.
 38. **[UX][DONE]** "Wrong place?" — one click to re-search with a corrected address without losing the dialog state.
 39. **[F][FLAGGED]** Manual pin-drag on the map → re-resolve the jurisdiction for the dragged point (for when geocoding lands on the wrong side of a boundary).
 
@@ -296,7 +296,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## U — Data quality & research depth
 
 221. **[F][DONE]** Per-office verification logs: not just "verified" but verified-what: sign-permit ✓, zoning ✓, electrical ✗ — per-role truth.
-222. **[H][FLAGGED-dedicated]** Source-coverage scoring: a jurisdiction's score = verified_roles / expected_roles — surfaces thin coverage as a % bar.
+222. **[H][DONE]** Source-coverage scoring: a jurisdiction's score = verified_roles / expected_roles — surfaces thin coverage as a % bar.
 223. **[F][DONE]** Electrical-issuer vs electrical-inspector separation enforced in the model — two roles, two offices, never merged.
 224. **[H][FLAGGED-dedicated]** Cross-check boundary claims: when two sources disagree on whether the pin is in the city, surface the conflict — don't pick silently.
 225. **[F][DONE]** "Research this" request per locality: flag it for the research queue with a note — the loop from picker → backlog is one click.
@@ -396,7 +396,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 300. **[UX][DONE]** "All permits issued" completion state: the job card shows a clear done-state when every line is issued.
 301. **[F][DONE]** Denial-record: a denied permit records the reason + date + appeal deadline — the next attempt learns from it.
 302. **[UX][DONE]** Variance-tracking: when the office requires a variance, a linked variance line is auto-suggested.
-303. **[F][FLAGGED-dedicated]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
+303. **[F][DONE]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
 304. **[UX][DONE]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
 305. **[F][DONE]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
 306. **[UX][DONE]** "What inspectors usually flag" hint per jurisdiction when known — tribal knowledge recorded.
