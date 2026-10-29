@@ -367,7 +367,7 @@ export default function AdminCalendarSettings() {
           <ul className="mt-2 space-y-1">
             {unscheduledWork.map((w) => (
               <li key={w.id} className="flex items-center gap-2 text-xs text-blue-800">
-                <span className="font-medium truncate">{w.title || w.id}</span>
+                <a href={`/MainWorkflow?wo=${w.id}`} className="font-medium truncate underline hover:text-blue-900" title="Open this work order">{w.title || w.id}</a>
                 {w.sales_status && <span className="text-blue-600/70">({w.sales_status})</span>}
               </li>
             ))}
