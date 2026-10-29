@@ -8,6 +8,7 @@ import {
 import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import AttentionFeed from "@/components/workflow/AttentionFeed";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -44,12 +45,10 @@ export default function ReportingDashboard() {
     setReadError("");
     try {
       const [wos, us] = await Promise.all([
-        loadAllEntityRows({
-          entity: staffEntities.WorkOrder,
-          query: { deleted: false },
-          sort: "created_date",
-          label: "Reporting Dashboard Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
         loadAllEntityRows({ entity: staffEntities.AuthorizedEmail, sort: null, label: "Reporting Dashboard authorized users" })
       ]);
       setWorkOrders(wos || []);
