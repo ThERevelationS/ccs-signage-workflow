@@ -91,10 +91,10 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
               />
             </label>
             <div className="flex justify-end gap-2">
-              <button onClick={onClose} className="h-[30px] px-3 border border-gray-300 rounded-sm text-[12px]">
+              <button type="button" onClick={onClose} className="h-[30px] px-3 border border-gray-300 rounded-sm text-[12px]">
                 Cancel
               </button>
-              <button
+              <button type="button"
                 onClick={save}
                 disabled={busy}
                 className="h-[30px] px-4 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 disabled:opacity-60"
@@ -115,7 +115,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                     {(t.project_data?.items || []).length} foundations
                   </div>
                 </div>
-                <button
+                <button type="button"
                   onClick={() => {
                     onApply(t.project_data || {});
                     onClose();
@@ -124,7 +124,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                 >
                   Apply
                 </button>
-                <button onClick={() => remove(t)} className="text-gray-400 hover:text-red-600">
+                <button type="button" onClick={() => remove(t)} className="text-gray-400 hover:text-red-600">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
