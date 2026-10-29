@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { playSoundEffect } from "@/components/announcements/AnnouncementContext";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
@@ -291,6 +292,7 @@ export default function QuickClockSection({
   const showNotification = (type, userName, timestamp) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     setNotification({ type, userName, time: format(new Date(timestamp), "h:mm a") });
+    playSoundEffect(type === "in" ? "chime" : "ding");
     notificationTimerRef.current = setTimeout(() => setNotification(null), 5000);
   };
 
