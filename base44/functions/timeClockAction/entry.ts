@@ -7870,6 +7870,51 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, employees, total_available_minutes: totalAvailable });
     }
 
+    if (action === 'payroll_export') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required for payroll exports.' }, { status: 403 });
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : '';
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : '';
+      if (!from || !to) return Response.json({ success: false, error: 'from and to dates (YYYY-MM-DD) are required.' }, { status: 400 });
+      const rows = await entryEntity.filter({}, '-clock_in', 4000).catch(() => []);
+      if (!Array.isArray(rows)) throw new Error('TimeEntry lookup did not return a record list.');
+      const included = rows.filter((e: any) => {
+        const dk = dateKeyInCompanyTime(e.clock_in);
+        return dk && dk >= from && dk <= to && e.archived_test_data !== true && e.archived_admin !== true && e.payroll_hold !== true && e.clock_out;
+      });
+      // Certified-payroll shape: one row per employee per day with a reg/OT
+      // split, cost code, union, and prevailing-wage fields carried through.
+      const byKey = new Map<string, any>();
+      for (const e of included) {
+        const dk = dateKeyInCompanyTime(e.clock_in);
+        const key = `${e.user_email}|${dk}`;
+        const row = byKey.get(key) || { user_email: e.user_email, user_name: e.user_name || '', date: dk, total_hours: 0, regular_hours: 0, overtime_hours: 0, entries: 0, cost_codes: new Set<string>(), union_locals: new Set<string>(), certified: false, jobs: new Set<string>() };
+        const hrs = Number(e.total_hours || 0);
+        const ot = Number(e.overtime_hours || 0);
+        row.total_hours += hrs;
+        row.overtime_hours += ot;
+        row.regular_hours += Math.max(0, hrs - ot);
+        row.entries += 1;
+        if (e.cost_code) row.cost_codes.add(e.cost_code);
+        if (e.union_local) row.union_locals.add(e.union_local);
+        if (e.certified_payroll === true) row.certified = true;
+        const segs = Array.isArray(e.labor_segments) ? e.labor_segments : [];
+        for (const s of segs) { if (s?.work_order_title) row.jobs.add(s.work_order_title); }
+        byKey.set(key, row);
+      }
+      const exportRows = [...byKey.values()].map((r) => ({
+        user_email: r.user_email, user_name: r.user_name, date: r.date,
+        regular_hours: Math.round(r.regular_hours * 100) / 100,
+        overtime_hours: Math.round(r.overtime_hours * 100) / 100,
+        total_hours: Math.round(r.total_hours * 100) / 100,
+        entries: r.entries,
+        cost_code: [...r.cost_codes].join(', '),
+        union_local: [...r.union_locals].join(', '),
+        certified_payroll: r.certified,
+        jobs: [...r.jobs].join(', '),
+      })).sort((a, b) => a.user_email.localeCompare(b.user_email) || a.date.localeCompare(b.date));
+      return Response.json({ success: true, rows: exportRows, on_hold: rows.length - included.length });
+    }
+
     if (action === 'register_device') {
       // Idempotent kiosk heartbeat - the kiosk registers on load and on every
       // punch so the admin sees it in the device list with a last_seen stamp.
