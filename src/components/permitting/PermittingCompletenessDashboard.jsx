@@ -87,6 +87,8 @@ export default function PermittingCompletenessDashboard() {
     staleDays: 90,
   });
   const [metrics, setMetrics] = useState(null);
+  const [followUps, setFollowUps] = useState([]);
+  const [officeContacts, setOfficeContacts] = useState([]);
   const [queueSearch, setQueueSearch] = useState("");
   const { queuePage, loadingQueue, queueError, loadQueue } = usePermittingQueueBrowse(readQueuePage, filters, queueSearch);
 
@@ -209,6 +211,19 @@ export default function PermittingCompletenessDashboard() {
     return () => { alive = false; };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    base44.entities.JurisdictionProfile.filter({}, { limit: 300 })
+      .then((rows) => {
+        if (!alive) return;
+        setOfficeContacts((Array.isArray(rows) ? rows : [])
+          .filter((r) => r.contact_info?.phone || r.contact_info?.email || r.website_url)
+          .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""))));
+      })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+
   if ((loading && !metrics) || (metrics && metrics.staleDays !== filters.staleDays)) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -255,6 +270,28 @@ export default function PermittingCompletenessDashboard() {
             })}
           </ul>
           {followUps.length > 10 && <p className="mt-1 text-xs text-gray-400">...and {followUps.length - 10} more</p>}
+        </div>
+      )}
+
+      {officeContacts.length > 0 && (
+        <div className="clay-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Layers className="w-4 h-4" /> Office contacts
+            <span className="text-xs font-normal text-gray-400">{officeContacts.length} jurisdiction{officeContacts.length === 1 ? "" : "s"} with contact info</span>
+          </div>
+          <ul className="mt-2 grid grid-cols-1 gap-1 md:grid-cols-2">
+            {officeContacts.map((r) => (
+              <li key={r.id} className="rounded-lg border border-gray-200 bg-white/70 px-3 py-1.5 text-xs">
+                <span className="font-medium text-gray-800">{r.name || r.jurisdiction_name || "Office"}</span>
+                {r.contact_info?.department && <span className="text-gray-500"> · {r.contact_info.department}</span>}
+                <div className="mt-0.5 flex flex-wrap gap-x-3 text-gray-500">
+                  {r.contact_info?.phone && <span>{r.contact_info.phone}</span>}
+                  {r.contact_info?.email && <span className="truncate">{r.contact_info.email}</span>}
+                  {r.website_url && <span className="truncate text-sky-600">{r.website_url}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
