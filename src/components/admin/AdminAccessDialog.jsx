@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ShieldCheck, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, ShieldCheck, ChevronDown, ChevronRight, Copy } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ADMIN_TAB_GROUPS, ADMIN_NESTED_TABS } from "@/components/admin/adminTabNavigation";
 import { updateAuthorizedUserAdmin } from "@/components/admin/authorizedUserAdminPersistence";
 
@@ -19,7 +20,24 @@ function buildInitial(user) {
   };
 }
 
-export default function AdminAccessDialog({ user, open, onOpenChange, sessionToken, onSaved }) {
+const PRESETS = [
+  { label: "All pages", apply: () => ({ tabs: {}, subtabs: {} }) },
+  { label: "People only", groups: ["people"] },
+  { label: "Integrations only", groups: ["integrations"] },
+  { label: "Permitting only", groups: ["permitting"] },
+  { label: "Workflow only", groups: ["workflow"] },
+];
+
+function presetChecks(groupIds) {
+  const tabs = {};
+  for (const g of ADMIN_TAB_GROUPS) {
+    const allowed = groupIds.includes(g.id);
+    for (const t of g.tabs) tabs[t.value] = allowed;
+  }
+  return { tabs, subtabs: {} };
+}
+
+export default function AdminAccessDialog({ user, open, onOpenChange, sessionToken, onSaved, admins = [] }) {
   const [fullAdmin, setFullAdmin] = useState(() => buildInitial(user).fullAdmin);
   const [tabChecks, setTabChecks] = useState(() => buildInitial(user).tabs);
   const [subtabChecks, setSubtabChecks] = useState(() => buildInitial(user).subtabs);
@@ -42,6 +60,17 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
       else next[parent] = [...list];
       return next;
     });
+  };
+  const applyPreset = (preset) => {
+    if (preset.apply) { const next = preset.apply(); setTabChecks(next.tabs); setSubtabChecks(next.subtabs); return; }
+    const next = presetChecks(preset.groups || []); setTabChecks(next.tabs); setSubtabChecks(next.subtabs);
+    setExpanded({});
+  };
+  const copyFrom = (adminId) => {
+    const source = admins.find((a) => a.id === adminId);
+    if (!source) return;
+    const init = buildInitial(source);
+    setFullAdmin(init.fullAdmin); setTabChecks(init.tabs); setSubtabChecks(init.subtabs); setExpanded({});
   };
   const subtabState = (parent, value) => {
     const list = subtabChecks[parent];
@@ -90,9 +119,29 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
           <Switch checked={fullAdmin} onCheckedChange={setFullAdmin} disabled={busy} />
         </div>
 
+        {admins.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Copy className="w-4 h-4 text-gray-400" />
+            <Select onValueChange={copyFrom} disabled={busy}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Copy access from another admin…" /></SelectTrigger>
+              <SelectContent>
+                {admins.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name || a.email}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {!fullAdmin && (
           <div className="space-y-2">
             <p className="text-xs text-gray-500">Unchecked pages are hidden from this admin's Admin navigation.</p>
+            <div className="flex flex-wrap gap-1">
+              {PRESETS.map((p) => (
+                <button key={p.label} type="button" disabled={busy} onClick={() => applyPreset(p)}
+                  className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">
+                  {p.label}
+                </button>
+              ))}
+            </div>
             {ADMIN_TAB_GROUPS.map((group) => {
               const allChecked = group.tabs.every((t) => tabChecks[t.value] !== false);
               const someChecked = group.tabs.some((t) => tabChecks[t.value] !== false);
