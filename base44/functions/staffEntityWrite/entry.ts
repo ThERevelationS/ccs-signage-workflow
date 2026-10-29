@@ -52,6 +52,11 @@ Deno.serve(async (req) => {
     if (!allowed || !allowed.has(op)) {
       return Response.json({ error: 'This record type cannot be written here.' }, { status: 403 });
     }
+    // New jurisdiction records are created only through the admin draft flow —
+    // the UI gates this already; the server must fail closed the same way.
+    if (entityName === 'PermitLocality' && op === 'create' && user.role !== 'admin') {
+      return Response.json({ error: 'Only administrators can add new jurisdictions.' }, { status: 403 });
+    }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
     if (JSON.stringify(data).length > 200000) throw bad('Record payload is too large.');
