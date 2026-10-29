@@ -46,6 +46,12 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
   const [error, setError] = useState("");
 
   const allTabValues = useMemo(() => ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => t.value)), []);
+  const permittedLabels = useMemo(() => {
+    if (fullAdmin) return null;
+    return ADMIN_TAB_GROUPS.flatMap((g) => g.tabs)
+      .filter((t) => tabChecks[t.value] !== false)
+      .map((t) => t.label);
+  }, [fullAdmin, tabChecks]);
 
   const toggleTab = (value, checked) => {
     setTabChecks((prev) => ({ ...prev, [value]: checked }));
@@ -199,6 +205,17 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
             })}
           </div>
         )}
+
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <div className="text-xs font-semibold text-gray-700 mb-1">This admin will see:</div>
+          {fullAdmin ? (
+            <p className="text-xs text-gray-600">Every Admin page — Full Administrator bypasses all page restrictions.</p>
+          ) : permittedLabels.length === 0 ? (
+            <p className="text-xs text-red-600 font-medium">Nothing — this admin will be locked out of every Admin page.</p>
+          ) : (
+            <p className="text-xs text-gray-600">{permittedLabels.join(" · ")}</p>
+          )}
+        </div>
 
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" disabled={busy} onClick={() => onOpenChange(false)}>Cancel</Button>
