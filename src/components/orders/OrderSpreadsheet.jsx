@@ -21,7 +21,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
-import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
