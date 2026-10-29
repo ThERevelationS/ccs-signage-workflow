@@ -25,7 +25,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 12. **[F][DONE]** Auto-load the client/job address into the search field on open — zero typing when the client already has an address.
 13. **[F][DONE]** Auto-search once a prefilled address lands — the user opens the picker and the lookup already ran.
 14. **[F][DONE]** Paste-and-parse: pasting "914 Lila Ave, Milford OH 45150" from anywhere should populate and auto-search without clicking.
-15. **[F][FLAGGED]** Address autocomplete/suggestions as the user types (Census geocoder has no suggest API — evaluate a cheap suggest layer or reuse saved address history for type-ahead).
+15. **[F][DONE]** Address autocomplete/suggestions as the user types (Census geocoder has no suggest API — evaluate a cheap suggest layer or reuse saved address history for type-ahead).
 16. **[UX][DONE]** Recent-address list per user — last 5 searches one-click re-runnable.
 17. **[F][DONE]** "Same as another job" — copy a jurisdiction from a recent job by client name (reuses verified localities).
 18. **[UX][DONE]** Validation before search: warn if the address lacks a city/ZIP/state instead of failing silently ("That address is missing a city — try adding one").
@@ -127,7 +127,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 91. **[F][DONE]** "Permit office" field on every job card — shows the applied locality at a glance, not buried in a line item.
 92. **[F][DONE]** Unassigned jobs get a prominent "Find the permit office →" CTA — the empty state tells the user what to do.
-93. **[F][FLAGGED]** Jobs in the same verified jurisdiction visually group — a county/cluster header so staff see coverage at a glance.
+93. **[F][DONE]** Jobs in the same verified jurisdiction visually group — a county/cluster header so staff see coverage at a glance.
 94. **[F][DONE]** Permit due-date/chase reminders on the job card — "Permit application due in 3 days" for jobs whose jurisdiction data is stale.
 95. **[F][DONE]** Track permit-status per job line (applied, in-review, approved, issued, inspected) — not just "locality chosen".
 96. **[UX][DONE]** A pending-permit badge on the page header — "3 jobs still need a jurisdiction chosen" — the work queue is visible.
@@ -236,7 +236,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 171. **[UX][DONE]** Repository row shows the ONE thing staff care about first: "Sign permit office verified — call (513) 831-7143" — front and center.
 172. **[F][DONE]** Confidence-tier per office claim: verified source / inferred from county rule / unverified — a 3-dot indicator on each office.
 173. **[UX][DONE]** "What changed" diff on jurisdiction updates — the change_log entries render as "phone changed" not raw JSON.
-174. **[F][FLAGGED]** Office hours normalized + "open now?" — "Open until 4:30 PM" vs "Closed today" when the data exists.
+174. **[F][DONE]** Office hours normalized + "open now?" — "Open until 4:30 PM" vs "Closed today" when the data exists.
 175. **[UX][DONE]** Jurisdiction notes field: free-text staff notes ("they only take checks") pinned on the profile.
 176. **[F][DONE]** Photo/scan attachments on a jurisdiction: the fee-schedule PDF or the printed rules page as evidence.
 177. **[UX][DONE]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
@@ -259,7 +259,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 191. **[H][FLAGGED-dedicated]** Deterministic idempotency key on resolver calls: same address+options in 10s → return the cached result, don't re-scan.
 192. **[H][FLAGGED-dedicated]** Rate-limit-aware queue for bulk lookups: many addresses resolved server-side with pacing, not parallel invokes.
 193. **[H][DONE]** Structured timing/stage log on the scan record — which stage ate the seconds (geocode vs boundary vs office review).
-194. **[H][FLAGGED-dedicated]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
+194. **[H][DONE]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
 195. **[H][DONE]** Graceful half-result: boundary matched but office review timed out → usable locality + "offices still checking" (partial success, not failure).
 196. **[H][DONE]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
 197. **[H][DONE]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
@@ -339,7 +339,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 252. **[UX][DONE]** Days-in-status badge: "Under review · 6 days" — aging visible without opening the line.
 253. **[F][DONE]** Expected-response date: the office's stated turnaround → the line shows "expected by Oct 30" — chase when it passes.
 254. **[UX][DONE]** Escalation suggestion: overdue + no response → "Time to call — they said 2-week turnaround" hint.
-255. **[F][FLAGGED-dedicated]** Application packet builder: assemble drawings + forms + site plan into one zip for the office's upload.
+255. **[F][DONE]** Application packet builder: assemble drawings + forms + site plan into one zip for the office's upload.
 256. **[UX][DONE]** The submit button confirms in plain language: "Mark this application as filed with {office}?"
 
 ## X — Evidence & sources, deeper
@@ -411,12 +411,12 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 312. **[F][DONE]** Common-mistake warnings: "You picked the county — the city issues sign permits for this address" soft-suggest.
 313. **[UX][DONE]** Confidence-building flow: a new user's first 3 applies get a confirming message "that's right — you did it".
 314. **[F][DONE]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
-315. **[UX][FLAGGED-dedicated]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
+315. **[UX][DONE]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
 316. **[F][DONE]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
 317. **[UX][FLAGGED-dedicated]** Contextual empty-states: "No applications filed yet — press the button above when you file one" — every empty area teaches.
 318. **[F][FLAGGED-dedicated]** Buddy-check: a new user's first few applies can flag "reviewed by {senior}" — a soft QA loop.
 319. **[UX][DONE]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
-320. **[F][FLAGGED-dedicated]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
+320. **[F][DONE]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
 321. **[UX][DONE]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
 322. **[F][DONE]** Onboarding checklist for new permitting staff: the 5 things to learn — tracked as done.
 323. **[UX][DONE]** Error messages that teach: "That didn't work because {reason} — here's how to fix it" — every error educates.
@@ -491,7 +491,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 380. **[UX][DONE]** Follow-up scheduling: "remind me in a week" on any line — the chase doesn't rely on memory.
 381. **[F][DONE]** Status-change digest: a daily "what moved in permitting" — office verifications, applies, issues.
 382. **[UX][DONE]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
-383. **[F][FLAGGED-dedicated]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
+383. **[F][DONE]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
 384. **[UX][DONE]** Plain-language status for clients: "Waiting on the township's review" — not internal jargon.
 385. **[F][DONE]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
 386. **[UX][DONE]** Next-check-in prompt: after applying, "check back Thursday?" — a soft reminder set in one tap.
