@@ -1,8 +1,9 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {retainHtmlEvidence,getHtmlEvidenceRequest,fetchHtmlSnapshot,readHtmlEvidence,htmlEvidenceSummary,validateHtmlEvidence} from '../../shared/permittingHtmlEvidence.mjs';
 Deno.serve(async req=>{
  try{
-  const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);
   if(!user || !['admin','user'].includes(user.role))return Response.json({error:'Authenticated staff access required'},{status:403});
   const body=await req.json().catch(()=>({})),action=String(body.action || '');
   if(!['context','list','read','cite','raw','preview','capture','get_request'].includes(action))
