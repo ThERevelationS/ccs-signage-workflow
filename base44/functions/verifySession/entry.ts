@@ -71,6 +71,10 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
+    const status = Number(error?.status || error?.response?.status || 500);
+    if (status === 429) {
+      return Response.json({ valid: false, retry_later: true, error: 'Session verification is busy. Try again in a moment.' }, { status: 429 });
+    }
     console.error('verifySession error:', error);
     return Response.json({ valid: false, error: 'Session verification could not be completed safely' }, { status: 500 });
   }
