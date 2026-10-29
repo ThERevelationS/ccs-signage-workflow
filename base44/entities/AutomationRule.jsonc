@@ -97,6 +97,10 @@
       },
       "description": "Last 20 executions: { at, status, detail, actions[] }"
     },
+    "owner": {
+      "type": "string",
+      "description": "Team member responsible for maintaining this rule"
+    },
     "group": {
       "type": "string",
       "description": "Optional folder/group label for organizing rules"
