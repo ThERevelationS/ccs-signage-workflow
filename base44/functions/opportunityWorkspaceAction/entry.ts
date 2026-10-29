@@ -217,12 +217,13 @@ Deno.serve(async (req) => {
     const Payment = base44.asServiceRole.entities.Payment;
     const Inventory = base44.asServiceRole.entities.Inventory;
     const PermitLineItem = base44.asServiceRole.entities.PermitLineItem;
+    const BuilderPart = base44.asServiceRole.entities.BuilderPart;
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
     const PortalMessage = base44.asServiceRole.entities.PortalMessage;
 
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows] = await Promise.all([
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 200).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 200).catch(() => []),
@@ -234,6 +235,7 @@ Deno.serve(async (req) => {
         PermitLineItem.filter({}, "-updated_date", 300).catch(() => []),
         Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
         Estimate.filter({ pipeline_sync_pending: true }, "-updated_date", 100).catch(() => []),
+        BuilderPart.filter({ needs_recalc: true }, "-updated_date", 150).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -335,6 +337,14 @@ Deno.serve(async (req) => {
         stale_sent_estimates: staleSentEstimates,
         open_estimating_requests: openRequests,
         low_stock: lowStock,
+        needs_recalc_parts: list(needsRecalcRows)
+          .slice(0, 25)
+          .map((p: any) => ({
+            id: clean(p?.id),
+            part_name: clean(p?.part_name) || clean(p?.part_key),
+            builder_product_id: clean(p?.builder_product_id),
+            estimate_id: clean(p?.estimate_id),
+          })),
         sync_pending_estimates: list(syncPendingRows)
           .filter((e: any) => Date.parse(clean(e?.updated_date)) < Date.now() - 86400000)
           .slice(0, 25)
