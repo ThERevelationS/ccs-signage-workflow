@@ -86,6 +86,9 @@ export default function UserManagement() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteImpact, setDeleteImpact] = useState(null);
   const [deleteImpactError, setDeleteImpactError] = useState("");
+  const [lastDeletedUser, setLastDeletedUser] = useState(null);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [restoreError, setRestoreError] = useState("");
   const [deletionSaving, setDeletionSaving] = useState(false);
   const deletionInFlight = useRef(false);
   const deletionOwner = useRef(null);
@@ -1418,6 +1421,20 @@ export default function UserManagement() {
     return () => { cancelled = true; };
   }, [deleteConfirm, sessionToken]);
 
+  const restoreDeletedUser = async () => {
+    if (!lastDeletedUser || restoreBusy || !sessionToken) return;
+    setRestoreBusy(true); setRestoreError("");
+    try {
+      await createAuthorizedUserAdmin({ data: lastDeletedUser, sessionToken });
+      setLastDeletedUser(null);
+      await loadUsers();
+    } catch (err) {
+      setRestoreError(err?.message || "The user could not be restored.");
+    } finally {
+      setRestoreBusy(false);
+    }
+  };
+
   const handleDelete = async (user) => {
     // The confirmed row must still be present in the verified directory at
     // the exact version shown to this administrator.
@@ -1447,6 +1464,14 @@ export default function UserManagement() {
       });
       if (!ownsDeletion()) return;
       setDeleteConfirm(null);
+      setLastDeletedUser({
+        email: verifiedUser.email,
+        full_name: verifiedUser.full_name || "",
+        role: verifiedUser.role || "user",
+        sales_roles: Array.isArray(verifiedUser.sales_roles) ? verifiedUser.sales_roles : [],
+        is_full_admin: verifiedUser.is_full_admin === true,
+        admin_permissions: verifiedUser.admin_permissions && typeof verifiedUser.admin_permissions === "object" ? verifiedUser.admin_permissions : {},
+      });
       await loadUsers();
     } catch (error) {
       if (!ownsDeletion()) return;
@@ -1862,6 +1887,22 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="space-y-2">
+            {lastDeletedUser && (
+              <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+                <span className="text-xs font-semibold text-amber-900">
+                  Removed {lastDeletedUser.full_name || lastDeletedUser.email}
+                </span>
+                <Button type="button" size="sm" variant="outline" disabled={restoreBusy || !sessionToken}
+                  onClick={restoreDeletedUser} className="h-7 text-xs bg-white/80">
+                  {restoreBusy ? "Restoring…" : "Undo remove"}
+                </Button>
+                <Button type="button" size="sm" variant="ghost" disabled={restoreBusy}
+                  onClick={() => { setLastDeletedUser(null); setRestoreError(""); }} className="h-7 text-xs">
+                  Dismiss
+                </Button>
+                {restoreError && <span className="text-xs text-red-600">{restoreError}</span>}
+              </div>
+            )}
             {selectedUserIds.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
                 <span className="text-xs font-semibold text-indigo-900">{selectedUserIds.size} selected</span>
