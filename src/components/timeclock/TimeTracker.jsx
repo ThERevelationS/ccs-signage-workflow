@@ -350,6 +350,12 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
         toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
         if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
       }
+      // Escalation: if the reminder was ignored, re-fire once 10 minutes later.
+      const nudge = 30000 + minute;
+      if (displayMinutes >= minute + 10 && !next.includes(nudge)) {
+        next.push(nudge);
+        toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"} - still on the clock` });
+      }
     }
     if (next.length !== fired.length) writeMilestones(email, snapshot.company_day, next);
   }, [enabled, live, displayMinutes, prefs, email, snapshot?.company_day, toast]);
@@ -602,6 +608,14 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </span>
             )}
           </span>
+          {Number(snapshot?.pending_shift_review?.count || 0) > 0 && (
+            <span
+              className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white shadow"
+              title={`${snapshot.pending_shift_review.count} shift review${snapshot.pending_shift_review.count === 1 ? "" : "s"} awaiting approval`}
+            >
+              {snapshot.pending_shift_review.count}
+            </span>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="center" className="w-80 rounded-2xl border-indigo-200/60 bg-white/95 p-4 shadow-2xl backdrop-blur-xl dark:border-indigo-500/30 dark:bg-slate-950/95">
@@ -735,6 +749,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
             {snapshotRecord.receivedAt > 0 && (
               <p className="mt-1 text-[9px] text-slate-400">
                 Synced {Math.max(0, Math.round((nowMs - snapshotRecord.receivedAt) / 1000))}s ago{pollError ? ` · refresh issue: ${pollError}` : ""}
+              </p>
+            )}
+            {Math.abs(Number(snapshotRecord.serverOffset || 0)) > 120000 && (
+              <p className="mt-1 text-[9px] font-semibold text-amber-600 dark:text-amber-400">
+                Device clock is off by {Math.round(Math.abs(Number(snapshotRecord.serverOffset || 0)) / 60000)}min vs the server - punches use server time.
               </p>
             )}
           </>
