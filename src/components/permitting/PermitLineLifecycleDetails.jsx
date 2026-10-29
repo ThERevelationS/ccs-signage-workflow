@@ -249,6 +249,27 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("permit_document_url", value)}
         />
         <CommitTextField
+          label="Application packet"
+          value={lineItem.application_document_url}
+          placeholder="The filed/drafted application PDF"
+          disabled={!isRegistered}
+          onCommit={(value) => update("application_document_url", value)}
+        />
+        <CommitTextField
+          label="Site photo"
+          value={lineItem.site_photo_url}
+          placeholder="Photo of the posted sign"
+          disabled={!isRegistered}
+          onCommit={(value) => update("site_photo_url", value)}
+        />
+        <CommitTextField
+          label="Note attachment"
+          value={lineItem.note_attachment_url}
+          placeholder="Photo/scan for the notes"
+          disabled={!isRegistered}
+          onCommit={(value) => update("note_attachment_url", value)}
+        />
+        <CommitTextField
           label="Next action"
           value={lineItem.next_action}
           placeholder="What happens next? (e.g. Call the office Friday)"
@@ -339,6 +360,18 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           value={lineItem.correction_resolved_date}
           disabled={!isRegistered}
           onCommit={(value) => update("correction_resolved_date", value)}
+        />
+        <DateField
+          label="Office contacted"
+          value={lineItem.office_contacted_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("office_contacted_date", value)}
+        />
+        <DateField
+          label="Office replied"
+          value={lineItem.office_responded_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("office_responded_date", value)}
         />
         <DateField
           label="Check back on"
