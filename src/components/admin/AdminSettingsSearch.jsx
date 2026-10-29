@@ -20,6 +20,18 @@ export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }
 const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [dense, setDense] = useState(() => { try { return localStorage.getItem("admin_search_dense") === "1"; } catch { return false; } });
+  const [topQueries, setTopQueries] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("admin_search_counts") || "{}"); } catch { return {}; }
+  });
+  const logQuery = (q) => {
+    const key = String(q || "").trim().toLowerCase();
+    if (!key) return;
+    setTopQueries((cur) => {
+      const next = { ...cur, [key]: (cur[key] || 0) + 1 };
+      try { localStorage.setItem("admin_search_counts", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const toggleDense = () => setDense((d) => { const next = !d; try { localStorage.setItem("admin_search_dense", next ? "1" : "0"); } catch { /* ignore */ } return next; });
   const [recentTabs, setRecentTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]"); } catch { return []; }
@@ -59,6 +71,7 @@ const [query, setQuery] = useState("");
   }, [activeIndex, selectedResult?.id]);
 
   const openResult = (result) => {
+    logQuery(result.label);
     onNavigate(result.tab, result.subtab || null);
     setQuery("");
     setActiveIndex(-1);
@@ -133,6 +146,13 @@ const [query, setQuery] = useState("");
       {focused && !hasQuery && recentTabs.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1 px-1">
           <span className="text-[10px] font-medium uppercase text-gray-400">Recent:</span>
+          {Object.entries(topQueries).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([q]) => (
+            <button key={`q-${q}`} type="button"
+              className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-800 hover:border-sky-400"
+              onMouseDown={(e) => { e.preventDefault(); setQuery(q); inputRef.current?.focus(); }}>
+              {q}
+            </button>
+          ))}
           {[...recentTabs].slice(-5).reverse().map((v) => (
             <button key={v} type="button"
               className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] text-gray-700 hover:border-sky-300 hover:text-sky-800"
