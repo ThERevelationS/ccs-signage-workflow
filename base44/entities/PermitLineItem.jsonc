@@ -245,6 +245,11 @@
       "format": "date",
       "description": "Staff-set 'check back on this' date \u2014 the chase reminder."
     },
+    "application_revision": {
+      "type": "number",
+      "default": 1,
+      "description": "How many times this application has been sent back and resubmitted \u2014 starts at 1."
+    },
     "denial_date": {
       "type": "string",
       "format": "date",
