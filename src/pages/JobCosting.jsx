@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
+import { downloadCsv } from "@/components/shared/exportCsv";
 import {
   ArrowDown,
   ArrowUp,
@@ -49,6 +50,15 @@ function MarginPct({ job }) {
 
 function JobDetail({ sessionToken, workOrderId, onClose }) {
   const [detail, setDetail] = useState(null);
+  const exportCsv = () => {
+    downloadCsv("job-costing.csv",
+      ["Job", "Customer", "Stage", "Estimated", "Change Orders", "Contract Value", "PO Committed", "Stock Issued", "Labor Hours", "Invoiced", "Collected", "Margin"],
+      sorted.map((j) => [
+        j.title || "", j.client_name || "", j.current_stage || j.sales_status || "",
+        j.estimated_amount ?? "", j.co_delta ?? "", j.contract_value ?? "", j.po_committed ?? "",
+        j.stock_issued ?? "", j.labor_hours ?? "", j.invoiced ?? "", j.collected ?? "", j.margin_vs_materials ?? "",
+      ]));
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -239,6 +249,7 @@ export default function JobCosting() {
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-violet-600" />
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Job Costing</h1>
+            <button type="button" onClick={exportCsv} disabled={sorted.length === 0} className="h-7 px-2.5 rounded border border-slate-300 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">Export CSV</button>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">Estimate vs actual: contract, POs, labor, invoicing per job. Click a row to expand.</p>
         </div>
