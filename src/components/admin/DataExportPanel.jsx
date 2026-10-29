@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Loader2 } from "lucide-react";
@@ -38,6 +38,14 @@ const toCsv = (rows) => {
 export default function DataExportPanel() {
   const [entityName, setEntityName] = useState("AuthorizedEmail");
   const [busy, setBusy] = useState(false);
+  const [counts, setCounts] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    Promise.all(EXPORTABLE.map((e) =>
+      staffEntities[e.value].count({}).then((n) => [e.value, n]).catch(() => [e.value, null])
+    )).then((pairs) => { if (alive) setCounts(Object.fromEntries(pairs)); });
+    return () => { alive = false; };
+  }, []);
   const [msg, setMsg] = useState("");
 
   const runExport = async () => {
@@ -70,6 +78,15 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      {counts && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {EXPORTABLE.map((e) => (
+            <span key={e.value} className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600">
+              {e.label}: {counts[e.value] === null ? "—" : counts[e.value]}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <div>
           <label className="text-xs font-medium text-gray-600" htmlFor="data-export-entity">Entity</label>
