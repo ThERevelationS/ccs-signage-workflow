@@ -64,7 +64,8 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
   // Live diff preview: the open revision when one exists, otherwise the most
   // recent history row. The snapshot is compared against the current estimate
   // so an in-progress revision shows what has changed so far.
-  const snapshotDiffRevision = openRevision || rows[0] || null;
+  const wantVersion = (() => { try { return Number(new URLSearchParams(window.location.search).get("version")) || 0; } catch { return 0; } })();
+  const snapshotDiffRevision = openRevision || (wantVersion ? rows.find((r) => Number(r.revision_number) === wantVersion) : null) || rows[0] || null;
   let snapshotDiffLines = [];
   try {
     if (snapshotDiffRevision?.estimate_snapshot_before && estimate) {
@@ -217,7 +218,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
           </DialogHeader>
           <div className="p-5 space-y-4 bg-white">
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">REVISION REASON<textarea autoFocus value={reason} onChange={(event) => setReason(event.target.value)} rows={4} placeholder="What needs to change and why?" className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[12px] font-normal text-gray-800 resize-y" /></label>
-            <div className="flex flex-wrap gap-1.5">{["Client request", "Correction", "Scope change", "Price update", "Site conditions"].map((preset) => <button key={preset} type="button" onClick={() => setReason((current) => current.trim() ? `${current.trim().replace(/\.*$/, "")} — ${preset}` : preset)} className="px-2 py-1 rounded border border-gray-300 bg-gray-50 text-[9px] font-semibold text-gray-600 hover:border-lime-400 hover:text-gray-900">{preset}</button>)}</div>
+            <div className="flex flex-wrap gap-1.5">{["Client request", "Correction", "Scope change", "Price update", "Site conditions"].map((preset) => <button type="button" key={preset} type="button" onClick={() => setReason((current) => current.trim() ? `${current.trim().replace(/\.*$/, "")} — ${preset}` : preset)} className="px-2 py-1 rounded border border-gray-300 bg-gray-50 text-[9px] font-semibold text-gray-600 hover:border-lime-400 hover:text-gray-900">{preset}</button>)}</div>
             {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
             <div className="flex justify-end gap-2"><button type="button" disabled={starting} onClick={() => setDialogOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button><button type="button" disabled={starting || !reason.trim()} onClick={start} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{starting ? "Starting…" : "Start Revision"}</button></div>
           </div>
