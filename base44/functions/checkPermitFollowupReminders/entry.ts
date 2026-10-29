@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { claimPermitFollowupForToday } from '../../shared/permitLineItemPersistence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
@@ -9,7 +10,7 @@ import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocation
 // Dedupe: uses `last_followup_fired_date` field on the line item to avoid double-firing.
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkPermitFollowupReminders');
 
