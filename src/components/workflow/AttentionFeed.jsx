@@ -97,13 +97,23 @@ export default function AttentionFeed() {
     if (!sessionToken) return;
     setLoading(true);
     try {
-      const r = await base44.functions.invoke("opportunityWorkspaceAction", {
-        session_token: sessionToken,
-        action: "attention_feed",
-        today: new Date().toLocaleDateString("en-CA"),
-      });
+      const [r, watchRes] = await Promise.all([
+        base44.functions.invoke("opportunityWorkspaceAction", {
+          session_token: sessionToken,
+          action: "attention_feed",
+          today: new Date().toLocaleDateString("en-CA"),
+        }),
+        // Watch-rule hits (#349): "tell me when X reaches state Y" — the
+        // dispatcher surfaces matching watched records here.
+        base44.functions.invoke("opportunityWorkspaceAction", {
+          session_token: sessionToken,
+          action: "check_watches",
+        }).catch(() => null),
+      ]);
       const d = r?.data || r;
       if (d?.success) setFeed(d);
+      const hits = (watchRes?.data || watchRes)?.hits;
+      setWatchHits(Array.isArray(hits) ? hits : []);
     } catch { /* fail-soft — strip hides itself */ }
     finally { setLoading(false); }
   }, [sessionToken]);
