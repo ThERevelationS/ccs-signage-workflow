@@ -19,6 +19,8 @@ export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }
     const inputRef = useRef(null);
 const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const [dense, setDense] = useState(() => { try { return localStorage.getItem("admin_search_dense") === "1"; } catch { return false; } });
+  const toggleDense = () => setDense((d) => { const next = !d; try { localStorage.setItem("admin_search_dense", next ? "1" : "0"); } catch { /* ignore */ } return next; });
   const [recentTabs, setRecentTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]"); } catch { return []; }
   });
@@ -150,7 +152,7 @@ const [query, setQuery] = useState("");
               : "No matching Admin settings. Try another term."}
           </p>
           {results.length > 0 && (
-            <div id={resultsListId} ref={resultsListRef} role="listbox" aria-label="Matching Admin settings" className="grid max-h-60 min-w-0 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
+            <div id={resultsListId} ref={resultsListRef} role="listbox" aria-label="Matching Admin settings" className={`grid min-w-0 grid-cols-1 overflow-y-auto sm:grid-cols-2 ${dense ? "max-h-40 gap-0.5" : "max-h-60 gap-1.5"}`}>
               {results.map((result, index) => (
                 <button
                   id={`${resultsListId}-option-${index}`}
@@ -174,6 +176,7 @@ const [query, setQuery] = useState("");
             </div>
               <p className="px-1 pt-1 text-[10px] text-gray-400">
                 <span className="font-semibold">Up/Down</span> choose · <span className="font-semibold">Enter</span> open · <span className="font-semibold">Esc</span> close
+                <button type="button" onClick={toggleDense} className="ml-2 rounded border border-gray-200 px-1 text-[10px] text-gray-500 hover:text-gray-800">{dense ? "Comfortable" : "Compact"}</button>
               </p>
           )}
         </div>
