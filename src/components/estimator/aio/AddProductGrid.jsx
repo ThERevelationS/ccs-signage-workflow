@@ -106,7 +106,9 @@ const getMeta = (key) =>
 
 export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, className = "" }) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
   const [addingKey, setAddingKey] = useState(null);
   const [customNameOpen, setCustomNameOpen] = useState(false);
   const [customName, setCustomName] = useState("Custom Product");
