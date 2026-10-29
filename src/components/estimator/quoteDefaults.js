@@ -22,6 +22,8 @@ export const DEFAULT_QUOTE_SETTINGS = {
   estimate_number_format: "EST-{seq}",
   order_number_format: "INV-{seq}",
   doc_number_padding: 5,
+  module_number_prefixes: "",
+  display_timezone: "",
   email_subject_template: "",
   email_message_template: "",
   payment_terms: "",
