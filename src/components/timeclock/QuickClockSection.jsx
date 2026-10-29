@@ -855,7 +855,7 @@ export default function QuickClockSection({
         getVideo: () => videoRef.current,
         matchFace: (descriptor) => findMatchingUser(descriptor),
         isActive: () => !recognitionLockedRef.current,
-        onFrame: ({ status, winner }) => {
+        onFrame: ({ status, winner, votes }) => {
           if (faceRun !== faceRunRef.current) {
             session.stop();
             return;
@@ -865,7 +865,9 @@ export default function QuickClockSection({
             void handleFaceRecognized(winner);
             return;
           }
-          setRecognitionStatus(FACE_SCAN_STATUS_TEXT[status] || "Look directly at the camera in even lighting.");
+          setRecognitionStatus(status === "verifying" && votes?.required
+            ? `Hold still - verifying your identity... ${votes.count}/${votes.required}`
+            : FACE_SCAN_STATUS_TEXT[status] || "Look directly at the camera in even lighting.");
         },
       });
       faceScanSessionRef.current = session;
@@ -1625,7 +1627,7 @@ export default function QuickClockSection({
                 {selectedUser.full_name || selectedUser.email}
               </p>
               <p className="text-xs text-emerald-700/80">
-                {Number.isFinite(new Date(activeEntry.clock_in).getTime()) && `Since ${format(new Date(activeEntry.clock_in), "h:mm a")}`}
+                {Number.isFinite(new Date(activeEntry.clock_in).getTime()) && `Since ${format(new Date(activeEntry.clock_in), "h:mm a")}${new Date(activeEntry.clock_in).toDateString() !== new Date().toDateString() ? ` (${format(new Date(activeEntry.clock_in), "EEE, MMM d")})` : ""}`}
                 {activeEntry.approval_status === "needs_review" && " - pending manager review"}
               </p>
             </div>
