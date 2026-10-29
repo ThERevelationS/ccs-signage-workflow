@@ -17,22 +17,29 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [showPlaybook, setShowPlaybook] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [templates, setTemplates] = useState([]);
+  const [showSchedules, setShowSchedules] = useState(false);
+  const [schedForm, setSchedForm] = useState({ email: "", start: "08:00", end: "16:30", days: ["mon", "tue", "wed", "thu", "fri"], label: "" });
+  const [schedBusy, setSchedBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
-      const [whoRes, faceRes, auditRes] = await Promise.all([
+      const [whoRes, faceRes, auditRes, schedRes] = await Promise.all([
         base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        base44.functions.invoke("timeClockAction", { action: "list_shift_templates", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
       const audit = auditRes?.data || auditRes;
+      const sched = schedRes?.data || schedRes;
       if (who?.success !== true) throw new Error(who?.error || "Who's-in data could not be loaded.");
       setStaff(Array.isArray(who.staff) ? who.staff : []);
       setRoster(face?.success === true && Array.isArray(face.roster) ? face.roster : []);
       setEvents(audit?.success === true && Array.isArray(audit.events) ? audit.events : []);
+      setTemplates(sched?.success === true && Array.isArray(sched.templates) ? sched.templates : []);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Roster data could not be loaded.");
@@ -147,6 +154,78 @@ export default function AdminRosterPanels({ sessionToken }) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="clay-card p-4 lg:col-span-2">
+        <button type="button" onClick={() => setShowSchedules((v) => !v)} className="flex w-full items-center justify-between text-left">
+          <h3 className="font-semibold">Shift schedules <span className="text-xs font-normal text-slate-400">powers early/late notices on the tracker</span></h3>
+          <span className="text-xs text-slate-400">{templates.length} · {showSchedules ? "Hide" : "Show"}</span>
+        </button>
+        {showSchedules && (
+          <div className="mt-3 space-y-3">
+            <div className="flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Employee</label>
+                <select value={schedForm.email} onChange={(e) => setSchedForm({ ...schedForm, email: e.target.value })}
+                  className="mt-0.5 block w-44 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs">
+                  <option value="">Pick employee</option>
+                  {roster.map((r) => <option key={r.email} value={r.email}>{r.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Start</label>
+                <input type="time" value={schedForm.start} onChange={(e) => setSchedForm({ ...schedForm, start: e.target.value })}
+                  className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs" />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">End</label>
+                <input type="time" value={schedForm.end} onChange={(e) => setSchedForm({ ...schedForm, end: e.target.value })}
+                  className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs" />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Days</label>
+                <div className="mt-0.5 flex gap-1">
+                  {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d) => (
+                    <button key={d} type="button"
+                      onClick={() => setSchedForm({ ...schedForm, days: schedForm.days.includes(d) ? schedForm.days.filter((x) => x !== d) : [...schedForm.days, d] })}
+                      className={`h-7 w-7 rounded-md border text-[10px] font-bold ${schedForm.days.includes(d) ? "border-indigo-400 bg-indigo-100 text-indigo-700" : "border-slate-200 bg-white text-slate-400"}`}
+                    >{d[0].toUpperCase()}</button>
+                  ))}
+                </div>
+              </div>
+              <button type="button" disabled={schedBusy || !schedForm.email || !schedForm.days.length}
+                onClick={async () => {
+                  setSchedBusy(true);
+                  try {
+                    const res = await base44.functions.invoke("timeClockAction", { action: "upsert_shift_template", session_token: sessionToken, scope: "admin", request_id: newRequestId(), template: { user_email: schedForm.email, start_time: schedForm.start, end_time: schedForm.end, days: schedForm.days, label: schedForm.label } });
+                    if ((res?.data || res)?.success === true) { setSchedForm({ ...schedForm, email: "", label: "" }); await load(); }
+                  } finally { setSchedBusy(false); }
+                }}
+                className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-40"
+              >{schedBusy ? "Saving..." : "Add schedule"}</button>
+            </div>
+            {templates.length === 0 ? (
+              <p className="text-xs text-slate-400">No schedules yet - add one above to enable early/late notices.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {templates.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-700">{roster.find((r) => r.email === t.user_email)?.name || t.user_email}</p>
+                      <p className="text-[11px] text-slate-400">{(t.days || []).map((d) => d.slice(0, 3)).join(", ")} · {t.start_time}-{t.end_time}</p>
+                    </div>
+                    <button type="button"
+                      onClick={async () => {
+                        await base44.functions.invoke("timeClockAction", { action: "delete_shift_template", session_token: sessionToken, scope: "admin", request_id: newRequestId(), template_id: t.id }).catch(() => null);
+                        await load();
+                      }}
+                      className="ml-2 shrink-0 text-[10px] text-red-400 hover:text-red-600">Remove</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="clay-card p-4 lg:col-span-2">
