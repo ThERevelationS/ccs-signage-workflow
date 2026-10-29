@@ -10,9 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
-import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 
 const INHOUSE_TASKS = [
   "Fabrication",
@@ -862,6 +861,16 @@ export default function ClockOutDialog({
             <div className="flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-blue-600" />
               <Label className="font-semibold">Notes for Admin (Optional)</Label>
+            </div>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] text-slate-500">Leaving early?</span>
+              {["Appointment", "Site call", "Sick", "Family", "Slow day"].map((r) => (
+                <button
+                  key={r} type="button"
+                  onClick={() => setNotes((prev) => (prev.includes(`Early out: ${r}`) ? prev : `${prev.trim() ? prev.trim() + " " : ""}Early out: ${r}.`))}
+                  className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:border-blue-300 hover:text-blue-700"
+                >{r}</button>
+              ))}
             </div>
             <Textarea
               value={notes}
