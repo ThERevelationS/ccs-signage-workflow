@@ -51,6 +51,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import AdminAccessDialog from "@/components/admin/AdminAccessDialog";
+import { getAdminAccessSummary } from "@/components/admin/adminTabNavigation";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
@@ -1833,6 +1834,11 @@ export default function UserManagement() {
                     )}
                   </Button>
                   {user.role === 'admin' && (
+                    <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap" title="Current admin page access">
+                      {getAdminAccessSummary(user)}
+                    </span>
+                  )}
+                  {user.role === 'admin' && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -2646,6 +2652,7 @@ export default function UserManagement() {
         open={!!accessUser}
         onOpenChange={(open) => { if (!open) setAccessUser(null); }}
         sessionToken={sessionToken}
+        admins={users.filter((u) => u.role === 'admin' && u.id !== accessUser?.id)}
         onSaved={(saved) => {
           if (saved?.id) setUsers((current) => current.map((row) => (row.id === saved.id ? { ...row, ...saved } : row)));
         }}
