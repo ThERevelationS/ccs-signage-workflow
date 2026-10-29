@@ -476,8 +476,8 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 368. **[H][DONE]** Defer non-critical reads: WorkOrder/AuthorizedEmail load after the permit lines render — the list appears sooner.
 369. **[H][DONE]** Boundary-bundle pre-warm: common OH/KY boundaries preloaded — the picker doesn't fetch on every search.
 370. **[H][DONE]** Debounced repository search: 300ms after typing stops — not every keystroke a filter pass.
-371. **[H][FLAGGED-dedicated]** Skeleton-per-section: the page renders the header + groups progressively, not all-at-once.
-372. **[H][FLAGGED-dedicated]** Idle-time prefetch: when the page is idle, next-likely catalogs warm in the background.
+371. **[H][DONE]** Skeleton-per-section: the page renders the header + groups progressively, not all-at-once.
+372. **[H][DONE]** Idle-time prefetch: when the page is idle, next-likely catalogs warm in the background.
 373. **[H][DONE]** Cancel-abandoned reads: leaving the picker mid-load cancels the in-flight entity calls.
 374. **[H][DONE]** Bound the event payload: scan events cap at N entries server-side — a long scan can't bloat the record.
 375. **[H][FLAGGED-dedicated]** Memoized list-derivations: the queue summaries + counts compute once per data-change, not per render.
@@ -533,7 +533,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 416. **[UX][FLAGGED-dedicated]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
 417. **[F][FLAGGED-dedicated]** Multi-job jurisdiction assign: select N jobs in the same town → apply the verified jurisdiction once.
 418. **[UX][DONE]** Quick-switch to a sibling: "the township handles this, not the city" — a one-tap swap to the other candidate.
-419. **[F][FLAGGED-dedicated]** Custom workflow steps per jurisdiction: "Milford needs a site plan first" — jurisdiction-specific steps on its lines.
+419. **[F][DONE]** Custom workflow steps per jurisdiction: "Milford needs a site plan first" — jurisdiction-specific steps on its lines.
 420. **[UX][DONE]** "What's different about this town" hint: jurisdiction-specific quirks surfaced on its jobs — "they want mail-in only".
 421. **[F][DONE]** Permit-renewal flow: an expiring permit's renewal path — reuse the prior application's data.
 422. **[UX][DONE]** Smart-suggest next-step: "Call them — they said 2 weeks" — the next action recommended.
@@ -541,7 +541,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 424. **[UX][DONE]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
 425. **[F][DONE]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
 426. **[UX][DONE]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
-427. **[F][FLAGGED-dedicated]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
+427. **[F][DONE]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
 428. **[UX][FLAGGED-dedicated]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
 429. **[F][FLAGGED-dedicated]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
 430. **[UX][FLAGGED-dedicated]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
