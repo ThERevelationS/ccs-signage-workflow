@@ -24,11 +24,11 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 16. **[F][DONE]** Estimate split — move a section to a new estimate
 17. **[F][DONE]** Template estimates — save a draft as a named template, instantiate new estimates from it
 18. **[H][DONE]** `estimate_number` uniqueness enforced at create (currently assumed via generateDocNumber)
-19. **[F]** Print/PDF estimate header — brand logo + terms block from QuoteSettings
-20. **[F]** Internal vs customer-facing section visibility flags on line items
-21. **[F]** Estimate notes timeline (not just single `notes` field)
-22. **[H]** `quote_issue_date` auto-set on first `sent` transition; never editable after
-23. **[F]** `quote_expiration_date` editable override per-estimate (defaulted from `quote_valid_days`)
+19. **[F][DONE]** Print/PDF estimate header — brand logo + terms block from QuoteSettings
+20. **[F][DONE]** Internal vs customer-facing section visibility flags on line items
+21. **[F][DONE]** Estimate notes timeline (not just single `notes` field)
+22. **[H][DONE]** `quote_issue_date` auto-set on first `sent` transition; never editable after
+23. **[F][DONE]** `quote_expiration_date` editable override per-estimate (defaulted from `quote_valid_days`)
 24. **[F]** Estimate color/label tags for personal organization (per-user field)
 25. **[H]** CAS guard on the `status` field specifically — a stale session can't revert `sent` → `draft`
 
