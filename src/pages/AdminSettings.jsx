@@ -714,6 +714,16 @@ export default function AdminSettings() {
   const [pauseBusy, setPauseBusy] = useState(false);
   const [pauseError, setPauseError] = useState("");
   const [openExceptionCount, setOpenExceptionCount] = useState(0);
+  const [pinnedTabs, setPinnedTabs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
+  });
+  const togglePin = (tabValue) => {
+    setPinnedTabs((prev) => {
+      const next = prev.includes(tabValue) ? prev.filter((v) => v !== tabValue) : [...prev, tabValue];
+      try { localStorage.setItem("admin_pinned_tabs", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const [emailGroups, setEmailGroups] = useState([]);
   const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
   const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
@@ -2107,7 +2117,7 @@ export default function AdminSettings() {
               ))}
             </div>
             <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className="mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 bg-transparent p-1 sm:grid-cols-3 lg:grid-cols-4">
-              {activeAdminGroup.tabs.map((tab) => {
+              {[...activeAdminGroup.tabs].sort((a, b) => (pinnedTabs.includes(b.value) ? 1 : 0) - (pinnedTabs.includes(a.value) ? 1 : 0)).map((tab) => {
                 const TabIcon = ADMIN_TAB_ICONS[tab.value];
                 return (
                   <TabsTrigger
@@ -2117,6 +2127,11 @@ export default function AdminSettings() {
                   >
                     {TabIcon && <TabIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                     <span>{tab.label}</span>
+                    <button type="button" aria-label={pinnedTabs.includes(tab.value) ? `Unpin ${tab.label}` : `Pin ${tab.label}`}
+                      onClick={(e) => { e.stopPropagation(); togglePin(tab.value); }}
+                      className={`ml-0.5 text-[10px] leading-none ${pinnedTabs.includes(tab.value) ? "text-amber-500" : "text-gray-300 hover:text-amber-500"}`}>
+                      {pinnedTabs.includes(tab.value) ? "★" : "☆"}
+                    </button>
                     {tab.value === "timeclock" && openExceptionCount > 0 && (
                       <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
                         title={`${openExceptionCount} open punch exception${openExceptionCount === 1 ? "" : "s"}`}>
