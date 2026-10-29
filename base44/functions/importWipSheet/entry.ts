@@ -265,6 +265,10 @@ Deno.serve(async (req) => {
       skip += pageSize;
     }
 
+    // Exclude deleted, completed and rider rows from matching — a dead record
+    // must never absorb an update meant for a live order.
+    allWorkOrders = allWorkOrders.filter(wo => !wo.deleted && !wo.completed && !wo.is_rider);
+
     // Build lookup indexes for faster matching
     const byInvoiceNum = new Map();
     const byEstInvAt = new Map();
