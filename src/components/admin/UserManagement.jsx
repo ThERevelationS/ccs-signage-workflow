@@ -1834,13 +1834,14 @@ export default function UserManagement() {
                   </Button>
                   {user.role === 'admin' && (
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setAccessUser(user)}
-                      className="h-8 w-8"
+                      className="h-8 gap-1 border-indigo-300 px-2 text-xs font-medium text-indigo-700"
                       title="Admin page access"
                     >
-                      <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Access
                     </Button>
                   )}
                   <Button
