@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, Search, X } from "lucide-react";
-import { getAdminSearchKeyboardIndex, searchAdminSettings } from "@/components/admin/adminTabNavigation";
+import { ADMIN_TAB_GROUPS, getAdminSearchKeyboardIndex, searchAdminSettings } from "@/components/admin/adminTabNavigation";
 
 // Search is deliberately inline rather than an unbounded dropdown overlay:
 // results remain within the Admin navigation card on narrow viewports.
@@ -18,6 +18,15 @@ const highlightTerms = (text, q) => {
 export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }) {
     const inputRef = useRef(null);
 const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [recentTabs, setRecentTabs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]"); } catch { return []; }
+  });
+  const tabLabel = (() => {
+    const map = {};
+    ADMIN_TAB_GROUPS.forEach((g) => (g.tabs || []).forEach((t) => { map[t.value] = t.label; }));
+    return map;
+  })();
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const resultsListRef = useRef(null);
@@ -81,6 +90,11 @@ const [query, setQuery] = useState("");
             placeholder="Find a setting... (Ctrl+K)"
             maxLength={100}
             ref={inputRef}
+            onFocus={() => {
+              setFocused(true);
+              try { setRecentTabs(JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]")); } catch { /* ignore */ }
+            }}
+            onBlur={() => setTimeout(() => setFocused(false), 200)}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -114,6 +128,18 @@ const [query, setQuery] = useState("");
           )}
         </div>
       </form>
+      {focused && !hasQuery && recentTabs.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1 px-1">
+          <span className="text-[10px] font-medium uppercase text-gray-400">Recent:</span>
+          {[...recentTabs].slice(-5).reverse().map((v) => (
+            <button key={v} type="button"
+              className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] text-gray-700 hover:border-sky-300 hover:text-sky-800"
+              onMouseDown={(e) => { e.preventDefault(); onNavigate(v, null); }}>
+              {tabLabel[v] || v}
+            </button>
+          ))}
+        </div>
+      )}
       {hasQuery && (
         <div aria-label="Admin search results" className="mt-2 min-w-0">
           <p id={searchStatusId} role="status" aria-live="polite" className="mb-1 px-1 text-xs text-gray-600">
