@@ -22,6 +22,8 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit, Users, Mail, X } from "lucide-react";
+import { ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createEmailGroupIfAbsent, deleteEmailGroupIfUnused, updateEmailGroupIfUnchanged } from "@/components/admin/emailGroupPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
@@ -43,7 +45,8 @@ export default function EmailGroupsManager() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    emails: []
+    emails: [],
+    permission_sections: []
   });
 
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function EmailGroupsManager() {
     if (isLoading || loadError || isSaving) return;
     setPersistenceError("");
     setEditingGroup(null);
-    setFormData({ name: "", description: "", emails: [] });
+    setFormData({ name: "", description: "", emails: [], permission_sections: [] });
     setNewEmail("");
     setIsDialogOpen(true);
   };
@@ -89,6 +92,7 @@ export default function EmailGroupsManager() {
     setEditingGroup(group);
     setFormData({
       name: group.name || "",
+      permission_sections: group.permission_sections || [],
       description: group.description || "",
       emails: group.emails || []
     });
@@ -296,6 +300,23 @@ export default function EmailGroupsManager() {
             </div>
 
             <div>
+              <Label>Grants admin sections to members</Label>
+              <div className="mb-3 flex flex-wrap gap-2 rounded-lg border border-gray-200 p-2">
+                {ADMIN_TAB_GROUPS.map((group) => (
+                  <label key={group.id} className="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      checked={(formData.permission_sections || []).includes(group.id)}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        permission_sections: checked
+                          ? [...new Set([...(formData.permission_sections || []), group.id])]
+                          : (formData.permission_sections || []).filter((v) => v !== group.id)
+                      })}
+                    />
+                    {group.label || group.id}
+                  </label>
+                ))}
+              </div>
               <Label>Email Addresses *</Label>
               <div className="flex gap-2 mt-1">
                 <Input
