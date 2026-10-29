@@ -373,6 +373,18 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           disabled={!isRegistered}
           onCommit={(value) => update("office_responded_date", value)}
         />
+        {isRegistered && (
+          <button
+            type="button"
+            className="self-center rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100"
+            title="Copy a follow-up email you can paste to the office"
+            onClick={async () => {
+              const ref = lineItem.permit_number || lineItem.application_reference_number || lineItem.row_name || "our application";
+              const text = `Hi,\n\nFollowing up on ${ref} for ${lineItem.work_order_title || "our job"} in ${lineItem.locality_name || "your jurisdiction"} — could you share an update on its status?${lineItem.expected_response_date ? ` We were hoping to hear back by ${lineItem.expected_response_date}.` : ""}\n\nThank you!`;
+              try { await navigator.clipboard.writeText(text); } catch {}
+            }}
+          >Copy follow-up email</button>
+        )}
         <DateField
           label="Check back on"
           value={lineItem.follow_up_date}
