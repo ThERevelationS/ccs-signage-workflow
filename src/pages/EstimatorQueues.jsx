@@ -266,6 +266,11 @@ export default function EstimatorQueues() {
   }, [estimates]);
 
   const q = query.trim().toLowerCase();
+  const [visibleCount, setVisibleCount] = useState(40);
+  const PAGE = 40;
+  // Incremental render-window (#404-408): large queues render the first PAGE
+  // rows and grow on "Load more" — resets whenever the filters change.
+  useEffect(() => { setVisibleCount(PAGE); }, [status, query, sort, mine]);
   const rows = useMemo(() => {
     let list = status === "trash"
       ? estimates.filter((e) => e?.deleted === true)
@@ -475,7 +480,7 @@ export default function EstimatorQueues() {
                   {bulkError && <span role="status" className="text-[10px] text-red-600">{bulkError}</span>}
                 </div>
               )}
-              {rows.map((e) => {
+              {rows.slice(0, visibleCount).map((e) => {
                 const expires = expiryOf(e);
                 const expired = expires && expires < today();
                 const expiringSoon = expires && !expired && expires <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
