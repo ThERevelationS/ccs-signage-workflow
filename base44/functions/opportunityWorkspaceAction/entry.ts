@@ -430,6 +430,61 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, copied_products: copiedProducts, copied_parts: copiedParts });
     }
 
+    // Copy sections between estimates (#467): clone each source line_items
+    // entry — its module project record + builder product — appended as new
+    // sections on the target estimate.
+    if (action === "copy_sections") {
+      const fromId = clean(body?.from_estimate_id);
+      const toId = clean(body?.to_estimate_id);
+      if (!fromId || !toId || fromId === toId) throw bad("Different from/to estimate ids are required.", 400);
+      const [src, dst] = await Promise.all([Estimate.get(fromId).catch(() => null), Estimate.get(toId).catch(() => null)]);
+      if (!src?.id) throw bad("Source estimate not found.", 404);
+      if (!dst?.id) throw bad("Target estimate not found.", 404);
+      const MODULE_ENTITIES: Record<string, string> = {
+        foundation: "FoundationProject", metal: "MetalProject",
+        channel_letters: "ChannelLetterInstallation", vinyl: "VinylProject",
+        cnc: "CNCProject", brick_stone: "BrickStoneProject",
+        maintenance: "MaintenanceProject", laser: "LaserProject",
+        sign_hardware: "SignHardwareProject", digital_print: "DigitalPrintProject",
+      };
+      const svcEntities = base44.asServiceRole.entities as any;
+      const newLines: any[] = [];
+      let copied = 0;
+      for (const line of list(src?.line_items)) {
+        const moduleKey = clean(line?.module_key);
+        const entityName = MODULE_ENTITIES[moduleKey];
+        if (!entityName || !clean(line?.project_id)) continue;
+        let newProjectId = "";
+        try {
+          const proj = await svcEntities[entityName].get(clean(line.project_id)).catch(() => null);
+          if (proj?.id) {
+            const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = proj;
+            const newProj = await svcEntities[entityName].create({ ...pf }).catch(() => null);
+            if (newProj?.id) newProjectId = newProj.id;
+          }
+        } catch { /* project clone failed — still copy the line row */ }
+        let newProductId = "";
+        if (clean(line?.builder_product_id)) {
+          const bp = await base44.asServiceRole.entities.BuilderProduct.get(clean(line.builder_product_id)).catch(() => null);
+          if (bp?.id) {
+            const { id: _bi, created_date: _bc, updated_date: _bu, created_by_id: _bbi, created_by: _bb, ...bf } = bp;
+            const newBp = await base44.asServiceRole.entities.BuilderProduct.create({ ...bf, estimate_id: toId }).catch(() => null);
+            if (newBp?.id) newProductId = newBp.id;
+          }
+        }
+        newLines.push({
+          ...line,
+          line_id: `sec_${Date.now().toString(36)}_${newLines.length}`,
+          builder_product_id: newProductId || clean(line?.builder_product_id),
+          project_id: newProjectId || clean(line?.project_id),
+        });
+        copied += 1;
+      }
+      const merged = [...list(dst?.line_items), ...newLines];
+      await Estimate.update(toId, { line_items: merged, pricing_stale: true, pricing_stale_reason: "Sections copied — recompute + re-save before sending." }).catch(() => null);
+      return Response.json({ success: true, action, copied_sections: copied });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
