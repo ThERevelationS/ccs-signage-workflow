@@ -15,6 +15,7 @@ import {
   Package,
   Receipt,
   RefreshCw,
+  RotateCcw,
   ShoppingCart,
   Volume2,
   VolumeX,
