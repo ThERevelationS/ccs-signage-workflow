@@ -379,6 +379,15 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     if (!source.length) return;
     const fired = readMilestones(email, snapshot.company_day);
     const next = [...fired];
+    // Quiet hours: when the employee has a schedule, reminders stay inside it.
+    const sched = snapshot?.todays_schedule;
+    const outsideSchedule = (() => {
+      if (!sched?.end_time || !snapshot?.company_day) return false;
+      const [eh, em] = String(sched.end_time).split(":").map(Number);
+      const end = new Date(); end.setHours(eh || 0, (em || 0) + 60, 0, 0); // 1h grace
+      return Date.now() > end.getTime();
+    })();
+
     for (const r of source) {
       const minute = Number(typeof r === "object" && r !== null && Number(r.percent) > 0
         ? Number(r.percent) * goalMinutes
@@ -388,8 +397,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       const marker = 10000 + minute;
       if (displayMinutes >= minute && !next.includes(marker)) {
         next.push(marker);
-        toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
-        if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
+        if (!outsideSchedule) {
+          toast({ description: `Time Tracker reminder: ${label || formatClock(minute, "hours_minutes") + " on the clock"}` });
+          if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
+        }
       }
       // Escalation: if the reminder was ignored, re-fire once 10 minutes later.
       const nudge = 30000 + minute;
@@ -802,7 +813,26 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
-            {Number(snapshot?.team_clocked_in_count) > 0 && (
+            {/* Pace ghost - this week vs the employee's own weekly average */}
+        {clockedIn && Number(snapshot?.weekly_paid_minutes) > 0 && (() => {
+          const weeklyDaily = Array.isArray(snapshot.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
+          const todayIdx = (new Date().getDay() + 6) % 7;
+          const priorDays = weeklyDaily.slice(0, todayIdx).filter((m) => m > 0);
+          if (!priorDays.length) return null;
+          const avg = priorDays.reduce((a, b) => a + b, 0) / priorDays.length;
+          const diff = Math.round((live?.paid || 0) - avg);
+          if (Math.abs(diff) < 10) return null;
+          return (
+            <p className={`mt-2 text-[10px] font-medium ${diff > 0 ? "text-emerald-600" : "text-slate-400"}`}>
+              {diff > 0 ? `${formatMinutes(diff)} ahead of your usual pace` : `${formatMinutes(-diff)} behind your usual pace`}
+            </p>
+          );
+        })()}
+        {schedule?.break_minutes > 0 && (
+          <p className="mt-2 text-[10px] text-slate-400">Lunch window: ~{schedule.break_minutes}min scheduled</p>
+        )}
+
+        {Number(snapshot?.team_clocked_in_count) > 0 && (
           <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
             {snapshot.team_clocked_in_count} coworker{snapshot.team_clocked_in_count === 1 ? "" : "s"} clocked in right now
           </p>
