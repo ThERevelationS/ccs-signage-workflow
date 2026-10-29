@@ -1,14 +1,39 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Camera, 
-  Loader2, 
-  UserX, 
+import {
+  Camera,
+  Loader2,
+  UserX,
   RefreshCw,
   Scan,
   Square
 } from "lucide-react";
-import { createFaceMatcher, createMatchVoter, detectDetailedFace, estimateFaceBrightness, loadFaceModelsOnce, passesFaceQualityGate } from '@/components/timeclock/faceScanRuntime';
+import {
+  createFaceMatcher,
+  createFaceScanSession,
+  detectDetailedFace,
+  descriptorDistance,
+  estimateFaceBrightness,
+  FACE_QUALITY,
+  loadFaceModelsOnce,
+  passesFaceQualityGate,
+} from '@/components/timeclock/faceScanRuntime';
+
+const ENROLL_TARGET = 10;
+const ENROLL_TICK_MS = 250;
+// Captures closer than this distance are near-duplicates of the same pose ???
+// rejecting them forces the template set to cover different angles and
+// distances, which is what makes recognition robust on other cameras.
+const ENROLL_MIN_POSE_DISTANCE = 0.08;
+const ENROLL_MAX_STALL = 8;
+
+const SCAN_STATUS_TEXT = {
+  "no-face": "No face detected. Look at camera.",
+  "low-quality": "Move closer and face the camera for a clearer scan.",
+  dim: "Lighting is dim. Move to better light or closer to the camera.",
+  "no-match": "Face not recognized. Hold still and look at the camera.",
+  verifying: "Face detected, verifying...",
+};
 
 export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
   // Support both old and new prop names
@@ -17,11 +42,16 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const scanIntervalRef = useRef(null);
-  const detectionBusyRef = useRef(false);
+  const scanSessionRef = useRef(null);
+  const enrollIntervalRef = useRef(null);
+  const enrollBusyRef = useRef(false);
+  const enrollStallRef = useRef(0);
+  const capturedRef = useRef([]);
   const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
   const matchFaceRef = useRef(matchFace);
   matchFaceRef.current = matchFace;
+  const enrollCaptureRef = useRef(handleEnrollCapture);
+  enrollCaptureRef.current = handleEnrollCapture;
 
   const [errorMsg, setErrorMsg] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -30,243 +60,180 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const [capturedDescriptors, setCapturedDescriptors] = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
-  const [countdown, setCountdown] = useState(null);
   const [autoCapturing, setAutoCapturing] = useState(false);
-  const countdownIntervalRef = useRef(null);
 
-  // Start camera
+  // Start the camera and load the models in parallel ??? the old flow waited for
+  // the camera before even starting the model download, which added seconds to
+  // every open of this component.
   useEffect(() => {
     let mounted = true;
-    
+
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
         });
-        
         if (!mounted) {
           stream.getTracks().forEach(t => t.stop());
           return;
         }
-        
         streamRef.current = stream;
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         console.error("Camera error:", err);
-        if (mounted) {
-          setErrorMsg("Camera access denied. Please allow camera permissions.");
-        }
+        if (mounted) setErrorMsg("Camera access denied. Please allow camera permissions.");
       }
     };
-    
+
+    const loadModels = async () => {
+      try {
+        await loadFaceModelsOnce();
+        if (mounted) setModelsLoaded(true);
+      } catch (err) {
+        console.error("Model load error:", err);
+        if (mounted) setErrorMsg("Failed to load face recognition models.");
+      }
+    };
+
     startCamera();
-    
+    loadModels();
+
     return () => {
       mounted = false;
+      scanSessionRef.current?.stop();
+      scanSessionRef.current = null;
+      if (enrollIntervalRef.current) {
+        clearInterval(enrollIntervalRef.current);
+        enrollIntervalRef.current = null;
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
         streamRef.current = null;
       }
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-      }
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
     };
   }, []);
 
-  // Handle video playing
   const handleVideoPlaying = () => {
     setCameraReady(true);
-    setScanStatus("Loading face models...");
+    if (!modelsLoaded) setScanStatus("Loading face models...");
   };
 
-  // Load models after camera is ready, then auto-start scanning in recognition mode
+  // Recognition mode auto-starts once both the camera and models are ready.
   useEffect(() => {
-    if (!cameraReady) return;
-    
-    let mounted = true;
-    
-    const loadModels = async () => {
-      try {
-        await loadFaceModelsOnce();
-        
-        if (mounted) {
-          setModelsLoaded(true);
-          if (!isEnrollMode) {
-            // Auto-start scanning for recognition mode
-            setScanStatus("Looking for face...");
-          } else {
-            setScanStatus("Ready! Position your face and click Capture.");
-          }
-        }
-      } catch (err) {
-        console.error("Model load error:", err);
-        if (mounted) {
-          setErrorMsg("Failed to load face recognition models.");
-        }
-      }
-    };
-    
-    loadModels();
-    
-    return () => { mounted = false; };
-  }, [cameraReady, isEnrollMode]);
-
-  // Auto-start scanning when models are loaded (recognition mode only)
-  useEffect(() => {
-    if (modelsLoaded && !isEnrollMode && !isScanning) {
+    if (modelsLoaded && cameraReady && !isEnrollMode && !isScanning) {
       startScanning();
     }
-  }, [modelsLoaded]);
+  }, [modelsLoaded, cameraReady, isEnrollMode]);
 
-  const detectFace = async () => {
-    if (!videoRef.current || !modelsLoaded) return null;
-    
-    if (detectionBusyRef.current) return null;
-    detectionBusyRef.current = true;
-    try {
-      const detection = await detectDetailedFace(videoRef.current);
-      if (detection && !passesFaceQualityGate(detection)) {
-        return null;
-      }
-      if (detection) {
-        const brightness = estimateFaceBrightness(videoRef.current, detection.detection.box);
-        return { detection, dim: Number.isFinite(brightness) && brightness < 45 };
-      }
-      return null;
-    } catch (err) {
-      console.error("Detection error:", err);
-      return null;
-    } finally {
-      detectionBusyRef.current = false;
+  useEffect(() => {
+    if (isEnrollMode && modelsLoaded && cameraReady) {
+      setScanStatus("Ready! Position your face and click Start Auto-Capture.");
     }
+  }, [isEnrollMode, modelsLoaded, cameraReady]);
+
+  const handleScanFrame = ({ status, detection, winner }) => {
+    if (status === "recognized" && winner) {
+      scanSessionRef.current?.stop();
+      setIsScanning(false);
+      setRecognizedUser(winner);
+      setScanStatus(`Recognized: ${winner.full_name || winner.email}`);
+      onRecognized?.(winner, Array.from(detection.descriptor));
+      return;
+    }
+    setScanStatus(SCAN_STATUS_TEXT[status] || "Scanning...");
   };
 
-  const findMatchingUser = (descriptor) => matchFaceRef.current(descriptor);
-
   const startScanning = () => {
+    scanSessionRef.current?.stop();
+    const session = createFaceScanSession({
+      getVideo: () => videoRef.current,
+      matchFace: (descriptor) => matchFaceRef.current(descriptor),
+      onFrame: handleScanFrame,
+    });
+    scanSessionRef.current = session;
     setIsScanning(true);
     setRecognizedUser(null);
     setScanStatus("Looking for face...");
-    // Recognition requires the same identity to win 3 of the last 5 frames so
-    // single-frame jitter or a passer's face cannot trigger a punch.
-    const voter = createMatchVoter({ required: 3, window: 5 });
-    
-    scanIntervalRef.current = setInterval(async () => {
-      if (!videoRef.current) return;
-      const frame = await detectFace();
-      if (frame) {
-        const { detection, dim } = frame;
-        const user = dim ? null : findMatchingUser(detection.descriptor);
-        const winner = voter(user);
-        if (winner) {
-          setRecognizedUser(winner);
-          setScanStatus(`Recognized: ${winner.full_name || winner.email}`);
-          stopScanning();
-          onRecognized?.(winner, Array.from(detection.descriptor));
-        } else {
-          setScanStatus(dim
-            ? "Lighting is dim. Move to better light or closer to the camera."
-            : "Face detected, verifying...");
-        }
-      } else {
-        voter(null);
-        setScanStatus("No face detected. Look at camera.");
-      }
-    }, 300);
+    session.start();
   };
 
   const stopScanning = () => {
     setIsScanning(false);
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
+    scanSessionRef.current?.stop();
+    scanSessionRef.current = null;
   };
 
-  const startCountdown = (currentDescriptors) => {
-    if (currentDescriptors.length >= 10) return;
-    
-    setAutoCapturing(true);
-    setCountdown(3);
-    
-    countdownIntervalRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownIntervalRef.current);
-          countdownIntervalRef.current = null;
-          // Capture after countdown
-          setTimeout(() => captureForEnrollmentAuto(currentDescriptors), 100);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const captureForEnrollmentAuto = async (currentDescriptors) => {
-    setScanStatus("Capturing...");
-    const frame = await detectFace();
-    const detection = frame?.detection;
-    
-    if (frame?.dim) {
-      setScanStatus("Lighting is too dim to enroll well. Move to better light. Retrying...");
-      setTimeout(() => startCountdown(currentDescriptors), 500);
-      return;
-    }
-    if (detection) {
-      const newDescriptors = [...currentDescriptors, Array.from(detection.descriptor)];
-      setCapturedDescriptors(newDescriptors);
-      
-      if (newDescriptors.length >= 10) {
-       setScanStatus("Ready to save!");
-       setAutoCapturing(false);
-       handleEnrollCapture?.(newDescriptors);
-      } else {
-       setScanStatus(`Captured ${newDescriptors.length}/10. Move slightly...`);
-       // Auto-start next countdown
-       setTimeout(() => startCountdown(newDescriptors), 500);
+  // Enrollment captures continuously while a good frame is available. Poses
+  // that are near-duplicates of an accepted capture are rejected (with a stall
+  // bypass so a stationary camera can never deadlock), which spreads the ten
+  // stored templates across angles and distances instead of one repeated pose.
+  const captureEnrollmentTick = async () => {
+    if (enrollBusyRef.current || !videoRef.current || !modelsLoaded) return;
+    enrollBusyRef.current = true;
+    try {
+      const detection = await detectDetailedFace(videoRef.current);
+      if (!detection || !passesFaceQualityGate(detection)) {
+        setScanStatus("No clear face ??? look at the camera.");
+        return;
       }
-    } else {
-      setScanStatus("No face detected. Retrying...");
-      // Retry countdown
-      setTimeout(() => startCountdown(currentDescriptors), 500);
+      const brightness = estimateFaceBrightness(videoRef.current, detection.detection.box);
+      if (Number.isFinite(brightness) && brightness < FACE_QUALITY.minBrightness) {
+        setScanStatus("Lighting is too dim to enroll well. Move to better light.");
+        return;
+      }
+      const descriptor = detection.descriptor;
+      const prev = capturedRef.current;
+      if (prev.length >= ENROLL_TARGET) return;
+      const duplicate = prev.some(d => descriptorDistance(d, descriptor) < ENROLL_MIN_POSE_DISTANCE);
+      if (duplicate && enrollStallRef.current < ENROLL_MAX_STALL) {
+        enrollStallRef.current += 1;
+        setScanStatus(`Captured ${prev.length}/${ENROLL_TARGET} ??? turn your head slightly for a new angle.`);
+        return;
+      }
+      enrollStallRef.current = 0;
+      const next = [...prev, Array.from(descriptor)];
+      capturedRef.current = next;
+      setCapturedDescriptors(next);
+      if (next.length >= ENROLL_TARGET) {
+        stopAutoEnrollment();
+        setScanStatus("Ready to save!");
+        enrollCaptureRef.current?.(next);
+      } else {
+        setScanStatus(`Captured ${next.length}/${ENROLL_TARGET} ??? turn slightly for the next angle.`);
+      }
+    } catch (err) {
+      console.warn("Enrollment capture warning:", err);
+    } finally {
+      enrollBusyRef.current = false;
     }
   };
 
   const startAutoEnrollment = () => {
+    capturedRef.current = [];
     setCapturedDescriptors([]);
-    setScanStatus("Starting auto-capture...");
-    startCountdown([]);
+    enrollStallRef.current = 0;
+    setAutoCapturing(true);
+    setScanStatus("Capturing automatically ??? hold still, then turn your head slightly between captures.");
+    enrollIntervalRef.current = setInterval(captureEnrollmentTick, ENROLL_TICK_MS);
   };
 
   const stopAutoEnrollment = () => {
     setAutoCapturing(false);
-    setCountdown(null);
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
+    if (enrollIntervalRef.current) {
+      clearInterval(enrollIntervalRef.current);
+      enrollIntervalRef.current = null;
     }
-    setScanStatus("Auto-capture stopped.");
   };
 
   const resetEnrollment = () => {
+    stopAutoEnrollment();
+    capturedRef.current = [];
     setCapturedDescriptors([]);
-    setAutoCapturing(false);
-    setCountdown(null);
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
+    enrollStallRef.current = 0;
     setScanStatus("Camera ready.");
   };
 
-  // Reticle color tracks the live scan state — indigo scanning, amber
+  // Reticle color tracks the live scan state ??? indigo scanning, amber
   // verifying or dim-light, green on a confirmed identity.
   const scanTone = recognizedUser ? "success"
     : scanStatus.toLowerCase().includes("verifying") ? "verifying"
@@ -300,10 +267,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           muted
           playsInline
           onPlaying={handleVideoPlaying}
-          style={{ 
-            width: "100%", 
-            height: "100%", 
-            objectFit: "cover", 
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
             transform: "scaleX(-1)",
             display: "block"
           }}
@@ -315,7 +282,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           </div>
         )}
         <canvas ref={canvasRef} width={320} height={240} className="absolute inset-0 pointer-events-none" />
-        
+
         {isScanning && !recognizedUser && (
           <div className={`scan-reticle scan-tone-${scanTone}`} aria-hidden="true">
             <div className="scan-bracket tl" />
@@ -326,15 +293,15 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             <div className="scan-line" />
           </div>
         )}
-        
-        {countdown !== null && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-            <div className="text-7xl font-bold text-white drop-shadow-lg animate-pulse">
-              {countdown}
-            </div>
+
+        {autoCapturing && capturedDescriptors.length < ENROLL_TARGET && (
+          <div className="absolute inset-x-0 bottom-0 bg-black/50 py-1.5 text-center">
+            <span className="text-xs font-medium text-white">
+              Capturing {capturedDescriptors.length}/{ENROLL_TARGET}
+            </span>
           </div>
         )}
-        
+
         {recognizedUser && (
           <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
             <div className="success-burst" />
@@ -360,26 +327,26 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       {isEnrollMode ? (
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
-              <div 
+            {[...Array(ENROLL_TARGET)].map((_, i) => (
+              <div
                 key={i}
-                className={`w-4 h-4 rounded-full ${capturedDescriptors.length >= i ? "bg-green-500" : "bg-gray-300"}`}
+                className={`w-4 h-4 rounded-full ${capturedDescriptors.length > i ? "bg-green-500" : "bg-gray-300"}`}
               />
             ))}
           </div>
           <div className="flex gap-3">
             {!autoCapturing ? (
-              <Button 
+              <Button
                 onClick={startAutoEnrollment}
-                disabled={capturedDescriptors.length >= 10 || !modelsLoaded}
+                disabled={capturedDescriptors.length >= ENROLL_TARGET || !modelsLoaded}
                 className="gap-2 bg-purple-600 hover:bg-purple-700"
               >
                 <Camera className="w-4 h-4" />
                 Start Auto-Capture
               </Button>
             ) : (
-              <Button 
-                onClick={stopAutoEnrollment}
+              <Button
+                onClick={() => { stopAutoEnrollment(); setScanStatus("Auto-capture stopped."); }}
                 variant="outline"
                 className="gap-2"
               >
@@ -391,7 +358,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
             )}
           </div>
           <p className="text-xs text-gray-500 text-center max-w-xs">
-            Auto-captures 10 photos with a 3-second countdown. Move your head slightly between captures for better accuracy.
+            Captures {ENROLL_TARGET} poses automatically. Turn your head slightly left, right, up, and down between captures so recognition works from every angle and distance.
           </p>
           {onCancel && (
             <Button variant="outline" onClick={onCancel} className="mt-2">
@@ -407,7 +374,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
               Stop
             </Button>
           ) : (
-            <Button onClick={startScanning} className="gap-2 bg-purple-600 hover:bg-purple-700">
+            <Button onClick={startScanning} className="gap-2 bg-purple-600 hover:bg-purple-700" disabled={!modelsLoaded}>
               <Scan className="w-4 h-4" />
               Start Scan
             </Button>
@@ -417,3 +384,4 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     </div>
   );
 }
+
