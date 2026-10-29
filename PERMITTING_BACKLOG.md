@@ -75,7 +75,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 50. **[F][DONE]** Source link on every claim — tap the claim → open the government source the data came from.
 51. **[UX][DONE]** Last-verified date on each office card, plain language: "Checked on Oct 20" → "More than 90 days old — may need a re-check".
 52. **[F][DONE]** Flag stale jurisdictions in the repository automatically (last-verified > N days) and queue them for re-verification.
-53. **[F][FLAGGED]** Record a call outcome per office ("they said permits take 2 weeks") — the tribal knowledge stays with the jurisdiction.
+53. **[F][DONE]** Record a call outcome per office ("they said permits take 2 weeks") — the tribal knowledge stays with the jurisdiction.
 54. **[F][DONE]** Fee snapshot where known: "Sign permit ≈ $75" sourced from the office's fee schedule page.
 55. **[F][DONE]** Turnaround estimate where known: "Typical approval: 5–10 business days" sourced or marked unverified.
 
@@ -209,7 +209,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 150. **[F][FLAGGED-dedicated]** "Compare side by side" for two candidates: county vs city vs township offices shown in columns so the difference is obvious.
 151. **[UX][DONE]** The detected card states what it is NOT: "Not a township address — it sits inside the city." Kills second-guessing.
 152. **[F][DONE]** Show the FULL containment chain on the card: Address → City of Milford → Clermont County → Ohio — every level separately.
-153. **[UX][FLAGGED-dedicated]** A boundary-edge warning: "The pin is within ~200 ft of the city line — the next office over is X Township" when the margin is thin.
+153. **[UX][DONE]** A boundary-edge warning: "The pin is within ~200 ft of the city line — the next office over is X Township" when the margin is thin.
 154. **[F][DONE]** Per-candidate "evidence" link opening the exact source page that proved coverage.
 155. **[UX][DONE]** Candidate cards sorted: verified-detected first, then verified-repository, then unverified — never alphabetical.
 156. **[F][DONE]** County offices listed as their own card (county zoning/electrical when unincorporated) — never folded into the city card.
@@ -225,7 +225,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 163. **[UX][DONE]** A compact "at a glance" strip per client: offices needed · picked · verified · permits issued — four numbers.
 164. **[F][DONE]** Per-line assignee chip — who owns chasing this office (falls back to the WO assignee).
 165. **[UX][DONE]** Copy-all-offices button: "Copy contact info" → clipboard block with every office's phone/portal for pasting into email.
-166. **[F][FLAGGED-dedicated]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
+166. **[F][DONE]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
 167. **[UX][DONE]** Line reorder via drag — staff order the offices the way they actually work them.
 168. **[F][DONE]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
 169. **[UX][DONE]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
@@ -283,7 +283,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## T — Field/on-site workflow
 
 211. **[F][DONE]** "On-site now" mode: GPS + one-tap confirm the jurisdiction matches where the truck is parked.
-212. **[F][FLAGGED-dedicated]** Site-photo attach to the permit line: the posted sign photo rides with the permit for the final inspection.
+212. **[F][DONE]** Site-photo attach to the permit line: the posted sign photo rides with the permit for the final inspection.
 213. **[UX][DONE]** Full-screen "dialer" view per office: giant phone number, tap-to-call, plus the office's notes — built for a phone in hand.
 214. **[F][DONE]** Permit pickup directions: the office's address as a maps link — "drive to this counter".
 215. **[UX][FLAGGED-dedicated]** Offline-pocket card: the applied jurisdiction's offices as a cached card readable without signal.
@@ -436,7 +436,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 334. **[UX][DONE]** "Recent work in this town" on the card: last 3 jobs in the same jurisdiction — institutional memory.
 335. **[F][FLAGGED-dedicated]** Notification-hook: a jurisdiction update pings the linked active jobs' assignees.
 336. **[UX][DONE]** Deep-link to a jurisdiction: a URL like /Permitting?jurisdiction=milford opens that card — shareable links.
-337. **[F][FLAGGED-dedicated]** Photo-attach to a jurisdiction: site photos of the office's posted requirements — evidence.
+337. **[F][DONE]** Photo-attach to a jurisdiction: site photos of the office's posted requirements — evidence.
 338. **[H][FLAGGED-dedicated]** Timezone-normalized timestamps: all display times in America/New_York — no UTC leakage.
 339. **[F][FLAGGED-dedicated]** The estimate's permit line auto-fills the office's known fee — priced-right without re-typing.
 340. **[UX][DONE]** "What changed since I was last here" panel on the page — returning users see the delta.
@@ -455,7 +455,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
 351. **[F][FLAGGED-dedicated]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
 352. **[H][FLAGGED-dedicated]** Rate-limit on applies: a job can't create 10 locality links in 10 seconds — burst-write protection.
-353. **[F][FLAGGED-dedicated]** Soft-delete on jurisdiction merges: merged-away rows stay recoverable for 30 days — undo is real.
+353. **[F][DONE]** Soft-delete on jurisdiction merges: merged-away rows stay recoverable for 30 days — undo is real.
 354. **[H][FLAGGED-dedicated]** Mass-change approval: bulk jurisdiction edits (>5 rows) need a second staff confirmation.
 355. **[F][FLAGGED-dedicated]** "Check what this changes" preview on jurisdiction edits: affected jobs listed before save.
 356. **[H][DONE]** FIPS-code integrity: jurisdictions carry the FIPS code — the identity is machine-verifiable, not just a name.
@@ -493,7 +493,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 382. **[UX][FLAGGED-dedicated]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
 383. **[F][FLAGGED-dedicated]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
 384. **[UX][FLAGGED-dedicated]** Plain-language status for clients: "Waiting on the township's review" — not internal jargon.
-385. **[F][FLAGGED-dedicated]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
+385. **[F][DONE]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
 386. **[UX][FLAGGED-dedicated]** Next-check-in prompt: after applying, "check back Thursday?" — a soft reminder set in one tap.
 387. **[F][FLAGGED-dedicated]** Team-shift notes: end-of-day "here's where each job stands" auto-summary for the next shift.
 388. **[UX][DONE]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
@@ -503,7 +503,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 392. **[UX][FLAGGED-dedicated]** Meeting-notes capture: notes from a client call about permitting link to the job — context travels.
 393. **[F][FLAGGED-dedicated]** Escalation to management: a stuck >N-day line auto-surfaces to a manager-review queue.
 394. **[UX][FLAGGED-dedicated]** Comment-thread per line: staff discuss the chase right where the work happens.
-395. **[F][FLAGGED-dedicated]** Photo-in-message: a site photo attached to a line's note — the record stays visual.
+395. **[F][DONE]** Photo-in-message: a site photo attached to a line's note — the record stays visual.
 396. **[UX][DONE]** Handoff confirmation: transferring a line's ownership asks the receiving staff to confirm — never silent.
 
 ## AF — Reporting & insight
