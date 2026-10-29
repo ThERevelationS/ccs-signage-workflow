@@ -2099,7 +2099,7 @@ export default function AdminSettings() {
           );
         })()}
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
-          <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
+          <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
             {capabilityExpiryLabel && (
               <p data-admin-capability-expiry className="px-2 pb-1 text-right text-[11px] font-medium text-red-900/60">
