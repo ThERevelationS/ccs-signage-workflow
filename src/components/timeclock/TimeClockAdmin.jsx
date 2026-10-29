@@ -216,6 +216,8 @@ export default function TimeClockAdmin() {
   const [timeEntryError, setTimeEntryError] = useState("");
   const [approvalEntry, setApprovalEntry] = useState(null);
   const [approvalDecision, setApprovalDecision] = useState("approve");
+  const [bulkApproveBusy, setBulkApproveBusy] = useState(false);
+  const [bulkApproveResult, setBulkApproveResult] = useState("");
   const [approvalNote, setApprovalNote] = useState("");
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalRequestId, setApprovalRequestId] = useState("");
@@ -332,6 +334,10 @@ export default function TimeClockAdmin() {
   const completedEntries = filteredEntries.filter(entry => entry.status === "clocked_out" && entry.clock_out);
   const approvedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "approved");
   const needsReviewEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "needs_review");
+  const openPunchEntryIds = new Set(punchExceptions.filter(row => ["open", "pending_manager_review"].includes(row.status)).map(row => row.time_entry_id));
+  const pendingCorrectionEntryIds = new Set(correctionRequests.filter(row => ["pending", "reviewing"].includes(row.status)).map(row => row.time_entry_id));
+  const cleanReviewEntries = needsReviewEntries.filter(entry =>
+    !entry.pay_period_id && !openPunchEntryIds.has(entry.id) && !pendingCorrectionEntryIds.has(entry.id));
   const unreviewedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "unreviewed");
 
   const isTransitionalState = (state) => ["clocking_in", "clocking_out"].includes(state.status)
@@ -552,6 +558,32 @@ export default function TimeClockAdmin() {
     setApprovalRequestId(payload.request_id);
     setApprovalRetryPayload(payload);
     setApprovalError("Retrying the exact interrupted manager approval payload. Values are frozen until the server confirms or rejects this request.");
+  };
+
+  const approveAllClean = async () => {
+    if (bulkApproveBusy || !sessionToken || !cleanReviewEntries.length) return;
+    setBulkApproveBusy(true); setBulkApproveResult("");
+    const failed = [];
+    for (const entry of cleanReviewEntries) {
+      try {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "admin_set_entry_approval",
+          session_token: sessionToken,
+          target_email: entry.user_email,
+          request_id: newRequestId(),
+          entry_id: entry.id,
+          expected_updated_date: entry.updated_date,
+          decision: "approve",
+          note: "Bulk approved — no exceptions on this shift.",
+        });
+        if (!functionData(response)?.success) failed.push(entry.user_name || entry.user_email);
+      } catch {
+        failed.push(entry.user_name || entry.user_email);
+      }
+    }
+    setBulkApproveResult(failed.length ? `${cleanReviewEntries.length - failed.length} approved, ${failed.length} failed` : `${cleanReviewEntries.length} shifts approved`);
+    setBulkApproveBusy(false);
+    await loadData();
   };
 
   const handleApproval = async () => {
@@ -1208,6 +1240,13 @@ export default function TimeClockAdmin() {
           <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
             <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
             <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
+            {cleanReviewEntries.length > 0 && (
+              <Button type="button" size="sm" variant="outline" disabled={bulkApproveBusy || isLoading}
+                onClick={approveAllClean} className="mt-2 h-7 w-full text-xs bg-white/80">
+                {bulkApproveBusy ? "Approving…" : `Approve ${cleanReviewEntries.length} clean`}
+              </Button>
+            )}
+            {bulkApproveResult && <p className="text-[11px] text-green-700 mt-1">{bulkApproveResult}</p>}
           </div>
           <div className="rounded-lg border border-green-200 bg-green-50 p-3">
             <p className="text-xs text-green-700">Approved</p>
