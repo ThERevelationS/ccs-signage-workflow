@@ -85,34 +85,12 @@ const STAFF_READABLE = new Set([
   'VinylProject',
   'VinylWorkflowTemplate',
   'WorkOrder',
-
-  // Screens that previously read these straight from the browser (which entity
-  // RLS blocks for staff sessions): announcements, sales filters, calendar,
-  // estimator revisions/acceptances, price revisions, templates and capacity.
-  'Announcement',
-  'BuilderPriceRevision',
-  'CalendarEvent',
-  'EstimateAcceptance',
-  'EstimateQuoteDelivery',
-  'EstimateRevision',
-  'EstimateSectionAcceptance',
-  'InventoryMovement',
-  'PTOPolicy',
-  'ProjectTemplate',
-  'QuickProductCategory',
-  'SalesFilter',
-  'UserCapacity',
 ]);
 
-// Admin-settings data: readable by admins only. AuthorizedEmail is
-// staff-readable because dozens of staff views resolve user identities from it;
-// its secret fields are stripped by FIELD_DENYLIST below before any row leaves
-// the backend.
-const ADMIN_READABLE = new Set<string>([
-  'AutomationRule',
-  'EmailGroup',
-  'EmailNotificationSettings',
-]);
+// Nothing is admin-only today; AuthorizedEmail is staff-readable because
+// dozens of staff views resolve user identities from it. Its secret fields
+// are stripped by FIELD_DENYLIST below before any row leaves the backend.
+const ADMIN_READABLE = new Set<string>([]);
 
 // Fields that must never leave the backend regardless of role. These hold
 // credentials, bearer tokens, biometric descriptors, and session-revocation
@@ -178,75 +156,23 @@ function cleanSort(value: unknown, entityName: string) {
   return sort;
 }
 
-// The only filter operators a staff read may use. Comparison/set operators are
-// safe on ordinary fields; logical operators ($or/$and/$nor) stay refused so a
-// filter can never assemble a query the gateway did not scope itself.
-const ALLOWED_OPERATORS = new Set([
-  '$eq', '$ne', '$in', '$nin', '$gt', '$gte', '$lt', '$lte', '$exists', '$regex', '$options',
-]);
-const MAX_IN_VALUES = 200;
-const MAX_REGEX_LENGTH = 200;
-
-function checkOperatorValue(operator: string, value: unknown) {
-  if (operator === '$in' || operator === '$nin') {
-    if (!Array.isArray(value) || value.length === 0 || value.length > MAX_IN_VALUES) {
-      throw Object.assign(new Error(`Staff read ${operator} needs 1 to ${MAX_IN_VALUES} values.`), { status: 400 });
-    }
-    for (const entry of value) {
-      if (entry && typeof entry === 'object') {
-        throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
-      }
-    }
-    return;
-  }
-  if (operator === '$exists') {
-    if (typeof value !== 'boolean') {
-      throw Object.assign(new Error('Staff read $exists needs true or false.'), { status: 400 });
-    }
-    return;
-  }
-  if (operator === '$regex' || operator === '$options') {
-    if (typeof value !== 'string' || value.length > MAX_REGEX_LENGTH) {
-      throw Object.assign(new Error('Staff read search pattern is not allowed.'), { status: 400 });
-    }
-    return;
-  }
-  if (value !== null && typeof value === 'object') {
-    throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
-  }
-}
-
-function cleanQuery(value: unknown, entityName: string) {
+function cleanQuery(value: unknown) {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw Object.assign(new Error('Staff read filter must be an object.'), { status: 400 });
   }
-  // Operators are allowed only directly on a top-level field, never on a
-  // denylisted field (that would turn output-denied data into a boolean
-  // oracle) and never nested deeper than one level.
-  const deniedFields = new Set(FIELD_DENYLIST[entityName] || []);
-  const stack: any[] = [{ node: value, field: '', depth: 0 }];
+  // Reject operator keys at ANY depth — a nested operator like
+  // { password_hash: { $regex: '^5f' } } turns the filter into a boolean
+  // oracle on fields the output projection denies.
+  const stack: any[] = [value];
   while (stack.length) {
-    const { node, field, depth } = stack.pop();
-    if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
+    const node = stack.pop();
+    if (!node || typeof node !== 'object') continue;
     for (const [key, val] of Object.entries(node)) {
       if (key.startsWith('$')) {
-        if (depth !== 1 || !field) {
-          throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
-        }
-        if (!ALLOWED_OPERATORS.has(key)) {
-          throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
-        }
-        if (deniedFields.has(field)) {
-          throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
-        }
-        checkOperatorValue(key, val);
-        continue;
+        throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
       }
-      if (val && typeof val === 'object') {
-        // Exactly one level below a top-level field may hold operators.
-        stack.push({ node: val, field: key, depth: depth + 1 });
-      }
+      if (val && typeof val === 'object') stack.push(val);
     }
   }
   let serialized;
@@ -264,12 +190,10 @@ function cleanQuery(value: unknown, entityName: string) {
 function cleanLimit(value: unknown, fallback: number) {
   if (value == null || value === '') return fallback;
   const parsed = Math.floor(Number(value));
-  if (!Number.isFinite(parsed) || parsed < 1) {
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
     throw Object.assign(new Error(`Staff read limit must be between 1 and ${MAX_LIMIT}.`), { status: 400 });
   }
-  // A caller asking for more than one page gets the page maximum rather than a
-  // failed read; callers that need every row page with skip.
-  return Math.min(parsed, MAX_LIMIT);
+  return parsed;
 }
 
 function cleanSkip(value: unknown) {
@@ -281,39 +205,63 @@ function cleanSkip(value: unknown) {
   return parsed;
 }
 
-const isRateLimited = (error: any) => Number(error?.status) === 429
-  || /rate limit|too many requests/i.test(String(error?.message || error));
-
-const MAX_BATCH = 20;
-const BATCH_CONCURRENCY = 4;
-
-// One read for an already-authenticated staff user. Returns {status, body} so a
-// batch can report each read independently; the single-read path wraps it as a
-// normal Response. Authorization, owner scoping and field projection are
-// identical for both paths.
-async function readOne(base44: any, user: any, body: any) {
+Deno.serve(async (req) => {
   try {
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const body = await req.json().catch(() => ({}));
+    const user = await resolveFleetStaffUser(base44, body?.session_token);
+    if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
+
+    // Batch mode: { entities: [{ entity, query?, sort?, limit?, skip? }] } — one
+    // response carries every entity's rows, cutting page-mount bursts to a
+    // single function call. Each entry still passes the same read gate.
+    if (Array.isArray(body?.entities)) {
+      if (body.entities.length > 16) {
+        return Response.json({ error: 'A batch read is limited to 16 record types.' }, { status: 400 });
+      }
+      const out: Record<string, any> = {};
+      for (const entry of body.entities) {
+        const name = String(entry?.entity || '').trim();
+        if (!STAFF_READABLE.has(name) && !ADMIN_READABLE.has(name)) {
+          return Response.json({ error: `This record type cannot be read here: ${name}` }, { status: 403 });
+        }
+        if (ADMIN_READABLE.has(name) && user.role !== 'admin') {
+          return Response.json({ error: `This record type requires a CCS admin: ${name}` }, { status: 403 });
+        }
+        const ent = base44.asServiceRole.entities[name];
+        const q = cleanQuery(entry?.query);
+        const sort = String(entry?.sort || 'created_date').trim() || null;
+        const limit = normalizeLimit(entry?.limit);
+        const skip = normalizeSkip(entry?.skip);
+        const rows = q
+          ? await ent.filter(q, sort, limit, skip)
+          : await ent.list(sort, limit, skip);
+        out[name] = (Array.isArray(rows) ? rows : []).map((r: any) => projectItem(name, r));
+      }
+      return Response.json({ success: true, entities: out });
+    }
+
     const entityName = String(body?.entity || '').trim();
     if (!STAFF_READABLE.has(entityName) && !ADMIN_READABLE.has(entityName)) {
-      return { status: 403, body: { error: 'This record type cannot be read here.' } };
+      return Response.json({ error: 'This record type cannot be read here.' }, { status: 403 });
     }
     if (ADMIN_READABLE.has(entityName) && user.role !== 'admin') {
-      return { status: 403, body: { error: 'This record type requires a CCS admin.' } };
+      return Response.json({ error: 'This record type requires a CCS admin.' }, { status: 403 });
     }
 
     const entity = base44.asServiceRole.entities[entityName];
     const ownerEmail = user.role === 'admin' ? '' : String(user.email).trim().toLowerCase();
     const id = String(body?.id || '').trim();
     if (id) {
-      const item = await entity.get(id).catch((e: any) => (Number(e?.status) === 404 ? null : Promise.reject(e)));
-      if (!item) return { status: 404, body: { error: 'Record not found.' } };
+      const item = await entity.get(id).catch(() => null);
+      if (!item) return Response.json({ error: 'Record not found.' }, { status: 404 });
       if (OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail) {
-        return { status: 404, body: { error: 'Record not found.' } };
+        return Response.json({ error: 'Record not found.' }, { status: 404 });
       }
-      return { status: 200, body: { success: true, item: projectItem(entityName, item) } };
+      return Response.json({ success: true, item: projectItem(entityName, item) });
     }
 
-    const query = cleanQuery(body?.query, entityName);
+    const query = cleanQuery(body?.query);
     const sort = cleanSort(body?.sort, entityName);
     const limit = cleanLimit(body?.limit, 100);
     const skip = cleanSkip(body?.skip);
@@ -329,70 +277,15 @@ async function readOne(base44: any, user: any, body: any) {
       ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
       : rows;
     if (body?.count === true) {
-      return { status: 200, body: { success: true, count: scopedRows.length } };
+      return Response.json({ success: true, count: scopedRows.length });
     }
-    return { status: 200, body: { success: true, items: scopedRows.map((row) => projectItem(entityName, row)) } };
-  } catch (error: any) {
-    const status = Number(error?.status || 500);
-    if ([400, 401, 403].includes(status)) {
-      return { status, body: { error: error?.message || 'Staff read failed.' } };
-    }
-    const message = String(error?.message || error);
-    // A platform rate limit is transient: hand it back as 429 so the browser
-    // backs off and retries instead of surfacing a hard failure.
-    if (isRateLimited(error)) {
-      return { status: 429, body: { error: 'Data could not be loaded. Try again.', detail: message, retry_after_ms: 3000 } };
-    }
-    console.error('staffDataRead error:', error);
-    return { status: 500, body: { error: 'Data could not be loaded. Try again.', detail: message } };
-  }
-}
-
-function toResponse(result: { status: number, body: any }) {
-  const headers: Record<string, string> = result.status === 429 ? { 'Retry-After': '3' } : {};
-  return Response.json(result.body, { status: result.status, headers });
-}
-
-Deno.serve(async (req) => {
-  try {
-    // One quick server-side retry at most: longer backoff belongs to the
-    // browser, which honors Retry-After and coordinates every open request.
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
-    const body = await req.json().catch(() => ({}));
-    const user = await resolveFleetStaffUser(base44, body?.session_token);
-    if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
-
-    // Batch: many reads behind a single session verification. Each read keeps
-    // its own authorization, scoping and status; one failure never hides the
-    // others' results.
-    if (Array.isArray(body?.requests)) {
-      const requests = body.requests;
-      if (requests.length === 0 || requests.length > MAX_BATCH) {
-        return Response.json({ error: `Staff read batch needs 1 to ${MAX_BATCH} reads.` }, { status: 400 });
-      }
-      const results: any[] = new Array(requests.length);
-      for (let start = 0; start < requests.length; start += BATCH_CONCURRENCY) {
-        const slice = requests.slice(start, start + BATCH_CONCURRENCY);
-        const settled = await Promise.all(slice.map((request: any) => readOne(base44, user, request)));
-        settled.forEach((result, offset) => { results[start + offset] = result; });
-      }
-      return Response.json({ success: true, results });
-    }
-
-    return toResponse(await readOne(base44, user, body));
+    return Response.json({ success: true, items: scopedRows.map((row) => projectItem(entityName, row)) });
   } catch (error: any) {
     const status = Number(error?.status || 500);
     if ([400, 401, 403].includes(status)) {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
     }
-    const message = String(error?.message || error);
-    if (isRateLimited(error)) {
-      return Response.json(
-        { error: 'Data could not be loaded. Try again.', detail: message, retry_after_ms: 3000 },
-        { status: 429, headers: { 'Retry-After': '3' } },
-      );
-    }
     console.error('staffDataRead error:', error);
-    return Response.json({ error: 'Data could not be loaded. Try again.', detail: message }, { status: 500 });
+    return Response.json({ error: 'Data could not be loaded. Try again.' }, { status: 500 });
   }
 });
