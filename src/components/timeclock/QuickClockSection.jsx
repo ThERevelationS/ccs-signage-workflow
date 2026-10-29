@@ -218,6 +218,16 @@ export default function QuickClockSection({
     setShowKioskTutorial(false);
     try { localStorage.setItem("ccs_kiosk_tutorial_seen", "1"); } catch {}
   };
+  // Camera preview orientation - mirrored reads naturally for most, but
+  // some users prefer the raw feed. Persisted per kiosk device.
+  const [cameraMirrored, setCameraMirrored] = useState(() => {
+    try { return localStorage.getItem("ccs_kiosk_camera_mirror") !== "0"; } catch { return true; }
+  });
+  const toggleCameraMirror = () => setCameraMirrored((v) => {
+    const next = !v;
+    try { localStorage.setItem("ccs_kiosk_camera_mirror", next ? "1" : "0"); } catch {}
+    return next;
+  });
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
@@ -1756,7 +1766,14 @@ export default function QuickClockSection({
           <div className="flex flex-col items-center">
             {recognitionMethod === "face" && (
               <div className="relative mb-4">
-                <video ref={videoRef} autoPlay muted playsInline className="w-80 h-60 object-cover rounded-2xl bg-gray-900 scale-x-[-1]" />
+                <div className="relative inline-block">
+                  <video ref={videoRef} autoPlay muted playsInline className={`w-80 h-60 object-cover rounded-2xl bg-gray-900 ${cameraMirrored ? "scale-x-[-1]" : ""}`} />
+                  <button type="button" onClick={toggleCameraMirror}
+                    className="absolute right-2 top-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-black/70"
+                    title="Flip camera preview">
+                    {cameraMirrored ? "Unflip" : "Mirror"}
+                  </button>
+                </div>
                 <div className="scan-reticle scan-tone-scanning" aria-hidden="true">
                   <div className="scan-bracket tl" />
                   <div className="scan-bracket tr" />
