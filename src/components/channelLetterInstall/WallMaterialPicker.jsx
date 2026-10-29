@@ -7,7 +7,7 @@ export default function WallMaterialPicker({ value, onChange }) {
       {WALL_MATERIALS.map((m) => {
         const selected = value === m.id;
         return (
-          <button
+          <button type="button"
             key={m.id}
             type="button"
             onClick={() => onChange(m.id)}
