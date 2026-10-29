@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert, ChevronRight } from "lucide-react";
+import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert, ChevronRight, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
@@ -55,6 +55,16 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
             </div>
             {jurisdiction.type !== "county" && jurisdiction.parent_county?.name && (
               <div className="mt-1 text-[11px] text-gray-500">Parent County: {jurisdiction.parent_county.name}</div>
+            )}
+            {(jurisdiction.contact_info?.phone || (jurisdiction.offices || []).find((o) => o.contact_phone)?.contact_phone) && (
+              <a
+                href={`tel:${(jurisdiction.contact_info?.phone || (jurisdiction.offices || []).find((o) => o.contact_phone)?.contact_phone || "").replace(/[^+\d]/g, "")}`}
+                className="mt-1 flex items-center gap-1 text-xs font-semibold text-green-700 hover:underline"
+                onClick={e => e.stopPropagation()}
+              >
+                <Phone className="w-3 h-3" />
+                {jurisdiction.contact_info?.phone || (jurisdiction.offices || []).find((o) => o.contact_phone)?.contact_phone}
+              </a>
             )}
             {jurisdiction.permitting_url && (
               <a
