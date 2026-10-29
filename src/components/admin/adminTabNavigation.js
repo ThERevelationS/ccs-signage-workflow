@@ -224,3 +224,16 @@ export function searchAdminSettings(input, isAdmin, limit = 8, user) {
     .slice(0, Math.max(0, Math.floor(Number(limit) || 0)))
     .map(({ destination: { keywords, ...result } }) => result);
 }
+
+// Human-readable summary of an admin's page access for row badges.
+// Counts top-level tab visibility only; subtab restrictions don't change the count.
+export function getAdminAccessSummary(user) {
+  if (user?.is_full_admin === true) return 'Full access';
+  const permissions = user?.admin_permissions && typeof user.admin_permissions === 'object' && !Array.isArray(user.admin_permissions)
+    ? user.admin_permissions : null;
+  const allTabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ ...t, groupId: g.id })));
+  const allowed = allTabs.filter((tab) => isGroupPermitted(tab.groupId, permissions) && isTabPermitted(tab, permissions));
+  if (allowed.length === allTabs.length) return 'All pages';
+  if (allowed.length === 0) return 'No pages';
+  return `${allowed.length} of ${allTabs.length} pages`;
+}
