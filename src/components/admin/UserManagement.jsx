@@ -165,6 +165,24 @@ export default function UserManagement() {
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [accessUser, setAccessUser] = useState(null);
   const [previewUserId, setPreviewUserId] = useState(null);
+  const [sessionsByUser, setSessionsByUser] = useState({});
+  const loadSessions = async (user) => {
+    if (!sessionToken) return;
+    setSessionsByUser((cur) => ({ ...cur, [user.id]: { loading: true, rows: [] } }));
+    try {
+      const r = await base44.functions.invoke("sessionAdminAction", { session_token: sessionToken, action: "list", target_email: user.email });
+      setSessionsByUser((cur) => ({ ...cur, [user.id]: { loading: false, rows: r?.data?.sessions || [] } }));
+    } catch {
+      setSessionsByUser((cur) => ({ ...cur, [user.id]: { loading: false, rows: [], error: true } }));
+    }
+  };
+  const revokeSession = async (user, sessionId) => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("sessionAdminAction", { session_token: sessionToken, action: "revoke", session_id: sessionId });
+      if (r?.data?.success) loadSessions(user);
+    } catch { /* leave row retryable */ }
+  };
   const [userSearch, setUserSearch] = useState("");
   const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin | inactive
   const [userSort, setUserSort] = useState("name"); // name | name_desc | email | role
@@ -2316,7 +2334,10 @@ export default function UserManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setPreviewUserId((cur) => (cur === user.id ? null : user.id))}
+                    onClick={() => {
+                      setPreviewUserId((cur) => (cur === user.id ? null : user.id));
+                      if (previewUserId !== user.id && !sessionsByUser[user.id]) loadSessions(user);
+                    }}
                     aria-label={`Preview what ${user.full_name || user.email} sees`}
                     aria-expanded={previewUserId === user.id}
                     className="h-8 w-8"
@@ -2354,6 +2375,28 @@ export default function UserManagement() {
                       ))
                     ) : (
                       <span className="text-[11px] text-gray-400">Not an admin — sees no admin tabs.</span>
+                    )}
+                  </div>
+                  <div className="mt-2 border-t border-gray-100 pt-2">
+                    <p className="text-[11px] font-semibold text-gray-500">Active sessions</p>
+                    {sessionsByUser[user.id]?.loading ? (
+                      <p className="mt-1 text-[11px] text-gray-400">Loading…</p>
+                    ) : (sessionsByUser[user.id]?.rows || []).length ? (
+                      <ul className="mt-1 space-y-1">
+                        {sessionsByUser[user.id].rows.map((ses) => (
+                          <li key={ses.id} className="flex items-center justify-between gap-2 text-[10px] text-gray-600">
+                            <span>Signed in {ses.created_at ? new Date(ses.created_at).toLocaleDateString() : "—"} · expires {ses.expires_at ? new Date(ses.expires_at).toLocaleDateString() : "—"}</span>
+                            {ses.revoked ? (
+                              <span className="text-red-500">revoked</span>
+                            ) : (
+                              <Button type="button" variant="ghost" size="sm" onClick={() => revokeSession(user, ses.id)}
+                                className="h-5 px-1.5 text-[10px] text-red-600">Revoke</Button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-gray-400">{sessionsByUser[user.id]?.error ? "Could not load sessions." : "No active sessions recorded yet — rows appear after their next sign-in."}</p>
                     )}
                   </div>
                 </div>
