@@ -66,6 +66,7 @@ import { classifySalesTaskStatusAudit } from "../../../base44/shared/salesTaskSt
 import { salesReviewQueueFilterKey, canKeepLocallyResolvedSalesReview, keepLocallyResolvedSalesReviewDetails, nextSalesReviewQueueIndex } from "@/components/sales/salesReviewQueueExit.mjs";
 import { canUpdateWonOperationalField, captureSalesTransitionGuards, untouchedSalesTransitionGuards, planSalesTaskChange, planExistingSalesTaskStatusReconciliation, isSalesTransitionSnapshotCurrent } from "@/components/sales/salesTaskStageMapping.mjs";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 const WorkOrder = staffEntities.WorkOrder;
 const GlobalSettings = staffEntities.GlobalSettings;
@@ -717,19 +718,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       let hasMore = false;
 
       if (scope === "current") {
-        rows = await loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, in_pipeline: true, sales_status: { $nin: ["won", "lost"] }, deleted: { $ne: true } },
-          sort: "-created_date",
-          label: "Sales Pipeline current opportunities",
-        });
+        rows = (await fetchAllWorkOrders()).filter((wo) =>
+          wo.is_rider !== true && wo.completed !== true && wo.in_pipeline === true &&
+          !["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
+        ).sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
       } else if (scope === "outcomes") {
-        rows = await loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
-          sort: "-close_date",
-          label: "Sales Pipeline modern outcomes",
-        });
+        rows = (await fetchAllWorkOrders()).filter((wo) =>
+          wo.is_rider !== true && wo.in_pipeline === true &&
+          ["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
+        ).sort((a, b) => (b.close_date || "").localeCompare(a.close_date || ""));
       } else if (scope === "history") {
         const page = await readArchivePage(LEGACY_CLOSED_QUERY, 0);
         rows = page;
