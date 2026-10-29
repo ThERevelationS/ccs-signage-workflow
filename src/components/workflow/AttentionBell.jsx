@@ -1,4 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+// Subtle WebAudio chime when the attention count grows — opt-out via
+// localStorage.attention_sound === "off" (toggled in AttentionFeed).
+export function chimeAttentionIncrease() {
+  try {
+    if (localStorage.getItem("attention_sound") === "off") return;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+    osc.onended = () => ctx.close();
+  } catch { /* audio blocked — stay quiet */ }
+}
 import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -22,6 +42,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
   const { sessionToken } = useAuth();
   const navigate = useNavigate();
   const [count, setCount] = useState(0);
+  const prevCountRef = useRef(null);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -32,7 +53,10 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
         today: new Date().toLocaleDateString("en-CA"),
       });
       const feed = r?.data || r || {};
-      setCount(SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0));
+      const next = SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0);
+      if (prevCountRef.current !== null && next > prevCountRef.current) chimeAttentionIncrease();
+      prevCountRef.current = next;
+      setCount(next);
     } catch { /* fail soft — bell just stays quiet */ }
   }, [sessionToken]);
 
