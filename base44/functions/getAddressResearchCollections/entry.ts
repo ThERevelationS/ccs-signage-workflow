@@ -1,9 +1,10 @@
 import {addressResearchCollection} from '../../shared/permittingAddressDiscoveryContinuation.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 Deno.serve(async req=>{
  try{
-  const client=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);
+  const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);
   const review=body.review===true;
   if(review&&actor.role!=='admin')return Response.json({error:'Administrator access is required to review employee research.'},{status:403});
   const inScope=row=>Boolean(row&&row.reference_only===true&&row.authority_established===false&&(review||(row.owner_id===actor.id&&row.owner_email===String(actor.email).toLowerCase())));
