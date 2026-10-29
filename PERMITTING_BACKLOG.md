@@ -428,7 +428,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 326. **[UX][FLAGGED-dedicated]** "Open in the CRM" cross-links: the customer record ↔ the permit job — one click between.
 327. **[F][FLAGGED-dedicated]** Permit-data export to accounting: fees paid → CSV for QuickBooks — the money trail.
 328. **[H][FLAGGED-dedicated]** Estimate-integration: the estimate's permit-cost line pulls the office's actual fee where known.
-329. **[F][FLAGGED-dedicated]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
+329. **[F][DONE]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
 330. **[UX][DONE]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
 331. **[F][FLAGGED-dedicated]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
 332. **[H][DONE]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
