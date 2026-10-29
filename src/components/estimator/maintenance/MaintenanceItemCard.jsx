@@ -26,7 +26,7 @@ export default function MaintenanceItemCard({ item, index, materials, onChange, 
           placeholder="Sign description (e.g. front elevation letters)"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button
+        <button type="button"
           onClick={() => {
             if (window.confirm("Remove this sign and all its actions?")) onRemove(index);
           }}
