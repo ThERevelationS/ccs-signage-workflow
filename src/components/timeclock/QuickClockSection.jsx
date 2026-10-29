@@ -324,7 +324,7 @@ export default function QuickClockSection({
   const showNotification = (type, userName, timestamp) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     setNotification({ type, userName, time: format(new Date(timestamp), "h:mm a") });
-    playSoundEffect(type === "in" ? "chime" : "ding");
+    if (!quietNow()) playSoundEffect(type === "in" ? "chime" : "ding");
     notificationTimerRef.current = setTimeout(() => setNotification(null), 5000);
   };
 
@@ -339,6 +339,18 @@ export default function QuickClockSection({
     );
   };
   useEffect(() => { refreshGeo(); const t = setInterval(refreshGeo, 300000); return () => clearInterval(t); }, []);
+
+  // --- Kiosk comfort features (localStorage-gated, no backend) ---
+  const [dimmed, setDimmed] = useState(false);
+  const dimTimerRef = useRef(null);
+  const wake = () => { setDimmed(false); if (dimTimerRef.current) clearTimeout(dimTimerRef.current); dimTimerRef.current = setTimeout(() => setDimmed(true), 120000); };
+  useEffect(() => { wake(); const h = () => wake(); window.addEventListener("pointerdown", h); window.addEventListener("keydown", h); return () => { window.removeEventListener("pointerdown", h); window.removeEventListener("keydown", h); if (dimTimerRef.current) clearTimeout(dimTimerRef.current); }; }, []);
+  const [voiceOn] = useState(() => { try { return localStorage.getItem("ccs_kiosk_voice") === "1"; } catch { return false; } });
+  useEffect(() => { if (voiceOn && recognitionStatus && "speechSynthesis" in window) { try { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(recognitionStatus)); } catch {} } }, [recognitionStatus, voiceOn]);
+  const [faceFails, setFaceFails] = useState(() => { try { return Number(localStorage.getItem("ccs_face_fails") || 0); } catch { return 0; } });
+  const [holiday] = useState(() => { const d = new Date(); const key = d.toISOString().slice(0, 10); const map = { "2026-01-01": "New Year's Day", "2026-07-04": "Independence Day", "2026-11-26": "Thanksgiving", "2026-12-25": "Christmas" }; return map[key] || null; });
+  const quietNow = () => { try { const w = localStorage.getItem("ccs_kiosk_quiet"); if (!w) return false; const [a, b] = w.split("-").map(Number); const h = new Date().getHours(); return a <= b ? h >= a && h < b : h >= a || h < b; } catch { return false; } };
+  const [gloveMode] = useState(() => { try { return localStorage.getItem("ccs_kiosk_glove") === "1"; } catch { return false; } });
 
   // Device heartbeat - register this kiosk so the admin sees it in the
   // device list with a live last_seen stamp. Id is stable per browser.
@@ -1634,7 +1646,7 @@ export default function QuickClockSection({
         </div>
       )}
 
-      <div className="clay-card p-6 mb-6" style={largeText ? { zoom: 1.18 } : undefined}>
+      <div className="clay-card p-6 mb-6" style={{ zoom: gloveMode ? 1.5 : largeText ? 1.18 : 1 }}>
         <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-5 h-5 text-purple-600" />
           Quick Clock In/Out
@@ -1645,6 +1657,23 @@ export default function QuickClockSection({
           >A+</button>
         </h2>
 
+        {(() => {
+          // Rotating shop safety tip - changes daily, no network needed.
+          const tips = ["Check your harness before any lift work.", "Lock out power before changing signage wiring.", "Report spills - wet concrete is a fall hazard.", "Eye protection on the shop floor, always.", "Keep exits and extinguisher paths clear.", "Lift with your legs, not your back.", "Verify the permit copy is on the job site.", "Hydrate - shop temps run high in summer."];
+          const tip = tips[Math.floor(Date.now() / 86400000) % tips.length];
+          const lastAction = (() => { try { return localStorage.getItem("ccs_last_action"); } catch { return null; } })();
+          return (
+            <>
+              {lastAction && (
+                <p className="mb-2 rounded-md bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-800">Last action: {lastAction}</p>
+              )}
+              <p className="mb-3 text-center text-[11px] italic text-slate-500">Safety tip: {tip}</p>
+            </>
+          );
+        })()}
+        {dimmed && <div className="kiosk-dim-overlay fixed inset-0 z-50 bg-slate-900/90 transition-opacity" onClick={wake} />}
+        {holiday && <p className="mb-2 rounded-md bg-amber-50 px-3 py-1.5 text-center text-sm font-semibold text-amber-800">Happy {holiday}! Holiday hours apply today.</p>}
+        {faceFails >= 5 && <p className="mb-2 rounded-md bg-red-50 px-3 py-1.5 text-[11px] font-medium text-red-700">Face not recognizing you? Ask a manager to re-enroll your photo.</p>}
         {showKioskTutorial && (
           <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/80 p-3">
             <div className="flex items-start justify-between gap-3">
