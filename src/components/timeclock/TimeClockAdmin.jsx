@@ -828,6 +828,16 @@ export default function TimeClockAdmin() {
     XLSX.writeFile(wb, fileName);
   };
 
+  const jobSummary = filteredEntries.reduce((acc, entry) => {
+    for (const j of entry.job_allocations || []) {
+      const key = j.is_inhouse ? `In-house: ${j.inhouse_task || "task"}` : (j.client_name || "Unknown client");
+      const hrs = Number(j.hours) || (Number(j.minutes) ? Number(j.minutes) / 60 : 0);
+      acc[key] = (acc[key] || 0) + hrs;
+    }
+    return acc;
+  }, {});
+  const jobRows = Object.entries(jobSummary).sort((a, b) => b[1] - a[1]);
+
   const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
     const entry = timeEntries.find(e => e.user_email === email);
     return { email, name: entry?.user_name || email };
@@ -1047,6 +1057,24 @@ export default function TimeClockAdmin() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {jobRows.length > 0 && (
+        <div className="clay-card p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Briefcase className="w-4 h-4" />
+            Hours by Job
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {jobRows.slice(0, 12).map(([name, hrs]) => (
+              <div key={name} className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium text-sm truncate" title={name}>{name}</p>
+                <p className="text-lg font-bold text-indigo-600">{hrs.toFixed(2)} hrs</p>
+              </div>
+            ))}
+          </div>
+          {jobRows.length > 12 && <p className="mt-2 text-xs text-gray-400">Top 12 of {jobRows.length} jobs</p>}
         </div>
       )}
 
