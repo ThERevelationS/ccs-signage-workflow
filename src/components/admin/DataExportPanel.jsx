@@ -14,6 +14,9 @@ const EXPORTABLE = [
   { value: "TimeClockCorrectionRequest", label: "Time-clock correction requests" },
   { value: "EmailGroup", label: "Email groups" },
   { value: "GlobalSettings", label: "Global settings" },
+  { value: "PermittingRule", label: "Permitting rules" },
+  { value: "JurisdictionProfile", label: "Jurisdiction profiles" },
+  { value: "PermitLocality", label: "Permit localities" },
 ];
 
 const flattenValue = (value) => {
