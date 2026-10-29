@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { isQuoteExpired, localDateStamp, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
+import { estimateQuoteExpiration, localDateStamp, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const CUSTOMER_NOTE_CACHE_MS = 30_000;
@@ -59,9 +59,9 @@ export default function EstimateCard({ estimate }) {
   const sentWithQuote =
     (estimate.status || "draft") === "sent" && estimate.quote_issue_date && validDays;
   const expires = sentWithQuote
-    ? quoteExpirationDate(estimate.quote_issue_date, validDays)
+    ? estimateQuoteExpiration(estimate)
     : "";
-  const expired = !!expires && isQuoteExpired(estimate.quote_issue_date, validDays);
+  const expired = !!expires && localDateStamp() > expires;
   const expiringSoon =
     !!expires && !expired && expires <= localDateStamp(new Date(Date.now() + 7 * 86400000));
 
@@ -86,7 +86,7 @@ export default function EstimateCard({ estimate }) {
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
             <span className="flex items-center gap-1">
               <User className="w-3.5 h-3.5" />
-              {estimate.client_name || "—"}
+              {estimate.client_name || "â€”"}
             </span>
             {estimate.estimate_number && (
               <span className="font-mono text-xs text-gray-400">{estimate.estimate_number}</span>
