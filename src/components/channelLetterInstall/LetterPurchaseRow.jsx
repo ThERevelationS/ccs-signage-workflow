@@ -128,7 +128,7 @@ export default function LetterPurchaseRow({
                     Add to set as…
                   </div>
                   {SET_CHILD_TYPES.map(t => (
-                    <button
+                    <button type="button"
                       key={t.value}
                       type="button"
                       onClick={() => {
