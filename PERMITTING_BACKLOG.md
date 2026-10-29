@@ -390,7 +390,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 294. **[UX][DONE]** Renewal shortcut: an expired permit gets a "start renewal" action copying the prior application's data.
 295. **[F][FLAGGED-dedicated]** Permit-transfer tracking: when a job moves clients, the permit's owner field changes — the handoff is recorded.
 296. **[UX][FLAGGED-dedicated]** Document thumbnails: the permit PDF's first page as a preview on the line — staff recognize it without opening.
-297. **[F][FLAGGED-dedicated]** Permit-packet export: permit + application + site plan bundled as one printable packet for the inspector.
+297. **[F][DONE]** Permit-packet export: permit + application + site plan bundled as one printable packet for the inspector.
 298. **[H][DONE]** Document-freshness check: a permit expiring before the job's install date flags "permit may lapse — renew first".
 299. **[F][DONE]** Multi-permit coordination: when a job needs sign + electrical + zoning separately, the three tracks show as parallel rows.
 300. **[UX][DONE]** "All permits issued" completion state: the job card shows a clear done-state when every line is issued.
