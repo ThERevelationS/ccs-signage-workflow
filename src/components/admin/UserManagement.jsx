@@ -62,6 +62,7 @@ import {
   createAuthorizedUserAdmin,
   deleteAuthorizedUserAdmin,
   getAccountDeletionImpactAdmin,
+  getUserDeletionImpactAdmin,
   listAccountDeletionRequestsAdmin,
   listAuthorizedUsersAdmin,
   resolveAccountDeletionRequestAdmin,
@@ -83,6 +84,8 @@ export default function UserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteImpact, setDeleteImpact] = useState(null);
+  const [deleteImpactError, setDeleteImpactError] = useState("");
   const [deletionSaving, setDeletionSaving] = useState(false);
   const deletionInFlight = useRef(false);
   const deletionOwner = useRef(null);
@@ -127,6 +130,10 @@ export default function UserManagement() {
   const [accessUser, setAccessUser] = useState(null);
   const [userSearch, setUserSearch] = useState("");
   const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin
+  const [userSort, setUserSort] = useState("name"); // name | name_desc | email | role
+  const [selectedUserIds, setSelectedUserIds] = useState(() => new Set());
+  const [bulkRoleBusy, setBulkRoleBusy] = useState(false);
+  const [bulkRoleError, setBulkRoleError] = useState("");
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
@@ -289,6 +296,42 @@ export default function UserManagement() {
     };
   }, [sessionToken]);
 
+  const applyRoleToSelected = async (role) => {
+    const targets = visibleUsers.filter((u) => selectedUserIds.has(u.id) && u.role !== role);
+    if (!targets.length || !sessionToken) return;
+    setBulkRoleBusy(true); setBulkRoleError("");
+    const failed = [];
+    for (const record of targets) {
+      try {
+        const saved = await updateAuthorizedUserAdmin({ record, nextFields: { role }, sessionToken });
+        if (saved?.id) setUsers((current) => current.map((row) => (row.id === saved.id ? { ...row, ...saved } : row)));
+      } catch (err) {
+        failed.push(record.full_name || record.email || record.id);
+      }
+    }
+    if (failed.length) setBulkRoleError(`Could not update: ${failed.join(", ")}`);
+    else setSelectedUserIds(new Set());
+    setBulkRoleBusy(false);
+  };
+
+  const exportUsersCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Name", "Email", "Role", "Full Admin", "Sales Roles", "Pages Access"],
+      ...visibleUsers.map((u) => [
+        u.full_name || "", u.email || "", u.role || "",
+        u.is_full_admin === true ? "yes" : "",
+        (Array.isArray(u.sales_roles) ? u.sales_roles : []).join("; "),
+        u.role === "admin" ? getAdminAccessSummary(u) : "",
+      ]),
+    ].map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "users.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const userSearchQ = userSearch.trim().toLowerCase();
   const visibleUsers = users.filter((u) => {
     if (userFilter === "admin" && u.role !== "admin") return false;
@@ -298,6 +341,16 @@ export default function UserManagement() {
     const hay = [u.full_name, u.email, ...(Array.isArray(u.sales_roles) ? u.sales_roles : [])]
       .filter(Boolean).join(" ").toLowerCase();
     return hay.includes(userSearchQ);
+  });
+  visibleUsers.sort((a, b) => {
+    const an = String(a.full_name || a.email || "").toLowerCase();
+    const bn = String(b.full_name || b.email || "").toLowerCase();
+    switch (userSort) {
+      case "name_desc": return bn.localeCompare(an);
+      case "email": return String(a.email || "").localeCompare(String(b.email || ""));
+      case "role": return String(a.role || "").localeCompare(String(b.role || "")) || an.localeCompare(bn);
+      default: return an.localeCompare(bn);
+    }
   });
 
   const loadUsers = async () => {
@@ -1347,6 +1400,24 @@ export default function UserManagement() {
     }
   };
 
+  // Pre-delete impact check (read-only): warn before removing users who
+  // still own live work or history. Failures never block the delete path.
+  useEffect(() => {
+    setDeleteImpact(null); setDeleteImpactError("");
+    const target = deleteConfirm;
+    if (!target?.id || !sessionToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const impact = await getUserDeletionImpactAdmin({ user: target, sessionToken });
+        if (!cancelled) setDeleteImpact(impact);
+      } catch (err) {
+        if (!cancelled) setDeleteImpactError(err?.message || "Impact check unavailable.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [deleteConfirm, sessionToken]);
+
   const handleDelete = async (user) => {
     // The confirmed row must still be present in the verified directory at
     // the exact version shown to this administrator.
@@ -1791,6 +1862,24 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="space-y-2">
+            {selectedUserIds.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
+                <span className="text-xs font-semibold text-indigo-900">{selectedUserIds.size} selected</span>
+                <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
+                  onClick={() => applyRoleToSelected("admin")} className="h-7 text-xs">
+                  {bulkRoleBusy ? "Working…" : "Grant admin"}
+                </Button>
+                <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
+                  onClick={() => applyRoleToSelected("user")} className="h-7 text-xs">
+                  {bulkRoleBusy ? "Working…" : "Revoke admin"}
+                </Button>
+                <Button type="button" size="sm" variant="ghost" disabled={bulkRoleBusy}
+                  onClick={() => { setSelectedUserIds(new Set()); setBulkRoleError(""); }} className="h-7 text-xs">
+                  Clear
+                </Button>
+                {bulkRoleError && <span className="text-xs text-red-600">{bulkRoleError}</span>}
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <Input
                 value={userSearch}
@@ -1809,6 +1898,21 @@ export default function UserManagement() {
                   </Button>
                 ))}
               </div>
+              <Select value={userSort} onValueChange={setUserSort}>
+                <SelectTrigger className="h-7 w-32 text-xs" aria-label="Sort users">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name A–Z</SelectItem>
+                  <SelectItem value="name_desc">Name Z–A</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="role">Role</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="button" size="sm" variant="outline" onClick={exportUsersCsv}
+                className="h-7 text-xs" title="Export the filtered user list to CSV">
+                Export
+              </Button>
               {(userSearch || userFilter !== "all") && (
                 <span className="text-xs text-gray-400 ml-auto">{visibleUsers.length} of {users.length}</span>
               )}
@@ -1822,6 +1926,15 @@ export default function UserManagement() {
                 className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={selectedUserIds.has(user.id)}
+                    onCheckedChange={(checked) => setSelectedUserIds((prev) => {
+                      const next = new Set(prev);
+                      if (checked === true) next.add(user.id); else next.delete(user.id);
+                      return next;
+                    })}
+                    aria-label={`Select ${user.full_name || user.email}`}
+                  />
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
                     style={{
@@ -2670,6 +2783,34 @@ export default function UserManagement() {
               Are you sure you want to remove "{deleteConfirm?.full_name || deleteConfirm?.email}"? 
               They will lose access to this application.
             </AlertDialogDescription>
+            {deleteConfirm && !deleteImpact && !deleteImpactError && (
+              <p className="mt-2 text-xs text-gray-400">Checking what this user still owns…</p>
+            )}
+            {deleteImpactError && (
+              <p className="mt-2 text-xs text-gray-400">Impact check unavailable — review their assignments manually.</p>
+            )}
+            {deleteImpact && (
+              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 space-y-1">
+                {(deleteImpact.blockers || []).length > 0 ? (
+                  deleteImpact.blockers.map((b, i) => <p key={i} className="font-medium">Warning: {b}</p>)
+                ) : (
+                  <p>No blocking records found for this user.</p>
+                )}
+                {(() => {
+                  const a = deleteImpact.assignments || {};
+                  const refs = (a.WorkOrder || 0) + (a.GeneralTask || 0) + (a.CalendarEvent || 0);
+                  const hist = (deleteImpact.history || []).reduce((sum, r) => sum + (r.count || 0), 0);
+                  if (!refs && !hist) return null;
+                  return (
+                    <p>
+                      {refs > 0 ? `${refs} live assignment${refs === 1 ? "" : "s"} (work orders, tasks, calendar)` : ""}
+                      {refs > 0 && hist > 0 ? " · " : ""}
+                      {hist > 0 ? `${hist} history record${hist === 1 ? "" : "s"} preserved` : ""}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deletionSaving} className="clay-button">Cancel</AlertDialogCancel>
