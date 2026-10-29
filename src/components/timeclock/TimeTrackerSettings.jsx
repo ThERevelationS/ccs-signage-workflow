@@ -121,6 +121,8 @@ const DEFAULT_PREFS = {
   alert_minutes: [],
   reminders: [],
   time_format: "hh_mm_ss",
+  hide_when_idle_minutes: 0,
+  daily_goal_overrides: null,
 };
 
 function newRequestId() {
@@ -311,6 +313,29 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 />
               </Field>
             </div>
+            <Field label="Per-day goal overrides (hours)" hint="Blank days use the daily goal above — e.g. set Friday to 6 for a short day" info>
+              <div className="grid grid-cols-7 gap-1.5 mt-2">
+                {["sun", "mon", "tue", "wed", "thu", "fri", "sat"].map((d) => (
+                  <div key={d} className="text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{d}</div>
+                    <input
+                      type="number" min={0} max={14} step={0.5}
+                      value={Number(p.daily_goal_overrides?.[d]) ? p.daily_goal_overrides[d] / 60 : ""}
+                      placeholder="-"
+                      onChange={(e) => {
+                        const hours = e.target.value === "" ? null : Number(e.target.value);
+                        const next = { ...(p.daily_goal_overrides || {}) };
+                        if (Number.isFinite(hours) && hours > 0) next[d] = Math.round(hours * 60);
+                        else delete next[d];
+                        update("daily_goal_overrides", Object.keys(next).length ? next : null);
+                      }}
+                      disabled={saving}
+                      className="w-full rounded-md border border-slate-200 px-1 py-1 text-center text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
               <Field label="Counts" hint="Paid time excludes unpaid breaks and work pauses; elapsed is raw wall-clock">
                 <Select value={p.count_mode} onValueChange={set("count_mode")} disabled={saving}>
@@ -688,6 +713,13 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                 </label>
               ))}
             </div>
+            <Field label={`Hide when idle — ${Number(p.hide_when_idle_minutes) > 0 ? `${p.hide_when_idle_minutes}m` : "off"}`} hint="Tracker disappears after this much mouse/keyboard inactivity (0 = never hide)" info>
+              <Slider
+                value={[Number(p.hide_when_idle_minutes) || 0]} min={0} max={120} step={5}
+                onValueChange={([v]) => update("hide_when_idle_minutes", v)}
+                disabled={saving} className="mt-2"
+              />
+            </Field>
           </Section>
 
           {/* ---------------- DETAILS ---------------- */}
