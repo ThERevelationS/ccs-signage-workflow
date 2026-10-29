@@ -344,6 +344,7 @@ export default function EstimatorQueues() {
           </div>
           <SavedViews
             storageKey="views.estimator_queues"
+            autoApply={!status && !params.get("q") && !params.get("sort") && !mine}
             getState={() => ({ q: query, status, sort })}
             onApply={(s) => {
               const nextQ = s?.q || ""; const nextSort = s?.sort || "newest"; const nextStatus = s?.status || "";
