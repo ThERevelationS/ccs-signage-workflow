@@ -310,7 +310,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 231. **[F][DONE]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
 232. **[UX][DONE]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
-233. **[F][FLAGGED-dedicated]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
+233. **[F][DONE]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
 234. **[UX][DONE]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
 235. **[F][DONE]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
 236. **[UX][DONE]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
@@ -347,7 +347,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 257. **[F][DONE]** Evidence confidence per source: official .gov page / state registry / inferred / hearsay — a badge on every document.
 258. **[H][FLAGGED-dedicated]** Source link health-check: periodic HEAD-requests flag 404'd official pages — dead evidence gets noticed.
 259. **[F][DONE]** Source date captured: "Page last updated March 2024" — the evidence's own freshness, not just ours.
-260. **[UX][FLAGGED-dedicated]** Click any claim → see the quoted text from the source that proved it — evidence is one tap, not a trust-me.
+260. **[UX][DONE]** Click any claim → see the quoted text from the source that proved it — evidence is one tap, not a trust-me.
 261. **[F][FLAGGED-dedicated]** Contradiction logging: when two sources disagree on who issues permits, both get recorded + flagged — never silently resolved.
 262. **[H][FLAGGED-dedicated]** Source-dedup: the same URL on two jurisdictions gets normalized to one record — the evidence graph stays clean.
 263. **[F][DONE]** Offline source snapshots: a cached copy of the proving page so a 404 doesn't erase the evidence.
@@ -395,7 +395,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 299. **[F][DONE]** Multi-permit coordination: when a job needs sign + electrical + zoning separately, the three tracks show as parallel rows.
 300. **[UX][DONE]** "All permits issued" completion state: the job card shows a clear done-state when every line is issued.
 301. **[F][DONE]** Denial-record: a denied permit records the reason + date + appeal deadline — the next attempt learns from it.
-302. **[UX][FLAGGED-dedicated]** Variance-tracking: when the office requires a variance, a linked variance line is auto-suggested.
+302. **[UX][DONE]** Variance-tracking: when the office requires a variance, a linked variance line is auto-suggested.
 303. **[F][FLAGGED-dedicated]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
 304. **[UX][DONE]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
 305. **[F][DONE]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
@@ -480,9 +480,9 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 372. **[H][DONE]** Idle-time prefetch: when the page is idle, next-likely catalogs warm in the background.
 373. **[H][DONE]** Cancel-abandoned reads: leaving the picker mid-load cancels the in-flight entity calls.
 374. **[H][DONE]** Bound the event payload: scan events cap at N entries server-side — a long scan can't bloat the record.
-375. **[H][FLAGGED-dedicated]** Memoized list-derivations: the queue summaries + counts compute once per data-change, not per render.
-376. **[H][FLAGGED-dedicated]** Stale-while-revalidate on the repository: last-cached list shows instantly, fresh data swaps in behind.
-377. **[H][FLAGGED-dedicated]** Chunked map render: >50 boundary polygons batch-paint so the map doesn't freeze.
+375. **[H][DONE]** Memoized list-derivations: the queue summaries + counts compute once per data-change, not per render.
+376. **[H][DONE]** Stale-while-revalidate on the repository: last-cached list shows instantly, fresh data swaps in behind.
+377. **[H][DONE]** Chunked map render: >50 boundary polygons batch-paint so the map doesn't freeze.
 378. **[H][FLAGGED-dedicated]** One shared geocoder client: the resolver + browser-fallback share one fetch budget — no parallel geocoder storms.
 
 ## AE — Communication & follow-through
@@ -494,14 +494,14 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 383. **[F][FLAGGED-dedicated]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
 384. **[UX][DONE]** Plain-language status for clients: "Waiting on the township's review" — not internal jargon.
 385. **[F][DONE]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
-386. **[UX][FLAGGED-dedicated]** Next-check-in prompt: after applying, "check back Thursday?" — a soft reminder set in one tap.
+386. **[UX][DONE]** Next-check-in prompt: after applying, "check back Thursday?" — a soft reminder set in one tap.
 387. **[F][FLAGGED-dedicated]** Team-shift notes: end-of-day "here's where each job stands" auto-summary for the next shift.
 388. **[UX][DONE]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
-389. **[F][FLAGGED-dedicated]** Approval-request workflow: an unverified-locality apply asks a senior for approval — staff work continues pending it.
+389. **[F][DONE]** Approval-request workflow: an unverified-locality apply asks a senior for approval — staff work continues pending it.
 390. **[UX][DONE]** "Who's on this?" per line: the person currently working the chase is named — handoffs are clean.
 391. **[F][DONE]** Office-contact log: every call to an office recorded — the jurisdiction's "we've talked" history.
 392. **[UX][DONE]** Meeting-notes capture: notes from a client call about permitting link to the job — context travels.
-393. **[F][FLAGGED-dedicated]** Escalation to management: a stuck >N-day line auto-surfaces to a manager-review queue.
+393. **[F][DONE]** Escalation to management: a stuck >N-day line auto-surfaces to a manager-review queue.
 394. **[UX][DONE]** Comment-thread per line: staff discuss the chase right where the work happens.
 395. **[F][DONE]** Photo-in-message: a site photo attached to a line's note — the record stays visual.
 396. **[UX][DONE]** Handoff confirmation: transferring a line's ownership asks the receiving staff to confirm — never silent.
@@ -512,17 +512,17 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 398. **[UX][DONE]** Coverage-gap report: jurisdictions with verified jobs but unverified offices — the risk list.
 399. **[F][FLAGGED-dedicated]** Slow-office report: which jurisdictions take longest to verify — research effort targeted.
 400. **[UX][DONE]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
-401. **[F][FLAGGED-dedicated]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
-402. **[UX][FLAGGED-dedicated]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
+401. **[F][DONE]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
+402. **[UX][DONE]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
 403. **[F][DONE]** Repeat-offender list: jurisdictions where applications keep getting rejected — process problems surface.
-404. **[UX][FLAGGED-dedicated]** Time-to-issue report: days from apply → issued per jurisdiction — realistic expectations set.
+404. **[UX][DONE]** Time-to-issue report: days from apply → issued per jurisdiction — realistic expectations set.
 405. **[F][DONE]** Most-applied jurisdictions: the hot-10 towns — where the permitting effort concentrates.
-406. **[UX][FLAGGED-dedicated]** First-try-rate: % of applications accepted first time — quality signal.
-407. **[F][FLAGGED-dedicated]** Electrical-coverage gap report: jurisdictions where electrical issuer/inspector isn't verified — a specific risk.
-408. **[UX][FLAGGED-dedicated]** New-jurisdiction velocity: how fast new towns get researched after first job — the research-lag metric.
+406. **[UX][DONE]** First-try-rate: % of applications accepted first time — quality signal.
+407. **[F][DONE]** Electrical-coverage gap report: jurisdictions where electrical issuer/inspector isn't verified — a specific risk.
+408. **[UX][DONE]** New-jurisdiction velocity: how fast new towns get researched after first job — the research-lag metric.
 409. **[F][DONE]** Data-staleness report: which verified jurisdictions haven't been re-checked in 6 months — the re-verify list.
-410. **[UX][FLAGGED-dedicated]** Per-client permit-health: each client's open jobs' permit status — a client-facing summary.
-411. **[F][FLAGGED-dedicated]** Fee-accuracy report: estimated fees vs actual charged — the estimator calibrates.
+410. **[UX][DONE]** Per-client permit-health: each client's open jobs' permit status — a client-facing summary.
+411. **[F][DONE]** Fee-accuracy report: estimated fees vs actual charged — the estimator calibrates.
 412. **[UX][DONE]** Team-workload view: permits-in-flight per person — the load balance.
 
 ## AG — Power features & polish
