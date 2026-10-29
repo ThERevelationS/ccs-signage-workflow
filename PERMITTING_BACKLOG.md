@@ -471,7 +471,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 363. **[H][DONE]** Picker mount lazy-loads: the map + repository list don't fetch until the dialog opens — faster page.
 364. **[H][FLAGGED-dedicated]** Boundary GeoJSON compression: polygons stored simplified — the map loads fast on phones.
 365. **[H][DONE]** Paged scan-activity: the panel pages old runs — long-history sessions stay fast.
-366. **[H][FLAGGED-dedicated]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
+366. **[H][DONE]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
 367. **[H][DONE]** Incremental list loading: the repository pages 50-at-a-time with "load more" — not one 500-row dump.
 368. **[H][DONE]** Defer non-critical reads: WorkOrder/AuthorizedEmail load after the permit lines render — the list appears sooner.
 369. **[H][DONE]** Boundary-bundle pre-warm: common OH/KY boundaries preloaded — the picker doesn't fetch on every search.
