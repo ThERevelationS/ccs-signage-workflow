@@ -19,7 +19,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   JurisdictionProfile: new Set(['create', 'update']),
   PermitLocality: new Set(['create']),
   LegacyMigrationMap: new Set(['create']),
-  PermitLineItem: new Set(['create']),
+  PermitLineItem: new Set(['create', 'update', 'updateMany', 'delete']),
   PermittingWorkflowDraft: new Set(['create', 'update']),
   RegulationAlert: new Set(['update', 'delete']),
   SipChecklistTemplate: new Set(['create', 'update', 'delete']),
