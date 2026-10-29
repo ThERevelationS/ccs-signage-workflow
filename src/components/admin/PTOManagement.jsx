@@ -102,8 +102,7 @@ function BlackoutDaysCard() {
       .then((r) => {
         if (!alive) return;
         setRow(r);
-        setText((Array.isArray(r?.setting_value?.dates) ? r.setting_value.dates : []).join("
-"));
+        setText((Array.isArray(r?.setting_value?.dates) ? r.setting_value.dates : []).join("\n"));
       })
       .catch(() => null);
     return () => { alive = false; };
@@ -111,15 +110,13 @@ function BlackoutDaysCard() {
   const save = async () => {
     if (busy) return;
     setBusy(true); setMsg("");
-    const dates = [...new Set(text.split(/?
-/).map(d => d.trim()).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)))].sort();
+    const dates = [...new Set(text.split(/\r?\n/).map(d => d.trim()).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)))].sort();
     try {
       const saved = await saveGlobalSettingValueIfUnchanged({
         entity: GlobalSettings, loadedRecord: row, settingKey: "holidayBlackoutDays",
         nextValue: { dates }, label: "Holiday blackout days",
       });
-      setRow(saved); setText(dates.join("
-"));
+      setRow(saved); setText(dates.join("\n"));
       setMsg(`Saved ${dates.length} blackout day${dates.length === 1 ? "" : "s"}.`);
     } catch (err) { setMsg(err?.message || "Could not save blackout days."); }
     finally { setBusy(false); }
@@ -130,9 +127,7 @@ function BlackoutDaysCard() {
       <p className="mt-1 text-xs text-gray-500">Company-closed dates — one per line as YYYY-MM-DD. Use these when reviewing time-off requests.</p>
       <div className="mt-2 flex items-start gap-3">
         <textarea rows={5} value={text} onChange={(e) => setText(e.target.value)}
-          placeholder={"2026-01-01
-2026-07-04
-2026-12-25"}
+          placeholder={"2026-01-01\n2026-07-04\n2026-12-25"}
           className="w-56 rounded-md border border-input bg-transparent px-2 py-1 font-mono text-xs" />
         <div className="flex flex-col gap-1">
           <Button type="button" size="sm" variant="outline" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save days"}</Button>
@@ -506,13 +501,13 @@ export default function PTOManagement() {
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => duplicatePolicy(policy)}>
+                      <Button variant="ghost" size="icon" aria-label="Duplicate policy" onClick={() => duplicatePolicy(policy)}>
                         <Copy className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditPolicy(policy)}>
+                      <Button variant="ghost" size="icon" aria-label="Edit policy" onClick={() => openEditPolicy(policy)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(policy)}>
+                      <Button variant="ghost" size="icon" aria-label="Delete policy" onClick={() => setDeleteConfirm(policy)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -644,7 +639,7 @@ export default function PTOManagement() {
                           className="w-48 font-medium"
                         />
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeTimeOffType(index)}>
+                      <Button variant="ghost" size="icon" aria-label="Remove time-off type" onClick={() => removeTimeOffType(index)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </div>
@@ -769,7 +764,7 @@ export default function PTOManagement() {
                       />
                       Paid
                     </label>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeHoliday(index)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Remove holiday" onClick={() => removeHoliday(index)}>
                       <X className="w-3 h-3" />
                     </Button>
                   </div>
