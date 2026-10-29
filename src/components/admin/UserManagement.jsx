@@ -53,7 +53,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import AdminAccessDialog from "@/components/admin/AdminAccessDialog";
-import { getAdminAccessSummary, getAccessibleAdminTab, ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
+import { getAdminAccessSummary, getAccessibleAdminTab, getAccessibleAdminGroups, ADMIN_TAB_GROUPS } from "@/components/admin/adminTabNavigation";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { createAdminAccountDraft, getChangedAdminAccountFields, hasUnsavedAdminAccountDraft } from "./adminAccountDraft.js";
 import { compareUnverifiedAccountSave, rebaseAppliedAccountDraft, isSameVerifiedAccountSnapshot } from "./unverifiedAccountSave.js";
@@ -164,6 +164,7 @@ export default function UserManagement() {
   const onboardingResendOwner = useRef(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [accessUser, setAccessUser] = useState(null);
+  const [previewUserId, setPreviewUserId] = useState(null);
   const [userSearch, setUserSearch] = useState("");
   const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin | inactive
   const [userSort, setUserSort] = useState("name"); // name | name_desc | email | role
@@ -2176,8 +2177,9 @@ export default function UserManagement() {
             {visibleUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
+                className="rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
               >
+              <div className="flex items-center justify-between gap-2 p-3">
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={selectedUserIds.has(user.id)}
@@ -2275,6 +2277,7 @@ export default function UserManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() => setAccessUser(user)}
+                      aria-label={`Edit pages access for ${user.full_name || user.email}`}
                       className="h-8 gap-1 border-indigo-300 px-2 text-xs font-medium text-indigo-700"
                       title="Admin page access"
                     >
@@ -2313,6 +2316,17 @@ export default function UserManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => setPreviewUserId((cur) => (cur === user.id ? null : user.id))}
+                    aria-label={`Preview what ${user.full_name || user.email} sees`}
+                    aria-expanded={previewUserId === user.id}
+                    className="h-8 w-8"
+                    title="Preview their admin access"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-teal-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => openEditUser(user)}
                     aria-label={`Edit ${user.full_name || user.email}`}
                     className="h-8 w-8"
@@ -2329,6 +2343,21 @@ export default function UserManagement() {
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
                 </div>
+              </div>
+              {previewUserId === user.id && (
+                <div className="border-t border-gray-100 px-3 pb-3 pt-2">
+                  <p className="text-[11px] font-semibold text-gray-500">What {user.full_name || user.email} sees in Admin:</p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {user.role === "admin" ? (
+                      getAccessibleAdminGroups(true, user).flatMap((g) => g.tabs).map((t) => (
+                        <span key={t.value} className="rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800">{t.label}</span>
+                      ))
+                    ) : (
+                      <span className="text-[11px] text-gray-400">Not an admin — sees no admin tabs.</span>
+                    )}
+                  </div>
+                </div>
+              )}
               </div>
             ))}
           </div>
