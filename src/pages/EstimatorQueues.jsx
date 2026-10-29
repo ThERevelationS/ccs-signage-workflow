@@ -112,6 +112,7 @@ export default function EstimatorQueues() {
   const [bulkError, setBulkError] = useState("");
   const mine = params.get("mine") === "1";
   const [me, setMe] = useState(null);
+  const [backupBusy, setBackupBusy] = useState(false);
   useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
 
   const toggleSelected = (id) => setSelectedIds((prev) => {
@@ -269,6 +270,40 @@ export default function EstimatorQueues() {
   }, [estimates, status, q, sort, mine, me]);
 
   const visibleTotal = rows.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
+
+  // Full estimate backup (#468): dumps estimates plus their builder tree and
+  // audit trail (revisions, acceptances, deliveries) to one JSON file. Admin-only
+  // because it exports every estimate, not just the filtered view.
+  const exportBackup = async () => {
+    if (backupBusy || me?.role !== "admin") return;
+    setBackupBusy(true);
+    try {
+      const [estimates, products, parts, revisions, acceptances, sectionAcceptances, deliveries] = await Promise.all([
+        loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, label: "Estimates" }),
+        loadAllEntityRows({ entity: staffEntities.BuilderProduct, label: "Products" }),
+        loadAllEntityRows({ entity: staffEntities.BuilderPart, label: "Parts" }),
+        base44.entities.EstimateRevision.filter({}, "-created_date", 500).catch(() => []),
+        base44.entities.EstimateAcceptance.filter({}, "-created_date", 500).catch(() => []),
+        base44.entities.EstimateSectionAcceptance.filter({}, "-created_date", 500).catch(() => []),
+        base44.entities.EstimateQuoteDelivery.filter({}, "-created_date", 500).catch(() => []),
+      ]);
+      downloadJson(`estimate-backup-${new Date().toISOString().slice(0, 10)}.json`, {
+        exported_at: new Date().toISOString(),
+        app: "ccs-signage-workflow",
+        estimates: estimates || [],
+        builder_products: products || [],
+        builder_parts: parts || [],
+        estimate_revisions: revisions || [],
+        estimate_acceptances: acceptances || [],
+        estimate_section_acceptances: sectionAcceptances || [],
+        estimate_quote_deliveries: deliveries || [],
+      });
+    } catch (e) {
+      window.alert(e?.message || "The estimate backup could not be exported.");
+    } finally {
+      setBackupBusy(false);
+    }
+  };
 
   const exportCsv = () => {
     downloadCsv("estimates.csv",
