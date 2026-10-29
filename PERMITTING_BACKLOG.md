@@ -439,7 +439,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 337. **[F][FLAGGED-dedicated]** Photo-attach to a jurisdiction: site photos of the office's posted requirements — evidence.
 338. **[H][FLAGGED-dedicated]** Timezone-normalized timestamps: all display times in America/New_York — no UTC leakage.
 339. **[F][FLAGGED-dedicated]** The estimate's permit line auto-fills the office's known fee — priced-right without re-typing.
-340. **[UX][FLAGGED-dedicated]** "What changed since I was last here" panel on the page — returning users see the delta.
+340. **[UX][DONE]** "What changed since I was last here" panel on the page — returning users see the delta.
 341. **[F][DONE]** Cross-device handoff: start a search on the desktop, confirm it on the phone — state persists.
 
 ## AC — Safety & correctness, deeper
