@@ -837,6 +837,7 @@ Deno.serve(async (req) => {
       const estimateBySalesperson: any = {};
       const estimateLostReasonMap: any = {};
       const markupUsage: any = { discount: 0, none: 0, "0-10%": 0, "10-25%": 0, "25-50%": 0, "50%+": 0 };
+      const moduleBreakdown: Record<string, { module: string; count: number; value: number }> = {};
       let partCostRatioSum = 0;
       let partCostRatioCount = 0;
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
@@ -861,6 +862,10 @@ Deno.serve(async (req) => {
         }
         let partCost = 0;
         for (const li of Array.isArray(row?.line_items) ? row.line_items : []) {
+          const mk = clean(li?.module_key) || "unassigned";
+          const mSlot = moduleBreakdown[mk] || (moduleBreakdown[mk] = { module: mk, count: 0, value: 0 });
+          mSlot.count += 1;
+          mSlot.value += total;
           const adj = num(li?.adjustment_percent);
           const bucket = adj < 0 ? "discount" : adj === 0 ? "none" : adj <= 10 ? "0-10%" : adj <= 25 ? "10-25%" : adj <= 50 ? "25-50%" : "50%+";
           markupUsage[bucket] += 1;
@@ -888,6 +893,7 @@ Deno.serve(async (req) => {
         win_rate: estimateDecidedCount > 0 ? Math.round((estimateWonCount / estimateDecidedCount) * 1000) / 10 : null,
         won_value: Math.round(estimateWonValue * 100) / 100,
         decided_value: Math.round(estimateDecidedValue * 100) / 100,
+        by_module: Object.values(moduleBreakdown).sort((a: any, b: any) => b.value - a.value).slice(0, 12),
         avg_margin_pct: estimateMarginCount > 0 ? Math.round((estimateMarginSum / estimateMarginCount) * 1000) / 10 : null,
         total_margin: Math.round(estimateMarginTotal * 100) / 100,
         aging_buckets: agingBuckets,
