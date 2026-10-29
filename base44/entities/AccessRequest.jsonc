@@ -1,0 +1,65 @@
+{
+  "name": "AccessRequest",
+  "properties": {
+    "requester_email": {
+      "type": "string",
+      "description": "Email of the user requesting access."
+    },
+    "requested_sections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Admin sections requested \u2014 empty means full admin."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Why access is needed (free text)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "reviewer_email": {
+      "type": "string"
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decided_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "requester_email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
