@@ -117,7 +117,8 @@ export default function PermitSpreadsheetRow({
   isRegistered,
   users,
   currentUser,
-  today
+  today,
+  installDate = ""
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -178,6 +179,12 @@ export default function PermitSpreadsheetRow({
     const ed = parseLocalDate(lineItem.permit_expiration_date);
     const td = parseLocalDate(today);
     return !!(ed && td && differenceInDays(ed, td) < 0);
+  })();
+  const permitExpiresBeforeInstall = (() => {
+    if (isCompleted || !installDate || !lineItem.permit_expiration_date) return false;
+    const ed = parseLocalDate(lineItem.permit_expiration_date);
+    const id = parseLocalDate(installDate);
+    return !!(ed && id && differenceInDays(ed, id) < 0);
   })();
   const localityLabel = lineItem.locality_name || "—";
   const appliedByLabel = (() => {
@@ -246,6 +253,9 @@ export default function PermitSpreadsheetRow({
           )}
           {permitExpired && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fef2f2', color: '#991b1b', border: '1px solid #dc2626' }} title="This permit has expired — start the renewal before the install.">RENEWAL NEEDED</span>
+          )}
+          {permitExpiresBeforeInstall && !permitExpired && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight" style={{ backgroundColor: '#fff7ed', color: '#9a3412', border: '1px solid #ea580c' }} title="The permit expires before the install date — renew or extend it first.">EXPIRES BEFORE INSTALL</span>
           )}
           {officeTypes.length === 0 ? (
             <span
