@@ -202,6 +202,7 @@ export default function TimeClockAdmin() {
   const [activeLaborSegments, setActiveLaborSegments] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
   const [punchExceptions, setPunchExceptions] = useState([]);
+  const [devices, setDevices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
@@ -274,7 +275,7 @@ export default function TimeClockAdmin() {
         }
         throw new Error("Time Clock admin data exceeds the 50,000-record safety limit.");
       };
-      const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows] = await Promise.all([
+      const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows, deviceRows] = await Promise.all([
         loadAdminCollection("entries"),
         loadAdminCollection("states"),
         loadAdminCollection("breaks"),
@@ -282,6 +283,7 @@ export default function TimeClockAdmin() {
         loadAdminCollection("labor_segments"),
         loadAdminCollection("correction_requests"),
         loadAdminCollection("punch_exceptions"),
+        loadAdminCollection("devices").catch(() => []),
       ]);
       setTimeEntries(entries);
       setEmployeeStates(states);
@@ -290,6 +292,7 @@ export default function TimeClockAdmin() {
       setActiveLaborSegments(laborSegments);
       setCorrectionRequests(corrections);
       setPunchExceptions(punchExceptionRows);
+      setDevices(deviceRows || []);
       const recovery = entries.flatMap((entry) => ["approve", "reopen"].map((decision) => storedApprovalRetry(decision, entry.id))).find(Boolean) || null;
       setPendingApprovalRecovery(recovery);
     } catch (err) {
@@ -1998,6 +2001,30 @@ export default function TimeClockAdmin() {
           onExitInvestigation={() => setAuditInvestigation(null)}
         />
       </div>
+      </AdminSection>
+
+      <AdminSection title="Registered Devices" icon={Clock3} count={devices.length}
+        subtitle="Kiosks and tablets that have signed in to the time clock.">
+        {devices.length === 0 ? (
+          <p className="text-xs text-gray-500">No devices have registered yet.</p>
+        ) : (
+          <div className="grid gap-1.5 md:grid-cols-2">
+            {devices.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white/80 px-3 py-2 text-xs">
+                <div>
+                  <span className="font-medium text-gray-900">{d.device_name || d.device_key || "Device"}</span>
+                  <span className="ml-2 text-gray-500">{d.device_type || ""}{d.location ? ` · ${d.location}` : ""}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-2 py-0.5 font-medium ${d.status === "active" && d.is_active !== false ? "bg-green-100 text-green-700" : d.status === "offline" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-500"}`}>
+                    {d.is_active === false ? "retired" : d.status || "unknown"}
+                  </span>
+                  <span className="text-gray-400">{d.last_seen_at ? `seen ${String(d.last_seen_at).slice(0, 10)}` : "never seen"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </AdminSection>
 
       <TimeClockShiftDetail
