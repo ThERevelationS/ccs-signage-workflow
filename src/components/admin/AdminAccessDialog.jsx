@@ -42,6 +42,7 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
   const [tabChecks, setTabChecks] = useState(() => buildInitial(user).tabs);
   const [subtabChecks, setSubtabChecks] = useState(() => buildInitial(user).subtabs);
   const [deniedChecks, setDeniedChecks] = useState(() => new Set(user?.admin_permissions?.denied_tabs || []));
+  const [readOnly, setReadOnly] = useState(() => user?.admin_permissions?.read_only === true);
   const [expanded, setExpanded] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -98,6 +99,7 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
           ...(Object.keys(subtabChecks).length ? { subtabs: subtabChecks } : {}),
         }),
         ...(denied.length ? { denied_tabs: denied } : {}),
+        ...(readOnly ? { read_only: true } : {}),
       };
       const saved = await updateAuthorizedUserAdmin({
         record: user,
@@ -232,6 +234,10 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
 
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" disabled={busy} onClick={() => onOpenChange(false)}>Cancel</Button>
+        <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 p-2">
+          <Checkbox checked={readOnly} onCheckedChange={(c) => setReadOnly(c === true)} />
+          <label className="text-xs text-gray-700">Read-only — can open Admin and view every tab, but every save is refused</label>
+        </div>
         <div className="mt-2 border-t border-gray-100 pt-2">
           <p className="text-xs font-medium text-red-700">Explicit blocks — denied tabs override every grant, including full admin:</p>
           <div className="mt-1 flex flex-wrap gap-1">

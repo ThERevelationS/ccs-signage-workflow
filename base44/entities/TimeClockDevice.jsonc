@@ -1,4 +1,5 @@
 {
+  "type": "object",
   "name": "TimeClockDevice",
   "properties": {
     "device_name": {
@@ -29,8 +30,8 @@
     },
     "last_seen_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Updated whenever the kiosk registers or punches"
+      "description": "Updated whenever the kiosk registers or punches",
+      "format": "date-time"
     },
     "firmware_version": {
       "type": "string",
@@ -62,6 +63,9 @@
       "default": false
     }
   },
+  "required": [
+    "device_key"
+  ],
   "rls": {
     "create": {
       "user_condition": {
@@ -83,8 +87,5 @@
         "role": "timeclock_backend_only"
       }
     }
-  },
-  "required": [
-    "device_key"
-  ]
+  }
 }

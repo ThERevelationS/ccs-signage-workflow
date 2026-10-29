@@ -1,4 +1,5 @@
 {
+  "type": "object",
   "name": "AccessRequest",
   "properties": {
     "requester_email": {
@@ -11,10 +12,10 @@
     },
     "requested_sections": {
       "type": "array",
+      "description": "Admin sections requested \u2014 empty means full admin.",
       "items": {
         "type": "string"
-      },
-      "description": "Admin sections requested \u2014 empty means full admin."
+      }
     },
     "reason": {
       "type": "string",
