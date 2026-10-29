@@ -30,6 +30,14 @@ const num = (value: any, fallback = 0) => {
 };
 const money = (value: number) => Math.round(value * 100) / 100;
 
+// Module-scope row cache for attention_feed — that action reads 12 tables
+// per call and every signed-in tab polls it on a timer, which was the
+// largest steady drain on the shared service-token entity_list budget.
+// Isolates persist across invocations under load, exactly when the extra
+// reads hurt most; data freshness stays within ~2 minutes.
+let attentionFeedRowsCache: { rows: any[]; expires: number } | null = null;
+const ATTENTION_FEED_CACHE_MS = 120_000;
+
 const STAGES = ["new", "qualified", "estimating", "quoted", "follow_up", "on_hold", "won", "lost"];
 const CLOSED_STAGES = new Set(["won", "lost"]);
 const REQUIREMENT_VALUES = ["unknown", "yes", "no", "maybe", "na"];
@@ -276,7 +284,8 @@ Deno.serve(async (req) => {
 
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = await Promise.all([
+      const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
+      const feedRows: any[] = afCached ? attentionFeedRowsCache!.rows : await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 200).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 200).catch(() => []),
@@ -290,6 +299,8 @@ Deno.serve(async (req) => {
         Estimate.filter({ pipeline_sync_pending: true }, "-updated_date", 100).catch(() => []),
         BuilderPart.filter({ needs_recalc: true }, "-updated_date", 150).catch(() => []),
       ]);
+      if (!afCached) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = feedRows;
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
       const unreadMessages = list(messages).map((m: any) => ({
