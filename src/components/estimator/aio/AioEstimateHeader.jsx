@@ -1,4 +1,4 @@
-import { Layers, Link2, Save, RefreshCw, Copy } from "lucide-react";
+import { Layers, Link2, Save, RefreshCw, Copy, GitMerge } from "lucide-react";
 
 export default function AioEstimateHeader({
   status = "draft",
@@ -11,6 +11,7 @@ export default function AioEstimateHeader({
   readOnly = false,
   onDuplicate,
   duplicating = false,
+  onMerge,
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
@@ -50,6 +51,17 @@ export default function AioEstimateHeader({
         >
           <Link2 className="w-4 h-4" aria-hidden="true" />
         </button>
+        {onMerge && !readOnly && (
+          <button
+            type="button"
+            onClick={onMerge}
+            title="Merge another draft estimate into this one"
+            aria-label="Merge another estimate"
+            className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
+          >
+            <GitMerge className="w-4 h-4" />
+          </button>
+        )}
         {onDuplicate && (
           <button
             onClick={onDuplicate}
