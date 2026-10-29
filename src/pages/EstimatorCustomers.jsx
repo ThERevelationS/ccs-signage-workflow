@@ -280,6 +280,23 @@ export default function EstimatorCustomers() {
   const tierImportRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [tierImporting, setTierImporting] = useState(false);
+  const [reMarkBusy, setReMarkBusy] = useState(false);
+  // Bulk re-markup flag (#145): pick a tier → flag all open estimates on it
+  // pricing_stale so they recompute on next open.
+  const reMarkupTier = async () => {
+    const raw = window.prompt("Re-markup open estimates on which pricing tier? (number)", "");
+    const tier = Math.floor(Number(String(raw || "").trim()));
+    if (!tier) return;
+    if (!window.confirm(`Flag every open estimate on pricing tier ${tier} as pricing-stale? They will need a recompute before sending.`)) return;
+    if (reMarkBusy) return;
+    setReMarkBusy(true);
+    try {
+      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "bulk_remarkup", tier_number: tier });
+      const d = res?.data || res;
+      window.alert(d?.success ? `${d.flagged} estimate(s) flagged for re-markup.` : (d?.error || "Re-markup failed."));
+    } catch (e) { window.alert(e?.message || "Re-markup failed."); } finally { setReMarkBusy(false); }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -518,6 +535,9 @@ export default function EstimatorCustomers() {
               {tierImporting ? "Importingâ€¦" : "Import tiers (JSON)"}
             </button>
             <input ref={tierImportRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importTiersJson(e.target.files?.[0])} />
+            <button type="button" onClick={reMarkupTier} disabled={reMarkBusy} className="h-8 px-3 inline-flex items-center gap-1.5 rounded border border-amber-300 bg-amber-50 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50" title="Flag every open estimate on a tier as pricing-stale — they recompute on next open (#145)">
+              {reMarkBusy ? "Marking…" : "Re-markup estimates"}
+            </button>
           </>)}
         </div>
 
