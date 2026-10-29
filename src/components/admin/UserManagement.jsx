@@ -2185,6 +2185,11 @@ export default function UserManagement() {
                       const stale = days > 90;
                       return <span className={`text-[11px] font-medium ${stale ? "text-amber-600" : "text-gray-400"}`} title={`Password last changed ${user.password_changed_at.slice(0, 10)}`}>password {days}d old{stale ? " — rotate" : ""}</span>;
                     })()}
+                    {(() => {
+                      if (!user.last_login_at) return <span className="text-[11px] text-gray-400">never signed in</span>;
+                      const days = Math.floor((Date.now() - new Date(user.last_login_at).getTime()) / 86400000);
+                      return <span className={`text-[11px] ${days > 60 ? "text-amber-600" : "text-gray-400"}`} title={`Last sign-in ${user.last_login_at.slice(0, 10)}`}>active {days === 0 ? "today" : `${days}d ago`}</span>;
+                    })()}
                     {user.username && (
                       <span className="text-xs text-purple-600">@{user.username}</span>
                     )}
