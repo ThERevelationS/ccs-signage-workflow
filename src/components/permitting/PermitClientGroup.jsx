@@ -329,6 +329,22 @@ export default function PermitClientGroup({
               )}
             </div>
           ))}
+          <button
+            type="button"
+            className="mt-1.5 text-[10px] font-semibold text-amber-800 underline hover:text-amber-950"
+            onClick={() => {
+              const blocks = authorityCoverage.map(({ locality_id, locality_name }) => {
+                const loc = localities?.find((l) => l.id === locality_id);
+                const offices = (loc?.offices || []).map((o) =>
+                  `${o.name || "Office"} (${(o.office_types || []).join(", ") || "general"}) — ${o.contact_phone || "no phone"} — ${o.contact_website || "no link"}`
+                );
+                return `${locality_name}\n${offices.length ? offices.join("\n") : "  (no offices configured)"}`;
+              });
+              navigator.clipboard?.writeText(blocks.join("\n\n")).catch(() => {});
+            }}
+          >
+            Copy office contact info
+          </button>
         </div>
       )}
 
@@ -338,7 +354,7 @@ export default function PermitClientGroup({
           {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Check jurisdiction…</Button></div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs text-gray-500">Choose the jurisdiction for this job:</span>
+              <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> find which town or township issues this job's permits.</span>
               <Button
                 onClick={() => setShowLocalityPicker(true)}
                 disabled={!isRegistered}
