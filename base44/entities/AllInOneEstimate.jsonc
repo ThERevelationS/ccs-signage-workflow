@@ -630,7 +630,7 @@
     },
     "category_adjustments": {
       "type": "object",
-      "description": "Per-category price adjustments for this estimate only."
+      "description": "Per-category price adjustments for this estimate only \u2014 {'Category': percent} stacked on top of each section's own adjustment_percent."
     },
     "pricing_tier": {
       "type": "number",
@@ -639,7 +639,7 @@
     },
     "personal_tags": {
       "type": "object",
-      "description": "Per-user color/label tags for personal organization \u2014 keyed by staff email. Not customer-visible."
+      "description": "Per-user color/label tags for personal organization \u2014 keyed by staff email, e.g. {'brett@cincisigns.com': {'color': 'red'}}. Not customer-visible; each user only sees their own tag."
     },
     "notes": {
       "type": "string"
