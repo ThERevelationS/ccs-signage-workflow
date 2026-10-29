@@ -19,13 +19,18 @@ export async function handler(request: Request) {
       const reasonLower = reason.toLowerCase();
       if (reasonLower.includes('breakglass') && !sections.includes('breakglass')) sections.push('breakglass');
       if (reasonLower.includes('full admin') && !sections.includes('full_admin')) sections.push('full_admin');
-      // Idempotent: one pending request per email.
-      const existing = await requests.filter({ requester_email: actor.email, status: 'pending' });
+      // Admins may propose a grant for someone else (two-admin flow):
+      // target_email receives the grant; actor is recorded as proposer and
+      // cannot approve their own full_admin/breakglass proposal.
+      const targetEmail = String(body?.target_email || '').trim().toLowerCase();
+      const requesterEmail = targetEmail && actor.role === 'admin' ? targetEmail : actor.email;
+      const existing = await requests.filter({ requester_email: requesterEmail, status: 'pending' });
       if (Array.isArray(existing) && existing.length > 0) {
         return Response.json({ success: true, already_pending: true });
       }
       const row = await requests.create({
-        requester_email: actor.email, requested_sections: sections, reason,
+        requester_email: requesterEmail, requested_sections: sections, reason,
+        proposer_email: actor.email,
         status: 'pending',
       });
       await audit.create({ actor_email: actor.email, action: 'request_access', target_email: actor.email, detail: reason ? `${sections.join(',')} — ${reason}` : sections.join(','), at: new Date().toISOString() });
@@ -52,6 +57,11 @@ export async function handler(request: Request) {
       // → full admin for 4 hours (auto-lapses via admin_grant_expires),
       // otherwise sections merge into admin_permissions.sections. Only the
       // requester's record is written — the approver's access never changes.
+      const sections0 = Array.isArray(row.requested_sections) ? row.requested_sections : [];
+      const needsSecondAdmin = sections0.includes('full_admin') || sections0.includes('breakglass');
+      if (needsSecondAdmin && row.proposer_email && String(row.proposer_email).toLowerCase() === String(actor.email).toLowerCase()) {
+        return Response.json({ success: false, error: 'Two-admin rule: a different admin must approve full-admin and break-glass grants.' }, { status: 403 });
+      }
       if (action === 'approve') {
         const users = base44.asServiceRole.entities.AuthorizedEmail;
         const targetRows = await users.filter({ email: row.requester_email });
