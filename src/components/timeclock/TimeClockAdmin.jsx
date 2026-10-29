@@ -44,6 +44,7 @@ import {
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths, startOfDay, endOfDay, addDays, subDays } from "date-fns";
 import * as XLSX from "xlsx";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
+import AdminRosterPanels from "@/components/timeclock/AdminRosterPanels";
 import TimeOffApprovalPanel from "@/components/timeclock/TimeOffApprovalPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
@@ -1335,6 +1336,7 @@ export default function TimeClockAdmin() {
           </div>
         </div>
       </div>
+      <AdminRosterPanels sessionToken={sessionToken} />
       <CorrectionRequestAdminPanel
         sessionToken={sessionToken}
         onEntriesChanged={loadData}
