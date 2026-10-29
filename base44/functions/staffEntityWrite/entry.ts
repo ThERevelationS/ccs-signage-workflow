@@ -183,7 +183,7 @@ Deno.serve(async (req) => {
     throw bad('Unsupported operation.');
   } catch (error: any) {
     const status = Number(error?.status || 500);
-    if ([400, 401, 403, 404, 409].includes(status)) {
+    if ([400, 401, 403, 404, 409, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Write failed.' }, { status });
     }
     console.error('staffEntityWrite error:', error);
