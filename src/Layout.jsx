@@ -889,13 +889,21 @@ function LayoutContent({ children }) {
           align-items: center;
           gap: 6px 10px;
         }
-        .ccs-topbar-brand { grid-area: brand; justify-self: start; }
+        .ccs-topbar-brand { grid-area: brand; justify-self: start; min-width: 150px; }
+        .ccs-topbar-brand [data-shell-view-controls] { min-height: 24px; }
+        .ccs-topbar-brand [data-shell-view-controls] button { font-size: 11px; }
         .ccs-topbar-menu { grid-area: menu; }
         .ccs-topbar-utilities { grid-area: utilities; justify-self: end; min-width: 0; max-width: 100%; }
         .ccs-topbar-utilities .ccs-glass-control > span { font-size: 12px; }
         .ccs-topbar-links { grid-area: links; min-width: 0; }
         .ccs-topbar-links .ccs-glass-nav-item span { font-size: 12px; }
 
+        @media (max-width: 1399px) {
+          .ccs-topbar-links[data-manual-compact="false"] .ccs-glass-nav-item {
+            gap: 4px;
+            padding: 4px 6px;
+          }
+        }
         @media (max-height: 600px) {
           .ccs-topbar-menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
@@ -1302,6 +1310,7 @@ function LayoutContent({ children }) {
                 {/* Links use the space between the brand and utilities when available. */}
                 <div
                   data-top-navigation-links
+                  data-manual-compact={compactView}
                   className={`ccs-topbar-links hidden lg:flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                 >
                   <DragDropContext onDragEnd={handleNavReorder}>
@@ -1318,7 +1327,7 @@ function LayoutContent({ children }) {
                                 <NavPageLink
                                   item={item}
                                   variant="top"
-                                  compactView={topBarCompact}
+                                  compactView={compactView}
                                   isActive={location.pathname === item.url}
                                   isInSplit={isInSplitView(item)}
                                   onNavigate={(event) => handleNavClick(event, item)}
@@ -1336,7 +1345,7 @@ function LayoutContent({ children }) {
                             icon={Calendar}
                             accent="#FACC15"
                             items={meetingsNavItems}
-                            compactView={topBarCompact}
+                            compactView={compactView}
                             activePath={location.pathname}
                             isInSplitUrl={isInSplitView}
                             onNavigate={handleNavClick}
@@ -1346,7 +1355,7 @@ function LayoutContent({ children }) {
                             icon={BarChart3}
                             accent="#8B5CF6"
                             items={reportsNavItems}
-                            compactView={topBarCompact}
+                            compactView={compactView}
                             activePath={location.pathname}
                             isInSplitUrl={isInSplitView}
                             onNavigate={handleNavClick}
