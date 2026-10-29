@@ -813,7 +813,25 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
-            {/* Pace ghost - this week vs the employee's own weekly average */}
+            {/* Weekly schedule variance - scheduled minutes this week vs worked */}
+        {schedule?.start_time && schedule?.end_time && Number(snapshot?.weekly_paid_minutes) > 0 && (() => {
+          const [sh, sm] = schedule.start_time.split(":").map(Number);
+          const [eh, em] = schedule.end_time.split(":").map(Number);
+          const perDay = (eh * 60 + em) - (sh * 60 + sm) - (Number(schedule.break_minutes) || 0);
+          if (perDay <= 0) return null;
+          const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0
+          const scheduledSoFar = perDay * (todayIdx + 1);
+          const worked = Math.round(Number(snapshot.weekly_paid_minutes) + (live?.paid || 0) - (snapshot.paid_minutes_today || 0));
+          const diff = Math.round(worked - scheduledSoFar);
+          if (Math.abs(diff) < 15) return null;
+          return (
+            <p className={`mt-2 text-[10px] font-medium ${diff >= 0 ? "text-emerald-600" : "text-amber-600"}`}>
+              {diff >= 0 ? `+${formatMinutes(diff)}` : `-${formatMinutes(-diff)}`} vs your schedule this week
+            </p>
+          );
+        })()}
+
+        {/* Pace ghost - this week vs the employee's own weekly average */}
         {clockedIn && Number(snapshot?.weekly_paid_minutes) > 0 && (() => {
           const weeklyDaily = Array.isArray(snapshot.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
           const todayIdx = (new Date().getDay() + 6) % 7;
