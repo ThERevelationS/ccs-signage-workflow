@@ -1,4 +1,5 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {continueOwnedAddressDiscovery} from '../../shared/permittingAddressDiscoveryContinuation.mjs';
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
@@ -7,7 +8,7 @@ import {readPermittingResourceResponse} from '../../shared/permittingResourceRes
 Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
  try{
-  const client=createClientFromRequest(req),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);
+  const client=withEntityRateLimitRetry(createClientFromRequest(req)),body=await req.json(),actor=await authenticateSignShopSession(client,body.session_token);
   if(typeof body.collection_id!=='string'||!body.collection_id||body.collection_id.length>100||Object.keys(body).some(key=>!['collection_id','session_token','action_token','retry_page_url'].includes(key)))return Response.json({error:'Select your saved research collection.'},{status:400});
   if(body.retry_page_url!==undefined&&(typeof body.retry_page_url!=='string'||!body.retry_page_url||body.retry_page_url.length>4096))return Response.json({error:'Select a saved failed page.'},{status:400});
   const entity=client.asServiceRole.entities.PermittingAddressArchive,row=await entity.get(body.collection_id);
