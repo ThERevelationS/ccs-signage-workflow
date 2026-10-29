@@ -813,7 +813,31 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               </div>
             )}
 
-            {/* Weekly schedule variance - scheduled minutes this week vs worked */}
+            {/* Session timeline - today's punches + breaks as a colored band */}
+        {clockedIn && snapshot?.clock_in && (
+          <div className="mt-3">
+            <div className="relative h-3 overflow-hidden rounded-full bg-emerald-400/70">
+              {(Array.isArray(snapshot.todays_segments) ? snapshot.todays_segments : []).map((seg, i) => {
+                const start = new Date(snapshot.clock_in).getTime();
+                const span = Math.max(1, Date.now() - start);
+                const s = Math.max(0, (new Date(seg.start) - start) / span);
+                const e = seg.end ? (new Date(seg.end) - start) / span : 1;
+                return (
+                  <span key={i} className={`absolute top-0 h-full ${seg.kind === "pause" ? "bg-purple-400" : seg.kind === "paid_break" ? "bg-sky-400" : "bg-amber-400"}`}
+                    style={{ left: `${Math.min(100, s * 100)}%`, width: `${Math.max(2, (e - s) * 100)}%` }}
+                    title={`${seg.kind.replace(/_/g, " ")} ${seg.start ? "" : ""}`} />
+                );
+              })}
+            </div>
+            <div className="mt-1 flex gap-3 text-[9px] text-slate-400">
+              <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />working</span>
+              <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400" />break</span>
+              <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-purple-400" />pause</span>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly schedule variance - scheduled minutes this week vs worked */}
         {schedule?.start_time && schedule?.end_time && Number(snapshot?.weekly_paid_minutes) > 0 && (() => {
           const [sh, sm] = schedule.start_time.split(":").map(Number);
           const [eh, em] = schedule.end_time.split(":").map(Number);
