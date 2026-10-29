@@ -103,6 +103,12 @@ Deno.serve(async (req) => {
         nextFields.login_locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000).toISOString();
       }
       await persistLoginSecurityFields(authorized, user, nextFields);
+      try {
+        await base44.asServiceRole.entities.FailedAdminAttempt.create({
+          email: user.email, reason: 'bad_password',
+          at: new Date().toISOString(),
+        });
+      } catch { /* attempt logging is best-effort */ }
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
