@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { localDateStamp } from "@/components/estimator/quoteLifecycle";
+import { localDateStamp, formatInCompanyTz } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
 import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -112,6 +112,7 @@ export default function EstimatorQueues() {
   const [bulkError, setBulkError] = useState("");
   const mine = params.get("mine") === "1";
   const [me, setMe] = useState(null);
+  const [companyTz, setCompanyTz] = useState("");
   const [backupBusy, setBackupBusy] = useState(false);
   const importEstRef = useRef(null);
   // Re-import an exported estimate bundle (#451): creates a new draft with
@@ -131,6 +132,13 @@ export default function EstimatorQueues() {
     finally { if (importEstRef.current) importEstRef.current.value = ""; }
   };
   useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
+  // Company timezone (#488): QuoteDefaults.display_timezone drives the date
+  // displays; blank falls back to the browser's zone.
+  useEffect(() => {
+    staffEntities.QuoteDefaults.filter({ config_name: "default" }, undefined, 1)
+      .then((rows) => setCompanyTz((Array.isArray(rows) ? rows[0]?.display_timezone : "") || ""))
+      .catch(() => {});
+  }, []);
 
   const toggleSelected = (id) => setSelectedIds((prev) => {
     const next = new Set(prev);
