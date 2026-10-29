@@ -299,7 +299,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     if (!matchesSearchFor(jurisdiction)) return false;
     if (trustFilter === "all") return true;
     return assessJurisdictionTrust(jurisdiction, duplicateCountFor(jurisdiction)).key === trustFilter;
-  });
+  }).sort((a, b) => String(b.updated_date || "").localeCompare(String(a.updated_date || "")));
 
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
