@@ -262,7 +262,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 194. **[H][FLAGGED-dedicated]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
 195. **[H][DONE]** Graceful half-result: boundary matched but office review timed out → usable locality + "offices still checking" (partial success, not failure).
 196. **[H][FLAGGED-dedicated]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
-197. **[H][FLAGGED-dedicated]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
+197. **[H][DONE]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
 198. **[H][FLAGGED-dedicated]** Feature flag the fallback geocoder path so a Nominatim outage can't cascade into the picker.
 
 ## S — Accessibility & simplicity, round 2
@@ -453,7 +453,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 348. **[H][DONE]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
 349. **[F][FLAGGED-dedicated]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
 350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
-351. **[F][FLAGGED-dedicated]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
+351. **[F][DONE]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
 352. **[H][FLAGGED-dedicated]** Rate-limit on applies: a job can't create 10 locality links in 10 seconds — burst-write protection.
 353. **[F][DONE]** Soft-delete on jurisdiction merges: merged-away rows stay recoverable for 30 days — undo is real.
 354. **[H][FLAGGED-dedicated]** Mass-change approval: bulk jurisdiction edits (>5 rows) need a second staff confirmation.
