@@ -343,6 +343,29 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           <button
             type="button"
             disabled={!isRegistered}
+            onClick={() => update("variance_required", !lineItem.variance_required)}
+            className={`min-h-11 rounded-full border px-3 text-[11px] font-semibold ${lineItem.variance_required ? "border-purple-400 bg-purple-50 text-purple-800" : "border-gray-300 bg-white text-gray-600"}`}
+          >
+            {lineItem.variance_required ? "Variance required" : "Variance"}
+          </button>
+        </div>
+        <CommitTextField
+          label="Variance status"
+          value={lineItem.variance_status}
+          placeholder="applied / hearing / approved / denied"
+          disabled={!isRegistered}
+          onCommit={(value) => update("variance_status", value)}
+        />
+        <DateField
+          label="Hearing date"
+          value={lineItem.variance_hearing_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("variance_hearing_date", value)}
+        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!isRegistered}
             onClick={() => update("correction_required", !lineItem.correction_required)}
             className={`min-h-11 rounded-full border px-3 text-[11px] font-semibold ${lineItem.correction_required ? "border-orange-400 bg-orange-50 text-orange-800" : "border-gray-300 bg-white text-gray-600"}`}
           >
