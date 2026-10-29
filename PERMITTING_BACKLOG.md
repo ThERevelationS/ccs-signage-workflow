@@ -433,7 +433,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 331. **[F][FLAGGED-dedicated]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
 332. **[H][DONE]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
 333. **[F][DONE]** Office-lookup by phone: inbound call → the office's row — "who is calling".
-334. **[UX][FLAGGED-dedicated]** "Recent work in this town" on the card: last 3 jobs in the same jurisdiction — institutional memory.
+334. **[UX][DONE]** "Recent work in this town" on the card: last 3 jobs in the same jurisdiction — institutional memory.
 335. **[F][FLAGGED-dedicated]** Notification-hook: a jurisdiction update pings the linked active jobs' assignees.
 336. **[UX][DONE]** Deep-link to a jurisdiction: a URL like /Permitting?jurisdiction=milford opens that card — shareable links.
 337. **[F][FLAGGED-dedicated]** Photo-attach to a jurisdiction: site photos of the office's posted requirements — evidence.
