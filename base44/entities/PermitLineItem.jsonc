@@ -307,6 +307,20 @@
       "format": "url",
       "description": "Photo/scan attached to the line's notes \u2014 the record stays visual."
     },
+    "variance_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "The office requires a variance (sign exceeds the standard rules) \u2014 a separate approval path."
+    },
+    "variance_status": {
+      "type": "string",
+      "description": "Variance tracking: applied / hearing date / approved / denied."
+    },
+    "variance_hearing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the variance hearing, when scheduled."
+    },
     "correction_required": {
       "type": "boolean",
       "default": false,
