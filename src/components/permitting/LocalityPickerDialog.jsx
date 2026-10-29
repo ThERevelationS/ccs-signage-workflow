@@ -8,6 +8,7 @@ import {useResearchProgress} from './ResearchProgressContext';
 import ElectricalAuthorityCoverage from './ElectricalAuthorityCoverage';
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -128,7 +129,7 @@ function LocalityPickerSession({
     setRepositoryError("");
 
     loadAllEntityRows({
-      entity: base44.entities.JurisdictionProfile,
+      entity: staffEntities.JurisdictionProfile,
       sort: "name",
       label: "Permitting locality picker repository",
     }).then((rows) => {
@@ -247,14 +248,14 @@ function LocalityPickerSession({
       await runPickerDraftAction({pending:pendingDraft,isCurrent:()=>openRef.current&&draftVersion===searchVersion.current,
       prepare:async()=>requireReviewedRepositoryProfile({
         reviewed:draftCandidate,
-        rows:await loadAllEntityRows({entity:base44.entities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck"}),
+        rows:await loadAllEntityRows({entity:staffEntities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck"}),
         hasDuplicate:hasDuplicateRepositoryIdentity,
         toDraft:jurisdictionToDraftPermitLocality,
       }),create:payload=>createPermitLocalityIfAbsent({
-        entity: base44.entities.PermitLocality,
+        entity: staffEntities.PermitLocality,
         data: payload,
         readCurrentLocalities: () => loadAllEntityRows({
-          entity: base44.entities.PermitLocality,
+          entity: staffEntities.PermitLocality,
           sort: "name",
           label: "Permit locality repository bridge identity",
         }),
