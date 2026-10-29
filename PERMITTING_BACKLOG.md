@@ -252,7 +252,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## R — Pipeline & backend, round 2
 
 186. **[H]** Warm the catalog cache on page load — one batch read fills JurisdictionProfile + PermitLocality + GlobalSettings together (uses the new batch mode).
-187. **[H]** Circuit-breaker on the resolver: after 3 consecutive 5xx, show "lookup service is having trouble" instead of hammering it.
+187. **[H][DONE]** Circuit-breaker on the resolver: after 3 consecutive 5xx, show "lookup service is having trouble" instead of hammering it.
 188. **[H]** Request timing headers on the resolver response so slow paths are measurable server-side.
 189. **[H]** A `permittingHealth` probe function: geocoder + census + boundary + repository-read statuses in one call — first thing to check on a bad report.
 190. **[H]** Dead-letter on failed scans: a scan that errors mid-write lands in a reviewable queue instead of vanishing.
