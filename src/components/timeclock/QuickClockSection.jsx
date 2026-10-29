@@ -199,6 +199,7 @@ export default function QuickClockSection({
   matchFaceRef.current = matchFace;
   const credentialRef = useRef(null);
   const requestRef = useRef({});
+  const lastPunchRef = useRef({ email: "", at: 0 });
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
@@ -278,6 +279,14 @@ export default function QuickClockSection({
       stopAllMedia();
     };
   }, []);
+
+  // Abandoned identify flows must not hold the kiosk open: after 90s in
+  // identify mode, return to the idle card automatically.
+  useEffect(() => {
+    if (!isRecognizing) return undefined;
+    const timer = setTimeout(() => { void resetState(); }, 90000);
+    return () => clearTimeout(timer);
+  }, [isRecognizing]);
 
   const showNotification = (type, userName, timestamp) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
@@ -640,6 +649,15 @@ export default function QuickClockSection({
     const email = user?.email;
     if (!email) throw new Error("Verified employee identity is missing an email address.");
 
+    // Client-side duplicate debounce: a fast double scan within 5s of a
+    // confirmed punch must not send a second request at all.
+    const normEmail = String(email).trim().toLowerCase();
+    if (lastPunchRef.current.email === normEmail && Date.now() - lastPunchRef.current.at < 5000) {
+      setRecognitionStatus("Already clocked in. Duplicate punch ignored.");
+      scheduleDisplayReset(3000);
+      return null;
+    }
+
     const clockScope = currentActionScope();
     const stillCurrent = () => clockScope === currentActionScope();
     const requestId = requestIdFor("clock_in", email);
@@ -672,12 +690,14 @@ export default function QuickClockSection({
       setLaborSummary(data.labor_summary || { count: 0, total_minutes: 0 });
 
       if (data.status === "already_clocked_in") {
+        lastPunchRef.current = { email: normEmail, at: Date.now() };
         setActiveEntry(data.entry || null);
         setRecognitionStatus("Already clocked in. No duplicate entry was created.");
         scheduleDisplayReset(3000);
         return data;
       }
 
+      lastPunchRef.current = { email: normEmail, at: Date.now() };
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
       setRecognitionStatus("Clock-in confirmed by server.");
       setClockOutDismissed(data.entry?.id, true);
