@@ -63,6 +63,9 @@ function verifiedAuthoritySummary(locality) {
 }
 
 const normalizeAddress=(raw)=>{let a=String(raw||"").replace(/s+/g," ").trim();a=a.replace(/(unit|suite|ste|apt|apartment|#)s*[A-Za-z0-9-]+/ig,"");a=a.replace(/,s*(USA|United States|US).?$/i,"");a=a.replace(/([0-9]{5})-[0-9]{4}/g,"$1");a=a.replace(/[ 	]+,/g,",").replace(/,(?=S)/g,", ").replace(/s+/g," ").trim().replace(/^,+|,+$/g,"");return a||String(raw||"").trim();};
+const RECENT_ADDR_KEY="permitting_recent_addresses";
+const loadRecentAddresses=()=>{try{return JSON.parse(localStorage.getItem(RECENT_ADDR_KEY)||"[]");}catch{return[];}};
+const rememberAddress=(addr)=>{const a=String(addr||"").trim();if(!a)return;try{const list=loadRecentAddresses().filter(x=>x!==a);list.unshift(a);localStorage.setItem(RECENT_ADDR_KEY,JSON.stringify(list.slice(0,5)));}catch{}};
 export default function LocalityPickerDialog(props) {
   const {sessionToken,currentUser}=useAuth();
   if(!sessionToken||!(currentUser?.id||currentUser?.email))return null;
@@ -84,6 +87,8 @@ function LocalityPickerSession({
   useEffect(()=>()=>{openRef.current=false;searchVersion.current++;},[]);
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
+  const [recentAddresses, setRecentAddresses] = useState(() => loadRecentAddresses());
+  const [slowSearch, setSlowSearch] = useState(false);
   const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(false);
@@ -145,6 +150,12 @@ function LocalityPickerSession({
     return () => { cancelled = true; };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!searching) { setSlowSearch(false); return; }
+    const t = setTimeout(() => setSlowSearch(true), 90000);
+    return () => clearTimeout(t);
+  }, [searching]);
+
   const runSearch = async () => {
     if (!address.trim()) return;
     if(searching||pendingSearch.current!==null||!openRef.current)return;
@@ -192,6 +203,7 @@ function LocalityPickerSession({
       } else {
         setResult(data);
         setError("");
+        if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());}
         if (data?.suggested_locality?.id) {
           setSelectedLocalityId(data.suggested_locality.id);
         }
@@ -213,6 +225,12 @@ function LocalityPickerSession({
   const addressCanApply=address.trim()?Boolean(result?.apply_allowed===true&&result?.location_resolution?.status==='location_verified'&&selectedLocalityId===result?.suggested_locality?.id):currentUser?.role==='admin';
   const handleApply = () => {
     if (!openRef.current || !selectedLocalityId || searching || !addressCanApply) return;
+    // Unverified picks get one deliberate pause — address-flow applies are
+    // already gated on a verified review; repository picks may not be.
+    if (!address.trim() && selectedAuthority.officeCount === 0) {
+      const name = selectedLocality?.name || "this office";
+      if (!window.confirm(`${name} hasn't been checked by our team yet — the permit offices and contact info may be incomplete. Use it anyway?`)) return;
+    }
     onApply(selectedLocalityId, { excludeElectrical });
     onClose();
   };
@@ -309,6 +327,18 @@ function LocalityPickerSession({
                 placeholder="e.g. 4900 Parkway Dr, Mason, OH 45040"
                 className="min-h-11 pl-8 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && !searching && runSearch()}
+                onPaste={(e) => {
+                  // Paste-and-go: if the pasted text looks like a complete
+                  // street address, search immediately — zero extra clicks.
+                  const text = String(e.clipboardData?.getData("text") || "").trim();
+                  const looksComplete = /\d/.test(text) && /[a-zA-Z]{3,}/.test(text) && (/,/.test(text) || /\d{5}/.test(text));
+                  if (looksComplete) {
+                    e.preventDefault();
+                    searchVersion.current++; pendingSearch.current = null;
+                    setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false);
+                    setTimeout(() => runSearch(), 0);
+                  }
+                }}
               />
             </div>
           </div>
@@ -338,6 +368,11 @@ function LocalityPickerSession({
           </Button>
         </div>
 
+        {slowSearch && searching && (
+          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-sm text-blue-800">
+            This lookup is taking longer than usual — it can hang on slow government sites. You can keep waiting, or cancel and try again.
+          </div>
+        )}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded p-2 text-sm text-red-700 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -347,6 +382,19 @@ function LocalityPickerSession({
                 Try again
               </button>
             )}
+          </div>
+        )}
+
+        {!address.trim() && !searching && recentAddresses.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <span className="text-[10px] text-gray-500 font-medium">Recent:</span>
+            {recentAddresses.map((addr) => (
+              <button key={addr} type="button" title={addr}
+                onClick={() => { searchVersion.current++; pendingSearch.current = null; setAddress(addr); setResult(null); setSelectedLocalityId(''); setTimeout(() => runSearch(), 0); }}
+                className="text-[11px] text-violet-700 bg-violet-50 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-100 max-w-[240px] truncate">
+                {addr}
+              </button>
+            ))}
           </div>
         )}
 
