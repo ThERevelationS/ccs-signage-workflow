@@ -45,7 +45,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 34. **[H][DONE]** Customer CAS on `company_name` renames — warn when estimates reference old name
 35. **[F][DONE]** Customer 360 "estimates" tab shows lifecycle funnel (draft→sent→approved counts)
 36. **[F][DONE]** Last-contacted date on customer (from portal messages / quote sends)
-37. **[F]** Customer tags (wholesale, repeat, VIP) usable as filter on EstimatorCustomers
+37. **[F][DONE]** Customer tags (wholesale, repeat, VIP) usable as filter on EstimatorCustomers
 38. **[B]** `EstimatorCustomers` unread badge — verify it clears on message read
 39. **[F]** Import customers from CSV on EstimatorCustomers page
 40. **[H]** `upsertCustomerFromEstimate` — strip whitespace-only `client_name` before lookup
