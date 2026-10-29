@@ -98,11 +98,9 @@ Deno.serve(async (req) => {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
 
-    // Optional session: validates when presented but reads stay open to match
-    // the entities' existing read RLS.
-    if (String(body?.session_token || '').trim()) {
-      await authenticateSignShopSession(base44, body.session_token);
-    }
+    // Staff session required — WorkOrder/Order read RLS is role-gated, so an
+    // anonymous service-role feed would reopen the access that lockdown closed.
+    await authenticateSignShopSession(base44, body.session_token);
 
     const entityName = String(body?.entity || '').trim();
     const spec = FEEDABLE[entityName];
