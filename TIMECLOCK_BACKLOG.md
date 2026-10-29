@@ -17,7 +17,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 12. **[F]** Per-device camera preference persistence (front vs rear)
 
 ## 2. Kiosk — punch integrity
-13. **[F]** Geo-fence/device-location stamp on punches with graceful fallback
+13. **[F][DONE]** Geo stamp - kiosk captures device location in background; clock_in_geo stored on the entry
 14. **[F]** Photo capture per punch, optional, stored on the entry
 15. **[F]** Punch rounding rules (5/10/15 min), raw time preserved and displayed
 16. **[F]** Early-punch block or warning vs scheduled start
@@ -61,10 +61,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 52. **[F]** Camera preview mirror toggle
 53. **[F]** Per-kiosk enabled methods config (face-only office, QR-only field)
 54. **[F]** "New employee" guided first-punch flow
-55. **[F]** Return-from-leave welcome + PTO balance flash
+55. **[F][DONE]** Return-from-leave PTO flash - PTO balance chip in the tracker popover
 56. **[F]** End-of-week hours recap on Friday clock-out
 57. **[F]** Holiday-aware greeting and holiday-pay indicator
-58. **[F]** Custom kiosk wallpaper/logo per site
+58. **[F][DONE]** Camera preview mirror toggle - flip/unflip button, persisted per kiosk
 59. **[F][DONE]** Punch success with employee name - notification uses full_name
 60. **[F]** Quiet-hours volume schedule on the kiosk speaker
 
@@ -106,8 +106,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 93. **[F][DONE]** PTO balance - pto_balance in snapshot + popover stat row
 94. **[F][DONE]** Pending-approval dot - amber dot on the tracker when the admin snapshot shows pending reviews
 95. **[F][DONE]** "Last action" subtitle — popover header shows "Clocked in 8:02 AM" / "Work paused" / "On break"
-96. **[F]** Next scheduled break indicator
-97. **[F]** Estimated finish time to daily goal ("done at 4:32 PM")
+96. **[F][DONE]** Scheduled-break hint - lunch window line under the schedule
+97. **[F][DONE]** Comparison ghost - ahead/behind usual pace from the week strip
 98. **[F][DONE]** Time-off notice - approved upcoming TimeOffRequest banner in the popover
 99. **[F]** Shift differential indicator for evening/night rates
 
@@ -119,7 +119,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 104. **[F][DONE]** Auto-hide when idle - hide_when_idle_minutes pref + slider, pointer/key activity tracking
 105. **[F][DONE]** Auto-pulse on milestone hit - milestone_behavior "pulse" already exists
 106. **[F][DONE]** Reminder escalation - reminders re-fire once +10min later if ignored
-107. **[F]** Quiet hours suppressing reminders outside shifts
+107. **[F][DONE]** Quiet hours - reminders stay inside the scheduled shift (+1h grace)
 108. **[F][DONE]** Percent reminders - {percent} reminders resolve against the daily goal, server-sanitized
 109. **[F][DONE]** Sound picker for milestone alerts - milestone_sound pref already exists
 110. **[F][DONE]** Weekend exclusion - hide_on_weekend pref + visibility gate + settings toggle
