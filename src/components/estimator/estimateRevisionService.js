@@ -24,7 +24,7 @@ export async function getOpenEstimateRevision(estimateId) {
 export async function listEstimateRevisions(estimateId, { strict = false } = {}) {
   if (!estimateId) return [];
   try {
-    const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: "revision_number", label: "Estimate revisions" });
+    const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: "-revision_number", label: "Estimate revisions" });
     return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number));
   } catch (error) {
     if (strict) throw error;
