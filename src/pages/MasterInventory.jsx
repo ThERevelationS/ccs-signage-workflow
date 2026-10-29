@@ -43,6 +43,34 @@ export default function MasterInventory() {
 
   const activeSource = SOURCE_BY_KEY[activeKey];
   const isAdmin = user?.role === "admin";
+  const linkPartsRef = useRef(null);
+  const [linkBusy, setLinkBusy] = useState(false);
+  // Bulk-link inventory→parts (#470): a CSV of {part_id, inventory_item_id}
+  // sets the part's inventory link via a per-part CAS update (id+updated_date).
+  const linkPartsCsv = async (file) => {
+    if (!file || linkBusy) return;
+    setLinkBusy(true);
+    try {
+      const text = await file.text();
+      const lines = text.split(/?
+/).map((l) => l.trim()).filter(Boolean).slice(0, 500);
+      let linked = 0, failed = 0;
+      for (const line of lines) {
+        const [partId, invId] = line.split(",").map((s) => s.trim());
+        if (!partId || !invId || partId.toLowerCase() === "part_id") continue;
+        try {
+          const part = await staffEntities.BuilderPart.get(partId);
+          if (!part?.id || !part?.updated_date) { failed += 1; continue; }
+          await staffEntities.updateMany("BuilderPart", { id: part.id, updated_date: part.updated_date }, { $set: { inventory_item_id: invId } });
+          linked += 1;
+        } catch { failed += 1; }
+      }
+      window.alert(`Linked ${linked} part(s) to inventory.${failed ? ` ${failed} row(s) skipped.` : ""}`);
+    } catch (e) { window.alert(e?.message || "Link failed."); } finally {
+      setLinkBusy(false);
+      if (linkPartsRef.current) linkPartsRef.current.value = "";
+    }
+  };
   const isCustomTab = !!activeSource?.custom;
 
   // Load current user once
@@ -208,6 +236,14 @@ export default function MasterInventory() {
               <Upload className="w-4 h-4 mr-2" />
               Import from Excel
             </Button>
+            {isAdmin && (
+              <>
+                <Button onClick={() => linkPartsRef.current?.click()} disabled={linkBusy} variant="outline" className="border-violet-300 text-violet-700 hover:bg-violet-50" title="CSV: part_id,inventory_item_id — links parts to inventory rows (#470)">
+                  {linkBusy ? "Linking…" : "Link parts (CSV)"}
+                </Button>
+                <input ref={linkPartsRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => linkPartsCsv(e.target.files?.[0])} />
+              </>
+            )}
             {!isCustomTab && (
               <Button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
