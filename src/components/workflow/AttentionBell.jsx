@@ -1,24 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-
-// Subtle WebAudio chime when the attention count grows — opt-out via
-// localStorage.attention_sound === "off" (toggled in AttentionFeed).
-export function chimeAttentionIncrease() {
-  try {
-    if (localStorage.getItem("attention_sound") === "off") return;
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.4);
-    osc.onended = () => ctx.close();
-  } catch { /* audio blocked — stay quiet */ }
-}
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -42,7 +22,6 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
   const { sessionToken } = useAuth();
   const navigate = useNavigate();
   const [count, setCount] = useState(0);
-  const prevCountRef = useRef(null);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -53,10 +32,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
         today: new Date().toLocaleDateString("en-CA"),
       });
       const feed = r?.data || r || {};
-      const next = SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0);
-      if (prevCountRef.current !== null && next > prevCountRef.current) chimeAttentionIncrease();
-      prevCountRef.current = next;
-      setCount(next);
+      setCount(SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0));
     } catch { /* fail soft — bell just stays quiet */ }
   }, [sessionToken]);
 
@@ -64,7 +40,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
     load();
     // Skip the 60s poll while the tab is hidden — keeps the attention_feed
     // calls (and their entity_list budget) from piling up in the background.
-    const t = setInterval(() => { if (!document.hidden) load(); }, 60000);
+    const t = setInterval(() => { if (!document.hidden) load(); }, 180000);
     const onVisible = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
