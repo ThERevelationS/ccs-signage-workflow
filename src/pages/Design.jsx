@@ -5,8 +5,7 @@ import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
 import { ActivityActions } from "../components/workflow/ActivityLogger";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { usePolling } from "@/lib/usePolling";
+import { useAllWorkOrders, fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
@@ -27,7 +26,21 @@ export default function Design() {
     document.title = "Design - Workflow Manager";
   }, []);
 
-  usePolling(() => loadWorkOrders(false), 120000, { runOnMount: false });
+  const { data: cachedWorkOrders = [], isFetched: workOrdersFetched } = useAllWorkOrders();
+
+  useEffect(() => {
+    const taskDescriptions = getDesignTaskDescriptions();
+    setWorkOrders((cachedWorkOrders || []).filter(wo =>
+      wo.completed !== true && wo.deleted !== true &&
+      ((wo.current_task_description && taskDescriptions.some(desc =>
+        wo.current_task_description.includes(desc)
+      )) || (wo.is_rider && wo.rider_stage === 'design' && wo.in_pipeline !== false))
+    ).sort((a, b) => (a.priority || 0) - (b.priority || 0)));
+  }, [cachedWorkOrders]);
+
+  useEffect(() => {
+    if (workOrdersFetched) setIsLoading(false);
+  }, [workOrdersFetched]);
 
   useEffect(() => {
     loadWorkOrders(true);
@@ -64,19 +77,14 @@ export default function Design() {
   };
 
   const fetchWorkOrders = async () => {
-    const allWorkOrders = await loadAllEntityRows({
-      entity: WorkOrder,
-      query: { completed: false, deleted: { $ne: true } },
-      sort: "priority",
-      label: "Design Work Orders",
-    });
+    const allWorkOrders = await fetchAllWorkOrders();
     const taskDescriptions = getDesignTaskDescriptions();
-    // Filter to only show jobs with task descriptions assigned to Design page, or riders locked to design
-    return allWorkOrders.filter(wo => 
-      (wo.current_task_description && taskDescriptions.some(desc => 
+    return allWorkOrders.filter(wo =>
+      wo.completed !== true && wo.deleted !== true &&
+      ((wo.current_task_description && taskDescriptions.some(desc =>
         wo.current_task_description.includes(desc)
-      )) || (wo.is_rider && wo.rider_stage === 'design' && wo.in_pipeline !== false)
-    );
+      )) || (wo.is_rider && wo.rider_stage === 'design' && wo.in_pipeline !== false))
+    ).sort((a, b) => (a.priority || 0) - (b.priority || 0));
   };
 
   const loadWorkOrders = async (showLoading = false) => {
