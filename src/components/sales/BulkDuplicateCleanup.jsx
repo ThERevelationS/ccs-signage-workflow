@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
@@ -181,12 +182,10 @@ export default function BulkDuplicateCleanup() {
     setReadError("");
     try {
       const [all, usersData] = await Promise.all([
-        loadAllEntityRows({
-        entity: WorkOrder,
-        query: { deleted: { $ne: true }, completed: { $ne: true }, is_rider: { $ne: true } },
-        sort: "created_date",
-        label: "Duplicate Cleanup Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.deleted !== true && wo.completed !== true && wo.is_rider !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
         loadSalesPersonRosterSafely({ sessionToken, label: "Duplicate Cleanup authorized users" }),
       ]);
       setUsers(usersData);
