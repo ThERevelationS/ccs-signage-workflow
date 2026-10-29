@@ -10,6 +10,13 @@
       "type": "string",
       "description": "Description of the email group"
     },
+    "permission_sections": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Admin sections granted to group members \u2014 members inherit these on top of their own admin_permissions."
+    },
     "emails": {
       "type": "array",
       "description": "List of email addresses in this group",
