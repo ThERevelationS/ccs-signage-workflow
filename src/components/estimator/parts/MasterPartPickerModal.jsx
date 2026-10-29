@@ -6,7 +6,7 @@ import { money } from "@/components/estimator/aioPricing";
 import { base44 } from "@/api/base44Client";
 import { createInventoryRecordWithRecovery } from "@/components/masterInventory/inventoryPersistence";
 
-export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "add", initialQuantity = 1, catalogFilter = null }) {
+export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "add", initialQuantity = 1, catalogFilter = null, suggestQuery = "" }) {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState("");
@@ -25,6 +25,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
     if (!open) return;
     let active = true;
     setQuantity(initialQuantity);
+    if (mode === "switch" && suggestQuery) setQuery(String(suggestQuery).trim());
     setLoading(true);
     setLoadError("");
     setItems([]);
