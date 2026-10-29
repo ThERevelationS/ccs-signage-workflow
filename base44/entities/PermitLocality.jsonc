@@ -223,16 +223,30 @@
     "order": {
       "type": "number",
       "default": 0
+    },
+    "change_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "changed_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Audit trail of edits to this jurisdiction \u2014 server-appended on each gateway update: {at, by, changed_fields}."
     }
   },
   "required": [
     "name"
   ]
-,
-  "rls": {
-    "create": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "read": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "update": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permitlocality_backend_only__" } }
-  }
 }
