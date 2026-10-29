@@ -234,6 +234,11 @@
         }
       }
     },
+    "low_data_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "Reduce polling frequency and skip secondary fetches on metered connections"
+    },
     "last_request_id": {
       "type": "string",
       "description": "Idempotency request id of the most recent preference update"
