@@ -186,6 +186,20 @@ export default function AdminRosterPanels({ sessionToken }) {
             <p className="text-xs text-gray-500 mt-1">Server-side audit trail - every punch, correction, and approval with its request id.</p>
           </div>
           <Badge className="bg-slate-100 text-slate-600">{events.length} events {showAudit ? "hide" : "show"}</Badge>
+          {(() => {
+            const byReviewer = {};
+            for (const e of events) {
+              if (!/approve|reject|review|correct|finalize/i.test(String(e.action || ""))) continue;
+              const k = e.actor_email || "system";
+              byReviewer[k] = (byReviewer[k] || 0) + 1;
+            }
+            const rows = Object.entries(byReviewer).sort((a, b) => b[1] - a[1]).slice(0, 4);
+            return rows.length ? (
+              <span className="ml-auto flex items-center gap-2 text-[10px] text-slate-400">
+                Reviews: {rows.map(([email, n]) => `${email.split("@")[0]} ${n}`).join(" · ")}
+              </span>
+            ) : null;
+          })()}
         </button>
         {showAudit && (
           events.length === 0 ? (
