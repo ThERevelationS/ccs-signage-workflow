@@ -53,6 +53,7 @@ import {
   GitBranch,
   Sparkles,
   Loader2,
+  RotateCcw,
   SortAsc,
   Clock,
   Activity,
@@ -1009,6 +1010,32 @@ export default function AdminSettings() {
       formData: nextForm,
       triggers: rule.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
       actions: rule.actions || [{ action_type: "", action_config: {} }]
+    });
+    setAutomationDraftParked(false);
+    setIsDialogOpen(true);
+  };
+
+  const restoreRuleVersion = async (rule) => {
+    const history = Array.isArray(rule.history) ? rule.history : [];
+    const snapshot = history[history.length - 1]?.snapshot;
+    if (!snapshot) return;
+    if (automationSaveInFlight.current || emailGroupsLoading) return;
+    const ownerEpoch = automationSessionEpoch.current;
+    setAutomationSaveError("");
+    if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
+    setEditingRule(rule);
+    setTriggers(snapshot.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+    setActions(snapshot.actions || [{ action_type: "", action_config: {} }]);
+    const nextForm = {
+      name: snapshot.name || rule.name || "",
+      enabled: snapshot.enabled !== false,
+      priority: snapshot.priority || 0
+    };
+    setFormData(nextForm);
+    automationEditorBaseline.current = JSON.stringify({
+      formData: nextForm,
+      triggers: snapshot.triggers || [],
+      actions: snapshot.actions || []
     });
     setAutomationDraftParked(false);
     setIsDialogOpen(true);
@@ -2419,6 +2446,14 @@ export default function AdminSettings() {
                         <Button variant="ghost" size="icon" aria-label={`Duplicate ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => duplicateRule(rule)} className="h-8 w-8">
                           <Copy className="w-4 h-4 text-gray-500" />
                         </Button>
+                        {(rule.history?.length || 0) > 0 && (
+                          <Button variant="ghost" size="icon" aria-label={`Restore previous version of ${rule.name}`}
+                            title={`Restore previous version (${rule.history.length} saved)`}
+                            disabled={emailGroupsLoading || emailGroupsLoadError}
+                            onClick={() => restoreRuleVersion(rule)} className="h-8 w-8">
+                            <RotateCcw className="w-4 h-4 text-purple-600" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" aria-label={`Edit ${rule.name}`} disabled={emailGroupsLoading || emailGroupsLoadError} onClick={() => openEditRule(rule)} className="h-8 w-8">
                           <Edit className="w-4 h-4 text-blue-600" />
                         </Button>
