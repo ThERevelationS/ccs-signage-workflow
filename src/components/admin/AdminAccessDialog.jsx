@@ -41,6 +41,7 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
   const [fullAdmin, setFullAdmin] = useState(() => buildInitial(user).fullAdmin);
   const [tabChecks, setTabChecks] = useState(() => buildInitial(user).tabs);
   const [subtabChecks, setSubtabChecks] = useState(() => buildInitial(user).subtabs);
+  const [deniedChecks, setDeniedChecks] = useState(() => new Set(user?.admin_permissions?.denied_tabs || []));
   const [expanded, setExpanded] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -87,12 +88,16 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
   const save = async () => {
     setBusy(true); setError("");
     try {
-      const perms = fullAdmin ? {} : {
-        sections: ADMIN_TAB_GROUPS
-          .filter((g) => g.tabs.some((t) => tabChecks[t.value] !== false))
-          .map((g) => g.id),
-        tabs: Object.fromEntries(allTabValues.map((v) => [v, tabChecks[v] !== false])),
-        ...(Object.keys(subtabChecks).length ? { subtabs: subtabChecks } : {}),
+      const denied = [...deniedChecks];
+      const perms = {
+        ...(fullAdmin ? {} : {
+          sections: ADMIN_TAB_GROUPS
+            .filter((g) => g.tabs.some((t) => tabChecks[t.value] !== false))
+            .map((g) => g.id),
+          tabs: Object.fromEntries(allTabValues.map((v) => [v, tabChecks[v] !== false])),
+          ...(Object.keys(subtabChecks).length ? { subtabs: subtabChecks } : {}),
+        }),
+        ...(denied.length ? { denied_tabs: denied } : {}),
       };
       const saved = await updateAuthorizedUserAdmin({
         record: user,
@@ -219,6 +224,19 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
 
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" disabled={busy} onClick={() => onOpenChange(false)}>Cancel</Button>
+        <div className="mt-2 border-t border-gray-100 pt-2">
+          <p className="text-xs font-medium text-red-700">Explicit blocks — denied tabs override every grant, including full admin:</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {ADMIN_TAB_GROUPS.flatMap((g) => g.tabs).map((t) => (
+              <button key={t.value} type="button"
+                aria-pressed={deniedChecks.has(t.value)}
+                onClick={() => setDeniedChecks((cur) => { const next = new Set(cur); next.has(t.value) ? next.delete(t.value) : next.add(t.value); return next; })}
+                className={`rounded-full border px-2 py-0.5 text-[10px] ${deniedChecks.has(t.value) ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500"}`}>
+                {deniedChecks.has(t.value) ? "✕ " : ""}{t.label}
+              </button>
+            ))}
+          </div>
+        </div>
           <Button className="flex-1" disabled={busy} onClick={save}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Access"}
           </Button>
