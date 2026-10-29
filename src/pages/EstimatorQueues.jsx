@@ -438,7 +438,7 @@ export default function EstimatorQueues() {
                   </select>
                   <button type="button" onClick={applyBulkStatus} disabled={bulkBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applyingâ€¦" : "Apply status"}</button>
                   <button type="button" onClick={() => setSelectedIds(new Set())} className="h-7 px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-red-300">Clear</button>
-                  {bulkError && <span role="status" className="text-[10px] text-red-600">{bulkError}</span>
+                  {bulkError && <span role="status" className="text-[10px] text-red-600">{bulkError}</span>}
                 </div>
               )}
               {rows.map((e) => {
