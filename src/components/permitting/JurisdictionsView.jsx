@@ -30,6 +30,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [lineCounts, setLineCounts] = useState({});
+  const [denialCounts, setDenialCounts] = useState({});
   const [onboardingDone, setOnboardingDone] = useState(() => {
     try { return JSON.parse(localStorage.getItem("permitting_onboarding") || "[]"); } catch { return []; }
   });
@@ -93,11 +94,16 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
       ]);
       setJurisdictions(data);
       const counts = {};
+      const denials = {};
       for (const li of lines || []) {
         const key = String(li.locality_name || "").trim().toLowerCase();
-        if (key) counts[key] = (counts[key] || 0) + 1;
+        if (key) {
+          counts[key] = (counts[key] || 0) + 1;
+          if (li.denial_date) denials[key] = (denials[key] || 0) + 1;
+        }
       }
       setLineCounts(counts);
+      setDenialCounts(denials);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -302,6 +308,13 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
       return verified && Number.isFinite(updated) && updated < sixMonthsAgo;
     });
   }, [jurisdictions]);
+  const repeatOffenders = useMemo(() => {
+    return (jurisdictions || [])
+      .map((j) => ({ name: j.name, count: denialCounts[String(j.name || "").trim().toLowerCase()] || 0 }))
+      .filter((j) => j.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [jurisdictions, denialCounts]);
   const mostApplied = useMemo(() => {
     return (jurisdictions || [])
       .map((j) => ({ name: j.name, count: lineCounts[String(j.name || "").trim().toLowerCase()] || 0 }))
@@ -453,6 +466,12 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
                   </label>
                 ))}
               </div>
+            </div>
+          )}
+          {repeatOffenders.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500" title="Jurisdictions where applications were denied — process problems surface here">
+              <span className="font-semibold text-slate-600">Denied applications:</span>
+              {repeatOffenders.map((j) => <span key={j.name} className="font-medium text-red-600">{j.name} ({j.count})</span>)}
             </div>
           )}
           {staleJurisdictions.length > 0 && (

@@ -17,8 +17,8 @@ const highlightTerms = (text, q) => {
 };
 
 export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }) {
-    const inputRef = useRef(null);
-const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
+  const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [dense, setDense] = useState(() => { try { return localStorage.getItem("admin_search_dense") === "1"; } catch { return false; } });
   const [topQueries, setTopQueries] = useState(() => {
@@ -43,7 +43,6 @@ const [query, setQuery] = useState("");
     return map;
   })();
   const [activeIndex, setActiveIndex] = useState(-1);
-  const searchInputRef = useRef(null);
   const resultsListRef = useRef(null);
   const searchStatusId = useId();
   const resultsListId = useId();
@@ -81,7 +80,7 @@ const [query, setQuery] = useState("");
     setQuery("");
     setActiveIndex(-1);
     // A clicked result disappears after navigation; keep focus in a usable control.
-    searchInputRef.current?.focus();
+    inputRef.current?.focus();
   };
 
   return (
@@ -97,7 +96,7 @@ const [query, setQuery] = useState("");
         <div className="relative w-full min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" aria-hidden="true" />
           <input
-            ref={searchInputRef}
+            ref={inputRef}
             type="search"
             role="combobox"
             aria-label="Find an Admin page or setting"
@@ -109,7 +108,6 @@ const [query, setQuery] = useState("");
             aria-describedby={hasQuery ? searchStatusId : undefined}
             placeholder="Find a setting... (Ctrl+K)"
             maxLength={100}
-            ref={inputRef}
             onFocus={() => {
               setFocused(true);
               try { setRecentTabs(JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]")); } catch { /* ignore */ }
@@ -177,32 +175,34 @@ const [query, setQuery] = useState("");
               : "No matching Admin settings. Try another term."}
           </p>
           {results.length > 0 && (
-            <div id={resultsListId} ref={resultsListRef} role="listbox" aria-label="Matching Admin settings" className={`grid min-w-0 grid-cols-1 overflow-y-auto sm:grid-cols-2 ${dense ? "max-h-40 gap-0.5" : "max-h-60 gap-1.5"}`}>
-              {results.map((result, index) => (
-                <button
-                  id={`${resultsListId}-option-${index}`}
-                  key={result.id}
-                  type="button"
-                  role="option"
-                  aria-selected={index === activeIndex}
-                  data-admin-search-active={index === activeIndex ? "true" : "false"}
-                  onClick={() => openResult(result)}
-                  className={`flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${index === activeIndex ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300" : "border-red-200/60 bg-white/85 hover:border-red-300 hover:bg-white"}`}
-                >
-                  <span className="min-w-0">
-                    <span className="block break-words font-medium">{highlightTerms(result.label, query)}</span>
-                    <span className="block break-words text-xs text-gray-600">
-                      {result.group}{result.parentLabel ? ` / ${result.parentLabel}` : ""}
+            <>
+              <div id={resultsListId} ref={resultsListRef} role="listbox" aria-label="Matching Admin settings" className={`grid min-w-0 grid-cols-1 overflow-y-auto sm:grid-cols-2 ${dense ? "max-h-40 gap-0.5" : "max-h-60 gap-1.5"}`}>
+                {results.map((result, index) => (
+                  <button
+                    id={`${resultsListId}-option-${index}`}
+                    key={result.id}
+                    type="button"
+                    role="option"
+                    aria-selected={index === activeIndex}
+                    data-admin-search-active={index === activeIndex ? "true" : "false"}
+                    onClick={() => openResult(result)}
+                    className={`flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${index === activeIndex ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300" : "border-red-200/60 bg-white/85 hover:border-red-300 hover:bg-white"}`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block break-words font-medium">{highlightTerms(result.label, query)}</span>
+                      <span className="block break-words text-xs text-gray-600">
+                        {result.group}{result.parentLabel ? ` / ${result.parentLabel}` : ""}
+                      </span>
                     </span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
-                </button>
-              ))}
-            </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
               <p className="px-1 pt-1 text-[10px] text-gray-400">
                 <span className="font-semibold">Up/Down</span> choose · <span className="font-semibold">Enter</span> open · <span className="font-semibold">Esc</span> close
                 <button type="button" onClick={toggleDense} className="ml-2 rounded border border-gray-200 px-1 text-[10px] text-gray-500 hover:text-gray-800">{dense ? "Comfortable" : "Compact"}</button>
               </p>
+            </>
           )}
         </div>
       )}
