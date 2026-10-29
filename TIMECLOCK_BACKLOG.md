@@ -28,7 +28,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 21. **[F]** Consecutive-days-worked warning (6th/7th day per policy)
 22. **[F]** Minor work-rule enforcement (break/hour caps for minors)
 23. **[F]** Offline punch queue with original-timestamp sync on reconnect
-24. **[F]** Duplicate-punch client debounce + "already clocked in" flash
+24. **[F][DONE]** Duplicate-punch client debounce - 5s same-employee guard, server request-id still the backstop
 25. **[F]** Punch-edit requests from the kiosk routed to the correction queue
 26. **[F]** Clock-out reason prompt for early outs (appointment/site/sick)
 27. **[F]** Job-site transfer punch — "moving to WO-1234" mid-shift
@@ -50,7 +50,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 41. **[F]** Confetti/sound themes per branding
 42. **[F]** Post-punch day summary ("0:00 worked - lunch ~12:30")
 43. **[F]** Supervisor quick-view — manager badge scan shows who's in
-44. **[F]** Idle return-to-identify timeout for half-done flows
+44. **[F][DONE]** Idle return-to-identify timeout - 90s identify-mode auto-reset
 45. **[F]** One-glance roster on kiosk home ("Who's in: 14")
 46. **[F]** Birthday/work-anniversary greeting on punch
 47. **[F]** Safety-tip-of-the-day rotation on the idle screen
@@ -94,15 +94,15 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 81. **[F]** Earnings estimate for hourly staff (opt-in)
 82. **[F][DONE]** Overtime proximity warning — "Xm to OT" amber chip when within 30 min of the daily goal
 83. **[F][DONE]** Break/pause elapsed while paused — "Work paused - 12m so far" (elapsed shown; scheduled-break countdown needs break schedules)
-84. **[F]** Streak counter for consecutive goal days
+84. **[F][DONE]** Streak counter - N-day goal streak chip in the popover
 85. **[F]** Team presence indicator ("3 of 5 in")
 86. **[F]** Pomodoro/focus-block alternate scheme
 87. **[F]** Compact icon+minutes badge mode for cramped bars
 88. **[F]** Full-screen expanded card on click
-89. **[F]** Week heat map mini-grid (hours per day this week)
+89. **[F][DONE]** Week heat map - week strip greens >=100% of goal and dims <50%
 90. **[F]** Pay-period progress arc
-91. **[F]** Comparison ghost ("20m ahead of usual pace")
-92. **[F]** Yesterday's total shown as context on clock-in
+91. **[F][DONE]** Comparison context - week header shows trailing avg/day
+92. **[F][DONE]** Yesterday's total shown in the week header
 93. **[F]** PTO balance chip in expanded view
 94. **[F]** Pending-approval dot when a correction awaits review
 95. **[F][DONE]** "Last action" subtitle — popover header shows "Clocked in 8:02 AM" / "Work paused" / "On break"
