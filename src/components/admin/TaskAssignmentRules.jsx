@@ -621,6 +621,7 @@ function TaskLoadPanel({ users }) {
   const [toUser, setToUser] = useState("");
   const [reassignBusy, setReassignBusy] = useState(false);
   const [reassignMsg, setReassignMsg] = useState("");
+  const [doneTasks, setDoneTasks] = useState([]);
 
   const loadTasks = async () => {
     if (busy) return;
@@ -628,6 +629,8 @@ function TaskLoadPanel({ users }) {
     try {
       const rows = await loadAllEntityRows({ entity: staffEntities.GeneralTask, query: { completed: { $ne: true } }, sort: null, label: "Open general tasks" });
       setTasks(Array.isArray(rows) ? rows : []);
+      const doneRows = await staffEntities.GeneralTask.filter({ completed: true }, "-updated_date", 100).catch(() => []);
+      setDoneTasks(Array.isArray(doneRows) ? doneRows : []);
     } catch (e) { setErr(e?.message || "Task load could not be loaded."); }
     finally { setBusy(false); }
   };
@@ -656,6 +659,16 @@ function TaskLoadPanel({ users }) {
       await loadTasks();
     } catch (e) { setErr(e?.message || "Could not update the task."); }
   };
+
+  const closeDaysByAssignee = {};
+  for (const t of doneTasks) {
+    const days = (new Date(t.updated_date) - new Date(t.created_date)) / 86400e3;
+    if (!Number.isFinite(days) || days < 0) continue;
+    for (const p of (Array.isArray(t.assigned_to) ? t.assigned_to : [])) {
+      const c = closeDaysByAssignee[p] = closeDaysByAssignee[p] || { sum: 0, n: 0 };
+      c.sum += days; c.n += 1;
+    }
+  }
 
   const rows = Object.values(byAssignee).sort((a, b) => b.open - a.open);
   const reassignTargets = users.map(u => u.full_name || u.email).filter(Boolean);
@@ -721,6 +734,9 @@ function TaskLoadPanel({ users }) {
                 <p className="truncate text-sm font-medium text-gray-800">{r.name}</p>
                 <p className="text-lg font-bold text-indigo-700">{r.open}</p>
                 {r.overdue > 0 && <p className="text-[11px] font-semibold text-red-600">{r.overdue} overdue</p>}
+                {closeDaysByAssignee[r.name]?.n > 0 && (
+                  <p className="text-[11px] text-gray-500">avg {(closeDaysByAssignee[r.name].sum / closeDaysByAssignee[r.name].n).toFixed(1)}d to close</p>
+                )}
               </div>
             ))}
             {rows.length === 0 && unassigned.length === 0 && <p className="col-span-full py-3 text-center text-xs text-gray-500">No open tasks.</p>}
