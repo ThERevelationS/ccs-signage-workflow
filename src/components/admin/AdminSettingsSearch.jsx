@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, Search, X } from "lucide-react";
 import { ADMIN_TAB_GROUPS, getAdminSearchKeyboardIndex, searchAdminSettings } from "@/components/admin/adminTabNavigation";
+import { createPageUrl } from "@/utils";
 
 // Search is deliberately inline rather than an unbounded dropdown overlay:
 // results remain within the Admin navigation card on narrow viewports.
@@ -72,6 +73,10 @@ const [query, setQuery] = useState("");
 
   const openResult = (result) => {
     logQuery(result.label);
+    if (result.page) {
+      window.location.href = createPageUrl(result.page);
+      return;
+    }
     onNavigate(result.tab, result.subtab || null);
     setQuery("");
     setActiveIndex(-1);
