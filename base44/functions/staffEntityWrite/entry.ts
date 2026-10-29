@@ -67,6 +67,20 @@ Deno.serve(async (req) => {
     const entity = (base44.asServiceRole.entities as any)[entityName];
     if (!entity) throw bad('Unknown record type.');
 
+    // Office-authority roles are a fixed vocabulary — a write carrying an
+    // unknown role string (typo, merged types) must not land. Keeps
+    // electrical issuer/inspector and city/township roles strictly separate.
+    const KNOWN_ROLES = new Set(['sign_permit', 'zoning', 'building', 'electrical', 'electrical_permit', 'electrical_inspection', 'right_of_way', 'historic_review', 'planning', 'transportation', 'other']);
+    const badRole = (roles: any[]) => (Array.isArray(roles) ? roles : []).find((r: any) => typeof r === 'string' && r.trim() && !KNOWN_ROLES.has(r));
+    if (entityName === 'PermitLineItem' && (op === 'create' || op === 'update')) {
+      const bad = badRole(data?.office_types || []);
+      if (bad) return Response.json({ error: `Unknown office role "${bad}" — must be one of: ${[...KNOWN_ROLES].join(', ')}.` }, { status: 400 });
+    }
+    if (entityName === 'PermitLocality' && (op === 'create' || op === 'update') && Array.isArray(data?.offices)) {
+      const bad = data.offices.map((o: any) => badRole(o?.authority_roles || [])).find(Boolean);
+      if (bad) return Response.json({ error: `Unknown office role "${bad}" — must be one of: ${[...KNOWN_ROLES].join(', ')}.` }, { status: 400 });
+    }
+
     if (op === 'create') {
       // Jurisdiction drafts are name+state-unique: a double-submit or racing
       // session must converge on one row instead of minting duplicates.
