@@ -93,7 +93,11 @@ const STAFF_READABLE = new Set([
 // Nothing is admin-only today; AuthorizedEmail is staff-readable because
 // dozens of staff views resolve user identities from it. Its secret fields
 // are stripped by FIELD_DENYLIST below before any row leaves the backend.
-const ADMIN_READABLE = new Set<string>([]);
+const ADMIN_READABLE = new Set<string>([
+  'AdminAuditLog',
+  'FailedAdminAttempt',
+  'UserSession',
+]);
 
 // Fields that must never leave the backend regardless of role. These hold
 // credentials, bearer tokens, biometric descriptors, and session-revocation
