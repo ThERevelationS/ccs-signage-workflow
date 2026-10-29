@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ArrowLeft,
+  ArrowRightLeft,
   HelpCircle,
   Undo2,
   Redo2,
@@ -42,6 +43,7 @@ export default function FoundationToolbar({
   onSaveAndExit,
   onSaveAsCopy,
   onSaveAsTemplate,
+  onConvertToBrickStone,
   onTemplates,
   onHelp,
   onBack,
@@ -79,6 +81,7 @@ export default function FoundationToolbar({
         <Btn icon={LayoutTemplate} label="Templates" onClick={onTemplates} />
         <Btn icon={BookmarkPlus} label="Save as Template" onClick={onSaveAsTemplate} />
         <Btn icon={Copy} label="Save As Copy" onClick={onSaveAsCopy} />
+        {onConvertToBrickStone && <Btn icon={ArrowRightLeft} label="To Brick & Stone" onClick={onConvertToBrickStone} disabled={saving} />
         <button
           type="button"
           onClick={onSaveAndExit}
