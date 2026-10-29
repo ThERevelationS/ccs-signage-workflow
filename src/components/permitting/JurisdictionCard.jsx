@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert, ChevronRight, Phone } from "lucide-react";
@@ -29,7 +30,7 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
     ? format(lastUpdatedDate, "MM/dd/yy")
     : null;
   const hasRequirements = jurisdiction.permit_requirements?.requires_permit !== undefined;
-  const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
+  const trust = useMemo(() => assessJurisdictionTrust(jurisdiction, duplicateCount), [jurisdiction, duplicateCount]);
 
   return (
     <div
