@@ -188,6 +188,11 @@ function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen 
 export default function TimeClockAdmin() {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
+  const [bulkCloseOpen, setBulkCloseOpen] = useState(false);
+  const [bulkCloseTime, setBulkCloseTime] = useState("17:00");
+  const [bulkCloseReason, setBulkCloseReason] = useState("");
+  const [bulkCloseBusy, setBulkCloseBusy] = useState(false);
+  const [bulkCloseResults, setBulkCloseResults] = useState(null);
   const [roundMin, setRoundMin] = useState(() => { try { return Number(localStorage.getItem("tc_round_min") || 0); } catch { return 0; } });
   const setRounding = (v) => { const n = Number(v) || 0; setRoundMin(n); try { localStorage.setItem("tc_round_min", String(n)); } catch {} };
   const roundH = (h) => { const m = Number(roundMin) || 0; return m > 0 ? Math.round((h * 60) / m) * m / 60 : h; };
@@ -1620,6 +1625,65 @@ export default function TimeClockAdmin() {
           </div>
         </div>
       )}
+      <Dialog open={bulkCloseOpen} onOpenChange={setBulkCloseOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Close {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"}</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm text-gray-600">Each entry will be closed at the chosen time <strong>on the day it started</strong>. Entries whose clock-in is after that time are skipped.</p>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs whitespace-nowrap">Close at</Label>
+              <Input type="time" value={bulkCloseTime} onChange={(e) => setBulkCloseTime(e.target.value)} className="w-28" />
+            </div>
+            <div>
+              <Label className="text-xs">Reason (required)</Label>
+              <Textarea rows={2} value={bulkCloseReason} onChange={(e) => setBulkCloseReason(e.target.value)} placeholder="e.g. Employee forgot to clock out — closed by admin" className="mt-1" />
+            </div>
+            <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-gray-600">
+              {staleActiveEntries.map(e => <li key={e.id}>{e.user_name || e.user_email} — in {safeFormat(e.clock_in, "MMM d 'at' h:mm a")}</li>)}
+            </ul>
+            {bulkCloseResults && (
+              <p className={`text-xs ${bulkCloseResults.failed.length ? "text-amber-700" : "text-emerald-700"}`}>
+                Closed {bulkCloseResults.closed}, skipped {bulkCloseResults.skipped}
+                {bulkCloseResults.failed.length ? `, failed ${bulkCloseResults.failed.length}: ${bulkCloseResults.failed.join("; ")}` : ""}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setBulkCloseOpen(false)}>Cancel</Button>
+              <Button type="button" size="sm" disabled={bulkCloseBusy || !bulkCloseReason.trim() || !sessionToken || !staleActiveEntries.length}
+                onClick={async () => {
+                  setBulkCloseBusy(true);
+                  const failed = []; let closed = 0, skipped = 0;
+                  for (const entry of staleActiveEntries) {
+                    const dayInput = `${companyDateTimeInputFromIso(entry.clock_in).slice(0, 10)}T${bulkCloseTime}`;
+                    const parsed = parseCompanyDateTimeInput(dayInput, entry.clock_in);
+                    if (!parsed?.ok || new Date(parsed.iso).getTime() <= new Date(entry.clock_in).getTime()) { skipped++; continue; }
+                    try {
+                      const rid = newRequestId();
+                      const res = await base44.functions.invoke("timeClockAction", {
+                        action: "admin_correct_entry", session_token: sessionToken,
+                        target_email: entry.user_email, request_id: rid, entry_id: entry.id,
+                        expected_updated_date: entry.updated_date, reason: bulkCloseReason.trim(),
+                        correction: {
+                          clock_in: entry.clock_in, clock_out: parsed.iso,
+                          lunch_minutes: entry.lunch_minutes ?? 0, notes: entry.notes || "",
+                          job_allocations: entry.job_allocations || [],
+                        },
+                      });
+                      const data = functionData(res);
+                      if (!data?.success) throw adminActionError(data, "not confirmed");
+                      closed++;
+                    } catch (err) { failed.push(`${entry.user_name || entry.user_email}: ${err?.message || err}`); }
+                  }
+                  setBulkCloseResults({ closed, skipped, failed });
+                  setBulkCloseBusy(false);
+                  await loadData();
+                }}>
+                {bulkCloseBusy ? "Closing…" : "Close entries"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {otWatch.length > 0 && (
         <div className="rounded-xl border border-orange-300 bg-orange-50 p-4">
           <div className="flex items-start gap-3">
@@ -1681,6 +1745,12 @@ export default function TimeClockAdmin() {
               <p className="text-sm text-amber-800 mt-1">
                 These entries have remained clocked in for more than 24 hours. Nothing was changed automatically.
               </p>
+              <div className="mt-2">
+                <Button size="sm" variant="outline" className="border-amber-400 text-amber-900"
+                  onClick={() => { setBulkCloseResults(null); setBulkCloseOpen(true); }}>
+                  Close all at a set time
+                </Button>
+              </div>
               <div className="mt-3 space-y-2">
                 {staleActiveEntries.map(entry => (
                   <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
