@@ -663,6 +663,16 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const changedBy = String(changedByOverride || payload?.changed_by || 'System').trim() || 'System';
   const context = { workOrder: eventWorkOrder, order: orderRecord, record: contextRecord, recordEntity, extras, eventType };
 
+  // Global kill switch: a GlobalSettings row {setting_key:'automations_paused',
+  // setting_value:{paused:true}} halts every rule until resumed. Read failures
+  // fail OPEN so a settings hiccup never silently disables automation.
+  try {
+    const pauseRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'automations_paused' });
+    if (Array.isArray(pauseRows) && pauseRows.some((r) => r?.setting_value?.paused === true)) {
+      return { success: true, paused: true, triggered_count: 0, actions: [] };
+    }
+  } catch { /* fail open */ }
+
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
