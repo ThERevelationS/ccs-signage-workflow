@@ -342,6 +342,20 @@ export default function EstimatorQueues() {
           {me?.role === "admin" && <button type="button" onClick={exportBackup} disabled={backupBusy} className="h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" />{backupBusy ? " Exporting…" : " Backup (JSON)"}</button>}
           <button type="button" onClick={() => importEstRef.current?.click()} className="h-6 px-2 rounded border border-emerald-300 bg-emerald-50 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 inline-flex items-center gap-1" title="Import an exported estimate JSON bundle (#451)"><Upload className="w-3 h-3" />Import estimate</button>
           <input ref={importEstRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importEstimateJson(e.target.files?.[0])} />
+          <button type="button" onClick={async () => {
+            const moduleKey = window.prompt("Module key? (foundation, metal, channel_letters, vinyl, cnc, brick_stone, maintenance, laser, sign_hardware, digital_print)", "");
+            if (!moduleKey) return;
+            const projectId = window.prompt("Module project id?", "");
+            if (!projectId) return;
+            try {
+              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "estimate_from_module", module_key: moduleKey.trim(), project_id: projectId.trim() });
+              const d = res?.data || res;
+              if (!d?.success || !d?.estimate_id) throw new Error(d?.error || "Wrap failed.");
+              navigate(`/EstimateDetail?id=${d.estimate_id}`);
+            } catch (e) { window.alert(e?.message || "Wrap failed."); }
+          }}
+            className="h-6 px-2 rounded border border-sky-300 bg-sky-50 text-[10px] font-bold text-sky-700 hover:bg-sky-100 inline-flex items-center gap-1" title="Wrap a standalone module project into a new AIO estimate (#455)">From project</button>
           <span className="text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
         </div>
 
