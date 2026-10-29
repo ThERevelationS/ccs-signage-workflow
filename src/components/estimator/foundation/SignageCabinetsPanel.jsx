@@ -38,7 +38,7 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
         <span className="text-[12px] font-bold text-gray-800 whitespace-nowrap">
           {money((cabinet.unit_cost || 0) * (cabinet.quantity || 1))}
         </span>
-        <button onClick={onRemove} className="text-gray-400 hover:text-red-600" title="Remove">
+        <button type="button" onClick={onRemove} className="text-gray-400 hover:text-red-600" title="Remove">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -95,7 +95,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                     Foundation {index + 1}
                     {item.description ? ` — ${item.description}` : ""}
                   </span>
-                  <button
+                  <button type="button"
                     onClick={() => add("foundation", index)}
                     className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
                   >
@@ -139,7 +139,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
               <div key={index} className="border border-gray-200 rounded-sm p-2 mb-2">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[12px] font-semibold text-gray-700">Pole {index + 1}</span>
-                  <button
+                  <button type="button"
                     onClick={() => add("pole", index)}
                     className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
                   >
