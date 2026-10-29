@@ -713,6 +713,7 @@ export default function AdminSettings() {
   const [pauseSettingRow, setPauseSettingRow] = useState(null);
   const [pauseBusy, setPauseBusy] = useState(false);
   const [pauseError, setPauseError] = useState("");
+  const [openExceptionCount, setOpenExceptionCount] = useState(0);
   const [emailGroups, setEmailGroups] = useState([]);
   const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
   const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
@@ -1660,7 +1661,14 @@ export default function AdminSettings() {
       setAutomationsPaused(row?.setting_value?.paused === true);
     } catch { /* fail open: leave current state */ }
   };
-  useEffect(() => { if (isUnlocked) void loadAutomationPauseState(); }, [isUnlocked]);
+  useEffect(() => {
+    if (!isUnlocked) return;
+    void loadAutomationPauseState();
+    // Open punch-exception count → nav badge on the Time Clock tab.
+    staffEntities.TimeClockPunchException.filter({ status: "open" })
+      .then((rows) => setOpenExceptionCount(Array.isArray(rows) ? rows.length : 0))
+      .catch(() => setOpenExceptionCount(0));
+  }, [isUnlocked]);
 
   const toggleAutomationPause = async () => {
     if (pauseBusy) return;
@@ -2092,6 +2100,12 @@ export default function AdminSettings() {
                   >
                     {TabIcon && <TabIcon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                     <span>{tab.label}</span>
+                    {tab.value === "timeclock" && openExceptionCount > 0 && (
+                      <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                        title={`${openExceptionCount} open punch exception${openExceptionCount === 1 ? "" : "s"}`}>
+                        {openExceptionCount}
+                      </span>
+                    )}
                   </TabsTrigger>
                 );
               })}
