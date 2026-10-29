@@ -2989,8 +2989,8 @@ export default function UserManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deletionSaving} className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleDelete(deleteConfirm)}
-              disabled={deletionSaving || userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken}
+              onClick={() => { if (!(selfEmail && deleteConfirm?.email?.toLowerCase() === selfEmail)) handleDelete(deleteConfirm); }}
+              disabled={deletionSaving || userMutationSaving || hrMutationSaving || isLoading || userDirectoryError || !sessionToken || (selfEmail && deleteConfirm?.email?.toLowerCase() === selfEmail)}
               className="bg-red-600 text-white"
             >
               {deletionSaving ? "Removing..." : "Remove User"}
