@@ -2169,6 +2169,12 @@ export default function UserManagement() {
                       const expired = user.access_expires_on < today;
                       return <span className={`text-[11px] font-medium ${expired ? "text-red-600" : "text-gray-400"}`}>{expired ? "expired " : "expires "}{user.access_expires_on}</span>;
                     })()}
+                    {(() => {
+                      const days = user.password_changed_at ? Math.floor((Date.now() - new Date(user.password_changed_at).getTime()) / 86400000) : null;
+                      if (days === null) return <span className="text-[11px] text-amber-600" title="No password-change date recorded">password age unknown</span>;
+                      const stale = days > 90;
+                      return <span className={`text-[11px] font-medium ${stale ? "text-amber-600" : "text-gray-400"}`} title={`Password last changed ${user.password_changed_at.slice(0, 10)}`}>password {days}d old{stale ? " — rotate" : ""}</span>;
+                    })()}
                     {user.username && (
                       <span className="text-xs text-purple-600">@{user.username}</span>
                     )}
