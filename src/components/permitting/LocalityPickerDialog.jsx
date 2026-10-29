@@ -52,6 +52,10 @@ const AUTHORITY_ROLE_LABELS = {
   other: "Other",
 };
 
+// Power-user mode: a localStorage flag that skips the confirm dialogs — for
+// staff who do many applies back-to-back and know what they are doing.
+export const confirmOrSkip = (message) => { try { if (localStorage.getItem("permitting_skip_confirms") === "1") return true; } catch {} return window.confirm(message); };
+
 function verifiedAuthoritySummary(locality) {
   const review = summarizeMatchedLocalityAuthority(locality);
   return {
@@ -184,9 +188,9 @@ function LocalityPickerSession({
     try {
       const invoke=runAction;
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
-      let data;
+      let { data };
       try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
-      catch(firstErr){ if(/status code 5\d\d/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
+      catch(firstErr){ if(/status code 5dd/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
@@ -245,7 +249,7 @@ function LocalityPickerSession({
     // already gated on a verified review; repository picks may not be.
     if (!address.trim() && selectedAuthority.officeCount === 0) {
       const name = selectedLocality?.name || "this office";
-      if (!window.confirm(`${name} hasn't been checked by our team yet — the permit offices and contact info may be incomplete. Use it anyway?`)) return;
+      if (!confirmOrSkip(`${name} hasn't been checked by our team yet — the permit offices and contact info may be incomplete. Use it anyway?`)) return;
     }
     onApply(selectedLocalityId, { excludeElectrical });
     onClose();
@@ -323,7 +327,7 @@ function LocalityPickerSession({
   return (
     <Dialog open={isOpen} onOpenChange={(o) => {
       if (o) return;
-      if (searching && !window.confirm("A lookup is still running — close anyway? (It keeps running in the background.)")) return;
+      if (searching && !confirmOrSkip("A lookup is still running — close anyway? (It keeps running in the background.)")) return;
       onClose();
     }}>
       <DialogContent className={"flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0 "+(bigText?"text-[115%] [&_button]:min-h-12 [&_input]:text-base [&_p]:text-sm [&_span]:text-sm [&_p]:tracking-wide [&_p]:leading-relaxed [&_button]:tracking-wide":"")}>
@@ -401,6 +405,7 @@ function LocalityPickerSession({
           <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-violet-700 underline self-center" onClick={() => { const v = !showOptions; setShowOptions(v); try { localStorage.setItem("permitting_show_options", v ? "1" : "0"); } catch {} }}>{showOptions ? "Fewer options" : "More options…"}</button>
 
           {showOptions && <>
+          <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-slate-600 underline self-center" onClick={() => { try { const v = localStorage.getItem("permitting_skip_confirms") !== "1"; localStorage.setItem("permitting_skip_confirms", v ? "1" : "0"); window.alert(v ? "Confirmations are now skipped." : "Confirmations are back on."); } catch {} }}>Skip confirmations</button>
           <Button
             variant="outline"
             className="gap-1 min-h-11 w-full sm:w-auto"
@@ -446,7 +451,7 @@ function LocalityPickerSession({
           {/* Electrical inspector toggle */}
           <Button
             variant="outline"
-            onClick={() => { if (!excludeElectrical && !window.confirm("Hide electrical inspectors on this job? Only do this if the office already confirmed no electrical permit is needed.")) return; setExcludeElectrical(v => !v); }}
+            onClick={() => { if (!excludeElectrical && !confirmOrSkip("Hide electrical inspectors on this job? Only do this if the office already confirmed no electrical permit is needed.")) return; setExcludeElectrical(v => !v); }}
             className={`gap-1 min-h-11 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
