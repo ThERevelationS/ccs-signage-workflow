@@ -1,0 +1,47 @@
+{
+  "name": "AdminAuditLog",
+  "properties": {
+    "actor_email": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "target_email": {
+      "type": "string"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "action",
+    "at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
