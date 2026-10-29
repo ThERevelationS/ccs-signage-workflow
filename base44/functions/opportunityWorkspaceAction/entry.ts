@@ -485,6 +485,41 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, copied_sections: copied });
     }
 
+    // Wrap a standalone module project into an AIO estimate (#455): legacy
+    // BOM → new structure. {module_key, project_id} → a new AllInOneEstimate
+    // whose line_items point at that module project.
+    if (action === "estimate_from_module") {
+      const moduleKey = clean(body?.module_key);
+      const projectId = clean(body?.project_id);
+      const MODULE_ENTITIES: Record<string, string> = {
+        foundation: "FoundationProject", metal: "MetalProject",
+        channel_letters: "ChannelLetterInstallation", vinyl: "VinylProject",
+        cnc: "CNCProject", brick_stone: "BrickStoneProject",
+        maintenance: "MaintenanceProject", laser: "LaserProject",
+        sign_hardware: "SignHardwareProject", digital_print: "DigitalPrintProject",
+      };
+      const entityName = MODULE_ENTITIES[moduleKey];
+      if (!entityName || !projectId) throw bad("module_key + project_id are required.", 400);
+      const proj = await (base44.asServiceRole.entities as any)[entityName].get(projectId).catch(() => null);
+      if (!proj?.id) throw bad("Module project not found.", 404);
+      const created = await Estimate.create({
+        project_name: clean(proj?.project_name) || clean(proj?.name) || `${moduleKey} estimate`,
+        client_name: clean(proj?.client_name) || clean(proj?.customer_name) || "",
+        status: "draft",
+        line_items: [{
+          line_id: `sec_${Date.now().toString(36)}_0`,
+          module_key: moduleKey,
+          project_id: projectId,
+          project_name: clean(proj?.project_name) || clean(proj?.name) || "",
+          client_name: clean(proj?.client_name) || clean(proj?.customer_name) || "",
+          total_snapshot: num(proj?.estimated_total ?? proj?.total ?? 0),
+        }],
+        pricing_stale: true,
+        pricing_stale_reason: "Imported module estimate — recompute + re-save before sending.",
+      });
+      return Response.json({ success: true, action, estimate_id: created?.id });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
