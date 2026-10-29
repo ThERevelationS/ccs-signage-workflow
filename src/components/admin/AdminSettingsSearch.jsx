@@ -146,6 +146,9 @@ const [query, setQuery] = useState("");
                 </button>
               ))}
             </div>
+              <p className="px-1 pt-1 text-[10px] text-gray-400">
+                <span className="font-semibold">Up/Down</span> choose · <span className="font-semibold">Enter</span> open · <span className="font-semibold">Esc</span> close
+              </p>
           )}
         </div>
       )}
