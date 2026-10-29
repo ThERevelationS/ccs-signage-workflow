@@ -34,6 +34,7 @@ export function calendarEventFieldsFromForm(form = {}) {
     external_id: form.external_id,
     external_source: form.external_source,
     reminder_minutes: form.reminder_minutes,
+    travel_buffer_minutes: form.travel_buffer_minutes,
     status: form.status,
   };
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
