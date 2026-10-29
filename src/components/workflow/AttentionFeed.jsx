@@ -170,7 +170,7 @@ export default function AttentionFeed() {
         id: it.id,
         primary: it.label,
         secondary: `${it.quantity_on_hand} on hand · reorder at ${it.reorder_point}${it.supplier ? ` · ${it.supplier}` : ""}`,
-        href: "/Inventory",
+        href: it.id ? `/PurchaseOrders?draft_item=${it.id}` : "/Inventory",
       })),
     },
     {
