@@ -311,7 +311,7 @@ export default function JobCosting() {
                 <th className="px-4 py-2.5 text-right">Contract</th><th className="px-4 py-2.5 text-right">PO</th>
                 <th className="px-4 py-2.5 text-right">Stock</th><th className="px-4 py-2.5 text-right">Labor</th><th className="px-4 py-2.5 text-right">CO Δ</th>
                 <th className="px-4 py-2.5 text-right">Invoiced</th><th className="px-4 py-2.5 text-right">Collected</th>
-                <th className="px-4 py-2.5 text-right">
+                <th className="px-4 py-2.5 text-right" aria-sort={marginSort === "asc" ? "ascending" : marginSort === "desc" ? "descending" : "none"}>
                   <button
                     type="button"
                     onClick={() => setMarginSort((s) => (s === "desc" ? "asc" : "desc"))}
