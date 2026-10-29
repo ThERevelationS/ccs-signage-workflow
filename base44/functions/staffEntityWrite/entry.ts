@@ -62,6 +62,13 @@ Deno.serve(async (req) => {
     if (entityName === 'TaxGroup' && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can manage tax groups.' }, { status: 403 });
     }
+
+    const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
+    if (JSON.stringify(data).length > 200000) throw bad('Record payload is too large.');
+    rejectOperatorKeys(data);
+    // Identity/system fields are never client-supplied.
+    for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (data as any)[f];
+
     if (entityName === 'TaxGroup' && (op === 'create' || op === 'update')) {
       const pct = Number(data?.tax_percent ?? 0);
       if (!String(data?.group_name || '').trim()) return Response.json({ error: 'Tax group needs a name.' }, { status: 400 });
@@ -69,12 +76,6 @@ Deno.serve(async (req) => {
       (data as any).group_name = String(data.group_name).trim().slice(0, 120);
       (data as any).tax_percent = Math.round(pct * 1000) / 1000;
     }
-
-    const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
-    if (JSON.stringify(data).length > 200000) throw bad('Record payload is too large.');
-    rejectOperatorKeys(data);
-    // Identity/system fields are never client-supplied.
-    for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (data as any)[f];
 
     const entity = (base44.asServiceRole.entities as any)[entityName];
     if (!entity) throw bad('Unknown record type.');
