@@ -119,6 +119,9 @@ function LocalityPickerSession({
   const [multiResults, setMultiResults] = useState([]);
   const [multiRunning, setMultiRunning] = useState(false);
   const [gpsCoords, setGpsCoords] = useState(null);
+  const [scanningQR, setScanningQR] = useState(false);
+  const scanVideoRef = useRef(null);
+  const scanStreamRef = useRef(null);
   const inputRef = useRef(null);
 
   const autoSearchRef = useRef(false);
@@ -503,6 +506,40 @@ function LocalityPickerSession({
           >
             <MapPin className="w-4 h-4" /> {t("Use my location", "Usar mi ubicación")}
           </Button>
+
+          {"BarcodeDetector" in window && (
+            <Button
+              variant="outline"
+              className="gap-1 min-h-11 w-full sm:w-auto"
+              title="Scan a printed work order's QR code to pull the job address"
+              onClick={async () => {
+                if (scanningQR) { scanStreamRef.current?.getTracks().forEach((t) => t.stop()); setScanningQR(false); return; }
+                try {
+                  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                  scanStreamRef.current = stream; setScanningQR(true);
+                  const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+                  const tick = async () => {
+                    if (!scanVideoRef.current || scanVideoRef.current.readyState < 2) { if (scanStreamRef.current) setTimeout(tick, 300); return; }
+                    try {
+                      const codes = await detector.detect(scanVideoRef.current);
+                      if (codes.length && codes[0].rawValue) {
+                        scanStreamRef.current?.getTracks().forEach((t) => t.stop()); scanStreamRef.current = null; setScanningQR(false);
+                        setAddress(String(codes[0].rawValue)); setResult(null); setSelectedLocalityId(''); setSearching(false);
+                        setTimeout(() => runSearch(), 0); return;
+                      }
+                    } catch {}
+                    if (scanStreamRef.current) setTimeout(tick, 300);
+                  };
+                  setTimeout(tick, 300);
+                } catch { setError("Camera was blocked — allow access or type the address."); }
+              }}
+            >
+              {scanningQR ? "Stop scan" : "Scan QR"}
+            </Button>
+          )}
+          {scanningQR && (
+            <video ref={(el) => { scanVideoRef.current = el; if (el && scanStreamRef.current) { el.srcObject = scanStreamRef.current; el.play().catch(() => {}); } }} className="mt-2 max-h-40 w-full rounded-md border border-slate-200 object-cover" muted playsInline />
+          )}
 
           <Button
             variant="outline"
