@@ -441,13 +441,6 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
 
-  // Index of today inside the Monday-first week strip.
-  const todayIndex = (() => {
-    const day = snapshot?.company_day;
-    if (!day) return -1;
-    return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
-  })();
-
   // Goal streak: consecutive days at/above the daily goal, ending today.
   const goalStreak = useMemo(() => {
     if (weeklyDaily.length !== 7) return 0;
@@ -466,6 +459,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     const days = weeklyDaily.map(Number).filter((m, i) => i < todayIndex && m > 0);
     return days.length ? days.reduce((a, b) => a + b, 0) / days.length : null;
   }, [weeklyDaily, todayIndex]);
+  const todayIndex = (() => {
+    const day = snapshot?.company_day;
+    if (!day) return -1;
+    return (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7;
+  })();
 
   const trackerLabel = clockedIn
     ? (String(prefs?.custom_label || "").trim() || (prefs?.direction === "down" && !overtime ? "Remaining" : "Today"))
@@ -695,6 +693,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
             <p className="mt-3 text-[10px] leading-relaxed text-slate-400">
               Counts {prefs?.count_mode === "elapsed" ? "elapsed" : "paid"} time against a {formatClock(goalMinutes, "hours_minutes")} daily goal, in {TIME_CLOCK_COMPANY_TIME_LABEL}. Configure in Time Clock → Settings.
             </p>
+            {snapshotRecord.receivedAt > 0 && (
+              <p className="mt-1 text-[9px] text-slate-400">
+                Synced {Math.max(0, Math.round((nowMs - snapshotRecord.receivedAt) / 1000))}s ago{pollError ? ` · refresh issue: ${pollError}` : ""}
+              </p>
+            )}
           </>
         )}
       </PopoverContent>
