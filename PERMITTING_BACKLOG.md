@@ -514,7 +514,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 400. **[UX][DONE]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
 401. **[F][FLAGGED-dedicated]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
 402. **[UX][FLAGGED-dedicated]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
-403. **[F][FLAGGED-dedicated]** Repeat-offender list: jurisdictions where applications keep getting rejected — process problems surface.
+403. **[F][DONE]** Repeat-offender list: jurisdictions where applications keep getting rejected — process problems surface.
 404. **[UX][FLAGGED-dedicated]** Time-to-issue report: days from apply → issued per jurisdiction — realistic expectations set.
 405. **[F][DONE]** Most-applied jurisdictions: the hot-10 towns — where the permitting effort concentrates.
 406. **[UX][FLAGGED-dedicated]** First-try-rate: % of applications accepted first time — quality signal.
