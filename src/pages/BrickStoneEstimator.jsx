@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Save } from "lucide-react";
@@ -25,6 +24,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const saveRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -189,6 +189,7 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
       setSaving(false);
     }
   };
+  saveRef.current = handleSave;
 
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
