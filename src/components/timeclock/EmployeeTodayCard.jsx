@@ -169,6 +169,11 @@ export default function EmployeeTodayCard({
             <Badge variant="outline" className={statusClass}>
               <StatusIcon className="w-3 h-3 mr-1" />{statusLabel}
             </Badge>
+            {statusData?.break_status === "on_break" && activeBreakElapsed > 60 && (
+              <Badge variant="outline" className="border-red-300 bg-red-50 text-red-700" title="Break has run over the standard hour">
+                {activeBreakElapsed}m - over
+              </Badge>
+            )}
           </div>
           <p className="text-xs text-gray-500 mt-1">Live operational time from authoritative Time Clock state.</p>
         </div>
