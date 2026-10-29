@@ -160,6 +160,10 @@
           "file_url": {
             "type": "string"
           },
+          "superseded": {
+            "type": "boolean",
+            "description": "This source is outdated (form replaced, page moved) \u2014 kept for audit, not cited."
+          },
           "doc_type": {
             "type": "string",
             "enum": [
