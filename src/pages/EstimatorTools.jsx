@@ -12,6 +12,7 @@ const LINKS = [
   { label: "Master Inventory", desc: "Stocked materials across modules", to: "/MasterInventory" },
   { label: "Quote Settings", desc: "Customer quote branding, terms and defaults", to: "/QuoteSettings" },
   { label: "Estimator Settings", desc: "Estimator module defaults", to: "/EstimatorSettings" },
+  { label: "Data backup", desc: "Admin full estimate + parts + audit export (JSON) on Estimate Queues", to: "/EstimatorQueues" },
   { label: "Main Workflow", desc: "Jump to the shop workflow board", to: "/MainWorkflow" },
   { label: "Sales Pipeline", desc: "Leads, quotes and follow-ups", to: "/SalesPipeline" },
   { label: "Reports & Requests", desc: "Submit a bug or feature request", to: "/FeatureReports" },
