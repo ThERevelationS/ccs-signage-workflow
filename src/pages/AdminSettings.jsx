@@ -562,6 +562,15 @@ export default function AdminSettings() {
       }, isAdmin, currentUser);
     }
   }, [isUnlocked, navigationKey, selectedAdminTab, selectedAdminSubtab, isAdmin, browserStorage]);
+
+  useEffect(() => {
+    if (!isUnlocked || !selectedAdminTab) return;
+    setRecentTabs((prev) => {
+      const next = [selectedAdminTab, ...prev.filter((v) => v !== selectedAdminTab)].slice(0, 5);
+      try { localStorage.setItem("admin_recent_tabs", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, [isUnlocked, selectedAdminTab]);
   const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser);
   const requestedDeepLinkTab = searchParams.get("tab");
   const requestedDeepLinkSubtab = searchParams.get("subtab");
@@ -717,6 +726,10 @@ export default function AdminSettings() {
   const [pinnedTabs, setPinnedTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
   });
+  const [recentTabs, setRecentTabs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("admin_recent_tabs") || "[]"); } catch { return []; }
+  });
+
   const togglePin = (tabValue) => {
     setPinnedTabs((prev) => {
       const next = prev.includes(tabValue) ? prev.filter((v) => v !== tabValue) : [...prev, tabValue];
@@ -2116,6 +2129,21 @@ export default function AdminSettings() {
                 </button>
               ))}
             </div>
+            {recentTabs.length > 0 && (
+              <div className="mb-1 flex flex-wrap items-center gap-1 px-1 text-[11px] text-gray-500">
+                <span className="font-medium">Recent:</span>
+                {recentTabs.map((v) => {
+                  const t = activeAdminGroup.tabs.find((x) => x.value === v) ||
+                    availableAdminGroups.flatMap((g) => g.tabs).find((x) => x.value === v);
+                  return t ? (
+                    <button key={v} type="button" onClick={() => handleAdminTabChange(v)}
+                      className={`rounded-full border px-2 py-0.5 ${v === selectedAdminTab ? "border-red-300 bg-white font-semibold" : "border-gray-200 bg-white/60 hover:border-red-300"}`}>
+                      {t.label}
+                    </button>
+                  ) : null;
+                })}
+              </div>
+            )}
             <TabsList aria-label={`Admin ${activeAdminGroup.label} pages`} className="mt-2 grid h-auto min-h-10 w-full min-w-0 max-w-full grid-cols-2 items-stretch gap-1 bg-transparent p-1 sm:grid-cols-3 lg:grid-cols-4">
               {[...activeAdminGroup.tabs].sort((a, b) => (pinnedTabs.includes(b.value) ? 1 : 0) - (pinnedTabs.includes(a.value) ? 1 : 0)).map((tab) => {
                 const TabIcon = ADMIN_TAB_ICONS[tab.value];
