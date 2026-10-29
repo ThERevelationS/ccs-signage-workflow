@@ -2288,6 +2288,20 @@ export default function UserManagement() {
                     })()}
                     {user.is_deactivated === true && <span className="text-[11px] font-semibold text-red-600">deactivated</span>}
                     {(() => {
+                      const certs = (user.hr_data && typeof user.hr_data === "object" ? user.hr_data.certifications : null) || [];
+                      const expiring = certs.filter((c) => {
+                        const m = String(c).match(/exp\s+([\d-]{4,10})/i);
+                        if (!m) return false;
+                        const d = new Date(m[1]);
+                        return Number.isFinite(+d) && d < new Date(Date.now() + 60 * 86400000);
+                      });
+                      return expiring.length ? (
+                        <span className="text-[11px] font-semibold text-amber-700" title={expiring.join(", ")}>
+                          {expiring.length} cert{expiring.length === 1 ? "" : "s"} expiring
+                        </span>
+                      ) : null;
+                    })()}
+                    {(() => {
                       if (!user.last_login_at) return <span className="text-[11px] text-gray-400">never signed in</span>;
                       const days = Math.floor((Date.now() - new Date(user.last_login_at).getTime()) / 86400000);
                       return <span className={`text-[11px] ${days > 60 ? "text-amber-600" : "text-gray-400"}`} title={`Last sign-in ${user.last_login_at.slice(0, 10)}`}>active {days === 0 ? "today" : `${days}d ago`}</span>;
