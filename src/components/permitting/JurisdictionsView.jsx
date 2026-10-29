@@ -30,6 +30,8 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => { const t = setTimeout(() => setDebouncedSearch(searchTerm), 300); return () => clearTimeout(t); }, [searchTerm]);
   const [selectedJurisdiction, setSelectedJurisdiction] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingJurisdiction, setEditingJurisdiction] = useState(null);
@@ -261,7 +263,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     setAiDiscoverLoading(false);
   };
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const normalizedSearch = debouncedSearch.trim().toLowerCase();
 
   // Users type things like "Hamilton County" or "City of Mason" while profiles
   // are stored by bare name + type. Normalize the query (strip type words) and
