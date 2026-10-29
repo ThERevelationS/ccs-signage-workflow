@@ -242,6 +242,11 @@ export default function PermittingRulesReview() {
           <SelectTrigger><SelectValue placeholder="Conflict" /></SelectTrigger>
           <SelectContent>{CONFLICT_STATES.map(c => <SelectItem key={c.value} value={c.value || "all"}>{c.label}</SelectItem>)}</SelectContent>
         </Select>
+        {rules.filter(r => r.conflict_state === "conflicting_sources" || r.conflict_state === "under_review").length > 0 && (
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+            {rules.filter(r => r.conflict_state === "conflicting_sources" || r.conflict_state === "under_review").length} conflict{rules.filter(r => r.conflict_state === "conflicting_sources" || r.conflict_state === "under_review").length === 1 ? "" : "s"} to review
+          </span>
+        )}
         <Select value={filters.confidence || "all"} onValueChange={(v) => setFilter("confidence", v === "all" ? "" : v)}>
           <SelectTrigger><SelectValue placeholder="Confidence" /></SelectTrigger>
           <SelectContent>
