@@ -2003,6 +2003,28 @@ export default function TimeClockAdmin() {
       </div>
       </AdminSection>
 
+      {(() => {
+        const byJob = {};
+        for (const e of entries || []) {
+          const key = e.work_order_id ? (e.work_order_title || e.client_name || e.work_order_id) : null;
+          if (!key) continue;
+          byJob[key] = (byJob[key] || 0) + Number(e.total_hours || 0);
+        }
+        const jobs = Object.entries(byJob).map(([k, h]) => ({ name: k, hours: h })).sort((a, b) => b.hours - a.hours).slice(0, 10);
+        return jobs.length ? (
+          <AdminSection title="Hours by Job" icon={Clock3} count={jobs.length}>
+            <ul className="space-y-1">
+              {jobs.map((j) => (
+                <li key={j.name} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="truncate text-gray-700">{j.name}</span>
+                  <span className="font-medium text-gray-900">{j.hours.toFixed(1)}h</span>
+                </li>
+              ))}
+            </ul>
+          </AdminSection>
+        ) : null;
+      })()}
+
       <AdminSection title="Registered Devices" icon={Clock3} count={devices.length}
         subtitle="Kiosks and tablets that have signed in to the time clock.">
         {devices.length === 0 ? (
