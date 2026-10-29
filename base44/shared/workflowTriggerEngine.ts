@@ -673,6 +673,22 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     }
   } catch { /* fail open */ }
 
+  // Quiet hours: a GlobalSettings row {setting_key:'notificationQuietHours',
+  // setting_value:{enabled:true,start:'20:00',end:'07:00'}} skips send_email
+  // actions inside the window (overnight ranges wrap). Fail OPEN.
+  let quietHoursActive = false;
+  try {
+    const qhRows = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'notificationQuietHours' });
+    const qh = qhRows?.[0]?.setting_value;
+    if (qh?.enabled === true && qh.start && qh.end) {
+      const now = new Date();
+      const mins = now.getHours() * 60 + now.getMinutes();
+      const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+      const start = toMin(qh.start), end = toMin(qh.end);
+      quietHoursActive = start <= end ? (mins >= start && mins < end) : (mins >= start || mins < end);
+    }
+  } catch { /* fail open */ }
+
   const automations = await loadAllEntityRows({ entity: base44.asServiceRole.entities.AutomationRule, query: { enabled: true }, sort: null, label: 'Enabled workflow automation rules' });
   const triggeredActions: any[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
@@ -692,6 +708,10 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     for (const [actionIndex, action] of rule.actions.entries()) {
       if (!action?.action_type) continue;
       try {
+        if (quietHoursActive && action.action_type === 'send_email') {
+          triggeredActions.push({ rule: rule.name, action: 'send_email', result: 'skipped_quiet_hours' });
+          continue;
+        }
         const source = contextRecord || orderRecord;
         if (!actionWorkOrder?.id && ['add_task', 'add_note'].includes(action.action_type) && supportsRecordDestination(eventType) &&
             (!source?.updated_date || !rule.id)) throw new Error('Record action requires a verified source version and rule identity.');
