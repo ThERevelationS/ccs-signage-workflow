@@ -113,6 +113,9 @@ function LocalityPickerSession({
   const [repositoryDraftId,setRepositoryDraftId]=useState("");
   const [draftCreateError, setDraftCreateError] = useState("");
   const [creatingDraft, setCreatingDraft] = useState(false);
+  const [multiMode, setMultiMode] = useState(false);
+  const [multiResults, setMultiResults] = useState([]);
+  const [multiRunning, setMultiRunning] = useState(false);
   const inputRef = useRef(null);
 
   const autoSearchRef = useRef(false);
@@ -394,7 +397,50 @@ function LocalityPickerSession({
                 }}
               />
             </div>
+            <button type="button" onClick={() => { setMultiMode(!multiMode); setMultiResults([]); }} className="text-[10px] font-semibold text-purple-600 hover:underline">
+              {multiMode ? "Single address" : "Paste several addresses"}
+            </button>
           </div>
+          {multiMode && (
+            <div className="space-y-2">
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={"One address per line:\n4900 Parkway Dr, Mason, OH\n100 Main St, Loveland, OH"}
+                className="min-h-[100px] w-full rounded-md border border-gray-200 p-2 text-sm"
+              />
+              <Button
+                size="sm"
+                disabled={multiRunning || !address.trim()}
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={async () => {
+                  const lines = address.split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, 20);
+                  setMultiRunning(true); setMultiResults([]);
+                  const results = [];
+                  for (const line of lines) {
+                    try {
+                      const res = await base44.functions.invoke("resolvePermittingAddress", { address: line });
+                      const data = res?.data || res || {};
+                      const loc = data.locality_name || data.locality?.name || data.candidates?.[0]?.locality_name || data.candidates?.[0]?.name || "";
+                      results.push({ address: line, locality: loc, found: !!loc });
+                    } catch { results.push({ address: line, locality: "", found: false }); }
+                    setMultiResults([...results]);
+                  }
+                  setMultiRunning(false);
+                }}
+              >{multiRunning ? "Resolving…" : "Resolve all"}</Button>
+              {multiResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto rounded border border-gray-200 text-[11px]">
+                  {multiResults.map((r, i) => (
+                    <div key={i} className={`flex items-center justify-between gap-2 border-b border-gray-100 px-2 py-1 ${r.found ? "" : "bg-red-50"}`}>
+                      <span className="truncate text-slate-600">{r.address}</span>
+                      <span className={`shrink-0 font-semibold ${r.found ? "text-emerald-700" : "text-red-600"}`}>{r.locality || "not found"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {searching ? (
             <Button
               variant="outline"
