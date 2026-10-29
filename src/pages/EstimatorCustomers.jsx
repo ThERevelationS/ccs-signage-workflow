@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw, X, MapPin, FileText, Briefcase, Loader2, Link2, Copy, Send, MessageSquare, Printer } from "lucide-react";
@@ -466,6 +467,11 @@ export default function EstimatorCustomers() {
                         <span className="hidden sm:flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           {c.contact_email}
+                        </span>
+                      )}
+                      {c.last_contacted_at && (
+                        <span className="text-[10px] text-gray-400">
+                          · contacted {format(new Date(c.last_contacted_at), "MMM d")}
                         </span>
                       )}
                       {c.company_phone && (
