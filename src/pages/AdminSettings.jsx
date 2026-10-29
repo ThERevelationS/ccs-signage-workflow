@@ -112,6 +112,7 @@ import {
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getAccessibleAdminGroups, getAccessibleAdminSubtab, getAccessibleAdminTab, getAdminCategoryKeyboardTarget, getAdminGroupForTab } from "@/components/admin/adminTabNavigation";
 import AdminSettingsSearch from "@/components/admin/AdminSettingsSearch";
+import { createFeatureReportWithRecovery } from "@/components/reports/featureReportPersistence";
 import { classifyAutomationCreateReceipt, reviewUncertainAutomationSave, snapshotUncertainAutomationReview, reviewedAutomationSnapshotIsCurrent } from "@/components/admin/automationSaveReconciliation";
 import { AutomationReadTimeoutError, withAutomationReadDeadline } from "@/components/admin/automationReadDeadline";
 import { reviewAutomationOperation } from "@/components/admin/automationOperationReconciliation";
@@ -768,6 +769,10 @@ export default function AdminSettings() {
   
   const [automations, setAutomations] = useState([]);
   const [automationsPaused, setAutomationsPaused] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDraft, setReportDraft] = useState({ title: "", type: "bug", description: "" });
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportMsg, setReportMsg] = useState("");
   const [quietSettingRow, setQuietSettingRow] = useState(null);
   const [quietEnabled, setQuietEnabled] = useState(false);
   const [quietStart, setQuietStart] = useState("20:00");
@@ -2320,13 +2325,66 @@ export default function AdminSettings() {
           });
         }} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
-            <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1"><AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} /></div>
+              <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1 text-xs"
+                onClick={() => { setReportMsg(""); setReportOpen(true); }}
+                aria-label="Report an issue or idea">
+                <Flag className="h-3.5 w-3.5" aria-hidden="true" /> Report
+              </Button>
+            </div>
             {capabilityExpiryLabel && (
               <p data-admin-capability-expiry className="px-2 pb-1 text-right text-[11px] font-medium text-red-900/60">
                 Admin authorization expires at {capabilityExpiryLabel}
               </p>
             )}
-            <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70 pb-2 [scrollbar-width:thin]">
+              <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Report an issue or idea</DialogTitle></DialogHeader>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <Label className="text-xs">Short title</Label>
+                    <Input value={reportDraft.title} onChange={(e) => setReportDraft(d => ({ ...d, title: e.target.value }))} placeholder="What happened or what would help?" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Kind</Label>
+                    <Select value={reportDraft.type} onValueChange={(v) => setReportDraft(d => ({ ...d, type: v }))}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bug">Something is broken</SelectItem>
+                        <SelectItem value="improvement">Could be better</SelectItem>
+                        <SelectItem value="feature">New idea</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Details</Label>
+                    <Textarea rows={4} value={reportDraft.description} onChange={(e) => setReportDraft(d => ({ ...d, description: e.target.value }))} placeholder="Steps, what you expected, which page you were on…" className="mt-1" />
+                  </div>
+                  {reportMsg && <p className={`text-xs ${reportMsg.startsWith("Saved") ? "text-emerald-600" : "text-red-600"}`}>{reportMsg}</p>}
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setReportOpen(false)}>Cancel</Button>
+                    <Button type="button" size="sm" disabled={reportBusy || !reportDraft.title.trim() || !sessionToken}
+                      onClick={async () => {
+                        setReportBusy(true); setReportMsg("");
+                        try {
+                          await createFeatureReportWithRecovery({
+                            data: { title: reportDraft.title.trim(), type: reportDraft.type, description: reportDraft.description.trim() },
+                            sessionToken,
+                            label: "Admin feedback",
+                          });
+                          setReportMsg("Saved — thank you.");
+                          setReportDraft({ title: "", type: "bug", description: "" });
+                        } catch (err) { setReportMsg(err?.message || "Report could not be saved."); }
+                        finally { setReportBusy(false); }
+                      }}>
+                      {reportBusy ? "Saving…" : "Send report"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          <div ref={categoryScrollerRef} role="group" aria-label="Admin navigation categories" className="flex w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain border-b border-red-200/70 pb-2 [scrollbar-width:thin]">
               {availableAdminGroups.map((group) => (
                 <button
                   key={group.id}
