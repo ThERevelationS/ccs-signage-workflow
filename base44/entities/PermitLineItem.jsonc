@@ -273,6 +273,31 @@
       "format": "date",
       "description": "Appeal/resubmission deadline after a denial, when one applies."
     },
+    "application_document_url": {
+      "type": "string",
+      "format": "url",
+      "description": "The application packet/PDF filed (or drafted) for this line \u2014 the document rides with the record."
+    },
+    "site_photo_url": {
+      "type": "string",
+      "format": "url",
+      "description": "Site photo of the posted sign \u2014 rides with the permit for final inspection."
+    },
+    "office_contacted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date staff last contacted the office (call/email)."
+    },
+    "office_responded_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office last replied \u2014 the response loop closes visibly."
+    },
+    "note_attachment_url": {
+      "type": "string",
+      "format": "url",
+      "description": "Photo/scan attached to the line's notes \u2014 the record stays visual."
+    },
     "correction_required": {
       "type": "boolean",
       "default": false,
@@ -299,11 +324,5 @@
   },
   "required": [
     "work_order_id"
-  ],
-  "rls": {
-    "create": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
-    "read": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
-    "update": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permitlineitem_backend_only__" } }
-  }
+  ]
 }
