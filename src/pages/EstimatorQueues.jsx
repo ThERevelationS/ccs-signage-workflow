@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download } from "lucide-react";
+import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
