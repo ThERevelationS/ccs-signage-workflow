@@ -2083,7 +2083,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <div ref={adminScrollRef} data-admin-scroll-area className="min-h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
+    <div ref={adminScrollRef} data-admin-scroll-area id="admin-print-root" className="min-h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
         {(deniedDeepLinkTab || deniedDeepLinkSubtab) && (
           <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
@@ -2129,6 +2129,13 @@ export default function AdminSettings() {
             <p className={`text-lg font-bold ${automationsPaused ? "text-red-700" : "text-green-700"}`}>{automationsPaused ? "PAUSED" : "Live"}</p>
           </div>
         </div>
+        <style>{`@media print {
+          #admin-print-root button, #admin-print-root nav, #admin-print-root [role="tablist"],
+          #admin-print-root input, #admin-print-root select, #admin-print-root [role="dialog"],
+          #admin-print-root [role="alertdialog"] { display: none !important; }
+          #admin-print-root .clay-card { break-inside: avoid; }
+          #admin-print-root table { font-size: 11px; }
+        }`}</style>
         {offline && (
           <div className="mb-3 rounded-lg border border-red-400 bg-red-100 px-3 py-2 text-xs font-semibold text-red-900" role="alert">
             You appear to be offline — admin changes will not save until your connection returns.
