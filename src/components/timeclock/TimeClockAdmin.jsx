@@ -965,6 +965,21 @@ export default function TimeClockAdmin() {
   }
   const lateLeaders = Object.entries(lateByEmp).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
+  // Absence leaderboard - fewest worked days in the filtered range.
+  const daysByEmp = {};
+  for (const e of filteredEntries) {
+    if (!e.user_email || !e.clock_in) continue;
+    const k = `${e.user_email}|${safeFormat(e.clock_in, "yyyy-MM-dd")}`;
+    if (!daysByEmp[k]) daysByEmp[k] = e.user_name || e.user_email;
+  }
+  const workedDaysByEmp = {};
+  for (const k of Object.keys(daysByEmp)) {
+    const email = k.split("|")[0];
+    if (!workedDaysByEmp[email]) workedDaysByEmp[email] = { name: daysByEmp[k], days: 0 };
+    workedDaysByEmp[email].days += 1;
+  }
+  const fewestDays = Object.values(workedDaysByEmp).sort((a, b) => a.days - b.days).slice(0, 4);
+
   // Missing punch today - rostered employees with no entry today.
   const todayKey = format(new Date(), "yyyy-MM-dd");
   const punchedToday = new Set(filteredEntries.filter((e) => e.clock_in && safeFormat(e.clock_in, "yyyy-MM-dd") === todayKey).map((e) => e.user_email));
@@ -1286,6 +1301,14 @@ export default function TimeClockAdmin() {
                 <p className="text-[10px] font-semibold text-slate-400 mb-1">Most after-9am starts</p>
                 {lateLeaders.map(([name, n]) => (
                   <div key={name} className="flex items-center justify-between text-xs"><span className="truncate text-slate-600">{name}</span><span className="font-semibold text-slate-700">{n}</span></div>
+                ))}
+              </div>
+            )}
+            {fewestDays.length > 0 && (
+              <div className="mt-2 border-t border-slate-100 pt-2">
+                <p className="text-[10px] font-semibold text-slate-400 mb-1">Fewest days in range</p>
+                {fewestDays.map((r) => (
+                  <div key={r.name} className="flex items-center justify-between text-xs"><span className="truncate text-slate-600">{r.name}</span><span className="font-semibold text-slate-700">{r.days}d</span></div>
                 ))}
               </div>
             )}
