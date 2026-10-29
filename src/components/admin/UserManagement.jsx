@@ -2164,6 +2164,16 @@ export default function UserManagement() {
                     </div>
                     <span className="text-sm text-gray-500">{user.email}</span>
                     {user.reports_to && <span className="text-[11px] text-gray-400">reports to {user.reports_to}</span>}
+                    {(() => {
+                      const missing = [];
+                      if (!user.full_name) missing.push("name");
+                      if (!user.username) missing.push("username");
+                      if (!user.password_changed_at) missing.push("password");
+                      if (user.role === "admin" && !(getAdminAccessSummary(user) || "").trim()) missing.push("admin tabs");
+                      const done = 4 - missing.length;
+                      if (!missing.length) return <span className="text-[11px] text-emerald-600" title="Account setup complete">setup 4/4</span>;
+                      return <span className={`text-[11px] font-medium ${done <= 1 ? "text-red-600" : "text-amber-600"}`} title={`Missing: ${missing.join(", ")}`}>setup {done}/4</span>;
+                    })()}
                     {user.access_expires_on && (() => {
                       const today = new Date().toISOString().slice(0, 10);
                       const expired = user.access_expires_on < today;
