@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
-import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
 import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -33,6 +33,8 @@ const compact = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : money0(n));
 const today = () => localDateStamp();
 
 function expiryOf(e) {
+  const override = String(e?.quote_expiration_date || "").trim();
+  if (/^d{4}-d{2}-d{2}$/.test(override)) return override;
   const validDays = e.quote_valid_days ?? e.valid_days;
   if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !validDays) return null;
   const d = new Date(e.quote_issue_date);
@@ -53,13 +55,7 @@ function syncExpiredFlags(rows) {
   }).slice(0, EXPIRY_FLAG_SWEEP_LIMIT);
   for (const e of stale) {
     const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
-    replaceEstimateFieldsIfUnchanged({
-      entity: staffEntities.AllInOneEstimate,
-      estimateId: e.id,
-      expectedFields: { quote_expired: e.quote_expired ?? null },
-      nextFields: { quote_expired: expired },
-      label: "Expired quote flag",
-    }).catch(() => {});
+    staffEntities.AllInOneEstimate.update(e.id, { quote_expired: expired }).catch(() => {});
   }
 }
 
@@ -103,13 +99,7 @@ export default function EstimatorQueues() {
         continue;
       }
       try {
-        await replaceEstimateFieldsIfUnchanged({
-          entity: staffEntities.AllInOneEstimate,
-          estimateId: id,
-          expectedFields: { status: row?.status ?? null },
-          nextFields: { status: bulkStatus },
-          label: "Bulk status change",
-        });
+        await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });
       } catch (error) {
         failures.push(`${id}: ${error?.message || "update failed"}`);
       }
