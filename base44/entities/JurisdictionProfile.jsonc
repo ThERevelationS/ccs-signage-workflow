@@ -48,6 +48,10 @@
       "type": "string",
       "description": "Property/parcel lookup database URL (CAGIS or equivalent)"
     },
+    "fips_code": {
+      "type": "string",
+      "description": "Federal FIPS place/county code \u2014 machine-verifiable identity, not just a name."
+    },
     "ordinance_citation": {
       "type": "string",
       "description": "The governing code section \u2014 'Milford Codified \u00a7153.042' \u2014 as structured data, not buried in notes."
