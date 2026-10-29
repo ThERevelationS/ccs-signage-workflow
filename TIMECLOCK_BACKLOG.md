@@ -216,9 +216,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 193. **[F][DONE]** Disaster mode - printable paper-punch sheet generator on the admin roster panel
 
 ## 11. Announcements & engagement
-194. **[F]** Clock-in-triggered announcements (safety brief on punch)
-195. **[F]** Shift-end auto-announcement to anyone still in
-196. **[F]** Birthday/anniversary auto-announcements from HR data
+194. **[F][DONE]** Clock-in nudge - one-tap announcement to employees not yet clocked in
+195. **[F][DONE]** Missed-clockout alert - announcement to anyone 12+ hours on the clock
+196. **[F][DONE]** Manager digest - shift totals + pending corrections announcement to admins
 197. **[F][DONE]** Announcement read-receipts - acknowledgeAnnouncement persists per-viewer acks
 198. **[F][DONE]** Ack-required announcements - requires_ack display mode already exists
 
