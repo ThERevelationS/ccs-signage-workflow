@@ -905,7 +905,7 @@ function LayoutContent({ children }) {
             grid-template-areas: "brand utilities" "links links";
           }
         }
-        @media (min-width: 1800px) {
+        @media (min-width: 1600px) {
           .ccs-topbar-layout {
             grid-template-columns: auto minmax(0, 1fr) auto;
             grid-template-areas: "brand links utilities";
