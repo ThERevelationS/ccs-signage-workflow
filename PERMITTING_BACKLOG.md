@@ -537,7 +537,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 420. **[UX][DONE]** "What's different about this town" hint: jurisdiction-specific quirks surfaced on its jobs — "they want mail-in only".
 421. **[F][DONE]** Permit-renewal flow: an expiring permit's renewal path — reuse the prior application's data.
 422. **[UX][DONE]** Smart-suggest next-step: "Call them — they said 2 weeks" — the next action recommended.
-423. **[F][FLAGGED-dedicated]** Jurisdiction-diff: compare two jurisdictions' office structures side-by-side — "Milford has city zoning; Miami Township doesn't".
+423. **[F][DONE]** Jurisdiction-diff: compare two jurisdictions' office structures side-by-side — "Milford has city zoning; Miami Township doesn't".
 424. **[UX][DONE]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
 425. **[F][DONE]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
 426. **[UX][DONE]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
