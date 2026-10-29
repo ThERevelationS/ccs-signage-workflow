@@ -313,8 +313,25 @@ export default function QuickClockSection({
     notificationTimerRef.current = setTimeout(() => setNotification(null), 5000);
   };
 
+  // Device geo stamp - captured in the background, attached to punches when fresh.
+  const geoCacheRef = useRef({ at: 0, data: null });
+  const refreshGeo = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { geoCacheRef.current = { at: Date.now(), data: { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy || 0) } }; },
+      () => {},
+      { timeout: 4000, maximumAge: 600000 },
+    );
+  };
+  useEffect(() => { refreshGeo(); const t = setInterval(refreshGeo, 300000); return () => clearInterval(t); }, []);
+  const geoStamp = () => (geoCacheRef.current.data && Date.now() - geoCacheRef.current.at < 600000 ? geoCacheRef.current.data : null);
+
   const invokeTimeClock = async (payload) => {
     cancelDisplayReset();
+    if (["clock_in", "clock_out", "break_start", "labor_start", "missed_clock_in"].includes(payload?.action) && !payload.geo) {
+      const g = geoStamp();
+      if (g) payload = { ...payload, geo: g };
+    }
     if (payload?.action !== "status" && payload?.action !== "labor_allocation_preview") {
       workViewEpochRef.current += 1;
     }
