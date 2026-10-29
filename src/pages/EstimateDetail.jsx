@@ -1370,7 +1370,7 @@ export default function EstimateDetail() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      {celebration ? <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-emerald-300 bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-xl">&#10003; {celebration}</div> : null}
+      {celebration ? <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-emerald-300 bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-xl">&#10003; {celebration}</div> : null}
       <AioEstimateHeader
         title={estimate.project_name || "Estimate"}
         subtitle={`One page, one set of project info, every estimator. Â· Totals synced ${new Date().toLocaleTimeString()}`}
