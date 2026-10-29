@@ -24,8 +24,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 17. **[F]** Scheduled-shift variance notice ("you're 12 min early")
 18. **[F]** Max shift length auto clock-out with manager notification
 19. **[F]** Break compliance — flag shifts missing required lunch after N hours
-20. **[F]** Rest-period check — warn on <10h between shifts
-21. **[F]** Consecutive-days-worked warning (6th/7th day per policy)
+20. **[F][DONE]** Rest-period warning - snapshot returns rest_hours; tracker flags <10h between shifts
+21. **[F][DONE]** Consecutive-days warning - snapshot counts worked days; tracker flags day 6+
 22. **[F]** Minor work-rule enforcement (break/hour caps for minors)
 23. **[F]** Offline punch queue with original-timestamp sync on reconnect
 24. **[F][DONE]** Duplicate-punch client debounce - 5s same-employee guard, server request-id still the backstop
@@ -90,7 +90,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 77. **[F]** Session timeline strip — today's punches/breaks as a colored band
 78. **[F][DONE]** "Next milestone" chip ("45m to 8h") — popover shows remaining minutes to the next unfired threshold
 79. **[F]** Weekly + daily dual ring mode
-80. **[F]** Monthly cumulative option
+80. **[F][DONE]** Monthly cumulative - monthly_paid_minutes in snapshot + 'This month' popover stat
 81. **[F]** Earnings estimate for hourly staff (opt-in)
 82. **[F][DONE]** Overtime proximity warning — "Xm to OT" amber chip when within 30 min of the daily goal
 83. **[F][DONE]** Break/pause elapsed while paused — "Work paused - 12m so far" (elapsed shown; scheduled-break countdown needs break schedules)
@@ -103,8 +103,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 90. **[F]** Pay-period progress arc
 91. **[F][DONE]** Comparison context - week header shows trailing avg/day
 92. **[F][DONE]** Yesterday's total shown in the week header
-93. **[F]** PTO balance chip in expanded view
-94. **[F]** Pending-approval dot when a correction awaits review
+93. **[F][DONE]** PTO balance - pto_balance in snapshot + popover stat row
+94. **[F][DONE]** Pending-approval dot - amber dot on the tracker when the admin snapshot shows pending reviews
 95. **[F][DONE]** "Last action" subtitle — popover header shows "Clocked in 8:02 AM" / "Work paused" / "On break"
 96. **[F]** Next scheduled break indicator
 97. **[F]** Estimated finish time to daily goal ("done at 4:32 PM")
@@ -112,13 +112,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 99. **[F]** Shift differential indicator for evening/night rates
 
 ## 6. Tracker — settings & behavior
-100. **[F]** Named config profiles (save/load/share)
+100. **[F][DONE]** Config profiles - clipboard JSON export/import of the full prefs bundle
 101. **[F]** Per-device vs per-account preset slots
-102. **[F]** Export prefs as QR/copyable blob for other machines
+102. **[F][DONE]** Export prefs - copy/paste buttons on the settings header
 103. **[F]** Drag-to-reposition with snap points
 104. **[F][DONE]** Auto-hide when idle - hide_when_idle_minutes pref + slider, pointer/key activity tracking
 105. **[F][DONE]** Auto-pulse on milestone hit - milestone_behavior "pulse" already exists
-106. **[F]** Reminder escalation — repeat once or flash if ignored
+106. **[F][DONE]** Reminder escalation - reminders re-fire once +10min later if ignored
 107. **[F]** Quiet hours suppressing reminders outside shifts
 108. **[F][DONE]** Percent reminders - {percent} reminders resolve against the daily goal, server-sanitized
 109. **[F][DONE]** Sound picker for milestone alerts - milestone_sound pref already exists
@@ -139,14 +139,14 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 7. Admin — approvals & corrections
 124. **[F][DONE]** Bulk approve - select-all + shared-reason batch bar on the correction queue, per-row retry-safe approve calls
-125. **[F]** Correction diff view — submitted vs corrected side by side
+125. **[F][DONE]** Correction diff - dialog already shows ORIGINAL vs EMPLOYEE REQUEST side by side
 126. **[F][DONE]** Approval-age SLA - oldest-first sort + amber/red age badges (>=1d, >=3d)
-127. **[F]** Required approver notes on certain correction types
+127. **[F][DONE]** Approver notes required - review_reason min-3 gate on every decision
 128. **[F]** Approve from the notification bell
 129. **[F]** Delegated approvers per crew/department
 130. **[F]** Two-step approval for corrections over N hours
 131. **[F]** Auto-approve rules for small adjustments (<5 min)
-132. **[F]** Rejection with structured reason codes
+132. **[F][DONE]** Rejection reason codes - quick-pick chips fill the manager review reason
 133. **[F]** Employee notification on approval/rejection outcome
 134. **[F]** Correction attachments (photo of paper slip)
 135. **[F]** Full correction chain audit inline per entry
@@ -206,9 +206,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 10. Reliability & security
 184. **[F][DONE]** Audit log viewer - list_timeclock_audit action + collapsible admin panel
 185. **[F]** Two-device conflict resolver surfaced to admin
-186. **[F]** Kiosk clock-drift warning vs server time
+186. **[F][DONE]** Clock-drift warning - tracker footer flags when device time is >2min off the server
 187. **[F]** Session-token rotation alerts on compromised kiosk
-188. **[F]** Admin action audit — who approved/edited what, searchable
+188. **[F][DONE]** Admin action audit - list_timeclock_audit + panel (actor, request id, time)
 189. **[F]** Rate-limit punch attempts per device
 190. **[F]** Suspicious login pattern alerts
 191. **[F]** Data-retention tooling (auto-archive >2y)
@@ -231,12 +231,12 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 13. Employee self-service
 204. **[F]** My timesheet grid with edit-request buttons per row
-205. **[F]** My PTO balance + projected accrual by next request date
+205. **[F][DONE]** PTO balance display - available/accrued/pending minutes via snapshot (projection needs accrual rules)
 206. **[F]** My punch history export (CSV/PDF)
 207. **[F][DONE]** Forget-to-clock-out reminder - one-shot toast when elapsed passes goal + 4h
 208. **[F]** Personal stats — avg shift, on-time %, weekly trend
 209. **[F]** Correction status tracker on the employee card
-210. **[F]** Missed-punch guided self-report wizard
+210. **[F][DONE]** Missed-punch wizard - MissedClockInDialog + banner flow exists
 211. **[F]** Preferred-kiosk memory per employee
 212. **[F]** Mileage/expense quick-entry on clock-out
 213. **[F]** Shift swap request board with approval
@@ -254,7 +254,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 223. **[F]** Export audit trail with the payroll file
 
 ## 15. Data & API
-224. **[F]** Public "who's in" API for signage dashboard widget
+224. **[F][DONE]** Who-is-in API - timeClockAction who_is_in function endpoint
 225. **[F]** Webhook on punch events for downstream systems
 226. **[F]** Bulk import punches on migration
 227. **[F]** Per-employee full data export on request
