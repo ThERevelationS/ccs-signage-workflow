@@ -359,6 +359,41 @@ export default function UserManagement() {
     a.href = url; a.download = "access-matrix.csv"; a.click(); URL.revokeObjectURL(url);
   };
 
+  const exportAuditBundleCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const tabs = ADMIN_TAB_GROUPS.flatMap((g) => g.tabs.map((t) => ({ label: `${g.label}: ${t.label}`, value: t.value })));
+    const userRows = visibleUsers.map((u) => [
+      u.full_name || "", u.email || "", u.role || "",
+      u.is_full_admin === true ? "yes" : "",
+      (Array.isArray(u.sales_roles) ? u.sales_roles : []).join("; "),
+      u.role === "admin" ? getAdminAccessSummary(u) : "",
+    ]);
+    const matrixRows = visibleUsers.map((u) => [
+      u.full_name || "", u.email || "",
+      ...tabs.map((t) => {
+        if (u.is_full_admin === true) return "yes";
+        if (u.role !== "admin") return "";
+        return getAccessibleAdminTab(t.value, true, u) ? "yes" : "no";
+      }),
+    ]);
+    const NL = String.fromCharCode(10);
+    const csv = [
+      "=== USERS ===",
+      ["Name", "Email", "Role", "Full Admin", "Sales Roles", "Pages Access"].map(esc).join(","),
+      ...userRows.map((r) => r.map(esc).join(",")),
+      "",
+      "=== ACCESS MATRIX ===",
+      ["Name", "Email", ...tabs.map((t) => t.label)].map(esc).join(","),
+      ...matrixRows.map((r) => r.map(esc).join(",")),
+      "",
+      `Exported ${new Date().toISOString()} · ${visibleUsers.length} users`,
+    ].join(NL);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "admin-audit-bundle.csv"; a.click(); URL.revokeObjectURL(url);
+  };
+
   const userSearchQ = userSearch.trim().toLowerCase();
   const visibleUsers = users.filter((u) => {
     if (userFilter === "admin" && u.role !== "admin") return false;
@@ -2040,6 +2075,10 @@ export default function UserManagement() {
                   <SelectItem value="role">Role</SelectItem>
                 </SelectContent>
               </Select>
+              <Button type="button" size="sm" variant="outline" onClick={exportAuditBundleCsv}
+                className="h-7 text-xs" title="Download users + access matrix in one audit file">
+                Audit bundle
+              </Button>
               <Button type="button" size="sm" variant="outline" onClick={exportAccessMatrixCsv}
                 className="h-7 text-xs" title="Export every user's page access as a matrix">
                 Access matrix
