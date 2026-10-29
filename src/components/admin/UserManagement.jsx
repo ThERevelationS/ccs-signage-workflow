@@ -321,6 +321,23 @@ export default function UserManagement() {
     setBulkRoleBusy(false);
   };
 
+  const bulkRemove = async () => {
+    if (bulkRoleBusy || !sessionToken) return;
+    const targets = visibleUsers.filter((u) => selectedUserIds.has(u.id) && u.email?.toLowerCase() !== selfEmail);
+    if (!targets.length) { setBulkRoleError("Nothing to remove (your own account is skipped)."); return; }
+    if (!window.confirm(`Remove ${targets.length} selected user${targets.length === 1 ? "" : "s"}? They lose access immediately. Review ownership impacts first.`)) return;
+    setBulkRoleBusy(true); setBulkRoleError("");
+    const failed = [];
+    for (const u of targets) {
+      try { await deleteAuthorizedUserAdmin({ record: u, sessionToken }); }
+      catch (e) { failed.push(`${u.email}: ${e?.message || "failed"}`); }
+    }
+    setSelectedUserIds(new Set());
+    setBulkRoleError(failed.length ? `${targets.length - failed.length} removed; ${failed.length} failed (${failed.slice(0, 2).join("; ")}${failed.length > 2 ? "…" : ""})` : "");
+    setBulkRoleBusy(false);
+    await loadUsers();
+  };
+
   const exportUsersCsv = () => {
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = [
@@ -387,7 +404,7 @@ export default function UserManagement() {
       ["Name", "Email", ...tabs.map((t) => t.label)].map(esc).join(","),
       ...matrixRows.map((r) => r.map(esc).join(",")),
       "",
-      `Exported ${new Date().toISOString()} Â· ${visibleUsers.length} users`,
+      `Exported ${new Date().toISOString()} · ${visibleUsers.length} users`,
     ].join(NL);
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -948,7 +965,7 @@ export default function UserManagement() {
     try {
       const dataToSave = { ...formData };
       const newPassword = dataToSave.password_hash;
-      // Never send password_hash directly â€” use the separate secure backend.
+      // Never send password_hash directly — use the separate secure backend.
       delete dataToSave.password_hash;
       const changedFields = getChangedAdminAccountFields(record, dataToSave);
       // Recovery needs the full original draft to compare individual fields;
@@ -1438,13 +1455,13 @@ export default function UserManagement() {
           throw new Error(contactResult?.error || "Requestor contact update could not be verified.");
         }
         setInviteSuccess((previous) => ownsInvite()
-          ? `${previous} Â· Order Requestor verified in Smartsheet.` : previous);
+          ? `${previous} · Order Requestor verified in Smartsheet.` : previous);
       } catch (contactError) {
         if (!ownsInvite()) return;
         const detail = contactError?.response?.data?.error || contactError?.data?.error ||
           contactError?.message || "Could not verify the Smartsheet Requestor dropdown.";
         setInviteSuccess((previous) => ownsInvite()
-          ? `${previous} Â· Order Requestor Smartsheet sync needs attention: ${detail}` : previous);
+          ? `${previous} · Order Requestor Smartsheet sync needs attention: ${detail}` : previous);
       }
       if (!ownsInvite()) return;
       setInviteEmail("");
@@ -1508,7 +1525,7 @@ export default function UserManagement() {
       try { await createAuthorizedUserAdmin({ data: row, sessionToken }); }
       catch (err) { failed.push(`${row.email}: ${err?.message || "failed"}`); }
     }
-    setImportMsg(failed.length ? `${importRows.length - failed.length} imported; ${failed.length} failed (${failed.slice(0, 2).join("; ")}${failed.length > 2 ? "â€¦" : ""})` : `${importRows.length} users imported.`);
+    setImportMsg(failed.length ? `${importRows.length - failed.length} imported; ${failed.length} failed (${failed.slice(0, 2).join("; ")}${failed.length > 2 ? "…" : ""})` : `${importRows.length} users imported.`);
     setImportRows(null); setImportBusy(false);
     await loadUsers();
   };
@@ -1868,7 +1885,7 @@ export default function UserManagement() {
             {deletionRequests.map((request) => {
               const pending = request.status === "pending";
               const statusLabel = request.status === "processed"
-                ? "Reviewed â€” no deletion performed"
+                ? "Reviewed — no deletion performed"
                 : request.status === "cancelled"
                   ? "Cancelled"
                   : "Pending";
@@ -1893,7 +1910,7 @@ export default function UserManagement() {
                     <div className="text-sm text-gray-500">{request.user_email}</div>
                     <div className="text-xs text-gray-400 mt-1">
                       Requested {formatDeletionRequestDate(request.requested_at)}
-                      {!pending && request.processed_by ? " â€¢ Resolved by " + request.processed_by : ""}
+                      {!pending && request.processed_by ? " • Resolved by " + request.processed_by : ""}
                     </div>
                   </div>
 
@@ -1990,7 +2007,7 @@ export default function UserManagement() {
               }
               return dupes.length ? (
                 <div className="mb-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                  Possible duplicate accounts: {dupes.slice(0, 3).join("; ")}{dupes.length > 3 ? ` (+${dupes.length - 3} more)` : ""} â€” same display name on multiple records.
+                  Possible duplicate accounts: {dupes.slice(0, 3).join("; ")}{dupes.length > 3 ? ` (+${dupes.length - 3} more)` : ""} — same display name on multiple records.
                 </div>
               ) : null;
             })()}
@@ -2001,7 +2018,7 @@ export default function UserManagement() {
                 </span>
                 <Button type="button" size="sm" variant="outline" disabled={restoreBusy || !sessionToken}
                   onClick={restoreDeletedUser} className="h-7 text-xs bg-white/80">
-                  {restoreBusy ? "Restoringâ€¦" : "Undo remove"}
+                  {restoreBusy ? "Restoring…" : "Undo remove"}
                 </Button>
                 <Button type="button" size="sm" variant="ghost" disabled={restoreBusy}
                   onClick={() => { setLastDeletedUser(null); setRestoreError(""); }} className="h-7 text-xs">
@@ -2012,12 +2029,12 @@ export default function UserManagement() {
             )}
             {importRows && (
               <div className="mb-1 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2">
-                <p className="text-xs font-semibold text-blue-900">Import preview â€” {importRows.length} users</p>
+                <p className="text-xs font-semibold text-blue-900">Import preview — {importRows.length} users</p>
                 <div className="mt-1 max-h-24 overflow-y-auto text-xs text-blue-800">
-                  {importRows.map((r, i) => <p key={i}>{r.email} Â· {r.full_name || "no name"} Â· {r.role}</p>)}
+                  {importRows.map((r, i) => <p key={i}>{r.email} · {r.full_name || "no name"} · {r.role}</p>)}
                 </div>
                 <div className="mt-2 flex gap-2">
-                  <Button type="button" size="sm" onClick={runImport} disabled={importBusy} className="h-7 text-xs">{importBusy ? "Importingâ€¦" : "Import all"}</Button>
+                  <Button type="button" size="sm" onClick={runImport} disabled={importBusy} className="h-7 text-xs">{importBusy ? "Importing…" : "Import all"}</Button>
                   <Button type="button" size="sm" variant="ghost" onClick={() => setImportRows(null)} className="h-7 text-xs">Cancel</Button>
                 </div>
               </div>
@@ -2034,11 +2051,15 @@ export default function UserManagement() {
                 <span className="text-xs font-semibold text-indigo-900">{selectedUserIds.size} selected</span>
                 <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
                   onClick={() => applyRoleToSelected("admin")} className="h-7 text-xs">
-                  {bulkRoleBusy ? "Workingâ€¦" : "Grant admin"}
+                  {bulkRoleBusy ? "Working…" : "Grant admin"}
                 </Button>
                 <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
                   onClick={() => applyRoleToSelected("user")} className="h-7 text-xs">
-                  {bulkRoleBusy ? "Workingâ€¦" : "Revoke admin"}
+                  {bulkRoleBusy ? "Working…" : "Revoke admin"}
+                </Button>
+                <Button type="button" size="sm" variant="outline" disabled={bulkRoleBusy}
+                  onClick={bulkRemove} className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-50">
+                  Remove
                 </Button>
                 <Button type="button" size="sm" variant="ghost" disabled={bulkRoleBusy}
                   onClick={() => { setSelectedUserIds(new Set()); setBulkRoleError(""); }} className="h-7 text-xs">
@@ -2051,7 +2072,7 @@ export default function UserManagement() {
               <Input
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                placeholder="Search name, email, or roleâ€¦"
+                placeholder="Search name, email, or role…"
                 className="h-8 w-56 text-xs"
                 aria-label="Search users"
               />
@@ -2070,8 +2091,8 @@ export default function UserManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Name Aâ€“Z</SelectItem>
-                  <SelectItem value="name_desc">Name Zâ€“A</SelectItem>
+                  <SelectItem value="name">Name A–Z</SelectItem>
+                  <SelectItem value="name_desc">Name Z–A</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="role">Role</SelectItem>
                 </SelectContent>
@@ -2285,7 +2306,7 @@ export default function UserManagement() {
                           changeAccountDraft({ password_hash: e.target.value });
                           setPasswordRetryConfirmed(false);
                         }}
-                        placeholder={formData.password_hash ? "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" : "Set password"}
+                        placeholder={formData.password_hash ? "••••••••" : "Set password"}
                         className="mt-1"
                       />
                       <p className="text-xs text-gray-500 mt-1">Leave blank to keep existing password; new passwords require at least 8 characters</p>
@@ -2454,7 +2475,7 @@ export default function UserManagement() {
             <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 space-y-3 text-sm" role="alert">
               <p className="font-semibold text-amber-950">
                 {accountWriteRecovery.rejectedField
-                  ? "Account save rejected â€” review concurrent field changes"
+                  ? "Account save rejected — review concurrent field changes"
                   : "Account save outcome needs verification"}
               </p>
               <p className="text-amber-900">
@@ -2843,7 +2864,7 @@ export default function UserManagement() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="rounded-lg border p-3">
-                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Payroll / historical records â€” preserve</h5>
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Payroll / historical records — preserve</h5>
                   <div className="space-y-1 text-sm">
                     {(deletionImpactReport.history || []).filter((item) => item.count > 0).map((item) => (
                       <div key={item.entity} className="flex justify-between gap-3">
@@ -2858,7 +2879,7 @@ export default function UserManagement() {
                 </div>
 
                 <div className="rounded-lg border p-3">
-                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Account state â€” review for cleanup</h5>
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Account state — review for cleanup</h5>
                   <div className="space-y-1 text-sm">
                     {(deletionImpactReport.account_state || []).filter((item) => item.count > 0).map((item) => (
                       <div key={item.entity} className="flex justify-between gap-3">
@@ -2873,7 +2894,7 @@ export default function UserManagement() {
                 </div>
 
                 <div className="rounded-lg border p-3">
-                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Estimator ownership â€” preserve or transfer</h5>
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Estimator ownership — preserve or transfer</h5>
                   <div className="space-y-1 text-sm">
                     {(deletionImpactReport.ownership || []).filter((item) => item.count > 0).map((item) => (
                       <div key={item.entity} className="flex justify-between gap-3">
@@ -2964,10 +2985,10 @@ export default function UserManagement() {
               </p>
             )}
             {deleteConfirm && !deleteImpact && !deleteImpactError && (
-              <p className="mt-2 text-xs text-gray-400">Checking what this user still ownsâ€¦</p>
+              <p className="mt-2 text-xs text-gray-400">Checking what this user still owns…</p>
             )}
             {deleteImpactError && (
-              <p className="mt-2 text-xs text-gray-400">Impact check unavailable â€” review their assignments manually.</p>
+              <p className="mt-2 text-xs text-gray-400">Impact check unavailable — review their assignments manually.</p>
             )}
             {deleteImpact && (
               <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900 space-y-1">
@@ -2984,7 +3005,7 @@ export default function UserManagement() {
                   return (
                     <p>
                       {refs > 0 ? `${refs} live assignment${refs === 1 ? "" : "s"} (work orders, tasks, calendar)` : ""}
-                      {refs > 0 && hist > 0 ? " Â· " : ""}
+                      {refs > 0 && hist > 0 ? " · " : ""}
                       {hist > 0 ? `${hist} history record${hist === 1 ? "" : "s"} preserved` : ""}
                     </p>
                   );
