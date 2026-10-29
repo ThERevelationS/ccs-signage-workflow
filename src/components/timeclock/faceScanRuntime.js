@@ -81,15 +81,19 @@ export function estimateFaceBrightness(video, box) {
 // misses, so recognition needs a stable run rather than one lucky frame.
 export function createMatchVoter({ required = 3, window = 5 } = {}) {
   const history = [];
-  return (user) => {
+  const vote = (user) => {
     history.push(user?.id || null);
     if (history.length > window) history.shift();
     const latest = history[history.length - 1];
-    if (!latest) return null;
+    if (!latest) { vote.lastCount = 0; return null; }
     let count = 0;
     for (const id of history) if (id === latest) count += 1;
+    vote.lastCount = count;
     return count >= required ? user : null;
   };
+  vote.lastCount = 0;
+  vote.required = required;
+  return vote;
 }
 
 function detectAt(video, inputSize, scoreThreshold) {
@@ -164,6 +168,7 @@ export function createFaceScanSession({
         dim,
         matched,
         winner,
+        votes: { count: voter.lastCount || 0, required: voter.required || 0 },
       };
     }
     onFrame?.(result);
