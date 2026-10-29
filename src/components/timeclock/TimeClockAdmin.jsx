@@ -956,10 +956,32 @@ export default function TimeClockAdmin() {
   const earlyClockIns = filteredEntries.filter((e) => e.clock_in && new Date(e.clock_in).getHours() < 7).length;
   const lateClockIns = filteredEntries.filter((e) => e.clock_in && new Date(e.clock_in).getHours() >= 9 && new Date(e.clock_in).getHours() < 12).length;
 
+  // Per-employee late-arrival leaderboard (clock-ins at/after 9am).
+  const lateByEmp = {};
+  for (const e of filteredEntries) {
+    if (!e.clock_in || new Date(e.clock_in).getHours() < 9 || new Date(e.clock_in).getHours() >= 12) continue;
+    const k = e.user_name || e.user_email;
+    lateByEmp[k] = (lateByEmp[k] || 0) + 1;
+  }
+  const lateLeaders = Object.entries(lateByEmp).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
   // Missing punch today - rostered employees with no entry today.
   const todayKey = format(new Date(), "yyyy-MM-dd");
   const punchedToday = new Set(filteredEntries.filter((e) => e.clock_in && safeFormat(e.clock_in, "yyyy-MM-dd") === todayKey).map((e) => e.user_email));
   const missingPunch = uniqueUsers.filter((u) => !punchedToday.has(u.email));
+
+  // Buddy-punch heuristic: same-day punch pairs under 90s apart by different
+  // employees sharing a clock source. Not proof - a review flag.
+  const punchPairs = [];
+  const sorted = [...filteredEntries].filter((e) => e.clock_in).sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in));
+  for (let i = 1; i < sorted.length; i++) {
+    const a = sorted[i - 1], b = sorted[i];
+    if (a.user_email === b.user_email) continue;
+    const gap = Math.abs(new Date(b.clock_in) - new Date(a.clock_in)) / 1000;
+    if (gap <= 90 && (a.clock_source || "") === (b.clock_source || "") && a.clock_source) {
+      punchPairs.push({ a, b, gap: Math.round(gap) });
+    }
+  }
 
   const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
     const entry = timeEntries.find(e => e.user_email === email);
@@ -1259,6 +1281,14 @@ export default function TimeClockAdmin() {
               <div className="flex items-center justify-between"><span className="text-slate-600">Before 7 AM</span><span className="font-bold text-amber-600">{earlyClockIns}</span></div>
               <div className="flex items-center justify-between"><span className="text-slate-600">After 9 AM</span><span className="font-bold text-slate-700">{lateClockIns}</span></div>
             </div>
+            {lateLeaders.length > 0 && (
+              <div className="mt-2 border-t border-slate-100 pt-2">
+                <p className="text-[10px] font-semibold text-slate-400 mb-1">Most after-9am starts</p>
+                {lateLeaders.map(([name, n]) => (
+                  <div key={name} className="flex items-center justify-between text-xs"><span className="truncate text-slate-600">{name}</span><span className="font-semibold text-slate-700">{n}</span></div>
+                ))}
+              </div>
+            )}
             <p className="mt-3 text-[10px] text-slate-400">Early-clock-in patterns drive unauthorized overtime; late patterns flag scheduling issues.</p>
           </div>
           <div className="clay-card p-4">
@@ -1271,6 +1301,20 @@ export default function TimeClockAdmin() {
                 {missingPunch.length > 8 && <p className="text-[10px] text-slate-400">+{missingPunch.length - 8} more</p>}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {punchPairs.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="font-semibold text-amber-900 mb-2">Possible buddy punches - {punchPairs.length} near-simultaneous pair{punchPairs.length === 1 ? "" : "s"}</div>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {punchPairs.slice(0, 10).map((p, i) => (
+              <p key={i} className="text-xs text-amber-800">
+                {(p.a.user_name || p.a.user_email)} &amp; {(p.b.user_name || p.b.user_email)} - {p.gap}s apart via {String(p.a.clock_source).replace(/_/g, " ")} on {safeFormat(p.a.clock_in, "MMM d")}
+              </p>
+            ))}
+            {punchPairs.length > 10 && <p className="text-[10px] text-amber-700">+{punchPairs.length - 10} more</p>}
           </div>
         </div>
       )}
