@@ -77,9 +77,21 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
+  // Break-glass expiry — a time-boxed admin grant lapses automatically; the
+  // actor keeps their session but every backend admin gate sees a non-admin.
+  const stripExpiredGrant = (user: any) => {
+    const grantExpiry = Date.parse(String(user?.admin_grant_expires || ''));
+    if (Number.isFinite(grantExpiry) && grantExpiry > 0 && grantExpiry <= Date.now() && user) {
+      user.role = 'user';
+      user.is_full_admin = false;
+      user.admin_permissions = {};
+    }
+    return user;
+  };
+
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
-  if (cachedAuth && cachedAuth.expires > Date.now()) return cachedAuth.user;
+  if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
 
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
@@ -101,7 +113,7 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     // UserSession may not exist yet — treat lookup failures as non-blocking.
   }
 
-  const user = users[0];
+  const user = stripExpiredGrant(users[0]);
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
   sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ''));
