@@ -291,6 +291,23 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Staff read-only share link (#88): a 'staff_view' link opens exactly one
+      // estimate's quote, read-only. Every mutation action below already fails
+      // closed on kind !== 'customer', so nothing on this link can write.
+      if (clean(link.kind) === "staff_view") {
+        const estimate = await Estimate.get(clean(link.record_id)).catch(() => null);
+        if (!estimate?.id) throw bad("The linked estimate is no longer available.", 404);
+        return Response.json({
+          success: true,
+          action,
+          kind: "staff_view",
+          label: clean(link.label),
+          expires_at: clean(link.expires_at),
+          view_only: true,
+          estimate: estimatePortalView(estimate),
+        });
+      }
+
       // Account-level link: one call returns the whole customer workspace.
       // Only 'customer' links reach here — an estimate-scoped link must never
       // escalate into the full customer workspace.
@@ -797,12 +814,17 @@ Deno.serve(async (req) => {
 
     if (action === "create_link") {
       const kind = clean(body?.kind) || "invoice";
-      const recordId = kind === "customer" ? clean(body?.customer_id) : clean(body?.invoice_id);
-      if (!["invoice", "customer"].includes(kind)) throw bad("kind must be invoice or customer.");
-      if (!recordId) throw bad(`${kind === "customer" ? "customer_id" : "invoice_id"} is required.`);
+      const recordId = kind === "customer" ? clean(body?.customer_id) : kind === "staff_view" ? clean(body?.estimate_id) : clean(body?.invoice_id);
+      if (!["invoice", "customer", "staff_view"].includes(kind)) throw bad("kind must be invoice, customer, or staff_view.");
+      if (!recordId) throw bad(`${kind === "customer" ? "customer_id" : kind === "staff_view" ? "estimate_id" : "invoice_id"} is required.`);
       let customerId = "";
       let label = clean(body?.label);
-      if (kind === "invoice") {
+      if (kind === "staff_view") {
+        const estimate = await Estimate.get(recordId).catch(() => null);
+        if (!estimate?.id) throw bad("Estimate not found.", 404);
+        customerId = clean(estimate.customer_id);
+        label = label || `Shared view ${clean(estimate.estimate_number) || recordId}`;
+      } else if (kind === "invoice") {
         const invoice = await Invoice.get(recordId).catch(() => null);
         if (!invoice?.id) throw bad("Invoice not found.", 404);
         customerId = clean(invoice.customer_id);
