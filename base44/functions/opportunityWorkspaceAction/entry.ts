@@ -221,6 +221,30 @@ Deno.serve(async (req) => {
     const Activity = base44.asServiceRole.entities.OpportunityActivity;
     const PortalMessage = base44.asServiceRole.entities.PortalMessage;
 
+    // Full-data backup (#484): every real entity dumped to a JSON bundle.
+    // Admin-only — this exposes customer/estimate/inventory/admin records.
+    if (action === "full_backup") {
+      if (clean(user?.role) !== "admin") throw bad("Only administrators can export a full backup.", 403);
+      const SKIP = /^(Nope|Temp|Oops|DO_NOT_USE|__|_noop|_never_use|_CheckpointMistake|_invalid|_do_not)/i;
+      const entities = base44.asServiceRole.entities as any;
+      const names: string[] = [];
+      // Enumerate the entity registry — filter the junk/test entities.
+      for (const name of Object.keys(entities)) {
+        if (!SKIP.test(name)) names.push(name);
+      }
+      const bundle: Record<string, any[]> = {};
+      const errors: Record<string, string> = {};
+      for (const name of names) {
+        try {
+          const rows = await entities[name].filter({});
+          bundle[name] = Array.isArray(rows) ? rows : (rows?.items || []);
+        } catch (e: any) {
+          errors[name] = e?.message || 'read failed';
+        }
+      }
+      return Response.json({ success: true, action, exported_at: new Date().toISOString(), entity_count: names.length, entities: bundle, errors });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = await Promise.all([
