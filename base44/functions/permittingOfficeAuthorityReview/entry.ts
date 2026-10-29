@@ -1,9 +1,10 @@
+import {withEntityRateLimitRetry} from '../../shared/entityRateLimitRetry.ts';
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
 import {reviewOfficeAuthority,listOfficeAuthorityReviews,getOfficeAuthorityRequest} from '../../shared/permittingOfficeAuthority.mjs';
 import {htmlOfficeDelegationContext} from '../../shared/permittingHtmlOfficeDelegation.mjs';
 Deno.serve(async req=>{
  try{
-  const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);
   if(!user || !['admin','user'].includes(user.role))return Response.json({error:'Authenticated staff access required'},{status:403});
   const body=await req.json().catch(()=>({})),action=String(body.action || '');
   if(!['list','context','get_request','preview','preview_revoke','verify','revoke'].includes(action))
