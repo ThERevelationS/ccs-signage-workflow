@@ -11,6 +11,7 @@ import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from "@/components/portal/PortalPanel";
 import SavedViews from "@/components/workflow/SavedViews";
 import { staffEntities } from "@/components/staff/staffEntities";
+import CustomerMergeDialog from "@/components/estimator/CustomerMergeDialog";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -33,9 +34,9 @@ function statementHtml(data) {
   const addr = [c.billing_address_1, c.billing_address_2, [c.billing_city, c.billing_state, c.billing_postal_code].filter(Boolean).join(" ")].filter(Boolean);
   const billTo = [c.billing_contact_name || c.company_name, ...addr].filter(Boolean).map(escHtml).join("<br>");
   const row = (cells, cls = "") => `<tr>${cells.map((x, i) => `<td class="${cls}" style="padding:6px 10px;${i === 0 ? "" : "text-align:right;"}">${x}</td>`).join("")}</tr>`;
-  const agingRow = [["Current", aging.current], ["1–30 days", aging.d1_30], ["31–60", aging.d31_60], ["61–90", aging.d61_90], ["90+", aging.d90_plus]]
+  const agingRow = [["Current", aging.current], ["1â€“30 days", aging.d1_30], ["31â€“60", aging.d31_60], ["61â€“90", aging.d61_90], ["90+", aging.d90_plus]]
     .map(([l, v]) => `<td style="text-align:center;padding:6px;border:1px solid #e2e8f0"><div style="font-size:10px;text-transform:uppercase;color:#64748b">${l}</div><div style="font-weight:700">${usd(v)}</div></td>`).join("");
-  return `<!doctype html><html><head><title>Statement — ${escHtml(c.company_name || "Customer")}</title><style>
+  return `<!doctype html><html><head><title>Statement â€” ${escHtml(c.company_name || "Customer")}</title><style>
     body{font-family:system-ui,-apple-system,sans-serif;color:#0f172a;margin:32px;font-size:13px}
     table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #e2e8f0}
     th{text-align:left;font-size:10px;text-transform:uppercase;color:#64748b;padding:6px 10px}
@@ -43,19 +44,19 @@ function statementHtml(data) {
     @media print{button{display:none}}
   </style></head><body>
   <button onclick="window.print()" style="float:right;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer">Print / Save PDF</button>
-  <h1>CCS Signage — Account Statement</h1>
+  <h1>CCS Signage â€” Account Statement</h1>
   <p class="muted">Statement date: ${escHtml(aging.as_of || localDateStamp())}</p>
-  <h2 style="font-size:14px;margin:24px 0 4px">Bill to</h2><p>${billTo || "—"}</p>
+  <h2 style="font-size:14px;margin:24px 0 4px">Bill to</h2><p>${billTo || "â€”"}</p>
   <h2 style="font-size:14px;margin:20px 0 4px">Open activity</h2>
   <table><tr><th>Invoice</th><th>Issued</th><th>Due</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr>
   ${inv.map((i) => row([
-    escHtml(i.invoice_number || "—"), escHtml(i.issue_date || "—"), escHtml(i.due_date || "—"),
+    escHtml(i.invoice_number || "â€”"), escHtml(i.issue_date || "â€”"), escHtml(i.due_date || "â€”"),
     escHtml(i.status), usd(i.total), usd(i.amount_paid), `<b>${usd(i.balance_due)}</b>`,
   ])).join("") || `<tr><td colspan="7" style="padding:12px;color:#94a3b8">No invoices.</td></tr>`}
   </table>
   ${pays.length ? `<h2 style="font-size:14px;margin:20px 0 4px">Payments received</h2>
   <table><tr><th>Date</th><th>Invoice</th><th>Method</th><th>Reference</th><th>Amount</th></tr>
-  ${pays.map((p) => row([escHtml(p.paid_date || "—"), escHtml(invById.get(p.invoice_id) || p.invoice_id || "—"), escHtml(p.method || "—"), escHtml(p.reference_number || ""), usd(p.amount)])).join("")}
+  ${pays.map((p) => row([escHtml(p.paid_date || "â€”"), escHtml(invById.get(p.invoice_id) || p.invoice_id || "â€”"), escHtml(p.method || "â€”"), escHtml(p.reference_number || ""), usd(p.amount)])).join("")}
   </table>` : ""}
   <h2 style="font-size:14px;margin:20px 0 8px">Balance aging</h2>
   <table style="width:auto">${`<tr>${agingRow}</tr>`}</table>
@@ -87,7 +88,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
       <div className="my-8 w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {!data ? (
           error ? <div className="py-8 text-center text-sm text-red-600">{error}</div>
-            : <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading…</div>
+            : <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loadingâ€¦</div>
         ) : (
           <>
             <div className="flex items-start justify-between">
@@ -116,13 +117,13 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
 
             {data.ar_aging && Number(s?.open_ar) > 0 && (
               <div className="mt-3 rounded-lg border border-gray-200 p-3">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">AR aging · as of {data.ar_aging.as_of}</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">AR aging Â· as of {data.ar_aging.as_of}</h3>
                 <div className="mt-2 grid grid-cols-5 gap-2 text-center">
                   {[
                     ["Current", data.ar_aging.current, "text-gray-800"],
-                    ["1–30", data.ar_aging.d1_30, "text-amber-700"],
-                    ["31–60", data.ar_aging.d31_60, "text-orange-700"],
-                    ["61–90", data.ar_aging.d61_90, "text-red-600"],
+                    ["1â€“30", data.ar_aging.d1_30, "text-amber-700"],
+                    ["31â€“60", data.ar_aging.d31_60, "text-orange-700"],
+                    ["61â€“90", data.ar_aging.d61_90, "text-red-600"],
                     ["90+", data.ar_aging.d90_plus, "text-red-800"],
                   ].map(([label, val, cls]) => (
                     <div key={label}>
@@ -140,7 +141,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {Object.entries(data.estimate_funnel || {}).map(([status, count]) => (
                     <span key={status} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700 capitalize">
-                      {status} <b>×{count}</b>
+                      {status} <b>Ã—{count}</b>
                     </span>
                   ))}
                 </div>
@@ -148,7 +149,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                   {(data.estimates || []).slice(0, 6).map((e) => (
                     <Link key={e.id} to={`/EstimateDetail?id=${e.id}`} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1 text-[11px] hover:border-red-300 hover:bg-red-50/40">
                       <span className="truncate text-gray-700">{e.project_name || e.estimate_number || e.id}</span>
-                      <span className="ml-2 shrink-0 text-gray-500 capitalize">{e.status} · ${Number(e.quote_total || 0).toLocaleString()}</span>
+                      <span className="ml-2 shrink-0 text-gray-500 capitalize">{e.status} Â· ${Number(e.quote_total || 0).toLocaleString()}</span>
                     </Link>
                   ))}
                 </div>
@@ -163,7 +164,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                   <div key={p.id} className="mt-1.5 text-sm">
                     <span className="font-medium text-gray-800">{p.display_name || [p.first_name, p.last_name].filter(Boolean).join(" ")}</span>
                     <span className="text-xs text-gray-400"> {p.position || p.authority_role || ""}</span>
-                    {(p.email || p.phone) && <div className="text-xs text-gray-500">{[p.email, p.phone].filter(Boolean).join(" · ")}</div>}
+                    {(p.email || p.phone) && <div className="text-xs text-gray-500">{[p.email, p.phone].filter(Boolean).join(" Â· ")}</div>}
                   </div>
                 ))}
               </div>
@@ -224,7 +225,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 {(data.jobs || []).length === 0 && <div className="mt-1 text-xs text-gray-400">None</div>}
                 {(data.jobs || []).map((w) => (
                   <div key={w.id} className="mt-1.5 flex items-center justify-between text-sm">
-                    <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "—"})</span></span>
+                    <span className="min-w-0 truncate text-gray-800">{w.title || "Work order"} <span className="text-xs text-gray-400">({w.current_stage || w.sales_status || "â€”"})</span></span>
                     <span className="shrink-0 text-xs font-medium text-gray-600">{w.estimate_amount ? usd(w.estimate_amount) : ""}</span>
                   </div>
                 ))}
@@ -256,6 +257,7 @@ export default function EstimatorCustomers() {
   const [portalInbox, setPortalInbox] = useState([]);
   const [me, setMe] = useState(null);
   const [syncingWorkflowCustomers, setSyncingWorkflowCustomers] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
   const workflowSyncRef = useRef(false);
   const pricingTierSaveRef = useRef(false);
 
@@ -364,7 +366,12 @@ export default function EstimatorCustomers() {
               title="Explicitly add workflow/Sales Pipeline client names that do not already have a shared Customer record"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncingWorkflowCustomers ? "animate-spin" : ""}`} />
-              {syncingWorkflowCustomers ? "Syncing…" : "Sync Workflow Customers"}
+              {syncingWorkflowCustomers ? "Syncingâ€¦" : "Sync Workflow Customers"}
+            </button>
+          )}
+          {me?.role === "admin" && (
+            <button type="button" onClick={() => setMergeOpen(true)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-50" title="Merge duplicate customers — linked estimates and work orders move to the kept record">
+              Merge duplicates
             </button>
           )}
         </div>
@@ -373,7 +380,7 @@ export default function EstimatorCustomers() {
           <div className="flex flex-col gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 text-xs text-blue-900">
               <span className="font-semibold">Linked customer:</span>{" "}
-              {loading ? "Loading…" : linkedCustomer?.company_name || "Customer record not found"}
+              {loading ? "Loadingâ€¦" : linkedCustomer?.company_name || "Customer record not found"}
             </div>
             <Link to="/EstimatorCustomers" className="inline-flex h-11 shrink-0 items-center justify-center rounded-md border border-blue-200 bg-white px-3 text-xs font-semibold text-blue-800 hover:bg-blue-100 sm:h-8">
               Show all customers
@@ -384,7 +391,7 @@ export default function EstimatorCustomers() {
         {portalInbox.length > 0 && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-              <MessageSquare className="h-3.5 w-3.5" />Portal inbox — {portalInbox.length} customer{portalInbox.length === 1 ? "" : "s"} waiting
+              <MessageSquare className="h-3.5 w-3.5" />Portal inbox â€” {portalInbox.length} customer{portalInbox.length === 1 ? "" : "s"} waiting
             </div>
             <div className="mt-1.5 space-y-1">
               {portalInbox.slice(0, 4).map((row) => (
@@ -441,7 +448,7 @@ export default function EstimatorCustomers() {
 
         <div className="bg-white">
           {loading ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-400">Loading customers…</div>
+            <div className="px-4 py-10 text-center text-sm text-gray-400">Loading customersâ€¦</div>
           ) : rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-gray-500">{linkedCustomerId ? "The linked Customer record is not available." : "No customers found."}</div>
           ) : (
@@ -453,7 +460,7 @@ export default function EstimatorCustomers() {
                     <div className="text-sm font-semibold text-gray-800 truncate">{c.company_name}</div>
                     <div className="text-xs text-gray-500 truncate flex items-center gap-3">
                       <span>
-                        {[c.contact_first_name, c.contact_last_name].filter(Boolean).join(" ") || "—"}
+                        {[c.contact_first_name, c.contact_last_name].filter(Boolean).join(" ") || "â€”"}
                       </span>
                       {c.contact_email && (
                         <span className="hidden sm:flex items-center gap-1">
@@ -479,7 +486,7 @@ export default function EstimatorCustomers() {
                     >
                       {tiers.map((tier) => (
                         <option key={tier.id} value={String(tier.tier_number)}>
-                          Tier {tier.tier_number} — {tier.tier_name}
+                          Tier {tier.tier_number} â€” {tier.tier_name}
                         </option>
                       ))}
                     </select>
@@ -492,6 +499,7 @@ export default function EstimatorCustomers() {
             </div>
           )}
         </div>
+        <CustomerMergeDialog open={mergeOpen} customers={customers} onClose={() => setMergeOpen(false)} onMerged={() => { loadAllCustomers().then((rows) => setCustomers(rows || [])).catch(() => {}); }} />
         {detailId && (
           <CustomerDetail sessionToken={sessionToken} customerId={detailId} onClose={() => setDetailId("")} />
         )}
