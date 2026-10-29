@@ -725,6 +725,8 @@ export default function AdminSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [sortBy, setSortBy] = useState("name"); // "name", "trigger", "action", "enabled"
   const [sortDirection, setSortDirection] = useState("asc");
+  const [ruleFilter, setRuleFilter] = useState("all"); // "all" | "enabled" | "disabled"
+  const [ruleSearch, setRuleSearch] = useState("");
   const [automationSaveError, setAutomationSaveError] = useState("");
   const [automationSaving, setAutomationSaving] = useState(false);
   const automationSaveInFlight = useRef(false);
@@ -1595,6 +1597,18 @@ export default function AdminSettings() {
     }
   };
 
+  const visibleAutomations = sortedAutomations.filter((rule) => {
+    const isEnabled = rule.enabled !== false;
+    if (ruleFilter === "enabled" && !isEnabled) return false;
+    if (ruleFilter === "disabled" && isEnabled) return false;
+    const q = ruleSearch.trim().toLowerCase();
+    if (!q) return true;
+    const trigger = TRIGGER_TYPES.find(t => t.value === (rule.triggers?.[0]?.trigger_type || ""));
+    const action = ACTION_TYPES.find(t => t.value === (rule.actions?.[0]?.action_type || ""));
+    return [rule.name, trigger?.label, trigger?.category, action?.label]
+      .filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
+
   const renderRecordDestination = (config, index) => needsRecordDestination && (
     <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
       <Label htmlFor={`record-destination-${index}`}>Destination Work Order *</Label>
@@ -2144,6 +2158,27 @@ export default function AdminSettings() {
               </div>
             )}
 
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <Input
+                value={ruleSearch}
+                onChange={(e) => setRuleSearch(e.target.value)}
+                placeholder="Search rules…"
+                className="h-8 w-44 text-xs"
+                aria-label="Search automation rules"
+              />
+              <span className="text-sm text-gray-500">Show:</span>
+              <div className="flex gap-1">
+                {[["all", "All"], ["enabled", "Enabled"], ["disabled", "Disabled"]].map(([value, label]) => (
+                  <Button key={value} type="button" size="sm"
+                    variant={ruleFilter === value ? "default" : "outline"}
+                    onClick={() => setRuleFilter(value)}
+                    className="h-7 text-xs">
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <span className="text-xs text-gray-400 ml-auto">{visibleAutomations.length} of {automations.length} rules</span>
+            </div>
             <div className="flex justify-between items-center mb-4">
               {/* Sort Controls */}
               <div className="flex items-center gap-2">
@@ -2252,7 +2287,10 @@ export default function AdminSettings() {
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedAutomations.map((rule) => (
+                {visibleAutomations.length === 0 && (
+                  <div className="text-center py-6 text-sm text-gray-500">No rules match the current filter.</div>
+                )}
+                {visibleAutomations.map((rule) => (
                   <div key={rule.id} className={`clay-card p-4 ${!rule.enabled ? 'opacity-60' : ''}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
