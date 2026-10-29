@@ -711,6 +711,23 @@ Answer only from the provided excerpts and cite the document title and official 
                 )}
               </div>
             </div>
+            {onUpdate && (
+              <Button
+                variant="outline"
+                size="sm"
+                title="Suggest an office we don't know about — the research queue gets the signal"
+                onClick={async () => {
+                  const suggestion = window.prompt("What office is missing here? (e.g. 'Electrical inspector is the county building dept')");
+                  if (!suggestion || !suggestion.trim()) return;
+                  const notes = `${jurisdiction.notes || ""}\n[Staff suggestion ${new Date().toISOString().slice(0, 10)}]: ${suggestion.trim()}`.trim();
+                  const saved = await base44.entities.JurisdictionProfile.update(jurisdiction.id, { notes });
+                  if (saved?.id) onUpdate(saved);
+                }}
+                className="min-h-11 gap-1 text-xs"
+              >
+                <MessageSquare className="w-3.5 h-3.5" /> Suggest an office
+              </Button>
+            )}
             {onSetVerification && (
               <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:flex-shrink-0">
                 {trust.key !== "verified" && (
