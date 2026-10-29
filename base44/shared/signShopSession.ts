@@ -1,5 +1,13 @@
 import { constantTimeEqual } from './constantTime.ts';
 
+// Short-lived auth cache — every function call used to spend ~2 entity_list
+// reads re-verifying the same session (AuthorizedEmail + UserSession). Deno
+// isolates persist across invocations, so a 60s cache eliminates the
+// per-invoke read cost on warm isolates while keeping session revocation
+// near-immediate. Only successful authentications are cached.
+const sessionAuthCache = new Map<string, { user: any; expires: number }>();
+const SESSION_AUTH_CACHE_MS = 60_000;
+
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -69,6 +77,10 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
+  const tokenHash = await signShopSessionTokenHash(rawToken);
+  const cachedAuth = sessionAuthCache.get(tokenHash);
+  if (cachedAuth && cachedAuth.expires > Date.now()) return cachedAuth.user;
+
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
@@ -80,7 +92,6 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
 
   // Revocation check — a revoked UserSession row (by token fingerprint) rejects this token.
   try {
-    const tokenHash = await signShopSessionTokenHash(rawToken);
     const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
     if (Array.isArray(revoked) && revoked.length > 0) {
       throw Object.assign(new Error('Authentication required'), { status: 401 });
@@ -91,6 +102,8 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
   }
 
   const user = users[0];
+  if (sessionAuthCache.size > 500) sessionAuthCache.clear();
+  sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ''));
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
