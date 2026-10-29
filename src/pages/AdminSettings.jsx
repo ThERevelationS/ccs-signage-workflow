@@ -539,6 +539,8 @@ const ADMIN_TAB_ICONS = {
   fleet: Truck,
 };
 
+const AUTOMATION_DRAFT_KEY = "admin-automation-editor-draft";
+
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
@@ -556,6 +558,13 @@ export default function AdminSettings() {
     : null;
   const { tab: selectedAdminTab, subtab: selectedAdminSubtab } =
     resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
+  useEffect(() => {
+    if (!isDialogOpen || editingRule) return;
+    try {
+      localStorage.setItem(AUTOMATION_DRAFT_KEY, JSON.stringify({ formData, triggers, actions, saved_at: Date.now() }));
+    } catch {}
+  }, [formData, triggers, actions, isDialogOpen, editingRule]);
+
   useEffect(() => {
     if (isUnlocked && navigationKey) {
       storeAdminNavigation(browserStorage, navigationKey, {
@@ -753,6 +762,7 @@ export default function AdminSettings() {
   const [testEmailAddr, setTestEmailAddr] = useState("");
   const [testEmailBusy, setTestEmailBusy] = useState(false);
   const [testEmailMsg, setTestEmailMsg] = useState("");
+  const [draftRestored, setDraftRestored] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [automationLoadError, setAutomationLoadError] = useState(false);
   const automationLoadSequence = useRef(0);
@@ -1034,14 +1044,21 @@ export default function AdminSettings() {
     setAutomationSaveError("");
     if (!(await loadEmailGroups()) || ownerEpoch !== automationSessionEpoch.current) return;
     setEditingRule(null);
-    setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
-    setActions([{ action_type: "", action_config: {} }]);
-    const nextForm = { name: "", enabled: true, priority: 0, group: "" };
+    let draft = null;
+    try {
+      const raw = localStorage.getItem(AUTOMATION_DRAFT_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.formData && Array.isArray(parsed.triggers) && Array.isArray(parsed.actions)) draft = parsed;
+    } catch {}
+    const nextForm = draft?.formData || { name: "", enabled: true, priority: 0, group: "" };
+    setTriggers(draft?.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+    setActions(draft?.actions || [{ action_type: "", action_config: {} }]);
     setFormData(nextForm);
+    setDraftRestored(!!draft);
     automationEditorBaseline.current = JSON.stringify({
       formData: nextForm,
-      triggers: [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
-      actions: [{ action_type: "", action_config: {} }]
+      triggers: draft?.triggers || [{ trigger_type: "", trigger_condition: {}, logic: "or" }],
+      actions: draft?.actions || [{ action_type: "", action_config: {} }]
     });
     setAutomationDraftParked(false);
     setIsDialogOpen(true);
@@ -2707,6 +2724,18 @@ export default function AdminSettings() {
             {ordinaryAutomationRecovery}
             {uncertainAutomationReview}
             <fieldset disabled={automationSaving} className="min-w-0 space-y-6 mt-4">
+              {draftRestored && !editingRule && (
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs text-blue-900">
+                  <span>Draft restored from your last unsaved rule.</span>
+                  <button type="button" className="font-semibold underline" onClick={() => {
+                    try { localStorage.removeItem(AUTOMATION_DRAFT_KEY); } catch {}
+                    setFormData({ name: "", enabled: true, priority: 0, group: "" });
+                    setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
+                    setActions([{ action_type: "", action_config: {} }]);
+                    setDraftRestored(false);
+                  }}>Discard draft</button>
+                </div>
+              )}
               {!editingRule && !formData.name && !triggers[0]?.trigger_type && (
                 <section aria-label="Automation starters" className="rounded-xl border border-blue-200 bg-blue-50 p-4">
                   <h3 className="font-semibold text-blue-950">Start with an example</h3>
