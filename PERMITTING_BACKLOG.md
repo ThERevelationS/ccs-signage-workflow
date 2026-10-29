@@ -192,14 +192,14 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 137. **[UX][DONE]** Placeholder example inside the empty input — "e.g. 914 Lila Ave, Milford, OH 45150" so first-timers see the shape before typing.
 138. **[F]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
-139. **[UX]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
+139. **[UX][DONE]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
 140. **[F]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
 141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
 142. **[F]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
 143. **[UX]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
 144. **[F]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
 145. **[UX][DONE]** Spelling-tolerant search: "Milford OH 45150" without a street still finds Milford's candidates and says so plainly.
-146. **[F]** Intersection syntax: "Lila Ave & Main St, Milford" resolves via the geocoder's free-form match.
+146. **[F][DONE]** Intersection syntax: "Lila Ave & Main St, Milford" resolves via the geocoder's free-form match.
 147. **[UX]** If the address resolves to a PO box/rural route, say it plainly ("We found a postal area, not a situs address — check the map pin").
 
 ## O — Candidate clarity, round 2
@@ -207,13 +207,13 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 148. **[UX][DONE]** Each candidate card gets a one-line "why it's here": "The map pin falls inside its boundary" vs "Same name as the town" — the reason, not just the name.
 149. **[UX]** Distance hint on candidates: "About 0.3 miles from the pin" — helps spot a boundary-edge mistake.
 150. **[F]** "Compare side by side" for two candidates: county vs city vs township offices shown in columns so the difference is obvious.
-151. **[UX]** The detected card states what it is NOT: "Not a township address — it sits inside the city." Kills second-guessing.
+151. **[UX][DONE]** The detected card states what it is NOT: "Not a township address — it sits inside the city." Kills second-guessing.
 152. **[F][DONE]** Show the FULL containment chain on the card: Address → City of Milford → Clermont County → Ohio — every level separately.
 153. **[UX]** A boundary-edge warning: "The pin is within ~200 ft of the city line — the next office over is X Township" when the margin is thin.
 154. **[F]** Per-candidate "evidence" link opening the exact source page that proved coverage.
-155. **[UX]** Candidate cards sorted: verified-detected first, then verified-repository, then unverified — never alphabetical.
-156. **[F]** County offices listed as their own card (county zoning/electrical when unincorporated) — never folded into the city card.
-157. **[UX]** When the pin lands in a village, label it "village" not "city" — the type words matter and Ohio mixes them.
+155. **[UX][DONE]** Candidate cards sorted: verified-detected first, then verified-repository, then unverified — never alphabetical.
+156. **[F][DONE]** County offices listed as their own card (county zoning/electrical when unincorporated) — never folded into the city card.
+157. **[UX][DONE]** When the pin lands in a village, label it "village" not "city" — the type words matter and Ohio mixes them.
 158. **[F]** Extraterritorial jurisdiction (ETJ) hints: city-owned land outside city limits flags "ETJ — the city may still issue permits here".
 
 ## P — The job card, round 2
@@ -228,7 +228,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 166. **[F]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
 167. **[UX]** Line reorder via drag — staff order the offices the way they actually work them.
 168. **[F]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
-169. **[UX]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
+169. **[UX][DONE]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
 170. **[F]** Batch status: select multiple lines → mark them all "application submitted" in one click.
 
 ## Q — Repository & jurisdiction data, round 2
@@ -245,7 +245,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 180. **[F]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
 181. **[UX]** Recently-researched strip: the 5 most-recently-verified jurisdictions at the top of the repository.
 182. **[F]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
-183. **[UX]** "Needs electrical review" chip where sign+zoning verified but electrical isn't — partial states are visible.
+183. **[UX][DONE]** "Needs electrical review" chip where sign+zoning verified but electrical isn't — partial states are visible.
 184. **[F]** Contact-import from a business card photo (OCR on the phone# + name) — fast office-data entry.
 185. **[H]** Jurisdiction-merge staging: queue a merge → preview affected jobs → confirm — never a one-click clobber (ties to item 59).
 
