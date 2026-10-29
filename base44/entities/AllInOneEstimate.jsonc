@@ -613,6 +613,34 @@
         }
       }
     },
+    "volume_discount_tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "min_subtotal": {
+            "type": "number"
+          },
+          "discount_percent": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Snapshot of the linked customer's volume discount tiers captured at customer-select time."
+    },
+    "category_adjustments": {
+      "type": "object",
+      "description": "Per-category price adjustments for this estimate only."
+    },
+    "pricing_tier": {
+      "type": "number",
+      "default": 1,
+      "description": "Markup pricing tier auto-applied from the linked Customer (Customer.pricing_tier)."
+    },
+    "personal_tags": {
+      "type": "object",
+      "description": "Per-user color/label tags for personal organization \u2014 keyed by staff email. Not customer-visible."
+    },
     "notes": {
       "type": "string"
     },
