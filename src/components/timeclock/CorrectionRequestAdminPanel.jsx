@@ -67,6 +67,8 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const [checkedIds, setCheckedIds] = useState(() => new Set());
   const [bulkReason, setBulkReason] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkDecision, setBulkDecision] = useState("approve");
+  const [queueFilter, setQueueFilter] = useState("");
 
   const loadSeqRef = useRef(0);
   const loadRequests = useCallback(async () => {
@@ -220,9 +222,22 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const allChecked = requests.length > 0 && checkedIds.size === requests.length;
   const toggleAll = () => setCheckedIds(allChecked ? new Set() : new Set(requests.map((r) => r.id)));
 
-  const bulkApprove = async () => {
+  // Oldest requests surface first and carry an age badge so stale items can't hide.
+  const ageDays = (iso) => {
+    const t = Date.parse(String(iso || ""));
+    return Number.isFinite(t) ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : null;
+  };
+  const visibleRequests = requests
+    .filter((r) => {
+      const q = queueFilter.trim().toLowerCase();
+      if (!q) return true;
+      return [r.user_name, r.user_email, r.request_kind, r.employee_reason].some((v) => String(v || "").toLowerCase().includes(q));
+    })
+    .sort((a, b) => Date.parse(a.requested_at || 0) - Date.parse(b.requested_at || 0));
+
+  const bulkReview = async () => {
     if (bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3) {
-      if (bulkReason.trim().length < 3) setError("Enter a shared manager review reason (3+ characters) for the bulk approval.");
+      if (bulkReason.trim().length < 3) setError("Enter a shared manager review reason (3+ characters) for the bulk decision.");
       return;
     }
     setBulkBusy(true);
@@ -237,7 +252,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           request_id: newRequestId(),
           correction_request_id: request.id,
           expected_request_updated_date: request.updated_date,
-          decision: "approve",
+          decision: bulkDecision,
           reason: bulkReason.trim(),
         });
         const data = response?.data || response;
@@ -247,7 +262,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
       }
     }
     setCheckedIds(new Set());
-    if (failed.length) setError(`Bulk approval had ${failed.length} failure(s): ${failed.join("; ")}`);
+    if (failed.length) setError(`Bulk ${bulkDecision} had ${failed.length} failure(s): ${failed.join("; ")}`);
     await Promise.all([loadRequests(), onEntriesChanged?.()]);
     setBulkBusy(false);
   };
@@ -286,16 +301,37 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
               Select all
             </label>
             <Input
+              value={queueFilter}
+              onChange={(e) => setQueueFilter(e.target.value)}
+              placeholder="Filter by name, kind, or reason"
+              className="h-8 w-44 text-xs"
+              disabled={bulkBusy}
+            />
+            <select
+              value={bulkDecision}
+              onChange={(e) => setBulkDecision(e.target.value)}
+              className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium"
+              disabled={bulkBusy}
+            >
+              <option value="approve">Approve</option>
+              <option value="reject">Reject</option>
+            </select>
+            <Input
               value={bulkReason}
               onChange={(e) => setBulkReason(e.target.value)}
               placeholder="Shared review reason (required)"
-              className="h-8 min-w-48 flex-1 text-xs"
+              className="h-8 min-w-40 flex-1 text-xs"
               maxLength={500}
               disabled={bulkBusy || checkedIds.size === 0}
             />
-            <Button size="sm" onClick={bulkApprove} disabled={bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3} className="gap-1.5">
+            <Button
+              size="sm"
+              onClick={bulkReview}
+              disabled={bulkBusy || checkedIds.size === 0 || bulkReason.trim().length < 3}
+              className={`gap-1.5 ${bulkDecision === "reject" ? "bg-red-600 hover:bg-red-700" : ""}`}
+            >
               {bulkBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              Approve {checkedIds.size || ""} selected
+              {bulkDecision === "reject" ? "Reject" : "Approve"} {checkedIds.size || ""} selected
             </Button>
           </div>
         )}
@@ -307,7 +343,9 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
           <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No pending correction requests.</div>
         ) : (
           <div className="space-y-2">
-            {requests.map((request) => (
+            {visibleRequests.length === 0 ? (
+              <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No requests match this filter.</div>
+            ) : visibleRequests.map((request) => (
               <div key={request.id} className="rounded-lg border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0 flex items-start gap-2">
                   <input
@@ -324,7 +362,12 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                       <Badge className="bg-amber-100 text-amber-800">Missed Clock Out</Badge>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
+                  <div className="text-xs text-gray-500">
+                    Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}
+                    {(() => { const d = ageDays(request.requested_at); return d !== null && d >= 1 ? (
+                      <span className={`ml-1.5 rounded px-1 py-0.5 text-[10px] font-bold ${d >= 3 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>{d}d old</span>
+                    ) : null; })()}
+                  </div>
                   <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.employee_reason}</div>
                   </div>
                 </div>
