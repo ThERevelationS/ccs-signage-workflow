@@ -397,7 +397,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 301. **[F][DONE]** Denial-record: a denied permit records the reason + date + appeal deadline — the next attempt learns from it.
 302. **[UX][FLAGGED-dedicated]** Variance-tracking: when the office requires a variance, a linked variance line is auto-suggested.
 303. **[F][FLAGGED-dedicated]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
-304. **[UX][DONE]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
+304. **[UX][FLAGGED-dedicated]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
 305. **[F][DONE]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
 306. **[UX][DONE]** "What inspectors usually flag" hint per jurisdiction when known — tribal knowledge recorded.
 307. **[F][DONE]** Correction-notice tracking: failed inspection → correction required by date → marked resolved.
