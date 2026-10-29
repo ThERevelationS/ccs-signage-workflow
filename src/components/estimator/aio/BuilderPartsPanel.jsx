@@ -23,6 +23,7 @@ import BuilderPartEditWarningModal from "./BuilderPartEditWarningModal";
 import DetachedPartOverrideModal from "./DetachedPartOverrideModal";
 import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPickerModal";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
 import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPart, updateManualProductPart } from "@/components/estimator/parts/customProductService";
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
@@ -741,7 +742,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     for (let i = 0; i < nextGroups.length; i++) {
       const g = nextGroups[i];
       if (Number(g.sort_order) !== i) {
-        await base44.entities.BuilderPartGroup.update(g.id, { sort_order: i }).catch(() => null);
+        await staffEntities.BuilderPartGroup.updateMany({ id: g.id }, { sort_order: i }).catch(() => null);
       }
     }
   };
