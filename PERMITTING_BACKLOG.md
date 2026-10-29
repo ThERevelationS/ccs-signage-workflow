@@ -474,7 +474,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 366. **[H][FLAGGED-dedicated]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
 367. **[H][FLAGGED-dedicated]** Incremental list loading: the repository pages 50-at-a-time with "load more" — not one 500-row dump.
 368. **[H][DONE]** Defer non-critical reads: WorkOrder/AuthorizedEmail load after the permit lines render — the list appears sooner.
-369. **[H][FLAGGED-dedicated]** Boundary-bundle pre-warm: common OH/KY boundaries preloaded — the picker doesn't fetch on every search.
+369. **[H][DONE]** Boundary-bundle pre-warm: common OH/KY boundaries preloaded — the picker doesn't fetch on every search.
 370. **[H][DONE]** Debounced repository search: 300ms after typing stops — not every keystroke a filter pass.
 371. **[H][FLAGGED-dedicated]** Skeleton-per-section: the page renders the header + groups progressively, not all-at-once.
 372. **[H][FLAGGED-dedicated]** Idle-time prefetch: when the page is idle, next-likely catalogs warm in the background.
@@ -489,7 +489,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 379. **[F][FLAGGED-dedicated]** In-app mention: "@brett — can you verify the Mason office?" pings a staff member on a jurisdiction.
 380. **[UX][DONE]** Follow-up scheduling: "remind me in a week" on any line — the chase doesn't rely on memory.
-381. **[F][FLAGGED-dedicated]** Status-change digest: a daily "what moved in permitting" — office verifications, applies, issues.
+381. **[F][DONE]** Status-change digest: a daily "what moved in permitting" — office verifications, applies, issues.
 382. **[UX][FLAGGED-dedicated]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
 383. **[F][FLAGGED-dedicated]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
 384. **[UX][FLAGGED-dedicated]** Plain-language status for clients: "Waiting on the township's review" — not internal jargon.
@@ -511,7 +511,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 397. **[F][FLAGGED-dedicated]** Weekly permit-throughput: how many jurisdictions verified, applies, issued — the health number.
 398. **[UX][DONE]** Coverage-gap report: jurisdictions with verified jobs but unverified offices — the risk list.
 399. **[F][FLAGGED-dedicated]** Slow-office report: which jurisdictions take longest to verify — research effort targeted.
-400. **[UX][FLAGGED-dedicated]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
+400. **[UX][DONE]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
 401. **[F][FLAGGED-dedicated]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
 402. **[UX][FLAGGED-dedicated]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
 403. **[F][FLAGGED-dedicated]** Repeat-offender list: jurisdictions where applications keep getting rejected — process problems surface.
