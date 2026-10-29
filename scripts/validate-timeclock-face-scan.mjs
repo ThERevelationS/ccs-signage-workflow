@@ -10,15 +10,17 @@ const componentSource = readFileSync("src/components/timeclock/FaceRecognition.j
 let passed = 0;
 const test = async (name, fn) => { await fn(); passed += 1; console.log("PASS " + name); };
 
-function loadRuntime({ firstPass = null, secondPass = null } = {}) {
+function loadRuntime({ firstPass = null, secondPass = null, passes = null } = {}) {
   const calls = [];
+  const timers = [];
   const faceapi = {
     TinyFaceDetectorOptions: class {
       constructor(opts) { this.opts = opts; }
     },
     detectSingleFace(_video, opts) {
       calls.push(opts?.opts?.inputSize ?? opts?.inputSize);
-      const value = calls.length === 1 ? firstPass : secondPass;
+      const value = passes ? passes[calls.length - 1] ?? null
+        : calls.length === 1 ? firstPass : secondPass;
       return {
         withFaceLandmarks() { return this; },
         withFaceDescriptor() { return Promise.resolve(value); },
@@ -29,16 +31,26 @@ function loadRuntime({ firstPass = null, secondPass = null } = {}) {
   };
   const ctx = {
     faceapi, document: {}, Promise, Float32Array, Math, Number, console,
+    setTimeout: (fn) => { timers.push(fn); return timers.length; },
+    clearTimeout: () => { timers.length = 0; },
   };
   vm.createContext(ctx);
   vm.runInContext(
     runtimeSource
       .replace(/^import \* as faceapi.*$/m, "")
       .replace(/^export /gm, "")
-      + "\nthis.__x = { FACE_QUALITY, createMatchVoter, createFaceMatcher, detectDetailedFace, estimateFaceBrightness, passesFaceQualityGate };",
+      + "\nthis.__x = { FACE_QUALITY, FACE_SCAN, createMatchVoter, createFaceMatcher, createFaceScanSession, detectDetailedFace, descriptorDistance, estimateFaceBrightness, passesFaceQualityGate };",
     ctx,
   );
-  return { x: ctx.__x, calls };
+  // Runs every scheduled tick to completion; returns how many detector calls
+  // happened across those ticks.
+  const flush = async () => {
+    const pending = timers.splice(0);
+    const before = calls.length;
+    for (const fn of pending) await fn();
+    return calls.length - before;
+  };
+  return { x: ctx.__x, calls, timers, flush };
 }
 
 const det = (score, width) => ({ detection: { score, box: { width, height: width } } });
@@ -69,6 +81,22 @@ await test("two-pass detection: 512 fallback finds smaller/distant faces", async
   const result = await x.detectDetailedFace(video);
   assert.equal(result.detection.box.width, 40);
   assert.deepEqual(calls, [320, 512], "deep pass only runs after a miss");
+});
+
+await test("weak first-pass detection escalates to the 512 pass for a better descriptor", async () => {
+  const { x, calls } = loadRuntime({ firstPass: det(0.55, 40), secondPass: det(0.9, 80) });
+  const video = { readyState: 4, videoWidth: 1280 };
+  const result = await x.detectDetailedFace(video);
+  assert.equal(result.detection.score, 0.9, "the stronger deep-pass detection wins");
+  assert.deepEqual(calls, [320, 512], "marginal faces retry at the higher input size");
+});
+
+await test("weak first-pass detection is kept when the deep pass misses", async () => {
+  const { x, calls } = loadRuntime({ firstPass: det(0.55, 40), secondPass: null });
+  const video = { readyState: 4, videoWidth: 1280 };
+  const result = await x.detectDetailedFace(video);
+  assert.equal(result.detection.score, 0.55, "a weak detection beats none");
+  assert.deepEqual(calls, [320, 512]);
 });
 
 await test("detectDetailedFace skips unready video without detector calls", async () => {
@@ -125,19 +153,93 @@ await test("brightness estimator guards malformed boxes", () => {
   assert.equal(x.estimateFaceBrightness({}, { width: 0, height: 10 }), null);
 });
 
-await test("component requests higher-resolution video and uses the voter", () => {
+await test("shared scan session serializes detections and feeds the voter only on real frames", async () => {
+  const { x, calls, flush } = loadRuntime({ passes: [null, null, null, null] });
+  const video = { readyState: 4, videoWidth: 1280 };
+  const frames = [];
+  const session = x.createFaceScanSession({
+    getVideo: () => video,
+    matchFace: () => null,
+    onFrame: (f) => frames.push(f.status),
+  });
+  session.start();
+  assert.equal(await flush(), 2, "one detectDetailedFace per tick ??? 320 pass plus 512 fallback, no overlap");
+  assert.equal(await flush(), 2);
+  assert.deepEqual(frames, ["no-face", "no-face"], "real misses reach onFrame and the voter");
+  session.stop();
+  assert.equal(await flush(), 0, "a stopped session runs no more detections");
+  assert.equal(calls.length, 4, "every tick ran the 320 pass then the 512 fallback");
+});
+
+await test("shared scan session confirms through the voter and reports verified winners", async () => {
+  const face = { ...det(0.8, 120), descriptor: [1, 2, 3] };
+  const { x, flush } = loadRuntime({ passes: [face, face, face, face] });
+  const video = { readyState: 4, videoWidth: 1280 };
+  const user = { id: "u1", full_name: "Ada" };
+  const frames = [];
+  const session = x.createFaceScanSession({
+    getVideo: () => video,
+    matchFace: () => user,
+    onFrame: (f) => frames.push(f.status),
+  });
+  session.start();
+  await flush(); await flush(); await flush();
+  assert.deepEqual(frames, ["verifying", "verifying", "recognized"], "3-of-5 same-identity frames confirm");
+  session.stop();
+});
+
+await test("shared scan session reports low-quality and dim frames as misses", async () => {
+  const { x, flush } = loadRuntime({ passes: [det(0.4, 200)] });
+  const video = { readyState: 4, videoWidth: 1280 };
+  const frames = [];
+  const session = x.createFaceScanSession({
+    getVideo: () => video,
+    matchFace: () => { throw new Error("must not match on a gated frame"); },
+    onFrame: (f) => frames.push(f.status),
+  });
+  session.start();
+  await flush();
+  assert.deepEqual(frames, ["low-quality"]);
+  session.stop();
+});
+
+await test("runtime owns the voter defaults and the dim-light match gate", () => {
+  assert.match(runtimeSource, /required: FACE_SCAN\.requiredVotes, window: FACE_SCAN\.voteWindow/);
+  assert.match(runtimeSource, /voter\(null\)/, "real misses must enter the window");
+  assert.match(runtimeSource, /const matched = dim \? null : matchFace/, "dim frames never reach the matcher");
+  assert.match(runtimeSource, /FACE_SCAN = \{ intervalMs: 120, requiredVotes: 3, voteWindow: 5 \}/);
+});
+
+await test("component requests higher-resolution video and delegates to the shared session", () => {
   assert.match(componentSource, /width: \{ ideal: 1280 \}, height: \{ ideal: 720 \}/);
-  assert.match(componentSource, /createMatchVoter\(\{ required: 3, window: 5 \}\)/);
-  assert.match(componentSource, /voter\(null\)/, "misses must enter the window");
+  assert.match(componentSource, /createFaceScanSession\(\{/);
+  assert.match(componentSource, /matchFace: \(descriptor\) => matchFaceRef\.current\(descriptor\)/);
   assert.match(componentSource, /onRecognized\?\.\(winner/, "only the voter's confirmed winner triggers recognition");
   assert.doesNotMatch(componentSource, /box\.width < 80/, "fixed 80px floor must be gone");
+  assert.doesNotMatch(componentSource, /setInterval\(async/, "the old fixed-cadence interval is gone");
 });
 
 await test("component dims out instead of matching under poor light", () => {
-  assert.match(componentSource, /const user = dim \? null : findMatchingUser/);
   assert.match(componentSource, /Lighting is dim\. Move to better light/);
   assert.match(componentSource, /Lighting is too dim to enroll well/, "enrollment rejects dim captures");
   assert.match(componentSource, /estimateFaceBrightness\(videoRef\.current, detection\.detection\.box\)/);
+});
+
+await test("enrollment captures continuously with pose dedupe instead of per-shot countdowns", () => {
+  assert.match(componentSource, /ENROLL_MIN_POSE_DISTANCE/);
+  assert.match(componentSource, /descriptorDistance\(d, descriptor\) < ENROLL_MIN_POSE_DISTANCE/);
+  assert.match(componentSource, /ENROLL_MAX_STALL/, "a stall bypass keeps stationary enrollment completable");
+  assert.doesNotMatch(componentSource, /startCountdown|countdownIntervalRef/, "3-second countdowns are gone");
+});
+
+await test("admin and kiosk scans share the runtime session and descriptor pipeline", () => {
+  const qc = readFileSync("src/components/timeclock/QuickClockSection.jsx", "utf8");
+  assert.match(qc, /createFaceScanSession\(\{/);
+  assert.doesNotMatch(qc, /detectDetailedFace\(|createMatchVoter\(|estimateFaceBrightness\(|passesFaceQualityGate\(/,
+    "the kiosk must not keep its own copy of the detection pipeline");
+  const admin = readFileSync("src/pages/AdminSettings.jsx", "utf8");
+  assert.match(admin, /issueAdminSettingsAccess", \{ session_token: sessionToken, face_descriptor: descriptor \}/,
+    "face-only capability requests are gone ??? session + face, same as the kiosk");
 });
 
 await test("scan reticle is a pointer-events-none overlay keyed to scan state", () => {
@@ -166,8 +268,9 @@ await test("scan CSS provides all tones and reduced-motion fallbacks", () => {
   for (const cls of ["scanSweep", "scanBreath", "successRing", "drawCheck", "scan-reticle", "scan-tone-scanning", "scan-tone-verifying", "scan-tone-dim", "scan-tone-success", "success-burst", "check-draw"]) {
     assert.ok(cssSource.includes(cls), "index.css must define " + cls);
   }
-  const rmBlock = cssSource.slice(cssSource.lastIndexOf("prefers-reduced-motion"));
-  assert.match(rmBlock, /\.scan-line, \.scan-oval, \.success-burst, \.check-draw \{ animation: none !important; \}/);
+  const rmBlocks = cssSource.split("@media (prefers-reduced-motion").slice(1).join("\n");
+  assert.match(rmBlocks, /\.scan-line, \.scan-oval, \.success-burst, \.check-draw \{ animation: none !important; \}/,
+    "some reduced-motion block must neutralize the scan animations");
 });
 
 await test("QuickClockSection inline face scan uses the same reticle", () => {
@@ -209,3 +312,4 @@ test("QRScanner shows the scan reticle while scanning", () => {
 
 setTimeout(() => console.log(`\nFACE SCAN VALIDATOR: ${passed} scenarios PASS`), 0);
 setTimeout(() => console.log(`PASS ${passed}/${passed} face-scan scenarios`), 0);
+
