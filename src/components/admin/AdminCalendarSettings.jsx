@@ -558,6 +558,12 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
             <Input value={form.location || ""} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="mt-1" />
           </div>
           <div>
+            <Label>Travel buffer (minutes)</Label>
+            <Input type="number" min="0" max="240" value={form.travel_buffer_minutes ?? 0}
+              onChange={e => setForm(f => ({ ...f, travel_buffer_minutes: Math.max(0, Number(e.target.value) || 0) }))} className="mt-1" />
+            <p className="text-xs text-gray-400 mt-0.5">Counted as busy time before and after the event for conflict checks.</p>
+          </div>
+          <div>
             <Label>Notes</Label>
             <Textarea value={form.description || ""} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="mt-1" />
           </div>
