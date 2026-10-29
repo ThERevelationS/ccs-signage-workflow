@@ -21,6 +21,7 @@ import {
   Download, 
   Pencil, 
   Archive, 
+  Flag,
   User, 
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -750,6 +751,26 @@ export default function TimeClockAdmin() {
       }
     } finally {
       setApprovalBusy(false);
+    }
+  };
+
+  const togglePayrollHold = async (entry) => {
+    if (!sessionToken || !entry?.id) return;
+    const releasing = entry.payroll_hold === true;
+    const reason = releasing ? "" : (window.prompt("Payroll hold reason", "Under review") || "").slice(0, 300);
+    if (!releasing && !reason) return;
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "toggle_payroll_hold", session_token: sessionToken,
+        request_id: newRequestId(), entry_id: entry.id,
+        expected_updated_date: entry.updated_date,
+        hold: !releasing, reason,
+      });
+      const data = functionData(response);
+      if (data?.success !== true) throw new Error(data?.error || "Hold was not updated.");
+      await loadData();
+    } catch (err) {
+      setTimeEntryError(err?.message || "Payroll hold could not be updated.");
     }
   };
 
@@ -1511,6 +1532,15 @@ export default function TimeClockAdmin() {
                           title={entry.pay_period_id ? "Reopen the finalized pay period before archiving this shift" : "Archive time entry"}
                         >
                           <Archive className={`w-3 h-3 ${entry.pay_period_id ? "text-slate-400" : "text-amber-600"}`} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => togglePayrollHold(entry)}
+                          className="h-7 w-7"
+                          title={entry.payroll_hold ? `On payroll hold${entry.payroll_hold_reason ? `: ${entry.payroll_hold_reason}` : ""} - click to release` : "Flag for payroll hold"}
+                        >
+                          <Flag className={`w-3 h-3 ${entry.payroll_hold ? "text-red-600 fill-red-200" : "text-slate-400"}`} />
                         </Button>
                       </div>
                     </td>
