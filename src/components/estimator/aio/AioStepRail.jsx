@@ -39,7 +39,7 @@ export default function AioStepRail({
         {SECTIONS.map((section) => {
           const active = section.n === activeStep;
           return (
-            <button
+            <button type="button"
               key={section.key}
               onClick={() => onStepClick?.(section.n)}
               aria-current={active ? "step" : undefined}
@@ -97,7 +97,7 @@ export default function AioStepRail({
         </div>
       </div>
 
-      <button
+      <button type="button"
         onClick={onSaveProgress}
         disabled={saving || readOnly}
         className="w-full bg-lime-200 hover:bg-lime-300 disabled:opacity-60 border border-lime-500 text-slate-900 font-semibold py-2 rounded-sm text-sm transition-colors"
