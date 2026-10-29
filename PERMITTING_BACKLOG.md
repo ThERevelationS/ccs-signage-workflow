@@ -229,7 +229,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 167. **[UX][DONE]** Line reorder via drag — staff order the offices the way they actually work them.
 168. **[F][DONE]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
 169. **[UX][DONE]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
-170. **[F][FLAGGED-dedicated]** Batch status: select multiple lines → mark them all "application submitted" in one click.
+170. **[F][DONE]** Batch status: select multiple lines → mark them all "application submitted" in one click.
 
 ## Q — Repository & jurisdiction data, round 2
 
@@ -508,9 +508,9 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 ## AF — Reporting & insight
 
-397. **[F][FLAGGED-dedicated]** Weekly permit-throughput: how many jurisdictions verified, applies, issued — the health number.
+397. **[F][DONE]** Weekly permit-throughput: how many jurisdictions verified, applies, issued — the health number.
 398. **[UX][DONE]** Coverage-gap report: jurisdictions with verified jobs but unverified offices — the risk list.
-399. **[F][FLAGGED-dedicated]** Slow-office report: which jurisdictions take longest to verify — research effort targeted.
+399. **[F][DONE]** Slow-office report: which jurisdictions take longest to verify — research effort targeted.
 400. **[UX][DONE]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
 401. **[F][DONE]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
 402. **[UX][DONE]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
@@ -527,7 +527,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 ## AG — Power features & polish
 
-413. **[F][FLAGGED-dedicated]** "Clone job's permit setup": a second job in the same town inherits the verified locality + office set — one click.
+413. **[F][DONE]** "Clone job's permit setup": a second job in the same town inherits the verified locality + office set — one click.
 414. **[UX][DONE]** Quick-reply templates: canned office-email lines ("Following up on permit #X — any update?") for the chase.
 415. **[F][DONE]** Permit-template library: common application-packets per jurisdiction — Milford's PDF + required docs pre-known.
 416. **[UX][FLAGGED-dedicated]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
