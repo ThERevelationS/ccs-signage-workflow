@@ -629,6 +629,15 @@ Deno.serve(async (req) => {
         },
         label: `Authorized user ${email}`,
       });
+      try {
+        await base44.asServiceRole.entities.AdminAuditLog.create({
+          actor_email: actor?.email || 'unknown',
+          action: 'update_user',
+          target_email: current.email,
+          detail: Object.keys(desired).join(', '),
+          at: new Date().toISOString(),
+        });
+      } catch { /* audit logging is best-effort — never block the save */ }
       return Response.json({ success: true, record: adminUserView(saved) });
     }
 
