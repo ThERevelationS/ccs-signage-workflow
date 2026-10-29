@@ -32,6 +32,11 @@ export async function signShopSessionPayload(payload: Record<string, unknown>) {
   return `${payloadStr}.${sig}`;
 }
 
+export async function signShopSessionTokenHash(token: string) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return b64urlEncode(String.fromCharCode(...new Uint8Array(buf)));
+}
+
 export async function authenticateSignShopSession(base44: any, token: unknown) {
   const rawToken = String(token || '').trim();
   if (!rawToken) throw Object.assign(new Error('Authentication required'), { status: 401 });
@@ -64,13 +69,6 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
-  // Every staff request verifies its session against AuthorizedEmail, and all of
-  // those reads share one service-role rate budget. Reuse a verified identity
-  // briefly within this warm function instance so page bursts do not spend half
-  // the budget re-reading the same user record.
-  const cached = verifiedSessions.get(rawToken);
-  if (cached && cached.until > Date.now()) return { ...cached.user };
-
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
@@ -80,17 +78,23 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
     throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
   }
 
+  // Revocation check — a revoked UserSession row (by token fingerprint) rejects this token.
+  try {
+    const tokenHash = await signShopSessionTokenHash(rawToken);
+    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+    if (Array.isArray(revoked) && revoked.length > 0) {
+      throw Object.assign(new Error('Authentication required'), { status: 401 });
+    }
+  } catch (e) {
+    if (e && typeof e === 'object' && 'status' in e) throw e;
+    // UserSession may not exist yet — treat lookup failures as non-blocking.
+  }
+
   const user = users[0];
   const notBefore = Date.parse(String(user?.session_not_before || ''));
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
-  if (verifiedSessions.size >= SESSION_CACHE_MAX) verifiedSessions.clear();
-  verifiedSessions.set(rawToken, { user: { ...user }, until: Math.min(Date.now() + SESSION_CACHE_MS, expiresAt) });
   return user;
 }
-
-const SESSION_CACHE_MS = 20000;
-const SESSION_CACHE_MAX = 500;
-const verifiedSessions = new Map<string, { user: any, until: number }>();
