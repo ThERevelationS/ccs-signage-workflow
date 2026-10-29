@@ -130,6 +130,9 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (user.is_deactivated === true) {
+      return Response.json({ success: false, error: 'This account has been deactivated. Please see an administrator.' }, { status: 403 });
+    }
     if (user.force_password_reset === true) {
       return Response.json({ success: false, requires_password_reset: true, error: 'Password reset required. Please see an administrator for a new password.' }, { status: 403 });
     }
