@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       return Response.json({ valid: false, error: 'No token provided' }, { status: 400 });
     }
 
-    const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)));
+    const base44 = withEntityRateLimitRetry(withEmployeeAccessReads(createClientFromRequest(req)), { maxRetries: 1 });
     // action === 'logout': revoke the server-side session (not just the
     // client token) by bumping session_not_before past this token's issue.
     const isLogout = String(body?.action || '') === 'logout';

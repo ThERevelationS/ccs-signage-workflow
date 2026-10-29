@@ -3651,7 +3651,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
     const backgroundSync = ['run_sync', 'run_sales_sync', 'run_order_sync', 'push_dataset', 'pull_dataset'].includes(action);
-    const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0 });
+    const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0, maxRetries: 1 });
     base44Instance = base44;
     const claimInvocationRun = async (status: any, dataset?: string) => {
       const claimed = await claimSyncRun(base44, status, dataset);
