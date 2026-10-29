@@ -415,6 +415,23 @@ export default function TimeClockAdmin() {
     row.hours += e.total_hours || 0;
   }
   const otWatch = Object.values(otByEmail).filter(r => r.hours >= 36).sort((a, b) => b.hours - a.hours);
+  // Projected week-end hours: current hours + (avg per worked weekday ×
+  // remaining weekdays) — rough payroll forecast for the open week.
+  const workday = (weekStart.getDay() + 6) % 7; // Mon=0
+  const workedDays = {};
+  for (const e of timeEntries) {
+    if (!e.clock_in || new Date(e.clock_in) < weekStart || e.archived_admin || e.archived_test_data || !e.user_email) continue;
+    const d = safeFormat(e.clock_in, "yyyy-MM-dd");
+    const key = `${e.user_email}|${d}`;
+    if (!workedDays[key]) workedDays[key] = true;
+  }
+  const otProjected = otWatch.map(r => {
+    const email = Object.keys(otByEmail).find(k => otByEmail[k] === r);
+    const daysWorked = Object.keys(workedDays).filter(k => k.startsWith(`${email}|`)).length || 1;
+    const remaining = Math.max(0, 5 - workday - 1);
+    const avg = r.hours / daysWorked;
+    return { ...r, projected: r.hours + avg * remaining };
+  });
 
   // Group by user for summary
   const userSummary = filteredEntries.reduce((acc, entry) => {
@@ -1319,7 +1336,10 @@ export default function TimeClockAdmin() {
               <div className="mt-2 flex flex-wrap gap-2">
                 {otWatch.map(r => (
                   <span key={r.name} className={`rounded-full border px-2 py-1 text-xs font-medium ${r.hours >= 40 ? "border-red-400 bg-red-100 text-red-800" : "border-orange-300 bg-white text-orange-800"}`}>
-                    {r.name} · {r.hours.toFixed(1)}h
+                    {(() => {
+                      const p = otProjected.find(x => x.name === r.name);
+                      return `${r.name} · ${r.hours.toFixed(1)}h${p ? ` → ~${p.projected.toFixed(0)}h` : ""}`;
+                    })()}
                   </span>
                 ))}
               </div>
