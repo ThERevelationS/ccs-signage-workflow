@@ -23,6 +23,11 @@
       "type": "string",
       "description": "Unique username for time clock login"
     },
+    "admin_grant_expires": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Time-boxed admin grant (break-glass) \u2014 backend auth strips admin fields once this timestamp passes."
+    },
     "notification_prefs": {
       "type": "object",
       "description": "Per-user notification opt-outs \u2014 e.g. { automation_emails: false } skips automation send_email actions for this user."
