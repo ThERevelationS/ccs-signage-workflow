@@ -118,7 +118,10 @@ export default function PermittingRulesReview() {
   }, [filters.jurisdiction_name]);
 
   useEffect(() => { setCounts(null); loadCounts(); }, [filters.jurisdiction_name]);
-  useEffect(() => { loadRules(true); }, [filters.jurisdiction_name, filters.rule_category, filters.status, filters.confidence, filters.conflict_state]);
+  useEffect(() => {
+    const t = setTimeout(() => loadRules(true), 350);
+    return () => clearTimeout(t);
+  }, [filters.jurisdiction_name, filters.rule_category, filters.status, filters.confidence, filters.conflict_state]);
 
   useEffect(() => {
     let alive = true;
