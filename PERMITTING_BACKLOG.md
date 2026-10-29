@@ -311,7 +311,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 231. **[F][FLAGGED-dedicated]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
 232. **[UX][DONE]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
 233. **[F][FLAGGED-dedicated]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
-234. **[UX][FLAGGED-dedicated]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
+234. **[UX][DONE]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
 235. **[F][DONE]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
 236. **[UX][DONE]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
 
