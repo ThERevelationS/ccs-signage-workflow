@@ -32,7 +32,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
             Draw landscaping features, paths and site boundaries. Each cell is 1 sq ft.
           </p>
         </div>
-        <button
+        <button type="button"
           onClick={() => {
             if (!window.confirm("Clear all landscaping from the canvas?")) return;
             onChange({ cell_size_inches: 12, cells: {} });
@@ -47,7 +47,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
         <div className="w-[120px] flex-shrink-0 space-y-1">
           <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Materials</div>
           {LANDSCAPE_MATERIALS.map((m) => (
-            <button
+            <button type="button"
               key={m.key}
               onClick={() => setBrush(m.key)}
               className={`w-full flex items-center gap-2 px-2 py-1 rounded-sm border text-[11px] ${
