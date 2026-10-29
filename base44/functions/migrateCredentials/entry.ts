@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
         await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
           entity,
           user,
-          nextFields: { password_hash },
+          nextFields: { password_hash, password_changed_at: new Date().toISOString() },
           guardFields: { email: user.email },
           label: `Legacy password hash upgrade for ${user.email}`,
         });
