@@ -2461,6 +2461,15 @@ export default function UserManagement() {
                         />
                         <label className="text-sm">Can Import/Export Data</label>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.force_password_reset === true}
+                          onCheckedChange={(checked) => {
+                            changeAccountDraft({ force_password_reset: checked === true });
+                          }}
+                        />
+                        <label className="text-sm">Require password reset at next sign-in</label>
+                      </div>
                       {formData.role === "admin" && (
                         <div className="flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3">
                           <Checkbox
