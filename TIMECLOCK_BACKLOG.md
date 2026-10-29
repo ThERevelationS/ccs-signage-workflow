@@ -87,7 +87,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 76. **[F]** Overtime authorization prompt at clock-in when projected week >40h
 
 ## 5. Tracker — display
-77. **[F]** Session timeline strip — today's punches/breaks as a colored band
+77. **[F][DONE]** Session timeline strip - break/pause segments as a colored band under the clock
 78. **[F][DONE]** "Next milestone" chip ("45m to 8h") — popover shows remaining minutes to the next unfired threshold
 79. **[F]** Weekly + daily dual ring mode
 80. **[F][DONE]** Monthly cumulative - monthly_paid_minutes in snapshot + 'This month' popover stat
