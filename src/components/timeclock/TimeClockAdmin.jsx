@@ -1749,6 +1749,7 @@ export default function TimeClockAdmin() {
       </div>
       <CorrectionRequestAdminPanel
         sessionToken={sessionToken}
+        entries={timeEntries}
         onEntriesChanged={loadData}
         reviewRequestId={correctionReviewRequestId}
         onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
