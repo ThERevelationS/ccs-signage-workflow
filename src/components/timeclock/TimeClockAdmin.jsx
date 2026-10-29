@@ -766,8 +766,34 @@ export default function TimeClockAdmin() {
       ).join("; ") || ""
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    // Per-employee summary sheet — totals at a glance before the detail rows.
+    const byEmployee = new Map();
+    for (const entry of filteredEntries) {
+      const key = entry.user_email || "unknown";
+      const row = byEmployee.get(key) || {
+        "Employee": entry.user_name || key,
+        "Email": key,
+        "Shifts": 0,
+        "Total Hours": 0,
+        "Lunch (min)": 0,
+        "Approved": 0,
+        "Needs Review": 0,
+        "Unreviewed": 0,
+      };
+      row["Shifts"] += 1;
+      row["Total Hours"] += Number(entry.total_hours || 0);
+      row["Lunch (min)"] += Number(entry.lunch_minutes || 0);
+      const status = entry.approval_status || "unreviewed";
+      if (status === "approved") row["Approved"] += 1;
+      else if (status === "needs_review") row["Needs Review"] += 1;
+      else row["Unreviewed"] += 1;
+      byEmployee.set(key, row);
+    }
+    const summaryData = [...byEmployee.values()].map(r => ({ ...r, "Total Hours": r["Total Hours"].toFixed(2) }));
+
     const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Summary");
+    const ws = XLSX.utils.json_to_sheet(exportData);
     XLSX.utils.book_append_sheet(wb, ws, "Time Entries");
     
     const fileName = `time_entries_${format(start, "yyyy-MM-dd")}_to_${format(end, "yyyy-MM-dd")}.xlsx`;
