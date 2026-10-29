@@ -117,6 +117,7 @@ export default function CustomerQuotePanel({
   const canEmailQuote = !revisionInProgress && persistedStatus !== "cancelled" && (issuingNewQuote || quoteVersion > 0);
   const [sendOpen, setSendOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const sendingRef = useRef(false);
   const [sendError, setSendError] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -230,6 +231,31 @@ export default function CustomerQuotePanel({
   };
 
   const set = (key, value) => onChange?.({ [key]: value });
+
+  const downloadQuotePdf = async () => {
+    setDownloadingPdf(true);
+    setSendError("");
+    try {
+      const pdf = await generateCustomerQuotePdf({
+        estimateNumber: estimate.estimate_number,
+        projectName: estimate.project_name,
+        quoteIssueDate: estimate.quote_issue_date || localDateStamp(),
+        quoteVersion,
+        quoteValidDays: estimate.quote_valid_days ?? 30,
+      });
+      const bytes = Uint8Array.from(atob(pdf.base64), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: pdf.mimeType || "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = pdf.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setSendError(e?.message || "The quote PDF could not be generated.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const openSendDialog = async () => {
     if (!canEmailQuote) return;
@@ -401,6 +427,16 @@ export default function CustomerQuotePanel({
             {revisionInProgress ? "Save Revision Before Sending" : emailActionLabel}
           </Button>
           <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={downloadQuotePdf}
+            disabled={revisionInProgress || downloadingPdf}
+            title={revisionInProgress ? "Save the open revision before downloading the customer quote." : "Download the customer quote as a PDF file."}
+            className="h-[31px] text-[11px]"
+          >
+            <Download className="w-3.5 h-3.5 mr-1.5" /> {downloadingPdf ? "Preparing…" : "PDF"}
+          </Button>
         </div>
       </div>
 
