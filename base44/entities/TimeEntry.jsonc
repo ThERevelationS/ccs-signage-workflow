@@ -28,6 +28,45 @@
       "type": "string",
       "description": "Idempotency request id for the confirmed clock-out"
     },
+    "payroll_hold": {
+      "type": "boolean",
+      "default": false,
+      "description": "Contested-entry flag set by managers; blocks payroll inclusion until cleared"
+    },
+    "payroll_hold_reason": {
+      "type": "string",
+      "description": "Why the entry is on hold"
+    },
+    "clock_in_geo": {
+      "type": "object",
+      "description": "Kiosk device geolocation captured at clock-in (lat/lng/accuracy in meters)",
+      "properties": {
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "accuracy": {
+          "type": "number"
+        }
+      }
+    },
+    "clock_out_geo": {
+      "type": "object",
+      "description": "Kiosk device geolocation captured at clock-out",
+      "properties": {
+        "lat": {
+          "type": "number"
+        },
+        "lng": {
+          "type": "number"
+        },
+        "accuracy": {
+          "type": "number"
+        }
+      }
+    },
     "clock_source": {
       "type": "string",
       "enum": [
