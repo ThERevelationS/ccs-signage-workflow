@@ -41,7 +41,7 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths, startOfDay, endOfDay, addDays, subDays } from "date-fns";
 import * as XLSX from "xlsx";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeOffApprovalPanel from "@/components/timeclock/TimeOffApprovalPanel";
@@ -70,10 +70,10 @@ function functionData(response) {
 }
 
 function safeFormat(value, pattern) {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = value instanceof Date ? value : parseISO(String(value));
-  if (!date || Number.isNaN(date.getTime())) return '—';
-  try { return format(date, pattern); } catch { return '—'; }
+  if (!date || Number.isNaN(date.getTime())) return '-';
+  try { return format(date, pattern); } catch { return '-'; }
 }
 
 function adminRequestStorageKey(action, entryId) {
@@ -296,6 +296,8 @@ export default function TimeClockAdmin() {
         start: startOfWeek(currentDate, { weekStartsOn: 0 }),
         end: endOfWeek(currentDate, { weekStartsOn: 0 })
       };
+    } else if (dateRange === "today") {
+      return { start: startOfDay(currentDate), end: endOfDay(currentDate) };
     } else {
       return {
         start: startOfMonth(currentDate),
@@ -396,6 +398,8 @@ export default function TimeClockAdmin() {
   const navigateDate = (direction) => {
     if (dateRange === "week") {
       setCurrentDate(direction > 0 ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+    } else if (dateRange === "today") {
+      setCurrentDate(direction > 0 ? addDays(currentDate, 1) : subDays(currentDate, 1));
     } else {
       setCurrentDate(direction > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
     }
@@ -831,6 +835,7 @@ export default function TimeClockAdmin() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
               <SelectItem value="week">Weekly</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
               <SelectItem value="custom">Custom Range</SelectItem>
@@ -861,9 +866,11 @@ export default function TimeClockAdmin() {
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <span className="text-sm font-medium min-w-[200px] text-center">
-              {dateRange === "week" 
+              {dateRange === "week"
                 ? `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`
-                : format(currentDate, "MMMM yyyy")
+                : dateRange === "today"
+                  ? format(currentDate, "EEEE, MMM d, yyyy")
+                  : format(currentDate, "MMMM yyyy")
               }
             </span>
             <Button variant="ghost" size="sm" onClick={() => navigateDate(1)}>
@@ -1281,7 +1288,7 @@ export default function TimeClockAdmin() {
                       </p>
                     )}
                     {state.break_status === "on_break" && !breakRow && (
-                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record â€” review required.</p>
+                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record -- review required.</p>
                     )}
                     {state.work_pause_status === "paused" && workPauseRow && (
                       <p className="text-xs text-purple-700 mt-1">
@@ -1289,12 +1296,12 @@ export default function TimeClockAdmin() {
                       </p>
                     )}
                     {state.work_pause_status === "paused" && !workPauseRow && (
-                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record â€” review required.</p>
+                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record -- review required.</p>
                     )}
                     {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
                       <p className="text-xs text-blue-700 mt-1 capitalize">
                         Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
-                        {laborRow.work_order_id ? ` Â· ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
+                        {laborRow.work_order_id ? ` - ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
                       </p>
                     )}
                   </div>
@@ -1383,7 +1390,7 @@ export default function TimeClockAdmin() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Clock In â€” {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
+                  <Label className="text-sm font-medium">Clock In -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
                   <Input
                     type="datetime-local"
                     value={editingClockInInput}
@@ -1391,7 +1398,7 @@ export default function TimeClockAdmin() {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Clock Out â€” {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
+                  <Label className="text-sm font-medium">Clock Out -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
                   <Input
                     type="datetime-local"
                     value={editingClockOutInput}
@@ -1521,7 +1528,7 @@ export default function TimeClockAdmin() {
                 <p className="font-medium">{approvalEntry.user_name || approvalEntry.user_email}</p>
                 <p className="text-gray-500 mt-1">
                   {approvalEntry.clock_in ? `${formatCompanyDateTime(approvalEntry.clock_in)} (${TIME_CLOCK_COMPANY_TIME_LABEL})` : "Unknown start"}
-                  {approvalEntry.clock_out ? ` â€“ ${formatCompanyDateTime(approvalEntry.clock_out)}` : ""}
+                  {approvalEntry.clock_out ? ` - ${formatCompanyDateTime(approvalEntry.clock_out)}` : ""}
                 </p>
                 <p className="text-gray-600 mt-1">{Number(approvalEntry.total_hours || 0).toFixed(2)} hours</p>
               </div>
