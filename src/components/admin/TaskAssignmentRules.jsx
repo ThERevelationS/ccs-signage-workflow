@@ -144,7 +144,7 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
           {ASSIGNABLE_FIELDS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
         </SelectContent>
       </Select>
-      <span className="text-xs text-gray-500">→</span>
+      <span className="text-xs text-gray-500">â†’</span>
       <Select value={assign.person} onValueChange={(v) => onChange("person", v)}>
         <SelectTrigger className="w-44 h-7 text-xs">
           <SelectValue placeholder="Person" />
@@ -185,7 +185,7 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
             <div className="flex flex-wrap gap-1 text-xs text-gray-500 mt-1">
               {rule.assignments?.slice(0, 3).map((a, i) => {
                 const fieldLabel = ASSIGNABLE_FIELDS.find(f => f.value === a.field)?.label || a.field;
-                return <span key={i} className="bg-blue-50 px-1.5 py-0.5 rounded">{fieldLabel} → {a.person === "__clear__" ? "Clear" : a.person}</span>;
+                return <span key={i} className="bg-blue-50 px-1.5 py-0.5 rounded">{fieldLabel} â†’ {a.person === "__clear__" ? "Clear" : a.person}</span>;
               })}
             </div>
           )}
@@ -208,7 +208,7 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
                 const onlyIfLabel = ONLY_IF_OPTS.find(o => o.value === a.only_if)?.label || a.only_if;
                 return (
                   <div key={i} className="bg-blue-50 px-2 py-0.5 rounded text-gray-600">
-                    {fieldLabel} → <strong>{a.person === "__clear__" ? "Clear" : a.person}</strong> <span className="text-gray-400">({onlyIfLabel})</span>
+                    {fieldLabel} â†’ <strong>{a.person === "__clear__" ? "Clear" : a.person}</strong> <span className="text-gray-400">({onlyIfLabel})</span>
                   </div>
                 );
               })}
@@ -568,7 +568,7 @@ export default function TaskAssignmentRules() {
                           <div key={field} className={`flex items-center gap-2 ${info.applies ? "text-green-700" : "text-gray-400"}`}>
                             <span>{label}:</span>
                             <span className="line-through text-gray-400">{info.current || "empty"}</span>
-                            {info.applies ? <span>→ <strong>{info.wouldSet || "clear"}</strong></span> : <span className="text-xs italic">(skip - not empty)</span>}
+                            {info.applies ? <span>â†’ <strong>{info.wouldSet || "clear"}</strong></span> : <span className="text-xs italic">(skip - not empty)</span>}
                           </div>
                         );
                       })}
@@ -593,6 +593,8 @@ export default function TaskAssignmentRules() {
       </Dialog>
 
       {/* Delete Confirm */}
+      <TaskLoadPanel users={users} />
+
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
@@ -605,6 +607,122 @@ export default function TaskAssignmentRules() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+// Open-task workload panel: per-assignee counts, overdue flags, unassigned
+// queue, and bulk reassignment between people.
+function TaskLoadPanel({ users }) {
+  const [tasks, setTasks] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [fromUser, setFromUser] = useState("");
+  const [toUser, setToUser] = useState("");
+  const [reassignBusy, setReassignBusy] = useState(false);
+  const [reassignMsg, setReassignMsg] = useState("");
+
+  const loadTasks = async () => {
+    if (busy) return;
+    setBusy(true); setErr("");
+    try {
+      const rows = await loadAllEntityRows({ entity: staffEntities.GeneralTask, query: { completed: { $ne: true } }, sort: null, label: "Open general tasks" });
+      setTasks(Array.isArray(rows) ? rows : []);
+    } catch (e) { setErr(e?.message || "Task load could not be loaded."); }
+    finally { setBusy(false); }
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const openTasks = tasks || [];
+  const byAssignee = {};
+  const unassigned = [];
+  for (const t of openTasks) {
+    const people = Array.isArray(t.assigned_to) ? t.assigned_to.filter(Boolean) : [];
+    if (!people.length) { unassigned.push(t); continue; }
+    for (const p of people) {
+      byAssignee[p] = byAssignee[p] || { name: p, open: 0, overdue: 0, tasks: [] };
+      byAssignee[p].open += 1;
+      if (t.due_date && t.due_date < today) byAssignee[p].overdue += 1;
+      byAssignee[p].tasks.push(t);
+    }
+  }
+  const rows = Object.values(byAssignee).sort((a, b) => b.open - a.open);
+  const reassignTargets = users.map(u => u.full_name || u.email).filter(Boolean);
+
+  const reassign = async () => {
+    if (!fromUser || !toUser || fromUser === toUser || reassignBusy) return;
+    const moving = openTasks.filter(t => Array.isArray(t.assigned_to) && t.assigned_to.includes(fromUser));
+    if (!moving.length) { setReassignMsg(`No open tasks assigned to ${fromUser}.`); return; }
+    if (!window.confirm(`Move ${moving.length} open task${moving.length === 1 ? "" : "s"} from ${fromUser} to ${toUser}?`)) return;
+    setReassignBusy(true); setReassignMsg("");
+    let failed = 0;
+    for (const t of moving) {
+      const next = t.assigned_to.map(n => n === fromUser ? toUser : n);
+      try { await staffEntities.GeneralTask.update(t.id, { assigned_to: next }); }
+      catch { failed++; }
+    }
+    setReassignMsg(failed ? `${moving.length - failed} moved, ${failed} failed — review remaining tasks.` : `${moving.length} tasks reassigned to ${toUser}.`);
+    setReassignBusy(false);
+    await loadTasks();
+  };
+
+  return (
+    <div className="mt-6 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="font-semibold text-indigo-950">Open task load</h3>
+          <p className="text-xs text-indigo-800/70">Current open general tasks by assignee — overloaded people, overdue work, and unassigned items.</p>
+        </div>
+        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={loadTasks} className="bg-white/80">
+          {busy ? "Loading…" : tasks === null ? "Load task load" : "Refresh"}
+        </Button>
+      </div>
+      {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
+      {tasks !== null && (
+        <div className="mt-3 space-y-3">
+          {unassigned.length > 0 && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+              <p className="text-xs font-semibold text-amber-900">{unassigned.length} unassigned open task{unassigned.length === 1 ? "" : "s"}</p>
+              <div className="mt-1 space-y-1">
+                {unassigned.slice(0, 5).map(t => (
+                  <p key={t.id} className="text-xs text-amber-800">· {t.text}{t.due_date ? ` (due ${t.due_date})` : ""}</p>
+                ))}
+                {unassigned.length > 5 && <p className="text-xs text-amber-700">…and {unassigned.length - 5} more</p>}
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {rows.map(r => (
+              <div key={r.name} className="rounded-lg border border-gray-200 bg-white p-2">
+                <p className="truncate text-sm font-medium text-gray-800">{r.name}</p>
+                <p className="text-lg font-bold text-indigo-700">{r.open}</p>
+                {r.overdue > 0 && <p className="text-[11px] font-semibold text-red-600">{r.overdue} overdue</p>}
+              </div>
+            ))}
+            {rows.length === 0 && unassigned.length === 0 && <p className="col-span-full py-3 text-center text-xs text-gray-500">No open tasks.</p>}
+          </div>
+          <div className="flex flex-wrap items-end gap-2 rounded-lg border border-indigo-200 bg-white/70 p-3">
+            <div>
+              <Label className="text-xs">Move open tasks from</Label>
+              <Select value={fromUser} onValueChange={setFromUser}>
+                <SelectTrigger className="mt-1 h-9 w-48"><SelectValue placeholder="Person" /></SelectTrigger>
+                <SelectContent>{rows.map(r => <SelectItem key={r.name} value={r.name}>{r.name} ({r.open})</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">to</Label>
+              <Select value={toUser} onValueChange={setToUser}>
+                <SelectTrigger className="mt-1 h-9 w-48"><SelectValue placeholder="Person" /></SelectTrigger>
+                <SelectContent>{reassignTargets.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <Button type="button" size="sm" variant="outline" disabled={reassignBusy || !fromUser || !toUser || fromUser === toUser} onClick={reassign} className="bg-white">
+              {reassignBusy ? "Moving…" : "Reassign"}
+            </Button>
+            {reassignMsg && <p className="w-full text-xs text-indigo-800">{reassignMsg}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
