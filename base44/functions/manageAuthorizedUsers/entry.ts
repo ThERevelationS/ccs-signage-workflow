@@ -117,6 +117,7 @@ function cleanManagedFields(value: any) {
   }
   if (Object.prototype.hasOwnProperty.call(input, 'can_work_pause')) out.can_work_pause = input.can_work_pause === true;
   if (Object.prototype.hasOwnProperty.call(input, 'force_password_reset')) out.force_password_reset = input.force_password_reset === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'is_deactivated')) out.is_deactivated = input.is_deactivated === true;
   if (Object.prototype.hasOwnProperty.call(input, 'is_full_admin')) out.is_full_admin = input.is_full_admin === true;
   if (Object.prototype.hasOwnProperty.call(input, 'admin_permissions')) {
     const perms = input.admin_permissions;
