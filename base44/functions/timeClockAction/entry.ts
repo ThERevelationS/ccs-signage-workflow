@@ -307,7 +307,7 @@ const FULL_SHIFT_HOURS = 8; // Clocking out under a full worked day counts as ea
 const LONG_SHIFT_HOURS = 10; // Worked length that raises the long-shift event.
 const PTO_LOW_HOURS_THRESHOLD = 8; // Available balance under one workday counts as low.
 const PTO_LOW_ALERT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // At most one low-balance alert per type per week.
-const STALE_SHIFT_MONITOR_CAPABILITY_HASH = 'f63c5b792d82c0fade5324f96447480a3530b9e8459dc141909ae16782096ed0';
+const STALE_SHIFT_MONITOR_CAPABILITY_HASH = '5228d94ea9970926dcb7f6365da6f336f9b8c633c109991da94feba223ccfe17';
 
 function dateKeyInCompanyTime(value: any) {
   const date = new Date(String(value || ''));
