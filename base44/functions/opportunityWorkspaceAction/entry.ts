@@ -257,6 +257,8 @@ Deno.serve(async (req) => {
           customer_name: clean(i?.customer_display_name || i?.customer_name),
           due_date: clean(i?.due_date),
           balance_due: money(num(i?.balance_due)),
+          customer_id: clean(i?.customer_id),
+          salesperson_email: clean(i?.salesperson_email) || clean(i?.salesperson),
         }));
       const overdueInvoiceTotal = money(overdueInvoices.reduce((s: number, i: any) => s + i.balance_due, 0));
 
@@ -291,6 +293,36 @@ Deno.serve(async (req) => {
           quote_total: num(e?.quote_total),
           days_sent: Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000),
           updated_date: clean(e?.updated_date),
+        }));
+
+      // Forward-looking quote expiry (#346): quotes that hit their
+      // expiration date inside the next 7 days, still in 'sent' — notify the
+      // responsible salesperson before the quote lapses.
+      const sevenDaysOut = new Date(Date.parse(today) + 7 * 86400000).toISOString().slice(0, 10);
+      const quotesExpiringSoon = list(sentEstimates)
+        .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.quote_expiration_date) && clean(e?.quote_expiration_date) >= today && clean(e?.quote_expiration_date) <= sevenDaysOut)
+        .map((e: any) => ({
+          id: clean(e?.id),
+          estimate_number: clean(e?.estimate_number),
+          project_name: clean(e?.project_name),
+          client_name: clean(e?.client_name),
+          quote_total: num(e?.quote_total),
+          quote_expiration_date: clean(e?.quote_expiration_date),
+          days_until_expiry: Math.floor((Date.parse(clean(e?.quote_expiration_date)) - Date.parse(today)) / 86400000),
+          salesperson_email: clean(e?.salesperson_email) || clean(e?.salesperson),
+        }));
+      // Already past expiry but still 'sent' — the quote lapsed without a
+      // customer response or a staff expiry update.
+      const quotesExpired = list(sentEstimates)
+        .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && (e?.quote_expired === true || (clean(e?.quote_expiration_date) && clean(e?.quote_expiration_date) < today)))
+        .map((e: any) => ({
+          id: clean(e?.id),
+          estimate_number: clean(e?.estimate_number),
+          project_name: clean(e?.project_name),
+          client_name: clean(e?.client_name),
+          quote_total: num(e?.quote_total),
+          quote_expiration_date: clean(e?.quote_expiration_date),
+          salesperson_email: clean(e?.salesperson_email) || clean(e?.salesperson),
         }));
 
       const overdueFollowUps = list(opps)
@@ -335,6 +367,8 @@ Deno.serve(async (req) => {
         proposed_cos: proposedCos,
         overdue_follow_ups: overdueFollowUps,
         stale_sent_estimates: staleSentEstimates,
+        quotes_expiring_soon: quotesExpiringSoon,
+        quotes_expired: quotesExpired,
         open_estimating_requests: openRequests,
         // Escalation: still-unassigned after 2 days — flagged to managers.
         unassigned_estimating_requests: openRequests
