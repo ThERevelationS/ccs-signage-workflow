@@ -38,6 +38,10 @@
       ],
       "default": ""
     },
+    "last_contacted_at": {
+      "type": "string",
+      "description": "UTC timestamp of the most recent real customer contact (quote sent, portal message)."
+    },
     "merged_into_customer_id": {
       "type": "string",
       "description": "Set when this Customer was merged into another canonical Customer \u2014 linked records were relinked and this row is kept for audit."
