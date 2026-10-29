@@ -435,11 +435,11 @@ export default function AdminCalendarSettings() {
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {ev.is_universal && <Badge className="bg-purple-100 text-purple-700 text-xs"><Globe className="w-2.5 h-2.5 mr-0.5" />Universal</Badge>}
-                  <Button variant="ghost" size="icon" className="w-7 h-7"
+                  <Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Edit ${ev.title || "event"}`}
                     onClick={() => { setEditingEvent(ev); setShowEventForm(true); }}>
                     <Settings className="w-3.5 h-3.5 text-gray-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="w-7 h-7"
+                  <Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Delete ${ev.title || "event"}`}
                     onClick={() => handleDeleteEvent(ev)}>
                     <Trash2 className="w-3.5 h-3.5 text-red-500" />
                   </Button>
