@@ -89,6 +89,13 @@
       "type": "number",
       "default": 0,
       "description": "Total times this rule has fired"
+    },
+    "recent_runs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Last 20 executions: { at, status, detail, actions[] }"
     }
   },
   "required": [
