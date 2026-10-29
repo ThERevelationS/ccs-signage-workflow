@@ -66,6 +66,29 @@
       "type": "number",
       "default": 0,
       "description": "Order of execution"
+    },
+    "last_run_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this rule fired (stamped by the trigger engine)"
+    },
+    "last_run_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "partial",
+        "error"
+      ],
+      "description": "Outcome of the last run"
+    },
+    "last_run_detail": {
+      "type": "string",
+      "description": "Per-action outcome summary of the last run"
+    },
+    "run_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total times this rule has fired"
     }
   },
   "required": [
