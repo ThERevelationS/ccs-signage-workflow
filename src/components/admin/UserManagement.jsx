@@ -452,7 +452,11 @@ export default function UserManagement() {
       if (days < 60) return false;
     }
     if (!userSearchQ) return true;
-    const hay = [u.full_name, u.email, ...(Array.isArray(u.sales_roles) ? u.sales_roles : [])]
+    const hr = u.hr_data && typeof u.hr_data === "object" ? u.hr_data : {};
+    const hay = [u.full_name, u.email, ...(Array.isArray(u.sales_roles) ? u.sales_roles : []),
+      ...(Array.isArray(hr.skills) ? hr.skills : []),
+      ...(Array.isArray(hr.certifications) ? hr.certifications : []),
+      ...(Array.isArray(hr.licenses) ? hr.licenses : [])]
       .filter(Boolean).join(" ").toLowerCase();
     return hay.includes(userSearchQ);
   });
