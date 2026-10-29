@@ -9,6 +9,23 @@ export default async function (req) {
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     const docType = body.doc_type === 'order' ? 'order' : 'estimate';
+
+    const svc = base44.asServiceRole;
+    // Configurable number format from Quote Defaults (prefix/suffix around the
+    // padded sequence) — falls back to the EST-/INV- convention.
+    let numberFormat = docType === 'order' ? 'INV-{seq}' : 'EST-{seq}';
+    let padLen = 5;
+    try {
+      const defaults = await svc.entities.QuoteDefaults.filter({ config_name: 'default' });
+      const d = Array.isArray(defaults) && defaults.length ? defaults[0] : null;
+      const fmt = String(docType === 'order' ? (d?.order_number_format || '') : (d?.estimate_number_format || '')).trim();
+      if (fmt && fmt.includes('{seq}') && /^[\w\-.{}\[\]#]*$/.test(fmt) && fmt.length <= 40) {
+        numberFormat = fmt;
+      }
+      const pad = Math.floor(Number(d?.doc_number_padding));
+      if (Number.isFinite(pad) && pad >= 3 && pad <= 10) padLen = pad;
+    } catch { /* defaults lookup failure falls back to standard format */ }
+
     const prefix = docType === 'order' ? 'INV-' : 'EST-';
     const requestedCount = Math.min(Math.max(parseInt(body.count || 1, 10) || 1, 1), 50);
     if (requestedCount > 1 && actor?.role !== 'admin') {
@@ -66,7 +83,10 @@ export default async function (req) {
 
       const numbers = [];
       for (let i = 0; i < count; i++) {
-        numbers.push(prefix + String(start + i).padStart(5, '0'));
+        const seq = String(start + i).padStart(padLen, '0');
+        // numberFormat carries the {seq} placeholder (or the legacy prefix
+        // fallback when a custom format is not configured).
+        numbers.push(numberFormat.includes('{seq}') ? numberFormat.replace('{seq}', seq) : prefix + seq);
       }
 
       return Response.json({ numbers, number: numbers[0], next_seq: nextSeq });
