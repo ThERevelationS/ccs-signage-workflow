@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -84,18 +84,12 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     [project, material]
   );
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
-  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
-  if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
-
-  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
-
   // Ctrl+S / Cmd+S saves the section without leaving the editor.
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        if (!saving) handleSave();
+        if (!saving) saveRef.current?.();
       }
     };
     window.addEventListener("keydown", handler);
@@ -108,6 +102,13 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [saving]);
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
+  if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Brick & Stone Builder unavailable. Required project data or the primary masonry catalog could not be verified. {loadError}</div>;
+  if (!project) return <div className="p-10 text-center text-gray-500">Section not found.</div>;
+
+  const patch = (changes) => setProject((prev) => ({ ...prev, ...changes }));
+
   const handleSave = async () => {
     if (!(Number(totals?.calculated_surface_area) > 0)) {
       window.alert("Wall area must be greater than zero before this section can be saved. Check the wall dimensions and material selection.");

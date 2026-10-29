@@ -17,13 +17,13 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 9. **[F][DONE]** Estimate reopen flow — `approved` → `sent` with mandatory reason
 10. **[H][DONE]** `quote_version` bump only on material pricing changes, not cosmetic edits
 11. **[F][DONE]** Expired-quote auto-flag job (`expired` computed at read, persist a flag for reporting)
-12. **[F]** `needs_recalc` flag when source project changes post-calculate
-13. **[B]** `EstimatorQueues` "sync issues" bucket — confirm `pipeline_sync_pending` is ever cleared anywhere
-14. **[F]** `cancelled_at`/`cancelled_by`/`cancellation_reason` persisted on cancel modal
-15. **[H]** Guard estimate delete when linked WorkOrder exists (block or cascade-warn)
-16. **[F]** Estimate split — move a section to a new estimate
-17. **[F]** Template estimates — save a draft as a named template, instantiate new estimates from it
-18. **[H]** `estimate_number` uniqueness enforced at create (currently assumed via generateDocNumber)
+12. **[F][DONE]** `needs_recalc` flag when source project changes post-calculate
+13. **[B][DONE]** `EstimatorQueues` "sync issues" bucket — confirm `pipeline_sync_pending` is ever cleared anywhere
+14. **[F][DONE]** `cancelled_at`/`cancelled_by`/`cancellation_reason` persisted on cancel modal
+15. **[H][DONE]** Guard estimate delete when linked WorkOrder exists (block or cascade-warn)
+16. **[F][DONE]** Estimate split — move a section to a new estimate
+17. **[F][DONE]** Template estimates — save a draft as a named template, instantiate new estimates from it
+18. **[H][DONE]** `estimate_number` uniqueness enforced at create (currently assumed via generateDocNumber)
 19. **[F]** Print/PDF estimate header — brand logo + terms block from QuoteSettings
 20. **[F]** Internal vs customer-facing section visibility flags on line items
 21. **[F]** Estimate notes timeline (not just single `notes` field)

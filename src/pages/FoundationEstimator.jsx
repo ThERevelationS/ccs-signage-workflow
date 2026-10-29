@@ -179,6 +179,25 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     return () => clearTimeout(t);
   }, [autoSave, dirty, project]);
 
+  // Ctrl+S / Cmd+S saves the section without leaving the editor.
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!saving) saveRef.current?.();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saving]);
+  // Block accidental navigation while a save is in flight.
+  useEffect(() => {
+    if (!saving) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
+
   if (loading) return <div className="p-10 text-center text-gray-400">Loading section…</div>;
   if (loadError) return <div className="p-10 text-center text-red-700 bg-red-50 border border-red-200 rounded">Foundation Builder unavailable. Required project data, foundation inventory, concrete services, or Settings could not be verified. {loadError}</div>;
   if (!project) return <div className="p-10 text-center text-gray-500">Foundation section not found.</div>;
@@ -286,24 +305,6 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     total_wall_cap_cost: calc.totals.total_wall_cap_cost,
   });
 
-  // Ctrl+S / Cmd+S saves the section without leaving the editor.
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        if (!saving) handleSave();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [saving]);
-  // Block accidental navigation while a save is in flight.
-  useEffect(() => {
-    if (!saving) return undefined;
-    const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [saving]);
   const handleSave = async () => {
     setSaving(true);
     try {
