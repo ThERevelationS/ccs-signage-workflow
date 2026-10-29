@@ -892,6 +892,17 @@ function LayoutContent({ children }) {
         .ccs-topbar-brand { grid-area: brand; justify-self: start; min-width: 150px; }
         .ccs-topbar-brand [data-shell-view-controls] { min-height: 24px; }
         .ccs-topbar-brand [data-shell-view-controls] button { font-size: 11px; }
+        .ccs-topbar-layout[data-compact="true"] .ccs-topbar-brand {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          min-width: 0;
+        }
+        .ccs-topbar-layout[data-compact="true"] .ccs-topbar-brand [data-shell-view-controls] {
+          margin-top: 0;
+          min-width: 132px;
+          flex-shrink: 0;
+        }
         .ccs-topbar-menu { grid-area: menu; }
         .ccs-topbar-utilities { grid-area: utilities; justify-self: end; min-width: 0; max-width: 100%; }
         .ccs-topbar-utilities .ccs-glass-control > span { font-size: 12px; }
@@ -1206,7 +1217,7 @@ function LayoutContent({ children }) {
             className="top-nav ccs-glass-shell fixed left-0 right-0 top-0 z-50 overflow-visible"
           >
             <div className={topBarCompact ? "px-2 py-1" : "px-4 py-2"}>
-              <div className="ccs-topbar-layout">
+              <div className="ccs-topbar-layout" data-compact={compactView}>
                 {/* Brand + tiny shell view controls */}
                 <div className="ccs-topbar-brand">
                   <div className={`ccs-glass-panel flex items-center ${topBarCompact ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
