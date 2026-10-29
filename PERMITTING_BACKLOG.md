@@ -239,7 +239,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 174. **[F][FLAGGED]** Office hours normalized + "open now?" — "Open until 4:30 PM" vs "Closed today" when the data exists.
 175. **[UX][DONE]** Jurisdiction notes field: free-text staff notes ("they only take checks") pinned on the profile.
 176. **[F][FLAGGED-dedicated]** Photo/scan attachments on a jurisdiction: the fee-schedule PDF or the printed rules page as evidence.
-177. **[UX][FLAGGED-dedicated]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
+177. **[UX][DONE]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
 178. **[F][FLAGGED-dedicated]** Version compare on a jurisdiction: current vs an archived snapshot — what the AI/staff edits actually changed.
 179. **[UX][DONE]** Search by phone number or office name — "who is (513) 831-7143?" → the jurisdiction row.
 180. **[F][FLAGGED-dedicated]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
@@ -340,7 +340,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 253. **[F][DONE]** Expected-response date: the office's stated turnaround → the line shows "expected by Oct 30" — chase when it passes.
 254. **[UX][DONE]** Escalation suggestion: overdue + no response → "Time to call — they said 2-week turnaround" hint.
 255. **[F][FLAGGED-dedicated]** Application packet builder: assemble drawings + forms + site plan into one zip for the office's upload.
-256. **[UX][FLAGGED-dedicated]** The submit button confirms in plain language: "Mark this application as filed with {office}?"
+256. **[UX][DONE]** The submit button confirms in plain language: "Mark this application as filed with {office}?"
 
 ## X — Evidence & sources, deeper
 
@@ -418,7 +418,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 319. **[UX][DONE]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
 320. **[F][FLAGGED-dedicated]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
 321. **[UX][DONE]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
-322. **[F][FLAGGED-dedicated]** Onboarding checklist for new permitting staff: the 5 things to learn — tracked as done.
+322. **[F][DONE]** Onboarding checklist for new permitting staff: the 5 things to learn — tracked as done.
 323. **[UX][DONE]** Error messages that teach: "That didn't work because {reason} — here's how to fix it" — every error educates.
 
 ## AB — Integrations & data exchange
@@ -437,7 +437,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 335. **[F][FLAGGED-dedicated]** Notification-hook: a jurisdiction update pings the linked active jobs' assignees.
 336. **[UX][DONE]** Deep-link to a jurisdiction: a URL like /Permitting?jurisdiction=milford opens that card — shareable links.
 337. **[F][DONE]** Photo-attach to a jurisdiction: site photos of the office's posted requirements — evidence.
-338. **[H][FLAGGED-dedicated]** Timezone-normalized timestamps: all display times in America/New_York — no UTC leakage.
+338. **[H][DONE]** Timezone-normalized timestamps: all display times in America/New_York — no UTC leakage.
 339. **[F][FLAGGED-dedicated]** The estimate's permit line auto-fills the office's known fee — priced-right without re-typing.
 340. **[UX][DONE]** "What changed since I was last here" panel on the page — returning users see the delta.
 341. **[F][DONE]** Cross-device handoff: start a search on the desktop, confirm it on the phone — state persists.
@@ -448,7 +448,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 343. **[H][DONE]** Locality-delete guard: a locality with linked lines can't be deleted without explicit relink-first — no orphan jobs.
 344. **[H][DONE]** Boundary-source whitelist: only sanctioned boundary services may feed `location_resolution` — untrusted inputs rejected.
 345. **[F][DONE]** "Sure about that?" on electrical exclusion: excluding electrical on a job that needs it asks once — the toggle isn't silent.
-346. **[H][FLAGGED-dedicated]** Verify-then-write: apply only lands after the repository row + the detected boundary agree — mismatches halt.
+346. **[H][DONE]** Verify-then-write: apply only lands after the repository row + the detected boundary agree — mismatches halt.
 347. **[F][DONE]** Duplicate-application check before submit: the same office+job can't be filed twice accidentally.
 348. **[H][DONE]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
 349. **[F][FLAGGED-dedicated]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
@@ -528,7 +528,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## AG — Power features & polish
 
 413. **[F][FLAGGED-dedicated]** "Clone job's permit setup": a second job in the same town inherits the verified locality + office set — one click.
-414. **[UX][FLAGGED-dedicated]** Quick-reply templates: canned office-email lines ("Following up on permit #X — any update?") for the chase.
+414. **[UX][DONE]** Quick-reply templates: canned office-email lines ("Following up on permit #X — any update?") for the chase.
 415. **[F][FLAGGED-dedicated]** Permit-template library: common application-packets per jurisdiction — Milford's PDF + required docs pre-known.
 416. **[UX][FLAGGED-dedicated]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
 417. **[F][FLAGGED-dedicated]** Multi-job jurisdiction assign: select N jobs in the same town → apply the verified jurisdiction once.
@@ -542,12 +542,12 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 425. **[F][DONE]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
 426. **[UX][DONE]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
 427. **[F][DONE]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
-428. **[UX][FLAGGED-dedicated]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
+428. **[UX][DONE]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
 429. **[F][FLAGGED-dedicated]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
 430. **[UX][FLAGGED-dedicated]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
 431. **[F][FLAGGED-dedicated]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
-432. **[UX][FLAGGED-dedicated]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
+432. **[UX][DONE]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
 433. **[F][FLAGGED-dedicated]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
 434. **[UX][DONE]** The picker answers "who do I call?" first — before asking for the address — the card leads with the office.
 435. **[F][DONE]** Permit-status line on the WO outside permitting: the job's main record shows "sign permit: issued" — no digging.
-436. **[UX][FLAGGED-dedicated]** Every item on this page reads at a 6th-grade level — the whole page is plain language end-to-end.
+436. **[UX][DONE]** Every item on this page reads at a 6th-grade level — the whole page is plain language end-to-end.
