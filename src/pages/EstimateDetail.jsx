@@ -32,6 +32,7 @@ import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel"
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
+import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
@@ -597,6 +598,10 @@ export default function EstimateDetail() {
     try {
       const before = await staffEntities.AllInOneEstimate.get(estimate.id);
       assertNoPendingPriceAcceptance(before, "saving the estimate");
+      if (!isEstimateStatusTransitionAllowed(before.status, estimate.status)) {
+        window.alert(`An estimate cannot go from ${before.status || "draft"} to ${estimate.status || "draft"} directly. Send it first — approval is only allowed after the quote has been sent.`);
+        return;
+      }
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       const pendingTransition = pendingLifecycleBaselineRef.current;
@@ -1435,7 +1440,7 @@ export default function EstimateDetail() {
                 isRegistered={isRegistered}
               />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} openRevision={openRevision} />
+                <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
                 <ConvertToWorkOrder
                   estimate={estimate}
                   pricing={pricing}
