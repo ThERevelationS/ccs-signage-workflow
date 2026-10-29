@@ -52,7 +52,10 @@ export default function PermitClientGroup({
   expanded: controlledExpanded,
   onExpandedChange
 }) {
-  const [internalExpanded, setInternalExpanded] = useState(true);
+  const expandKey = `permitting_expanded_${group?.work_order_id || "unknown"}`;
+  const [internalExpanded, setInternalExpanded] = useState(() => {
+    try { const saved = localStorage.getItem(expandKey); return saved == null ? true : saved === "1"; } catch { return true; }
+  });
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
@@ -60,7 +63,7 @@ export default function PermitClientGroup({
   const expanded = controlledExpanded ?? internalExpanded;
   const setExpanded = (nextExpanded) => {
     if (onExpandedChange) onExpandedChange(nextExpanded);
-    else setInternalExpanded(nextExpanded);
+    else { setInternalExpanded(nextExpanded); try { localStorage.setItem(expandKey, nextExpanded ? "1" : "0"); } catch {} }
   };
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
