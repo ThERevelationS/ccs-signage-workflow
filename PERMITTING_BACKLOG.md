@@ -191,7 +191,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## N — Address entry, round 2
 
 137. **[UX][DONE]** Placeholder example inside the empty input — "e.g. 914 Lila Ave, Milford, OH 45150" so first-timers see the shape before typing.
-138. **[F][FLAGGED-dedicated]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
+138. **[F][DONE]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
 139. **[UX][DONE]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
 140. **[F][DONE]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
 141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
