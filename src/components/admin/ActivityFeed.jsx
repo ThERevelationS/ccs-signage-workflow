@@ -35,6 +35,23 @@ export default function ActivityFeed() {
   const [dateTo, setDateTo] = useState("");
   const [liveTail, setLiveTail] = useState(false);
   const [mineOnly, setMineOnly] = useState(false);
+  const [savedViews, setSavedViews] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("activity_saved_views") || "[]"); } catch { return []; }
+  });
+  const saveCurrentView = () => {
+    const name = (prompt("Name this view") || "").trim();
+    if (!name) return;
+    const view = { name, filterType, actorFilter, dateFrom, dateTo, mineOnly };
+    const next = [...savedViews.filter(v => v.name !== name), view];
+    setSavedViews(next);
+    try { localStorage.setItem("activity_saved_views", JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const applySavedView = (name) => {
+    const v = savedViews.find(x => x.name === name);
+    if (!v) return;
+    setFilterType(v.filterType || "all"); setActorFilter(v.actorFilter || "all");
+    setDateFrom(v.dateFrom || ""); setDateTo(v.dateTo || ""); setMineOnly(!!v.mineOnly);
+  };
   const [limit, setLimit] = useState(50);
 
   useEffect(() => {
@@ -208,6 +225,16 @@ export default function ActivityFeed() {
             className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="From date" />
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
             className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="To date" />
+          {savedViews.length > 0 && (
+            <Select value="" onValueChange={applySavedView}>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Saved views" /></SelectTrigger>
+              <SelectContent>{savedViews.map(v => <SelectItem key={v.name} value={v.name}>{v.name}</SelectItem>)}</SelectContent>
+            </Select>
+          )}
+          <button type="button" onClick={saveCurrentView} title="Save current filters"
+            className="h-9 rounded-md border border-input px-3 text-xs font-medium hover:bg-gray-50">
+            Save view
+          </button>
           <button type="button" onClick={exportActivitiesCsv} disabled={visibleActivities.length === 0}
             className="h-9 rounded-md border border-input px-3 text-xs font-medium hover:bg-gray-50 disabled:opacity-40">
             Export CSV
