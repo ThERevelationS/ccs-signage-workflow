@@ -2590,6 +2590,15 @@ export default function UserManagement() {
                         />
                         <label className="text-sm">Account deactivated — sign-in blocked, record kept</label>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          checked={formData.notification_prefs?.automation_emails !== false}
+                          onCheckedChange={(checked) => {
+                            changeAccountDraft({ notification_prefs: { automation_emails: checked === true } });
+                          }}
+                        />
+                        <label className="text-sm">Receives automation emails</label>
+                      </div>
                       {formData.role === "admin" && (
                         <div className="flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3">
                           <Checkbox
