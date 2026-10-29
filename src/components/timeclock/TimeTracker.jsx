@@ -202,8 +202,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     let cancelled = false;
     const run = () => { if (!cancelled) refresh({ force: true }).catch(() => {}); };
     run();
-    // Hidden tabs skip the poll; the visibility handler refreshes on return.
-    const id = window.setInterval(() => { if (!document.hidden) run(); }, intervalSeconds * 1000);
+    const id = window.setInterval(run, intervalSeconds * 1000);
     return () => { cancelled = true; window.clearInterval(id); };
   }, [sessionToken, email, intervalSeconds, refresh]);
 
@@ -250,6 +249,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       paid: Number(snapshot.paid_minutes_today || 0) + (accruingPaid ? sinceReceipt : 0),
       elapsed: Number(snapshot.elapsed_minutes_today || 0) + (accruingElapsed ? sinceReceipt : 0),
       weekly: Number(snapshot.weekly_paid_minutes || 0) + (accruingPaid ? sinceReceipt : 0),
+      unpaidNow: Number(snapshot.live_unpaid_minutes || 0) + (accruingElapsed && !accruingPaid ? sinceReceipt : 0),
       frozen: snapshot.status === "clocked_in" && !accruingPaid,
     };
   }, [snapshot, snapshotRecord, nowMs]);
@@ -416,6 +416,28 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       : { label: `${formatMinutes(Math.round(-diff))} behind pace`, minutes: diff };
   }, [snapshot, live, clockedIn, goalMinutes]);
 
+  // Next unfired milestone - "45m to 8h" chip.
+  const nextMilestone = useMemo(() => {
+    if (!live || !clockedIn || !milestoneThresholds.length) return null;
+    for (const marker of [...milestoneThresholds].sort((a, b) => a - b)) {
+      const target = marker * goalMinutes;
+      if (target > displayMinutes) return { remaining: target - displayMinutes, target };
+    }
+    return null;
+  }, [live, clockedIn, milestoneThresholds, goalMinutes, displayMinutes]);
+
+  // Approaching the overtime threshold - shifts the chip amber before OT hits.
+  const otNearMinutes = !overtime && clockedIn ? Math.max(0, goalMinutes - displayMinutes) : 0;
+  const otNear = !overtime && clockedIn && otNearMinutes > 0 && otNearMinutes <= 30;
+
+  // "Last action" line for the popover header.
+  const lastActionText = (() => {
+    if (!snapshot || !clockedIn) return null;
+    if (snapshot.paused_now) return "Work paused";
+    if (snapshot.on_unpaid_break_now) return "On break";
+    return snapshot.clock_in ? `Clocked in ${formatCompanyDateTime(snapshot.clock_in)}` : null;
+  })();
+
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
   const todayIndex = (() => {
@@ -453,11 +475,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           aria-label={`Time Tracker. ${clockedIn ? `${formatClock(displayMinutes, "hours_minutes")} of ${formatClock(goalMinutes, "hours_minutes")} today` : "Not clocked in"}`}
           className={`tracker-pill group relative flex items-center gap-2.5 text-left outline-none transition-[transform,opacity] duration-200 focus-visible:ring-4 focus-visible:ring-indigo-300/60 ${bgClass} ${prefs?.size === "expanded" ? "px-2 py-1" : "px-1.5 py-0.5"} ${animFor("all")} ${prefs?.goal_celebrate !== false && clockedIn && progress >= 1 ? "tracker-celebrate" : ""}`}
           style={{
-            // Docked in the vertical sidebar the pill must stay inside the rail,
-            // so its scale is capped and it can never spill into the content.
-            zoom: position === "side" ? Math.min(prefs?.scale || 1, 0.72) : (prefs?.scale || 1),
+            zoom: prefs?.scale || 1,
             opacity: prefs?.opacity ?? 1,
-            maxWidth: "100%",
             ...accentVars,
           }}
         >
@@ -500,7 +519,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               className={`font-bold tabular-nums ${prefs?.privacy_blur ? "blur-[3px] transition-[filter] duration-200 group-hover:blur-0 group-focus-visible:blur-0" : ""} ${prefs?.size === "expanded" ? "text-lg" : "text-sm"} ${frozen ? "opacity-60" : ""} ${prefs?.display_style === "flip" ? "tracker-flip" : prefs?.display_style === "roll" ? "tracker-roll" : ""} ${animFor("digits")} ${prefs?.blink_separator === true ? "tracker-blink" : ""}`}
               key={["flip","roll"].includes(prefs?.display_style) ? formatClockSeconds(shown, "hh_mm_ss") : "digits"}
             >
-              {trackerLabel && prefs?.show_label !== false && position !== "side" && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
+              {trackerLabel && prefs?.show_label !== false && <span className={`font-semibold uppercase tracking-[0.12em] opacity-55 mr-1.5 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{trackerLabel}</span>}
               {prefs?.display_style === "badge"
                 ? <span className="rounded-md px-1.5 py-0.5 text-white" style={{ background: accent.ring }}>{trackerTime}</span>
                 : trackerTime}
@@ -519,6 +538,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 +{formatClock(overtimeMinutes, prefs?.time_format)} OT
               </span>
             )}
+            {prefs?.show_overtime !== false && otNear && (
+              <span className="mt-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                {formatMinutes(Math.ceil(otNearMinutes))} to OT
+              </span>
+            )}
           </span>
         </button>
       </PopoverTrigger>
@@ -533,6 +557,12 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
             {!clockedIn ? "Off" : frozen ? (snapshot?.paused_now ? "Paused" : "Break") : "Working"}
           </span>
         </div>
+        {lastActionText && (
+          <p className="mt-1 text-[10px] text-slate-400">
+            {lastActionText}
+            {frozen && live?.unpaidNow > 0 ? ` - ${formatMinutes(Math.round(live.unpaidNow))} so far` : ""}
+          </p>
+        )}
 
         {!snapshot && (
           <p className="mt-3 text-sm text-slate-500">{pollError || "Loading your day…"}</p>
@@ -615,6 +645,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                     <span key={marker}>{Math.round(marker * 100)}%</span>
                   ))}
                 </div>
+                {nextMilestone && (
+                  <p className="mt-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">
+                    {formatMinutes(Math.ceil(nextMilestone.remaining))} to {formatClock(nextMilestone.target, prefs?.time_format)}
+                  </p>
+                )}
               </div>
             )}
 
