@@ -55,7 +55,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 46. **[F]** Birthday/work-anniversary greeting on punch
 47. **[F]** Safety-tip-of-the-day rotation on the idle screen
 48. **[F]** Weather/alert banner via announcements
-49. **[F]** Punch confirmation haptic/audio (louder for noisy shops)
+49. **[F][DONE]** Punch confirmation audio - chime on clock-in, ding on clock-out via shared sound infra
 50. **[F]** QR badge reprint shortcut (lost badge -> prints new, revokes old)
 51. **[F]** Bigger hit targets / glove mode
 52. **[F]** Camera preview mirror toggle
@@ -140,7 +140,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 7. Admin — approvals & corrections
 124. **[F][DONE]** Bulk approve - select-all + shared-reason batch bar on the correction queue, per-row retry-safe approve calls
 125. **[F]** Correction diff view — submitted vs corrected side by side
-126. **[F]** Approval-age SLA badge + sort by oldest
+126. **[F][DONE]** Approval-age SLA - oldest-first sort + amber/red age badges (>=1d, >=3d)
 127. **[F]** Required approver notes on certain correction types
 128. **[F]** Approve from the notification bell
 129. **[F]** Delegated approvers per crew/department
@@ -150,8 +150,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 133. **[F]** Employee notification on approval/rejection outcome
 134. **[F]** Correction attachments (photo of paper slip)
 135. **[F]** Full correction chain audit inline per entry
-136. **[F]** Bulk reject with shared reason
-137. **[F]** Review queue filters — employee, dept, type, age
+136. **[F][DONE]** Bulk reject - batch bar decision select (approve/reject) with shared reason
+137. **[F][DONE]** Review queue filter - name/kind/reason text filter on the correction queue
 138. **[F]** Payroll-hold flag on contested entries
 139. **[F]** Supervisor comments visible to the employee
 140. **[F]** Compare adjacent days in review ("normal 8h, today 14")
