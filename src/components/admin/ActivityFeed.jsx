@@ -28,6 +28,9 @@ export default function ActivityFeed() {
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState("all"); // all, WorkOrder, Order
+  const [actorFilter, setActorFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [limit, setLimit] = useState(50);
 
   useEffect(() => {
@@ -126,6 +129,14 @@ export default function ActivityFeed() {
     return "bg-gray-100 text-gray-800";
   };
 
+  const visibleActivities = activities.filter((a) => {
+    if (actorFilter !== "all" && a.user !== actorFilter) return false;
+    const t = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+    if (dateFrom && t < new Date(dateFrom + "T00:00:00").getTime()) return false;
+    if (dateTo && t > new Date(dateTo + "T23:59:59").getTime()) return false;
+    return true;
+  });
+
   return (
     <div className="space-y-4">
       {/* Header and Filters */}
@@ -147,6 +158,20 @@ export default function ActivityFeed() {
             </Select>
           </div>
           
+          <Select value={actorFilter} onValueChange={setActorFilter}>
+            <SelectTrigger className="w-40 h-9"><SelectValue placeholder="All people" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All people</SelectItem>
+              {[...new Set(activities.map(a => a.user).filter(Boolean))].sort().map(u => (
+                <SelectItem key={u} value={u}>{u}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="From date" />
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+            className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="To date" />
+
           <Select value={String(limit)} onValueChange={(v) => setLimit(parseInt(v))}>
             <SelectTrigger className="w-28 h-9">
               <SelectValue />
@@ -177,13 +202,13 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
         </div>
-      ) : activities.length === 0 ? (
+      ) : visibleActivities.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           No activity found
         </div>
       ) : (
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
-          {activities.map((activity) => (
+          {visibleActivities.map((activity) => (
             <div 
               key={`${activity.type}-${activity.id}`} 
               className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
@@ -200,7 +225,7 @@ export default function ActivityFeed() {
                     <span className="font-medium text-sm text-gray-800">
                       {activity.user}
                     </span>
-                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-400">â€¢</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getActionColor(activity.actionType)}`}>
                       {activity.entityType === "Order" ? "Order" : "Sales"}
                     </span>
