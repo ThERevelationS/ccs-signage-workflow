@@ -23,6 +23,10 @@
       "type": "string",
       "description": "Unique username for time clock login"
     },
+    "is_deactivated": {
+      "type": "boolean",
+      "description": "When true, sign-in is refused but the account record and history are kept"
+    },
     "force_password_reset": {
       "type": "boolean",
       "description": "When true, sign-in is refused until an admin sets a new password"
