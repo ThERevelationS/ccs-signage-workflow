@@ -109,7 +109,7 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
       throw Object.assign(new Error('Authentication required'), { status: 401 });
     }
   } catch (e) {
-    if (e && typeof e === 'object' && 'status' in e) throw e;
+    if (e?.status === 401) throw e;
     // UserSession may not exist yet — treat lookup failures as non-blocking.
   }
 
