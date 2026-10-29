@@ -43,6 +43,30 @@ export async function handler(request: Request) {
       if (!row) return Response.json({ success: false, error: 'Request not found' }, { status: 404 });
       if (row.status !== 'pending') return Response.json({ success: false, error: 'Request already decided' }, { status: 409 });
       const note = String(body?.note || '').trim().slice(0, 300);
+      // Approving applies the grant: 'full_admin' → full admin, 'breakglass'
+      // → full admin for 4 hours (auto-lapses via admin_grant_expires),
+      // otherwise sections merge into admin_permissions.sections. Only the
+      // requester's record is written — the approver's access never changes.
+      if (action === 'approve') {
+        const users = base44.asServiceRole.entities.AuthorizedEmail;
+        const targetRows = await users.filter({ email: row.requester_email });
+        if (!Array.isArray(targetRows) || targetRows.length !== 1) {
+          return Response.json({ success: false, error: 'Requesting user could not be resolved' }, { status: 404 });
+        }
+        const target = targetRows[0];
+        const sections = Array.isArray(row.requested_sections) ? row.requested_sections : [];
+        const next: Record<string, unknown> = { role: 'admin' };
+        if (sections.includes('breakglass')) {
+          next.is_full_admin = true;
+          next.admin_grant_expires = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+        } else if (sections.includes('full_admin')) {
+          next.is_full_admin = true;
+        } else if (sections.length) {
+          const perms = target.admin_permissions && typeof target.admin_permissions === 'object' ? target.admin_permissions : {};
+          next.admin_permissions = { ...perms, sections: [...new Set([...(Array.isArray(perms.sections) ? perms.sections : []), ...sections])] };
+        }
+        await users.update(target.id, next);
+      }
       await requests.update(id, {
         status: action === 'approve' ? 'approved' : 'rejected',
         reviewer_email: actor.email, decided_at: new Date().toISOString(), decided_note: note,
