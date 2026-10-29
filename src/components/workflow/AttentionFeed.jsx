@@ -51,6 +51,19 @@ export default function AttentionFeed() {
   const [hiddenSections, setHiddenSections] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem("attention_hidden_sections") || "[]")); } catch { return new Set(); }
   });
+  const [digestOn, setDigestOn] = useState(() => { try { return localStorage.getItem("attention_digest_opt_in") === "1"; } catch { return false; } });
+  const [digestSending, setDigestSending] = useState(false);
+  const sendDigest = async () => {
+    if (digestSending || !sessionToken) return;
+    setDigestSending(true);
+    try { await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "send_digest" }); } catch { /* fail-soft */ } finally { setDigestSending(false); }
+  };
+  const toggleDigest = () => {
+    const next = !digestOn;
+    setDigestOn(next);
+    try { localStorage.setItem("attention_digest_opt_in", next ? "1" : "0"); } catch {}
+    if (next) sendDigest();
+  });
   const [snoozed, setSnoozed] = useState(() => {
     try { return JSON.parse(localStorage.getItem("attention_snoozed") || "{}"); } catch { return {}; }
   });
@@ -341,7 +354,18 @@ export default function AttentionFeed() {
           </button>
           {prefsOpen && (
             <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Sections</p>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Daily email digest</p>
+              <label className="flex items-center gap-1.5 px-1 py-1 text-xs text-slate-700 dark:text-slate-300">
+                <input type="checkbox" checked={digestOn} onChange={toggleDigest} className="h-3 w-3" />
+                Email me a daily digest
+              </label>
+              {digestOn && (
+                <button type="button" onClick={sendDigest} disabled={digestSending}
+                  className="mb-1 px-1 text-[10px] font-semibold text-violet-600 hover:text-violet-800 disabled:opacity-50">
+                  {digestSending ? "Sending..." : "Send a digest now"}
+                </button>
+              )}
+              <p className="mb-1 border-t border-slate-100 pt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800">Sections</p>
               {["portal","invoices","pos","cos","follow","sent","requests","unassigned","stock","jobs","permits","fees","recalc"].map((key) => {
                 const cat = categories.find((c) => c.key === key);
                 const label = cat?.label || key;
