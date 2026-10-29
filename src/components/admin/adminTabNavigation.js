@@ -79,9 +79,12 @@ function permittedSubtabs(parentTab, permissions) {
 
 export function getAccessibleAdminGroups(isAdmin, user) {
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+  // Explicit deny wins over every grant — including full-admin. Full admins
+  // carry {} permissions, so denied_tabs lives on admin_permissions regardless.
+  const denied = Array.isArray(user?.admin_permissions?.denied_tabs) ? user.admin_permissions.denied_tabs : [];
   return ADMIN_TAB_GROUPS.map((group) => ({
     ...group,
-    tabs: group.tabs.filter((tab) => (!tab.adminOnly || isAdmin) && isGroupPermitted(group.id, permissions) && isTabPermitted(tab, permissions)),
+    tabs: group.tabs.filter((tab) => !denied.includes(tab.value) && (!tab.adminOnly || isAdmin) && isGroupPermitted(group.id, permissions) && isTabPermitted(tab, permissions)),
   })).filter((group) => group.tabs.length > 0);
 }
 
