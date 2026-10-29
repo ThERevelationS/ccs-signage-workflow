@@ -1887,6 +1887,21 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="space-y-2">
+            {(() => {
+              const dupes = [];
+              const seen = {};
+              for (const u of visibleUsers) {
+                const key = String(u.full_name || "").trim().toLowerCase().replace(/\s+/g, " ");
+                if (!key) continue;
+                if (seen[key]) dupes.push(seen[key].full_name + " / " + u.full_name);
+                else seen[key] = u;
+              }
+              return dupes.length ? (
+                <div className="mb-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                  Possible duplicate accounts: {dupes.slice(0, 3).join("; ")}{dupes.length > 3 ? ` (+${dupes.length - 3} more)` : ""} — same display name on multiple records.
+                </div>
+              ) : null;
+            })()}
             {lastDeletedUser && (
               <div className="flex flex-wrap items-center gap-2 mb-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
                 <span className="text-xs font-semibold text-amber-900">
