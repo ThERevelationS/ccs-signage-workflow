@@ -304,13 +304,13 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
               value={queueFilter}
               onChange={(e) => setQueueFilter(e.target.value)}
               placeholder="Filter by name, kind, or reason"
-              className="h-8 w-44 text-xs"
+              className="min-h-10 w-44 text-xs"
               disabled={bulkBusy}
             />
             <select
               value={bulkDecision}
               onChange={(e) => setBulkDecision(e.target.value)}
-              className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium"
+              className="min-h-10 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium"
               disabled={bulkBusy}
             >
               <option value="approve">Approve</option>
@@ -320,7 +320,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
               value={bulkReason}
               onChange={(e) => setBulkReason(e.target.value)}
               placeholder="Shared review reason (required)"
-              className="h-8 min-w-40 flex-1 text-xs"
+              className="min-h-10 min-w-40 flex-1 text-xs"
               maxLength={500}
               disabled={bulkBusy || checkedIds.size === 0}
             />
