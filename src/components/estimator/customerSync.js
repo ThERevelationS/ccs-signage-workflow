@@ -157,6 +157,7 @@ export const resolveCustomerForEstimate = async (form, customers = []) => {
 
 export const upsertCustomerFromEstimate = async (form, customers = [], { changedKeys = null, sessionToken = "" } = {}) => {
   const name = String(form.client_name || "").trim();
+  if (!name) return null;
   const fields = customerFieldsFromEstimate(form, changedKeys);
   const existing = await resolveCustomerForEstimate(form, customers);
   if (existing) {
