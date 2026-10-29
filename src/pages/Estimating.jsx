@@ -9,8 +9,7 @@ import DragDropList from "@/components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { usePolling } from "@/lib/usePolling";
+import { useAllWorkOrders, fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
@@ -47,7 +46,23 @@ export default function Estimating() {
     document.title = "Estimating - Workflow Manager";
   }, []);
 
-  usePolling(() => loadWorkOrders(), 120000, { runOnMount: false });
+  const { data: cachedWorkOrders = [], isFetched: workOrdersFetched } = useAllWorkOrders();
+
+  useEffect(() => {
+    const taskDescriptions = getEstimatingTaskDescriptions();
+    setWorkOrders((cachedWorkOrders || [])
+      .filter(wo =>
+        wo.is_rider !== true && wo.completed !== true && wo.deleted !== true &&
+        wo.current_task_description && taskDescriptions.some(desc =>
+          wo.current_task_description.includes(desc)
+        )
+      )
+      .sort((a, b) => (a.priority || 0) - (b.priority || 0)));
+  }, [cachedWorkOrders]);
+
+  useEffect(() => {
+    if (workOrdersFetched) setIsLoading(false);
+  }, [workOrdersFetched]);
 
   useEffect(() => {
     loadWorkOrders();
@@ -150,20 +165,12 @@ export default function Estimating() {
   };
 
   const fetchWorkOrders = async () => {
-    const orders = await loadAllEntityRows({
-      entity: WorkOrder,
-      query: {
-        is_rider: false,
-        completed: false,
-        deleted: { $ne: true }
-      },
-      sort: "created_date",
-      label: "Estimating Work Orders",
-    });
+    const orders = await fetchAllWorkOrders();
     const taskDescriptions = getEstimatingTaskDescriptions();
     // Filter to only show jobs with task descriptions assigned to Estimating page.
     return orders
       .filter(wo =>
+        wo.is_rider !== true && wo.completed !== true && wo.deleted !== true &&
         wo.current_task_description && taskDescriptions.some(desc =>
           wo.current_task_description.includes(desc)
         )
