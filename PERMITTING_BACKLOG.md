@@ -328,9 +328,9 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 241. **[F]** Required-documents tracker: drawings attached? site plan? contractor license? — checkmarks per application.
 242. **[UX]** "Ready to submit?" gate: the line flags what's missing before staff call it submitted — prevents bounce-backs.
 243. **[F]** Rejection-tracking: a rejected application records the office's stated reason + date — resubmissions learn from it.
-244. **[F]** Revision count on the line: v1, v2, v3 — how many times the office sent it back.
+244. **[F][DONE]** Revision count on the line: v1, v2, v3 — how many times the office sent it back.
 245. **[UX][DONE]** "What's left to file" summary on the job card: "2 of 3 applications still unfiled" — the work left is a number.
-246. **[F]** Application fee paid-tracking per line: amount + method + date + check # — separate from the issued-permit fee.
+246. **[F][DONE]** Application fee paid-tracking per line: amount + method + date + check # — separate from the issued-permit fee.
 247. **[F]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
 248. **[UX]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
 249. **[F][DONE]** Confirmation-number field: the portal's submission reference gets saved where staff actually look for it.
@@ -386,7 +386,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 ## Z — Permits & documents lifecycle
 
-293. **[F]** Permit-expiry alerts: a permit with expiration_date nearing → surfaces on the job + a flag 30 days out.
+293. **[F][DONE]** Permit-expiry alerts: a permit with expiration_date nearing → surfaces on the job + a flag 30 days out.
 294. **[UX]** Renewal shortcut: an expired permit gets a "start renewal" action copying the prior application's data.
 295. **[F]** Permit-transfer tracking: when a job moves clients, the permit's owner field changes — the handoff is recorded.
 296. **[UX]** Document thumbnails: the permit PDF's first page as a preview on the line — staff recognize it without opening.
@@ -398,7 +398,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 302. **[UX]** Variance-tracking: when the office requires a variance, a linked variance line is auto-suggested.
 303. **[F]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
 304. **[UX]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
-305. **[F]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
+305. **[F][DONE]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
 306. **[UX]** "What inspectors usually flag" hint per jurisdiction when known — tribal knowledge recorded.
 307. **[F]** Correction-notice tracking: failed inspection → correction required by date → marked resolved.
 308. **[H]** Duplicate-permit guard: two identical open applications to the same office for the same job flag as possible duplicates.
