@@ -1550,6 +1550,18 @@ export default function AdminSettings() {
     setActions(draft.actions);
     setAutomationSaveError("");
   };
+  const describeAutomationRule = (rule) => {
+    const triggers = (rule.triggers || []).map((t) => {
+      const label = TRIGGER_TYPES.find((x) => x.value === t.trigger_type)?.label || t.trigger_type;
+      const filters = Object.values(t.trigger_condition || {}).filter((v) => v != null && v !== "").length;
+      return filters ? `${label} (filtered)` : label;
+    });
+    const actions = (rule.actions || []).map((a) => ACTION_TYPES.find((x) => x.value === a.action_type)?.label || a.action_type);
+    const when = triggers.length ? `When ${triggers.join(" or ")}` : "When triggered";
+    const then = actions.length ? `then ${actions.join(" and ")}` : "no action is set up yet";
+    return `${when} — ${then}${rule.enabled === false ? " (currently turned off)" : ""}.`;
+  };
+
   const groupedTriggers = TRIGGER_TYPES.filter(t => getTriggerSupportedActions(t.value)).reduce((acc, trigger) => {
     if (!acc[trigger.category]) acc[trigger.category] = [];
     acc[trigger.category].push(trigger);
@@ -2323,6 +2335,7 @@ export default function AdminSettings() {
                           ))}
                           {(rule.actions?.length || 0) > 2 && <span className="text-gray-400">+{rule.actions.length - 2} more</span>}
                         </div>
+                        <p className="mt-2 text-xs text-gray-500 italic">{describeAutomationRule(rule)}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
