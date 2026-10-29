@@ -6,6 +6,7 @@ import { invokePortal } from "@/components/portal/PortalPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { estimateQuoteExpiration, formatQuoteIssueDate, isQuoteExpired, localDateStamp, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
+import SignaturePad from "./SignaturePad";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 
 const METHOD_LABELS = {
@@ -37,6 +38,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [acceptanceMethod, setAcceptanceMethod] = useState("signed_quote");
   const [acceptedAt, setAcceptedAt] = useState(localDateTimeInput());
   const [evidenceReference, setEvidenceReference] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState(null);
   const [notes, setNotes] = useState("");
   const [deliveryId, setDeliveryId] = useState("");
   const [portalBusy, setPortalBusy] = useState(false);
@@ -116,6 +118,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     setEvidenceReference(currentAcceptance?.evidence_reference || "");
     setNotes(currentAcceptance?.notes || "");
     setDeliveryId(currentAcceptance?.delivery_id || "");
+    setSignatureDataUrl(null);
     setError("");
     setDialogOpen(true);
   };
@@ -133,13 +136,25 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     setSaving(true);
     setError("");
     try {
+      // If a signature was drawn, archive it to storage and carry its URL as
+      // the acceptance evidence alongside whatever the recorder typed.
+      let evidenceFinal = evidenceReference.trim();
+      if (signatureDataUrl) {
+        try {
+          const blob = await (await fetch(signatureDataUrl)).blob();
+          const file = new File([blob], `signature-${estimate?.id || "estimate"}-${quoteVersion || 0}.png`, { type: "image/png" });
+          const uploaded = await base44.integrations.Core.UploadFile({ file });
+          const url = uploaded?.file_url || uploaded?.data?.file_url || "";
+          if (url) evidenceFinal = `${evidenceFinal ? evidenceFinal + " · " : ""}Signature: ${url}`;
+        } catch { /* signature upload failure never blocks the acceptance */ }
+      }
       await onRecordAcceptance?.({
         quoteVersion,
         acceptedByName: acceptedByName.trim(),
         acceptedByEmail: acceptedByEmail.trim(),
         acceptanceMethod,
         acceptedAt: new Date(acceptedAt).toISOString(),
-        evidenceReference: evidenceReference.trim(),
+        evidenceReference: evidenceFinal,
         notes: notes.trim(),
         deliveryId,
       });
@@ -254,6 +269,12 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             </div>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">RELATED QUOTE DELIVERY (OPTIONAL)<select disabled={recoveringRecordedAcceptance} value={deliveryId} onChange={(event) => setDeliveryId(event.target.value)} className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500"><option value="">Not tied to a specific delivery</option>{currentVersionDeliveries.map((delivery) => <option key={delivery.id} value={delivery.id}>{delivery.sent_at ? new Date(delivery.sent_at).toLocaleString() : "Sent"} · {delivery.recipient_email || "recipient not recorded"}{delivery.delivery_n > 1 ? ` · Send #${delivery.delivery_n}` : delivery.is_resend ? " · Resend" : ""}</option>)}</select><span className="mt-1 block text-[9px] font-normal normal-case tracking-normal text-gray-400">Choose the exact email delivery the customer accepted when known. Leave blank for verbal/in-person approval or when the specific delivery is unknown.</span></label>
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">EVIDENCE / REFERENCE<input disabled={recoveringRecordedAcceptance} value={evidenceReference} onChange={(event) => setEvidenceReference(event.target.value)} placeholder="e.g. Signed quote received, approval email, PO #..." className="mt-1 w-full h-[34px] rounded border border-gray-300 px-2.5 text-[12px] font-normal text-gray-800 disabled:bg-gray-100 disabled:text-gray-500" /></label>
+            {!recoveringRecordedAcceptance && (
+              <div>
+                <span className="block text-[10px] font-bold tracking-wide text-gray-500">SIGNATURE (OPTIONAL)</span>
+                <div className="mt-1"><SignaturePad onChange={setSignatureDataUrl} disabled={saving} /></div>
+              </div>
+            )}
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">NOTES<textarea disabled={recoveringRecordedAcceptance} value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y disabled:bg-gray-100 disabled:text-gray-500" /></label>
             {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
             <div className="flex justify-end gap-2 pt-1">
