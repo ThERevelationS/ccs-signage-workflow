@@ -488,7 +488,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## AE — Communication & follow-through
 
 379. **[F]** In-app mention: "@brett — can you verify the Mason office?" pings a staff member on a jurisdiction.
-380. **[UX]** Follow-up scheduling: "remind me in a week" on any line — the chase doesn't rely on memory.
+380. **[UX][DONE]** Follow-up scheduling: "remind me in a week" on any line — the chase doesn't rely on memory.
 381. **[F]** Status-change digest: a daily "what moved in permitting" — office verifications, applies, issues.
 382. **[UX]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
 383. **[F]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
@@ -498,7 +498,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 387. **[F]** Team-shift notes: end-of-day "here's where each job stands" auto-summary for the next shift.
 388. **[UX][DONE]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
 389. **[F]** Approval-request workflow: an unverified-locality apply asks a senior for approval — staff work continues pending it.
-390. **[UX]** "Who's on this?" per line: the person currently working the chase is named — handoffs are clean.
+390. **[UX][DONE]** "Who's on this?" per line: the person currently working the chase is named — handoffs are clean.
 391. **[F]** Office-contact log: every call to an office recorded — the jurisdiction's "we've talked" history.
 392. **[UX]** Meeting-notes capture: notes from a client call about permitting link to the job — context travels.
 393. **[F]** Escalation to management: a stuck >N-day line auto-surfaces to a manager-review queue.
