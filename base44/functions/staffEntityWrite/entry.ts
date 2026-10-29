@@ -24,6 +24,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   RegulationAlert: new Set(['update', 'delete']),
   SipChecklistTemplate: new Set(['create', 'update', 'delete']),
   WorkOrder: new Set(['create', 'updateMany']),
+  TaxGroup: new Set(['create', 'update', 'delete']),
 };
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
@@ -56,6 +57,17 @@ Deno.serve(async (req) => {
     // the UI gates this already; the server must fail closed the same way.
     if (entityName === 'PermitLocality' && (op === 'create' || op === 'update') && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
+    }
+    // Tax rates feed every quote's tax_percent — admin-gated like jurisdictions.
+    if (entityName === 'TaxGroup' && user.role !== 'admin') {
+      return Response.json({ error: 'Only administrators can manage tax groups.' }, { status: 403 });
+    }
+    if (entityName === 'TaxGroup' && (op === 'create' || op === 'update')) {
+      const pct = Number(data?.tax_percent ?? 0);
+      if (!String(data?.group_name || '').trim()) return Response.json({ error: 'Tax group needs a name.' }, { status: 400 });
+      if (!Number.isFinite(pct) || pct < 0 || pct > 100) return Response.json({ error: 'Tax percent must be between 0 and 100.' }, { status: 400 });
+      (data as any).group_name = String(data.group_name).trim().slice(0, 120);
+      (data as any).tax_percent = Math.round(pct * 1000) / 1000;
     }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
