@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { money } from "./aioPricing";
 import { computeEstimateProfitability } from "./profitability";
@@ -15,7 +16,7 @@ const FEE_FIELDS = [
 ];
 
 export default function PricingSummary({ estimate, pricing, onChange, readOnly = false, openRevision = null }) {
-  const profitability = computeEstimateProfitability(estimate, pricing);
+  const profitability = useMemo(() => computeEstimateProfitability(estimate, pricing), [estimate, pricing]);
   const rows = [
     ["Sections subtotal", pricing.subtotal],
     ["Discount", -pricing.discount],
