@@ -35,7 +35,7 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
             onChange={(e) => set({ unit_count: parseFloat(e.target.value) || 0 })}
           />
         )}
-        <button
+        <button type="button"
           onClick={() => {
             if (window.confirm("Remove this action and its materials?")) onRemove();
           }}
@@ -65,7 +65,7 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
             value={m.quantity ?? 1}
             onChange={(e) => setMaterial(idx, { quantity: parseFloat(e.target.value) || 0 })}
           />
-          <button
+          <button type="button"
             onClick={() => {
               if (window.confirm("Remove this material?")) {
                 set({ materials: action.materials.filter((_, i) => i !== idx) });
@@ -79,7 +79,7 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
       ))}
 
       <div className="flex items-center justify-between text-xs">
-        <button
+        <button type="button"
           onClick={() => set({ materials: [...(action.materials || []), { quantity: 1 }] })}
           className="flex items-center gap-1 text-gray-500 hover:text-red-600"
         >
