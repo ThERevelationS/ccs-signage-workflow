@@ -41,6 +41,22 @@ function expiryOf(e) {
   return localDateStamp(d);
 }
 
+// The EXPIRED badge is computed at read, but reporting needs a persisted
+// flag — sweep a bounded slice of stale rows each load so `quote_expired`
+// stays a truthful filter without a dedicated cron job.
+const EXPIRY_FLAG_SWEEP_LIMIT = 10;
+function syncExpiredFlags(rows) {
+  const now = today();
+  const stale = (Array.isArray(rows) ? rows : []).filter((e) => {
+    const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
+    return Boolean(e?.id) && expired !== (e?.quote_expired === true);
+  }).slice(0, EXPIRY_FLAG_SWEEP_LIMIT);
+  for (const e of stale) {
+    const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
+    staffEntities.AllInOneEstimate.update(e.id, { quote_expired: expired }).catch(() => {});
+  }
+}
+
 function daysSince(dateStr) {
   const d = Date.parse(dateStr || "");
   if (!Number.isFinite(d)) return null;
@@ -112,6 +128,7 @@ export default function EstimatorQueues() {
           label: "Estimate queues",
         });
         setEstimates(rows);
+        syncExpiredFlags(rows);
       } catch (err) {
         console.error("Estimate queues could not be loaded:", err);
         setLoadError(err?.message || "Estimates could not be loaded.");
@@ -361,6 +378,7 @@ export default function EstimatorQueues() {
                         {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
                           {e.priority && e.priority !== "normal" ? ` · ${String(e.priority).toUpperCase()} PRIORITY` : ""}
                         {age != null ? ` Â· ${age}d open` : ""}
+                        {e.status === "archived" && e.archived_reason ? ` · ${e.archived_reason}` : ""}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
