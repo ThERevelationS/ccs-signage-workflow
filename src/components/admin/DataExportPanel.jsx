@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Download, Loader2 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 // Entities an admin may reasonably export for audits. Reads rely on each
 // entity's normal access rules — anything blocked simply returns an error.
@@ -38,12 +39,15 @@ const toCsv = (rows) => {
 export default function DataExportPanel() {
   const [entityName, setEntityName] = useState("AuthorizedEmail");
   const [busy, setBusy] = useState(false);
+  const [connections, setConnections] = useState(null);
   const [counts, setCounts] = useState(null);
   useEffect(() => {
     let alive = true;
     Promise.all(EXPORTABLE.map((e) =>
       staffEntities[e.value].count({}).then((n) => [e.value, n]).catch(() => [e.value, null])
     )).then((pairs) => { if (alive) setCounts(Object.fromEntries(pairs)); });
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "calendarSettings", label: "Calendar settings" })
+      .then((r) => { if (alive) setConnections(r?.setting_value || {}); }).catch(() => { if (alive) setConnections({}); });
     return () => { alive = false; };
   }, []);
   const [msg, setMsg] = useState("");
@@ -87,6 +91,17 @@ export default function DataExportPanel() {
           <li>Exports are on-demand snapshots — nothing is downloaded or sent automatically.</li>
         </ul>
       </div>
+      {connections !== null && (
+        <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px]" aria-label="Integration connections status">
+          <p className="font-semibold text-gray-700">Connections</p>
+          <ul className="mt-0.5 space-y-0.5">
+            <li className="flex items-center gap-1.5"><span className={`h-1.5 w-1.5 rounded-full ${connections.outlook_connected ? "bg-emerald-500" : "bg-gray-300"}`} />Outlook calendar — {connections.outlook_connected ? "connected" : "not connected"}</li>
+            <li className="flex items-center gap-1.5"><span className={`h-1.5 w-1.5 rounded-full ${connections.google_connected ? "bg-emerald-500" : "bg-gray-300"}`} />Google calendar — {connections.google_connected ? "connected" : "not connected"}</li>
+            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-gray-300" />Smartsheet — token stored as an app secret (check the Smartsheet settings card)</li>
+            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-gray-300" />Bouncie fleet — webhook key stored as an app secret</li>
+          </ul>
+        </div>
+      )}
       {counts && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {EXPORTABLE.map((e) => (
