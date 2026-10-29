@@ -22,7 +22,6 @@ import { isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -181,7 +180,7 @@ export default function PermitSpreadsheetRow({
     setJurisdictionPreviewError("");
     try {
       const rows = await loadAllEntityRows({
-        entity: staffEntities.JurisdictionProfile,
+        entity: base44.entities.JurisdictionProfile,
         sort: "name",
         label: `Jurisdiction preview ${lineItem.locality_name}`,
       });
@@ -439,7 +438,11 @@ export default function PermitSpreadsheetRow({
               <span className="flex-shrink-0">Owner:</span>
               <Select
                 value={lineItem.assigned_to || "__unassigned__"}
-                onValueChange={(value) => onUpdateField(lineItem.id, 'assigned_to', value === "__unassigned__" ? "" : value)}
+                onValueChange={(value) => {
+                  const next = value === "__unassigned__" ? "" : value;
+                  if (lineItem.assigned_to && lineItem.assigned_to !== next && !window.confirm(`${lineItem.assigned_to} owns this line — reassign${next ? ` to ${next}` : ""}?`)) return;
+                  onUpdateField(lineItem.id, 'assigned_to', next);
+                }}
                 disabled={!isRegistered}
               >
                 <SelectTrigger className="h-7 min-w-0 w-[140px] border-gray-200 px-2 text-[11px] shadow-none">
