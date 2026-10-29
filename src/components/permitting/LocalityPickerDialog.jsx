@@ -93,6 +93,7 @@ function LocalityPickerSession({
   const [searching, setSearching] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState(() => loadRecentAddresses());
   const [slowSearch, setSlowSearch] = useState(false);
+  const [firstRun, setFirstRun] = useState(() => { try { return localStorage.getItem("permitting_first_run_done") !== "1"; } catch { return true; } });
   const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
   const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
@@ -322,6 +323,7 @@ function LocalityPickerSession({
           </DialogTitle>
         </DialogHeader>
 
+        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this jurisdiction. That's it.</div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
@@ -552,6 +554,7 @@ function LocalityPickerSession({
                 </div>
 
                 <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>
+                {currentUser?.role==='admin'&&result&&<details className="rounded border bg-gray-50 p-2 text-[10px]"><summary className="cursor-pointer font-semibold text-gray-600">Show technical details</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify({geocoding_service:result.geocoding_service,location_resolution:result.location_resolution,authority_review:result.authority_review,match_confidence:result.match_confidence,match_method:result.match_method,apply_allowed:result.apply_allowed},null,2)}</pre></details>}
                 {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. Someone on the team needs to check the sign and zoning offices before it can be used.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
