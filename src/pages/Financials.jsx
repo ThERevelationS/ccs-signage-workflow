@@ -11,6 +11,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { format as dateFnsFormat } from "date-fns";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 // Workflow reporting constants
@@ -262,12 +263,10 @@ export default function Financials() {
     setDataReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Financial Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Financials authorized users" })
       ]);
       setWorkOrders(orders);
