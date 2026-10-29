@@ -195,7 +195,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 139. **[UX][DONE]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
 140. **[F][DONE]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
 141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
-142. **[F][FLAGGED-dedicated]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
+142. **[F][DONE]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
 143. **[UX][DONE]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
 144. **[F][DONE]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
 145. **[UX][DONE]** Spelling-tolerant search: "Milford OH 45150" without a street still finds Milford's candidates and says so plainly.
@@ -413,7 +413,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 314. **[F][DONE]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
 315. **[UX][DONE]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
 316. **[F][DONE]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
-317. **[UX][FLAGGED-dedicated]** Contextual empty-states: "No applications filed yet — press the button above when you file one" — every empty area teaches.
+317. **[UX][DONE]** Contextual empty-states: "No applications filed yet — press the button above when you file one" — every empty area teaches.
 318. **[F][DONE]** Buddy-check: a new user's first few applies can flag "reviewed by {senior}" — a soft QA loop.
 319. **[UX][DONE]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
 320. **[F][DONE]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
@@ -530,7 +530,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 413. **[F][DONE]** "Clone job's permit setup": a second job in the same town inherits the verified locality + office set — one click.
 414. **[UX][DONE]** Quick-reply templates: canned office-email lines ("Following up on permit #X — any update?") for the chase.
 415. **[F][DONE]** Permit-template library: common application-packets per jurisdiction — Milford's PDF + required docs pre-known.
-416. **[UX][FLAGGED-dedicated]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
+416. **[UX][DONE]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
 417. **[F][DONE]** Multi-job jurisdiction assign: select N jobs in the same town → apply the verified jurisdiction once.
 418. **[UX][DONE]** Quick-switch to a sibling: "the township handles this, not the city" — a one-tap swap to the other candidate.
 419. **[F][DONE]** Custom workflow steps per jurisdiction: "Milford needs a site plan first" — jurisdiction-specific steps on its lines.
@@ -544,7 +544,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 427. **[F][DONE]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
 428. **[UX][DONE]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
 429. **[F][DONE]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
-430. **[UX][FLAGGED-dedicated]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
+430. **[UX][DONE]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
 431. **[F][DONE]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
 432. **[UX][DONE]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
 433. **[F][DONE]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
