@@ -1,8 +1,9 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {invalidateSourceRules} from '../../shared/permittingSourceRuleInvalidation.mjs';
 Deno.serve(async req=>{
  try{
-  const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req)),user=await base44.auth.me().catch(()=>null);
   if(!user || user.role!=='admin')return Response.json({error:'Admin access required'},{status:403});
   const body=await req.json().catch(()=>({})),entities=base44.asServiceRole.entities;
   return Response.json(await invalidateSourceRules({sourceEntity:entities.PermittingSourceDocument,ruleEntity:entities.PermittingRule,
