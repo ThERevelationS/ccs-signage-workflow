@@ -35,7 +35,7 @@ export default function ChannelEquipmentPanel({ project, selections, catalog, on
                   </option>
                 ))}
               </select>
-              <button
+              <button type="button"
                 onClick={() => {
                   if (!window.confirm("Remove this equipment?")) return;
                   onChange({ selected_equipment: project.selected_equipment.filter((_, i) => i !== idx) });
