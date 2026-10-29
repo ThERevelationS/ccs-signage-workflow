@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ import {
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths, startOfDay, endOfDay, addDays, subDays } from "date-fns";
 import * as XLSX from "xlsx";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
+import AdminRosterPanels from "@/components/timeclock/AdminRosterPanels";
 import TimeOffApprovalPanel from "@/components/timeclock/TimeOffApprovalPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import CorrectionCoordinatorDiagnostics from "@/components/timeclock/CorrectionCoordinatorDiagnostics";
@@ -225,7 +226,6 @@ export default function TimeClockAdmin() {
   const [pendingApprovalRecovery, setPendingApprovalRecovery] = useState(null);
   const [approvalError, setApprovalError] = useState("");
   const [detailEntry, setDetailEntry] = useState(null);
-  const [expandedEmail, setExpandedEmail] = useState(null);
   const [correctionReviewRequestId, setCorrectionReviewRequestId] = useState("");
   const [auditInvestigation, setAuditInvestigation] = useState(null);
 
@@ -1064,17 +1064,11 @@ export default function TimeClockAdmin() {
                 </tr>
               ) : (
                 filteredEntries.map(entry => (
-                  <Fragment key={entry.id}>
-                  <tr className="hover:bg-gray-50">
+                  <tr key={entry.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <button type="button"
-                            onClick={() => setExpandedEmail(e => e === entry.user_email ? null : entry.user_email)}
-                            className="font-medium text-left hover:text-purple-700 hover:underline"
-                            title="Show this employee's daily breakdown">
-                            {entry.user_name}
-                          </button>
+                          <p className="font-medium">{entry.user_name}</p>
                           {entry.pay_period_id && (
                             <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 gap-1">
                               <LockKeyhole className="w-3 h-3" /> Finalized
@@ -1209,30 +1203,6 @@ export default function TimeClockAdmin() {
                       </div>
                     </td>
                   </tr>
-                  {expandedEmail === entry.user_email && (
-                    <tr className="bg-purple-50/60">
-                      <td colSpan="11" className="px-6 py-3">
-                        <p className="text-xs font-semibold text-purple-900 mb-2">Daily breakdown for {entry.user_name || entry.user_email} in this period</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            const days = {};
-                            for (const e of filteredEntries) {
-                              if (e.user_email !== entry.user_email) continue;
-                              const d = safeFormat(e.clock_in, "MMM d");
-                              days[d] = (days[d] || 0) + (Number(e.total_hours) || 0);
-                            }
-                            return Object.entries(days).map(([d, h]) => (
-                              <span key={d} className="rounded border border-purple-200 bg-white px-2 py-1 text-xs">
-                                <span className="font-medium text-gray-700">{d}</span>
-                                <span className="ml-1 text-purple-700 font-semibold">{h.toFixed(2)}h</span>
-                              </span>
-                            ));
-                          })()}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  </Fragment>
                 ))
               )}
             </tbody>
@@ -1366,6 +1336,7 @@ export default function TimeClockAdmin() {
           </div>
         </div>
       </div>
+      <AdminRosterPanels sessionToken={sessionToken} />
       <CorrectionRequestAdminPanel
         sessionToken={sessionToken}
         onEntriesChanged={loadData}
