@@ -23,7 +23,7 @@ const EDITORS = {
   painting: PaintingEstimator,
 };
 
-export default function InlineProductEditor({ line, estimateId, expectedEstimateUpdatedAt = "", onClose, onSaved }) {
+export default function InlineProductEditor({ line, lines = [], estimateId, expectedEstimateUpdatedAt = "", onClose, onSaved, onSwitchLine }) {
   const Editor = EDITORS[line?.module_key];
   const [checkingDetached, setCheckingDetached] = useState(!!line?.builder_product_id);
   const [detachedParts, setDetachedParts] = useState([]);
