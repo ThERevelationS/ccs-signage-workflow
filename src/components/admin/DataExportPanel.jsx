@@ -42,6 +42,7 @@ export default function DataExportPanel() {
   const [entityName, setEntityName] = useState("AuthorizedEmail");
   const [busy, setBusy] = useState(false);
   const [connections, setConnections] = useState(null);
+  const [pending, setPending] = useState(null);
   const [counts, setCounts] = useState(null);
   useEffect(() => {
     let alive = true;
@@ -50,6 +51,11 @@ export default function DataExportPanel() {
     )).then((pairs) => { if (alive) setCounts(Object.fromEntries(pairs)); });
     loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "calendarSettings", label: "Calendar settings" })
       .then((r) => { if (alive) setConnections(r?.setting_value || {}); }).catch(() => { if (alive) setConnections({}); });
+    Promise.all([
+      staffEntities.TimeOffRequest.count({ status: "pending" }).catch(() => null),
+      staffEntities.TimeClockCorrectionRequest.count({ status: "pending" }).catch(() => null),
+      staffEntities.DeletionRequest.count({ status: "pending" }).catch(() => null),
+    ]).then(([pto, corr, del]) => { if (alive) setPending({ pto, corr, del }); });
     return () => { alive = false; };
   }, []);
   useEffect(() => {
@@ -109,6 +115,18 @@ export default function DataExportPanel() {
           ))}
         </ul>
       </div>
+
+      {pending && (
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50/60 p-2 text-[11px] text-gray-600" aria-label="Pending approvals">
+          <p className="font-semibold text-gray-700">Pending approvals</p>
+          <ul className="mt-0.5 space-y-0.5">
+            <li className="flex items-center justify-between"><span>PTO requests</span><b className={pending.pto > 0 ? "text-amber-700" : "text-gray-400"}>{pending.pto ?? "—"}</b></li>
+            <li className="flex items-center justify-between"><span>Time-clock corrections</span><b className={pending.corr > 0 ? "text-amber-700" : "text-gray-400"}>{pending.corr ?? "—"}</b></li>
+            <li className="flex items-center justify-between"><span>Deletion requests</span><b className={pending.del > 0 ? "text-amber-700" : "text-gray-400"}>{pending.del ?? "—"}</b></li>
+          </ul>
+          <p className="mt-1 text-[10px] text-gray-400">Work each queue on its own tab — People → PTO, Time Clock → corrections, Users → deletions.</p>
+        </div>
+      )}
 
       <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Migration runners">
         <p className="font-semibold text-gray-700">Migration runners</p>
