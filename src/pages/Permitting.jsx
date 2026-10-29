@@ -134,7 +134,7 @@ export default function Permitting() {
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
         batched?.PermitLineItem
           ? Promise.resolve(primeAndReturn("Permitting line items", null, "-updated_date", batched.PermitLineItem))
-          : loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
+          : loadAllEntityRows({ entity: PermitLineItem, sort: "-updated_date", label: "Permitting line items", cacheTtlMs: 30000 }),
         batched?.PermitLocality
           ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
           : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
@@ -145,7 +145,7 @@ export default function Permitting() {
 
         batched?.AuthorizedEmail
           ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
-          : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
+          : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
         loadSingleGlobalSetting({
           entity: staffEntities.GlobalSettings,
           settingKey: "permitOfficeTypes",
