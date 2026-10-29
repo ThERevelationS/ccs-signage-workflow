@@ -2058,6 +2058,23 @@ export default function AdminSettings() {
               : `The Admin sub-page "${requestedDeepLinkSubtab}" isn't available for your account.`}
           </div>
         )}
+        {(() => {
+          const tabLabel = activeAdminGroup.tabs.find((t) => t.value === selectedAdminTab)?.label || "";
+          const SUBTAB_LABELS = { entries: "Time Entries", reports: "Reports", pto: "PTO Policies", overtime: "Overtime Rules",
+            backup: "Data Backup", client_trash: "Client Trash", order_trash: "Order Trash" };
+          const subLabel = SUBTAB_LABELS[selectedAdminSubtab] || "";
+          const crumbs = ["Admin", activeAdminGroup.label, tabLabel, subLabel].filter(Boolean);
+          return (
+            <nav aria-label="Breadcrumb" className="mb-2 text-xs text-gray-500">
+              {crumbs.map((c, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="mx-1 text-gray-300">/</span>}
+                  <span className={i === crumbs.length - 1 ? "font-semibold text-gray-800" : ""}>{c}</span>
+                </span>
+              ))}
+            </nav>
+          );
+        })()}
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
