@@ -149,7 +149,7 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
             <p className="text-xs text-gray-500">Unchecked pages are hidden from this admin's Admin navigation.</p>
             <div className="flex flex-wrap gap-1">
               {PRESETS.map((p) => (
-                <button key={p.label} type="button" disabled={busy} onClick={() => applyPreset(p)}
+                <button type="button" key={p.label} type="button" disabled={busy} onClick={() => applyPreset(p)}
                   className="rounded-full border border-gray-300 px-2 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50">
                   {p.label}
                 </button>
@@ -242,7 +242,7 @@ export default function AdminAccessDialog({ user, open, onOpenChange, sessionTok
           <p className="text-xs font-medium text-red-700">Explicit blocks — denied tabs override every grant, including full admin:</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {ADMIN_TAB_GROUPS.flatMap((g) => g.tabs).map((t) => (
-              <button key={t.value} type="button"
+              <button type="button" key={t.value} type="button"
                 aria-pressed={deniedChecks.has(t.value)}
                 onClick={() => setDeniedChecks((cur) => { const next = new Set(cur); next.has(t.value) ? next.delete(t.value) : next.add(t.value); return next; })}
                 className={`rounded-full border px-2 py-0.5 text-[10px] ${deniedChecks.has(t.value) ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-500"}`}>
