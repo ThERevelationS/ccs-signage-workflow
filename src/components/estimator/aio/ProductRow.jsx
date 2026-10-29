@@ -569,13 +569,20 @@ export default function ProductRow({
             value={liveCustomerPrice}
             disabled
           />
-          <Field
-            label="ADJUSTMENT %"
-            type="number"
-            value={line.adjustment_percent ?? 0}
-            onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
-            onBlur={(e) => commit({ adjustment_percent: parseFloat(e.target.value) || 0 })}
-          />
+          <div>
+            <Field
+              label="ADJUSTMENT %"
+              type="number"
+              value={line.adjustment_percent ?? 0}
+              onChange={(e) => set({ adjustment_percent: parseFloat(e.target.value) || 0 })}
+              onBlur={(e) => commit({ adjustment_percent: parseFloat(e.target.value) || 0 })}
+            />
+            {Number(line.adjustment_percent || 0) !== 0 && (
+              <div className="mt-0.5 text-[9px] text-emerald-700 font-semibold">
+                → {money(Number(customerPrice || 0) * (1 + Number(line.adjustment_percent || 0) / 100))} preview
+              </div>
+            )}
+          </div>
           <Field
             label="QUANTITY"
             type="number"
