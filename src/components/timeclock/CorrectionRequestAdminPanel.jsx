@@ -450,7 +450,20 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   </div>
                 </div>
               </div>
-              <div><Label>Manager Review Reason <span className="text-red-600">*</span></Label><Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy || retryingSelected} /></div>
+              <div>
+                <Label>Manager Review Reason <span className="text-red-600">*</span></Label>
+                <div className="mb-1.5 flex flex-wrap gap-1.5">
+                  {["Verified with schedule", "Matches posted shift", "Corrected per employee attestation", "Insufficient documentation", "Conflicts with recorded punches", "Policy exception approved"].map((chip) => (
+                    <button
+                      key={chip} type="button"
+                      onClick={() => setReviewReason((prev) => prev.trim() ? `${prev.trim()} - ${chip}` : chip)}
+                      disabled={busy || retryingSelected}
+                      className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-700"
+                    >{chip}</button>
+                  ))}
+                </div>
+                <Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy || retryingSelected} />
+              </div>
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
                 <strong>Correction approval is not shift approval.</strong> Approving the reported or edited punch applies the audited correction and leaves the completed shift at <strong>Needs Review</strong>. A manager must separately approve the completed shift before pay-period finalization.
               </div>
