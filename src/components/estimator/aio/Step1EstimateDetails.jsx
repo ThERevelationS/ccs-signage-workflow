@@ -76,10 +76,11 @@ export default function Step1EstimateDetails({
   }, [form.customer_id]);
 
   const applyCustomer = (c) => {
-    const defaultTaxGroup = taxGroups.find((group) => group.name === c.default_tax_group);
+    const taxGroupName = (g) => g?.group_name || g?.name || "";
+    const defaultTaxGroup = taxGroups.find((group) => taxGroupName(group) === c.default_tax_group);
     const defaultTaxPercent = Number(defaultTaxGroup?.tax_percent);
     const taxDefaults = defaultTaxGroup && Number.isFinite(defaultTaxPercent) && defaultTaxPercent >= 0 && defaultTaxPercent <= 100
-      ? { tax_group: defaultTaxGroup.name, tax_percent: defaultTaxPercent }
+      ? { tax_group: taxGroupName(defaultTaxGroup), tax_percent: defaultTaxPercent }
       : {};
     const customerValidDays = Number(c.quote_valid_days);
     const validDaysDefault = Number.isFinite(customerValidDays) && customerValidDays > 0
@@ -453,17 +454,17 @@ export default function Step1EstimateDetails({
             <select
               value={form.tax_group}
               onChange={(e) => {
-                const g = taxGroups.find((t) => t.name === e.target.value);
+                const g = taxGroups.find((t) => (t.group_name || t.name) === e.target.value);
                 patch({ tax_group: e.target.value, tax_percent: g?.tax_percent || 0 });
               }}
               className={inputCls}
             >
               <option value="">select</option>
-              {taxGroups.map((t, i) => (
-                <option key={t.id || `tax-group-${t.name}-${i}`} value={t.name}>
-                  {t.name} ({t.tax_percent}%)
+              {taxGroups.map((t, i) => { const gn = t.group_name || t.name; return (
+                <option key={t.id || `tax-group-${gn}-${i}`} value={gn}>
+                  {gn} ({t.tax_percent}%)
                 </option>
-              ))}
+              ); })}
             </select>
           </Row>
           <p className="text-[10px] text-gray-400 text-center mt-1">
