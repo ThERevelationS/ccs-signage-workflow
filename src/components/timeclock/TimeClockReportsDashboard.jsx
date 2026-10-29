@@ -23,6 +23,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subM
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const TimeEntry = staffEntities.TimeEntry;
@@ -76,7 +77,10 @@ export default function TimeClockReportsDashboard() {
     try {
       const [entries, orders] = await Promise.all([
         loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock entries" }),
-        loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" })
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
       ]);
       if (!mountedRef.current) return;
       setTimeEntries(entries);
