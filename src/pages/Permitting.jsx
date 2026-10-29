@@ -116,7 +116,7 @@ export default function Permitting() {
     try {
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
         loadAllEntityRows({ entity: PermitLineItem, sort: '-updated_date', label: "Permitting line items" }),
-        loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities" }),
+        loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
@@ -966,6 +966,7 @@ export default function Permitting() {
 
   const totalLines = lineItems.length;
   const activeLinesCount = lineItems.filter(li => !isPermitLineEffectivelyComplete(li)).length;
+  const unassignedCount = lineItems.filter(li => !isPermitLineEffectivelyComplete(li) && !String(li.locality_id || "").trim()).length;
   const completedLinesCount = lineItems.filter(li => isPermitLineEffectivelyComplete(li)).length;
   const routingMismatchCount = workOrders.filter((wo) => wo._permittingRoutingMismatch).length;
 
@@ -1064,7 +1065,7 @@ export default function Permitting() {
             <div>
               <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">Permitting Tracker</h1>
               <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
-                {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed
+                {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed{unassignedCount ? " · " + unassignedCount + " need a jurisdiction" : ""}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
