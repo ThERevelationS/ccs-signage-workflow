@@ -190,6 +190,9 @@ export default function PermitClientGroup({
           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || "border-gray-200 bg-gray-50 text-gray-700"}`}>
             {PERMIT_QUEUE_META[queueState.key]?.label || "Permit"}
           </span>
+          {group.lines.some(li => li.urgent) && (
+            <span className="inline-flex items-center rounded-full border border-red-400 bg-red-100 px-2 py-0.5 font-bold text-red-800">⚠ URGENT</span>
+          )}
           {queueState.timingLabel && (
             <span className={`inline-flex items-center gap-1 font-semibold ${queueState.key === "overdue" ? "text-red-700" : queueState.key === "due_today" ? "text-amber-700" : "text-gray-500"}`}>
               <Clock className="w-3 h-3" /> {queueState.timingLabel}
