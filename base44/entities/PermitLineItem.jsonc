@@ -214,6 +214,14 @@
       "type": "string",
       "description": "Notes for this line item"
     },
+    "next_action": {
+      "type": "string",
+      "description": "The next thing someone should do on this permit line \u2014 e.g. 'Call the office Friday to chase approval'. Free text, staff-entered."
+    },
+    "inspector_contact": {
+      "type": "string",
+      "description": "Inspector name/phone for the scheduled inspection."
+    },
     "assigned_to": {
       "type": "string",
       "description": "Person responsible"
