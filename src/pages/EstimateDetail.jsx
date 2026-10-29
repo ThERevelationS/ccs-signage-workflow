@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ClipboardPaste, Clock, FileMinus, LockKeyhole, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Clock, Eye, FileMinus, LockKeyhole, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -115,6 +115,8 @@ export default function EstimateDetail() {
   const [repairingConversionTracking, setRepairingConversionTracking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [watchBusy, setWatchBusy] = useState(false);
+  const [watchNote, setWatchNote] = useState("");
   const [step, setStep] = useState(() => {
     // Deep link: ?section=details|products|pricing (or ?step=1|2|3) opens that
     // workspace section on load; unknown/missing values keep the default.
