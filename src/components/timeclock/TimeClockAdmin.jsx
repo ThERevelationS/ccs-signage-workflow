@@ -2063,6 +2063,42 @@ export default function TimeClockAdmin() {
         ) : null;
       })()}
 
+      {(() => {
+        const geoPunches = (timeEntries || []).filter((e) => e.clock_in_geo?.lat || e.clock_out_geo?.lat);
+        if (!geoPunches.length) return null;
+        const lats = geoPunches.map((e) => (e.clock_in_geo?.lat ?? e.clock_out_geo?.lat)).filter(Number.isFinite).sort((a, b) => a - b);
+        const lngs = geoPunches.map((e) => (e.clock_in_geo?.lng ?? e.clock_out_geo?.lng)).filter(Number.isFinite).sort((a, b) => a - b);
+        if (!lats.length) return null;
+        const midLat = lats[Math.floor(lats.length / 2)], midLng = lngs[Math.floor(lngs.length / 2)];
+        const dist = (a, b, c, d) => {
+          const dx = (a - c) * 111320, dy = (b - d) * 111320 * Math.cos((c * Math.PI) / 180);
+          return Math.sqrt(dx * dx + dy * dy);
+        };
+        const outliers = geoPunches.filter((e) => {
+          const g = e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo;
+          return dist(g.lat, g.lng, midLat, midLng) > 500;
+        });
+        const noGeo = (timeEntries || []).length - geoPunches.length;
+        return (
+          <AdminSection title="Punch location review" icon={AlertTriangle} tone={outliers.length ? "amber" : "gray"} count={outliers.length}>
+            <p className="text-xs text-gray-500">
+              {geoPunches.length} punches carry location data{noGeo > 0 ? `; ${noGeo} have none` : ""}.
+              {outliers.length ? ` ${outliers.length} punched >500m from the usual cluster:` : " All punches sit near the usual cluster."}
+            </p>
+            {outliers.length > 0 && (
+              <ul className="mt-1 space-y-1">
+                {outliers.slice(0, 10).map((e) => (
+                  <li key={e.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-gray-700">{e.user_email || "—"} · {e.clock_in ? new Date(e.clock_in).toLocaleDateString() : ""}</span>
+                    <span className="font-medium text-amber-700">{Math.round(dist((e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo).lat, (e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo).lng, midLat, midLng))}m off-cluster</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminSection>
+        );
+      })()}
+
       <AdminSection title="Registered Devices" icon={Clock3} count={devices.length}
         subtitle="Kiosks and tablets that have signed in to the time clock.">
         {devices.length === 0 ? (
