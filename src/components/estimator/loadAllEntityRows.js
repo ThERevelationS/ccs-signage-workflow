@@ -11,13 +11,15 @@ function rowIdentity(row, index) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function isRateLimitError(error) {
+  const status = error?.status ?? error?.response?.status;
+  if (status === 429) return true;
   const message = String(
     error?.message ||
     error?.response?.data?.error ||
     error?.data?.error ||
     ""
   ).toLowerCase();
-  return message.includes("rate limit");
+  return message.includes("rate limit") || message.includes("too many requests");
 }
 
 /**
