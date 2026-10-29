@@ -720,6 +720,9 @@ export default function EstimateDetail() {
         return;
       }
       const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...data } = estimate;
+      // A save recomputes pricing — clear the tier-change stale flag (#145).
+      data.pricing_stale = false;
+      data.pricing_stale_reason = "";
       const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
       const pendingTransition = pendingLifecycleBaselineRef.current;
       const matchingPendingTransition = lifecycleReasonRequired &&
@@ -1397,6 +1400,14 @@ export default function EstimateDetail() {
 
       {/* Watch rule (#349): "tell me when this estimate is approved" — the
           rule persists in GlobalSettings and `check_watches` surfaces hits. */}
+      {/* Bulk re-markup flag (#145): when the admin changes this estimate's
+          pricing tier, open estimates get pricing_stale — recompute + re-save
+          clears it. */}
+      {estimate.pricing_stale && (
+        <div className="mx-3 mb-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-800">
+          {estimate.pricing_stale_reason || "The pricing tier changed — recompute and re-save this estimate before sending."}
+        </div>
+      )}
       {estimate.id && persistedStatus !== "approved" && (
         <div className="px-3 pb-2">
           <button type="button" disabled={watchBusy} onClick={async () => {
