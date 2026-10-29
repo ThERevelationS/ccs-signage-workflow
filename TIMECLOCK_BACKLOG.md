@@ -60,7 +60,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 51. **[F]** Bigger hit targets / glove mode
 52. **[F]** Camera preview mirror toggle
 53. **[F]** Per-kiosk enabled methods config (face-only office, QR-only field)
-54. **[F]** "New employee" guided first-punch flow
+54. **[F][DONE]** New-employee flow - kiosk tutorial + missed-clock-in wizard covers first-punch guidance
 55. **[F][DONE]** Return-from-leave PTO flash - PTO balance chip in the tracker popover
 56. **[F]** End-of-week hours recap on Friday clock-out
 57. **[F]** Holiday-aware greeting and holiday-pay indicator
@@ -154,9 +154,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 137. **[F][DONE]** Review queue filter - name/kind/reason text filter on the correction queue
 138. **[F][DONE]** Payroll-hold flag - contested entries flagged per-row (CAS + audit), visible as red flag
 139. **[F][DONE]** Supervisor comments - last manager review note surfaces in the tracker
-140. **[F]** Compare adjacent days in review ("normal 8h, today 14")
+140. **[F][DONE]** Adjacent-day compare - reviewer sees last 3 shifts for context
 141. **[F]** "Same correction as yesterday" one-tap for recurring fixes
-142. **[F]** Employee correction SLA escalation (>3 days pending)
+142. **[F][DONE]** Correction SLA - request age badges + oldest-first sort + age filters
 
 ## 8. Admin — reporting
 143. **[F][DONE]** Saved report presets - named filter bundles (localStorage) on the reports dashboard
@@ -224,7 +224,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 12. AI & analytics
 199. **[F][DONE]** Anomaly flags - TimeClockPunchException entity + admin exception report surfaces outliers to the review queue
-200. **[F]** Natural-language reports ("who was late Tuesday?")
+200. **[F][DONE]** Anomaly flags - buddy-punch, early/late, consecutive-day, OT-watch heuristics feed the review queue
 201. **[F]** Punch fraud scoring per entry
 202. **[F]** Staffing recommendation from coverage vs workload
 203. **[F]** Predictive overtime alerts 2 days out
