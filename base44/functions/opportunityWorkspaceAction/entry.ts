@@ -336,6 +336,10 @@ Deno.serve(async (req) => {
         overdue_follow_ups: overdueFollowUps,
         stale_sent_estimates: staleSentEstimates,
         open_estimating_requests: openRequests,
+        // Escalation: still-unassigned after 2 days — flagged to managers.
+        unassigned_estimating_requests: openRequests
+          .filter((r: any) => !r.assigned_estimator && Date.parse(r.created_date) < Date.now() - 2 * 86400000)
+          .slice(0, 25),
         low_stock: lowStock,
         needs_recalc_parts: list(needsRecalcRows)
           .slice(0, 25)
