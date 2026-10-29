@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
 
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates] = await Promise.all([
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows] = await Promise.all([
         PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
         Invoice.filter({}, "-updated_date", 200).catch(() => []),
         PurchaseOrder.filter({}, "-updated_date", 200).catch(() => []),
@@ -233,6 +233,7 @@ Deno.serve(async (req) => {
         WorkOrder.filter({}, "-updated_date", 300).catch(() => []),
         PermitLineItem.filter({}, "-updated_date", 300).catch(() => []),
         Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
+        Estimate.filter({ pipeline_sync_pending: true }, "-updated_date", 100).catch(() => []),
       ]);
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -334,6 +335,16 @@ Deno.serve(async (req) => {
         stale_sent_estimates: staleSentEstimates,
         open_estimating_requests: openRequests,
         low_stock: lowStock,
+        sync_pending_estimates: list(syncPendingRows)
+          .filter((e: any) => Date.parse(clean(e?.updated_date)) < Date.now() - 86400000)
+          .slice(0, 25)
+          .map((e: any) => ({
+            id: clean(e?.id),
+            project_name: clean(e?.project_name),
+            estimate_number: clean(e?.estimate_number),
+            status: clean(e?.status),
+            updated_date: clean(e?.updated_date),
+          })),
         overdue_jobs: list(workOrders)
           .filter((w: any) => clean(w?.current_stage) !== "completed" && clean(w?.due_date) && clean(w?.due_date) < today)
           .map((w: any) => ({
