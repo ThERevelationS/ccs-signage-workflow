@@ -18,7 +18,7 @@ export default function CuttingMethodSlider({ value, onChange, disabled = false,
         const Icon = opt.icon;
         const isDisabled = disabled || (disableLaser && opt.key === "laser");
         return (
-          <button
+          <button type="button"
             key={opt.key}
             type="button"
             disabled={isDisabled}
