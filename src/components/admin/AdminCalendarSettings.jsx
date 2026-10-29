@@ -33,6 +33,7 @@ export default function AdminCalendarSettings() {
   const [eventError, setEventError] = useState("");
   const [stats, setStats] = useState({ total: 0, universal: 0, synced: 0 });
   const [hiddenTypes, setHiddenTypes] = useState(new Set());
+  const [workOrders, setWorkOrders] = useState([]);
 
   // Connection status (future OAuth)
   const [outlookConnected, setOutlookConnected] = useState(false);
@@ -45,15 +46,17 @@ export default function AdminCalendarSettings() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [evs, savedSettings] = await Promise.all([
+      const [evs, savedSettings, wos] = await Promise.all([
         base44.entities.CalendarEvent.list("-start_datetime", 200),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "calendarSettings",
           label: "Calendar settings",
         }),
+        base44.entities.WorkOrder.list("-created_date", 150).catch(() => []),
       ]);
       setEvents(evs || []);
+      setWorkOrders((wos || []).filter((w) => !w.deleted));
       setGlobalSettings(savedSettings);
       const sv = savedSettings?.setting_value || {};
       setOutlookConnected(sv.outlook_connected || false);
@@ -127,6 +130,11 @@ export default function AdminCalendarSettings() {
     .filter(e => !hiddenTypes.has(e.event_type || "other"))
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
+
+  const unscheduledWork = (() => {
+    const scheduledIds = new Set(events.map((e) => e.work_order_id).filter(Boolean));
+    return workOrders.filter((w) => w.id && !scheduledIds.has(w.id)).slice(0, 8);
+  })();
 
   const printWeekRows = (() => {
     const end = new Date(Date.now() + 7 * 86400000);
@@ -349,6 +357,20 @@ export default function AdminCalendarSettings() {
               </li>
             ))}
             {bookingConflicts.length > 8 && <li className="text-xs text-amber-700">…and {bookingConflicts.length - 8} more</li>}
+          </ul>
+        </div>
+      )}
+
+      {unscheduledWork.length > 0 && (
+        <div className="clay-card border-blue-200 bg-blue-50/60 p-4">
+          <h3 className="text-sm font-semibold text-blue-900">Unscheduled work — {unscheduledWork.length}{workOrders.length > 8 ? "+" : ""} with no calendar event</h3>
+          <ul className="mt-2 space-y-1">
+            {unscheduledWork.map((w) => (
+              <li key={w.id} className="flex items-center gap-2 text-xs text-blue-800">
+                <span className="font-medium truncate">{w.title || w.id}</span>
+                {w.sales_status && <span className="text-blue-600/70">({w.sales_status})</span>}
+              </li>
+            ))}
           </ul>
         </div>
       )}
