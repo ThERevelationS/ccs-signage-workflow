@@ -7868,6 +7868,27 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, employees, total_available_minutes: totalAvailable });
     }
 
+    if (action === 'admin_period_compare') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required for period comparisons.' }, { status: 403 });
+      const rows = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, '-clock_in', 2000).catch(() => []);
+      if (!Array.isArray(rows)) throw new Error('TimeEntry lookup did not return a record list.');
+      const monthKey = (iso: any) => { const k = dateKeyInCompanyTime(iso); return k ? k.slice(0, 7) : ''; };
+      const months: Record<string, { hours: number, entries: number, employees: Set<string> }> = {};
+      for (const e of rows) {
+        const mk = monthKey(e.clock_in);
+        if (!mk) continue;
+        if (!months[mk]) months[mk] = { hours: 0, entries: 0, employees: new Set() };
+        months[mk].hours += Number(e.total_hours || 0);
+        months[mk].entries += 1;
+        if (e.user_email) months[mk].employees.add(e.user_email);
+      }
+      const periods = Object.entries(months)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .slice(0, 13)
+        .map(([month, v]) => ({ month, hours: Math.round(v.hours * 100) / 100, entries: v.entries, employees: v.employees.size }));
+      return Response.json({ success: true, periods });
+    }
+
     if (action === 'list_pending_requests') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view in-flight requests.' }, { status: 403 });
       const rows = await stateEntity.filter({}).catch(() => []);
