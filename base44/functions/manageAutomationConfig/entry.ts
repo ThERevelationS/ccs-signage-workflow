@@ -85,7 +85,10 @@ function cleanEmailGroupData(value: any) {
   if (!emails.length || emails.some((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320)) {
     throw Object.assign(new Error('Email group contains an invalid email address.'), { status: 400 });
   }
-  return { name, description: cleanDescription(data.description), emails };
+  const permission_sections = Array.isArray(data.permission_sections)
+    ? [...new Set(data.permission_sections.map((v: unknown) => String(v || '').trim().slice(0, 80)).filter(Boolean))].slice(0, 30)
+    : [];
+  return { name, description: cleanDescription(data.description), emails, permission_sections };
 }
 
 async function listRules(entity: any) {
@@ -250,7 +253,7 @@ async function updateGroup(Group: any, body: any) {
   const cleaned = cleanEmailGroupData({ ...current, ...(body?.next_fields || {}) });
   const duplicates = nameMatches(await listGroups(Group), cleaned.name, id);
   if (duplicates.length) throw Object.assign(new Error(`Another email group named “${cleaned.name}” already exists.`), { status: 409 });
-  const patch = { name: cleaned.name, description: cleaned.description, emails: cleaned.emails };
+  const patch = { name: cleaned.name, description: cleaned.description, emails: cleaned.emails, permission_sections: cleaned.permission_sections };
   const result = await Group.updateMany({ id, updated_date: expectedUpdatedDate }, { $set: patch });
   if (!result || result.updated !== 1) throw Object.assign(new Error('Email group changed in another session.'), { status: 409 });
   const saved = await Group.get(id).catch(() => null);
