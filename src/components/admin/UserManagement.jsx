@@ -125,6 +125,8 @@ export default function UserManagement() {
   const onboardingResendOwner = useRef(null);
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [accessUser, setAccessUser] = useState(null);
+  const [userSearch, setUserSearch] = useState("");
+  const [userFilter, setUserFilter] = useState("all"); // all | admin | user | full_admin
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
   const [accountSaveRecovery, setAccountSaveRecovery] = useState(null);
@@ -286,6 +288,17 @@ export default function UserManagement() {
       ++deletionImpactSequence.current;
     };
   }, [sessionToken]);
+
+  const userSearchQ = userSearch.trim().toLowerCase();
+  const visibleUsers = users.filter((u) => {
+    if (userFilter === "admin" && u.role !== "admin") return false;
+    if (userFilter === "user" && u.role === "admin") return false;
+    if (userFilter === "full_admin" && u.is_full_admin !== true) return false;
+    if (!userSearchQ) return true;
+    const hay = [u.full_name, u.email, ...(Array.isArray(u.sales_roles) ? u.sales_roles : [])]
+      .filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(userSearchQ);
+  });
 
   const loadUsers = async () => {
     // A stale mutation must not even start a read with its previous token.
@@ -1778,7 +1791,32 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="space-y-2">
-            {users.map((user) => (
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <Input
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search name, email, or role…"
+                className="h-8 w-56 text-xs"
+                aria-label="Search users"
+              />
+              <div className="flex gap-1">
+                {[["all", "All"], ["admin", "Admins"], ["user", "Users"], ["full_admin", "Full admins"]].map(([v, label]) => (
+                  <Button key={v} type="button" size="sm"
+                    variant={userFilter === v ? "default" : "outline"}
+                    onClick={() => setUserFilter(v)}
+                    className="h-7 text-xs">
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              {(userSearch || userFilter !== "all") && (
+                <span className="text-xs text-gray-400 ml-auto">{visibleUsers.length} of {users.length}</span>
+              )}
+            </div>
+            {visibleUsers.length === 0 && (
+              <div className="text-center py-6 text-sm text-gray-500">No users match the current filter.</div>
+            )}
+            {visibleUsers.map((user) => (
               <div
                 key={user.id}
                 className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/50 hover:bg-white/80 transition-colors"
