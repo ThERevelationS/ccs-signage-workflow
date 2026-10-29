@@ -164,6 +164,11 @@ export default function ActivityFeed() {
       }, Infinity)
     : null;
 
+  const actorCounts = visibleActivities.reduce((acc, a) => {
+    const key = a.user || "Unknown"; acc[key] = (acc[key] || 0) + 1; return acc;
+  }, {});
+  const burstActors = new Set(Object.entries(actorCounts).filter(([, n]) => n >= 20).map(([k]) => k));
+
   const exportActivitiesCsv = () => {
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = [
@@ -309,6 +314,10 @@ export default function ActivityFeed() {
                     <span className="font-medium text-sm text-gray-800">
                       {activity.user}
                     </span>
+                    {burstActors.has(activity.user) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300"
+                        title="Unusually high activity in this window">burst</span>
+                    )}
                     <span className="text-gray-400">â€¢</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getActionColor(activity.actionType)}`}>
                       {activity.entityType === "Order" ? "Order" : "Sales"}
