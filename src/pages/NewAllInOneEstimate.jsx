@@ -56,6 +56,7 @@ const DUPLICATE_PREFILL_FIELDS = [
   "salesperson",
   "sales_center",
   "pricing_tier",
+  "volume_discount_tiers",
 ];
 
 const EMPTY = {
@@ -101,7 +102,15 @@ export default function NewAllInOneEstimate() {
   const [dupSource, setDupSource] = useState(null);
 
   useEffect(() => {
-    loadAllCustomers().then((r) => setCustomers(r || [])).catch((err) => setError(err?.message || "Customers could not be loaded."));
+    loadAllCustomers().then((r) => {
+      const rows = r || [];
+      setCustomers(rows);
+      try {
+        const want = new URLSearchParams(window.location.search).get("customer");
+        const match = want && rows.find((c) => String(c.id) === String(want));
+        if (match) setForm((f) => ({ ...f, customer_id: match.id, client_name: match.company_name || f.client_name }));
+      } catch {}
+    }).catch((err) => setError(err?.message || "Customers could not be loaded."));
     loadAllEntityRows({ entity: staffEntities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || "Tax groups could not be loaded."));
     loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || [])).catch((err) => setError(err?.message || "Users could not be loaded."));
     loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
