@@ -42,6 +42,7 @@ import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
 import { duplicateEstimate, splitEstimate, newEstimateCreationKey, estimateLineSelectionKey } from "@/components/estimator/estimateCreationService";
 import MergeEstimateDialog from "@/components/estimator/aio/MergeEstimateDialog";
+import EstimateNotesTimeline from "@/components/estimator/aio/EstimateNotesTimeline";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -268,17 +269,10 @@ export default function EstimateDetail() {
         archived_reason: `Merged into ${primaryLabel} (${picked.length} section${picked.length === 1 ? "" : "s"} moved)`,
       };
       try {
-        const archiveFields = {
+        await staffEntities.AllInOneEstimate.update(secondary.id, {
           status: secondaryAfter.status,
           archived_at: secondaryAfter.archived_at,
           archived_reason: secondaryAfter.archived_reason,
-        };
-        await replaceEstimateFieldsIfUnchanged({
-          entity: staffEntities.AllInOneEstimate,
-          estimateId: secondary.id,
-          expectedFields: expectedEstimateFields(secondary, archiveFields),
-          nextFields: archiveFields,
-          label: "Merged estimate archive",
         });
         await ensureEstimateLifecycleRevision({
           idempotencyKey: `estimate_merge:${secondary.id}:${estimate.id}:${picked.length}`,
@@ -1430,6 +1424,7 @@ export default function EstimateDetail() {
           )}
 
           {step === 1 && <EstimateHeaderForm estimate={estimate} onChange={patch} readOnly={readOnly} />}
+          {step === 1 && <div className="mt-3"><EstimateNotesTimeline estimate={estimate} onChange={patch} readOnly={readOnly} /></div>}
 
           {step === 2 && (
             activeProduct ? (
