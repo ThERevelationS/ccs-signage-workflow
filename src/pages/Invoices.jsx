@@ -399,7 +399,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
     paid_date: clean(pay.paid_date),
     reference_number: clean(pay.reference_number),
     notes: clean(pay.notes),
-  });
+  }, () => setPay((p) => ({ amount: "", method: p.method, paid_date: "", reference_number: "", notes: "" })));
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
