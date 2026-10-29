@@ -9,6 +9,7 @@ import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
 import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
 import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import CustomerQuotePanel from "@/components/estimator/CustomerQuotePanel";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
@@ -115,11 +116,12 @@ export default function EstimateDetail() {
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   const [trashing, setTrashing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [duplicateChoiceOpen, setDuplicateChoiceOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const copyingRef = useRef(false);
   const copyAttemptRef = useRef(null);
-  const copyCreationKey = (kind, lineIds = []) => {
-    const signature = JSON.stringify([kind, estimate, [...lineIds].sort()]);
+  const copyCreationKey = (kind, lineIds = [], variant = "") => {
+    const signature = JSON.stringify([kind, variant, estimate, [...lineIds].sort()]);
     if (copyAttemptRef.current?.signature !== signature) {
       copyAttemptRef.current = { signature, key: newEstimateCreationKey() };
     }
@@ -162,16 +164,21 @@ export default function EstimateDetail() {
     }
   };
 
-  const handleDuplicate = async () => {
+  const handleDuplicate = () => {
     if (copyingRef.current || saving || trashing || !estimate?.id || estimate.deleted === true) return;
     if (openRevision) {
       window.alert("Save the open estimate revision before duplicating this estimate.");
       return;
     }
+    setDuplicateChoiceOpen(true);
+  };
+
+  const runDuplicate = async (keepEstimateNumber) => {
+    setDuplicateChoiceOpen(false);
     copyingRef.current = true;
     setDuplicating(true);
     try {
-      const created = await duplicateEstimate({ source: estimate, sessionToken, creationKey: copyCreationKey("duplicate") });
+      const created = await duplicateEstimate({ source: estimate, sessionToken, creationKey: copyCreationKey("duplicate", [], keepEstimateNumber ? "same" : "new"), keepEstimateNumber });
       navigate(`/EstimateDetail?id=${created.id}`);
     } catch (error) {
       window.alert(error?.message || "The estimate could not be duplicated.");
@@ -1490,6 +1497,22 @@ export default function EstimateDetail() {
         onConfirm={handleCancel}
         estimateName={estimate.project_name}
       />
+
+      <AlertDialog open={duplicateChoiceOpen} onOpenChange={setDuplicateChoiceOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate this estimate?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose whether the copy gets a new estimate number or keeps {estimate.estimate_number ? `#${estimate.estimate_number}` : "the same number"} (useful when reworking the same quote). Either way it starts as a new draft and the original is unchanged.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => runDuplicate(true)}>Keep same number</AlertDialogAction>
+            <AlertDialogAction onClick={() => runDuplicate(false)}>New number</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
