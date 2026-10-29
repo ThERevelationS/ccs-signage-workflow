@@ -16,3 +16,10 @@ Remote sandbox is the source of truth — pull remote files before editing (`npx
 - Concurrency: `replaceFoundationFieldsIfUnchanged` / `replaceEstimateFieldsIfUnchanged` / `deleteBuilderEntityIfUnchanged` — CAS anchored on loaded `updated_date` + baseline fields.
 - Frontend lists: `loadAllEntityRows` (paged, rate-limit retry, dedupe, fail-closed).
 - Deploy a function: `npx base44@latest functions deploy <name> --app-id <id> --json` (deploys from LOCAL file — pull remote first). Site publishes only on explicit request.
+
+## Security — DO NOT regress
+
+- Every `base44/entities/*.jsonc` MUST keep its `"rls"` block. When rewriting or regenerating an entity file, preserve the existing rls verbatim; never emit an entity file without rls. Backend-only entities use sentinel roles like `__<name>_backend_only__`.
+- Frontend code must not call `base44.entities.<Entity>` directly for staff-tier entities — use `@/api/gatedEntities` / staffEntities (session-gated `staffDataRead`/`staffEntityWrite`).
+- No anonymous writes: new backend functions must authenticate via `authenticateSignShopSession` (or an explicit public-by-design path).
+- Never add `"rls"`-free entities, plaintext password handling, or unauthenticated capability issuance.
