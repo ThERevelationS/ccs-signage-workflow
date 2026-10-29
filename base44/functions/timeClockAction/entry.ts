@@ -7722,6 +7722,31 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, entry: updated });
     }
 
+    if (action === 'my_labor_history') {
+      // Employee self-service: distinct recent labor allocations for quick-pick.
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view labor history.' }, { status: 403 });
+      const rows = await laborEntity.filter({ user_email: target.email }, '-created_date', 60).catch(() => []);
+      if (!Array.isArray(rows)) throw new Error('Labor history lookup did not return a record list.');
+      const seen = new Set<string>();
+      const recent: any[] = [];
+      for (const r of rows) {
+        if (!r?.id) continue;
+        const key = [r.work_order_id || '', r.client_name || '', r.inhouse_task || '', r.activity_type || ''].join('|');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        recent.push({
+          activity_type: r.activity_type || 'other',
+          work_order_id: r.work_order_id || null,
+          work_order_title: r.work_order_title || r.job_name || '',
+          client_name: r.client_name || '',
+          inhouse_task: r.inhouse_task || '',
+          is_inhouse: r.is_inhouse === true,
+        });
+        if (recent.length >= 8) break;
+      }
+      return Response.json({ success: true, recent });
+    }
+
     if (action === 'my_history') {
       // Employee self-service: own recent punches for export and stats.
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view punch history.' }, { status: 403 });
