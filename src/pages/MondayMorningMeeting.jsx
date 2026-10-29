@@ -17,6 +17,7 @@ import { Loader2, Link as LinkIcon, Search, RefreshCw, CalendarClock, AlertTrian
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, mutateWorkOrderArrayField, mutateLocatedWorkOrderArrayItem } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -338,12 +339,10 @@ export default function MondayMorningMeeting() {
     else setIsRefreshing(true);
     try {
       const [orders, usersData, taskDescSetting] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Monday Morning Meeting Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Monday Morning Meeting authorized users" }),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
