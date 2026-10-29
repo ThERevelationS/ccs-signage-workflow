@@ -58,7 +58,24 @@ export function getVolumeDiscountPct(eligibleSubtotal, brackets) {
  * @param {Object} settings - { brackets, eligibleCategoryKeys }
  * @returns {Object} { lines: [...withMarkupApplied], totals: {...} }
  */
+// Skip-recompute memo (#414): identical line/tier objects with identical
+// settings content return the last result without re-running the markup
+// waterfall. WeakMap on lines (a new array = new payload = fresh compute).
+const _applyCache = new WeakMap();
+
 export function applyMarkups(lines, tier, settings) {
+  if (!lines || typeof lines !== "object") return _applyMarkupsComputed(lines, tier, settings);
+  const settingsKey = JSON.stringify(settings || {});
+  let byTier = _applyCache.get(lines);
+  const hit = byTier?.get(tier);
+  if (hit && hit.key === settingsKey) return hit.out;
+  const out = _applyMarkupsComputed(lines, tier, settings);
+  if (!byTier) { byTier = new Map(); _applyCache.set(lines, byTier); }
+  byTier.set(tier, { key: settingsKey, out });
+  return out;
+}
+
+function _applyMarkupsComputed(lines, tier, settings) {
   const { brackets = [], eligibleCategoryKeys = [], categoryFlags = {} } = settings || {};
   const isDiscountEligible = (key) => eligibleCategoryKeys.includes(key) && categoryFlags[key] !== false;
 
