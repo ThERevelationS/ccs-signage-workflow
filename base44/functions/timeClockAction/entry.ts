@@ -3553,7 +3553,6 @@ Deno.serve(async (req) => {
       let breakMinutes = 0;
       let paidBreakMinutes = 0;
       let pauseMinutes = 0;
-      const todaysSegments: any[] = [];
       if (entry) {
         const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
         const pauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
