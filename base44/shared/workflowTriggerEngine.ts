@@ -693,7 +693,9 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const triggeredActions: any[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
   for (const rule of orderedRules) {
-    if (!rule || rule.enabled !== true || !Array.isArray(rule.triggers) || !Array.isArray(rule.actions)) continue;
+    // Approval-gated automations: a pending rule is a proposal — it never fires
+    // until an administrator approves it, even if it is enabled.
+    if (!rule || rule.enabled !== true || rule.approval_status === 'pending' || !Array.isArray(rule.triggers) || !Array.isArray(rule.actions)) continue;
     // Triggers combine with each row's declared logic (and/or). AND only
     // holds when several trigger rows can match the same event — the same
     // semantics the Admin editor warns about for mixed event types.
