@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import {
   createWorkOrderArrayItemLocator,
   findWorkOrderArrayItemIndex,
@@ -188,12 +189,9 @@ export default function MyWorkflow() {
     setIsLoading(true);
     try {
       const [allOrders, allGeneralTasks] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "My Workflow Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
+        ),
         loadAllEntityRows({
           entity: GeneralTask,
           query: { completed: false },
