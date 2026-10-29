@@ -93,6 +93,15 @@ function projectRow(row: any, fields: string[] | null, heavy: string[]) {
   return clean;
 }
 
+// Module-scope result cache — Deno isolates are reused across invocations,
+// so a burst of identical full pulls (post-publish reloads, many staff tabs
+// opening at once) collapses to one upstream read set instead of ~7 paged
+// entity reads per tab. Delta pulls and custom projections are never
+// cached; the cached payload keeps its own server_time so the caller
+// delta cursor still covers the gap.
+let feedCache: { key: string; payload: any; expires: number } | null = null;
+const FEED_CACHE_TTL_MS = 30_000;
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
@@ -117,6 +126,11 @@ Deno.serve(async (req) => {
     const fields = cleanFields(body?.fields);
     const includeHeavy = body?.include_heavy === true;
     const heavy = includeHeavy ? [] : spec.heavy;
+    const cacheable = !since && !fields && !includeHeavy;
+    const cacheKey = entityName + "|" + JSON.stringify(query) + "|" + sort;
+    if (cacheable && feedCache && feedCache.key === cacheKey && feedCache.expires > Date.now()) {
+      return Response.json(feedCache.payload);
+    }
 
     const entity = base44.asServiceRole.entities[entityName];
     const rows: any[] = [];
@@ -137,12 +151,14 @@ Deno.serve(async (req) => {
       if (skip >= MAX_ROWS) { truncated = true; break; }
     }
 
-    return Response.json({
+    const payload = {
       rows,
       count: rows.length,
       truncated,
       server_time: new Date().toISOString(),
-    });
+    };
+    if (cacheable) feedCache = { key: cacheKey, payload, expires: Date.now() + FEED_CACHE_TTL_MS };
+    return Response.json(payload);
   } catch (error: any) {
     const status = Number(error?.status || error?.response?.status || 500);
     if ([400, 401, 403, 429].includes(status)) {
