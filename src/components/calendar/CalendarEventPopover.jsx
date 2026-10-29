@@ -28,7 +28,7 @@ export default function CalendarEventPopover({ event, onEdit, onClose, style }) 
           <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: event.color || event._color || "#7C3AED" }} />
           <h3 className="font-semibold text-gray-900 text-sm truncate">{event.title}</h3>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+        <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
           <X className="w-4 h-4" />
         </button>
       </div>
