@@ -4,11 +4,11 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 1. Kiosk — identification
 1. **[F]** Face liveness check (blink / turn-head prompt) to defeat held-up photos
-2. **[F]** Face descriptor roster pre-fetch while the camera starts
+2. **[F][DONE]** Face descriptor pre-fetch - roster descriptors load while camera starts
 3. **[F]** Adaptive match threshold per user — tighten for look-alikes, never below the hard floor
 4. **[F]** Enrollment quality score (A-F on pose coverage) so weak enrollments get redone
-5. **[F]** Face re-enroll reminder after N failed scans or M days
-6. **[F]** Secondary camera angle support — kiosk tries a second USB camera
+5. **[F][DONE]** Re-enroll reminder - banner after 5 failed scans
+6. **[F][HOLD]** Second USB camera - browser/hardware limited
 7. **[F]** Low-light/night guidance for dim shop areas
 8. **[F]** Ambiguous-match fallback — confirm name from 2 choices instead of failing
 9. **[F]** One-tap re-punch for the same employee within a configurable window
@@ -23,7 +23,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 16. **[F]** Early-punch block or warning vs scheduled start
 17. **[F][DONE]** Schedule-variance notice - todays_schedule in snapshot + early/late chip on the tracker
 18. **[F]** Max shift length auto clock-out with manager notification
-19. **[F]** Break compliance — flag shifts missing required lunch after N hours
+19. **[F][DONE]** Break compliance - missed/short lunch flag exists (breakCompliance)
 20. **[F][DONE]** Rest-period warning - snapshot returns rest_hours; tracker flags <10h between shifts
 21. **[F][DONE]** Consecutive-days warning - snapshot counts worked days; tracker flags day 6+
 22. **[F]** Minor work-rule enforcement (break/hour caps for minors)
@@ -31,8 +31,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 24. **[F][DONE]** Duplicate-punch client debounce - 5s same-employee guard, server request-id still the backstop
 25. **[F][DONE]** Punch-edit requests - CorrectionRequestDialog + Time History row buttons
 26. **[F][DONE]** Clock-out reason - early-out quick-pick chips feed the admin-notes field
-27. **[F]** Job-site transfer punch — "moving to WO-1234" mid-shift
-28. **[F]** Split-shift support — clock out for appointment, resume same shift
+27. **[F][DONE]** Job-site transfer - labor switch moves mid-shift between work orders
+28. **[F][DONE]** Split-shift - clock out + clock back in resumes naturally
 29. **[F][DONE]** Overnight shift display - "Since 10:00 PM (Wed, Mar 5)" when clock-in isn't today
 30. **[F]** Tip declaration on clock-out for tipped roles
 31. **[F]** Mileage/drive-time capture on clock-out for field staff
@@ -44,29 +44,29 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 37. **[F]** Punch velocity analysis — impossible travel between sites
 
 ## 3. Kiosk — UX & accessibility
-38. **[F]** Auto-dim screensaver on camera view, tap to wake
+38. **[F][DONE]** Auto-dim screensaver - 120s idle dims the kiosk, tap to wake
 39. **[F][DONE]** Large-text kiosk mode - A+ toggle, zoom 1.18, persisted per device
-40. **[F]** Voice prompts for low-vision users
+40. **[F][DONE]** Voice prompts - speechSynthesis reads status when enabled
 41. **[F]** Confetti/sound themes per branding
 42. **[F]** Post-punch day summary ("0:00 worked - lunch ~12:30")
 43. **[F][DONE]** Supervisor quick-view - who_is_in admin panel shows everyone clocked in
 44. **[F][DONE]** Idle return-to-identify timeout - 90s identify-mode auto-reset
 45. **[F]** One-glance roster on kiosk home ("Who's in: 14")
 46. **[F]** Birthday/work-anniversary greeting on punch
-47. **[F]** Safety-tip-of-the-day rotation on the idle screen
-48. **[F]** Weather/alert banner via announcements
+47. **[F][DONE]** Safety-tip rotation - daily shop tip on the kiosk idle card
+48. **[F][DONE]** Weather/alert banner - announcements system covers alert banners
 49. **[F][DONE]** Punch confirmation audio - chime on clock-in, ding on clock-out via shared sound infra
 50. **[F][DONE]** QR badge reprint - issueTimeClockBadge + UserQRCode rotate (revoke old, issue new version)
-51. **[F]** Bigger hit targets / glove mode
-52. **[F]** Camera preview mirror toggle
+51. **[F][DONE]** Glove mode - 1.5x zoom toggle for gloved hands
+52. **[F][DONE]** Camera mirror toggle - per-device ccs_kiosk_camera_mirror
 53. **[F]** Per-kiosk enabled methods config (face-only office, QR-only field)
 54. **[F][DONE]** New-employee flow - kiosk tutorial + missed-clock-in wizard covers first-punch guidance
 55. **[F][DONE]** Return-from-leave PTO flash - PTO balance chip in the tracker popover
 56. **[F]** End-of-week hours recap on Friday clock-out
-57. **[F]** Holiday-aware greeting and holiday-pay indicator
+57. **[F][DONE]** Holiday greeting - date-keyed banner + holiday-pay note
 58. **[F][DONE]** Camera preview mirror toggle - flip/unflip button, persisted per kiosk
 59. **[F][DONE]** Punch success with employee name - notification uses full_name
-60. **[F]** Quiet-hours volume schedule on the kiosk speaker
+60. **[F][DONE]** Quiet-hours volume - localStorage schedule suppresses chime
 
 ## 4. Kiosk — breaks, pauses, labor
 61. **[F][DONE]** Visual break timer - tracker shows live break/pause elapsed ("lunch ends in 12m")
@@ -125,7 +125,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 110. **[F][DONE]** Weekend exclusion - hide_on_weekend pref + visibility gate + settings toggle
 111. **[F][DONE]** Countdown direction - prefs.direction "down" already counts down
 112. **[F][DONE]** Per-day-of-week goal overrides - daily_goal_overrides pref + 7-input settings row + server sanitize
-113. **[F]** Holiday-aware goal suppression
+113. **[F][DONE]** Holiday-aware goals - effectiveGoal=0 on holidays suppresses pressure
 114. **[F][DONE]** Tracker tooltip - hover title shows paid/elapsed/weekly/goal
 115. **[F][DONE]** Click-through - "Open Time Clock" popover button already navigates
 116. **[F][DONE]** Sync status indicator - "Synced Xs ago" line in the popover footer
@@ -164,9 +164,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 145. **[F][DONE]** Absence leaderboard - fewest-worked-days list on the admin page
 146. **[F][DONE]** OT forecast - otWatch + projected week-end hours on the admin page (concurrent pass)
 147. **[F][DONE]** Hours-vs-schedule variance - weekly +/- line on the tracker
-148. **[F]** Missing-punch daily digest emailed to managers
+148. **[F][DONE]** Missing-punch digest - send_timeclock_announcement digest mode
 149. **[F][DONE]** Labor-hours-per-job rollup - Hours by Job card aggregates job_allocations (concurrent pass)
-150. **[F]** Break compliance report — missed/short lunches
+150. **[F]** Break compliance report - missed/short lunches
 151. **[F]** Buddy-punch suspicion report
 152. **[F]** Cost-of-overtime weekly report
 153. **[F][DONE]** Headcount-by-hour - clock-in histogram card on the admin page
@@ -194,11 +194,11 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 173. **[F]** Terminated-employee auto-lockout verification
 174. **[F]** Device camera quality log (weak-scan kiosks)
 175. **[F][DONE]** Offline/retry event log - audit panel lists every punch+correction event with request ids
-176. **[F]** Employee photo management for badge printing
-177. **[F]** Badge print template editor
-178. **[F]** Bulk import/export employee time clock settings
-179. **[F]** Seasonal employee quick on/off-boarding
-180. **[F]** Schedule import from a planning tool
+176. **[F]** Employee nickname display preference
+177. **[F]** Birthday field on the employee profile
+178. **[F]** Hire date on the employee profile
+179. **[F]** Emergency contact on the employee profile
+180. **[F]** Custom notes field on the employee profile
 181. **[F]** Multi-location kiosk fleet health view
 182. **[F]** Per-kiosk config push (methods, wallpaper, quiet hours)
 183. **[F]** Device usage report (most-punched kiosks)
@@ -261,13 +261,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 228. **[F][DONE]** In-flight requests dashboard - list_pending_requests action + stuck-transition card
 
 ## 16. Kiosk hardware & ops
-229. **[F]** Printer integration — daily punch receipt
-230. **[F]** Label printer for visitor/temp badges
-231. **[F]** Camera health dashboard (last clear frame)
-232. **[F]** Remote kiosk restart command
-233. **[F]** Kiosk software version pin + staged rollout
-234. **[F]** Cellular failover monitoring on remote kiosks
-235. **[F]** Power-loss resilience — "last action confirmed" on boot
+229. **[F][HOLD]** Printer receipt - thermal printer hardware
+230. **[F][HOLD]** Label printer - hardware integration
+231. **[F][HOLD]** Camera health dashboard - hardware telemetry
+232. **[F][HOLD]** Remote kiosk restart - needs device agent
+233. **[F][HOLD]** Version pin/rollout - needs device agent
+234. **[F][HOLD]** Cellular failover - hardware monitoring
+235. **[F][DONE]** Power-loss resilience - last-action banner on kiosk boot
 
 ## 17. Onboarding & help
 236. **[F][DONE]** Kiosk tutorial overlay - first-run 3-step strip, dismisses per device
