@@ -109,6 +109,11 @@ function cleanManagedFields(value: any) {
   if (Object.prototype.hasOwnProperty.call(input, 'can_import_export')) out.can_import_export = input.can_import_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_order_export')) out.can_order_export = input.can_order_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_view_resources')) out.can_view_resources = input.can_view_resources === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'notification_prefs')) {
+    const prefs = input.notification_prefs && typeof input.notification_prefs === 'object' && !Array.isArray(input.notification_prefs)
+      ? input.notification_prefs : {};
+    out.notification_prefs = { automation_emails: prefs.automation_emails !== false };
+  }
   if (Object.prototype.hasOwnProperty.call(input, 'can_approve_quotes')) out.can_approve_quotes = input.can_approve_quotes === true;
   if (Object.prototype.hasOwnProperty.call(input, 'employment_type')) {
     const employmentType = String(input.employment_type || '');
