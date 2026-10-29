@@ -135,6 +135,10 @@
           "contact_address": {
             "type": "string"
           },
+          "hours": {
+            "type": "string",
+            "description": "Office hours in plain text ('Mon-Fri 8a-4:30p') \u2014 'open now?' is a display concern."
+          },
           "contact_notes": {
             "type": "string"
           },
@@ -248,11 +252,5 @@
   },
   "required": [
     "name"
-  ],
-  "rls": {
-    "create": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "read": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "update": { "user_condition": { "role": "__permitlocality_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permitlocality_backend_only__" } }
-  }
+  ]
 }
