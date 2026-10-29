@@ -430,6 +430,7 @@ export default function PermitClientGroup({
                     users={users}
                     currentUser={currentUser}
                     today={today}
+                    installDate={wo?.project_install_date || ""}
                   />
                     </div>
                   </div>
