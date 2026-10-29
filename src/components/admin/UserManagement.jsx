@@ -101,6 +101,7 @@ export default function UserManagement() {
   const [inviteLastName, setInviteLastName] = useState("");
   const [inviteRole, setInviteRole] = useState("user");
   const [inviteManager, setInviteManager] = useState("");
+  const [inviteExpiry, setInviteExpiry] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const inviteInFlight = useRef(false);
   const inviteOwner = useRef(null);
@@ -1411,6 +1412,7 @@ export default function UserManagement() {
           full_name: fullName || null,
           role: inviteRole,
           reports_to: inviteManager.trim() || null,
+          access_expires_on: inviteExpiry || null,
           sales_roles: ["Task Assigned"],
           employment_type: "hourly",
           can_work_pause: false,
@@ -1798,6 +1800,11 @@ export default function UserManagement() {
             <Input value={inviteManager} onChange={(e) => setInviteManager(e.target.value)}
               placeholder="Manager name or email" className="mt-1" />
           </div>
+          <div className="w-40">
+            <Label className="text-xs text-gray-500">Access expires</Label>
+            <Input type="date" value={inviteExpiry} onChange={(e) => setInviteExpiry(e.target.value)}
+              className="mt-1" aria-label="Access expiry date" />
+          </div>
           <div className="w-32">
             <Label className="text-xs text-gray-500">Role</Label>
             <Select value={inviteRole} onValueChange={setInviteRole}>
@@ -2157,6 +2164,11 @@ export default function UserManagement() {
                     </div>
                     <span className="text-sm text-gray-500">{user.email}</span>
                     {user.reports_to && <span className="text-[11px] text-gray-400">reports to {user.reports_to}</span>}
+                    {user.access_expires_on && (() => {
+                      const today = new Date().toISOString().slice(0, 10);
+                      const expired = user.access_expires_on < today;
+                      return <span className={`text-[11px] font-medium ${expired ? "text-red-600" : "text-gray-400"}`}>{expired ? "expired " : "expires "}{user.access_expires_on}</span>;
+                    })()}
                     {user.username && (
                       <span className="text-xs text-purple-600">@{user.username}</span>
                     )}
