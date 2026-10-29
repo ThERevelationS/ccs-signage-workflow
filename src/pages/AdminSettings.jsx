@@ -2102,6 +2102,26 @@ export default function AdminSettings() {
             </nav>
           );
         })()}
+        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Admin overview">
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Automation rules</p>
+            <p className="text-lg font-bold text-gray-800">{automations.length}
+              <span className="ml-1 text-xs font-medium text-green-700">{automations.filter(r => r.enabled !== false).length} on</span>
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Open punch exceptions</p>
+            <p className={`text-lg font-bold ${openExceptionCount ? "text-red-700" : "text-gray-800"}`}>{openExceptionCount}</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Sync conflicts</p>
+            <p className={`text-lg font-bold ${openConflictCount ? "text-amber-700" : "text-gray-800"}`}>{openConflictCount}</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white/70 px-3 py-2">
+            <p className="text-[11px] text-gray-500">Automations</p>
+            <p className={`text-lg font-bold ${automationsPaused ? "text-red-700" : "text-green-700"}`}>{automationsPaused ? "PAUSED" : "Live"}</p>
+          </div>
+        </div>
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
