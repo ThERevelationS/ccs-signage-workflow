@@ -43,6 +43,8 @@ export default function FleetRequests() {
       setEquipment(e || []);
       setParts(p || []);
       setFluids(f || []);
+    } catch (error) {
+      if (requestSequence === loadSequenceRef.current) setActionError(error?.message || "Failed to load fleet requests.");
     } finally {
       if (requestSequence === loadSequenceRef.current) setLoading(false);
     }
