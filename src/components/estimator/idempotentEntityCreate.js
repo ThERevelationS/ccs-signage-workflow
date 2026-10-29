@@ -23,6 +23,10 @@ function sameValue(a, b) {
   if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
     return Math.abs(Number(a) - Number(b)) <= 0.000001;
   }
+  // Trimmed server values must match the retry payload — backend `clean()`
+  // trims most string fields on write, so a strict compare would false-negative
+  // a legitimately-reused record and 409 "retry key belongs to different data".
+  if (typeof a === "string" && typeof b === "string") return a.trim() === b.trim();
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 
