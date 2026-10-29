@@ -143,6 +143,13 @@ export default function ReattachPartsModal({
             })}
           </div>
 
+          <div className="mt-3 rounded border border-lime-200 bg-lime-50 px-3 py-2 text-[11px] text-lime-900">
+            <strong>Plan preview:</strong>{" "}
+            {selected.size === 0
+              ? "No parts selected — nothing will change. All detached parts stay detached."
+              : `${selected.size} part${selected.size === 1 ? "" : "s"} will reattach to ${selected.size === 1 ? "its" : "their"} matched inventory record${selected.size === 1 ? "" : "s"} (frozen prices kept); ${parts.length - selected.size} part${parts.length - selected.size === 1 ? "" : "s"} stay${parts.length - selected.size === 1 ? "s" : ""} detached.`}
+          </div>
+
           {error && (
             <div className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
               {error}
