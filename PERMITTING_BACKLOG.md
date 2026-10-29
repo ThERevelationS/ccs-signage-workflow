@@ -346,23 +346,23 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 257. **[F][FLAGGED-dedicated]** Evidence confidence per source: official .gov page / state registry / inferred / hearsay — a badge on every document.
 258. **[H][FLAGGED-dedicated]** Source link health-check: periodic HEAD-requests flag 404'd official pages — dead evidence gets noticed.
-259. **[F][FLAGGED-dedicated]** Source date captured: "Page last updated March 2024" — the evidence's own freshness, not just ours.
+259. **[F][DONE]** Source date captured: "Page last updated March 2024" — the evidence's own freshness, not just ours.
 260. **[UX][FLAGGED-dedicated]** Click any claim → see the quoted text from the source that proved it — evidence is one tap, not a trust-me.
 261. **[F][FLAGGED-dedicated]** Contradiction logging: when two sources disagree on who issues permits, both get recorded + flagged — never silently resolved.
 262. **[H][FLAGGED-dedicated]** Source-dedup: the same URL on two jurisdictions gets normalized to one record — the evidence graph stays clean.
-263. **[F][FLAGGED-dedicated]** Offline source snapshots: a cached copy of the proving page so a 404 doesn't erase the evidence.
+263. **[F][DONE]** Offline source snapshots: a cached copy of the proving page so a 404 doesn't erase the evidence.
 264. **[UX][DONE]** "Why we believe this" expandable on any verified fact — the reasoning chain in plain language.
 265. **[F][DONE]** Source-type taxonomy: ordinance / fee schedule / application form / zoning map / department page — labeled, not just linked.
 266. **[H][FLAGGED-dedicated]** Source-discovery log: what the crawler tried and rejected — research failures are visible, not silent.
 267. **[F][DONE]** Citizen-verified flag: a jurisdiction whose evidence came from a human staff check vs AI research — different trust.
 268. **[UX][DONE]** Evidence-count on the card: "3 official sources" — confidence at a glance.
-269. **[F][FLAGGED-dedicated]** Application-form library: the actual PDF form per jurisdiction linked for download — staff don't re-find it.
+269. **[F][DONE]** Application-form library: the actual PDF form per jurisdiction linked for download — staff don't re-find it.
 270. **[H][FLAGGED-dedicated]** Form-version tracking: when an office updates their application form, the old link flags "may be outdated".
 271. **[F][DONE]** Ordinance section citations: "Milford Codified §153.042" stored as structured data, not just in notes.
-272. **[UX][FLAGGED-dedicated]** Fee-schedule page deep-link: the exact PDF page with the fee table, not just the department site.
+272. **[UX][DONE]** Fee-schedule page deep-link: the exact PDF page with the fee table, not just the department site.
 273. **[F][FLAGGED-dedicated]** Meeting-agenda links: the council agenda that changed a fee gets linked — the "why" is traceable.
 274. **[H][DONE]** Evidence-gated verification: a jurisdiction can't verify without ≥1 usable official source — enforced server-side.
-275. **[UX][FLAGGED-dedicated]** "Last checked" per source: "This page verified working Oct 15" — per-link freshness.
+275. **[UX][DONE]** "Last checked" per source: "This page verified working Oct 15" — per-link freshness.
 
 ## Y — Boundaries & geography, deeper
 
@@ -391,7 +391,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 295. **[F][FLAGGED-dedicated]** Permit-transfer tracking: when a job moves clients, the permit's owner field changes — the handoff is recorded.
 296. **[UX][FLAGGED-dedicated]** Document thumbnails: the permit PDF's first page as a preview on the line — staff recognize it without opening.
 297. **[F][FLAGGED-dedicated]** Permit-packet export: permit + application + site plan bundled as one printable packet for the inspector.
-298. **[H][FLAGGED-dedicated]** Document-freshness check: a permit expiring before the job's install date flags "permit may lapse — renew first".
+298. **[H][DONE]** Document-freshness check: a permit expiring before the job's install date flags "permit may lapse — renew first".
 299. **[F][DONE]** Multi-permit coordination: when a job needs sign + electrical + zoning separately, the three tracks show as parallel rows.
 300. **[UX][DONE]** "All permits issued" completion state: the job card shows a clear done-state when every line is issued.
 301. **[F][DONE]** Denial-record: a denied permit records the reason + date + appeal deadline — the next attempt learns from it.
@@ -399,7 +399,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 303. **[F][FLAGGED-dedicated]** Fee-reconciliation report: per job, applied fees vs invoiced fees — money never falls between cracks.
 304. **[UX][FLAGGED-dedicated]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
 305. **[F][DONE]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
-306. **[UX][FLAGGED-dedicated]** "What inspectors usually flag" hint per jurisdiction when known — tribal knowledge recorded.
+306. **[UX][DONE]** "What inspectors usually flag" hint per jurisdiction when known — tribal knowledge recorded.
 307. **[F][DONE]** Correction-notice tracking: failed inspection → correction required by date → marked resolved.
 308. **[H][DONE]** Duplicate-permit guard: two identical open applications to the same office for the same job flag as possible duplicates.
 
@@ -440,7 +440,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 338. **[H][FLAGGED-dedicated]** Timezone-normalized timestamps: all display times in America/New_York — no UTC leakage.
 339. **[F][FLAGGED-dedicated]** The estimate's permit line auto-fills the office's known fee — priced-right without re-typing.
 340. **[UX][FLAGGED-dedicated]** "What changed since I was last here" panel on the page — returning users see the delta.
-341. **[F][FLAGGED-dedicated]** Cross-device handoff: start a search on the desktop, confirm it on the phone — state persists.
+341. **[F][DONE]** Cross-device handoff: start a search on the desktop, confirm it on the phone — state persists.
 
 ## AC — Safety & correctness, deeper
 
