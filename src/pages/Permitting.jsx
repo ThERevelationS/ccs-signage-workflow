@@ -23,6 +23,7 @@ import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnc
 import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "@/shared/permittingAddressLocality.js";
 import { staffEntities, loadEntitiesBatch } from "@/components/staff/staffEntities";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { primeEntityRowsCache } from "@/components/estimator/loadAllEntityRows";
 
 const primeAndReturn = (label, query, sort, rows) => { primeEntityRowsCache(label, query, sort, rows); return rows; };
@@ -128,7 +129,6 @@ export default function Permitting() {
       const batched = await loadEntitiesBatch([
         { entity: "PermitLineItem", sort: "-updated_date" },
         { entity: "PermitLocality" },
-        { entity: "WorkOrder", query: { completed: false, deleted: { $ne: true } }, sort: "created_date" },
         { entity: "AuthorizedEmail" },
       ]).catch(() => null);
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
@@ -138,14 +138,11 @@ export default function Permitting() {
         batched?.PermitLocality
           ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
           : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
-        batched?.WorkOrder
-          ? Promise.resolve(primeAndReturn("Permitting Work Orders", { completed: false, deleted: { $ne: true } }, "created_date", batched.WorkOrder))
-          : loadAllEntityRows({
-              entity: WorkOrder,
-              query: { completed: false, deleted: { $ne: true } },
-              sort: "created_date",
-              label: "Permitting Work Orders",
-            }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
+
         batched?.AuthorizedEmail
           ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
           : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users" }),
@@ -753,7 +750,13 @@ export default function Permitting() {
 
   const openWorkOrder = (workOrderId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
-    if (wo) setSelectedWorkOrder(wo);
+    if (!wo) return;
+    setSelectedWorkOrder(wo);
+    // List rows are slim (board feed strips work_notes + smartsheet blobs).
+    // The details dialog needs the full record, so hydrate it on open.
+    WorkOrder.get(wo.id).then((full) => {
+      if (full?.id) setSelectedWorkOrder((prev) => prev?.id === wo.id ? { ...prev, ...full } : prev);
+    }).catch(() => {});
   };
 
   // Group by work order
