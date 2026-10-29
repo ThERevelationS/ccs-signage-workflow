@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ClipboardCheck, Download, FileSpreadsheet, Loader2, ShieldCheck } from "lucide-react";
@@ -7,6 +7,46 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 // The legacy component name is retained because AdminSettings already mounts it.
 // This page does not call CoreBridge, Gmail, or any historical importer.
+function SyncHealthStrip() {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    const latest = async (entity, sort) => {
+      try { const r = await staffEntities[entity].list(sort, 1); return Array.isArray(r) && r[0] ? r[0] : null; }
+      catch { return null; }
+    };
+    const countWhere = async (entity, query) => {
+      try { return await staffEntities[entity].count(query); } catch { return null; }
+    };
+    Promise.all([
+      latest("CorebridgeLog", "-run_at").then((r) => ({ name: "CoreBridge", status: r?.status || "no runs", at: r?.run_at })),
+      latest("SmartsheetSyncTrace", "-created_date").then((r) => ({ name: "Smartsheet", status: r?.status || "no runs", at: r?.created_date })),
+      latest("PermittingScanRun", "-started_at").then((r) => ({ name: "Permitting scan", status: r?.status || "no runs", at: r?.started_at })),
+      countWhere("FleetNotificationQueue", { status: "failed" }).then((n) => ({ name: "Fleet alerts", status: n === null ? "unknown" : n > 0 ? `${n} failed` : "ok", at: null })),
+      countWhere("SyncConflict", { status: "open" }).then((n) => ({ name: "Conflicts", status: n === null ? "unknown" : n > 0 ? `${n} open` : "none", at: null })),
+    ]).then((list) => { if (alive) setRows(list); });
+    return () => { alive = false; };
+  }, []);
+  const tone = (status) =>
+    /fail|error|open/i.test(status) ? "bg-red-100 text-red-800"
+    : /ok|none|complete|success|done/i.test(status) ? "bg-emerald-100 text-emerald-800"
+    : "bg-gray-100 text-gray-600";
+  return (
+    <div className="clay-card p-3" aria-label="Sync health">
+      <p className="text-xs font-semibold text-gray-700">Sync health</p>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {rows.map((r) => (
+          <span key={r.name} className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tone(r.status)}`}
+            title={r.at ? `Last run: ${r.at}` : undefined}>
+            {r.name}: {r.status}
+          </span>
+        ))}
+        {!rows.length && <span className="text-[11px] text-gray-400">Checking integrations…</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function CorebridgeApiSettings({ sessionToken }) {
   const [scope, setScope] = useState("all");
   const [busy, setBusy] = useState(false);
@@ -124,6 +164,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
 
   return (
     <div className="space-y-4">
+      <SyncHealthStrip />
       <div className="clay-card p-5 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-semibold text-gray-800 flex items-center gap-2">
