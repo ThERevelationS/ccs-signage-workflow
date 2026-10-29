@@ -545,7 +545,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 428. **[UX][DONE]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
 429. **[F][DONE]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
 430. **[UX][FLAGGED-dedicated]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
-431. **[F][FLAGGED-dedicated]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
+431. **[F][DONE]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
 432. **[UX][DONE]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
 433. **[F][DONE]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
 434. **[UX][DONE]** The picker answers "who do I call?" first — before asking for the address — the card leads with the office.
