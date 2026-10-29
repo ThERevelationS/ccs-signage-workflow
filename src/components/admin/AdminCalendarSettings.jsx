@@ -32,6 +32,7 @@ export default function AdminCalendarSettings() {
   const [settingsError, setSettingsError] = useState("");
   const [eventError, setEventError] = useState("");
   const [stats, setStats] = useState({ total: 0, universal: 0, synced: 0 });
+  const [hiddenTypes, setHiddenTypes] = useState(new Set());
 
   // Connection status (future OAuth)
   const [outlookConnected, setOutlookConnected] = useState(false);
@@ -117,11 +118,13 @@ export default function AdminCalendarSettings() {
 
   const upcomingEvents = events
     .filter(e => new Date(e.start_datetime) >= new Date())
+    .filter(e => !hiddenTypes.has(e.event_type || "other"))
     .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime))
     .slice(0, 20);
 
   const pastEvents = events
     .filter(e => new Date(e.start_datetime) < new Date())
+    .filter(e => !hiddenTypes.has(e.event_type || "other"))
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
 
@@ -326,6 +329,20 @@ export default function AdminCalendarSettings() {
           </ul>
         </div>
       )}
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-medium uppercase text-gray-400">Layers:</span>
+        {Object.entries(EVENT_TYPE_COLORS).map(([type, color]) => {
+          const off = hiddenTypes.has(type);
+          return (
+            <button key={type} type="button" aria-pressed={!off}
+              onClick={() => setHiddenTypes((cur) => { const next = new Set(cur); if (next.has(type)) next.delete(type); else next.add(type); return next; })}
+              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${off ? "border-gray-200 bg-gray-50 text-gray-400 line-through" : "border-gray-200 bg-white text-gray-700"}`}>
+              <span className="h-2 w-2 rounded-full" style={{ background: color }} />{type}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Upcoming Events */}
       <div className="clay-card p-5">
