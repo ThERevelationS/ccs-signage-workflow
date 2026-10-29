@@ -35,11 +35,11 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 ## 2. Customer & CRM Integration (25)
 
 26. **[F][DONE]** Customer merge dialog — combine duplicates with record relink preview
-27. **[F]** `CustomerLocation` picker prefill from opportunity address on new estimates
-28. **[H]** `billing_contact_email` fallback chain everywhere `customer.email` is read (C2-J pattern)
-29. **[F]** Customer quick-add inside NewAllInOneEstimate (not just dialog pick)
-30. **[F]** `CustomerContact` role field (billing/site/decision-maker) + pick by role in Step 1
-31. **[F]** Customer credit-hold flag → warn badge on new-estimate dialog
+27. **[F][DONE]** `CustomerLocation` picker prefill from opportunity address on new estimates
+28. **[H][DONE]** `billing_contact_email` fallback chain everywhere `customer.email` is read (C2-J pattern)
+29. **[F][DONE]** Customer quick-add inside NewAllInOneEstimate (not just dialog pick)
+30. **[F][DONE]** `CustomerContact` role field (billing/site/decision-maker) + pick by role in Step 1
+31. **[F][DONE]** Customer credit-hold flag → warn badge on new-estimate dialog
 32. **[F]** `default_tax_group` on Customer → auto-apply in estimate
 33. **[F]** `default_markup_tier` on Customer → auto-select in CustomerPricingTab
 34. **[H]** Customer CAS on `company_name` renames — warn when estimates reference old name
