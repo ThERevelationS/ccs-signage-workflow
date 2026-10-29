@@ -256,7 +256,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2 mb-4">
         <Camera className="w-5 h-5 text-purple-600" />
-        <h3 className="font-semibold">{isEnrollment ? "Face Enrollment" : "Face Recognition"}</h3>
+        <h3 className="font-semibold">{isEnrollMode ? "Face Enrollment" : "Face Recognition"}</h3>
       </div>
 
       {/* Video */}
