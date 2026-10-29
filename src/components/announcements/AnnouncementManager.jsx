@@ -36,7 +36,7 @@ const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
   "Design", "Production", "Fabrication", "InstallationDeliver", "OrderForm",
   "SIPs", "SOP", "MondayMorningMeeting", "Financials",
-  "TimeClock", "customerportal"
+  "WorkOrderCalendar", "TimeClock", "customerportal"
 ];
 
 const STOCK_SOUNDS = [
@@ -59,7 +59,7 @@ const PRIORITY_OPTIONS = [
 const PAGE_GROUPS = [
   { label: "All pages", all: true },
   { label: "Kiosk", pages: ["TimeClock", "customerportal"] },
-  { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "MondayMorningMeeting"] },
+  { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "WorkOrderCalendar", "MondayMorningMeeting"] },
   { label: "Sales", pages: ["SalesPipeline", "Estimating", "OrderForm", "Permitting"] },
   { label: "Admin", pages: ["Financials", "SIPs", "SOP", "Design", "Production", "Fabrication", "InstallationDeliver"] },
 ];
@@ -511,7 +511,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
               <Sparkles className="w-3 h-3" />Templates
             </span>
             {ANNOUNCEMENT_TEMPLATES.map(tpl => (
-              <button
+              <button type="button"
                 key={tpl.label}
                 onClick={() => applyTemplate(tpl)}
                 className="px-2 py-1 text-xs rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:text-red-700 transition-colors"
@@ -780,7 +780,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             </Label>
             <div className="flex flex-wrap gap-1 mb-2">
               {PAGE_GROUPS.map(group => (
-                <button
+                <button type="button"
                   key={group.label}
                   onClick={() => applyPageGroup(group)}
                   className="px-2 py-1 text-[10px] rounded-md border border-dashed border-gray-300 text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
@@ -791,7 +791,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             </div>
             <div className="flex flex-wrap gap-1">
               {ALL_PAGES.map(page => (
-                <button
+                <button type="button"
                   key={page}
                   onClick={() => togglePage(page)}
                   className={`px-2 py-1 text-xs rounded-lg transition-all border ${
