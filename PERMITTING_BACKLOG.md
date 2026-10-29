@@ -410,7 +410,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 311. **[UX][DONE]** Terminology glossary: a "?" chip on words like "situs", "variance", "ETJ" opening a one-line definition.
 312. **[F][FLAGGED-dedicated]** Common-mistake warnings: "You picked the county — the city issues sign permits for this address" soft-suggest.
 313. **[UX][DONE]** Confidence-building flow: a new user's first 3 applies get a confirming message "that's right — you did it".
-314. **[F][FLAGGED-dedicated]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
+314. **[F][DONE]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
 315. **[UX][FLAGGED-dedicated]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
 316. **[F][DONE]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
 317. **[UX][FLAGGED-dedicated]** Contextual empty-states: "No applications filed yet — press the button above when you file one" — every empty area teaches.
@@ -424,9 +424,9 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## AB — Integrations & data exchange
 
 324. **[F][DONE]** Work-order address auto-pull: the picker's address defaults to the WO's site address — wired but verify.
-325. **[F][FLAGGED-dedicated]** Client billing-entity link: the office's invoice address on file for fee-billing to the jurisdiction.
-326. **[UX][FLAGGED-dedicated]** "Open in the CRM" cross-links: the customer record ↔ the permit job — one click between.
-327. **[F][FLAGGED-dedicated]** Permit-data export to accounting: fees paid → CSV for QuickBooks — the money trail.
+325. **[F][DONE]** Client billing-entity link: the office's invoice address on file for fee-billing to the jurisdiction.
+326. **[UX][DONE]** "Open in the CRM" cross-links: the customer record ↔ the permit job — one click between.
+327. **[F][DONE]** Permit-data export to accounting: fees paid → CSV for QuickBooks — the money trail.
 328. **[H][FLAGGED-dedicated]** Estimate-integration: the estimate's permit-cost line pulls the office's actual fee where known.
 329. **[F][DONE]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
 330. **[UX][DONE]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
@@ -451,7 +451,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 346. **[H][DONE]** Verify-then-write: apply only lands after the repository row + the detected boundary agree — mismatches halt.
 347. **[F][DONE]** Duplicate-application check before submit: the same office+job can't be filed twice accidentally.
 348. **[H][DONE]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
-349. **[F][FLAGGED-dedicated]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
+349. **[F][DONE]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
 350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
 351. **[F][DONE]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
 352. **[H][FLAGGED-dedicated]** Rate-limit on applies: a job can't create 10 locality links in 10 seconds — burst-write protection.
@@ -472,7 +472,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 364. **[H][FLAGGED-dedicated]** Boundary GeoJSON compression: polygons stored simplified — the map loads fast on phones.
 365. **[H][DONE]** Paged scan-activity: the panel pages old runs — long-history sessions stay fast.
 366. **[H][FLAGGED-dedicated]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
-367. **[H][FLAGGED-dedicated]** Incremental list loading: the repository pages 50-at-a-time with "load more" — not one 500-row dump.
+367. **[H][DONE]** Incremental list loading: the repository pages 50-at-a-time with "load more" — not one 500-row dump.
 368. **[H][DONE]** Defer non-critical reads: WorkOrder/AuthorizedEmail load after the permit lines render — the list appears sooner.
 369. **[H][DONE]** Boundary-bundle pre-warm: common OH/KY boundaries preloaded — the picker doesn't fetch on every search.
 370. **[H][DONE]** Debounced repository search: 300ms after typing stops — not every keystroke a filter pass.
@@ -490,7 +490,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 379. **[F][FLAGGED-dedicated]** In-app mention: "@brett — can you verify the Mason office?" pings a staff member on a jurisdiction.
 380. **[UX][DONE]** Follow-up scheduling: "remind me in a week" on any line — the chase doesn't rely on memory.
 381. **[F][DONE]** Status-change digest: a daily "what moved in permitting" — office verifications, applies, issues.
-382. **[UX][FLAGGED-dedicated]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
+382. **[UX][DONE]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
 383. **[F][FLAGGED-dedicated]** Client-facing status: a shareable "permit status" read-only link for the customer — "where's my sign permit?"
 384. **[UX][FLAGGED-dedicated]** Plain-language status for clients: "Waiting on the township's review" — not internal jargon.
 385. **[F][DONE]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
@@ -499,8 +499,8 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 388. **[UX][DONE]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
 389. **[F][FLAGGED-dedicated]** Approval-request workflow: an unverified-locality apply asks a senior for approval — staff work continues pending it.
 390. **[UX][DONE]** "Who's on this?" per line: the person currently working the chase is named — handoffs are clean.
-391. **[F][FLAGGED-dedicated]** Office-contact log: every call to an office recorded — the jurisdiction's "we've talked" history.
-392. **[UX][FLAGGED-dedicated]** Meeting-notes capture: notes from a client call about permitting link to the job — context travels.
+391. **[F][DONE]** Office-contact log: every call to an office recorded — the jurisdiction's "we've talked" history.
+392. **[UX][DONE]** Meeting-notes capture: notes from a client call about permitting link to the job — context travels.
 393. **[F][FLAGGED-dedicated]** Escalation to management: a stuck >N-day line auto-surfaces to a manager-review queue.
 394. **[UX][FLAGGED-dedicated]** Comment-thread per line: staff discuss the chase right where the work happens.
 395. **[F][DONE]** Photo-in-message: a site photo attached to a line's note — the record stays visual.
@@ -543,7 +543,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 426. **[UX][DONE]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
 427. **[F][DONE]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
 428. **[UX][DONE]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
-429. **[F][FLAGGED-dedicated]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
+429. **[F][DONE]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
 430. **[UX][FLAGGED-dedicated]** Recovery-first design: every destructive action names its undo path — "deleted — undo in the line's history".
 431. **[F][FLAGGED-dedicated]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
 432. **[UX][DONE]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
