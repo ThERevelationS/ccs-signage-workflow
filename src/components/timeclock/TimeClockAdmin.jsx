@@ -403,6 +403,19 @@ export default function TimeClockAdmin() {
   const duplicateActiveEntries = timeEntries.filter(entry => entry.status === "clocked_in" && duplicateActiveEmails.includes(entry.user_email));
   const missingBreakEntries = completedEntries.filter(entry => (entry.total_hours || 0) >= 5 && !entry.lunch_minutes && !entry.pay_period_id);
 
+  // Overtime pacing — total hours this calendar week per employee; flag
+  // anyone at 36h+ (approaching 40) or already over.
+  const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const otByEmail = {};
+  for (const e of timeEntries) {
+    if (!e.clock_in || new Date(e.clock_in) < weekStart || e.archived_admin || e.archived_test_data) continue;
+    const k = e.user_email; if (!k) continue;
+    const row = otByEmail[k] = otByEmail[k] || { name: e.user_name || k, hours: 0 };
+    row.hours += e.total_hours || 0;
+  }
+  const otWatch = Object.values(otByEmail).filter(r => r.hours >= 36).sort((a, b) => b.hours - a.hours);
+
   // Group by user for summary
   const userSummary = filteredEntries.reduce((acc, entry) => {
     const key = entry.user_email;
@@ -1264,6 +1277,23 @@ export default function TimeClockAdmin() {
                   </div>
                 ))}
                 {missingBreakEntries.length > 10 && <p className="text-xs text-amber-700">…and {missingBreakEntries.length - 10} more</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {otWatch.length > 0 && (
+        <div className="rounded-xl border border-orange-300 bg-orange-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-orange-700 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-semibold text-orange-900">Overtime watch — {otWatch.length} employee{otWatch.length === 1 ? "" : "s"} near or over 40h this week</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {otWatch.map(r => (
+                  <span key={r.name} className={`rounded-full border px-2 py-1 text-xs font-medium ${r.hours >= 40 ? "border-red-400 bg-red-100 text-red-800" : "border-orange-300 bg-white text-orange-800"}`}>
+                    {r.name} · {r.hours.toFixed(1)}h
+                  </span>
+                ))}
               </div>
             </div>
           </div>
