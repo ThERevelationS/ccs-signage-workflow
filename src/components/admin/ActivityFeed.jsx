@@ -164,6 +164,27 @@ export default function ActivityFeed() {
       }, Infinity)
     : null;
 
+  const displayActivities = (() => {
+    const out = [];
+    let run = [];
+    const flush = () => {
+      if (run.length >= 3) {
+        const fields = [...new Set(run.map(x => x.field || x.description || "?"))];
+        out.push({ group: true, user: run[0].user, entityTitle: run[0].entityTitle, entityId: run[0].entityId,
+          entityType: run[0].entityType, timestamp: run[0].timestamp, count: run.length, fields });
+      } else out.push(...run);
+      run = [];
+    };
+    for (const a of visibleActivities) {
+      const key = a.type === "cell_change" ? `${a.user}|${a.entityType}|${a.entityId}` : null;
+      if (key && run.length && `${run[0].user}|${run[0].entityType}|${run[0].entityId}` === key) { run.push(a); continue; }
+      flush();
+      if (key) run = [a]; else { out.push(a); }
+    }
+    flush();
+    return out;
+  })();
+
   const actorCounts = visibleActivities.reduce((acc, a) => {
     const key = a.user || "Unknown"; acc[key] = (acc[key] || 0) + 1; return acc;
   }, {});
@@ -297,11 +318,24 @@ export default function ActivityFeed() {
         </div>
       ) : (
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
-          {visibleActivities.map((activity) => (
+          {displayActivities.map((activity) => (
             <div 
-              key={`${activity.type}-${activity.id}`} 
+              key={activity.group ? `group-${activity.user}-${activity.entityId}` : `${activity.type}-${activity.id}`} 
               className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
             >
+              {activity.group ? (
+                <div className="flex items-start gap-3">
+                  <div className="mt-1">{getEntityIcon(activity.entityType)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm text-gray-800">{activity.user}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">{activity.count} changes</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{activity.entityTitle || activity.entityId} — fields: {activity.fields.join(", ")}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{activity.timestamp ? new Date(activity.timestamp).toLocaleString() : ""}</p>
+                  </div>
+                </div>
+              ) : (
               <div className="flex items-start gap-3">
                 {/* Entity Icon */}
                 <div className="mt-1">
@@ -358,6 +392,7 @@ export default function ActivityFeed() {
                   {format(new Date(activity.timestamp), "M/d/yy h:mm a")}
                 </div>
               </div>
+              )}
             </div>
           ))}
         </div>
