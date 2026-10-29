@@ -3627,6 +3627,10 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Privacy-safe team presence: a count only, never names.
+      const inNow = await stateEntity.filter({ status: 'clocked_in', archived_test_data: { $ne: true } }).catch(() => []);
+      const teamCount = Array.isArray(inNow) ? inNow.filter((s: any) => s?.user_email && s.user_email !== target.email).length : 0;
+
       let ptoBalance: any = null;
       const ptoRows = await ptoBalanceEntity.filter({ user_email: target.email }).catch(() => []);
       if (Array.isArray(ptoRows) && ptoRows[0]) {
@@ -3663,6 +3667,7 @@ Deno.serve(async (req) => {
         next_timeoff: nextTimeoff,
         pay_period: payPeriod,
         todays_schedule: todaysSchedule,
+        team_clocked_in_count: teamCount,
         company_day: dateKeyInCompanyTime(serverNow.toISOString()),
         prefs,
       });
@@ -7815,6 +7820,23 @@ Deno.serve(async (req) => {
       await shiftTemplateEntity.update(row.id, { archived_admin: true });
       await auditEntity.create({ action: 'delete_shift_template', request_id: requestId, user_email: row.user_email || '', actor_email: actorEmail, details: { template_id: row.id } }).catch(() => null);
       return Response.json({ success: true });
+    }
+
+    if (action === 'list_pending_requests') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view in-flight requests.' }, { status: 403 });
+      const rows = await stateEntity.filter({}).catch(() => []);
+      if (!Array.isArray(rows)) throw new Error('Employee state lookup did not return a record list.');
+      const pending = rows
+        .filter((s: any) => s?.id && s.status && s.status !== 'clocked_out' && s.status !== 'clocked_in'
+          && !['idle', 'working'].includes(String(s.break_status || 'idle'))
+          || s.labor_status === 'starting' || s.labor_status === 'changing' || s.labor_status === 'stopping')
+        .map((s: any) => ({
+          user_email: s.user_email || '', status: s.status,
+          break_status: s.break_status || '', work_pause_status: s.work_pause_status || '', labor_status: s.labor_status || '',
+          pending_since: s.pending_started_at || s.break_pending_started_at || s.work_pause_pending_started_at || s.labor_pending_started_at || null,
+          request_id: s.last_request_id || '',
+        }));
+      return Response.json({ success: true, pending });
     }
 
     if (action === 'list_timeclock_audit') {
