@@ -131,6 +131,26 @@ export default function AdminCalendarSettings() {
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
 
+  const [scheduleDates, setScheduleDates] = useState({});
+  const [schedulingId, setSchedulingId] = useState(null);
+  const [scheduleMsg, setScheduleMsg] = useState(null);
+  const scheduleWorkOrder = async (w) => {
+    const date = scheduleDates[w.id];
+    if (!date || schedulingId) return;
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability) { setScheduleMsg("Admin unlock required to schedule."); return; }
+    setSchedulingId(w.id); setScheduleMsg(null);
+    try {
+      await createCalendarEventWithRecovery({
+        data: { title: w.title || "Work order", start_datetime: `${date}T08:00:00`, work_order_id: w.id, event_type: "other", all_day: true },
+        adminCapability: writeCapability, label: `Schedule ${w.title || w.id}`,
+      });
+      setScheduleMsg(`Scheduled "${w.title || w.id}" for ${date}`);
+      setEvents((cur) => [...cur, { id: `temp-${w.id}`, work_order_id: w.id }]);
+    } catch (e) { setScheduleMsg(e?.message || "Could not schedule"); }
+    setSchedulingId(null);
+  };
+
   const unscheduledWork = (() => {
     const scheduledIds = new Set(events.map((e) => e.work_order_id).filter(Boolean));
     return workOrders.filter((w) => w.id && !scheduledIds.has(w.id)).slice(0, 8);
@@ -403,9 +423,18 @@ export default function AdminCalendarSettings() {
               <li key={w.id} className="flex items-center gap-2 text-xs text-blue-800">
                 <a href={`/MainWorkflow?wo=${w.id}`} className="font-medium truncate underline hover:text-blue-900" title="Open this work order">{w.title || w.id}</a>
                 {w.sales_status && <span className="text-blue-600/70">({w.sales_status})</span>}
+                <span className="ml-auto flex items-center gap-1">
+                  <input type="date" value={scheduleDates[w.id] || ""} onChange={(e) => setScheduleDates((cur) => ({ ...cur, [w.id]: e.target.value }))}
+                    className="h-6 rounded border border-blue-200 bg-white px-1 text-[10px]" aria-label={`Schedule date for ${w.title || w.id}`} />
+                  <Button type="button" size="sm" variant="outline" disabled={!scheduleDates[w.id] || schedulingId === w.id}
+                    onClick={() => scheduleWorkOrder(w)} className="h-6 px-1.5 text-[10px]">
+                    {schedulingId === w.id ? "…" : "schedule"}
+                  </Button>
+                </span>
               </li>
             ))}
           </ul>
+          {scheduleMsg && <p className="mt-1.5 text-[11px] text-blue-700">{scheduleMsg}</p>}
         </div>
       )}
 
