@@ -561,6 +561,11 @@ export default function AdminSettings() {
     }
   }, [isUnlocked, navigationKey, selectedAdminTab, selectedAdminSubtab, isAdmin, browserStorage]);
   const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser);
+  const requestedDeepLinkTab = searchParams.get("tab");
+  const requestedDeepLinkSubtab = searchParams.get("subtab");
+  const deniedDeepLinkTab = isUnlocked && requestedDeepLinkTab && requestedDeepLinkTab !== selectedAdminTab;
+  const deniedDeepLinkSubtab = isUnlocked && !deniedDeepLinkTab && requestedDeepLinkSubtab && requestedDeepLinkSubtab !== selectedAdminSubtab;
+  const resolvedTabLabel = availableAdminGroups.flatMap((g) => g.tabs).find((t) => t.value === selectedAdminTab)?.label || selectedAdminTab;
   const activeAdminGroupId = getAdminGroupForTab(selectedAdminTab, isAdmin, currentUser);
   const activeAdminGroup = availableAdminGroups.find((group) => group.id === activeAdminGroupId) || availableAdminGroups[0];
   const categoryScrollerRef = useRef(null);
@@ -1952,6 +1957,13 @@ export default function AdminSettings() {
   return (
     <div ref={adminScrollRef} data-admin-scroll-area className="min-h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-3 sm:p-6">
       <div className="mx-auto w-full min-w-0 max-w-6xl pb-8">
+        {(deniedDeepLinkTab || deniedDeepLinkSubtab) && (
+          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+            {deniedDeepLinkTab
+              ? `The Admin page "${requestedDeepLinkTab}" isn't available for your account — showing ${resolvedTabLabel} instead.`
+              : `The Admin sub-page "${requestedDeepLinkSubtab}" isn't available for your account.`}
+          </div>
+        )}
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
