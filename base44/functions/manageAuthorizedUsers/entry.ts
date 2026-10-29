@@ -256,20 +256,22 @@ async function countIdentityReferences(base44: any, entityName: string, identiti
   return rows.filter((row: any) => recordReferencesIdentity(row, identities, keys)).length;
 }
 
-async function deletionImpactReport(base44: any, Request: any, requestId: string) {
-  if (!requestId) throw Object.assign(new Error('Deletion request identity is required.'), { status: 400 });
-  const request = await Request.get(requestId).catch(() => null);
-  if (!request?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+async function deletionImpactReport(base44: any, Request: any, requestId: string, directTarget: any = null) {
+  let request: any = null;
+  if (requestId) {
+    request = await Request.get(requestId).catch(() => null);
+    if (!request?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+  }
 
-  const email = cleanEmail(request.user_email);
-  const authorizedId = String(request.authorized_email_id || '').trim();
+  const email = cleanEmail(request?.user_email || directTarget?.email);
+  const authorizedId = String(request?.authorized_email_id || directTarget?.authorized_id || '').trim();
   if (!email || !authorizedId) {
-    throw Object.assign(new Error('Deletion request identity is incomplete.'), { status: 409 });
+    throw Object.assign(new Error('Deletion target identity is incomplete.'), { status: 409 });
   }
 
   const authorized = await base44.asServiceRole.entities.AuthorizedEmail.get(authorizedId).catch(() => null);
   const authorizedMatches = !!authorized?.id && cleanEmail(authorized.email) === email;
-  const displayName = cleanText(authorized?.full_name || request.user_name, 500);
+  const displayName = cleanText(authorized?.full_name || request?.user_name || directTarget?.name, 500);
   const identities = new Set([email, displayName.toLowerCase()].filter(Boolean));
 
   const base44UsersRaw = await base44.asServiceRole.entities.User.filter({ email });
@@ -326,7 +328,7 @@ async function deletionImpactReport(base44: any, Request: any, requestId: string
   if (workOrders + generalTasks + calendarEvents > 0) blockers.push('Live workflow/task/calendar references exist and need reassignment or archival treatment.');
 
   return {
-    request: adminDeletionRequestView(request),
+    request: request ? adminDeletionRequestView(request) : null,
     target: {
       authorized_email_id: authorizedId,
       authorized_email_exists: authorizedMatches,
@@ -531,7 +533,19 @@ Deno.serve(async (req) => {
 
     if (action === 'deletion_impact') {
       const Request = base44.asServiceRole.entities.AccountDeletionRequest;
-      const impact = await deletionImpactReport(base44, Request, String(body?.request_id || '').trim());
+      const requestId = String(body?.request_id || '').trim();
+      if (!requestId) {
+        // Direct pre-delete check: the Remove User dialog verifies impact
+        // without requiring an employee-initiated deletion request.
+        const email = cleanEmail(body?.user_email);
+        const authorizedId = String(body?.authorized_email_id || '').trim();
+        if (!email || !authorizedId) {
+          return Response.json({ error: 'Deletion impact requires a request_id or a user identity.' }, { status: 400 });
+        }
+        const impact = await deletionImpactReport(base44, Request, '', { email, authorized_id: authorizedId, name: body?.user_name });
+        return Response.json({ success: true, impact });
+      }
+      const impact = await deletionImpactReport(base44, Request, requestId);
       return Response.json({ success: true, impact });
     }
 
