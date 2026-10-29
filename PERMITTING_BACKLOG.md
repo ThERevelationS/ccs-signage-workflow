@@ -470,7 +470,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 363. **[H][DONE]** Picker mount lazy-loads: the map + repository list don't fetch until the dialog opens — faster page.
 364. **[H][FLAGGED-dedicated]** Boundary GeoJSON compression: polygons stored simplified — the map loads fast on phones.
-365. **[H][FLAGGED-dedicated]** Paged scan-activity: the panel pages old runs — long-history sessions stay fast.
+365. **[H][DONE]** Paged scan-activity: the panel pages old runs — long-history sessions stay fast.
 366. **[H][FLAGGED-dedicated]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
 367. **[H][FLAGGED-dedicated]** Incremental list loading: the repository pages 50-at-a-time with "load more" — not one 500-row dump.
 368. **[H][DONE]** Defer non-critical reads: WorkOrder/AuthorizedEmail load after the permit lines render — the list appears sooner.
@@ -523,7 +523,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 409. **[F][FLAGGED-dedicated]** Data-staleness report: which verified jurisdictions haven't been re-checked in 6 months — the re-verify list.
 410. **[UX][FLAGGED-dedicated]** Per-client permit-health: each client's open jobs' permit status — a client-facing summary.
 411. **[F][FLAGGED-dedicated]** Fee-accuracy report: estimated fees vs actual charged — the estimator calibrates.
-412. **[UX][FLAGGED-dedicated]** Team-workload view: permits-in-flight per person — the load balance.
+412. **[UX][DONE]** Team-workload view: permits-in-flight per person — the load balance.
 
 ## AG — Power features & polish
 
