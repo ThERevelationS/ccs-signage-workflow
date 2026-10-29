@@ -3520,6 +3520,17 @@ Deno.serve(async (req) => {
       let onUnpaidBreakNow = false;
       let pausedNow = false;
       if (entry) {
+        // Segment data for the timeline strip - completed + active spans.
+        const [breakRows, pauseRows] = await Promise.all([
+          breakEntity.filter({ time_entry_id: entry.id, user_email: target.email }).catch(() => []),
+          workPauseEntity.filter({ time_entry_id: entry.id, user_email: target.email }).catch(() => []),
+        ]);
+        if (Array.isArray(breakRows)) for (const r of breakRows) {
+          if (r?.id && r.started_at) todaysSegments.push({ kind: r.is_paid === true ? 'paid_break' : 'break', start: r.started_at, end: r.ended_at || null });
+        }
+        if (Array.isArray(pauseRows)) for (const r of pauseRows) {
+          if (r?.id && r.started_at) todaysSegments.push({ kind: 'pause', start: r.started_at, end: r.ended_at || null });
+        }
         const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
         const safeActiveBreak = activeBreak?.id && activeBreak.status === 'active' && asEmail(activeBreak.user_email) === target.email && activeBreak.time_entry_id === entry.id ? activeBreak : null;
         const activePause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
@@ -3539,6 +3550,7 @@ Deno.serve(async (req) => {
       let breakMinutes = 0;
       let paidBreakMinutes = 0;
       let pauseMinutes = 0;
+      const todaysSegments: any[] = [];
       if (entry) {
         const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
         const pauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
@@ -3667,6 +3679,7 @@ Deno.serve(async (req) => {
         next_timeoff: nextTimeoff,
         pay_period: payPeriod,
         todays_schedule: todaysSchedule,
+        todays_segments: todaysSegments,
         team_clocked_in_count: teamCount,
         company_day: dateKeyInCompanyTime(serverNow.toISOString()),
         prefs,
@@ -7835,6 +7848,24 @@ Deno.serve(async (req) => {
       await shiftTemplateEntity.update(row.id, { archived_admin: true });
       await auditEntity.create({ action: 'delete_shift_template', request_id: requestId, user_email: row.user_email || '', actor_email: actorEmail, details: { template_id: row.id } }).catch(() => null);
       return Response.json({ success: true });
+    }
+
+    if (action === 'pto_liability_report') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view PTO liability.' }, { status: 403 });
+      const rows = await ptoBalanceEntity.filter({}).catch(() => []);
+      if (!Array.isArray(rows)) throw new Error('PTO balance lookup did not return a record list.');
+      const employees = rows
+        .filter((r: any) => r?.id && r.user_email)
+        .map((r: any) => ({
+          user_email: r.user_email,
+          user_name: r.user_name || r.user_email,
+          available_minutes: Math.round(Number(r.available_minutes ?? r.balance_minutes ?? 0)),
+          accrued_minutes: Math.round(Number(r.accrued_minutes ?? 0)),
+          pending_minutes: Math.round(Number(r.pending_minutes ?? 0)),
+        }))
+        .sort((a: any, b: any) => b.available_minutes - a.available_minutes);
+      const totalAvailable = employees.reduce((s: number, e: any) => s + e.available_minutes, 0);
+      return Response.json({ success: true, employees, total_available_minutes: totalAvailable });
     }
 
     if (action === 'list_pending_requests') {
