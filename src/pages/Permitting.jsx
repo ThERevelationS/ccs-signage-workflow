@@ -883,6 +883,15 @@ export default function Permitting() {
   const visibleQueueKeys = queueFilter === "all"
     ? PERMIT_QUEUE_ORDER
     : [queueFilter];
+  // Per-person workload board — "you have N offices to chase" — the day's calls, distributed.
+  const workloadByAssignee = useMemo(() => {
+    const counts = {};
+    for (const li of lineItems || []) {
+      const who = String(li.assigned_to || "").trim();
+      if (who) counts[who] = (counts[who] || 0) + 1;
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  }, [lineItems]);
   const visibleGroups = queueFilter === "all"
     ? filteredGroups
     : (queueSummary[queueFilter] || []);
@@ -1310,6 +1319,15 @@ export default function Permitting() {
             );
           })}
         </div>
+
+        {workloadByAssignee.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-indigo-100 bg-indigo-50/50 px-3 py-2 text-[11px] text-slate-600" title="The day's calls, distributed — permit lines per assignee">
+            <span className="font-semibold text-slate-700">Offices to chase:</span>
+            {workloadByAssignee.slice(0, 8).map(([who, n]) => (
+              <span key={who} className="font-medium">{who} <span className="text-indigo-600">({n})</span></span>
+            ))}
+          </div>
+        )}
 
         {routingMismatchCount > 0 && (
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
