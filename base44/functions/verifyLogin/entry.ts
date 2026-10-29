@@ -130,6 +130,10 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (user.force_password_reset === true) {
+      return Response.json({ success: false, requires_password_reset: true, error: 'Password reset required. Please see an administrator for a new password.' }, { status: 403 });
+    }
+
     const loginSecurityFields: Record<string, unknown> = { last_login_at: new Date().toISOString() };
     if (Number(user.failed_login_count) > 0 || user.login_locked_until) {
       loginSecurityFields.failed_login_count = 0;
