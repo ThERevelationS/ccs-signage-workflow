@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ScanFace, Users } from "lucide-react";
+import { Loader2, ScanFace, ShieldCheck, Users } from "lucide-react";
 import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
 
 function newRequestId() {
@@ -12,21 +12,26 @@ function newRequestId() {
 export default function AdminRosterPanels({ sessionToken }) {
   const [staff, setStaff] = useState([]);
   const [roster, setRoster] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [showAudit, setShowAudit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
-      const [whoRes, faceRes] = await Promise.all([
+      const [whoRes, faceRes, auditRes] = await Promise.all([
         base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
+      const audit = auditRes?.data || auditRes;
       if (who?.success !== true) throw new Error(who?.error || "Who's-in data could not be loaded.");
       setStaff(Array.isArray(who.staff) ? who.staff : []);
       setRoster(face?.success === true && Array.isArray(face.roster) ? face.roster : []);
+      setEvents(audit?.success === true && Array.isArray(audit.events) ? audit.events : []);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Roster data could not be loaded.");
@@ -104,6 +109,32 @@ export default function AdminRosterPanels({ sessionToken }) {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="clay-card p-4 lg:col-span-2">
+        <button type="button" onClick={() => setShowAudit((v) => !v)} className="flex w-full items-center justify-between text-left">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-slate-600" />Recent Time Clock Activity</h3>
+            <p className="text-xs text-gray-500 mt-1">Server-side audit trail - every punch, correction, and approval with its request id.</p>
+          </div>
+          <Badge className="bg-slate-100 text-slate-600">{events.length} events {showAudit ? "hide" : "show"}</Badge>
+        </button>
+        {showAudit && (
+          events.length === 0 ? (
+            <div className="mt-3 rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No audit events returned.</div>
+          ) : (
+            <div className="mt-3 max-h-72 space-y-1 overflow-y-auto pr-1">
+              {events.map((ev) => (
+                <div key={ev.id} className="flex items-center justify-between gap-2 rounded-lg border bg-white px-3 py-1.5 text-xs">
+                  <span className="font-medium text-slate-800">{ev.action || "event"}</span>
+                  <span className="truncate text-slate-500">{ev.user_email}{ev.actor_email && ev.actor_email !== ev.user_email ? ` by ${ev.actor_email}` : ""}</span>
+                  <span className="shrink-0 font-mono text-[10px] text-slate-400" title={ev.request_id}>{String(ev.request_id || "").slice(0, 8)}</span>
+                  <span className="shrink-0 text-[10px] text-slate-400">{formatCompanyDateTime(ev.created)}</span>
+                </div>
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>
