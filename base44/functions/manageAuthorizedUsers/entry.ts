@@ -583,6 +583,24 @@ Deno.serve(async (req) => {
       if (touchesPrivilege && actor?.is_full_admin !== true) {
         return Response.json({ error: 'Only a full admin can change roles or admin privileges.' }, { status: 403 });
       }
+      // Two-admin rule: promoting someone to full admin directly is blocked —
+      // it must come through an approved AccessRequest (the approve path
+      // applies grants via service-role writes and bypasses this check).
+      if (desired.is_full_admin === true && current?.is_full_admin !== true) {
+        const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        let approved: any[] = [];
+        try {
+          approved = await base44.asServiceRole.entities.AccessRequest.filter({
+            requester_email: current.email, status: 'approved',
+          }) || [];
+        } catch { approved = []; }
+        const valid = (approved || []).some((r: any) =>
+          Date.parse(String(r?.decided_at || '')) >= Date.parse(dayAgo) &&
+          (Array.isArray(r?.requested_sections) && r.requested_sections.includes('full_admin')));
+        if (!valid) {
+          return Response.json({ error: 'Full-admin grants require an approved access request. Create one via request admin access, then have a second admin approve it.' }, { status: 403 });
+        }
+      }
       const roleBoundPermission = Object.prototype.hasOwnProperty.call(desired, 'can_order_export') ||
         Object.prototype.hasOwnProperty.call(desired, 'can_view_resources');
       // Existing clients may not supply expected_role. They still receive a
