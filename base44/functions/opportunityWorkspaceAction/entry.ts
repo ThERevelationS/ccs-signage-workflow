@@ -245,6 +245,35 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, exported_at: new Date().toISOString(), entity_count: names.length, entities: bundle, errors });
     }
 
+    // Email digest (#333): compiles the attention-feed buckets for the
+    // requester and sends a summary via sendGmail. Opt-in is recorded
+    // client-side; a scheduler can invoke this per opted-in user.
+    if (action === "send_digest") {
+      const email = clean(user?.email);
+      if (!email) throw bad("A signed-in user is required for a digest.", 400);
+      const [requests, invoices, sentEstimates, opps] = await Promise.all([
+        EstimatingRequest.filter({}, "-created_date", 100).catch(() => []),
+        Invoice.filter({}, "-created_date", 200).catch(() => []),
+        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
+        base44.asServiceRole.entities.Opportunity.filter({}, "-created_date", 300).catch(() => []),
+      ]);
+      const openRequests = list(requests).filter((r) => OPEN_REQUEST_STATUSES.has(clean(r?.status))).length;
+      const overdueInv = list(invoices).filter((i) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today).length;
+      const staleSent = list(sentEstimates).filter((e) => clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7).length;
+      const overdueFollowUps = list(opps).filter((o) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today).length;
+      const unassigned = list(requests).filter((r) => OPEN_REQUEST_STATUSES.has(clean(r?.status)) && !clean(r?.assigned_estimator) && !clean(r?.estimator)).length;
+      const rows = [
+        ["Open estimating requests", openRequests],
+        ["Unassigned requests", unassigned],
+        ["Overdue invoices", overdueInv],
+        ["Stale sent quotes (7d+)", staleSent],
+        ["Overdue follow-ups", overdueFollowUps],
+      ];
+      const html = `<h2 style="font-family:sans-serif;color:#111">Your daily attention digest</h2><p style="font-family:sans-serif;color:#555">Open items needing attention as of ${today}:</p><ul style="font-family:sans-serif;color:#111">${rows.map(([l, c]) => `<li><strong>${l}:</strong> ${c}</li>`).join("")}</ul><p style="font-family:sans-serif;color:#999;font-size:12px">Open CCS Signage Workflow - attention feed for details.</p>`;
+      const sendRes = await base44.asServiceRole.functions.invoke("sendGmail", { to: email, subject: `CCS daily digest - ${today}`, body: html }).catch(() => null);
+      return Response.json({ success: true, action, to: email, sent: !!sendRes, counts: Object.fromEntries(rows) });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = await Promise.all([
