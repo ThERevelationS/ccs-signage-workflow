@@ -805,6 +805,9 @@ export default function AdminSettings() {
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
   const RECENTLY_CHANGED_TABS = new Set(["automations", "task_assignments", "users", "timeclock", "activity", "sync_conflicts", "corebridge", "permitting_rules", "backend"]);
+  const [tourSeen, setTourSeen] = useState(() => {
+    try { return localStorage.getItem("admin_tour_seen") === "1"; } catch { return true; }
+  });
   const [visitedTabs, setVisitedTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_visited_tabs_v1") || "[]"); } catch { return []; }
   });
@@ -2366,6 +2369,24 @@ export default function AdminSettings() {
             </div>
           );
         })()}
+        {!tourSeen && (
+          <div className="mb-3 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3" role="note" aria-label="Admin quick tour">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">New to Admin? Three things to know:</p>
+                <ol className="mt-1 list-decimal pl-4 text-xs text-indigo-800 space-y-0.5">
+                  <li><b>Ctrl+K</b> or the search box jumps to any admin page or setting.</li>
+                  <li>Tabs are grouped by job — People, Work, Integrations, Permitting, System.</li>
+                  <li>Green setup-check chips above flag anything missing; fix amber ones first.</li>
+                </ol>
+              </div>
+              <Button type="button" size="sm" variant="ghost" className="h-7 text-xs text-indigo-700"
+                onClick={() => { setTourSeen(true); try { localStorage.setItem("admin_tour_seen", "1"); } catch { /* ignore */ } }}>
+                Got it
+              </Button>
+            </div>
+          </div>
+        )}
         <Tabs value={selectedAdminTab} onValueChange={(v) => {
           handleAdminTabChange(v);
           setVisitedTabs((cur) => {
