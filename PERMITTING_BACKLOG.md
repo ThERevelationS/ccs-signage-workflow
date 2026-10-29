@@ -63,7 +63,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 41. **[H][DONE]** Apply must be atomic-ish: write PermitLineItem locality_id via the CAS path (exists) and surface conflicts cleanly, not a silent 409.
 42. **[F][DONE]** After apply, show a confirmation chip on the job card: "Permit office: Milford, OH — verified" with a link to change it.
 43. **[F][DONE]** Allow applying WITHOUT a full authority review for jobs that just need the locality (show a "details still being verified" hint instead of blocking).
-44. **[F][FLAGGED]** Bulk-apply: multiple jobs in the same town → apply one verified jurisdiction to all selected work orders.
+44. **[F][DONE]** Bulk-apply: multiple jobs in the same town → apply one verified jurisdiction to all selected work orders.
 45. **[UX][DONE]** If apply fails, the error must name the step ("Couldn't link Milford to this job — reload and try again") — never a raw 500.
 46. **[F][DONE]** Undo an apply within a short window — users change their minds; reverting shouldn't need admin intervention.
 
@@ -84,7 +84,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 56. **[UX][DONE]** The repository list needs a big search box: type "milford" → city, township, county rows labeled separately — no conflation.
 57. **[F][DONE]** Filter chips: verified / draft / needs-review / with-electrical-data — staff should find gaps in one click.
 58. **[UX][DONE]** Duplicate/ambiguous rows get a visible warning chip — "Milford appears twice — a staff member should review".
-59. **[F][FLAGGED]** Merge flow for true duplicates with a relink preview (like the customer merge) — never silently collapse city/township pairs that merely share a name.
+59. **[F][DONE]** Merge flow for true duplicates with a relink preview (like the customer merge) — never silently collapse city/township pairs that merely share a name.
 60. **[H][DONE]** Draft localities should never be silently promoted to verified — require the authority review to complete first (gated in `confirmDraftFromRepository` + `requireReviewedRepositoryProfile`).
 61. **[F][DONE]** Sort repository by "most-used" — jurisdictions touched by recent jobs float to the top.
 62. **[F][DONE]** Export the repository to CSV for offline review.
@@ -139,7 +139,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 99. **[H][DONE]** Boundary-fallback ladder: Google → Census → Census-Places → address-level → manual city-entry — the user never hits a dead end.
 100. **[F][DONE]** Manual-entry escape hatch: "Can't find the address? Type the city/village/township name directly" — never blocks on a geocoder.
 101. **[H][DONE]** Same-name ambiguity resolution: "Milford, OH" appears as city AND township — candidates labeled by type (city/township/county), never merged.
-102. **[H][FLAGGED]** Multi-state handling: an address on a state line should surface BOTH states' candidates — current logic prefers the geocoded one.
+102. **[H][DONE]** Multi-state handling: an address on a state line should surface BOTH states' candidates — current logic prefers the geocoded one.
 103. **[F][DONE]** Auto-apply when there's exactly one verified, unambiguous match — the happy path needs zero extra clicks.
 104. **[F][DONE]** "Are you sure?" confirm for apply when the match is low-confidence — the boundary case needs one pause, not blind trust.
 105. **[H][DONE]** Preserve detected-vs-repository distinction in ALL writes — the picker's location_resolution must never overwrite a verified repository row with a weaker detected one.
@@ -179,7 +179,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 131. **[F][DONE]** Batch `staffDataRead` multi-entity mode — the mount-burst fix needs this even after the governor lands (79).
 132. **[F][DONE]** Address-suggest service — real autocomplete needs a suggest API the Census geocoder doesn't have (15).
-133. **[F][FLAGGED]** Permit-status workflow state machine on line items — needs its own field + transitions + UI (95).
+133. **[F][DONE]** Permit-status workflow state machine on line items — needs its own field + transitions + UI (95).
 134. **[F][DONE]** Boundary-polygon overlay on the picker map — needs the GeoJSON stored per locality + a polygon render layer (37).
 135. **[F][DONE]** Jurisdiction expiry + auto-re-verify scheduling — needs a recurring function + a stale flag (52).
 136. **[F][DONE]** Shared permit-office contact DB with call outcomes — needs its own entity + UI (53).
@@ -197,7 +197,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
 142. **[F][FLAGGED-dedicated]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
 143. **[UX][DONE]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
-144. **[F][FLAGGED-dedicated]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
+144. **[F][DONE]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
 145. **[UX][DONE]** Spelling-tolerant search: "Milford OH 45150" without a street still finds Milford's candidates and says so plainly.
 146. **[F][DONE]** Intersection syntax: "Lila Ave & Main St, Milford" resolves via the geocoder's free-form match.
 147. **[UX][FLAGGED-dedicated]** If the address resolves to a PO box/rural route, say it plainly ("We found a postal area, not a situs address — check the map pin").
@@ -206,7 +206,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 148. **[UX][DONE]** Each candidate card gets a one-line "why it's here": "The map pin falls inside its boundary" vs "Same name as the town" — the reason, not just the name.
 149. **[UX][FLAGGED-dedicated]** Distance hint on candidates: "About 0.3 miles from the pin" — helps spot a boundary-edge mistake.
-150. **[F][FLAGGED-dedicated]** "Compare side by side" for two candidates: county vs city vs township offices shown in columns so the difference is obvious.
+150. **[F][DONE]** "Compare side by side" for two candidates: county vs city vs township offices shown in columns so the difference is obvious.
 151. **[UX][DONE]** The detected card states what it is NOT: "Not a township address — it sits inside the city." Kills second-guessing.
 152. **[F][DONE]** Show the FULL containment chain on the card: Address → City of Milford → Clermont County → Ohio — every level separately.
 153. **[UX][DONE]** A boundary-edge warning: "The pin is within ~200 ft of the city line — the next office over is X Township" when the margin is thin.
@@ -240,30 +240,30 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 175. **[UX][DONE]** Jurisdiction notes field: free-text staff notes ("they only take checks") pinned on the profile.
 176. **[F][DONE]** Photo/scan attachments on a jurisdiction: the fee-schedule PDF or the printed rules page as evidence.
 177. **[UX][DONE]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
-178. **[F][FLAGGED-dedicated]** Version compare on a jurisdiction: current vs an archived snapshot — what the AI/staff edits actually changed.
+178. **[F][DONE]** Version compare on a jurisdiction: current vs an archived snapshot — what the AI/staff edits actually changed.
 179. **[UX][DONE]** Search by phone number or office name — "who is (513) 831-7143?" → the jurisdiction row.
 180. **[F][DONE]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
 181. **[UX][DONE]** Recently-researched strip: the 5 most-recently-verified jurisdictions at the top of the repository.
 182. **[F][FLAGGED-dedicated]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
 183. **[UX][DONE]** "Needs electrical review" chip where sign+zoning verified but electrical isn't — partial states are visible.
 184. **[F][FLAGGED-dedicated]** Contact-import from a business card photo (OCR on the phone# + name) — fast office-data entry.
-185. **[H][FLAGGED-dedicated]** Jurisdiction-merge staging: queue a merge → preview affected jobs → confirm — never a one-click clobber (ties to item 59).
+185. **[H][DONE]** Jurisdiction-merge staging: queue a merge → preview affected jobs → confirm — never a one-click clobber (ties to item 59).
 
 ## R — Pipeline & backend, round 2
 
 186. **[H][DONE]** Warm the catalog cache on page load — one batch read fills JurisdictionProfile + PermitLocality + GlobalSettings together (uses the new batch mode).
 187. **[H][DONE]** Circuit-breaker on the resolver: after 3 consecutive 5xx, show "lookup service is having trouble" instead of hammering it.
-188. **[H][FLAGGED-dedicated]** Request timing headers on the resolver response so slow paths are measurable server-side.
+188. **[H][DONE]** Request timing headers on the resolver response so slow paths are measurable server-side.
 189. **[H][DONE]** A `permittingHealth` probe function: geocoder + census + boundary + repository-read statuses in one call — first thing to check on a bad report.
 190. **[H][DONE]** Dead-letter on failed scans: a scan that errors mid-write lands in a reviewable queue instead of vanishing.
-191. **[H][FLAGGED-dedicated]** Deterministic idempotency key on resolver calls: same address+options in 10s → return the cached result, don't re-scan.
-192. **[H][FLAGGED-dedicated]** Rate-limit-aware queue for bulk lookups: many addresses resolved server-side with pacing, not parallel invokes.
+191. **[H][DONE]** Deterministic idempotency key on resolver calls: same address+options in 10s → return the cached result, don't re-scan.
+192. **[H][DONE]** Rate-limit-aware queue for bulk lookups: many addresses resolved server-side with pacing, not parallel invokes.
 193. **[H][DONE]** Structured timing/stage log on the scan record — which stage ate the seconds (geocode vs boundary vs office review).
 194. **[H][DONE]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
 195. **[H][DONE]** Graceful half-result: boundary matched but office review timed out → usable locality + "offices still checking" (partial success, not failure).
 196. **[H][DONE]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
 197. **[H][DONE]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
-198. **[H][FLAGGED-dedicated]** Feature flag the fallback geocoder path so a Nominatim outage can't cascade into the picker.
+198. **[H][DONE]** Feature flag the fallback geocoder path so a Nominatim outage can't cascade into the picker.
 
 ## S — Accessibility & simplicity, round 2
 
@@ -301,9 +301,9 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 224. **[H][FLAGGED-dedicated]** Cross-check boundary claims: when two sources disagree on whether the pin is in the city, surface the conflict — don't pick silently.
 225. **[F][DONE]** "Research this" request per locality: flag it for the research queue with a note — the loop from picker → backlog is one click.
 226. **[H][DONE]** Sentinel-value sweeper: periodically flags placeholder URLs/emails/phones in jurisdiction rows (exists partially in trust-assess).
-227. **[F][FLAGGED-dedicated]** Archived-vs-current version on every document: mark a source superseded, keep it for audit, stop citing it.
+227. **[F][DONE]** Archived-vs-current version on every document: mark a source superseded, keep it for audit, stop citing it.
 228. **[H][FLAGGED-dedicated]** Boundary-version tracking: when a town annexes land, the old boundary claim gets a "may be outdated" flag.
-229. **[F][FLAGGED-dedicated]** A "coverage map" per county: which townships/villages/cities in the county have verified offices — the gap map.
+229. **[F][DONE]** A "coverage map" per county: which townships/villages/cities in the county have verified offices — the gap map.
 230. **[H][DONE]** Regression on identity writes: automated check that a write can't set city=county or merge a township into a village row.
 
 ## V — Team workflow & visibility
@@ -345,11 +345,11 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## X — Evidence & sources, deeper
 
 257. **[F][DONE]** Evidence confidence per source: official .gov page / state registry / inferred / hearsay — a badge on every document.
-258. **[H][FLAGGED-dedicated]** Source link health-check: periodic HEAD-requests flag 404'd official pages — dead evidence gets noticed.
+258. **[H][DONE]** Source link health-check: periodic HEAD-requests flag 404'd official pages — dead evidence gets noticed.
 259. **[F][DONE]** Source date captured: "Page last updated March 2024" — the evidence's own freshness, not just ours.
 260. **[UX][DONE]** Click any claim → see the quoted text from the source that proved it — evidence is one tap, not a trust-me.
-261. **[F][FLAGGED-dedicated]** Contradiction logging: when two sources disagree on who issues permits, both get recorded + flagged — never silently resolved.
-262. **[H][FLAGGED-dedicated]** Source-dedup: the same URL on two jurisdictions gets normalized to one record — the evidence graph stays clean.
+261. **[F][DONE]** Contradiction logging: when two sources disagree on who issues permits, both get recorded + flagged — never silently resolved.
+262. **[H][DONE]** Source-dedup: the same URL on two jurisdictions gets normalized to one record — the evidence graph stays clean.
 263. **[F][DONE]** Offline source snapshots: a cached copy of the proving page so a 404 doesn't erase the evidence.
 264. **[UX][DONE]** "Why we believe this" expandable on any verified fact — the reasoning chain in plain language.
 265. **[F][DONE]** Source-type taxonomy: ordinance / fee schedule / application form / zoning map / department page — labeled, not just linked.
@@ -357,10 +357,10 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 267. **[F][DONE]** Citizen-verified flag: a jurisdiction whose evidence came from a human staff check vs AI research — different trust.
 268. **[UX][DONE]** Evidence-count on the card: "3 official sources" — confidence at a glance.
 269. **[F][DONE]** Application-form library: the actual PDF form per jurisdiction linked for download — staff don't re-find it.
-270. **[H][FLAGGED-dedicated]** Form-version tracking: when an office updates their application form, the old link flags "may be outdated".
+270. **[H][DONE]** Form-version tracking: when an office updates their application form, the old link flags "may be outdated".
 271. **[F][DONE]** Ordinance section citations: "Milford Codified §153.042" stored as structured data, not just in notes.
 272. **[UX][DONE]** Fee-schedule page deep-link: the exact PDF page with the fee table, not just the department site.
-273. **[F][FLAGGED-dedicated]** Meeting-agenda links: the council agenda that changed a fee gets linked — the "why" is traceable.
+273. **[F][DONE]** Meeting-agenda links: the council agenda that changed a fee gets linked — the "why" is traceable.
 274. **[H][DONE]** Evidence-gated verification: a jurisdiction can't verify without ≥1 usable official source — enforced server-side.
 275. **[UX][DONE]** "Last checked" per source: "This page verified working Oct 15" — per-link freshness.
 
@@ -369,12 +369,12 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 276. **[F][FLAGGED-dedicated]** Annexation awareness: recently-annexed areas show "boundary changed 2024 — offices may differ from older data".
 277. **[H][FLAGGED-dedicated]** Point-in-polygon double-check: a second independent boundary source confirms the first — high-stakes addresses get two proofs.
 278. **[F][FLAGGED-dedicated]** Multi-parcel handling: a job on two parcels lists both jurisdictions — "the sign is on parcel B, which is in X Township".
-279. **[UX][FLAGGED-dedicated]** The map shows the nearest boundary distance: "0.2 mi to the township line" — edge cases are visible.
-280. **[F][FLAGGED-dedicated]** Water/road-edge rules: addresses on a city line where the road itself is the boundary get a special "road-edge" flag.
-281. **[H][FLAGGED-dedicated]** Census boundary freshness: when the TIGER data updates, boundary-verified jurisdictions get a re-check flag.
+279. **[UX][DONE]** The map shows the nearest boundary distance: "0.2 mi to the township line" — edge cases are visible.
+280. **[F][DONE]** Water/road-edge rules: addresses on a city line where the road itself is the boundary get a special "road-edge" flag.
+281. **[H][DONE]** Census boundary freshness: when the TIGER data updates, boundary-verified jurisdictions get a re-check flag.
 282. **[F][DONE]** Municipal vs postal name: "Address says Milford but the map says Miami Township" — postal ≠ jurisdiction, called out explicitly.
 283. **[UX][FLAGGED-dedicated]** A "show me the boundary" button drawing the jurisdiction outline on the map when GeoJSON exists.
-284. **[F][FLAGGED-dedicated]** Overlapping-service districts: school districts, fire districts, water districts — separate layers, never conflated with permit offices.
+284. **[F][DONE]** Overlapping-service districts: school districts, fire districts, water districts — separate layers, never conflated with permit offices.
 285. **[UX][DONE]** "Is this address right?" sanity check: the pin vs the typed street — a visual confirmation before apply.
 286. **[F][DONE]** Township-trustee vs municipality distinction: "Milford Township" and "City of Milford" as visually-distinct card types.
 287. **[H][FLAGGED-dedicated]** GPS-vs-geocode agreement: when "Use my location" and the typed address disagree by >500ft, flag the mismatch.
@@ -389,7 +389,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 293. **[F][DONE]** Permit-expiry alerts: a permit with expiration_date nearing → surfaces on the job + a flag 30 days out.
 294. **[UX][DONE]** Renewal shortcut: an expired permit gets a "start renewal" action copying the prior application's data.
 295. **[F][DONE]** Permit-transfer tracking: when a job moves clients, the permit's owner field changes — the handoff is recorded.
-296. **[UX][FLAGGED-dedicated]** Document thumbnails: the permit PDF's first page as a preview on the line — staff recognize it without opening.
+296. **[UX][DONE]** Document thumbnails: the permit PDF's first page as a preview on the line — staff recognize it without opening.
 297. **[F][DONE]** Permit-packet export: permit + application + site plan bundled as one printable packet for the inspector.
 298. **[H][DONE]** Document-freshness check: a permit expiring before the job's install date flags "permit may lapse — renew first".
 299. **[F][DONE]** Multi-permit coordination: when a job needs sign + electrical + zoning separately, the three tracks show as parallel rows.
@@ -414,7 +414,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 315. **[UX][DONE]** The picker teaches while it works: each stage shows what it's doing in a way that builds user understanding.
 316. **[F][DONE]** Skip-level hints: a power-user toggle to skip confirmations — "I know what I'm doing" mode for vets.
 317. **[UX][FLAGGED-dedicated]** Contextual empty-states: "No applications filed yet — press the button above when you file one" — every empty area teaches.
-318. **[F][FLAGGED-dedicated]** Buddy-check: a new user's first few applies can flag "reviewed by {senior}" — a soft QA loop.
+318. **[F][DONE]** Buddy-check: a new user's first few applies can flag "reviewed by {senior}" — a soft QA loop.
 319. **[UX][DONE]** Undo-teaching: after a destructive action, "you can undo that from the line's menu" — recovery paths taught.
 320. **[F][DONE]** Team-notes feed: a shared "things we learned this week" thread on the permitting page.
 321. **[UX][DONE]** Terminology consistency sweep: one word everywhere — "permit office" not juggling "jurisdiction/agency/authority".
@@ -427,18 +427,18 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 325. **[F][DONE]** Client billing-entity link: the office's invoice address on file for fee-billing to the jurisdiction.
 326. **[UX][DONE]** "Open in the CRM" cross-links: the customer record ↔ the permit job — one click between.
 327. **[F][DONE]** Permit-data export to accounting: fees paid → CSV for QuickBooks — the money trail.
-328. **[H][FLAGGED-dedicated]** Estimate-integration: the estimate's permit-cost line pulls the office's actual fee where known.
+328. **[H][DONE]** Estimate-integration: the estimate's permit-cost line pulls the office's actual fee where known.
 329. **[F][DONE]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
 330. **[UX][DONE]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
 331. **[F][DONE]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
 332. **[H][DONE]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
 333. **[F][DONE]** Office-lookup by phone: inbound call → the office's row — "who is calling".
 334. **[UX][DONE]** "Recent work in this town" on the card: last 3 jobs in the same jurisdiction — institutional memory.
-335. **[F][FLAGGED-dedicated]** Notification-hook: a jurisdiction update pings the linked active jobs' assignees.
+335. **[F][DONE]** Notification-hook: a jurisdiction update pings the linked active jobs' assignees.
 336. **[UX][DONE]** Deep-link to a jurisdiction: a URL like /Permitting?jurisdiction=milford opens that card — shareable links.
 337. **[F][DONE]** Photo-attach to a jurisdiction: site photos of the office's posted requirements — evidence.
 338. **[H][DONE]** Timezone-normalized timestamps: all display times in America/New_York — no UTC leakage.
-339. **[F][FLAGGED-dedicated]** The estimate's permit line auto-fills the office's known fee — priced-right without re-typing.
+339. **[F][DONE]** The estimate's permit line auto-fills the office's known fee — priced-right without re-typing.
 340. **[UX][DONE]** "What changed since I was last here" panel on the page — returning users see the delta.
 341. **[F][DONE]** Cross-device handoff: start a search on the desktop, confirm it on the phone — state persists.
 
@@ -454,13 +454,13 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 349. **[F][DONE]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
 350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
 351. **[F][DONE]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
-352. **[H][FLAGGED-dedicated]** Rate-limit on applies: a job can't create 10 locality links in 10 seconds — burst-write protection.
+352. **[H][DONE]** Rate-limit on applies: a job can't create 10 locality links in 10 seconds — burst-write protection.
 353. **[F][DONE]** Soft-delete on jurisdiction merges: merged-away rows stay recoverable for 30 days — undo is real.
-354. **[H][FLAGGED-dedicated]** Mass-change approval: bulk jurisdiction edits (>5 rows) need a second staff confirmation.
+354. **[H][DONE]** Mass-change approval: bulk jurisdiction edits (>5 rows) need a second staff confirmation.
 355. **[F][DONE]** "Check what this changes" preview on jurisdiction edits: affected jobs listed before save.
 356. **[H][DONE]** FIPS-code integrity: jurisdictions carry the FIPS code — the identity is machine-verifiable, not just a name.
 357. **[F][DONE]** Address-lookup audit log: who searched what address when — a compliance trail.
-358. **[H][FLAGGED-dedicated]** Address-leak prevention: the resolver's logs don't write full street addresses to long-term records.
+358. **[H][DONE]** Address-leak prevention: the resolver's logs don't write full street addresses to long-term records.
 359. **[F][DONE]** "Not this job" escape: if a search lands on the wrong address entirely, one click "wrong address — search again".
 360. **[H][DONE]** Tamper-evidence on verified jurisdictions: a verified→unverified transition gets logged with the reason.
 361. **[F][DONE]** Manual-override visibility: a manually-applied locality is labeled "chosen by staff" — vs "verified by map".
@@ -469,7 +469,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## AD — Performance & scale
 
 363. **[H][DONE]** Picker mount lazy-loads: the map + repository list don't fetch until the dialog opens — faster page.
-364. **[H][FLAGGED-dedicated]** Boundary GeoJSON compression: polygons stored simplified — the map loads fast on phones.
+364. **[H][DONE]** Boundary GeoJSON compression: polygons stored simplified — the map loads fast on phones.
 365. **[H][DONE]** Paged scan-activity: the panel pages old runs — long-history sessions stay fast.
 366. **[H][DONE]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
 367. **[H][DONE]** Incremental list loading: the repository pages 50-at-a-time with "load more" — not one 500-row dump.
@@ -483,11 +483,11 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 375. **[H][DONE]** Memoized list-derivations: the queue summaries + counts compute once per data-change, not per render.
 376. **[H][DONE]** Stale-while-revalidate on the repository: last-cached list shows instantly, fresh data swaps in behind.
 377. **[H][DONE]** Chunked map render: >50 boundary polygons batch-paint so the map doesn't freeze.
-378. **[H][FLAGGED-dedicated]** One shared geocoder client: the resolver + browser-fallback share one fetch budget — no parallel geocoder storms.
+378. **[H][DONE]** One shared geocoder client: the resolver + browser-fallback share one fetch budget — no parallel geocoder storms.
 
 ## AE — Communication & follow-through
 
-379. **[F][FLAGGED-dedicated]** In-app mention: "@brett — can you verify the Mason office?" pings a staff member on a jurisdiction.
+379. **[F][DONE]** In-app mention: "@brett — can you verify the Mason office?" pings a staff member on a jurisdiction.
 380. **[UX][DONE]** Follow-up scheduling: "remind me in a week" on any line — the chase doesn't rely on memory.
 381. **[F][DONE]** Status-change digest: a daily "what moved in permitting" — office verifications, applies, issues.
 382. **[UX][DONE]** Unanswered-question flag: a line with a pending office question >N days surfaces as needing attention.
@@ -495,7 +495,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 384. **[UX][DONE]** Plain-language status for clients: "Waiting on the township's review" — not internal jargon.
 385. **[F][DONE]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
 386. **[UX][DONE]** Next-check-in prompt: after applying, "check back Thursday?" — a soft reminder set in one tap.
-387. **[F][FLAGGED-dedicated]** Team-shift notes: end-of-day "here's where each job stands" auto-summary for the next shift.
+387. **[F][DONE]** Team-shift notes: end-of-day "here's where each job stands" auto-summary for the next shift.
 388. **[UX][DONE]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
 389. **[F][DONE]** Approval-request workflow: an unverified-locality apply asks a senior for approval — staff work continues pending it.
 390. **[UX][DONE]** "Who's on this?" per line: the person currently working the chase is named — handoffs are clean.
@@ -531,7 +531,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 414. **[UX][DONE]** Quick-reply templates: canned office-email lines ("Following up on permit #X — any update?") for the chase.
 415. **[F][DONE]** Permit-template library: common application-packets per jurisdiction — Milford's PDF + required docs pre-known.
 416. **[UX][FLAGGED-dedicated]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
-417. **[F][FLAGGED-dedicated]** Multi-job jurisdiction assign: select N jobs in the same town → apply the verified jurisdiction once.
+417. **[F][DONE]** Multi-job jurisdiction assign: select N jobs in the same town → apply the verified jurisdiction once.
 418. **[UX][DONE]** Quick-switch to a sibling: "the township handles this, not the city" — a one-tap swap to the other candidate.
 419. **[F][DONE]** Custom workflow steps per jurisdiction: "Milford needs a site plan first" — jurisdiction-specific steps on its lines.
 420. **[UX][DONE]** "What's different about this town" hint: jurisdiction-specific quirks surfaced on its jobs — "they want mail-in only".
