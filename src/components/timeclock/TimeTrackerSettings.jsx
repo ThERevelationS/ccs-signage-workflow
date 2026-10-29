@@ -376,6 +376,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
                   <SelectContent>
                     <SelectItem value="paid">Paid time only</SelectItem>
                     <SelectItem value="elapsed">Raw elapsed</SelectItem>
+                    <SelectItem value="pomodoro">Pomodoro cycles (25m)</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
