@@ -210,6 +210,14 @@ export default function QuickClockSection({
     try { localStorage.setItem("ccs_kiosk_large_text", next ? "1" : "0"); } catch {}
     return next;
   });
+  // First-run kiosk tutorial strip; dismisses per device forever.
+  const [showKioskTutorial, setShowKioskTutorial] = useState(() => {
+    try { return localStorage.getItem("ccs_kiosk_tutorial_seen") !== "1"; } catch { return false; }
+  });
+  const dismissKioskTutorial = () => {
+    setShowKioskTutorial(false);
+    try { localStorage.setItem("ccs_kiosk_tutorial_seen", "1"); } catch {}
+  };
   // Keep an uncertain Clock Out bound to its exact original body/request ID.
   // A different reconciliation payload may not reuse that idempotency key.
   const clockOutAttemptRef = useRef(null);
@@ -1594,6 +1602,25 @@ export default function QuickClockSection({
             title="Large text mode for the kiosk"
           >A+</button>
         </h2>
+
+        {showKioskTutorial && (
+          <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50/80 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">First time? It's three steps:</p>
+                <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-xs text-indigo-800">
+                  <li>Choose Face, Badge, or Email below</li>
+                  <li>Look at the camera or enter your code</li>
+                  <li>Clock In or Clock Out - done</li>
+                </ol>
+              </div>
+              <button type="button" onClick={dismissKioskTutorial}
+                className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold text-indigo-500 hover:bg-indigo-100">
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
 
         {persistenceError && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
