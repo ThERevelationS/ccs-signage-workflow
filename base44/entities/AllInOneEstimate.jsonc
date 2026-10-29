@@ -27,6 +27,10 @@
       "type": "string",
       "description": "Parent estimate id when this estimate was created via Split \u2014 links the child back to its source for traceability."
     },
+    "duplicated_from_estimate_id": {
+      "type": "string",
+      "description": "Source estimate id when this estimate was created via Duplicate \u2014 links the clone back to its source for traceability."
+    },
     "estimating_request_id": {
       "type": "string",
       "description": "Optional EstimatingRequest link preserving the pre-estimate handoff identity."
