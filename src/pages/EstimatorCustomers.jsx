@@ -11,6 +11,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import PortalPanel, { invokePortal, MESSAGE_KIND_LABELS } from "@/components/portal/PortalPanel";
 import SavedViews from "@/components/workflow/SavedViews";
+import { downloadCsv } from "@/components/shared/exportCsv";
 import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerMergeDialog from "@/components/estimator/CustomerMergeDialog";
 
@@ -423,6 +424,22 @@ export default function EstimatorCustomers() {
   const term = search.trim().toLowerCase();
   const allTags = [...new Set(customers.flatMap((c) => (Array.isArray(c.tags) ? c.tags : [])).filter(Boolean))].sort();
   const linkedCustomer = linkedCustomerId ? customers.find((customer) => customer.id === linkedCustomerId) || null : null;
+  const exportCsv = () => {
+    downloadCsv("customers.csv",
+      ["Company", "Contact", "Email", "Phone", "City", "State", "Tier", "Tags", "Created"],
+      rows.map((c) => [
+        c.company_name || "",
+        c.contact_name || [c.first_name, c.last_name].filter(Boolean).join(" ") || "",
+        c.email || c.contact_email || "",
+        c.phone || c.contact_phone || "",
+        c.city || c.billing_city || "",
+        c.state || c.billing_state || "",
+        c.tier_name || c.tier || "",
+        (Array.isArray(c.tags) ? c.tags : []).join("; "),
+        c.created_date || "",
+      ]));
+  };
+
   const rows = customers
     .filter((c) => (linkedCustomerId ? c.id === linkedCustomerId : status ? (c.customer_status || "prospect") === status : true))
     .filter((c) => (tagFilter ? (Array.isArray(c.tags) && c.tags.includes(tagFilter)) : true))
@@ -442,7 +459,8 @@ export default function EstimatorCustomers() {
         <div className="bg-white px-4 py-3 flex items-center gap-2">
           <Users className="w-4 h-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">CUSTOMERS</h1>
-          <span className="ml-auto text-xs text-gray-400">{customers.length} total</span>
+          <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1">CSV</button>
+          <span className="text-xs text-gray-400">{customers.length} total</span>
           {me?.role === "admin" && (
             <button
               type="button"
