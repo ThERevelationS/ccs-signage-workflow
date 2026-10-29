@@ -140,6 +140,13 @@ export default function ActivityFeed() {
     return "bg-gray-100 text-gray-800";
   };
 
+  const oldestActivity = visibleActivities.length
+    ? visibleActivities.reduce((min, a) => {
+        const t = a.timestamp ? new Date(a.timestamp).getTime() : Infinity;
+        return t < min ? t : min;
+      }, Infinity)
+    : null;
+
   const exportActivitiesCsv = () => {
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = [
@@ -151,8 +158,7 @@ export default function ActivityFeed() {
         a.field || a.actionType || a.description || "",
         a.oldValue ?? "", a.newValue ?? "",
       ]),
-    ].map((r) => r.map(esc).join(",")).join("
-");
+    ].map((r) => r.map(esc).join(",")).join("\n");
     const blob = new Blob([rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -245,7 +251,12 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
         </div>
-      ) : visibleActivities.length === 0 ? (
+      ) : (
+        <>
+      {oldestActivity && Number.isFinite(oldestActivity) && (
+        <p className="text-[11px] text-gray-400 mb-2">Showing activity back to {new Date(oldestActivity).toLocaleString()} · {visibleActivities.length} items</p>
+      )}
+      {visibleActivities.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           No activity found
         </div>
@@ -311,6 +322,8 @@ export default function ActivityFeed() {
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );
