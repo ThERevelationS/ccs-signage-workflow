@@ -76,9 +76,13 @@ Deno.serve(async (req) => {
         const wantState = String(data?.state || '').trim().toLowerCase();
         if (rawName) {
           const dup = await entity.filter({ name: rawName }, null, 50).catch(() => []);
+          const wantProfile = String(data?.jurisdiction_profile_id || '').trim();
           const existing = (Array.isArray(dup) ? dup : []).find((r: any) =>
             String(r?.name || '').trim().toLowerCase() === wantName &&
-            String(r?.state || '').trim().toLowerCase() === wantState
+            String(r?.state || '').trim().toLowerCase() === wantState &&
+            // Same-name city/township/county rows are legitimately separate
+            // jurisdictions — never dedupe across different linked profiles.
+            (!wantProfile || !String(r?.jurisdiction_profile_id || '').trim() || String(r?.jurisdiction_profile_id).trim() === wantProfile)
           );
           if (existing?.id) return Response.json({ success: true, record: existing, deduplicated: true });
         }
