@@ -116,6 +116,7 @@ function LocalityPickerSession({
   const [multiMode, setMultiMode] = useState(false);
   const [multiResults, setMultiResults] = useState([]);
   const [multiRunning, setMultiRunning] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState(null);
   const inputRef = useRef(null);
 
   const autoSearchRef = useRef(false);
@@ -332,6 +333,12 @@ function LocalityPickerSession({
   };
 
   const mapPosition = Number.isFinite(result?.geocode?.lat)&&Number.isFinite(result?.geocode?.lon) ? { lat: result.geocode.lat, lng: result.geocode.lon } : null;
+  // GPS-vs-geocode disagreement — when "Use my location" and the resolved pin disagree by >500ft, flag the mismatch.
+  const gpsMismatch = gpsCoords && mapPosition && (() => {
+    const dLat = (mapPosition.lat - gpsCoords.lat) * 111320;
+    const dLng = (mapPosition.lng - gpsCoords.lng) * 111320 * Math.cos(gpsCoords.lat * Math.PI / 180);
+    return Math.sqrt(dLat * dLat + dLng * dLng) > 152; // 500ft ≈ 152m
+  })();
   const markerTitle = result?.geocode?.display_name || address.trim();
 
   return (
@@ -485,6 +492,7 @@ function LocalityPickerSession({
                   if (!parts.length) { setError("Couldn't read an address from your location — type it instead."); return; }
                   const found = parts.join(', ');
                   setAddress(found); setResult(null); setSelectedLocalityId(''); setSearching(false);
+                  setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                   setTimeout(() => runSearch(), 0);
                 } catch { setError("Couldn't read an address from your location — type it instead."); }
               }, () => setError("Location was blocked — allow location access or type the address."), { timeout: 15000 });
@@ -558,6 +566,11 @@ function LocalityPickerSession({
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[400px_minmax(0,1fr)] lg:overflow-hidden">
           <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
+            {gpsMismatch && (
+              <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
+                Your GPS and the typed address disagree by more than 500 ft — double-check which location is the actual job site before applying.
+              </p>
+            )}
             {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this jurisdiction.":"We found the town or township — someone on the team still needs to check the offices before it can be used."}</p></section>}
             <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
