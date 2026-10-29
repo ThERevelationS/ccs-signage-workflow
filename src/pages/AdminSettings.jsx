@@ -645,7 +645,14 @@ export default function AdminSettings() {
       return next;
     });
   }, [isUnlocked, selectedAdminTab]);
-  const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser);
+  const userTeamSections = useMemo(() => {
+    const email = String(currentUser?.email || '').toLowerCase();
+    if (!email || !Array.isArray(emailGroups)) return [];
+    return [...new Set(emailGroups
+      .filter((g) => Array.isArray(g?.emails) && g.emails.map((e) => String(e).toLowerCase()).includes(email))
+      .flatMap((g) => Array.isArray(g?.permission_sections) ? g.permission_sections : []))];
+  }, [currentUser?.email, emailGroups]);
+  const availableAdminGroups = getAccessibleAdminGroups(isAdmin, currentUser, userTeamSections);
   const requestedDeepLinkTab = searchParams.get("tab");
   const requestedDeepLinkSubtab = searchParams.get("subtab");
   const deniedDeepLinkTab = isUnlocked && requestedDeepLinkTab && requestedDeepLinkTab !== selectedAdminTab;
