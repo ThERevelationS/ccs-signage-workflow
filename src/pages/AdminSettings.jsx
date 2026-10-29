@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AUTOMATION_PRESETS, draftFromPreset, recordFilterFields, destinationWorkOrderId, draftProblems } from "@/components/admin/automationBuilderModel.mjs";
+import DataExportPanel from "@/components/admin/DataExportPanel";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1647,7 +1648,7 @@ export default function AdminSettings() {
     const actions = (rule.actions || []).map((a) => ACTION_TYPES.find((x) => x.value === a.action_type)?.label || a.action_type);
     const when = triggers.length ? `When ${triggers.join(" or ")}` : "When triggered";
     const then = actions.length ? `then ${actions.join(" and ")}` : "no action is set up yet";
-    return `${when} — ${then}${rule.enabled === false ? " (currently turned off)" : ""}.`;
+    return `${when} â€” ${then}${rule.enabled === false ? " (currently turned off)" : ""}.`;
   };
 
   const groupedTriggers = TRIGGER_TYPES.filter(t => getTriggerSupportedActions(t.value)).reduce((acc, trigger) => {
@@ -1698,7 +1699,7 @@ export default function AdminSettings() {
   useEffect(() => {
     if (!isUnlocked) return;
     void loadAutomationPauseState();
-    // Open punch-exception count → nav badge on the Time Clock tab.
+    // Open punch-exception count â†’ nav badge on the Time Clock tab.
     staffEntities.TimeClockPunchException.filter({ status: "open" })
       .then((rows) => setOpenExceptionCount(Array.isArray(rows) ? rows.length : 0))
       .catch(() => setOpenExceptionCount(0));
@@ -1744,10 +1745,10 @@ export default function AdminSettings() {
   );
 
   const sig = (list, key) => [...new Set((list || []).map((x) => x?.[key]).filter(Boolean))].sort().join("|");
-  const currentRuleSig = `${sig(triggers, "trigger_type")}→${sig(actions, "action_type")}`;
-  const nearDuplicateRule = currentRuleSig !== "→" ? automations.find((rule) =>
+  const currentRuleSig = `${sig(triggers, "trigger_type")}â†’${sig(actions, "action_type")}`;
+  const nearDuplicateRule = currentRuleSig !== "â†’" ? automations.find((rule) =>
     rule.id !== editingRule?.id &&
-    `${sig(rule.triggers, "trigger_type")}→${sig(rule.actions, "action_type")}` === currentRuleSig
+    `${sig(rule.triggers, "trigger_type")}â†’${sig(rule.actions, "action_type")}` === currentRuleSig
   ) : null;
 
   const visibleAutomations = sortedAutomations.filter((rule) => {
@@ -2091,7 +2092,7 @@ export default function AdminSettings() {
         {(deniedDeepLinkTab || deniedDeepLinkSubtab) && (
           <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
             {deniedDeepLinkTab
-              ? `The Admin page "${requestedDeepLinkTab}" isn't available for your account — showing ${resolvedTabLabel} instead.`
+              ? `The Admin page "${requestedDeepLinkTab}" isn't available for your account â€” showing ${resolvedTabLabel} instead.`
               : `The Admin sub-page "${requestedDeepLinkSubtab}" isn't available for your account.`}
           </div>
         )}
@@ -2141,7 +2142,7 @@ export default function AdminSettings() {
         }`}</style>
         {offline && (
           <div className="mb-3 rounded-lg border border-red-400 bg-red-100 px-3 py-2 text-xs font-semibold text-red-900" role="alert">
-            You appear to be offline — admin changes will not save until your connection returns.
+            You appear to be offline â€” admin changes will not save until your connection returns.
           </div>
         )}
         {(() => {
@@ -2156,7 +2157,7 @@ export default function AdminSettings() {
             <div className="mb-3 flex flex-wrap gap-1.5" aria-label="Setup checks">
               {checks.map((c) => (
                 <span key={c.label} className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${c.ok ? "border-green-300 bg-green-50 text-green-800" : "border-amber-300 bg-amber-50 text-amber-800"}`}>
-                  {c.ok ? "✓" : "⚠"} {c.label}
+                  {c.ok ? "âœ“" : "âš "} {c.label}
                 </span>
               ))}
             </div>
@@ -2222,7 +2223,7 @@ export default function AdminSettings() {
                     <button type="button" aria-label={pinnedTabs.includes(tab.value) ? `Unpin ${tab.label}` : `Pin ${tab.label}`}
                       onClick={(e) => { e.stopPropagation(); togglePin(tab.value); }}
                       className={`ml-0.5 text-[10px] leading-none ${pinnedTabs.includes(tab.value) ? "text-amber-500" : "text-gray-300 hover:text-amber-500"}`}>
-                      {pinnedTabs.includes(tab.value) ? "★" : "☆"}
+                      {pinnedTabs.includes(tab.value) ? "â˜…" : "â˜†"}
                     </button>
                     {tab.value === "timeclock" && openExceptionCount > 0 && (
                       <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
@@ -2285,6 +2286,7 @@ export default function AdminSettings() {
                   </TabsList>
                     <AdminPanelContent value="backup">
                     <BackupManager />
+                    <DataExportPanel />
                   </AdminPanelContent>
                   <AdminPanelContent value="client_trash">
                     <ProjectTrash />
@@ -2419,7 +2421,7 @@ export default function AdminSettings() {
 
             {automationsPaused && (
               <div className="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800" role="alert">
-                All automations are PAUSED — no rules will run until resumed.
+                All automations are PAUSED â€” no rules will run until resumed.
               </div>
             )}
             {pauseError && <div className="mb-2 text-xs text-red-600">{pauseError}</div>}
@@ -2433,7 +2435,7 @@ export default function AdminSettings() {
               <Input
                 value={ruleSearch}
                 onChange={(e) => setRuleSearch(e.target.value)}
-                placeholder="Search rules…"
+                placeholder="Search rulesâ€¦"
                 className="h-8 w-44 text-xs"
                 aria-label="Search automation rules"
               />
@@ -2498,7 +2500,7 @@ export default function AdminSettings() {
                   onClick={toggleAutomationPause} disabled={pauseBusy || automationSaving}
                   className={automationsPaused ? "bg-red-600 text-white" : ""}
                   aria-label={automationsPaused ? "Resume all automations" : "Pause all automations"}>
-                  {pauseBusy ? "Working…" : automationsPaused ? "Resume all" : "Pause all"}
+                  {pauseBusy ? "Workingâ€¦" : automationsPaused ? "Resume all" : "Pause all"}
                 </Button>
               <Button onClick={openNewRule} disabled={isLoading || automationLoadError || emailGroupsLoading || emailGroupsLoadError} className="clay-button border-none text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
@@ -2588,7 +2590,7 @@ export default function AdminSettings() {
                             const recent = Array.isArray(rule.recent_runs) ? rule.recent_runs.slice(-3) : [];
                             return recent.length === 3 && recent.every((r) => r?.status === 'error') ? (
                               <Badge className="text-xs bg-red-600 text-white border border-red-700">
-                                Failing — last 3 runs errored
+                                Failing â€” last 3 runs errored
                               </Badge>
                             ) : null;
                           })()}
@@ -2598,7 +2600,7 @@ export default function AdminSettings() {
                             const firedToday = recent.filter((r) => Date.parse(r?.at || "") > dayAgo).length;
                             return firedToday >= 10 ? (
                               <Badge className="text-xs bg-purple-100 text-purple-800 border border-purple-300">
-                                High volume — {firedToday} runs in 24h
+                                High volume â€” {firedToday} runs in 24h
                               </Badge>
                             ) : null;
                           })()}
@@ -2626,12 +2628,12 @@ export default function AdminSettings() {
                         <p className="mt-2 text-xs text-gray-500 italic">{describeAutomationRule(rule)}</p>
                         <p className="mt-1 text-[11px] text-gray-400">
                           {rule.last_run_at
-                            ? <>Last run {new Date(rule.last_run_at).toLocaleString()} — <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? ` · ${rule.group && <Badge className="text-xs bg-indigo-100 text-indigo-700 border border-indigo-300 mr-1">{rule.group}</Badge>}
+                            ? <>Last run {new Date(rule.last_run_at).toLocaleString()} â€” <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? ` Â· ${rule.group && <Badge className="text-xs bg-indigo-100 text-indigo-700 border border-indigo-300 mr-1">{rule.group}</Badge>}
                           {rule.run_count} runs` : ''}</>
                             : 'Never run'}
                         </p>
                         <p className="text-[11px] text-gray-400">
-                          Added by {rule.created_by || 'unknown'}{rule.created_date ? ` · ${new Date(rule.created_date).toLocaleDateString()}` : ''}
+                          Added by {rule.created_by || 'unknown'}{rule.created_date ? ` Â· ${new Date(rule.created_date).toLocaleDateString()}` : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -3026,7 +3028,7 @@ export default function AdminSettings() {
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
                   <div className="flex items-center gap-2 text-amber-700 text-sm font-medium">
                     <AlertTriangle className="w-4 h-4" />
-                    "{nearDuplicateRule.name}" already uses this exact trigger and action combination — you may be creating a duplicate.
+                    "{nearDuplicateRule.name}" already uses this exact trigger and action combination â€” you may be creating a duplicate.
                   </div>
                 </div>
               )}
