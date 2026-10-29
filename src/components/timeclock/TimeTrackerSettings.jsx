@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Hourglass, Loader2, CheckCircle, AlertCircle, Info, Plus, X, Timer,
+  Hourglass, Loader2, CheckCircle, AlertCircle, Info, Plus, X, Timer, ClipboardCopy, ClipboardPaste,
 } from "lucide-react";
 import { TimeTrackerPreview, ACCENT_PRESETS, resolveAccent } from "@/components/timeclock/TimeTracker";
 
@@ -173,6 +173,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(0);
+  const [importNotice, setImportNotice] = useState("");
   const [error, setError] = useState("");
   const [reminderMinutes, setReminderMinutes] = useState("");
   const [reminderLabel, setReminderLabel] = useState("");
@@ -262,6 +263,26 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
     update("reminders", reminders.filter((r) => Number(r.minutes) !== Number(minutes)));
   };
 
+  const exportPrefs = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(p, null, 2));
+      setImportNotice("Settings copied - paste them on another machine to import.");
+    } catch {
+      setImportNotice("Clipboard copy failed - select and copy the text manually.");
+    }
+  };
+  const importPrefs = async () => {
+    try {
+      const raw = await navigator.clipboard.readText();
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("bad json");
+      setPrefs({ ...DEFAULT_PREFS, ...parsed });
+      setImportNotice("Settings imported - review and Save to keep them.");
+    } catch {
+      setImportNotice("No valid settings JSON found on the clipboard.");
+    }
+  };
+
   return (
     <div className="clay-card p-5">
       <div className="flex items-center justify-between mb-1">
@@ -269,13 +290,24 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
           <Hourglass className="w-5 h-5 text-indigo-600" />
           Time Tracker
         </h3>
-        <Switch
-          checked={p.tracker_enabled === true}
-          onCheckedChange={set("tracker_enabled")}
-          disabled={loading || saving}
-          aria-label="Enable Time Tracker"
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={exportPrefs} disabled={saving}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Copy settings JSON to clipboard">
+            <ClipboardCopy className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={importPrefs} disabled={saving}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Import settings JSON from clipboard">
+            <ClipboardPaste className="h-4 w-4" />
+          </button>
+          <Switch
+            checked={p.tracker_enabled === true}
+            onCheckedChange={set("tracker_enabled")}
+            disabled={loading || saving}
+            aria-label="Enable Time Tracker"
         />
+        </div>
       </div>
+      {importNotice && <p className="mb-2 text-[11px] font-medium text-indigo-600">{importNotice}</p>}
       <p className="text-sm text-gray-600 mb-4">
         A live count-up timer on your navigation bars showing today's time against your daily goal.
       </p>
