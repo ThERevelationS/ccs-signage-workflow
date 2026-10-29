@@ -249,6 +249,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         <MasterPartPickerModal
           open={switchOpen}
           mode="switch"
+          suggestQuery={part.part_name || part.inventory_item_name || ""}
           initialQuantity={part.quantity || 1}
           onClose={() => setSwitchOpen(false)}
           onAdd={async (item) => {
