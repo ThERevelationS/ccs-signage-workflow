@@ -18,9 +18,70 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 const UserCapacity = base44.entities.UserCapacity;
+
+const SUBCONTRACTOR_KEY = "subcontractorDirectory";
+
+function SubcontractorDirectory() {
+  const [row, setRow] = useState(null);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: SUBCONTRACTOR_KEY, label: "Subcontractor directory" })
+      .then((r) => {
+        if (!alive) return;
+        setRow(r);
+        const entries = Array.isArray(r?.setting_value?.entries) ? r.setting_value.entries : [];
+        setText(entries.map((e) => [e.name, e.contact, e.insurance_expires_on].filter(Boolean).join(" | ")).join("\n"));
+      })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+  const parse = () => text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => {
+    const [name, contact, exp] = l.split("|").map((x) => x.trim());
+    return { name: name || "", contact: contact || "", insurance_expires_on: /^\d{4}-\d{2}-\d{2}$/.test(exp || "") ? exp : "" };
+  }).filter((e) => e.name);
+  const save = async () => {
+    if (busy) return;
+    setBusy(true); setMsg("");
+    try {
+      const entries = parse();
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: staffEntities.GlobalSettings, loadedRecord: row, settingKey: SUBCONTRACTOR_KEY,
+        nextValue: { entries }, label: "Subcontractor directory",
+      });
+      setRow(saved); setMsg(`Saved ${entries.length} subcontractor${entries.length === 1 ? "" : "s"}.`);
+    } catch (err) { setMsg(err?.message || "Could not save."); }
+    finally { setBusy(false); }
+  };
+  const entries = parse();
+  const today = new Date().toISOString().slice(0, 10);
+  const expired = entries.filter((e) => e.insurance_expires_on && e.insurance_expires_on < today);
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white/70 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-gray-800">Subcontractor directory</h4>
+        {expired.length > 0 && <span className="text-[11px] font-semibold text-red-600">{expired.length} insurance expired</span>}
+      </div>
+      <p className="mt-0.5 text-xs text-gray-400">One per line: name | contact | insurance expiry (YYYY-MM-DD)</p>
+      <textarea rows={4} value={text} onChange={(e) => setText(e.target.value)}
+        placeholder={"Acme Cranes | dispatch@acme.com | 2026-06-01"}
+        className="mt-1 w-full rounded-md border border-input bg-transparent px-2 py-1 font-mono text-xs" />
+      <div className="mt-1 flex items-center gap-2">
+        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save directory"}</Button>
+        {msg && <span className={`text-xs ${msg.startsWith("Saved") ? "text-emerald-600" : "text-red-600"}`}>{msg}</span>}
+      </div>
+      {expired.length > 0 && (
+        <p className="mt-1 text-xs text-red-600">Expired: {expired.map((e) => e.name).join(", ")}</p>
+      )}
+    </div>
+  );
+}
 
 export default function ResourceAllocationView({ compact = false }) {
   const { sessionToken } = useAuth();
@@ -279,6 +340,7 @@ export default function ResourceAllocationView({ compact = false }) {
           ))}
         </div>
       )}
+      <div className="mt-4"><SubcontractorDirectory /></div>
     </div>
   );
 }
