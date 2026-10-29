@@ -322,7 +322,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## W — Application & filing workflow
 
 237. **[F]** Application status mini-timeline per line: drafted → submitted → acknowledged → under review → approved — dates on each transition.
-238. **[F]** Submission-method field per line: portal / email / fax / in-person / mail — staff record HOW it went in.
+238. **[F][DONE]** Submission-method field per line: portal / email / fax / in-person / mail — staff record HOW it went in.
 239. **[UX]** Portal-link deep button: "Open the Milford permit portal" straight from the line — not buried in office details.
 240. **[F]** Application-checklist template per jurisdiction: the office's own required-fields list stored on the profile — "Milford wants drawings + site plan".
 241. **[F]** Required-documents tracker: drawings attached? site plan? contractor license? — checkmarks per application.
@@ -333,10 +333,10 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 246. **[F]** Application fee paid-tracking per line: amount + method + date + check # — separate from the issued-permit fee.
 247. **[F]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
 248. **[UX]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
-249. **[F]** Confirmation-number field: the portal's submission reference gets saved where staff actually look for it.
+249. **[F][DONE]** Confirmation-number field: the portal's submission reference gets saved where staff actually look for it.
 250. **[UX]** "Resubmit" one-click: reopens the portal link + copies the last application's data — rejections recover fast.
 251. **[F]** Correspondence thread per line: emails/letters from the office linked or pasted — the paper trail.
-252. **[UX]** Days-in-status badge: "Under review · 6 days" — aging visible without opening the line.
+252. **[UX][DONE]** Days-in-status badge: "Under review · 6 days" — aging visible without opening the line.
 253. **[F]** Expected-response date: the office's stated turnaround → the line shows "expected by Oct 30" — chase when it passes.
 254. **[UX]** Escalation suggestion: overdue + no response → "Time to call — they said 2-week turnaround" hint.
 255. **[F]** Application packet builder: assemble drawings + forms + site plan into one zip for the office's upload.
@@ -423,7 +423,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 ## AB — Integrations & data exchange
 
-324. **[F]** Work-order address auto-pull: the picker's address defaults to the WO's site address — wired but verify.
+324. **[F][DONE]** Work-order address auto-pull: the picker's address defaults to the WO's site address — wired but verify.
 325. **[F]** Client billing-entity link: the office's invoice address on file for fee-billing to the jurisdiction.
 326. **[UX]** "Open in the CRM" cross-links: the customer record ↔ the permit job — one click between.
 327. **[F]** Permit-data export to accounting: fees paid → CSV for QuickBooks — the money trail.
@@ -431,7 +431,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 329. **[F]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
 330. **[UX]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
 331. **[F]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
-332. **[H]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
+332. **[H][DONE]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
 333. **[F]** Office-lookup by phone: inbound call → the office's row — "who is calling".
 334. **[UX]** "Recent work in this town" on the card: last 3 jobs in the same jurisdiction — institutional memory.
 335. **[F]** Notification-hook: a jurisdiction update pings the linked active jobs' assignees.
@@ -445,14 +445,14 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## AC — Safety & correctness, deeper
 
 342. **[H]** Write-time type guard: a PermitLineItem write carrying a township's id but typed 'city' rejects server-side.
-343. **[H]** Locality-delete guard: a locality with linked lines can't be deleted without explicit relink-first — no orphan jobs.
+343. **[H][DONE]** Locality-delete guard: a locality with linked lines can't be deleted without explicit relink-first — no orphan jobs.
 344. **[H]** Boundary-source whitelist: only sanctioned boundary services may feed `location_resolution` — untrusted inputs rejected.
 345. **[F]** "Sure about that?" on electrical exclusion: excluding electrical on a job that needs it asks once — the toggle isn't silent.
 346. **[H]** Verify-then-write: apply only lands after the repository row + the detected boundary agree — mismatches halt.
 347. **[F]** Duplicate-application check before submit: the same office+job can't be filed twice accidentally.
 348. **[H]** Authority-claim audit: every "verified" office must cite a source — a periodic sweep flags unsupported claims.
 349. **[F]** Stale-profile write-guard: a locality verified >1 year ago shows "re-verify before relying on this" — old truth isn't trusted blindly.
-350. **[H]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
+350. **[H][DONE]** Address-result sanity: a resolved locality in a different state than the typed address halts loudly — never silent wrong-state.
 351. **[F]** Override-logging: when staff apply an unverified match, the override is logged with who/why — accountability.
 352. **[H]** Rate-limit on applies: a job can't create 10 locality links in 10 seconds — burst-write protection.
 353. **[F]** Soft-delete on jurisdiction merges: merged-away rows stay recoverable for 30 days — undo is real.
@@ -461,7 +461,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 356. **[H]** FIPS-code integrity: jurisdictions carry the FIPS code — the identity is machine-verifiable, not just a name.
 357. **[F]** Address-lookup audit log: who searched what address when — a compliance trail.
 358. **[H]** Address-leak prevention: the resolver's logs don't write full street addresses to long-term records.
-359. **[F]** "Not this job" escape: if a search lands on the wrong address entirely, one click "wrong address — search again".
+359. **[F][DONE]** "Not this job" escape: if a search lands on the wrong address entirely, one click "wrong address — search again".
 360. **[H]** Tamper-evidence on verified jurisdictions: a verified→unverified transition gets logged with the reason.
 361. **[F]** Manual-override visibility: a manually-applied locality is labeled "chosen by staff" — vs "verified by map".
 362. **[H]** Concurrency test: two staff applying different jurisdictions to the same job → second write flags conflict, not silent last-write-wins.
@@ -509,7 +509,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 ## AF — Reporting & insight
 
 397. **[F]** Weekly permit-throughput: how many jurisdictions verified, applies, issued — the health number.
-398. **[UX]** Coverage-gap report: jurisdictions with verified jobs but unverified offices — the risk list.
+398. **[UX][DONE]** Coverage-gap report: jurisdictions with verified jobs but unverified offices — the risk list.
 399. **[F]** Slow-office report: which jurisdictions take longest to verify — research effort targeted.
 400. **[UX]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
 401. **[F]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
