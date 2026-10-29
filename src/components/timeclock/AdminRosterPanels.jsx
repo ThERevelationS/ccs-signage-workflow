@@ -21,25 +21,29 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [showSchedules, setShowSchedules] = useState(false);
   const [schedForm, setSchedForm] = useState({ email: "", start: "08:00", end: "16:30", days: ["mon", "tue", "wed", "thu", "fri"], label: "" });
   const [schedBusy, setSchedBusy] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
-      const [whoRes, faceRes, auditRes, schedRes] = await Promise.all([
+      const [whoRes, faceRes, auditRes, schedRes, pendRes] = await Promise.all([
         base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_shift_templates", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        base44.functions.invoke("timeClockAction", { action: "list_pending_requests", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
       const audit = auditRes?.data || auditRes;
       const sched = schedRes?.data || schedRes;
+      const pend = pendRes?.data || pendRes;
       if (who?.success !== true) throw new Error(who?.error || "Who's-in data could not be loaded.");
       setStaff(Array.isArray(who.staff) ? who.staff : []);
       setRoster(face?.success === true && Array.isArray(face.roster) ? face.roster : []);
       setEvents(audit?.success === true && Array.isArray(audit.events) ? audit.events : []);
       setTemplates(sched?.success === true && Array.isArray(sched.templates) ? sched.templates : []);
+      setPendingRequests(pend?.success === true && Array.isArray(pend.pending) ? pend.pending : []);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Roster data could not be loaded.");
@@ -227,6 +231,24 @@ export default function AdminRosterPanels({ sessionToken }) {
           </div>
         )}
       </div>
+
+      {pendingRequests.length > 0 && (
+        <div className="clay-card p-4 lg:col-span-2 border-amber-300 bg-amber-50/40">
+          <h3 className="font-semibold text-amber-900 mb-2">In-flight requests ({pendingRequests.length})</h3>
+          <p className="mb-2 text-[11px] text-amber-700">Punches or transitions still resolving on the server - these complete on their own but flag a stuck kiosk if they linger.</p>
+          <div className="space-y-1">
+            {pendingRequests.slice(0, 8).map((p, i) => (
+              <div key={i} className="flex items-center justify-between rounded-md bg-white/70 px-3 py-1.5 text-xs">
+                <span className="font-medium text-slate-700 truncate">{roster.find((r) => r.email === p.user_email)?.name || p.user_email || "unknown"}</span>
+                <span className="text-slate-500">
+                  {[p.status, p.break_status, p.work_pause_status, p.labor_status].filter((s) => s && s !== "idle").join(" · ") || "pending"}
+                  {p.pending_since ? ` · since ${formatCompanyDateTime(p.pending_since)}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="clay-card p-4 lg:col-span-2">
         <button type="button" onClick={() => setShowPlaybook((v) => !v)} className="flex w-full items-center justify-between text-left">
