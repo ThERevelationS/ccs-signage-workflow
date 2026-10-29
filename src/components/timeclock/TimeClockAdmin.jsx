@@ -218,6 +218,9 @@ export default function TimeClockAdmin() {
   const [approvalDecision, setApprovalDecision] = useState("approve");
   const [bulkApproveBusy, setBulkApproveBusy] = useState(false);
   const [bulkApproveResult, setBulkApproveResult] = useState("");
+  const [retentionYears, setRetentionYears] = useState("2");
+  const [retentionBusy, setRetentionBusy] = useState(false);
+  const [retentionMsg, setRetentionMsg] = useState("");
   const [approvalNote, setApprovalNote] = useState("");
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalRequestId, setApprovalRequestId] = useState("");
@@ -631,6 +634,35 @@ export default function TimeClockAdmin() {
     await loadData();
   };
 
+  const archiveOldEntries = async () => {
+    if (retentionBusy || !sessionToken) return;
+    const years = Number(retentionYears) || 2;
+    const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear() - years);
+    const old = completedEntries.filter(e => e.clock_in && new Date(e.clock_in) < cutoff && !e.archived_admin && !e.archived_test_data);
+    if (!old.length) { setRetentionMsg(`No completed entries older than ${years} years.`); return; }
+    if (!window.confirm(`Archive ${old.length} completed entr${old.length === 1 ? "y" : "ies"} older than ${years} years? They will be hidden from the list but kept in history.`)) return;
+    setRetentionBusy(true); setRetentionMsg("");
+    const reason = `Retention archive — entries older than ${years} years`;
+    let failed = 0;
+    for (const entry of old) {
+      try {
+        const response = await base44.functions.invoke("timeClockAction", {
+          action: "admin_archive_entry",
+          session_token: sessionToken,
+          target_email: entry.user_email,
+          request_id: newRequestId(),
+          entry_id: entry.id,
+          expected_updated_date: entry.updated_date,
+          reason,
+        });
+        if (!functionData(response)?.success) failed++;
+      } catch { failed++; }
+    }
+    setRetentionMsg(failed ? `${old.length - failed} archived, ${failed} failed` : `${old.length} old entries archived`);
+    setRetentionBusy(false);
+    await loadData();
+  };
+
   const handleApproval = async () => {
     if (!approvalEntry?.id || approvalBusy) return;
     if (!sessionToken) {
@@ -1018,6 +1050,22 @@ export default function TimeClockAdmin() {
           Reset
         </Button>
 
+        <div className="flex items-center gap-1">
+          <Select value={retentionYears} onValueChange={setRetentionYears}>
+            <SelectTrigger className="h-9 w-28 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Older than 1y</SelectItem>
+              <SelectItem value="2">Older than 2y</SelectItem>
+              <SelectItem value="3">Older than 3y</SelectItem>
+              <SelectItem value="5">Older than 5y</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button type="button" variant="outline" size="sm" disabled={retentionBusy || !sessionToken}
+            onClick={archiveOldEntries} className="h-9 text-xs"
+            title="Archive completed entries older than the selected period">
+            {retentionBusy ? "Archiving…" : "Archive old"}
+          </Button>
+        </div>
         <Button onClick={exportToExcel} className="gap-2">
           <Download className="w-4 h-4" />
           Export
@@ -1462,6 +1510,7 @@ export default function TimeClockAdmin() {
               </Button>
             )}
             {bulkApproveResult && <p className="text-[11px] text-green-700 mt-1">{bulkApproveResult}</p>}
+            {retentionMsg && <p className="text-[11px] text-gray-600 mt-1">{retentionMsg}</p>}
           </div>
           <div className="rounded-lg border border-green-200 bg-green-50 p-3">
             <p className="text-xs text-green-700">Approved</p>
