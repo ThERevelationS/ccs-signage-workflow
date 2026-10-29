@@ -188,9 +188,9 @@ function LocalityPickerSession({
     try {
       const invoke=runAction;
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
-      let data;
+      let { data };
       try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
-      catch(firstErr){ if(/status code 5\d\d/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
+      catch(firstErr){ if(/status code 5dd/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
@@ -252,6 +252,13 @@ function LocalityPickerSession({
       if (!confirmOrSkip(`${name} hasn't been checked by our team yet — the permit offices and contact info may be incomplete. Use it anyway?`)) return;
     }
     onApply(selectedLocalityId, { excludeElectrical });
+    // First-few-applies reassurance — a small visible win while the workflow is
+    // still new to the staff member. Stops after the third apply.
+    try {
+      const count = (parseInt(localStorage.getItem("permitting_apply_count") || "0", 10) || 0) + 1;
+      localStorage.setItem("permitting_apply_count", String(count));
+      if (count <= 3) setTimeout(() => window.alert(count === 1 ? "Done — that's right! The jurisdiction is linked to this job." : "Good — jurisdiction linked. You've got this."), 350);
+    } catch {}
     onClose();
   };
 
