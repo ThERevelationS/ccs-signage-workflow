@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ClipboardCheck, Download, FileSpreadsheet, Loader2, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 // The legacy component name is retained because AdminSettings already mounts it.
 // This page does not call CoreBridge, Gmail, or any historical importer.
@@ -17,6 +18,30 @@ export default function CorebridgeApiSettings({ sessionToken }) {
   const [verifyingBackup, setVerifyingBackup] = useState(false);
   const [backupError, setBackupError] = useState("");
   const [backupComparison, setBackupComparison] = useState(null);
+  const [logRows, setLogRows] = useState(null);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState("");
+  const [logSearch, setLogSearch] = useState("");
+  const [logStatus, setLogStatus] = useState("all");
+
+  const loadLog = async () => {
+    if (logLoading) return;
+    setLogLoading(true); setLogError("");
+    try {
+      const rows = await staffEntities.CorebridgeLog.filter({}, "-run_at", 50);
+      setLogRows(Array.isArray(rows) ? rows : []);
+    } catch (e) { setLogError(e?.message || "Log could not be loaded."); }
+    finally { setLogLoading(false); }
+  };
+  const visibleLogs = (logRows || []).filter((r) => {
+    if (logStatus !== "all" && r.status !== logStatus) return false;
+    if (logSearch.trim()) {
+      const q = logSearch.trim().toLowerCase();
+      const hay = `${r.status || ""} ${r.trigger || ""} ${r.error_message || ""} ${r.run_at || ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 
   const verifyBackup = async () => {
     if (!sessionToken || busy || auditing || verifyingBackup) return;
@@ -102,7 +127,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-semibold text-gray-800 flex items-center gap-2">
             <FileSpreadsheet className="w-4 h-4 text-blue-600" />
-            CoreBridge Migration · CCS Native Reports
+            CoreBridge Migration Â· CCS Native Reports
           </h2>
           <Badge className="bg-green-100 text-green-800">API-FREE</Badge>
           <Badge variant="outline">ADMIN ONLY</Badge>
@@ -324,9 +349,9 @@ export default function CorebridgeApiSettings({ sessionToken }) {
                 <div className="mt-3 space-y-3">
                   {auditReport.review_only_name_samples.map((group, index) => (
                     <div key={index} className="border-t border-gray-100 pt-2">
-                      <div className="font-medium">{group.client} — {group.title} ({group.count} records)</div>
+                      <div className="font-medium">{group.client} â€” {group.title} ({group.count} records)</div>
                       <div className="mt-1 space-y-1 text-xs text-gray-600">
-                        {group.jobs.map(job => <div key={job.id} className="break-all">CCS {job.id} · Sheet row {job.sheet_row_id || "not linked"}</div>)}
+                        {group.jobs.map(job => <div key={job.id} className="break-all">CCS {job.id} Â· Sheet row {job.sheet_row_id || "not linked"}</div>)}
                       </div>
                     </div>
                   ))}
@@ -342,7 +367,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
           <ShieldCheck className="w-4 h-4 text-green-700" /> Existing migration paths
         </div>
         <p>
-          For an exported WIP workbook, use Backend Functions → WIP Import. It already matches
+          For an exported WIP workbook, use Backend Functions â†’ WIP Import. It already matches
           existing jobs by order number and updates descriptions and install dates.
           Sales Pipeline and Order Form have their own existing spreadsheet exports and imports.
           No automatic CoreBridge synchronization is enabled.
@@ -351,6 +376,52 @@ export default function CorebridgeApiSettings({ sessionToken }) {
           Historical CoreBridge import records and audit logs remain preserved.
           This CSV is a snapshot of CCS records, not a fresh export from CoreBridge.
         </p>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-gray-200 bg-white/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-semibold text-gray-800">Import run log</h3>
+          <Button type="button" variant="outline" size="sm" disabled={logLoading} onClick={loadLog}>
+            {logLoading ? "Loading…" : logRows === null ? "Load log" : "Refresh"}
+          </Button>
+        </div>
+        {logRows !== null && (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <input type="text" value={logSearch} onChange={(e) => setLogSearch(e.target.value)}
+                placeholder="Search errors, status, dates…" aria-label="Search import log"
+                className="h-9 flex-1 min-w-40 rounded-md border border-input bg-transparent px-3 text-xs" />
+              <select value={logStatus} onChange={(e) => setLogStatus(e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-2 text-xs" aria-label="Filter by status">
+                <option value="all">All statuses</option>
+                <option value="success">Success</option>
+                <option value="error">Error</option>
+                <option value="partial">Partial</option>
+                <option value="no_emails">No emails</option>
+              </select>
+            </div>
+            {visibleLogs.length === 0 ? (
+              <p className="py-4 text-center text-xs text-gray-500">No log entries match.</p>
+            ) : (
+              <div className="max-h-80 space-y-1 overflow-y-auto">
+                {visibleLogs.map((row) => (
+                  <div key={row.id} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-gray-800">{row.run_at || "—"}</span>
+                      <span className={`rounded-full px-2 py-0.5 ${row.status === "success" ? "bg-green-100 text-green-700" : row.status === "error" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                        {row.status || "unknown"}
+                      </span>
+                      <span className="text-gray-500">{row.trigger || ""}</span>
+                      <span className="text-gray-400">{row.emails_found ?? "—"} found · {row.processed ?? "—"} processed</span>
+                    </div>
+                    {row.error_message && <p className="mt-1 text-red-700">{row.error_message}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {logError && <p className="mt-2 text-xs text-red-600">{logError}</p>}
       </div>
     </div>
   );
