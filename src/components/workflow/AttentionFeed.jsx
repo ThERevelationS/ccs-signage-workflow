@@ -226,6 +226,19 @@ export default function AttentionFeed() {
       })),
     },
     {
+      key: "unassigned",
+      label: "unassigned requests",
+      count: (feed.unassigned_estimating_requests || []).length,
+      icon: Inbox,
+      tone: "text-red-700 bg-red-50 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800",
+      items: (feed.unassigned_estimating_requests || []).slice(0, 6).map((r) => ({
+        id: r.id,
+        primary: `${r.request_number || "Request"}${r.opportunity_title ? ` - ${r.opportunity_title}` : ""}`,
+        secondary: "Unassigned over 2 days - needs an estimator",
+        href: "/EstimatingQueues",
+      })),
+    },
+    {
       key: "recalc",
       label: "needs recalc",
       count: (feed.needs_recalc_parts || []).length,
