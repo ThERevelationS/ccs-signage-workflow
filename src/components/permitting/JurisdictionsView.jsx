@@ -28,6 +28,9 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const isAdmin = currentUser?.role === 'admin';
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
+  const [lastVisit] = useState(() => {
+    try { const v = localStorage.getItem("permitting_jurisdictions_last_visit") || ""; localStorage.setItem("permitting_jurisdictions_last_visit", new Date().toISOString()); return v; } catch { return ""; }
+  });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -264,6 +267,10 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   };
 
   const normalizedSearch = debouncedSearch.trim().toLowerCase();
+  const recentlyChanged = useMemo(() => {
+    if (!lastVisit) return [];
+    return (jurisdictions || []).filter((j) => String(j.updated_date || "") > lastVisit);
+  }, [jurisdictions, lastVisit]);
 
   // Users type things like "Hamilton County" or "City of Mason" while profiles
   // are stored by bare name + type. Normalize the query (strip type words) and
@@ -361,6 +368,11 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
           )}
 
           <div className="flex gap-2 items-start">
+            {recentlyChanged.length > 0 && (
+              <span className="mr-2 self-center whitespace-nowrap text-[11px] font-semibold text-indigo-700" title={recentlyChanged.slice(0, 5).map(j => j.name).join(", ")}>
+                {recentlyChanged.length} changed since your last visit
+              </span>
+            )}
             <Input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
