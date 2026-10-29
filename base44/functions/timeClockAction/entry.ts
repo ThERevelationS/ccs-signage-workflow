@@ -3595,6 +3595,26 @@ Deno.serve(async (req) => {
       }
       const restHours = lastClockOutMs > 0 ? (nowMs - lastClockOutMs) / 3600000 : null;
 
+      // Upcoming approved time off and the pay period covering today.
+      let nextTimeoff: any = null;
+      if (todayKey) {
+        const offRows = await timeOffRequestEntity.filter({ user_email: target.email, status: 'approved' }).catch(() => []);
+        if (Array.isArray(offRows)) {
+          const upcoming = offRows
+            .filter((r: any) => String(r?.end_date || '') >= todayKey || String(r?.start_date || '') >= todayKey)
+            .sort((a: any, b: any) => String(a.start_date).localeCompare(String(b.start_date)))[0];
+          if (upcoming) nextTimeoff = { start_date: upcoming.start_date, end_date: upcoming.end_date, type: upcoming.request_type || upcoming.type || 'time off' };
+        }
+      }
+      let payPeriod: any = null;
+      if (todayKey) {
+        const periods = await payPeriodEntity.filter({}).catch(() => []);
+        if (Array.isArray(periods)) {
+          const current = periods.find((p: any) => p && !p.archived_test_data && String(p.start_date || '') <= todayKey && String(p.end_date || '') >= todayKey);
+          if (current) payPeriod = { label: current.label || 'Pay period', start_date: current.start_date, end_date: current.end_date, status: current.status };
+        }
+      }
+
       let ptoBalance: any = null;
       const ptoRows = await ptoBalanceEntity.filter({ user_email: target.email }).catch(() => []);
       if (Array.isArray(ptoRows) && ptoRows[0]) {
@@ -3628,6 +3648,8 @@ Deno.serve(async (req) => {
         last_clock_out: lastClockOutMs > 0 ? new Date(lastClockOutMs).toISOString() : null,
         rest_hours_since_last_shift: restHours,
         pto_balance: ptoBalance,
+        next_timeoff: nextTimeoff,
+        pay_period: payPeriod,
         company_day: dateKeyInCompanyTime(serverNow.toISOString()),
         prefs,
       });
@@ -7677,6 +7699,21 @@ Deno.serve(async (req) => {
         .map((r: any) => ({ id: r.id, user_email: r.user_email, user_name: r.user_name || r.user_email, clock_in: r.clock_in }))
         .sort((a: any, b: any) => new Date(a.clock_in || 0).getTime() - new Date(b.clock_in || 0).getTime());
       return Response.json({ success: true, staff });
+    }
+
+    if (action === 'my_history') {
+      // Employee self-service: own recent punches for export and stats.
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view punch history.' }, { status: 403 });
+      const rows = await entryEntity.filter({ user_email: target.email }, '-clock_in', 120);
+      if (!Array.isArray(rows)) throw new Error('TimeEntry history lookup did not return a record list.');
+      const entries = rows
+        .filter((r: any) => r?.id && !r.archived_test_data && !r.archived_admin)
+        .map((r: any) => ({
+          id: r.id, clock_in: r.clock_in, clock_out: r.clock_out || null,
+          status: r.status, lunch_minutes: Number(r.lunch_minutes || 0),
+          approval_status: r.approval_status || '', notes: String(r.notes || '').slice(0, 500),
+        }));
+      return Response.json({ success: true, entries });
     }
 
     if (action === 'list_timeclock_audit') {
