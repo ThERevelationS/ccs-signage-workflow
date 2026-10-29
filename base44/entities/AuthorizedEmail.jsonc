@@ -10,6 +10,10 @@
       "type": "string",
       "description": "User's full name"
     },
+    "reports_to": {
+      "type": "string",
+      "description": "Manager / supervisor this user reports to (name or email)"
+    },
     "username": {
       "type": "string",
       "description": "Unique username for time clock login"
