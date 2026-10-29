@@ -33,6 +33,11 @@ export function createFaceMatcher(users = []) {
 
 export const FACE_QUALITY = { minScore: 0.5, minBoxWidth: 32, minBrightness: 45 };
 
+// Shared scan cadence. The loop self-schedules: the next frame is captured this
+// many ms after the previous detection finishes, so fast devices scan faster
+// and slow devices never pile up overlapping inferences.
+export const FACE_SCAN = { intervalMs: 120, requiredVotes: 3, voteWindow: 5 };
+
 // A face must clear a scaled size floor and a detector-score floor. 32px still
 // gives the landmark net enough face pixels at the larger input sizes, so
 // people can clock in from farther back than the old fixed 80px floor allowed.
@@ -45,15 +50,19 @@ export function passesFaceQualityGate(detection) {
 
 // Mean luminance of the detected face region (0-255). Used to steer the user
 // toward better lighting instead of silently failing on dim or backlit frames.
+// The scratch canvas is reused so per-frame sampling never allocates.
+let brightnessCanvas = null;
 export function estimateFaceBrightness(video, box) {
   try {
     const width = Math.max(1, Math.round(box?.width || 0));
     const height = Math.max(1, Math.round(box?.height || 0));
     if (!width || !height) return null;
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!brightnessCanvas) {
+      brightnessCanvas = document.createElement("canvas");
+      brightnessCanvas.width = 32;
+      brightnessCanvas.height = 32;
+    }
+    const ctx = brightnessCanvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     ctx.drawImage(video, box.x, box.y, width, height, 0, 0, 32, 32);
     const data = ctx.getImageData(0, 0, 32, 32).data;
@@ -83,14 +92,105 @@ export function createMatchVoter({ required = 3, window = 5 } = {}) {
   };
 }
 
+function detectAt(video, inputSize, scoreThreshold) {
+  return faceapi
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold }))
+    .withFaceLandmarks().withFaceDescriptor();
+}
+
 export function detectDetailedFace(video) {
   if (!video || video.readyState < 2 || !video.videoWidth) return Promise.resolve(null);
-  // First pass stays cheap at normal distances; the deeper second pass catches
-  // faces that are smaller because the person is farther away or the camera is
-  // low-resolution.
-  return faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
-    .withFaceLandmarks().withFaceDescriptor()
-    .then((first) => first || faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 }))
-      .withFaceLandmarks().withFaceDescriptor());
+  // First pass stays cheap at normal distances. The deeper 512 pass runs when
+  // the first pass misses OR finds a marginal face ??? a low-score or small-box
+  // detection at 320 often resolves into a far stronger detection (and a much
+  // better descriptor) at the higher input size, which is what makes distant
+  // or low-resolution cameras work.
+  return detectAt(video, 320, 0.4).then((first) => {
+    const strong = first && first.detection.score >= 0.6 && first.detection.box.width >= 48;
+    if (strong) return first;
+    return detectAt(video, 512, 0.3).then((second) => second || first || null);
+  });
+}
+
+// One shared scan loop for every recognition surface (admin login, kiosk quick
+// clock, enrollment preview). It owns the busy flag, the cadence, the quality
+// gate, the brightness check, and the temporal voter, so callers can never
+// drift apart on matching behaviour ??? they only map results to their own UI.
+//
+// Cadence is self-scheduling: a new frame is sampled `intervalMs` after the
+// previous detection resolves. In-flight ticks are skipped rather than counted
+// as misses, so a slow inference cannot flush the vote window the way a fixed
+// setInterval did.
+export function createFaceScanSession({
+  getVideo,
+  matchFace,
+  voter = createMatchVoter({ required: FACE_SCAN.requiredVotes, window: FACE_SCAN.voteWindow }),
+  intervalMs = FACE_SCAN.intervalMs,
+  isActive = () => true,
+  onFrame,
+}) {
+  let timer = null;
+  let running = false;
+  let generation = 0;
+
+  const schedule = () => {
+    if (running) timer = setTimeout(tick, intervalMs);
+  };
+
+  const tick = async () => {
+    const gen = generation;
+    const video = getVideo?.();
+    if (!running || gen !== generation || !isActive() || !video) {
+      schedule();
+      return;
+    }
+    const detection = await detectDetailedFace(video).catch(() => null);
+    if (!running || gen !== generation || !isActive()) {
+      schedule();
+      return;
+    }
+    let result;
+    if (!detection || !passesFaceQualityGate(detection)) {
+      voter(null);
+      result = { status: detection ? "low-quality" : "no-face", detection };
+    } else {
+      const brightness = estimateFaceBrightness(video, detection.detection.box);
+      const dim = Number.isFinite(brightness) && brightness < FACE_QUALITY.minBrightness;
+      const matched = dim ? null : matchFace?.(detection.descriptor) || null;
+      const winner = voter(matched);
+      result = {
+        status: dim ? "dim" : winner ? "recognized" : matched ? "verifying" : "no-match",
+        detection,
+        dim,
+        matched,
+        winner,
+      };
+    }
+    onFrame?.(result);
+    schedule();
+  };
+
+  return {
+    start() {
+      if (running) return;
+      running = true;
+      generation += 1;
+      schedule();
+    },
+    stop() {
+      running = false;
+      generation += 1;
+      if (timer) clearTimeout(timer);
+      timer = null;
+    },
+    isRunning: () => running,
+  };
+}
+
+// Euclidean distance between two 128-dim descriptors. Enrollment uses this to
+// reject near-duplicate captures so the stored template set actually covers
+// different angles and distances instead of ten copies of one pose.
+export function descriptorDistance(a, b) {
+  if (!a || !b || a.length !== b.length) return Infinity;
+  return faceapi.euclideanDistance(a, b);
 }
