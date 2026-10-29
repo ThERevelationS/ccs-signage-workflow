@@ -185,7 +185,13 @@ export function getAdminSearchKeyboardIndex(key, index, resultCount) {
 }
 
 export function searchAdminSettings(input, isAdmin, limit = 8, user) {
-  const query = normalizedSearch(input);
+  let query = normalizedSearch(input);
+  if (!query) return [];
+  // Scoped prefixes: "tab:time clock", "group:people", "page:users" restrict
+  // matching to that field so admins can jump precisely.
+  let scope = null;
+  const prefixed = query.match(/^(tab|group|page):\s*(.*)$/);
+  if (prefixed) { scope = prefixed[1]; query = prefixed[2].trim(); }
   if (!query) return [];
   const terms = query.split(' ');
   const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
@@ -214,7 +220,9 @@ export function searchAdminSettings(input, isAdmin, limit = 8, user) {
     .map((destination, order) => {
       const label = normalizedSearch(destination.label);
       const breadcrumb = normalizedSearch(`${destination.group} ${destination.parentLabel || ''}`);
-      const haystack = `${label} ${breadcrumb} ${normalizedSearch(destination.keywords)}`;
+      const haystack = scope === 'group' ? normalizedSearch(destination.group)
+        : scope === 'tab' || scope === 'page' ? `${label} ${normalizedSearch(destination.parentLabel || '')}`
+        : `${label} ${breadcrumb} ${normalizedSearch(destination.keywords)}`;
       if (!terms.every((term) => haystack.includes(term))) return null;
       const rank = label === query ? 0 : label.startsWith(query) ? 1 : label.includes(query) ? 2 : 3;
       return { destination, rank, order };
