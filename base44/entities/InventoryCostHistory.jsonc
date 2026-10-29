@@ -1,4 +1,5 @@
 {
+  "type": "object",
   "name": "InventoryCostHistory",
   "properties": {
     "inventory_item_id": {

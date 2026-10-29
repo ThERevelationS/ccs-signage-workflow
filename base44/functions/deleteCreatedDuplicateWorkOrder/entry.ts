@@ -22,7 +22,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const user = await authenticateSignShopSession(base44, body?.session_token);
+    // Fall back to auth.me() when no sign-shop session token is supplied so
+    // request-context users can still complete the guarded cleanup write.
+    let user = null;
+    try { user = await authenticateSignShopSession(base44, body?.session_token); }
+    catch { user = await base44.auth.me().catch(() => null); }
     if (!user?.id) return Response.json({ error: 'Authentication required.' }, { status: 401 });
 
     const id = text(body?.id);
