@@ -877,6 +877,53 @@ export default function TimeClockAdmin() {
     XLSX.writeFile(wb, fileName);
   };
 
+  // Payroll-shaped CSV: one row per employee per worked day with a
+  // 40h/week regular-vs-OT split, matching common payroll import formats.
+  const exportPayrollCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const byEmp = new Map();
+    for (const e of filteredEntries) {
+      const k = e.user_email || "unknown";
+      if (!byEmp.has(k)) byEmp.set(k, []);
+      byEmp.get(k).push(e);
+    }
+    const rows = ["Employee,Email,Week Start,Date,Regular Hours,OT Hours,Total Hours"];
+    for (const [email, entries] of byEmp) {
+      entries.sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in));
+      const weeklyUsed = {}; // weekStartKey -> hours used toward 40
+      for (const e of entries) {
+        const ci = new Date(e.clock_in);
+        const ws = new Date(ci); ws.setDate(ws.getDate() - ws.getDay()); ws.setHours(0, 0, 0, 0);
+        const wsKey = ws.toISOString().slice(0, 10);
+        const used = weeklyUsed[wsKey] || 0;
+        const hrs = Number(e.total_hours || 0);
+        const reg = Math.min(hrs, Math.max(0, 40 - used));
+        const ot = Math.max(0, hrs - reg);
+        weeklyUsed[wsKey] = used + hrs;
+        rows.push([e.user_name || email, email, wsKey, safeFormat(e.clock_in, "yyyy-MM-dd"), reg.toFixed(2), ot.toFixed(2), hrs.toFixed(2)].map(esc).join(","));
+      }
+    }
+    const url = URL.createObjectURL(new Blob([rows.join("\r\n")], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = `payroll_${format(start, "yyyy-MM-dd")}_to_${format(end, "yyyy-MM-dd")}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Printable punch card for one employee across the filtered range - used
+  // for disputes and payroll verification.
+  const printPunchCard = (user) => {
+    const rows = filteredEntries
+      .filter((e) => e.user_email === user.email)
+      .sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in))
+      .map((e) => `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "yyyy-MM-dd")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "h:mm a")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.clock_out ? safeFormat(e.clock_out, "h:mm a") : "Active"}</td><td style="padding:8px;border-bottom:1px solid #ddd;text-align:right">${Number(e.total_hours || 0).toFixed(2)}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.approval_status || "unreviewed"}</td></tr>`)
+      .join("");
+    const total = filteredEntries.filter((e) => e.user_email === user.email).reduce((s, e) => s + Number(e.total_hours || 0), 0);
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(`<html><head><title>Punch Card - ${user.name}</title></head><body style="padding:24px;font-family:sans-serif"><h2>Punch Card - ${user.name}</h2><p style="color:#666;font-size:12px">${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")} · generated ${new Date().toLocaleString()}</p><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Date</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">In</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Out</th><th style="text-align:right;padding:8px;border-bottom:2px solid #333">Hours</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Status</th></tr>${rows}</table><p style="margin-top:12px;font-weight:bold">Total: ${total.toFixed(2)} hours</p><script>window.print()</script></body></html>`);
+    w.document.close();
+  };
+
   const jobSummary = filteredEntries.reduce((acc, entry) => {
     for (const j of entry.job_allocations || []) {
       const key = j.is_inhouse ? `In-house: ${j.inhouse_task || "task"}` : (j.client_name || "Unknown client");
@@ -886,6 +933,33 @@ export default function TimeClockAdmin() {
     return acc;
   }, {});
   const jobRows = Object.entries(jobSummary).sort((a, b) => b[1] - a[1]);
+
+  // Punch-channel stats: how punches arrived (kiosk face, QR, manual, correction).
+  const channelSummary = filteredEntries.reduce((acc, e) => {
+    const key = e.clock_source || "unknown";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const channelRows = Object.entries(channelSummary).sort((a, b) => b[1] - a[1]);
+  const channelTotal = filteredEntries.length || 1;
+
+  // Headcount by clock-in hour - coverage planning at a glance.
+  const hourBuckets = new Array(12).fill(0); // 6am-5pm display range
+  for (const e of filteredEntries) {
+    if (!e.clock_in) continue;
+    const h = new Date(e.clock_in).getHours();
+    if (h >= 6 && h < 18) hourBuckets[h - 6] += 1;
+  }
+  const maxHour = Math.max(1, ...hourBuckets);
+
+  // Early-clock-in pattern (before 7am) and late pattern (after 9am).
+  const earlyClockIns = filteredEntries.filter((e) => e.clock_in && new Date(e.clock_in).getHours() < 7).length;
+  const lateClockIns = filteredEntries.filter((e) => e.clock_in && new Date(e.clock_in).getHours() >= 9 && new Date(e.clock_in).getHours() < 12).length;
+
+  // Missing punch today - rostered employees with no entry today.
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const punchedToday = new Set(filteredEntries.filter((e) => e.clock_in && safeFormat(e.clock_in, "yyyy-MM-dd") === todayKey).map((e) => e.user_email));
+  const missingPunch = uniqueUsers.filter((u) => !punchedToday.has(u.email));
 
   const uniqueUsers = [...new Set(timeEntries.map(e => e.user_email).filter(Boolean))].map(email => {
     const entry = timeEntries.find(e => e.user_email === email);
@@ -1066,6 +1140,10 @@ export default function TimeClockAdmin() {
             {retentionBusy ? "Archiving…" : "Archive old"}
           </Button>
         </div>
+        <Button onClick={exportPayrollCsv} variant="outline" className="gap-2" title="CSV shaped for payroll import - per employee per day with reg/OT split">
+          <Download className="w-4 h-4" />
+          Payroll CSV
+        </Button>
         <Button onClick={exportToExcel} className="gap-2">
           <Download className="w-4 h-4" />
           Export
@@ -1104,7 +1182,12 @@ export default function TimeClockAdmin() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.values(userSummary).map(user => (
               <div key={user.email} className="p-3 bg-gray-50 rounded-lg">
-                <p className="font-medium text-sm">{user.name}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-sm">{user.name}</p>
+                  <button type="button" onClick={() => printPunchCard(user)}
+                    className="rounded px-1.5 py-0.5 text-[10px] font-medium text-slate-400 hover:bg-white hover:text-indigo-600"
+                    title="Print punch card for this employee">Print</button>
+                </div>
                 <p className="text-lg font-bold text-purple-600">{user.hours.toFixed(2)} hrs</p>
                 <p className="text-xs text-gray-500">{user.entries} entries</p>
                 {(() => {
@@ -1140,6 +1223,55 @@ export default function TimeClockAdmin() {
             ))}
           </div>
           {jobRows.length > 12 && <p className="mt-2 text-xs text-gray-400">Top 12 of {jobRows.length} jobs</p>}
+        </div>
+      )}
+
+      {channelRows.length > 0 && (
+        <div className="clay-card p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">Punch Channels</h3>
+          <div className="flex flex-wrap gap-2">
+            {channelRows.map(([channel, count]) => (
+              <div key={channel} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <span className="font-medium capitalize">{channel.replace(/_/g, " ")}</span>
+                <span className="ml-2 text-slate-500">{count} ({Math.round((count / channelTotal) * 100)}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filteredEntries.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="clay-card p-4">
+            <h3 className="font-semibold mb-3">Clock-ins by Hour</h3>
+            <div className="flex items-end gap-1 h-20">
+              {hourBuckets.map((count, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                  <div className="w-full rounded-t bg-indigo-300" style={{ height: `${(count / maxHour) * 100}%`, minHeight: count ? 3 : 0 }} title={`${6 + i}:00 - ${count} clock-ins`} />
+                  <span className="text-[8px] text-slate-400">{6 + i}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="clay-card p-4">
+            <h3 className="font-semibold mb-3">Punch Timing</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between"><span className="text-slate-600">Before 7 AM</span><span className="font-bold text-amber-600">{earlyClockIns}</span></div>
+              <div className="flex items-center justify-between"><span className="text-slate-600">After 9 AM</span><span className="font-bold text-slate-700">{lateClockIns}</span></div>
+            </div>
+            <p className="mt-3 text-[10px] text-slate-400">Early-clock-in patterns drive unauthorized overtime; late patterns flag scheduling issues.</p>
+          </div>
+          <div className="clay-card p-4">
+            <h3 className="font-semibold mb-3">No Punch Today</h3>
+            {missingPunch.length === 0 ? (
+              <p className="text-sm text-emerald-600">Everyone in the loaded range has punched today.</p>
+            ) : (
+              <div className="max-h-20 overflow-y-auto space-y-1">
+                {missingPunch.slice(0, 8).map((u) => <p key={u.email} className="text-xs text-slate-600 truncate">{u.name}</p>)}
+                {missingPunch.length > 8 && <p className="text-[10px] text-slate-400">+{missingPunch.length - 8} more</p>}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
