@@ -59,7 +59,7 @@ export default function InstallTypePicker({ value, onChange }) {
       {TYPES.map(t => {
         const selected = value === t.id;
         return (
-          <button
+          <button type="button"
             key={t.id}
             type="button"
             onClick={() => onChange(t.id)}
