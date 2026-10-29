@@ -29,7 +29,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 21. **[F][DONE]** Estimate notes timeline (not just single `notes` field)
 22. **[H][DONE]** `quote_issue_date` auto-set on first `sent` transition; never editable after
 23. **[F][DONE]** `quote_expiration_date` editable override per-estimate (defaulted from `quote_valid_days`)
-24. **[F]** Estimate color/label tags for personal organization (per-user field)
+24. **[F][DONE]** Estimate color/label tags for personal organization (per-user field)
 25. **[H]** CAS guard on the `status` field specifically — a stale session can't revert `sent` → `draft`
 
 ## 2. Customer & CRM Integration (25)
