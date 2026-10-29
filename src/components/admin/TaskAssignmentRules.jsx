@@ -673,6 +673,25 @@ function TaskLoadPanel({ users }) {
   const rows = Object.values(byAssignee).sort((a, b) => b.open - a.open);
   const reassignTargets = users.map(u => u.full_name || u.email).filter(Boolean);
 
+  const TASK_TEMPLATES = [
+    { name: "New work order intake", tasks: ["Confirm specs with customer", "Schedule site survey", "Order required materials"] },
+    { name: "Permit submission prep", tasks: ["Verify jurisdiction requirements", "Prepare permit application documents", "Schedule submission"] },
+    { name: "Install day checklist", tasks: ["Confirm crew assignment", "Verify materials on hand", "Confirm site access with customer"] },
+  ];
+  const spawnTemplate = async (tpl) => {
+    if (reassignBusy) return;
+    if (!window.confirm(`Create ${tpl.tasks.length} tasks from "${tpl.name}"? They start unassigned.`)) return;
+    setReassignBusy(true); setReassignMsg("");
+    let failed = 0;
+    for (const text of tpl.tasks) {
+      try { await staffEntities.GeneralTask.create({ text: `${text} — ${tpl.name}`, assigned_to: [], completed: false }); }
+      catch { failed++; }
+    }
+    setReassignMsg(failed ? `${tpl.tasks.length - failed} tasks created, ${failed} failed.` : `${tpl.tasks.length} tasks created unassigned — assign them below.`);
+    setReassignBusy(false);
+    await loadTasks();
+  };
+
   const reassign = async () => {
     if (!fromUser || !toUser || fromUser === toUser || reassignBusy) return;
     const moving = openTasks.filter(t => Array.isArray(t.assigned_to) && t.assigned_to.includes(fromUser));
@@ -760,6 +779,15 @@ function TaskLoadPanel({ users }) {
               {reassignBusy ? "Moving…" : "Reassign"}
             </Button>
             {reassignMsg && <p className="w-full text-xs text-indigo-800">{reassignMsg}</p>}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-indigo-900">Task templates:</span>
+            {TASK_TEMPLATES.map(tpl => (
+              <button key={tpl.name} type="button" disabled={reassignBusy} onClick={() => spawnTemplate(tpl)}
+                className="rounded-full border border-indigo-300 bg-white px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-40">
+                + {tpl.name}
+              </button>
+            ))}
           </div>
         </div>
       )}
