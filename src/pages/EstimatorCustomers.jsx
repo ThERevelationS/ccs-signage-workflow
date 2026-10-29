@@ -428,6 +428,35 @@ export default function EstimatorCustomers() {
   const term = search.trim().toLowerCase();
   const allTags = [...new Set(customers.flatMap((c) => (Array.isArray(c.tags) ? c.tags : [])).filter(Boolean))].sort();
   const linkedCustomer = linkedCustomerId ? customers.find((customer) => customer.id === linkedCustomerId) || null : null;
+  const importTiersJson = async (file) => {
+    if (!file || tierImporting || me?.role !== "admin") return;
+    setTierImporting(true);
+    try {
+      const parsed = JSON.parse(await file.text());
+      const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.tiers) ? parsed.tiers : null;
+      if (!list || !list.length) throw new Error("Expected a JSON array of tiers — [{tier_number, tier_name, markups:{category_key:1.5}}].");
+      let created = 0, updated = 0;
+      const byNumber = new Map(tiers.map((t) => [Number(t.tier_number), t]));
+      for (const row of list) {
+        const tierNumber = Math.floor(Number(row?.tier_number));
+        const tierName = String(row?.tier_name || "").trim();
+        const markups = row?.markups && typeof row.markups === "object" && !Array.isArray(row.markups) ? row.markups : {};
+        if (!tierNumber || !tierName) throw new Error(`Every tier needs tier_number + tier_name (got ${JSON.stringify(row).slice(0, 80)}).`);
+        const data = { tier_number: tierNumber, tier_name: tierName, markups, sort_order: Number(row.sort_order) || tierNumber };
+        const existing = byNumber.get(tierNumber);
+        if (existing?.id) { await staffEntities.update("MarkupTier", existing.id, data); updated += 1; }
+        else { await staffEntities.create("MarkupTier", data); created += 1; }
+      }
+      await load();
+      window.alert(`Pricing tiers imported — ${created} created, ${updated} updated.`);
+    } catch (e) {
+      window.alert(e?.message || "The tier JSON could not be imported.");
+    } finally {
+      setTierImporting(false);
+      if (tierImportRef.current) tierImportRef.current.value = "";
+    }
+  };
+
   const exportCsv = () => {
     downloadCsv("customers.csv",
       ["Company", "Contact", "Email", "Phone", "City", "State", "Tier", "Tags", "Created"],
@@ -485,6 +514,10 @@ export default function EstimatorCustomers() {
               {importing ? "Importingâ€¦" : "Import CSV"}
             </button>
             <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => importCustomersCsv(e.target.files?.[0])} />
+            <button type="button" onClick={() => tierImportRef.current?.click()} disabled={tierImporting} className="h-8 px-3 inline-flex items-center gap-1.5 rounded border border-violet-300 bg-violet-50 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50" title="Import pricing tiers from JSON — [{tier_number, tier_name, markups:{category_key:1.5}}]">
+              {tierImporting ? "Importingâ€¦" : "Import tiers (JSON)"}
+            </button>
+            <input ref={tierImportRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importTiersJson(e.target.files?.[0])} />
           </>)}
         </div>
 
