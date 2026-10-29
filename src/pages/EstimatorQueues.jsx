@@ -494,7 +494,7 @@ export default function EstimatorQueues() {
                           {e.client_name}
                           {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
                           {e.priority && e.priority !== "normal" ? ` · ${String(e.priority).toUpperCase()} PRIORITY` : ""}
-                          {e.deleted_at ? ` Â· deleted ${format(new Date(e.deleted_at), "MMM d")}` : ""}
+                          {e.deleted_at ? ` Â· deleted ${formatInCompanyTz(e.deleted_at, companyTz)}` : ""}
                           {e.deleted_by ? ` by ${e.deleted_by}` : ""}
                         </div>
                       </div>
