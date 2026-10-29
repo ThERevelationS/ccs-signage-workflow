@@ -96,8 +96,14 @@ export default function Permitting() {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
-  const [activeView, setActiveView] = useState(() => new URLSearchParams(window.location.search).get("view") === "jurisdictions" ? "jurisdictions" : "work");
-  const [jurisdictionFocus, setJurisdictionFocus] = useState(null);
+  const [activeView, setActiveView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get("view") === "jurisdictions" || params.get("jurisdiction")) ? "jurisdictions" : "work";
+  });
+  const [jurisdictionFocus, setJurisdictionFocus] = useState(() => {
+    const name = new URLSearchParams(window.location.search).get("jurisdiction");
+    return name ? { name } : null;
+  });
   const lineItemBaselinesRef = useRef(new Map());
   const lineItemMutationQueuesRef = useRef(new Map());
   const lineItemMutationCountRef = useRef(0);
