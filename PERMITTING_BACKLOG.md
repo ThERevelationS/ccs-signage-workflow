@@ -244,7 +244,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 179. **[UX][DONE]** Search by phone number or office name — "who is (513) 831-7143?" → the jurisdiction row.
 180. **[F][DONE]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
 181. **[UX][DONE]** Recently-researched strip: the 5 most-recently-verified jurisdictions at the top of the repository.
-182. **[F][FLAGGED-dedicated]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
+182. **[F][DONE]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
 183. **[UX][DONE]** "Needs electrical review" chip where sign+zoning verified but electrical isn't — partial states are visible.
 184. **[F][FLAGGED-dedicated]** Contact-import from a business card photo (OCR on the phone# + name) — fast office-data entry.
 185. **[H][DONE]** Jurisdiction-merge staging: queue a merge → preview affected jobs → confirm — never a one-click clobber (ties to item 59).
@@ -373,7 +373,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 280. **[F][DONE]** Water/road-edge rules: addresses on a city line where the road itself is the boundary get a special "road-edge" flag.
 281. **[H][DONE]** Census boundary freshness: when the TIGER data updates, boundary-verified jurisdictions get a re-check flag.
 282. **[F][DONE]** Municipal vs postal name: "Address says Milford but the map says Miami Township" — postal ≠ jurisdiction, called out explicitly.
-283. **[UX][FLAGGED-dedicated]** A "show me the boundary" button drawing the jurisdiction outline on the map when GeoJSON exists.
+283. **[UX][DONE]** A "show me the boundary" button drawing the jurisdiction outline on the map when GeoJSON exists.
 284. **[F][DONE]** Overlapping-service districts: school districts, fire districts, water districts — separate layers, never conflated with permit offices.
 285. **[UX][DONE]** "Is this address right?" sanity check: the pin vs the typed street — a visual confirmation before apply.
 286. **[F][DONE]** Township-trustee vs municipality distinction: "Milford Township" and "City of Milford" as visually-distinct card types.
