@@ -30,6 +30,15 @@ export default function Estimating() {
   const [searchQuery, setSearchQuery] = useState(
     () => new URLSearchParams(window.location.search).get("q") || ""
   );
+
+  // Write-back: keep ?q= in the URL in sync so searches survive reload/share.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const next = searchQuery.trim();
+    if (next) params.set("q", next); else params.delete("q");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+  }, [searchQuery]);
   const listContainerRef = useRef(null);
   const [cardContainers, setCardContainers] = useState({});
   const deepLinkedWorkOrderRef = useRef(false);
@@ -336,7 +345,7 @@ export default function Estimating() {
             <p className="text-xs text-gray-400 mt-1">
               {queueStats.count} {queueStats.count === 1 ? "job" : "jobs"}
               {queueStats.hasAmounts &&
-                ` · $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                ` Â· $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             </p>
           </div>
           <div className="relative w-64 max-w-full">
