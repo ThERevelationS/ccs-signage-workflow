@@ -1,0 +1,91 @@
+{
+  "name": "TimeClockDevice",
+  "entityType": "standard",
+  "properties": {
+    "device_name": {
+      "type": "string",
+      "description": "Display name for the kiosk device (Front Lobby Kiosk, Shop Tablet 2)"
+    },
+    "device_key": {
+      "type": "string",
+      "description": "Stable identifier stored in localStorage on the kiosk (kiosk_device_id)"
+    },
+    "device_type": {
+      "type": "string",
+      "enum": [
+        "kiosk",
+        "tablet",
+        "desktop",
+        "mobile",
+        "scanner"
+      ],
+      "default": "kiosk"
+    },
+    "location": {
+      "type": "string",
+      "description": "Physical placement - Front entrance, Shop floor, Warehouse"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Updated whenever the kiosk registers or punches"
+    },
+    "firmware_version": {
+      "type": "string",
+      "description": "Reported app/agent version for offline-update tracking"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "provisioning",
+        "offline",
+        "retired"
+      ],
+      "default": "active"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "provisioned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provisioned_by_email": {
+      "type": "string"
+    },
+    "archived_test_data": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  },
+  "required": [
+    "device_key"
+  ]
+}
