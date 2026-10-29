@@ -724,6 +724,13 @@ export default function AdminSettings() {
   const [pauseError, setPauseError] = useState("");
   const [openExceptionCount, setOpenExceptionCount] = useState(0);
   const [openConflictCount, setOpenConflictCount] = useState(0);
+  const [offline, setOffline] = useState(typeof navigator !== "undefined" ? !navigator.onLine : false);
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on); window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
   const [pinnedTabs, setPinnedTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
   });
@@ -2122,6 +2129,11 @@ export default function AdminSettings() {
             <p className={`text-lg font-bold ${automationsPaused ? "text-red-700" : "text-green-700"}`}>{automationsPaused ? "PAUSED" : "Live"}</p>
           </div>
         </div>
+        {offline && (
+          <div className="mb-3 rounded-lg border border-red-400 bg-red-100 px-3 py-2 text-xs font-semibold text-red-900" role="alert">
+            You appear to be offline — admin changes will not save until your connection returns.
+          </div>
+        )}
         <Tabs value={selectedAdminTab} onValueChange={handleAdminTabChange} className="w-full min-w-0 max-w-full space-y-6">
           <div className="clay-card sticky top-0 z-20 w-full min-w-0 max-w-full rounded-xl border border-red-200/70 p-2 shadow-sm" style={{ background: '#FEE2E2' }}>
             <AdminSettingsSearch isAdmin={isAdmin} currentUser={currentUser} onNavigate={handleAdminTabChange} />
