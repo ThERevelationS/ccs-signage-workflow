@@ -280,6 +280,25 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           </button>
         </div>
         <DateField
+          label="Denied on"
+          value={lineItem.denial_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("denial_date", value)}
+        />
+        <CommitTextField
+          label="Denial reason"
+          value={lineItem.denial_reason}
+          placeholder="Why the office denied it"
+          disabled={!isRegistered}
+          onCommit={(value) => update("denial_reason", value)}
+        />
+        <DateField
+          label="Appeal deadline"
+          value={lineItem.appeal_deadline}
+          disabled={!isRegistered}
+          onCommit={(value) => update("appeal_deadline", value)}
+        />
+        <DateField
           label="Check back on"
           value={lineItem.follow_up_date}
           disabled={!isRegistered}
