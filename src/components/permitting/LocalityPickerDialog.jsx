@@ -335,7 +335,7 @@ function LocalityPickerSession({
           </DialogTitle>
         </DialogHeader>
 
-        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this jurisdiction. That's it.</div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
+        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this jurisdiction. That's it. <span className="cursor-help border-b border-dotted border-violet-400" title='"Jurisdiction" just means which town, township, or county office issues your permit — every level is different. "Verified" means our team checked it. "Needs review" means nobody has confirmed it yet.'>what do these words mean?</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
