@@ -285,6 +285,11 @@ function QuoteCard({ quote, onRespond, busy }) {
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
             </button>
+            <button onClick={() => onRespond(quote, "declined", note)} disabled={busy || !note.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              title="Decline this quote — a reason is required">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Decline quote
+            </button>
             <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
