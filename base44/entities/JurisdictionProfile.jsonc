@@ -414,5 +414,11 @@
   "required": [
     "name",
     "state"
-  ]
+  ],
+  "rls": {
+    "create": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
+    "read": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
+    "update": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
+    "delete": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } }
+  }
 }
