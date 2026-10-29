@@ -146,7 +146,7 @@ export default function DimensionalMaterialPickerDialog({ open, onClose, materia
               const isSel = m.id === selectedId;
               const sqin = materialCostPerSqin(m);
               return (
-                <button
+                <button type="button"
                   key={m.id}
                   onClick={() => { onSelect(m.id); onClose(); }}
                   className={`w-full text-left border rounded-lg p-3 transition-colors flex items-center gap-3 ${
