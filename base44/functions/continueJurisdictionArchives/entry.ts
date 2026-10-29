@@ -1,4 +1,5 @@
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import { archiveExternalJurisdictionReferral } from '../../shared/jurisdictionExternalReferralArchive.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
@@ -11,7 +12,7 @@ import { PERMITTING_RESEARCH_CONFIG_KEY } from '../../shared/permittingResearchD
 Deno.serve(async req => {
   let reporter:any=silentScanReporter;
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== 'admin') return Response.json({ error: 'Admin access required' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
