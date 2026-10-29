@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { invokePortal } from "@/components/portal/PortalPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quoteLifecycle";
+import { estimateQuoteExpiration, formatQuoteIssueDate, isQuoteExpired, localDateStamp, quoteExpirationDate } from "./quoteLifecycle";
 import { listEstimateRevisions } from "./estimateRevisionService";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 
@@ -91,8 +91,8 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const quoteVersion = Math.max(0, Math.floor(Number(estimate?.quote_version || 0)));
   const currentAcceptance = rows.find((row) => Number(row.quote_version || 0) === quoteVersion) || null;
   const currentVersionDeliveries = deliveryRows.filter((row) => Number(row.quote_version || 0) === quoteVersion);
-  const currentExpirationDate = quoteExpirationDate(estimate?.quote_issue_date, estimate?.quote_valid_days ?? 30);
-  const currentQuoteExpired = quoteVersion > 0 && isQuoteExpired(estimate?.quote_issue_date, estimate?.quote_valid_days ?? 30);
+  const currentExpirationDate = estimateQuoteExpiration(estimate || {});
+  const currentQuoteExpired = quoteVersion > 0 && !!currentExpirationDate && localDateStamp() > currentExpirationDate;
   const acceptanceLifecycleKey = currentAcceptance?.id ? `customer_acceptance:${currentAcceptance.id}` : "";
   const approvalRevisionRecorded = !!acceptanceLifecycleKey && revisionRows.some((row) =>
     row.revision_status === "completed" &&
