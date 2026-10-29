@@ -8,7 +8,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## P0 — Blocking live behavior
 
-1. **[H]** Deploy/rebuild the published bundle — all frontend fixes (request governor, 429-aware retries, subscribe fallback, plain-language copy, staffEntities pickers) are synced but the live site still serves `index-CJvDKpab.js`. The page's mount burst (~17+ staffDataRead calls) self-saturates the invoke budget → `main` stays empty. The new bundle fixes this.
+1. **[H][DONE]** Deploy/rebuild the published bundle — all frontend fixes (request governor, 429-aware retries, subscribe fallback, plain-language copy, staffEntities pickers) are synced but the live site still serves `index-CJvDKpab.js`. The page's mount burst (~17+ staffDataRead calls) self-saturates the invoke budget → `main` stays empty. The new bundle fixes this.
 2. **[B][DONE]** `PermitLocality` was not in `staffEntityWrite` WRITE_OPS — picker "Create draft" would fail server-side. Added `create`.
 3. **[B][DONE]** `PermitLineItem` only allowed `create` — every line-item edit/delete would fail for staff. Added `update`, `updateMany`, `delete`.
 4. **[B][DONE]** `LocalityPickerDialog` called `base44.entities.*` directly, bypassing the staff gateway → locked-RLS failures for staff. Swapped to `staffEntities`.
@@ -313,7 +313,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 233. **[F][FLAGGED-dedicated]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
 234. **[UX][FLAGGED-dedicated]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
 235. **[F][DONE]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
-236. **[UX][FLAGGED-dedicated]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
+236. **[UX][DONE]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
 
 # --- ROUND 3 (items 237-436) ---
 
@@ -352,7 +352,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 262. **[H][FLAGGED-dedicated]** Source-dedup: the same URL on two jurisdictions gets normalized to one record — the evidence graph stays clean.
 263. **[F][FLAGGED-dedicated]** Offline source snapshots: a cached copy of the proving page so a 404 doesn't erase the evidence.
 264. **[UX][DONE]** "Why we believe this" expandable on any verified fact — the reasoning chain in plain language.
-265. **[F][FLAGGED-dedicated]** Source-type taxonomy: ordinance / fee schedule / application form / zoning map / department page — labeled, not just linked.
+265. **[F][DONE]** Source-type taxonomy: ordinance / fee schedule / application form / zoning map / department page — labeled, not just linked.
 266. **[H][FLAGGED-dedicated]** Source-discovery log: what the crawler tried and rejected — research failures are visible, not silent.
 267. **[F][DONE]** Citizen-verified flag: a jurisdiction whose evidence came from a human staff check vs AI research — different trust.
 268. **[UX][DONE]** Evidence-count on the card: "3 official sources" — confidence at a glance.
