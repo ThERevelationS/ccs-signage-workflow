@@ -104,7 +104,7 @@ function LocalityPickerSession({
   const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
   const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
-  const [excludeElectrical, setExcludeElectrical] = useState(false);
+  const [excludeElectrical, setExcludeElectrical] = useState(() => { try { return localStorage.getItem("permitting_exclude_electrical") === "1"; } catch { return false; } });
   const [selectedLocalityId, setSelectedLocalityId] = useState("");
   const [repositoryJurisdictions, setRepositoryJurisdictions] = useState([]);
   const [repositoryLoading, setRepositoryLoading] = useState(false);
@@ -127,7 +127,7 @@ function LocalityPickerSession({
       setResult(null);
       setError("");
       setSelectedLocalityId("");
-      setExcludeElectrical(false);
+      setExcludeElectrical(() => { try { return localStorage.getItem("permitting_exclude_electrical") === "1"; } catch { return false; } });
       setDraftCandidate(null);setRepositoryDraftId("");
       setDraftCreateError("");
       autoSearchRef.current = Boolean(preset);
@@ -458,7 +458,7 @@ function LocalityPickerSession({
           {/* Electrical inspector toggle */}
           <Button
             variant="outline"
-            onClick={() => { if (!excludeElectrical && !confirmOrSkip("Hide electrical inspectors on this job? Only do this if the office already confirmed no electrical permit is needed.")) return; setExcludeElectrical(v => !v); }}
+            onClick={() => { if (!excludeElectrical && !confirmOrSkip("Hide electrical inspectors on this job? Only do this if the office already confirmed no electrical permit is needed.")) return; setExcludeElectrical(v => { const next = !v; try { localStorage.setItem("permitting_exclude_electrical", next ? "1" : "0"); } catch {} return next; }); }}
             className={`gap-1 min-h-11 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
