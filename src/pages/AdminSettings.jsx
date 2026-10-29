@@ -3393,6 +3393,23 @@ export default function AdminSettings() {
                         </div>
                       )}
 
+                      {trigger.trigger_type && (
+                        <details className="mt-2 rounded-md border border-slate-200 bg-slate-50/60 p-2 text-xs">
+                          <summary className="cursor-pointer font-medium text-slate-600">Advanced — check another record too</summary>
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <Input aria-label="Related entity" placeholder="Entity (e.g. WorkOrder)" value={trigger.trigger_condition.related_entity || ""}
+                              onChange={(e) => updateTrigger(index, "related_entity", e.target.value || undefined)} />
+                            <Input aria-label="Match field" placeholder="Match field (e.g. id)" value={trigger.trigger_condition.related_match_field || ""}
+                              onChange={(e) => updateTrigger(index, "related_match_field", e.target.value || undefined)} />
+                            <Input aria-label="Field to check" placeholder="Field on it (e.g. current_stage)" value={trigger.trigger_condition.related_field || ""}
+                              onChange={(e) => updateTrigger(index, "related_field", e.target.value || undefined)} />
+                            <Input aria-label="Required value" placeholder="Must equal (e.g. Approved)" value={trigger.trigger_condition.related_value || ""}
+                              onChange={(e) => updateTrigger(index, "related_value", e.target.value || undefined)} />
+                          </div>
+                          <p className="mt-1.5 text-[10px] text-slate-500">The rule only runs when the matching record's field equals this value. If the lookup fails, the rule stays quiet.</p>
+                        </details>
+                      )}
+
                       {trigger.trigger_type && !getTriggerSupportedActions(trigger.trigger_type) && (
                         <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
                           This trigger isn't connected to anything yet, so a rule using it won't run.
