@@ -1,5 +1,6 @@
 import { base44 } from "@/api/base44Client";
-import { getSessionToken, notifySessionRejected } from "@/components/auth/EmailGate";
+import { getSessionToken } from "@/components/auth/EmailGate";
+import { createRequestGovernor } from "@/api/requestGovernor.mjs";
 
 // A read issued while a pre-mutation fetch is in flight must not consume that
 // fetch's stale snapshot — so every completed fleet* invoke advances a mutation
@@ -16,18 +17,26 @@ const READ_ONLY_FUNCTIONS = new Set([
   "getGoogleMapsKey",
 ]);
 
+// All backend invokes share the app's function rate budget, and pages fan out
+// dozens of staffDataRead calls at mount — an unbounded burst 429s itself. The
+// governor caps in-flight invokes and retries rejected ones with backoff so a
+// busy page degrades to slower loads instead of failing outright.
+const invokeGovernor = createRequestGovernor({
+  maxConcurrent: 6,
+  maxRetries: 4,
+  baseDelayMs: 800,
+  maxDelayMs: 10000,
+});
+
 export async function invokeFleet(name, payload = {}) {
   try {
-    return await base44.functions.invoke(name, {
-      session_token: getSessionToken(),
-      ...(payload || {}),
-    });
-  } catch (error) {
-    // A 401 means this tab's signed-in identity was refused. Report it so the
-    // session layer can reverify once — recovering a live session, or dropping
-    // a dead one and reopening sign-in — while callers keep their own handling.
-    if (Number(error?.response?.status ?? error?.status) === 401) notifySessionRejected();
-    throw error;
+    return await invokeGovernor.run(`invoke:${name}`, () =>
+      base44.functions.invoke(name, {
+        session_token: getSessionToken(),
+        ...(payload || {}),
+      }),
+      { retryOnRateLimit: true },
+    );
   } finally {
     if (!READ_ONLY_FUNCTIONS.has(name)) mutationEpoch += 1;
   }
