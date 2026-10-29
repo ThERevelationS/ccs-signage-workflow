@@ -81,6 +81,18 @@ Deno.serve(async (req) => {
       if (bad) return Response.json({ error: `Unknown office role "${bad}" — must be one of: ${[...KNOWN_ROLES].join(', ')}.` }, { status: 400 });
     }
 
+    // Evidence-gated verification: a jurisdiction can't be marked 'verified'
+    // without a usable source — a document or an office portal link. Keeps
+    // unapproved findings from being presented as confirmed truth.
+    if (entityName === 'JurisdictionProfile' && op === 'update' && data?.verification_status === 'verified') {
+      const hasDoc = Array.isArray(data?.documents) && data.documents.length > 0;
+      const hasOfficeSource = Array.isArray(data?.offices) && data.offices.some((o: any) => String(o?.portal_url || o?.source_url || '').trim());
+      const hasManualDoc = data?._manual_documents && Object.keys(data._manual_documents).length > 0;
+      if (!hasDoc && !hasOfficeSource && !hasManualDoc) {
+        return Response.json({ error: 'A jurisdiction can only be marked verified with at least one usable source — a document or an office portal link.' }, { status: 400 });
+      }
+    }
+
     if (op === 'create') {
       // Jurisdiction drafts are name+state-unique: a double-submit or racing
       // session must converge on one row instead of minting duplicates.
