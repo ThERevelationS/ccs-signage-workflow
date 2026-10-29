@@ -241,6 +241,13 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           disabled={!isRegistered}
           onCommit={(value) => update("permit_number", value)}
         />
+        <CommitTextField
+          label="Permit document"
+          value={lineItem.permit_document_url}
+          placeholder="Paste the permit file or portal link"
+          disabled={!isRegistered}
+          onCommit={(value) => update("permit_document_url", value)}
+        />
         <DateField
           label="Approval date"
           value={lineItem.approval_date}
