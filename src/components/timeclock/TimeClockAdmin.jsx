@@ -188,6 +188,9 @@ function AdminSection({ title, subtitle, icon: Icon, tone = "gray", defaultOpen 
 export default function TimeClockAdmin() {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
+  const [roundMin, setRoundMin] = useState(() => { try { return Number(localStorage.getItem("tc_round_min") || 0); } catch { return 0; } });
+  const setRounding = (v) => { const n = Number(v) || 0; setRoundMin(n); try { localStorage.setItem("tc_round_min", String(n)); } catch {} };
+  const roundH = (h) => { const m = Number(roundMin) || 0; return m > 0 ? Math.round((h * 60) / m) * m / 60 : h; };
   const [employeeStates, setEmployeeStates] = useState([]);
   const [activeBreaks, setActiveBreaks] = useState([]);
   const [activeWorkPauses, setActiveWorkPauses] = useState([]);
@@ -1212,7 +1215,19 @@ export default function TimeClockAdmin() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="clay-card p-4">
           <p className="text-sm text-gray-500">Total Hours</p>
-          <p className="text-2xl font-bold text-purple-600">{totalHours.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-purple-600">{roundH(totalHours).toFixed(2)}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[10px] text-gray-400">round</span>
+            <Select value={String(roundMin)} onValueChange={setRounding}>
+              <SelectTrigger className="h-6 w-20 text-[10px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">exact</SelectItem>
+                <SelectItem value="5">5 min</SelectItem>
+                <SelectItem value="10">10 min</SelectItem>
+                <SelectItem value="15">15 min</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="clay-card p-4">
           <p className="text-sm text-gray-500">Total Entries</p>
@@ -1431,7 +1446,8 @@ export default function TimeClockAdmin() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium text-purple-600">
-                      {Number(entry.total_hours ?? 0).toFixed(2)} hrs
+                      {roundH(Number(entry.total_hours ?? 0)).toFixed(2)} hrs
+                      {roundMin > 0 && <span className="block text-[10px] text-gray-400" title={`Exact: ${Number(entry.total_hours ?? 0).toFixed(2)} hrs`}>rounded {roundMin}m</span>}
                     </td>
                     <td className="px-4 py-3">
                       {entry.status === "needs_resolution" ? (
