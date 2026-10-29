@@ -1555,6 +1555,22 @@ export default function AdminSettings() {
     setActions(draft.actions);
     setAutomationSaveError("");
   };
+  const ruleOrphanedTargets = (rule) => {
+    const missing = [];
+    for (const a of rule.actions || []) {
+      const config = a.action_config || {};
+      if (a.action_type === "send_email") {
+        for (const r of config.recipients || []) {
+          if (r?.type === "email_group" && r.value && !emailGroups.some((g) => g.id === r.value)) missing.push("email group");
+        }
+      }
+      if (a.action_type === "assign_to" && config.assignee && !TEAM_MEMBERS.includes(config.assignee)) missing.push(`assignee "${config.assignee}"`);
+      if (a.action_type === "change_stage" && config.stage && !STAGES.some((st) => st.value === config.stage)) missing.push("target stage");
+      if (a.action_type === "create_rider" && config.rider_stage && !STAGES.some((st) => st.value === config.rider_stage)) missing.push("rider stage");
+    }
+    return [...new Set(missing)];
+  };
+
   const describeAutomationRule = (rule) => {
     const triggers = (rule.triggers || []).map((t) => {
       const label = TRIGGER_TYPES.find((x) => x.value === t.trigger_type)?.label || t.trigger_type;
@@ -2340,6 +2356,11 @@ export default function AdminSettings() {
                           {!ruleIsRunnable(rule) && (
                             <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300">
                               Won't run - not wired yet
+                            </Badge>
+                          )}
+                          {ruleOrphanedTargets(rule).length > 0 && (
+                            <Badge className="text-xs bg-red-100 text-red-800 border border-red-300">
+                              Missing: {ruleOrphanedTargets(rule).join(", ")}
                             </Badge>
                           )}
                         </div>
