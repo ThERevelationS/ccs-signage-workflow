@@ -804,7 +804,7 @@ export default function PTOManagement() {
             
             <div className="space-y-2">
               {policies.map(policy => (
-                <button
+                <button type="button"
                   key={policy.id}
                   onClick={() => selectedUser?.email && assignPolicyToUser(selectedUser.email, policy.id)}
                   disabled={ptoSaving}
