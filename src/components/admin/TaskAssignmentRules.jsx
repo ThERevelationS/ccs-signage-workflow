@@ -226,7 +226,7 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           <Switch checked={rule.enabled} onCheckedChange={() => onToggle(rule)} />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDuplicate(rule)}><Copy className="w-3.5 h-3.5 text-gray-500" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicate ${rule.name || "rule"}`} onClick={() => onDuplicate(rule)}><Copy className="w-3.5 h-3.5 text-gray-500" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(rule)}><Edit className="w-3.5 h-3.5 text-blue-600" /></Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(rule)}><Trash2 className="w-3.5 h-3.5 text-red-600" /></Button>
         </div>
