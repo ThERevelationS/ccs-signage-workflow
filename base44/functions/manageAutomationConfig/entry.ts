@@ -48,6 +48,11 @@ function cleanAutomationData(value: any) {
     triggers: data.triggers,
     actions: data.actions,
     priority: Number.isFinite(Number(data.priority)) ? Number(data.priority) : 0,
+    // Rule metadata — previously dropped by the field whitelist.
+    owner: typeof data.owner === 'string' ? data.owner.slice(0, 200) : undefined,
+    group: typeof data.group === 'string' ? data.group.slice(0, 120) : undefined,
+    approval_status: data.approval_status === 'pending' ? 'pending' : 'approved',
+    history: Array.isArray(data.history) ? data.history.slice(-10) : undefined,
   };
   if (JSON.stringify(cleaned).length > MAX_RULE_JSON) {
     throw Object.assign(new Error('Automation Rule is too large.'), { status: 400 });
@@ -57,7 +62,7 @@ function cleanAutomationData(value: any) {
 
 function cleanAutomationPatch(value: any, current: any) {
   const patch = value && typeof value === 'object' ? value : {};
-  const allowed = ['name', 'enabled', 'triggers', 'actions', 'priority'];
+  const allowed = ['name', 'enabled', 'triggers', 'actions', 'priority', 'owner', 'group', 'approval_status', 'history'];
   const proposed: any = {};
   for (const key of allowed) if (Object.prototype.hasOwnProperty.call(patch, key)) proposed[key] = patch[key];
   const merged = cleanAutomationData({ ...current, ...proposed });
