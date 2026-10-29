@@ -94,6 +94,7 @@ function LocalityPickerSession({
   const [searching, setSearching] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState(() => loadRecentAddresses());
   const [slowSearch, setSlowSearch] = useState(false);
+  const [searchedFor, setSearchedFor] = useState("");
   const [firstRun, setFirstRun] = useState(() => { try { return localStorage.getItem("permitting_first_run_done") !== "1"; } catch { return true; } });
   const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
   const [result, setResult] = useState(null); // address location and reference research
@@ -212,7 +213,7 @@ function LocalityPickerSession({
       } else {
         setResult(data);
         setError("");
-        if(data){serviceFails.current=0;}
+        if(data){serviceFails.current=0;setSearchedFor(norm);}
         if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());saveLastSearch(address,data);}
         if (data?.suggested_locality?.id) {
           setSelectedLocalityId(data.suggested_locality.id);
@@ -490,6 +491,9 @@ function LocalityPickerSession({
               </label>
               <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Review draft creation</Button>
             </section>}
+            {result && searchedFor && normalizeAddress(address).toLowerCase() !== searchedFor.toLowerCase() && (
+              <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">The address changed since this result — press Find again to re-check.</div>
+            )}
             {result && (
               <>
                 {/* Locality match */}
