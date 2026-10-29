@@ -2891,8 +2891,25 @@ function extractManualItems(project, moduleKey) {
   }));
 }
 
+// Extraction memo (#413): keyed on the project object identity + module/
+// options + catalogs identity. The same project re-rendered through sync
+// paths skips re-extraction; any payload or catalog change recomputes.
+const _extractCache = new WeakMap();
+
 export function extractBuilderParts(moduleKey, project, catalogs = {}, options = {}) {
   if (!project) return [];
+  if (typeof project !== "object") return _extractBuilderPartsComputed(moduleKey, project, catalogs, options);
+  const key = `${moduleKey}|${options?.legacyMode ? 1 : 0}`;
+  let byKey = _extractCache.get(project);
+  const hit = byKey?.get(key);
+  if (hit && hit.catalogs === catalogs) return hit.out;
+  const out = _extractBuilderPartsComputed(moduleKey, project, catalogs, options);
+  if (!byKey) { byKey = new Map(); _extractCache.set(project, byKey); }
+  byKey.set(key, { catalogs, out });
+  return out;
+}
+
+function _extractBuilderPartsComputed(moduleKey, project, catalogs = {}, options = {}) {
   switch (moduleKey) {
     case "foundation": return extractFoundation(project, catalogs);
     case "channel_letters": return extractChannel(project, catalogs);
