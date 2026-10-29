@@ -63,7 +63,7 @@ export default function AttentionFeed() {
     setDigestOn(next);
     try { localStorage.setItem("attention_digest_opt_in", next ? "1" : "0"); } catch {}
     if (next) sendDigest();
-  });
+  };
   const [snoozed, setSnoozed] = useState(() => {
     try { return JSON.parse(localStorage.getItem("attention_snoozed") || "{}"); } catch { return {}; }
   });
