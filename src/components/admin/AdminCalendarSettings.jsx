@@ -22,7 +22,6 @@ import {
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
@@ -48,7 +47,7 @@ export default function AdminCalendarSettings() {
       const [evs, savedSettings] = await Promise.all([
         base44.entities.CalendarEvent.list("-start_datetime", 200),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "calendarSettings",
           label: "Calendar settings",
         }),
@@ -77,7 +76,7 @@ export default function AdminCalendarSettings() {
     const newVal = { ...current, ...updates };
     try {
       const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: staffEntities.GlobalSettings,
+        entity: base44.entities.GlobalSettings,
         loadedRecord: globalSettings,
         settingKey: "calendarSettings",
         nextValue: newVal,
@@ -125,6 +124,32 @@ export default function AdminCalendarSettings() {
     .filter(e => new Date(e.start_datetime) < new Date())
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
+
+  const bookingConflicts = (() => {
+    const byPerson = {};
+    for (const e of events) {
+      for (const email of Array.isArray(e.assigned_to) ? e.assigned_to : []) {
+        if (!email) continue;
+        (byPerson[email] = byPerson[email] || []).push(e);
+      }
+    }
+    const pairs = [];
+    for (const [email, list] of Object.entries(byPerson)) {
+      const sorted = list
+        .filter(e => e.start_datetime && e.end_datetime)
+        .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+      for (let i = 0; i < sorted.length && pairs.length < 20; i++) {
+        for (let j = i + 1; j < sorted.length; j++) {
+          const a = sorted[i], b = sorted[j];
+          if (new Date(b.start_datetime) >= new Date(a.end_datetime)) break;
+          if (new Date(b.start_datetime) < new Date(a.end_datetime) && new Date(b.end_datetime) > new Date(a.start_datetime)) {
+            pairs.push({ email, a, b });
+          }
+        }
+      }
+    }
+    return pairs;
+  })();
 
   const EVENT_TYPE_COLORS = {
     company: "#7C3AED", install: "#059669", survey: "#D97706",
@@ -285,6 +310,22 @@ export default function AdminCalendarSettings() {
           the platform's integration settings. Once authorized, events will sync automatically every 15 minutes.
         </div>
       </div>
+
+      {bookingConflicts.length > 0 && (
+        <div className="clay-card border-amber-300 bg-amber-50 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+            <Calendar className="w-4 h-4" /> Scheduling conflicts — {bookingConflicts.length} overlapping assignment{bookingConflicts.length === 1 ? "" : "s"}
+          </h3>
+          <ul className="mt-2 space-y-1">
+            {bookingConflicts.slice(0, 8).map((c, i) => (
+              <li key={i} className="text-xs text-amber-800">
+                {c.email}: “{c.a.title || "Event"}” and “{c.b.title || "Event"}” overlap ({String(c.a.start_datetime).slice(0, 10)})
+              </li>
+            ))}
+            {bookingConflicts.length > 8 && <li className="text-xs text-amber-700">…and {bookingConflicts.length - 8} more</li>}
+          </ul>
+        </div>
+      )}
 
       {/* Upcoming Events */}
       <div className="clay-card p-5">
