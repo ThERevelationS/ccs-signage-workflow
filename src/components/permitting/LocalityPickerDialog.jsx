@@ -176,7 +176,8 @@ function LocalityPickerSession({
     // but still let the search run: a street+state query can still succeed.
     const norm=normalizeAddress(address);
     const hasSignal=/\d{5}/.test(norm)||(norm.includes(",")&&/[,]\s*[A-Za-z]{2}(\s|$)/.test(norm));
-    if(!hasSignal&&!/,\s*\S+/.test(norm))setError("That address is missing a city, state, or ZIP — adding one usually finds it faster.");
+    if(/^\s*\d{5}(-\d{4})?\s*$/.test(norm))setError("A ZIP code narrows it down but isn't enough — add the street address.");
+    else if(!hasSignal&&!/,\s*\S+/.test(norm))setError("That address is missing a city, state, or ZIP — adding one usually finds it faster.");
     else setError("");
     setResult(null);
     try {
@@ -436,9 +437,13 @@ function LocalityPickerSession({
                       className="w-full min-h-11 text-sm border rounded px-2 mt-1"
                     >
                       <option value="">— Select —</option>
-                      {localities.map(l => (
+                      {[...localities].sort((a, b) => {
+                        const av = verifiedAuthoritySummary(a).officeCount > 0 ? 0 : 1;
+                        const bv = verifiedAuthoritySummary(b).officeCount > 0 ? 0 : 1;
+                        return av - bv || String(a.name || '').localeCompare(String(b.name || ''));
+                      }).map(l => (
                         <option key={l.id} value={l.id}>
-                          {l.name}{l.state ? ` (${l.state})` : ''}{l.zip ? ` ${l.zip}` : ''}
+                          {verifiedAuthoritySummary(l).officeCount > 0 ? '✓ ' : ''}{l.name}{l.state ? ` (${l.state})` : ''}{l.zip ? ` ${l.zip}` : ''}
                         </option>
                       ))}
                     </select>
@@ -526,6 +531,9 @@ function LocalityPickerSession({
                         const chain = [`${String(t.type || 'area').replace(/^\w/, (c) => c.toUpperCase())} of ${t.name}`, t.county ? `${t.county} County` : null, t.state].filter(Boolean);
                         return <p className="text-[11px] text-green-700 mt-0.5" title="Every level stays separate — the city, the township, and the county are different offices.">{chain.join(' → ')}</p>;
                       })()}
+                      {result.location_resolution?.status === 'location_verified' && result.location_resolution?.target?.type && result.location_resolution?.target?.type !== 'township' && (
+                        <p className="text-[11px] text-green-700 mt-0.5">Not a township address — it sits inside the {String(result.location_resolution.target.type) === 'county' ? 'county' : `${result.location_resolution.target.type}`}.</p>
+                      )}
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
