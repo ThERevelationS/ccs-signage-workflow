@@ -89,6 +89,7 @@ export default function Step1EstimateDetails({
       office_phone: c.contact_office_phone || c.company_phone || form.office_phone,
       office_phone_ext: c.contact_office_ext || form.office_phone_ext,
       terms: c.terms || form.terms,
+      pricing_tier: Number(c.pricing_tier) || form.pricing_tier || 1,
       salesperson: c.salesperson || form.salesperson,
       ...taxDefaults,
       ...validDaysDefault,
