@@ -134,8 +134,8 @@ function LocalityPickerSession({
     }).then((rows) => {
       if (!cancelled) setRepositoryJurisdictions(Array.isArray(rows) ? rows : []);
     }).catch((e) => {
-      console.error("Could not load Jurisdiction Repository in locality picker:", e);
-      if (!cancelled) setRepositoryError("The Jurisdiction Repository could not be loaded. You can still use an existing configured locality.");
+      console.error("Could not load saved jurisdictions in locality picker:", e);
+      if (!cancelled) setRepositoryError("We could not load the saved jurisdictions list. You can still pick one that is already set up.");
     }).finally(() => {
       if (!cancelled) setRepositoryLoading(false);
     });
@@ -231,7 +231,7 @@ function LocalityPickerSession({
     if(currentUser?.role!=="admin"||(address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
     if (hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction)) {
-      setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Review and resolve the duplicate profiles before creating a permit locality.`);
+      setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Someone on the team needs to clean up the matching entries first.`);
       return;
     }
     setDraftCandidate(jurisdiction);
@@ -358,27 +358,27 @@ function LocalityPickerSession({
                         <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
                           <div className="flex items-center gap-1 font-semibold">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            {selectedAuthority.officeCount} staff-verified authorit{selectedAuthority.officeCount === 1 ? "y" : "ies"}
+                            {selectedAuthority.officeCount} office checked by our team{selectedAuthority.officeCount === 1 ? "y" : "ies"}
                           </div>
                           <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
-                          <p className="mt-1 text-emerald-800">Only these roles are confirmed authority relationships; other configured offices remain workflow references.</p>
+                          <p className="mt-1 text-emerald-800">These offices are confirmed. Any others listed are still just our notes.</p>
                           {selectedAuthority.coverage_status === "partial" && (
                             <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                              <p className="font-semibold">Partial office-authority review: {selectedAuthority.other_office_count} configured office(s) still need review.</p>
-                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Roles on offices awaiting review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                              <p className="font-semibold">Still needs checking: {selectedAuthority.other_office_count} more office(s).</p>
+                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices still being checked: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                             </div>
                           )}
                           {selectedAuthority.coverage_status === "configured_offices_reviewed" && (
-                            <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                            <p className="mt-2 text-gray-700">Every office we know about has been checked — but there may be another office we do not know about.</p>
                           )}
                         </div>
                       ) : (
                         <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
                           <div className="flex items-center gap-1 font-semibold">
-                            <AlertTriangle className="h-3.5 w-3.5" /> No staff-verified office authority
+                            <AlertTriangle className="h-3.5 w-3.5" /> No offices checked yet
                           </div>
-                          <p className="mt-1">Configured offices can still be applied with the existing workflow, but none are confirmed here as the legal authority for this locality.</p>
-                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Configured roles awaiting staff review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                          <p className="mt-1">You can still use this place, but no one has confirmed which office handles permits there.</p>
+                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Offices still being checked: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                         </div>
                       )
                     )}
@@ -390,7 +390,7 @@ function LocalityPickerSession({
             {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this jurisdiction.</p>}
             {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
               <h4 className="font-semibold text-sm">Create a tracker from the repository</h4>
-              <p className="text-xs">Manual selection creates a draft workflow reference. It does not verify the job location or office authority.</p>
+              <p className="text-xs">This makes a draft — it does not confirm the address or the right office.</p>
               {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError}</p>}
               <label className="block text-xs">Repository jurisdiction
                 <select aria-label="Repository jurisdiction for draft" className="block w-full min-h-11 border rounded bg-white" value={repositoryDraftId} disabled={repositoryLoading||Boolean(repositoryError)||creatingDraft} onChange={event=>{setRepositoryDraftId(event.target.value);setDraftCandidate(null);}}>
@@ -433,38 +433,38 @@ function LocalityPickerSession({
                       <div className={`mt-2 rounded border px-2.5 py-2 text-[11px] ${addressAuthority?.status === 'staff_verified_roles' ? 'border-emerald-200 bg-white/70 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         <div className="flex items-center gap-1 font-semibold">
                           {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-                          Permitting authority: {addressAuthority?.status === 'staff_verified_roles' ? 'staff-verified roles' : 'not staff-verified'}
+                          Permit offices: {addressAuthority?.status === 'staff_verified_roles' ? 'checked by our team' : 'not checked yet'}
                         </div>
                         {addressAuthority?.status === 'staff_verified_roles' ? (
                           <>
                             <p className="mt-0.5">{addressAuthorityLabels.join(" • ")}</p>
-                            <p className="mt-1 text-emerald-800">The boundary check identifies the building location. These roles come separately from staff-reviewed office relationships.</p>
+                            <p className="mt-1 text-emerald-800">We confirmed the spot on the map. The offices above were checked separately by our team.</p>
                           </>
                         ) : (
-                          <p className="mt-1">The address can match this locality without proving which office has sign, zoning, building, or electrical authority.</p>
+                          <p className="mt-1">Finding the address does not prove which office handles sign, zoning, building, or electrical permits.</p>
                         )}
                         {addressAuthority?.coverage_status === 'partial' && (
                           <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                            <p className="font-semibold">Partial office-authority review: {addressAuthority.other_office_count} configured office(s) still need review.</p>
+                            <p className="font-semibold">Still needs checking: {addressAuthority.other_office_count} more office(s).</p>
                             {addressRolesNeedingReview.length > 0 && (
-                              <p className="mt-1">Roles on offices awaiting review: {addressRolesNeedingReview.join(" • ")}</p>
+                              <p className="mt-1">Offices still being checked: {addressRolesNeedingReview.join(" • ")}</p>
                             )}
                           </div>
                         )}
                         <ElectricalAuthorityCoverage authority={addressAuthority} selectionContext="address" />
                         {addressAuthority?.coverage_status === 'configured_offices_reviewed' && (
-                          <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                          <p className="mt-2 text-gray-700">Every office we know about has been checked — but there may be another office we do not know about.</p>
                         )}
                         {addressAuthority?.coverage_status === 'not_verified' && addressRolesNeedingReview.length > 0 && (
-                          <p className="mt-2 text-amber-900">Configured roles awaiting staff review: {addressRolesNeedingReview.join(" • ")}</p>
+                          <p className="mt-2 text-amber-900">Offices still being checked: {addressRolesNeedingReview.join(" • ")}</p>
                         )}
                       </div>
                       </details>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'The primary map service was unavailable — a backup locator found an approximate position.' : 'The map location service needs attention.') : result.location_resolution?.status==='location_verified' ? 'Location found. The office setup needs review.' : 'We could not confirm the property location.'}</strong></p>
-                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'Website research started automatically. An administrator needs to review the results.' : 'Website research is available in the tools below when an administrator wants it.'} You do not need to choose a place or guess.</p>
+                      <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'Our main map service was down — a backup found the general area.' : 'Our map tool had a problem.') : result.location_resolution?.status==='location_verified' ? 'Found the spot — the offices still need checking.' : 'We could not pin down the exact spot.'}</strong></p>
+                      <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'We started looking up info on the town’s website — someone on the team still needs to check it.' : 'Someone on the team can dig deeper using the tools below.'} You do not need to choose a place or guess.</p>
                       {result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
@@ -473,14 +473,14 @@ function LocalityPickerSession({
                 </div>
 
                 <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>
-                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">The location was found. An administrator must confirm the sign and zoning offices before you can use it.</p>}
+                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. Someone on the team needs to check the sign and zoning offices before it can be used.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
                   <div className="border rounded-lg p-3 bg-violet-50 border-violet-200 space-y-2">
                     <div>
-                      <h4 className="font-semibold text-sm text-violet-950">Jurisdiction Repository</h4>
+                      <h4 className="font-semibold text-sm text-violet-950">Saved jurisdictions</h4>
                       <p className="text-[11px] text-violet-800 mt-0.5">
-                        Repository data is reference material, not proof of permitting authority. Review it before creating a tracker locality.
+                        These are saved records — not proof of which office handles permits. Check before using one.
                       </p>
                     </div>
 
@@ -534,7 +534,7 @@ function LocalityPickerSession({
                           </div>
                           {duplicate ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
-                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Duplicate repository profiles must be resolved before this can be used.
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Two saved entries match this place — an admin needs to clean them up first.
                             </p>
                           ) : trust.issues.length > 0 ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
