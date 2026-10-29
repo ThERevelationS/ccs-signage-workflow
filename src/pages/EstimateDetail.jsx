@@ -31,6 +31,7 @@ import { resumeIndependentPartGroupMove } from "@/components/estimator/parts/par
 import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
+import EstimateActivityPanel from "@/components/estimator/EstimateActivityPanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
@@ -1572,6 +1573,7 @@ export default function EstimateDetail() {
                 refreshKey={revisionRefreshKey + deliveryRefreshKey}
                 isRegistered={isRegistered}
               />
+              <EstimateActivityPanel estimate={estimate} refreshKey={revisionRefreshKey + deliveryRefreshKey} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
                 <ConvertToWorkOrder
