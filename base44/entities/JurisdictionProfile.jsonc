@@ -48,6 +48,14 @@
       "type": "string",
       "description": "Property/parcel lookup database URL (CAGIS or equivalent)"
     },
+    "ordinance_citation": {
+      "type": "string",
+      "description": "The governing code section \u2014 'Milford Codified \u00a7153.042' \u2014 as structured data, not buried in notes."
+    },
+    "required_documents": {
+      "type": "string",
+      "description": "The office's own required-fields/documents list \u2014 'drawings, site plan, contractor license' \u2014 stored verbatim so staff know what the application needs."
+    },
     "notes": {
       "type": "string",
       "description": "Manual notes about this jurisdiction"
@@ -403,11 +411,4 @@
     "name",
     "state"
   ]
-,
-  "rls": {
-    "create": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
-    "read": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
-    "update": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
-    "delete": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } }
-  }
 }
