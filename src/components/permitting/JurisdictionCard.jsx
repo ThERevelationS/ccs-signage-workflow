@@ -48,6 +48,7 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
                 <ShieldAlert className="w-3 h-3" /> {trust.label}
               </span>
+              {(() => { const days = jurisdiction.verified_at ? Math.floor((Date.now() - new Date(jurisdiction.verified_at).getTime()) / 86400000) : null; return days != null && days > 90 ? <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800" title={"Verified " + days + " days ago"}>stale · {days}d</span> : null; })()}
               {trust.issues.length > 0 && (
                 <span className="text-[10px] text-gray-500">{trust.issues.length} review item{trust.issues.length === 1 ? '' : 's'}</span>
               )}
