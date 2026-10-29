@@ -484,7 +484,7 @@ export default function AdminCalendarSettings() {
         {Object.entries(EVENT_TYPE_COLORS).map(([type, color]) => {
           const off = hiddenTypes.has(type);
           return (
-            <button key={type} type="button" aria-pressed={!off}
+            <button type="button" key={type} type="button" aria-pressed={!off}
               onClick={() => setHiddenTypes((cur) => { const next = new Set(cur); if (next.has(type)) next.delete(type); else next.add(type); return next; })}
               className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${off ? "border-gray-200 bg-gray-50 text-gray-400 line-through" : "border-gray-200 bg-white text-gray-700"}`}>
               <span className="h-2 w-2 rounded-full" style={{ background: color }} />{type}
