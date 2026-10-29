@@ -30,6 +30,12 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [lineCounts, setLineCounts] = useState({});
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparePicks, setComparePicks] = useState([]);
+  const toggleComparePick = (j) => setComparePicks((prev) => {
+    if (prev.some((p) => p.id === j.id)) return prev.filter((p) => p.id !== j.id);
+    return [...prev, j].slice(-2);
+  });
   const [denialCounts, setDenialCounts] = useState({});
   const [onboardingDone, setOnboardingDone] = useState(() => {
     try { return JSON.parse(localStorage.getItem("permitting_onboarding") || "[]"); } catch { return []; }
@@ -479,6 +485,20 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               {staleJurisdictions.length} verified jurisdiction{staleJurisdictions.length === 1 ? "" : "s"} haven't been re-checked in 6+ months
             </div>
           )}
+          {comparePicks.length === 2 && (
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              {comparePicks.map((j) => (
+                <div key={j.id} className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-3 text-xs">
+                  <div className="mb-1 font-bold text-indigo-900">{j.name}, {j.state} <span className="font-normal text-[10px] text-indigo-500">({j.jurisdiction_type || j.type || "jurisdiction"})</span></div>
+                  <div className="text-[10px] text-slate-600">{(j.offices || []).length} offices · {(j.documents || []).length} sources · {String(j.verification_status || "unverified")}</div>
+                </div>
+              ))}
+              <button type="button" onClick={() => { setCompareMode(false); setComparePicks([]); }} className="col-span-2 text-[10px] font-semibold text-slate-400 hover:text-slate-600">Clear compare</button>
+            </div>
+          )}
+          {compareMode && comparePicks.length < 2 && (
+            <p className="mb-2 rounded border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700">Click a jurisdiction card's compare checkbox — pick {2 - comparePicks.length} more.</p>
+          )}
           {mostApplied.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500" title="Where the permitting effort concentrates — jurisdictions with the most permit lines">
               <span className="font-semibold text-slate-600">Most applied:</span>
@@ -486,6 +506,12 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             </div>
           )}
           <div className="flex gap-2 items-start">
+            <button
+              type="button"
+              onClick={() => { const v = !compareMode; setCompareMode(v); if (!v) setComparePicks([]); }}
+              className={`min-h-11 self-center rounded-md border px-2.5 text-[11px] font-semibold ${compareMode ? "border-indigo-400 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+              title="Compare two jurisdictions side by side"
+            >Compare</button>
             {recentlyChanged.length > 0 && (
               <span className="mr-2 self-center whitespace-nowrap text-[11px] font-semibold text-indigo-700" title={recentlyChanged.slice(0, 5).map(j => j.name).join(", ")}>
                 {recentlyChanged.length} changed since your last visit
@@ -587,7 +613,13 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             </div>
           ) : (
             displayList.map(j => (
-              <div key={j.id}>
+              <div key={j.id} className={comparePicks.some((p) => p.id === j.id) ? "ring-2 ring-indigo-400 rounded-xl" : ""}>
+                {compareMode && (
+                  <label className="mb-1 flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-indigo-700" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" checked={comparePicks.some((p) => p.id === j.id)} onChange={() => toggleComparePick(j)} />
+                    Compare
+                  </label>
+                )}
                 <JurisdictionCard
                   jurisdiction={j}
                   onEdit={handleEdit}
