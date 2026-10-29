@@ -103,6 +103,7 @@ export default function SalesOpportunityDialog({
   queueNavigation = null,
 }) {
   const [history, setHistory] = useState([]);
+  const [statusTimeline, setStatusTimeline] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [historyPagination, setHistoryPagination] = useState(null);
@@ -178,6 +179,19 @@ export default function SalesOpportunityDialog({
       });
     return () => { historyRevisionRef.current += 1; };
   }, [workOrder?.id, workOrder?.updated_date, historyReloadNonce]);
+
+  useEffect(() => {
+    if (!workOrder?.id) { setStatusTimeline([]); return; }
+    let cancelled = false;
+    base44.functions.invoke("opportunityWorkspaceAction", {
+      action: "status_timeline",
+      session_token: localStorage.getItem("sss_session_token") || "",
+      opportunity_id: workOrder.id,
+    }).then((r) => {
+      if (!cancelled) setStatusTimeline(r?.data?.timeline || []);
+    }).catch(() => { if (!cancelled) setStatusTimeline([]); });
+    return () => { cancelled = true; };
+  }, [workOrder?.id]);
 
   const loadMoreSalesHistory = async () => {
     if (!workOrder?.id || !historyPagination?.has_more || historyLoading ||
@@ -678,7 +692,7 @@ export default function SalesOpportunityDialog({
                     const fileUrl = safeExternalHttpUrl(file?.url);
                     const meta = fileMeta(file);
                     return (
-                      <button
+                      <button type="button"
                         key={file?.id || `${file?.name || "file"}-${index}`}
                         type="button"
                         disabled={!fileUrl}
@@ -714,6 +728,19 @@ export default function SalesOpportunityDialog({
             <div className="flex items-center gap-2 font-semibold text-gray-800"><FileClock className="h-4 w-4 text-slate-600" />Sales Activity</div>
             <p className="mt-1 text-xs text-gray-500">Committed Sales field history and older CellHistory. Legacy records may have incomplete coverage.</p>
             <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+              {statusTimeline.length > 0 && (
+                <div className="mb-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-2" aria-label="Status timeline">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-500">Status timeline</p>
+                  <ul className="space-y-1">
+                    {statusTimeline.slice(0, 8).map((a) => (
+                      <li key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-gray-700">{String(a.event_type || "").replace(/_/g, " ")}</span>
+                        <span className="shrink-0 text-gray-400">{a.created_date ? format(new Date(a.created_date), "MMM d") : ""}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {historyLoading ? <div className="flex items-center justify-center py-8 text-sm text-gray-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading history…</div> : historyError ? <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{historyError}</div> : history.length === 0 ? <div className="py-6 text-center text-sm text-gray-400">No captured sales changes yet.</div> : history.map((entry) => (
                 <div key={entry.id} className="flex gap-3 rounded-lg border border-gray-100 px-3 py-2">
                   <UserRound className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
