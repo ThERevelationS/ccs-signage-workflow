@@ -233,6 +233,16 @@ export default function JobCosting() {
       })
     : visible;
 
+  const exportCsv = () => {
+    downloadCsv("job-costing.csv",
+      ["Job", "Customer", "Stage", "Estimated", "Change Orders", "Contract Value", "PO Committed", "Stock Issued", "Labor Hours", "Invoiced", "Collected", "Margin"],
+      sorted.map((j) => [
+        j.title || "", j.client_name || "", j.current_stage || j.sales_status || "",
+        j.estimated_amount ?? "", j.co_delta ?? "", j.contract_value ?? "", j.po_committed ?? "",
+        j.stock_issued ?? "", j.labor_hours ?? "", j.invoiced ?? "", j.collected ?? "", j.margin_vs_materials ?? "",
+      ]));
+  };
+
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -274,15 +284,6 @@ export default function JobCosting() {
           <input className={`${inputCls} pl-9`} value={query} onChange={(e) => { setViewName(""); setQuery(e.target.value); }} placeholder="Search job or client…" />
         </div>
         <label className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-        <button type="button" onClick={() => {
-          downloadCsv("job-costing.csv",
-            ["Job", "Customer", "Stage", "Estimated", "Change Orders", "Contract Value", "PO Committed", "Stock Issued", "Labor Hours", "Invoiced", "Collected", "Margin"],
-            sorted.map((j) => [
-              j.title || "", j.client_name || "", j.current_stage || j.sales_status || "",
-              j.estimated_amount ?? "", j.co_delta ?? "", j.contract_value ?? "", j.po_committed ?? "",
-              j.stock_issued ?? "", j.labor_hours ?? "", j.invoiced ?? "", j.collected ?? "", j.margin_vs_materials ?? "",
-            ]));
-        }} disabled={sorted.length === 0} className="hidden">x</button>
           <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={activeOnly} onChange={(e) => { setViewName(""); setActiveOnly(e.target.checked); }} />
           Active jobs only
         </label>
