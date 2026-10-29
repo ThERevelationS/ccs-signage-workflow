@@ -237,7 +237,7 @@ export default function DataExportPanel() {
         <p className="font-semibold text-gray-700">Scheduled jobs</p>
         <p className="mt-0.5 text-gray-400">Platform-managed timers — no next-run data is exposed to the client.</p>
         <ul className="mt-0.5 grid grid-cols-2 gap-x-3 list-disc pl-4">
-          {["checkDeadlineReminders", "checkPermitFollowupReminders", "detectSalesDuplicates", "fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "monitorJurisdictionChanges", "smartsheetSyncAction", "sourceMonitorScan", "backupToGoogleDrive", "backupPermittingRepository", "bouncieSyncNotifications"].map((f) => (
+          {["checkDeadlineReminders", "checkPermitFollowupReminders", "detectSalesDuplicates", "fleetScheduledMaintenanceGeneration", "fleetScheduledReminders", "monitorJurisdictionChanges", "smartsheetSyncAction", "sourceMonitorScan", "backupToGoogleDrive", "backupPermittingRepository", "bouncieSyncNotifications", "weeklyAdminDigest"].map((f) => (
             <li key={f} className="font-mono text-[10px]">{f}</li>
           ))}
         </ul>
