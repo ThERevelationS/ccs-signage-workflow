@@ -434,6 +434,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const popoverStats = snapshot ? [
     { label: "Clocked in", value: snapshot.clock_in ? formatCompanyDateTime(snapshot.clock_in) : "—" },
     { label: "Paid time", value: formatClock(live?.paid || 0, prefs?.time_format), accent: true },
+    ...(Number(snapshot.monthly_paid_minutes) > 0 ? [{ label: "This month", value: formatClock(live ? live.paid - (snapshot.paid_minutes_today || 0) + Number(snapshot.monthly_paid_minutes || 0) : snapshot.monthly_paid_minutes, "hours_minutes") }] : []),
+    ...(snapshot.pto_balance ? [{ label: "PTO balance", value: formatClock(snapshot.pto_balance.available_minutes || 0, "hours_minutes") }] : []),
     { label: "Unpaid break", value: formatMinutes(Math.round((snapshot.break_minutes || 0) - (snapshot.paid_break_minutes || 0) + (snapshot.on_unpaid_break_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
     { label: "Work Pause", value: formatMinutes(Math.round((snapshot.pause_minutes || 0) + (snapshot.paused_now ? snapshot.live_unpaid_minutes || 0 : 0))) },
   ] : [];
@@ -633,6 +635,16 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           <p className="mt-1 text-[10px] text-slate-400">
             {lastActionText}
             {frozen && live?.unpaidNow > 0 ? ` - ${formatMinutes(Math.round(live.unpaidNow))} so far` : ""}
+          </p>
+        )}
+        {Number(snapshot?.consecutive_worked_days) >= 6 && (
+          <p className="mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            Day {snapshot.consecutive_worked_days} in a row - check the rest policy.
+          </p>
+        )}
+        {clockedIn && Number.isFinite(Number(snapshot?.rest_hours_since_last_shift)) && Number(snapshot.rest_hours_since_last_shift) < 10 && snapshot?.last_clock_out && (
+          <p className="mt-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            Only {Math.round(Number(snapshot.rest_hours_since_last_shift) * 10) / 10}h since your last shift.
           </p>
         )}
 
