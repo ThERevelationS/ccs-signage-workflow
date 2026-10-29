@@ -101,7 +101,7 @@ function detectAt(video, inputSize, scoreThreshold) {
 export function detectDetailedFace(video) {
   if (!video || video.readyState < 2 || !video.videoWidth) return Promise.resolve(null);
   // First pass stays cheap at normal distances. The deeper 512 pass runs when
-  // the first pass misses OR finds a marginal face — a low-score or small-box
+  // the first pass misses OR finds a marginal face - a low-score or small-box
   // detection at 320 often resolves into a far stronger detection (and a much
   // better descriptor) at the higher input size, which is what makes distant
   // or low-resolution cameras work.
@@ -115,7 +115,7 @@ export function detectDetailedFace(video) {
 // One shared scan loop for every recognition surface (admin login, kiosk quick
 // clock, enrollment preview). It owns the busy flag, the cadence, the quality
 // gate, the brightness check, and the temporal voter, so callers can never
-// drift apart on matching behaviour — they only map results to their own UI.
+// drift apart on matching behaviour - they only map results to their own UI.
 //
 // Cadence is self-scheduling: a new frame is sampled `intervalMs` after the
 // previous detection resolves. In-flight ticks are skipped rather than counted
