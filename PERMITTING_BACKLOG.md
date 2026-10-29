@@ -27,10 +27,10 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 14. **[F][DONE]** Paste-and-parse: pasting "914 Lila Ave, Milford OH 45150" from anywhere should populate and auto-search without clicking.
 15. **[F]** Address autocomplete/suggestions as the user types (Census geocoder has no suggest API — evaluate a cheap suggest layer or reuse saved address history for type-ahead).
 16. **[UX][DONE]** Recent-address list per user — last 5 searches one-click re-runnable.
-17. **[F]** "Same as another job" — copy a jurisdiction from a recent job by client name (reuses verified localities).
+17. **[F][DONE]** "Same as another job" — copy a jurisdiction from a recent job by client name (reuses verified localities).
 18. **[UX][DONE]** Validation before search: warn if the address lacks a city/ZIP/state instead of failing silently ("That address is missing a city — try adding one").
 19. **[UX][DONE]** If the geocoder returns a corrected address, show "Did you mean…" and let the user accept the correction in one click.
-20. **[F]** Saved/favorite addresses per client — a client with recurring job sites should remember them.
+20. **[F][DONE]** Saved/favorite addresses per client — a client with recurring job sites should remember them.
 
 ## B — Search progress + feedback
 
@@ -69,7 +69,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## E — Authority review / who to call
 
-47. **[F]** Per-locality office card: the office that issues sign permits, with phone, address, hours, permit portal link — the thing the estimator actually calls.
+47. **[F][DONE]** Per-locality office card: the office that issues sign permits, with phone, address, hours, permit portal link — the thing the estimator actually calls.
 48. **[F][DONE]** Electrical permit + electrical inspection authority as separate cards — NEVER combine with the sign office.
 49. **[UX][DONE]** "Call" / "Email" / "Open portal" buttons on each office card — the review becomes actionable in one click.
 50. **[F][DONE]** Source link on every claim — tap the claim → open the government source the data came from.
@@ -77,7 +77,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 52. **[F][DONE]** Flag stale jurisdictions in the repository automatically (last-verified > N days) and queue them for re-verification.
 53. **[F]** Record a call outcome per office ("they said permits take 2 weeks") — the tribal knowledge stays with the jurisdiction.
 54. **[F][DONE]** Fee snapshot where known: "Sign permit ≈ $75" sourced from the office's fee schedule page.
-55. **[F]** Turnaround estimate where known: "Typical approval: 5–10 business days" sourced or marked unverified.
+55. **[F][DONE]** Turnaround estimate where known: "Typical approval: 5–10 business days" sourced or marked unverified.
 
 ## F — Repository (saved jurisdictions)
 
@@ -89,7 +89,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 61. **[F]** Sort repository by "most-used" — jurisdictions touched by recent jobs float to the top.
 62. **[F][DONE]** Export the repository to CSV for offline review.
 63. **[F][DONE]** Print/share a jurisdiction summary card — the field tech wants the office address + phone, not the whole repository.
-64. **[H]** Research-backlog rows: a locality that keeps failing boundary verification needs a visible "problem" flag, not silent retries.
+64. **[H][DONE]** Research-backlog rows: a locality that keeps failing boundary verification needs a visible "problem" flag, not silent retries.
 65. **[F][DONE]** A jurisdiction with NO verified source evidence shows a warning badge — unverified data never looks confident.
 
 ## G — Page layout + accessibility (young AND old users)
@@ -121,14 +121,14 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 87. **[H][DONE]** If `resolvePermittingAddress` returns 5xx mid-scan, the picker should re-attempt with a clean retry (already retries 429s; extend to 5xx).
 88. **[H][DONE]** Timeouts: searches longer than 90s should say "taking longer than usual" and offer a cancel — never spin forever.
 89. **[H][DONE]** Guard the draft-create path for non-admin users — the UI currently hides it by role but the create path itself should also fail closed.
-90. **[H]** Keep `county/city/township/village` strictly separate in every data write — the enduring rule; a code audit is a dedicated pass.
+90. **[H][FLAGGED for dedicated audit]** Keep `county/city/township/village` strictly separate in every data write — the enduring rule; a code audit is a dedicated pass.
 
 ## I — Job card integration
 
 91. **[F][DONE]** "Permit office" field on every job card — shows the applied locality at a glance, not buried in a line item.
 92. **[F][DONE]** Unassigned jobs get a prominent "Find the permit office →" CTA — the empty state tells the user what to do.
 93. **[F]** Jobs in the same verified jurisdiction visually group — a county/cluster header so staff see coverage at a glance.
-94. **[F]** Permit due-date/chase reminders on the job card — "Permit application due in 3 days" for jobs whose jurisdiction data is stale.
+94. **[F][DONE]** Permit due-date/chase reminders on the job card — "Permit application due in 3 days" for jobs whose jurisdiction data is stale.
 95. **[F][DONE]** Track permit-status per job line (applied, in-review, approved, issued, inspected) — not just "locality chosen".
 96. **[UX][DONE]** A pending-permit badge on the page header — "3 jobs still need a jurisdiction chosen" — the work queue is visible.
 97. **[F][DONE]** Permit-number field per line item once issued — the clerk types it in, the history stays with the job.
@@ -148,8 +148,8 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## K — Notifications + follow-through
 
-108. **[F]** When a jurisdiction's authority review completes, surface it on the job card — "Milford office details verified".
-109. **[F]** When an office's data goes stale, flag it — "Milford office info last verified 6 months ago".
+108. **[F][DONE]** When a jurisdiction's authority review completes, surface it on the job card — "Milford office details verified".
+109. **[F][DONE]** When an office's data goes stale, flag it — "Milford office info last verified 6 months ago".
 110. **[F]** Reminder when a job has had a jurisdiction picked but no permit-applied status in N days — permits age without tracking.
 111. **[F][DONE]** Internal note/activity feed per job-line for permit status changes ("applied on Oct 22", "approved on Oct 30").
 112. **[F]** If a jurisdiction's repository row gets merged/updated, jobs linked to the old row get flagged for re-verify — never silently linked to stale data.
@@ -163,17 +163,17 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 117. **[UX][DONE]** The card grid's responsive behavior on a phone: one column, big buttons — the current layout was desktop-first.
 118. **[UX][DONE]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
 119. **[F][DONE]** A "Print this jurisdiction's details" view — clerk takes a paper copy of office name/address/phone to the phone call.
-120. **[UX]** Undo/history of searches in the dialog — the back-arrow restores the previous search, not close-everything.
-121. **[UX]** Accessibility pass on color contrast for every status chip/badge — WCAG AA minimum.
+120. **[UX][DONE]** Undo/history of searches in the dialog — the back-arrow restores the previous search, not close-everything.
+121. **[UX][FLAGGED for dedicated audit]** Accessibility pass on color contrast for every status chip/badge — WCAG AA minimum.
 122. **[UX][DONE]** Reduced copy density in the picker's review section — the current "authority review" block is too wordy for a fast flow.
-123. **[F]** First-run walkthrough: one small guided overlay on first use ("Type an address → pick the office → apply it") — dismissible, never repeats.
-124. **[UX]** Every icon-only control gets a label or tooltip — older users don't know what the pin/leaflet icons do.
-125. **[H]** Performance audit on the picker mount — the dialog currently fires several parallel calls before the user types; the search should only run on demand.
-126. **[F]** A debug-mode toggle (staff only) showing the raw pipeline events for troubleshooting — hidden behind "Show technical details" for normal users.
-127. **[UX]** When there's literally nothing to do (empty workspace), a friendly "No permit work right now" screen with what-that-means copy.
+123. **[F][DONE]** First-run walkthrough: one small guided overlay on first use ("Type an address → pick the office → apply it") — dismissible, never repeats.
+124. **[UX][DONE]** Every icon-only control gets a label or tooltip — older users don't know what the pin/leaflet icons do.
+125. **[H][DONE]** Performance audit on the picker mount — the dialog currently fires several parallel calls before the user types; the search should only run on demand.
+126. **[F][DONE]** A debug-mode toggle (staff only) showing the raw pipeline events for troubleshooting — hidden behind "Show technical details" for normal users.
+127. **[UX][DONE]** When there's literally nothing to do (empty workspace), a friendly "No permit work right now" screen with what-that-means copy.
 128. **[F]** An in-app help page for the permitting flow — the plain-language manual for the team.
-129. **[H]** Regression suite for the picker flow: address in → resolve → boundary match → apply — every step asserts the right entity ops fired.
-130. **[H]** Contract-check the picker's writes: every PermitLocality/PermitLineItem create/update goes through the gateway + CAS — no direct base44.entities calls remain on the page (partially fixed; sweep the rest).
+129. **[H][DONE]** Regression suite for the picker flow: address in → resolve → boundary match → apply — every step asserts the right entity ops fired.
+130. **[H][DONE]** Contract-check the picker's writes: every PermitLocality/PermitLineItem create/update goes through the gateway + CAS — no direct base44.entities calls remain on the page (partially fixed; sweep the rest).
 
 ## M — Dedicated-pass items (bigger scope, already analyzed)
 
