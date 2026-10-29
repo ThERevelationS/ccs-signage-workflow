@@ -61,6 +61,7 @@ export default function WorkPauseOverlay({
   const pauseIdRef = useRef("");
   const dismissedAtRef = useRef(0);
   const lastActivityAtRef = useRef(Date.now());
+  const lastPollAtRef = useRef(0);
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
     if (resumeInFlightRef.current) return null;
@@ -77,6 +78,7 @@ export default function WorkPauseOverlay({
       return null;
     }
     try {
+      lastPollAtRef.current = Date.now();
       const response = await base44.functions.invoke("timeClockAction", {
         action: "status",
         ...credentialPayload,
@@ -138,9 +140,9 @@ export default function WorkPauseOverlay({
     setError("");
     loadStatus({ preservePausedOnError: false });
     // Hidden tabs skip the poll; the visibility handler refreshes on return.
-    const interval = setInterval(() => { if (!document.hidden) loadStatus(); }, 15000);
-    const onFocus = () => loadStatus();
-    const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
+    const interval = setInterval(() => { if (!document.hidden) loadStatus(); }, 60000);
+    const onFocus = () => { if (Date.now() - lastPollAtRef.current > 45000) loadStatus(); };
+    const onVisibility = () => { if (document.visibilityState === "visible" && Date.now() - lastPollAtRef.current > 45000) loadStatus(); };
     const onPauseChanged = (event) => {
       const confirmed = event?.detail;
       const confirmedEmail = String(confirmed?.user?.email || confirmed?.entry?.user_email || "").trim().toLowerCase();
