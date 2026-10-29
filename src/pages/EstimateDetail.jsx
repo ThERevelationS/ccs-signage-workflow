@@ -269,10 +269,17 @@ export default function EstimateDetail() {
         archived_reason: `Merged into ${primaryLabel} (${picked.length} section${picked.length === 1 ? "" : "s"} moved)`,
       };
       try {
-        await staffEntities.AllInOneEstimate.update(secondary.id, {
+        const archiveFields = {
           status: secondaryAfter.status,
           archived_at: secondaryAfter.archived_at,
           archived_reason: secondaryAfter.archived_reason,
+        };
+        await replaceEstimateFieldsIfUnchanged({
+          entity: staffEntities.AllInOneEstimate,
+          estimateId: secondary.id,
+          expectedFields: expectedEstimateFields(secondary, archiveFields),
+          nextFields: archiveFields,
+          label: "Merged estimate archive",
         });
         await ensureEstimateLifecycleRevision({
           idempotencyKey: `estimate_merge:${secondary.id}:${estimate.id}:${picked.length}`,

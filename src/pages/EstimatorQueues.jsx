@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
-import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
+import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -56,7 +56,13 @@ function syncExpiredFlags(rows) {
   }).slice(0, EXPIRY_FLAG_SWEEP_LIMIT);
   for (const e of stale) {
     const expired = Boolean(expiryOf(e) && expiryOf(e) < now);
-    staffEntities.AllInOneEstimate.update(e.id, { quote_expired: expired }).catch(() => {});
+    replaceEstimateFieldsIfUnchanged({
+      entity: staffEntities.AllInOneEstimate,
+      estimateId: e.id,
+      expectedFields: { quote_expired: e.quote_expired ?? null },
+      nextFields: { quote_expired: expired },
+      label: "Expired quote flag",
+    }).catch(() => {});
   }
 }
 
@@ -104,7 +110,13 @@ export default function EstimatorQueues() {
         continue;
       }
       try {
-        await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });
+        await replaceEstimateFieldsIfUnchanged({
+          entity: staffEntities.AllInOneEstimate,
+          estimateId: id,
+          expectedFields: { status: row?.status ?? null },
+          nextFields: { status: bulkStatus },
+          label: "Bulk status change",
+        });
       } catch (error) {
         failures.push(`${id}: ${error?.message || "update failed"}`);
       }
