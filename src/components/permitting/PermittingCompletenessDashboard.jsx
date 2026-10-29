@@ -116,10 +116,10 @@ export default function PermittingCompletenessDashboard() {
         staffEntities.SourceCollectionQueue.aggregate({ groupBy: "state", count: true }),
         staffEntities.SourceCollectionQueue.aggregate({ groupBy: "status", count: true }),
         staffEntities.SourceCollectionQueue.aggregate({ groupBy: "jurisdiction_type", count: true }),
-        staffEntities.JurisdictionProfile.aggregate({ groupBy: "state", count: true }),
-        staffEntities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified", "rewrite_authority.effectiveDateStatus": "verified" }),
-        staffEntities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified" }),
-        staffEntities.JurisdictionProfile.count({ "rewrite_authority.effectiveDateStatus": "verified" }),
+        base44.entities.JurisdictionProfile.aggregate({ groupBy: "state", count: true }),
+        base44.entities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified", "rewrite_authority.effectiveDateStatus": "verified" }),
+        base44.entities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified" }),
+        base44.entities.JurisdictionProfile.count({ "rewrite_authority.effectiveDateStatus": "verified" }),
         staffEntities.PermittingSourceDocument.aggregate({ groupBy: "authority_classification", count: true }),
         staffEntities.PermittingSourceDocument.count({}),
         staffEntities.PermittingSourceDocument.count({ last_checked: { $lt: staleThreshold } }),
@@ -196,6 +196,19 @@ export default function PermittingCompletenessDashboard() {
     return () => { active = false; };
   }, [countyAttempt]);
 
+  useEffect(() => {
+    let alive = true;
+    staffEntities.PermitLineItem.filter({}, { limit: 300 })
+      .then((rows) => {
+        if (!alive) return;
+        setFollowUps((Array.isArray(rows) ? rows : [])
+          .filter((r) => r.next_followup_date)
+          .sort((a, b) => String(a.next_followup_date).localeCompare(String(b.next_followup_date))));
+      })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
+
   if ((loading && !metrics) || (metrics && metrics.staleDays !== filters.staleDays)) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -221,6 +234,30 @@ export default function PermittingCompletenessDashboard() {
 
   return (
     <div className="space-y-4">
+      {followUps.length > 0 && (
+        <div className="clay-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Layers className="w-4 h-4" /> Permit follow-ups
+            <span className="text-xs font-normal text-gray-400">
+              {followUps.filter((f) => f.next_followup_date < new Date().toISOString().slice(0, 10)).length} overdue
+            </span>
+          </div>
+          <ul className="mt-2 space-y-1">
+            {followUps.slice(0, 10).map((f) => {
+              const overdue = f.next_followup_date < new Date().toISOString().slice(0, 10);
+              return (
+                <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-1.5 text-xs">
+                  <span className="font-medium text-gray-800">{f.row_name || f.work_order_title || "Permit"}</span>
+                  <span className="text-gray-500">{f.locality_name || ""}</span>
+                  <span className={`font-medium ${overdue ? "text-red-600" : "text-gray-600"}`}>{overdue ? "overdue " : "due "}{f.next_followup_date}</span>
+                </li>
+              );
+            })}
+          </ul>
+          {followUps.length > 10 && <p className="mt-1 text-xs text-gray-400">...and {followUps.length - 10} more</p>}
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="clay-card p-4">
         <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
