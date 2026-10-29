@@ -23,6 +23,11 @@
       "type": "string",
       "description": "Unique username for time clock login"
     },
+    "password_changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the password was last set or rehashed \u2014 drives password-age expiry warnings"
+    },
     "password_hash": {
       "type": "string",
       "description": "Hashed password for time clock login",
