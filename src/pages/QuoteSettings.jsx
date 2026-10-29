@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Save, ShieldCheck } from "lucide-react";
+import { Save, ShieldCheck, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { DEFAULT_QUOTE_SETTINGS, loadQuoteDefaults, quoteDefaultsForm, quoteDefaultsPayload } from "@/components/estimator/quoteDefaults";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
@@ -174,6 +174,7 @@ export default function QuoteSettings() {
           </div>
           {form.show_notes_on_quote && <div className="mt-2 border border-amber-200 bg-amber-50 px-3 py-2 text-[9px] text-amber-800"><strong>Estimate-level notes will be customer-visible by default.</strong> Keep this off unless your shop intentionally uses the estimate notes field for customer-facing copy.</div>}
         </div>
+        <TaxGroupsSection canEdit={canEdit} />
       </div>
     </div>
   );
@@ -181,6 +182,82 @@ export default function QuoteSettings() {
 
 function SettingsSection({ title, children }) {
   return <section className="bg-white border border-gray-200 p-4"><div className="text-[10px] font-bold tracking-widest text-gray-500 mb-3">{title.toUpperCase()}</div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">{children}</div></section>;
+}
+
+
+function TaxGroupsSection({ canEdit }) {
+  const [groups, setGroups] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPct, setNewPct] = useState("");
+
+  const load = async () => {
+    try { setGroups(await staffEntities.list("TaxGroup", "sort_order", 200)); }
+    catch (e) { setErr(e?.message || "Could not load tax groups."); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!newName.trim()) return;
+    setBusy(true); setErr("");
+    try {
+      await staffEntities.create("TaxGroup", {
+        group_name: newName.trim(),
+        tax_percent: Math.max(0, Math.min(100, Number(newPct) || 0)),
+        is_active: true,
+        sort_order: (groups || []).length,
+      });
+      setNewName(""); setNewPct("");
+      await load();
+    } catch (e) { setErr(e?.message || "Could not create tax group."); }
+    finally { setBusy(false); }
+  };
+
+  const patchRow = async (row, patchFields) => {
+    setBusy(true); setErr("");
+    try { await staffEntities.update("TaxGroup", row.id, patchFields); await load(); }
+    catch (e) { setErr(e?.message || "Could not update tax group."); }
+    finally { setBusy(false); }
+  };
+
+  const remove = async (row) => {
+    if (!window.confirm(`Delete tax group "${row.group_name || row.name}"?`)) return;
+    setBusy(true); setErr("");
+    try { await staffEntities.delete("TaxGroup", row.id); await load(); }
+    catch (e) { setErr(e?.message || "Could not delete tax group."); }
+    finally { setBusy(false); }
+  };
+
+  const rows = (groups || []).map((g) => ({ ...g, _name: g.group_name || g.name || "" }));
+
+  return (
+    <div className={`bg-white border border-gray-200 p-4 ${!canEdit ? "pointer-events-none opacity-70" : ""}`}>
+      <div className="text-[10px] font-bold tracking-widest text-gray-500 mb-2">TAX GROUPS</div>
+      <p className="mb-3 text-[10px] text-gray-400">Picking a tax group on an estimate sets its tax percent. Admin-managed.</p>
+      {err && <div className="mb-2 border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{err}</div>}
+      <div className="space-y-1.5">
+        {rows.map((g) => (
+          <div key={g.id} className="grid grid-cols-[1fr_90px_70px_70px_28px] items-center gap-2">
+            <input value={g._name} onChange={(e) => setGroups((prev) => prev.map((r) => r.id === g.id ? { ...r, _name: e.target.value } : r))} onBlur={() => { const v = g._name.trim(); if (v && v !== (g.group_name || g.name)) patchRow(g, { group_name: v }); }} className="h-[30px] rounded border border-gray-300 px-2 text-[11px] text-gray-800" disabled={!canEdit || busy} />
+            <input type="number" min="0" max="100" step="0.001" value={g.tax_percent ?? 0} onChange={(e) => setGroups((prev) => prev.map((r) => r.id === g.id ? { ...r, tax_percent: e.target.value } : r))} onBlur={() => patchRow(g, { tax_percent: Number(g.tax_percent) || 0 })} className="h-[30px] rounded border border-gray-300 px-2 text-[11px] text-gray-800" disabled={!canEdit || busy} />
+            <label className="flex items-center gap-1 text-[10px] text-gray-600"><input type="checkbox" checked={g.is_default === true} onChange={(e) => patchRow(g, { is_default: e.target.checked })} disabled={!canEdit || busy} className="w-3 h-3 accent-red-600" />Default</label>
+            <label className="flex items-center gap-1 text-[10px] text-gray-600"><input type="checkbox" checked={g.is_active !== false} onChange={(e) => patchRow(g, { is_active: e.target.checked })} disabled={!canEdit || busy} className="w-3 h-3 accent-red-600" />Active</label>
+            <button type="button" onClick={() => remove(g)} disabled={!canEdit || busy} className="text-gray-300 hover:text-red-600" title="Delete tax group"><Trash2 className="w-3.5 h-3.5" /></button>
+          </div>
+        ))}
+        {groups === null && <div className="text-[10px] text-gray-400">Loading...</div>}
+        {groups?.length === 0 && <div className="text-[10px] text-gray-400">No tax groups yet - add one below.</div>}
+      </div>
+      {canEdit && (
+        <div className="mt-3 flex items-center gap-2">
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Ohio - Hamilton County" className="h-[30px] flex-1 rounded border border-gray-300 px-2 text-[11px] text-gray-800" />
+          <input type="number" min="0" max="100" step="0.001" value={newPct} onChange={(e) => setNewPct(e.target.value)} placeholder="%" className="h-[30px] w-[90px] rounded border border-gray-300 px-2 text-[11px] text-gray-800" />
+          <button type="button" onClick={add} disabled={busy || !newName.trim()} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40">Add</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function TextField({ label, value, onChange, textarea = false, wide = false }) {
