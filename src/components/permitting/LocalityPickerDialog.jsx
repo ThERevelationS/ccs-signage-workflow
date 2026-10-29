@@ -856,7 +856,15 @@ function LocalityPickerSession({
 
           {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
           <div className="relative min-h-[360px] w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-gray-100 shadow-sm lg:min-h-0 lg:self-stretch">
-            <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} />
+            <GoogleMapView position={mapPosition} markerTitle={markerTitle} boundaries={result?.location_resolution?.boundaries || []} onDragEnd={async (coords) => {
+              try {
+                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&addressdetails=1`);
+                const hit = await r.json();
+                const a = hit?.address || {};
+                const parts = [[a.house_number, a.road].filter(Boolean).join(' '), a.city || a.town || a.village || a.hamlet || a.county, a.state, a.postcode].filter(Boolean);
+                if (parts.length) { setAddress(parts.join(', ')); setResult(null); setSelectedLocalityId(''); setSearching(false); setTimeout(() => runSearch(), 0); }
+              } catch { setError("Couldn't read the dragged pin's address — re-type it instead."); }
+            }} />
           </div>
         </div>
 
