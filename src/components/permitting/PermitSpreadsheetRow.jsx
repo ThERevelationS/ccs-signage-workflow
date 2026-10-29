@@ -473,6 +473,19 @@ export default function PermitSpreadsheetRow({
                   ))}
                 </SelectContent>
               </Select>
+              {(lineItem.submission_method || lineItem.confirmation_number) && (
+                <button
+                  type="button"
+                  className="text-[10px] font-semibold text-indigo-700 underline"
+                  title="Copy this application&#039;s submission details to paste into the office portal for resubmit"
+                  onClick={async () => {
+                    const parts = [`Job: ${lineItem.work_order_title || ''}`, `Office: ${lineItem.locality_name || ''}`, `Submitted via: ${lineItem.submission_method || '—'}`, `Confirmation #: ${lineItem.confirmation_number || '—'}`, `Application ref: ${lineItem.application_reference_number || '—'}`, `Revision: ${lineItem.application_revision || 1}`];
+                    try { await navigator.clipboard.writeText(parts.join('\n')); } catch {}
+                  }}
+                >
+                  Copy submission details
+                </button>
+              )}
               {canAssignToMe && (
                 <button
                   type="button"
