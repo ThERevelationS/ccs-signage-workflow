@@ -1640,7 +1640,7 @@ export default function AdminSettings() {
     try {
       const saved = await updateAutomationRuleIfUnchanged({
         record: rule,
-        nextFields: { approval_status: 'approved' }, exactVersion: false, adminCapability: writeCapability,
+        nextFields: { approval_status: 'approved' }, adminCapability: writeCapability,
       });
       if (saved?.id) setAutomations(prev => prev.map(r => r.id === saved.id ? saved : r));
     } catch { /* leave the pending badge retryable */ }
