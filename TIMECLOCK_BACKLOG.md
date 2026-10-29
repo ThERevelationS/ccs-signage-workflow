@@ -190,7 +190,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 169. **[F]** Shift templates per employee
 170. **[F]** Per-employee permission matrix (face/QR/manual, missed punches)
 171. **[F]** Department/crew management with roll-ups
-172. **[F]** New-hire onboarding checklist (enroll, badge, schedule)
+172. **[F][DONE]** New-hire setup checklist - admin card computing enrollment/punch/audit status
 173. **[F]** Terminated-employee auto-lockout verification
 174. **[F]** Device camera quality log (weak-scan kiosks)
 175. **[F]** Kiosk offline event log (dropped + re-queued punches)
@@ -213,14 +213,14 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 190. **[F]** Suspicious login pattern alerts
 191. **[F]** Data-retention tooling (auto-archive >2y)
 192. **[F][DONE]** Config backup - JSON export/import covers prefs backup/restore
-193. **[F]** Disaster mode — printable paper-punch fallback card
+193. **[F][DONE]** Disaster mode - printable paper-punch sheet generator on the admin roster panel
 
 ## 11. Announcements & engagement
 194. **[F]** Clock-in-triggered announcements (safety brief on punch)
 195. **[F]** Shift-end auto-announcement to anyone still in
 196. **[F]** Birthday/anniversary auto-announcements from HR data
-197. **[F]** Announcement read-receipts per employee
-198. **[F]** Acknowledge-required policy announcements
+197. **[F][DONE]** Announcement read-receipts - acknowledgeAnnouncement persists per-viewer acks
+198. **[F][DONE]** Ack-required announcements - requires_ack display mode already exists
 
 ## 12. AI & analytics
 199. **[F][DONE]** Anomaly flags - TimeClockPunchException entity + admin exception report surfaces outliers to the review queue
@@ -272,9 +272,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 17. Onboarding & help
 236. **[F]** In-app kiosk tutorial overlay ("first punch? scan here")
 237. **[F]** Video walkthrough of face enrollment
-238. **[F]** Admin quick-start checklist (schedule -> enroll -> badges)
+238. **[F][DONE]** Admin quick-start checklist - computed setup checklist on the admin page
 239. **[F]** Employee FAQ panel on the Time Clock page
-240. **[F]** Contextual help on every admin setting (info-dot pattern)
+240. **[F][DONE]** Contextual help - InfoDot tooltips already used across tracker settings
 241. **[F]** "What's new" panel for employees on UI changes
 242. **[F]** Manager playbook — common correction scenarios in-app
 243. **[F]** Per-company feature flag for experimental features
