@@ -89,6 +89,7 @@ function LocalityPickerSession({
   const [searching, setSearching] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState(() => loadRecentAddresses());
   const [slowSearch, setSlowSearch] = useState(false);
+  const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
   const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(false);
@@ -273,7 +274,7 @@ function LocalityPickerSession({
       await runPickerDraftAction({pending:pendingDraft,isCurrent:()=>openRef.current&&draftVersion===searchVersion.current,
       prepare:async()=>requireReviewedRepositoryProfile({
         reviewed:draftCandidate,
-        rows:await loadAllEntityRows({entity:staffEntities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck"}),
+        rows:await loadAllEntityRows({entity:staffEntities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck",cacheTtlMs:15000}),
         hasDuplicate:hasDuplicateRepositoryIdentity,
         toDraft:jurisdictionToDraftPermitLocality,
       }),create:payload=>createPermitLocalityIfAbsent({
@@ -283,6 +284,7 @@ function LocalityPickerSession({
           entity: staffEntities.PermitLocality,
           sort: "name",
           label: "Permit locality repository bridge identity",
+          cacheTtlMs: 15000,
         }),
         label: `Permit locality draft ${payload.name}`,
       }),apply:locality=>{
@@ -305,11 +307,12 @@ function LocalityPickerSession({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0">
+      <DialogContent className={"flex h-[95dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden border-none bg-slate-50 p-0 "+(bigText?"text-[115%] [&_button]:min-h-12 [&_input]:text-base [&_p]:text-sm [&_span]:text-sm":"")}>
         <DialogHeader className="border-b bg-white px-5 py-3.5">
           <DialogTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>
-            Choose your jurisdiction
+            Which office issues permits here?
+            <button type="button" onClick={()=>{const v=!bigText;setBigText(v);try{localStorage.setItem("permitting_big_text",v?"1":"0");}catch{}}} className="ml-auto text-[10px] font-semibold text-violet-700 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-50" title="Make the text bigger">{bigText?"A−":"A+"}</button>
           </DialogTitle>
         </DialogHeader>
 
@@ -325,7 +328,7 @@ function LocalityPickerSession({
                 value={address}
                 onChange={(e) => {searchVersion.current++;pendingSearch.current=null;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
                 placeholder="e.g. 4900 Parkway Dr, Mason, OH 45040"
-                className="min-h-11 pl-8 text-sm"
+                className="min-h-11 pl-8 text-base"
                 onKeyDown={(e) => e.key === 'Enter' && !searching && runSearch()}
                 onPaste={(e) => {
                   // Paste-and-go: if the pasted text looks like a complete
