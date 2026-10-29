@@ -11,12 +11,12 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 3. **[H][DONE]** Status-transition state machine — reject `draft` → `approved` skips (require `sent` first)
 4. **[F][DONE]** "Clone as new estimate number" vs "clone into same number" choice on duplicate
 5. **[F][DONE]** Estimate merge — combine two drafts into one (section-by-section picker)
-6. **[H]** Block editing locked sections after `sent` unless revision started
-7. **[F]** `archived_reason` field — why archived (lost, superseded, test)
-8. **[F]** Bulk status change on EstimatorQueues (select → mark sent/archived)
-9. **[F]** Estimate reopen flow — `approved` → `sent` with mandatory reason
-10. **[H]** `quote_version` bump only on material pricing changes, not cosmetic edits
-11. **[F]** Expired-quote auto-flag job (`expired` computed at read, persist a flag for reporting)
+6. **[H][DONE]** Block editing locked sections after `sent` unless revision started
+7. **[F][DONE]** `archived_reason` field — why archived (lost, superseded, test)
+8. **[F][DONE]** Bulk status change on EstimatorQueues (select → mark sent/archived)
+9. **[F][DONE]** Estimate reopen flow — `approved` → `sent` with mandatory reason
+10. **[H][DONE]** `quote_version` bump only on material pricing changes, not cosmetic edits
+11. **[F][DONE]** Expired-quote auto-flag job (`expired` computed at read, persist a flag for reporting)
 12. **[F]** `needs_recalc` flag when source project changes post-calculate
 13. **[B]** `EstimatorQueues` "sync issues" bucket — confirm `pipeline_sync_pending` is ever cleared anywhere
 14. **[F]** `cancelled_at`/`cancelled_by`/`cancellation_reason` persisted on cancel modal

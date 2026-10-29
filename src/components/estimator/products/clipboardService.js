@@ -142,22 +142,6 @@ export async function copyProductToClipboard({ estimateId, line }) {
   });
 }
 
-// Copies one complete Product package from another estimate straight into the
-// target estimate (no clipboard record). The source estimate is untouched.
-export async function copyProductIntoEstimate({ sourceEstimateId, line, targetEstimateId }) {
-  if (!sourceEstimateId || !targetEstimateId || !line?.builder_product_id) throw new Error("Product is not ready to copy.");
-  const source = await staffEntities.AllInOneEstimate.get(sourceEstimateId);
-  if (!(await getEstimateLine(source, line.builder_product_id))) {
-    throw new Error(`"${line.client_product_name || line.project_name || "Product"}" is no longer on the source estimate. Reload and pick again.`);
-  }
-  const payload = await captureProductPayload({ line });
-  return instantiateProductSnapshot({
-    estimateId: targetEstimateId,
-    productSnapshot: payload,
-    sourceId: `${sourceEstimateId}:${line.builder_product_id}`,
-  });
-}
-
 export async function copyPartToClipboard({ estimateId, builderProductId, part }) {
   if (!estimateId || !builderProductId || !part) throw new Error("Part is not ready to copy.");
   const estimate = await staffEntities.AllInOneEstimate.get(estimateId);
