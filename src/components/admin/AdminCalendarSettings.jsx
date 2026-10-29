@@ -128,6 +128,20 @@ export default function AdminCalendarSettings() {
     .sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime))
     .slice(0, 10);
 
+  const crewCapacity = (() => {
+    const weekEnd = new Date(Date.now() + 7 * 86400000);
+    const byPerson = {};
+    for (const e of events) {
+      const start = new Date(e.start_datetime || 0);
+      if (!(start >= new Date() && start <= weekEnd)) continue;
+      for (const email of Array.isArray(e.assigned_to) ? e.assigned_to : []) {
+        if (!email) continue;
+        byPerson[email] = (byPerson[email] || 0) + 1;
+      }
+    }
+    return Object.entries(byPerson).map(([email, count]) => ({ email, count })).sort((a, b) => b.count - a.count);
+  })();
+
   const bookingConflicts = (() => {
     const byPerson = {};
     for (const e of events) {
@@ -327,6 +341,21 @@ export default function AdminCalendarSettings() {
             ))}
             {bookingConflicts.length > 8 && <li className="text-xs text-amber-700">…and {bookingConflicts.length - 8} more</li>}
           </ul>
+        </div>
+      )}
+
+      {crewCapacity.length > 0 && (
+        <div className="clay-card p-4">
+          <h3 className="text-sm font-semibold text-gray-800">Crew capacity — next 7 days</h3>
+          <div className="mt-2 space-y-1">
+            {crewCapacity.slice(0, 10).map((c) => (
+              <div key={c.email} className="flex items-center gap-2 text-xs">
+                <span className="w-40 truncate text-gray-700">{c.email}</span>
+                <div className="h-2 rounded-full bg-purple-500" style={{ width: `${Math.min(160, c.count * 20)}px` }} />
+                <span className={`font-medium ${c.count > 6 ? "text-red-600" : "text-gray-500"}`}>{c.count} event{c.count === 1 ? "" : "s"}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
