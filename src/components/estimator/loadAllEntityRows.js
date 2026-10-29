@@ -63,6 +63,12 @@ export async function withRateLimitRetry(fn) {
  *   label?: string,
  * }} [options]
  */
+// Short-TTL in-memory cache for slow-changing catalogs (jurisdiction/locality
+// lists). Opt-in per call — repeated mounts of the same page stop re-reading
+// the whole catalog and burning the shared rate-limit budget.
+const readCache = new Map();
+const CACHE_MAX_AGE_MS = 30000;
+
 export async function loadAllEntityRows({
   entity,
   query = null,
@@ -70,7 +76,13 @@ export async function loadAllEntityRows({
   pageSize = DEFAULT_PAGE_SIZE,
   maxRows = DEFAULT_MAX_ROWS,
   label = "Estimator prerequisite catalog",
+  cacheTtlMs = 0,
 } = {}) {
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([entity?.name || entity, query, sort, pageSize, maxRows]) : null;
+  if (cacheKey) {
+    const hit = readCache.get(cacheKey);
+    if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
+  }
   const hasFilter = query && typeof query === "object";
   const reader = hasFilter ? entity?.filter : entity?.list;
   if (typeof reader !== "function") {
@@ -102,7 +114,10 @@ export async function loadAllEntityRows({
       collected.push(row);
     }
 
-    if (page.length < safePageSize) return collected;
+    if (page.length < safePageSize) {
+      if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
+      return collected;
+    }
     skip += safePageSize;
   }
 
