@@ -162,10 +162,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 143. **[F]** Saved report presets (range + filters + columns), shareable
 144. **[F]** Payroll-provider export formats (CSV mapping)
 145. **[F]** Absence/late leaderboard by department + trend
-146. **[F]** Overtime forecast from current pace
+146. **[F][DONE]** OT forecast - otWatch + projected week-end hours on the admin page (concurrent pass)
 147. **[F]** Hours-vs-schedule variance (needs shift schedules)
 148. **[F]** Missing-punch daily digest emailed to managers
-149. **[F]** Labor-hours-per-work-order vs estimate rollup
+149. **[F][DONE]** Labor-hours-per-job rollup - Hours by Job card aggregates job_allocations (concurrent pass)
 150. **[F]** Break compliance report — missed/short lunches
 151. **[F]** Buddy-punch suspicion report
 152. **[F]** Cost-of-overtime weekly report
@@ -211,7 +211,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 188. **[F][DONE]** Admin action audit - list_timeclock_audit + panel (actor, request id, time)
 189. **[F]** Rate-limit punch attempts per device
 190. **[F]** Suspicious login pattern alerts
-191. **[F]** Data-retention tooling (auto-archive >2y)
+191. **[F][DONE]** Retention tooling - Archive old control + admin_archive_entry backend action (CAS + audit)
 192. **[F][DONE]** Config backup - JSON export/import covers prefs backup/restore
 193. **[F][DONE]** Disaster mode - printable paper-punch sheet generator on the admin roster panel
 
