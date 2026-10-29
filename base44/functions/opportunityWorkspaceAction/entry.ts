@@ -282,6 +282,66 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, to: email, sent: !!sendRes, counts: Object.fromEntries(rows) });
     }
 
+    // User-defined watch rules (#349): "tell me when X reaches state Y".
+    // Rules persist on the GlobalSettings `watch_rules` config keyed by the
+    // caller's email; the dispatcher (`check_watches` — called on feed load)
+    // returns matching rules so the UI can surface "watch hit" notifications.
+    const loadWatchConfig = async () => {
+      const rows = await GlobalSettings.filter({ config_name: "watch_rules" }).catch(() => []);
+      const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+      let map: Record<string, any[]> = {};
+      try { map = JSON.parse(String(row?.watch_rules || "{}") || "{}"); } catch { map = {}; }
+      return { row, map };
+    };
+    if (action === "set_watch") {
+      const { row, map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      if (!key) throw bad("A signed-in user is required to watch a record.", 400);
+      const rule = {
+        entity: clean(body?.entity),
+        record_id: clean(body?.record_id),
+        field: clean(body?.field),
+        equals: body?.value != null ? String(body.value) : null,
+        label: clean(body?.label),
+      };
+      if (!rule.entity || !rule.record_id || !rule.field) throw bad("entity, record_id and field are required to watch a record.", 400);
+      map[key] = (map[key] || []).filter((w: any) => !(w.entity === rule.entity && w.record_id === rule.record_id && w.field === rule.field));
+      map[key].push(rule);
+      if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
+      else await GlobalSettings.create({ config_name: "watch_rules", watch_rules: JSON.stringify(map) });
+      return Response.json({ success: true, action, rule, count: map[key].length });
+    }
+    if (action === "list_watches") {
+      const { map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      return Response.json({ success: true, action, watches: map[key] || [] });
+    }
+    if (action === "clear_watch") {
+      const { row, map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      const idx = Number(body?.index);
+      if (!Number.isInteger(idx)) throw bad("A watch index is required.", 400);
+      map[key] = (map[key] || []).filter((_: any, i: number) => i !== idx);
+      if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
+      return Response.json({ success: true, action, watches: map[key] });
+    }
+    // Evaluate the caller's watched records and surface any that match.
+    // Call on feed load — cheap because most users have 0 watches.
+    if (action === "check_watches") {
+      const { map } = await loadWatchConfig();
+      const key = clean(user?.email) || actor;
+      const hits: any[] = [];
+      for (const w of (map[key] || [])) {
+        try {
+          const rec = await (base44.asServiceRole.entities as any)[w.entity]?.filter({ id: w.record_id }).catch(() => []);
+          const row0 = Array.isArray(rec) ? rec[0] : rec;
+          const cur = row0 ? String(row0[w.field] ?? "") : null;
+          if (cur != null && (w.equals == null || cur === w.equals)) hits.push({ ...w, current: cur });
+        } catch { /* unreadable entity — skip */ }
+      }
+      return Response.json({ success: true, action, hits });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
