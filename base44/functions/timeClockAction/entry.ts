@@ -3304,6 +3304,7 @@ Deno.serve(async (req) => {
     const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
+    const shiftTemplateEntity = base44.asServiceRole.entities.TimeClockShiftTemplate;
     const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
     const adminCorrectionGateEntity = base44.asServiceRole.entities.TimeClockAdminCorrectionGate;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
@@ -3615,6 +3616,17 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Today's scheduled shift template (for variance/early-punch notices).
+      let todaysSchedule: any = null;
+      if (todayKey) {
+        const weekday = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date(`${todayKey}T12:00:00Z`).getUTCDay()];
+        const templates = await shiftTemplateEntity.filter({ user_email: target.email, archived_admin: { $ne: true }, active: true }).catch(() => []);
+        if (Array.isArray(templates)) {
+          const match = templates.find((t: any) => Array.isArray(t.days) && t.days.includes(weekday) && t.start_time);
+          if (match) todaysSchedule = { label: match.label || '', start_time: match.start_time, end_time: match.end_time || '', break_minutes: Number(match.break_minutes || 0) };
+        }
+      }
+
       let ptoBalance: any = null;
       const ptoRows = await ptoBalanceEntity.filter({ user_email: target.email }).catch(() => []);
       if (Array.isArray(ptoRows) && ptoRows[0]) {
@@ -3650,6 +3662,7 @@ Deno.serve(async (req) => {
         pto_balance: ptoBalance,
         next_timeoff: nextTimeoff,
         pay_period: payPeriod,
+        todays_schedule: todaysSchedule,
         company_day: dateKeyInCompanyTime(serverNow.toISOString()),
         prefs,
       });
@@ -7760,6 +7773,48 @@ Deno.serve(async (req) => {
           approval_status: r.approval_status || '', notes: String(r.notes || '').slice(0, 500),
         }));
       return Response.json({ success: true, entries });
+    }
+
+    if (action === 'list_shift_templates') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to view shift templates.' }, { status: 403 });
+      const rows = await shiftTemplateEntity.filter({ archived_admin: { $ne: true } }).catch(() => []);
+      if (!Array.isArray(rows)) throw new Error('Shift template lookup did not return a record list.');
+      return Response.json({ success: true, templates: rows });
+    }
+
+    if (action === 'upsert_shift_template') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to edit shift templates.' }, { status: 403 });
+      if (!requestId) return Response.json({ success: false, error: 'A request_id is required to save a shift template.' }, { status: 400 });
+      const t = body?.template && typeof body.template === 'object' ? body.template : {};
+      const userEmail = asEmail(t.user_email || '');
+      if (!userEmail) return Response.json({ success: false, error: 'template.user_email is required.' }, { status: 400 });
+      const clean: any = {
+        user_email: userEmail,
+        label: String(t.label || '').slice(0, 60).trim(),
+        days: (Array.isArray(t.days) ? t.days : []).filter((d: any) => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(d)),
+        start_time: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(t.start_time || '')) ? String(t.start_time) : '',
+        end_time: /^([01]\d|2[0-3]):[0-5]\d$/.test(String(t.end_time || '')) ? String(t.end_time) : '',
+        break_minutes: Math.min(480, Math.max(0, Math.round(Number(t.break_minutes) || 0))),
+        active: t.active !== false,
+      };
+      if (!clean.start_time || !clean.end_time || !clean.days.length) {
+        return Response.json({ success: false, error: 'A template needs at least one day plus valid start and end times.' }, { status: 400 });
+      }
+      const existing = t.id ? await shiftTemplateEntity.get(String(t.id)).catch(() => null) : null;
+      const row = existing?.id
+        ? await shiftTemplateEntity.update(existing.id, clean)
+        : await shiftTemplateEntity.create(clean);
+      await auditEntity.create({ action: 'upsert_shift_template', request_id: requestId, user_email: userEmail, actor_email: actorEmail, details: { template_id: row?.id || null } }).catch(() => null);
+      return Response.json({ success: true, template: row });
+    }
+
+    if (action === 'delete_shift_template') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to delete shift templates.' }, { status: 403 });
+      const row = await shiftTemplateEntity.get(String(body?.template_id || '')).catch(() => null);
+      if (!row?.id) return Response.json({ success: false, error: 'Shift template not found.' }, { status: 404 });
+      await shiftTemplateEntity.update(row.id, { archived_admin: true });
+      await auditEntity.create({ action: 'delete_shift_template', request_id: requestId, user_email: row.user_email || '', actor_email: actorEmail, details: { template_id: row.id } }).catch(() => null);
+      return Response.json({ success: true });
     }
 
     if (action === 'list_timeclock_audit') {
