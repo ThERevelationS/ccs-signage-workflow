@@ -410,7 +410,13 @@ export default function PurchaseOrders() {
   const [viewName, setViewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(() => {
+    // ?draft_item=<inventory_item_id> opens a new PO prefilled with the
+    // low-stock item (linked from the attention feed's low-stock section).
+    const id = new URLSearchParams(window.location.search).get("draft_item");
+    return Boolean(id && String(id).trim());
+  });
+  const draftItemId = new URLSearchParams(window.location.search).get("draft_item") || "";
   const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get("po") || "");
 
   const load = useCallback(async () => {
@@ -520,7 +526,7 @@ export default function PurchaseOrders() {
         )}
       </div>
 
-      {showCreate && <PoForm sessionToken={sessionToken} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
+      {showCreate && <PoForm sessionToken={sessionToken} purchaseOrder={draftItemId ? { line_items: [{ inventory_item_id: draftItemId, quantity: 1 }] } : undefined} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); load(); }} />}
       {openId && <PoDetail sessionToken={sessionToken} purchaseOrderId={openId} onClose={() => setOpenId("")} onChanged={load} />}
     </div>
   );
