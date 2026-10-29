@@ -113,6 +113,23 @@ export default function EstimatorQueues() {
   const mine = params.get("mine") === "1";
   const [me, setMe] = useState(null);
   const [backupBusy, setBackupBusy] = useState(false);
+  const importEstRef = useRef(null);
+  // Re-import an exported estimate bundle (#451): creates a new draft with
+  // its parts/products re-pointed, then opens it.
+  const importEstimateJson = async (file) => {
+    if (!file) return;
+    try {
+      const bundle = JSON.parse(await file.text());
+      if (!bundle?.estimate?.project_name) throw new Error("Not an estimate export — expected { estimate, products, parts }.");
+      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "import_estimate", bundle });
+      const d = res?.data || res;
+      if (!d?.success || !d?.estimate_id) throw new Error(d?.error || "Import failed.");
+      window.alert(`Estimate imported as a new draft (${d.imported_parts || 0} parts).`);
+      navigate(`/EstimateDetail?id=${d.estimate_id}`);
+    } catch (e) { window.alert(e?.message || "Import failed."); }
+    finally { if (importEstRef.current) importEstRef.current.value = ""; }
+  };
   useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
 
   const toggleSelected = (id) => setSelectedIds((prev) => {
@@ -323,6 +340,8 @@ export default function EstimatorQueues() {
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
           <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
           {me?.role === "admin" && <button type="button" onClick={exportBackup} disabled={backupBusy} className="h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" />{backupBusy ? " Exporting…" : " Backup (JSON)"}</button>}
+          <button type="button" onClick={() => importEstRef.current?.click()} className="h-6 px-2 rounded border border-emerald-300 bg-emerald-50 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 inline-flex items-center gap-1" title="Import an exported estimate JSON bundle (#451)"><Upload className="w-3 h-3" />Import estimate</button>
+          <input ref={importEstRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importEstimateJson(e.target.files?.[0])} />
           <span className="text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
         </div>
 
