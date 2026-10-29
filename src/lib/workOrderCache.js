@@ -26,11 +26,85 @@ const stateFor = (entity) => {
       cursor: "",
       fullSyncAt: 0,
       inFlight: null,
+      hydrated: false,
     });
   }
   return boardState.get(entity);
 };
 
+// --- Cross-session persistence + cross-tab sharing ----------------------------------
+// Every reload used to pay a full boardFeed pull (~3k rows) before painting.
+// Snapshots persist to IndexedDB and broadcast to sibling tabs, so a fresh
+// load paints from the last snapshot instantly and only delta-syncs upstream.
+const IDB_NAME = 'ccs-board-cache';
+const IDB_STORE = 'snapshots';
+const boardChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ccs-board-sync') : null;
+let idbPromise = null;
+const idb = () => (idbPromise ||= new Promise((resolve) => {
+  try {
+    if (typeof indexedDB === 'undefined') return resolve(null);
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  } catch { resolve(null); }
+}));
+async function idbRead(entity) {
+  const db = await idb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    const req = db.transaction(IDB_STORE).objectStore(IDB_STORE).get(entity);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+async function idbWrite(entity, state) {
+  const db = await idb();
+  if (!db) return;
+  try {
+    db.transaction(IDB_STORE, 'readwrite').objectStore(IDB_STORE)
+      .put({ rows: state.rows, cursor: state.cursor, fullSyncAt: state.fullSyncAt, savedAt: Date.now() }, entity);
+  } catch { /* quota or serialization failures are non-fatal */ }
+}
+const publishSnapshot = (entity, state) => {
+  const key = FEED_ENTITIES[entity]?.queryKey;
+  if (key) queryClientInstance.setQueryData(key, [...state.rows.values()]);
+  try {
+    boardChannel?.postMessage({ type: 'snapshot', entity, rows: state.rows, cursor: state.cursor, fullSyncAt: state.fullSyncAt });
+  } catch { /* cross-context clone failures are non-fatal */ }
+};
+async function ensureHydrated(entity) {
+  const state = stateFor(entity);
+  if (state.hydrated) return;
+  state.hydrated = true;
+  const snap = await idbRead(entity).catch(() => null);
+  if (snap?.rows instanceof Map && snap.rows.size > 0 && state.rows.size === 0) {
+    state.rows = snap.rows;
+    state.cursor = snap.cursor || '';
+    state.fullSyncAt = snap.fullSyncAt || 0;
+    publishSnapshot(entity, state);
+    return;
+  }
+  if (boardChannel) {
+    boardChannel.postMessage({ type: 'request', entity });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+}
+if (boardChannel) {
+  boardChannel.onmessage = (event) => {
+    const msg = event?.data || {};
+    if (!FEED_ENTITIES[msg.entity]) return;
+    const state = stateFor(msg.entity);
+    if (msg.type === 'snapshot' && msg.rows instanceof Map && state.rows.size === 0) {
+      state.rows = msg.rows;
+      state.cursor = msg.cursor || '';
+      state.fullSyncAt = msg.fullSyncAt || 0;
+      publishSnapshot(msg.entity, state);
+    } else if (msg.type === 'request' && state.rows.size > 0) {
+      publishSnapshot(msg.entity, state);
+    }
+  };
+}
 // A full re-sync on a timer is the safety net for hard deletes and any row a
 // delta pass could not surface; delta sync alone cannot observe removals.
 const FULL_RESYNC_MS = 10 * 60 * 1000;
@@ -50,6 +124,7 @@ async function fetchFeedRows(entity, { forceFull = false } = {}) {
   const state = stateFor(entity);
   if (state.inFlight) return state.inFlight;
   state.inFlight = (async () => {
+    await ensureHydrated(entity);
     const needsFull = forceFull || !state.cursor || Date.now() - state.fullSyncAt > FULL_RESYNC_MS;
     let data = await boardFeed({ entity, sort: "-updated_date", since: needsFull ? null : state.cursor });
     if (!needsFull && data.truncated) {
@@ -70,10 +145,9 @@ async function fetchFeedRows(entity, { forceFull = false } = {}) {
       if (updated > maxUpdated) maxUpdated = updated;
     }
     if (maxUpdated) state.cursor = maxUpdated;
-    const arr = [...state.rows.values()];
-    const key = FEED_ENTITIES[entity]?.queryKey;
-    if (key) queryClientInstance.setQueryData(key, arr);
-    return arr;
+    idbWrite(entity, state);
+    publishSnapshot(entity, state);
+    return [...state.rows.values()];
   })().finally(() => {
     state.inFlight = null;
   });
