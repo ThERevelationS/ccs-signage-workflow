@@ -131,7 +131,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     }
   }, [isEnrollMode, modelsLoaded, cameraReady]);
 
-  const handleScanFrame = ({ status, detection, winner }) => {
+  const handleScanFrame = ({ status, detection, winner, votes }) => {
     if (status === "recognized" && winner) {
       scanSessionRef.current?.stop();
       setIsScanning(false);
@@ -140,7 +140,9 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
       onRecognized?.(winner, Array.from(detection.descriptor));
       return;
     }
-    setScanStatus(SCAN_STATUS_TEXT[status] || "Scanning...");
+    setScanStatus(status === "verifying" && votes?.required
+      ? `Verifying identity... ${votes.count}/${votes.required}`
+      : SCAN_STATUS_TEXT[status] || "Scanning...");
   };
 
   const startScanning = () => {
