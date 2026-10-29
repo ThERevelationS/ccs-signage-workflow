@@ -24,11 +24,12 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [ptoLiability, setPtoLiability] = useState(null);
   const [periods, setPeriods] = useState([]);
+  const [devices, setDevices] = useState([]);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
-      const [whoRes, faceRes, auditRes, schedRes, pendRes, ptoRes, compareRes] = await Promise.all([
+      const [whoRes, faceRes, auditRes, schedRes, pendRes, ptoRes, compareRes, devRes] = await Promise.all([
         base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
@@ -36,6 +37,7 @@ export default function AdminRosterPanels({ sessionToken }) {
         base44.functions.invoke("timeClockAction", { action: "list_pending_requests", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "pto_liability_report", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "admin_period_compare", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        base44.functions.invoke("timeClockAction", { action: "list_devices", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
@@ -52,6 +54,8 @@ export default function AdminRosterPanels({ sessionToken }) {
       setPtoLiability(pto?.success === true ? { total: pto.total_available_minutes || 0, employees: Array.isArray(pto.employees) ? pto.employees : [] } : null);
       const compare = compareRes?.data || compareRes;
       setPeriods(compare?.success === true && Array.isArray(compare.periods) ? compare.periods : []);
+      const dev = devRes?.data || devRes;
+      setDevices(dev?.success === true && Array.isArray(dev.devices) ? dev.devices : []);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Roster data could not be loaded.");
@@ -255,6 +259,28 @@ export default function AdminRosterPanels({ sessionToken }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {devices.length > 0 && (
+        <div className="clay-card p-4 lg:col-span-2">
+          <h3 className="font-semibold mb-2">Registered kiosks</h3>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {devices.map((d) => {
+              const seenMin = d.last_seen_at ? Math.round((Date.now() - new Date(d.last_seen_at)) / 60000) : null;
+              const offline = seenMin == null || seenMin > 15;
+              return (
+                <div key={d.id} className="rounded-lg border border-slate-200 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${offline ? "bg-red-400" : "bg-emerald-400"}`} />
+                    <p className="text-sm font-semibold truncate">{d.device_name || d.device_key}</p>
+                  </div>
+                  {d.location ? <p className="text-[11px] text-slate-500">{d.location}</p> : null}
+                  <p className="text-[10px] text-slate-400">{seenMin == null ? "never seen" : `seen ${seenMin}m ago`}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
