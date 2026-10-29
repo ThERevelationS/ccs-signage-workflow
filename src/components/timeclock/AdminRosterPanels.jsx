@@ -22,16 +22,18 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [schedForm, setSchedForm] = useState({ email: "", start: "08:00", end: "16:30", days: ["mon", "tue", "wed", "thu", "fri"], label: "" });
   const [schedBusy, setSchedBusy] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [ptoLiability, setPtoLiability] = useState(null);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
-      const [whoRes, faceRes, auditRes, schedRes, pendRes] = await Promise.all([
+      const [whoRes, faceRes, auditRes, schedRes, pendRes, ptoRes] = await Promise.all([
         base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_shift_templates", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_pending_requests", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        base44.functions.invoke("timeClockAction", { action: "pto_liability_report", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
@@ -44,6 +46,8 @@ export default function AdminRosterPanels({ sessionToken }) {
       setEvents(audit?.success === true && Array.isArray(audit.events) ? audit.events : []);
       setTemplates(sched?.success === true && Array.isArray(sched.templates) ? sched.templates : []);
       setPendingRequests(pend?.success === true && Array.isArray(pend.pending) ? pend.pending : []);
+      const pto = ptoRes?.data || ptoRes;
+      setPtoLiability(pto?.success === true ? { total: pto.total_available_minutes || 0, employees: Array.isArray(pto.employees) ? pto.employees : [] } : null);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Roster data could not be loaded.");
@@ -231,6 +235,24 @@ export default function AdminRosterPanels({ sessionToken }) {
           </div>
         )}
       </div>
+
+      {ptoLiability && (
+        <div className="clay-card p-4 lg:col-span-2">
+          <h3 className="font-semibold mb-1">PTO liability</h3>
+          <p className="text-sm text-slate-600">
+            <span className="font-bold text-indigo-700">{Math.round(ptoLiability.total / 60 * 10) / 10}h</span> of accrued time off on the books across {ptoLiability.employees.length} employees
+          </p>
+          {ptoLiability.employees.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {ptoLiability.employees.slice(0, 6).map((e) => (
+                <span key={e.user_email} className="rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                  {e.user_name.split("@")[0]}: {Math.round(e.available_minutes / 60 * 10) / 10}h
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {pendingRequests.length > 0 && (
         <div className="clay-card p-4 lg:col-span-2 border-amber-300 bg-amber-50/40">
