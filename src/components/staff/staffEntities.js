@@ -42,7 +42,7 @@ const METHODS = {
       }
     };
     check();
-    const timer = setInterval(check, 60000);
+    const timer = setInterval(check, 120000);
     return () => {
       stopped = true;
       clearInterval(timer);
