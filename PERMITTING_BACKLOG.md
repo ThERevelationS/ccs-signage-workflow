@@ -226,7 +226,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 164. **[F][DONE]** Per-line assignee chip — who owns chasing this office (falls back to the WO assignee).
 165. **[UX][DONE]** Copy-all-offices button: "Copy contact info" → clipboard block with every office's phone/portal for pasting into email.
 166. **[F][FLAGGED-dedicated]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
-167. **[UX][FLAGGED-dedicated]** Line reorder via drag — staff order the offices the way they actually work them.
+167. **[UX][DONE]** Line reorder via drag — staff order the offices the way they actually work them.
 168. **[F][DONE]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
 169. **[UX][DONE]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
 170. **[F][FLAGGED-dedicated]** Batch status: select multiple lines → mark them all "application submitted" in one click.
@@ -267,7 +267,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 ## S — Accessibility & simplicity, round 2
 
-199. **[UX][FLAGGED-dedicated]** A "one big button" mode: hide every optional control (electrical toggle, debug, repository browse) behind a "show more options" — default view is just address + find + result + apply.
+199. **[UX][DONE]** A "one big button" mode: hide every optional control (electrical toggle, debug, repository browse) behind a "show more options" — default view is just address + find + result + apply.
 200. **[UX][FLAGGED-dedicated]** Spanish/other-language toggle on the picker copy — the field crew isn't all English-first.
 201. **[UX][DONE]** Dyslexia-friendly font option (OpenDyslexic or just letter-spacing bump) alongside the big-text toggle.
 202. **[UX][DONE]** Every number on a status chip also gets the unit word: "3 offices" not just "3".
