@@ -16,6 +16,7 @@ import {
   Receipt,
   RefreshCw,
   RotateCcw,
+  Settings,
   ShoppingCart,
   Volume2,
   VolumeX,
@@ -44,6 +45,33 @@ export default function AttentionFeed() {
     });
   };
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("attention_sound") !== "off");
+  // Per-user notification prefs (#328): sections hidden via the settings
+  // popover persist in localStorage; snoozed sections hide until their
+  // timestamp passes (#332).
+  const [hiddenSections, setHiddenSections] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("attention_hidden_sections") || "[]")); } catch { return new Set(); }
+  });
+  const [snoozed, setSnoozed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("attention_snoozed") || "{}"); } catch { return {}; }
+  });
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const toggleHidden = (key) => {
+    setHiddenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem("attention_hidden_sections", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+    if (section === key) setSection("");
+  };
+  const snoozeSection = (key, hours = 4) => {
+    setSnoozed((prev) => {
+      const next = { ...prev, [key]: Date.now() + hours * 3600000 };
+      try { localStorage.setItem("attention_snoozed", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    if (section === key) setSection("");
+  };
   const toggleSound = () => {
     setSoundOn((on) => {
       const next = !on;
@@ -251,7 +279,7 @@ export default function AttentionFeed() {
         href: p.estimate_id ? `/EstimateDetail?id=${p.estimate_id}` : "/EstimatorQueues",
       })),
     },
-  ].filter((c) => c.count > 0) : [];
+  ].filter((c) => c.count > 0 && !hiddenSections.has(c.key) && !(snoozed[c.key] && snoozed[c.key] > Date.now())) : [];
 
   if (!feed) return null;
   if (categories.length === 0 && !loading) return null;
