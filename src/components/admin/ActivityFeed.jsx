@@ -352,7 +352,7 @@ export default function ActivityFeed() {
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300"
                         title="Unusually high activity in this window">burst</span>
                     )}
-                    <span className="text-gray-400">â€¢</span>
+                    <span className="text-gray-400">•</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getActionColor(activity.actionType)}`}>
                       {activity.entityType === "Order" ? "Order" : "Sales"}
                     </span>
