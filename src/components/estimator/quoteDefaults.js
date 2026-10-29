@@ -3,7 +3,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 export const QUOTE_DEFAULT_KEYS = [
   "company_name", "company_phone", "company_email", "company_address", "company_website", "company_license", "company_logo_url",
-  "quote_title", "quote_accent_color", "quote_valid_days", "payment_terms", "quote_intro_text", "quote_footer_text", "quote_terms_conditions", "warranty_text", "lead_time_text", "email_signature", "email_subject_template", "email_message_template",
+  "quote_title", "quote_accent_color", "quote_valid_days", "payment_terms", "quote_intro_text", "quote_footer_text", "quote_terms_conditions", "warranty_text", "lead_time_text", "email_signature", "email_subject_template", "email_message_template", "estimate_number_format", "order_number_format", "doc_number_padding",
   "scope_auto_apply", "hide_section_prices", "show_company_block", "show_logo", "show_contact_block", "show_estimate_number", "show_po_number", "show_site_address", "show_dates", "show_category_column", "show_section_descriptions", "show_quantity_column", "show_scope_lists", "show_subtotal_line", "show_discount_line", "show_fees_line", "show_tax_line", "show_deposit_lines", "show_notes_on_quote", "show_terms_block", "show_warranty_block", "show_lead_time_block", "show_signature_block", "show_validity_footer", "round_prices_to_dollar",
 ];
 
@@ -19,6 +19,9 @@ export const DEFAULT_QUOTE_SETTINGS = {
   quote_accent_color: "#4f46e5",
   quote_valid_days: 30,
   email_signature: "",
+  estimate_number_format: "EST-{seq}",
+  order_number_format: "INV-{seq}",
+  doc_number_padding: 5,
   email_subject_template: "",
   email_message_template: "",
   payment_terms: "",
