@@ -911,8 +911,24 @@ export default function TimeClockAdmin() {
 
   // Payroll-shaped CSV: one row per employee per worked day with a
   // 40h/week regular-vs-OT split, matching common payroll import formats.
-  const exportPayrollCsv = () => {
+  const exportPayrollCsv = async () => {
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // Prefer the backend export - it carries cost codes, union locals,
+    // certified flags, and excludes payroll_hold entries authoritatively.
+    try {
+      const res = await base44.functions.invoke("timeClockAction", { action: "payroll_export", from: format(start, "yyyy-MM-dd"), to: format(end, "yyyy-MM-dd"), session_token: sessionToken, scope: "admin", request_id: newRequestId() });
+      const data = res?.data || res;
+      if (data?.success === true && Array.isArray(data.rows)) {
+        const rows = ["Employee,Email,Date,Regular Hours,OT Hours,Total Hours,Cost Code,Union Local,Certified,Jobs"];
+        for (const r of data.rows) rows.push([r.user_name, r.user_email, r.date, r.regular_hours, r.overtime_hours, r.total_hours, r.cost_code, r.union_local, r.certified_payroll ? "Y" : "", r.jobs].map(esc).join(","));
+        const url = URL.createObjectURL(new Blob([rows.join("\r\n")], { type: "text/csv" }));
+        const a = document.createElement("a");
+        a.href = url; a.download = `payroll_${format(start, "yyyy-MM-dd")}_to_${format(end, "yyyy-MM-dd")}.csv`; a.click();
+        URL.revokeObjectURL(url);
+        if (data.on_hold > 0) alert(`${data.on_hold} entries on payroll hold were excluded.`);
+        return;
+      }
+    } catch {}
     const byEmp = new Map();
     for (const e of filteredEntries) {
       const k = e.user_email || "unknown";
