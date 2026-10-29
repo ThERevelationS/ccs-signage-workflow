@@ -202,6 +202,38 @@
       "default": "hh_mm_ss",
       "description": "hh_mm_ss = 7:42:18, hours_minutes = 7h 42m, decimal = 7.71h"
     },
+    "hide_when_idle_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Hide the tracker after this many minutes of mouse/keyboard inactivity (0 = never hide)"
+    },
+    "daily_goal_overrides": {
+      "type": "object",
+      "description": "Optional per-day-of-week goal overrides in minutes, keyed sun-sat; missing days use daily_goal_minutes",
+      "properties": {
+        "sun": {
+          "type": "number"
+        },
+        "mon": {
+          "type": "number"
+        },
+        "tue": {
+          "type": "number"
+        },
+        "wed": {
+          "type": "number"
+        },
+        "thu": {
+          "type": "number"
+        },
+        "fri": {
+          "type": "number"
+        },
+        "sat": {
+          "type": "number"
+        }
+      }
+    },
     "last_request_id": {
       "type": "string",
       "description": "Idempotency request id of the most recent preference update"
