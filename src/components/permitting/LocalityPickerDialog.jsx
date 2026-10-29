@@ -66,6 +66,10 @@ const normalizeAddress=(raw)=>{let a=String(raw||"").replace(/s+/g," ").trim();a
 const RECENT_ADDR_KEY="permitting_recent_addresses";
 const loadRecentAddresses=()=>{try{return JSON.parse(localStorage.getItem(RECENT_ADDR_KEY)||"[]");}catch{return[];}};
 const rememberAddress=(addr)=>{const a=String(addr||"").trim();if(!a)return;try{const list=loadRecentAddresses().filter(x=>x!==a);list.unshift(a);localStorage.setItem(RECENT_ADDR_KEY,JSON.stringify(list.slice(0,5)));}catch{}};
+const LAST_SEARCH_KEY="permitting_last_search_";
+const lastSearchKeyFor=(addr)=>LAST_SEARCH_KEY+normalizeAddress(addr).toLowerCase();
+const loadLastSearch=(addr)=>{try{const r=JSON.parse(localStorage.getItem(lastSearchKeyFor(addr))||"null");return r?.result||null;}catch{return null;}};
+const saveLastSearch=(addr,result)=>{try{localStorage.setItem(lastSearchKeyFor(addr),JSON.stringify({result,saved_at:Date.now()}));}catch{}};
 export default function LocalityPickerDialog(props) {
   const {sessionToken,currentUser}=useAuth();
   if(!sessionToken||!(currentUser?.id||currentUser?.email))return null;
@@ -108,6 +112,8 @@ function LocalityPickerSession({
     searchVersion.current++;pendingSearch.current=null;
     if (isOpen) {
       const preset = String(initialAddress || "").trim();
+      const cached = preset ? loadLastSearch(preset) : null;
+      if (cached) setResult(cached);
       setAddress(preset);
       setSearching(false);
       setResult(null);
@@ -204,7 +210,7 @@ function LocalityPickerSession({
       } else {
         setResult(data);
         setError("");
-        if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());}
+        if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());saveLastSearch(address,data);}
         if (data?.suggested_locality?.id) {
           setSelectedLocalityId(data.suggested_locality.id);
         }
