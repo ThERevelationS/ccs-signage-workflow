@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2 } from "lucide-react";
+import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
@@ -29,6 +29,20 @@ const SORTS = [
   { key: "value_desc", label: "$ high â†’ low" },
   { key: "expiring", label: "Expiring first" },
 ];
+
+const csvCell = (value) => {
+  const s = value == null ? "" : String(value);
+  return /[",
+]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+const downloadCsv = (filename, headers, rows) => {
+  const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("
+");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+};
 
 const money0 = (n) => `$${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const compact = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : money0(n));
@@ -240,13 +254,31 @@ export default function EstimatorQueues() {
 
   const visibleTotal = rows.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
 
+  const exportCsv = () => {
+    downloadCsv("estimates.csv",
+      ["Estimate #", "Project", "Customer", "Status", "Quote Total", "Cost Total", "Salesperson", "Source", "Updated", "Due Date"],
+      rows.map((e) => [
+        e.estimate_number || e.job_name || "",
+        e.project_name || "",
+        e.client_name || "",
+        e.status || "",
+        e.quote_total ?? "",
+        e.cost_total ?? "",
+        e.salesperson_email || e.created_by || "",
+        e.source_module || "",
+        e.updated_date || "",
+        e.due_date || "",
+      ]));
+  };
+
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-3">
         <div className="bg-white px-4 py-3 flex items-center gap-2">
           <ListFilter className="w-4 h-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
-          <span className="ml-auto text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
+          <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
+          <span className="text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
