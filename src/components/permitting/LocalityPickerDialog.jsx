@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Loader2, MapPin, AlertTriangle, CheckCircle2, Zap, ZapOff, X, Save } from "lucide-react";
+import { Search, Loader2, MapPin, AlertTriangle, CheckCircle2, Zap, ZapOff, X, Save , Mic} from "lucide-react";
 import GoogleMapView from "./GoogleMapView";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -341,13 +341,32 @@ function LocalityPickerSession({
             <Label htmlFor="jurisdiction-job-address" className="text-xs">Job address</Label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              {typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition) && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 min-h-11 min-w-8 rounded text-gray-500 hover:text-violet-700"
+                  title="Speak the address"
+                  onClick={() => {
+                    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const rec = new SR(); rec.lang = 'en-US'; rec.interimResults = false;
+                    rec.onresult = (ev) => {
+                      const text = String(ev.results?.[0]?.[0]?.transcript || '').trim();
+                      if (text) { searchVersion.current++; pendingSearch.current = null; setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false); setTimeout(() => runSearch(), 0); }
+                    };
+                    rec.onerror = () => setError("Couldn't hear that — type the address instead.");
+                    try { rec.start(); } catch {}
+                  }}
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              )}
               <Input
                 id="jurisdiction-job-address"
                 ref={inputRef}
                 value={address}
                 onChange={(e) => {searchVersion.current++;pendingSearch.current=null;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
                 placeholder="e.g. 4900 Parkway Dr, Mason, OH 45040"
-                className="min-h-11 pl-8 text-base"
+                className="min-h-11 pl-8 pr-10 text-base"
                 onKeyDown={(e) => e.key === 'Enter' && !searching && runSearch()}
                 onPaste={(e) => {
                   // Paste-and-go: if the pasted text looks like a complete
@@ -377,6 +396,30 @@ function LocalityPickerSession({
               <Search className="w-4 h-4" /> Find my jurisdiction
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            className="gap-1 min-h-11 w-full sm:w-auto"
+            title="Use my current location to find the address (works best on-site)"
+            onClick={() => {
+              if (!navigator.geolocation) { setError("This device can't share its location — type the address instead."); return; }
+              setError("");
+              navigator.geolocation.getCurrentPosition(async (pos) => {
+                try {
+                  const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
+                  const hit = await r.json();
+                  const a = hit?.address || {};
+                  const parts = [[a.house_number, a.road].filter(Boolean).join(' '), a.city || a.town || a.village || a.hamlet || a.county, a.state, a.postcode].filter(Boolean);
+                  if (!parts.length) { setError("Couldn't read an address from your location — type it instead."); return; }
+                  const found = parts.join(', ');
+                  setAddress(found); setResult(null); setSelectedLocalityId(''); setSearching(false);
+                  setTimeout(() => runSearch(), 0);
+                } catch { setError("Couldn't read an address from your location — type it instead."); }
+              }, () => setError("Location was blocked — allow location access or type the address."), { timeout: 15000 });
+            }}
+          >
+            <MapPin className="w-4 h-4" /> Use my location
+          </Button>
 
           {/* Electrical inspector toggle */}
           <Button
