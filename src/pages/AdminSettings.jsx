@@ -1272,6 +1272,10 @@ export default function AdminSettings() {
     // snapshot, so an expired capability fails before dispatch instead of
     // sending a stale credential to the server. An expired authorization
     // re-locks Admin Settings so the message's instruction is actionable.
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
     const writeCapability = getStoredAdminSettingsCapability();
     if (!writeCapability) {
       setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
@@ -1567,6 +1571,10 @@ export default function AdminSettings() {
     // Check stored authorization before acquiring the operation lock: an
     // expired capability must re-lock, never fence the panel behind an
     // unverifiable write that was never dispatched.
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
     const writeCapability = getStoredAdminSettingsCapability();
     if (!writeCapability) {
       setPasswordError("Your Admin Settings authorization expired. Sign in again to continue.");
@@ -1645,6 +1653,10 @@ export default function AdminSettings() {
   const handleDelete = (rule) => runAutomationOperation("delete", rule);
   const toggleEnabled = (rule) => runAutomationOperation("toggle", rule);
   const approveRule = async (rule) => {
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
     const writeCapability = getStoredAdminSettingsCapability();
     if (!writeCapability) return;
     try {
@@ -1746,6 +1758,10 @@ export default function AdminSettings() {
   const [condTest, setCondTest] = useState(null);
   const [condTestBusy, setCondTestBusy] = useState(false);
   const transferRuleOwner = async (rule, owner) => {
+    if (currentUser?.admin_permissions?.read_only === true) {
+      setAutomationSaveError("Read-only admin — saves are disabled for this account.");
+      return;
+    }
     const writeCapability = getStoredAdminSettingsCapability();
     if (!writeCapability || !rule?.id) return;
     try {
