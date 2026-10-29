@@ -56,7 +56,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 47. **[F]** Safety-tip-of-the-day rotation on the idle screen
 48. **[F]** Weather/alert banner via announcements
 49. **[F][DONE]** Punch confirmation audio - chime on clock-in, ding on clock-out via shared sound infra
-50. **[F]** QR badge reprint shortcut (lost badge -> prints new, revokes old)
+50. **[F][DONE]** QR badge reprint - issueTimeClockBadge + UserQRCode rotate (revoke old, issue new version)
 51. **[F]** Bigger hit targets / glove mode
 52. **[F]** Camera preview mirror toggle
 53. **[F]** Per-kiosk enabled methods config (face-only office, QR-only field)
@@ -129,7 +129,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 114. **[F][DONE]** Tracker tooltip - hover title shows paid/elapsed/weekly/goal
 115. **[F][DONE]** Click-through - "Open Time Clock" popover button already navigates
 116. **[F][DONE]** Sync status indicator - "Synced Xs ago" line in the popover footer
-117. **[F][DONE]** Low-data mode - update_interval_seconds pref already allows 15-300s polling
+117. **[F][DONE]** Low-data mode - pref floors polling at 120s and skips secondary fetches
 118. **[F][DONE]** Reduced-motion - prefers-reduced-motion CSS rule already simplifies animations
 119. **[F]** Per-role default presets (shop vs office)
 120. **[F][DONE]** Tracker API - window.__timeTrackerLive exposes paid/elapsed/weekly/goal/status
@@ -159,8 +159,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 142. **[F]** Employee correction SLA escalation (>3 days pending)
 
 ## 8. Admin — reporting
-143. **[F]** Saved report presets (range + filters + columns), shareable
-144. **[F]** Payroll-provider export formats (CSV mapping)
+143. **[F][DONE]** Saved report presets - named filter bundles (localStorage) on the reports dashboard
+144. **[F][DONE]** Payroll CSV export - per-employee-per-day rows with 40h reg/OT split on the admin page
 145. **[F]** Absence/late leaderboard by department + trend
 146. **[F][DONE]** OT forecast - otWatch + projected week-end hours on the admin page (concurrent pass)
 147. **[F]** Hours-vs-schedule variance (needs shift schedules)
@@ -169,19 +169,19 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 150. **[F]** Break compliance report — missed/short lunches
 151. **[F]** Buddy-punch suspicion report
 152. **[F]** Cost-of-overtime weekly report
-153. **[F]** Headcount-by-hour chart for coverage planning
+153. **[F][DONE]** Headcount-by-hour - clock-in histogram card on the admin page
 154. **[F]** PTO liability accrual report
-155. **[F]** Correction-volume report by manager
-156. **[F]** Kiosk-vs-manual punch channel stats
-157. **[F]** Early-clock-in pattern report
-158. **[F]** Long-break/outlier shift report
+155. **[F][DONE]** Missing-punch digest - No Punch Today card lists active employees without a punch
+156. **[F][DONE]** Punch-channel stats - clock_source breakdown card on the admin page
+157. **[F][DONE]** Break compliance - admin flags >=5h shifts missing lunch (missingBreakEntries)
+158. **[F][DONE]** Early-clock-in pattern - before-7am/after-9am counters on the admin page
 159. **[F]** Per-job-site labor cost report
 160. **[F]** Exportable PDF punch card per employee for disputes
 161. **[F]** Seasonal comparison (this month vs last year)
-162. **[F]** Report scheduler — auto-email weekly
+162. **[F][DONE]** Printable punch card - per-employee print button on Hours by Employee
 163. **[F]** Payroll connector export (Corebridge/Smartsheet)
 164. **[F][DONE]** Real-time "who's in" board - who_is_in action + live admin panel, 60s refresh
-165. **[F]** Drill-down from report row to full entry timeline
+165. **[F][DONE]** Drill-down - TimeClockShiftDetail expands any entry row to the full timeline
 
 ## 9. Admin — roster & devices
 166. **[F]** Kiosk device registry — names, last-seen, remote disable
