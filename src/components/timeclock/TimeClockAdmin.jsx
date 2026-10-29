@@ -37,6 +37,7 @@ import {
   Pause,
   CheckCircle2,
   RotateCcw,
+  RefreshCw,
   LockKeyhole,
   Eye,
   ChevronDown,
@@ -201,6 +202,21 @@ export default function TimeClockAdmin() {
   const [activeWorkPauses, setActiveWorkPauses] = useState([]);
   const [activeLaborSegments, setActiveLaborSegments] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
+  const [swapRequests, setSwapRequests] = useState([]);
+  const loadSwapRequests = async () => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("shiftSwapAction", { session_token: sessionToken, action: "list" });
+      setSwapRequests(r?.data?.swaps || []);
+    } catch { setSwapRequests([]); }
+  };
+  const decideSwap = async (requestId, decision) => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("shiftSwapAction", { session_token: sessionToken, action: decision, request_id: requestId });
+      if (r?.data?.success) { setSwapRequests((cur) => cur.filter((x) => x.id !== requestId)); }
+    } catch { /* leave row retryable */ }
+  };
   const [punchExceptions, setPunchExceptions] = useState([]);
   const [devices, setDevices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -291,6 +307,7 @@ export default function TimeClockAdmin() {
       setActiveWorkPauses(workPauses);
       setActiveLaborSegments(laborSegments);
       setCorrectionRequests(corrections);
+      loadSwapRequests();
       setPunchExceptions(punchExceptionRows);
       setDevices(deviceRows || []);
       const recovery = entries.flatMap((entry) => ["approve", "reopen"].map((decision) => storedApprovalRetry(decision, entry.id))).find(Boolean) || null;
@@ -1881,6 +1898,26 @@ export default function TimeClockAdmin() {
         reviewRequestId={correctionReviewRequestId}
         onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
       />
+      {swapRequests.length > 0 && (
+        <AdminSection title="Schedule swap requests" icon={RefreshCw} tone="blue" count={swapRequests.length}>
+          <ul className="mt-1 space-y-1">
+            {swapRequests.map((req) => (
+              <li key={req.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-blue-100 bg-white/70 px-2 py-1.5 text-xs">
+                <div className="min-w-0">
+                  <span className="font-medium">{req.requester_email}</span>
+                  <span className="mx-1 text-gray-400">⇄</span>
+                  <span className="font-medium">{req.partner_email}</span>
+                  {req.reason && <p className="text-[10px] text-gray-500">"{req.reason}"</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button type="button" size="sm" variant="outline" onClick={() => decideSwap(req.id, "approve")} className="h-6 px-2 text-[10px] text-emerald-700">Approve swap</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => decideSwap(req.id, "reject")} className="h-6 px-2 text-[10px] text-red-600">Reject</Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </AdminSection>
+      )}
       <TimeOffApprovalPanel sessionToken={sessionToken} />
       <TimeClockPunchExceptionReport
         punchExceptions={punchExceptions}
