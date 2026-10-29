@@ -407,7 +407,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 309. **[UX]** New-user mode: extra guidance copy for staff in their first N days — experienced users never see it.
 310. **[F]** Internal runbook link: "how we do Milford permits" staff-written note pinned to the jurisdiction.
-311. **[UX]** Terminology glossary: a "?" chip on words like "situs", "variance", "ETJ" opening a one-line definition.
+311. **[UX][DONE]** Terminology glossary: a "?" chip on words like "situs", "variance", "ETJ" opening a one-line definition.
 312. **[F]** Common-mistake warnings: "You picked the county — the city issues sign permits for this address" soft-suggest.
 313. **[UX]** Confidence-building flow: a new user's first 3 applies get a confirming message "that's right — you did it".
 314. **[F]** Office-relationship notes: "Jane at Mason zoning is helpful — ask for her" — staff relationships recorded.
@@ -468,7 +468,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 
 ## AD — Performance & scale
 
-363. **[H]** Picker mount lazy-loads: the map + repository list don't fetch until the dialog opens — faster page.
+363. **[H][DONE]** Picker mount lazy-loads: the map + repository list don't fetch until the dialog opens — faster page.
 364. **[H]** Boundary GeoJSON compression: polygons stored simplified — the map loads fast on phones.
 365. **[H]** Paged scan-activity: the panel pages old runs — long-history sessions stay fast.
 366. **[H]** Memoized trust assessment: assessJurisdictionTrust results cached per jurisdiction version — re-renders don't re-compute.
@@ -496,7 +496,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 385. **[F]** Office-response tracking: "we emailed them Monday" → "they replied Thursday" — the loop closes visibly.
 386. **[UX]** Next-check-in prompt: after applying, "check back Thursday?" — a soft reminder set in one tap.
 387. **[F]** Team-shift notes: end-of-day "here's where each job stands" auto-summary for the next shift.
-388. **[UX]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
+388. **[UX][DONE]** Urgent-flag: a line marked urgent rises to a visible strip — the day-one priority is visible.
 389. **[F]** Approval-request workflow: an unverified-locality apply asks a senior for approval — staff work continues pending it.
 390. **[UX]** "Who's on this?" per line: the person currently working the chase is named — handoffs are clean.
 391. **[F]** Office-contact log: every call to an office recorded — the jurisdiction's "we've talked" history.
@@ -540,7 +540,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 423. **[F]** Jurisdiction-diff: compare two jurisdictions' office structures side-by-side — "Milford has city zoning; Miami Township doesn't".
 424. **[UX][DONE]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
 425. **[F]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
-426. **[UX]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
+426. **[UX][DONE]** The page's empty-state explains the system: "This is where your permits-by-jurisdiction list lives — add a job's address to start."
 427. **[F]** Permit-office call-script: a cheat-sheet "what to ask the permit clerk" per role — new staff never blank.
 428. **[UX]** In-page keyboard-shortcut help: "?" opens a shortcut cheat-sheet — power users learn the fast path.
 429. **[F]** Jurisdiction data-quality card: per jurisdiction, "85% verified · 2 offices · 3 sources" — the trust picture.
