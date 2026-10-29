@@ -163,7 +163,7 @@ await test("shared scan session serializes detections and feeds the voter only o
     onFrame: (f) => frames.push(f.status),
   });
   session.start();
-  assert.equal(await flush(), 2, "one detectDetailedFace per tick — 320 pass plus 512 fallback, no overlap");
+  assert.equal(await flush(), 2, "one detectDetailedFace per tick - 320 pass plus 512 fallback, no overlap");
   assert.equal(await flush(), 2);
   assert.deepEqual(frames, ["no-face", "no-face"], "real misses reach onFrame and the voter");
   session.stop();
@@ -239,7 +239,7 @@ await test("admin and kiosk scans share the runtime session and descriptor pipel
     "the kiosk must not keep its own copy of the detection pipeline");
   const admin = readFileSync("src/pages/AdminSettings.jsx", "utf8");
   assert.match(admin, /issueAdminSettingsAccess", \{ session_token: sessionToken, face_descriptor: descriptor \}/,
-    "face-only capability requests are gone — session + face, same as the kiosk");
+    "face-only capability requests are gone - session + face, same as the kiosk");
 });
 
 await test("scan reticle is a pointer-events-none overlay keyed to scan state", () => {
