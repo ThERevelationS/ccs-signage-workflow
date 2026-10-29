@@ -4,6 +4,17 @@ import { getAdminSearchKeyboardIndex, searchAdminSettings } from "@/components/a
 
 // Search is deliberately inline rather than an unbounded dropdown overlay:
 // results remain within the Admin navigation card on narrow viewports.
+// Wrap matched query terms in <mark> so users see why a result appeared.
+const highlightTerms = (text, q) => {
+  const terms = String(q || "").trim().split(/\s+/).filter(Boolean).slice(0, 4);
+  if (!terms.length) return text;
+  const pattern = new RegExp(`(${terms.map((t) => t.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")).join("|")})`, "ig");
+  const parts = String(text || "").split(pattern);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <mark key={i} className="rounded bg-amber-200/70 px-0.5 text-inherit">{part}</mark> : part
+  );
+};
+
 export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }) {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -112,7 +123,7 @@ export default function AdminSettingsSearch({ isAdmin, currentUser, onNavigate }
                   className={`flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${index === activeIndex ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300" : "border-red-200/60 bg-white/85 hover:border-red-300 hover:bg-white"}`}
                 >
                   <span className="min-w-0">
-                    <span className="block break-words font-medium">{result.label}</span>
+                    <span className="block break-words font-medium">{highlightTerms(result.label, query)}</span>
                     <span className="block break-words text-xs text-gray-600">
                       {result.group}{result.parentLabel ? ` / ${result.parentLabel}` : ""}
                     </span>
