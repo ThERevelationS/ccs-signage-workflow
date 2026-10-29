@@ -1,6 +1,5 @@
 {
   "name": "TimeClockDevice",
-  "entityType": "standard",
   "properties": {
     "device_name": {
       "type": "string",
