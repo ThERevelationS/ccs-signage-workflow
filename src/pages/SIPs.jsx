@@ -18,6 +18,7 @@ import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { usePolling } from "@/lib/usePolling";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -247,12 +248,10 @@ export default function SIPs() {
     // a successful, current snapshot proves that the issue has recovered.
     try {
       const [orders, usersData, taskDescSetting, dropdownsSetting] = await Promise.all([
-        loadAllEntityRows({
-          entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "SIPs Work Orders",
-        }),
+        fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIPs authorized users" }),
         loadSingleGlobalSetting({
           entity: staffEntities.GlobalSettings,
