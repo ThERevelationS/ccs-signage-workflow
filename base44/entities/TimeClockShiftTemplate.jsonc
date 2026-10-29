@@ -53,9 +53,25 @@
     "user_email"
   ],
   "rls": {
-    "read": "timeclock_backend_only",
-    "create": "timeclock_backend_only",
-    "update": "timeclock_backend_only",
-    "delete": "timeclock_backend_only"
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
   }
 }
