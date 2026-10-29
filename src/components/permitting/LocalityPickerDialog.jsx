@@ -86,6 +86,7 @@ function LocalityPickerSession({
   const { sessionToken,currentUser } = useAuth();
   const {runAction}=useResearchProgress();
   const searchVersion=useRef(0);
+  const serviceFails=useRef(0);
   const pendingSearch=useRef(null),pendingDraft=useRef(null);
   const openRef=useRef(isOpen);openRef.current=isOpen;
   useEffect(()=>()=>{openRef.current=false;searchVersion.current++;},[]);
@@ -211,6 +212,7 @@ function LocalityPickerSession({
       } else {
         setResult(data);
         setError("");
+        if(data){serviceFails.current=0;}
         if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());saveLastSearch(address,data);}
         if (data?.suggested_locality?.id) {
           setSelectedLocalityId(data.suggested_locality.id);
@@ -218,7 +220,10 @@ function LocalityPickerSession({
       }
     } catch (e) {
       if(version!==searchVersion.current||!openRef.current)return;
-      setError(e.message || "Search failed");
+      serviceFails.current=(serviceFails.current||0)+1;
+      setError(serviceFails.current>=2
+        ? "Our lookup service is having trouble right now — try again in a minute, or pick from the saved jurisdictions list below."
+        : (e.message || "Search failed"));
     }
     if(pendingSearch.current===version)pendingSearch.current=null;
     if(version===searchVersion.current&&openRef.current)setSearching(false);
