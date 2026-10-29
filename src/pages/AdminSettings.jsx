@@ -871,7 +871,7 @@ export default function AdminSettings() {
     setAutomationDraftParked(false);
     setIsDialogOpen(false);
     setEditingRule(null);
-    setFormData({ name: "", enabled: true, priority: 0 });
+    setFormData({ name: "", enabled: true, priority: 0, group: "" });
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
     setAutomationSaveError("");
@@ -1015,7 +1015,7 @@ export default function AdminSettings() {
     setEditingRule(null);
     setTriggers([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
     setActions([{ action_type: "", action_config: {} }]);
-    const nextForm = { name: "", enabled: true, priority: 0 };
+    const nextForm = { name: "", enabled: true, priority: 0, group: "" };
     setFormData(nextForm);
     automationEditorBaseline.current = JSON.stringify({
       formData: nextForm,
@@ -1040,7 +1040,8 @@ export default function AdminSettings() {
     const nextForm = {
       name: rule.name || "",
       enabled: rule.enabled !== false,
-      priority: rule.priority || 0
+      priority: rule.priority || 0,
+      group: rule.group || ""
     };
     setFormData(nextForm);
     automationEditorBaseline.current = JSON.stringify({
@@ -1066,7 +1067,8 @@ export default function AdminSettings() {
     const nextForm = {
       name: snapshot.name || rule.name || "",
       enabled: snapshot.enabled !== false,
-      priority: snapshot.priority || 0
+      priority: snapshot.priority || 0,
+      group: snapshot.group || rule.group || ""
     };
     setFormData(nextForm);
     automationEditorBaseline.current = JSON.stringify({
@@ -1130,6 +1132,7 @@ export default function AdminSettings() {
     const saveData = {
       ...formData,
       name: String(formData.name || "").trim(),
+      group: String(formData.group || "").trim(),
       triggers,
       actions: actions.map(action => action.action_config?.target_work_order_id ? {
         ...action, action_config: { ...action.action_config, target_work_order_id: destinationWorkOrderId(action.action_config.target_work_order_id) },
@@ -2605,7 +2608,8 @@ export default function AdminSettings() {
                         <p className="mt-2 text-xs text-gray-500 italic">{describeAutomationRule(rule)}</p>
                         <p className="mt-1 text-[11px] text-gray-400">
                           {rule.last_run_at
-                            ? <>Last run {new Date(rule.last_run_at).toLocaleString()} — <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? ` · ${rule.run_count} runs` : ''}</>
+                            ? <>Last run {new Date(rule.last_run_at).toLocaleString()} — <span className={rule.last_run_status === 'error' ? 'text-red-600 font-medium' : rule.last_run_status === 'partial' ? 'text-amber-600 font-medium' : 'text-green-600 font-medium'}>{rule.last_run_status || 'success'}</span>{rule.last_run_detail ? ` (${rule.last_run_detail})` : ''}{rule.run_count ? ` · ${rule.group && <Badge className="text-xs bg-indigo-100 text-indigo-700 border border-indigo-300 mr-1">{rule.group}</Badge>}
+                          {rule.run_count} runs` : ''}</>
                             : 'Never run'}
                         </p>
                         <p className="text-[11px] text-gray-400">
@@ -2675,7 +2679,12 @@ export default function AdminSettings() {
                   <Label>Priority (lower = first)</Label>
                   <Input type="number" value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })} className="mt-1" />
                 </div>
-              </div>
+              </div>                <div>
+                  <Label>Group (optional)</Label>
+                  <Input value={formData.group || ""} onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                    placeholder="e.g., Payroll, Sales" className="mt-1" />
+                </div>
+
 
               {/* IF - Triggers */}
               <div className="clay-card p-4 bg-gradient-to-r from-orange-50 to-yellow-50">
