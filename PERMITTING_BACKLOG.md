@@ -458,8 +458,8 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 353. **[F][FLAGGED-dedicated]** Soft-delete on jurisdiction merges: merged-away rows stay recoverable for 30 days — undo is real.
 354. **[H][FLAGGED-dedicated]** Mass-change approval: bulk jurisdiction edits (>5 rows) need a second staff confirmation.
 355. **[F][FLAGGED-dedicated]** "Check what this changes" preview on jurisdiction edits: affected jobs listed before save.
-356. **[H][FLAGGED-dedicated]** FIPS-code integrity: jurisdictions carry the FIPS code — the identity is machine-verifiable, not just a name.
-357. **[F][FLAGGED-dedicated]** Address-lookup audit log: who searched what address when — a compliance trail.
+356. **[H][DONE]** FIPS-code integrity: jurisdictions carry the FIPS code — the identity is machine-verifiable, not just a name.
+357. **[F][DONE]** Address-lookup audit log: who searched what address when — a compliance trail.
 358. **[H][FLAGGED-dedicated]** Address-leak prevention: the resolver's logs don't write full street addresses to long-term records.
 359. **[F][DONE]** "Not this job" escape: if a search lands on the wrong address entirely, one click "wrong address — search again".
 360. **[H][DONE]** Tamper-evidence on verified jurisdictions: a verified→unverified transition gets logged with the reason.
