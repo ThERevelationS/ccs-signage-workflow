@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, FileDown, Loader2, MapPin, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -1192,6 +1192,30 @@ export default function Permitting() {
                   setViewName(name || "");
                 }}
               />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                  const rows = [
+                    ["Job", "Office", "Permit #", "Fee", "Fee status", "Paid date", "Payment link"],
+                    ...(lineItems || []).map((li) => [
+                      li.work_order_title || "", li.locality_name || "", li.permit_number || "",
+                      li.jurisdiction_fee_amount || "", li.jurisdiction_fee_status || "",
+                      li.jurisdiction_fee_paid_date || "", li.fee_payment_link || "",
+                    ]),
+                  ].map((r) => r.map(esc).join(",")).join("\r\n");
+                  const url = URL.createObjectURL(new Blob([rows], { type: "text/csv" }));
+                  const a = document.createElement("a");
+                  a.href = url; a.download = `permit-fees-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="gap-1 border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                title="Export all permit fees as a CSV for accounting"
+              >
+                <FileDown className="w-4 h-4" /> Fees CSV
+              </Button>
               <Button
                 type="button"
                 size="sm"
