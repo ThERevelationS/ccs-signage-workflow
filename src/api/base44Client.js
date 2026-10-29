@@ -65,7 +65,7 @@ const STAFF_READ_ENTITIES = new Set([
   'CustomerLocation', 'EmailGroup', 'EmailNotificationSettings', 'EstimateAcceptance',
   'EstimateOption', 'EstimateQuoteDelivery', 'EstimateRevision', 'EstimateSectionAcceptance',
   'GeneralTask', 'GlobalSettings', 'Inventory', 'InventoryMovement', 'JurisdictionProfile',
-  'Order', 'PTOPolicy', 'PermitLineItem', 'PermitLocality', 'ProjectTemplate', 'QuickProduct',
+  'OpportunityActivity', 'Order', 'PTOPolicy', 'PermitLineItem', 'PermitLocality', 'PortalMessage', 'ProjectTemplate', 'QuickProduct',
   'QuickProductCategory', 'SalesFilter', 'Settings', 'TimeEntry', 'TimeOffRequest',
   'UserCapacity', 'UserPTOBalance', 'WorkOrder',
 ]);
@@ -98,6 +98,16 @@ function wrapEntity(name, target) {
   const wrapped = new Proxy(target, {
     get(t, prop) {
       const value = Reflect.get(t, prop);
+      if (prop === 'subscribe' && STAFF_READ_ENTITIES.has(name)) {
+        return (callback) => {
+          let unsub = () => {};
+          import('@/components/staff/staffEntities').then(({ staffEntities }) => {
+            const u = staffEntities[name]?.subscribe?.(callback);
+            if (typeof u === 'function') unsub = u;
+          }).catch(() => {});
+          return () => unsub();
+        };
+      }
       if (prop === 'subscribe' || typeof value !== 'function') return value;
       if (STAFF_READ_ENTITIES.has(name) && READ_METHODS.has(String(prop))) {
         return async (...args) => {
