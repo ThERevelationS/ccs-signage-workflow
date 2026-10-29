@@ -117,18 +117,18 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 102. **[F]** Export prefs as QR/copyable blob for other machines
 103. **[F]** Drag-to-reposition with snap points
 104. **[F]** Auto-hide when idle >N min on personal dashboards
-105. **[F]** Auto-pulse on milestone hit (visual only)
+105. **[F][DONE]** Auto-pulse on milestone hit - milestone_behavior "pulse" already exists
 106. **[F]** Reminder escalation — repeat once or flash if ignored
 107. **[F]** Quiet hours suppressing reminders outside shifts
 108. **[F]** Reminder types — "at 80% of shift", "30m before end"
 109. **[F]** Sound picker for milestone alerts (reuse announcement sounds)
 110. **[F]** Weekend exclusion or weekend-goal override
-111. **[F]** Countdown direction ("time left in shift")
+111. **[F][DONE]** Countdown direction - prefs.direction "down" already counts down
 112. **[F]** Per-day-of-week goal overrides (Friday = 6h)
 113. **[F]** Holiday-aware goal suppression
 114. **[F]** Tracker tooltip with raw pace/projection numbers
-115. **[F]** Click-through to the right Time Clock subtab
-116. **[F]** Sync status indicator (last refresh time in tooltip)
+115. **[F][DONE]** Click-through - "Open Time Clock" popover button already navigates
+116. **[F][DONE]** Sync status indicator - "Synced Xs ago" line in the popover footer
 117. **[F]** Low-data mode — reduced polling on metered connections
 118. **[F]** Reduced-motion simplify beyond CSS (ring+numbers only)
 119. **[F]** Per-role default presets (shop vs office)
@@ -138,7 +138,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 123. **[F]** Include-vs-exclude lunch toggle views
 
 ## 7. Admin — approvals & corrections
-124. **[F]** Bulk approve with per-row exception checkboxes
+124. **[F][DONE]** Bulk approve - select-all + shared-reason batch bar on the correction queue, per-row retry-safe approve calls
 125. **[F]** Correction diff view — submitted vs corrected side by side
 126. **[F]** Approval-age SLA badge + sort by oldest
 127. **[F]** Required approver notes on certain correction types
