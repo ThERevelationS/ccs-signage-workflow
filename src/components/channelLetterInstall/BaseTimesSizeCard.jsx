@@ -129,7 +129,7 @@ export default function BaseTimesSizeCard({
         <Label className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">Installation Height</Label>
         <div className="grid grid-cols-4 gap-1 mt-1">
           {HEIGHT_BUCKETS.map(hb => (
-            <button
+            <button type="button"
               key={hb.key}
               type="button"
               onClick={() => setHeightBucket(hb.key)}
