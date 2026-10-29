@@ -75,6 +75,7 @@ const Production = lazyPage(() => import('./pages/Production'));
 const ReportingDashboard = lazyPage(() => import('./pages/ReportingDashboard'));
 const ResourcePlanning = lazyPage(() => import('./pages/ResourcePlanning'));
 import __Layout from './Layout.jsx';
+const SOP = lazyPage(() => import('./pages/SOP'));
 const SIPs = lazyPage(() => import('./pages/SIPs'));
 const SalesPipeline = lazyPage(() => import('./pages/SalesPipeline'));
 const TemplateBuilder = lazyPage(() => import('./pages/TemplateBuilder'));
@@ -109,6 +110,7 @@ export const PAGES = {
     "Production": Production,
     "ReportingDashboard": ReportingDashboard,
     "ResourcePlanning": ResourcePlanning,
+    "SOP": SOP,
     "SIPs": SIPs,
     "SalesPipeline": SalesPipeline,
     "TemplateBuilder": TemplateBuilder,
