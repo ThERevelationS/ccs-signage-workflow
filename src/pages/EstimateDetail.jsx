@@ -1393,6 +1393,26 @@ export default function EstimateDetail() {
         </div>
       )}
 
+      {/* Watch rule (#349): "tell me when this estimate is approved" — the
+          rule persists in GlobalSettings and `check_watches` surfaces hits. */}
+      {estimate.id && persistedStatus !== "approved" && (
+        <div className="px-3 pb-2">
+          <button type="button" disabled={watchBusy} onClick={async () => {
+            if (watchBusy) return;
+            setWatchBusy(true);
+            try {
+              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "set_watch", entity: "AllInOneEstimate", record_id: estimate.id, field: "status", value: "approved", label: estimate.project_name || estimate.estimate_number || "this estimate" });
+              if ((res?.data || res)?.success) setWatchNote("Watching — you'll see a notice when it's approved.");
+            } catch (e) { setWatchNote(e?.message || "Couldn't set the watch."); } finally { setWatchBusy(false); }
+          }}
+            className="inline-flex items-center gap-1.5 rounded border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50">
+            <Eye className="w-3.5 h-3.5" /> Watch for approval
+          </button>
+          {watchNote ? <span className="ml-2 text-[10px] text-violet-600">{watchNote}</span> : null}
+        </div>
+      )}
+
       <div className="flex gap-3 px-3 pb-6">
         <AioStepRail
           activeStep={step}
