@@ -1423,6 +1423,23 @@ export default function EstimateDetail() {
             <Eye className="w-3.5 h-3.5" /> Watch for approval
           </button>
           {watchNote ? <span className="ml-2 text-[10px] text-violet-600">{watchNote}</span> : null}
+          <button type="button" onClick={async () => {
+            try {
+              const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+              const res = await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "export_estimate", estimate_id: estimate.id });
+              const d = res?.data || res;
+              if (!d?.success || !d?.bundle) throw new Error(d?.error || "Export failed.");
+              const blob = new Blob([JSON.stringify(d.bundle, null, 2)], { type: "application/json" });
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(blob);
+              a.download = `estimate-${estimate.estimate_number || estimate.id}.json`;
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+            } catch (e) { window.alert(e?.message || "Export failed."); }
+          }}
+            className="ml-2 inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-50" title="Export this estimate + parts + audit as re-importable JSON (#451)">
+            Export JSON
+          </button>
         </div>
       )}
 
