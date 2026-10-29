@@ -219,11 +219,11 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## P — The job card, round 2
 
 159. **[UX][DONE]** The permit section's first line answers "what do I do next?": "Find the permit office" / "Call (513) 831-7143" / "Waiting on review".
-160. **[F]** Permit checklist per line: application submitted → fee paid → permit issued → inspection scheduled → final passed — checkable steps, not just text.
-161. **[UX]** Overdue highlighting: a permit step sitting open > N days goes amber, then red — aging is visible at a glance.
-162. **[F]** "Next action" field per line: who does what by when — editable inline.
-163. **[UX]** A compact "at a glance" strip per client: offices needed · picked · verified · permits issued — four numbers.
-164. **[F]** Per-line assignee chip — who owns chasing this office (falls back to the WO assignee).
+160. **[F][DONE]** Permit checklist per line: application submitted → fee paid → permit issued → inspection scheduled → final passed — checkable steps, not just text.
+161. **[UX][DONE]** Overdue highlighting: a permit step sitting open > N days goes amber, then red — aging is visible at a glance.
+162. **[F][DONE]** "Next action" field per line: who does what by when — editable inline.
+163. **[UX][DONE]** A compact "at a glance" strip per client: offices needed · picked · verified · permits issued — four numbers.
+164. **[F][DONE]** Per-line assignee chip — who owns chasing this office (falls back to the WO assignee).
 165. **[UX][DONE]** Copy-all-offices button: "Copy contact info" → clipboard block with every office's phone/portal for pasting into email.
 166. **[F]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
 167. **[UX]** Line reorder via drag — staff order the offices the way they actually work them.
@@ -233,17 +233,17 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 ## Q — Repository & jurisdiction data, round 2
 
-171. **[UX]** Repository row shows the ONE thing staff care about first: "Sign permit office verified — call (513) 831-7143" — front and center.
+171. **[UX][DONE]** Repository row shows the ONE thing staff care about first: "Sign permit office verified — call (513) 831-7143" — front and center.
 172. **[F]** Confidence-tier per office claim: verified source / inferred from county rule / unverified — a 3-dot indicator on each office.
 173. **[UX]** "What changed" diff on jurisdiction updates — the change_log entries render as "phone changed" not raw JSON.
-174. **[F]** Office hours normalized + "open now?" — "Open until 4:30 PM" vs "Closed today" when the data exists.
-175. **[UX]** Jurisdiction notes field: free-text staff notes ("they only take checks") pinned on the profile.
+174. **[F][FLAGGED]** Office hours normalized + "open now?" — "Open until 4:30 PM" vs "Closed today" when the data exists.
+175. **[UX][DONE]** Jurisdiction notes field: free-text staff notes ("they only take checks") pinned on the profile.
 176. **[F]** Photo/scan attachments on a jurisdiction: the fee-schedule PDF or the printed rules page as evidence.
 177. **[UX]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
 178. **[F]** Version compare on a jurisdiction: current vs an archived snapshot — what the AI/staff edits actually changed.
-179. **[UX]** Search by phone number or office name — "who is (513) 831-7143?" → the jurisdiction row.
+179. **[UX][DONE]** Search by phone number or office name — "who is (513) 831-7143?" → the jurisdiction row.
 180. **[F]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
-181. **[UX]** Recently-researched strip: the 5 most-recently-verified jurisdictions at the top of the repository.
+181. **[UX][DONE]** Recently-researched strip: the 5 most-recently-verified jurisdictions at the top of the repository.
 182. **[F]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
 183. **[UX][DONE]** "Needs electrical review" chip where sign+zoning verified but electrical isn't — partial states are visible.
 184. **[F]** Contact-import from a business card photo (OCR on the phone# + name) — fast office-data entry.
@@ -287,9 +287,9 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 213. **[UX]** Full-screen "dialer" view per office: giant phone number, tap-to-call, plus the office's notes — built for a phone in hand.
 214. **[F]** Permit pickup directions: the office's address as a maps link — "drive to this counter".
 215. **[UX]** Offline-pocket card: the applied jurisdiction's offices as a cached card readable without signal.
-216. **[F]** Inspection-schedule field: date+time+inspector contact — the visit is tracked where the permit lives.
+216. **[F][DONE]** Inspection-schedule field: date+time+inspector contact — the visit is tracked where the permit lives.
 217. **[UX][DONE]** The whole picker works at 320px wide without horizontal scroll — field phones.
-218. **[F]** Mark-as-inspected from the line: final inspection passed → stamp date + photo + done.
+218. **[F][DONE]** Mark-as-inspected from the line: final inspection passed → stamp date + photo + done.
 219. **[UX][DONE]** Big "print for the truck" sheet: job address, office address, phone, permit # — one page, taped to the dash.
 220. **[F]** A "call next" queue: which of today's jobs need an office call, sorted by age.
 
@@ -312,5 +312,5 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 232. **[UX]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
 233. **[F]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
 234. **[UX]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
-235. **[F]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
+235. **[F][DONE]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
 236. **[UX]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
