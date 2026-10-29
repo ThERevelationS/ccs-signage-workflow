@@ -57,6 +57,24 @@ export default function DataExportPanel() {
     } catch { setScanResults([{ name: "scan", error: "Integrity scan could not run" }]); }
     setScanBusy(false);
   };
+  const [orphansByCheck, setOrphansByCheck] = useState({});
+  const [relinkTarget, setRelinkTarget] = useState({});
+  const [relinkMsg, setRelinkMsg] = useState(null);
+  const listOrphans = async (checkName) => {
+    try {
+      const r = await base44.functions.invoke("dataIntegrityAction", { session_token: sessionToken, action: "list_orphans", check_name: checkName });
+      setOrphansByCheck((cur) => ({ ...cur, [checkName]: r?.data?.orphans || [] }));
+    } catch { setOrphansByCheck((cur) => ({ ...cur, [checkName]: [] })); }
+  };
+  const relinkOrphan = async (checkName, orphanValue) => {
+    const target = (relinkTarget[orphanValue] || "").trim();
+    if (!target) return;
+    try {
+      const r = await base44.functions.invoke("dataIntegrityAction", { session_token: sessionToken, action: "relink", check_name: checkName, orphan_value: orphanValue, new_parent_value: target });
+      setRelinkMsg(r?.data?.success ? `Relinked ${r.data.relinked} rows to ${target}` : (r?.data?.error || "Relink failed"));
+      if (r?.data?.success) { setOrphansByCheck((cur) => ({ ...cur, [checkName]: (cur[checkName] || []).filter((v) => v !== orphanValue) })); runIntegrityScan(); }
+    } catch (e) { setRelinkMsg(e?.message || "Relink failed"); }
+  };
   const [counts, setCounts] = useState(null);
   useEffect(() => {
     let alive = true;
@@ -155,13 +173,30 @@ export default function DataExportPanel() {
         {scanResults && (
           <ul className="mt-1 space-y-0.5">
             {scanResults.map((r) => (
-              <li key={r.name} className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[10px]">{r.name}</span>
-                <span className={r.orphans > 0 || r.error ? "font-medium text-red-600" : "text-gray-500"}>
-                  {r.error ? "check failed" : `${r.orphans ?? 0} orphan${r.orphans === 1 ? "" : "s"} / ${r.scanned ?? 0}`}
+              <li key={r.name} className="flex flex-col gap-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[10px]">{r.name}</span>
+                  <span className="flex items-center gap-1">
+                    <span className={r.orphans > 0 || r.error ? "font-medium text-red-600" : "text-gray-500"}>
+                      {r.error ? "check failed" : `${r.orphans ?? 0} orphan${r.orphans === 1 ? "" : "s"} / ${r.scanned ?? 0}`}
+                    </span>
+                    {(r.orphans ?? 0) > 0 && (
+                      <Button type="button" size="sm" variant="ghost" onClick={() => listOrphans(r.name)} className="h-5 px-1.5 text-[9px] text-indigo-600">repair</Button>
+                    )}
+                  </span>
                 </span>
+                {(orphansByCheck[r.name] || []).map((v) => (
+                  <span key={v} className="flex items-center gap-1 pl-2 text-[10px]">
+                    <code className="text-red-600">{v}</code>
+                    <span className="text-gray-400">→</span>
+                    <Input value={relinkTarget[v] || ""} onChange={(e) => setRelinkTarget((cur) => ({ ...cur, [v]: e.target.value }))}
+                      placeholder="valid parent value" className="h-5 w-28 text-[10px]" />
+                    <Button type="button" size="sm" variant="outline" onClick={() => relinkOrphan(r.name, v)} className="h-5 px-1.5 text-[9px]">relink</Button>
+                  </span>
+                ))}
               </li>
             ))}
+            {relinkMsg && <li className="text-[10px] text-gray-600">{relinkMsg}</li>}
           </ul>
         )}
       </div>
