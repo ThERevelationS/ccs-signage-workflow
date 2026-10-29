@@ -21,6 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -435,12 +436,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
         }),
         reloadAux
-          ? loadAllEntityRows({
-            entity: WorkOrder,
-            query: { completed: { $ne: true }, deleted: { $ne: true } },
-            sort: "created_date",
-            label: "Order Spreadsheet Work Orders",
-          })
+          ? fetchAllWorkOrders().then((rows) =>
+            (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true))
           : Promise.resolve(cachedWorkOrdersRef.current || []),
         reloadAux
           ? loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Order Spreadsheet authorized users" })
