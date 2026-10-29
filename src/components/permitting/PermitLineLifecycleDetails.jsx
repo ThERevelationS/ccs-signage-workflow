@@ -248,6 +248,20 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           disabled={!isRegistered}
           onCommit={(value) => update("permit_document_url", value)}
         />
+        <CommitTextField
+          label="Next action"
+          value={lineItem.next_action}
+          placeholder="What happens next? (e.g. Call the office Friday)"
+          disabled={!isRegistered}
+          onCommit={(value) => update("next_action", value)}
+        />
+        <CommitTextField
+          label="Inspector contact"
+          value={lineItem.inspector_contact}
+          placeholder="Inspector name or phone"
+          disabled={!isRegistered}
+          onCommit={(value) => update("inspector_contact", value)}
+        />
         <DateField
           label="Approval date"
           value={lineItem.approval_date}
