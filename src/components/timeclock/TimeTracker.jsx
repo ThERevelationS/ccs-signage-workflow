@@ -149,6 +149,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const [historyBusy, setHistoryBusy] = useState(false);
   const [historyStats, setHistoryStats] = useState(null);
   const [myPendingCorrections, setMyPendingCorrections] = useState(0);
+  const [lastManagerNote, setLastManagerNote] = useState(null);
   const [pollError, setPollError] = useState("");
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -178,7 +179,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
         });
         const data = res?.data || res;
         if (!cancelled && data?.success === true && Array.isArray(data.requests)) {
-          setMyPendingCorrections(data.requests.filter((r) => r.status === "pending" || r.status === "reviewing").length);
+          const pending = data.requests.filter((r) => r.status === "pending" || r.status === "reviewing");
+          setMyPendingCorrections(pending.length);
+          // Latest manager note visible to the employee - "why was it rejected/edited?"
+          const reviewed = [...data.requests].filter((r) => r.review_reason || r.manager_reason).sort((a, b) => String(b.updated_date || "").localeCompare(String(a.updated_date || "")))[0];
+          setLastManagerNote(reviewed ? { reason: reviewed.review_reason || reviewed.manager_reason || "", status: reviewed.status || "" } : null);
         }
       } catch {}
     };
@@ -291,6 +296,9 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const dayKey = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
   const goalMinutes = Math.max(60, Number(prefs?.daily_goal_overrides?.[dayKey]) || Number(prefs?.daily_goal_minutes) || 480);
   const displayMinutes = live ? (prefs?.count_mode === "elapsed" ? live.elapsed : live.paid) : 0;
+  const POMODORO_MINUTES = 25;
+  const pomodoroCycles = prefs?.count_mode === "pomodoro" ? Math.floor(displayMinutes / POMODORO_MINUTES) : 0;
+  const pomodoroCurrent = prefs?.count_mode === "pomodoro" ? displayMinutes % POMODORO_MINUTES : 0;
   const progress = goalMinutes > 0 ? displayMinutes / goalMinutes : 0;
   const overtimeMinutes = Math.max(0, displayMinutes - goalMinutes);
   const overtime = overtimeMinutes > 0.5;
@@ -559,9 +567,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     ? (String(prefs?.custom_label || "").trim() || (prefs?.direction === "down" && !overtime ? "Remaining" : "Today"))
     : "";
   const trackerTime = clockedIn
-    ? (prefs?.show_seconds === false
-        ? formatClock(shown, "hours_minutes")
-        : formatClockSeconds(shown, prefs?.time_format))
+    ? (prefs?.count_mode === "pomodoro"
+        ? `${pomodoroCycles}x${POMODORO_MINUTES}m +${formatMinutes(pomodoroCurrent)}`
+        : prefs?.show_seconds === false
+          ? formatClock(shown, "hours_minutes")
+          : formatClockSeconds(shown, prefs?.time_format))
     : "Off the clock";
   const bgStyle = String(prefs?.background_style || "minimal");
   const bgClass = bgStyle === "minimal"
@@ -812,6 +822,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
         {myPendingCorrections > 0 && (
               <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-800">
                 {myPendingCorrections} correction{myPendingCorrections === 1 ? "" : "s"} awaiting manager review
+              </p>
+            )}
+            {lastManagerNote && (
+              <p className={`mt-2 rounded-lg border px-2.5 py-1.5 text-[11px] ${lastManagerNote.status === "rejected" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+                Manager{lastManagerNote.status ? ` (${lastManagerNote.status})` : ""}: {lastManagerNote.reason}
               </p>
             )}
 
