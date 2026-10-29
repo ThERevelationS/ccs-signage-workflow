@@ -10,7 +10,6 @@ import { AlertCircle, Clock, RefreshCw, Loader2, Plus, X, Mail } from "lucide-re
 import { format } from "date-fns";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
 import { useAuth } from "@/components/auth/EmailGate";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function JurisdictionMonitoringSettings() {
   const { sessionToken } = useAuth();
@@ -50,7 +49,7 @@ export default function JurisdictionMonitoringSettings() {
   const loadSettings = async () => {
     try {
       const saved = await loadSingleGlobalSetting({
-        entity: staffEntities.GlobalSettings,
+        entity: base44.entities.GlobalSettings,
         settingKey: 'jurisdiction_monitoring',
         label: 'Jurisdiction Monitoring settings',
       });
@@ -65,7 +64,7 @@ export default function JurisdictionMonitoringSettings() {
 
   const loadAlerts = async () => {
     try {
-      const recentAlerts = await staffEntities.RegulationAlert?.list?.("-detected_at", 5) || [];
+      const recentAlerts = await base44.entities.RegulationAlert?.list?.("-detected_at", 5) || [];
       setAlerts(Array.isArray(recentAlerts) ? recentAlerts : []);
     } catch (e) {
       console.error("Load alerts error:", e);
@@ -78,7 +77,7 @@ export default function JurisdictionMonitoringSettings() {
     setSettingsSaveError("");
     try {
       const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: staffEntities.GlobalSettings,
+        entity: base44.entities.GlobalSettings,
         loadedRecord: monitoringSettingRecord,
         settingKey: 'jurisdiction_monitoring',
         nextValue: monitoringSettings,
@@ -253,7 +252,7 @@ export default function JurisdictionMonitoringSettings() {
             {(monitoringSettings.notification_emails || []).map(email => (
               <div key={email} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                 <span>{email}</span>
-                <button
+                <button type="button"
                   onClick={() => setMonitoringSettings({
                     ...monitoringSettings,
                     notification_emails: monitoringSettings.notification_emails.filter(e => e !== email)
