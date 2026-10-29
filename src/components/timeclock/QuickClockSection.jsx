@@ -339,6 +339,16 @@ export default function QuickClockSection({
     );
   };
   useEffect(() => { refreshGeo(); const t = setInterval(refreshGeo, 300000); return () => clearInterval(t); }, []);
+
+  // Device heartbeat - register this kiosk so the admin sees it in the
+  // device list with a live last_seen stamp. Id is stable per browser.
+  useEffect(() => {
+    try {
+      let key = localStorage.getItem("ccs_kiosk_device_id");
+      if (!key) { key = `kiosk-${Math.random().toString(36).slice(2, 10)}`; localStorage.setItem("ccs_kiosk_device_id", key); }
+      base44.functions.invoke("timeClockAction", { action: "register_device", device_key: key, device_name: `Kiosk ${key.slice(-4)}`, scope: "kiosk", request_id: `devreg-${Date.now().toString(36)}` }).catch(() => {});
+    } catch {}
+  }, []);
   const geoStamp = () => (geoCacheRef.current.data && Date.now() - geoCacheRef.current.at < 600000 ? geoCacheRef.current.data : null);
 
   const invokeTimeClock = async (payload) => {
