@@ -116,26 +116,26 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 101. **[F]** Per-device vs per-account preset slots
 102. **[F]** Export prefs as QR/copyable blob for other machines
 103. **[F]** Drag-to-reposition with snap points
-104. **[F]** Auto-hide when idle >N min on personal dashboards
+104. **[F][DONE]** Auto-hide when idle - hide_when_idle_minutes pref + slider, pointer/key activity tracking
 105. **[F][DONE]** Auto-pulse on milestone hit - milestone_behavior "pulse" already exists
 106. **[F]** Reminder escalation — repeat once or flash if ignored
 107. **[F]** Quiet hours suppressing reminders outside shifts
-108. **[F]** Reminder types — "at 80% of shift", "30m before end"
-109. **[F]** Sound picker for milestone alerts (reuse announcement sounds)
+108. **[F][DONE]** Percent reminders - {percent} reminders resolve against the daily goal, server-sanitized
+109. **[F][DONE]** Sound picker for milestone alerts - milestone_sound pref already exists
 110. **[F]** Weekend exclusion or weekend-goal override
 111. **[F][DONE]** Countdown direction - prefs.direction "down" already counts down
-112. **[F]** Per-day-of-week goal overrides (Friday = 6h)
+112. **[F][DONE]** Per-day-of-week goal overrides - daily_goal_overrides pref + 7-input settings row + server sanitize
 113. **[F]** Holiday-aware goal suppression
-114. **[F]** Tracker tooltip with raw pace/projection numbers
+114. **[F][DONE]** Tracker tooltip - hover title shows paid/elapsed/weekly/goal
 115. **[F][DONE]** Click-through - "Open Time Clock" popover button already navigates
 116. **[F][DONE]** Sync status indicator - "Synced Xs ago" line in the popover footer
 117. **[F]** Low-data mode — reduced polling on metered connections
 118. **[F]** Reduced-motion simplify beyond CSS (ring+numbers only)
 119. **[F]** Per-role default presets (shop vs office)
-120. **[F]** Tracker API — one source of truth for "hours today"
+120. **[F][DONE]** Tracker API - window.__timeTrackerLive exposes paid/elapsed/weekly/goal/status
 121. **[F]** Milestone webhook to team channel on goal hit
 122. **[F]** Custom milestone templates (union contract presets)
-123. **[F]** Include-vs-exclude lunch toggle views
+123. **[F][DONE]** Include-vs-exclude lunch - count_mode paid vs elapsed already covers both views
 
 ## 7. Admin — approvals & corrections
 124. **[F][DONE]** Bulk approve - select-all + shared-reason batch bar on the correction queue, per-row retry-safe approve calls
