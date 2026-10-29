@@ -402,6 +402,34 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, estimate_id: created?.id, imported_parts: importedParts });
     }
 
+    // Copy BOM between estimates (#464): clone a source estimate's
+    // BuilderProducts + BuilderParts re-pointed at the target estimate.
+    if (action === "copy_bom") {
+      const fromId = clean(body?.from_estimate_id);
+      const toId = clean(body?.to_estimate_id);
+      if (!fromId || !toId || fromId === toId) throw bad("Different from/to estimate ids are required.", 400);
+      const [src, dst] = await Promise.all([Estimate.get(fromId).catch(() => null), Estimate.get(toId).catch(() => null)]);
+      if (!src?.id) throw bad("Source estimate not found.", 404);
+      if (!dst?.id) throw bad("Target estimate not found.", 404);
+      const [products, parts] = await Promise.all([
+        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: fromId }).catch(() => []),
+        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: fromId }).catch(() => []),
+      ]);
+      let copiedProducts = 0, copiedParts = 0;
+      for (const p of list(products)) {
+        const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+        const r = await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: toId }).catch(() => null);
+        if (r?.id) copiedProducts += 1;
+      }
+      for (const p of list(parts)) {
+        const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+        const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: toId }).catch(() => null);
+        if (r?.id) copiedParts += 1;
+      }
+      await Estimate.update(toId, { pricing_stale: true, pricing_stale_reason: "BOM copied — recompute + re-save before sending." }).catch(() => null);
+      return Response.json({ success: true, action, copied_products: copiedProducts, copied_parts: copiedParts });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
