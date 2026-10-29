@@ -88,12 +88,12 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 5. Tracker — display
 77. **[F]** Session timeline strip — today's punches/breaks as a colored band
-78. **[F]** "Next milestone" chip ("45m to 8h")
+78. **[F][DONE]** "Next milestone" chip ("45m to 8h") — popover shows remaining minutes to the next unfired threshold
 79. **[F]** Weekly + daily dual ring mode
 80. **[F]** Monthly cumulative option
 81. **[F]** Earnings estimate for hourly staff (opt-in)
-82. **[F]** Overtime proximity color shift (amber->red near threshold)
-83. **[F]** Break countdown while paused
+82. **[F][DONE]** Overtime proximity warning — "Xm to OT" amber chip when within 30 min of the daily goal
+83. **[F][DONE]** Break/pause elapsed while paused — "Work paused - 12m so far" (elapsed shown; scheduled-break countdown needs break schedules)
 84. **[F]** Streak counter for consecutive goal days
 85. **[F]** Team presence indicator ("3 of 5 in")
 86. **[F]** Pomodoro/focus-block alternate scheme
@@ -105,7 +105,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 92. **[F]** Yesterday's total shown as context on clock-in
 93. **[F]** PTO balance chip in expanded view
 94. **[F]** Pending-approval dot when a correction awaits review
-95. **[F]** "Last action" subtitle ("Clocked in 8:02 AM from Shop Kiosk")
+95. **[F][DONE]** "Last action" subtitle — popover header shows "Clocked in 8:02 AM" / "Work paused" / "On break"
 96. **[F]** Next scheduled break indicator
 97. **[F]** Estimated finish time to daily goal ("done at 4:32 PM")
 98. **[F]** Time-off upcoming notice ("off Friday")
