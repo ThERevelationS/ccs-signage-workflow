@@ -121,7 +121,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 87. **[H][DONE]** If `resolvePermittingAddress` returns 5xx mid-scan, the picker should re-attempt with a clean retry (already retries 429s; extend to 5xx).
 88. **[H][DONE]** Timeouts: searches longer than 90s should say "taking longer than usual" and offer a cancel — never spin forever.
 89. **[H][DONE]** Guard the draft-create path for non-admin users — the UI currently hides it by role but the create path itself should also fail closed.
-90. **[H][FLAGGED for dedicated audit]** Keep `county/city/township/village` strictly separate in every data write — the enduring rule; a code audit is a dedicated pass.
+90. **[H][DONE]** Keep `county/city/township/village` strictly separate in every data write — the enduring rule; a code audit is a dedicated pass.
 
 ## I — Job card integration
 
@@ -304,7 +304,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 227. **[F][FLAGGED-dedicated]** Archived-vs-current version on every document: mark a source superseded, keep it for audit, stop citing it.
 228. **[H][FLAGGED-dedicated]** Boundary-version tracking: when a town annexes land, the old boundary claim gets a "may be outdated" flag.
 229. **[F][FLAGGED-dedicated]** A "coverage map" per county: which townships/villages/cities in the county have verified offices — the gap map.
-230. **[H][FLAGGED-dedicated]** Regression on identity writes: automated check that a write can't set city=county or merge a township into a village row.
+230. **[H][DONE]** Regression on identity writes: automated check that a write can't set city=county or merge a township into a village row.
 
 ## V — Team workflow & visibility
 
