@@ -22,12 +22,14 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const JurisdictionProfile = staffEntities.JurisdictionProfile;
+const PermitLineItem = staffEntities.PermitLineItem;
 
 export default function JurisdictionsView({ focusJurisdiction = null }) {
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'admin';
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
+  const [lineCounts, setLineCounts] = useState({});
   const [lastVisit] = useState(() => {
     try { const v = localStorage.getItem("permitting_jurisdictions_last_visit") || ""; localStorage.setItem("permitting_jurisdictions_last_visit", new Date().toISOString()); return v; } catch { return ""; }
   });
@@ -68,13 +70,22 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
 
   const loadJurisdictions = async () => {
     try {
-      const data = await loadAllEntityRows({
-        entity: JurisdictionProfile,
-        sort: null,
-        label: "Permitting Repository catalog",
-        cacheTtlMs: 15000,
-      });
+      const [data, lines] = await Promise.all([
+        loadAllEntityRows({
+          entity: JurisdictionProfile,
+          sort: null,
+          label: "Permitting Repository catalog",
+          cacheTtlMs: 15000,
+        }),
+        loadAllEntityRows({ entity: PermitLineItem, sort: null, label: "Repository permit-line counts", cacheTtlMs: 15000 }).catch(() => []),
+      ]);
       setJurisdictions(data);
+      const counts = {};
+      for (const li of lines || []) {
+        const key = String(li.locality_name || "").trim().toLowerCase();
+        if (key) counts[key] = (counts[key] || 0) + 1;
+      }
+      setLineCounts(counts);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -469,15 +480,21 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             </div>
           ) : (
             displayList.map(j => (
-              <JurisdictionCard
-                key={j.id}
-                jurisdiction={j}
-                onEdit={handleEdit}
-                onRefresh={handleRefresh}
-                onSelect={setSelectedJurisdiction}
-                isRefreshing={refreshingIds.has(j.id)}
-                duplicateCount={duplicateCountFor(j)}
-              />
+              <div key={j.id}>
+                <JurisdictionCard
+                  jurisdiction={j}
+                  onEdit={handleEdit}
+                  onRefresh={handleRefresh}
+                  onSelect={setSelectedJurisdiction}
+                  isRefreshing={refreshingIds.has(j.id)}
+                  duplicateCount={duplicateCountFor(j)}
+                />
+                {(lineCounts[String(j.name || "").trim().toLowerCase()] || 0) > 0 && (
+                  <p className="-mt-1 px-3 pb-2 text-[10px] font-medium text-slate-500" title="Permit lines on record here">
+                    {lineCounts[String(j.name || "").trim().toLowerCase()]} permit{lineCounts[String(j.name || "").trim().toLowerCase()] === 1 ? "" : "s"} on record
+                  </p>
+                )}
+              </div>
             ))
           )}
         </div>
