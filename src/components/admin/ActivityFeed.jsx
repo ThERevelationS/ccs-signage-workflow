@@ -31,11 +31,19 @@ export default function ActivityFeed() {
   const [actorFilter, setActorFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [liveTail, setLiveTail] = useState(false);
   const [limit, setLimit] = useState(50);
 
   useEffect(() => {
     loadActivities();
   }, [filterType, limit]);
+
+  // Live-tail: poll the feed every 15s while enabled (monitoring a busy sync).
+  useEffect(() => {
+    if (!liveTail) return undefined;
+    const id = setInterval(loadActivities, 15000);
+    return () => clearInterval(id);
+  }, [liveTail, filterType, limit]);
 
   const loadActivities = async () => {
     setIsLoading(true);
@@ -217,6 +225,10 @@ export default function ActivityFeed() {
             <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+          <button type="button" onClick={() => setLiveTail(v => !v)} title="Auto-refresh every 15 seconds"
+            className={`h-9 rounded-md border px-3 text-xs font-medium ${liveTail ? "border-green-500 bg-green-50 text-green-700" : "border-input hover:bg-gray-50"}`}>
+            {liveTail ? "Live on" : "Live"}
+          </button>
         </div>
       </div>
 
