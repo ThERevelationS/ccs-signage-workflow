@@ -1,0 +1,4 @@
+{
+  "name": "sessionAdminAction",
+  "entry": "base44/functions/sessionAdminAction/entry.ts"
+}
