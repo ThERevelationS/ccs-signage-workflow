@@ -22,49 +22,49 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 ## A — One-field address entry (the core UX)
 
 11. **[F]** Single primary input: the job-address field is THE control — everything else (map, candidates, apply) is consequence, not separate steps.
-12. **[F]** Auto-load the client/job address into the search field on open — zero typing when the client already has an address.
-13. **[F]** Auto-search once a prefilled address lands — the user opens the picker and the lookup already ran.
-14. **[F]** Paste-and-parse: pasting "914 Lila Ave, Milford OH 45150" from anywhere should populate and auto-search without clicking.
+12. **[F][DONE]** Auto-load the client/job address into the search field on open — zero typing when the client already has an address.
+13. **[F][DONE]** Auto-search once a prefilled address lands — the user opens the picker and the lookup already ran.
+14. **[F][DONE]** Paste-and-parse: pasting "914 Lila Ave, Milford OH 45150" from anywhere should populate and auto-search without clicking.
 15. **[F]** Address autocomplete/suggestions as the user types (Census geocoder has no suggest API — evaluate a cheap suggest layer or reuse saved address history for type-ahead).
-16. **[UX]** Recent-address list per user — last 5 searches one-click re-runnable.
+16. **[UX][DONE]** Recent-address list per user — last 5 searches one-click re-runnable.
 17. **[F]** "Same as another job" — copy a jurisdiction from a recent job by client name (reuses verified localities).
-18. **[UX]** Validation before search: warn if the address lacks a city/ZIP/state instead of failing silently ("That address is missing a city — try adding one").
+18. **[UX][DONE]** Validation before search: warn if the address lacks a city/ZIP/state instead of failing silently ("That address is missing a city — try adding one").
 19. **[UX]** If the geocoder returns a corrected address, show "Did you mean…" and let the user accept the correction in one click.
 20. **[F]** Saved/favorite addresses per client — a client with recurring job sites should remember them.
 
 ## B — Search progress + feedback
 
 21. **[UX][DONE]** Plain-language pass on picker copy — "Type the full street address and press Find my jurisdiction" replaces jargon.
-22. **[UX]** Show WHY a search is taking a while — named stages ("Finding the address", "Checking saved jurisdictions", "Checking which offices cover it") instead of a spinner.
-23. **[UX]** Progress indicator with the current stage + a realistic hint ("Usually takes 5–15 seconds").
-24. **[F]** Cancel a running search and keep the last result — currently cancellation leaves the dialog in limbo.
-25. **[UX]** Retry button that re-runs the last search in one click when the geocoder/network blips — no retyping.
-26. **[UX]** Error messages that say what to do next, not what broke: "We couldn't reach the map service. Try again — or type the city and state manually."
+22. **[UX][DONE]** Show WHY a search is taking a while — named stages ("Finding the address", "Checking saved jurisdictions", "Checking which offices cover it") instead of a spinner.
+23. **[UX][DONE]** Progress indicator with the current stage + a realistic hint ("Usually takes 5–15 seconds").
+24. **[F][DONE]** Cancel a running search and keep the last result — currently cancellation leaves the dialog in limbo.
+25. **[UX][DONE]** Retry button that re-runs the last search in one click when the geocoder/network blips — no retyping.
+26. **[UX][DONE]** Error messages that say what to do next, not what broke: "We couldn't reach the map service. Try again — or type the city and state manually."
 27. **[F]** Persist the last search per work order so reopening the picker restores the in-flight context.
-28. **[H]** Debounce + dedupe parallel searches — double-clicking Find must not fire two scans (searchVersion ref exists; verify it covers rapid re-clicks).
-29. **[UX]** Distinguish "still looking" vs "found nothing" — the current copy merges them into one confusing state.
+28. **[H][DONE]** Debounce + dedupe parallel searches — double-clicking Find must not fire two scans (searchVersion ref exists; verify it covers rapid re-clicks).
+29. **[UX][DONE]** Distinguish "still looking" vs "found nothing" — the current copy merges them into one confusing state.
 
 ## C — Results: making the answer obvious
 
-30. **[UX]** The detected jurisdiction should be a BIG, obvious card: name, state, "This is where your permit goes" + a single Apply button.
-31. **[UX]** Explain the result in one sentence: "914 Lila Ave is inside the City of Milford, Clermont County — the city office issues your sign permit."
-32. **[F]** Confidence badge on the result — "Verified by map boundary" vs "Best guess from city name" vs "Needs review" with a plain explanation of why.
-33. **[UX]** When city AND township both match, show them as separate, clearly-labeled cards — never merge. State which one the address falls inside and why the other also appears.
-34. **[F]** Show the full breakdown per address: county, city/village, township, other offices — exactly as the data model intends; never conflate roles.
-35. **[F]** Show which offices do what: sign permit issuer, electrical permit issuer, electrical inspector, zoning office — as a labeled list, not a data dump.
-36. **[UX]** Color-code verified vs unverified vs needs-review candidates so the eye lands on the trustworthy one.
+30. **[UX][DONE]** The detected jurisdiction should be a BIG, obvious card: name, state, "This is where your permit goes" + a single Apply button.
+31. **[UX][DONE]** Explain the result in one sentence: "914 Lila Ave is inside the City of Milford, Clermont County — the city office issues your sign permit."
+32. **[F][DONE]** Confidence badge on the result — "Verified by map boundary" vs "Best guess from city name" vs "Needs review" with a plain explanation of why.
+33. **[UX][DONE]** When city AND township both match, show them as separate, clearly-labeled cards — never merge. State which one the address falls inside and why the other also appears.
+34. **[F][DONE]** Show the full breakdown per address: county, city/village, township, other offices — exactly as the data model intends; never conflate roles.
+35. **[F][DONE]** Show which offices do what: sign permit issuer, electrical permit issuer, electrical inspector, zoning office — as a labeled list, not a data dump.
+36. **[UX][DONE]** Color-code verified vs unverified vs needs-review candidates so the eye lands on the trustworthy one.
 37. **[F]** Click any boundary candidate on the map → highlight the matching card (and vice versa) so map and list agree.
-38. **[UX]** "Wrong place?" — one click to re-search with a corrected address without losing the dialog state.
+38. **[UX][DONE]** "Wrong place?" — one click to re-search with a corrected address without losing the dialog state.
 39. **[F]** Manual pin-drag on the map → re-resolve the jurisdiction for the dragged point (for when geocoding lands on the wrong side of a boundary).
 
 ## D — Applying the result
 
 40. **[F]** One-button apply: "Use Milford, OH" → writes the locality to the work order and closes — the picker's only positive action.
-41. **[H]** Apply must be atomic-ish: write PermitLineItem locality_id via the CAS path (exists) and surface conflicts cleanly, not a silent 409.
-42. **[F]** After apply, show a confirmation chip on the job card: "Permit office: Milford, OH — verified" with a link to change it.
+41. **[H][DONE]** Apply must be atomic-ish: write PermitLineItem locality_id via the CAS path (exists) and surface conflicts cleanly, not a silent 409.
+42. **[F][DONE]** After apply, show a confirmation chip on the job card: "Permit office: Milford, OH — verified" with a link to change it.
 43. **[F]** Allow applying WITHOUT a full authority review for jobs that just need the locality (show a "details still being verified" hint instead of blocking).
 44. **[F]** Bulk-apply: multiple jobs in the same town → apply one verified jurisdiction to all selected work orders.
-45. **[UX]** If apply fails, the error must name the step ("Couldn't link Milford to this job — reload and try again") — never a raw 500.
+45. **[UX][DONE]** If apply fails, the error must name the step ("Couldn't link Milford to this job — reload and try again") — never a raw 500.
 46. **[F]** Undo an apply within a short window — users change their minds; reverting shouldn't need admin intervention.
 
 ## E — Authority review / who to call
@@ -111,16 +111,16 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 ## H — Reliability / hardening the pipeline
 
 79. **[H]** Frontend mount burst: batch page-level `staffDataRead` calls — one read returning multiple entities would cut the burst ~10x. Needs a `staffDataRead` multi-entity mode.
-80. **[H]** Silent-retry for transient 429s in loadAllEntityRows — most bursts recover in <1s; the UI shouldn't flash errors for recoverable blips.
+80. **[H][DONE]** Silent-retry for transient 429s in loadAllEntityRows — most bursts recover in <1s; the UI shouldn't flash errors for recoverable blips.
 81. **[H]** `staffDataRead` response caching for slowly-changing catalogs (JurisdictionProfile, PermitLocality repository list) — a 30s TTL kills repeat mount storms.
-82. **[H]** `permittingScanStatus` poll: back off when the scan is idle (>30s with no progress → poll every 8s, not 3s).
+82. **[H][DONE]** `permittingScanStatus` poll: back off when the scan is idle (>30s with no progress → poll every 8s, not 3s).
 83. **[H]** Offline tolerance: if `staffDataRead` is unreachable, show last-cached data with a "working offline" banner instead of an empty main.
-84. **[H]** Idempotent draft-create at the SERVER layer too — client dedupe (createPermitLocalityIfAbsent) is a courtesy, not a guarantee under double-submit races.
+84. **[H][DONE]** Idempotent draft-create at the SERVER layer too — client dedupe (createPermitLocalityIfAbsent) is a courtesy, not a guarantee under double-submit races.
 85. **[H]** CAS guard on PermitLocality updates (when update ops get added) — concurrent repository edits must not clobber each other.
 86. **[H]** Audit trail on jurisdiction changes: who changed a locality name/state/authority fields and when — a simple `notes_log`-style array on the entity.
-87. **[H]** If `resolvePermittingAddress` returns 5xx mid-scan, the picker should re-attempt with a clean retry (already retries 429s; extend to 5xx).
-88. **[H]** Timeouts: searches longer than 90s should say "taking longer than usual" and offer a cancel — never spin forever.
-89. **[H]** Guard the draft-create path for non-admin users — the UI currently hides it by role but the create path itself should also fail closed.
+87. **[H][DONE]** If `resolvePermittingAddress` returns 5xx mid-scan, the picker should re-attempt with a clean retry (already retries 429s; extend to 5xx).
+88. **[H][DONE]** Timeouts: searches longer than 90s should say "taking longer than usual" and offer a cancel — never spin forever.
+89. **[H][DONE]** Guard the draft-create path for non-admin users — the UI currently hides it by role but the create path itself should also fail closed.
 90. **[H]** Keep `county/city/township/village` strictly separate in every data write — the enduring rule; a code audit is a dedicated pass.
 
 ## I — Job card integration
@@ -137,14 +137,14 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 ## J — Search quality / matching
 
 99. **[H]** Boundary-fallback ladder: Google → Census → Census-Places → address-level → manual city-entry — the user never hits a dead end.
-100. **[F]** Manual-entry escape hatch: "Can't find the address? Type the city/village/township name directly" — never blocks on a geocoder.
+100. **[F][DONE]** Manual-entry escape hatch: "Can't find the address? Type the city/village/township name directly" — never blocks on a geocoder.
 101. **[H][DONE]** Same-name ambiguity resolution: "Milford, OH" appears as city AND township — candidates labeled by type (city/township/county), never merged.
 102. **[H]** Multi-state handling: an address on a state line should surface BOTH states' candidates — current logic prefers the geocoded one.
-103. **[F]** Auto-apply when there's exactly one verified, unambiguous match — the happy path needs zero extra clicks.
-104. **[F]** "Are you sure?" confirm for apply when the match is low-confidence — the boundary case needs one pause, not blind trust.
+103. **[F][DONE]** Auto-apply when there's exactly one verified, unambiguous match — the happy path needs zero extra clicks.
+104. **[F][DONE]** "Are you sure?" confirm for apply when the match is low-confidence — the boundary case needs one pause, not blind trust.
 105. **[H]** Preserve detected-vs-repository distinction in ALL writes — the picker's location_resolution must never overwrite a verified repository row with a weaker detected one.
 106. **[F]** Alias table for common name variants ("City of Milford" ↔ "Milford") so searches don't fail on office-name formatting.
-107. **[H]** Strip/normalize ZIP+4, abbreviations ("St"↔"Street"), suite numbers — input tolerance before lookup.
+107. **[H][DONE]** Strip/normalize ZIP+4, abbreviations ("St"↔"Street"), suite numbers — input tolerance before lookup.
 
 ## K — Notifications + follow-through
 
@@ -154,18 +154,18 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 111. **[F]** Internal note/activity feed per job-line for permit status changes ("applied on Oct 22", "approved on Oct 30").
 112. **[F]** If a jurisdiction's repository row gets merged/updated, jobs linked to the old row get flagged for re-verify — never silently linked to stale data.
 113. **[F]** One-click "re-check this jurisdiction" per job — re-runs the address pipeline and shows what changed.
-114. **[F]** Show the original search that produced the applied locality — the audit trail on the job.
+114. **[F][DONE]** Show the original search that produced the applied locality — the audit trail on the job.
 
 ## L — Polish
 
 115. **[UX]** Empty state for the picker when no address entered: a friendly "Type the job's street address above" with an example — not a blank dialog.
-116. **[UX]** Skeleton states while cards load — never show a half-rendered empty `main` like the 429-storm case.
+116. **[UX][DONE]** Skeleton states while cards load — never show a half-rendered empty `main` like the 429-storm case.
 117. **[UX]** The card grid's responsive behavior on a phone: one column, big buttons — the current layout was desktop-first.
-118. **[UX]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
+118. **[UX][DONE]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
 119. **[F]** A "Print this jurisdiction's details" view — clerk takes a paper copy of office name/address/phone to the phone call.
 120. **[UX]** Undo/history of searches in the dialog — the back-arrow restores the previous search, not close-everything.
 121. **[UX]** Accessibility pass on color contrast for every status chip/badge — WCAG AA minimum.
-122. **[UX]** Reduced copy density in the picker's review section — the current "authority review" block is too wordy for a fast flow.
+122. **[UX][DONE]** Reduced copy density in the picker's review section — the current "authority review" block is too wordy for a fast flow.
 123. **[F]** First-run walkthrough: one small guided overlay on first use ("Type an address → pick the office → apply it") — dismissible, never repeats.
 124. **[UX]** Every icon-only control gets a label or tooltip — older users don't know what the pin/leaflet icons do.
 125. **[H]** Performance audit on the picker mount — the dialog currently fires several parallel calls before the user types; the search should only run on demand.
@@ -178,8 +178,8 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 ## M — Dedicated-pass items (bigger scope, already analyzed)
 
 131. **[F]** Batch `staffDataRead` multi-entity mode — the mount-burst fix needs this even after the governor lands (79).
-132. **[F]** Address-suggest service — real autocomplete needs a suggest API the Census geocoder doesn't have (15).
+132. **[F][DONE]** Address-suggest service — real autocomplete needs a suggest API the Census geocoder doesn't have (15).
 133. **[F]** Permit-status workflow state machine on line items — needs its own field + transitions + UI (95).
-134. **[F]** Boundary-polygon overlay on the picker map — needs the GeoJSON stored per locality + a polygon render layer (37).
-135. **[F]** Jurisdiction expiry + auto-re-verify scheduling — needs a recurring function + a stale flag (52).
+134. **[F][DONE]** Boundary-polygon overlay on the picker map — needs the GeoJSON stored per locality + a polygon render layer (37).
+135. **[F][DONE]** Jurisdiction expiry + auto-re-verify scheduling — needs a recurring function + a stale flag (52).
 136. **[F]** Shared permit-office contact DB with call outcomes — needs its own entity + UI (53).
