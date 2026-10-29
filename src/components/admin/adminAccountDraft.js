@@ -3,7 +3,7 @@
 const ACCOUNT_FIELDS = [
   "full_name", "username", "role", "sales_roles",
   "can_import_export", "can_order_export", "can_view_resources",
-  "employment_type", "can_work_pause"
+  "employment_type", "can_work_pause", "force_password_reset"
 ];
 const own = (value, field) => Object.prototype.hasOwnProperty.call(value, field);
 const stableRoles = value => Array.isArray(value)
@@ -21,7 +21,8 @@ export function createAdminAccountDraft(record) {
     can_order_export: record.role === "admin" && record.can_order_export === true,
     can_view_resources: record.role === "admin" || record.can_view_resources || false,
     employment_type: record.employment_type || "hourly",
-    can_work_pause: record.can_work_pause === true
+    can_work_pause: record.can_work_pause === true,
+    force_password_reset: record.force_password_reset === true
   };
 }
 
