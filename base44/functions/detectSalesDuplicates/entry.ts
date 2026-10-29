@@ -38,6 +38,7 @@ function similarity(a, b) {
 }
 
 Deno.serve(async (req) => {
+  try {
   const base44 = createClientFromRequest(req);
   const body = await req.json().catch(() => ({}));
   const isScheduled = await hasWorkflowInvocationCapability(body, 'detectSalesDuplicates');
@@ -77,43 +78,55 @@ Deno.serve(async (req) => {
   const groups = [];
   const flagged = new Set();
 
-  for (let i = 0; i < workOrders.length; i++) {
-    if (flagged.has(workOrders[i].id)) continue;
-    const a = workOrders[i];
-    const aName = (a.client_name || '').toLowerCase().trim();
-    const aTitle = (a.title || '').toLowerCase().trim();
-
-    for (let j = i + 1; j < workOrders.length; j++) {
-      if (flagged.has(workOrders[j].id)) continue;
-      const b = workOrders[j];
-      const bName = (b.client_name || '').toLowerCase().trim();
-      const bTitle = (b.title || '').toLowerCase().trim();
-
-      const estInvMatch = a.est_inv_at && b.est_inv_at && a.est_inv_at === b.est_inv_at;
-
-      // Cheap early-exit: skip if names share no first word (avoids expensive similarity call)
-      const aFirstWord = aName.split(' ')[0];
-      const bFirstWord = bName.split(' ')[0];
-      const mayBeRelated = estInvMatch || (aFirstWord && bFirstWord && (
-        aFirstWord === bFirstWord || aName.includes(bFirstWord) || bName.includes(aFirstWord)
-      ));
-      if (!mayBeRelated) continue;
-
-      const nameSim = similarity(aName, bName);
-      const titleSim = similarity(aTitle, bTitle);
-
-      let score = 0;
-      const reasons = [];
-
-      if (estInvMatch) { score += 90; reasons.push('Same Est/Inv number'); }
-      if (nameSim >= 0.85) { score += 50; reasons.push(`Very similar client name (${Math.round(nameSim * 100)}%)`); }
-      else if (nameSim >= 0.7) { score += 30; reasons.push(`Similar client name (${Math.round(nameSim * 100)}%)`); }
-      if (titleSim >= 0.8 && aTitle && bTitle) { score += 30; reasons.push(`Similar title (${Math.round(titleSim * 100)}%)`); }
-
-      if (score >= 50) {
-        groups.push({ a, b, score: Math.min(score, 99), reasons });
-        flagged.add(b.id);
+  // Compare only plausibly-related pairs — same client-name first word or the
+  // same Est/Inv number. A full O(n^2) pair scan over thousands of active
+  // orders exceeds the worker CPU budget and crashed this function (F-dsd).
+  const buckets = new Map();
+  const addTo = (key, idx) => {
+    const list = buckets.get(key);
+    if (list) list.push(idx); else buckets.set(key, [idx]);
+  };
+  workOrders.forEach((wo, idx) => {
+    const first = String(wo.client_name || "").toLowerCase().trim().split(" ")[0];
+    if (first) addTo("w:" + first, idx);
+    if (wo.est_inv_at) addTo("e:" + wo.est_inv_at, idx);
+  });
+  const seenPairs = new Set();
+  const pairs = [];
+  for (const idxs of buckets.values()) {
+    for (let x = 0; x < idxs.length; x++) {
+      for (let y = x + 1; y < idxs.length; y++) {
+        const k = idxs[x] * 1e7 + idxs[y];
+        if (!seenPairs.has(k)) { seenPairs.add(k); pairs.push([idxs[x], idxs[y]]); }
       }
+    }
+  }
+
+  for (const [i, j] of pairs) {
+    if (flagged.has(workOrders[i].id) || flagged.has(workOrders[j].id)) continue;
+    const a = workOrders[i];
+    const aName = (a.client_name || "").toLowerCase().trim();
+    const aTitle = (a.title || "").toLowerCase().trim();
+    const b = workOrders[j];
+    const bName = (b.client_name || "").toLowerCase().trim();
+    const bTitle = (b.title || "").toLowerCase().trim();
+
+    const estInvMatch = a.est_inv_at && b.est_inv_at && a.est_inv_at === b.est_inv_at;
+
+    const nameSim = similarity(aName, bName);
+    const titleSim = similarity(aTitle, bTitle);
+
+    let score = 0;
+    const reasons = [];
+
+    if (estInvMatch) { score += 90; reasons.push("Same Est/Inv number"); }
+    if (nameSim >= 0.85) { score += 50; reasons.push(`Very similar client name (${Math.round(nameSim * 100)}%)`); }
+    else if (nameSim >= 0.7) { score += 30; reasons.push(`Similar client name (${Math.round(nameSim * 100)}%)`); }
+    if (titleSim >= 0.8 && aTitle && bTitle) { score += 30; reasons.push(`Similar title (${Math.round(titleSim * 100)}%)`); }
+
+    if (score >= 50) {
+      groups.push({ a, b, score: Math.min(score, 99), reasons });
+      flagged.add(b.id);
     }
   }
 
@@ -186,4 +199,8 @@ Deno.serve(async (req) => {
     new_flags_created: createdCount,
     concurrent_existing_flags: reusedCount,
   });
+  } catch (error) {
+    console.error("detectSalesDuplicates crashed:", error?.message || error);
+    return Response.json({ error: "Duplicate scan failed safely", detail: String(error?.message || error) }, { status: 500 });
+  }
 });
