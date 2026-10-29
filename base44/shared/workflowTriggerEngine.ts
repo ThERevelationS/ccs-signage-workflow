@@ -473,7 +473,22 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   }
 
   const sent: string[] = [];
-  for (const to of [...new Set(recipients)]) {
+  // Per-user notification preferences — admins/staff with
+  // notification_prefs.automation_emails === false are skipped. The lookup is
+  // fail-open: a prefs read failure must never block a configured send.
+  let sendList = [...new Set(recipients)];
+  try {
+    const prefUsers = await base44.asServiceRole.entities.AuthorizedEmail.list('-created_date', 500);
+    const optedOut = new Set(
+      (prefUsers || [])
+        .filter((u: any) => u?.notification_prefs?.automation_emails === false)
+        .map((u: any) => String(u?.email || '').trim().toLowerCase()),
+    );
+    sendList = sendList.filter((to) => !optedOut.has(String(to).trim().toLowerCase()));
+  } catch { /* prefs lookup is best-effort */ }
+  if (sendList.length === 0) return { skipped: true, reason: 'All recipients opted out' };
+
+  for (const to of sendList) {
     try {
       await base44.integrations.Core.SendEmail({ to, subject, body });
       sent.push(to);
