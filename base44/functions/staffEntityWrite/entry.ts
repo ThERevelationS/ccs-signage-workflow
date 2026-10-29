@@ -25,6 +25,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   SipChecklistTemplate: new Set(['create', 'update', 'delete']),
   WorkOrder: new Set(['create', 'updateMany']),
   TaxGroup: new Set(['create', 'update', 'delete']),
+  MarkupTier: new Set(['create', 'update']),
 };
 
 function rejectOperatorKeys(value: unknown, path = 'data'): void {
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Only administrators can edit jurisdictions.' }, { status: 403 });
     }
     // Tax rates feed every quote's tax_percent — admin-gated like jurisdictions.
-    if (entityName === 'TaxGroup' && user.role !== 'admin') {
+    if ((entityName === 'TaxGroup' || entityName === 'MarkupTier') && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can manage tax groups.' }, { status: 403 });
     }
 
@@ -69,6 +70,15 @@ Deno.serve(async (req) => {
     // Identity/system fields are never client-supplied.
     for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (data as any)[f];
 
+    if (entityName === 'MarkupTier' && (op === 'create' || op === 'update')) {
+      const tierNum = Math.floor(Number(data?.tier_number));
+      if (!Number.isInteger(tierNum) || tierNum < 1 || tierNum > 8) throw bad('tier_number must be an integer 1-8.');
+      if (!String(data?.tier_name || '').trim()) throw bad('tier_name is required.');
+      if (data?.markups !== undefined && (typeof data.markups !== 'object' || data.markups === null || Array.isArray(data.markups))) throw bad('markups must be a {category_key: multiplier} object.');
+      if (data?.markups) for (const [k, v] of Object.entries(data.markups)) {
+        if (!Number.isFinite(Number(v)) || Number(v) <= 0 || Number(v) > 100) throw bad(`markups.${k} must be a multiplier between 0 and 100.`);
+      }
+    }
     if (entityName === 'TaxGroup' && (op === 'create' || op === 'update')) {
       const pct = Number(data?.tax_percent ?? 0);
       // Rows written before the group_name convention carried `name` — normalize either.
