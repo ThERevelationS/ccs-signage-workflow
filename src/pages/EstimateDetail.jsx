@@ -9,6 +9,7 @@ import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
 import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
 import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import PricingSummary from "@/components/estimator/PricingSummary";
 import CustomerQuotePanel from "@/components/estimator/CustomerQuotePanel";
 import ConvertToWorkOrder from "@/components/estimator/ConvertToWorkOrder";
@@ -39,8 +40,8 @@ import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcu
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged, softDeleteEstimateFromLoadedSnapshot, restoreEstimateFromLoadedTrashSnapshot } from "@/components/estimator/estimatePersistence";
-import { duplicateEstimate, splitEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
-import DuplicateEstimateDialog from "@/components/estimator/DuplicateEstimateDialog";
+import { duplicateEstimate, splitEstimate, newEstimateCreationKey, estimateLineSelectionKey } from "@/components/estimator/estimateCreationService";
+import MergeEstimateDialog from "@/components/estimator/aio/MergeEstimateDialog";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const WORKSPACE_TITLES = {
@@ -117,11 +118,12 @@ export default function EstimateDetail() {
   const [trashing, setTrashing] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [duplicateChoiceOpen, setDuplicateChoiceOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const copyingRef = useRef(false);
   const copyAttemptRef = useRef(null);
-  const copyCreationKey = (kind, lineIds = []) => {
-    const signature = JSON.stringify([kind, estimate, [...lineIds].sort()]);
+  const copyCreationKey = (kind, lineIds = [], variant = "") => {
+    const signature = JSON.stringify([kind, variant, estimate, [...lineIds].sort()]);
     if (copyAttemptRef.current?.signature !== signature) {
       copyAttemptRef.current = { signature, key: newEstimateCreationKey() };
     }
@@ -173,13 +175,12 @@ export default function EstimateDetail() {
     setDuplicateChoiceOpen(true);
   };
 
-  const runDuplicate = async (numbering) => {
-    if (copyingRef.current || saving || trashing || !estimate?.id || estimate.deleted === true) return;
+  const runDuplicate = async (keepEstimateNumber) => {
+    setDuplicateChoiceOpen(false);
     copyingRef.current = true;
     setDuplicating(true);
     try {
-      const created = await duplicateEstimate({ source: estimate, sessionToken, numbering, creationKey: copyCreationKey(`duplicate-${numbering}`) });
-      setDuplicateChoiceOpen(false);
+      const created = await duplicateEstimate({ source: estimate, sessionToken, creationKey: copyCreationKey("duplicate", [], keepEstimateNumber ? "same" : "new"), keepEstimateNumber });
       navigate(`/EstimateDetail?id=${created.id}`);
     } catch (error) {
       window.alert(error?.message || "The estimate could not be duplicated.");
@@ -204,6 +205,93 @@ export default function EstimateDetail() {
     } finally {
       copyingRef.current = false;
       setDuplicating(false);
+    }
+  };
+
+  const handleMerge = async ({ secondary, lineItemIds }) => {
+    if (!estimate?.id || estimate.deleted === true) throw new Error("This estimate is in Trash — restore it before merging.");
+    if (isEstimateProtected(estimate.status)) throw new Error("This estimate is protected — merge is only allowed on Draft or Calculated estimates.");
+    if (openRevision) throw new Error("Save the open estimate revision before merging.");
+    if (saving || duplicating || trashing) throw new Error("Wait for the current operation to finish before merging.");
+
+    const keep = new Set(lineItemIds || []);
+    const secondaryLines = Array.isArray(secondary?.line_items) ? secondary.line_items : [];
+    const secondaryKeys = secondaryLines.map(estimateLineSelectionKey);
+    if (!keep.size || [...keep].some((key) => secondaryKeys.filter((k) => k === key).length !== 1)) {
+      throw new Error("The selected sections changed or have ambiguous identifiers. Reload the merge dialog and select them again.");
+    }
+    const picked = secondaryLines.filter((_, index) => keep.has(secondaryKeys[index]));
+
+    // Section keys must stay unique on the merged estimate — a merged section
+    // that collides with an existing key gets a fresh line_id.
+    const existingKeys = new Set((estimate.line_items || []).map(estimateLineSelectionKey));
+    const mergedLines = [...(estimate.line_items || [])];
+    for (const line of picked) {
+      const copy = { ...line };
+      if (existingKeys.has(estimateLineSelectionKey(copy, mergedLines.length))) {
+        copy.line_id = globalThis.crypto?.randomUUID
+          ? globalThis.crypto.randomUUID()
+          : `merged-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+      mergedLines.push(copy);
+      existingKeys.add(estimateLineSelectionKey(copy, mergedLines.length));
+    }
+
+    const mergedEstimate = { ...estimate, line_items: mergedLines };
+    const mergedPricing = computePricing(mergedEstimate);
+    setSaving(true);
+    try {
+      const before = await staffEntities.AllInOneEstimate.get(estimate.id);
+      assertNoPendingPriceAcceptance(before, "merging sections into the estimate");
+      const nextFields = {
+        line_items: mergedLines,
+        total_cost: acceptedInternalEstimateCost(mergedLines),
+        quote_total: mergedPricing.quoteTotal,
+      };
+      const saved = await saveEstimateFieldsSafely({
+        baseline: before,
+        nextFields,
+        label: "Estimate merge",
+        guardWholeVersion: true,
+      });
+      const after = { ...mergedEstimate, ...(saved || {}), id: estimate.id };
+      setEstimate(after);
+      setPersistedEstimate(saved || after);
+      await rememberServerVersion(saved);
+
+      const secondaryLabel = secondary.estimate_number ? `#${secondary.estimate_number}` : (secondary.project_name || "the other estimate");
+      const primaryLabel = estimate.estimate_number ? `#${estimate.estimate_number}` : (estimate.project_name || "this estimate");
+      const secondaryAfter = {
+        ...secondary,
+        status: "archived",
+        archived_at: new Date().toISOString(),
+        archived_reason: `Merged into ${primaryLabel} (${picked.length} section${picked.length === 1 ? "" : "s"} moved)`,
+      };
+      try {
+        await staffEntities.AllInOneEstimate.update(secondary.id, {
+          status: secondaryAfter.status,
+          archived_at: secondaryAfter.archived_at,
+          archived_reason: secondaryAfter.archived_reason,
+        });
+        await ensureEstimateLifecycleRevision({
+          idempotencyKey: `estimate_merge:${secondary.id}:${estimate.id}:${picked.length}`,
+          sessionToken,
+          estimateBefore: secondary,
+          estimateAfter: secondaryAfter,
+          reason: `Merged into ${primaryLabel}`,
+          revisionType: "status_transition",
+          quoteTotalBefore: secondary.quote_total,
+          quoteTotalAfter: secondary.quote_total,
+          internalCostBefore: secondary.total_cost,
+          internalCostAfter: secondary.total_cost,
+        });
+      } catch {
+        window.alert(`The sections were merged, but ${secondaryLabel} could not be archived. Archive it manually so it is not edited twice.`);
+      }
+      setMergeOpen(false);
+      window.alert(`${picked.length} section${picked.length === 1 ? "" : "s"} merged from ${secondaryLabel}. The other estimate was archived.`);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1259,13 +1347,7 @@ export default function EstimateDetail() {
         readOnly={readOnly}
         onDuplicate={handleDuplicate}
         duplicating={duplicating}
-      />
-      <DuplicateEstimateDialog
-        open={duplicateChoiceOpen}
-        onOpenChange={setDuplicateChoiceOpen}
-        estimateNumber={estimate.estimate_number}
-        onChoose={runDuplicate}
-        busy={duplicating}
+        onMerge={() => setMergeOpen(true)}
       />
 
       {estimate.opportunity_id && (
@@ -1505,6 +1587,29 @@ export default function EstimateDetail() {
         onConfirm={handleCancel}
         estimateName={estimate.project_name}
       />
+
+      <MergeEstimateDialog
+        open={mergeOpen}
+        currentEstimateId={estimate.id}
+        onClose={() => setMergeOpen(false)}
+        onMerge={handleMerge}
+      />
+
+      <AlertDialog open={duplicateChoiceOpen} onOpenChange={setDuplicateChoiceOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate this estimate?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose whether the copy gets a new estimate number or keeps {estimate.estimate_number ? `#${estimate.estimate_number}` : "the same number"} (useful when reworking the same quote). Either way it starts as a new draft and the original is unchanged.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => runDuplicate(true)}>Keep same number</AlertDialogAction>
+            <AlertDialogAction onClick={() => runDuplicate(false)}>New number</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
