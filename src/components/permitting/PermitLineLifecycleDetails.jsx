@@ -279,6 +279,13 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             {lineItem.urgent ? "⚠ URGENT" : "Mark urgent"}
           </button>
         </div>
+        <CommitTextField
+          label="Revision #"
+          value={lineItem.application_revision}
+          placeholder="1"
+          disabled={!isRegistered}
+          onCommit={(value) => update("application_revision", value === "" ? null : Number(value) || null)}
+        />
         <DateField
           label="Denied on"
           value={lineItem.denial_date}
