@@ -53,6 +53,7 @@ export default function AttentionFeed() {
   });
   const [digestOn, setDigestOn] = useState(() => { try { return localStorage.getItem("attention_digest_opt_in") === "1"; } catch { return false; } });
   const [digestSending, setDigestSending] = useState(false);
+  const [watchHits, setWatchHits] = useState([]);
   const sendDigest = async () => {
     if (digestSending || !sessionToken) return;
     setDigestSending(true);
@@ -337,6 +338,11 @@ export default function AttentionFeed() {
 
   return (
     <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
+      {watchHits.length > 0 && (
+        <div className="mb-1 flex items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-2 py-1 text-[11px] font-bold text-violet-700 dark:border-violet-800 dark:bg-violet-950/40" title={watchHits.map((h) => `${h.label || h.record_id} ${h.field}=${h.current}`).join("; ")}>
+          <Eye className="h-3.5 w-3.5" />{watchHits.length} watched record{watchHits.length === 1 ? "" : "s"} matched — {watchHits.slice(0, 3).map((h) => `${h.label || h.entity} ${h.field} is now "${h.current}"`).join("; ")}{watchHits.length > 3 ? ` +${watchHits.length - 3} more` : ""}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => setOpen((v) => !v)}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
