@@ -139,7 +139,20 @@
         "role": "__announcement_backend_only__"
       }
     },
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "__announcement_backend_only__"
