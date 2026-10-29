@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/components/auth/EmailGate";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { 
@@ -25,6 +26,7 @@ const CellHistory = staffEntities.CellHistory;
 const ActivityLog = staffEntities.ActivityLog;
 
 export default function ActivityFeed() {
+  const { sessionUser } = useAuth();
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState("all"); // all, WorkOrder, Order
@@ -32,6 +34,7 @@ export default function ActivityFeed() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [liveTail, setLiveTail] = useState(false);
+  const [mineOnly, setMineOnly] = useState(false);
   const [limit, setLimit] = useState(50);
 
   useEffect(() => {
@@ -158,6 +161,7 @@ export default function ActivityFeed() {
 
   const visibleActivities = activities.filter((a) => {
     if (actorFilter !== "all" && a.user !== actorFilter) return false;
+    if (mineOnly && sessionUser?.email && a.userEmail !== sessionUser.email) return false;
     const t = a.timestamp ? new Date(a.timestamp).getTime() : 0;
     if (dateFrom && t < new Date(dateFrom + "T00:00:00").getTime()) return false;
     if (dateTo && t > new Date(dateTo + "T23:59:59").getTime()) return false;
@@ -228,6 +232,10 @@ export default function ActivityFeed() {
           <button type="button" onClick={() => setLiveTail(v => !v)} title="Auto-refresh every 15 seconds"
             className={`h-9 rounded-md border px-3 text-xs font-medium ${liveTail ? "border-green-500 bg-green-50 text-green-700" : "border-input hover:bg-gray-50"}`}>
             {liveTail ? "Live on" : "Live"}
+          </button>
+          <button type="button" onClick={() => setMineOnly(v => !v)} title="Show only my actions"
+            className={`h-9 rounded-md border px-3 text-xs font-medium ${mineOnly ? "border-purple-500 bg-purple-50 text-purple-700" : "border-input hover:bg-gray-50"}`}>
+            {mineOnly ? "Mine ✓" : "Mine"}
           </button>
         </div>
       </div>
