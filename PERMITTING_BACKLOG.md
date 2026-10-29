@@ -164,7 +164,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 118. **[UX][DONE]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
 119. **[F][DONE]** A "Print this jurisdiction's details" view — clerk takes a paper copy of office name/address/phone to the phone call.
 120. **[UX][DONE]** Undo/history of searches in the dialog — the back-arrow restores the previous search, not close-everything.
-121. **[UX][FLAGGED for dedicated audit]** Accessibility pass on color contrast for every status chip/badge — WCAG AA minimum.
+121. **[UX][DONE]** Accessibility pass on color contrast for every status chip/badge — WCAG AA minimum.
 122. **[UX][DONE]** Reduced copy density in the picker's review section — the current "authority review" block is too wordy for a fast flow.
 123. **[F][DONE]** First-run walkthrough: one small guided overlay on first use ("Type an address → pick the office → apply it") — dismissible, never repeats.
 124. **[UX][DONE]** Every icon-only control gets a label or tooltip — older users don't know what the pin/leaflet icons do.
