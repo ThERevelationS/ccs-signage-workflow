@@ -29,6 +29,7 @@ check("staffEntityWrite wrapped with retry", /withEntityRateLimitRetry/.test(sew
 check("picker dedupes drafts via createPermitLocalityIfAbsent", /createPermitLocalityIfAbsent/.test(picker));
 check("picker blocks non-admin draft create", /role!=="admin"|role !== "admin"/.test(picker));
 check("picker handles canceled searches via searchVersion", /searchVersion/.test(picker));
+check("PermitLocality dedupe respects jurisdiction_profile_id", sew.includes("jurisdiction_profile_id") && sew.includes("wantProfile"));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
