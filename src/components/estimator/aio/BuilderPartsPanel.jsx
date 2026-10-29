@@ -524,6 +524,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [loading, setLoading] = useState(!!builderProductId);
   const [parts, setParts] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [dragGroupIdx, setDragGroupIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [groupModalOpen, setGroupModalOpen] = useState(false);
@@ -734,6 +736,16 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
 
   let offset = 0;
   const partsFrozenTotal = parts.reduce((sum, part) => sum + num(part.frozen_extended_cost), 0);
+  const persistGroupOrder = async (nextGroups) => {
+    for (let i = 0; i < nextGroups.length; i++) {
+      const g = nextGroups[i];
+      if (Number(g.sort_order) !== i) {
+        await base44.entities.BuilderPartGroup.update(g.id, { sort_order: i }).catch(() => null);
+      }
+    }
+  };
+
+
   return (
     <div className="border-t border-gray-300 bg-[#f6f6f6] px-3 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2 pb-1">
@@ -833,7 +845,32 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           />
         );
         offset += groupParts.length;
-        return node;
+        return readOnly ? node : (
+          <div
+            key={group.id}
+            draggable
+            onDragStart={() => setDragGroupIdx(groups.indexOf(group))}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIdx(groups.indexOf(group)); }}
+            onDragLeave={() => setDragOverIdx(null)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              if (dragGroupIdx === null) return;
+              const target = groups.indexOf(group);
+              const next = [...groups];
+              const [moved] = next.splice(dragGroupIdx, 1);
+              next.splice(target, 0, moved);
+              setGroups(next);
+              setDragGroupIdx(null);
+              setDragOverIdx(null);
+              await persistGroupOrder(next);
+              setRefreshNonce((v) => v + 1);
+            }}
+            onDragEnd={() => { setDragGroupIdx(null); setDragOverIdx(null); }}
+            className={`${dragOverIdx === groups.indexOf(group) ? "ring-2 ring-emerald-400 rounded" : ""}`}
+          >
+            {node}
+          </div>
+        );
       })}
       {grouped.ungrouped.map((part, index) => (
         <PartRow
