@@ -1814,6 +1814,7 @@ export default function AdminSettings() {
                 </div>
               </div>
               <Switch 
+                aria-label="Use AI for this action"
                 checked={config.use_ai === true} 
                 onCheckedChange={(val) => updateAction(index, "use_ai", val)} 
               />
@@ -1920,7 +1921,7 @@ export default function AdminSettings() {
       case "set_asap":
         return (
           <div className="flex items-center gap-2 mt-2">
-            <Switch checked={config.asap === true} onCheckedChange={(val) => updateAction(index, "asap", val)} />
+            <Switch aria-label="Toggle ASAP" checked={config.asap === true} onCheckedChange={(val) => updateAction(index, "asap", val)} />
             <Label className="text-sm">{config.asap ? "Turn ASAP ON" : "Turn ASAP OFF"}</Label>
           </div>
         );
@@ -2807,7 +2808,7 @@ export default function AdminSettings() {
                       {(WORKFLOW_ENGINE_TRIGGER_SET.has(trigger.trigger_type) || DEADLINE_TRIGGER_SET.has(trigger.trigger_type)) && (
                         <div className="flex flex-wrap gap-4 mt-2 pt-2 border-t border-orange-100">
                           <div className="flex items-center gap-1">
-                            <Switch checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
+                            <Switch aria-label="ASAP only" checked={trigger.trigger_condition.is_asap === true} onCheckedChange={(v) => updateTrigger(index, "is_asap", v || undefined)} />
                             <Label className="text-xs">ASAP Only</Label>
                           </div>
                           <div className="flex items-center gap-2">
