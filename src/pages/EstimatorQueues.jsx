@@ -274,32 +274,25 @@ export default function EstimatorQueues() {
   // Full estimate backup (#468): dumps estimates plus their builder tree and
   // audit trail (revisions, acceptances, deliveries) to one JSON file. Admin-only
   // because it exports every estimate, not just the filtered view.
+  // Full-data backup (#484): server-side admin-gated dump of EVERY real
+  // entity — estimates, customers, inventory, work orders, admin records.
   const exportBackup = async () => {
     if (backupBusy || me?.role !== "admin") return;
     setBackupBusy(true);
     try {
-      const [estimates, products, parts, revisions, acceptances, sectionAcceptances, deliveries] = await Promise.all([
-        loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, label: "Estimates" }),
-        loadAllEntityRows({ entity: staffEntities.BuilderProduct, label: "Products" }),
-        loadAllEntityRows({ entity: staffEntities.BuilderPart, label: "Parts" }),
-        base44.entities.EstimateRevision.filter({}, "-created_date", 500).catch(() => []),
-        base44.entities.EstimateAcceptance.filter({}, "-created_date", 500).catch(() => []),
-        base44.entities.EstimateSectionAcceptance.filter({}, "-created_date", 500).catch(() => []),
-        base44.entities.EstimateQuoteDelivery.filter({}, "-created_date", 500).catch(() => []),
-      ]);
-      downloadJson(`estimate-backup-${new Date().toISOString().slice(0, 10)}.json`, {
-        exported_at: new Date().toISOString(),
+      const sessionToken = localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+      const res = await base44.functions.invoke("opportunityWorkspaceAction", { action: "full_backup", session_token: sessionToken });
+      const d = res?.data || res;
+      if (!d?.success) throw new Error(d?.error || "Backup export failed.");
+      downloadJson(`full-backup-${new Date().toISOString().slice(0, 10)}.json`, {
+        exported_at: d.exported_at,
         app: "ccs-signage-workflow",
-        estimates: estimates || [],
-        builder_products: products || [],
-        builder_parts: parts || [],
-        estimate_revisions: revisions || [],
-        estimate_acceptances: acceptances || [],
-        estimate_section_acceptances: sectionAcceptances || [],
-        estimate_quote_deliveries: deliveries || [],
+        entity_count: d.entity_count,
+        entities: d.entities,
+        errors: d.errors,
       });
     } catch (e) {
-      window.alert(e?.message || "The estimate backup could not be exported.");
+      window.alert(e?.message || "The full backup could not be exported.");
     } finally {
       setBackupBusy(false);
     }
