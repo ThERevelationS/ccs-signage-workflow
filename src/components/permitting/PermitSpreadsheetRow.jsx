@@ -399,6 +399,8 @@ export default function PermitSpreadsheetRow({
                                   {processingTime && <div><span className="font-semibold">Processing:</span> {processingTime}</div>}
                                   {maxArea && <div><span className="font-semibold">Max area:</span> {maxArea} sq ft</div>}
                                   {maxHeight && <div><span className="font-semibold">Max height:</span> {maxHeight} ft</div>}
+                                  {usableText(jurisdiction.required_documents) && <div className="col-span-2"><span className="font-semibold">Office wants:</span> {usableText(jurisdiction.required_documents)}</div>}
+                                  {usableText(jurisdiction.ordinance_citation) && <div className="col-span-2"><span className="font-semibold">Code:</span> {usableText(jurisdiction.ordinance_citation)}</div>}
                                 </div>
                               )}
                             </div>
