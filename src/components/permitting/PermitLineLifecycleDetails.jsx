@@ -256,6 +256,13 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("next_action", value)}
         />
         <CommitTextField
+          label="Call / chase notes"
+          value={lineItem.notes}
+          placeholder="e.g. 10/22 — called office, resubmit Friday"
+          disabled={!isRegistered}
+          onCommit={(value) => update("notes", value)}
+        />
+        <CommitTextField
           label="Inspector contact"
           value={lineItem.inspector_contact}
           placeholder="Inspector name or phone"
