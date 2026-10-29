@@ -46,6 +46,7 @@ export default function Step1EstimateDetails({
   const [newOpen, setNewOpen] = useState(false);
   const [entityLocations, setEntityLocations] = useState([]);
   const [entityContacts, setEntityContacts] = useState([]);
+  const [entityFlags, setEntityFlags] = useState([]);
 
   const linkedCustomer = customers.find((c) => c.id === form.customer_id) || null;
 
@@ -60,11 +61,12 @@ export default function Step1EstimateDetails({
       entity && typeof entity.filter === "function"
         ? entity.filter({ customer_id: form.customer_id }).catch(() => [])
         : Promise.resolve([]);
-    Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact)]).then(
-      ([locations, contacts]) => {
+    Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact), load(staffEntities?.CustomerNote)]).then(
+      ([locations, contacts, notes]) => {
         if (!active) return;
         setEntityLocations(locations || []);
         setEntityContacts(contacts || []);
+        setEntityFlags((notes || []).filter((n) => n?.kind === "flag" && n?.deleted !== true));
       }
     );
     return () => {
@@ -252,6 +254,19 @@ export default function Step1EstimateDetails({
               CREDIT HOLD â€” new work needs a deposit or manager override
             </span>
           )}
+          {entityFlags.map((flag) => {
+            const styles = {
+              red: "bg-red-100 text-red-700 border-red-200",
+              amber: "bg-amber-100 text-amber-800 border-amber-200",
+              blue: "bg-blue-100 text-blue-700 border-blue-200",
+              green: "bg-emerald-100 text-emerald-700 border-emerald-200",
+            };
+            return (
+              <span key={flag.id || flag.text} className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${styles[flag.flag_color] || styles.amber}`}>
+                {flag.text}
+              </span>
+            );
+          })}
         </Row>
         {recentCustomers.length > 0 && (
           <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px]" aria-label="Recent customers">
