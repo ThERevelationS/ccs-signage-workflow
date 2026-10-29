@@ -1,6 +1,6 @@
 {
-  "type": "object",
   "name": "PermitLineItem",
+  "type": "object",
   "properties": {
     "work_order_id": {
       "type": "string",
@@ -43,18 +43,18 @@
     },
     "status": {
       "type": "string",
-      "description": "Current status of this line item",
       "enum": [
         "active",
         "waiting",
         "completed"
       ],
-      "default": "active"
+      "default": "active",
+      "description": "Current status of this line item"
     },
     "priority": {
       "type": "number",
-      "description": "Sort order",
-      "default": 0
+      "default": 0.0,
+      "description": "Sort order"
     },
     "steps": {
       "type": "array",
@@ -87,7 +87,7 @@
           },
           "followup_interval_days": {
             "type": "number",
-            "default": 14
+            "default": 14.0
           },
           "next_followup_date": {
             "type": "string",
@@ -102,18 +102,18 @@
     },
     "submitted_date": {
       "type": "string",
-      "description": "When the permit was submitted",
-      "format": "date"
+      "format": "date",
+      "description": "When the permit was submitted"
     },
     "next_followup_date": {
       "type": "string",
-      "description": "Next follow-up date (drives sorting)",
-      "format": "date"
+      "format": "date",
+      "description": "Next follow-up date (drives sorting)"
     },
     "permit_received_date": {
       "type": "string",
-      "description": "When the permit was received \u2014 marks complete",
-      "format": "date"
+      "format": "date",
+      "description": "When the permit was received \u2014 marks complete"
     },
     "application_reference_number": {
       "type": "string",
@@ -123,15 +123,19 @@
       "type": "string",
       "description": "Issued permit number for this individual permit/office line. Line-level; does not overwrite the legacy WorkOrder permit_number field."
     },
+    "permit_document_url": {
+      "type": "string",
+      "description": "Link to the issued permit document (PDF/image) for this line \u2014 staff pastes the file or portal URL here."
+    },
     "approval_date": {
       "type": "string",
-      "description": "Date this individual permit/office line was approved, when approval is distinct from permit receipt/issuance.",
-      "format": "date"
+      "format": "date",
+      "description": "Date this individual permit/office line was approved, when approval is distinct from permit receipt/issuance."
     },
     "expiration_date": {
       "type": "string",
-      "description": "Expiration date for this individual permit/office line, when provided by the issuing authority.",
-      "format": "date"
+      "format": "date",
+      "description": "Expiration date for this individual permit/office line, when provided by the issuing authority."
     },
     "jurisdiction_fee_amount": {
       "type": "number",
@@ -139,72 +143,72 @@
     },
     "jurisdiction_fee_status": {
       "type": "string",
-      "description": "Staff-recorded payment state for the actual jurisdiction fee. Blank means not recorded; no status is inferred from repository data.",
       "enum": [
         "due",
         "paid",
         "waived"
-      ]
+      ],
+      "description": "Staff-recorded payment state for the actual jurisdiction fee. Blank means not recorded; no status is inferred from repository data."
     },
     "jurisdiction_fee_paid_date": {
       "type": "string",
-      "description": "Date the actual jurisdiction fee for this permit line was paid, when known.",
-      "format": "date"
+      "format": "date",
+      "description": "Date the actual jurisdiction fee for this permit line was paid, when known."
     },
     "correction_status": {
       "type": "string",
-      "description": "Staff-recorded correction/resubmission state for this individual permit line. Blank means no correction state is currently recorded.",
       "enum": [
         "corrections_received",
         "working_corrections",
         "resubmitted"
-      ]
+      ],
+      "description": "Staff-recorded correction/resubmission state for this individual permit line. Blank means no correction state is currently recorded."
     },
     "corrections_received_date": {
       "type": "string",
-      "description": "Date the issuing authority sent or communicated the latest correction request for this permit line.",
-      "format": "date"
+      "format": "date",
+      "description": "Date the issuing authority sent or communicated the latest correction request for this permit line."
     },
     "resubmitted_date": {
       "type": "string",
-      "description": "Date the latest corrected package was resubmitted for this permit line.",
-      "format": "date"
+      "format": "date",
+      "description": "Date the latest corrected package was resubmitted for this permit line."
     },
     "closeout_status": {
       "type": "string",
-      "description": "Optional staff-recorded post-issuance inspection/closeout state for this individual permit line. Blank preserves legacy completion behavior and does not imply an inspection is required.",
       "enum": [
         "inspection_required",
         "inspection_scheduled",
         "inspection_failed",
         "inspection_passed",
         "closed_out"
-      ]
+      ],
+      "description": "Optional staff-recorded post-issuance inspection/closeout state for this individual permit line. Blank preserves legacy completion behavior and does not imply an inspection is required."
     },
     "inspection_date": {
       "type": "string",
-      "description": "Scheduled or most recent inspection date for this individual permit line, as recorded by staff.",
-      "format": "date"
+      "format": "date",
+      "description": "Scheduled or most recent inspection date for this individual permit line, as recorded by staff."
     },
     "closeout_date": {
       "type": "string",
-      "description": "Date staff confirmed the permit line's required inspection/closeout work was completed.",
-      "format": "date"
+      "format": "date",
+      "description": "Date staff confirmed the permit line's required inspection/closeout work was completed."
     },
     "last_submitted_trigger_date": {
       "type": "string",
-      "description": "Exact submitted_date value already claimed for workflow automation. Prevents duplicate permit_submitted actions while allowing a later corrected date to fire once.",
-      "format": "date"
+      "format": "date",
+      "description": "Exact submitted_date value already claimed for workflow automation. Prevents duplicate permit_submitted actions while allowing a later corrected date to fire once."
     },
     "last_permit_received_trigger_date": {
       "type": "string",
-      "description": "Exact permit_received_date value already claimed for workflow automation. Prevents duplicate permit_received actions while allowing a later corrected date to fire once.",
-      "format": "date"
+      "format": "date",
+      "description": "Exact permit_received_date value already claimed for workflow automation. Prevents duplicate permit_received actions while allowing a later corrected date to fire once."
     },
     "last_followup_fired_date": {
       "type": "string",
-      "description": "Date the follow-up reminder was last fired (dedupe guard)",
-      "format": "date"
+      "format": "date",
+      "description": "Date the follow-up reminder was last fired (dedupe guard)"
     },
     "notes": {
       "type": "string",
@@ -218,11 +222,4 @@
   "required": [
     "work_order_id"
   ]
-,
-  "rls": {
-    "create": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
-    "read": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
-    "update": { "user_condition": { "role": "__permitlineitem_backend_only__" } },
-    "delete": { "user_condition": { "role": "__permitlineitem_backend_only__" } }
-  }
 }
