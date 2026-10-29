@@ -53,12 +53,12 @@
     "user_email"
   ],
   "rls": {
-    "read": {
+    "create": {
       "user_condition": {
         "role": "timeclock_backend_only"
       }
     },
-    "create": {
+    "read": {
       "user_condition": {
         "role": "timeclock_backend_only"
       }
