@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { buildCustomerQuoteRows } from "./customerQuote";
 import { computeEstimateProfitability, DEFAULT_MARGIN_FLOOR_PERCENT } from "./profitability";
-import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
+import { estimateQuoteExpiration, formatQuoteIssueDate, localDateStamp, quoteExpirationDate, resolveQuoteIssueMetadata } from "./quoteLifecycle";
 import { generateCustomerQuotePdf } from "./quotePdf";
 import { approveEstimateQuote, defaultQuoteEmailMessage, defaultQuoteEmailSubject, deliverEstimateQuote } from "./quoteDeliveryService";
 import { loadQuoteDefaults, quoteDefaultsPayload } from "./quoteDefaults";
@@ -111,7 +111,7 @@ export default function CustomerQuotePanel({
   const quoteRows = buildCustomerQuoteRows(estimate, pricing);
   const quoteDate = formatQuoteIssueDate(estimate.quote_issue_date);
   const quoteVersion = Math.max(0, Math.floor(Number(estimate.quote_version || 0)));
-  const quoteExpiration = quoteExpirationDate(estimate.quote_issue_date || localDateStamp(), estimate.quote_valid_days ?? 30);
+  const quoteExpiration = estimateQuoteExpiration(estimate);
   const quoteExpirationLabel = quoteExpiration ? formatQuoteIssueDate(quoteExpiration) : "";
   const issuingNewQuote = ["draft", "calculated"].includes(String(persistedStatus || "draft"));
   const canEmailQuote = !revisionInProgress && persistedStatus !== "cancelled" && (issuingNewQuote || quoteVersion > 0);
@@ -426,6 +426,7 @@ export default function CustomerQuotePanel({
               <Field label="Terms & conditions" value={estimate.quote_terms_conditions || ""} onChange={(value) => set("quote_terms_conditions", value)} textarea />
               <Field label="Footer text" value={estimate.quote_footer_text || ""} onChange={(value) => set("quote_footer_text", value)} textarea />
               <label className="text-[10px] font-bold tracking-wide text-gray-500 block">QUOTE VALID DAYS<input type="number" min="0" value={estimate.quote_valid_days ?? 30} onChange={(event) => set("quote_valid_days", Math.max(0, Number(event.target.value || 0)))} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
+              <label className="text-[10px] font-bold tracking-wide text-gray-500 block">EXPIRATION OVERRIDE<input type="date" value={estimate.quote_expiration_date || ""} onChange={(event) => set("quote_expiration_date", event.target.value || "")} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
             </div>
           </div>
 
