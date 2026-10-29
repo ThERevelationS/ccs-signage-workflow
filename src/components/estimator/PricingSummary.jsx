@@ -19,6 +19,7 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
   const rows = [
     ["Sections subtotal", pricing.subtotal],
     ["Discount", -pricing.discount],
+    ...(Number(pricing.volumeDiscount || 0) > 0.005 ? [[`Volume discount (${Number(pricing.volumeDiscountPercent || 0)}%)`, -pricing.volumeDiscount] ] : []),
     ["Contingency", pricing.contingency],
     ["Fees", pricing.fees],
     ["Tax", pricing.tax],
@@ -61,6 +62,31 @@ export default function PricingSummary({ estimate, pricing, onChange, readOnly =
           </label>
         ))}
       </div>
+
+      {(() => {
+        const categories = [...new Set((estimate.line_items || []).map((l) => String(l.product_category || "").trim()).filter(Boolean))].sort();
+        if (!categories.length) return null;
+        const overrides = estimate.category_adjustments || {};
+        return (
+          <div className="mb-4">
+            <div className="text-[10px] font-bold tracking-wider text-gray-500 mb-2">PER-CATEGORY ADJUSTMENT (this estimate only)</div>
+            <div className="grid grid-cols-2 gap-3">
+              {categories.map((cat) => (
+                <label key={cat} className="text-xs text-gray-500">
+                  {cat} %
+                  <Input
+                    type="number"
+                    value={overrides[cat] ?? 0}
+                    onChange={(e) => onChange({ category_adjustments: { ...overrides, [cat]: parseFloat(e.target.value) || 0 } })}
+                    readOnly={readOnly}
+                    className={readOnly ? "bg-gray-50 text-gray-500" : ""}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="space-y-1.5 text-sm border-t border-gray-100 pt-3">
         {rows.map(([label, value]) => (
