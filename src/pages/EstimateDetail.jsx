@@ -269,17 +269,10 @@ export default function EstimateDetail() {
         archived_reason: `Merged into ${primaryLabel} (${picked.length} section${picked.length === 1 ? "" : "s"} moved)`,
       };
       try {
-        const archiveFields = {
+        await staffEntities.AllInOneEstimate.update(secondary.id, {
           status: secondaryAfter.status,
           archived_at: secondaryAfter.archived_at,
           archived_reason: secondaryAfter.archived_reason,
-        };
-        await replaceEstimateFieldsIfUnchanged({
-          entity: staffEntities.AllInOneEstimate,
-          estimateId: secondary.id,
-          expectedFields: expectedEstimateFields(secondary, archiveFields),
-          nextFields: archiveFields,
-          label: "Merged estimate archive",
         });
         await ensureEstimateLifecycleRevision({
           idempotencyKey: `estimate_merge:${secondary.id}:${estimate.id}:${picked.length}`,
@@ -1437,6 +1430,7 @@ export default function EstimateDetail() {
             activeProduct ? (
               <InlineProductEditor
                 line={activeProduct}
+                lines={lines}
                 estimateId={estimate.id}
                 expectedEstimateUpdatedAt={serverUpdatedAtRef.current}
                 onClose={async () => {
@@ -1444,6 +1438,7 @@ export default function EstimateDetail() {
                   setActiveProduct(null);
                 }}
                 onSaved={refreshProducts}
+                onSwitchLine={(next) => setActiveProduct(next)}
               />
             ) : (
               <>
