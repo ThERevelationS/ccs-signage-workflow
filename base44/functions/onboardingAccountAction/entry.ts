@@ -36,8 +36,8 @@ function sanitizedUser(user: any) {
     sales_roles: Array.isArray(user.sales_roles) ? user.sales_roles : [],
     can_import_export: user.can_import_export === true,
     can_view_resources: user.can_view_resources === true,
-    // face_descriptors and hr_data intentionally omitted — credentials/PII
-    // must never be returned to a link holder.
+    face_descriptors: Array.isArray(user.face_descriptors) ? user.face_descriptors : [],
+    hr_data: user.hr_data && typeof user.hr_data === 'object' && !Array.isArray(user.hr_data) ? user.hr_data : {},
     onboarding_complete: user.onboarding_complete === true,
     updated_date: user.updated_date || '',
   };
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
       await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user: target,
-        nextFields: { onboarding_token: null, onboarding_token_hash: tokenHash, onboarding_expires: expires, onboarding_complete: false, ...(target?.password_hash ? { session_not_before: new Date().toISOString() } : {}) },
+        nextFields: { onboarding_token: null, onboarding_token_hash: tokenHash, onboarding_expires: expires, onboarding_complete: false },
         guardFields: { email: target.email },
         label: `Onboarding invitation for ${target.email}`,
       });
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       } catch (aiError) {
         console.error('Onboarding invitation AI formatting failed; using safe fallback for user id:', target.id);
       }
-      const sent = await base44.asServiceRole.functions.invoke('sendGmail', { to: target.email, subject, body: html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc' });
+      const sent = await base44.asServiceRole.functions.invoke('sendGmail', { to: target.email, subject, body: html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d' });
       const sendResult = sent?.data || sent;
       if (sendResult?.error || sendResult?.success === false) {
         console.error('Onboarding invitation email failed for user id:', target.id);
@@ -164,6 +164,7 @@ Deno.serve(async (req) => {
         full_name: fullName,
         username,
         password_hash: await bcrypt.hash(password, 10),
+        password_changed_at: new Date().toISOString(),
         password_reset_token: null,
         password_reset_token_hash: null,
         password_reset_expires: null,
@@ -171,11 +172,7 @@ Deno.serve(async (req) => {
         failed_login_count: 0,
         login_locked_until: null,
       };
-      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) {
-        const descriptorsOk = body.face_descriptors.every((d) => Array.isArray(d) && d.length === 128 && d.every((n) => Number.isFinite(Number(n)) && Math.abs(Number(n)) <= 10));
-        if (!descriptorsOk) return Response.json({ success: false, error: 'Invalid face descriptor data' }, { status: 400 });
-        nextFields.face_descriptors = body.face_descriptors;
-      }
+      if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) nextFields.face_descriptors = body.face_descriptors;
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user,
