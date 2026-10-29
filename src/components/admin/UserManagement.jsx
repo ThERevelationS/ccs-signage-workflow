@@ -222,6 +222,21 @@ export default function UserManagement() {
     setHasUnsavedHrData(previous => previous === status.dirty ? previous : status.dirty === true);
   }, []);
   const [deletionRequests, setDeletionRequests] = useState([]);
+  const [accessRequests, setAccessRequests] = useState([]);
+  const loadAccessRequests = async () => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: "list" });
+      setAccessRequests(r?.data?.requests || []);
+    } catch { setAccessRequests([]); }
+  };
+  const decideAccessRequest = async (requestId, decision) => {
+    if (!sessionToken) return;
+    try {
+      const r = await base44.functions.invoke("accessRequestAction", { session_token: sessionToken, action: decision, request_id: requestId });
+      if (r?.data?.success) setAccessRequests((cur) => cur.filter((x) => x.id !== requestId));
+    } catch { /* leave row retryable */ }
+  };
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestsError, setDeletionRequestsError] = useState(false);
   const deletionRequestLoadSequence = useRef(0);
@@ -319,6 +334,7 @@ export default function UserManagement() {
     if (sessionToken) {
       void loadUsers();
       void loadDeletionRequests();
+      void loadAccessRequests();
     } else {
       ++userLoadSequence.current;
       ++deletionRequestLoadSequence.current;
@@ -2135,6 +2151,28 @@ export default function UserManagement() {
                   Clear
                 </Button>
                 {bulkRoleError && <span className="text-xs text-red-600">{bulkRoleError}</span>}
+              </div>
+            )}
+            {accessRequests.length > 0 && (
+              <div className="mb-2 rounded-lg border border-indigo-200 bg-indigo-50/60 p-2" aria-label="Pending access requests">
+                <p className="text-xs font-semibold text-indigo-800">{accessRequests.length} pending access request{accessRequests.length === 1 ? "" : "s"}</p>
+                <ul className="mt-1 space-y-1">
+                  {accessRequests.map((req) => (
+                    <li key={req.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-indigo-100 bg-white/70 px-2 py-1 text-xs">
+                      <div className="min-w-0">
+                        <span className="font-medium">{req.requester_email}</span>
+                        {req.reason && <span className="ml-1.5 text-gray-500">"{req.reason}"</span>}
+                        {Array.isArray(req.requested_sections) && req.requested_sections.length > 0 && (
+                          <span className="ml-1.5 text-[10px] text-indigo-500">[{req.requested_sections.join(", ")}]</span>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button type="button" size="sm" variant="outline" onClick={() => decideAccessRequest(req.id, "approve")} className="h-6 px-2 text-[10px] text-emerald-700">Approve</Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => decideAccessRequest(req.id, "reject")} className="h-6 px-2 text-[10px] text-red-600">Reject</Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
             <div className="flex flex-wrap items-center gap-2 mb-1">
