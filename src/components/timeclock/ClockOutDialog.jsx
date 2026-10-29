@@ -9,6 +9,7 @@ import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -232,12 +233,10 @@ export default function ClockOutDialog({
   const searchWorkOrders = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await loadAllEntityRows({
-        entity: WorkOrder,
-        query: { completed: false, deleted: { $ne: true } },
-        sort: "created_date",
-        label: "Clock Out Work Orders",
-      });
+      const allWorkOrders = await fetchAllWorkOrders().then((rows) =>
+          (rows || [])
+            .filter((wo) => wo.completed !== true && wo.deleted !== true)
+            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")));
       const search = searchTerm.toLowerCase();
       const filtered = allWorkOrders.filter(wo => {
         const searchable = [wo.title, wo.client_name, wo.description].filter(Boolean).join(' ').toLowerCase();
