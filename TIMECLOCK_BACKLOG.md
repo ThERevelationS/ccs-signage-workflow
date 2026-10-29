@@ -95,8 +95,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 82. **[F][DONE]** Overtime proximity warning — "Xm to OT" amber chip when within 30 min of the daily goal
 83. **[F][DONE]** Break/pause elapsed while paused — "Work paused - 12m so far" (elapsed shown; scheduled-break countdown needs break schedules)
 84. **[F][DONE]** Streak counter - N-day goal streak chip in the popover
-85. **[F]** Team presence indicator ("3 of 5 in")
-86. **[F]** Pomodoro/focus-block alternate scheme
+85. **[F][DONE]** Team presence - privacy-safe count of clocked-in coworkers in the tracker
+86. **[F][DONE]** Pomodoro mode - count_mode shows 25-minute focus cycles
 87. **[F][DONE]** Compact badge mode - display_style "badge" already renders icon+minutes
 88. **[F][DONE]** Full-screen expanded view - tracker popover card
 89. **[F][DONE]** Week heat map - week strip greens >=100% of goal and dims <50%
@@ -153,7 +153,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 136. **[F][DONE]** Bulk reject - batch bar decision select (approve/reject) with shared reason
 137. **[F][DONE]** Review queue filter - name/kind/reason text filter on the correction queue
 138. **[F]** Payroll-hold flag on contested entries
-139. **[F]** Supervisor comments visible to the employee
+139. **[F][DONE]** Supervisor comments - last manager review note surfaces in the tracker
 140. **[F]** Compare adjacent days in review ("normal 8h, today 14")
 141. **[F]** "Same correction as yesterday" one-tap for recurring fixes
 142. **[F]** Employee correction SLA escalation (>3 days pending)
@@ -161,7 +161,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 8. Admin — reporting
 143. **[F][DONE]** Saved report presets - named filter bundles (localStorage) on the reports dashboard
 144. **[F][DONE]** Payroll CSV export - per-employee-per-day rows with 40h reg/OT split on the admin page
-145. **[F]** Absence/late leaderboard by department + trend
+145. **[F][DONE]** Absence leaderboard - fewest-worked-days list on the admin page
 146. **[F][DONE]** OT forecast - otWatch + projected week-end hours on the admin page (concurrent pass)
 147. **[F]** Hours-vs-schedule variance (needs shift schedules)
 148. **[F]** Missing-punch daily digest emailed to managers
@@ -258,7 +258,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 225. **[F]** Webhook on punch events for downstream systems
 226. **[F]** Bulk import punches on migration
 227. **[F]** Per-employee full data export on request
-228. **[F]** Idempotent-retry dashboard — pending/ambiguous requests visible
+228. **[F][DONE]** In-flight requests dashboard - list_pending_requests action + stuck-transition card
 
 ## 16. Kiosk hardware & ops
 229. **[F]** Printer integration — daily punch receipt
