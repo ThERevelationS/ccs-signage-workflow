@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bookmark, Check, ChevronDown, Trash2 } from "lucide-react";
+import { Bookmark, Check, ChevronDown, Star, Trash2 } from "lucide-react";
 
 const readViews = (key) => {
   try {
@@ -10,12 +10,35 @@ const readViews = (key) => {
 
 // Named, localStorage-backed filter presets. `getState` returns the current
 // serializable filter state; `onApply` restores it. Per-page, per-browser.
-export default function SavedViews({ storageKey, getState, onApply, activeName }) {
+export default function SavedViews({ storageKey, getState, onApply, activeName, autoApply = false }) {
   const [views, setViews] = useState(() => readViews(storageKey));
   const [open, setOpen] = useState(false);
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState("");
   const ref = useRef(null);
+  const [defaultName, setDefaultName] = useState(() => {
+    try { return localStorage.getItem(`${storageKey}_default`) || ""; } catch { return ""; }
+  });
+  const autoAppliedRef = useRef(false);
+
+  // Auto-apply the user's default view once on mount — only when the parent
+  // says the URL carries no explicit filters (deep links always win).
+  useEffect(() => {
+    if (autoAppliedRef.current || !autoApply || !defaultName) return;
+    const view = views.find((v) => v.name === defaultName);
+    if (!view) return;
+    autoAppliedRef.current = true;
+    onApply(view.state, view.name);
+  }, [autoApply, defaultName]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setDefault = (viewName) => {
+    const next = defaultName === viewName ? "" : viewName;
+    setDefaultName(next);
+    try {
+      if (next) localStorage.setItem(`${storageKey}_default`, next);
+      else localStorage.removeItem(`${storageKey}_default`);
+    } catch { /* quota — non-fatal */ }
+  };
 
   useEffect(() => {
     const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setNaming(false); } };
@@ -62,6 +85,15 @@ export default function SavedViews({ storageKey, getState, onApply, activeName }
               >
                 {v.name === activeName && <Check className="mr-1 inline h-3.5 w-3.5 text-violet-600" />}
                 {v.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDefault(v.name)}
+                className={`mr-1 rounded p-1 ${v.name === defaultName ? "text-amber-500" : "text-slate-300 hover:text-amber-500"} invisible group-hover:visible`}
+                aria-label={v.name === defaultName ? `Unset ${v.name} as default` : `Set ${v.name} as default`}
+                title={v.name === defaultName ? "Default view (auto-applied)" : "Set as default view"}
+              >
+                <Star className="h-3.5 w-3.5" fill={v.name === defaultName ? "currentColor" : "none"} />
               </button>
               <button
                 type="button"
