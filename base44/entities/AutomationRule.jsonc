@@ -96,6 +96,13 @@
         "type": "object"
       },
       "description": "Last 20 executions: { at, status, detail, actions[] }"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Last 10 saved versions: { at, snapshot: {name,triggers,actions,enabled,priority} }"
     }
   },
   "required": [
