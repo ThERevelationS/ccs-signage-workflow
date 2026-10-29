@@ -152,7 +152,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 135. **[F]** Full correction chain audit inline per entry
 136. **[F][DONE]** Bulk reject - batch bar decision select (approve/reject) with shared reason
 137. **[F][DONE]** Review queue filter - name/kind/reason text filter on the correction queue
-138. **[F]** Payroll-hold flag on contested entries
+138. **[F][DONE]** Payroll-hold flag - contested entries flagged per-row (CAS + audit), visible as red flag
 139. **[F][DONE]** Supervisor comments - last manager review note surfaces in the tracker
 140. **[F]** Compare adjacent days in review ("normal 8h, today 14")
 141. **[F]** "Same correction as yesterday" one-tap for recurring fixes
@@ -237,7 +237,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 208. **[F][DONE]** Personal stats - completed-shift count + avg shift length after export
 209. **[F][DONE]** Correction status tracker - pending-corrections chip in tracker popover
 210. **[F][DONE]** Missed-punch wizard - MissedClockInDialog + banner flow exists
-211. **[F]** Preferred-kiosk memory per employee
+211. **[F][DONE]** Preferred-kiosk memory - last-used method persisted + surfaced per device
 212. **[F]** Mileage/expense quick-entry on clock-out
 213. **[F]** Shift swap request board with approval
 214. **[F]** "Who else is in" crew view per department
