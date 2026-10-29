@@ -186,7 +186,7 @@ export default function CalendarEventForm({ isOpen, onClose, onSaved, event, def
               <Label className="text-sm font-medium">Color</Label>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {COLOR_PRESETS.map(c => (
-                  <button
+                  <button type="button"
                     key={c}
                     onClick={() => setForm(f => ({ ...f, color: c }))}
                     className="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110"
@@ -275,7 +275,7 @@ export default function CalendarEventForm({ isOpen, onClose, onSaved, event, def
                 {allUsers.map(u => {
                   const selected = (form.assigned_to || []).includes(u.email);
                   return (
-                    <button
+                    <button type="button"
                       key={u.email}
                       onClick={() => toggleUser(u.email)}
                       className="px-2 py-1 rounded-full text-xs border transition-all"
