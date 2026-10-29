@@ -191,30 +191,30 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 ## N — Address entry, round 2
 
 137. **[UX][DONE]** Placeholder example inside the empty input — "e.g. 914 Lila Ave, Milford, OH 45150" so first-timers see the shape before typing.
-138. **[F]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
+138. **[F][FLAGGED-dedicated]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
 139. **[UX][DONE]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
 140. **[F][DONE]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
 141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
-142. **[F]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
+142. **[F][FLAGGED-dedicated]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
 143. **[UX][DONE]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
-144. **[F]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
+144. **[F][FLAGGED-dedicated]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
 145. **[UX][DONE]** Spelling-tolerant search: "Milford OH 45150" without a street still finds Milford's candidates and says so plainly.
 146. **[F][DONE]** Intersection syntax: "Lila Ave & Main St, Milford" resolves via the geocoder's free-form match.
-147. **[UX]** If the address resolves to a PO box/rural route, say it plainly ("We found a postal area, not a situs address — check the map pin").
+147. **[UX][FLAGGED-dedicated]** If the address resolves to a PO box/rural route, say it plainly ("We found a postal area, not a situs address — check the map pin").
 
 ## O — Candidate clarity, round 2
 
 148. **[UX][DONE]** Each candidate card gets a one-line "why it's here": "The map pin falls inside its boundary" vs "Same name as the town" — the reason, not just the name.
-149. **[UX]** Distance hint on candidates: "About 0.3 miles from the pin" — helps spot a boundary-edge mistake.
-150. **[F]** "Compare side by side" for two candidates: county vs city vs township offices shown in columns so the difference is obvious.
+149. **[UX][FLAGGED-dedicated]** Distance hint on candidates: "About 0.3 miles from the pin" — helps spot a boundary-edge mistake.
+150. **[F][FLAGGED-dedicated]** "Compare side by side" for two candidates: county vs city vs township offices shown in columns so the difference is obvious.
 151. **[UX][DONE]** The detected card states what it is NOT: "Not a township address — it sits inside the city." Kills second-guessing.
 152. **[F][DONE]** Show the FULL containment chain on the card: Address → City of Milford → Clermont County → Ohio — every level separately.
-153. **[UX]** A boundary-edge warning: "The pin is within ~200 ft of the city line — the next office over is X Township" when the margin is thin.
-154. **[F]** Per-candidate "evidence" link opening the exact source page that proved coverage.
+153. **[UX][FLAGGED-dedicated]** A boundary-edge warning: "The pin is within ~200 ft of the city line — the next office over is X Township" when the margin is thin.
+154. **[F][DONE]** Per-candidate "evidence" link opening the exact source page that proved coverage.
 155. **[UX][DONE]** Candidate cards sorted: verified-detected first, then verified-repository, then unverified — never alphabetical.
 156. **[F][DONE]** County offices listed as their own card (county zoning/electrical when unincorporated) — never folded into the city card.
 157. **[UX][DONE]** When the pin lands in a village, label it "village" not "city" — the type words matter and Ohio mixes them.
-158. **[F]** Extraterritorial jurisdiction (ETJ) hints: city-owned land outside city limits flags "ETJ — the city may still issue permits here".
+158. **[F][FLAGGED-dedicated]** Extraterritorial jurisdiction (ETJ) hints: city-owned land outside city limits flags "ETJ — the city may still issue permits here".
 
 ## P — The job card, round 2
 
@@ -225,92 +225,92 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 163. **[UX][DONE]** A compact "at a glance" strip per client: offices needed · picked · verified · permits issued — four numbers.
 164. **[F][DONE]** Per-line assignee chip — who owns chasing this office (falls back to the WO assignee).
 165. **[UX][DONE]** Copy-all-offices button: "Copy contact info" → clipboard block with every office's phone/portal for pasting into email.
-166. **[F]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
-167. **[UX]** Line reorder via drag — staff order the offices the way they actually work them.
+166. **[F][FLAGGED-dedicated]** Attach the application PDF draft to the line before it's even sent — the file lives with the line.
+167. **[UX][FLAGGED-dedicated]** Line reorder via drag — staff order the offices the way they actually work them.
 168. **[F][DONE]** A "call log" mini-timeline per line: tap "+" → "called office, spoke to Jane, resubmit Friday" — the chase history stays with the job.
 169. **[UX][DONE]** Collapsed vs expanded line state remembered per user — the board doesn't re-expand everything on reload.
-170. **[F]** Batch status: select multiple lines → mark them all "application submitted" in one click.
+170. **[F][FLAGGED-dedicated]** Batch status: select multiple lines → mark them all "application submitted" in one click.
 
 ## Q — Repository & jurisdiction data, round 2
 
 171. **[UX][DONE]** Repository row shows the ONE thing staff care about first: "Sign permit office verified — call (513) 831-7143" — front and center.
-172. **[F]** Confidence-tier per office claim: verified source / inferred from county rule / unverified — a 3-dot indicator on each office.
-173. **[UX]** "What changed" diff on jurisdiction updates — the change_log entries render as "phone changed" not raw JSON.
+172. **[F][DONE]** Confidence-tier per office claim: verified source / inferred from county rule / unverified — a 3-dot indicator on each office.
+173. **[UX][DONE]** "What changed" diff on jurisdiction updates — the change_log entries render as "phone changed" not raw JSON.
 174. **[F][FLAGGED]** Office hours normalized + "open now?" — "Open until 4:30 PM" vs "Closed today" when the data exists.
 175. **[UX][DONE]** Jurisdiction notes field: free-text staff notes ("they only take checks") pinned on the profile.
-176. **[F]** Photo/scan attachments on a jurisdiction: the fee-schedule PDF or the printed rules page as evidence.
-177. **[UX]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
-178. **[F]** Version compare on a jurisdiction: current vs an archived snapshot — what the AI/staff edits actually changed.
+176. **[F][FLAGGED-dedicated]** Photo/scan attachments on a jurisdiction: the fee-schedule PDF or the printed rules page as evidence.
+177. **[UX][FLAGGED-dedicated]** Linked-jobs count per jurisdiction: "Used on 14 jobs" — the high-traffic rows get attention first.
+178. **[F][FLAGGED-dedicated]** Version compare on a jurisdiction: current vs an archived snapshot — what the AI/staff edits actually changed.
 179. **[UX][DONE]** Search by phone number or office name — "who is (513) 831-7143?" → the jurisdiction row.
-180. **[F]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
+180. **[F][FLAGGED-dedicated]** Jurisdiction export bundle: one jurisdiction's offices + evidence + sources as a shareable JSON/PDF for a partner shop.
 181. **[UX][DONE]** Recently-researched strip: the 5 most-recently-verified jurisdictions at the top of the repository.
-182. **[F]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
+182. **[F][FLAGGED-dedicated]** Boundary map thumbnail per jurisdiction (if GeoJSON exists) — a visual sanity check the profile is the right shape.
 183. **[UX][DONE]** "Needs electrical review" chip where sign+zoning verified but electrical isn't — partial states are visible.
-184. **[F]** Contact-import from a business card photo (OCR on the phone# + name) — fast office-data entry.
-185. **[H]** Jurisdiction-merge staging: queue a merge → preview affected jobs → confirm — never a one-click clobber (ties to item 59).
+184. **[F][FLAGGED-dedicated]** Contact-import from a business card photo (OCR on the phone# + name) — fast office-data entry.
+185. **[H][FLAGGED-dedicated]** Jurisdiction-merge staging: queue a merge → preview affected jobs → confirm — never a one-click clobber (ties to item 59).
 
 ## R — Pipeline & backend, round 2
 
 186. **[H][DONE]** Warm the catalog cache on page load — one batch read fills JurisdictionProfile + PermitLocality + GlobalSettings together (uses the new batch mode).
 187. **[H][DONE]** Circuit-breaker on the resolver: after 3 consecutive 5xx, show "lookup service is having trouble" instead of hammering it.
-188. **[H]** Request timing headers on the resolver response so slow paths are measurable server-side.
-189. **[H]** A `permittingHealth` probe function: geocoder + census + boundary + repository-read statuses in one call — first thing to check on a bad report.
-190. **[H]** Dead-letter on failed scans: a scan that errors mid-write lands in a reviewable queue instead of vanishing.
-191. **[H]** Deterministic idempotency key on resolver calls: same address+options in 10s → return the cached result, don't re-scan.
-192. **[H]** Rate-limit-aware queue for bulk lookups: many addresses resolved server-side with pacing, not parallel invokes.
-193. **[H]** Structured timing/stage log on the scan record — which stage ate the seconds (geocode vs boundary vs office review).
-194. **[H]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
+188. **[H][FLAGGED-dedicated]** Request timing headers on the resolver response so slow paths are measurable server-side.
+189. **[H][DONE]** A `permittingHealth` probe function: geocoder + census + boundary + repository-read statuses in one call — first thing to check on a bad report.
+190. **[H][FLAGGED-dedicated]** Dead-letter on failed scans: a scan that errors mid-write lands in a reviewable queue instead of vanishing.
+191. **[H][FLAGGED-dedicated]** Deterministic idempotency key on resolver calls: same address+options in 10s → return the cached result, don't re-scan.
+192. **[H][FLAGGED-dedicated]** Rate-limit-aware queue for bulk lookups: many addresses resolved server-side with pacing, not parallel invokes.
+193. **[H][DONE]** Structured timing/stage log on the scan record — which stage ate the seconds (geocode vs boundary vs office review).
+194. **[H][FLAGGED-dedicated]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
 195. **[H][DONE]** Graceful half-result: boundary matched but office review timed out → usable locality + "offices still checking" (partial success, not failure).
-196. **[H]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
-197. **[H]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
-198. **[H]** Feature flag the fallback geocoder path so a Nominatim outage can't cascade into the picker.
+196. **[H][FLAGGED-dedicated]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
+197. **[H][FLAGGED-dedicated]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
+198. **[H][FLAGGED-dedicated]** Feature flag the fallback geocoder path so a Nominatim outage can't cascade into the picker.
 
 ## S — Accessibility & simplicity, round 2
 
-199. **[UX]** A "one big button" mode: hide every optional control (electrical toggle, debug, repository browse) behind a "show more options" — default view is just address + find + result + apply.
-200. **[UX]** Spanish/other-language toggle on the picker copy — the field crew isn't all English-first.
-201. **[UX]** Dyslexia-friendly font option (OpenDyslexic or just letter-spacing bump) alongside the big-text toggle.
+199. **[UX][FLAGGED-dedicated]** A "one big button" mode: hide every optional control (electrical toggle, debug, repository browse) behind a "show more options" — default view is just address + find + result + apply.
+200. **[UX][FLAGGED-dedicated]** Spanish/other-language toggle on the picker copy — the field crew isn't all English-first.
+201. **[UX][DONE]** Dyslexia-friendly font option (OpenDyslexic or just letter-spacing bump) alongside the big-text toggle.
 202. **[UX][DONE]** Every number on a status chip also gets the unit word: "3 offices" not just "3".
 203. **[UX][DONE]** The map's "this is the pin" label: a plain "Your job is here" bubble so the visual isn't ambiguous.
 204. **[UX][DONE]** Color-blind safe status: verified=check-icon+word, needs-review=?-icon+word — shape+text, not color alone.
 205. **[UX][DONE]** Error recovery reads like a person wrote it: "That lookup hit a snag — try it again, or skip to picking from the saved list."
 206. **[UX][DONE]** Confirmation before leaving with unsaved work: closing the picker mid-search asks "leave the lookup running?".
 207. **[UX][DONE]** Focus-outline visibility: every focusable element shows a clear 2px ring — keyboard users can see where they are.
-208. **[UX]** "Read aloud" button on the office card (SpeechSynthesis) — for a driver who can't look at the screen.
+208. **[UX][DONE]** "Read aloud" button on the office card (SpeechSynthesis) — for a driver who can't look at the screen.
 209. **[UX][DONE]** Estimated steps on first open: "This takes 3 steps, usually under a minute" — sets expectations up front.
 210. **[UX][DONE]** A persistent "how's this going?" hint under the button while searching: the current stage as words, not just a spinner.
 
 ## T — Field/on-site workflow
 
 211. **[F][DONE]** "On-site now" mode: GPS + one-tap confirm the jurisdiction matches where the truck is parked.
-212. **[F]** Site-photo attach to the permit line: the posted sign photo rides with the permit for the final inspection.
+212. **[F][FLAGGED-dedicated]** Site-photo attach to the permit line: the posted sign photo rides with the permit for the final inspection.
 213. **[UX][DONE]** Full-screen "dialer" view per office: giant phone number, tap-to-call, plus the office's notes — built for a phone in hand.
 214. **[F][DONE]** Permit pickup directions: the office's address as a maps link — "drive to this counter".
-215. **[UX]** Offline-pocket card: the applied jurisdiction's offices as a cached card readable without signal.
+215. **[UX][FLAGGED-dedicated]** Offline-pocket card: the applied jurisdiction's offices as a cached card readable without signal.
 216. **[F][DONE]** Inspection-schedule field: date+time+inspector contact — the visit is tracked where the permit lives.
 217. **[UX][DONE]** The whole picker works at 320px wide without horizontal scroll — field phones.
 218. **[F][DONE]** Mark-as-inspected from the line: final inspection passed → stamp date + photo + done.
 219. **[UX][DONE]** Big "print for the truck" sheet: job address, office address, phone, permit # — one page, taped to the dash.
-220. **[F]** A "call next" queue: which of today's jobs need an office call, sorted by age.
+220. **[F][FLAGGED-dedicated]** A "call next" queue: which of today's jobs need an office call, sorted by age.
 
 ## U — Data quality & research depth
 
-221. **[F]** Per-office verification logs: not just "verified" but verified-what: sign-permit ✓, zoning ✓, electrical ✗ — per-role truth.
-222. **[H]** Source-coverage scoring: a jurisdiction's score = verified_roles / expected_roles — surfaces thin coverage as a % bar.
-223. **[F]** Electrical-issuer vs electrical-inspector separation enforced in the model — two roles, two offices, never merged.
-224. **[H]** Cross-check boundary claims: when two sources disagree on whether the pin is in the city, surface the conflict — don't pick silently.
-225. **[F]** "Research this" request per locality: flag it for the research queue with a note — the loop from picker → backlog is one click.
+221. **[F][DONE]** Per-office verification logs: not just "verified" but verified-what: sign-permit ✓, zoning ✓, electrical ✗ — per-role truth.
+222. **[H][FLAGGED-dedicated]** Source-coverage scoring: a jurisdiction's score = verified_roles / expected_roles — surfaces thin coverage as a % bar.
+223. **[F][DONE]** Electrical-issuer vs electrical-inspector separation enforced in the model — two roles, two offices, never merged.
+224. **[H][FLAGGED-dedicated]** Cross-check boundary claims: when two sources disagree on whether the pin is in the city, surface the conflict — don't pick silently.
+225. **[F][FLAGGED-dedicated]** "Research this" request per locality: flag it for the research queue with a note — the loop from picker → backlog is one click.
 226. **[H][DONE]** Sentinel-value sweeper: periodically flags placeholder URLs/emails/phones in jurisdiction rows (exists partially in trust-assess).
-227. **[F]** Archived-vs-current version on every document: mark a source superseded, keep it for audit, stop citing it.
-228. **[H]** Boundary-version tracking: when a town annexes land, the old boundary claim gets a "may be outdated" flag.
-229. **[F]** A "coverage map" per county: which townships/villages/cities in the county have verified offices — the gap map.
-230. **[H]** Regression on identity writes: automated check that a write can't set city=county or merge a township into a village row.
+227. **[F][FLAGGED-dedicated]** Archived-vs-current version on every document: mark a source superseded, keep it for audit, stop citing it.
+228. **[H][FLAGGED-dedicated]** Boundary-version tracking: when a town annexes land, the old boundary claim gets a "may be outdated" flag.
+229. **[F][FLAGGED-dedicated]** A "coverage map" per county: which townships/villages/cities in the county have verified offices — the gap map.
+230. **[H][FLAGGED-dedicated]** Regression on identity writes: automated check that a write can't set city=county or merge a township into a village row.
 
 ## V — Team workflow & visibility
 
-231. **[F]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
-232. **[UX]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
-233. **[F]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
-234. **[UX]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
+231. **[F][FLAGGED-dedicated]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
+232. **[UX][FLAGGED-dedicated]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
+233. **[F][FLAGGED-dedicated]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
+234. **[UX][FLAGGED-dedicated]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
 235. **[F][DONE]** Escalation flag: a permit stuck >N days surfaces to a manager queue automatically.
-236. **[UX]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
+236. **[UX][FLAGGED-dedicated]** Team-verified celebration state: when a jurisdiction's every office is verified, the card shows "fully verified" plainly — a small visible win.
