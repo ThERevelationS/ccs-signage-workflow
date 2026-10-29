@@ -2540,6 +2540,29 @@ export default function AdminSettings() {
                 {uncoveredTriggerTypes.map((t) => t.label).join(", ")}
               </div>
             )}
+            {(() => {
+              const cutoff = Date.now() - 90 * 86400e3;
+              const stale = automations.filter(r =>
+                r.enabled === false && !r.last_run_at && r.created_date && new Date(r.created_date) < cutoff
+              );
+              if (!stale.length) return null;
+              return (
+                <div className="mb-3 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs">
+                  <span className="font-semibold text-gray-800">Cleanup suggestions:</span>{" "}
+                  <span className="text-gray-600">{stale.length} disabled rule{stale.length === 1 ? "" : "s"} created 90+ days ago that never ran:</span>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {stale.slice(0, 6).map(r => (
+                      <span key={r.id} className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-0.5">
+                        <span className="text-gray-700">{r.name}</span>
+                        <button type="button" className="text-red-600 font-semibold" aria-label={`Delete stale rule ${r.name}`}
+                          onClick={() => setDeleteConfirm(r)}>x</button>
+                      </span>
+                    ))}
+                    {stale.length > 6 && <span className="text-gray-500">+{stale.length - 6} more</span>}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <Input
                 value={ruleSearch}
