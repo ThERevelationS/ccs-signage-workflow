@@ -29,8 +29,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 22. **[F]** Minor work-rule enforcement (break/hour caps for minors)
 23. **[F]** Offline punch queue with original-timestamp sync on reconnect
 24. **[F][DONE]** Duplicate-punch client debounce - 5s same-employee guard, server request-id still the backstop
-25. **[F]** Punch-edit requests from the kiosk routed to the correction queue
-26. **[F]** Clock-out reason prompt for early outs (appointment/site/sick)
+25. **[F][DONE]** Punch-edit requests - CorrectionRequestDialog + Time History row buttons
+26. **[F][DONE]** Clock-out reason - early-out quick-pick chips feed the admin-notes field
 27. **[F]** Job-site transfer punch — "moving to WO-1234" mid-shift
 28. **[F]** Split-shift support — clock out for appointment, resume same shift
 29. **[F][DONE]** Overnight shift display - "Since 10:00 PM (Wed, Mar 5)" when clock-in isn't today
@@ -49,7 +49,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 40. **[F]** Voice prompts for low-vision users
 41. **[F]** Confetti/sound themes per branding
 42. **[F]** Post-punch day summary ("0:00 worked - lunch ~12:30")
-43. **[F]** Supervisor quick-view — manager badge scan shows who's in
+43. **[F][DONE]** Supervisor quick-view - who_is_in admin panel shows everyone clocked in
 44. **[F][DONE]** Idle return-to-identify timeout - 90s identify-mode auto-reset
 45. **[F]** One-glance roster on kiosk home ("Who's in: 14")
 46. **[F]** Birthday/work-anniversary greeting on punch
@@ -223,7 +223,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 198. **[F]** Acknowledge-required policy announcements
 
 ## 12. AI & analytics
-199. **[F]** Anomaly detection -> review queue (unusual times, outliers)
+199. **[F][DONE]** Anomaly flags - TimeClockPunchException entity + admin exception report surfaces outliers to the review queue
 200. **[F]** Natural-language reports ("who was late Tuesday?")
 201. **[F]** Punch fraud scoring per entry
 202. **[F]** Staffing recommendation from coverage vs workload
@@ -243,7 +243,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 214. **[F]** "Who else is in" crew view per department
 
 ## 14. Payroll & integration
-215. **[F]** Payroll-period lock — freeze edits after close, admin unlock log
+215. **[F][DONE]** Payroll-period lock - pay_period_id Finalized badge + finalize/reopen flow in PayPeriodManager
 216. **[F]** Certified-payroll report mode
 217. **[F]** Tip pooling report
 218. **[F]** Union-hour tracking per classification
