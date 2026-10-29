@@ -723,6 +723,7 @@ export default function AdminSettings() {
   const [pauseBusy, setPauseBusy] = useState(false);
   const [pauseError, setPauseError] = useState("");
   const [openExceptionCount, setOpenExceptionCount] = useState(0);
+  const [openConflictCount, setOpenConflictCount] = useState(0);
   const [pinnedTabs, setPinnedTabs] = useState(() => {
     try { return JSON.parse(localStorage.getItem("admin_pinned_tabs") || "[]"); } catch { return []; }
   });
@@ -1691,6 +1692,9 @@ export default function AdminSettings() {
     staffEntities.TimeClockPunchException.filter({ status: "open" })
       .then((rows) => setOpenExceptionCount(Array.isArray(rows) ? rows.length : 0))
       .catch(() => setOpenExceptionCount(0));
+    staffEntities.SyncConflict.filter({ status: "open" })
+      .then((rows) => setOpenConflictCount(Array.isArray(rows) ? rows.length : 0))
+      .catch(() => setOpenConflictCount(0));
   }, [isUnlocked]);
 
   const toggleAutomationPause = async () => {
@@ -2164,6 +2168,12 @@ export default function AdminSettings() {
                       <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
                         title={`${openExceptionCount} open punch exception${openExceptionCount === 1 ? "" : "s"}`}>
                         {openExceptionCount}
+                      </span>
+                    )}
+                    {tab.value === "sync_conflicts" && openConflictCount > 0 && (
+                      <span className="ml-1 rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                        title={`${openConflictCount} unresolved sync conflict${openConflictCount === 1 ? "" : "s"}`}>
+                        {openConflictCount}
                       </span>
                     )}
                   </TabsTrigger>
