@@ -48,6 +48,7 @@ export default function PermitClientGroup({
   users,
   taskDescriptions,
   today,
+  sharedOfficeCount = 0,
   queueState,
   expanded: controlledExpanded,
   onExpandedChange
@@ -192,6 +193,11 @@ export default function PermitClientGroup({
           </span>
           {group.lines.some(li => li.urgent) && (
             <span className="inline-flex items-center rounded-full border border-red-400 bg-red-100 px-2 py-0.5 font-bold text-red-800">⚠ URGENT</span>
+          )}
+          {sharedOfficeCount > 1 && (
+            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700" title="Another job uses this same permit office — coordinate the calls">
+              Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
+            </span>
           )}
           {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
             <button
