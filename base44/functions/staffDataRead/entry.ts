@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, items: scopedRows.map((row) => projectItem(entityName, row)) });
   } catch (error: any) {
     const status = Number(error?.status || 500);
-    if ([400, 401, 403].includes(status)) {
+    if ([400, 401, 403, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
     }
     console.error('staffDataRead error:', error);
