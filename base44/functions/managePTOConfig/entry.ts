@@ -436,6 +436,7 @@ async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: 
       details: {
         payload_hash: payloadHash,
         previous_policy_id: balance?.policy_id || null,
+        previous_balances: Array.isArray(balance?.balances) ? balance.balances : [],
         policy_id: policyId,
         expected_updated_date: expectedUpdatedDate || null,
       },
