@@ -324,9 +324,9 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 237. **[F][DONE]** Application status mini-timeline per line: drafted → submitted → acknowledged → under review → approved — dates on each transition.
 238. **[F][DONE]** Submission-method field per line: portal / email / fax / in-person / mail — staff record HOW it went in.
 239. **[UX][DONE]** Portal-link deep button: "Open the Milford permit portal" straight from the line — not buried in office details.
-240. **[F][FLAGGED-dedicated]** Application-checklist template per jurisdiction: the office's own required-fields list stored on the profile — "Milford wants drawings + site plan".
-241. **[F][FLAGGED-dedicated]** Required-documents tracker: drawings attached? site plan? contractor license? — checkmarks per application.
-242. **[UX][FLAGGED-dedicated]** "Ready to submit?" gate: the line flags what's missing before staff call it submitted — prevents bounce-backs.
+240. **[F][DONE]** Application-checklist template per jurisdiction: the office's own required-fields list stored on the profile — "Milford wants drawings + site plan".
+241. **[F][DONE]** Required-documents tracker: drawings attached? site plan? contractor license? — checkmarks per application.
+242. **[UX][DONE]** "Ready to submit?" gate: the line flags what's missing before staff call it submitted — prevents bounce-backs.
 243. **[F][DONE]** Rejection-tracking: a rejected application records the office's stated reason + date — resubmissions learn from it.
 244. **[F][DONE]** Revision count on the line: v1, v2, v3 — how many times the office sent it back.
 245. **[UX][DONE]** "What's left to file" summary on the job card: "2 of 3 applications still unfiled" — the work left is a number.
@@ -358,7 +358,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 268. **[UX][DONE]** Evidence-count on the card: "3 official sources" — confidence at a glance.
 269. **[F][FLAGGED-dedicated]** Application-form library: the actual PDF form per jurisdiction linked for download — staff don't re-find it.
 270. **[H][FLAGGED-dedicated]** Form-version tracking: when an office updates their application form, the old link flags "may be outdated".
-271. **[F][FLAGGED-dedicated]** Ordinance section citations: "Milford Codified §153.042" stored as structured data, not just in notes.
+271. **[F][DONE]** Ordinance section citations: "Milford Codified §153.042" stored as structured data, not just in notes.
 272. **[UX][FLAGGED-dedicated]** Fee-schedule page deep-link: the exact PDF page with the fee table, not just the department site.
 273. **[F][FLAGGED-dedicated]** Meeting-agenda links: the council agenda that changed a fee gets linked — the "why" is traceable.
 274. **[H][DONE]** Evidence-gated verification: a jurisdiction can't verify without ≥1 usable official source — enforced server-side.
@@ -400,7 +400,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 304. **[UX][FLAGGED-dedicated]** Permit-number autocomplete: typing a known permit # on the line pulls the jurisdiction context.
 305. **[F][DONE]** Inspection-outcome record: pass/fail + inspector notes + re-inspection needed — the closeout is tracked.
 306. **[UX][FLAGGED-dedicated]** "What inspectors usually flag" hint per jurisdiction when known — tribal knowledge recorded.
-307. **[F][FLAGGED-dedicated]** Correction-notice tracking: failed inspection → correction required by date → marked resolved.
+307. **[F][DONE]** Correction-notice tracking: failed inspection → correction required by date → marked resolved.
 308. **[H][DONE]** Duplicate-permit guard: two identical open applications to the same office for the same job flag as possible duplicates.
 
 ## AA — Staff experience & training
@@ -532,11 +532,11 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 415. **[F][FLAGGED-dedicated]** Permit-template library: common application-packets per jurisdiction — Milford's PDF + required docs pre-known.
 416. **[UX][FLAGGED-dedicated]** The picker remembers "usual" answers: electrical included? office preference? — per-user defaults.
 417. **[F][FLAGGED-dedicated]** Multi-job jurisdiction assign: select N jobs in the same town → apply the verified jurisdiction once.
-418. **[UX][FLAGGED-dedicated]** Quick-switch to a sibling: "the township handles this, not the city" — a one-tap swap to the other candidate.
+418. **[UX][DONE]** Quick-switch to a sibling: "the township handles this, not the city" — a one-tap swap to the other candidate.
 419. **[F][FLAGGED-dedicated]** Custom workflow steps per jurisdiction: "Milford needs a site plan first" — jurisdiction-specific steps on its lines.
-420. **[UX][FLAGGED-dedicated]** "What's different about this town" hint: jurisdiction-specific quirks surfaced on its jobs — "they want mail-in only".
-421. **[F][FLAGGED-dedicated]** Permit-renewal flow: an expiring permit's renewal path — reuse the prior application's data.
-422. **[UX][FLAGGED-dedicated]** Smart-suggest next-step: "Call them — they said 2 weeks" — the next action recommended.
+420. **[UX][DONE]** "What's different about this town" hint: jurisdiction-specific quirks surfaced on its jobs — "they want mail-in only".
+421. **[F][DONE]** Permit-renewal flow: an expiring permit's renewal path — reuse the prior application's data.
+422. **[UX][DONE]** Smart-suggest next-step: "Call them — they said 2 weeks" — the next action recommended.
 423. **[F][FLAGGED-dedicated]** Jurisdiction-diff: compare two jurisdictions' office structures side-by-side — "Milford has city zoning; Miami Township doesn't".
 424. **[UX][DONE]** Fast-path for repeat addresses: same address searched recently → the cached verified match applies in one click.
 425. **[F][DONE]** "What would my neighbor do" — the township/county context shown when the city is the answer, so the user understands the map.
@@ -548,6 +548,6 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 431. **[F][FLAGGED-dedicated]** Two-jobs-same-town view: jobs in the same jurisdiction cluster with "same permit office — coordinate them" hint.
 432. **[UX][FLAGGED-dedicated]** Whole-page plain-language sweep #4: every remaining field-name or technical phrase gets human words.
 433. **[F][FLAGGED-dedicated]** "Suggest an office we don't know": staff flag a missing office on a jurisdiction — the research queue gets the signal.
-434. **[UX][FLAGGED-dedicated]** The picker answers "who do I call?" first — before asking for the address — the card leads with the office.
-435. **[F][FLAGGED-dedicated]** Permit-status line on the WO outside permitting: the job's main record shows "sign permit: issued" — no digging.
+434. **[UX][DONE]** The picker answers "who do I call?" first — before asking for the address — the card leads with the office.
+435. **[F][DONE]** Permit-status line on the WO outside permitting: the job's main record shows "sign permit: issued" — no digging.
 436. **[UX][FLAGGED-dedicated]** Every item on this page reads at a 6th-grade level — the whole page is plain language end-to-end.
