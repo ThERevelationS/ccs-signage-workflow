@@ -310,6 +310,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       }
       if (prefs?.milestone_behavior === "toast_sound") playSoundEffect(prefs?.milestone_sound || "chime");
     }
+    // Forget-to-clock-out warning once elapsed passes goal + 4h.
+    if (!next.includes(88888) && live.elapsed >= goalMinutes + 240) {
+      next.push(88888);
+      toast({ description: "Time Tracker: still clocked in - did you forget to clock out?" });
+    }
     if (prefs?.weekly_celebrate === true) {
       const weeklyGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
       if (live.weekly >= weeklyGoal && !next.includes(2000)) {
@@ -395,6 +400,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const visibleHere = enabled && locationPref !== "hidden" &&
     !(prefs?.show_only_clocked_in === true && snapshot?.status !== "clocked_in") &&
     !(prefs?.hide_when_unfocused === true && !focused) &&
+    !(prefs?.hide_on_weekend === true && (dayKey === "sun" || dayKey === "sat")) &&
     !idleExpired &&
     !(prefs?.timeclock_page_only === true && !onTimeClock) &&
     !(prefs?.device_scope === "desktop_only" && isMobileView) &&
