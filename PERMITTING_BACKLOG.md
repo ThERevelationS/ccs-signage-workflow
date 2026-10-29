@@ -71,10 +71,10 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 47. **[F]** Per-locality office card: the office that issues sign permits, with phone, address, hours, permit portal link — the thing the estimator actually calls.
 48. **[F][DONE]** Electrical permit + electrical inspection authority as separate cards — NEVER combine with the sign office.
-49. **[UX]** "Call" / "Email" / "Open portal" buttons on each office card — the review becomes actionable in one click.
-50. **[F]** Source link on every claim — tap the claim → open the government source the data came from.
-51. **[UX]** Last-verified date on each office card, plain language: "Checked on Oct 20" → "More than 90 days old — may need a re-check".
-52. **[F]** Flag stale jurisdictions in the repository automatically (last-verified > N days) and queue them for re-verification.
+49. **[UX][DONE]** "Call" / "Email" / "Open portal" buttons on each office card — the review becomes actionable in one click.
+50. **[F][DONE]** Source link on every claim — tap the claim → open the government source the data came from.
+51. **[UX][DONE]** Last-verified date on each office card, plain language: "Checked on Oct 20" → "More than 90 days old — may need a re-check".
+52. **[F][DONE]** Flag stale jurisdictions in the repository automatically (last-verified > N days) and queue them for re-verification.
 53. **[F]** Record a call outcome per office ("they said permits take 2 weeks") — the tribal knowledge stays with the jurisdiction.
 54. **[F][DONE]** Fee snapshot where known: "Sign permit ≈ $75" sourced from the office's fee schedule page.
 55. **[F]** Turnaround estimate where known: "Typical approval: 5–10 business days" sourced or marked unverified.
@@ -95,16 +95,16 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 ## G — Page layout + accessibility (young AND old users)
 
 66. **[UX][DONE]** Big-text mode toggle on the permitting page — 18px+ everything for older users.
-67. **[UX]** High-contrast option — status colors get text labels too so color isn't the only signal.
+67. **[UX][DONE]** High-contrast option — status colors get text labels too so color isn't the only signal.
 68. **[UX][DONE]** Touch targets ≥ 44px on the picker buttons/cards — small select buttons are unusable on a phone or shaky hands.
-69. **[UX]** Keyboard navigation: Tab through candidates, Enter to select, Esc to close — the picker is currently mouse-driven.
-70. **[UX]** Screen-reader labels: every candidate card needs aria-labels reading "Milford, Ohio — verified — select this office".
-71. **[UX]** Focus management: when the search completes, focus jumps to the result card — announce it via aria-live.
-72. **[UX]** Reduced-motion mode: the map/skeleton transitions shouldn't disorient users with vestibular sensitivity.
+69. **[UX][DONE]** Keyboard navigation: Tab through candidates, Enter to select, Esc to close — the picker is currently mouse-driven.
+70. **[UX][DONE]** Screen-reader labels: every candidate card needs aria-labels reading "Milford, Ohio — verified — select this office".
+71. **[UX][DONE]** Focus management: when the search completes, focus jumps to the result card — announce it via aria-live.
+72. **[UX][DONE]** Reduced-motion mode: the map/skeleton transitions shouldn't disorient users with vestibular sensitivity.
 73. **[UX][DONE]** The picker dialog needs a visible, labeled Close button in the top-right — not an icon-only X.
 74. **[UX][DONE]** Status badges get words, not just colors: "Verified", "Needs review", "Draft" — readable without a legend.
 75. **[UX][DONE]** Font size for the picker input should be 16px+ — iOS zoom-on-focus with small inputs is a classic complaint.
-76. **[UX]** Plain-language sweep #3: every remaining technical string ("authority_established", "boundary_intersection", "CAS conflict") gets human copy.
+76. **[UX][DONE]** Plain-language sweep #3: every remaining technical string ("authority_established", "boundary_intersection", "CAS conflict") gets human copy.
 77. **[UX][DONE]** The scan-activity panel needs an explain-me tooltip — "This shows what the system checked behind the scenes. You don't need it — it's for us."
 78. **[UX][DONE]** The jurisdiction picker title should say what the user is DOING: "Which office issues permits for this address?" — not "Choose your jurisdiction" (better than it was, still jargon-y).
 
@@ -162,7 +162,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 116. **[UX][DONE]** Skeleton states while cards load — never show a half-rendered empty `main` like the 429-storm case.
 117. **[UX][DONE]** The card grid's responsive behavior on a phone: one column, big buttons — the current layout was desktop-first.
 118. **[UX][DONE]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
-119. **[F]** A "Print this jurisdiction's details" view — clerk takes a paper copy of office name/address/phone to the phone call.
+119. **[F][DONE]** A "Print this jurisdiction's details" view — clerk takes a paper copy of office name/address/phone to the phone call.
 120. **[UX]** Undo/history of searches in the dialog — the back-arrow restores the previous search, not close-everything.
 121. **[UX]** Accessibility pass on color contrast for every status chip/badge — WCAG AA minimum.
 122. **[UX][DONE]** Reduced copy density in the picker's review section — the current "authority review" block is too wordy for a fast flow.
