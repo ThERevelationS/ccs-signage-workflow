@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Loader2 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -26,9 +27,10 @@ const flattenValue = (value) => {
   return value;
 };
 
-const toCsv = (rows) => {
+const toCsv = (rows, colsOnly = null) => {
   const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const cols = [...new Set(rows.flatMap((r) => Object.keys(r || {})))].filter((c) => c !== "__v").slice(0, 60);
+  const cols = (colsOnly && colsOnly.length ? colsOnly
+    : [...new Set(rows.flatMap((r) => Object.keys(r || {})))].filter((c) => c !== "__v")).slice(0, 60);
   const lines = [cols.map(esc).join(",")];
   for (const row of rows) {
     lines.push(cols.map((c) => esc(flattenValue(row[c]))).join(","));
@@ -50,15 +52,31 @@ export default function DataExportPanel() {
       .then((r) => { if (alive) setConnections(r?.setting_value || {}); }).catch(() => { if (alive) setConnections({}); });
     return () => { alive = false; };
   }, []);
+  useEffect(() => {
+    let alive = true;
+    staffEntities[entityName].list("-created_date", 3).then((rows) => {
+      if (!alive) return;
+      const fs = [...new Set((Array.isArray(rows) ? rows : []).flatMap((r) => Object.keys(r || {})))].filter((f) => f !== "__v").slice(0, 40);
+      setFields(fs); setPickedCols(new Set(fs)); setFilterField(""); setFilterValue("");
+    }).catch(() => { if (alive) { setFields([]); setPickedCols(new Set()); } });
+    return () => { alive = false; };
+  }, [entityName]);
   const [msg, setMsg] = useState("");
+  const [fields, setFields] = useState([]);
+  const [pickedCols, setPickedCols] = useState(new Set());
+  const [filterField, setFilterField] = useState("");
+  const [filterValue, setFilterValue] = useState("");
 
   const runExport = async () => {
     if (busy) return;
     setBusy(true); setMsg("");
     try {
-      const rows = await loadAllEntityRows({ entity: staffEntities[entityName], sort: null, label: `${entityName} export` });
-      if (!rows.length) { setMsg("No rows found for that entity."); setBusy(false); return; }
-      const csv = toCsv(rows);
+      let rows = await loadAllEntityRows({ entity: staffEntities[entityName], sort: null, label: `${entityName} export` });
+      if (filterField && filterValue.trim()) {
+        rows = rows.filter((r) => String(r?.[filterField] ?? "").toLowerCase().includes(filterValue.trim().toLowerCase()));
+      }
+      if (!rows.length) { setMsg("No rows found for that entity/filter."); setBusy(false); return; }
+      const csv = toCsv(rows, pickedCols.size ? [...pickedCols] : null);
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -147,6 +165,36 @@ export default function DataExportPanel() {
           {busy ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Exporting…</> : "Export CSV"}
         </Button>
       </div>
+      {fields.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-medium text-gray-600">Columns to include:</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {fields.map((f) => (
+              <button key={f} type="button" aria-pressed={pickedCols.has(f)}
+                onClick={() => setPickedCols((cur) => { const next = new Set(cur); if (next.has(f)) next.delete(f); else next.add(f); return next; })}
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-mono ${pickedCols.has(f) ? "border-indigo-300 bg-indigo-50 text-indigo-800" : "border-gray-200 bg-gray-50 text-gray-400 line-through"}`}>
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 flex items-end gap-2">
+            <div>
+              <label className="text-xs font-medium text-gray-600">Filter field</label>
+              <Select value={filterField} onValueChange={setFilterField}>
+                <SelectTrigger className="mt-1 h-8 w-48 bg-white text-xs"><SelectValue placeholder="No filter" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No filter</SelectItem>
+                  {fields.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600">contains</label>
+              <Input value={filterValue} onChange={(e) => setFilterValue(e.target.value)} className="mt-1 h-8 w-40 bg-white text-xs" placeholder="value…" />
+            </div>
+          </div>
+        </div>
+      )}
       {msg && <p className="mt-2 text-xs text-gray-600">{msg}</p>}
 
       <div className="mt-4 rounded-lg border border-green-200 bg-green-50/60 p-3" aria-label="Access-rule coverage">
