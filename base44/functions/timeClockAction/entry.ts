@@ -1319,6 +1319,9 @@ function defaultTrackerPrefs(email: string, name: string) {
     custom_label: '',
     alert_minutes: [],
     reminders: [],
+    hide_when_idle_minutes: 0,
+    daily_goal_overrides: null,
+    hide_on_weekend: false,
     weekly_celebrate: true,
   };
 }
@@ -1341,8 +1344,8 @@ const TRACKER_ENUMS: Record<string, string[]> = {
   time_format: ['hh_mm_ss', 'hours_minutes', 'decimal'],
 };
 
-const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate', 'weekly_celebrate'];
-const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes', 'reminders'];
+const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate', 'weekly_celebrate', 'hide_on_weekend'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes', 'reminders', 'hide_when_idle_minutes', 'daily_goal_overrides'];
 
 function trackerClamp(value: any, min: number, max: number, fallback: number) {
   const n = Number(value);
@@ -1364,6 +1367,14 @@ function normalizeTrackerPrefs(row: any, target: any) {
   out.scale = trackerClamp(row.scale, 0.5, 2, 1);
   out.opacity = trackerClamp(row.opacity, 0.4, 1, 1);
   out.update_interval_seconds = Math.round(trackerClamp(row.update_interval_seconds, 15, 300, 60));
+  out.hide_when_idle_minutes = Math.round(trackerClamp(row.hide_when_idle_minutes, 0, 480, 0));
+  const rawOverrides = row.daily_goal_overrides && typeof row.daily_goal_overrides === 'object' ? row.daily_goal_overrides : {};
+  const cleanOverrides: Record<string, number> = {};
+  for (const k of ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']) {
+    const v = Math.round(Number((rawOverrides as any)[k]));
+    if (Number.isFinite(v) && v >= 60 && v <= 840) cleanOverrides[k] = v;
+  }
+  out.daily_goal_overrides = Object.keys(cleanOverrides).length ? cleanOverrides : null;
   const rawThresholds = Array.isArray(row.milestone_thresholds) ? row.milestone_thresholds : base.milestone_thresholds;
   out.milestone_thresholds = rawThresholds
     .map((t: any) => Number(t))
@@ -1377,12 +1388,14 @@ function normalizeTrackerPrefs(row: any, target: any) {
     : (Array.isArray(row.alert_minutes) ? row.alert_minutes : []);
   out.reminders = reminderSource
     .map((r: any) => {
+      const percent = Number(typeof r === 'object' && r !== null ? r.percent : NaN);
       const minutes = Math.round(Number(typeof r === 'object' && r !== null ? r.minutes : r));
       const label = typeof r === 'object' && r !== null ? String(r.label || '').slice(0, 60).trim() : '';
+      if (Number.isFinite(percent) && percent > 0 && percent <= 1.5) return { percent, label };
       return Number.isFinite(minutes) && minutes > 0 && minutes <= 1440 ? { minutes, label } : null;
     })
     .filter(Boolean)
-    .filter((r: any, i: number, arr: any[]) => arr.findIndex((o: any) => o.minutes === r.minutes) === i)
+    .filter((r: any, i: number, arr: any[]) => arr.findIndex((o: any) => o.minutes === r.minutes && o.percent === r.percent) === i)
     .slice(0, 12);
   out.alert_minutes = (Array.isArray(row.alert_minutes) ? row.alert_minutes : [])
     .map((m: any) => Math.round(Number(m)))
@@ -7614,6 +7627,54 @@ Deno.serve(async (req) => {
       if (!Array.isArray(requests)) throw new Error('Correction request list did not return records.');
       requests.sort((a: any, b: any) => new Date(b.requested_at || b.created_date || 0).getTime() - new Date(a.requested_at || a.created_date || 0).getTime());
       return Response.json({ success: true, requests });
+    }
+
+    if (action === 'who_is_in') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({ status: 'clocked_in' });
+      if (!Array.isArray(rows)) throw new Error('TimeEntry list did not return records.');
+      const staff = rows
+        .filter((r: any) => r?.id && !r.archived_test_data && !r.archived_admin)
+        .map((r: any) => ({ id: r.id, user_email: r.user_email, user_name: r.user_name || r.user_email, clock_in: r.clock_in }))
+        .sort((a: any, b: any) => new Date(a.clock_in || 0).getTime() - new Date(b.clock_in || 0).getTime());
+      return Response.json({ success: true, staff });
+    }
+
+    if (action === 'list_timeclock_audit') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await auditEntity.filter({});
+      if (!Array.isArray(rows)) throw new Error('Audit list did not return records.');
+      const events = rows
+        .filter((r: any) => r?.id)
+        .sort((a: any, b: any) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime())
+        .slice(0, 60)
+        .map((r: any) => ({
+          id: r.id,
+          action: r.action || '',
+          user_email: r.user_email || '',
+          actor_email: r.actor_email || '',
+          request_id: r.request_id || '',
+          time_entry_id: r.time_entry_id || '',
+          created: r.created_date || null,
+        }));
+      return Response.json({ success: true, events });
+    }
+
+    if (action === 'list_face_enrollment') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const userEntity = base44.asServiceRole.entities.User;
+      const users = await userEntity.filter({});
+      if (!Array.isArray(users)) throw new Error('User list did not return records.');
+      const roster = users
+        .map((u: any) => ({
+          email: u.email,
+          name: u.full_name || u.email,
+          descriptor_count: Array.isArray(u.face_descriptors) ? u.face_descriptors.length : 0,
+          enrolled: Array.isArray(u.face_descriptors) && u.face_descriptors.length > 0,
+          updated: u.updated_date || null,
+        }))
+        .sort((a: any, b: any) => Number(a.enrolled) - Number(b.enrolled) || String(a.name).localeCompare(String(b.name)));
+      return Response.json({ success: true, roster });
     }
 
     if (action === 'update_notes') {
