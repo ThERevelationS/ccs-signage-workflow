@@ -157,23 +157,29 @@ function cleanSort(value: unknown, entityName: string) {
   return sort;
 }
 
-function cleanQuery(value: unknown) {
+// Read-filter operators allowed on non-denied fields. Anything that scans or
+// evaluates ($regex/$where/$expr/$or/...) stays blocked — those turn a filter
+// into a boolean oracle on fields the projection denies.
+const SAFE_READ_OPERATORS = new Set(["$in", "$nin", "$lt", "$lte", "$gt", "$gte", "$ne", "$exists"]);
+
+function cleanQuery(value: unknown, entityName: string) {
   if (value == null) return null;
-  if (typeof value !== 'object' || Array.isArray(value)) {
-    throw Object.assign(new Error('Staff read filter must be an object.'), { status: 400 });
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw Object.assign(new Error("Staff read filter must be an object."), { status: 400 });
   }
-  // Reject operator keys at ANY depth — a nested operator like
-  // { password_hash: { $regex: '^5f' } } turns the filter into a boolean
-  // oracle on fields the output projection denies.
-  const stack: any[] = [value];
+  const denied = new Set(FIELD_DENYLIST[entityName] || []);
+  const stack: Array<{ node: any; field: string }> = [{ node: value, field: "" }];
   while (stack.length) {
-    const node = stack.pop();
-    if (!node || typeof node !== 'object') continue;
+    const { node, field } = stack.pop();
+    if (!node || typeof node !== "object") continue;
     for (const [key, val] of Object.entries(node)) {
-      if (key.startsWith('$')) {
-        throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
+      if (key.startsWith("$")) {
+        if (!field || denied.has(field) || !SAFE_READ_OPERATORS.has(key)) {
+          throw Object.assign(new Error("Staff read filter operators are not allowed."), { status: 400 });
+        }
+        continue;
       }
-      if (val && typeof val === 'object') stack.push(val);
+      if (val && typeof val === "object" && !Array.isArray(val)) stack.push({ node: val, field: key });
     }
   }
   let serialized;
@@ -230,7 +236,7 @@ Deno.serve(async (req) => {
           return Response.json({ error: `This record type requires a CCS admin: ${name}` }, { status: 403 });
         }
         const ent = base44.asServiceRole.entities[name];
-        const q = cleanQuery(entry?.query);
+        const q = cleanQuery(entry?.query, name);
         const sort = String(entry?.sort || 'created_date').trim() || null;
         const limit = normalizeLimit(entry?.limit);
         const skip = normalizeSkip(entry?.skip);
@@ -262,7 +268,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, item: projectItem(entityName, item) });
     }
 
-    const query = cleanQuery(body?.query);
+    const query = cleanQuery(body?.query, entityName);
     const sort = cleanSort(body?.sort, entityName);
     const limit = cleanLimit(body?.limit, 100);
     const skip = cleanSkip(body?.skip);
