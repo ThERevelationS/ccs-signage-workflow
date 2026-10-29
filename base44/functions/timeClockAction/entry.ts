@@ -1328,7 +1328,7 @@ function defaultTrackerPrefs(email: string, name: string) {
 
 const TRACKER_ENUMS: Record<string, string[]> = {
   display_style: ['ring', 'bar', 'minimal', 'flip', 'roll', 'donut', 'arc', 'badge'],
-  count_mode: ['paid', 'elapsed'],
+  count_mode: ['paid', 'elapsed', 'pomodoro'],
   direction: ['up', 'down'],
   milestones_mode: ['off', 'goal', 'custom'],
   milestone_behavior: ['silent', 'pulse', 'toast', 'toast_sound'],
@@ -10654,6 +10654,11 @@ Deno.serve(async (req) => {
 
         let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, 'Clock-in request');
         if (!entry) {
+          const geoLat = Number(body?.geo?.lat);
+          const geoLng = Number(body?.geo?.lng);
+          const geo = Number.isFinite(geoLat) && Number.isFinite(geoLng) && Math.abs(geoLat) <= 90 && Math.abs(geoLng) <= 180
+            ? { lat: Math.round(geoLat * 100000) / 100000, lng: Math.round(geoLng * 100000) / 100000, accuracy: Math.min(10000, Math.max(0, Math.round(Number(body.geo.accuracy) || 0))) }
+            : null;
           entry = await entryEntity.create({
             user_email: target.email,
             user_name: target.full_name || target.email,
@@ -10661,6 +10666,7 @@ Deno.serve(async (req) => {
             clock_in_request_id: requestId,
             clock_source: 'server',
             status: 'clocked_in',
+            ...(geo ? { clock_in_geo: geo } : {}),
           });
         }
         if (!entry?.id) throw new Error('Clock-in TimeEntry could not be created.');
