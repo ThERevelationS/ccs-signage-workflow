@@ -119,7 +119,7 @@ export default function CreateQuickProductModal({ open, line, partCount = 0, onC
                   {visibleCategories.map((category) => {
                     const selected = categories.includes(category.category_name);
                     return (
-                      <button key={category.id} type="button" onClick={() => toggleCategory(category.category_name)} className={`h-[26px] px-2.5 rounded-full border text-[10px] font-semibold ${selected ? "border-lime-400 bg-lime-100 text-gray-900" : "border-gray-300 bg-white text-gray-600"}`}>
+                      <button type="button" key={category.id} type="button" onClick={() => toggleCategory(category.category_name)} className={`h-[26px] px-2.5 rounded-full border text-[10px] font-semibold ${selected ? "border-lime-400 bg-lime-100 text-gray-900" : "border-gray-300 bg-white text-gray-600"}`}>
                         {category.category_name}
                       </button>
                     );
