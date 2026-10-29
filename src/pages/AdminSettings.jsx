@@ -2358,6 +2358,14 @@ export default function AdminSettings() {
                               Won't run - not wired yet
                             </Badge>
                           )}
+                          {(() => {
+                            const recent = Array.isArray(rule.recent_runs) ? rule.recent_runs.slice(-3) : [];
+                            return recent.length === 3 && recent.every((r) => r?.status === 'error') ? (
+                              <Badge className="text-xs bg-red-600 text-white border border-red-700">
+                                Failing — last 3 runs errored
+                              </Badge>
+                            ) : null;
+                          })()}
                           {ruleOrphanedTargets(rule).length > 0 && (
                             <Badge className="text-xs bg-red-100 text-red-800 border border-red-300">
                               Missing: {ruleOrphanedTargets(rule).join(", ")}
