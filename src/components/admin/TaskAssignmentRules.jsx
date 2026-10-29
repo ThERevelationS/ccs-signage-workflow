@@ -18,6 +18,7 @@ const AuthorizedEmail = staffEntities.AuthorizedEmail;
 const WorkOrder = staffEntities.WorkOrder;
 
 const SETTING_KEY = "taskAssignmentRules";
+const ESCALATION_KEY = "escalationMatrix";
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },
@@ -144,7 +145,7 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
           {ASSIGNABLE_FIELDS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
         </SelectContent>
       </Select>
-      <span className="text-xs text-gray-500">â†’</span>
+      <span className="text-xs text-gray-500">→</span>
       <Select value={assign.person} onValueChange={(v) => onChange("person", v)}>
         <SelectTrigger className="w-44 h-7 text-xs">
           <SelectValue placeholder="Person" />
@@ -171,6 +172,10 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
 
 function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
   const [expanded, setExpanded] = useState(false);
+  const [escalationRows, setEscalationRows] = useState([]);
+  const [escalationRecord, setEscalationRecord] = useState(null);
+  const [escalationSaving, setEscalationSaving] = useState(false);
+  const [escalationMsg, setEscalationMsg] = useState("");
   return (
     <div className={`clay-card p-4 ${!rule.enabled ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-2">
@@ -185,7 +190,7 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
             <div className="flex flex-wrap gap-1 text-xs text-gray-500 mt-1">
               {rule.assignments?.slice(0, 3).map((a, i) => {
                 const fieldLabel = ASSIGNABLE_FIELDS.find(f => f.value === a.field)?.label || a.field;
-                return <span key={i} className="bg-blue-50 px-1.5 py-0.5 rounded">{fieldLabel} â†’ {a.person === "__clear__" ? "Clear" : a.person}</span>;
+                return <span key={i} className="bg-blue-50 px-1.5 py-0.5 rounded">{fieldLabel} → {a.person === "__clear__" ? "Clear" : a.person}</span>;
               })}
             </div>
           )}
@@ -208,7 +213,7 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
                 const onlyIfLabel = ONLY_IF_OPTS.find(o => o.value === a.only_if)?.label || a.only_if;
                 return (
                   <div key={i} className="bg-blue-50 px-2 py-0.5 rounded text-gray-600">
-                    {fieldLabel} â†’ <strong>{a.person === "__clear__" ? "Clear" : a.person}</strong> <span className="text-gray-400">({onlyIfLabel})</span>
+                    {fieldLabel} → <strong>{a.person === "__clear__" ? "Clear" : a.person}</strong> <span className="text-gray-400">({onlyIfLabel})</span>
                   </div>
                 );
               })}
@@ -249,13 +254,16 @@ export default function TaskAssignmentRules() {
   const load = async () => {
     setLoading(true);
     try {
-      const [record, usersData] = await Promise.all([
+      const [record, usersData, escalation] = await Promise.all([
         loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: SETTING_KEY, label: "Task assignment rules" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Task assignment authorized users" })
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Task assignment authorized users" }),
+        loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: ESCALATION_KEY, label: "Escalation contacts" })
       ]);
       setSettingRecord(record);
       setRules(record?.setting_value?.rules || []);
       setUsers(usersData);
+      setEscalationRecord(escalation);
+      setEscalationRows(Array.isArray(escalation?.setting_value?.rows) ? escalation.setting_value.rows : []);
     } catch (error) {
       console.error("Error loading task assignment rules:", error);
       setSettingsError(error?.message || "Task assignment rules could not be loaded safely.");
@@ -265,6 +273,28 @@ export default function TaskAssignmentRules() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const saveEscalation = async () => {
+    if (escalationSaving) return;
+    setEscalationSaving(true); setEscalationMsg("");
+    try {
+      const rows = escalationRows
+        .map(r => ({ area: (r.area || "").trim(), contact: (r.contact || "").trim() }))
+        .filter(r => r.area && r.contact);
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: escalationRecord,
+        settingKey: ESCALATION_KEY,
+        nextValue: { rows },
+        label: "Escalation contacts",
+      });
+      setEscalationRecord(saved);
+      setEscalationRows(rows);
+      setEscalationMsg("Escalation contacts saved.");
+    } catch (e) {
+      setEscalationMsg(e?.message || "Save blocked - reload before saving.");
+    } finally { setEscalationSaving(false); }
+  };
 
   const persist = async (updatedRules) => {
     setSaving(true);
@@ -568,7 +598,7 @@ export default function TaskAssignmentRules() {
                           <div key={field} className={`flex items-center gap-2 ${info.applies ? "text-green-700" : "text-gray-400"}`}>
                             <span>{label}:</span>
                             <span className="line-through text-gray-400">{info.current || "empty"}</span>
-                            {info.applies ? <span>â†’ <strong>{info.wouldSet || "clear"}</strong></span> : <span className="text-xs italic">(skip - not empty)</span>}
+                            {info.applies ? <span>→ <strong>{info.wouldSet || "clear"}</strong></span> : <span className="text-xs italic">(skip - not empty)</span>}
                           </div>
                         );
                       })}
@@ -594,6 +624,35 @@ export default function TaskAssignmentRules() {
 
       {/* Delete Confirm */}
       <TaskLoadPanel users={users} />
+
+      <div className="mt-4 rounded-xl border border-gray-200 bg-white/70 p-4">
+        <h3 className="font-semibold text-gray-800">Escalation contacts</h3>
+        <p className="text-xs text-gray-500 mt-1">Who to call when something goes wrong - payroll issues, sync failures, permit holds.</p>
+        <div className="mt-3 space-y-2">
+          {escalationRows.map((row, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2">
+              <Input value={row.area || ""} placeholder="Area (e.g., Payroll)"
+                onChange={(e) => setEscalationRows(prev => prev.map((r, j) => j === i ? { ...r, area: e.target.value } : r))}
+                className="h-8 w-40 text-xs" />
+              <Input value={row.contact || ""} placeholder="Name / phone / email"
+                onChange={(e) => setEscalationRows(prev => prev.map((r, j) => j === i ? { ...r, contact: e.target.value } : r))}
+                className="h-8 flex-1 text-xs" />
+              <Button type="button" variant="ghost" size="icon" aria-label="Remove row" className="h-8 w-8"
+                onClick={() => setEscalationRows(prev => prev.filter((_, j) => j !== i))}>
+                <Trash2 className="h-3.5 w-3.5 text-red-600" />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+            onClick={() => setEscalationRows(prev => [...prev, { area: "", contact: "" }])}>Add row</Button>
+          <Button type="button" size="sm" disabled={escalationSaving} onClick={saveEscalation} className="h-7 text-xs">
+            {escalationSaving ? "Saving..." : "Save contacts"}
+          </Button>
+          {escalationMsg && <span className="text-xs text-gray-600">{escalationMsg}</span>}
+        </div>
+      </div>
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
