@@ -324,6 +324,17 @@ const TRIGGER_HELP = {
   punch_exception: "Fires when a punch problem needs admin attention.",
 };
 
+// Plain-English descriptions for each admin group — shown as button tooltips
+// so new admins know where to look before they click.
+const GROUP_HELP = {
+  workflow: "Workflow: automation rules, task assignments, calendar, and the activity feed",
+  people: "People: users and permissions, time clock, and resource capacity",
+  integrations: "Integrations: Smartsheet sync, CoreBridge history, and conflict review",
+  permitting: "Permitting: completeness dashboards, rule review, and test results",
+  system: "System: backend tools (backup, trash, imports, jobs, export) and fleet settings",
+};
+
+
 
 const ACTION_TYPES = [
   { value: "send_email", label: "Send Email", icon: Mail, color: "blue" },
@@ -2276,6 +2287,7 @@ export default function AdminSettings() {
                   key={group.id}
                   type="button"
                   data-admin-category={group.id}
+                  title={GROUP_HELP[group.id] || group.label}
                   aria-pressed={activeAdminGroup.id === group.id}
                   onClick={() => {
                     if (activeAdminGroup.id !== group.id) handleAdminTabChange(group.tabs[0].value);
