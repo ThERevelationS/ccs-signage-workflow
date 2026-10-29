@@ -10,6 +10,11 @@
       "type": "string",
       "description": "User's full name"
     },
+    "access_expires_on": {
+      "type": "string",
+      "format": "date",
+      "description": "Temporary-access expiry date \u2014 admins review and revoke at or before this date"
+    },
     "reports_to": {
       "type": "string",
       "description": "Manager / supervisor this user reports to (name or email)"
