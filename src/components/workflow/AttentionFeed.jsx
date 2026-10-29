@@ -16,6 +16,8 @@ import {
   Receipt,
   RefreshCw,
   ShoppingCart,
+  Volume2,
+  VolumeX,
   Wrench,
 } from "lucide-react";
 
@@ -28,6 +30,14 @@ export default function AttentionFeed() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState("");
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem("attention_sound") !== "off");
+  const toggleSound = () => {
+    setSoundOn((on) => {
+      const next = !on;
+      try { localStorage.setItem("attention_sound", next ? "on" : "off"); } catch {}
+      return next;
+    });
+  };
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
@@ -226,6 +236,11 @@ export default function AttentionFeed() {
             {c.count} {c.label}
           </button>
         ))}
+        <button type="button" onClick={toggleSound} title={soundOn ? "Mute notification sound" : "Unmute notification sound"}
+          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
+          {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+          {soundOn ? "Sound on" : "Sound off"}
+        </button>
         <button type="button" onClick={load} disabled={loading}
           className="ml-auto rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800">
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
