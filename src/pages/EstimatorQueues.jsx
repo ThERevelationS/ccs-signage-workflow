@@ -6,6 +6,7 @@ import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2 } from "lucide-react
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
+import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const STATUSES = [
@@ -72,7 +73,13 @@ export default function EstimatorQueues() {
     if (!selectedIds.size || bulkBusy) return;
     setBulkBusy(true); setBulkError("");
     const failures = [];
+    const skipped = [];
     for (const id of selectedIds) {
+      const row = estimates.find((e) => e.id === id);
+      if (!isEstimateStatusTransitionAllowed(row?.status, bulkStatus)) {
+        skipped.push(`${row?.estimate_number || id} (${row?.status || "draft"} → ${bulkStatus})`);
+        continue;
+      }
       try {
         await staffEntities.AllInOneEstimate.update(id, { status: bulkStatus });
       } catch (error) {
@@ -81,7 +88,10 @@ export default function EstimatorQueues() {
     }
     setBulkBusy(false);
     setSelectedIds(new Set());
-    if (failures.length) setBulkError(`Bulk update partially failed: ${failures.slice(0, 3).join(" Â· ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
+    const notes = [];
+    if (skipped.length) notes.push(`${skipped.length} skipped — status change not allowed: ${skipped.slice(0, 3).join(" · ")}${skipped.length > 3 ? ` (+${skipped.length - 3} more)` : ""}`);
+    if (failures.length) notes.push(`Bulk update partially failed: ${failures.slice(0, 3).join(" · ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
+    if (notes.length) setBulkError(notes.join(" "));
     try { const reloaded = await loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
   };
 
