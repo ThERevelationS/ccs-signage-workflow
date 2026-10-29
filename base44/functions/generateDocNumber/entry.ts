@@ -18,7 +18,15 @@ export default async function (req) {
     try {
       const defaults = await svc.entities.QuoteDefaults.filter({ config_name: 'default' });
       const d = Array.isArray(defaults) && defaults.length ? defaults[0] : null;
-      const fmt = String(docType === 'order' ? (d?.order_number_format || '') : (d?.estimate_number_format || '')).trim();
+      const moduleKey = String(body?.module_key || '').trim();
+      // Per-module prefix map (#499): a JSON map of module_key → "{seq}"
+      // format that overrides the doc-type format for module-specific numbers.
+      let moduleFmt = '';
+      try {
+        const map = JSON.parse(String(d?.module_number_prefixes || '{}').trim() || '{}');
+        if (map && typeof map === 'object' && !Array.isArray(map)) moduleFmt = String(map[moduleKey] || '').trim();
+      } catch { /* malformed map ignored */ }
+      const fmt = (moduleFmt || String(docType === 'order' ? (d?.order_number_format || '') : (d?.estimate_number_format || '')).trim());
       if (fmt && fmt.includes('{seq}') && /^[\w\-.{}\[\]#]*$/.test(fmt) && fmt.length <= 40) {
         numberFormat = fmt;
       }
