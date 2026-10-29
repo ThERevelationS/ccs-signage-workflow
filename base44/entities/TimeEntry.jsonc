@@ -37,6 +37,23 @@
       "type": "string",
       "description": "Why the entry is on hold"
     },
+    "cost_code": {
+      "type": "string",
+      "description": "GL/cost code for payroll job-costing (set by managers or inherited from the labor segment)"
+    },
+    "union_local": {
+      "type": "string",
+      "description": "Union local identifier for certified-payroll jobs"
+    },
+    "certified_payroll": {
+      "type": "boolean",
+      "default": false,
+      "description": "Entry belongs to a prevailing-wage/certified-payroll job"
+    },
+    "prevailing_wage_rate": {
+      "type": "number",
+      "description": "Prevailing-wage hourly rate locked at punch time for certified jobs"
+    },
     "clock_in_geo": {
       "type": "object",
       "description": "Kiosk device geolocation captured at clock-in (lat/lng/accuracy in meters)",
