@@ -140,21 +140,21 @@ export const ADMIN_NESTED_TABS = {
 };
 
 const ADMIN_SEARCH_KEYWORDS = {
-  automations: 'automation rules email groups gmail',
-  users: 'staff user accounts access roles permissions passwords',
-  timeclock: 'time clock employee hours payroll',
-  backend: 'backend functions maintenance administration',
+  automations: 'automation rules email groups gmail pause resume kill switch enabled disabled duplicate restore version create new rule',
+  users: 'staff user accounts access roles permissions passwords deactivate remove delete export csv invite grant revoke admin bulk',
+  timeclock: 'time clock employee hours payroll approve shift review exception missed punch clock out export correction time off pto overtime',
+  backend: 'backend functions maintenance administration backup restore trash client order deleted',
   corebridge: 'corebridge api migration',
   opportunity_bridge: 'sales opportunities integration',
-  sync_conflicts: 'sync conflict review discrepancies',
-  smartsheet: 'smartsheet sync integration sales orders',
+  sync_conflicts: 'sync conflict review discrepancies resolve approve merge',
+  smartsheet: 'smartsheet sync integration sales orders run sync now columns sheet binding',
   resources: 'resource allocation capacity',
   permitting_completeness: 'permit completeness',
   permitting_rules: 'permit rules review',
   permitting_tests: 'permit tests',
   task_assignments: 'task assignment rules',
   calendar: 'scheduling calendar',
-  activity: 'activity feed events history',
+  activity: 'activity feed events history audit log export saved views live mine filter',
   fleet: 'fleet settings bouncie notifications reminders maintenance mechanic portal public report',
 };
 
