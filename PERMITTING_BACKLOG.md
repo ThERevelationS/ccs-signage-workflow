@@ -193,10 +193,10 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 137. **[UX][DONE]** Placeholder example inside the empty input — "e.g. 914 Lila Ave, Milford, OH 45150" so first-timers see the shape before typing.
 138. **[F]** QR/barcode scan of a printed work order → pulls the job address straight into the picker (field techs on tablets).
 139. **[UX][DONE]** Address field accepts just a ZIP code → narrows to ZIP's localities and says "a ZIP alone isn't enough — add the street".
-140. **[F]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
+140. **[F][DONE]** Geolocate-me button: use the browser's GPS to pre-fill coordinates → reverse-resolve the jurisdiction (great for a tech standing on the site).
 141. **[UX][DONE]** When the prefilled address is stale (job edited), show "address changed since last search — search again?" instead of silently re-using the old result.
 142. **[F]** Multi-address input: paste several job addresses at once → resolves each in sequence with a per-address status list.
-143. **[UX]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
+143. **[UX][DONE]** Voice input for the address field (Web Speech API) — hands-free for someone holding a tape measure.
 144. **[F]** Address from a dropped photo with EXIF GPS (site photo dropped on the input → coordinates → jurisdiction).
 145. **[UX][DONE]** Spelling-tolerant search: "Milford OH 45150" without a street still finds Milford's candidates and says so plainly.
 146. **[F][DONE]** Intersection syntax: "Lila Ave & Main St, Milford" resolves via the geocoder's free-form match.
@@ -282,7 +282,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 ## T — Field/on-site workflow
 
-211. **[F]** "On-site now" mode: GPS + one-tap confirm the jurisdiction matches where the truck is parked.
+211. **[F][DONE]** "On-site now" mode: GPS + one-tap confirm the jurisdiction matches where the truck is parked.
 212. **[F]** Site-photo attach to the permit line: the posted sign photo rides with the permit for the final inspection.
 213. **[UX]** Full-screen "dialer" view per office: giant phone number, tap-to-call, plus the office's notes — built for a phone in hand.
 214. **[F]** Permit pickup directions: the office's address as a maps link — "drive to this counter".
