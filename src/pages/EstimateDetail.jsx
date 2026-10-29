@@ -102,7 +102,8 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
 export default function EstimateDetail() {
   const navigate = useNavigate();
   const { sessionToken, isRegistered, currentUser } = useAuth();
-  const id = new URLSearchParams(window.location.search).get("id");
+  const _params = new URLSearchParams(window.location.search);
+  const id = _params.get("id") || _params.get("estimate");
   const [estimate, setEstimate] = useState(null);
   const [persistedEstimate, setPersistedEstimate] = useState(null);
   const [openRevision, setOpenRevision] = useState(null);
@@ -111,7 +112,16 @@ export default function EstimateDetail() {
   const [repairingConversionTracking, setRepairingConversionTracking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(() => {
+    // Deep link: ?section=details|products|pricing (or ?step=1|2|3) opens that
+    // workspace section on load; unknown/missing values keep the default.
+    try {
+      const raw = (new URLSearchParams(window.location.search).get("section")
+        || new URLSearchParams(window.location.search).get("step") || "").toLowerCase();
+      const map = { "1": 1, details: 1, "2": 2, products: 2, "3": 3, pricing: 3 };
+      return map[raw] || 2;
+    } catch { return 2; }
+  });
   const [showCancel, setShowCancel] = useState(false);
   const [activeProduct, setActiveProduct] = useState(null);
   const [clipboardOpen, setClipboardOpen] = useState(false);
@@ -347,6 +357,11 @@ export default function EstimateDetail() {
       setPersistedEstimate(loaded);
       setOpenRevision(revision);
       setReconciliationWarnings(warnings);
+      const wantOpen = _params.get("open");
+      if (wantOpen) {
+        const match = (loaded?.line_items || []).find((l) => l.project_id === wantOpen || l.id === wantOpen);
+        if (match) setActiveProduct({ ...match, estimate_id: loaded.id });
+      }
       setLoading(false);
     });
   }, [id]);
