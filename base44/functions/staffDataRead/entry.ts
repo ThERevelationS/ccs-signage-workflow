@@ -138,8 +138,9 @@ const OWNER_SCOPED = new Set([
 ]);
 const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
 
-function projectItem(entityName: string, item: any) {
-  const denied = FIELD_DENYLIST[entityName];
+function projectItem(entityName: string, item: any, user?: any) {
+  const denied = [...(FIELD_DENYLIST[entityName] || []),
+    ...((user?.admin_permissions?.denied_fields?.[entityName]) || [])];
   if (!denied || !item || typeof item !== 'object') return item;
   const clean = { ...item };
   for (const field of denied) delete clean[field];
@@ -283,7 +284,7 @@ Deno.serve(async (req) => {
       if (OWNER_SCOPED.has(entityName) && ownerEmail && String(item?.user_email || '').trim().toLowerCase() !== ownerEmail) {
         return Response.json({ error: 'Record not found.' }, { status: 404 });
       }
-      return Response.json({ success: true, item: projectItem(entityName, item) });
+      return Response.json({ success: true, item: projectItem(entityName, item, user) });
     }
 
     const query = cleanQuery(body?.query, entityName);
