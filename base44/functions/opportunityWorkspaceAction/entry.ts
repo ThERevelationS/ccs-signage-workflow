@@ -362,6 +362,46 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, action, tier_number: tier, flagged });
     }
 
+    // Export one estimate as re-importable JSON (#451): the estimate plus its
+    // builder tree (products + parts) and audit trail, for a portable bundle.
+    if (action === "export_estimate") {
+      const id = clean(body?.estimate_id);
+      if (!id) throw bad("estimate_id is required.", 400);
+      const estimate = await Estimate.get(id).catch(() => null);
+      if (!estimate?.id) throw bad("Estimate not found.", 404);
+      const [products, parts, revisions, acceptances, deliveries] = await Promise.all([
+        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: id }).catch(() => []),
+        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: id }).catch(() => []),
+        base44.asServiceRole.entities.EstimateRevision.filter({ estimate_id: id }).catch(() => []),
+        base44.asServiceRole.entities.EstimateAcceptance.filter({ estimate_id: id }).catch(() => []),
+        base44.asServiceRole.entities.EstimateQuoteDelivery.filter({ estimate_id: id }).catch(() => []),
+      ]);
+      return Response.json({ success: true, action, bundle: { exported_at: new Date().toISOString(), estimate, products: list(products), parts: list(parts), revisions: list(revisions), acceptances: list(acceptances), deliveries: list(deliveries) } });
+    }
+    // Re-import an exported estimate bundle as a NEW draft — new estimate id,
+    // linked to the same customer; products/parts re-pointed at the new id.
+    if (action === "import_estimate") {
+      if (clean(user?.role) !== "admin" && clean(user?.role) !== "staff") throw bad("Only staff can import an estimate.", 403);
+      const b = body?.bundle && typeof body.bundle === "object" ? body.bundle : null;
+      const src = b?.estimate;
+      if (!src?.project_name) throw bad("bundle.estimate is required.", 400);
+      const { id: _oid, created_date: _c, updated_date: _u, created_by_id: _cbi, created_by: _cb, ...fields } = src;
+      const created = await Estimate.create({ ...fields, status: "draft", estimate_number: "", pricing_stale: true, pricing_stale_reason: "Imported estimate — recompute + re-save before sending." });
+      let importedParts = 0;
+      if (created?.id) {
+        for (const p of list(b?.products)) {
+          const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+          await base44.asServiceRole.entities.BuilderProduct.create({ ...pf, estimate_id: created.id }).catch(() => null);
+        }
+        for (const p of list(b?.parts)) {
+          const { id: _pi, created_date: _pc, updated_date: _pu, created_by_id: _pbi, created_by: _pb, ...pf } = p || {};
+          const r = await base44.asServiceRole.entities.BuilderPart.create({ ...pf, estimate_id: created.id }).catch(() => null);
+          if (r?.id) importedParts += 1;
+        }
+      }
+      return Response.json({ success: true, action, estimate_id: created?.id, imported_parts: importedParts });
+    }
+
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
