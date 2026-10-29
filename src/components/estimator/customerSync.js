@@ -92,13 +92,29 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
   return canonical;
 };
 
+// Fuzzy comparison for near-duplicate names — strips punctuation and common
+// company suffixes so "Acme Signs, LLC" still matches "Acme Signs".
+const fuzzyNorm = (s) =>
+  norm(s)
+    .replace(/[.,'"&()-]/g, " ")
+    .replace(/\b(inc|llc|ltd|corp|corporation|co|company|group|the)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 /** Find a Customer by company name (or legacy workflow client name). */
 export const findCustomerByName = (customers, name) => {
   const n = norm(name);
   if (!n) return null;
-  return (
+  const exact =
     customers.find((c) => norm(c.company_name) === n) ||
     customers.find((c) => (c.legacy_client_names || []).some((l) => norm(l) === n)) ||
+    null;
+  if (exact) return exact;
+  const f = fuzzyNorm(name);
+  if (!f) return null;
+  return (
+    customers.find((c) => fuzzyNorm(c.company_name) === f) ||
+    customers.find((c) => (c.legacy_client_names || []).some((l) => fuzzyNorm(l) === f)) ||
     null
   );
 };
