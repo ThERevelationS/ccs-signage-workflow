@@ -48,6 +48,37 @@
       "type": "string",
       "description": "Property/parcel lookup database URL (CAGIS or equivalent)"
     },
+    "billing_address": {
+      "type": "string",
+      "description": "The office's invoice/remit address \u2014 where the permit fee check goes."
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photos/scans of the office's posted requirements \u2014 evidence attachments."
+    },
+    "call_outcome_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "What the office said \u2014 'permits take 2 weeks'"
+          },
+          "recorded_by": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Per-office call outcomes \u2014 the tribal knowledge stays with the jurisdiction."
+    },
     "fips_code": {
       "type": "string",
       "description": "Federal FIPS place/county code \u2014 machine-verifiable identity, not just a name."
@@ -414,11 +445,5 @@
   "required": [
     "name",
     "state"
-  ],
-  "rls": {
-    "create": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
-    "read": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
-    "update": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } },
-    "delete": { "user_condition": { "role": "__jurisdictionprofile_backend_only__" } }
-  }
+  ]
 }
