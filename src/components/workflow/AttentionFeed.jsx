@@ -31,6 +31,17 @@ export default function AttentionFeed() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState("");
+  const [handled, setHandled] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("attention_handled") || "[]")); } catch { return new Set(); }
+  });
+  const markHandled = (id) => {
+    setHandled((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      try { localStorage.setItem("attention_handled", JSON.stringify([...next].slice(-300))); } catch {}
+      return next;
+    });
+  };
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("attention_sound") !== "off");
   const toggleSound = () => {
     setSoundOn((on) => {
@@ -262,12 +273,19 @@ export default function AttentionFeed() {
       </div>
       {open && active && (
         <div className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
-          {active.items.map((it) => (
-            <button key={it.id} type="button" onClick={() => navigate(it.href)}
-              className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800">
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{it.primary}</span>
-              <span className="truncate text-xs text-slate-500">{it.secondary}</span>
-            </button>
+          {active.items.filter((it) => !handled.has(it.id)).map((it) => (
+            <div key={it.id} className="flex w-full items-center gap-1 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800">
+              <button type="button" onClick={() => navigate(it.href)}
+                className="flex flex-1 items-center justify-between gap-3 text-left">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{it.primary}</span>
+                <span className="truncate text-xs text-slate-500">{it.secondary}</span>
+              </button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); markHandled(it.id); }}
+                title="Mark as handled"
+                className="shrink-0 rounded p-0.5 text-slate-300 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ))}
           {active.count > active.items.length && (
             <div className="px-3 py-1.5 text-xs text-slate-400">+{active.count - active.items.length} more</div>
