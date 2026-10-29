@@ -34,7 +34,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 2. Customer & CRM Integration (25)
 
-26. **[F]** Customer merge dialog — combine duplicates with record relink preview
+26. **[F][DONE]** Customer merge dialog — combine duplicates with record relink preview
 27. **[F]** `CustomerLocation` picker prefill from opportunity address on new estimates
 28. **[H]** `billing_contact_email` fallback chain everywhere `customer.email` is read (C2-J pattern)
 29. **[F]** Customer quick-add inside NewAllInOneEstimate (not just dialog pick)
