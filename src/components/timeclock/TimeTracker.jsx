@@ -440,6 +440,25 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
 
   const weeklyDaily = Array.isArray(snapshot?.weekly_daily_minutes) ? snapshot.weekly_daily_minutes : [];
   const weekGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
+
+  // Goal streak: consecutive days at/above the daily goal, ending today.
+  const goalStreak = useMemo(() => {
+    if (weeklyDaily.length !== 7) return 0;
+    let streak = 0;
+    for (let i = weeklyDaily.length - 1; i >= 0; i -= 1) {
+      const minutes = i === todayIndex && live ? live.paid : Number(weeklyDaily[i] || 0);
+      if (minutes >= goalMinutes) streak += 1;
+      else break;
+    }
+    return streak;
+  }, [weeklyDaily, live, goalMinutes, todayIndex]);
+
+  // Yesterday's total for context, and the trailing average for pace compare.
+  const yesterdayMinutes = todayIndex > 0 ? Number(weeklyDaily[todayIndex - 1] || 0) : null;
+  const weekAvgMinutes = useMemo(() => {
+    const days = weeklyDaily.map(Number).filter((m, i) => i < todayIndex && m > 0);
+    return days.length ? days.reduce((a, b) => a + b, 0) / days.length : null;
+  }, [weeklyDaily, todayIndex]);
   const todayIndex = (() => {
     const day = snapshot?.company_day;
     if (!day) return -1;
@@ -601,7 +620,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
             {prefs?.show_week_strip !== false && weeklyDaily.length === 7 && (
               <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-500">
-                  <span>This week</span>
+                  <span>This week{yesterdayMinutes !== null ? ` · yesterday ${formatClock(yesterdayMinutes, "hours_minutes")}` : ""}{weekAvgMinutes ? ` · avg ${formatClock(weekAvgMinutes, "hours_minutes")}/day` : ""}</span>
                   <span>{formatClock(live?.weekly || 0, "hours_minutes")} / {formatClock(weekGoal, "hours_minutes")}</span>
                 </div>
                 <div className="flex items-end gap-1">
@@ -613,7 +632,13 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                         <div className="flex h-14 w-full items-end rounded-md bg-black/[0.06] dark:bg-white/10">
                           <div
                             className={`w-full rounded-md ${isToday ? "tracker-today-bar" : ""}`}
-                            style={{ height: `${Math.max(4, fraction * 100)}%`, backgroundImage: `linear-gradient(180deg, ${accent.barStart}, ${accent.barEnd})` }}
+                            style={{
+                              height: `${Math.max(4, fraction * 100)}%`,
+                              backgroundImage: fraction >= 1
+                                ? "linear-gradient(180deg, #34d399, #059669)"
+                                : `linear-gradient(180deg, ${accent.barStart}, ${accent.barEnd})`,
+                              opacity: fraction < 0.5 && !isToday ? 0.45 : 1,
+                            }}
                           />
                         </div>
                         <span className={`text-[9px] font-bold ${isToday ? "text-indigo-600" : "text-slate-400"}`}>{WEEK_LABELS[index]}</span>
@@ -648,6 +673,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 {nextMilestone && (
                   <p className="mt-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">
                     {formatMinutes(Math.ceil(nextMilestone.remaining))} to {formatClock(nextMilestone.target, prefs?.time_format)}
+                  </p>
+                )}
+                {goalStreak >= 2 && (
+                  <p className="mt-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    {goalStreak}-day goal streak
                   </p>
                 )}
               </div>
