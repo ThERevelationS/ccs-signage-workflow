@@ -100,6 +100,16 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Shared-module dependency map">
+        <p className="font-semibold text-gray-700">Shared-module dependency map</p>
+        <p className="mt-0.5 text-gray-400">Importer counts across src/ — the highest-blast-radius files to review first.</p>
+        <ul className="mt-0.5 grid grid-cols-2 gap-x-3">
+          {[["ui/button.jsx", 296], ["ui/input.jsx", 225], ["ui/label.jsx", 134], ["estimator/loadAllEntityRows.js", 123], ["ui/dialog.jsx", 123], ["auth/EmailGate.jsx", 114], ["ui/select.jsx", 114], ["ui/badge.jsx", 112], ["staff/staffEntities.js", 99], ["estimator/builder/builderEntityPersistence.js", 52], ["ui/card.jsx", 52], ["ui/checkbox.jsx", 51], ["ui/textarea.jsx", 46], ["ui/alert-dialog.jsx", 36], ["fleet/fleetInvoke.js", 34]].map(([f, n]) => (
+            <li key={f} className="flex items-center justify-between gap-1 font-mono text-[10px]"><span className="truncate">{f}</span><span className="text-gray-400">{n}</span></li>
+          ))}
+        </ul>
+      </div>
+
       <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Migration runners">
         <p className="font-semibold text-gray-700">Migration runners</p>
         <p className="mt-0.5">Data-migration functions — run from the platform Functions console with an explicit action; never auto-run.</p>
