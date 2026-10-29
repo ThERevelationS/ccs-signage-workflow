@@ -594,6 +594,19 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     "--tracker-accent-text": accent.text,
   };
 
+  if (sessionToken && email && !snapshot) {
+    return (
+      <div
+        data-time-tracker-status
+        role="status"
+        className="ccs-glass-control ccs-glass-neutral flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2 py-1 text-xs text-slate-700 dark:text-slate-100"
+        title={pollError ? "Time Tracker could not load. It will retry automatically." : "Checking Time Tracker settings"}
+      >
+        <Hourglass className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+        <span>{pollError ? "Clock unavailable" : "Loading clock..."}</span>
+      </div>
+    );
+  }
   if (!visibleHere) return null;
 
   return (
