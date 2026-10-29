@@ -42,6 +42,7 @@ import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import EmployeeTodayCard from "@/components/timeclock/EmployeeTodayCard";
+import TimeClockHelpCard from "@/components/timeclock/TimeClockHelpCard";
 import {
   TIME_CLOCK_IDLE_LOGOUT_MS,
   remainingTimeClockSessionMs,
@@ -1052,6 +1053,9 @@ export default function TimeClock() {
                 />
               </TabsContent>
             </Tabs>
+            <div className="mt-6">
+              <TimeClockHelpCard />
+            </div>
           </>
         )}
       </div>
