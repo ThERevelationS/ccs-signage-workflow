@@ -77,8 +77,13 @@ function permittedSubtabs(parentTab, permissions) {
   return nested.filter((subtab) => allowed.includes(subtab.value));
 }
 
-export function getAccessibleAdminGroups(isAdmin, user) {
-  const permissions = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+export function getAccessibleAdminGroups(isAdmin, user, teamSections) {
+  const base = user?.is_full_admin ? null : (user?.admin_permissions && typeof user.admin_permissions === 'object' ? user.admin_permissions : null);
+  // Team grants — sections granted by the user's email-group memberships
+  // merge on top of their own sections list.
+  const permissions = base && Array.isArray(base.sections) && Array.isArray(teamSections) && teamSections.length
+    ? { ...base, sections: [...new Set([...base.sections, ...teamSections])] }
+    : base;
   // Explicit deny wins over every grant — including full-admin. Full admins
   // carry {} permissions, so denied_tabs lives on admin_permissions regardless.
   const denied = Array.isArray(user?.admin_permissions?.denied_tabs) ? user.admin_permissions.denied_tabs : [];
