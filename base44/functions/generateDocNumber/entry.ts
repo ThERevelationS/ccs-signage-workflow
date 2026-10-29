@@ -33,7 +33,6 @@ export default async function (req) {
     }
     const count = requestedCount;
 
-    const svc = base44.asServiceRole;
     const Counter = svc.entities.DocNumberCounter;
     const MAX_ATTEMPTS = 8;
 
