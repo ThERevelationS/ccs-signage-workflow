@@ -110,6 +110,18 @@ Deno.serve(async (req) => {
     const EstimateUser = base44.entities.AllInOneEstimate;
     const EstimateService = base44.asServiceRole.entities.AllInOneEstimate;
 
+    // estimate_number uniqueness: a supplied number must not collide with a
+    // live estimate unless the caller explicitly opts in (same-number clone).
+    if (estimate.estimate_number && body?.allow_estimate_number_reuse !== true) {
+      const clashes = await EstimateService.filter({ estimate_number: estimate.estimate_number }).catch(() => []);
+      const live = (Array.isArray(clashes) ? clashes : []).filter(
+        (row: any) => row?.deleted !== true && clean(row?.estimate_number) === estimate.estimate_number
+      );
+      if (live.length) {
+        return Response.json({ error: `Estimate number ${estimate.estimate_number} is already used by another estimate.` }, { status: 409 });
+      }
+    }
+
     const readKeyedRows = async () => {
       const rows = await EstimateService.filter({ creation_request_key: creationKey });
       if (!Array.isArray(rows)) {
