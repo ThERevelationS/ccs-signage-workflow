@@ -1,11 +1,11 @@
 import {claimPermittingCollectionCycle,finishPermittingCollectionCycle} from '../../shared/permittingCollectionCycle.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import {continuePermittingDocumentArchiveBacklog} from '../../shared/permittingDocumentArchiveBacklog.mjs';
 import {continueDiscoveryBacklog} from '../../shared/permittingDiscoveryContinuation.mjs';
 import {readPermittingResourceResponse} from '../../shared/permittingResourceResponse.mjs';
 import {invalidateVerifiedJurisdictionAfterResearch} from '../../shared/jurisdictionVerification.ts';
 import {RESEARCH_FETCH_TIMEOUT_MS} from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
-import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import {
   classifyBacklogRows,
   ohioFirstResearchRows,
@@ -125,7 +125,7 @@ async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 150 });
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Admin access required" }, { status: 403 });
