@@ -884,6 +884,15 @@ export default function Permitting() {
     ? PERMIT_QUEUE_ORDER
     : [queueFilter];
   // Per-person workload board — "you have N offices to chase" — the day's calls, distributed.
+  // Same-town cluster — how many distinct jobs share each locality's permit office.
+  const sharedLocalities = useMemo(() => {
+    const counts = {};
+    for (const group of filteredGroups || []) {
+      const names = new Set((group.lines || []).map(li => String(li.locality_name || "").trim().toLowerCase()).filter(Boolean));
+      for (const n of names) counts[n] = (counts[n] || new Set()).add(group.work_order_id);
+    }
+    return counts;
+  }, [filteredGroups]);
   const workloadByAssignee = useMemo(() => {
     const counts = {};
     for (const li of lineItems || []) {
@@ -1071,6 +1080,12 @@ export default function Permitting() {
                   users={users}
                   taskDescriptions={taskDescriptions}
                   today={today}
+                  sharedOfficeCount={(() => {
+                    const names = new Set((group.lines || []).map(li => String(li.locality_name || "").trim().toLowerCase()).filter(Boolean));
+                    let count = 0;
+                    for (const n of names) count = Math.max(count, sharedLocalities[n]?.size || 0);
+                    return count;
+                  })()}
                   expanded={!collapsedGroupIds.has(group.work_order_id)}
                   onExpandedChange={(expanded) => setGroupExpanded(group.work_order_id, expanded)}
                 />
