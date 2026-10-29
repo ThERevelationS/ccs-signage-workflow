@@ -38,6 +38,10 @@
       ],
       "default": ""
     },
+    "merged_into_customer_id": {
+      "type": "string",
+      "description": "Set when this Customer was merged into another canonical Customer \u2014 linked records were relinked and this row is kept for audit."
+    },
     "customer_status": {
       "type": "string",
       "enum": [
