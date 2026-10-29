@@ -335,7 +335,7 @@ export default function EmailGroupsManager() {
                   <Badge key={email} className="flex items-center gap-1 py-1 px-2">
                     <Mail className="w-3 h-3" />
                     {email}
-                    <button onClick={() => removeEmail(email)} className="ml-1 hover:text-red-600">
+                    <button type="button" onClick={() => removeEmail(email)} className="ml-1 hover:text-red-600">
                       <X className="w-3 h-3" />
                     </button>
                   </Badge>
