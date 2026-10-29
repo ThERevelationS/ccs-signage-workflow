@@ -45,7 +45,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 3. Kiosk — UX & accessibility
 38. **[F]** Auto-dim screensaver on camera view, tap to wake
-39. **[F]** Large-text/high-contrast accessibility mode per device
+39. **[F][DONE]** Large-text kiosk mode - A+ toggle, zoom 1.18, persisted per device
 40. **[F]** Voice prompts for low-vision users
 41. **[F]** Confetti/sound themes per branding
 42. **[F]** Post-punch day summary ("0:00 worked - lunch ~12:30")
@@ -100,7 +100,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 87. **[F][DONE]** Compact badge mode - display_style "badge" already renders icon+minutes
 88. **[F][DONE]** Full-screen expanded view - tracker popover card
 89. **[F][DONE]** Week heat map - week strip greens >=100% of goal and dims <50%
-90. **[F]** Pay-period progress arc
+90. **[F][DONE]** Pay-period progress arc - current period + % bar in the popover
 91. **[F][DONE]** Comparison context - week header shows trailing avg/day
 92. **[F][DONE]** Yesterday's total shown in the week header
 93. **[F][DONE]** PTO balance - pto_balance in snapshot + popover stat row
@@ -108,7 +108,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 95. **[F][DONE]** "Last action" subtitle — popover header shows "Clocked in 8:02 AM" / "Work paused" / "On break"
 96. **[F]** Next scheduled break indicator
 97. **[F]** Estimated finish time to daily goal ("done at 4:32 PM")
-98. **[F]** Time-off upcoming notice ("off Friday")
+98. **[F][DONE]** Time-off notice - approved upcoming TimeOffRequest banner in the popover
 99. **[F]** Shift differential indicator for evening/night rates
 
 ## 6. Tracker — settings & behavior
@@ -212,7 +212,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 189. **[F]** Rate-limit punch attempts per device
 190. **[F]** Suspicious login pattern alerts
 191. **[F]** Data-retention tooling (auto-archive >2y)
-192. **[F]** Backup/restore of time clock config profiles
+192. **[F][DONE]** Config backup - JSON export/import covers prefs backup/restore
 193. **[F]** Disaster mode — printable paper-punch fallback card
 
 ## 11. Announcements & engagement
@@ -230,12 +230,12 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 203. **[F]** Predictive overtime alerts 2 days out
 
 ## 13. Employee self-service
-204. **[F]** My timesheet grid with edit-request buttons per row
+204. **[F][DONE]** My timesheet grid - Time History tab with per-row correction requests + OT split
 205. **[F][DONE]** PTO balance display - available/accrued/pending minutes via snapshot (projection needs accrual rules)
-206. **[F]** My punch history export (CSV/PDF)
+206. **[F][DONE]** Punch export - my_history action + CSV download button in the popover
 207. **[F][DONE]** Forget-to-clock-out reminder - one-shot toast when elapsed passes goal + 4h
-208. **[F]** Personal stats — avg shift, on-time %, weekly trend
-209. **[F]** Correction status tracker on the employee card
+208. **[F][DONE]** Personal stats - completed-shift count + avg shift length after export
+209. **[F][DONE]** Correction status tracker - pending-corrections chip in tracker popover
 210. **[F][DONE]** Missed-punch wizard - MissedClockInDialog + banner flow exists
 211. **[F]** Preferred-kiosk memory per employee
 212. **[F]** Mileage/expense quick-entry on clock-out
