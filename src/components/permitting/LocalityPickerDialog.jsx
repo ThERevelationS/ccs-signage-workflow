@@ -102,6 +102,8 @@ function LocalityPickerSession({
   const [firstRun, setFirstRun] = useState(() => { try { return localStorage.getItem("permitting_first_run_done") !== "1"; } catch { return true; } });
   const [showOptions, setShowOptions] = useState(() => { try { return localStorage.getItem("permitting_show_options") === "1"; } catch { return false; } });
   const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
+  const [lang, setLang] = useState(() => { try { return localStorage.getItem("permitting_lang") || "en"; } catch { return "en"; } });
+  const t = (en, es) => (lang === "es" ? es : en);
   const [result, setResult] = useState(null); // address location and reference research
   const [error, setError] = useState("");
   const [excludeElectrical, setExcludeElectrical] = useState(() => { try { return localStorage.getItem("permitting_exclude_electrical") === "1"; } catch { return false; } });
@@ -352,7 +354,8 @@ function LocalityPickerSession({
           <DialogTitle className="flex items-center gap-2 text-base">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-100"><MapPin className="h-4 w-4 text-violet-600" /></span>
             Which office issues permits here?
-            <button type="button" onClick={()=>{const v=!bigText;setBigText(v);try{localStorage.setItem("permitting_big_text",v?"1":"0");}catch{}}} className="ml-auto text-[10px] font-semibold text-violet-700 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-50" title="Make the text bigger">{bigText?"A−":"A+"}</button>
+            <button type="button" onClick={()=>{const v=lang==="en"?"es":"en";setLang(v);try{localStorage.setItem("permitting_lang",v);}catch{}}} className="ml-auto text-[10px] font-semibold text-violet-700 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-50" title={lang==="en"?"Cambiar a español":"Switch to English"}>{lang==="en"?"ES":"EN"}</button>
+            <button type="button" onClick={()=>{const v=!bigText;setBigText(v);try{localStorage.setItem("permitting_big_text",v?"1":"0");}catch{}}} className="text-[10px] font-semibold text-violet-700 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-50" title="Make the text bigger">{bigText?"A−":"A+"}</button>
           </DialogTitle>
         </DialogHeader>
 
@@ -464,7 +467,7 @@ function LocalityPickerSession({
           ) : (
             <>
             <Button onClick={runSearch} disabled={!address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
-              <Search className="w-4 h-4" /> Find my jurisdiction
+              <Search className="w-4 h-4" /> {t("Find my jurisdiction", "Encontrar mi jurisdicción")}
             </Button>
             <button type="button" className="min-h-11 self-center rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-500 hover:bg-slate-50" title="Keyboard shortcuts"
               onClick={() => window.alert("Shortcuts:\n• Enter — search the typed address\n• Esc — close this dialog\n• Paste a full address — searches automatically")}>?</button>
@@ -498,7 +501,7 @@ function LocalityPickerSession({
               }, () => setError("Location was blocked — allow location access or type the address."), { timeout: 15000 });
             }}
           >
-            <MapPin className="w-4 h-4" /> Use my location
+            <MapPin className="w-4 h-4" /> {t("Use my location", "Usar mi ubicación")}
           </Button>
 
           <Button
