@@ -40,11 +40,11 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 29. **[F][DONE]** Customer quick-add inside NewAllInOneEstimate (not just dialog pick)
 30. **[F][DONE]** `CustomerContact` role field (billing/site/decision-maker) + pick by role in Step 1
 31. **[F][DONE]** Customer credit-hold flag → warn badge on new-estimate dialog
-32. **[F]** `default_tax_group` on Customer → auto-apply in estimate
-33. **[F]** `default_markup_tier` on Customer → auto-select in CustomerPricingTab
-34. **[H]** Customer CAS on `company_name` renames — warn when estimates reference old name
-35. **[F]** Customer 360 "estimates" tab shows lifecycle funnel (draft→sent→approved counts)
-36. **[F]** Last-contacted date on customer (from portal messages / quote sends)
+32. **[F][DONE]** `default_tax_group` on Customer → auto-apply in estimate
+33. **[F][DONE]** `default_markup_tier` on Customer → auto-select in CustomerPricingTab
+34. **[H][DONE]** Customer CAS on `company_name` renames — warn when estimates reference old name
+35. **[F][DONE]** Customer 360 "estimates" tab shows lifecycle funnel (draft→sent→approved counts)
+36. **[F][DONE]** Last-contacted date on customer (from portal messages / quote sends)
 37. **[F]** Customer tags (wholesale, repeat, VIP) usable as filter on EstimatorCustomers
 38. **[B]** `EstimatorCustomers` unread badge — verify it clears on message read
 39. **[F]** Import customers from CSV on EstimatorCustomers page
