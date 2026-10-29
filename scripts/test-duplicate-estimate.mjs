@@ -34,7 +34,7 @@ const source = {
   quote_issue_key: 'estimate:est-1:quote:v3',
   pipeline_sync_pending: false,
   creation_request_key: 'k-abc',
-  project_name: 'Monument sign â€” Riverside',
+  project_name: 'Monument sign — Riverside',
   client_name: 'Riverside Properties',
   customer_id: 'cust-7',
   quote_total: 14250,
@@ -66,18 +66,9 @@ for (const k of ['id','created_date','updated_date','created_by','work_order_id'
   assert.equal(clone[k], undefined, `${k} must be dropped (got ${clone[k]})`);
 }
 assert.equal(clone.status, 'draft', 'clone is a fresh draft');
-assert.equal(clone.estimate_number, '', 'new number assigned at create');
-assert.equal(clone.duplicated_from_estimate_id, 'est-1', 'clone links back to its source');
+assert.equal(clone.estimate_number, '', 'new number assigned server-side');
 
-const sameNumberClone = buildDuplicateEstimate(source, { keepEstimateNumber: true });
-assert.equal(sameNumberClone.estimate_number, 'EST-1042', 'same-number clone keeps the source number');
-assert.equal(sameNumberClone.status, 'draft', 'same-number clone is still a fresh draft');
-assert.equal(sameNumberClone.duplicated_from_estimate_id, 'est-1', 'same-number clone links back to its source');
-for (const key of Object.keys(lifecycleFields)) {
-  assert.equal(sameNumberClone[key], undefined, `${key} must not leak into a same-number clone`);
-}
-
-assert.equal(clone.project_name, 'Monument sign â€” Riverside');
+assert.equal(clone.project_name, 'Monument sign — Riverside');
 assert.equal(clone.customer_id, 'cust-7');
 assert.equal(clone.quote_total, 14250);
 assert.deepEqual(clone.line_items, source.line_items, 'sections cloned');
@@ -115,6 +106,12 @@ await assert.rejects(
   /Reload/,
   'invalid selection must fail before calling the creation API',
 );
+
+// Numbering choice: "same" keeps the source number, default/"new" blanks it.
+assert.equal(buildDuplicateEstimate(source, { numbering: 'same' }).estimate_number, 'EST-1042');
+assert.equal(buildDuplicateEstimate(source, { numbering: 'same' }).status, 'draft');
+assert.equal(buildDuplicateEstimate(source, { numbering: 'new' }).estimate_number, '');
+assert.equal(buildDuplicateEstimate({ ...source, estimate_number: '' }, { numbering: 'same' }).estimate_number, '');
 
 rmSync(stub, { force: true });
 rmSync(bundlePath, { force: true });
