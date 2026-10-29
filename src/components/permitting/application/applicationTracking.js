@@ -1,13 +1,5 @@
 import { format, isValid } from "date-fns";
 
-export const SUBMISSION_METHODS = [
-  { value: "portal", label: "Online portal" },
-  { value: "email", label: "Email" },
-  { value: "fax", label: "Fax" },
-  { value: "in_person", label: "In person" },
-  { value: "mail", label: "Mail" },
-];
-
 export const COMMON_DOCUMENTS = [
   "Sign drawings",
   "Site plan",
@@ -44,7 +36,7 @@ export function getRequiredDocuments(line) {
 export function getSubmitReadiness(line) {
   const documents = getRequiredDocuments(line);
   const missing = [];
-  if (!line?.submission_method) missing.push("Choose how it will be submitted");
+  if (!String(line?.submission_method || "").trim()) missing.push("Record how it will be submitted");
   if (documents.length === 0) missing.push("List the documents this office needs");
   documents.filter((doc) => !doc.done).forEach((doc) => missing.push(`${doc.name} not ready`));
   return { submitted: !!line?.submitted_date, ready: missing.length === 0, missing };

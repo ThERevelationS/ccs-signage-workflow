@@ -5,6 +5,7 @@ import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
+import PermitApplicationTracker from "./application/PermitApplicationTracker";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -351,6 +352,8 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("expiration_date", value)}
         />
       </div>
+
+      <PermitApplicationTracker lineItem={lineItem} disabled={!isRegistered} update={update} />
 
       <button
         type="button"
