@@ -5,6 +5,7 @@ import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
+import PermitApplicationTracker from "./application/PermitApplicationTracker";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -256,20 +257,6 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("next_action", value)}
         />
         <CommitTextField
-          label="How it was submitted"
-          value={lineItem.submission_method}
-          placeholder="portal / email / fax / in-person / mail"
-          disabled={!isRegistered}
-          onCommit={(value) => update("submission_method", value)}
-        />
-        <CommitTextField
-          label="Confirmation #"
-          value={lineItem.confirmation_number}
-          placeholder="Office's submission reference"
-          disabled={!isRegistered}
-          onCommit={(value) => update("confirmation_number", value)}
-        />
-        <CommitTextField
           label="Call / chase notes"
           value={lineItem.notes}
           placeholder="e.g. 10/22 — called office, resubmit Friday"
@@ -296,6 +283,8 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("expiration_date", value)}
         />
       </div>
+
+      <PermitApplicationTracker lineItem={lineItem} disabled={!isRegistered} update={update} />
 
       <button
         type="button"

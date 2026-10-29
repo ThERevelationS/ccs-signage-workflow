@@ -137,6 +137,61 @@
       "format": "date",
       "description": "Expiration date for this individual permit/office line, when provided by the issuing authority."
     },
+    "drafted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Staff-recorded date the application package was drafted. Application timeline only."
+    },
+    "acknowledged_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Staff-recorded date the office acknowledged receiving the application. Application timeline only."
+    },
+    "under_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Staff-recorded date the office reported the application as under review. Application timeline only."
+    },
+    "submission_method": {
+      "type": "string",
+      "enum": [
+        "portal",
+        "email",
+        "fax",
+        "in_person",
+        "mail"
+      ],
+      "description": "How staff submitted this application to the office. Blank means not recorded."
+    },
+    "required_documents": {
+      "type": "array",
+      "description": "Staff-maintained checklist of documents this office needs for the application (drawings, site plan, license, etc.).",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "rejected_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the office rejected this application, when it did. Staff-recorded."
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "The office's stated reason for rejecting this application, in staff's words."
+    },
     "jurisdiction_fee_amount": {
       "type": "number",
       "description": "Actual known jurisdiction/permit-office fee for this individual line, entered or reconciled by staff. Never auto-filled from repository fee guidance or estimator permit_fee."
@@ -221,23 +276,6 @@
     "inspector_contact": {
       "type": "string",
       "description": "Inspector name/phone for the scheduled inspection."
-    },
-    "submission_method": {
-      "type": "string",
-      "enum": [
-        "",
-        "portal",
-        "email",
-        "fax",
-        "in_person",
-        "mail",
-        "other"
-      ],
-      "description": "How the application was submitted to the office \u2014 portal / email / fax / in-person / mail."
-    },
-    "confirmation_number": {
-      "type": "string",
-      "description": "The office's submission reference/confirmation number, recorded at submit time."
     },
     "assigned_to": {
       "type": "string",
