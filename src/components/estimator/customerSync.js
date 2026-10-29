@@ -3,6 +3,7 @@ import { resolvePipelineLifecycleDates, resolvePipelineSalesStatus } from "./pip
 import { hasVerifiedEstimateSalesActivity } from "./estimateSalesActivity.mjs";
 import { localDateStamp } from "./quoteLifecycle";
 import { loadAllEntityRows } from "./loadAllEntityRows";
+import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { createEstimateLinkedWorkOrderWithRecovery, deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
 import { expectedCustomerFields, replaceCustomerFieldsIfUnchanged } from "./customerPersistence";
@@ -400,11 +401,8 @@ export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus 
  * Returns the (possibly extended) customer list.
  */
 export const backfillCustomersFromWorkOrders = async (customers, { sessionToken = "" } = {}) => {
-  const workOrders = await loadAllEntityRows({
-    entity: staffEntities.WorkOrder,
-    sort: "-created_date",
-    label: "Workflow Work Orders",
-  });
+  const workOrders = (await fetchAllWorkOrders())
+    .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
   const known = new Set();
   customers.forEach((c) => {
     known.add(norm(c.company_name));
