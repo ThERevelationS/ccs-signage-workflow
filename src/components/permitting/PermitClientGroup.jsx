@@ -332,6 +332,17 @@ export default function PermitClientGroup({
               )}
             </div>
           ))}
+          {authorityCoverage.map(({ locality_id }) => {
+            const loc = localities?.find((l) => l.id === locality_id);
+            return (loc?.offices || []).map((o) => (
+              <div key={`${locality_id}-${o.id || o.name}`} className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-amber-950">
+                <span className="font-semibold">{o.name || "Office"}</span>
+                {o.contact_phone && <a className="underline" href={`tel:${String(o.contact_phone).replace(/[^+\d]/g, "")}`}>{o.contact_phone}</a>}
+                {o.contact_website && <a className="underline" href={o.contact_website} target="_blank" rel="noopener noreferrer">Permit portal ↗</a>}
+                {o.contact_address && <a className="underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(o.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a>}
+              </div>
+            ));
+          })}
           <button
             type="button"
             className="mt-1.5 text-[10px] font-semibold text-amber-800 underline hover:text-amber-950"
