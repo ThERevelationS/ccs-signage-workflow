@@ -226,6 +226,24 @@ export default function TimeClock() {
   const [timeOffRequests, setTimeOffRequests] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
   const [correctionEntry, setCorrectionEntry] = useState(null);
+  const [swapOpen, setSwapOpen] = useState(false);
+  const [swapPartner, setSwapPartner] = useState("");
+  const [swapReason, setSwapReason] = useState("");
+  const [swapBusy, setSwapBusy] = useState(false);
+  const [swapMsg, setSwapMsg] = useState(null);
+  const submitSwap = async () => {
+    if (!timeClockSessionToken || swapBusy) return;
+    setSwapBusy(true); setSwapMsg(null);
+    try {
+      const r = await base44.functions.invoke("shiftSwapAction", { session_token: timeClockSessionToken, action: "submit", partner_email: swapPartner.trim(), reason: swapReason.trim() });
+      const data = r?.data || r;
+      if (data?.success) {
+        setSwapMsg(data.already_pending ? "You already have a swap request pending." : "Swap request sent — a manager will review it.");
+        setSwapPartner(""); setSwapReason("");
+      } else setSwapMsg(data?.error || "Swap request failed.");
+    } catch (e) { setSwapMsg(e?.message || "Swap request failed."); }
+    setSwapBusy(false);
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [showTimeOffRequest, setShowTimeOffRequest] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -603,6 +621,10 @@ export default function TimeClock() {
               <h1 className="text-2xl font-bold text-gray-800">Time Clock</h1>
               <p className="text-gray-600 text-sm">Track your work hours</p>
             </div>
+            {loggedInUser && (
+              <Button type="button" variant="link" size="sm" className="text-xs text-indigo-600 px-0"
+                onClick={() => setSwapOpen(true)}>Request schedule swap</Button>
+            )}
           </div>
           
           {loggedInUser ? (
@@ -1088,6 +1110,31 @@ export default function TimeClock() {
         onLogin={handleLogin}
         allUsers={allUsers}
       />
+
+      {swapOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Request schedule swap">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSwapOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-gray-800">Request schedule swap</h3>
+            <p className="mt-0.5 text-xs text-gray-500">Trade your shift template with a coworker. A manager approves the swap.</p>
+            <div className="mt-3 space-y-2">
+              <input type="email" value={swapPartner} onChange={(e) => setSwapPartner(e.target.value)}
+                placeholder="coworker@email.com" aria-label="Partner email"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+              <textarea value={swapReason} onChange={(e) => setSwapReason(e.target.value)} rows={2}
+                placeholder="Why do you need the swap?" aria-label="Reason"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+              {swapMsg && <p className={`text-xs ${swapMsg.includes("sent") || swapMsg.includes("pending") ? "text-emerald-700" : "text-red-600"}`}>{swapMsg}</p>}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setSwapOpen(false)}>Cancel</Button>
+                <Button type="button" size="sm" disabled={swapBusy || !swapPartner.trim()} onClick={submitSwap}>
+                  {swapBusy ? "Sending…" : "Send request"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CorrectionRequestDialog
         open={!!correctionEntry}
