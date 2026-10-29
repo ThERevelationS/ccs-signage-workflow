@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { History, Loader2 } from "lucide-react";
-import { staffEntities } from "@/components/staff/staffEntities";
+import { base44 } from "@/api/base44Client";
 
 // Unified cross-system activity log for one estimate (#350): merges the
 // opportunity-level activity rows tied to this estimate with its portal
@@ -18,9 +18,9 @@ export default function EstimateActivityPanel({ estimate, refreshKey }) {
         if (!estimateId) { setRows([]); return; }
         const [activities, messages] = await Promise.all([
           estimate?.opportunity_id
-            ? staffEntities.filter("OpportunityActivity", { opportunity_id: estimate.opportunity_id }, "-created_date", 100).catch(() => [])
+            ? base44.entities.OpportunityActivity.filter({ opportunity_id: estimate.opportunity_id }, "-created_date", 100).catch(() => [])
             : Promise.resolve([]),
-          staffEntities.filter("PortalMessage", { related_kind: "estimate", related_id: estimateId }, "-created_date", 100).catch(() => []),
+          base44.entities.PortalMessage.filter({ related_kind: "estimate", related_id: estimateId }, "-created_date", 100).catch(() => []),
         ]);
         const activityRows = (Array.isArray(activities) ? activities : [])
           .filter((a) => {
