@@ -82,6 +82,18 @@ export default function DataExportPanel() {
       <p className="mt-1 text-xs text-gray-500">
         Download a CSV snapshot of admin-readable data for audits. List/object columns are exported as JSON text.
       </p>
+      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Recent admin changes">
+        <p className="font-semibold text-gray-700">Recent Admin changes</p>
+        <ul className="mt-0.5 list-disc pl-4 space-y-0.5">
+          <li>Ctrl+K search now jumps to tabs, settings, and standalone pages (Fleet, SOP, Resource Planning).</li>
+          <li>Automation rules: test-conditions dry-run, owner transfer, groups, quiet hours, draft restore.</li>
+          <li>Calendar admin: conflict + travel-buffer detection, crew capacity, layer toggles, print week.</li>
+          <li>Users: access preview per row, deactivate flag, password-age + reset flags, access-review prompt.</li>
+          <li>Permitting: approval-trend sparkline, conflict banner, locality coverage, follow-ups due.</li>
+          <li>Accessibility: focus/contrast support, icon-button labels, error announcements.</li>
+        </ul>
+      </div>
+
       <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2 text-[11px] text-gray-600" aria-label="Data retention policy">
         <p className="font-semibold text-gray-700">Retention policy</p>
         <ul className="mt-0.5 list-disc pl-4 space-y-0.5">
