@@ -129,6 +129,25 @@ export default function ActivityFeed() {
     return "bg-gray-100 text-gray-800";
   };
 
+  const exportActivitiesCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Time", "Actor", "Type", "Entity", "Field/Action", "Old Value", "New Value"],
+      ...visibleActivities.map((a) => [
+        a.timestamp ? new Date(a.timestamp).toLocaleString() : "",
+        a.user || "", a.entityType || a.type || "",
+        a.entityTitle || a.entityId || "",
+        a.field || a.actionType || a.description || "",
+        a.oldValue ?? "", a.newValue ?? "",
+      ]),
+    ].map((r) => r.map(esc).join(",")).join("
+");
+    const blob = new Blob([rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "activity.csv"; a.click(); URL.revokeObjectURL(url);
+  };
+
   const visibleActivities = activities.filter((a) => {
     if (actorFilter !== "all" && a.user !== actorFilter) return false;
     const t = a.timestamp ? new Date(a.timestamp).getTime() : 0;
@@ -171,6 +190,10 @@ export default function ActivityFeed() {
             className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="From date" />
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
             className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="To date" />
+          <button type="button" onClick={exportActivitiesCsv} disabled={visibleActivities.length === 0}
+            className="h-9 rounded-md border border-input px-3 text-xs font-medium hover:bg-gray-50 disabled:opacity-40">
+            Export CSV
+          </button>
 
           <Select value={String(limit)} onValueChange={(v) => setLimit(parseInt(v))}>
             <SelectTrigger className="w-28 h-9">
