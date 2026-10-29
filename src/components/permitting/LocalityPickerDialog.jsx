@@ -404,9 +404,13 @@ function LocalityPickerSession({
               <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" /> Cancel search
             </Button>
           ) : (
+            <>
             <Button onClick={runSearch} disabled={!address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
               <Search className="w-4 h-4" /> Find my jurisdiction
             </Button>
+            <button type="button" className="min-h-11 self-center rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-500 hover:bg-slate-50" title="Keyboard shortcuts"
+              onClick={() => window.alert("Shortcuts:\n• Enter — search the typed address\n• Esc — close this dialog\n• Paste a full address — searches automatically")}>?</button>
+            </>
           )}
 
           <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-violet-700 underline self-center" onClick={() => { const v = !showOptions; setShowOptions(v); try { localStorage.setItem("permitting_show_options", v ? "1" : "0"); } catch {} }}>{showOptions ? "Fewer options" : "More options…"}</button>
