@@ -8,6 +8,7 @@ import { localDateStamp } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
 import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -65,7 +66,11 @@ function daysSince(dateStr) {
   return Math.max(0, Math.floor((Date.now() - d) / 86400000));
 }
 
+const TAG_DOT = { red: "bg-red-500", amber: "bg-amber-400", green: "bg-emerald-500", blue: "bg-sky-500", violet: "bg-violet-500" };
+
 export default function EstimatorQueues() {
+  const { user } = useAuth();
+  const myEmail = String(user?.email || "").trim().toLowerCase();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const status = params.get("status") || "";
@@ -374,7 +379,7 @@ export default function EstimatorQueues() {
                       className="flex items-center gap-3 min-w-0 flex-1"
                     >
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-gray-800 truncate">{e.project_name}</div>
+                      <div className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1.5">{myEmail && e.personal_tags?.[myEmail]?.color ? <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${TAG_DOT[e.personal_tags[myEmail].color] || ""}`} title={`My label: ${e.personal_tags[myEmail].color}`} /> : null}{e.project_name}</div>
                       <div className="text-xs text-gray-500 truncate">
                         {e.client_name}
                         {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
