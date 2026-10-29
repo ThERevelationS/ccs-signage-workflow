@@ -155,6 +155,8 @@ export default function QuoteSettings() {
             <label className="text-[10px] font-bold tracking-wide text-gray-500">NUMBER PADDING<input type="number" min="3" max="10" value={form.doc_number_padding} onChange={(event) => patch({ doc_number_padding: Math.max(3, Math.min(10, Number(event.target.value || 5))) })} className="mt-1 h-[32px] w-full rounded border border-gray-300 px-2 text-[11px] font-normal text-gray-800" /></label>
             <p id="doc-format-hint" className="text-[10px] text-gray-400 -mt-1 sm:col-span-2">Use <code>{"{seq}"}</code> where the padded sequence goes — e.g. <code>EST-{"{seq}"}</code> or <code>26-{"{seq}"}-REV</code>.</p>
             <TextField label="Module prefixes (JSON)" value={form.module_number_prefixes} onChange={(value) => patch({ module_number_prefixes: value })} textarea wide />
+            <TextField label="Display timezone" value={form.display_timezone} onChange={(value) => patch({ display_timezone: value })} wide />
+            <p className="text-[10px] text-gray-400 -mt-1 sm:col-span-2">IANA timezone for estimate/date displays (e.g. <code>America/New_York</code>, <code>America/Chicago</code>) — blank uses the viewer's local zone.</p>
             <p className="text-[10px] text-gray-400 -mt-1 sm:col-span-2">Optional per-module override, e.g. <code>{'{"foundation":"FND-{seq}","channel_letters":"CL-{seq}"}'}</code> — passed as <code>module_key</code> to the number generator.</p>
             <TextField label="Payment terms" value={form.payment_terms} onChange={(value) => patch({ payment_terms: value })} textarea wide />
             <TextField label="Terms & conditions" value={form.quote_terms_conditions} onChange={(value) => patch({ quote_terms_conditions: value })} textarea wide />
