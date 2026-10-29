@@ -2373,6 +2373,16 @@ export default function AdminSettings() {
                               </Badge>
                             ) : null;
                           })()}
+                          {(() => {
+                            const recent = Array.isArray(rule.recent_runs) ? rule.recent_runs : [];
+                            const dayAgo = Date.now() - 86400e3;
+                            const firedToday = recent.filter((r) => Date.parse(r?.at || "") > dayAgo).length;
+                            return firedToday >= 10 ? (
+                              <Badge className="text-xs bg-purple-100 text-purple-800 border border-purple-300">
+                                High volume — {firedToday} runs in 24h
+                              </Badge>
+                            ) : null;
+                          })()}
                           {ruleOrphanedTargets(rule).length > 0 && (
                             <Badge className="text-xs bg-red-100 text-red-800 border border-red-300">
                               Missing: {ruleOrphanedTargets(rule).join(", ")}
