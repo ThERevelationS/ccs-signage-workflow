@@ -127,7 +127,7 @@ function ConditionRow({ cond, index, users, onChange, onRemove, isFirst }) {
           />
         )
       )}
-      <button onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
+      <button type="button" onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -163,7 +163,7 @@ function AssignmentRow({ assign, index, users, onChange, onRemove }) {
           {ONLY_IF_OPTS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
         </SelectContent>
       </Select>
-      <button onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
+      <button type="button" onClick={onRemove} className="ml-auto text-red-400 hover:text-red-600 p-1">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -222,7 +222,7 @@ function RuleCard({ rule, users, onEdit, onDuplicate, onDelete, onToggle }) {
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={() => setExpanded(!expanded)} className="p-1 text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={() => setExpanded(!expanded)} className="p-1 text-gray-400 hover:text-gray-600">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           <Switch checked={rule.enabled} onCheckedChange={() => onToggle(rule)} />
@@ -855,7 +855,7 @@ function TaskLoadPanel({ users }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-indigo-900">Task templates:</span>
             {TASK_TEMPLATES.map(tpl => (
-              <button key={tpl.name} type="button" disabled={reassignBusy} onClick={() => spawnTemplate(tpl)}
+              <button type="button" key={tpl.name} type="button" disabled={reassignBusy} onClick={() => spawnTemplate(tpl)}
                 className="rounded-full border border-indigo-300 bg-white px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-40">
                 + {tpl.name}
               </button>
