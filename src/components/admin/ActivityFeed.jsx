@@ -259,6 +259,9 @@ export default function ActivityFeed() {
       {visibleActivities.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           No activity found
+          {(actorFilter !== "all" || dateFrom || dateTo || mineOnly || filterType !== "all") && (
+            <p className="mt-2 text-xs text-gray-400">Try clearing the filters — some are active.</p>
+          )}
         </div>
       ) : (
         <div className="space-y-2 max-h-[600px] overflow-y-auto">
