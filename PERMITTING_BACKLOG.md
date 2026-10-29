@@ -182,7 +182,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 133. **[F][FLAGGED]** Permit-status workflow state machine on line items — needs its own field + transitions + UI (95).
 134. **[F][DONE]** Boundary-polygon overlay on the picker map — needs the GeoJSON stored per locality + a polygon render layer (37).
 135. **[F][DONE]** Jurisdiction expiry + auto-re-verify scheduling — needs a recurring function + a stale flag (52).
-136. **[F][FLAGGED]** Shared permit-office contact DB with call outcomes — needs its own entity + UI (53).
+136. **[F][DONE]** Shared permit-office contact DB with call outcomes — needs its own entity + UI (53).
 
 # --- ROUND 2 (items 137-236) ---
 
