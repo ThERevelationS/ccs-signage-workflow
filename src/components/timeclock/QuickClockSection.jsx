@@ -176,7 +176,12 @@ export default function QuickClockSection({
   const [notification, setNotification] = useState(null);
   const [persistenceError, setPersistenceError] = useState("");
   const [isRecognizing, setIsRecognizing] = useState(false);
-  const [recognitionMethod, setRecognitionMethod] = useState(null); // face | qr | manual
+  const [recognitionMethod, setRecognitionMethodRaw] = useState(null); // face | qr | manual
+  // Per-device preferred method - remembers how this kiosk usually identifies.
+  const setRecognitionMethod = (m) => {
+    setRecognitionMethodRaw(m);
+    if (m) { try { localStorage.setItem("ccs_kiosk_method", m); } catch {} }
+  };
   const [recognitionStatus, setRecognitionStatus] = useState("");
   const [authoritativeTransition, setAuthoritativeTransition] = useState(null);
   const [punchResolution, setPunchResolution] = useState(null);
@@ -1764,6 +1769,12 @@ export default function QuickClockSection({
 
         {isRecognizing && (
           <div className="flex flex-col items-center">
+            {!recognitionMethod && (() => {
+              const preferred = (() => { try { return localStorage.getItem("ccs_kiosk_method"); } catch { return null; } })();
+              return preferred ? (
+                <p className="mb-3 text-[10px] text-slate-400">Last used on this kiosk: <span className="font-semibold text-slate-600">{preferred === "face" ? "Face" : preferred === "qr" ? "QR Badge" : "Email"}</span></p>
+              ) : null;
+            })()}
             {recognitionMethod === "face" && (
               <div className="relative mb-4">
                 <div className="relative inline-block">
