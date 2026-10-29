@@ -24,6 +24,7 @@ import {
   ChevronDown, Search, Loader2, Layers, MapPin, FileText, Activity,
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const readQueuePage = (query, options) => staffEntities.SourceCollectionQueue.filter(query, options);
 
@@ -87,7 +88,15 @@ export default function PermittingCompletenessDashboard() {
     staleDays: 90,
   });
   const [metrics, setMetrics] = useState(null);
+  const [history, setHistory] = useState([]);
   const [followUps, setFollowUps] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "completenessHistory", label: "Completeness history" })
+      .then((r) => { if (alive && Array.isArray(r?.setting_value?.entries)) setHistory(r.setting_value.entries); })
+      .catch(() => null);
+    return () => { alive = false; };
+  }, []);
   const [officeContacts, setOfficeContacts] = useState([]);
   const [queueSearch, setQueueSearch] = useState("");
   const { queuePage, loadingQueue, queueError, loadQueue } = usePermittingQueueBrowse(readQueuePage, filters, queueSearch);
@@ -151,6 +160,22 @@ export default function PermittingCompletenessDashboard() {
       const totalProfiles = Object.values(profilesByStateMap).reduce((a, b) => a + b, 0);
 
       if (!current()) return;
+      const approvalPct = rulesTotal ? Math.round((rulesApproved / rulesTotal) * 100) : 0;
+      const today = new Date().toISOString().slice(0, 10);
+      setHistory((cur) => {
+        if (cur.some((h) => h.at === today)) return cur;
+        const next = [...cur, { at: today, pct: approvalPct }].slice(-30);
+        (async () => {
+          try {
+            const row = await loadSingleGlobalSetting({ entity: staffEntities.GlobalSettings, settingKey: "completenessHistory", label: "Completeness history" });
+            await saveGlobalSettingValueIfUnchanged({
+              entity: staffEntities.GlobalSettings, loadedRecord: row, settingKey: "completenessHistory",
+              nextValue: { entries: next }, label: "Completeness history",
+            });
+          } catch { /* snapshot is best-effort */ }
+        })();
+        return next;
+      });
       setMetrics({
         staleDays: days,
         queueByState: queueByStateMap,
@@ -462,6 +487,20 @@ export default function PermittingCompletenessDashboard() {
       </Section>
 
       {/* Rules extracted & approved */}
+      {history.length > 1 && (
+        <div className="rounded-xl border border-gray-200 bg-white/70 p-3" aria-label="Approval trend">
+          <p className="text-xs font-semibold text-gray-700">Rule-approval trend</p>
+          <div className="mt-1 flex items-end gap-0.5" style={{ height: 28 }}>
+            {history.map((h) => (
+              <div key={h.at} title={`${h.at}: ${h.pct}% approved`}
+                className={`w-2 rounded-sm ${h.pct >= 80 ? "bg-emerald-400" : h.pct >= 50 ? "bg-amber-400" : "bg-red-300"}`}
+                style={{ height: `${Math.max(8, h.pct)}%` }} />
+            ))}
+          </div>
+          <p className="mt-0.5 text-[10px] text-gray-400">Approved-rule share, one point per day · {history[0].at} → {history[history.length - 1].at}</p>
+        </div>
+      )}
+
       <Section title="Permitting rules extracted" icon={FileCheck2} badge={m.rulesTotal}>
         <div className="space-y-1 pt-3">
           <Row label="Total rules extracted" value={m.rulesTotal} />
