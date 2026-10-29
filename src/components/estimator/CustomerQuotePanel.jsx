@@ -237,7 +237,7 @@ export default function CustomerQuotePanel({
     if (!recipient && estimate.customer_id) {
       try {
         const customer = await base44.entities.Customer.get(estimate.customer_id).catch(() => null);
-        recipient = customer?.contact_email || customer?.billing_contact_email || "";
+        recipient = customer?.email || customer?.contact_email || customer?.billing_email || customer?.billing_contact_email || "";
       } catch {}
     }
     setRecipientEmail(recipient);
