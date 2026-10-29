@@ -10,6 +10,7 @@ import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estima
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -367,7 +368,7 @@ export default function EstimatorQueues() {
 
         <div className="bg-white">
           {loading ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-400">Loadingâ€¦</div>
+            <ListSkeleton rows={8} />
           ) : loadError ? (
             <div className="px-4 py-10 text-center text-sm text-red-600">{loadError}</div>
           ) : rows.length === 0 ? (
