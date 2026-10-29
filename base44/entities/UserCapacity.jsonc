@@ -20,6 +20,10 @@
       "default": 8,
       "description": "Maximum hours available per day"
     },
+    "hourly_cost_rate": {
+      "type": "number",
+      "description": "Internal hourly cost rate for capacity costing \u2014 admin-facing only"
+    },
     "skills": {
       "type": "array",
       "description": "User's skills for resource matching",
@@ -64,20 +68,7 @@
         "role": "__resource_capacity_backend_only__"
       }
     },
-    "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "user_condition": {
         "role": "__resource_capacity_backend_only__"
