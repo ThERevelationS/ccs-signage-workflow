@@ -466,6 +466,14 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             today={today}
             showTodayShortcut={["inspection_scheduled", "inspection_failed", "inspection_passed"].includes(String(lineItem.closeout_status || "").toLowerCase())}
           />
+          {lineItem.inspection_date && (
+            <a
+              className="self-center text-[10px] font-semibold text-indigo-700 underline"
+              href={`data:text/calendar;charset=utf8,${encodeURIComponent(`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART;VALUE=DATE:${String(lineItem.inspection_date).replace(/-/g, "")}\nSUMMARY:${(lineItem.row_name || "Permit")} inspection — ${lineItem.locality_name || ""}\nEND:VEVENT\nEND:VCALENDAR`)}`}
+              download={`inspection-${lineItem.inspection_date}.ics`}
+              title="Add this inspection to your calendar"
+            >+ calendar</a>
+          )}
           <DateField
             label="Closeout date"
             value={lineItem.closeout_date}
