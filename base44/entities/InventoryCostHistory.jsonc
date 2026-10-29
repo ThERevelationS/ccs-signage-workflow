@@ -3,7 +3,6 @@
   "properties": {
     "inventory_item_id": {
       "type": "string",
-      "required": true,
       "description": "Referenced inventory row id (any Master Inventory entity)."
     },
     "entity_key": {
