@@ -71,6 +71,9 @@ Deno.serve(async (req) => {
 
     if (entityName === 'TaxGroup' && (op === 'create' || op === 'update')) {
       const pct = Number(data?.tax_percent ?? 0);
+      // Rows written before the group_name convention carried `name` — normalize either.
+      if (!data?.group_name && data?.name) (data as any).group_name = data.name;
+      delete (data as any).name;
       if (!String(data?.group_name || '').trim()) return Response.json({ error: 'Tax group needs a name.' }, { status: 400 });
       if (!Number.isFinite(pct) || pct < 0 || pct > 100) return Response.json({ error: 'Tax percent must be between 0 and 100.' }, { status: 400 });
       (data as any).group_name = String(data.group_name).trim().slice(0, 120);
