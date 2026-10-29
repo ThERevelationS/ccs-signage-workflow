@@ -46,10 +46,10 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 35. **[F][DONE]** Customer 360 "estimates" tab shows lifecycle funnel (draft→sent→approved counts)
 36. **[F][DONE]** Last-contacted date on customer (from portal messages / quote sends)
 37. **[F][DONE]** Customer tags (wholesale, repeat, VIP) usable as filter on EstimatorCustomers
-38. **[B]** `EstimatorCustomers` unread badge — verify it clears on message read
-39. **[F]** Import customers from CSV on EstimatorCustomers page
-40. **[H]** `upsertCustomerFromEstimate` — strip whitespace-only `client_name` before lookup
-41. **[F]** Customer payment terms field → flows to invoice + quote validity
+38. **[B][DONE]** `EstimatorCustomers` unread badge — verify it clears on message read
+39. **[F][DONE]** Import customers from CSV on EstimatorCustomers page
+40. **[H][DONE]** `upsertCustomerFromEstimate` — strip whitespace-only `client_name` before lookup
+41. **[F][DONE]** Customer payment terms field → flows to invoice + quote validity
 42. **[F][DONE]** Customer portal contact auto-created when first quote emailed
 43. **[F][DONE]** "Recent customers" chip strip on NewAllInOneEstimate — local ID history, five-chip limit, privacy-safe storage
 44. **[H][DONE]** `ensureCustomerSummary` write — service-role persistence after caller-owned source-project validation
@@ -98,7 +98,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 81. **[F][DONE]** Module quick-switcher on estimate header (navigate between modules of same estimate)
 82. **[B][DONE]** CNCEstimator/HoldDownAdvisor — `result.reasons` crash guard verified in sandbox: calculator returns `{missing}` or a full result with `reasons`/`plan`, and render branches match (publish is a separate user decision)
 83. **[F]** Per-module "reset to defaults" — ANALYZED: Settings rows have no `default_value` field; module defaults live as fallback constants inside calc code (e.g. `Number(settingsMap.x) || 1.25`). Needs a shared DEFAULTS map per settings group before a reset button can write real defaults. Shared page pattern: `values`/`original`/`rows` + `saveSettingsRowsSafely` (CNC, Foundation, Laser, Maintenance, Metal, Painting settings pages)
-84. **[F]** Import settings JSON per module — ANALYZED: no estimator settings page exports JSON today (grep finds downloads only in Fleet/Permitting). Both export+import needed; the shared `values` map + `ACTIVE_KEYS` filtering makes a shared helper viable (export `values` → JSON, import validates keys against `ACTIVE_KEYS`)
+84. **[F][DONE]** Import settings JSON per module — ANALYZED: no estimator settings page exports JSON today (grep finds downloads only in Fleet/Permitting). Both export+import needed; the shared `values` map + `ACTIVE_KEYS` filtering makes a shared helper viable (export `values` → JSON, import validates keys against `ACTIVE_KEYS`)
 85. **[H][DONE]** Material select persistence — BrickGeometryPanel persists `selected_material_id` to `estimator:last_material:brick_stone` and auto-applies it when a new project has no selection (BrickStone is the only module with a dedicated material dropdown; other modules' pickers are workflow-scoped)
 86. **[F][DONE]** Global `Ctrl+S`/`Cmd+S` = save on all module estimators — keydown effect added to the 8 modules lacking it (ChannelLetter already had it), guarded against in-flight saves
 87. **[H][DONE]** `isSaving` also blocks navigation — a `beforeunload` warn is registered while any module save is in flight (ChannelLetter additionally uses the shared UnsavedChangesContext)
