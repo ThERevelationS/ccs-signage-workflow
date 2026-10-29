@@ -261,7 +261,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 193. **[H][DONE]** Structured timing/stage log on the scan record — which stage ate the seconds (geocode vs boundary vs office review).
 194. **[H][FLAGGED-dedicated]** Email-free status delivery: the scan-activity panel IS the notification surface — a subtle badge when a watched scan finishes.
 195. **[H][DONE]** Graceful half-result: boundary matched but office review timed out → usable locality + "offices still checking" (partial success, not failure).
-196. **[H][FLAGGED-dedicated]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
+196. **[H][DONE]** Cap scan-activity retention: prune stale runs older than N days so the panel stays fast.
 197. **[H][DONE]** Defensive parser on geocoder responses: a malformed payload becomes a clear "map service returned something odd" not a crash.
 198. **[H][FLAGGED-dedicated]** Feature flag the fallback geocoder path so a Nominatim outage can't cascade into the picker.
 
@@ -332,7 +332,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 245. **[UX][DONE]** "What's left to file" summary on the job card: "2 of 3 applications still unfiled" — the work left is a number.
 246. **[F][DONE]** Application fee paid-tracking per line: amount + method + date + check # — separate from the issued-permit fee.
 247. **[F][DONE]** Payment-link capture: the office's online-pay URL stored so the clerk never hunts it down twice.
-248. **[UX][FLAGGED-dedicated]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
+248. **[UX][DONE]** Timezone-correct "due" displays: "Application due tomorrow" — never raw UTC strings.
 249. **[F][DONE]** Confirmation-number field: the portal's submission reference gets saved where staff actually look for it.
 250. **[UX][DONE]** "Resubmit" one-click: reopens the portal link + copies the last application's data — rejections recover fast.
 251. **[F][DONE]** Correspondence thread per line: emails/letters from the office linked or pasted — the paper trail.
@@ -372,14 +372,14 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 279. **[UX][FLAGGED-dedicated]** The map shows the nearest boundary distance: "0.2 mi to the township line" — edge cases are visible.
 280. **[F][FLAGGED-dedicated]** Water/road-edge rules: addresses on a city line where the road itself is the boundary get a special "road-edge" flag.
 281. **[H][FLAGGED-dedicated]** Census boundary freshness: when the TIGER data updates, boundary-verified jurisdictions get a re-check flag.
-282. **[F][FLAGGED-dedicated]** Municipal vs postal name: "Address says Milford but the map says Miami Township" — postal ≠ jurisdiction, called out explicitly.
+282. **[F][DONE]** Municipal vs postal name: "Address says Milford but the map says Miami Township" — postal ≠ jurisdiction, called out explicitly.
 283. **[UX][FLAGGED-dedicated]** A "show me the boundary" button drawing the jurisdiction outline on the map when GeoJSON exists.
 284. **[F][FLAGGED-dedicated]** Overlapping-service districts: school districts, fire districts, water districts — separate layers, never conflated with permit offices.
-285. **[UX][FLAGGED-dedicated]** "Is this address right?" sanity check: the pin vs the typed street — a visual confirmation before apply.
+285. **[UX][DONE]** "Is this address right?" sanity check: the pin vs the typed street — a visual confirmation before apply.
 286. **[F][DONE]** Township-trustee vs municipality distinction: "Milford Township" and "City of Milford" as visually-distinct card types.
 287. **[H][FLAGGED-dedicated]** GPS-vs-geocode agreement: when "Use my location" and the typed address disagree by >500ft, flag the mismatch.
-288. **[F][FLAGGED-dedicated]** County-level fallback: when no local office exists, the county's office surfaces with "county handles unincorporated areas" context.
-289. **[UX][FLAGGED-dedicated]** Boundary data provenance: "Boundary from US Census TIGER 2024" — staff know where the lines came from.
+288. **[F][DONE]** County-level fallback: when no local office exists, the county's office surfaces with "county handles unincorporated areas" context.
+289. **[UX][DONE]** Boundary data provenance: "Boundary from US Census TIGER 2024" — staff know where the lines came from.
 290. **[F][FLAGGED-dedicated]** Overlap-zone candidates: two jurisdictions both claiming the pin → both shown with "conflicting boundary data" — never auto-picked.
 291. **[H][DONE]** Address normalization server-side too: the resolver normalizes before lookup so "St"↔"Street" variants hit the same boundary.
 292. **[UX][DONE]** Rural-route handling: addresses on a route get "mail goes to X but the land is in Y township" — the tricky case named.
@@ -430,7 +430,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 328. **[H][FLAGGED-dedicated]** Estimate-integration: the estimate's permit-cost line pulls the office's actual fee where known.
 329. **[F][DONE]** Calendar-feed: inspection dates as an .ics the field team can subscribe to.
 330. **[UX][DONE]** Clipboard-sync: copy an address anywhere in the app → it's pre-filled in the picker next open.
-331. **[F][FLAGGED-dedicated]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
+331. **[F][DONE]** Jurisdiction-data import: a CSV of towns/counties → repository rows — bulk onboarding of new regions.
 332. **[H][DONE]** Dedupe on jurisdiction import: an import can't mint a second "Milford" — merges into the existing row.
 333. **[F][DONE]** Office-lookup by phone: inbound call → the office's row — "who is calling".
 334. **[UX][DONE]** "Recent work in this town" on the card: last 3 jobs in the same jurisdiction — institutional memory.
