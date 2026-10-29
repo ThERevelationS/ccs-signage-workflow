@@ -86,7 +86,7 @@ export default function EstimateCard({ estimate }) {
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
             <span className="flex items-center gap-1">
               <User className="w-3.5 h-3.5" />
-              {estimate.client_name || "â€”"}
+              {estimate.client_name || "—"}
             </span>
             {estimate.estimate_number && (
               <span className="font-mono text-xs text-gray-400">{estimate.estimate_number}</span>
