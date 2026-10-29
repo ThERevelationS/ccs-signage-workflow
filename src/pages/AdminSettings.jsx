@@ -1720,6 +1720,18 @@ export default function AdminSettings() {
 
   const [condTest, setCondTest] = useState(null);
   const [condTestBusy, setCondTestBusy] = useState(false);
+  const transferRuleOwner = async (rule, owner) => {
+    const writeCapability = getStoredAdminSettingsCapability();
+    if (!writeCapability || !rule?.id) return;
+    try {
+      const saved = await updateAutomationRuleIfUnchanged({
+        record: rule, nextFields: { owner }, exactVersion: true,
+        adminCapability: writeCapability, label: `Automation Rule ${rule.name || rule.id}`,
+      });
+      setAutomations(prev => prev.map(r => r.id === saved.id ? saved : r));
+    } catch { /* leave current value */ }
+  };
+
   const runConditionTest = async () => {
     if (condTestBusy) return;
     const t = triggers.find((x) => x?.trigger_type);
@@ -2938,6 +2950,15 @@ export default function AdminSettings() {
                         <p className="text-[11px] text-gray-400">
                           Added by {rule.created_by || 'unknown'}{rule.created_date ? `  -  ${new Date(rule.created_date).toLocaleDateString()}` : ''}
                         </p>
+                        <label className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-400">
+                          Owner:
+                          <select aria-label={`Transfer ownership of ${rule.name}`} value={rule.owner || ""}
+                            onChange={(e) => transferRuleOwner(rule, e.target.value)}
+                            className="rounded border border-gray-200 bg-white px-1 py-0 text-[11px] text-gray-700">
+                            <option value="">Unassigned</option>
+                            {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch aria-label={`Toggle ${rule.name}`} disabled={!!automationOperation || automationSaving || !!automationUncertain} checked={rule.enabled} onCheckedChange={() => toggleEnabled(rule)} />
