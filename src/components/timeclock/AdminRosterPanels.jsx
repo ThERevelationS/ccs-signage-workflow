@@ -23,17 +23,19 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [schedBusy, setSchedBusy] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [ptoLiability, setPtoLiability] = useState(null);
+  const [periods, setPeriods] = useState([]);
 
   const load = useCallback(async () => {
     if (!sessionToken) return;
     try {
-      const [whoRes, faceRes, auditRes, schedRes, pendRes, ptoRes] = await Promise.all([
+      const [whoRes, faceRes, auditRes, schedRes, pendRes, ptoRes, compareRes] = await Promise.all([
         base44.functions.invoke("timeClockAction", { action: "who_is_in", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_face_enrollment", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_timeclock_audit", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_shift_templates", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "list_pending_requests", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
         base44.functions.invoke("timeClockAction", { action: "pto_liability_report", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
+        base44.functions.invoke("timeClockAction", { action: "admin_period_compare", session_token: sessionToken, scope: "admin", request_id: newRequestId() }).catch(() => null),
       ]);
       const who = whoRes?.data || whoRes;
       const face = faceRes?.data || faceRes;
@@ -48,6 +50,8 @@ export default function AdminRosterPanels({ sessionToken }) {
       setPendingRequests(pend?.success === true && Array.isArray(pend.pending) ? pend.pending : []);
       const pto = ptoRes?.data || ptoRes;
       setPtoLiability(pto?.success === true ? { total: pto.total_available_minutes || 0, employees: Array.isArray(pto.employees) ? pto.employees : [] } : null);
+      const compare = compareRes?.data || compareRes;
+      setPeriods(compare?.success === true && Array.isArray(compare.periods) ? compare.periods : []);
       setError("");
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Roster data could not be loaded.");
@@ -251,6 +255,21 @@ export default function AdminRosterPanels({ sessionToken }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {periods.length > 1 && (
+        <div className="clay-card p-4 lg:col-span-2">
+          <h3 className="font-semibold mb-2">Month-over-month</h3>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {periods.slice(0, 8).map((p) => (
+              <div key={p.month} className="rounded-lg border border-slate-200 px-3 py-2">
+                <p className="text-[11px] font-semibold text-slate-500">{p.month}</p>
+                <p className="text-lg font-bold text-indigo-700">{p.hours}h</p>
+                <p className="text-[10px] text-slate-400">{p.entries} shifts · {p.employees} people</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
