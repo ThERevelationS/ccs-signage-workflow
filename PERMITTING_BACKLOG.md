@@ -308,7 +308,7 @@ Second hundred. Same rules: permitting session only, never conflate county/city/
 
 ## V — Team workflow & visibility
 
-231. **[F][FLAGGED-dedicated]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
+231. **[F][DONE]** Permit workload board: per-person "you have N offices to chase" — the day's calls, distributed.
 232. **[UX][DONE]** Handoff notes on a line: "transfer chasing to Brett" — an internal assignee+note swap, logged.
 233. **[F][FLAGGED-dedicated]** Daily digest view: yesterday's applied jurisdictions + today's pending — the morning standup card.
 234. **[UX][DONE]** Who-applied audit on the job card: "Brett linked Milford, Oct 22" — accountability without digging.
