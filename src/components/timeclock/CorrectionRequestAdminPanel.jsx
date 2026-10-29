@@ -52,7 +52,7 @@ function displayTime(iso) {
   return formatCompanyDateTime(iso);
 }
 
-export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
+export default function CorrectionRequestAdminPanel({ sessionToken, entries = [], onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -400,6 +400,19 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   <div className="mt-1 text-xs text-amber-800">Employee-attested time. It is not official until this correction is applied through the audited backend.</div>
                 </div>
               )}
+              {(() => {
+                // Reviewer context - this employee's recent pattern so a 14h
+                // claim is evaluated against their usual 8h day.
+                const recent = entries
+                  .filter((e) => e.user_email === selected.user_email && e.id !== selected.time_entry_id && e.clock_in)
+                  .sort((a, b) => new Date(b.clock_in) - new Date(a.clock_in))
+                  .slice(0, 3);
+                return recent.length ? (
+                  <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+                    Recent shifts: {recent.map((e) => `${Number(e.total_hours || 0).toFixed(1)}h (${e.clock_in ? new Date(e.clock_in).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "?"})`).join(" · ")}
+                  </div>
+                ) : null;
+              })()}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div className="rounded-lg bg-gray-50 p-3">
                   <div className="text-xs font-semibold text-gray-500 mb-2">ORIGINAL · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
