@@ -136,6 +136,40 @@ export default function AdminCalendarSettings() {
     return workOrders.filter((w) => w.id && !scheduledIds.has(w.id)).slice(0, 8);
   })();
 
+  const [weatherByEvent, setWeatherByEvent] = useState({});
+  useEffect(() => {
+    // Open-Meteo (no key) — geocode each unique event location once, fetch the
+    // daily forecast, and pick the day matching the event date. Best-effort:
+    // failures simply leave the badge absent.
+    let cancelled = false;
+    const withinDays = upcomingEvents.filter((e) => e.location && (new Date(e.start_datetime) - new Date()) < 7 * 86400000);
+    const locations = [...new Map(withinDays.map((e) => [String(e.location).trim().toLowerCase(), e.location])).entries()].slice(0, 5);
+    if (!locations.length) return undefined;
+    const WMO = { 0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Cloudy", 45: "Fog", 51: "Drizzle", 61: "Rain", 66: "Freezing rain", 71: "Snow", 80: "Showers", 95: "Storm" };
+    (async () => {
+      for (const [key, location] of locations) {
+        try {
+          const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`).then((r) => r.json());
+          const place = geo?.results?.[0];
+          if (!place) continue;
+          const fc = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&forecast_days=16&temperature_unit=fahrenheit`).then((r) => r.json());
+          if (cancelled) return;
+          for (const e of withinDays.filter((ev) => String(ev.location).trim().toLowerCase() === key)) {
+            const dayIdx = (fc.daily?.time || []).indexOf(format(new Date(e.start_datetime), "yyyy-MM-dd"));
+            if (dayIdx < 0) continue;
+            const hi = Math.round(fc.daily.temperature_2m_max[dayIdx]);
+            const lo = Math.round(fc.daily.temperature_2m_min[dayIdx]);
+            const rain = fc.daily.precipitation_probability_max[dayIdx];
+            const code = WMO[fc.daily.weathercode[dayIdx]] || "";
+            setWeatherByEvent((cur) => ({ ...cur, [e.id]: `${code} ${lo}-${hi}°${rain >= 40 ? `, ${rain}% rain` : ""}` }));
+          }
+        } catch { /* weather is best-effort */ }
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(upcomingEvents.map((e) => [e.id, e.location, e.start_datetime]))]);
+
   const printWeekRows = (() => {
     const end = new Date(Date.now() + 7 * 86400000);
     return events
@@ -453,6 +487,11 @@ export default function AdminCalendarSettings() {
                   <p className="text-xs text-gray-500">
                     {format(new Date(ev.start_datetime), ev.all_day ? "MMM d, yyyy" : "MMM d, yyyy h:mm a")}
                     {ev.location && ` · ${ev.location}`}
+                    {weatherByEvent[ev.id] && (
+                      <span className="ml-1.5 rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700" title="Forecast for event day">
+                        {weatherByEvent[ev.id]}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
