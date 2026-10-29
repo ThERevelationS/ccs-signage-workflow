@@ -1,4 +1,5 @@
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { validatePermitDocumentBytes } from '../../shared/permittingDocumentValidation.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { patchJurisdictionDocuments } from '../../shared/jurisdictionPersistence.mjs';
@@ -77,7 +78,7 @@ Deno.serve(async (req) => {
   let reporter:any=silentScanReporter;
   async function respond(data:any,options:any={}){return Response.json({...data,scan_run:await reporter.finish(data.error?'failed':'complete',data.error || '')},options);}
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const user = await base44.auth.me().catch(() => null);
 
     if (!user) {
