@@ -62,7 +62,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 40. **[F]** One-button apply: "Use Milford, OH" → writes the locality to the work order and closes — the picker's only positive action.
 41. **[H][DONE]** Apply must be atomic-ish: write PermitLineItem locality_id via the CAS path (exists) and surface conflicts cleanly, not a silent 409.
 42. **[F][DONE]** After apply, show a confirmation chip on the job card: "Permit office: Milford, OH — verified" with a link to change it.
-43. **[F]** Allow applying WITHOUT a full authority review for jobs that just need the locality (show a "details still being verified" hint instead of blocking).
+43. **[F][DONE]** Allow applying WITHOUT a full authority review for jobs that just need the locality (show a "details still being verified" hint instead of blocking).
 44. **[F]** Bulk-apply: multiple jobs in the same town → apply one verified jurisdiction to all selected work orders.
 45. **[UX][DONE]** If apply fails, the error must name the step ("Couldn't link Milford to this job — reload and try again") — never a raw 500.
 46. **[F]** Undo an apply within a short window — users change their minds; reverting shouldn't need admin intervention.
@@ -82,12 +82,12 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 ## F — Repository (saved jurisdictions)
 
 56. **[UX][DONE]** The repository list needs a big search box: type "milford" → city, township, county rows labeled separately — no conflation.
-57. **[F]** Filter chips: verified / draft / needs-review / with-electrical-data — staff should find gaps in one click.
+57. **[F][DONE]** Filter chips: verified / draft / needs-review / with-electrical-data — staff should find gaps in one click.
 58. **[UX]** Duplicate/ambiguous rows get a visible warning chip — "Milford appears twice — a staff member should review".
 59. **[F]** Merge flow for true duplicates with a relink preview (like the customer merge) — never silently collapse city/township pairs that merely share a name.
 60. **[H][DONE]** Draft localities should never be silently promoted to verified — require the authority review to complete first (gated in `confirmDraftFromRepository` + `requireReviewedRepositoryProfile`).
 61. **[F]** Sort repository by "most-used" — jurisdictions touched by recent jobs float to the top.
-62. **[F]** Export the repository to CSV for offline review.
+62. **[F][DONE]** Export the repository to CSV for offline review.
 63. **[F]** Print/share a jurisdiction summary card — the field tech wants the office address + phone, not the whole repository.
 64. **[H]** Research-backlog rows: a locality that keeps failing boundary verification needs a visible "problem" flag, not silent retries.
 65. **[F]** A jurisdiction with NO verified source evidence shows a warning badge — unverified data never looks confident.
@@ -116,8 +116,8 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 82. **[H][DONE]** `permittingScanStatus` poll: back off when the scan is idle (>30s with no progress → poll every 8s, not 3s).
 83. **[H]** Offline tolerance: if `staffDataRead` is unreachable, show last-cached data with a "working offline" banner instead of an empty main.
 84. **[H][DONE]** Idempotent draft-create at the SERVER layer too — client dedupe (createPermitLocalityIfAbsent) is a courtesy, not a guarantee under double-submit races.
-85. **[H]** CAS guard on PermitLocality updates (when update ops get added) — concurrent repository edits must not clobber each other.
-86. **[H]** Audit trail on jurisdiction changes: who changed a locality name/state/authority fields and when — a simple `notes_log`-style array on the entity.
+85. **[H][DONE]** CAS guard on PermitLocality updates (when update ops get added) — concurrent repository edits must not clobber each other.
+86. **[H][DONE]** Audit trail on jurisdiction changes: who changed a locality name/state/authority fields and when — a simple `notes_log`-style array on the entity.
 87. **[H][DONE]** If `resolvePermittingAddress` returns 5xx mid-scan, the picker should re-attempt with a clean retry (already retries 429s; extend to 5xx).
 88. **[H][DONE]** Timeouts: searches longer than 90s should say "taking longer than usual" and offer a cancel — never spin forever.
 89. **[H][DONE]** Guard the draft-create path for non-admin users — the UI currently hides it by role but the create path itself should also fail closed.
@@ -158,7 +158,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 
 ## L — Polish
 
-115. **[UX]** Empty state for the picker when no address entered: a friendly "Type the job's street address above" with an example — not a blank dialog.
+115. **[UX][DONE]** Empty state for the picker when no address entered: a friendly "Type the job's street address above" with an example — not a blank dialog.
 116. **[UX][DONE]** Skeleton states while cards load — never show a half-rendered empty `main` like the 429-storm case.
 117. **[UX]** The card grid's responsive behavior on a phone: one column, big buttons — the current layout was desktop-first.
 118. **[UX][DONE]** Sort/filter the permit line items inside a client group — long lists need a simple "show only unpermitted".
