@@ -68,6 +68,21 @@ Deno.serve(async (req) => {
     if (!entity) throw bad('Unknown record type.');
 
     if (op === 'create') {
+      // Jurisdiction drafts are name+state-unique: a double-submit or racing
+      // session must converge on one row instead of minting duplicates.
+      if (entityName === 'PermitLocality') {
+        const rawName = String(data?.name || '').trim();
+        const wantName = rawName.toLowerCase();
+        const wantState = String(data?.state || '').trim().toLowerCase();
+        if (rawName) {
+          const dup = await entity.filter({ name: rawName }, null, 50).catch(() => []);
+          const existing = (Array.isArray(dup) ? dup : []).find((r: any) =>
+            String(r?.name || '').trim().toLowerCase() === wantName &&
+            String(r?.state || '').trim().toLowerCase() === wantState
+          );
+          if (existing?.id) return Response.json({ success: true, record: existing, deduplicated: true });
+        }
+      }
       const created = await entity.create(data);
       return Response.json({ success: true, record: created });
     }
