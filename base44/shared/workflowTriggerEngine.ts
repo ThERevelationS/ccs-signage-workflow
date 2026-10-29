@@ -85,7 +85,7 @@ const RECORD_LABELS: Record<string, string> = {
 
 // Named events arrive with event_type === the UI's trigger vocabulary; the
 // legacy 'create'/'update' vocabulary is still honored for field-diff checks.
-function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any, record?: any) {
+async function matchesTrigger(base44: any, trigger: any, eventType: string, workOrder: any, oldData: any, extra: any, order?: any, record?: any) {
   const condition = trigger?.trigger_condition || {};
 
   switch (trigger?.trigger_type) {
@@ -289,6 +289,21 @@ function matchesTrigger(trigger: any, eventType: string, workOrder: any, oldData
     if (condition.min_quantity != null && !(Number(order.quantity) >= Number(condition.min_quantity))) return false;
     if (condition.max_quantity != null && !(Number(order.quantity) <= Number(condition.max_quantity))) return false;
   }
+
+  // Cross-entity guard — 'related_*' fields load a row from another entity and
+  // require a field match. Fail-closed: a lookup error or missing row stops
+  // the trigger rather than firing actions from a broken config.
+  if (condition.related_entity && condition.related_match_field && condition.related_field) {
+    const sourceValue = workOrder?.[condition.related_match_field] ?? order?.[condition.related_match_field] ?? record?.[condition.related_match_field];
+    if (sourceValue == null || sourceValue === '') return false;
+    try {
+      const rows = await base44.asServiceRole.entities[condition.related_entity]?.filter({ [condition.related_match_field]: sourceValue });
+      if (!Array.isArray(rows)) return false;
+      const related = rows.find((r: any) => r?.[condition.related_match_field] === sourceValue) || rows[0];
+      if (!related || String(related[condition.related_field] ?? '') !== String(condition.related_value ?? '')) return false;
+    } catch { return false; }
+  }
+
   return matchesRecordFilters(condition, record);
 }
 
@@ -716,7 +731,7 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
     // semantics the Admin editor warns about for mixed event types.
     let triggered: boolean | null = null;
     for (const trigger of rule.triggers || []) {
-      const m = matchesTrigger(trigger, eventType, eventWorkOrder, oldData, extras, orderRecord, contextRecord);
+      const m = await matchesTrigger(base44, trigger, eventType, eventWorkOrder, oldData, extras, orderRecord, contextRecord);
       if (triggered === null) triggered = m;
       else triggered = trigger?.logic === 'and' ? (triggered && m) : (triggered || m);
     }
