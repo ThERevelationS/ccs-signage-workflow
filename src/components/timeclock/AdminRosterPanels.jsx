@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
 import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
 
 function newRequestId() {
@@ -14,6 +14,7 @@ export default function AdminRosterPanels({ sessionToken }) {
   const [roster, setRoster] = useState([]);
   const [events, setEvents] = useState([]);
   const [showAudit, setShowAudit] = useState(false);
+  const [showPlaybook, setShowPlaybook] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -146,6 +147,36 @@ export default function AdminRosterPanels({ sessionToken }) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="clay-card p-4 lg:col-span-2">
+        <button type="button" onClick={() => setShowPlaybook((v) => !v)} className="flex w-full items-center justify-between text-left">
+          <h3 className="flex items-center gap-2 font-semibold">
+            <BookOpen className="h-4 w-4 text-indigo-600" />
+            Manager playbook
+          </h3>
+          <span className="text-xs text-slate-400">{showPlaybook ? "Hide" : "Show"}</span>
+        </button>
+        {showPlaybook && (
+          <div className="mt-3 grid grid-cols-1 gap-2 text-xs leading-relaxed text-slate-600 md:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 p-3">
+              <p className="font-semibold text-slate-800">Missed punch</p>
+              <p className="mt-1">Employee reports it via the banner or Time History; the request lands in Correction Requests. Verify against the schedule or camera log, approve with a reason, and the entry repairs itself automatically.</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3">
+              <p className="font-semibold text-slate-800">Wrong clock-out time</p>
+              <p className="mt-1">The diff panel shows original vs requested side by side. Modify to the corrected time rather than rejecting - the employee sees the outcome and the audit trail records both values.</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3">
+              <p className="font-semibold text-slate-800">Still clocked in yesterday</p>
+              <p className="mt-1">Stale shifts surface in the exceptions report. Close them from the entry's detail view with a manager note - or ask the employee to file the correction so they own the claim.</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3">
+              <p className="font-semibold text-slate-800">Repeat offender</p>
+              <p className="mt-1">Check the audit panel for their pattern (late clock-ins, long pauses, corrections). The exception report aggregates by employee - coach with data, not memory.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="clay-card p-4 lg:col-span-2">
