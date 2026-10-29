@@ -3554,22 +3554,56 @@ Deno.serve(async (req) => {
       }
 
       const weekStartKey = companyWeekStartKey(serverNow.toISOString());
+      const todayKey = dateKeyInCompanyTime(serverNow.toISOString());
+      const monthKey = todayKey ? todayKey.slice(0, 7) : '';
       const weeklyDaily = [0, 0, 0, 0, 0, 0, 0];
       let weeklyPaid = 0;
+      let monthlyPaid = 0;
+      let lastClockOutMs = 0;
+      const workedDayKeys = new Set<string>();
       if (weekStartKey) {
         const recent = await entryEntity.filter({ user_email: target.email }, '-clock_in', 90);
         if (!Array.isArray(recent)) throw new Error('Time Tracker weekly entry lookup did not return a record list.');
         for (const row of recent) {
           if (!row?.id || row.archived_test_data || row.archived_admin) continue;
           const dayKey = dateKeyInCompanyTime(row.clock_in);
-          if (!dayKey || dayKey < weekStartKey) continue;
-          const dayIndex = (new Date(`${dayKey}T00:00:00Z`).getUTCDay() + 6) % 7;
+          if (!dayKey) continue;
+          if (dayKey < todayKey) workedDayKeys.add(dayKey);
+          if (dayKey === todayKey && todayKey) workedDayKeys.add(todayKey);
+          const outMs = row.clock_out ? new Date(String(row.clock_out)).getTime() : 0;
+          if (Number.isFinite(outMs) && outMs > lastClockOutMs && outMs < nowMs) lastClockOutMs = outMs;
           const paid = row.id === entry?.id
             ? paidToday
             : await trackerPaidMinutesForEntry({ entry: row, breakEntity, workPauseEntity, userEmail: target.email, nowMs });
+          if (monthKey && dayKey.startsWith(monthKey)) monthlyPaid += paid;
+          if (dayKey < weekStartKey) continue;
+          const dayIndex = (new Date(`${dayKey}T00:00:00Z`).getUTCDay() + 6) % 7;
           weeklyDaily[dayIndex] += paid;
           weeklyPaid += paid;
         }
+      }
+      // Consecutive worked days ending today, and hours since the last punch out.
+      let consecutiveDays = 0;
+      if (todayKey) {
+        let cursor = todayKey;
+        while (workedDayKeys.has(cursor)) {
+          consecutiveDays += 1;
+          const d = new Date(`${cursor}T00:00:00Z`);
+          d.setUTCDate(d.getUTCDate() - 1);
+          cursor = d.toISOString().slice(0, 10);
+        }
+      }
+      const restHours = lastClockOutMs > 0 ? (nowMs - lastClockOutMs) / 3600000 : null;
+
+      let ptoBalance: any = null;
+      const ptoRows = await ptoBalanceEntity.filter({ user_email: target.email }).catch(() => []);
+      if (Array.isArray(ptoRows) && ptoRows[0]) {
+        const r: any = ptoRows[0];
+        ptoBalance = {
+          available_minutes: Number(r.available_minutes ?? r.balance_minutes ?? 0),
+          accrued_minutes: Number(r.accrued_minutes ?? 0),
+          pending_minutes: Number(r.pending_minutes ?? 0),
+        };
       }
 
       return Response.json({
@@ -3589,6 +3623,11 @@ Deno.serve(async (req) => {
         accruing_paid: Boolean(entry) && !onUnpaidBreakNow && !pausedNow,
         weekly_paid_minutes: weeklyPaid,
         weekly_daily_minutes: weeklyDaily,
+        monthly_paid_minutes: monthlyPaid,
+        consecutive_worked_days: consecutiveDays,
+        last_clock_out: lastClockOutMs > 0 ? new Date(lastClockOutMs).toISOString() : null,
+        rest_hours_since_last_shift: restHours,
+        pto_balance: ptoBalance,
         company_day: dateKeyInCompanyTime(serverNow.toISOString()),
         prefs,
       });
