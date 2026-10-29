@@ -36,7 +36,7 @@ const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
   "Design", "Production", "Fabrication", "InstallationDeliver", "OrderForm",
   "SIPs", "MondayMorningMeeting", "Financials",
-  "WorkOrderCalendar", "TimeClock", "customerportal"
+  "TimeClock", "customerportal"
 ];
 
 const STOCK_SOUNDS = [
@@ -59,7 +59,7 @@ const PRIORITY_OPTIONS = [
 const PAGE_GROUPS = [
   { label: "All pages", all: true },
   { label: "Kiosk", pages: ["TimeClock", "customerportal"] },
-  { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "WorkOrderCalendar", "MondayMorningMeeting"] },
+  { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "MondayMorningMeeting"] },
   { label: "Sales", pages: ["SalesPipeline", "Estimating", "OrderForm", "Permitting"] },
   { label: "Admin", pages: ["Financials", "SIPs", "Design", "Production", "Fabrication", "InstallationDeliver"] },
 ];
