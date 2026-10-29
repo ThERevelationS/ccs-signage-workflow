@@ -338,7 +338,7 @@ export default function DataExportPanel() {
           <p className="text-xs font-medium text-gray-600">Columns to include:</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {fields.map((f) => (
-              <button key={f} type="button" aria-pressed={pickedCols.has(f)}
+              <button type="button" key={f} type="button" aria-pressed={pickedCols.has(f)}
                 onClick={() => setPickedCols((cur) => { const next = new Set(cur); if (next.has(f)) next.delete(f); else next.add(f); return next; })}
                 className={`rounded-full border px-2 py-0.5 text-[10px] font-mono ${pickedCols.has(f) ? "border-indigo-300 bg-indigo-50 text-indigo-800" : "border-gray-200 bg-gray-50 text-gray-400 line-through"}`}>
                 {f}
