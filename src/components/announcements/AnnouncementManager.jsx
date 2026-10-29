@@ -35,7 +35,7 @@ const AuthorizedEmail = staffEntities.AuthorizedEmail;
 const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
   "Design", "Production", "Fabrication", "InstallationDeliver", "OrderForm",
-  "SIPs", "MondayMorningMeeting", "Financials",
+  "SIPs", "SOP", "MondayMorningMeeting", "Financials",
   "TimeClock", "customerportal"
 ];
 
@@ -61,7 +61,7 @@ const PAGE_GROUPS = [
   { label: "Kiosk", pages: ["TimeClock", "customerportal"] },
   { label: "Workflow", pages: ["MyWorkflow", "MainWorkflow", "MondayMorningMeeting"] },
   { label: "Sales", pages: ["SalesPipeline", "Estimating", "OrderForm", "Permitting"] },
-  { label: "Admin", pages: ["Financials", "SIPs", "Design", "Production", "Fabrication", "InstallationDeliver"] },
+  { label: "Admin", pages: ["Financials", "SIPs", "SOP", "Design", "Production", "Fabrication", "InstallationDeliver"] },
 ];
 
 const ANNOUNCEMENT_TEMPLATES = [
