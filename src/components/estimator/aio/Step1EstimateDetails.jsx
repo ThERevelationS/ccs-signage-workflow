@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerSearchDialog from "./CustomerSearchDialog";
 import NewCustomerDialog from "./NewCustomerDialog";
 

@@ -482,7 +482,6 @@ export default function EstimatorCustomers() {
             </button>
             <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => importCustomersCsv(e.target.files?.[0])} />
           </>)}
-          )}
         </div>
 
         {linkedCustomerId && (

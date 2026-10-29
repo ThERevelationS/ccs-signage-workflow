@@ -257,7 +257,7 @@ export default function MaintenanceSettings() {
       <div className="max-w-[1280px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="maintenance-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button onClick={saveAll} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={globalSettings} allowedKeys={Object.keys(globalSettings)} fileName="maintenance-settings" onImport={(imported) => setGlobalSettings((v) => ({ ...v, ...imported }))} /><Button onClick={saveAll} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3 flex items-center gap-3">

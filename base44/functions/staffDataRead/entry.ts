@@ -50,6 +50,7 @@ const STAFF_READABLE = new Set([
   'ChecklistSubItem',
   'Customer',
   'CustomerLocation',
+  'CustomerNote',
   'DimensionalLetterMaterial',
   'EstimateOption',
   'FoundationInventory',
