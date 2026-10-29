@@ -467,7 +467,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
                 <Label>Manager Review Reason <span className="text-red-600">*</span></Label>
                 <div className="mb-1.5 flex flex-wrap gap-1.5">
                   {["Verified with schedule", "Matches posted shift", "Corrected per employee attestation", "Insufficient documentation", "Conflicts with recorded punches", "Policy exception approved"].map((chip) => (
-                    <button
+                    <button type="button"
                       key={chip} type="button"
                       onClick={() => setReviewReason((prev) => prev.trim() ? `${prev.trim()} - ${chip}` : chip)}
                       disabled={busy || retryingSelected}
