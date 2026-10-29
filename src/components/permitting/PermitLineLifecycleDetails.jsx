@@ -5,7 +5,6 @@ import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
-import PermitApplicationTracker from "./application/PermitApplicationTracker";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -319,6 +318,28 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           disabled={!isRegistered}
           onCommit={(value) => update("expected_response_date", value)}
         />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!isRegistered}
+            onClick={() => update("correction_required", !lineItem.correction_required)}
+            className={`min-h-11 rounded-full border px-3 text-[11px] font-semibold ${lineItem.correction_required ? "border-orange-400 bg-orange-50 text-orange-800" : "border-gray-300 bg-white text-gray-600"}`}
+          >
+            {lineItem.correction_required ? "Correction needed" : "Correction notice"}
+          </button>
+        </div>
+        <DateField
+          label="Fix by"
+          value={lineItem.correction_deadline}
+          disabled={!isRegistered}
+          onCommit={(value) => update("correction_deadline", value)}
+        />
+        <DateField
+          label="Fixed on"
+          value={lineItem.correction_resolved_date}
+          disabled={!isRegistered}
+          onCommit={(value) => update("correction_resolved_date", value)}
+        />
         <DateField
           label="Check back on"
           value={lineItem.follow_up_date}
@@ -352,8 +373,6 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           onCommit={(value) => update("expiration_date", value)}
         />
       </div>
-
-      <PermitApplicationTracker lineItem={lineItem} disabled={!isRegistered} update={update} />
 
       <button
         type="button"
