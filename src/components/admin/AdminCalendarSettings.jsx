@@ -159,15 +159,17 @@ export default function AdminCalendarSettings() {
     }
     const pairs = [];
     for (const [email, list] of Object.entries(byPerson)) {
+      const buf = (e) => Math.max(0, Number(e.travel_buffer_minutes) || 0) * 60000;
       const sorted = list
         .filter(e => e.start_datetime && e.end_datetime)
-        .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+        .map(e => ({ e, busyStart: new Date(e.start_datetime).getTime() - buf(e), busyEnd: new Date(e.end_datetime).getTime() + buf(e) }))
+        .sort((a, b) => a.busyStart - b.busyStart);
       for (let i = 0; i < sorted.length && pairs.length < 20; i++) {
         for (let j = i + 1; j < sorted.length; j++) {
           const a = sorted[i], b = sorted[j];
-          if (new Date(b.start_datetime) >= new Date(a.end_datetime)) break;
-          if (new Date(b.start_datetime) < new Date(a.end_datetime) && new Date(b.end_datetime) > new Date(a.start_datetime)) {
-            pairs.push({ email, a, b });
+          if (b.busyStart >= a.busyEnd) break;
+          if (b.busyStart < a.busyEnd && b.busyEnd > a.busyStart) {
+            pairs.push({ email, a: a.e, b: b.e });
           }
         }
       }
