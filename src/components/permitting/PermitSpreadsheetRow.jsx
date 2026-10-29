@@ -295,7 +295,7 @@ export default function PermitSpreadsheetRow({
         </div>
 
         {isRegistered && onDeleteLine && (
-          <button
+          <button type="button"
             onClick={() => setConfirmDeleteOpen(true)}
             className="col-start-2 row-start-1 flex-shrink-0 rounded p-1.5 opacity-100 transition-opacity hover:bg-red-50 sm:col-start-3 sm:p-0.5 sm:opacity-0 sm:group-hover/line:opacity-100"
             title="Delete this line"
@@ -328,7 +328,7 @@ export default function PermitSpreadsheetRow({
                 {appliedByLabel && <span className="block text-[9px] text-gray-400 font-normal">{appliedByLabel}</span>}
               </span>
               {lineItem.locality_id && (
-                <button
+                <button type="button"
                   onClick={() => onShowLocalityInfo(lineItem.locality_id)}
                   className="h-6 w-6 flex items-center justify-center rounded-md bg-blue-50 hover:bg-blue-100 border border-blue-200 flex-shrink-0"
                   title="View configured tracker locality"
@@ -467,7 +467,7 @@ export default function PermitSpreadsheetRow({
               </div>
             )}
             {isRegistered && onLinkLegacyOffice && legacyOfficeOptions.length > 0 && (
-              <button ref={linkOfficeTriggerRef} type="button" className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
+              <button type="button" ref={linkOfficeTriggerRef} className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
                 onClick={() => { setSelectedOfficeId(""); setLinkError(""); setLinkOfficeOpen(true); }}>
                 {lineItem.locality_office_id ? "Repair missing office link" : "Link legacy line to office"}
               </button>
@@ -575,7 +575,7 @@ export default function PermitSpreadsheetRow({
                     onOpenChange={(open) => setOpenDatePopover(open ? popoverId : null)}
                   >
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className={`h-7 w-full text-[13px] text-center hover:bg-gray-100 rounded font-medium ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
+                      <button type="button" className={`h-7 w-full text-[13px] text-center hover:bg-gray-100 rounded font-medium ${isFollowup && dateVal ? 'text-amber-700' : step.type === 'permit_received_date' && dateVal ? 'text-green-700' : ''}`}>
                         {dateVal ? (() => { const d = parseLocalDate(dateVal); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "—"; })() : "—"}
                       </button>
                     </PopoverTrigger>
@@ -591,7 +591,7 @@ export default function PermitSpreadsheetRow({
                       />
                       {dateVal && (
                         <div className="p-2 border-t">
-                          <button
+                          <button type="button"
                             onClick={() => { onUpdateStep(lineItem.id, step.id, { value: "" }); setOpenDatePopover(null); }}
                             className="text-xs text-red-500 hover:underline w-full text-center"
                           >
