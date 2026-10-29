@@ -20,7 +20,7 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
           placeholder="Sign / elevation description"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button
+        <button type="button"
           onClick={() => {
             if (!window.confirm("Remove this item?")) return;
             onRemove(index);
@@ -132,7 +132,7 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
                 </option>
               ))}
             </select>
-            <button
+            <button type="button"
               onClick={() => {
                 if (!window.confirm("Remove this material?")) return;
                 set({ materials: item.materials.filter((_, i) => i !== idx) });
