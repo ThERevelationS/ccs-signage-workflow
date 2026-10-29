@@ -107,7 +107,7 @@ const FEED_CACHE_TTL_MS = 30_000;
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
 
     // Staff session required — WorkOrder/Order read RLS is role-gated, so an

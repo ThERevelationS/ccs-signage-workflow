@@ -323,7 +323,7 @@ async function copyUnique(SalesFilter: any, actor: any, source: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     const action = String(body?.action || '').trim();

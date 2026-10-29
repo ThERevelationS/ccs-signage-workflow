@@ -162,7 +162,7 @@ async function convergeSingleLive(Announcement: any, maxPasses = 4) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     // Anonymous viewers may read the live feed and acknowledge banners;
     // only the admin actions below require a verified actor.

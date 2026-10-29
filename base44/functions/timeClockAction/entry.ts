@@ -3285,7 +3285,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
     const sessionToken = String(body?.session_token || '').trim();

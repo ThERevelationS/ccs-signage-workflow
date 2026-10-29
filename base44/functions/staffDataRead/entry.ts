@@ -226,7 +226,7 @@ const STAFF_READ_CACHE_MS = 45_000;
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const user = await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });

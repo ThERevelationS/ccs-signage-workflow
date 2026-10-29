@@ -203,7 +203,7 @@ function buildHandoffSnapshot({ opportunity, customer, primaryIntake }: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const actor = clean(user?.email) || clean(user?.id) || "unknown";

@@ -256,7 +256,7 @@ async function deleteExact(Sop: any, body: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     if (JSON.stringify(body || {}).length > 300000) {
       return Response.json({ error: 'Request is too large.' }, { status: 400 });
