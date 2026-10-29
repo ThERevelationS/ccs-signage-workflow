@@ -273,10 +273,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 236. **[F][DONE]** Kiosk tutorial overlay - first-run 3-step strip, dismisses per device
 237. **[F]** Video walkthrough of face enrollment
 238. **[F][DONE]** Admin quick-start checklist - computed setup checklist on the admin page
-239. **[F]** Employee FAQ panel on the Time Clock page
+239. **[F][DONE]** Employee FAQ - collapsible Q&A card on the TimeClock page
 240. **[F][DONE]** Contextual help - InfoDot tooltips already used across tracker settings
-241. **[F]** "What's new" panel for employees on UI changes
-242. **[F]** Manager playbook — common correction scenarios in-app
+241. **[F][DONE]** What-is-new panel - toggle inside the TimeClock help card
+242. **[F][DONE]** Manager playbook - collapsible correction-scenario guide on the admin page
 243. **[F]** Per-company feature flag for experimental features
 
 ## Top 10 candidates
