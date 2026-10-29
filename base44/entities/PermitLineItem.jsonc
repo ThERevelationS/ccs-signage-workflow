@@ -245,6 +245,11 @@
       "format": "date",
       "description": "Staff-set 'check back on this' date \u2014 the chase reminder."
     },
+    "expected_response_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The office's stated turnaround \u2014 'expected reply/decision by this date'."
+    },
     "application_revision": {
       "type": "number",
       "default": 1,
