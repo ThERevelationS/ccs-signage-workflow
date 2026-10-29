@@ -711,6 +711,12 @@ export default function TimeClockExceptionCenter({
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-sm">{item.title}</p>
                         <Badge variant="outline" className={severityBadge(item.severity)}>{item.severity}</Badge>
+                        {(() => {
+                          const ageTs = Date.parse(item.correctionRequest?.created_date || item.punchCase?.submitted_at || item.punchCase?.created_date || item.entry?.clock_in || item.approvalEntry?.clock_in || "");
+                          if (!Number.isFinite(ageTs) || (nowMs - ageTs) <= 48 * 3600e3) return null;
+                          const days = Math.floor((nowMs - ageTs) / 86400e3);
+                          return <Badge variant="outline" className="border-amber-400 bg-amber-100 text-amber-900">{days >= 1 ? `${days}d` : "48h+"} unreviewed</Badge>;
+                        })()}
                       </div>
                       <p className="text-xs font-medium mt-1">{item.employee}</p>
                       <p className="text-xs mt-1 opacity-90">{item.detail}</p>
