@@ -24,7 +24,10 @@ const FEEDABLE: Record<string, { heavy: string[] }> = {
 
 const ALLOWED_OPERATORS = new Set(['$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin']);
 const MAX_QUERY_BYTES = 4000;
-const PAGE_SIZE = 500;
+// One 5k page pulls the whole active table in a single entity_list call
+// (~2-5s) instead of ~7 sequential 500-row pages — both faster for the
+// caller and ~7x cheaper against the shared entity_list rate budget.
+const PAGE_SIZE = 5000;
 const MAX_ROWS = 20000;
 const MAX_FIELD_LIST = 200;
 const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
