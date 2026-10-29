@@ -511,7 +511,7 @@ Another 200, same rules: permitting session only, never conflate county/city/vil
 397. **[F][FLAGGED-dedicated]** Weekly permit-throughput: how many jurisdictions verified, applies, issued — the health number.
 398. **[UX][DONE]** Coverage-gap report: jurisdictions with verified jobs but unverified offices — the risk list.
 399. **[F][FLAGGED-dedicated]** Slow-office report: which jurisdictions take longest to verify — research effort targeted.
-400. **[UX]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
+400. **[UX][FLAGGED-dedicated]** Boundary-confidence map: which towns are boundary-verified vs inferred — the data-quality picture.
 401. **[F][FLAGGED-dedicated]** Staff-activity feed: who applied which jurisdiction to which job — an audit view.
 402. **[UX][FLAGGED-dedicated]** Revenue-tied view: permit fees by jurisdiction for the month — the money angle.
 403. **[F][FLAGGED-dedicated]** Repeat-offender list: jurisdictions where applications keep getting rejected — process problems surface.
