@@ -71,11 +71,12 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     const restoreActiveImport = async () => {
       if (!currentUserEmail || importJobIdRef.current) return;
       try {
-        const activeJobs = await staffEntities.ImportJob.filter({
+        const recentJobs = await staffEntities.ImportJob.filter({
           user_email: currentUserEmail,
-          status: { $in: ["running", "paused"] },
-        }, "-started_at", 5);
-        if (!mounted || activeJobs.length === 0) return;
+        }, "-started_at", 10);
+        if (!mounted) return;
+        const activeJobs = recentJobs.filter((j) => j.status === "running" || j.status === "paused");
+        if (activeJobs.length === 0) return;
         syncJob(activeJobs[0]);
       } catch (err) {
         console.error("Failed to restore import job:", err);
