@@ -371,7 +371,7 @@ export default function EstimatorQueues() {
         </div>
 
         {trashError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700 flex items-center justify-between gap-3">
+          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-700 flex items-center justify-between gap-3">
             <span>{trashError}</span>
             <button type="button" onClick={() => setTrashError("")} className="text-red-500 font-bold">Dismiss</button>
           </div>
@@ -381,7 +381,7 @@ export default function EstimatorQueues() {
           {loading ? (
             <ListSkeleton rows={8} />
           ) : loadError ? (
-            <div className="px-4 py-10 text-center text-sm text-red-600">{loadError}</div>
+            <div role="alert" className="px-4 py-10 text-center text-sm text-red-600">{loadError}</div>
           ) : rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-gray-500">Nothing in this queue.</div>
           ) : (
