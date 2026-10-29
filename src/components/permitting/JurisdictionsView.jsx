@@ -270,9 +270,11 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     const name = String(j.name || '').toLowerCase();
     const type = String(j.type || '').toLowerCase();
     const county = String(j.parent_county?.name || j.parent_county_name || '').toLowerCase();
+    const officeBits = (j.offices || []).flatMap((o) => [o.name, o.contact_phone, o.contact_email, o.contact_address]).map((v) => String(v || '').toLowerCase());
+    const contactBits = [j.contact_info?.phone, j.contact_info?.email, j.contact_info?.address, j.website_url, j.permitting_url].map((v) => String(v || '').toLowerCase());
     return [name, `${name} ${type}`, `${type} of ${name}`, `city of ${name}`,
       `village of ${name}`, `${name} township`, `${name} county`, county,
-      `${name} ${county}`].filter(Boolean);
+      `${name} ${county}`, ...officeBits, ...contactBits].filter(Boolean);
   };
   const queryTokens = normalizedSearch.split(/[^a-z0-9]+/)
     .filter(t => t && !['county','city','village','township','of','the','twp','ohio','oh','ky','kentucky'].includes(t));
