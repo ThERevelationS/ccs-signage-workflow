@@ -55,7 +55,7 @@ Legend: [F] feature · [UX] usability/accessibility · [H] hardening · [B] bug 
 36. **[UX][DONE]** Color-code verified vs unverified vs needs-review candidates so the eye lands on the trustworthy one.
 37. **[F][DONE]** Click any boundary candidate on the map → highlight the matching card (and vice versa) so map and list agree.
 38. **[UX][DONE]** "Wrong place?" — one click to re-search with a corrected address without losing the dialog state.
-39. **[F][FLAGGED]** Manual pin-drag on the map → re-resolve the jurisdiction for the dragged point (for when geocoding lands on the wrong side of a boundary).
+39. **[F][DONE]** Manual pin-drag on the map → re-resolve the jurisdiction for the dragged point (for when geocoding lands on the wrong side of a boundary).
 
 ## D — Applying the result
 
