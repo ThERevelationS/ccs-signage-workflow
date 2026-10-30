@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 function cleanText(value: unknown, max = 500) {
   return String(value || '').trim().slice(0, max);
@@ -23,7 +24,9 @@ function directoryUser(row: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    // One quick server-side retry at most: longer backoff belongs to the
+    // browser, which honors Retry-After and coordinates every open request.
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
 
@@ -48,7 +51,15 @@ Deno.serve(async (req) => {
       users,
     });
   } catch (error) {
-    const status = Number(error?.status || 500);
+    const status = Number(error?.status || error?.response?.status || 500);
+    // A platform rate limit is transient: hand it back as 429 so the browser
+    // backs off instead of retrying a deterministic 500 in a tight loop.
+    if (status === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json(
+        { error: 'The authorized user directory is busy. Try again shortly.', retry_after_ms: 3000 },
+        { status: 429, headers: { 'Retry-After': '3' } },
+      );
+    }
     const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
     console.error('listAuthorizedUserDirectory error:', error?.message || error);
     return Response.json({
