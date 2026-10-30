@@ -156,7 +156,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
 
                       {isRegistered && (expectedCloseOverdue || expectedCloseNear) && (
                         <label className={`mt-2 block rounded-md border p-2 ${expectedCloseOverdue ? "border-rose-200 bg-rose-50/60" : "border-cyan-200 bg-cyan-50/60"}`} onClick={(event) => event.stopPropagation()}>
-                          <span className={`block text-[9px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
+                          <span className={`block text-[10px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
                             {expectedCloseOverdue ? "Review overdue close" : "Review near close"}
                           </span>
                           <input
@@ -172,7 +172,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       {isRegistered && isOpen && quoteAging.awaitingResponse && !quoteAging.tracked && (
                         <div className="mt-2 rounded-md border border-amber-200 bg-amber-50/70 p-2" onClick={(event) => event.stopPropagation()}>
                           <label>
-                            <span className="block text-[9px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
+                            <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
                             <div className="mt-1 flex items-center gap-1.5">
                               <input
                                 type="date"
