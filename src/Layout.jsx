@@ -280,10 +280,12 @@ function LayoutContent({ children }) {
   // Detect mobile + narrow-desktop widths (top bar auto-compacts below 1400px)
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [isNarrowShell, setIsNarrowShell] = useState(() => window.innerWidth < 1400);
+  const [isShortShell, setIsShortShell] = useState(() => window.innerHeight < 720);
   useEffect(() => {
     const handler = () => {
       setIsMobile(window.innerWidth < 768);
       setIsNarrowShell(window.innerWidth < 1400);
+      setIsShortShell(window.innerHeight < 720);
     };
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
@@ -925,6 +927,17 @@ function LayoutContent({ children }) {
         @media (max-height: 600px) {
           .ccs-topbar-menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
+        @media (max-height: 720px) {
+          .side-nav > div:first-child { padding: 6px; }
+          .side-nav .ccs-glass-panel { padding: 4px 6px; gap: 4px; }
+          .side-nav .ccs-glass-panel p { display: none; }
+          .side-nav .mb-4 { margin-bottom: 8px; }
+          .side-nav .mb-2 { margin-bottom: 6px; }
+          .side-nav .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 4px; }
+          .side-nav .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 2px; }
+          .side-nav .ccs-glass-nav-item { padding-top: 3px; padding-bottom: 3px; gap: 6px; }
+          .side-nav .ccs-glass-nav-item span { font-size: 11px; }
+        }
         @media (min-width: 1024px) {
           .ccs-topbar-layout {
             grid-template-columns: auto minmax(0, 1fr);
@@ -1190,7 +1203,7 @@ function LayoutContent({ children }) {
               <SidebarNavGroup
                 label="Meetings"
                 items={meetingsNavItems}
-                collapsed={!!collapsedGroups.meetings}
+                collapsed={!!collapsedGroups.meetings || isShortShell}
                 onToggle={() => toggleNavGroup("meetings")}
                 compactView={compactView}
                 activePath={location.pathname}
@@ -1200,7 +1213,7 @@ function LayoutContent({ children }) {
               <SidebarNavGroup
                 label="Reports"
                 items={reportsNavItems}
-                collapsed={!!collapsedGroups.reports}
+                collapsed={!!collapsedGroups.reports || isShortShell}
                 onToggle={() => toggleNavGroup("reports")}
                 compactView={compactView}
                 activePath={location.pathname}
