@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { normalizeWebhookEvent, applyLiveState, patchConnection, milSemanticState } from '../../shared/bouncie.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const SEMANTIC_TRIP_EVENTS = new Set(['tripStart', 'tripEnd', 'tripMetrics']);
 
@@ -86,7 +87,7 @@ export default async function(req) {
     const cleanHeaders = new Headers(req.headers);
     cleanHeaders.delete('Authorization');
     cleanHeaders.delete('X-Bouncie-Authorization');
-    const base44 = createClientFromRequest(new Request(req.url, { method: 'POST', headers: cleanHeaders }));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(new Request(req.url, { method: 'POST', headers: cleanHeaders })), { maxRetries: 2 });
 
     const normalized = normalizeWebhookEvent(event);
     const vin = event.vin || '';
