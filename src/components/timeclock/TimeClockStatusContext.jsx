@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import { usePolling } from "@/lib/usePolling";
 
@@ -59,17 +60,17 @@ export function TimeClockStatusProvider({ children }) {
           session_token: requestToken,
           target_email: requestEmail,
         };
-        const liteResponse = await base44.functions.invoke("timeClockAction", {
+        let data = await invokeTimeClockAction({
           action: "status_lite",
-          ...payload,
+          sessionToken: requestToken,
+          payload,
         });
-        let data = liteResponse?.data || liteResponse;
         if (data?.requires_full_status) {
-          const response = await base44.functions.invoke("timeClockAction", {
+          data = await invokeTimeClockAction({
             action: "status",
-            ...payload,
+            sessionToken: requestToken,
+            payload,
           });
-          data = response?.data || response;
         }
         if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
         if (scopeRef.current.scope === requestScope) {
