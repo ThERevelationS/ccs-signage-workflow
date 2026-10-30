@@ -58,21 +58,21 @@ function _impl_categorizeChannelLetterProject(p) {
       const matCost = num(lp.fab_config.material_cost) + num(lp.fab_config.paint_material_cost);
       const laborCost = num(lp.fab_config.cnc_labor_cost) + num(lp.fab_config.paint_labor_cost);
       if (matCost > 0) {
-        lines.push({ module: 'channel_letter', label: `Dimensional Letter Material â€” ${lp.description || ''}`, cost: matCost, category_key: 'substrates' });
+        lines.push({ module: 'channel_letter', label: `Dimensional Letter Material — ${lp.description || ''}`, cost: matCost, category_key: 'substrates' });
       }
       if (laborCost > 0) {
-        lines.push({ module: 'channel_letter', label: `Dimensional Letter Fab Labor â€” ${lp.description || ''}`, cost: laborCost, category_key: 'inhouse_labor' });
+        lines.push({ module: 'channel_letter', label: `Dimensional Letter Fab Labor — ${lp.description || ''}`, cost: laborCost, category_key: 'inhouse_labor' });
       }
       const remainder = total - matCost - laborCost;
       if (remainder > 0.01) {
-        lines.push({ module: 'channel_letter', label: `Dimensional Letter (other) â€” ${lp.description || ''}`, cost: remainder, category_key: 'substrates' });
+        lines.push({ module: 'channel_letter', label: `Dimensional Letter (other) — ${lp.description || ''}`, cost: remainder, category_key: 'substrates' });
       }
     } else if (isDimensional) {
-      // Dimensional with no fab_config breakdown â€” categorize whole as substrates (material side)
-      lines.push({ module: 'channel_letter', label: `Dimensional Letters â€” ${lp.description || ''}`, cost: total, category_key: 'substrates' });
+      // Dimensional with no fab_config breakdown — categorize whole as substrates (material side)
+      lines.push({ module: 'channel_letter', label: `Dimensional Letters — ${lp.description || ''}`, cost: total, category_key: 'substrates' });
     } else {
       // Channel / Raceway / Capsule / Logo = outsourced fab
-      lines.push({ module: 'channel_letter', label: `Letter Purchase â€” ${lp.description || lp.letter_type}`, cost: total, category_key: 'outsourced_fab' });
+      lines.push({ module: 'channel_letter', label: `Letter Purchase — ${lp.description || lp.letter_type}`, cost: total, category_key: 'outsourced_fab' });
     }
   });
 
@@ -88,7 +88,7 @@ function _impl_categorizeChannelLetterProject(p) {
     lines.push({ module: 'channel_letter', label: 'Letter Fees (delivery/design/permit/etc.)', cost: letterFees, category_key: 'outsourced_fab' });
   }
 
-  // 2. Installation labor â€” when a crew is assigned, personnel pricing replaces
+  // 2. Installation labor — when a crew is assigned, personnel pricing replaces
   // the flat-rate labor (labor_cost_in_subtotal = 0), so labor is never double-counted.
   const baseLabor = p.labor_cost_in_subtotal !== undefined
     ? num(p.labor_cost_in_subtotal)
@@ -110,7 +110,7 @@ function _impl_categorizeChannelLetterProject(p) {
     lines.push({ module: 'channel_letter', label: 'Equipment Rental', cost: eqCost, category_key: 'outsourced_services' });
   }
 
-  // 5. Travel â€” was previously missing, so categorized lines didn't sum to the subtotal
+  // 5. Travel — was previously missing, so categorized lines didn't sum to the subtotal
   const travelCost = num(p.total_travel_cost);
   if (travelCost > 0) {
     lines.push({ module: 'channel_letter', label: 'Travel & Fuel', cost: travelCost, category_key: 'outsourced_services' });
@@ -219,11 +219,11 @@ function _impl_categorizeMaintenanceProject(p) {
 }
 
 // Vinyl Estimator:
-//   Vinyl + Laminate + Transfer Tape rolls + Ink + Blade â†’ substrates
-//   Machine time (printer / cutter / laminator amortized $/hr) â†’ machine_time
-//   Operator + Designer + Installer labor â†’ inhouse_labor
-//   Install equipment rental (lifts) â†’ outsourced_services
-//   Travel â†’ outsourced_services
+//   Vinyl + Laminate + Transfer Tape rolls + Ink + Blade → substrates
+//   Machine time (printer / cutter / laminator amortized $/hr) → machine_time
+//   Operator + Designer + Installer labor → inhouse_labor
+//   Install equipment rental (lifts) → outsourced_services
+//   Travel → outsourced_services
 function _impl_categorizeVinylProject(p) {
   if (!p) return [];
   const lines = [];
