@@ -114,7 +114,7 @@ export default function GlobalFocusTimer({ currentUser, paired = false, compact 
 
   return (
     <>
-      <button
+      <button type="button"
         data-focus-timer-trigger
         type="button"
         onClick={() => setOpen(true)}
