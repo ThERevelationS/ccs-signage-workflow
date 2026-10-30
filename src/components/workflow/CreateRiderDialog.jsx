@@ -33,14 +33,14 @@ function TaskItem({ task, expanded, onToggleExpand, onRemove, onAddSubTask, onRe
   return (
     <div className="border-b last:border-b-0">
       <div className="flex items-center gap-2 p-2 hover:bg-gray-50">
-        <button onClick={onToggleExpand} className="p-0.5">
+        <button type="button" onClick={onToggleExpand} className="p-0.5">
           {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </button>
         <span className="flex-1 text-sm">{task.text}</span>
         <span className="text-xs text-gray-400">
           {task.sub_tasks.length > 0 && `${task.sub_tasks.length} sub`}
         </span>
-        <button onClick={onRemove} className="p-1 hover:bg-red-100 rounded">
+        <button type="button" onClick={onRemove} className="p-1 hover:bg-red-100 rounded">
           <X className="w-3 h-3 text-red-500" />
         </button>
       </div>
@@ -53,13 +53,13 @@ function TaskItem({ task, expanded, onToggleExpand, onRemove, onAddSubTask, onRe
               <div className="flex items-center gap-2 py-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
                 <span className="flex-1 text-xs text-gray-700">{subTask.text}</span>
-                <button
+                <button type="button"
                   onClick={() => setAddingDetailFor(addingDetailFor === subTask.id ? null : subTask.id)}
                   className="text-xs text-blue-500 hover:underline"
                 >
                   +detail
                 </button>
-                <button onClick={() => onRemoveSubTask(subTask.id)} className="p-0.5 hover:bg-red-100 rounded">
+                <button type="button" onClick={() => onRemoveSubTask(subTask.id)} className="p-0.5 hover:bg-red-100 rounded">
                   <X className="w-2.5 h-2.5 text-red-500" />
                 </button>
               </div>
@@ -71,7 +71,7 @@ function TaskItem({ task, expanded, onToggleExpand, onRemove, onAddSubTask, onRe
                     <div key={idx} className="flex items-center gap-2 py-0.5">
                       <div className="w-1 h-1 rounded-full bg-gray-300" />
                       <span className="flex-1 text-xs text-gray-500">{detail.text}</span>
-                      <button onClick={() => onRemoveDetail(subTask.id, idx)} className="p-0.5 hover:bg-red-100 rounded">
+                      <button type="button" onClick={() => onRemoveDetail(subTask.id, idx)} className="p-0.5 hover:bg-red-100 rounded">
                         <X className="w-2 h-2 text-red-400" />
                       </button>
                     </div>
@@ -150,7 +150,7 @@ function TaskItem({ task, expanded, onToggleExpand, onRemove, onAddSubTask, onRe
               </Button>
             </div>
           ) : (
-            <button
+            <button type="button"
               onClick={() => setAddingSubTask(true)}
               className="ml-2 text-xs text-blue-500 hover:underline"
             >
