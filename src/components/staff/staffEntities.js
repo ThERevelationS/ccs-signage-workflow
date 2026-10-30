@@ -1,4 +1,5 @@
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionToken } from "@/components/auth/EmailGate";
 
 // Read facade for role-gated non-Fleet entities. Staff sessions are EmailGate
 // sessions and cannot satisfy entity RLS directly, so reads route through the
@@ -11,6 +12,11 @@ import { invokeFleet } from "@/components/fleet/fleetInvoke";
 // the same synchronous burst now coalesce into one batch invoke (the gateway
 // supports up to 16 entities per call), and identical simultaneous reads share a
 // single request entirely.
+// Guests (no EmailGate session) must never reach the gateways — every call
+// is a guaranteed 401 that burns budget and spams the console.
+const hasSession = () => !!getSessionToken();
+const NO_SESSION_ERR = () => new Error("Sign-in required");
+
 const pendingBatch = new Map();
 let flushScheduled = false;
 
@@ -45,6 +51,7 @@ async function flushBatch() {
 }
 
 const batchedRead = (entity, args) => {
+  if (!hasSession()) return Promise.resolve([]);
   const key = entity + "|" + JSON.stringify(args);
   const existing = pendingBatch.get(key);
   if (existing) return existing.promise;
@@ -61,17 +68,17 @@ const METHODS = {
   list: (entity, sort, limit, skip) =>
     batchedRead(entity, { sort, limit, skip }),
   get: (entity, id) =>
-    invokeFleet("staffDataRead", { entity, id }).then((r) => r?.item ?? null),
+    hasSession() ? invokeFleet("staffDataRead", { entity, id }).then((r) => r?.item ?? null) : Promise.resolve(null),
   count: (entity, query, sort, limit, skip) =>
-    invokeFleet("staffDataRead", { entity, query, sort, limit, skip, count: true }).then((r) => r?.count ?? 0),
+    hasSession() ? invokeFleet("staffDataRead", { entity, query, sort, limit, skip, count: true }).then((r) => r?.count ?? 0) : Promise.resolve(0),
   create: (entity, data) =>
-    invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => r?.record),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => r?.record) : Promise.reject(NO_SESSION_ERR()),
   update: (entity, id, data) =>
-    invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r) => r?.record),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r) => r?.record) : Promise.reject(NO_SESSION_ERR()),
   updateMany: (entity, query, update) =>
-    invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => r?.result),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => r?.result) : Promise.reject(NO_SESSION_ERR()),
   delete: (entity, id) =>
-    invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => r?.deleted === true),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => r?.deleted === true) : Promise.reject(NO_SESSION_ERR()),
   // Staff sessions cannot use platform live-subscriptions (entity RLS is
   // backend-only), so subscribe polls staffDataRead and emits a synthetic
   // change event when the row set changes. Returns an unsubscribe function,
@@ -81,6 +88,7 @@ const METHODS = {
     let stopped = false;
     let last = "";
     const check = async () => {
+      if (!hasSession()) return;
       try {
         // -updated_date puts mutations into the 500-row window — an unsorted
         // default order would cap the digest to the oldest rows and silently
