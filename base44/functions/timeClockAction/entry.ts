@@ -11307,15 +11307,20 @@ Deno.serve(async (req) => {
     if (action === 'differential_hours_report') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      // cur.getHours() is UTC on the server; the differential window is a
+      // company-time (America/New_York) 18:00-06:00 shift premium.
+      const companyHour = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, hourCycle: 'h23', hour: '2-digit' });
       const byEmp = new Map();
       for (const e of (Array.isArray(rows) ? rows : [])) {
         if (e.archived_test_data === true || e.archived_admin === true) continue;
         const ci = e.clock_in ? new Date(e.clock_in) : null;
         const co = e.clock_out ? new Date(e.clock_out) : null;
         if (!ci || !co) continue;
+        const spanMs = co.getTime() - ci.getTime();
+        if (spanMs <= 0 || spanMs > 24 * 3600000) continue;
         let diffMins = 0;
         const cur = new Date(ci);
-        while (cur < co) { const h = cur.getHours(); if (h >= 18 || h < 6) diffMins += 1; cur.setMinutes(cur.getMinutes() + 1); }
+        while (cur < co) { const h = Number(companyHour.format(cur)); if (h >= 18 || h < 6) diffMins += 5; cur.setMinutes(cur.getMinutes() + 5); }
         if (diffMins <= 0) continue;
         const agg = byEmp.get(e.user_email) || { user: e.user_name || e.user_email, differential_hours: 0 };
         agg.differential_hours += diffMins / 60;
@@ -11530,16 +11535,28 @@ Deno.serve(async (req) => {
     if (action === 'bulk_auto_approve') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const thresholdMin = Math.max(1, Math.min(60, Number(body.max_minutes || 5)));
-      const reason = typeof body.reason === 'string' && body.reason.trim().length >= 3 ? body.reason.trim() : 'Auto-approved small adjustment';
       const requests = await correctionRequestEntity.filter({ status: 'pending' }, '-requested_at', 200).catch(() => []);
-      let approved = 0; const errors = [];
+      // Preview only - the previous version approved without applying the
+      // correction and treated missing totals as a zero delta. Each request's
+      // delta is computed the same way the two-step block in
+      // review_correction_request does, from punch times plus lunch minutes.
+      const eligible = [];
+      let skippedUncomputable = 0;
       for (const r of (Array.isArray(requests) ? requests : [])) {
-        const delta = Math.abs(Number(r.requested_changes?.total_hours || 0) - Number(r.original_total_hours || 0)) * 60;
-        if (delta > thresholdMin) continue;
-        const ok = await correctionRequestEntity.update(r.id, { status: 'approved', manager_reason: reason, reviewed_by: actor.email, reviewed_at: new Date().toISOString() }).catch(() => null);
-        if (ok) approved += 1; else errors.push(r.id);
+        const linkedEntry = await entryEntity.get(r.time_entry_id).catch(() => null);
+        const req = r.requested_changes || {};
+        const reqIn = new Date(String(req.clock_in || '')).getTime();
+        const reqOut = new Date(String(req.clock_out || '')).getTime();
+        const reqMin = Number.isFinite(reqIn) && Number.isFinite(reqOut) && reqOut > reqIn ? Math.floor((reqOut - reqIn) / 60000) - Math.max(0, Number(req.lunch_minutes || 0)) : 0;
+        const origIn = new Date(String(linkedEntry?.clock_in || '')).getTime();
+        const origOut = new Date(String(linkedEntry?.clock_out || '')).getTime();
+        const origMin = Number.isFinite(origIn) && Number.isFinite(origOut) && origOut > origIn ? Math.floor((origOut - origIn) / 60000) - Math.max(0, Number(linkedEntry?.lunch_minutes || 0)) : 0;
+        if (!(reqMin > 0) || !(origMin > 0)) { skippedUncomputable += 1; continue; }
+        const deltaMin = Math.abs(reqMin - origMin);
+        if (deltaMin > thresholdMin) continue;
+        eligible.push({ id: r.id, user_email: r.user_email, delta_minutes: deltaMin });
       }
-      return Response.json({ success: true, approved, skipped: errors.length });
+      return Response.json({ success: true, preview: true, eligible, skipped_uncomputable: skippedUncomputable, max_minutes: thresholdMin });
     }
 
     if (action === 'report_camera_health') {
