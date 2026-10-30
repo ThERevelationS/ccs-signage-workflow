@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock3, Coffee, History, Loader2, Pause, Play, RefreshCw } from "lucide-react";
 import { format, isSameDay } from "date-fns";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 function formatDuration(totalMinutes) {
   const minutes = Math.max(0, Math.floor(Number(totalMinutes) || 0));
@@ -68,7 +69,7 @@ export default function EmployeeTodayCard({
 
   useEffect(() => {
     loadStatus();
-    const poll = setInterval(() => { if (!document.hidden) loadStatus(); }, 30000);
+    const poll = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); }, 60000);
     const tick = setInterval(() => setNow(new Date()), 1000);
     const onPauseChanged = () => loadStatus();
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
