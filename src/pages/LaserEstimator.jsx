@@ -162,30 +162,33 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   }, [editId, estimateId]);
 
 // DXF/SVG dimension extraction (#92): reads the file text and pulls a
-// bounding box — DXF $EXTMIN/$EXTMAX headers, or an SVG width/height/viewBox —
+// bounding box -- DXF $EXTMIN/$EXTMAX headers, or an SVG width/height/viewBox --
 // returning inches so a laser part can prefill length/width from a vector file.
 async function extractLaserDims(file) {
   try {
     const text = await file.text();
-    const metric = /\$MEASUREMENT[\s\S]{0,40}?
-\s*1/.test(text);
-    const units = /\$INSUNITS[\s\S]{0,40}?
-\s*4/.test(text) ? "mm" : (metric ? "mm" : "in");
-    const num = (key, src) => { const m = src.match(new RegExp(`${key}[\s\S]{0,20}?([\d\.eE+-]+)`)); return m ? parseFloat(m[1]) : NaN; };
-    const minX = num("$EXTMIN", text), maxX = num("$EXTMAX", text);
-    const minY = /\$EXTMIN[\s\S]{0,60}?
-\s*([\d\.eE+-]+)[\s\S]{0,60}?
-\s*([\d\.eE+-]+)/.exec(text);
-    if (Number.isFinite(minX) && Number.isFinite(maxX) && maxX > minX) {
-      const widthRaw = maxX - minX;
-      const hRaw = num("$EXTMAX", text.slice(text.indexOf("$EXTMAX")));
-      let heightRaw = widthRaw;
-      const maxY = (() => { const m = /\$EXTMAX[\s\S]{0,60}?
-\s*[\d\.eE+-]+[\s\S]{0,60}?
-\s*([\d\.eE+-]+)/.exec(text); return m ? parseFloat(m[1]) : NaN; })();
-      if (Number.isFinite(maxY) && minY) heightRaw = maxY - parseFloat(minY[2] || minY[1] || 0);
-      const toIn = units === "mm" ? 1 / 25.4 : 1;
-      return { w: +(widthRaw * toIn).toFixed(2), h: +(Math.abs(heightRaw) * toIn).toFixed(2) };
+    const lines = String(text).split(/[\r\n]+/);
+    const readPair = (marker) => {
+      const idx = lines.findIndex((l) => String(l).trim() === marker);
+      if (idx < 0) return null;
+      let x = NaN, y = NaN;
+      for (let j = idx + 1; j < Math.min(idx + 14, lines.length); j += 1) {
+        const code = String(lines[j]).trim();
+        if (code === "10") x = parseFloat(lines[j + 1]);
+        else if (code === "20") y = parseFloat(lines[j + 1]);
+        if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
+      }
+      return null;
+    };
+    const extMin = readPair("$EXTMIN");
+    const extMax = readPair("$EXTMAX");
+    const metric = lines.some((l, i) => String(l).trim() === "$MEASUREMENT" && String(lines[i + 2] || "").trim() === "1");
+    const insUnitsMM = lines.some((l, i) => String(l).trim() === "$INSUNITS" && String(lines[i + 2] || "").trim() === "4");
+    const toIn = (metric || insUnitsMM) ? 1 / 25.4 : 1;
+    if (extMin && extMax && extMax.x > extMin.x) {
+      const w = (extMax.x - extMin.x) * toIn;
+      const h = Math.abs(extMax.y - extMin.y) * toIn;
+      return { w: +w.toFixed(2), h: +h.toFixed(2) };
     }
     const vb = /viewBox=["']([\d\.\s-]+)["']/.exec(text);
     const sW = /width=["']([\d\.]+)/.exec(text), sH = /height=["']([\d\.]+)/.exec(text);
