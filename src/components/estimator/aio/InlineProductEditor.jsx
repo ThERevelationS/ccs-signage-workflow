@@ -8,6 +8,7 @@ import MetalEstimator from "@/pages/MetalEstimator";
 import BrickStoneEstimator from "@/pages/BrickStoneEstimator";
 import MaintenanceEstimator from "@/pages/MaintenanceEstimator";
 import PaintingEstimator from "@/pages/PaintingEstimator";
+import CustomItemsEstimator from "@/pages/CustomItemsEstimator";
 import ReattachPartsModal from "@/components/estimator/builder/ReattachPartsModal";
 import { getDetachedBuilderParts, reattachBuilderParts } from "@/components/estimator/builder/partSync";
 
@@ -21,6 +22,7 @@ const EDITORS = {
   brick_stone: BrickStoneEstimator,
   maintenance: MaintenanceEstimator,
   painting: PaintingEstimator,
+  custom_items: CustomItemsEstimator,
 };
 
 export default function InlineProductEditor({ line, lines = [], estimateId, expectedEstimateUpdatedAt = "", onClose, onSaved, onSwitchLine }) {
