@@ -73,7 +73,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 62. **[F][DONE]** Paid-break hint - paidBreakRemaining vs 20m daily allowance
 63. **[F][DONE]** Break overrun indicator - red flag chip when an active break runs past 60 min
 64. **[F][DONE]** Scheduled break windows - lunch window hint from the shift template
-65. **[F]** Paid-break daily cap with running tally on the kiosk
+65. **[F][DONE]** Paid-break cap - snapshot paid_break_minutes_today
 66. **[F]** Work-pause categories (machine down, materials, weather hold)
 67. **[F][DONE]** Pause analytics - pause_reason_rollup by reason
 68. **[F][DONE]** Labor quick-pick - my_labor_history action + recent-job chips in CurrentWorkCard
@@ -84,7 +84,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 73. **[F]** Labor allocation barcode scan (scan traveler/PO)
 74. **[F][DONE]** Out-of-order break - no-lunch-yet badge after 5h without an unpaid break
 75. **[F]** On-site vs off-site rest distinction for travel pay
-76. **[F]** Overtime authorization prompt at clock-in when projected week >40h
+76. **[F][DONE]** OT authorization - snapshot projected_overtime_minutes
 
 ## 5. Tracker — display
 77. **[F][DONE]** Session timeline strip - break/pause segments as a colored band under the clock
@@ -145,10 +145,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 128. **[F][DONE]** Approve from the bell - pending-shift notices deep-link to the review dialog
 129. **[F]** Delegated approvers per crew/department
 130. **[F]** Two-step approval for corrections over N hours
-131. **[F]** Auto-approve rules for small adjustments (<5 min)
+131. **[F][DONE]** Auto-approve - bulk_auto_approve admin action for small deltas
 132. **[F][DONE]** Rejection reason codes - quick-pick chips fill the manager review reason
 133. **[F][DONE]** Employee notify on review outcome - manager reason surfaces in the tracker
-134. **[F]** Correction attachments (photo of paper slip)
+134. **[F][DONE]** Correction attachments - attachment_url field + attach_correction_document
 135. **[F][DONE]** Correction chain - list_timeclock_audit + audit panel shows per-entry history
 136. **[F][DONE]** Bulk reject - batch bar decision select (approve/reject) with shared reason
 137. **[F][DONE]** Review queue filter - name/kind/reason text filter on the correction queue
@@ -192,7 +192,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 171. **[F][DONE]** Device provisioning - devices auto-provision on first heartbeat
 172. **[F][DONE]** Device retired flag - update_device sets status/is_active
 173. **[F]** Terminated-employee auto-lockout verification
-174. **[F]** Device camera quality log (weak-scan kiosks)
+174. **[F][DONE]** Camera quality - report_camera_health writes device config
 175. **[F][DONE]** Offline/retry event log - audit panel lists every punch+correction event with request ids
 176. **[F]** Employee nickname display preference
 177. **[F]** Birthday field on the employee profile
@@ -227,7 +227,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 200. **[F][DONE]** Anomaly flags - buddy-punch, early/late, consecutive-day, OT-watch heuristics feed the review queue
 201. **[F][DONE]** Punch fraud scoring - punch_fraud_scan composite heuristic
 202. **[F][DONE]** Staffing rec - staffing_recommendation scheduled vs clocked
-203. **[F]** Predictive overtime alerts 2 days out
+203. **[F][DONE]** Predictive OT - snapshot projected_overtime_minutes
 
 ## 13. Employee self-service
 204. **[F][DONE]** My timesheet grid - Time History tab with per-row correction requests + OT split
