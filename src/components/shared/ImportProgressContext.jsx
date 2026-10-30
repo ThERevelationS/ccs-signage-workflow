@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, PauseCircle, PlayCircle, XCircle } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const ImportProgressContext = createContext(null);
 const STORAGE_KEY = "activeImportProgress";
@@ -92,7 +93,7 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
     let polling = false;
 
     const poll = async () => {
-      if (polling) return;
+      if (polling || document.hidden || isFleetCoolingDown()) return;
       polling = true;
       try {
         const job = await staffEntities.ImportJob.get(importState.importJobId);
