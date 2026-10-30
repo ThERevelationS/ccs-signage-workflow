@@ -75,7 +75,7 @@ export default function SourceMonitorPanel({ jurisdictionName, jurisdictionId, o
       {monitors.length === 100 && <p className="text-xs">Showing up to 100 monitors; this is not a complete inventory.</p>}
       {visible.length === 0 && <p className="text-sm">No loaded monitors currently need attention. Choose All monitored to inspect source history.</p>}
       {visible.map(m => <article key={m.id} className="min-w-0 rounded-lg border bg-white">
-        <button aria-expanded={selected === m.id} className="flex min-h-11 w-full flex-wrap items-start gap-2 p-3 text-left" onClick={() => setSelected(selected === m.id ? null : m.id)}>
+        <button type="button" aria-expanded={selected === m.id} className="flex min-h-11 w-full flex-wrap items-start gap-2 p-3 text-left" onClick={() => setSelected(selected === m.id ? null : m.id)}>
           <span className="min-w-0 flex-1 break-words text-sm font-semibold">{m.source_title || m.official_url || 'Untitled source'}</span>
           <Badge>{(m.failure_count || 0) >= 3 ? 'Unavailable' : m.staff_review_required ? 'Needs review' : m.last_changed ? 'Change history' : m.last_successful_check ? 'Checked' : 'Not checked yet'}</Badge>
         </button>
