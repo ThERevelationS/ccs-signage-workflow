@@ -593,7 +593,7 @@ function LocalityPickerSession({
           <div className="flex flex-wrap gap-1.5 items-center">
             <span className="text-[10px] text-gray-500 font-medium">Recent:</span>
             {recentAddresses.map((addr) => (
-              <button key={addr} type="button" title={addr}
+              <button type="button" key={addr} type="button" title={addr}
                 onClick={() => { searchVersion.current++; pendingSearch.current = null; setAddress(addr); setResult(null); setSelectedLocalityId(''); setTimeout(() => runSearch(), 0); }}
                 className="text-[11px] text-violet-700 bg-violet-50 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-100 max-w-[240px] truncate">
                 {addr}
