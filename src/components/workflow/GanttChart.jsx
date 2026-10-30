@@ -78,7 +78,7 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
               </div>
               <div className="mt-1 space-y-0.5">
                 {segments.map((seg) => (
-                  <button
+                  <button type="button"
                     key={seg.id}
                     type="button"
                     className="w-full flex items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-white transition-colors"
