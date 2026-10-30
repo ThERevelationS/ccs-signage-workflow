@@ -1327,8 +1327,9 @@ function defaultTrackerPrefs(email: string, name: string) {
 }
 
 const TRACKER_ENUMS: Record<string, string[]> = {
-  display_style: ['ring', 'bar', 'minimal', 'flip', 'roll', 'donut', 'arc', 'badge'],
+  display_style: ['ring', 'bar', 'minimal', 'flip', 'roll', 'donut', 'arc', 'badge', 'dual'],
   count_mode: ['paid', 'elapsed', 'pomodoro'],
+  display_rounding: ['0', '5', '10', '15'],
   direction: ['up', 'down'],
   milestones_mode: ['off', 'goal', 'custom'],
   milestone_behavior: ['silent', 'pulse', 'toast', 'toast_sound'],
@@ -1345,7 +1346,7 @@ const TRACKER_ENUMS: Record<string, string[]> = {
 };
 
 const TRACKER_BOOL_KEYS = ['tracker_enabled', 'show_week_strip', 'overtime_warning', 'show_overtime', 'show_projected_finish', 'show_pace', 'privacy_blur', 'show_label', 'show_icon', 'show_seconds', 'show_percent', 'show_only_clocked_in', 'progressive_colors', 'blink_separator', 'hide_when_unfocused', 'timeclock_page_only', 'goal_celebrate', 'weekly_celebrate', 'hide_on_weekend', 'low_data_mode'];
-const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes', 'reminders', 'hide_when_idle_minutes', 'daily_goal_overrides'];
+const TRACKER_EDITABLE_KEYS = [...TRACKER_BOOL_KEYS, 'daily_goal_minutes', 'weekly_goal_minutes', 'display_style', 'count_mode', 'direction', 'milestones_mode', 'milestone_behavior', 'milestone_thresholds', 'milestone_sound', 'accent_color', 'size', 'location', 'scale', 'opacity', 'font', 'background_style', 'update_interval_seconds', 'display_rounding', 'animation_style', 'animation_target', 'time_format', 'device_scope', 'custom_label', 'alert_minutes', 'reminders', 'hide_when_idle_minutes', 'daily_goal_overrides'];
 
 function trackerClamp(value: any, min: number, max: number, fallback: number) {
   const n = Number(value);
