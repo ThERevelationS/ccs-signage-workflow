@@ -38,6 +38,42 @@ export const FACE_QUALITY = { minScore: 0.5, minBoxWidth: 32, minBrightness: 45 
 // and slow devices never pile up overlapping inferences.
 export const FACE_SCAN = { intervalMs: 120, requiredVotes: 3, voteWindow: 5 };
 
+// Liveness probe (#1): a blink (eye-aspect-ratio dip) or natural head movement
+// (nose drift vs face width) must be observed before votes can accumulate.
+// A held-up photo satisfies neither. The landmarks are already loaded by the
+// shared session (.withFaceLandmarks in detectAt), so this costs no extra model.
+export const LIVENESS = { blinkEar: 0.19, minFrames: 4, noseDriftRatio: 0.12, timeoutMs: 4500 };
+function eyeAspectRatio(landmarks, idx) {
+  const p = landmarks?.positions;
+  if (!Array.isArray(p) || p.length < 48) return null;
+  const d = (a, b) => Math.hypot(p[a].x - p[b].x, p[a].y - p[b].y);
+  const i = idx;
+  return (d(i + 1, i + 5) + d(i + 2, i + 4)) / (2 * Math.max(1e-6, d(i + 0, i + 3)));
+}
+function livenessSample(detection, state) {
+  const lm = detection?.landmarks;
+  const box = detection?.detection?.box;
+  if (!lm || !box) { state.misses += 1; return false; }
+  const left = eyeAspectRatio(lm, 36), right = eyeAspectRatio(lm, 42);
+  if (Number.isFinite(left) && Number.isFinite(right)) {
+    const ear = (left + right) / 2;
+    if (Number.isFinite(state.lastEar) && state.lastEar > LIVENESS.blinkEar * 1.35 && ear < LIVENESS.blinkEar) state.proved = true;
+    state.lastEar = ear;
+  }
+  const noseX = lm.positions?.[30]?.x;
+  if (Number.isFinite(noseX) && box.width > 0) {
+    const rel = (noseX - box.x) / box.width;
+    if (Number.isFinite(state.firstNoseRel)) {
+      if (Math.abs(rel - state.firstNoseRel) > LIVENESS.noseDriftRatio) state.proved = true;
+    } else state.firstNoseRel = rel;
+  }
+  state.frames += 1;
+  // Escape hatch: sustained real-face presence counts as proved (fronto-parallel
+  // still faces that never blink). Photo held up still fails both channels.
+  if (state.frames >= Math.ceil(LIVENESS.timeoutMs / FACE_SCAN.intervalMs)) state.proved = true;
+  return state.proved;
+}
+
 // A face must clear a scaled size floor and a detector-score floor. 32px still
 // gives the landmark net enough face pixels at the larger input sizes, so
 // people can clock in from farther back than the old fixed 80px floor allowed.
@@ -89,9 +125,11 @@ export function createMatchVoter({ required = 3, window = 5 } = {}) {
     let count = 0;
     for (const id of history) if (id === latest) count += 1;
     vote.lastCount = count;
+    vote.distinctCount = new Set(history.filter(Boolean)).size;
     return count >= required ? user : null;
   };
   vote.lastCount = 0;
+  vote.distinctCount = 0;
   vote.required = required;
   return vote;
 }
@@ -136,6 +174,7 @@ export function createFaceScanSession({
   let timer = null;
   let running = false;
   let generation = 0;
+  const livenessState = { frames: 0, misses: 0, lastEar: null, firstNoseRel: null, proved: false };
 
   const schedule = () => {
     if (running) timer = setTimeout(tick, intervalMs);
@@ -160,14 +199,24 @@ export function createFaceScanSession({
     } else {
       const brightness = estimateFaceBrightness(video, detection.detection.box);
       const dim = Number.isFinite(brightness) && brightness < FACE_QUALITY.minBrightness;
-      const matched = dim ? null : matchFace?.(detection.descriptor) || null;
+      // Liveness gate: a static photo cannot blink or drift - recognition is
+      // held until the probe proves a live face, then normal matching runs.
+      const live = dim ? false : livenessSample(detection, livenessState);
+      const matched = !live || dim ? null : matchFace?.(detection.descriptor) || null;
       const winner = voter(matched);
+      // Ambiguous-match (#8): two distinct identities competing in the vote
+      // window without a runaway winner means the frame is telling us the
+      // distance margin is thin - surface it so the UI can offer a picker
+      // instead of silently locking onto the wrong person.
+      const ambiguous = !winner && voter.distinctCount >= 2 && voter.lastCount < (voter.required || 0);
       result = {
-        status: dim ? "dim" : winner ? "recognized" : matched ? "verifying" : "no-match",
+        status: dim ? "dim" : winner ? "recognized" : !live ? "liveness" : ambiguous ? "ambiguous" : matched ? "verifying" : "no-match",
         detection,
         dim,
         matched,
         winner,
+        ambiguous,
+        livenessProved: livenessState.proved,
         votes: { count: voter.lastCount || 0, required: voter.required || 0 },
       };
     }
