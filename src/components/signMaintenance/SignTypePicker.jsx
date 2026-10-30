@@ -32,7 +32,7 @@ export default function SignTypePicker({ value, onChange }) {
         const Icon = ICON_FOR[t.id] || Wrench;
         const c = COLOR_CLASSES[t.color] || COLOR_CLASSES.slate;
         return (
-          <button
+          <button type="button"
             key={t.id}
             type="button"
             onClick={() => onChange(t.id)}
