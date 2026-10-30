@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
 import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -79,7 +80,7 @@ export default function AdminRosterPanels({ sessionToken }) {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 60000);
+    const timer = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) load(); }, 60000);
     return () => clearInterval(timer);
   }, [load]);
 
