@@ -164,6 +164,7 @@ export default function QuickClockSection({
   const [breakStatus, setBreakStatus] = useState("working");
   const [activeBreak, setActiveBreak] = useState(null);
   const [breakSummary, setBreakSummary] = useState({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+  const paidBreakRemaining = Math.max(0, 20 - (breakSummary?.paid_minutes || 0)); // 20m paid allowance policy
   const [workPauseAllowed, setWorkPauseAllowed] = useState(false);
   const [workPauseStatus, setWorkPauseStatus] = useState("working");
   const [activeWorkPause, setActiveWorkPause] = useState(null);
@@ -898,7 +899,11 @@ export default function QuickClockSection({
       const [modelsReady, stream] = await Promise.all([
         loadFaceModels(),
         navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+          video: (() => {
+            const pref = (() => { try { return localStorage.getItem("ccs_kiosk_camera_id"); } catch { return null; } })();
+            const base = { width: { ideal: 1280 }, height: { ideal: 720 } };
+            return pref ? { ...base, deviceId: { exact: pref } } : { ...base, facingMode: "user" };
+          })(),
         }),
       ]);
       if (faceRun !== faceRunRef.current) {
@@ -1777,7 +1782,7 @@ export default function QuickClockSection({
               <Clock3 className="w-4 h-4" />
               Forgot to Clock In? Set arrival time
             </button>
-            <button
+            <button type="button"
               onClick={startRecognition}
               disabled={isLoading}
               className="group relative w-64 h-32 rounded-3xl shadow-xl shadow-emerald-900/25 hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-[1.04] motion-safe:active:scale-[0.96] transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
@@ -1809,7 +1814,9 @@ export default function QuickClockSection({
         {isRecognizing && (
           <div className="flex flex-col items-center">
             {!recognitionMethod && (() => {
-              const preferred = (() => { try { return localStorage.getItem("ccs_kiosk_method"); } catch { return null; } })();
+              const allowedMethods = (() => { try { const m = localStorage.getItem("ccs_kiosk_methods"); return m ? m.split(",").map((x) => x.trim()).filter(Boolean) : ["face", "qr", "manual"]; } catch { return ["face", "qr", "manual"]; } })();
+              const stored = (() => { try { return localStorage.getItem("ccs_kiosk_method"); } catch { return null; } })();
+              const preferred = allowedMethods.includes(stored) ? stored : allowedMethods[0];
               return preferred ? (
                 <p className="mb-3 text-[10px] text-slate-400">Last used on this kiosk: <span className="font-semibold text-slate-600">{preferred === "face" ? "Face" : preferred === "qr" ? "QR Badge" : "Email"}</span></p>
               ) : null;
