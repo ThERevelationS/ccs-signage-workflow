@@ -58,9 +58,9 @@ import {
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const Order = staffEntities.Order;
+const Order = base44.entities.Order;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
-const GlobalSettings = staffEntities.GlobalSettings;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -547,7 +547,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
               <div className="flex items-center gap-1">
                 Type
                 {currentUser?.role === "admin" && (
-                  <button
+                  <button type="button"
                     onClick={() => { setRequestTypesError(""); setEditingRequestTypes(true); }}
                     className="hover:bg-gray-200 rounded p-0.5"
                     aria-label="Manage Order item types"
@@ -567,7 +567,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
               <div className="flex items-center gap-1">
                 Vendor
                 {isRegistered && (
-                  <button onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
+                  <button type="button" onClick={() => setEditingVendors(true)} className="hover:bg-gray-200 rounded p-0.5">
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
@@ -693,7 +693,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div className="w-24 px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                      <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                         {order.date_needed ? format(parseLocalDate(order.date_needed), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
@@ -730,7 +730,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div className="w-24 px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                      <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                         {order.date_ordered ? format(parseLocalDate(order.date_ordered), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
@@ -786,7 +786,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div className="w-24 px-1 py-0.5 border-r">
                   <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                      <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                         {order.date_received ? format(parseLocalDate(order.date_received), "MM/dd/yy") : "-"}
                       </button>
                     </PopoverTrigger>
@@ -871,7 +871,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div key={type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...requestTypes];
@@ -883,7 +883,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === requestTypes.length - 1) return;
                           const items = [...requestTypes];
@@ -898,7 +898,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     </div>
                     <span className="text-sm">{type}</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => removeRequestType(type)}
                     disabled={requestTypesSaving || requestTypes.length <= 1}
                     className="text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30"
@@ -940,7 +940,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                 <div key={vendor} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...vendors];
@@ -952,7 +952,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === vendors.length - 1) return;
                           const items = [...vendors];
@@ -967,7 +967,7 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
                     </div>
                     <span className="text-sm">{vendor}</span>
                   </div>
-                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                  <button type="button" onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
