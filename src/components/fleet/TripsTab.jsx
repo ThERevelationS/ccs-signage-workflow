@@ -61,7 +61,7 @@ export default function TripsTab({ vehicle, trips, loading, selectedTripId, onSe
         const monthTotal = dayGroups.reduce((s, g) => s + g.totalMiles, 0);
         return (
           <div key={month} className="mb-4">
-            <button
+            <button type="button"
               onClick={() => toggleMonth(month)}
               className="min-h-11 w-full flex items-center justify-between py-2 text-sm font-semibold text-gray-600 dark:text-slate-300"
             >
