@@ -1,0 +1,72 @@
+{
+  "name": "CustomItemsProject",
+  "type": "object",
+  "description": "Custom line-items estimate section \u2014 a flat list of hand-entered or CSV-imported priced items (no module-specific geometry). extractManualItems reads `items` for its `custom_items` module key.",
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Linked shared Customer record id."
+    },
+    "estimate_number": {
+      "type": "string"
+    },
+    "hyperlink": {
+      "type": "string"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Internal retry receipt used only to make the first create of this Builder source project idempotent."
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "calculated",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "items": {
+      "type": "array",
+      "description": "Flat priced line items \u2014 {description, quantity, item_total_cost, item_type}. Feeds extractManualItems for the custom_items module.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "item_total_cost": {
+            "type": "number",
+            "description": "Extended cost for this line (qty * unit cost)."
+          },
+          "item_type": {
+            "type": "string",
+            "description": "Part category \u2014 fabrication/material/labor/equipment/other."
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Section grand total \u2014 sum of items[].item_total_cost."
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
