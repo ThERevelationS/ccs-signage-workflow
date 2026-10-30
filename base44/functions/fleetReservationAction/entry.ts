@@ -208,6 +208,7 @@ Deno.serve(async req=>{
     return Response.json({error:'Unsupported Fleet reservation action.'},{status:400});
   }catch(error:any){
     console.error('fleetReservationAction error:',error);
+    if(Number(error?.status||error?.response?.status)===429||/rate limit|too many requests/i.test(String(error?.message||'')))return Response.json({error:'Fleet reservation operation is busy. Try again shortly.',retry_after_ms:3000},{status:429,headers:{'Retry-After':'3'}});
     if(error?.code==='FLEET_RECORD_CONFLICT')return Response.json({error:error.message},{status:409});
     return Response.json({error:error?.message||'Fleet reservation operation failed.'},{status:500});
   }
