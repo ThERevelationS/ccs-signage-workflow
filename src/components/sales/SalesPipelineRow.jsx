@@ -49,7 +49,7 @@ const DateCell = memo(function DateCell({ woId, field, value, popoverKey, openDa
   return (
     <Popover open={openDatePopover === popoverKey} onOpenChange={(open) => setOpenDatePopover(open ? popoverKey : null)}>
       <PopoverTrigger asChild disabled={!isRegistered}>
-        <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+        <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
           {displayDate()}
         </button>
       </PopoverTrigger>
@@ -156,7 +156,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
             switch (columnId) {
               case "client_name": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}>
-            <button onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
+            <button type="button" onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
               <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="min-w-0 flex-1 truncate">{opportunityDisplayName}</span>
               {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800" title="Exact placeholder customer name detected. Review before removing from Current Pipeline.">TEST</span>}
               {taskStatusAudit.kind !== 'none' && <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${taskStatusAudit.kind === 'modern_review' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'}`} title={taskStatusAudit.reason} aria-label={taskStatusAudit.kind === 'modern_review' ? 'Task and status need review' : 'Legacy task context'}>{taskStatusAudit.kind === 'modern_review' ? 'T/S' : 'Legacy'}</span>}
@@ -261,7 +261,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               ) : (
                 <Input value={wo.est_inv_at || ""} onChange={(e) => updateWorkOrder(wo.id, "est_inv_at", e.target.value)} className="h-7 text-xs border-0 bg-transparent px-1 flex-1" placeholder="-" disabled={!isRegistered} />
               )}
-              {isRegistered && <button onClick={() => openCorbridgeDialog(wo)} className="flex-shrink-0" title="Add link"><LinkIcon className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" /></button>}
+              {isRegistered && <button type="button" onClick={() => openCorbridgeDialog(wo)} className="flex-shrink-0" title="Add link"><LinkIcon className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" /></button>}
             </div>
           </td>
               );
