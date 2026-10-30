@@ -20,7 +20,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 13. **[F][DONE]** Geo stamp - kiosk captures device location in background; clock_in_geo stored on the entry
 14. **[F]** Photo capture per punch, optional, stored on the entry
 15. **[F]** Punch rounding rules (5/10/15 min), raw time preserved and displayed
-16. **[F]** Early-punch block or warning vs scheduled start
+16. **[F][DONE]** Early-punch warning - clocks >20min ahead of schedule flag in confirm
 17. **[F][DONE]** Schedule-variance notice - todays_schedule in snapshot + early/late chip on the tracker
 18. **[F]** Max shift length auto clock-out with manager notification
 19. **[F][DONE]** Break compliance - missed/short lunch flag exists (breakCompliance)
@@ -48,7 +48,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 39. **[F][DONE]** Large-text kiosk mode - A+ toggle, zoom 1.18, persisted per device
 40. **[F][DONE]** Voice prompts - speechSynthesis reads status when enabled
 41. **[F]** Confetti/sound themes per branding
-42. **[F]** Post-punch day summary ("0:00 worked - lunch ~12:30")
+42. **[F][DONE]** Post-punch summary - clock-in message shows time + lunch ETA
 43. **[F][DONE]** Supervisor quick-view - who_is_in admin panel shows everyone clocked in
 44. **[F][DONE]** Idle return-to-identify timeout - 90s identify-mode auto-reset
 45. **[F]** One-glance roster on kiosk home ("Who's in: 14")
