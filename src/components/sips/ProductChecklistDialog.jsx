@@ -20,7 +20,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseDateOnly = (dateString) => {
@@ -267,17 +267,17 @@ export default function ProductChecklistDialog({
         WorkOrder.filter({ id: workOrder.id }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Product checklist authorized users" }),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "Product checklist dropdown conditions",
         }),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "productTypes",
           label: "Product checklist product types",
         }),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "Product checklist SIPS task eligibility",
         })
@@ -1941,7 +1941,7 @@ export default function ProductChecklistDialog({
                 <div className="text-[11px] text-gray-500">Checklist complete</div>
                 <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
               </div>
-              <button
+              <button type="button"
                 ref={needsInputSummaryRef}
                 type="button"
                 onClick={focusFirstNeedsInput}
