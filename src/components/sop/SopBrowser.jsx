@@ -134,7 +134,7 @@ export default function SopBrowser({ sops, settings, me, activeCategory, onCateg
           All ({sops.length})
         </button>
         {categories.map((cat) => (
-          <button
+          <button type="button"
             key={cat.key}
             type="button"
             onClick={() => onCategoryChange(cat.key)}
