@@ -84,7 +84,7 @@ export default function MobileSelect({
           </DrawerHeader>
           <div className="pb-safe px-4 pb-6 space-y-1 overflow-y-auto max-h-[60vh]">
             {options.map((opt) => (
-              <button
+              <button type="button"
                 key={opt.value}
                 type="button"
                 disabled={opt.disabled}
