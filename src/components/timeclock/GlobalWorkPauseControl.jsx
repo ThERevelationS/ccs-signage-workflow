@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 import { useAuth } from "@/components/auth/EmailGate";
 import WorkPauseMenu from "@/components/timeclock/WorkPauseMenu";
 import { useTimeClockStatus } from "@/components/timeclock/TimeClockStatusContext";
@@ -171,13 +172,10 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
     setBusy(true);
     setError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const data = await invokeTimeClockAction({
         action,
-        request_id: requestId,
-        session_token: sessionToken,
-        target_email: email,
+        payload: { request_id: requestId, session_token: sessionToken, target_email: email },
       });
-      const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || `${paused ? "Resume Work" : "Work Pause"} was not confirmed by the server.`);
         err.retrySameRequest = data?.retry_same_request === true;
@@ -244,16 +242,10 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
     setReportBusy(true);
     setReportError("");
     try {
-      const response = await base44.functions.invoke("timeClockAction", {
+      const data = await invokeTimeClockAction({
         action,
-        request_id: requestId,
-        session_token: sessionToken,
-        target_email: email,
-        started_at,
-        resumed_at,
-        note,
+        payload: { request_id: requestId, session_token: sessionToken, target_email: email, started_at, resumed_at, note },
       });
-      const data = response?.data || response;
       if (!data?.success) {
         const err = new Error(data?.error || "The missed Work Pause was not confirmed by the server.");
         err.retrySameRequest = data?.retry_same_request === true;
