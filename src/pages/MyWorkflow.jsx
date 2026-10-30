@@ -75,7 +75,7 @@ function JobAssignmentInlineRow({ wo, users, descOptions = [], onSaveField, onAs
     <div className="inline-flex items-center gap-0.5 rounded bg-purple-50 px-1" onClick={(e) => e.stopPropagation()}>
       <User className="w-3 h-3 flex-shrink-0 text-purple-500" />
       <Select value={descValue} onValueChange={(next) => { if (next !== descValue) onSaveField(wo, { current_task_description: next }); }}>
-        <SelectTrigger className="h-7 w-40 text-xs border-0 bg-transparent px-1 truncate" title="Task description">
+        <SelectTrigger className="h-7 w-64 text-xs border-0 bg-transparent px-1 truncate" title={descValue || "Task description"}>
           <SelectValue placeholder="Task" />
         </SelectTrigger>
         <SelectContent>
