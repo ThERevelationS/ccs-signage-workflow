@@ -113,11 +113,16 @@ const STAFF_READABLE = new Set([
 // it; its secret fields are stripped by FIELD_DENYLIST below before any row
 // leaves the backend.
 const ADMIN_READABLE = new Set<string>([
+  'AccountDeletionRequest',
   'AdminAuditLog',
   'AutomationRule',
+  'CorebridgeLog',
   'EmailGroup',
   'EmailNotificationSettings',
   'FailedAdminAttempt',
+  'FeatureReport',
+  'SyncConflict',
+  'TimeClockPunchException',
   'UserSession',
 ]);
 
