@@ -89,7 +89,7 @@ export default function FleetConfirmDialog({
           </div>
         </div>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button ref={cancelButtonRef} type="button" disabled={busy} onClick={() => onCancel?.()} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">{cancelLabel}</button>
+          <button type="button" ref={cancelButtonRef} type="button" disabled={busy} onClick={() => onCancel?.()} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">{cancelLabel}</button>
           <button type="button" disabled={busy} onClick={() => onConfirm?.()} className={`min-h-11 px-4 py-2 rounded-lg text-white font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${confirmClass}`}>{busy && <Loader2 className="w-4 h-4 animate-spin" />}{confirmLabel}</button>
         </div>
       </div>
