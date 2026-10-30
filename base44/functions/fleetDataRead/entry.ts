@@ -122,7 +122,10 @@ Deno.serve(async (req) => {
       : await entity.list(sort || null, limit, skip);
     return Response.json({ success: true, items: Array.isArray(items) ? items : [] });
   } catch (error: any) {
-    const status = Number(error?.status || 500);
+    const status = Number(error?.status || error?.response?.status || 500);
+    if (status === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json({ error: 'Fleet data is busy. Try again shortly.', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
+    }
     if ([400, 401, 403].includes(status)) {
       return Response.json({ error: error?.message || 'Fleet read failed.' }, { status });
     }
