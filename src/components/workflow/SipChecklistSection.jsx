@@ -15,7 +15,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 export default function SipChecklistSection({ workOrder, onUpdate }) {
@@ -43,7 +43,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
         WorkOrder.filter({ id: workOrder.id }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIP checklist authorized users" }),
         loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
+          entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
           label: "SIP checklist dropdown conditions",
         })
@@ -375,7 +375,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
                           <div key={item.id} className="bg-white rounded p-2 border">
                             <div className="flex items-center gap-2">
                               {hasChildren ? (
-                                <button 
+                                <button type="button" 
                                   onClick={() => toggleExpanded(item.id)}
                                   className="p-0.5 hover:bg-gray-100 rounded"
                                 >
