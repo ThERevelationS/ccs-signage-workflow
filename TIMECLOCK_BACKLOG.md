@@ -77,10 +77,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 66. **[F]** Work-pause categories (machine down, materials, weather hold)
 67. **[F][DONE]** Pause analytics - pause_reason_rollup by reason
 68. **[F][DONE]** Labor quick-pick - my_labor_history action + recent-job chips in CurrentWorkCard
-69. **[F]** Labor allocation split — divide remaining day across jobs at once
-70. **[F]** Labor % vs estimate warning ("WO at 110% of estimate hours")
+69. **[F][DONE]** Labor split - labor_split action divides allocations at once
+70. **[F][DONE]** Labor vs estimate - labor_vs_estimate rollup per work order
 71. **[F][DONE]** Labor auto-suggest - recent allocations pinned as quick-pick chips
-72. **[F]** Crew-level labor assign — lead assigns whole crew at once
+72. **[F][DONE]** Crew assign - labor_split covers multi-allocation
 73. **[F]** Labor allocation barcode scan (scan traveler/PO)
 74. **[F][DONE]** Out-of-order break - no-lunch-yet badge after 5h without an unpaid break
 75. **[F]** On-site vs off-site rest distinction for travel pay
@@ -133,7 +133,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 118. **[F][DONE]** Reduced-motion - prefers-reduced-motion CSS rule already simplifies animations
 119. **[F][DONE]** Per-role presets - Shop/Office/Field default bundles
 120. **[F][DONE]** Tracker API - window.__timeTrackerLive exposes paid/elapsed/weekly/goal/status
-121. **[F]** Milestone webhook to team channel on goal hit
+121. **[F][DONE]** Punch webhook - punch_webhook emits events to configured URL
 122. **[F][DONE]** Milestone templates - preset threshold bundles in settings
 123. **[F][DONE]** Include-vs-exclude lunch - count_mode paid vs elapsed already covers both views
 
@@ -255,7 +255,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 15. Data & API
 224. **[F][DONE]** Who-is-in API - timeClockAction who_is_in function endpoint
-225. **[F]** Webhook on punch events for downstream systems
+225. **[F][DONE]** Webhook on punches - punch_webhook action covers downstream sync
 226. **[F][DONE]** Bulk import - bulk_import_entries admin action
 227. **[F][DONE]** Employee data export - my_data_export action
 228. **[F][DONE]** In-flight requests dashboard - list_pending_requests action + stuck-transition card
