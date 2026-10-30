@@ -5535,16 +5535,29 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         let lastOrderPullBatchEvidence: any = null;
         let completedSteps = 0;
         let datasetNeedsReview = false;
-        await claimInvocationRun({
-          status: 'running',
-          started_at: runStartedAt,
-          action,
-          total_steps: steps.length,
-          completed_steps: 0,
-          current_step_label: steps[0]?.label || '',
-          order_pull_requested: dataset === 'orders' && wantPull,
-          results: [],
-        }, dataset);
+        try {
+          await claimInvocationRun({
+            status: 'running',
+            started_at: runStartedAt,
+            action,
+            total_steps: steps.length,
+            completed_steps: 0,
+            current_step_label: steps[0]?.label || '',
+            order_pull_requested: dataset === 'orders' && wantPull,
+            results: [],
+          }, dataset);
+        } catch (claimError: any) {
+          // A stale coordinator blocks a new claim with 409. For a verified
+          // scheduled invocation that must not strike the scheduler's
+          // auto-disable counter, so report a skipped run with HTTP 200.
+          // Manual and admin calls keep the original 409.
+          if (scheduledRun && Number(claimError?.status) === 409) {
+            const reason = String(claimError?.message || claimError);
+            console.warn('[smartsheetSyncAction] scheduled run skipped:', reason);
+            return Response.json({ success: false, skipped: true, reason });
+          }
+          throw claimError;
+        }
         let activeDirection: 'pull' | 'push' | null = null;
         try {
           if (wantPull) {
