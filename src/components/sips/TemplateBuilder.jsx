@@ -22,8 +22,8 @@ import {
 } from "./templateBuilderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const ChecklistSubItem = staffEntities.ChecklistSubItem;
-const GlobalSettings = staffEntities.GlobalSettings;
+const ChecklistSubItem = base44.entities.ChecklistSubItem;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 // Keep the condition menu inside the visible viewport, including above the
 // trigger when there is more room there (e.g. near the bottom of a phone).
@@ -1274,7 +1274,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               {[...dropdownConditions.filter(d => d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0)),
                 ...dropdownConditions.filter(d => !d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0))
               ].map(dd => (
-                <button
+                <button type="button"
                   key={dd.id}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
@@ -1687,7 +1687,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         {workOrderProducts.map((product, index) => {
                           const hasTemplate = product.product_type && productTypeTemplates[product.product_type]?.items?.length > 0;
                           return (
-                            <button
+                            <button type="button"
                               key={product.id}
                               type="button"
                               onClick={() => {
@@ -1732,7 +1732,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     {productTypes.map(type => {
                       const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
                       return (
-                        <button
+                        <button type="button"
                           key={type}
                           type="button"
                           onClick={() => addProductToSelection(type)}
@@ -1837,7 +1837,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     item.product_name === product.customName && item.sub_template_name === st.name
                                   );
                                   return (
-                                    <button
+                                    <button type="button"
                                       key={st.id}
                                       type="button"
                                       onClick={() => { if (!isAlreadyApplied) toggleSubTemplateForProduct(product.id, st.id); }}
@@ -2114,7 +2114,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                           const currentST = subTemplates.find(st => st.id === selectedSubTemplate);
                           const isApplied = currentST?.applies_to_product_types?.includes(type);
                           return (
-                            <button
+                            <button type="button"
                               key={type}
                               onClick={async () => {
                                 const currentApplies = currentST?.applies_to_product_types || [];
@@ -2766,7 +2766,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           <div className="space-y-3">
             <div className="max-h-48 overflow-y-auto overscroll-contain border rounded">
               {dropdownConditions.length > 0 ? dropdownConditions.map(dd => (
-                <button
+                <button type="button"
                   key={dd.id}
                   type="button"
                   onClick={() => showOtherPopup && handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, dd.id)}
