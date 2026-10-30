@@ -977,7 +977,7 @@ export default function MyWorkflow() {
                                              </div>
                                             </div>
                                           ) : (
-                                            <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-4 h-3 px-0.5 text-[9px] opacity-0 group-hover/subtask:opacity-100"><Plus className="w-1.5 h-1.5" />Detail</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => setAddingDetailFor({ woId: wo.id, taskIndex: item.taskIndex, subTaskIndex: stIdx })} className="ml-4 h-3 px-0.5 text-[9px] hidden group-hover/subtask:inline-flex"><Plus className="w-1.5 h-1.5" />Detail</Button>
                                           )}
                                         </div>
                                       )})}
@@ -992,7 +992,7 @@ export default function MyWorkflow() {
                                          </div>
                                         </div>
                                       ) : (
-                                        <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-4 px-1 text-[9px] opacity-0 group-hover:opacity-100"><Plus className="w-2 h-2" />Sub-task</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setAddingSubTaskFor({ woId: wo.id, taskIndex: item.taskIndex })} className="h-4 px-1 text-[9px] hidden group-hover:inline-flex"><Plus className="w-2 h-2" />Sub-task</Button>
                                       )}
                                     </div>
                                   )}
