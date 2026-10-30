@@ -8,14 +8,13 @@ const names = new Set([
   'permittingSourceAuthorityPolicy.mjs', 'jurisdictionSourceTextSegments.mjs',
   'jurisdictionSourcePdfText.mjs',
   'salesTaskStatusAudit.mjs', 'salesTaskStageCatalog.mjs',
-  'salesOpportunityHistory.mjs', 'salesSaveAcknowledgmentGuard.mjs',
   'smartsheetSalesSafety.mjs', 'smartsheetSalesAssigneeTranslation.mjs',
   'smartsheetSalesImportEligibility.mjs', 'historicalSalesOutcomeReconciliation.mjs',
 ]);
 const prefix = '\0ccs-frontend-shared:';
 export function frontendSharedModules(root = process.cwd()) {
   const shared = path.resolve(root, 'base44/shared');
-  const allowed = (file) => path.dirname(file) === shared && names.has(path.basename(file));
+  const allowed = (file) => path.dirname(path.resolve(file)) === shared && names.has(path.basename(file));
   return {
     name: 'ccs-frontend-shared-modules', enforce: 'pre',
     resolveId(source, importer) {
