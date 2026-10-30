@@ -7960,6 +7960,10 @@ Deno.serve(async (req) => {
         certified_payroll: r.certified,
         jobs: [...r.jobs].join(', '),
       })).sort((a, b) => a.user_email.localeCompare(b.user_email) || a.date.localeCompare(b.date));
+      // Export audit trail (#223): every payroll export is logged with the
+      // range, row count, and who ran it - required for certified-payroll
+      // dispute defense.
+      await auditEntity.create({ action: 'payroll_export', outcome: 'confirmed', user_email: actor.email, server_timestamp: new Date().toISOString(), request_id: requestId, details: { from, to, rows: exportRows.length, on_hold: rows.length - included.length } }).catch(() => null);
       return Response.json({ success: true, rows: exportRows, on_hold: rows.length - included.length });
     }
 
@@ -11276,6 +11280,48 @@ Deno.serve(async (req) => {
       if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: minutes }).catch(() => null);
       else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'twoStepThresholdMinutes', value: minutes }).catch(() => null);
       return Response.json({ success: true, two_step_threshold_minutes: minutes });
+    }
+
+    if (action === 'overtime_cost_report') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rate = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'defaultHourlyRate' }).catch(() => []))[0]?.value ?? 0));
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 7 * 86400000).toISOString());
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const byEmp = new Map();
+      for (const e of (Array.isArray(rows) ? rows : [])) {
+        const dk = dateKeyInCompanyTime(e.clock_in);
+        if (!dk || dk < from || dk > to || e.archived_test_data === true || e.archived_admin === true) continue;
+        const hrs = Math.max(0, Number(e.total_hours || 0));
+        const ot = Math.max(0, hrs - 8);
+        if (ot <= 0) continue;
+        const cur = byEmp.get(e.user_email) || { user: e.user_name || e.user_email, ot_hours: 0, days: 0 };
+        cur.ot_hours += ot; cur.days += 1;
+        byEmp.set(e.user_email, cur);
+      }
+      const employees = [...byEmp.values()].sort((a: any, b: any) => b.ot_hours - a.ot_hours);
+      const totalOt = employees.reduce((s: number, e: any) => s + e.ot_hours, 0);
+      return Response.json({ success: true, from, to, total_ot_hours: Math.round(totalOt * 100) / 100, estimated_ot_cost: rate > 0 ? Math.round(totalOt * rate * 0.5 * 100) / 100 : null, employees });
+    }
+
+    if (action === 'differential_hours_report') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const byEmp = new Map();
+      for (const e of (Array.isArray(rows) ? rows : [])) {
+        if (e.archived_test_data === true || e.archived_admin === true) continue;
+        const ci = e.clock_in ? new Date(e.clock_in) : null;
+        const co = e.clock_out ? new Date(e.clock_out) : null;
+        if (!ci || !co) continue;
+        let diffMins = 0;
+        const cur = new Date(ci);
+        while (cur < co) { const h = cur.getHours(); if (h >= 18 || h < 6) diffMins += 1; cur.setMinutes(cur.getMinutes() + 1); }
+        if (diffMins <= 0) continue;
+        const agg = byEmp.get(e.user_email) || { user: e.user_name || e.user_email, differential_hours: 0 };
+        agg.differential_hours += diffMins / 60;
+        byEmp.set(e.user_email, agg);
+      }
+      return Response.json({ success: true, employees: [...byEmp.values()].map((e: any) => ({ ...e, differential_hours: Math.round(e.differential_hours * 100) / 100 })).sort((a: any, b: any) => b.differential_hours - a.differential_hours).slice(0, 50) });
     }
 
     if (action === 'buddy_punch_report') {
