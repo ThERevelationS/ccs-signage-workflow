@@ -27,7 +27,7 @@ export default function VinylItemCard({ item, index, vinyls, laminates, onChange
           placeholder="Graphic description"
           onChange={(e) => set({ description: e.target.value })}
         />
-        <button
+        <button type="button"
           onClick={() => {
             if (window.confirm("Remove this vinyl item?")) onRemove(index);
           }}
