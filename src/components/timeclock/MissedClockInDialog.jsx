@@ -129,7 +129,7 @@ export default function MissedClockInDialog({
               {QUICK_CHOICES.map((choice) => {
                 const selected = minutesAgo === choice.minutes;
                 return (
-                  <button
+                  <button type="button"
                     key={choice.minutes}
                     type="button"
                     disabled={busy}
