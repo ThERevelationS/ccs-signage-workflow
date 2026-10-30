@@ -4,6 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Clock3, Loader2, Pause, Play, X } from "lucide-react";
 import { format } from "date-fns";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -139,8 +140,9 @@ export default function WorkPauseOverlay({
     setShowResumePrompt(false);
     setError("");
     loadStatus({ preservePausedOnError: false });
-    // Hidden tabs skip the poll; the visibility handler refreshes on return.
-    const interval = setInterval(() => { if (!document.hidden) loadStatus(); }, 60000);
+    // Hidden tabs and an open 429 breaker skip the poll; the visibility
+    // handler refreshes on return.
+    const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); }, 60000);
     const onFocus = () => { if (Date.now() - lastPollAtRef.current > 45000) loadStatus(); };
     const onVisibility = () => { if (document.visibilityState === "visible" && Date.now() - lastPollAtRef.current > 45000) loadStatus(); };
     const onPauseChanged = (event) => {
