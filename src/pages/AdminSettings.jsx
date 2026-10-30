@@ -633,12 +633,6 @@ export default function AdminSettings() {
     : null;
   const { tab: selectedAdminTab, subtab: selectedAdminSubtab } =
     resolveAdminNavigation(searchParams, savedNavigation, isAdmin, currentUser);
-  useEffect(() => {
-    if (!isDialogOpen || editingRule) return;
-    try {
-      localStorage.setItem(AUTOMATION_DRAFT_KEY, JSON.stringify({ formData, triggers, actions, saved_at: Date.now() }));
-    } catch {}
-  }, [formData, triggers, actions, isDialogOpen, editingRule]);
 
   useEffect(() => {
     if (isUnlocked && navigationKey) {
@@ -919,6 +913,12 @@ export default function AdminSettings() {
   
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
+  useEffect(() => {
+    if (!isDialogOpen || editingRule) return;
+    try {
+      localStorage.setItem(AUTOMATION_DRAFT_KEY, JSON.stringify({ formData, triggers, actions, saved_at: Date.now() }));
+    } catch {}
+  }, [formData, triggers, actions, isDialogOpen, editingRule]);
   const automationDraftFingerprintRef = useRef(null);
   automationDraftFingerprintRef.current = JSON.stringify({ formData, triggers, actions });
 
