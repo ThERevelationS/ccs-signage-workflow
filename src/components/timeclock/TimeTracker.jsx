@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/EmailGate";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 import { useToast } from "@/components/ui/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { playSoundEffect } from "@/components/announcements/AnnouncementContext";
@@ -176,8 +177,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await base44.functions.invoke("timeClockAction", {
-          action: "list_correction_requests", session_token: sessionToken, request_id: newRequestId(),
+        const res = await invokeTimeClockAction({
+          action: "list_correction_requests", payload: { session_token: sessionToken, request_id: newRequestId() },
         });
         const data = res?.data || res;
         if (!cancelled && data?.success === true && Array.isArray(data.requests)) {
@@ -202,12 +203,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     const promise = (async () => {
       lastSnapshotRefreshAtRef.current = Date.now();
       try {
-        const response = await base44.functions.invoke("timeClockAction", {
+        const data = await invokeTimeClockAction({
           action: "time_tracker_snapshot",
-          session_token: sessionToken,
-          target_email: requestEmail,
+          payload: { session_token: sessionToken, target_email: requestEmail },
         });
-        const data = response?.data || response;
         if (scopeRef.current !== requestScope) return data;
         if (!data?.success) throw new Error(data?.error || "Time Tracker status could not be verified.");
         const receivedAt = Date.now();
@@ -991,7 +990,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 onClick={async () => {
                   setHistoryBusy(true);
                   try {
-                    const res = await base44.functions.invoke("timeClockAction", { action: "my_history", session_token: sessionToken, request_id: newRequestId() });
+                    const res = await invokeTimeClockAction({ action: "my_history", payload: { session_token: sessionToken, request_id: newRequestId() } });
                     const data = res?.data || res;
                     const entries = Array.isArray(data?.entries) ? data.entries : [];
                     if (!entries.length) { setHistoryStats({ count: 0 }); return; }
