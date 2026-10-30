@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { VinylPartTemplate } from "@/api/gatedEntities";
+import { VinylPartTemplate } from "@/entities/all";
 import { BookmarkPlus, Plus, Trash2, Search } from "lucide-react";
 import { createVinylTemplateWithRecovery, deleteVinylTemplateIfUnchanged } from "./vinylTemplatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -115,7 +115,7 @@ export default function VinylPartsLibraryDialog({ open, onClose, onPick }) {
               </div>
             ) : filtered.map(t => (
               <div key={t.id} className="flex items-center gap-2 p-2 border-b border-slate-100 hover:bg-slate-50 last:border-b-0">
-                <button onClick={() => handlePick(t)} className="flex-1 text-left text-sm">
+                <button type="button" onClick={() => handlePick(t)} className="flex-1 text-left text-sm">
                   <div className="font-medium">{t.name}</div>
                   <div className="text-[11px] text-slate-500 tabular-nums">{t.width_inches}″ × {t.height_inches}″</div>
                 </button>
