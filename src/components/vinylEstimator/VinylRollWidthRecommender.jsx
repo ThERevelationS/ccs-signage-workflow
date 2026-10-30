@@ -107,7 +107,7 @@ export default function VinylRollWidthRecommender({
         {evaluated.length > 1 && (
           <div className="flex flex-wrap gap-1 pt-1">
             {evaluated.map(opt => (
-              <button
+              <button type="button"
                 key={opt.vinyl.id}
                 onClick={() => onPick(opt.vinyl.id)}
                 className="text-[10px] px-2 py-0.5 rounded border border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50 tabular-nums"
