@@ -34,7 +34,7 @@ import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePa
 import EstimateActivityPanel from "@/components/estimator/EstimateActivityPanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
-import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
+import { isEstimateStatusTransitionAllowed, statusTransitionMap } from "@/components/estimator/estimateStatusTransitions";
 import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
@@ -117,6 +117,20 @@ export default function EstimateDetail() {
   const [saving, setSaving] = useState(false);
   const [watchBusy, setWatchBusy] = useState(false);
   const [watchNote, setWatchNote] = useState("");
+  const [statusMap, setStatusMap] = useState(null);
+  // Custom statuses (#493): QuoteDefaults custom_statuses + status_transitions
+  // merge over the baked transition enum.
+  useEffect(() => {
+    staffEntities.QuoteDefaults.filter({ config_name: "default" }, undefined, 1)
+      .then((rows) => {
+        const d = (Array.isArray(rows) ? rows[0] : null) || {};
+        let cs = [], tr = {};
+        try { cs = JSON.parse(d.custom_statuses || "[]") || []; } catch {}
+        try { tr = JSON.parse(d.status_transitions || "{}") || {}; } catch {}
+        setStatusMap(statusTransitionMap(cs, tr));
+      })
+      .catch(() => {});
+  }, []);
   const [step, setStep] = useState(() => {
     // Deep link: ?section=details|products|pricing (or ?step=1|2|3) opens that
     // workspace section on load; unknown/missing values keep the default.
@@ -715,7 +729,7 @@ export default function EstimateDetail() {
     try {
       const before = await staffEntities.AllInOneEstimate.get(estimate.id);
       assertNoPendingPriceAcceptance(before, "saving the estimate");
-      if (!isEstimateStatusTransitionAllowed(before.status, estimate.status)) {
+      if (!isEstimateStatusTransitionAllowed(before.status, estimate.status, statusMap)) {
         window.alert(`An estimate cannot go from ${before.status || "draft"} to ${estimate.status || "draft"} directly. Send it first — approval is only allowed after the quote has been sent.`);
         return;
       }
