@@ -174,6 +174,11 @@ export default function EmployeeTodayCard({
                 {activeBreakElapsed}m - over
               </Badge>
             )}
+            {activeSpanMinutes > 300 && completedActiveUnpaidBreak === 0 && statusData?.break_status === "working" && (
+              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800" title="Over 5 hours worked without a lunch break">
+                no lunch yet
+              </Badge>
+            )}
           </div>
           <p className="text-xs text-gray-500 mt-1">Live operational time from authoritative Time Clock state.</p>
         </div>
