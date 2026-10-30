@@ -142,34 +142,55 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                 </div>
                 <div className="flex-1 relative" style={{ height: `${Math.max(1, segments.length) * 20}px` }}>
                   <div className="absolute inset-0 flex flex-col gap-0.5">
-                    {segments.map((seg) => (
-                      <div
-                        key={seg.id}
-                        className="relative h-5 flex items-center"
-                        style={seg.kind === "rider" ? { paddingLeft: "16px" } : undefined}
-                      >
-                        <div className="w-full h-px bg-gray-200" />
+                    {segments.map((seg) => {
+                      const pos = getBarPosition(seg.start, seg.due);
+                      const chartPx = Math.max(300, paneWidth - (compact ? 112 : 192));
+                      const label = String(seg.label || "");
+                      const fitsInside = ((parseFloat(pos.width) || 0) / 100) * chartPx >= label.length * 5.8 + 10;
+                      const endPct = (parseFloat(pos.left) || 0) + (parseFloat(pos.width) || 0);
+                      const labelAfterBar = !fitsInside && endPct < 80;
+                      return (
                         <div
-                          className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
-                          style={{
-                            ...getBarPosition(seg.start, seg.due),
-                            background: `linear-gradient(135deg, ${seg.color}ee 0%, ${seg.color}aa 100%)`,
-                            boxShadow: "1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)",
-                            ...(seg.kind === "rider"
-                              ? { border: "1px dashed rgba(124, 58, 237, 0.3)" }
-                              : {}),
-                            ...(seg.kind === "milestone"
-                              ? { border: "1px solid rgba(0,0,0,0.15)" }
-                              : {}),
-                          }}
-                          onClick={() => onWorkOrderClick && onWorkOrderClick(seg.record)}
+                          key={seg.id}
+                          className="relative h-5 flex items-center"
+                          style={seg.kind === "rider" ? { paddingLeft: "16px" } : undefined}
                         >
-                          <span className="text-[9px] font-medium text-gray-700 px-1 truncate">
-                            {seg.label}
-                          </span>
+                          <div className="w-full h-px bg-gray-200" />
+                          <div
+                            className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
+                            title={`${label} · ${formatSegmentDates(seg)}`}
+                            style={{
+                              ...pos,
+                              background: `linear-gradient(135deg, ${seg.color}ee 0%, ${seg.color}aa 100%)`,
+                              boxShadow: "1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)",
+                              ...(seg.kind === "rider"
+                                ? { border: "1px dashed rgba(124, 58, 237, 0.3)" }
+                                : {}),
+                              ...(seg.kind === "milestone"
+                                ? { border: "1px solid rgba(0,0,0,0.15)" }
+                                : {}),
+                            }}
+                            onClick={() => onWorkOrderClick && onWorkOrderClick(seg.record)}
+                          >
+                            {fitsInside && (
+                              <span className="text-[10px] font-medium text-gray-700 px-1 truncate">
+                                {label}
+                              </span>
+                            )}
+                          </div>
+                          {!fitsInside && (
+                            <span
+                              className="pointer-events-none absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-gray-700"
+                              style={labelAfterBar
+                                ? { left: `calc(${pos.left} + ${pos.width} + 6px)` }
+                                : { right: `calc(${100 - (parseFloat(pos.left) || 0)}% + 6px)` }}
+                            >
+                              {label}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
