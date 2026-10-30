@@ -12,7 +12,7 @@
       "timezone": "UTC",
       "interval_value": 10,
       "interval_unit": "days",
-      "interval_anchor": "2026-03-02T20:21:19.836000",
+      "interval_anchor": "2026-10-31T08:00:00.000000",
       "ends_type": "never",
       "ends_on_date": null,
       "ends_after_count": null

@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
         console.error(`Error monitoring jurisdiction ${jurisdiction.id}:`, jurisdictionError.message);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     const nextOffset = (cursor + batch.length) % Math.max(1, jurisdictions.length);
