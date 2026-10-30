@@ -3297,7 +3297,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         </div>
       )}
 
-      <div ref={parentRef} className="overflow-auto" style={{ flex: 1, minHeight: 0, height: 0 }}>
+      <div ref={parentRef} className="overflow-auto ccs-scrollbar-hidden" style={{ flex: 1, minHeight: 0, height: 0 }}>
         <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
           <thead className="sticky top-0 z-10 bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap [&_th]:py-1">
             <tr className="h-7 border-b bg-gray-100">
