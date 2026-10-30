@@ -204,6 +204,7 @@ export default function Estimator() {
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
             <select
+              aria-label="Sort estimates"
               value={sort}
               onChange={(e) => setParam("sort", e.target.value === "newest" ? "" : e.target.value)}
               className="clay-card border-none h-11 px-2 text-xs font-semibold text-gray-600 outline-none"
