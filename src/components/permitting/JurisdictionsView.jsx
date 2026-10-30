@@ -16,6 +16,7 @@ import {
   saveJurisdictionFromLoadedSnapshot,
 } from "@/components/permitting/jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
 import { normalizePermitJurisdictionName } from "@/components/permitting/jurisdictionPermitBridge";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -68,7 +69,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
 
   useEffect(() => {
     loadJurisdictions();
-    const interval = setInterval(() => { if (!document.hidden) loadJurisdictions(); }, 300000);
+    const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadJurisdictions(); }, 300000);
     return () => clearInterval(interval);
   }, []);
 
