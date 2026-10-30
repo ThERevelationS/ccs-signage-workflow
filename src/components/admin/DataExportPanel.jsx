@@ -86,7 +86,7 @@ export default function DataExportPanel() {
     Promise.all([
       staffEntities.TimeOffRequest.count({ status: "pending" }).catch(() => null),
       staffEntities.TimeClockCorrectionRequest.count({ status: "pending" }).catch(() => null),
-      staffEntities.DeletionRequest.count({ status: "pending" }).catch(() => null),
+      staffEntities.AccountDeletionRequest.count({ status: "pending" }).catch(() => null),
       staffEntities.FeatureReport.count({ status: "open" }).catch(() => null),
       staffEntities.SyncConflict.count({ status: "open" }).catch(() => null),
     ]).then(([pto, corr, del, feat, conf]) => { if (alive) setPending({ pto, corr, del, feat, conf }); });
