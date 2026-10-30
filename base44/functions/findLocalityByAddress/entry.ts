@@ -99,6 +99,8 @@ function constantTimeEqual(a, b) {
 }
 
 // base44/shared/signShopSession.ts
+var sessionAuthCache = /* @__PURE__ */ new Map();
+var SESSION_AUTH_CACHE_MS = 6e4;
 function b64urlEncode(str) {
   return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -118,6 +120,10 @@ async function hmacSign(message, secret) {
   );
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
   return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
+}
+async function signShopSessionTokenHash(token) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return b64urlEncode(String.fromCharCode(...new Uint8Array(buf)));
 }
 async function authenticateSignShopSession(base44, token) {
   const rawToken = String(token || "").trim();
@@ -141,6 +147,18 @@ async function authenticateSignShopSession(base44, token) {
   if (!email || !Number.isFinite(issuedAt) || issuedAt <= 0 || !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt) {
     throw Object.assign(new Error("Authentication required"), { status: 401 });
   }
+  const stripExpiredGrant = (user2) => {
+    const grantExpiry = Date.parse(String(user2?.admin_grant_expires || ""));
+    if (Number.isFinite(grantExpiry) && grantExpiry > 0 && grantExpiry <= Date.now() && user2) {
+      user2.role = "user";
+      user2.is_full_admin = false;
+      user2.admin_permissions = {};
+    }
+    return user2;
+  };
+  const tokenHash = await signShopSessionTokenHash(rawToken);
+  const cachedAuth = sessionAuthCache.get(tokenHash);
+  if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) {
     throw Object.assign(new Error("Authenticated user identity could not be verified"), { status: 503 });
@@ -149,7 +167,17 @@ async function authenticateSignShopSession(base44, token) {
   if (users.length !== 1) {
     throw Object.assign(new Error("Authenticated user identity is ambiguous"), { status: 409 });
   }
-  const user = users[0];
+  try {
+    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+    if (Array.isArray(revoked) && revoked.length > 0) {
+      throw Object.assign(new Error("Authentication required"), { status: 401 });
+    }
+  } catch (e) {
+    if (e?.status === 401) throw e;
+  }
+  const user = stripExpiredGrant(users[0]);
+  if (sessionAuthCache.size > 500) sessionAuthCache.clear();
+  sessionAuthCache.set(tokenHash, { user, expires: Date.now() + SESSION_AUTH_CACHE_MS });
   const notBefore = Date.parse(String(user?.session_not_before || ""));
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
     throw Object.assign(new Error("Authentication required"), { status: 401 });
@@ -352,7 +380,7 @@ function traceDelay(kind, ms, retry = false) {
 }
 
 // base44/shared/entityRateLimitRetry.ts
-function withEntityRateLimitRetry(client, { paceMs = 0 } = {}) {
+function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
   if (!client?.asServiceRole?.entities) return client;
   let queue = Promise.resolve();
   let nextRequestAt = 0;
@@ -381,7 +409,7 @@ function withEntityRateLimitRetry(client, { paceMs = 0 } = {}) {
           try {
             return await value.apply(target, args);
           } catch (e) {
-            if (!isLimited(e) || attempt >= 5) throw e;
+            if (!isLimited(e) || attempt >= maxRetries) throw e;
             const delay = paceMs ? 15e3 * (attempt + 1) : 1500 * (attempt + 1);
             if (paceMs) nextRequestAt = Math.max(nextRequestAt, Date.now() + delay);
             const start = performance.now();
@@ -426,9 +454,10 @@ function addressResponse(data, init = {}) {
 }
 Deno.serve(async (req) => {
   let reporter = silentScanReporter;
+  let diagnostic = false;
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req)), body = await req.json();
-    const diagnostic = body?.action === "geocode_diagnostic";
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 }), body = await req.json();
+    diagnostic = body?.action === "geocode_diagnostic";
     const actor = diagnostic ? await base44.auth.me().catch(() => null) : await authenticateSignShopSession(base44, body?.session_token);
     if (diagnostic && actor?.role !== "admin") return addressResponse({ success: false, error: "Admin access required." }, { status: 403 });
     const address = typeof body.address === "string" ? body.address.trim() : "";
@@ -526,7 +555,9 @@ Deno.serve(async (req) => {
     await reporter.emit({ kind: "address_findings", detail: reason }, { stage: applyAllowed ? "Ready to use" : "Administrator review needed", processed: 1, total: 1, indeterminate: false });
     return addressResponse({ success: true, scan_run: await reporter.finish(hasServiceIssue ? "completed_with_errors" : "complete", hasServiceIssue ? geocodingService.message : void 0), geocode, geocoding_service: geocodingService, location_resolution: resolution, automatic_scan: automatic, address_archives: addressArchives, research_deferred: true, suggested_locality: matched ? { id: matched.id, name: matched.name, state: matched.state, zip: matched.zip, jurisdiction_profile_id: matched.jurisdiction_profile_id } : null, authority_review: authority, apply_allowed: applyAllowed, not_matched: !matched, ai_locality_name: resolution.target?.name || "", ai_state: resolution.state || "", ai_county: resolution.target?.county || "", match_confidence: matched ? "high" : "unresolved", match_method: matched ? "government_boundary_intersection" : "none", match_reason: reason, notes: !applyAllowed ? "An administrator must confirm the location and sign/zoning office setup before this address is used." : "" });
   } catch (error) {
-    const status = [400, 401, 409, 503].includes(Number(error?.status)) ? Number(error.status) : 500;
-    return addressResponse({ success: false, scan_run: await reporter.finish("failed", "Address lookup could not finish safely."), error: status === 500 ? "Address lookup could not finish safely. Please try again." : error.message, error_detail: String(error?.message || error).slice(0, 300) }, { status });
+    const errorStatus = Number(error?.status || error?.response?.status || 0);
+    if (errorStatus === 429 || /rate limit|too many requests/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3 }, { status: 429, headers: { "Retry-After": "3" } });
+    const status = [400, 401, 409, 503].includes(errorStatus) ? errorStatus : 500;
+    return addressResponse({ success: false, scan_run: await reporter.finish("failed", "Address lookup could not finish safely."), error: status === 500 ? "Address lookup could not finish safely. Please try again." : error.message, ...diagnostic || status !== 500 ? { error_detail: String(error?.message || error).slice(0, 300) } : {} }, { status });
   }
 });
