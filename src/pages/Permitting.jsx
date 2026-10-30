@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { useAuth } from "@/components/auth/EmailGate";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, FileDown, Loader2, MapPin, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
@@ -116,7 +117,7 @@ export default function Permitting() {
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
     loadData();
-    const interval = setInterval(() => loadData(false), 60000);
+    const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadData(false); }, 60000);
     return () => clearInterval(interval);
   }, []);
 
