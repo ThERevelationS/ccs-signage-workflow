@@ -18,7 +18,7 @@ function StepMedia({ step, onImageClick }) {
       {Array.isArray(step.images) && step.images.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {step.images.map((url, i) => (
-            <button
+            <button type="button"
               key={`${url}-${i}`}
               type="button"
               onClick={() => onImageClick?.(step.images, i)}
