@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/auth/EmailGate";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { useToast } from "@/components/ui/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { playSoundEffect } from "@/components/announcements/AnnouncementContext";
@@ -157,6 +158,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const scopeRef = useRef(scopeKey);
   scopeRef.current = scopeKey;
   const inFlightRef = useRef(null);
+  const lastSnapshotRefreshAtRef = useRef(0);
   const snapshotRef = useRef(null);
   snapshotRef.current = snapshotRecord.scope === scopeKey ? snapshotRecord : null;
 
@@ -188,7 +190,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       } catch {}
     };
     load();
-    const timer = setInterval(load, 300000);
+    const timer = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) load(); }, 300000);
     return () => { cancelled = true; clearInterval(timer); };
   }, [sessionToken, enabled]);
 
@@ -198,6 +200,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     if (!sessionToken || !requestEmail) return null;
     if (inFlightRef.current && !force) return inFlightRef.current;
     const promise = (async () => {
+      lastSnapshotRefreshAtRef.current = Date.now();
       try {
         const response = await base44.functions.invoke("timeClockAction", {
           action: "time_tracker_snapshot",
@@ -230,23 +233,36 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
     return promise;
   }, [currentUser?.email, sessionToken]);
 
-  // Initial + interval polling at the employee's chosen cadence.
+  // Initial + interval polling at the employee's chosen cadence (floor: 60s —
+  // every open Time Tracker tab shares the app's function rate budget).
   const lowDataMode = prefs?.low_data_mode === true;
   const intervalSeconds = lowDataMode
-    ? Math.max(120, Math.min(300, Math.max(15, Number(prefs?.update_interval_seconds) || 60)))
-    : Math.min(300, Math.max(15, Number(prefs?.update_interval_seconds) || 60));
+    ? Math.max(120, Math.min(300, Math.max(60, Number(prefs?.update_interval_seconds) || 60)))
+    : Math.min(300, Math.max(60, Number(prefs?.update_interval_seconds) || 60));
   useEffect(() => {
     if (!sessionToken || !email) return undefined;
     let cancelled = false;
-    const run = () => { if (!cancelled) refresh({ force: true }).catch(() => {}); };
+    const run = () => {
+      if (cancelled || document.hidden || isFleetCoolingDown()) return;
+      refresh({ force: true }).catch(() => {});
+    };
     run();
     const id = window.setInterval(run, intervalSeconds * 1000);
     return () => { cancelled = true; window.clearInterval(id); };
   }, [sessionToken, email, intervalSeconds, refresh]);
 
-  // Re-poll when Time Clock activity signals a state change.
+  // Re-poll when Time Clock activity signals a state change. Every listener
+  // routes through one throttle: explicit change signals bypass the freshness
+  // gap, cross-tab/storage pings refresh at most every 15s, and becoming
+  // visible again only refreshes when the poll interval was already due.
+  // Nothing refreshes while the shared 429 breaker is open.
   useEffect(() => {
     if (!sessionToken || !email) return undefined;
+    const requestSnapshotRefresh = (minGapMs = 15000) => {
+      if (isFleetCoolingDown()) return;
+      if (Date.now() - lastSnapshotRefreshAtRef.current < minGapMs) return;
+      refresh({ force: true }).catch(() => {});
+    };
     const onChange = (event) => {
       const incoming = event?.detail?.prefs;
       if (incoming && typeof incoming === "object") {
@@ -254,10 +270,10 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
           ? { ...prev, data: { ...prev.data, prefs: incoming } }
           : prev);
       }
-      refresh({ force: true }).catch(() => {});
+      requestSnapshotRefresh(0);
     };
-    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") onChange(); };
-    const onVisible = () => { if (document.visibilityState === "visible") onChange(); };
+    const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") requestSnapshotRefresh(); };
+    const onVisible = () => { if (document.visibilityState === "visible") requestSnapshotRefresh(intervalSeconds * 1000); };
     window.addEventListener("ccs-timeclock-work-pause-changed", onChange);
     window.addEventListener("ccs:timeTrackerRefresh", onChange);
     window.addEventListener("storage", onStorage);
@@ -268,7 +284,7 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [sessionToken, email, refresh]);
+  }, [sessionToken, email, refresh, intervalSeconds]);
 
   // Local 1s tick between authoritative snapshots.
   useEffect(() => {
