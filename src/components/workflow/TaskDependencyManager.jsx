@@ -210,7 +210,7 @@ export default function TaskDependencyManager({
               const willCycle = wouldCreateCycle(taskId);
               
               return (
-                <button
+                <button type="button"
                   key={taskId}
                   className={`w-full text-left p-2 rounded text-xs hover:bg-gray-100 flex items-center gap-2 ${
                     willCycle ? 'opacity-50 cursor-not-allowed' : ''
