@@ -955,6 +955,9 @@ function LayoutContent({ children }) {
           will-change: transform, opacity, width;
         }
 
+        .ccs-scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+        .ccs-scrollbar-hidden::-webkit-scrollbar { display: none; }
+
         @media (prefers-reduced-motion: reduce) {
           .ccs-glass-control,
           .ccs-glass-nav-item {
