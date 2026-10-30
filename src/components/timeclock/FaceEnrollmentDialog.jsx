@@ -34,10 +34,33 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     }
   }, [isOpen]);
 
+  const [enrollGrade, setEnrollGrade] = useState(null);
+  // Enrollment quality (#4): mean pairwise descriptor distance measures pose
+  // coverage - all captures from one pose cluster near zero and should be
+  // redone, spread coverage earns A/B.
+  const gradeFor = (descriptors) => {
+    if (descriptors.length < 2) return { grade: "-", tip: "Need 2+ captures" };
+    let sum = 0, n = 0;
+    for (let i = 0; i < descriptors.length; i += 1)
+      for (let j = i + 1; j < descriptors.length; j += 1) {
+        const a = descriptors[i], b = descriptors[j];
+        let acc = 0;
+        for (let k = 0; k < 128; k += 1) { const d = (a[k] || 0) - (b[k] || 0); acc += d * d; }
+        sum += Math.sqrt(acc); n += 1;
+      }
+    const mean = n ? sum / n : 0;
+    if (mean >= 0.3) return { grade: "A", tip: "Great pose coverage" };
+    if (mean >= 0.22) return { grade: "B", tip: "Good coverage" };
+    if (mean >= 0.15) return { grade: "C", tip: "OK - more angles would help" };
+    if (mean >= 0.08) return { grade: "D", tip: "Weak - vary pose/distance" };
+    return { grade: "F", tip: "Same pose repeated - recapture from different angles" };
+  };
+
   const handleCapture = (descriptors) => {
     // Descriptors belong to the employee shown when they were captured.
     capturedForRef.current = String(user?.email || "").toLowerCase();
     setFaceDescriptors(descriptors);
+    setEnrollGrade(gradeFor(descriptors));
   };
 
   const handleSave = async () => {
@@ -46,6 +69,10 @@ export default function FaceEnrollmentDialog({ isOpen, onClose, user, onSuccess 
     // Never bind a face captured for one employee to another record.
     if (capturedForRef.current !== recordEmail) {
       setSaveError("The captured face data was recorded for a different employee. Close and recapture before saving.");
+      return;
+    }
+    if (enrollGrade?.grade === "D" || enrollGrade?.grade === "F") {
+      setSaveError(`Enrollment quality ${enrollGrade.grade}: ${enrollGrade.tip}. Recapture with more pose/distance variation.`);
       return;
     }
     const requestSeq = ++saveSeqRef.current;
