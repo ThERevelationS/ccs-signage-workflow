@@ -20,9 +20,8 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
-import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 
 const stageOrder = ['permitting', 'design', 'production', 'fabrication', 'installation'];
 
@@ -244,7 +243,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                     <Label className="text-xs mb-2 block">Stages</Label>
                     <div className="flex flex-wrap gap-1">
                       {stageOrder.map(stage => (
-                        <button
+                        <button type="button"
                           key={stage}
                           onClick={() => toggleStageFilter(stage)}
                           className={`px-2 py-1 text-xs rounded-lg transition-all ${
