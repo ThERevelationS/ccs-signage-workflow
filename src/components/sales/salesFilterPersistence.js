@@ -112,8 +112,29 @@ export async function saveSalesDefaultSortSafely({ sessionToken, record, value, 
 // Several Sales screens need the same roster at once. Share one request and
 // reuse the answer briefly, and wait out "busy" responses instead of failing.
 const ROSTER_TTL_MS = 5 * 60 * 1000;
+const ROSTER_STORAGE_KEY = "ccsSalesPersonRoster";
 let rosterCache = { token: "", at: 0, promise: null };
 const isBusyError = (error) => /busy|rate limit|429|too many/i.test(String(error?.message || ""));
+
+// The roster survives a reload so a busy window on a fresh mount still renders
+// the names this session already loaded instead of failing the screen.
+function readStoredRoster(token) {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(ROSTER_STORAGE_KEY) || "null");
+    if (parsed?.token !== token || !Array.isArray(parsed.users)) return [];
+    return parsed.users;
+  } catch {
+    return [];
+  }
+}
+
+function storeRoster(token, users) {
+  try {
+    sessionStorage.setItem(ROSTER_STORAGE_KEY, JSON.stringify({ token, users }));
+  } catch {
+    // Storage full or unavailable — the in-memory cache still covers this session.
+  }
+}
 
 async function fetchRoster(token, label) {
   for (let attempt = 0; ; attempt += 1) {
@@ -134,12 +155,26 @@ export async function loadSalesPersonRosterSafely({ sessionToken, label = "Sales
   if (!fresh) {
     const promise = fetchRoster(token, label);
     rosterCache = { token, at: Date.now(), promise };
-    promise.catch(() => {
-      if (rosterCache.promise === promise) rosterCache = { token: "", at: 0, promise: null };
-    });
+    promise
+      .then((users) => {
+        if (rosterCache.promise === promise) storeRoster(token, users);
+      })
+      .catch(() => {
+        if (rosterCache.promise === promise) rosterCache = { token: "", at: 0, promise: null };
+      });
   }
-  const users = await rosterCache.promise;
-  return users.map((user) => ({ ...user }));
+  const active = rosterCache.promise;
+  if (!active) return readStoredRoster(token).map((user) => ({ ...user }));
+  try {
+    const users = await active;
+    return users.map((user) => ({ ...user }));
+  } catch (error) {
+    // A busy window must not break the Sales screens — the roster this session
+    // already loaded is still accurate enough to keep assigning people.
+    const stored = readStoredRoster(token);
+    if (stored.length) return stored.map((user) => ({ ...user }));
+    throw error;
+  }
 }
 
 export async function createSalesFilterIfAbsent({ data, sessionToken, label = "Sales filter" } = {}) {

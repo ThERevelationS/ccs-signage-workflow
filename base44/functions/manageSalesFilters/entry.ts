@@ -86,11 +86,41 @@ function salesRosterView(row: any) {
   };
 }
 
-async function loadSalesRoster(AuthorizedEmail: any) {
+// The roster is identical for every caller and costs a full paged read of
+// AuthorizedEmail. Every Sales screen mounting at once used to spend that read
+// from the shared entity budget and come back "busy". One read per warm
+// instance per minute now serves them all, and a stale roster keeps screens
+// working through a throttled window.
+const ROSTER_CACHE_MS = 60_000;
+let rosterCache: { at: number; users: any[] } | null = null;
+let rosterInFlight: Promise<any[]> | null = null;
+
+async function readSalesRoster(AuthorizedEmail: any) {
   const rows = await loadAllEntityRows({ entity: AuthorizedEmail, sort: 'full_name', label: 'Sales person roster' });
   return rows
     .map(salesRosterView)
     .filter((row: any) => row.is_active !== false && row.full_name);
+}
+
+async function loadSalesRoster(AuthorizedEmail: any) {
+  if (rosterCache && Date.now() - rosterCache.at < ROSTER_CACHE_MS) return rosterCache.users;
+  if (rosterInFlight) return rosterInFlight;
+
+  const promise = (async () => {
+    const users = await readSalesRoster(AuthorizedEmail);
+    rosterCache = { at: Date.now(), users };
+    return users;
+  })();
+
+  rosterInFlight = promise;
+  try {
+    return await promise;
+  } catch (error) {
+    if (rosterCache?.users?.length) return rosterCache.users;
+    throw error;
+  } finally {
+    if (rosterInFlight === promise) rosterInFlight = null;
+  }
 }
 
 function cleanSalesPipelinePreferences(value: any) {
