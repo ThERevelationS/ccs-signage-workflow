@@ -385,6 +385,21 @@ export default function EstimateDetail() {
     });
   }, [id]);
 
+  // Fire the approval celebration whenever the persisted status transitions
+  // to "approved" — covers the staff approve button, the conversion path, and
+  // a customer portal acceptance reflected on reload. Hooks must stay above
+  // every early return below (React #310).
+  useEffect(() => {
+    const status = String(persistedEstimate?.status || "").trim();
+    if (prevApprovedStatusRef.current && status === "approved" && prevApprovedStatusRef.current !== "approved") {
+      setCelebration("Quote approved — the customer signed off. Great work.");
+      const t = setTimeout(() => setCelebration(""), 4500);
+      return () => clearTimeout(t);
+    }
+    if (status) prevApprovedStatusRef.current = status;
+    return undefined;
+  }, [persistedEstimate?.status]);
+
   if (loading) return <div className="p-10 text-center text-gray-400">Loading estimateâ€¦</div>;
   if (!estimate) return <div className="p-10 text-center text-gray-500">Estimate not found.</div>;
 
@@ -1372,20 +1387,6 @@ export default function EstimateDetail() {
       </div>
     </div>
   );
-
-  // Fire the approval celebration whenever the persisted status transitions
-  // to "approved" — covers the staff approve button, the conversion path, and
-  // a customer portal acceptance reflected on reload.
-  useEffect(() => {
-    const status = String(persistedEstimate?.status || "").trim();
-    if (prevApprovedStatusRef.current && status === "approved" && prevApprovedStatusRef.current !== "approved") {
-      setCelebration("Quote approved — the customer signed off. Great work.");
-      const t = setTimeout(() => setCelebration(""), 4500);
-      return () => clearTimeout(t);
-    }
-    if (status) prevApprovedStatusRef.current = status;
-    return undefined;
-  }, [persistedEstimate?.status]);
 
   return (
     <div className="min-h-full bg-gray-50">
