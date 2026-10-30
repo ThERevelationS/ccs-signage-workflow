@@ -721,6 +721,9 @@ function LocalityPickerSession({
                       {result.location_resolution?.status === 'location_verified' && result.location_resolution?.target?.type && result.location_resolution?.target?.type !== 'township' && (
                         <p className="text-[11px] text-green-700 mt-0.5">Not a township address — it sits inside the {String(result.location_resolution.target.type) === 'county' ? 'county' : `${result.location_resolution.target.type}`}.</p>
                       )}
+                      {Number.isFinite(result.location_resolution?.target?.center_distance_miles) && (
+                        <p className="text-[11px] text-green-700 mt-0.5">About {result.location_resolution.target.center_distance_miles} mile{result.location_resolution.target.center_distance_miles === 1 ? '' : 's'} from the pin to {result.location_resolution.target.name}'s center.</p>
+                      )}
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
