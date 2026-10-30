@@ -33,6 +33,8 @@ const SCAN_STATUS_TEXT = {
   dim: "Lighting is dim. Move to better light or closer to the camera.",
   "no-match": "Face not recognized. Hold still and look at the camera.",
   verifying: "Face detected, verifying...",
+  liveness: "Blink or turn your head slightly to prove you're really here.",
+  ambiguous: "Two faces are matching - only you should be in frame.",
 };
 
 export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
