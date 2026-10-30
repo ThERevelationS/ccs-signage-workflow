@@ -88,13 +88,34 @@ const STAFF_READABLE = new Set([
   'VinylProject',
   'VinylWorkflowTemplate',
   'WorkOrder',
+
+  // Screens that previously read these straight from the browser (which entity
+  // RLS blocks for staff sessions): announcements, sales filters, calendar,
+  // estimator revisions/acceptances, price revisions, templates and capacity.
+  'Announcement',
+  'BuilderPriceRevision',
+  'CalendarEvent',
+  'EstimateAcceptance',
+  'EstimateQuoteDelivery',
+  'EstimateRevision',
+  'EstimateSectionAcceptance',
+  'InventoryMovement',
+  'PTOPolicy',
+  'ProjectTemplate',
+  'QuickProductCategory',
+  'SalesFilter',
+  'UserCapacity',
 ]);
 
-// Nothing is admin-only today; AuthorizedEmail is staff-readable because
-// dozens of staff views resolve user identities from it. Its secret fields
-// are stripped by FIELD_DENYLIST below before any row leaves the backend.
+// Admin-settings data: readable by admins only. AuthorizedEmail is
+// staff-readable because dozens of staff views resolve user identities from
+// it; its secret fields are stripped by FIELD_DENYLIST below before any row
+// leaves the backend.
 const ADMIN_READABLE = new Set<string>([
   'AdminAuditLog',
+  'AutomationRule',
+  'EmailGroup',
+  'EmailNotificationSettings',
   'FailedAdminAttempt',
   'UserSession',
 ]);
