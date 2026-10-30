@@ -13,13 +13,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 8. **[F]** Ambiguous-match fallback — confirm name from 2 choices instead of failing
 9. **[F]** One-tap re-punch for the same employee within a configurable window
 10. **[F][DONE]** Identification progress display - voter exposes N/required, both scanners show "Verifying X/3"
-11. **[F]** Camera health self-test — detect blurry/dirty lens and warn
+11. **[F][DONE]** Camera self-test - 5s brightness sampling warns dark/blown lens
 12. **[F][DONE]** Per-device camera pref - localStorage deviceId drives getUserMedia
 
 ## 2. Kiosk — punch integrity
 13. **[F][DONE]** Geo stamp - kiosk captures device location in background; clock_in_geo stored on the entry
 14. **[F]** Photo capture per punch, optional, stored on the entry
-15. **[F]** Punch rounding rules (5/10/15 min), raw time preserved and displayed
+15. **[F][DONE]** Punch rounding display - display_rounding pref (0/5/10/15), raw preserved
 16. **[F][DONE]** Early-punch warning - clocks >20min ahead of schedule flag in confirm
 17. **[F][DONE]** Schedule-variance notice - todays_schedule in snapshot + early/late chip on the tracker
 18. **[F]** Max shift length auto clock-out with manager notification
