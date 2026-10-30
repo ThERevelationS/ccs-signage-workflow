@@ -41,6 +41,8 @@ const FACE_SCAN_STATUS_TEXT = {
   dim: "Lighting is dim. Move to better light or face the light source.",
   "no-match": "Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.",
   verifying: "Hold still - verifying your identity...",
+  liveness: "Blink or turn your head slightly to prove you're really here.",
+  ambiguous: "Two faces are matching - hold your badge up or step back so only you are in frame.",
 };
 
 function apiErrorFrom(err, fallback) {
@@ -202,6 +204,14 @@ export default function QuickClockSection({
   const healthCanvasRef = useRef(null);
   const healthTimerRef = useRef(null);
   const [cameraHealth, setCameraHealth] = useState("ok");
+  // Report health changes so the admin fleet view can flag kiosks that need
+  // a lens clean/reposition - throttled, fire-and-forget.
+  useEffect(() => {
+    if (cameraHealth === "ok") return;
+    const key = (() => { try { return localStorage.getItem("ccs_kiosk_device_id") || ""; } catch { return ""; } })();
+    if (!key) return;
+    invokeTimeClock({ action: "report_camera_health", device_key: key, health: cameraHealth }).catch(() => {});
+  }, [cameraHealth]);
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
