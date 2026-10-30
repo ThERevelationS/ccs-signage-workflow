@@ -25,6 +25,7 @@ const MaintenanceEstimator = lazyPage(() => import('./pages/MaintenanceEstimator
 const ChannelLetterEstimator = lazyPage(() => import('./pages/ChannelLetterEstimator'));
 const CNCEstimator = lazyPage(() => import('./pages/CNCEstimator'));
 const LaserEstimator = lazyPage(() => import('./pages/LaserEstimator'));
+const CustomItemsEstimator = lazyPage(() => import('./pages/CustomItemsEstimator'));
 const MetalEstimator = lazyPage(() => import('./pages/MetalEstimator'));
 const BrickStoneEstimator = lazyPage(() => import('./pages/BrickStoneEstimator'));
 const PaintingEstimator = lazyPage(() => import('./pages/PaintingEstimator'));
@@ -84,6 +85,7 @@ const ESTIMATOR_PAGES = {
   ChannelLetterEstimator,
   CNCEstimator,
   LaserEstimator,
+  CustomItemsEstimator,
   MetalEstimator,
   BrickStoneEstimator,
   PaintingEstimator,
