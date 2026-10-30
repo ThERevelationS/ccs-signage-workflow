@@ -60,6 +60,7 @@ const STAFF_READABLE = new Set([
   'Inventory',
   'JurisdictionProfile',
   'LaborServiceInventory',
+  'CustomItemsProject',
   'LaserProject',
   'MaintenanceActionRate',
   'MaintenanceInventory',
