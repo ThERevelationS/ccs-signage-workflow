@@ -18,6 +18,8 @@ function loadCustomerNote(customerId) {
     .then((customer) => String(customer?.notes || "").trim())
     .catch((error) => {
       customerNoteCache.delete(id);
+      // A deleted Customer record is a missing note, not a load failure.
+      if (Number(error?.status ?? error?.response?.status) === 404) return "";
       throw error;
     });
   customerNoteCache.set(id, { expiresAt: Date.now() + CUSTOMER_NOTE_CACHE_MS, promise });
