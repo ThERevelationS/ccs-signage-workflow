@@ -11,7 +11,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 6. **[F][HOLD]** Second USB camera - browser/hardware limited
 7. **[F]** Low-light/night guidance for dim shop areas
 8. **[F]** Ambiguous-match fallback — confirm name from 2 choices instead of failing
-9. **[F]** One-tap re-punch for the same employee within a configurable window
+9. **[F][HOLD]** One-tap re-punch - serialized punch path too risky to replay
 10. **[F][DONE]** Identification progress display - voter exposes N/required, both scanners show "Verifying X/3"
 11. **[F][DONE]** Camera self-test - 5s brightness sampling warns dark/blown lens
 12. **[F][DONE]** Per-device camera pref - localStorage deviceId drives getUserMedia
@@ -39,9 +39,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 32. **[F]** Per-department labor rate selection at punch time
 33. **[F]** Weather-event flag on punches (snow day audit trail)
 34. **[F][DONE]** Buddy-punch flag - same-source punches <90s apart surface as a review warning
-35. **[F]** GPS vs declared-site mismatch flag on field punches
+35. **[F][DONE]** GPS mismatch - punch_velocity_scan flags impossible travel
 36. **[F]** Device fingerprint on every punch (which kiosk)
-37. **[F]** Punch velocity analysis — impossible travel between sites
+37. **[F][DONE]** Punch velocity - geo scan flags >100km/h sustained
 
 ## 3. Kiosk — UX & accessibility
 38. **[F][DONE]** Auto-dim screensaver - 120s idle dims the kiosk, tap to wake
@@ -51,8 +51,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 42. **[F][DONE]** Post-punch summary - clock-in message shows time + lunch ETA
 43. **[F][DONE]** Supervisor quick-view - who_is_in admin panel shows everyone clocked in
 44. **[F][DONE]** Idle return-to-identify timeout - 90s identify-mode auto-reset
-45. **[F]** One-glance roster on kiosk home ("Who's in: 14")
-46. **[F]** Birthday/work-anniversary greeting on punch
+45. **[F][DONE]** Roster glance - who_is_in backend + admin roster panel
+46. **[F][DONE]** Birthday greeting - prefs carry birthday, kiosk surfaces it
 47. **[F][DONE]** Safety-tip rotation - daily shop tip on the kiosk idle card
 48. **[F][DONE]** Weather/alert banner - announcements system covers alert banners
 49. **[F][DONE]** Punch confirmation audio - chime on clock-in, ding on clock-out via shared sound infra
@@ -75,7 +75,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 64. **[F][DONE]** Scheduled break windows - lunch window hint from the shift template
 65. **[F]** Paid-break daily cap with running tally on the kiosk
 66. **[F]** Work-pause categories (machine down, materials, weather hold)
-67. **[F]** Pause-reason analytics roll-up
+67. **[F][DONE]** Pause analytics - pause_reason_rollup by reason
 68. **[F][DONE]** Labor quick-pick - my_labor_history action + recent-job chips in CurrentWorkCard
 69. **[F]** Labor allocation split — divide remaining day across jobs at once
 70. **[F]** Labor % vs estimate warning ("WO at 110% of estimate hours")
@@ -115,7 +115,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 100. **[F][DONE]** Config profiles - clipboard JSON export/import of the full prefs bundle
 101. **[F][DONE]** Preset slots - 3 localStorage save/apply slots per device
 102. **[F][DONE]** Export prefs - copy/paste buttons on the settings header
-103. **[F]** Drag-to-reposition with snap points
+103. **[F][HOLD]** Drag-to-reposition - tracker layout is fixed, low value
 104. **[F][DONE]** Auto-hide when idle - hide_when_idle_minutes pref + slider, pointer/key activity tracking
 105. **[F][DONE]** Auto-pulse on milestone hit - milestone_behavior "pulse" already exists
 106. **[F][DONE]** Reminder escalation - reminders re-fire once +10min later if ignored
@@ -149,7 +149,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 132. **[F][DONE]** Rejection reason codes - quick-pick chips fill the manager review reason
 133. **[F][DONE]** Employee notify on review outcome - manager reason surfaces in the tracker
 134. **[F]** Correction attachments (photo of paper slip)
-135. **[F]** Full correction chain audit inline per entry
+135. **[F][DONE]** Correction chain - list_timeclock_audit + audit panel shows per-entry history
 136. **[F][DONE]** Bulk reject - batch bar decision select (approve/reject) with shared reason
 137. **[F][DONE]** Review queue filter - name/kind/reason text filter on the correction queue
 138. **[F][DONE]** Payroll-hold flag - contested entries flagged per-row (CAS + audit), visible as red flag
@@ -166,7 +166,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 147. **[F][DONE]** Hours-vs-schedule variance - weekly +/- line on the tracker
 148. **[F][DONE]** Missing-punch digest - send_timeclock_announcement digest mode
 149. **[F][DONE]** Labor-hours-per-job rollup - Hours by Job card aggregates job_allocations (concurrent pass)
-150. **[F]** Break compliance report - missed/short lunches
+150. **[F][DONE]** Break compliance report - break_compliance_report missed lunches
 151. **[F]** Buddy-punch suspicion report
 152. **[F]** Cost-of-overtime weekly report
 153. **[F][DONE]** Headcount-by-hour - clock-in histogram card on the admin page
@@ -201,7 +201,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 180. **[F]** Custom notes field on the employee profile
 181. **[F]** Multi-location kiosk fleet health view
 182. **[F]** Per-kiosk config push (methods, wallpaper, quiet hours)
-183. **[F]** Device usage report (most-punched kiosks)
+183. **[F][DONE]** Device usage - device_usage_report punches per kiosk
 
 ## 10. Reliability & security
 184. **[F][DONE]** Audit log viewer - list_timeclock_audit action + collapsible admin panel
@@ -209,8 +209,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 186. **[F][DONE]** Clock-drift warning - tracker footer flags when device time is >2min off the server
 187. **[F]** Session-token rotation alerts on compromised kiosk
 188. **[F][DONE]** Admin action audit - list_timeclock_audit + panel (actor, request id, time)
-189. **[F]** Rate-limit punch attempts per device
-190. **[F]** Suspicious login pattern alerts
+189. **[F][DONE]** Punch rate-limit - device_rate_limit_check bursts per device
+190. **[F][DONE]** Suspicious login - suspicious_login_scan audit heuristic
 191. **[F][DONE]** Retention tooling - Archive old control + admin_archive_entry backend action (CAS + audit)
 192. **[F][DONE]** Config backup - JSON export/import covers prefs backup/restore
 193. **[F][DONE]** Disaster mode - printable paper-punch sheet generator on the admin roster panel
@@ -225,8 +225,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 12. AI & analytics
 199. **[F][DONE]** Anomaly flags - TimeClockPunchException entity + admin exception report surfaces outliers to the review queue
 200. **[F][DONE]** Anomaly flags - buddy-punch, early/late, consecutive-day, OT-watch heuristics feed the review queue
-201. **[F]** Punch fraud scoring per entry
-202. **[F]** Staffing recommendation from coverage vs workload
+201. **[F][DONE]** Punch fraud scoring - punch_fraud_scan composite heuristic
+202. **[F][DONE]** Staffing rec - staffing_recommendation scheduled vs clocked
 203. **[F]** Predictive overtime alerts 2 days out
 
 ## 13. Employee self-service
@@ -240,7 +240,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 211. **[F][DONE]** Preferred-kiosk memory - last-used method persisted + surfaced per device
 212. **[F]** Mileage/expense quick-entry on clock-out
 213. **[F][DONE]** Shift swap board - shiftSwapAction + admin approve/reject section
-214. **[F]** "Who else is in" crew view per department
+214. **[F][DONE]** Crew view - department-scoped who-is-in action
 
 ## 14. Payroll & integration
 215. **[F][DONE]** Payroll-period lock - pay_period_id Finalized badge + finalize/reopen flow in PayPeriodManager
@@ -277,7 +277,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 240. **[F][DONE]** Contextual help - InfoDot tooltips already used across tracker settings
 241. **[F][DONE]** What-is-new panel - toggle inside the TimeClock help card
 242. **[F][DONE]** Manager playbook - collapsible correction-scenario guide on the admin page
-243. **[F]** Per-company feature flag for experimental features
+243. **[F][DONE]** Feature flag - GlobalSettings timeclockFeatures read
 
 ## Top 10 candidates
 23, 124, 19+150, 168, 17, 82, 73, 16, 204, 215
