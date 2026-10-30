@@ -171,7 +171,7 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
           <Badge className={pendingCount ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>{pendingCount} awaiting review</Badge>
         </div>
         {loading ? (
-          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requestsâ€¦</div>
+          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
         ) : error && !selected ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
         ) : requests.length === 0 ? (
@@ -187,7 +187,7 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
                     <Badge className={STATUS_BADGE[request.status] || "bg-gray-100 text-gray-700"}>{request.status}</Badge>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {request.start_date} â†’ {request.end_date} Â· {request.hours_requested}h requested
+                    {request.start_date} → {request.end_date} · {request.hours_requested}h requested
                   </div>
                   {request.reason && <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.reason}</div>}
                 </div>
@@ -208,7 +208,7 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
                 <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold text-gray-500">TYPE</div>{TYPE_LABELS[selected.request_type] || selected.request_type}</div>
                   <div className="rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold text-gray-500">HOURS</div>{selected.hours_requested}h</div>
-                  <div className="rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold text-gray-500">DATES</div>{selected.start_date} â†’ {selected.end_date}</div>
+                  <div className="rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold text-gray-500">DATES</div>{selected.start_date} → {selected.end_date}</div>
                   <div className="rounded-lg bg-gray-50 p-3"><div className="text-xs font-semibold text-gray-500">STATUS</div>{selected.status}</div>
                 </div>
                 {selected.reason && <p className="text-sm text-gray-600 mt-2"><strong>Employee reason:</strong> {selected.reason}</p>}
@@ -220,7 +220,7 @@ export default function TimeOffApprovalPanel({ sessionToken }) {
               )}
               <div>
                 <Label>Admin Notes</Label>
-                <Textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} rows={3} maxLength={1000} placeholder="Optional â€” recorded on the request and included in automation emails." disabled={busy || retryingSelected} />
+                <Textarea value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} rows={3} maxLength={1000} placeholder="Optional — recorded on the request and included in automation emails." disabled={busy || retryingSelected} />
               </div>
               {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
