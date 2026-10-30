@@ -51,6 +51,9 @@ export default async function(req) {
     if (error.message === 'BOUNCIE_REAUTH_REQUIRED') {
       return Response.json({ error: 'The Bouncie connection needs to be renewed.', code: 'reauth_required' }, { status: 401 });
     }
+    if (Number(error?.status || error?.response?.status) === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json({ error: 'Bouncie API is busy. Try again shortly.', code: 'rate_limited', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
+    }
     return Response.json({ error: error.message, code: 'api_error' }, { status: error.status && error.status < 500 ? error.status : 502 });
   }
 }
