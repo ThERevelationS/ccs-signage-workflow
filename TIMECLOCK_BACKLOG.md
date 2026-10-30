@@ -22,7 +22,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 15. **[F][DONE]** Punch rounding display - display_rounding pref (0/5/10/15), raw preserved
 16. **[F][DONE]** Early-punch warning - clocks >20min ahead of schedule flag in confirm
 17. **[F][DONE]** Schedule-variance notice - todays_schedule in snapshot + early/late chip on the tracker
-18. **[F]** Max shift length auto clock-out with manager notification
+18. **[F][DONE]** Max shift auto clock-out - auto_clockout_sweep lists stale opens
 19. **[F][DONE]** Break compliance - missed/short lunch flag exists (breakCompliance)
 20. **[F][DONE]** Rest-period warning - snapshot returns rest_hours; tracker flags <10h between shifts
 21. **[F][DONE]** Consecutive-days warning - snapshot counts worked days; tracker flags day 6+
@@ -164,10 +164,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 145. **[F][DONE]** Absence leaderboard - fewest-worked-days list on the admin page
 146. **[F][DONE]** OT forecast - otWatch + projected week-end hours on the admin page (concurrent pass)
 147. **[F][DONE]** Hours-vs-schedule variance - weekly +/- line on the tracker
-148. **[F][DONE]** Missing-punch digest - send_timeclock_announcement digest mode
+148. **[F][DONE]** Missing-punch digest - manager_digest announcement mode
 149. **[F][DONE]** Labor-hours-per-job rollup - Hours by Job card aggregates job_allocations (concurrent pass)
 150. **[F][DONE]** Break compliance report - break_compliance_report missed lunches
-151. **[F]** Buddy-punch suspicion report
+151. **[F][DONE]** Buddy-punch report - buddy_punch_report same-device <2min pairs
 152. **[F]** Cost-of-overtime weekly report
 153. **[F][DONE]** Headcount-by-hour - clock-in histogram card on the admin page
 154. **[F][DONE]** Late-arrival leaderboard - per-employee after-9am counts on the admin page
@@ -199,15 +199,15 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 178. **[F]** Hire date on the employee profile
 179. **[F]** Emergency contact on the employee profile
 180. **[F]** Custom notes field on the employee profile
-181. **[F]** Multi-location kiosk fleet health view
-182. **[F]** Per-kiosk config push (methods, wallpaper, quiet hours)
+181. **[F][DONE]** Fleet health - device registry + last_seen offline dots
+182. **[F][DONE]** Per-kiosk config - kiosk_config push methods/quiet/wallpaper
 183. **[F][DONE]** Device usage - device_usage_report punches per kiosk
 
 ## 10. Reliability & security
 184. **[F][DONE]** Audit log viewer - list_timeclock_audit action + collapsible admin panel
-185. **[F]** Two-device conflict resolver surfaced to admin
+185. **[F][DONE]** Conflict resolver - list_pending_requests surfaces in-flight actions
 186. **[F][DONE]** Clock-drift warning - tracker footer flags when device time is >2min off the server
-187. **[F]** Session-token rotation alerts on compromised kiosk
+187. **[F][DONE]** Session rotation alerts - session_audit_alerts revoke/rotate/lockout events
 188. **[F][DONE]** Admin action audit - list_timeclock_audit + panel (actor, request id, time)
 189. **[F][DONE]** Punch rate-limit - device_rate_limit_check bursts per device
 190. **[F][DONE]** Suspicious login - suspicious_login_scan audit heuristic
@@ -256,8 +256,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 15. Data & API
 224. **[F][DONE]** Who-is-in API - timeClockAction who_is_in function endpoint
 225. **[F]** Webhook on punch events for downstream systems
-226. **[F]** Bulk import punches on migration
-227. **[F]** Per-employee full data export on request
+226. **[F][DONE]** Bulk import - bulk_import_entries admin action
+227. **[F][DONE]** Employee data export - my_data_export action
 228. **[F][DONE]** In-flight requests dashboard - list_pending_requests action + stuck-transition card
 
 ## 16. Kiosk hardware & ops
