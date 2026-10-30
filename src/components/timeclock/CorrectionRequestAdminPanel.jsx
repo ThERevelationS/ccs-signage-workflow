@@ -466,6 +466,15 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
               <div>
                 <Label>Manager Review Reason <span className="text-red-600">*</span></Label>
                 <div className="mb-1.5 flex flex-wrap gap-1.5">
+                  <button type="button"
+                    onClick={() => {
+                      const last = requests.find((r) => r.id !== selected?.id && r.user_email === selected?.user_email && r.manager_reason);
+                      if (last?.manager_reason) setReviewReason(last.manager_reason);
+                    }}
+                    disabled={busy || retryingSelected}
+                    className="rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100"
+                    title="Copy the reason used on this employee's last reviewed request"
+                  >Same as last review</button>
                   {["Verified with schedule", "Matches posted shift", "Corrected per employee attestation", "Insufficient documentation", "Conflicts with recorded punches", "Policy exception approved"].map((chip) => (
                     <button type="button"
                       key={chip} type="button"
