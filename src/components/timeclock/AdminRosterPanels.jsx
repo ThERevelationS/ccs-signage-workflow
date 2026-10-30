@@ -215,7 +215,7 @@ export default function AdminRosterPanels({ sessionToken }) {
                 <label className="text-[10px] font-semibold text-slate-500">Days</label>
                 <div className="mt-0.5 flex gap-1">
                   {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d) => (
-                    <button key={d} type="button"
+                    <button type="button" key={d} type="button"
                       onClick={() => setSchedForm({ ...schedForm, days: schedForm.days.includes(d) ? schedForm.days.filter((x) => x !== d) : [...schedForm.days, d] })}
                       className={`h-7 w-7 rounded-md border text-[10px] font-bold ${schedForm.days.includes(d) ? "border-indigo-400 bg-indigo-100 text-indigo-700" : "border-slate-200 bg-white text-slate-400"}`}
                     >{d[0].toUpperCase()}</button>
