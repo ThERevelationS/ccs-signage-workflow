@@ -14,6 +14,7 @@ export const BuilderPart = staffEntities.BuilderPart;
 export const BuilderPartGroup = staffEntities.BuilderPartGroup;
 export const BuilderProduct = staffEntities.BuilderProduct;
 export const CNCProject = staffEntities.CNCProject;
+export const CustomItemsProject = staffEntities.CustomItemsProject;
 export const CellHistory = staffEntities.CellHistory;
 export const ChannelLetterInstallEquipment = staffEntities.ChannelLetterInstallEquipment;
 export const ChannelLetterInstallInventory = staffEntities.ChannelLetterInstallInventory;
