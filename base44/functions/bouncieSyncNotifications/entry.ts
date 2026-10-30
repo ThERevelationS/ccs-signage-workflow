@@ -356,6 +356,9 @@ export default async function(req) {
     if (error.message === 'BOUNCIE_REAUTH_REQUIRED') {
       return Response.json({ error: 'The Bouncie connection needs to be renewed.' }, { status: 401 });
     }
+    if (Number(error?.status || error?.response?.status) === 429 || /rate limit|too many requests/i.test(String(error?.message || ''))) {
+      return Response.json({ error: 'Bouncie notification sync is busy. Try again shortly.', retry_after_ms: 3000 }, { status: 429, headers: { 'Retry-After': '3' } });
+    }
     console.error('bouncieSyncNotifications error:', error);
     return Response.json({ error: error.message || 'Bouncie notification sync failed.' }, { status: 502 });
   }
