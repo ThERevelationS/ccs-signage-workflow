@@ -89,7 +89,7 @@ export default function FleetStartWorkDialog({ open, workOrder, busy, error, onC
             <h2 id="fleet-start-work-title" className="flex items-center gap-2 font-bold text-gray-900 dark:text-slate-100"><Play className="h-5 w-5 text-indigo-500"/>Start Work</h2>
             <div className="mt-1 text-xs text-gray-500 dark:text-slate-400">{workOrder.work_order_number} · {workOrder.title}</div>
           </div>
-          <button ref={closeButtonRef} type="button" onClick={onClose} disabled={busy} aria-label="Close Start Work dialog" className="min-h-11 min-w-11 rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="h-5 w-5"/></button>
+          <button type="button" ref={closeButtonRef} type="button" onClick={onClose} disabled={busy} aria-label="Close Start Work dialog" className="min-h-11 min-w-11 rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="h-5 w-5"/></button>
         </div>
         <div className="space-y-5 p-4 sm:p-5">
           {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</div>}
