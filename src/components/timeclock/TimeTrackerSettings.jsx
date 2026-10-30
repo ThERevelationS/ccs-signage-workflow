@@ -457,7 +457,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               </Label>
               <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {BACKGROUND_CHOICES.map((bg) => (
-                  <button
+                  <button type="button"
                     key={bg.value}
                     type="button"
                     onClick={() => update("background_style", bg.value)}
@@ -484,7 +484,7 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               </Label>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {ACCENT_CHOICES.map((choice) => (
-                  <button
+                  <button type="button"
                     key={choice.value}
                     type="button"
                     onClick={() => { update("accent_color", choice.value); setHexInput(""); }}
