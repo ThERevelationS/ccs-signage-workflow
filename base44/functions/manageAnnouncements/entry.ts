@@ -86,6 +86,49 @@ async function listAll(Announcement: any) {
   return loadAllEntityRows({ entity: Announcement, sort: '-updated_date', label: 'Announcement history' });
 }
 
+// The live feed is identical for every caller (including anonymous viewers),
+// so one short module-scope cache collapses the per-viewer fan-out.
+const ACTIVE_FEED_CACHE_MS = 30_000;
+let activeFeedCache: { value: any; expiresAt: number } | null = null;
+let activeFeedInFlight: Promise<any> | null = null;
+
+function clearActiveFeedCache() {
+  activeFeedCache = null;
+}
+
+async function computeActiveFeed(Announcement: any) {
+  const now = Date.now();
+  const rows = await Announcement.filter({ is_active: true }, '-updated_date', 100);
+  const feed: any[] = [];
+  for (const row of rows) {
+    if (row?.is_active !== true) continue;
+    const expiresMs = Date.parse(String(row.expires_at || ''));
+    if (Number.isFinite(expiresMs) && expiresMs <= now) {
+      const saved = await deactivateIfStillLive(Announcement, row).catch(() => null);
+      if (saved?.id) clearActiveFeedCache();
+      continue;
+    }
+    const scheduledMs = Date.parse(String(row.scheduled_for || ''));
+    if (Number.isFinite(scheduledMs) && scheduledMs > now) continue;
+    feed.push(row);
+  }
+  feed.sort(comparePublication);
+  return { announcements: feed.slice(0, 3), live_count: feed.length };
+}
+
+async function getActiveFeed(Announcement: any) {
+  if (activeFeedCache && activeFeedCache.expiresAt > Date.now()) return activeFeedCache.value;
+  if (!activeFeedInFlight) {
+    activeFeedInFlight = computeActiveFeed(Announcement)
+      .then((value) => {
+        activeFeedCache = { value, expiresAt: Date.now() + ACTIVE_FEED_CACHE_MS };
+        return value;
+      })
+      .finally(() => { activeFeedInFlight = null; });
+  }
+  return activeFeedInFlight;
+}
+
 async function createWithRecovery(Announcement: any, data: any) {
   const before = await listAll(Announcement);
   const beforeIds = new Set(before.map((row: any) => row?.id).filter(Boolean));
@@ -178,22 +221,7 @@ Deno.serve(async (req) => {
     // their start time and expired broadcasts are lazily deactivated here so
     // stale records can never keep re-appearing on viewer devices.
     if (action === 'active_feed') {
-      const now = Date.now();
-      const rows = await listAll(Announcement);
-      const feed: any[] = [];
-      for (const row of rows) {
-        if (row?.is_active !== true) continue;
-        const expiresMs = Date.parse(String(row.expires_at || ''));
-        if (Number.isFinite(expiresMs) && expiresMs <= now) {
-          await deactivateIfStillLive(Announcement, row).catch(() => null);
-          continue;
-        }
-        const scheduledMs = Date.parse(String(row.scheduled_for || ''));
-        if (Number.isFinite(scheduledMs) && scheduledMs > now) continue;
-        feed.push(row);
-      }
-      feed.sort(comparePublication);
-      return Response.json({ announcements: feed.slice(0, 3), live_count: feed.length });
+      return Response.json(await getActiveFeed(Announcement));
     }
 
     // Viewer acknowledgement is a best-effort append. The client also
@@ -220,11 +248,13 @@ Deno.serve(async (req) => {
     if (actor?.role !== 'admin') return Response.json({ error: 'Admin access is required.' }, { status: 403 });
 
     if (action === 'create') {
+      clearActiveFeedCache();
       const form = cleanForm(body?.data);
       return Response.json(await createWithRecovery(Announcement, { ...form, is_active: false }));
     }
 
     if (action === 'update') {
+      clearActiveFeedCache();
       const current = await Announcement.get(String(body?.id || '')).catch(() => null);
       if (!current?.id) return Response.json({ error: 'Announcement no longer exists.' }, { status: 404 });
       const form = cleanForm({ ...current, ...(body?.next_fields || {}) });
@@ -232,6 +262,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'publish') {
+      clearActiveFeedCache();
       const form = cleanForm(body?.form);
       // Expiration is mandatory for a live broadcast. Announcements without
       // one stay saved as drafts but can never go out unbounded.
@@ -267,6 +298,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'stop') {
+      clearActiveFeedCache();
       const id = String(body?.id || '').trim();
       const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
       if (!id || !expectedUpdatedDate) return Response.json({ error: 'Announcement version is required.' }, { status: 400 });
@@ -278,6 +310,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'delete') {
+      clearActiveFeedCache();
       const id = String(body?.id || '').trim();
       const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
       if (!id || !expectedUpdatedDate) return Response.json({ error: 'Announcement version is required.' }, { status: 400 });
