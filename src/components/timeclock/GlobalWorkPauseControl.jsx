@@ -316,7 +316,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
 
   return (
     <>
-    <button
+    <button type="button"
       data-work-pause-trigger
       type="button"
       onClick={() => setMenuOpen(true)}
