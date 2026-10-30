@@ -803,19 +803,19 @@ export default function SalesPipeline() {
             <div className="grid min-w-0 grid-cols-2 gap-1.5 pb-0.5 md:grid-cols-4" title="Four primary Sales metrics displayed together, including on phones.">
               <button type="button" title={`${Math.max(0, pipelineSummary.openCount - pipelineSummary.placeholderCount)} non-test · ${pipelineSummary.placeholderCount} test · ${pipelineSummary.assignedOwnerCount} owned · ${pipelineSummary.unassignedOwnerCount} unassigned`} onClick={() => applyMetricAttentionFilter("all")} className="min-w-0 rounded-md border border-slate-200 bg-white px-2 py-1 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-slate-500">Open Opportunities</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-slate-500">Open Opportunities</span>
                   <span className="shrink-0 text-base font-bold leading-none text-slate-900">{pipelineSummary.openCount}</span>
                 </div>
               </button>
               <button type="button" title={`Estimate Amount total. ${formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} non-test · ${formatPipelineValue(pipelineSummary.placeholderValue)} test.`} onClick={() => applyMetricAttentionFilter("all")} className="min-w-0 rounded-md border border-emerald-200 bg-emerald-50/60 px-2 py-1 text-left shadow-sm transition hover:border-emerald-300">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-emerald-700">Open Pipeline Value</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Open Pipeline Value</span>
                   <span className="shrink-0 text-base font-bold leading-none text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</span>
                 </div>
               </button>
               <button type="button" title={`${pipelineSummary.overdueCount} overdue · ${pipelineSummary.dueTodayCount} due today`} onClick={() => applyMetricAttentionFilter("due")} className={`min-w-0 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "due" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-red-600">Follow-ups Due</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-red-600">Follow-ups Due</span>
                   <span className="shrink-0 text-base font-bold leading-none text-red-800">{pipelineSummary.dueCount}</span>
                 </div>
               </button>
@@ -825,7 +825,7 @@ export default function SalesPipeline() {
                 onClick={() => applyMetricAttentionFilter("needs_attention")}
                 className={`min-w-0 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "needs_attention" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-amber-700">Needs Attention</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700">Needs Attention</span>
                   <span className="shrink-0 text-base font-bold leading-none text-amber-900">{pipelineSummary.needsAttentionCount}</span>
                 </div>
               </button>
@@ -834,25 +834,25 @@ export default function SalesPipeline() {
               className={showMoreMetrics ? "grid min-w-0 grid-cols-2 gap-1.5 pb-0.5 md:grid-cols-4" : "hidden"}>
               <button type="button" title={`${pipelineSummary.quoteAwaitingResponseCount} awaiting response · ${pipelineSummary.quoteTimingMissingCount} missing trusted quote timing`} onClick={() => applyMetricAttentionFilter("quote_no_followup")} className={`min-w-0 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "quote_no_followup" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-amber-700">Quotes Need Follow-up</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700">Quotes Need Follow-up</span>
                   <span className="shrink-0 text-base font-bold leading-none text-amber-900">{pipelineSummary.quoteNoFollowUpCount}</span>
                 </div>
               </button>
               <button type="button" title={`${pipelineSummary.noNextActionCount} opportunities missing a next action${pipelineSummary.noNextActionCount > 0 ? " · click to review" : ""}.`} onClick={() => applyMetricAttentionFilter(pipelineSummary.noNextActionCount > 0 ? "no_next_action" : "all")} className={`min-w-0 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "no_next_action" ? "border-violet-400 bg-violet-50" : "border-violet-200 bg-white hover:border-violet-300"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-violet-700">Next Action Coverage</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-violet-700">Next Action Coverage</span>
                   <span className="shrink-0 text-base font-bold leading-none text-violet-900">{pipelineSummary.nextActionCoverageCount}/{pipelineSummary.openCount}</span>
                 </div>
               </button>
               <button type="button" title="Based only on explicit expected close dates." onClick={() => applyMetricAttentionFilter("near_close")} className={`min-w-0 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "near_close" ? "border-cyan-400 bg-cyan-50" : "border-cyan-200 bg-white hover:border-cyan-300"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-cyan-700">Closing Next 14 Days</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-cyan-700">Closing Next 14 Days</span>
                   <span className="shrink-0 text-base font-bold leading-none text-cyan-900">{pipelineSummary.nearCloseCount}</span>
                 </div>
               </button>
               <button type="button" title="Staleness uses verified sales-specific activity only." onClick={() => applyMetricAttentionFilter("stale")} className={`min-w-0 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "stale" ? "border-rose-400 bg-rose-50" : "border-rose-200 bg-white hover:border-rose-300"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-rose-700">Stale 14+ Days</span>
+                  <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-rose-700">Stale 14+ Days</span>
                   <span className="shrink-0 text-base font-bold leading-none text-rose-900">{pipelineSummary.staleCount}</span>
                 </div>
               </button>
