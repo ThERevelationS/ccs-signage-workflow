@@ -32,7 +32,7 @@ export default function SectionRow({ line, index, estimateId, onChange, onRemove
           <div className="text-base font-bold text-gray-900">
             {fmt(acceptedCustomerUnitPrice(line) * Math.max(0, Number(line.customer_quantity ?? 1) || 0) * (1 + Number(line.adjustment_percent || 0) / 100))}
           </div>
-          <button
+          <button type="button"
             onClick={() => {
               if (window.confirm(`Remove "${line.project_name || getModuleLabel(line.module_key)}" from this estimate?`)) {
                 onRemove(index);
