@@ -8548,7 +8548,13 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'review_correction_request') {
-      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to review correction requests.' }, { status: 403 });
+      // Delegated approvers (#129): admins review everything; a configured
+      // approver list (GlobalSettings.timeclockDelegatedApprovers) may review
+      // requests outside their own punches - still blocked on their own.
+      const gsRows = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockDelegatedApprovers' }).catch(() => []);
+      const delegated = new Set(((Array.isArray(gsRows) && gsRows[0]?.value) || []).map((e: any) => String(e || '').trim().toLowerCase()).filter(Boolean));
+      const isDelegatedApprover = delegated.has(asEmail(actor.email));
+      if (actor.role !== 'admin' && !isDelegatedApprover) return Response.json({ success: false, error: 'Administrator or delegated-approver access is required to review correction requests.' }, { status: 403 });
       const correctionRequestId = String(body?.correction_request_id || '').trim();
       const expectedRequestUpdatedDate = String(body?.expected_request_updated_date || '').trim();
       const decision = String(body?.decision || '').trim();
@@ -8585,6 +8591,35 @@ Deno.serve(async (req) => {
 
       let correctionRequest = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
       if (!correctionRequest?.id || asEmail(correctionRequest.user_email) !== target.email) return Response.json({ success: false, error: 'Correction request was not found.' }, { status: 404 });
+      // A delegated approver may never approve their own punch - that defeats
+      // the entire point of having a second pair of eyes on the adjustment.
+      if (actor.role !== 'admin' && asEmail(correctionRequest.user_email) === asEmail(actor.email)) {
+        return Response.json({ success: false, error: 'Delegated approvers cannot review their own correction requests.' }, { status: 403 });
+      }
+      // Two-step approval (#130): deltas above the configured threshold need a
+      // second manager. The first approval marks the request pending-second;
+      // a DIFFERENT approver's decision then completes it normally.
+      const twoStepThresholdMin = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'twoStepThresholdMinutes' }).catch(() => []))[0]?.value ?? 240));
+      if (twoStepThresholdMin > 0 && (decision === 'approve' || decision === 'approve_modified')) {
+        const alreadyFirst = String(correctionRequest.first_approved_by || '');
+        if (!alreadyFirst) {
+          const linkedEntry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
+          const req = decision === 'approve_modified' && normalizedModifiedCorrection ? normalizedModifiedCorrection : (correctionRequest.requested_changes || {});
+          const reqIn = new Date(String(req.clock_in || '')).getTime();
+          const reqOut = new Date(String(req.clock_out || '')).getTime();
+          const reqMin = Number.isFinite(reqIn) && Number.isFinite(reqOut) && reqOut > reqIn ? Math.floor((reqOut - reqIn) / 60000) - Math.max(0, Number(req.lunch_minutes || 0)) : 0;
+          const origIn = new Date(String(linkedEntry?.clock_in || '')).getTime();
+          const origOut = new Date(String(linkedEntry?.clock_out || '')).getTime();
+          const origMin = Number.isFinite(origIn) && Number.isFinite(origOut) && origOut > origIn ? Math.floor((origOut - origIn) / 60000) - Math.max(0, Number(linkedEntry?.lunch_minutes || 0)) : 0;
+          const deltaMin = reqMin > 0 && origMin > 0 ? Math.abs(reqMin - origMin) : 0;
+          if (deltaMin > twoStepThresholdMin) {
+            await correctionRequestEntity.update(correctionRequest.id, { first_approved_by: actor.email, first_approved_at: new Date().toISOString(), first_decision: decision, first_reason: reviewerReason }).catch(() => null);
+            return Response.json({ success: true, needs_second_approval: true, delta_minutes: deltaMin, message: `Delta of ${Math.round(deltaMin)}m exceeds ${twoStepThresholdMin}m - a second approver must confirm.` });
+          }
+        } else if (asEmail(alreadyFirst) === asEmail(actor.email)) {
+          return Response.json({ success: false, error: 'A different approver must confirm the second step.' }, { status: 409 });
+        }
+      }
       // Review IDs identify one manager action across all employees.
       // Preflight both applied-correction and review-decision audit ownership.
       for (const auditAction of ['admin_correction', 'correction_review']) {
@@ -11223,6 +11258,24 @@ Deno.serve(async (req) => {
         }
       }
       return Response.json({ success: true, jobs: [...rollup.entries()].map(([wo, v]) => ({ work_order_id: wo, title: v.title, labor_hours: Math.round(v.hours * 100) / 100, shifts: v.shifts })).sort((a: any, b: any) => b.labor_hours - a.labor_hours).slice(0, 50) });
+    }
+
+    if (action === 'set_delegated_approvers') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const emails = Array.isArray(body.emails) ? body.emails.map((e: any) => asEmail(e)).filter(Boolean).slice(0, 50) : [];
+      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockDelegatedApprovers' }).catch(() => []);
+      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: emails }).catch(() => null);
+      else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'timeclockDelegatedApprovers', value: emails }).catch(() => null);
+      return Response.json({ success: true, delegated_approvers: emails });
+    }
+
+    if (action === 'set_two_step_threshold') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const minutes = Math.max(0, Math.min(1440, Number(body.minutes || 0)));
+      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'twoStepThresholdMinutes' }).catch(() => []);
+      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value: minutes }).catch(() => null);
+      else await base44.asServiceRole.entities.GlobalSettings.create({ key: 'twoStepThresholdMinutes', value: minutes }).catch(() => null);
+      return Response.json({ success: true, two_step_threshold_minutes: minutes });
     }
 
     if (action === 'buddy_punch_report') {
