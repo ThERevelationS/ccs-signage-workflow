@@ -257,6 +257,19 @@ function summarizeMatchedLocalityAuthority(locality) {
 var CENSUS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb";
 var LOCATION_SOURCES = { county: `${CENSUS}/State_County/MapServer/1`, place: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/4`, township: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/1`, oh_city: "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0", oh_township: "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3", ky_city: "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0" };
 var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
+function ringCentroid(rings) {
+  let best = null;
+  for (const ring of rings || []) {
+    if (Array.isArray(ring) && ring.length > (best?.length || 0)) best = ring;
+  }
+  if (!best) return null;
+  let x = 0, y = 0, n = 0;
+  for (const c of best) {
+    if (Number.isFinite(c?.[0]) && Number.isFinite(c?.[1])) { x += c[0]; y += c[1]; n++; }
+  }
+  return n ? { lng: x / n, lat: y / n } : null;
+}
+
 function boundaryPosition(rings, point) {
   if (!Array.isArray(rings) || !rings.length || !Number.isFinite(point?.lat) || !Number.isFinite(point?.lng)) throw Error("Invalid boundary geometry.");
   let inside = false, distance = Infinity, count = 0;
@@ -326,6 +339,14 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
       target = { name: t[0].attributes.NAME, state, type: "township", geoid: t[0].attributes.GEOID, county: countyName, county_geoid: countyId, geometry: t[0].geometry, source_url: s[0].source_url };
     } else target = { name: countyName, state, type: "county", geoid: countyId, county: countyName, county_geoid: countyId, geometry: countyRow.geometry, source_url: countyRow.source_url };
     base.targets = [{ ...target, geometry: void 0 }, { name: countyName, state, type: "county", geoid: countyId, county: countyName }].filter((t, i, all) => all.findIndex((other) => other.geoid === t.geoid) === i);
+    const targetCenter = ringCentroid(target.geometry?.rings);
+    if (targetCenter && base.targets[0]) {
+      const dLat = (targetCenter.lat - point.lat) * 111320;
+      const dLng = (targetCenter.lng - point.lng) * 111320 * Math.cos(point.lat * Math.PI / 180);
+      base.targets[0].center = targetCenter;
+      base.targets[0].center_distance_miles = Math.round((Math.hypot(dLat, dLng) / 1609.344) * 10) / 10;
+    }
+
     base.boundaries = [{ type: "Feature", properties: { name: target.name, source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } }];
     const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 ? [...townships, ...stateTownships] : []];
     const edge = geocode.approximate_source ? 150 : 25;
