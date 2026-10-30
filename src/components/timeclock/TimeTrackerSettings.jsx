@@ -71,6 +71,7 @@ const DISPLAY_CHOICES = [
   { value: "ring", label: "Progress ring", hint: "Circular ring fills toward your goal" },
   { value: "donut", label: "Donut", hint: "Thick ring with the % in the center" },
   { value: "arc", label: "Arc", hint: "Half-arc gauge beside the time" },
+  { value: "dual", label: "Dual ring", hint: "Daily inner ring + weekly outer ring" },
   { value: "bar", label: "Gradient bar", hint: "Time over a slim progress bar" },
   { value: "badge", label: "Badge", hint: "Time inside a solid accent chip" },
   { value: "minimal", label: "Minimal digits", hint: "Just the time, no visual" },
@@ -370,6 +371,17 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
               </div>
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+              <Field label="Rounding" hint="Display only - rounds the shown minutes; the raw punch time is never changed">
+                <Select value={p.display_rounding || "0"} onValueChange={set("display_rounding")} disabled={saving}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Exact (no rounding)</SelectItem>
+                    <SelectItem value="5">Nearest 5 minutes</SelectItem>
+                    <SelectItem value="10">Nearest 10 minutes</SelectItem>
+                    <SelectItem value="15">Nearest 15 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
               <Field label="Counts" hint="Paid time excludes unpaid breaks and work pauses; elapsed is raw wall-clock">
                 <Select value={p.count_mode} onValueChange={set("count_mode")} disabled={saving}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
