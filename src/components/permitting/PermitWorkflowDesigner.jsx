@@ -303,7 +303,7 @@ export default function PermitWorkflowDesigner({
               </Badge>
             )}
           </div>
-          <button onClick={closeDesigner} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close">
+          <button type="button" onClick={closeDesigner} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -317,7 +317,7 @@ export default function PermitWorkflowDesigner({
               {draftLoadError && <p role="status" className="text-sm text-amber-700">{draftLoadError}</p>}
               {savedDrafts.length > 0 && <section aria-label="Saved permitting drafts" className="rounded-lg border p-3">
                 <h3 className="text-sm font-semibold">Saved drafts · not approved for use</h3>
-                {savedDrafts.map(row => <button key={row.id} className="block min-h-11 w-full break-words py-2 text-left text-sm text-purple-700" onClick={() => {
+                {savedDrafts.map(row => <button type="button" key={row.id} className="block min-h-11 w-full break-words py-2 text-left text-sm text-purple-700" onClick={() => {
                   setDraft(row.snapshot); setForm(row.project_inputs || form); setDraftTitle(row.title); setReviewNotes(row.review_notes || '');
                   setSaved(row); setRevisionSource(row); setEditingSteps(false); setReviewed(true); setError(''); setCreateResult(null); setExpandedSteps(new Set());
                 }}>{row.title}</button>)}
@@ -524,7 +524,7 @@ export default function PermitWorkflowDesigner({
                   });
                   return (
                     <div key={idx} className={`rounded-lg border ${step.basis === "staff_confirmation_needed" ? "border-red-200 bg-red-50/30" : "border-gray-200 bg-white"}`}>
-                      <button
+                      <button type="button"
                         ref={node => { if (idx === initialStepIndex) selectedStepButton.current = node; }}
                         aria-expanded={isExpanded}
                         aria-controls={`pwd-proposed-step-${idx}`}
