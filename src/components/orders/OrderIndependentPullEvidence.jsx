@@ -27,7 +27,7 @@ export default function OrderIndependentPullEvidence({ currentUser, sessionToken
   const refreshRef = useRef(async () => {});
 
   // Read only for Order Form admins and never at the coordinator's 1s rate.
-  usePolling(() => refreshRef.current(), 30000, { enabled: isAdmin, runOnMount: false });
+  usePolling(() => refreshRef.current(), 60000, { enabled: isAdmin, runOnMount: false });
 
   useEffect(() => {
     if (!isAdmin) {
