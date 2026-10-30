@@ -144,7 +144,7 @@ export default function VehiclePanel({
 
         <div role="tablist" aria-label="Vehicle detail sections" className="flex items-center overflow-x-auto overscroll-x-contain border-t border-gray-100 dark:border-slate-800 px-1 sm:px-2">
           {TABS.map(tab => (
-            <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} className={`relative shrink-0 min-h-11 px-2 sm:px-2.5 py-3 text-[10px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${activeTab === tab.key ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>
+            <button type="button" key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} className={`relative shrink-0 min-h-11 px-2 sm:px-2.5 py-3 text-[10px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${activeTab === tab.key ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>
               {tab.label}
               {tab.key === "alerts" && unreadCount > 0 && <span className="ml-1 inline-flex min-w-[17px] h-[17px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] text-white">{unreadCount}</span>}
               {activeTab === tab.key && <span className="absolute left-2 right-2 bottom-0 h-[3px] rounded-full bg-blue-600" />}
