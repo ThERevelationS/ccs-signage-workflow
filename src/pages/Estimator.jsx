@@ -11,6 +11,7 @@ import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomR
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -62,12 +63,17 @@ export default function Estimator() {
       });
       setEstimates(rows);
 
-      if (!backfillStartedRef.current) {
+      // The migration writes a server-side completion sentinel and is
+      // resumable — once a full run finishes, this browser never runs it
+      // again, and background tabs / open 429 breakers never start it.
+      const bomDone = (() => { try { return Boolean(localStorage.getItem("ccs.bomMigration.done.v1")); } catch { return false; } })();
+      if (!backfillStartedRef.current && !bomDone && !document.hidden && !isFleetCoolingDown()) {
         backfillStartedRef.current = true;
         runHistoricalBuilderBackfill({ seedEstimates: rows })
           .then(async (result) => {
             if (result?.estimates?.length) setEstimates(result.estimates);
             await runLegacyBomReconcile();
+            try { localStorage.setItem("ccs.bomMigration.done.v1", new Date().toISOString()); } catch {}
           })
           .catch((error) => {
             // Historical conversion/reconciliation must never block normal estimating.
