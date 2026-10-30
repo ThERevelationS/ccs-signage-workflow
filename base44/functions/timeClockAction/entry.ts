@@ -11179,6 +11179,50 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
     }
 
+    if (action === 'punch_webhook') {
+      // Emit a punch event to a configured downstream URL - payroll/timekeeping
+      // sync. Fire-and-forget; failures never block the confirmed punch.
+      const url = typeof body.url === 'string' ? body.url.trim() : '';
+      if (!url || !/^https:\/\//.test(url)) return Response.json({ success: false, error: 'A valid https:// webhook URL is required.' }, { status: 400 });
+      const payload = { event: 'timeclock_punch', employee: publicEmployee(target), action_type: String(body.punch_action || ''), at: new Date().toISOString(), entry_id: body.entry_id || null };
+      try {
+        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => null);
+      } catch {}
+      return Response.json({ success: true });
+    }
+
+    if (action === 'labor_split') {
+      if (actor.role !== 'admin' && actor.role !== 'badge') return Response.json({ success: false, error: 'Only an employee can split their own labor.' }, { status: 403 });
+      const allocations = Array.isArray(body.allocations) ? body.allocations.slice(0, 10) : [];
+      if (!allocations.length) return Response.json({ success: false, error: 'allocations[] is required.' }, { status: 400 });
+      const state = await stateEntity.filter({ user_email: target.email }, '-updated_date', 1).catch(() => []);
+      const activeId = Array.isArray(state) && state[0]?.active_entry_id ? state[0].active_entry_id : '';
+      if (!activeId) return Response.json({ success: false, error: 'No active shift to split labor on.' }, { status: 409 });
+      const entry = await entryEntity.get(activeId).catch(() => null);
+      if (!entry?.id) return Response.json({ success: false, error: 'Active entry not found.' }, { status: 404 });
+      const clean = allocations.filter((a: any) => a && (a.work_order_id || a.inhouse_task)).map((a: any) => ({ work_order_id: a.work_order_id || null, work_order_title: String(a.work_order_title || a.inhouse_task || ''), client_name: String(a.client_name || ''), hours: Math.max(0, Number(a.hours || 0)), minutes: Math.max(0, Number(a.minutes || 0)), is_inhouse: !a.work_order_id, inhouse_task: a.inhouse_task || null }));
+      await entryEntity.update(entry.id, { job_allocations: clean }).catch(() => null);
+      return Response.json({ success: true, allocated: clean.length });
+    }
+
+    if (action === 'labor_vs_estimate') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const rollup = new Map();
+      for (const e of (Array.isArray(rows) ? rows : [])) {
+        if (e.archived_test_data === true || e.archived_admin === true) continue;
+        const segs = Array.isArray(e.job_allocations) ? e.job_allocations : [];
+        for (const seg of segs) {
+          if (!seg?.work_order_id) continue;
+          const cur = rollup.get(seg.work_order_id) || { title: seg.work_order_title || seg.work_order_id, hours: 0, shifts: 0 };
+          cur.hours += Number(seg.hours || 0) + Number(seg.minutes || 0) / 60;
+          cur.shifts += 1;
+          rollup.set(seg.work_order_id, cur);
+        }
+      }
+      return Response.json({ success: true, jobs: [...rollup.entries()].map(([wo, v]) => ({ work_order_id: wo, title: v.title, labor_hours: Math.round(v.hours * 100) / 100, shifts: v.shifts })).sort((a: any, b: any) => b.labor_hours - a.labor_hours).slice(0, 50) });
+    }
+
     if (action === 'buddy_punch_report') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const rows = await entryEntity.filter({}, '-clock_in', 2000).catch(() => []);
