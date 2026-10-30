@@ -17,6 +17,18 @@ export function createFaceMatcher(users = []) {
   const templates = users.map(user => ({ user, descriptors: (user.face_descriptors || [])
     .filter(value => (Array.isArray(value) || ArrayBuffer.isView(value)) && value.length === 128 && Array.from(value).every(Number.isFinite))
     .map(value => new Float32Array(value)) })).filter(item => item.descriptors.length);
+  // Per-user adaptive threshold (#3): if a user's enrollment templates cluster
+  // tightly (mean intra-distance low), a stricter cutoff applies so look-alikes
+  // can't squeeze in under the blanket floor. Never tightens below the 0.38
+  // ceiling and never loosens below a 0.22 hard floor for safety.
+  const userFloors = new Map(templates.map(item => {
+    const ds = item.descriptors;
+    if (ds.length < 2) return [item.user, 0.38];
+    let sum = 0, n = 0;
+    for (let i = 0; i < ds.length; i += 1) for (let j = i + 1; j < ds.length; j += 1) { sum += faceapi.euclideanDistance(ds[i], ds[j]); n += 1; }
+    const mean = n ? sum / n : 0;
+    return [item.user, Math.max(0.22, Math.min(0.38, mean + 0.1))];
+  }));
   return descriptor => {
     if (!descriptor || descriptor.length !== 128 || !Array.from(descriptor).every(Number.isFinite)) return null;
     let best = null, bestDistance = Infinity, secondDistance = Infinity;
@@ -26,8 +38,8 @@ export function createFaceMatcher(users = []) {
       if (distance < bestDistance) { secondDistance = bestDistance; bestDistance = distance; best = item.user; }
       else secondDistance = Math.min(secondDistance, distance);
     }
-    // Keep the existing identity threshold and runner-up separation unchanged.
-    return bestDistance <= 0.38 && secondDistance > bestDistance && secondDistance >= bestDistance * 1.5 ? best : null;
+    const floor = userFloors.get(best) ?? 0.38;
+    return bestDistance <= floor && secondDistance > bestDistance && secondDistance >= bestDistance * 1.5 ? best : null;
   };
 }
 
