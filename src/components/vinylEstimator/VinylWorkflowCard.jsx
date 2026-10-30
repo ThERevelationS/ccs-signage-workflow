@@ -232,7 +232,7 @@ export default function VinylWorkflowCard({
           {/* Compare to other vinyls — Feature #22 */}
           {vinyl && calc.vinylCost > 0 && (
             <div>
-              <button onClick={() => setShowCompare(s => !s)} className="text-[11px] underline text-blue-600">
+              <button type="button" onClick={() => setShowCompare(s => !s)} className="text-[11px] underline text-blue-600">
                 {showCompare ? "Hide" : "Show"} cost comparison vs other vinyls
               </button>
               {showCompare && (
