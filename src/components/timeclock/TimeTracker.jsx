@@ -303,9 +303,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
   const overtimeMinutes = Math.max(0, displayMinutes - goalMinutes);
   const overtime = overtimeMinutes > 0.5;
   const tone = toneFor(progress, overtime);
-  const shown = prefs?.direction === "down" && !overtime
+  const roundingStep = Math.max(0, Number(prefs?.display_rounding) || 0);
+  const rawShown = prefs?.direction === "down" && !overtime
     ? Math.max(0, goalMinutes - displayMinutes)
     : displayMinutes;
+  const shown = roundingStep > 0 ? Math.round(rawShown / roundingStep) * roundingStep : rawShown;
 
   // Milestone detection: thresholds crossed on the live counter.
   const milestoneThresholds = useMemo(() => {
@@ -645,6 +647,25 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
               )}
             </span>
           )}
+          {prefs?.display_style === "dual" && (() => {
+            const weeklyGoal = Math.max(60, Number(prefs?.weekly_goal_minutes) || 2400);
+            const weeklyFraction = live ? Math.min(1, (live.weekly || 0) / weeklyGoal) : 0;
+            const outerR = 116, outerC = 2 * Math.PI * outerR;
+            return (
+              <span className="relative shrink-0" style={{ width: ringSize, height: ringSize }}>
+                <svg viewBox="0 0 260 260" style={{ width: ringSize, height: ringSize }} className={animFor("ring")} aria-hidden="true">
+                  <circle cx="130" cy="130" r={outerR} fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth={10} />
+                  <circle cx="130" cy="130" r={outerR} fill="none" stroke={ringColor} strokeOpacity="0.45" strokeWidth={10} strokeLinecap="round"
+                    strokeDasharray={outerC} strokeDashoffset={outerC * (1 - weeklyFraction)} transform="rotate(-90 130 130)"
+                    className={prefs?.animation_style === "none" ? "" : "transition-[stroke-dashoffset] duration-700 ease-out"} />
+                  <circle cx="130" cy="130" r="100" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth={18} />
+                  <circle cx="130" cy="130" r="100" fill="none" stroke={ringColor} strokeWidth={18} strokeLinecap="round"
+                    strokeDasharray={circumference} strokeDashoffset={circumference * (1 - ringFraction)} transform="rotate(-90 130 130)"
+                    className={prefs?.animation_style === "none" ? "" : "transition-[stroke-dashoffset] duration-700 ease-out"} />
+                </svg>
+              </span>
+            );
+          })()}
           {prefs?.display_style === "arc" && (
             <svg viewBox="0 0 120 62" style={{ width: ringSize * 1.5, height: Math.round(ringSize * 0.78) }} className={`shrink-0 ${animFor("ring")}`} aria-hidden="true">
               <path d="M10 58 A50 50 0 0 1 110 58" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="11" strokeLinecap="round" />
