@@ -9,7 +9,7 @@ import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
 import { useAuth } from "@/components/auth/EmailGate";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, ChevronDown, ChevronUp, Gauge, GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
-import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { invokeFleet, isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
@@ -194,6 +194,7 @@ export default function FleetTracking() {
   useEffect(() => {
     if (!status?.connected || status?.needsReconnect) return;
     refreshTimer.current = setInterval(() => {
+      if (document.hidden || isFleetCoolingDown()) return;
       loadVehicles();
       loadNotifications();
     }, 60000);
@@ -245,6 +246,7 @@ export default function FleetTracking() {
         // Poll for connection so this tab refreshes once the popup completes.
         const started = Date.now();
         const poll = setInterval(async () => {
+          if (document.hidden || isFleetCoolingDown()) return;
           const s = await loadStatus();
           if (s?.connected && !s?.needsReconnect) {
             clearInterval(poll);
