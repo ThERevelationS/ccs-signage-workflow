@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { jitteredDelay, shouldRunFocusRefresh } from "@/lib/pollingSchedule.mjs";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 export function usePolling(
   fn,
@@ -53,7 +54,9 @@ export function usePolling(
     const schedule = () => {
       clearTimer();
       timerRef.current = setTimeout(async () => {
-        if (isHidden()) {
+        // Hidden tabs and an open 429 circuit breaker both skip the call —
+        // the schedule itself keeps running on its normal cadence.
+        if (isHidden() || isFleetCoolingDown()) {
           schedule();
           return;
         }
@@ -63,8 +66,11 @@ export function usePolling(
     };
 
     const refreshIfDue = () => {
-      if (isHidden()) return;
-      if (shouldRunFocusRefresh(lastRunAtRef.current, Date.now(), minFocusGapMs)) {
+      if (isHidden() || isFleetCoolingDown()) return;
+      // Only refresh on focus/visibility when the scheduled tick was already
+      // due (>= interval since the last run) — anything sooner adds calls
+      // between ticks for no new data.
+      if (shouldRunFocusRefresh(lastRunAtRef.current, Date.now(), Math.max(minFocusGapMs, intervalMs))) {
         run();
       }
     };
