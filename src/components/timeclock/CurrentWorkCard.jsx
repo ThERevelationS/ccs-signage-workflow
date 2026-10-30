@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, Clock3, Loader2, Search, Square, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -87,10 +86,12 @@ export default function CurrentWorkCard({
       const seq = ++searchSeqRef.current;
       setSearchBusy(true);
       try {
-        const rows = await fetchAllWorkOrders().then((rows) =>
-          (rows || [])
-            .filter((wo) => wo.completed !== true && wo.deleted !== true)
-            .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
+        const rows = await loadAllEntityRows({
+          entity: WorkOrder,
+          query: { completed: false, deleted: { $ne: true } },
+          sort: "-created_date",
+          label: "Current Work WorkOrders",
+        });
         if (seq !== searchSeqRef.current) return;
         const needle = searchTerm.trim().toLowerCase();
         setResults(rows.filter((wo) => [wo.title, wo.client_name, wo.description].filter(Boolean).join(" ").toLowerCase().includes(needle)).slice(0, 12));
@@ -157,7 +158,7 @@ export default function CurrentWorkCard({
           {recentJobs.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {recentJobs.slice(0, 6).map((job, i) => (
-                <button
+                <button type="button"
                   key={i} type="button"
                   disabled={actionBusy || disabled}
                   onClick={() => {
@@ -193,7 +194,7 @@ export default function CurrentWorkCard({
       {!selectedWorkOrder && results.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-lg border bg-white divide-y">
           {results.map((wo) => (
-            <button key={wo.id} type="button" className="w-full text-left p-2 hover:bg-gray-50" onClick={() => { setSelectedWorkOrder(wo); setSearchTerm(""); setResults([]); }}>
+            <button type="button" key={wo.id} type="button" className="w-full text-left p-2 hover:bg-gray-50" onClick={() => { setSelectedWorkOrder(wo); setSearchTerm(""); setResults([]); }}>
               <div className="text-sm font-medium flex items-center gap-2"><Briefcase className="w-3.5 h-3.5 text-purple-600" />{wo.client_name || "Client"}</div>
               <div className="text-xs text-gray-500 truncate">{wo.title}</div>
             </button>
