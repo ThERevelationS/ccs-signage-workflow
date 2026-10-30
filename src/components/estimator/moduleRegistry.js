@@ -10,6 +10,7 @@ export const ESTIMATOR_MODULES = [
   { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject", page: "BrickStoneEstimator" },
   { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject", page: "MaintenanceEstimator" },
   { key: "painting", label: "Painting", entity: "Project", page: "PaintingEstimator" },
+  { key: "custom_items", label: "Custom line items", entity: "CustomItemsProject", page: "CustomItemsEstimator" },
 ];
 
 // Field on the sub-estimate record holding its grand total. Foundation projects
@@ -26,6 +27,7 @@ export const MODULE_TOTAL_FIELD = {
   metal: "total_cost",
   brick_stone: "total_cost",
   maintenance: "total_cost",
+  custom_items: "total_cost",
 };
 
 const LEGACY_MODULES = {};
