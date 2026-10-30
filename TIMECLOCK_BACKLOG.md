@@ -3,14 +3,14 @@
 Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 1. Kiosk — identification
-1. **[F]** Face liveness check (blink / turn-head prompt) to defeat held-up photos
+1. **[F][DONE]** Liveness - blink (EAR) + head-drift gate in the shared scan session
 2. **[F][DONE]** Face descriptor pre-fetch - roster descriptors load while camera starts
 3. **[F]** Adaptive match threshold per user — tighten for look-alikes, never below the hard floor
 4. **[F]** Enrollment quality score (A-F on pose coverage) so weak enrollments get redone
 5. **[F][DONE]** Re-enroll reminder - banner after 5 failed scans
 6. **[F][HOLD]** Second USB camera - browser/hardware limited
 7. **[F]** Low-light/night guidance for dim shop areas
-8. **[F]** Ambiguous-match fallback — confirm name from 2 choices instead of failing
+8. **[F][DONE]** Ambiguous-match - voter tracks distinctCount, ambiguous status + guidance
 9. **[F][HOLD]** One-tap re-punch - serialized punch path too risky to replay
 10. **[F][DONE]** Identification progress display - voter exposes N/required, both scanners show "Verifying X/3"
 11. **[F][DONE]** Camera self-test - 5s brightness sampling warns dark/blown lens
@@ -143,8 +143,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 126. **[F][DONE]** Approval-age SLA - oldest-first sort + amber/red age badges (>=1d, >=3d)
 127. **[F][DONE]** Approver notes required - review_reason min-3 gate on every decision
 128. **[F][DONE]** Approve from the bell - pending-shift notices deep-link to the review dialog
-129. **[F]** Delegated approvers per crew/department
-130. **[F]** Two-step approval for corrections over N hours
+129. **[F][DONE]** Delegated approvers - GlobalSettings list + review gate, self-review blocked
+130. **[F][DONE]** Two-step - deltas over threshold need a second approver (different person)
 131. **[F][DONE]** Auto-approve - bulk_auto_approve admin action for small deltas
 132. **[F][DONE]** Rejection reason codes - quick-pick chips fill the manager review reason
 133. **[F][DONE]** Employee notify on review outcome - manager reason surfaces in the tracker
