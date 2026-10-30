@@ -81,7 +81,7 @@ export default function VinylSearchPickerDialog({
 
         <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1">
           {allowNone && (
-            <button
+            <button type="button"
               onClick={() => handlePick("")}
               className={`w-full text-left px-3 py-2 rounded-lg border transition-colors flex items-center justify-between ${
                 !selectedId ? "border-blue-300 bg-blue-50" : "border-slate-200 hover:bg-slate-50"
@@ -94,7 +94,7 @@ export default function VinylSearchPickerDialog({
           {filtered.map(v => {
             const isSel = v.id === selectedId;
             return (
-              <button
+              <button type="button"
                 key={v.id}
                 onClick={() => handlePick(v.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg border transition-colors flex items-center justify-between gap-3 ${
