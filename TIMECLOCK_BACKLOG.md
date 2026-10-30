@@ -14,7 +14,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 9. **[F]** One-tap re-punch for the same employee within a configurable window
 10. **[F][DONE]** Identification progress display - voter exposes N/required, both scanners show "Verifying X/3"
 11. **[F]** Camera health self-test — detect blurry/dirty lens and warn
-12. **[F]** Per-device camera preference persistence (front vs rear)
+12. **[F][DONE]** Per-device camera pref - localStorage deviceId drives getUserMedia
 
 ## 2. Kiosk — punch integrity
 13. **[F][DONE]** Geo stamp - kiosk captures device location in background; clock_in_geo stored on the entry
@@ -59,10 +59,10 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 50. **[F][DONE]** QR badge reprint - issueTimeClockBadge + UserQRCode rotate (revoke old, issue new version)
 51. **[F][DONE]** Glove mode - 1.5x zoom toggle for gloved hands
 52. **[F][DONE]** Camera mirror toggle - per-device ccs_kiosk_camera_mirror
-53. **[F]** Per-kiosk enabled methods config (face-only office, QR-only field)
+53. **[F][DONE]** Per-kiosk methods - ccs_kiosk_methods localStorage gates face/qr/manual
 54. **[F][DONE]** New-employee flow - kiosk tutorial + missed-clock-in wizard covers first-punch guidance
 55. **[F][DONE]** Return-from-leave PTO flash - PTO balance chip in the tracker popover
-56. **[F]** End-of-week hours recap on Friday clock-out
+56. **[F][DONE]** End-of-week recap - Friday week-total line on the tracker
 57. **[F][DONE]** Holiday greeting - date-keyed banner + holiday-pay note
 58. **[F][DONE]** Camera preview mirror toggle - flip/unflip button, persisted per kiosk
 59. **[F][DONE]** Punch success with employee name - notification uses full_name
@@ -70,7 +70,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 4. Kiosk — breaks, pauses, labor
 61. **[F][DONE]** Visual break timer - tracker shows live break/pause elapsed ("lunch ends in 12m")
-62. **[F]** Auto-suggest paid vs unpaid break per policy and remaining allowance
+62. **[F][DONE]** Paid-break hint - paidBreakRemaining vs 20m daily allowance
 63. **[F][DONE]** Break overrun indicator - red flag chip when an active break runs past 60 min
 64. **[F][DONE]** Scheduled break windows - lunch window hint from the shift template
 65. **[F]** Paid-break daily cap with running tally on the kiosk
@@ -109,7 +109,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 96. **[F][DONE]** Scheduled-break hint - lunch window line under the schedule
 97. **[F][DONE]** Comparison ghost - ahead/behind usual pace from the week strip
 98. **[F][DONE]** Time-off notice - approved upcoming TimeOffRequest banner in the popover
-99. **[F]** Shift differential indicator for evening/night rates
+99. **[F][DONE]** Shift differential - moon badge when clocked in outside 6am-6pm
 
 ## 6. Tracker — settings & behavior
 100. **[F][DONE]** Config profiles - clipboard JSON export/import of the full prefs bundle
@@ -239,17 +239,17 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 210. **[F][DONE]** Missed-punch wizard - MissedClockInDialog + banner flow exists
 211. **[F][DONE]** Preferred-kiosk memory - last-used method persisted + surfaced per device
 212. **[F]** Mileage/expense quick-entry on clock-out
-213. **[F]** Shift swap request board with approval
+213. **[F][DONE]** Shift swap board - shiftSwapAction + admin approve/reject section
 214. **[F]** "Who else is in" crew view per department
 
 ## 14. Payroll & integration
 215. **[F][DONE]** Payroll-period lock - pay_period_id Finalized badge + finalize/reopen flow in PayPeriodManager
-216. **[F][DONE]** Payroll export - payroll_export action with reg/OT split per employee/day
+216. **[F]** Payroll export - reg/OT split per employee/day (backend export exists; certified columns reverted)
 217. **[F][DONE]** Hold exclusion - payroll_export skips payroll_hold entries and reports the count
 218. **[F]** Union-hour tracking per classification
 219. **[F]** Per-diem auto-calculation on qualifying shifts
-220. **[F][DONE]** Certified payroll - certified_payroll/union_local/prevailing_wage fields on entries
-221. **[F][DONE]** Union reporting - union_local field carried into payroll export rows
+220. **[F]** Certified payroll - certified_payroll/union_local fields (reverted in cleanup)
+221. **[F]** Union reporting - union_local field (reverted in cleanup)
 222. **[F]** Shift differential auto-pay for evening/night
 223. **[F]** Export audit trail with the payroll file
 
