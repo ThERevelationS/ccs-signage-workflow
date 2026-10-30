@@ -9,9 +9,8 @@ import {
   Check, X, Plus, Trash2, Pencil, Save, 
   ClipboardList, FileText, Copy, Star 
 } from "lucide-react";
-import { staffEntities } from "@/components/staff/staffEntities";
 
-const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
+const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
 
 // Default checklist items if no template exists
 const DEFAULT_CHECKLIST = [
@@ -276,14 +275,14 @@ export default function SipChecklistDialog({
                   {/* Reorder buttons */}
                   {isRegistered && (
                     <div className="flex flex-col gap-0.5">
-                      <button 
+                      <button type="button" 
                         onClick={() => moveItem(index, 'up')}
                         disabled={index === 0}
                         className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
                       >
                         ▲
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => moveItem(index, 'down')}
                         disabled={index === checklist.length - 1}
                         className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30"
