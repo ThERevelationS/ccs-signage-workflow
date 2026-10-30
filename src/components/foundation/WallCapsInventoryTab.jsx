@@ -87,7 +87,7 @@ function CapForm({ item, onSave, onCancel }) {
         <Label className="text-xs">Color</Label>
         <div className="flex gap-2 mt-1 flex-wrap items-center">
           {PRESET_COLORS.map(c => (
-            <button key={c} className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${form.cap_color === c ? 'border-blue-500 scale-110' : 'border-transparent'}`}
+            <button type="button" key={c} className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${form.cap_color === c ? 'border-blue-500 scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }} onClick={() => set('cap_color', c)} />
           ))}
           <input type="color" value={form.cap_color || '#9ca3af'} onChange={e => set('cap_color', e.target.value)}
