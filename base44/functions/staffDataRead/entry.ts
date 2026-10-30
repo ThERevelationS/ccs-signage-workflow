@@ -288,12 +288,12 @@ function cleanSkip(value: unknown) {
   return parsed;
 }
 
-// Short-lived module-scope cache — identical reads within a few seconds (mount
-// storms: parallel component reads and subscribe checks) collapse to a single
-// upstream entity read while an isolate stays warm. Kept short so reads issued
-// right after a write never serve pre-write snapshots.
+// Module-scope cache — identical reads within the TTL (mount storms: parallel
+// component reads and subscribe checks) collapse to a single upstream entity
+// read while an isolate stays warm. Writes go through staffEntityWrite, so a
+// stale read for up to 45s is an accepted trade for the shared rate budget.
 const staffReadCache = new Map();
-const STAFF_READ_CACHE_MS = 5_000;
+const STAFF_READ_CACHE_MS = 45_000;
 
 const isRateLimited = (error: any) => Number(error?.status) === 429
   || /rate limit|too many requests/i.test(String(error?.message || error));
@@ -374,7 +374,19 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const user = await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
-    const readCacheKey = JSON.stringify(body) + '|' + user.email + '|' + user.role;
+    // Cache scope: role tier plus request body — shared across users on the
+    // same tier. Per-user scoping stays in the key wherever the read path
+    // actually applies it: OWNER_SCOPED entities filter rows to the caller's
+    // email, and per-admin denied_fields change the field projection.
+    const cacheRequestEntities = Array.isArray(body?.entities) ? body.entities : [body];
+    const ownerScopedRead = user.role !== 'admin'
+      && cacheRequestEntities.some((r) => OWNER_SCOPED.has(String(r?.entity || '').trim()));
+    const deniedFieldScope = user?.admin_permissions?.denied_fields
+      ? JSON.stringify(user.admin_permissions.denied_fields) : '';
+    const readCacheKey = JSON.stringify(body)
+      + '|' + (user.role === 'admin' ? 'admin' : 'staff')
+      + '|' + (ownerScopedRead ? String(user.email).trim().toLowerCase() : '')
+      + '|' + deniedFieldScope;
     const cachedRead = staffReadCache.get(readCacheKey);
     if (cachedRead && cachedRead.expires > Date.now()) return Response.json(cachedRead.payload);
 
