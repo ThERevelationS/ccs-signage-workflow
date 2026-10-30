@@ -5,8 +5,8 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 ## 1. Kiosk — identification
 1. **[F][DONE]** Liveness - blink (EAR) + head-drift gate in the shared scan session
 2. **[F][DONE]** Face descriptor pre-fetch - roster descriptors load while camera starts
-3. **[F]** Adaptive match threshold per user — tighten for look-alikes, never below the hard floor
-4. **[F]** Enrollment quality score (A-F on pose coverage) so weak enrollments get redone
+3. **[F][DONE]** Adaptive threshold - per-user intra-cluster tightening, 0.22-0.38 bounded
+4. **[F][DONE]** Enrollment quality - A-F pose-coverage grade blocks weak saves
 5. **[F][DONE]** Re-enroll reminder - banner after 5 failed scans
 6. **[F][HOLD]** Second USB camera - browser/hardware limited
 7. **[F][DONE]** Low-light guidance - camera health sampler warns dark/blown + dim status
@@ -74,7 +74,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 63. **[F][DONE]** Break overrun indicator - red flag chip when an active break runs past 60 min
 64. **[F][DONE]** Scheduled break windows - lunch window hint from the shift template
 65. **[F][DONE]** Paid-break cap - snapshot paid_break_minutes_today
-66. **[F]** Work-pause categories (machine down, materials, weather hold)
+66. **[F][DONE]** Work-pause categories - reason/pause_type rollup groups categories
 67. **[F][DONE]** Pause analytics - pause_reason_rollup by reason
 68. **[F][DONE]** Labor quick-pick - my_labor_history action + recent-job chips in CurrentWorkCard
 69. **[F][DONE]** Labor split - labor_split action divides allocations at once
