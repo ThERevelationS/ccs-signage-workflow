@@ -1,4 +1,4 @@
-import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { invokeFleet, isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { getSessionToken } from "@/components/auth/EmailGate";
 
 // Read facade for role-gated non-Fleet entities. Staff sessions are EmailGate
@@ -16,6 +16,30 @@ import { getSessionToken } from "@/components/auth/EmailGate";
 // is a guaranteed 401 that burns budget and spams the console.
 const hasSession = () => !!getSessionToken();
 const NO_SESSION_ERR = () => new Error("Sign-in required");
+
+// Per-session negative cache of denied entities. Once the gateway refuses an
+// entity for this session (403), every repeat read is a guaranteed failure
+// that only spends the shared budget — resolve it locally until the session
+// token changes (a different signed-in user may have different access).
+let deniedSessionToken;
+const deniedEntities = new Set();
+const syncDeniedScope = () => {
+  const token = getSessionToken();
+  if (token !== deniedSessionToken) {
+    deniedEntities.clear();
+    deniedSessionToken = token;
+  }
+};
+const markDenied = (entity) => {
+  if (!entity) return;
+  syncDeniedScope();
+  deniedEntities.add(entity);
+};
+const isDenied = (entity) => {
+  syncDeniedScope();
+  return deniedEntities.has(entity);
+};
+const isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
 
 // The platform's function client resolves with the transport envelope
 // ({ status, data, ... }) rather than the JSON body, while a few call paths hand
@@ -56,7 +80,10 @@ const pendingBatch = new Map();
 let flushScheduled = false;
 
 const singleRead = (entity, args) =>
-  invokeFleet("staffDataRead", { entity, ...args }).then(asRows);
+  invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
+    if (isForbidden(err)) markDenied(entity);
+    throw err;
+  });
 
 async function flushBatch() {
   flushScheduled = false;
@@ -82,9 +109,13 @@ async function flushBatch() {
       const body = bodyOf(r);
       const out = body.entities || {};
       const errs = body.errors || {};
+      // Denied entities resolve as empty reads and go into the negative cache
+      // so nothing in this session asks for them again.
+      (body.denied || []).forEach(markDenied);
       chunk.forEach((e) => {
         if (errs[e.entity]) {
           const detail = errs[e.entity];
+          if (Number(detail.status) === 403) markDenied(e.entity);
           e.reject(Object.assign(new Error(detail.error || 'Staff read failed'), { status: detail.status }));
         } else {
           e.resolve(Array.isArray(out[e.entity]) ? out[e.entity] : []);
@@ -120,21 +151,30 @@ const batchedRead = (entity, args) => {
 const METHODS = {
   filter: (entity, query, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
+    if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => (args.paged ? page(rows) : rows));
   },
   list: (entity, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
+    if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => (args.paged ? page(rows) : rows));
   },
-  get: (entity, id) =>
-    hasSession() ? invokeFleet("staffDataRead", { entity, id }).then((r) => bodyOf(r).item ?? null) : Promise.resolve(null),
+  get: (entity, id) => {
+    if (!hasSession() || isDenied(entity)) return Promise.resolve(null);
+    return invokeFleet("staffDataRead", { entity, id }).then(
+      (r) => bodyOf(r).item ?? null,
+      (err) => { if (isForbidden(err)) markDenied(entity); throw err; },
+    );
+  },
   count: (entity, query, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
-    return hasSession()
-      ? invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then((r) => bodyOf(r).count ?? 0)
-      : Promise.resolve(0);
+    if (!hasSession() || isDenied(entity)) return Promise.resolve(0);
+    return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then(
+      (r) => bodyOf(r).count ?? 0,
+      (err) => { if (isForbidden(err)) markDenied(entity); throw err; },
+    );
   },
   create: (entity, data) =>
     hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => bodyOf(r).record) : Promise.reject(NO_SESSION_ERR()),
@@ -153,7 +193,7 @@ const METHODS = {
     let stopped = false;
     let last = "";
     const check = async () => {
-      if (!hasSession()) return;
+      if (!hasSession() || isDenied(entity) || isFleetCoolingDown()) return;
       try {
         // -updated_date puts mutations into the 500-row window — an unsorted
         // default order would cap the digest to the oldest rows and silently
@@ -163,7 +203,8 @@ const METHODS = {
         const stamp = JSON.stringify(rows);
         if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
         last = stamp;
-      } catch {
+      } catch (err) {
+        if (isForbidden(err)) markDenied(entity);
         // Transient gateway/rate-limit failure — retry on the next tick.
       }
     };
@@ -198,5 +239,12 @@ export const staffEntities = new Proxy({}, {
 //     { entity: "PermitLocality", sort: "name" },
 //     { entity: "GlobalSettings", limit: 10 },
 //   ]);
-export const loadEntitiesBatch = (requests) =>
-  invokeFleet("staffDataRead", { entities: requests }).then((r) => bodyOf(r).entities || {});
+export const loadEntitiesBatch = (requests) => {
+  const live = (requests || []).filter((r) => !isDenied(r?.entity));
+  if (live.length === 0) return Promise.resolve({});
+  return invokeFleet("staffDataRead", { entities: live }).then((r) => {
+    const body = bodyOf(r);
+    (body.denied || []).forEach(markDenied);
+    return body.entities || {};
+  });
+};
