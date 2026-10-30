@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Radio } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const Q = staffEntities.SourceCollectionQueue;
-const POLL_MS = 10000;
+const POLL_MS = 60000;
 
 const OUTCOME_STYLE = {
   sources_found: "text-green-700",
@@ -18,7 +19,7 @@ export default function DrainLiveFeed() {
   useEffect(() => {
     let stop = false;
     const tick = async () => {
-      if (typeof document !== "undefined" && document.hidden) return;
+      if ((typeof document !== "undefined" && document.hidden) || isFleetCoolingDown()) return;
       try {
         const [inFlight, recent, remaining, total] = await Promise.all([
           Q.filter({ status: "source_discovery" }, "-updated_date", 25, 0),
