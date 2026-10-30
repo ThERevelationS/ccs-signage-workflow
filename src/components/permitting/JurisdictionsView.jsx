@@ -562,7 +562,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               ["manual_protected", "Manual Protected", trustCounts.manual_protected || 0, "border-blue-300 bg-blue-50 text-blue-700"],
               ["ai_researched", "AI Researched", trustCounts.ai_researched || 0, "border-purple-300 bg-purple-50 text-purple-700"],
             ].map(([key, label, count, colorClass]) => (
-              <button
+              <button type="button"
                 key={key}
                 type="button"
                 onClick={() => setTrustFilter(key)}
