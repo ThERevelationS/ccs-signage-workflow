@@ -271,10 +271,12 @@ function cleanQuery(value: unknown, entityName: string) {
 function cleanLimit(value: unknown, fallback: number) {
   if (value == null || value === '') return fallback;
   const parsed = Math.floor(Number(value));
-  if (!Number.isFinite(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
+  if (!Number.isFinite(parsed) || parsed < 1) {
     throw Object.assign(new Error(`Staff read limit must be between 1 and ${MAX_LIMIT}.`), { status: 400 });
   }
-  return parsed;
+  // A caller asking for more than one page gets the page maximum rather than a
+  // failed read; callers that need every row page with skip.
+  return Math.min(parsed, MAX_LIMIT);
 }
 
 function cleanSkip(value: unknown) {
