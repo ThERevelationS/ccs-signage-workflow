@@ -4,14 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
-import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 
 function scoreRecord(wo) {
   // Higher score = more data = better to keep
@@ -111,7 +109,7 @@ function DuplicateGroup({ group, onResolved, users }) {
             {keeping ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />}
             Keep Best, Delete Rest
           </Button>
-          <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
@@ -182,10 +180,12 @@ export default function BulkDuplicateCleanup() {
     setReadError("");
     try {
       const [all, usersData] = await Promise.all([
-        fetchAllWorkOrders().then((rows) =>
-          (rows || [])
-            .filter((wo) => wo.deleted !== true && wo.completed !== true && wo.is_rider !== true)
-            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
+        loadAllEntityRows({
+        entity: WorkOrder,
+        query: { deleted: { $ne: true }, completed: { $ne: true }, is_rider: { $ne: true } },
+        sort: "created_date",
+        label: "Duplicate Cleanup Work Orders",
+        }),
         loadSalesPersonRosterSafely({ sessionToken, label: "Duplicate Cleanup authorized users" }),
       ]);
       setUsers(usersData);
