@@ -11179,6 +11179,131 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
     }
 
+    if (action === 'punch_fraud_scan') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({}, '-clock_in', 500).catch(() => []);
+      const clean = (Array.isArray(rows) ? rows : []).filter((e: any) => e.archived_test_data !== true && e.archived_admin !== true).slice(0, 200);
+      const scored = clean.map((e: any) => {
+        let score = 0; const flags = [];
+        const ci = e.clock_in ? new Date(e.clock_in) : null;
+        if (ci && (ci.getHours() < 4 || ci.getHours() > 22)) { score += 30; flags.push('off-hours punch'); }
+        if (e.clock_source === 'manual' || e.clock_source === 'bulk_import') { score += 20; flags.push('manual source'); }
+        if (!e.clock_in_geo) { score += 10; flags.push('no geo'); }
+        if (e.payroll_hold) { score += 15; flags.push('held'); }
+        if (Number(e.total_hours || 0) > 14) { score += 25; flags.push('>14h shift'); }
+        if (e.auto_clocked_out) { score += 15; flags.push('auto-closed'); }
+        return { entry_id: e.id, user: e.user_name || e.user_email, date: dateKeyInCompanyTime(e.clock_in), score: Math.min(100, score), flags };
+      }).filter((r: any) => r.score >= 40).sort((a: any, b: any) => b.score - a.score);
+      return Response.json({ success: true, flagged: scored });
+    }
+
+    if (action === 'punch_velocity_scan') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({}, '-clock_in', 1000).catch(() => []);
+      const clean = (Array.isArray(rows) ? rows : []).filter((e: any) => e.clock_in_geo?.lat && e.clock_out_geo?.lat && e.archived_test_data !== true && e.archived_admin !== true);
+      const dist = (a: any, b: any) => { const dLat = (a.lat - b.lat) * 111320; const dLng = (a.lng - b.lng) * 111320 * Math.cos((b.lat * Math.PI) / 180); return Math.sqrt(dLat * dLat + dLng * dLng); };
+      const flagged = clean.map((e: any) => {
+        const meters = dist(e.clock_in_geo, e.clock_out_geo);
+        const hours = Math.max(0.1, (new Date(e.clock_out) - new Date(e.clock_in)) / 3600000);
+        return { entry_id: e.id, user: e.user_name || e.user_email, meters: Math.round(meters), hours: Math.round(hours * 10) / 10 };
+      }).filter((r: any) => r.meters / r.hours > 100000); // >100km/h sustained = impossible
+      return Response.json({ success: true, flagged });
+    }
+
+    if (action === 'staffing_recommendation') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const todayKey = dateKeyInCompanyTime(new Date().toISOString());
+      const [rosters, templates, todayRows] = await Promise.all([
+        authorized.filter({ timeclock_enabled: true }).catch(() => []),
+        shiftTemplateEntity.filter({ is_active: true }).catch(() => []),
+        entryEntity.filter({}, '-clock_in', 1500).catch(() => []),
+      ]);
+      const today = (Array.isArray(todayRows) ? todayRows : []).filter((e: any) => dateKeyInCompanyTime(e.clock_in) === todayKey && e.archived_test_data !== true && e.archived_admin !== true);
+      const scheduled = (Array.isArray(templates) ? templates : []).filter((t: any) => t.weekday === new Date().getDay()).length;
+      const actual = today.length;
+      const gap = scheduled - actual;
+      return Response.json({ success: true, scheduled, clocked_in: actual, gap, recommendation: gap > 0 ? `Short ${gap} vs today's schedule - check absences.` : gap < -2 ? `${-gap} extra vs schedule - check OT.` : 'Coverage matches schedule.' });
+    }
+
+    if (action === 'device_rate_limit_check') {
+      // Kiosks call before punching; backend counts punches from this device in
+      // the last 5 minutes and rejects bursts above the threshold.
+      const key = typeof body.device_key === 'string' ? body.device_key.trim() : '';
+      if (!key) return Response.json({ success: true, allowed: true });
+      const rows = await entryEntity.filter({ device_key: key }, '-clock_in', 50).catch(() => []);
+      const recent = (Array.isArray(rows) ? rows : []).filter((e: any) => Date.now() - new Date(e.clock_in).getTime() < 300000);
+      const allowed = recent.length < 10;
+      return Response.json({ success: true, allowed, recent: recent.length });
+    }
+
+    if (action === 'suspicious_login_scan') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const audits = await auditEntity.filter({}, '-server_timestamp', 500).catch(() => []);
+      const flagged = (Array.isArray(audits) ? audits : []).filter((a: any) => {
+        const fail = String(a.outcome || '') === 'failed' || String(a.outcome || '') === 'rejected';
+        const t = a.server_timestamp ? new Date(a.server_timestamp).getTime() : 0;
+        return fail && Date.now() - t < 3600000;
+      }).slice(0, 50).map((a: any) => ({ email: a.user_email || a.actor_email, at: a.server_timestamp, action: a.action }));
+      return Response.json({ success: true, flagged });
+    }
+
+    if (action === 'feature_flags') {
+      // Feature toggles from GlobalSettings - admin-managed, read by all clients.
+      const gs = await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'timeclockFeatures' }).catch(() => []);
+      const flags = (Array.isArray(gs) && gs[0]?.value) || { experimental: false, announcements: true, shift_templates: true, dual_ring: true };
+      return Response.json({ success: true, flags });
+    }
+
+    if (action === 'crew_view') {
+      // Scoped presence list - employees see names+status in their own
+      // department only, managers see everyone. Counts only, no times.
+      const todayKey = dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await entryEntity.filter({}, '-clock_in', 1000).catch(() => []);
+      const roster = await authorized.filter({}).catch(() => []);
+      const dept = Array.isArray(roster) && roster.length ? (roster.find((u: any) => asEmail(u.email) === actor.email)?.department || '') : '';
+      const today = (Array.isArray(rows) ? rows : []).filter((e: any) => dateKeyInCompanyTime(e.clock_in) === todayKey && e.archived_test_data !== true && e.archived_admin !== true);
+      const visible = actor.role === 'admin' ? today : today.filter((e: any) => {
+        const emp = Array.isArray(roster) ? roster.find((u: any) => asEmail(u.email) === asEmail(e.user_email)) : null;
+        return emp?.department === dept;
+      });
+      return Response.json({ success: true, count: visible.length, members: visible.map((e: any) => ({ name: e.user_name || e.user_email, on_break: e.break_status === 'on_break', on_pause: e.work_pause_status === 'paused' })) });
+    }
+
+    if (action === 'device_usage_report') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const counts = new Map();
+      for (const e of (Array.isArray(rows) ? rows : [])) {
+        if (!e.device_key || e.archived_test_data === true || e.archived_admin === true) continue;
+        counts.set(e.device_key, (counts.get(e.device_key) || 0) + 1);
+      }
+      return Response.json({ success: true, devices: [...counts.entries()].map(([device_key, punches]) => ({ device_key, punches })).sort((a: any, b: any) => b.punches - a.punches) });
+    }
+
+    if (action === 'break_compliance_report') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 30 * 86400000).toISOString());
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await entryEntity.filter({}, '-clock_in', 4000).catch(() => []);
+      const range = (Array.isArray(rows) ? rows : []).filter((e: any) => { const dk = dateKeyInCompanyTime(e.clock_in); return dk && dk >= from && dk <= to && e.archived_test_data !== true && e.archived_admin !== true && e.clock_out; });
+      const missedLunch = range.filter((e: any) => Number(e.total_hours || 0) > 6 && !(Array.isArray(e.breaks) && e.breaks.some((b: any) => Number(b.duration_minutes || 0) >= 30)));
+      return Response.json({ success: true, from, to, missed_lunches: missedLunch.length, entries: missedLunch.slice(0, 50).map((e: any) => ({ user: e.user_name || e.user_email, date: dateKeyInCompanyTime(e.clock_in), hours: e.total_hours })) });
+    }
+
+    if (action === 'pause_reason_rollup') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await workPauseEntity.filter({}, '-started_at', 1000).catch(() => []);
+      const rollup = new Map();
+      for (const p of (Array.isArray(rows) ? rows : [])) {
+        const reason = String(p.reason || p.pause_type || 'other').trim().toLowerCase();
+        const cur = rollup.get(reason) || { count: 0, minutes: 0 };
+        cur.count += 1;
+        cur.minutes += Number(p.duration_minutes || 0);
+        rollup.set(reason, cur);
+      }
+      return Response.json({ success: true, reasons: [...rollup.entries()].map(([reason, v]) => ({ reason, count: v.count, minutes: Math.round(v.minutes) })).sort((a: any, b: any) => b.minutes - a.minutes) });
+    }
+
     return Response.json({ success: false, error: 'Unsupported Time Clock action.' }, { status: 400 });
     } catch (error) {
     const status = Number(error?.status || error?.response?.status || 500);
