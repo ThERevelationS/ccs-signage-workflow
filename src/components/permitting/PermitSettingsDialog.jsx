@@ -25,10 +25,9 @@ import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
 import { copyCatalogOfficeToLocality, resolveCatalogOfficeProvenance } from "./localityOfficeCatalogBridge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
-import { staffEntities } from "@/components/staff/staffEntities";
 
-const PermitLocality = staffEntities.PermitLocality;
-const GlobalSettings = staffEntities.GlobalSettings;
+const PermitLocality = base44.entities.PermitLocality;
+const GlobalSettings = base44.entities.GlobalSettings;
 
 // Catalog office verification is distinct from an office's legal authority for a locality.
 function OfficeSourceStatus({ provenance }) {
@@ -679,7 +678,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                           {catalogSearchResults.length > 0 && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded shadow-lg z-10 max-h-56 overflow-y-auto">
                               {catalogSearchResults.map(o => (
-                                <button
+                                <button type="button"
                                   key={o.id}
                                   onClick={() => addOfficeFromCatalog(o)}
                                   className="w-full text-left px-2.5 py-1.5 hover:bg-purple-50 border-b last:border-b-0 flex items-center justify-between gap-2"
@@ -789,7 +788,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                           Permanent
                         </span>
                       ) : (
-                        <button
+                        <button type="button"
                           onClick={() => saveOfficeTypes(officeTypes.filter((_, i) => i !== idx))}
                           className="p-1 hover:bg-red-50 rounded"
                         >
