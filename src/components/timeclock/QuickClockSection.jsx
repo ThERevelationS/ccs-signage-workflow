@@ -198,6 +198,7 @@ export default function QuickClockSection({
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
   const faceScanSessionRef = useRef(null);
+  const qrLoopRef = useRef(0);
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
@@ -431,6 +432,7 @@ export default function QuickClockSection({
 
   const stopFaceCamera = () => {
     faceRunRef.current += 1;
+    qrLoopRef.current += 1;
     faceScanSessionRef.current?.stop();
     faceScanSessionRef.current = null;
     if (streamRef.current) {
@@ -876,28 +878,23 @@ export default function QuickClockSection({
     }
   };
 
-  const startFaceMode = async () => {
+  const startCameraMode = async () => {
     await stopAllMedia();
     identifyFlowSeqRef.current += 1;
     recognitionLockedRef.current = false;
     setIsRecognizing(true);
-    setRecognitionMethod("face");
+    setRecognitionMethod("camera");
     setUsernameError("");
 
-    if (!authoritativeSessionToken) {
-      setRecognitionStatus("Face mode requires a signed-in employee or admin kiosk session. Use Secure QR or Username instead.");
-      return;
-    }
-    if (!canUseFace) {
-      setRecognitionStatus("No enrolled faces are available to this signed-in session. Use Secure QR or Username instead.");
-      return;
-    }
+    // Face runs only when a signed session + enrolled faces exist; QR always
+    // works. Either detector can identify the employee - no method selection.
+    const faceEnabled = Boolean(authoritativeSessionToken) && canUseFace;
 
     setRecognitionStatus("Starting camera...");
     const faceRun = faceRunRef.current;
     try {
       const [modelsReady, stream] = await Promise.all([
-        loadFaceModels(),
+        faceEnabled ? loadFaceModels() : Promise.resolve(false),
         navigator.mediaDevices.getUserMedia({
           video: (() => {
             const pref = (() => { try { return localStorage.getItem("ccs_kiosk_camera_id"); } catch { return null; } })();
@@ -910,11 +907,6 @@ export default function QuickClockSection({
         stream.getTracks().forEach((track) => track.stop());
         return;
       }
-      if (!modelsReady) {
-        stream.getTracks().forEach((track) => track.stop());
-        setRecognitionStatus("Face models could not load. Use Secure QR or Username instead.");
-        return;
-      }
 
       streamRef.current = stream;
       if (videoRef.current) {
@@ -922,7 +914,34 @@ export default function QuickClockSection({
         await videoRef.current.play();
       }
       if (faceRun !== faceRunRef.current) return;
-      setRecognitionStatus("Look directly at the camera...");
+
+      // QR badge detection on the same stream - no second camera. Only
+      // TIMECLOCK2 badge payloads act; any other code in frame is ignored.
+      if ("BarcodeDetector" in window) {
+        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        const qrRun = ++qrLoopRef.current;
+        const tick = async () => {
+          if (qrRun !== qrLoopRef.current || faceRun !== faceRunRef.current) return;
+          const v = videoRef.current;
+          if (v && v.readyState >= 2 && !recognitionLockedRef.current) {
+            try {
+              const codes = await detector.detect(v);
+              const hit = (codes || []).find((c) => String(c?.rawValue || "").startsWith("TIMECLOCK2:"));
+              if (hit) { void handleQrDecoded(hit.rawValue); return; }
+            } catch {}
+          }
+          setTimeout(tick, 350);
+        };
+        setTimeout(tick, 400);
+      }
+
+      if (!faceEnabled || !modelsReady) {
+        setRecognitionStatus("BarcodeDetector" in window
+          ? "Hold your QR badge up to the camera."
+          : "QR scanning needs a supported browser - use Username instead.");
+        return;
+      }
+      setRecognitionStatus("Look at the camera or hold up your QR badge.");
 
       // Same shared scan session as the reusable FaceRecognition component -
       // one cadence, quality gate, brightness check, and voter for every
@@ -973,7 +992,7 @@ export default function QuickClockSection({
       await resolveVerifiedIdentity({ credential: { badgeCode: decodedText } });
     } catch {
       setIsRecognizing(true);
-      setRecognitionMethod("qr");
+      setRecognitionMethod("camera");
       recognitionLockedRef.current = false;
     }
   };
@@ -1043,8 +1062,7 @@ export default function QuickClockSection({
     setActiveEntry(null);
     credentialRef.current = null;
     requestRef.current = {};
-    if (canUseFace) await startFaceMode();
-    else await startQrMode();
+    await startCameraMode();
   };
 
   const handleManualSubmit = async () => {
@@ -1818,10 +1836,10 @@ export default function QuickClockSection({
               const stored = (() => { try { return localStorage.getItem("ccs_kiosk_method"); } catch { return null; } })();
               const preferred = allowedMethods.includes(stored) ? stored : allowedMethods[0];
               return preferred ? (
-                <p className="mb-3 text-[10px] text-slate-400">Last used on this kiosk: <span className="font-semibold text-slate-600">{preferred === "face" ? "Face" : preferred === "qr" ? "QR Badge" : "Email"}</span></p>
+                <p className="mb-3 text-[10px] text-slate-400">Last used on this kiosk: <span className="font-semibold text-slate-600">{preferred === "face" || preferred === "camera" ? "Camera" : preferred === "qr" ? "QR Badge" : "Email"}</span></p>
               ) : null;
             })()}
-            {recognitionMethod === "face" && (
+            {(recognitionMethod === "face" || recognitionMethod === "camera") && (
               <div className="relative mb-4">
                 <div className="relative inline-block">
                   <video ref={videoRef} autoPlay muted playsInline className={`w-80 h-60 object-cover rounded-2xl bg-gray-900 ${cameraMirrored ? "scale-x-[-1]" : ""}`} />
@@ -1889,33 +1907,25 @@ export default function QuickClockSection({
 
             <div className="px-4 py-2 rounded-full mb-4 bg-purple-100 text-purple-700 text-center">
               <p className="font-medium flex items-center justify-center gap-2">
-                {(recognitionMethod === "face" || recognitionMethod === "qr" || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
-                {recognitionStatus || "Choose an identification method."}
+                {(recognitionMethod === "face" || recognitionMethod === "camera" || recognitionMethod === "qr" || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
+                {recognitionStatus || "Look at the camera or hold up your QR badge."}
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                type="button"
-                variant={recognitionMethod === "face" ? "default" : "outline"}
-                onClick={startFaceMode}
-                disabled={isLoading || !canUseFace}
-                className="gap-2"
-                title={!authoritativeSessionToken ? "Sign in an employee or admin kiosk session to use face recognition" : undefined}
-              >
-                <Camera className="w-4 h-4" /> Face
-              </Button>
-              <Button type="button" variant={recognitionMethod === "qr" ? "default" : "outline"} onClick={startQrMode} disabled={isLoading} className="gap-2">
-                <QrCode className="w-4 h-4" /> Secure QR
-              </Button>
+              {!("BarcodeDetector" in window) && (
+                <Button type="button" variant="outline" onClick={startQrMode} disabled={isLoading} className="gap-2">
+                  <QrCode className="w-4 h-4" /> Scan QR badge
+                </Button>
+              )}
               <Button type="button" variant={recognitionMethod === "manual" ? "default" : "outline"} onClick={startManualMode} disabled={isLoading} className="gap-2">
-                <User className="w-4 h-4" /> Username
+                <User className="w-4 h-4" /> Type username instead
               </Button>
             </div>
 
             {!authoritativeSessionToken && (
               <p className="mt-3 text-xs text-gray-500 text-center max-w-md">
-                Face mode is disabled until an employee or admin kiosk session is signed in. Secure QR and username/password remain available.
+                QR badge scanning works for everyone. Face recognition also runs automatically once an employee or admin kiosk session is signed in.
               </p>
             )}
             {authoritativeSessionToken && authoritativeSessionUser && (
