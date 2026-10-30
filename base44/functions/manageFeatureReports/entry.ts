@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // Fire-and-forget automation emit — a failure must never break the report
 // write that already verified.
@@ -173,7 +174,7 @@ async function deleteExact(Report: any, id: string, expectedUpdatedDate: string)
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
     const Report = base44.asServiceRole.entities.FeatureReport;
