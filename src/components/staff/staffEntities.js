@@ -43,8 +43,16 @@ async function flushBatch() {
       const r = await invokeFleet("staffDataRead", { entities: chunk.map((e) => e.args) });
       const out = r?.entities || {};
       chunk.forEach((e) => e.resolve(Array.isArray(out[e.entity]) ? out[e.entity] : []));
-    } catch {
-      individual.push(...chunk);
+    } catch (err) {
+      // Rate-limited batch: fanning out into ~16 individual reads would amplify
+      // the very saturation that caused the 429 — reject so callers degrade.
+      if (err?.status === 429 || err?.response?.status === 429) {
+        chunk.forEach((e) => e.reject(err));
+      } else {
+        // Non-429 (e.g. one admin-gated entity 403s the whole batch): retry the
+        // entries individually so the healthy ones still resolve.
+        individual.push(...chunk);
+      }
     }
   }
   individual.forEach((e) => singleRead(e.entity, e.args).then(e.resolve, e.reject));
