@@ -6,7 +6,7 @@ import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload } 
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp, formatInCompanyTz } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
-import { isEstimateStatusTransitionAllowed } from "@/components/estimator/estimateStatusTransitions";
+import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStatuses } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
@@ -113,6 +113,8 @@ export default function EstimatorQueues() {
   const mine = params.get("mine") === "1";
   const [me, setMe] = useState(null);
   const [companyTz, setCompanyTz] = useState("");
+  const [statusMap, setStatusMap] = useState(null);
+  const [customStatuses, setCustomStatuses] = useState([]);
   const [backupBusy, setBackupBusy] = useState(false);
   const importEstRef = useRef(null);
   // Re-import an exported estimate bundle (#451): creates a new draft with
@@ -136,7 +138,15 @@ export default function EstimatorQueues() {
   // displays; blank falls back to the browser's zone.
   useEffect(() => {
     staffEntities.QuoteDefaults.filter({ config_name: "default" }, undefined, 1)
-      .then((rows) => setCompanyTz((Array.isArray(rows) ? rows[0]?.display_timezone : "") || ""))
+      .then((rows) => {
+        const d = (Array.isArray(rows) ? rows[0] : null) || {};
+        setCompanyTz(d.display_timezone || "");
+        let cs = [], tr = {};
+        try { cs = JSON.parse(d.custom_statuses || "[]") || []; } catch {}
+        try { tr = JSON.parse(d.status_transitions || "{}") || {}; } catch {}
+        setCustomStatuses(Array.isArray(cs) ? cs : []);
+        setStatusMap(statusTransitionMap(cs, tr));
+      })
       .catch(() => {});
   }, []);
 
@@ -153,7 +163,7 @@ export default function EstimatorQueues() {
     const skipped = [];
     for (const id of selectedIds) {
       const row = estimates.find((e) => e.id === id);
-      if (!isEstimateStatusTransitionAllowed(row?.status, bulkStatus)) {
+      if (!isEstimateStatusTransitionAllowed(row?.status, bulkStatus, statusMap)) {
         skipped.push(`${row?.estimate_number || id} (${row?.status || "draft"} → ${bulkStatus})`);
         continue;
       }
@@ -473,7 +483,7 @@ export default function EstimatorQueues() {
                 <div className="flex items-center gap-2 px-4 py-2 bg-red-50/60 border-b border-red-100">
                   <span className="text-[11px] font-bold text-red-700">{selectedIds.size} selected</span>
                   <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="h-7 rounded border border-gray-300 bg-white px-2 text-[11px] font-semibold text-gray-700">
-                    {["draft", "calculated", "sent", "approved", "archived"].map((s) => <option key={s} value={s}>{s}</option>)}
+                    {allEstimateStatuses(customStatuses).map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                   <button type="button" onClick={applyBulkStatus} disabled={bulkBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applyingâ€¦" : "Apply status"}</button>
                   <button type="button" onClick={() => setSelectedIds(new Set())} className="h-7 px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-red-300">Clear</button>
