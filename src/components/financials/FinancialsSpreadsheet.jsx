@@ -14,7 +14,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = staffEntities.WorkOrder;
+const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseLocalDate = (dateString) => {
@@ -393,7 +393,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
                 <tr key={wo.id} className="border-b hover:bg-gray-50">
                   {isColumnVisible("client_name") && (
                     <td className="px-1 py-0.5 border-r">
-                      <button
+                      <button type="button"
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600"
                       >
@@ -411,7 +411,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
 
                   {isColumnVisible("title") && (
                     <td className="px-1 py-0.5 border-r">
-                      <button
+                      <button type="button"
                         onClick={() => setSelectedWorkOrder(wo)}
                         className="h-6 w-full text-xs text-left px-1 hover:bg-blue-50 rounded truncate text-blue-600"
                       >
@@ -459,7 +459,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
                     <td className="px-1 py-0.5 border-r">
                       <Popover open={openDatePopover === `install-${wo.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `install-${wo.id}` : null)}>
                         <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
+                          <button type="button" className="h-6 w-full text-xs text-left px-1 hover:bg-gray-100 rounded">
                             {wo.project_install_date ? format(parseLocalDate(wo.project_install_date), "M/d/yyyy") : "-"}
                           </button>
                         </PopoverTrigger>
