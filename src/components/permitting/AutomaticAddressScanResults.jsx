@@ -54,7 +54,7 @@ export default function AutomaticAddressScanResults({scanResult,archives,savedOn
    const response=await base44.functions.invoke('getAddressResearchCollections',{collection_ids:ids,review:archives?.review_mode===true,session_token:sessionToken});
    if(current()){if(response.data?.collections)setCollections(response.data.collections);for(const run of response.data?.actions || [])trackAction(run);}
   }catch{if(current())setError('Saved file status could not update. Use Check saved files to try again.');}
- },15000,{enabled:Boolean(sessionToken)&&(archives?.collections || []).some(row=>row.id),runOnMount:false});
+ },60000,{enabled:Boolean(sessionToken)&&(archives?.collections || []).some(row=>row.id),runOnMount:false});
 
  async function saveFile(collection,doc,forBatch=false){
   const key=collection.id+'|'+doc.id;
