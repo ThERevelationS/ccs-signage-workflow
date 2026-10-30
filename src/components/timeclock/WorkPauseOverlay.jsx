@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Clock3, Loader2, Pause, Play, X } from "lucide-react";
 import { format } from "date-fns";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { invokeTimeClockAction } from "@/components/timeclock/timeClockReadCache";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -80,11 +81,7 @@ export default function WorkPauseOverlay({
     }
     try {
       lastPollAtRef.current = Date.now();
-      const response = await base44.functions.invoke("timeClockAction", {
-        action: "status",
-        ...credentialPayload,
-      });
-      const data = response?.data || response;
+      const data = await invokeTimeClockAction({ action: "status", payload: credentialPayload });
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
       if (!isCurrent()) return null;
       if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
