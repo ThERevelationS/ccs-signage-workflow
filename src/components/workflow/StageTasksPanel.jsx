@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, ClipboardList, Loader2 } from "lucide-react";
 import { deleteGeneralTaskIfUnchanged, updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const GeneralTask = base44.entities.GeneralTask;
 
@@ -33,7 +34,7 @@ export default function StageTasksPanel({ stage }) {
   useEffect(() => {
     setIsLoading(true);
     load();
-    const interval = setInterval(load, 60000);
+    const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) load(); }, 60000);
     return () => clearInterval(interval);
   }, [stage]);
 
