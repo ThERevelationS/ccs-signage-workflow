@@ -264,6 +264,28 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
     update("reminders", reminders.filter((r) => Number(r.minutes) !== Number(minutes)));
   };
 
+  // Presets: role defaults + 3 localStorage save slots per device (#101/#119).
+  const ROLE_PRESETS = {
+    shop: { label: "Shop default", patch: { display_style: "bar", count_mode: "paid", accent_color: "orange", animation_style: "none", privacy_blur: false, daily_goal_minutes: 480, milestone_sound: "ding" } },
+    office: { label: "Office default", patch: { display_style: "ring", count_mode: "paid", accent_color: "indigo", animation_style: "pulse", privacy_blur: true, daily_goal_minutes: 480, milestone_sound: "chime" } },
+    field: { label: "Field default", patch: { display_style: "dual", count_mode: "elapsed", accent_color: "green", animation_style: "none", privacy_blur: false, low_data_mode: true, milestone_sound: "bell" } },
+  };
+  const SOUND_THEMES = {
+    celebration: { label: "Celebration", patch: { milestone_sound: "fanfare", animation_style: "pulse", accent_color: "gold" } },
+    calm: { label: "Calm", patch: { milestone_sound: "none", animation_style: "none", accent_color: "teal" } },
+    focus: { label: "Focus", patch: { milestone_sound: "ding", animation_style: "sweep", accent_color: "violet" } },
+  };
+  const PRESET_SLOT_KEY = "ccs_tracker_presets";
+  const readSlots = () => { try { return JSON.parse(localStorage.getItem(PRESET_SLOT_KEY) || "{}"); } catch { return {}; } };
+  const [presetSlots, setPresetSlots] = useState(readSlots);
+  const applyPatch = (patch) => { setPrefs((cur) => ({ ...cur, ...patch })); setImportNotice("Preset applied - review and Save to keep it."); };
+  const saveSlot = (i) => {
+    const next = { ...readSlots(), [i]: { name: p.custom_label || `Preset ${i}`, patch: { ...p }, at: Date.now() } };
+    try { localStorage.setItem(PRESET_SLOT_KEY, JSON.stringify(next)); } catch {}
+    setPresetSlots(next); setImportNotice(`Saved as preset ${i} on this device.`);
+  };
+  const applySlot = (i) => { const s = readSlots()[i]; if (s?.patch) { setPrefs({ ...DEFAULT_PREFS, ...s.patch }); setImportNotice(`Loaded preset ${i} - Save to keep it.`); } };
+
   const exportPrefs = async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(p, null, 2));
@@ -291,6 +313,21 @@ export default function TimeTrackerSettings({ currentUser, sessionToken = "" }) 
           <Hourglass className="w-5 h-5 text-indigo-600" />
           Time Tracker
         </h3>
+        <div className="mt-2 mb-1 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Presets</span>
+          {Object.entries(ROLE_PRESETS).map(([k, r]) => (
+            <button key={k} type="button" onClick={() => applyPatch(r.patch)} className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:bg-slate-50" title={r.label}>{r.label}</button>
+          ))}
+          {Object.entries(SOUND_THEMES).map(([k, t]) => (
+            <button key={k} type="button" onClick={() => applyPatch(t.patch)} className="rounded-full border border-indigo-200 px-2 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-50" title={`${t.label} theme`}>{t.label}</button>
+          ))}
+          {[1, 2, 3].map((i) => (
+            <span key={i} className="inline-flex gap-0.5">
+              <button type="button" onClick={() => applySlot(i)} className="rounded-l-full border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-50" title={presetSlots[i]?.name || `Empty slot ${i}`}>{presetSlots[i] ? `P${i}` : `P${i}·`}</button>
+              <button type="button" onClick={() => saveSlot(i)} className="rounded-r-full border-y border-r border-emerald-200 px-1.5 py-0.5 text-[10px] text-emerald-500 hover:bg-emerald-50" title={`Save current as preset ${i}`}>+</button>
+            </span>
+          ))}
+        </div>
         <div className="flex items-center gap-1.5">
           <button type="button" onClick={exportPrefs} disabled={saving}
             className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Copy settings JSON to clipboard">
