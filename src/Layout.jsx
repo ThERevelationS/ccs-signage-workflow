@@ -145,7 +145,7 @@ function ShellViewControls({
         onClick={onToggleCompact}
         aria-pressed={compactView}
         title={compactView ? "Return navigation to comfortable spacing" : "Use compact navigation spacing"}
-        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${compactView
+        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[10px] whitespace-nowrap" : "gap-1 px-1.5 text-[10px] whitespace-nowrap"} ${compactView
           ? "bg-violet-400/20 text-violet-100 shadow-inner"
           : "text-slate-200 hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
@@ -161,7 +161,7 @@ function ShellViewControls({
         onClick={onToggleCollapsed}
         aria-pressed={collapsed}
         title={collapsed ? "Pin navigation open" : "Collapse navigation; hover the screen edge to peek"}
-        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${collapsed
+        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[10px] whitespace-nowrap" : "gap-1 px-1.5 text-[10px] whitespace-nowrap"} ${collapsed
           ? "bg-cyan-400/15 text-cyan-100 shadow-inner"
           : "text-slate-200 hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
@@ -244,6 +244,13 @@ function LayoutContent({ children }) {
   useEffect(() => {
     setNavOrder(loadNavOrder(currentUser?.email));
   }, [currentUser?.email]);
+
+  // Tab title fallback: pages that set their own title override this once mounted.
+  useEffect(() => {
+    const segment = (location.pathname || "/").split("/").filter(Boolean).pop() || "MyWorkflow";
+    const name = segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[-_]/g, " ").trim();
+    document.title = name + " - Workflow Manager";
+  }, [location.pathname]);
 
   const orderedNavItems = useMemo(() => applyNavOrder(navigationItems, navOrder), [navOrder]);
 
