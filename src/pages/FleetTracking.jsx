@@ -181,7 +181,9 @@ export default function FleetTracking() {
         loadNotifications();
         if (!s?.needsReconnect) {
           loadVehicles();
-          if (currentUser?.role === "admin") syncNotifications();
+          // bouncieSyncNotifications is heavy; the scheduled workflow syncs
+          // every 30 min. Browser triggers stay manual (refresh button /
+          // post-connect flow) instead of firing automatically at mount.
         } else {
           setVehiclesLoading(false);
         }
