@@ -23,6 +23,10 @@ const FAQ = [
     a: "The labor you're on right now - fabrication, install, a specific WorkOrder. It feeds job costing; recent jobs are pinned as quick-pick chips so switching takes one tap.",
   },
   {
+    q: "How do I enroll my face?",
+    a: "A manager opens Time Clock Admin → Face Enrollment and records your photo on a kiosk or phone camera - it takes about 10 seconds. Tip: enrollment works best in even lighting with your hat and glasses off.",
+  },
+  {
     q: "Where do my hours go?",
     a: "The Time Tracker counts paid time live. The popover shows your weekly grid, PTO balance, pay-period progress, and an Export button for your full punch history.",
   },
