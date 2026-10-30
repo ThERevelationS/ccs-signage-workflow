@@ -5,9 +5,8 @@ import { History, Trash2, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import FieldHistoryDialog from '@/components/shared/FieldHistoryDialog';
-import { staffEntities } from "@/components/staff/staffEntities";
 
-const CellHistory = staffEntities.CellHistory;
+const CellHistory = base44.entities.CellHistory;
 
 export function CellContextMenu({ 
   position, 
@@ -56,7 +55,7 @@ export function CellContextMenu({
       style={{ top: position.y, left: position.x }}
     >
       {(Array.isArray(actions) ? actions : []).map((action, index) => (
-        <button
+        <button type="button"
           key={index}
           disabled={action.disabled}
           className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 disabled:opacity-40"
@@ -71,7 +70,7 @@ export function CellContextMenu({
           {action.label}
         </button>
       ))}
-      <button
+      <button type="button"
         className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
         onMouseDown={(e) => {
           e.preventDefault();
@@ -83,7 +82,7 @@ export function CellContextMenu({
         Field History
       </button>
       {isRegistered && (
-        <button
+        <button type="button"
           className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
           onMouseDown={(e) => {
             e.preventDefault();
