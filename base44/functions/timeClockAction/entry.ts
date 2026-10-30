@@ -3685,7 +3685,7 @@ Deno.serve(async (req) => {
         todays_schedule: todaysSchedule,
         todays_segments: todaysSegments,
         paid_break_minutes_today: todaysSegments.filter((seg: any) => seg.kind === 'paid_break').reduce((sum: number, seg: any) => sum + Math.max(0, ((seg.end ? new Date(seg.end).getTime() : Date.now()) - new Date(seg.start).getTime()) / 60000), 0),
-        projected_overtime_minutes: Math.max(0, weeklyPaid + remainingScheduledMinutes - 2400),
+        projected_overtime_minutes: Math.max(0, weeklyPaid + (() => { const et = String(todaysSchedule?.end_time || ''); const [eh, em] = et.split(':').map(Number); if (!Number.isFinite(eh)) return 0; const now = new Date(); const endMs = new Date(now); endMs.setHours(eh, em || 0, 0, 0); if (endMs.getTime() <= now.getTime()) return 0; return Math.min(480, Math.round((endMs.getTime() - now.getTime()) / 60000)); })() - 2400),
         team_clocked_in_count: teamCount,
         company_day: dateKeyInCompanyTime(serverNow.toISOString()),
         prefs,
