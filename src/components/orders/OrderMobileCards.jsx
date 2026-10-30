@@ -40,7 +40,7 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
         const dateReceived = safeOrderMobileDate(order.date_received);
         const dateReceivedOption = typeof order.receipt_option === 'string' ? order.receipt_option.trim() : '';
         return (
-          <button
+          <button type="button"
             key={order.id}
             type="button"
             className="clay-card block w-full p-4 text-left cursor-pointer active:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
