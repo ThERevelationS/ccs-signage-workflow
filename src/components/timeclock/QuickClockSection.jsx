@@ -917,13 +917,16 @@ export default function QuickClockSection({
     try {
       const [modelsReady, stream] = await Promise.all([
         faceEnabled ? loadFaceModels() : Promise.resolve(false),
-        navigator.mediaDevices.getUserMedia({
+        Promise.race([
+          navigator.mediaDevices.getUserMedia({
           video: (() => {
             const pref = (() => { try { return localStorage.getItem("ccs_kiosk_camera_id"); } catch { return null; } })();
             const base = { width: { ideal: 1280 }, height: { ideal: 720 } };
             return pref ? { ...base, deviceId: { exact: pref } } : { ...base, facingMode: "user" };
           })(),
         }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Camera start timed out. Check that the camera is connected and permissions are granted.")), 12000)),
+        ]),
       ]);
       if (faceRun !== faceRunRef.current) {
         stream.getTracks().forEach((track) => track.stop());
