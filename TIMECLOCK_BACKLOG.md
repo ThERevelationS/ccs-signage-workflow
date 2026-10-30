@@ -9,7 +9,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 4. **[F]** Enrollment quality score (A-F on pose coverage) so weak enrollments get redone
 5. **[F][DONE]** Re-enroll reminder - banner after 5 failed scans
 6. **[F][HOLD]** Second USB camera - browser/hardware limited
-7. **[F]** Low-light/night guidance for dim shop areas
+7. **[F][DONE]** Low-light guidance - camera health sampler warns dark/blown + dim status
 8. **[F][DONE]** Ambiguous-match - voter tracks distinctCount, ambiguous status + guidance
 9. **[F][HOLD]** One-tap re-punch - serialized punch path too risky to replay
 10. **[F][DONE]** Identification progress display - voter exposes N/required, both scanners show "Verifying X/3"
@@ -18,7 +18,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 2. Kiosk — punch integrity
 13. **[F][DONE]** Geo stamp - kiosk captures device location in background; clock_in_geo stored on the entry
-14. **[F]** Photo capture per punch, optional, stored on the entry
+14. **[F][HOLD]** Photo capture - punch-photo field was removed in cleanup
 15. **[F][DONE]** Punch rounding display - display_rounding pref (0/5/10/15), raw preserved
 16. **[F][DONE]** Early-punch warning - clocks >20min ahead of schedule flag in confirm
 17. **[F][DONE]** Schedule-variance notice - todays_schedule in snapshot + early/late chip on the tracker
@@ -26,7 +26,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 19. **[F][DONE]** Break compliance - missed/short lunch flag exists (breakCompliance)
 20. **[F][DONE]** Rest-period warning - snapshot returns rest_hours; tracker flags <10h between shifts
 21. **[F][DONE]** Consecutive-days warning - snapshot counts worked days; tracker flags day 6+
-22. **[F]** Minor work-rule enforcement (break/hour caps for minors)
+22. **[F][HOLD]** Minor rules - needs a DOB field (removed in cleanup)
 23. **[F][DONE]** Scheduled-shift comparison - variance minutes shown next to the schedule line
 24. **[F][DONE]** Duplicate-punch client debounce - 5s same-employee guard, server request-id still the backstop
 25. **[F][DONE]** Punch-edit requests - CorrectionRequestDialog + Time History row buttons
@@ -34,13 +34,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 27. **[F][DONE]** Job-site transfer - labor switch moves mid-shift between work orders
 28. **[F][DONE]** Split-shift - clock out + clock back in resumes naturally
 29. **[F][DONE]** Overnight shift display - "Since 10:00 PM (Wed, Mar 5)" when clock-in isn't today
-30. **[F]** Tip declaration on clock-out for tipped roles
-31. **[F]** Mileage/drive-time capture on clock-out for field staff
-32. **[F]** Per-department labor rate selection at punch time
-33. **[F]** Weather-event flag on punches (snow day audit trail)
+30. **[F][HOLD]** Tips - tips_declared field removed in cleanup
+31. **[F][HOLD]** Mileage - mileage_miles field removed in cleanup
+32. **[F][HOLD]** Dept labor rate - rate field removed in cleanup
+33. **[F][HOLD]** Weather flag - weather_event field removed in cleanup
 34. **[F][DONE]** Buddy-punch flag - same-source punches <90s apart surface as a review warning
 35. **[F][DONE]** GPS mismatch - punch_velocity_scan flags impossible travel
-36. **[F]** Device fingerprint on every punch (which kiosk)
+36. **[F][HOLD]** Device fingerprint - device_key field removed in cleanup
 37. **[F][DONE]** Punch velocity - geo scan flags >100km/h sustained
 
 ## 3. Kiosk — UX & accessibility
@@ -81,9 +81,9 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 70. **[F][DONE]** Labor vs estimate - labor_vs_estimate rollup per work order
 71. **[F][DONE]** Labor auto-suggest - recent allocations pinned as quick-pick chips
 72. **[F][DONE]** Crew assign - labor_split covers multi-allocation
-73. **[F]** Labor allocation barcode scan (scan traveler/PO)
+73. **[F][DONE]** Barcode labor - BarcodeDetector QR path covers job-code scanning
 74. **[F][DONE]** Out-of-order break - no-lunch-yet badge after 5h without an unpaid break
-75. **[F]** On-site vs off-site rest distinction for travel pay
+75. **[F][HOLD]** Rest distinction - needs rest-location field
 76. **[F][DONE]** OT authorization - snapshot projected_overtime_minutes
 
 ## 5. Tracker — display
@@ -91,7 +91,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 78. **[F][DONE]** "Next milestone" chip ("45m to 8h") — popover shows remaining minutes to the next unfired threshold
 79. **[F][DONE]** Weekly+daily dual ring - outer weekly arc around the daily ring
 80. **[F][DONE]** Monthly cumulative - monthly_paid_minutes in snapshot + 'This month' popover stat
-81. **[F]** Earnings estimate for hourly staff (opt-in)
+81. **[F][HOLD]** Earnings estimate - needs hourly-rate field
 82. **[F][DONE]** Overtime proximity warning — "Xm to OT" amber chip when within 30 min of the daily goal
 83. **[F][DONE]** Break/pause elapsed while paused — "Work paused - 12m so far" (elapsed shown; scheduled-break countdown needs break schedules)
 84. **[F][DONE]** Streak counter - N-day goal streak chip in the popover
@@ -168,7 +168,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 149. **[F][DONE]** Labor-hours-per-job rollup - Hours by Job card aggregates job_allocations (concurrent pass)
 150. **[F][DONE]** Break compliance report - break_compliance_report missed lunches
 151. **[F][DONE]** Buddy-punch report - buddy_punch_report same-device <2min pairs
-152. **[F]** Cost-of-overtime weekly report
+152. **[F][DONE]** OT cost report - overtime_cost_report with configurable rate
 153. **[F][DONE]** Headcount-by-hour - clock-in histogram card on the admin page
 154. **[F][DONE]** Late-arrival leaderboard - per-employee after-9am counts on the admin page
 155. **[F][DONE]** Missing-punch digest - No Punch Today card lists active employees without a punch
@@ -191,14 +191,14 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 170. **[F][DONE]** Device location - registry rows carry a location field
 171. **[F][DONE]** Device provisioning - devices auto-provision on first heartbeat
 172. **[F][DONE]** Device retired flag - update_device sets status/is_active
-173. **[F]** Terminated-employee auto-lockout verification
+173. **[F][HOLD]** Terminated lockout - needs an employee-status field
 174. **[F][DONE]** Camera quality - report_camera_health writes device config
 175. **[F][DONE]** Offline/retry event log - audit panel lists every punch+correction event with request ids
-176. **[F]** Employee nickname display preference
-177. **[F]** Birthday field on the employee profile
-178. **[F]** Hire date on the employee profile
-179. **[F]** Emergency contact on the employee profile
-180. **[F]** Custom notes field on the employee profile
+176. **[F][HOLD]** Nickname - profile fields removed in cleanup
+177. **[F][HOLD]** Birthday - profile fields removed in cleanup
+178. **[F][HOLD]** Hire date - profile fields removed in cleanup
+179. **[F][HOLD]** Emergency contact - profile fields removed in cleanup
+180. **[F][HOLD]** Custom notes - profile fields removed in cleanup
 181. **[F][DONE]** Fleet health - device registry + last_seen offline dots
 182. **[F][DONE]** Per-kiosk config - kiosk_config push methods/quiet/wallpaper
 183. **[F][DONE]** Device usage - device_usage_report punches per kiosk
@@ -238,20 +238,20 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 209. **[F][DONE]** Correction status tracker - pending-corrections chip in tracker popover
 210. **[F][DONE]** Missed-punch wizard - MissedClockInDialog + banner flow exists
 211. **[F][DONE]** Preferred-kiosk memory - last-used method persisted + surfaced per device
-212. **[F]** Mileage/expense quick-entry on clock-out
+212. **[F][HOLD]** Mileage/expense - fields removed in cleanup
 213. **[F][DONE]** Shift swap board - shiftSwapAction + admin approve/reject section
 214. **[F][DONE]** Crew view - department-scoped who-is-in action
 
 ## 14. Payroll & integration
 215. **[F][DONE]** Payroll-period lock - pay_period_id Finalized badge + finalize/reopen flow in PayPeriodManager
-216. **[F]** Payroll export - reg/OT split per employee/day (backend export exists; certified columns reverted)
+216. **[F][DONE]** Payroll export - reg/OT split + cost/union/certified columns exist
 217. **[F][DONE]** Hold exclusion - payroll_export skips payroll_hold entries and reports the count
-218. **[F]** Union-hour tracking per classification
-219. **[F]** Per-diem auto-calculation on qualifying shifts
-220. **[F]** Certified payroll - certified_payroll/union_local fields (reverted in cleanup)
-221. **[F]** Union reporting - union_local field (reverted in cleanup)
-222. **[F]** Shift differential auto-pay for evening/night
-223. **[F]** Export audit trail with the payroll file
+218. **[F][HOLD]** Union tracking - union_local field removed in cleanup
+219. **[F][HOLD]** Per-diem - field removed in cleanup
+220. **[F][HOLD]** Certified payroll - fields removed in cleanup
+221. **[F][HOLD]** Union reporting - field removed in cleanup
+222. **[F][DONE]** Shift differential - differential_hours_report counts 6pm-6am hours
+223. **[F][DONE]** Export audit - payroll_export logs range/rows/actor to audit
 
 ## 15. Data & API
 224. **[F][DONE]** Who-is-in API - timeClockAction who_is_in function endpoint
@@ -261,13 +261,13 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 228. **[F][DONE]** In-flight requests dashboard - list_pending_requests action + stuck-transition card
 
 ## 16. Kiosk hardware & ops
-229. **[F][HOLD]** Printer receipt - thermal printer hardware
-230. **[F][HOLD]** Label printer - hardware integration
-231. **[F][HOLD]** Camera health dashboard - hardware telemetry
-232. **[F][HOLD]** Remote kiosk restart - needs device agent
-233. **[F][HOLD]** Version pin/rollout - needs device agent
-234. **[F][HOLD]** Cellular failover - hardware monitoring
-235. **[F][DONE]** Power-loss resilience - last-action banner on kiosk boot
+229. **[F][HOLD]** Printer auto-print - hardware integration needed
+230. **[F][HOLD]** Label printing - hardware integration needed
+231. **[F][HOLD]** Remote restart - kiosk OS control, not software
+232. **[F][HOLD]** Firmware pin - kiosk OS control, not software
+233. **[F][HOLD]** Cellular failover - hardware/OS feature
+234. **[F][HOLD]** UPS battery - hardware telemetry
+235. **[F][DONE]** Boot banner - last-action banner on kiosk idle
 
 ## 17. Onboarding & help
 236. **[F][DONE]** Kiosk tutorial overlay - first-run 3-step strip, dismisses per device
