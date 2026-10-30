@@ -185,29 +185,75 @@ function cleanSort(value: unknown, entityName: string) {
   return sort;
 }
 
-// Read-filter operators allowed on non-denied fields. Anything that scans or
-// evaluates ($regex/$where/$expr/$or/...) stays blocked — those turn a filter
-// into a boolean oracle on fields the projection denies.
-const SAFE_READ_OPERATORS = new Set(["$in", "$nin", "$lt", "$lte", "$gt", "$gte", "$ne", "$exists"]);
+// The only filter operators a staff read may use. Comparison/set operators are
+// safe on ordinary fields; logical operators ($or/$and/$nor) stay refused so a
+// filter can never assemble a query the gateway did not scope itself.
+const ALLOWED_OPERATORS = new Set([
+  '$eq', '$ne', '$in', '$nin', '$gt', '$gte', '$lt', '$lte', '$exists', '$regex', '$options',
+]);
+const MAX_IN_VALUES = 200;
+const MAX_REGEX_LENGTH = 200;
+
+function checkOperatorValue(operator: string, value: unknown) {
+  if (operator === '$in' || operator === '$nin') {
+    if (!Array.isArray(value) || value.length === 0 || value.length > MAX_IN_VALUES) {
+      throw Object.assign(new Error(`Staff read ${operator} needs 1 to ${MAX_IN_VALUES} values.`), { status: 400 });
+    }
+    for (const entry of value) {
+      if (entry && typeof entry === 'object') {
+        throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
+      }
+    }
+    return;
+  }
+  if (operator === '$exists') {
+    if (typeof value !== 'boolean') {
+      throw Object.assign(new Error('Staff read $exists needs true or false.'), { status: 400 });
+    }
+    return;
+  }
+  if (operator === '$regex' || operator === '$options') {
+    if (typeof value !== 'string' || value.length > MAX_REGEX_LENGTH) {
+      throw Object.assign(new Error('Staff read search pattern is not allowed.'), { status: 400 });
+    }
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
+  }
+}
 
 function cleanQuery(value: unknown, entityName: string) {
   if (value == null) return null;
-  if (typeof value !== "object" || Array.isArray(value)) {
-    throw Object.assign(new Error("Staff read filter must be an object."), { status: 400 });
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw Object.assign(new Error('Staff read filter must be an object.'), { status: 400 });
   }
-  const denied = new Set(FIELD_DENYLIST[entityName] || []);
-  const stack: Array<{ node: any; field: string }> = [{ node: value, field: "" }];
+  // Operators are allowed only directly on a top-level field, never on a
+  // denylisted field (that would turn output-denied data into a boolean
+  // oracle) and never nested deeper than one level.
+  const deniedFields = new Set(FIELD_DENYLIST[entityName] || []);
+  const stack: any[] = [{ node: value, field: '', depth: 0 }];
   while (stack.length) {
-    const { node, field } = stack.pop();
-    if (!node || typeof node !== "object") continue;
+    const { node, field, depth } = stack.pop();
+    if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
     for (const [key, val] of Object.entries(node)) {
-      if (key.startsWith("$")) {
-        if (!field || denied.has(field) || !SAFE_READ_OPERATORS.has(key)) {
-          throw Object.assign(new Error("Staff read filter operators are not allowed."), { status: 400 });
+      if (key.startsWith('$')) {
+        if (depth !== 1 || !field) {
+          throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
         }
+        if (!ALLOWED_OPERATORS.has(key)) {
+          throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
+        }
+        if (deniedFields.has(field)) {
+          throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
+        }
+        checkOperatorValue(key, val);
         continue;
       }
-      if (val && typeof val === "object" && !Array.isArray(val)) stack.push({ node: val, field: key });
+      if (val && typeof val === 'object') {
+        // Exactly one level below a top-level field may hold operators.
+        stack.push({ node: val, field: key, depth: depth + 1 });
+      }
     }
   }
   let serialized;
