@@ -199,6 +199,9 @@ export default function QuickClockSection({
   const qrScannerRef = useRef(null);
   const faceScanSessionRef = useRef(null);
   const qrLoopRef = useRef(0);
+  const healthCanvasRef = useRef(null);
+  const healthTimerRef = useRef(null);
+  const [cameraHealth, setCameraHealth] = useState("ok");
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const faceRunRef = useRef(0);
@@ -433,6 +436,8 @@ export default function QuickClockSection({
   const stopFaceCamera = () => {
     faceRunRef.current += 1;
     qrLoopRef.current += 1;
+    if (healthTimerRef.current) clearTimeout(healthTimerRef.current);
+    setCameraHealth("ok");
     faceScanSessionRef.current?.stop();
     faceScanSessionRef.current = null;
     if (streamRef.current) {
@@ -941,6 +946,27 @@ export default function QuickClockSection({
         };
         setTimeout(tick, 400);
       }
+
+      // Camera health self-test - sample frame brightness every 5s and warn
+      // when the lens is dark/dirty so scan failures aren't silent.
+      const healthRun = faceRun;
+      const healthTick = () => {
+        if (healthRun !== faceRunRef.current) return;
+        const v = videoRef.current;
+        if (v && v.readyState >= 2) {
+          try {
+            const c = healthCanvasRef.current || (healthCanvasRef.current = document.createElement("canvas"));
+            c.width = 32; c.height = 24;
+            c.getContext("2d").drawImage(v, 0, 0, 32, 24);
+            const d = c.getContext("2d").getImageData(0, 0, 32, 24).data;
+            let sum = 0; for (let i = 0; i < d.length; i += 4) sum += (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11);
+            const brightness = sum / (d.length / 4);
+            setCameraHealth(brightness < 30 ? "dark" : brightness > 225 ? "blown" : "ok");
+          } catch {}
+        }
+        healthTimerRef.current = setTimeout(healthTick, 5000);
+      };
+      healthTimerRef.current = setTimeout(healthTick, 2000);
 
       if (!faceEnabled || !modelsReady) {
         setRecognitionStatus("BarcodeDetector" in window
@@ -1850,6 +1876,11 @@ export default function QuickClockSection({
               <div className="relative mb-4">
                 <div className="relative inline-block">
                   <video ref={videoRef} autoPlay muted playsInline className={`w-80 h-60 object-cover rounded-2xl bg-gray-900 ${cameraMirrored ? "scale-x-[-1]" : ""}`} />
+                  {cameraHealth !== "ok" && (
+                    <p className="absolute bottom-2 left-2 rounded-md bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
+                      {cameraHealth === "dark" ? "Camera too dark - check lighting/lens" : "Camera too bright - adjust angle"}
+                    </p>
+                  )}
                   <button type="button" onClick={toggleCameraMirror}
                     className="absolute right-2 top-2 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-black/70"
                     title="Flip camera preview">
