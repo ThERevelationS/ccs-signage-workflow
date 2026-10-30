@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const CellHistory = staffEntities.CellHistory;
 const ActivityLog = staffEntities.ActivityLog;
@@ -62,10 +63,10 @@ export default function ActivityFeed() {
   useEffect(() => {
     if (!liveTail) return undefined;
     // Jittered cadence + hidden-tab skip — a fleet of open tabs polling in
-    // lockstep spikes the entity read path; ~15–20s with visibility checks
-    // keeps the feed live without the thundering herd.
-    const jitteredTick = () => { if (!document.hidden) loadActivities(); };
-    const id = setInterval(jitteredTick, 15000 + Math.floor(Math.random() * 5000));
+    // lockstep spikes the entity read path; ~60–65s with visibility and
+    // rate-limit checks keeps the feed fresh without the thundering herd.
+    const jitteredTick = () => { if (!document.hidden && !isFleetCoolingDown()) loadActivities(); };
+    const id = setInterval(jitteredTick, 60000 + Math.floor(Math.random() * 5000));
     return () => clearInterval(id);
   }, [liveTail, filterType, limit]);
 
