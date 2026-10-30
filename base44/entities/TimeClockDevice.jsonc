@@ -1,5 +1,4 @@
 {
-  "type": "object",
   "name": "TimeClockDevice",
   "properties": {
     "device_name": {
@@ -30,8 +29,8 @@
     },
     "last_seen_at": {
       "type": "string",
-      "description": "Updated whenever the kiosk registers or punches",
-      "format": "date-time"
+      "format": "date-time",
+      "description": "Updated whenever the kiosk registers or punches"
     },
     "firmware_version": {
       "type": "string",
@@ -51,6 +50,11 @@
       "type": "boolean",
       "default": true
     },
+    "config": {
+      "type": "object",
+      "description": "Admin-pushed kiosk settings: enabled_methods, quiet_hours, wallpaper_note - fetched by the device on load",
+      "additionalProperties": true
+    },
     "provisioned_at": {
       "type": "string",
       "format": "date-time"
@@ -63,9 +67,6 @@
       "default": false
     }
   },
-  "required": [
-    "device_key"
-  ],
   "rls": {
     "create": {
       "user_condition": {
@@ -87,5 +88,8 @@
         "role": "timeclock_backend_only"
       }
     }
-  }
+  },
+  "required": [
+    "device_key"
+  ]
 }
