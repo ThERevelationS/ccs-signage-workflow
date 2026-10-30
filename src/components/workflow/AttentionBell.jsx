@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { usePolling } from "@/lib/usePolling";
 
 const SECTION_KEYS = [
   "unread_portal_messages",
@@ -37,16 +37,9 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
     } catch { /* fail soft — bell just stays quiet */ }
   }, [sessionToken]);
 
-  useEffect(() => {
-    load();
-    // Skip the poll while the tab is hidden or the 429 breaker is open —
-    // keeps the attention_feed calls (and their entity_list budget) from
-    // piling up in the background.
-    const t = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) load(); }, 180000);
-    const onVisible = () => { if (!document.hidden) load(); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
-  }, [load]);
+  // usePolling already skips hidden tabs and open 429 breakers and only
+  // refreshes on focus when the interval was due.
+  usePolling(load, 180000);
 
   return (
     <button
