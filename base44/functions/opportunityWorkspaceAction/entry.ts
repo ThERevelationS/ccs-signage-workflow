@@ -534,21 +534,23 @@ Deno.serve(async (req) => {
     if (action === "attention_feed") {
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
+      let afFailed = false;
+      const afFail = () => { afFailed = true; return []; };
       const feedRows: any[] = afCached ? attentionFeedRowsCache!.rows : await Promise.all([
-        PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(() => []),
-        Invoice.filter({}, "-updated_date", 200).catch(() => []),
-        PurchaseOrder.filter({}, "-updated_date", 200).catch(() => []),
-        ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(() => []),
-        Opportunity.filter({}, "-last_activity_at", 300).catch(() => []),
-        EstimatingRequest.filter({}, "-created_date", 200).catch(() => []),
-        Inventory.filter({}, "-updated_date", 300).catch(() => []),
-        WorkOrder.filter({}, "-updated_date", 300).catch(() => []),
-        PermitLineItem.filter({}, "-updated_date", 300).catch(() => []),
-        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
-        Estimate.filter({ pipeline_sync_pending: true }, "-updated_date", 100).catch(() => []),
-        BuilderPart.filter({ needs_recalc: true }, "-updated_date", 150).catch(() => []),
+        PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(afFail),
+        Invoice.filter({}, "-updated_date", 200).catch(afFail),
+        PurchaseOrder.filter({}, "-updated_date", 200).catch(afFail),
+        ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(afFail),
+        Opportunity.filter({}, "-last_activity_at", 300).catch(afFail),
+        EstimatingRequest.filter({}, "-created_date", 200).catch(afFail),
+        Inventory.filter({}, "-updated_date", 300).catch(afFail),
+        WorkOrder.filter({}, "-updated_date", 300).catch(afFail),
+        PermitLineItem.filter({}, "-updated_date", 300).catch(afFail),
+        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(afFail),
+        Estimate.filter({ pipeline_sync_pending: true }, "-updated_date", 100).catch(afFail),
+        BuilderPart.filter({ needs_recalc: true }, "-updated_date", 150).catch(afFail),
       ]);
-      if (!afCached) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
+      if (!afCached && !afFailed) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = feedRows;
       const list = (v: any) => (Array.isArray(v) ? v : []);
 
@@ -673,6 +675,7 @@ Deno.serve(async (req) => {
 
       return Response.json({
         success: true, action, today,
+        ...(afFailed ? { partial: true } : {}),
         unread_portal_messages: unreadMessages,
         overdue_invoices: overdueInvoices,
         overdue_invoice_total: overdueInvoiceTotal,
