@@ -775,7 +775,14 @@ export default function QuickClockSection({
 
       lastPunchRef.current = { email: normEmail, at: Date.now() };
       showNotification("in", data.user?.full_name || user.full_name || email, data.entry?.clock_in || new Date().toISOString());
-      setRecognitionStatus("Clock-in confirmed by server.");
+      const clockInAt = data.entry?.clock_in ? new Date(data.entry.clock_in) : new Date();
+      const lunchEta = new Date(clockInAt.getTime() + 4.5 * 3600000);
+      const schedStart = data.todays_schedule?.scheduled_start || data.todays_schedule?.start_time || "";
+      const early = schedStart ? (() => { const [sh, sm] = String(schedStart).split(":").map(Number); const sMin = sh * 60 + (sm || 0); const pMin = clockInAt.getHours() * 60 + clockInAt.getMinutes(); return sMin - pMin > 20 ? Math.round(sMin - pMin) : 0; })() : 0;
+      setRecognitionStatus(
+        `Clocked in at ${format(clockInAt, "h:mm a")} — lunch reminder ~${format(lunchEta, "h:mm a")}.` +
+        (early ? ` (${early}m ahead of your ${schedStart} schedule)` : "")
+      );
       setClockOutDismissed(data.entry?.id, true);
       scheduleDisplayReset(5000);
       return data;
