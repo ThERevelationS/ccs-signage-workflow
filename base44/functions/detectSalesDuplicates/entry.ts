@@ -4,6 +4,7 @@ import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportC
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // Fire-and-forget automation emit — a failure must never break the scan.
 async function emitRecordAutomation(base44: any, eventType: string, recordId: string, actor: string) {
@@ -39,7 +40,7 @@ function similarity(a, b) {
 
 Deno.serve(async (req) => {
   try {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: 250 });
   const body = await req.json().catch(() => ({}));
   const isScheduled = await hasWorkflowInvocationCapability(body, 'detectSalesDuplicates');
 
