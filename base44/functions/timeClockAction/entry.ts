@@ -11179,6 +11179,84 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
     }
 
+    if (action === 'buddy_punch_report') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const rows = await entryEntity.filter({}, '-clock_in', 2000).catch(() => []);
+      const clean = (Array.isArray(rows) ? rows : []).filter((e: any) => e.clock_in && e.archived_test_data !== true && e.archived_admin !== true);
+      const pairs = [];
+      const byDay = new Map();
+      for (const e of clean) { const dk = dateKeyInCompanyTime(e.clock_in); if (!byDay.has(dk)) byDay.set(dk, []); byDay.get(dk).push(e); }
+      for (const [date, list] of byDay) {
+        const sorted = list.sort((a: any, b: any) => new Date(a.clock_in) - new Date(b.clock_in));
+        for (let i = 1; i < sorted.length; i += 1) {
+          const gap = Math.abs(new Date(sorted[i].clock_in) - new Date(sorted[i - 1].clock_in));
+          if (gap < 120000 && sorted[i].user_email !== sorted[i - 1].user_email && sorted[i].device_key && sorted[i].device_key === sorted[i - 1].device_key) {
+            pairs.push({ date, a: sorted[i - 1].user_name || sorted[i - 1].user_email, b: sorted[i].user_name || sorted[i].user_email, gap_seconds: Math.round(gap / 1000), device: sorted[i].device_key });
+          }
+        }
+      }
+      return Response.json({ success: true, pairs: pairs.slice(0, 100) });
+    }
+
+    if (action === 'session_audit_alerts') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const audits = await auditEntity.filter({}, '-server_timestamp', 300).catch(() => []);
+      const alerts = (Array.isArray(audits) ? audits : []).filter((a: any) => {
+        const act = String(a.action || '');
+        return (act.includes('revoke') || act.includes('rotate') || act.includes('lockout')) && Date.now() - new Date(a.server_timestamp || 0).getTime() < 86400000;
+      }).slice(0, 50).map((a: any) => ({ email: a.user_email || a.actor_email, action: a.action, at: a.server_timestamp }));
+      return Response.json({ success: true, alerts });
+    }
+
+    if (action === 'bulk_import_entries') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required for bulk imports.' }, { status: 403 });
+      const rows = Array.isArray(body.rows) ? body.rows.slice(0, 500) : [];
+      if (!rows.length) return Response.json({ success: false, error: 'rows[] is required.' }, { status: 400 });
+      let imported = 0; const errors = [];
+      for (const [i, r] of rows.entries()) {
+        const email = asEmail(r.user_email);
+        if (!email || !r.clock_in || !r.clock_out) { errors.push(`row ${i + 1}: needs user_email, clock_in, clock_out`); continue; }
+        const hrs = Math.max(0, (new Date(r.clock_out) - new Date(r.clock_in)) / 3600000);
+        const created = await entryEntity.create({ user_email: email, user_name: String(r.user_name || email), clock_in: r.clock_in, clock_out: r.clock_out, status: 'clocked_out', total_hours: Math.round(hrs * 100) / 100, clock_source: 'bulk_import', notes: String(r.notes || '') }).catch(() => null);
+        if (created?.id) imported += 1; else errors.push(`row ${i + 1}: create failed`);
+      }
+      return Response.json({ success: true, imported, errors: errors.slice(0, 20) });
+    }
+
+    if (action === 'my_data_export') {
+      const entries = await entryEntity.filter({ user_email: target.email }, '-clock_in', 1000).catch(() => []);
+      const clean = (Array.isArray(entries) ? entries : []).filter((e: any) => e.archived_test_data !== true && e.archived_admin !== true);
+      return Response.json({ success: true, employee: publicEmployee(target), entries: clean, exported_at: new Date().toISOString() });
+    }
+
+    if (action === 'auto_clockout_sweep') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const limitH = Math.max(8, Math.min(24, Number(body.max_hours || 16)));
+      const cutoff = Date.now() - limitH * 3600000;
+      const rows = await entryEntity.filter({ status: 'clocked_in' }, '-clock_in', 500).catch(() => []);
+      const stale = (Array.isArray(rows) ? rows : []).filter((e: any) => e.clock_in && new Date(e.clock_in).getTime() < cutoff && e.archived_test_data !== true && e.archived_admin !== true);
+      return Response.json({ success: true, stale_count: stale.length, entries: stale.slice(0, 50).map((e: any) => ({ id: e.id, user: e.user_name || e.user_email, clock_in: e.clock_in, hours_open: Math.round((Date.now() - new Date(e.clock_in).getTime()) / 3600000) })) });
+    }
+
+    if (action === 'kiosk_config') {
+      // Per-kiosk pushed config: enabled methods, quiet hours, wallpaper note.
+      // GET with just device_key returns the stored config; POST patches it.
+      const devKey = typeof body.device_key === 'string' ? body.device_key.trim() : '';
+      if (!devKey) return Response.json({ success: false, error: 'device_key is required.' }, { status: 400 });
+      const rows = await deviceEntity.filter({ device_key: devKey }, '-updated_date', 1).catch(() => []);
+      const dev = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      if (!dev?.id) return Response.json({ success: false, error: 'Device not registered.' }, { status: 404 });
+      if (body.get === true) return Response.json({ success: true, config: dev.config || {}, device_name: dev.device_name });
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required to push kiosk config.' }, { status: 403 });
+      const config = dev.config && typeof dev.config === 'object' ? { ...dev.config } : {};
+      if (typeof body.enabled_methods === 'string' && body.enabled_methods.length <= 50) config.enabled_methods = body.enabled_methods;
+      if (typeof body.quiet_hours === 'string' && /^\d{1,2}-\d{1,2}$/.test(body.quiet_hours)) config.quiet_hours = body.quiet_hours;
+      if (typeof body.wallpaper_note === 'string') config.wallpaper_note = body.wallpaper_note.slice(0, 120);
+      if (typeof body.config === 'object' && body.config) for (const [k, v] of Object.entries(body.config)) if (typeof v === 'string' && v.length <= 120) config[k] = v;
+      await deviceEntity.update(dev.id, { config }).catch(() => null);
+      return Response.json({ success: true, config });
+    }
+
     if (action === 'punch_fraud_scan') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const rows = await entryEntity.filter({}, '-clock_in', 500).catch(() => []);
