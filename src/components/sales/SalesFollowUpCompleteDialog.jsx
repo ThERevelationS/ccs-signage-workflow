@@ -92,7 +92,7 @@ export default function SalesFollowUpCompleteDialog({ workOrder, error = "", onC
                   date.setHours(0, 0, 0, 0);
                   date.setDate(date.getDate() + days);
                   const stamp = format(date, "yyyy-MM-dd");
-                  return <button key={days} type="button" onClick={() => { setNextFollowUpDate(stamp); setLeaveUnscheduled(false); }} className="h-11 shrink-0 rounded-full border border-gray-200 px-3 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">+{days}d</button>;
+                  return <button type="button" key={days} type="button" onClick={() => { setNextFollowUpDate(stamp); setLeaveUnscheduled(false); }} className="h-11 shrink-0 rounded-full border border-gray-200 px-3 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">+{days}d</button>;
                 })}
                 <button
                   type="button"
