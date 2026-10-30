@@ -380,9 +380,11 @@ Deno.serve(async (req) => {
 
     // Batch: many reads behind a single session verification. The "entities"
     // shape returns rows keyed by entity name with per-entity errors beside
-    // them; the "requests" shape returns positional {status, body} results.
-    // One failing entry never hides the others — a single bad entity can no
-    // longer turn one batch call into a fan-out of individual reads.
+    // them — plus a `denied` list of entities this caller may not read, each
+    // resolved as an empty read; the "requests" shape returns positional
+    // {status, body} results. One failing entry never hides the others — a
+    // single bad entity can no longer turn one batch call into a fan-out of
+    // individual reads.
     if (Array.isArray(body?.entities) || Array.isArray(body?.requests)) {
       const entityMode = Array.isArray(body.entities);
       const requests = entityMode ? body.entities : body.requests;
@@ -391,6 +393,7 @@ Deno.serve(async (req) => {
       }
       const entities: Record<string, any> = {};
       const errors: Record<string, any> = {};
+      const denied: string[] = [];
       const results: any[] = new Array(requests.length);
       for (let start = 0; start < requests.length; start += BATCH_CONCURRENCY) {
         const slice = requests.slice(start, start + BATCH_CONCURRENCY);
@@ -400,13 +403,24 @@ Deno.serve(async (req) => {
           const name = String(requests[start + offset]?.entity || '').trim();
           if (result.status === 200) {
             entities[name] = result.body?.items ?? result.body?.item ?? result.body?.count;
+          } else if (result.status === 403 && name) {
+            // A denied entity is an expected authorization outcome, not a batch
+            // failure: it resolves as an empty read and is reported in `denied`
+            // so the browser stops re-requesting it for this session.
+            entities[name] = [];
+            if (!denied.includes(name)) denied.push(name);
           } else if (name) {
             errors[name] = { status: result.status, error: result.body?.error || 'Staff read failed.' };
           }
         });
       }
       const batchPayload = entityMode
-        ? { success: true, entities, ...(Object.keys(errors).length ? { errors } : {}) }
+        ? {
+            success: true,
+            entities,
+            ...(denied.length ? { denied } : {}),
+            ...(Object.keys(errors).length ? { errors } : {}),
+          }
         : { success: true, results };
       if (staffReadCache.size > 300) staffReadCache.clear();
       staffReadCache.set(readCacheKey, { payload: batchPayload, expires: Date.now() + STAFF_READ_CACHE_MS });
