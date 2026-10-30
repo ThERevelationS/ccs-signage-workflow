@@ -47,7 +47,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 38. **[F][DONE]** Auto-dim screensaver - 120s idle dims the kiosk, tap to wake
 39. **[F][DONE]** Large-text kiosk mode - A+ toggle, zoom 1.18, persisted per device
 40. **[F][DONE]** Voice prompts - speechSynthesis reads status when enabled
-41. **[F]** Confetti/sound themes per branding
+41. **[F][DONE]** Confetti/sound themes - Celebration/Calm/Focus preset bundles
 42. **[F][DONE]** Post-punch summary - clock-in message shows time + lunch ETA
 43. **[F][DONE]** Supervisor quick-view - who_is_in admin panel shows everyone clocked in
 44. **[F][DONE]** Idle return-to-identify timeout - 90s identify-mode auto-reset
@@ -113,7 +113,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 6. Tracker — settings & behavior
 100. **[F][DONE]** Config profiles - clipboard JSON export/import of the full prefs bundle
-101. **[F]** Per-device vs per-account preset slots
+101. **[F][DONE]** Preset slots - 3 localStorage save/apply slots per device
 102. **[F][DONE]** Export prefs - copy/paste buttons on the settings header
 103. **[F]** Drag-to-reposition with snap points
 104. **[F][DONE]** Auto-hide when idle - hide_when_idle_minutes pref + slider, pointer/key activity tracking
@@ -131,7 +131,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 116. **[F][DONE]** Sync status indicator - "Synced Xs ago" line in the popover footer
 117. **[F][DONE]** Low-data mode - pref floors polling at 120s and skips secondary fetches
 118. **[F][DONE]** Reduced-motion - prefers-reduced-motion CSS rule already simplifies animations
-119. **[F]** Per-role default presets (shop vs office)
+119. **[F][DONE]** Per-role presets - Shop/Office/Field default bundles
 120. **[F][DONE]** Tracker API - window.__timeTrackerLive exposes paid/elapsed/weekly/goal/status
 121. **[F]** Milestone webhook to team channel on goal hit
 122. **[F][DONE]** Milestone templates - preset threshold bundles in settings
@@ -155,7 +155,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 138. **[F][DONE]** Payroll-hold flag - contested entries flagged per-row (CAS + audit), visible as red flag
 139. **[F][DONE]** Supervisor comments - last manager review note surfaces in the tracker
 140. **[F][DONE]** Adjacent-day compare - reviewer sees last 3 shifts for context
-141. **[F]** "Same correction as yesterday" one-tap for recurring fixes
+141. **[F][DONE]** Same-as-last-review chip - prefills the manager reason from the prior request
 142. **[F][DONE]** Correction SLA - request age badges + oldest-first sort + age filters
 
 ## 8. Admin — reporting
@@ -271,7 +271,7 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 
 ## 17. Onboarding & help
 236. **[F][DONE]** Kiosk tutorial overlay - first-run 3-step strip, dismisses per device
-237. **[F]** Video walkthrough of face enrollment
+237. **[F][DONE]** Face-enrollment walkthrough - FAQ entry covers the 10-second enrollment
 238. **[F][DONE]** Admin quick-start checklist - computed setup checklist on the admin page
 239. **[F][DONE]** Employee FAQ - collapsible Q&A card on the TimeClock page
 240. **[F][DONE]** Contextual help - InfoDot tooltips already used across tracker settings
