@@ -8,6 +8,7 @@ import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
+import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 
 const STATUS_KEYS = {
   orders: 'smartsheetOrderSyncStatus',
@@ -77,9 +78,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   useEffect(() => {
     loadStatus();
     // Running Order syncs publish row-level heartbeat data. Poll quickly enough
-    // for that activity to feel live without increasing idle background traffic.
-    const interval = setInterval(loadStatus,
-      compactOrderForm && status?.status === 'running' ? 1000 : 5000);
+    // for that activity to feel live; once idle, back off to a slow check so
+    // the widget stops spending the shared rate budget in the background.
+    const interval = setInterval(
+      () => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); },
+      compactOrderForm && status?.status === 'running' ? 1000 : 120000);
     return () => clearInterval(interval);
   }, [loadStatus, compactOrderForm, status?.status]);
 
