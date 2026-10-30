@@ -9,7 +9,6 @@ import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
 
 const WorkOrder = base44.entities.WorkOrder;
@@ -233,10 +232,12 @@ export default function ClockOutDialog({
   const searchWorkOrders = async () => {
     setIsSearching(true);
     try {
-      const allWorkOrders = await fetchAllWorkOrders().then((rows) =>
-          (rows || [])
-            .filter((wo) => wo.completed !== true && wo.deleted !== true)
-            .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")));
+      const allWorkOrders = await loadAllEntityRows({
+        entity: WorkOrder,
+        query: { completed: false, deleted: { $ne: true } },
+        sort: "created_date",
+        label: "Clock Out Work Orders",
+      });
       const search = searchTerm.toLowerCase();
       const filtered = allWorkOrders.filter(wo => {
         const searchable = [wo.title, wo.client_name, wo.description].filter(Boolean).join(' ').toLowerCase();
@@ -864,7 +865,7 @@ export default function ClockOutDialog({
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-slate-500">Leaving early?</span>
               {["Appointment", "Site call", "Sick", "Family", "Slow day"].map((r) => (
-                <button
+                <button type="button"
                   key={r} type="button"
                   onClick={() => setNotes((prev) => (prev.includes(`Early out: ${r}`) ? prev : `${prev.trim() ? prev.trim() + " " : ""}Early out: ${r}.`))}
                   className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:border-blue-300 hover:text-blue-700"
