@@ -82,14 +82,14 @@ Flags: **[F]** feature · **[B]** bug/hardening · **[DONE]** shipped
 71. **[F][DONE]** Labor auto-suggest - recent allocations pinned as quick-pick chips
 72. **[F]** Crew-level labor assign — lead assigns whole crew at once
 73. **[F]** Labor allocation barcode scan (scan traveler/PO)
-74. **[F]** Out-of-order break detection (lunch before break warnings)
+74. **[F][DONE]** Out-of-order break - no-lunch-yet badge after 5h without an unpaid break
 75. **[F]** On-site vs off-site rest distinction for travel pay
 76. **[F]** Overtime authorization prompt at clock-in when projected week >40h
 
 ## 5. Tracker — display
 77. **[F][DONE]** Session timeline strip - break/pause segments as a colored band under the clock
 78. **[F][DONE]** "Next milestone" chip ("45m to 8h") — popover shows remaining minutes to the next unfired threshold
-79. **[F]** Weekly + daily dual ring mode
+79. **[F][DONE]** Weekly+daily dual ring - outer weekly arc around the daily ring
 80. **[F][DONE]** Monthly cumulative - monthly_paid_minutes in snapshot + 'This month' popover stat
 81. **[F]** Earnings estimate for hourly staff (opt-in)
 82. **[F][DONE]** Overtime proximity warning — "Xm to OT" amber chip when within 30 min of the daily goal
