@@ -31,6 +31,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
   const {runAction}=useResearchProgress();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [lineCounts, setLineCounts] = useState({});
+  const [permitLines, setPermitLines] = useState([]);
   const [compareMode, setCompareMode] = useState(false);
   const [comparePicks, setComparePicks] = useState([]);
   const toggleComparePick = (j) => setComparePicks((prev) => {
@@ -111,6 +112,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
       }
       setLineCounts(counts);
       setDenialCounts(denials);
+      setPermitLines(lines || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -644,6 +646,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
         <div className="min-w-0 flex-1 overflow-hidden md:border-l">
           <JurisdictionDetailPanel
             jurisdiction={selectedJurisdiction}
+            permitLines={permitLines.filter((li) => String(li.locality_name || "").trim().toLowerCase() === String(selectedJurisdiction.name || "").trim().toLowerCase())}
             duplicateCount={duplicateCountFor(selectedJurisdiction)}
             onSetVerification={handleVerificationChange}
             onClose={() => setSelectedJurisdiction(null)}
