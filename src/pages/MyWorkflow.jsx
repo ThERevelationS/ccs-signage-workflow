@@ -714,18 +714,18 @@ export default function MyWorkflow() {
         <LoadErrorBanner message={loadError} onRetry={loadMyWorkOrders} />
         {/* Header */}
         <div className="clay-card p-3 mb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
               <User className="w-4 h-4 text-purple-700" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">My Workflow</h1>
+              <h1 className="text-xl font-bold text-gray-800 whitespace-nowrap">My Workflow</h1>
               <p className="text-gray-500 text-xs">{userName} - {visibleWorkOrders.length} items</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Label className="text-xs text-gray-500">Stage:</Label>
               <Select value={stageFilter} onValueChange={setStageFilter}>
-                <SelectTrigger className="h-8 w-40 text-xs">
+                <SelectTrigger className="h-8 w-32 sm:w-40 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -745,8 +745,8 @@ export default function MyWorkflow() {
         </div>
 
         {/* Spreadsheet Table */}
-        <div className="clay-card p-2 w-full">
-          <table className="w-full border-collapse" style={{ fontSize: '13px' }}>
+        <div className="clay-card p-2 w-full overflow-x-auto">
+          <table className="w-full border-collapse" style={{ fontSize: '13px', minWidth: '760px' }}>
             <thead className="bg-gray-100">
               <tr className="border-b">
                 <th className="px-2 py-2 border-r text-center font-bold text-gray-700" style={{ width: '35px' }}>#</th>
