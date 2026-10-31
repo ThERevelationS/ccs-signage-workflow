@@ -49,7 +49,7 @@ function attachScanReporter(entity, id) {
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.25";
 
 // base44/shared/pagedEntityRows.ts
-var DEFAULT_PAGE_SIZE = 500;
+var DEFAULT_PAGE_SIZE = 2e3;
 var DEFAULT_MAX_ROWS = 5e4;
 function rowIdentity(row, index) {
   const id = String(row?.id || "").trim();
@@ -61,6 +61,7 @@ async function loadAllEntityRows({
   sort = "created_date",
   pageSize = DEFAULT_PAGE_SIZE,
   maxRows = DEFAULT_MAX_ROWS,
+  fields = null,
   label = "Entity rows"
 }) {
   const hasFilter = !!query && typeof query === "object";
@@ -68,26 +69,13 @@ async function loadAllEntityRows({
   if (typeof reader !== "function") {
     throw new Error(`${label} could not initialize its paged read.`);
   }
-  const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || DEFAULT_PAGE_SIZE));
+  const safePageSize = Math.max(1, Math.min(5e3, Number(pageSize) || DEFAULT_PAGE_SIZE));
   const safeMaxRows = Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
   const rows = [];
   const seen = /* @__PURE__ */ new Set();
   let skip = 0;
   while (skip < safeMaxRows) {
-    let page, pageErr;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip) : await entity.list(sort || void 0, safePageSize, skip);
-        pageErr = null;
-        break;
-      } catch (error) {
-        pageErr = error;
-        const s = Number(error?.status || error?.response?.status || 0);
-        if (s !== 429 && s < 500) break;
-        await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
-      }
-    }
-    if (pageErr) throw pageErr;
+    const page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip, fields || void 0) : await entity.list(sort || void 0, safePageSize, skip, fields || void 0);
     if (!Array.isArray(page)) {
       throw new Error(`${label} could not be verified completely.`);
     }
