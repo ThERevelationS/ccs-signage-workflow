@@ -13,7 +13,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 if (previewQaHost && new URLSearchParams(window.location.search).get('permittingReviewQa') === '1') {
   // Fixture-only local callbacks; no application sessions or records are exposed.
   import('./components/admin/PermittingReviewBrowserFixture.jsx').then(({ default: Fixture }) => {
-    root.render(<AppErrorBoundary><Fixture /></AppErrorBoundary>);
+    root.render(<AppErrorBoundary><CcsMantineProvider><Fixture /></CcsMantineProvider></AppErrorBoundary>);
   });
 } else {
   root.render(<AppErrorBoundary><CcsMantineProvider><App /></CcsMantineProvider></AppErrorBoundary>);
