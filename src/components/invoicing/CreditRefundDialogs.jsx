@@ -7,9 +7,9 @@ import {
   paymentRefundable,
   usdSigned,
 } from "@/components/invoicing/refundMath";
+import { filterInputCls } from "@/components/kit";
 
-const inputCls =
-  "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+const inputCls = filterInputCls;
 const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400";
 
 function Shell({ title, icon, onClose, children }) {
