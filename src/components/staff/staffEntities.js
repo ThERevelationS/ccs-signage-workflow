@@ -245,6 +245,7 @@ export const staffEntities = new Proxy({}, {
 //     { entity: "GlobalSettings", limit: 10 },
 //   ]);
 export const loadEntitiesBatch = (requests) => {
+  if (!hasSession()) return Promise.resolve({});
   const live = (requests || []).filter((r) => !isDenied(r?.entity));
   if (live.length === 0) return Promise.resolve({});
   return invokeFleet("staffDataRead", { entities: live }).then((r) => {
