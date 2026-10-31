@@ -3,8 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth, getSessionToken } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusChip } from "@/components/kit";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -379,8 +379,8 @@ export default function ImportWizard({ onImportFinished }) {
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-bold text-gray-900">{t.label}</span>
                 {t.executable
-                  ? <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">import</Badge>
-                  : <Badge className="bg-amber-100 text-amber-800 border-amber-200"><Lock className="w-3 h-3 mr-1" />preview only</Badge>}
+                  ? <StatusChip tone="emerald" size="sm" showDot={false}>import</StatusChip>
+                  : <StatusChip tone="amber" size="sm" showDot={false}><Lock className="w-3 h-3" />preview only</StatusChip>}
               </div>
               <p className="mt-1 text-[11px] text-gray-500 leading-snug">{t.description}</p>
             </button>
@@ -442,8 +442,8 @@ export default function ImportWizard({ onImportFinished }) {
         </div>
 
         <div className="flex flex-wrap gap-2 text-[11px]">
-          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">{plan.valid} valid</Badge>
-          <Badge className="bg-red-100 text-red-800 border-red-200">{plan.invalid} invalid</Badge>
+          <StatusChip tone="emerald" size="sm" showDot={false}>{plan.valid} valid</StatusChip>
+          <StatusChip tone="red" size="sm" showDot={false}>{plan.invalid} invalid</StatusChip>
         </div>
 
         {validation.unmappedHeaders?.length > 0 && (
@@ -546,11 +546,11 @@ export default function ImportWizard({ onImportFinished }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2 text-[11px]">
-            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">{stats.created} created</Badge>
-            <Badge className="bg-blue-100 text-blue-800 border-blue-200">{stats.updated} updated</Badge>
-            <Badge className="bg-gray-100 text-gray-700 border-gray-200">{stats.unchanged} unchanged</Badge>
-            <Badge className="bg-amber-100 text-amber-800 border-amber-200">{stats.skipped} skipped</Badge>
-            <Badge className="bg-red-100 text-red-800 border-red-200">{stats.failed + (parsed?.plan.invalid || 0)} errors</Badge>
+            <StatusChip tone="emerald" size="sm" showDot={false}>{stats.created} created</StatusChip>
+            <StatusChip tone="sky" size="sm" showDot={false}>{stats.updated} updated</StatusChip>
+            <StatusChip tone="slate" size="sm" showDot={false}>{stats.unchanged} unchanged</StatusChip>
+            <StatusChip tone="amber" size="sm" showDot={false}>{stats.skipped} skipped</StatusChip>
+            <StatusChip tone="red" size="sm" showDot={false}>{stats.failed + (parsed?.plan.invalid || 0)} errors</StatusChip>
           </div>
           <p className="text-[11px] text-gray-600">{result?.summary}</p>
           {jobError && <p className="text-[10px] text-amber-700">{jobError}</p>}
