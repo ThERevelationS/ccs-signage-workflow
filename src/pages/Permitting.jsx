@@ -98,6 +98,7 @@ export default function Permitting() {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [activeView, setActiveView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return (params.get("view") === "jurisdictions" || params.get("jurisdiction")) ? "jurisdictions" : "work";
@@ -206,8 +207,12 @@ export default function Permitting() {
       setWorkOrders(permittingWOs);
       lineItemBaselinesRef.current = new Map(visibleItems.map((item) => [item.id, item]));
       setLineItems(visibleItems);
+      setLoadError("");
     } catch (error) {
       console.error("Error loading data:", error);
+      // A failed mount read must not masquerade as "0 permit lines" — surface
+      // the failure with a retry instead of an empty board.
+      setLoadError(error?.message || "Permits could not be loaded.");
     }
     if (showLoading) setIsLoading(false);
   };
@@ -1284,6 +1289,24 @@ export default function Permitting() {
             </div>
           )}
         </div>
+
+        {loadError && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span className="break-words">{loadError} — the board may be incomplete.</span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => loadData()}
+              className="shrink-0 gap-1 border-red-300 bg-white text-red-800"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
 
         {woFilter && (
           <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900 flex items-center justify-between gap-3 flex-wrap">
