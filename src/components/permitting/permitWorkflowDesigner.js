@@ -323,6 +323,7 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
       jurisdiction_id: jurisdiction?.jurisdiction_id || "",
       locality_id: jurisdiction?.locality_id || "",
       locality_name: jurisdiction?.locality_name || "",
+      offices_need_check: jurisdiction?.offices_need_check === true,
     },
     steps: reviewWorkflowSteps(draft.steps, rules),
     source_evidence: captureWorkflowSources(draft.steps, sourceDocs.all, jurisdiction?.jurisdiction_id),
