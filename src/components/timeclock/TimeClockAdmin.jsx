@@ -930,7 +930,12 @@ export default function TimeClockAdmin() {
   // Payroll-shaped CSV: one row per employee per worked day with a
   // 40h/week regular-vs-OT split, matching common payroll import formats.
   const exportPayrollCsv = async () => {
-    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // Prefix formula-trigger leading chars so spreadsheets treat the cell as text.
+    const esc = (v) => {
+      const s = String(v ?? "");
+      const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     // Prefer the backend export - it carries cost codes, union locals,
     // certified flags, and excludes payroll_hold entries authoritatively.
     try {
