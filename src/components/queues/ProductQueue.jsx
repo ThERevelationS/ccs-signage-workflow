@@ -474,18 +474,28 @@ export default function ProductQueue({
         </div>
       )}
 
-      <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-gray-50 p-2">
-        <label className="flex flex-col gap-0.5"><span className={lab}>Status</span>
-          <select className={sel} value={filters.status} onChange={(e) => set("status", e.target.value)}>
+      <FilterBar
+        className="mb-0 items-end"
+        search={
+          <FilterField label="Search">
+            <FilterSearchInput containerClassName="min-w-44" value={filters.search} onChange={(e) => set("search", e.target.value)} />
+          </FilterField>
+        }
+      >
+        <FilterField label="Status">
+          <FilterSelect value={filters.status} onChange={(e) => set("status", e.target.value)}>
             <option value="all">All</option>
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s}</option>)}
-          </select></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Substatus</span>
-          <input className={sel} placeholder="contains…" value={filters.substatus} onChange={(e) => set("substatus", e.target.value)} /></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Designer</span>
-          <select className={sel} value={filters.designer} onChange={(e) => set("designer", e.target.value)}>
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Substatus">
+          <input className={cn(filterInputCls, "w-28")} placeholder="contains…" value={filters.substatus} onChange={(e) => set("substatus", e.target.value)} />
+        </FilterField>
+        <FilterField label="Designer">
+          <FilterSelect value={filters.designer} onChange={(e) => set("designer", e.target.value)}>
             <option value="all">All</option>{distinct("designer").map((d) => <option key={d} value={d}>{d}</option>)}
-          </select></label>
+          </FilterSelect>
+        </FilterField>
         <label className="flex flex-col gap-0.5"><span className={lab}>Responsibility</span>
           <select className={sel} value={filters.responsibility} onChange={(e) => set("responsibility", e.target.value)}>
             <option value="all">All</option>{distinct("responsibility").map((d) => <option key={d} value={d}>{d}</option>)}
