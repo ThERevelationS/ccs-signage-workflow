@@ -119,7 +119,7 @@ function RowEditor({ row, actor, onSaved, disabled }) {
               <input type="checkbox" disabled={disabled} checked={overrideHardDue} onChange={(e) => setOverrideHardDue(e.target.checked)} />
               Override hard due date</label>
           )}
-          <button className={`${inp} font-semibold text-sky-700`} disabled={disabled || saving} onClick={save}>
+          <button type="button" className={`${inp} font-semibold text-sky-700`} disabled={disabled || saving} onClick={save}>
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
@@ -253,7 +253,7 @@ export default function ProductQueue({
         <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
           <input type="checkbox" checked={filters.includeFulfilled} onChange={(e) => set("includeFulfilled", e.target.checked)} />
           Include fulfilled</label>
-        <button className={sel} onClick={clearFilters}>Clear</button>
+        <button type="button" className={sel} onClick={clearFilters}>Clear</button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200">
@@ -280,7 +280,7 @@ export default function ProductQueue({
                 <tr className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
                   <td className="whitespace-nowrap px-2 py-1.5">
                     {onOpenWorkOrder ? (
-                      <button className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder(r.workOrderId)}>{r.ref}</button>
+                      <button type="button" className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder(r.workOrderId)}>{r.ref}</button>
                     ) : (
                       <Link className="text-sky-700 hover:underline" to={`/MainWorkflow?wo=${r.workOrderId}`}>{r.ref}</Link>
                     )}
@@ -320,7 +320,7 @@ export default function ProductQueue({
                       <option value="">Set status…</option>
                       {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s}</option>)}
                     </select>
-                    <button className={`${sel} ml-1`} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP}
+                    <button type="button" className={`${sel} ml-1`} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP}
                       onClick={() => setExpanded((x) => ({ ...x, [key]: !x[key] }))}>
                       {expanded[key] ? "Close" : "Edit"}
                     </button>
@@ -351,10 +351,10 @@ export default function ProductQueue({
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>Page {page + 1} of {pages}</span>
         <div className="flex gap-1">
-          <button className={sel} disabled={page === 0} onClick={() => setPage(0)}>First</button>
-          <button className={sel} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Prev</button>
-          <button className={sel} disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>Next</button>
-          <button className={sel} disabled={page >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button>
+          <button type="button" className={sel} disabled={page === 0} onClick={() => setPage(0)}>First</button>
+          <button type="button" className={sel} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Prev</button>
+          <button type="button" className={sel} disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>Next</button>
+          <button type="button" className={sel} disabled={page >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button>
         </div>
       </div>
     </div>

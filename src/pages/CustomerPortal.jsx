@@ -210,7 +210,7 @@ function QuoteCard({ quote, onRespond, busy }) {
       </div>
       {sections.length > 0 && (
         <div className="mt-3">
-          <button onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
+          <button type="button" onClick={() => setOpen(!open)} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
             {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {open ? "Hide" : "View"} quote details
           </button>
@@ -251,11 +251,11 @@ function QuoteCard({ quote, onRespond, busy }) {
       )}
       {respondable && !mode && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <button onClick={() => setMode("approve")} disabled={busy}
+          <button type="button" onClick={() => setMode("approve")} disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
             <CheckCircle2 className="h-4 w-4" />Approve quote
           </button>
-          <button onClick={() => setMode("changes")} disabled={busy}
+          <button type="button" onClick={() => setMode("changes")} disabled={busy}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
             Request changes
           </button>
@@ -267,11 +267,11 @@ function QuoteCard({ quote, onRespond, busy }) {
           <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note for the team…"
             className="mt-2 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onRespond(quote, "approve", note)} disabled={busy}
+            <button type="button" onClick={() => onRespond(quote, "approve", note)} disabled={busy}
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Confirm approval
             </button>
-            <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -281,16 +281,16 @@ function QuoteCard({ quote, onRespond, busy }) {
           <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Describe the revisions you'd like…"
             className="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm" />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onRespond(quote, "request_changes", note)} disabled={busy || !note.trim()}
+            <button type="button" onClick={() => onRespond(quote, "request_changes", note)} disabled={busy || !note.trim()}
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
             </button>
-            <button onClick={() => onRespond(quote, "declined", note)} disabled={busy || !note.trim()}
+            <button type="button" onClick={() => onRespond(quote, "declined", note)} disabled={busy || !note.trim()}
               className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
               title="Decline this quote — a reason is required">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Decline quote
             </button>
-            <button onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -333,7 +333,7 @@ function JobCard({ job, onRequestChange, busy }) {
         {progress && <span>Tasks: <span className="font-medium text-slate-700">{progress.completed}/{progress.total}</span></span>}
       </div>
       {active && onRequestChange && !changing && (
-        <button onClick={() => setChanging(true)} disabled={busy}
+        <button type="button" onClick={() => setChanging(true)} disabled={busy}
           className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
           Request a change to this job
         </button>
@@ -344,11 +344,11 @@ function JobCard({ job, onRequestChange, busy }) {
           <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Move the install date, swap the panel color, add a vinyl banner…"
             className="mt-2 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm" />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onRequestChange(job, note)} disabled={busy || !note.trim()}
+            <button type="button" onClick={() => onRequestChange(job, note)} disabled={busy || !note.trim()}
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
             </button>
-            <button onClick={() => { setChanging(false); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => { setChanging(false); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -363,7 +363,7 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
   const due = Number(invoice.balance_due) > 0;
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <button onClick={() => setOpen(!open)} className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left">
+      <button type="button" onClick={() => setOpen(!open)} className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left">
         <div>
           <p className="font-semibold text-slate-900">{invoice.invoice_number || "Invoice"}</p>
           <p className="text-xs text-slate-500">{invoice.issue_date ? `Issued ${invoice.issue_date}` : "Draft"}{invoice.due_date ? ` · due ${invoice.due_date}` : ""}</p>
@@ -383,7 +383,7 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
         <div className="border-t border-slate-100 p-4">
           <InvoiceView invoice={invoice} payments={payments} />
           {due && !noticing && (
-            <button onClick={() => setNoticing(true)}
+            <button type="button" onClick={() => setNoticing(true)}
               className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
               <AlertCircle className="h-4 w-4" />Let us know a payment is on the way
             </button>
@@ -394,11 +394,11 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
               <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Check #1042 mailed today, ACH tomorrow…"
                 className="mt-2 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm" />
               <div className="mt-3 flex gap-2">
-                <button onClick={() => { onNotice(invoice, note); setNoticing(false); setNote(""); }} disabled={busy}
+                <button type="button" onClick={() => { onNotice(invoice, note); setNoticing(false); setNote(""); }} disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send notice
                 </button>
-                <button onClick={() => setNoticing(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+                <button type="button" onClick={() => setNoticing(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
               </div>
             </div>
           )}
@@ -473,7 +473,7 @@ function Thread({ messages, onSend, busy, customerName }) {
             {attachment && <button type="button" onClick={(e) => { e.preventDefault(); setAttachment(null); }} className="ml-1 text-slate-400 hover:text-red-500">×</button>}
           </label>
           </div>
-          <button onClick={send} disabled={busy || (!draft.trim() && !attachment)}
+          <button type="button" onClick={send} disabled={busy || (!draft.trim() && !attachment)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
@@ -617,7 +617,7 @@ export default function CustomerPortal() {
             </div>
           </div>
           {!state.loading && !state.error && (
-            <button onClick={() => { setState((s) => ({ ...s, loading: true })); load(); }}
+            <button type="button" onClick={() => { setState((s) => ({ ...s, loading: true })); load(); }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
               <RefreshCw className="h-3.5 w-3.5" />Refresh
             </button>
@@ -632,7 +632,7 @@ export default function CustomerPortal() {
               {a.message && <p className="mt-0.5 whitespace-pre-line text-sm text-slate-600">{a.message}</p>}
               {a.image_url && <img src={a.image_url} alt="" className="mt-2 max-h-40 rounded-lg" />}
             </div>
-            <button onClick={() => dismissAnnouncement(a.title)} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
+            <button type="button" onClick={() => dismissAnnouncement(a.title)} className="h-fit rounded-lg p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600" aria-label="Dismiss">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -714,7 +714,7 @@ export default function CustomerPortal() {
                 const Icon = t.icon;
                 const badge = t.key === "messages" && unreadFromStaff > 0 ? unreadFromStaff : t.key === "quotes" && awaiting.length > 0 ? awaiting.length : 0;
                 return (
-                  <button key={t.key} onClick={() => setTab(t.key)}
+                  <button type="button" key={t.key} onClick={() => setTab(t.key)}
                     className={`relative inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
                       tab === t.key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
                     }`}>
@@ -757,7 +757,7 @@ export default function CustomerPortal() {
                     <p className="text-sm font-semibold text-amber-900">
                       {awaiting.length === 1 ? "A quote is waiting for your response." : `${awaiting.length} quotes are waiting for your response.`}
                     </p>
-                    <button onClick={() => setTab("quotes")} className="mt-2 text-sm font-semibold text-amber-800 underline">Review quotes →</button>
+                    <button type="button" onClick={() => setTab("quotes")} className="mt-2 text-sm font-semibold text-amber-800 underline">Review quotes →</button>
                   </div>
                 )}
 

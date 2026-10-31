@@ -1933,7 +1933,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               <div className="flex items-center gap-1">
                 Request Type {getSortIcon('request_type')}
                 {currentUser?.role === "admin" && (
-                  <button
+                  <button type="button"
                     onClick={(e) => { e.stopPropagation(); setRequestTypesError(""); setEditingRequestTypes(true); }}
                     className="hover:bg-gray-300 rounded p-0.5"
                     aria-label="Manage Order item types"
@@ -1987,7 +1987,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               <div className="flex items-center gap-1">
                 Vendor {getSortIcon('vendor')}
                 {isRegistered && (
-                  <button onClick={(e) => { e.stopPropagation(); setEditingVendors(true); }} className="hover:bg-gray-300 rounded p-0.5">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setEditingVendors(true); }} className="hover:bg-gray-300 rounded p-0.5">
                     <Pencil className="w-3 h-3 text-gray-500" />
                   </button>
                 )}
@@ -2038,7 +2038,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
               {/* Row Number - Clickable Focus Button */}
               <td className="px-0 py-0 border-r">
-                <button
+                <button type="button"
                   onClick={() => {
                     if (isFocused) {
                       setFocusedRowId(null);
@@ -2151,7 +2151,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   disabled={!isRegistered || isPulling}
                 />
                 {order.work_order_id && (
-                  <button
+                  <button type="button"
                     onClick={() => {
                       const wo = workOrders.find(w => w.id === order.work_order_id);
                       if (wo) setSelectedWorkOrder(wo);
@@ -2372,7 +2372,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
-                    <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                    <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       <span className="truncate">{order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}</span>
                       {orderDueState(order, todayStr) === "overdue" && (
                         <span className="ml-auto inline-flex shrink-0 rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>
@@ -2446,7 +2446,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
-                    <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                    <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.date_ordered_option || safeFormatDate(order.date_ordered, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
@@ -2545,7 +2545,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               >
                 <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered || isPulling}>
-                    <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
+                    <button type="button" className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
                       {order.receipt_option || safeFormatDate(order.date_received, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
@@ -2726,7 +2726,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...requestTypes];
@@ -2738,7 +2738,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === requestTypes.length - 1) return;
                           const items = [...requestTypes];
@@ -2753,7 +2753,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </div>
                     <span className="text-sm">{type}</span>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => removeRequestType(type)}
                     disabled={requestTypesSaving || requestTypes.length <= 1}
                     className="text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-30"
@@ -3003,7 +3003,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === 0) return;
                           const items = [...vendors];
@@ -3015,7 +3015,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => {
                           if (index === vendors.length - 1) return;
                           const items = [...vendors];
@@ -3030,7 +3030,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     </div>
                     <span className="text-sm">{vendor}</span>
                   </div>
-                  <button onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
+                  <button type="button" onClick={() => removeVendor(vendor)} className="text-red-500 hover:text-red-700">
                     <X className="w-4 h-4" />
                   </button>
                 </div>

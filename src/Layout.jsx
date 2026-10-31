@@ -1077,7 +1077,7 @@ function LayoutContent({ children }) {
               {/* Brand + tiny shell view controls */}
               <div className={compactView ? "mb-1.5" : "mb-4"}>
                 <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2"}`}>
-                  <button
+                  <button type="button"
                     onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
                     className={`ccs-glass-control ccs-glass-purple flex flex-shrink-0 items-center justify-center text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl"}`}
                     title="Switch to Top Bar"
@@ -1105,7 +1105,7 @@ function LayoutContent({ children }) {
               <div className={`${compactView ? "mb-2 space-y-1" : "mb-4 space-y-2"}`}>
                 {/* Login / Logout button */}
                 {!currentUser ? (
-                  <button
+                  <button type="button"
                     data-login-gate-allow
                     onClick={showLoginDialog}
                     className={`ccs-glass-control ccs-glass-purple w-full flex items-center justify-center rounded-xl text-violet-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
@@ -1115,7 +1115,7 @@ function LayoutContent({ children }) {
                     <span className="font-bold text-sm text-violet-100">Sign In</span>
                   </button>
                 ) : (
-                  <button
+                  <button type="button"
                     data-login-gate-allow
                     onClick={logout}
                     className={`ccs-glass-control ccs-glass-neutral w-full flex items-center justify-center rounded-xl text-slate-100 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
@@ -1136,7 +1136,7 @@ function LayoutContent({ children }) {
 
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
-                  <button
+                  <button type="button"
                     onClick={() => setShowAnnouncementManager(true)}
                     className={`ccs-glass-control ccs-glass-red w-full flex items-center justify-center rounded-xl text-red-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
                     title="Announcements (Admin)"
@@ -1154,7 +1154,7 @@ function LayoutContent({ children }) {
                     <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
                   </Link>
 
-                  <button
+                  <button type="button"
                     onClick={() => setShowAddTaskDialog(true)}
                     className={`ccs-glass-control ccs-glass-blue flex flex-1 items-center justify-center rounded-xl text-blue-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
                   >
@@ -1244,7 +1244,7 @@ function LayoutContent({ children }) {
                 {/* Brand + tiny shell view controls */}
                 <div className="ccs-topbar-brand">
                   <div className={`ccs-glass-panel flex items-center ${topBarCompact ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
-                    <button
+                    <button type="button"
                       onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
                       className={`ccs-glass-control ccs-glass-purple flex items-center justify-center text-violet-200 ${topBarCompact ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
                       title="Switch to Sidebar"
@@ -1269,7 +1269,7 @@ function LayoutContent({ children }) {
                 </div>
 
                 {/* Mobile Menu Button */}
-                <button
+                <button type="button"
                   className="ccs-topbar-menu lg:hidden clay-button p-2 min-h-[40px] min-w-[40px]"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   aria-expanded={mobileMenuOpen}
@@ -1284,7 +1284,7 @@ function LayoutContent({ children }) {
                   <div className={`flex flex-wrap items-stretch ${topBarCompact ? "gap-1" : "gap-2"}`}>
                     {/* Login / Logout button */}
                     {!currentUser ? (
-                      <button
+                      <button type="button"
                         data-login-gate-allow
                         onClick={showLoginDialog}
                         className={`ccs-glass-control ccs-glass-purple flex items-center rounded-xl text-violet-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
@@ -1294,7 +1294,7 @@ function LayoutContent({ children }) {
                         <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Sign In</span>
                       </button>
                     ) : (
-                      <button
+                      <button type="button"
                         data-login-gate-allow
                         onClick={logout}
                         className={`ccs-glass-control ccs-glass-neutral flex items-center rounded-xl text-slate-100 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
@@ -1310,7 +1310,7 @@ function LayoutContent({ children }) {
 
                     {/* Announcement button - admin only */}
                     {isUserAdmin(currentUser) && (
-                      <button
+                      <button type="button"
                         onClick={() => setShowAnnouncementManager(true)}
                         className={`ccs-glass-control ccs-glass-red flex flex-shrink-0 items-center justify-center rounded-xl text-red-200 ${topBarCompact ? "h-7 w-8" : "w-11 self-stretch"}`}
                         title="Announcements (Admin)"
@@ -1326,7 +1326,7 @@ function LayoutContent({ children }) {
                       <span className={`${topBarCompact ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
                     </Link>
 
-                    <button
+                    <button type="button"
                       onClick={() => setShowAddTaskDialog(true)}
                       className={`ccs-glass-control ccs-glass-blue flex items-center rounded-xl text-blue-200 ${topBarCompact ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
@@ -1444,7 +1444,7 @@ function LayoutContent({ children }) {
           <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-3 bg-white/95 backdrop-blur-sm border-b border-gray-200"
             style={{ height: '48px', paddingTop: 'env(safe-area-inset-top)', background: darkMode ? 'rgba(20,20,40,0.97)' : undefined, borderColor: darkMode ? 'rgba(255,255,255,0.1)' : undefined }}
           >
-            <button
+            <button type="button"
               onClick={() => navigate(-1)}
               className="flex items-center gap-1 text-purple-700 font-medium text-sm min-h-[44px] min-w-[44px] -ml-1"
               style={{ userSelect: 'none' }}
@@ -1543,7 +1543,7 @@ function LayoutContent({ children }) {
             style={{ marginLeft: isSideNav ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`) : '0' }}
           >
             {/* Full Screen Toggle */}
-            <button
+            <button type="button"
               onClick={toggleFullScreen}
               className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
               style={{ background: 'rgba(191, 219, 254, 0.8)', color: '#1e40af' }}
@@ -1593,7 +1593,7 @@ function LayoutContent({ children }) {
               />
             </div>
             {additionalPages.length > 0 && (
-              <button
+              <button type="button"
                 onClick={clearPages}
                 className="px-2 py-1 flex items-center gap-1 text-xs rounded-md transition-colors"
                 style={{ background: 'rgba(254, 202, 202, 0.8)', color: '#991b1b' }}
@@ -1628,7 +1628,7 @@ function LayoutContent({ children }) {
                   ].map((item) => {
                     if (item.action) {
                       return (
-                        <button
+                        <button type="button"
                           key={item.label}
                           data-login-gate-allow
                           onClick={item.action}
@@ -1662,7 +1662,7 @@ function LayoutContent({ children }) {
                     );
                   })}
               {/* More button */}
-              <button
+              <button type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="flex-1 flex flex-col items-center justify-center gap-1 transition-colors"
                 style={{ minHeight: '44px', userSelect: 'none', color: mobileMenuOpen ? '#7C3AED' : '#6B7280' }}
@@ -1681,7 +1681,7 @@ function LayoutContent({ children }) {
                 <div className="h-full overflow-y-auto p-4 pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-white">All Pages</h2>
-                    <button onClick={() => setMobileMenuOpen(false)} className="ccs-glass-control ccs-glass-neutral rounded-lg p-2 text-slate-100">
+                    <button type="button" onClick={() => setMobileMenuOpen(false)} className="ccs-glass-control ccs-glass-neutral rounded-lg p-2 text-slate-100">
                       <X className="h-5 w-5" />
                     </button>
                   </div>

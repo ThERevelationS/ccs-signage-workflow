@@ -367,7 +367,7 @@ export default function NewAllInOneEstimate() {
             onSaveSiteAsLocationChange={setSaveSiteAsLocation}
           />
           <div className="flex justify-end mt-3">
-            <button
+            <button type="button"
               onClick={handleSave}
               disabled={saving}
               className="h-[30px] px-4 rounded bg-lime-200 border border-lime-300 text-[13px] font-semibold text-gray-800 disabled:opacity-60"

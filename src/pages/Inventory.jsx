@@ -47,7 +47,7 @@ function MovementLog({ sessionToken, item, onClose }) {
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-slate-900 dark:text-slate-100">Stock history — {item.label}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-4 w-4" /></button>
         </div>
         <div className="mt-3 max-h-80 space-y-1.5 overflow-y-auto">
           {loading ? <div className="py-8 text-center text-sm text-slate-400"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>
@@ -210,17 +210,17 @@ export default function Inventory() {
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">On-hand quantities, receiving, issue-to-job, and reorder flags.</p>
         </div>
-        <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+        <button type="button" onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
         </button>
       </div>
 
       {lowCount > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <button onClick={() => { setViewName(""); setLowOnly(!lowOnly); }} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          <button type="button" onClick={() => { setViewName(""); setLowOnly(!lowOnly); }} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
             <AlertTriangle className="h-4 w-4" />{lowCount} item{lowCount === 1 ? "" : "s"} at/below reorder point — {lowOnly ? "show all" : "show only these"}
           </button>
-          <button onClick={createReorderPo} disabled={Boolean(busy)}
+          <button type="button" onClick={createReorderPo} disabled={Boolean(busy)}
             className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-200 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900/60">
             {busy === "reorder-po" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
             Create draft PO
@@ -312,23 +312,23 @@ export default function Inventory() {
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex justify-end gap-1">
-                        <button title="Receive stock" onClick={() => move(it, "receive_stock")} disabled={Boolean(busy)}
+                        <button type="button" title="Receive stock" onClick={() => move(it, "receive_stock")} disabled={Boolean(busy)}
                           className="rounded-lg bg-emerald-100 p-1.5 text-emerald-700 hover:bg-emerald-200 disabled:opacity-50 dark:bg-emerald-900/50 dark:text-emerald-300">
                           {b("receive_stock") ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="h-4 w-4" />}
                         </button>
-                        <button title="Issue to job" onClick={() => move(it, "issue_to_job")} disabled={Boolean(busy)}
+                        <button type="button" title="Issue to job" onClick={() => move(it, "issue_to_job")} disabled={Boolean(busy)}
                           className="rounded-lg bg-blue-100 p-1.5 text-blue-700 hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/50 dark:text-blue-300">
                           {b("issue_to_job") ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUpFromLine className="h-4 w-4" />}
                         </button>
-                        <button title="Adjust ±" onClick={() => move(it, "adjust_stock")} disabled={Boolean(busy)}
+                        <button type="button" title="Adjust ±" onClick={() => move(it, "adjust_stock")} disabled={Boolean(busy)}
                           className="rounded-lg bg-slate-100 px-2 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300">
                           {b("adjust_stock") ? <Loader2 className="h-4 w-4 animate-spin" /> : "±"}
                         </button>
-                        <button title="Movement history" onClick={() => setLogItem({ id: it.id, label })}
+                        <button type="button" title="Movement history" onClick={() => setLogItem({ id: it.id, label })}
                           className="rounded-lg bg-slate-100 p-1.5 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
                           <History className="h-4 w-4" />
                         </button>
-                        <button title="Archive item" onClick={() => archiveItem(it)} disabled={Boolean(busy)}
+                        <button type="button" title="Archive item" onClick={() => archiveItem(it)} disabled={Boolean(busy)}
                           className="rounded-lg bg-red-50 p-1.5 text-red-500 hover:bg-red-100 disabled:opacity-50 dark:bg-red-950/40 dark:text-red-300">
                           {b("archive") ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
                         </button>

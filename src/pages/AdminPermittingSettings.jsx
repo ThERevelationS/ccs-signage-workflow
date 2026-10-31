@@ -187,7 +187,7 @@ export default function AdminPermittingSettings() {
             { key: "authority", label: "Rewrite Authority" },
             { key: "audit", label: "AI Accuracy Auditor" }
           ].map(tab => (
-            <button
+            <button type="button"
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors -mb-px border-b-2 ${

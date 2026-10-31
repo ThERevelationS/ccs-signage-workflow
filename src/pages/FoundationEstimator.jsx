@@ -491,7 +491,7 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
                   </div>
                 )}
 
-                <button
+                <button type="button"
                   onClick={() => addItem("spread_foot")}
                   className="h-[30px] px-3 flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-[12px] font-medium text-gray-700 hover:bg-gray-50"
                 >

@@ -969,7 +969,7 @@ export default function MondayMorningMeeting() {
                     >
                       {/* Row Number - Clickable Focus Button */}
                       <td className="px-0 py-0 border-r">
-                        <button
+                        <button type="button"
                           onClick={(e) => { anchorFocusedRow(e.currentTarget); setFocusedRowId(focusedRowId === wo.id ? null : wo.id); }}
                           className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
                             focusedRowId === wo.id
@@ -1043,7 +1043,7 @@ export default function MondayMorningMeeting() {
 
                       {/* Customer */}
                       <td className="px-2 py-2 border-r">
-                        <button
+                        <button type="button"
                           data-mmm-focus-id={wo.id}
                           onClick={() => setSelectedWorkOrder(wo)}
                           className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
@@ -1358,7 +1358,7 @@ export default function MondayMorningMeeting() {
                         />
                       </td>
                       <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
-                        <button
+                        <button type="button"
                           data-mmm-focus-id={wo.id}
                           onClick={() => setSelectedWorkOrder(wo)}
                           className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full"

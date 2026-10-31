@@ -117,7 +117,7 @@ export default function FoundationCatalog() {
 
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
           {MATERIAL_TYPES.map((t) => (
-            <button
+            <button type="button"
               key={t.value}
               onClick={() => { const v = t.value; setActiveType(v); writeParam("type", v, "concrete_service"); }}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border ${
@@ -163,7 +163,7 @@ export default function FoundationCatalog() {
                       {row.unit ? ` / ${row.unit}` : ""}
                     </span>
                   </div>
-                  <button
+                  <button type="button"
                     disabled={!!loadError}
                     onClick={() => {
                       setEditing(row);
@@ -173,7 +173,7 @@ export default function FoundationCatalog() {
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(row)} className="text-gray-400 hover:text-red-600">
+                  <button type="button" onClick={() => handleDelete(row)} className="text-gray-400 hover:text-red-600">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

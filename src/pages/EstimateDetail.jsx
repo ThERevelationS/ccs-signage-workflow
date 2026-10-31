@@ -1627,7 +1627,7 @@ export default function EstimateDetail() {
           {step === 3 && (
             <>
               {estimate.status !== "cancelled" && !estimate.work_order_id && (
-                <button
+                <button type="button"
                   onClick={() => setShowCancel(true)}
                   disabled={!!openRevision}
                   className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1638,7 +1638,7 @@ export default function EstimateDetail() {
                 </button>
               )}
               {estimate.status !== "cancelled" && !estimate.work_order_id && (
-                <button
+                <button type="button"
                   onClick={handleMoveToTrash}
                   disabled={!!openRevision || trashing}
                   className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-red-200 rounded-sm hover:bg-red-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"

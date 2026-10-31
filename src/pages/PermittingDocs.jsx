@@ -23,7 +23,7 @@ function DocSection({ icon: Icon, title, children, defaultOpen = false }) {
   return (
     <Card>
       <CardHeader>
-        <button
+        <button type="button"
           onClick={() => setOpen(!open)}
           className="flex w-full items-center justify-between text-left"
         >

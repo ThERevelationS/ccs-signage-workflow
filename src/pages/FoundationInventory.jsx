@@ -254,7 +254,7 @@ function WallMaterialForm({ item, onSave, onCancel, isFillMaterial }) {
           <Label className="text-xs">Color</Label>
           <div className="flex gap-2 mt-1 flex-wrap">
             {PRESET_COLORS.map(c => (
-              <button key={c.value} title={c.label}
+              <button type="button" key={c.value} title={c.label}
                 className={`w-6 h-6 rounded border-2 transition-transform hover:scale-110 ${form.wall_color === c.value ? 'border-blue-500 scale-110' : 'border-transparent'}`}
                 style={{ backgroundColor: c.value }} onClick={() => set('wall_color', c.value)} />
             ))}

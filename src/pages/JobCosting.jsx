@@ -86,7 +86,7 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
                 <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{j.title || "Work order"}</h2>
                 <div className="mt-0.5 text-sm text-slate-500">{j.client_name} · {j.current_stage || j.sales_status || "—"}</div>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
@@ -255,7 +255,7 @@ export default function JobCosting() {
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">Estimate vs actual: contract, POs, labor, invoicing per job. Click a row to expand.</p>
         </div>
-        <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+        <button type="button" onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
         </button>
       </div>

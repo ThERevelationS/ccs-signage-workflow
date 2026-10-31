@@ -41,7 +41,7 @@ export default function ProductQueues() {
     <div className="flex h-full flex-col">
       <nav className="flex gap-1 border-b border-gray-200 bg-white px-3 pt-2">
         {QUEUES.map((q) => (
-          <button
+          <button type="button"
             key={q.key}
             onClick={() => setActive(q.key)}
             className={`rounded-t px-3 py-1.5 text-sm font-medium ${

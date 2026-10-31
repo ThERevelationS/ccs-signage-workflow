@@ -70,7 +70,7 @@ export default function AuditLog() {
         </div>
         <div className="flex gap-1.5">
           {TYPES.map((t) => (
-            <button key={t.key} onClick={() => setType(t.key)}
+            <button type="button" key={t.key} onClick={() => setType(t.key)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${type === t.key ? "bg-red-600 text-white border-red-600" : "bg-white/70 text-gray-600 border-gray-200 hover:border-red-300"}`}>
               {t.label}
             </button>

@@ -144,7 +144,7 @@ export default function QuickPrice() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {ESTIMATOR_MODULES.map((m) => (
-              <button
+              <button type="button"
                 key={m.key}
                 onClick={() => pickModule(m.key)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium text-left border ${
@@ -171,7 +171,7 @@ export default function QuickPrice() {
           <div className="bg-white p-4 space-y-2">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold tracking-wide text-gray-600">RECENT QUICK PRICES</h2>
-              <button
+              <button type="button"
                 onClick={clearHistory}
                 className="text-xs font-medium text-red-600 hover:text-red-700"
               >
@@ -190,14 +190,14 @@ export default function QuickPrice() {
                         {entry.created ? ` · ${new Date(entry.created).toLocaleDateString()}` : ""}
                       </div>
                     </div>
-                    <button
+                    <button type="button"
                       onClick={() => reuseEntry(entry)}
                       className="px-2 py-1 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-700"
                     >
                       Reuse
                     </button>
                     {mod && (
-                      <button
+                      <button type="button"
                         onClick={() => openEntry(entry)}
                         className="px-2 py-1 rounded-lg text-xs font-bold border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
                       >

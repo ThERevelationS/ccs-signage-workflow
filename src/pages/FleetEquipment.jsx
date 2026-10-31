@@ -263,7 +263,7 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
         <Link to={requestUrl} className="min-h-11 inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-slate-700 px-2 py-2 text-xs font-semibold text-gray-700 dark:text-slate-200"><ShoppingCart className="w-3.5 h-3.5" />Request Item</Link>
         <a href={reportUrl} className="col-span-2 min-h-11 inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20 px-2 py-2 text-xs font-semibold text-amber-800 dark:text-amber-300"><AlertTriangle className="w-3.5 h-3.5" />Report Problem</a>
       </div>}
-      {isAdmin && <button onClick={onEdit} className="w-full min-h-11 text-xs text-gray-500 dark:text-slate-400 inline-flex items-center justify-center gap-1 py-1"><Pencil className="w-3.5 h-3.5" />Edit equipment</button>}
+      {isAdmin && <button type="button" onClick={onEdit} className="w-full min-h-11 text-xs text-gray-500 dark:text-slate-400 inline-flex items-center justify-center gap-1 py-1"><Pencil className="w-3.5 h-3.5" />Edit equipment</button>}
     </div>
   </article>;
 }

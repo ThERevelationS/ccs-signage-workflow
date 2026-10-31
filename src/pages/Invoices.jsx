@@ -291,7 +291,7 @@ function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
       <div className="my-8 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{editing ? `Edit ${invoice.invoice_number}` : "New Invoice"}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -332,8 +332,8 @@ function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
 
         {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
-          <button onClick={save} disabled={saving}
+          <button type="button" onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button type="button" onClick={save} disabled={saving}
             className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {editing ? "Save changes" : "Create invoice"}
@@ -421,7 +421,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                   {inv.issue_date ? `Issued ${inv.issue_date}` : "Not issued"}{inv.due_date ? ` · Due ${inv.due_date}` : ""}{inv.terms ? ` · ${inv.terms}` : ""}
                 </div>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
 
             <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
@@ -622,7 +622,7 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
       <div className="my-8 w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Invoice from estimate</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
         </div>
 
         {!selected ? (
@@ -637,7 +637,7 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
               ) : estimates.length === 0 ? (
                 <div className="py-10 text-center text-sm text-slate-500">No approved estimates found.</div>
               ) : estimates.map((e) => (
-                <button key={e.id} onClick={() => setSelected(e)} className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-violet-50/60 last:border-0 dark:border-slate-800 dark:hover:bg-slate-800/60">
+                <button type="button" key={e.id} onClick={() => setSelected(e)} className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-violet-50/60 last:border-0 dark:border-slate-800 dark:hover:bg-slate-800/60">
                   <div>
                     <div className="font-semibold text-slate-900 dark:text-slate-100">{e.project_name || e.estimate_number}</div>
                     <div className="text-xs text-slate-500">{e.client_name} · {e.estimate_number}</div>
@@ -657,7 +657,7 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
                 <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">{selected.project_name || selected.estimate_number}</div>
                 <div className="text-xs text-slate-500">{selected.client_name} · {usd(selected.quote_total)} quote · {usd(selected.remaining_billable)} unbilled</div>
               </div>
-              <button onClick={() => setSelected(null)} className="text-xs font-semibold text-violet-600">Change</button>
+              <button type="button" onClick={() => setSelected(null)} className="text-xs font-semibold text-violet-600">Change</button>
             </div>
 
             <div className="mt-3 space-y-2">
@@ -705,9 +705,9 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
         {error && <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
+          <button type="button" onClick={onClose} className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Cancel</button>
           {selected && (
-            <button onClick={submit} disabled={saving} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white disabled:opacity-60 hover:bg-violet-700">
+            <button type="button" onClick={submit} disabled={saving} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white disabled:opacity-60 hover:bg-violet-700">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}Create invoice
             </button>
           )}
@@ -837,16 +837,16 @@ export default function Invoices() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Accounts receivable — invoices, payments, aging.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
+          <button type="button" onClick={load} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh
           </button>
-          <button onClick={exportCsv} disabled={exporting} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300">
+          <button type="button" onClick={exportCsv} disabled={exporting} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300">
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Export CSV
           </button>
-          <button onClick={() => setShowFromEstimate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-500 px-3 text-sm font-semibold text-violet-700 dark:text-violet-300">
+          <button type="button" onClick={() => setShowFromEstimate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-500 px-3 text-sm font-semibold text-violet-700 dark:text-violet-300">
             <Receipt className="h-4 w-4" />From Estimate
           </button>
-          <button onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
+          <button type="button" onClick={() => setShowCreate(true)} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
             <Plus className="h-4 w-4" />New Invoice
           </button>
         </div>
@@ -877,7 +877,7 @@ export default function Invoices() {
         </div>
         <div className="flex flex-wrap gap-1.5">
           {["", "draft", "sent", "partially_paid", "paid", "void"].map((s) => (
-            <button key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
+            <button type="button" key={s || "all"} onClick={() => { setViewName(""); setStatus(s); }}
               className={`min-h-9 rounded-full px-3 text-xs font-semibold ${status === s ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300"}`}>
               {s ? STATUS_LABELS[s] : "All"}
             </button>

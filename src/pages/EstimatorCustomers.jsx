@@ -46,7 +46,7 @@ function statementHtml(data) {
     h1{font-size:20px;margin:0} .muted{color:#64748b;font-size:12px}
     @media print{button{display:none}}
   </style></head><body>
-  <button onclick="window.print()" style="float:right;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer">Print / Save PDF</button>
+  <button type="button" onclick="window.print()" style="float:right;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer">Print / Save PDF</button>
   <h1>CCS Signage â€” Account Statement</h1>
   <p class="muted">Statement date: ${escHtml(aging.as_of || localDateStamp())}</p>
   <h2 style="font-size:14px;margin:24px 0 4px">Bill to</h2><p>${billTo || "â€”"}</p>
@@ -99,7 +99,7 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 <h2 className="text-lg font-bold text-gray-900">{c?.company_name || "Customer"}</h2>
                 <div className="text-xs text-gray-500 capitalize">{c?.customer_status || "prospect"}</div>
               </div>
-              <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">

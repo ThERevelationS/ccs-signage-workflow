@@ -762,7 +762,7 @@ export default function MyWorkflow() {
                           <span className="truncate">General Office Task</span>
                         </span>
                       ) : (
-                        <button
+                        <button type="button"
                           onClick={() => setSelectedWorkOrder(wo)}
                           className="text-xs text-left hover:text-blue-600 flex items-center gap-1 font-medium"
                         >
@@ -822,7 +822,7 @@ export default function MyWorkflow() {
                               {item.type === 'task_with_my_items' && (
                                 <div className="p-1 rounded border bg-gray-50 border-gray-200">
                                   <div className="flex items-center gap-1 mb-1">
-                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                    <button type="button" onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
                                       {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
                                     </button>
                                     <p className="text-xs text-gray-500 italic">↳ {item.task.text}</p>
@@ -856,7 +856,7 @@ export default function MyWorkflow() {
                               {item.type === 'task' && (
                                 <div className={`p-1 rounded border ${item.task.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
                                   <div className="flex items-center gap-1">
-                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                    <button type="button" onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
                                       {isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
                                     </button>
                                     <Checkbox
@@ -1002,7 +1002,7 @@ export default function MyWorkflow() {
                               {item.type === 'sip_task' && (
                                 <div className={`p-1 rounded border ${item.item.approved_by ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
                                   <div className="flex items-center gap-1">
-                                    <button onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
+                                    <button type="button" onClick={() => setExpandedTasks(prev => ({ ...prev, [taskKey]: !isExpanded }))}>
                                       {item.parentItem && (isExpanded ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />)}
                                     </button>
                                     <Checkbox
