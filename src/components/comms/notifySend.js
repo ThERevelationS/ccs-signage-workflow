@@ -32,7 +32,7 @@ const clean = (v) => String(v ?? "").trim();
 // Send-side of the sendStaffEmail contract. Resolves the axios-style {data}
 // envelope the SDK returns and treats {ok:true} as the only success —
 // {error,status} payloads and transport failures both throw a plain Error.
-export async function invokeStaffEmail({ sessionToken, to, subject, body, cc, kind } = {}) {
+export async function invokeStaffEmail({ sessionToken, to, subject, body, cc, kind, replyTo } = {}) {
   const res = await base44.functions.invoke("sendStaffEmail", {
     session_token: sessionToken,
     to: clean(to),
@@ -40,6 +40,7 @@ export async function invokeStaffEmail({ sessionToken, to, subject, body, cc, ki
     body: clean(body),
     ...(clean(cc) ? { cc: clean(cc) } : {}),
     ...(clean(kind) ? { kind: clean(kind) } : {}),
+    ...(clean(replyTo) ? { reply_to: clean(replyTo) } : {}),
   });
   const data = res?.data || res;
   if (data?.ok === true) return data;
@@ -162,6 +163,7 @@ export async function sendCustomerNotification({
   actor,
   log = {},
   overrides,
+  replyTo,
 } = {}) {
   const recipient = clean(to);
   if (!recipient.includes("@")) {
@@ -170,7 +172,7 @@ export async function sendCustomerNotification({
   const templates = overrides ?? (await loadSavedNotificationOverrides());
   const { subject, body } = renderNotification(kind, ctx, templates);
 
-  await invokeStaffEmail({ sessionToken, to: recipient, subject, body, cc, kind });
+  await invokeStaffEmail({ sessionToken, to: recipient, subject, body, cc, kind, replyTo });
 
   // The email is out — a log failure is reported but never un-sends it.
   let logRow = null;
