@@ -117,6 +117,7 @@ function LocalityPickerSession({
   const [creatingDraft, setCreatingDraft] = useState(false);
   const [multiMode, setMultiMode] = useState(false);
   const [multiResults, setMultiResults] = useState([]);
+  const [autoSearchNonce, setAutoSearchNonce] = useState(0);
   const [multiRunning, setMultiRunning] = useState(false);
   const [gpsCoords, setGpsCoords] = useState(null);
   const [scanningQR, setScanningQR] = useState(false);
@@ -244,6 +245,13 @@ function LocalityPickerSession({
     if(pendingSearch.current===version)pendingSearch.current=null;
     if(version===searchVersion.current&&openRef.current)setSearching(false);
   };
+
+  // Tapping a multi-address result sets the address then bumps this nonce —
+  // the effect runs after the re-render so runSearch sees the fresh address.
+  useEffect(() => {
+    if (!autoSearchNonce) return;
+    runSearch();
+  }, [autoSearchNonce]);
 
   const selectedLocality = localities.find(locality => locality.id === selectedLocalityId);
   const selectedAuthority = verifiedAuthoritySummary(selectedLocality);
@@ -439,20 +447,32 @@ function LocalityPickerSession({
                     try {
                       const res = await base44.functions.invoke("resolvePermittingAddress", { address: line });
                       const data = res?.data || res || {};
-                      const loc = data.locality_name || data.locality?.name || data.candidates?.[0]?.locality_name || data.candidates?.[0]?.name || "";
-                      results.push({ address: line, locality: loc, found: !!loc });
-                    } catch { results.push({ address: line, locality: "", found: false }); }
+                      const sug = data.suggested_locality || null;
+                      const loc = sug?.name || data.locality_name || data.locality?.name || data.candidates?.[0]?.locality_name || data.candidates?.[0]?.name || "";
+                      results.push({ address: line, locality: loc, found: !!loc, localityId: sug?.id || null, canApply: data.apply_allowed === true });
+                    } catch { results.push({ address: line, locality: "", found: false, localityId: null, canApply: false }); }
                     setMultiResults([...results]);
                   }
                   setMultiRunning(false);
                 }}
-              >{multiRunning ? "Resolving…" : "Resolve all"}</Button>
+              >{multiRunning ? "Checking…" : "Check all addresses"}</Button>
               {multiResults.length > 0 && (
                 <div className="max-h-40 overflow-y-auto rounded border border-gray-200 text-[11px]">
                   {multiResults.map((r, i) => (
                     <div key={i} className={`flex items-center justify-between gap-2 border-b border-gray-100 px-2 py-1 ${r.found ? "" : "bg-red-50"}`}>
                       <span className="truncate text-slate-600">{r.address}</span>
-                      <span className={`shrink-0 font-semibold ${r.found ? "text-emerald-700" : "text-red-600"}`}>{r.locality || "not found"}</span>
+                      {r.found && r.localityId ? (
+                        <button
+                          type="button"
+                          onClick={() => { setAddress(r.address); setMultiMode(false); setAutoSearchNonce(Date.now()); }}
+                          className="shrink-0 font-semibold text-emerald-700 underline decoration-dotted hover:text-emerald-900"
+                          title={r.canApply ? `Use ${r.locality} for this job` : `${r.locality} — found, but offices still need a check`}
+                        >
+                          {r.locality}{r.canApply ? " — use it →" : " — needs check"}
+                        </button>
+                      ) : (
+                        <span className={`shrink-0 font-semibold ${r.found ? "text-emerald-700" : "text-red-600"}`}>{r.locality || "not found"}</span>
+                      )}
                     </div>
                   ))}
                 </div>
