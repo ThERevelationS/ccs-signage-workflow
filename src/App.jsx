@@ -51,6 +51,7 @@ const WalkIn = lazyPage(() => import('./pages/WalkIn'));
 const OpsReports = lazyPage(() => import('./pages/OpsReports'));
 const CustomerStatements = lazyPage(() => import('./pages/CustomerStatements'));
 const PricingAdmin = lazyPage(() => import('./pages/PricingAdmin'));
+const CommsFollowups = lazyPage(() => import('./pages/CommsFollowups'));
 const EstimatorProducts = lazyPage(() => import('./pages/EstimatorProducts'));
 const EstimatorParts = lazyPage(() => import('./pages/EstimatorParts'));
 const EstimatorSettings = lazyPage(() => import('./pages/EstimatorSettings'));
@@ -120,6 +121,7 @@ const ESTIMATOR_PAGES = {
   OpsReports,
   CustomerStatements,
   PricingAdmin,
+  CommsFollowups,
   EstimatorProducts,
   EstimatorParts,
   EstimatorSettings,
