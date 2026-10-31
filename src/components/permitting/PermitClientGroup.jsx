@@ -211,10 +211,10 @@ export default function PermitClientGroup({
               className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800 hover:bg-emerald-100"
               title="Mark every pending line in this job as submitted today"
               onClick={() => {
+                const pending = group.lines.filter((li) => !li.submitted_date && !isPermitLineEffectivelyComplete(li));
+                if (!window.confirm(`Mark ${pending.length} application${pending.length === 1 ? "" : "s"} as sent to the office today? Only press OK if you really sent ${pending.length === 1 ? "it" : "them all"}.`)) return;
                 const today = new Date().toISOString().slice(0, 10);
-                for (const li of group.lines) {
-                  if (!li.submitted_date && !isPermitLineEffectivelyComplete(li)) onUpdateField(li.id, "submitted_date", today);
-                }
+                for (const li of pending) onUpdateField(li.id, "submitted_date", today);
               }}
             >Mark all submitted</button>
           )}
