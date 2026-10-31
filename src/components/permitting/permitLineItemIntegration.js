@@ -18,6 +18,7 @@
 
 import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 
 // ── Deterministic hash (djb2 — synchronous, no crypto needed) ──
 
@@ -87,14 +88,10 @@ export function buildLineNotes(idempotencyKey, citations, additionalNotes = "") 
  */
 export async function findExistingLines(workOrderId, rowNames) {
   if (!workOrderId || !rowNames.length) return {};
-  // NOTE: the staff read facade only forwards sort/limit/skip from an
-  // options object — a "fields" projection would be silently dropped, so the
-  // rows come back whole. The options form stays for its paged {items}
-  // return contract.
-  const { items } = await staffEntities.PermitLineItem.filter(
+  const { items } = await withRateLimitRetry(() => staffEntities.PermitLineItem.filter(
     { work_order_id: workOrderId, row_name: { $in: rowNames } },
-    { limit: 100 },
-  );
+    { limit: 100, fields: ["id", "row_name", "status", "notes", "office_types", "locality_name"] },
+  ));
   const map = {};
   for (const item of items) map[item.row_name] = item;
   return map;
@@ -242,7 +239,7 @@ export async function createPermitLinesFromDraft(draft, workOrder, signIdentity 
     }
 
     const payload = mapDraftStepToPermitLineItem(step, draft, workOrder, idempotencyKey, rowName);
-    const record = await staffEntities.PermitLineItem.create(payload);
+    const record = await withRateLimitRetry(() => staffEntities.PermitLineItem.create(payload));
     created.push({ id: record.id, rowName, step });
   }
 
@@ -264,14 +261,10 @@ export async function createPermitLinesFromDraft(draft, workOrder, signIdentity 
 export async function generateReviewSuggestions(workOrderId, affectedSourceDocIds) {
   if (!workOrderId || !affectedSourceDocIds?.length) return [];
 
-  // NOTE: the staff read facade only forwards sort/limit/skip from an
-  // options object — a "fields" projection would be silently dropped, so the
-  // rows come back whole. The options form stays for its paged {items}
-  // return contract.
-  const { items } = await staffEntities.PermitLineItem.filter(
+  const { items } = await withRateLimitRetry(() => staffEntities.PermitLineItem.filter(
     { work_order_id: workOrderId },
-    { limit: 100 },
-  );
+    { limit: 100, fields: ["id", "row_name", "notes", "status", "office_types", "locality_name", "steps"] },
+  ));
 
   const suggestions = [];
   for (const line of items) {
