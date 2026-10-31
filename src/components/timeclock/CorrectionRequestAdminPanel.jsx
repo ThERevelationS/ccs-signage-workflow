@@ -15,6 +15,7 @@ import {
   parseCompanyDateTimeInput,
   shiftDurationSummary,
 } from "@/components/timeclock/timeClockCompanyTime";
+import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
 
 function reviewRetryStorageKey(correctionRequestId) {
   return `ccs_timeclock_review_retry:${String(correctionRequestId || "").trim().toLowerCase()}`;
@@ -48,7 +49,7 @@ function newRequestId() {
 }
 
 function displayTime(iso) {
-  if (!iso) return "—";
+  if (!iso) return "???";
   return formatCompanyDateTime(iso);
 }
 
@@ -336,7 +337,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
           </div>
         )}
         {loading ? (
-          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests…</div>
+          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading requests???</div>
         ) : error && !selected ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
         ) : requests.length === 0 ? (
@@ -363,7 +364,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
                     )}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}
+                    Submitted {displayTime(request.requested_at)} ?? {TIME_CLOCK_COMPANY_TIME_LABEL}
                     {(() => { const d = ageDays(request.requested_at); return d !== null && d >= 1 ? (
                       <span className={`ml-1.5 rounded px-1 py-0.5 text-[10px] font-bold ${d >= 3 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>{d}d old</span>
                     ) : null; })()}
@@ -409,19 +410,19 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
                   .slice(0, 3);
                 return recent.length ? (
                   <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
-                    Recent shifts: {recent.map((e) => `${Number(e.total_hours || 0).toFixed(1)}h (${e.clock_in ? new Date(e.clock_in).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "?"})`).join(" · ")}
+                    Recent shifts: {recent.map((e) => `${Number(e.total_hours || 0).toFixed(1)}h (${e.clock_in ? new Date(e.clock_in).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "?"})`).join(" ?? ")}
                   </div>
                 ) : null;
               })()}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs font-semibold text-gray-500 mb-2">ORIGINAL · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
+                  <div className="text-xs font-semibold text-gray-500 mb-2">ORIGINAL ?? {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div>In: {displayTime(selected.original_snapshot?.clock_in)}</div>
                   <div>Out: {displayTime(selected.original_snapshot?.clock_out)}</div>
                   <div>Lunch: {selected.original_snapshot?.lunch_minutes || 0} min</div>
                 </div>
                 <div className="rounded-lg bg-purple-50 p-3">
-                  <div className="text-xs font-semibold text-purple-700 mb-2">EMPLOYEE REQUEST · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
+                  <div className="text-xs font-semibold text-purple-700 mb-2">EMPLOYEE REQUEST ?? {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div>In: {displayTime(selected.requested_changes?.clock_in)}</div>
                   <div>Out: {displayTime(selected.requested_changes?.clock_out)}</div>
                   <div>Lunch: {selected.requested_changes?.lunch_minutes || 0} min</div>
@@ -440,12 +441,12 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
               )}
               <div className="rounded-lg border p-3 space-y-3">
                 <div>
-                  <div className="text-sm font-semibold">Manager-adjusted values · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
+                  <div className="text-sm font-semibold">Manager-adjusted values ?? {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div className="text-xs text-gray-500 mt-1">These fields are used only by <strong>Apply Edited Time</strong>. <strong>Approve Reported Time</strong> uses the employee request above exactly.</div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><Input type="datetime-local" value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} /></div>
-                  <div><Label>Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><Input type="datetime-local" value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} /></div>
+                  <div><Label>Clock In ??? {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><TimeQuickPick value={clockIn} onChange={setClockIn} disabled={busy || retryingSelected} times={SHIFT_START_TIMES} inputId="adj-clock-in" /></div>
+                  <div><Label>Clock Out ??? {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><TimeQuickPick value={clockOut} onChange={setClockOut} disabled={busy || retryingSelected} inputId="adj-clock-out" /></div>
                 </div>
                 <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" step="1" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy || retryingSelected} /></div>
                 <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={4000} disabled={busy || retryingSelected} /></div>
@@ -454,7 +455,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
                     <Clock3 className="w-4 h-4 mt-0.5 shrink-0" />
                     {editedPreview.valid ? (
                       <div>
-                        <div><strong>Edited duration preview:</strong> {formatMinutes(editedPreview.grossMinutes)} gross − {editedPreview.lunchMinutes}m lunch = <strong>{formatMinutes(editedPreview.netMinutesBeforeWorkPause)}</strong>.</div>
+                        <div><strong>Edited duration preview:</strong> {formatMinutes(editedPreview.grossMinutes)} gross ??? {editedPreview.lunchMinutes}m lunch = <strong>{formatMinutes(editedPreview.netMinutesBeforeWorkPause)}</strong>.</div>
                         <div className="text-xs mt-1">Tracked Work Pause time, if any, remains preserved and is also excluded by the authoritative backend calculation.</div>
                       </div>
                     ) : (
@@ -502,3 +503,4 @@ export default function CorrectionRequestAdminPanel({ sessionToken, entries = []
     </>
   );
 }
+
