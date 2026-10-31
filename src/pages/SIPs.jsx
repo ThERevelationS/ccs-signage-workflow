@@ -248,7 +248,7 @@ export default function SIPs() {
     // a successful, current snapshot proves that the issue has recovered.
     try {
       const [orders, usersData, taskDescSetting, dropdownsSetting] = await Promise.all([
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
