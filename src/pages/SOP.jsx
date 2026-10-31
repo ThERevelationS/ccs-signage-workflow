@@ -9,8 +9,10 @@ import SopEditor from "@/components/sop/SopEditor";
 import SopAdminPanel from "@/components/sop/SopAdminPanel";
 import SopPrint, { SOP_PRINT_CSS } from "@/components/sop/SopPrint";
 import AiSopBuilderDialog from "@/components/sop/AiSopBuilderDialog";
+import SopRunMode from "@/components/sop/SopRunMode";
+import SopQrDialog from "@/components/sop/SopQr";
 import {
-  sopBootstrap, sopCreate, sopUpdate, sopSetStatus, sopDelete, sopAcknowledge,
+  sopBootstrap, sopCreate, sopUpdate, sopSetStatus, sopDelete, sopAcknowledge, sopSuggestEdit, sopResolveSuggestion,
 } from "@/components/sop/sopService";
 import { newSopDraft } from "@/components/sop/sopModel";
 
@@ -35,6 +37,8 @@ export default function SOP() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [printSop, setPrintSop] = useState(null);
+  const [runSop, setRunSop] = useState(null);
+  const [qrSop, setQrSop] = useState(null);
   const [busy, setBusy] = useState(false);
   const [acknowledging, setAcknowledging] = useState(false);
 
@@ -167,10 +171,13 @@ export default function SOP() {
         }
       }
       setError("");
+      setBusy(false);
+      return true;
     } catch (e) {
       setError(e?.message || "Could not save the SOP.");
+      setBusy(false);
+      return false;
     }
-    setBusy(false);
   };
 
   const archiveSop = async (sop) => {
@@ -195,6 +202,55 @@ export default function SOP() {
     } catch (e) {
       setError(e?.message || "Could not delete the SOP.");
     }
+    setBusy(false);
+  };
+
+  const cloneSop = (sop) => {
+    const { id, updated_date, created_date, acknowledged_viewers, suggestions, status, ...rest } = sop;
+    setActiveSop({ ...rest, title: `Copy of ${sop.title}`, status: "draft", version: 1 });
+    setIsNewDraft(true);
+    setDraftEpoch((n) => n + 1);
+    setView("edit");
+  };
+
+  const sendSuggestion = async ({ sopId, stepId, text }) => {
+    try {
+      await sopSuggestEdit({ id: sopId, stepId, text });
+      setError("");
+    } catch (e) {
+      setError(e?.message || "Could not send your suggestion.");
+    }
+  };
+
+  const resolveSuggestion = async ({ sop, suggestionId, outcome }) => {
+    try {
+      await sopResolveSuggestion({ id: sop.id, suggestionId, outcome, expectedUpdatedDate: sop.updated_date });
+      await bootstrap();
+    } catch (e) {
+      setError(e?.message || "Could not update that suggestion.");
+    }
+  };
+
+  // Bulk card actions from the browser's select mode — per-item try/catch so
+  // one stale row doesn't abort the rest.
+  const bulkUpdate = async ({ ids, action, category }) => {
+    setBusy(true);
+    for (const id of ids || []) {
+      const sop = sops.find((s) => s.id === id);
+      if (!sop) continue;
+      try {
+        if (action === "publish" || action === "archive") {
+          await sopSetStatus({ id, expectedUpdatedDate: sop.updated_date, status: action === "publish" ? "published" : "archived" });
+        } else if (action === "pin" || action === "unpin") {
+          await sopUpdate({ id, expectedUpdatedDate: sop.updated_date, nextFields: { pinned: action === "pin" } });
+        } else if (action === "move" && category) {
+          await sopUpdate({ id, expectedUpdatedDate: sop.updated_date, nextFields: { category } });
+        }
+      } catch (e) {
+        setError(e?.message || `Could not update "${sop.title}".`);
+      }
+    }
+    await bootstrap();
     setBusy(false);
   };
 
@@ -250,6 +306,7 @@ export default function SOP() {
           onNew={startNew}
           onAiBuild={() => setAiOpen(true)}
           onAdmin={() => setAdminOpen(true)}
+          onBulk={bulkUpdate}
         />
       )}
 
@@ -262,6 +319,10 @@ export default function SOP() {
           onEdit={startEdit}
           onAcknowledge={acknowledge}
           onPrint={setPrintSop}
+          onRun={setRunSop}
+          onQr={setQrSop}
+          onClone={cloneSop}
+          onSuggest={sendSuggestion}
           acknowledging={acknowledging}
         />
       )}
@@ -298,11 +359,18 @@ export default function SOP() {
         settingsUpdatedDate={settingsDate}
         sops={sops}
         onSaved={(next, nextDate) => { setSettings(next); setSettingsDate(nextDate); }}
+        onResolveSuggestion={resolveSuggestion}
       />
 
       {printSop && (
         <SopPrint sop={printSop} settings={settings} onClose={() => setPrintSop(null)} />
       )}
+
+      {runSop && (
+        <SopRunMode sop={runSop} settings={settings} onClose={() => setRunSop(null)} />
+      )}
+
+      <SopQrDialog sop={qrSop} settings={settings} open={!!qrSop} onClose={() => setQrSop(null)} />
     </div>
   );
 }
