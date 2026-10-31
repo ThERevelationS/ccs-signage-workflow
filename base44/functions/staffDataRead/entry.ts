@@ -298,6 +298,57 @@ function cleanSkip(value: unknown) {
   return parsed;
 }
 
+const MAX_CURSOR_BYTES = 4000;
+const MAX_FIELD_LIST = 200;
+const FIELD_NAME_PATTERN = /^[A-Za-z_][\w.]*$/;
+const COUNT_PAGE = 500;
+const COUNT_MAX_ROWS = 100000;
+
+// Continuation cursor for options-object reads — opaque to the gateway, only
+// size-checked so a request can't smuggle an oversized token.
+function cleanCursor(value: unknown) {
+  const cursor = String(value || '').trim();
+  if (!cursor) return '';
+  if (cursor.length > MAX_CURSOR_BYTES) {
+    throw Object.assign(new Error('Staff read cursor is invalid.'), { status: 400 });
+  }
+  return cursor;
+}
+
+// Optional field projection — dotted paths allowed so callers pull only the
+// fields a view needs. Denylisted fields still get stripped by projectItem on
+// the way out, so requesting one can never leak it.
+function cleanFields(value: unknown) {
+  if (value == null || value === '') return null;
+  if (!Array.isArray(value) || value.length > MAX_FIELD_LIST) {
+    throw Object.assign(new Error('Staff read fields list is invalid.'), { status: 400 });
+  }
+  const out = [...new Set(value.map((f) => String(f || '').trim()).filter((f) => FIELD_NAME_PATTERN.test(f)))];
+  return out.length ? out : null;
+}
+
+// Count the full matching set, not one bounded page — the old path counted
+// only the limit/skip window and under-reported anything larger. Prefers the
+// entity count() API; falls back to a paged tally (capped + honestly flagged)
+// when a backend does not expose it.
+async function countRows(entity: any, query: any) {
+  const countQuery = query && typeof query === 'object' ? query : {};
+  if (typeof entity?.count === 'function') {
+    try {
+      const total = Number(await entity.count(countQuery));
+      if (Number.isFinite(total) && total >= 0) return { count: total, truncated: false };
+    } catch { /* fall back to the paged tally below */ }
+  }
+  let scanned = 0;
+  while (scanned < COUNT_MAX_ROWS) {
+    const page = await entity.filter(countQuery, null, COUNT_PAGE, scanned);
+    if (!Array.isArray(page)) break;
+    scanned += page.length;
+    if (page.length < COUNT_PAGE) return { count: scanned, truncated: false };
+  }
+  return { count: scanned, truncated: true };
+}
+
 // Module-scope per-entry cache — identical reads within the TTL (mount storms:
 // parallel component reads and subscribe checks) collapse to a single upstream
 // entity read while an isolate stays warm. Writes go through staffEntityWrite,
@@ -334,6 +385,8 @@ function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
     sort: request?.sort,
     limit: request?.limit,
     skip: request?.skip,
+    cursor: request?.cursor,
+    fields: request?.fields,
     count: request?.count,
   }) + '|' + (user.role === 'admin' ? 'admin' : 'staff') + '|' + ownerScope + '|' + deniedFieldScope;
 }
@@ -389,21 +442,55 @@ async function readOne(base44: any, user: any, body: any) {
     const sort = cleanSort(body?.sort, entityName);
     const limit = cleanLimit(body?.limit, 100);
     const skip = cleanSkip(body?.skip);
+    const cursor = cleanCursor(body?.cursor);
+    const fields = cleanFields(body?.fields);
     let effectiveQuery = query;
     if (OWNER_SCOPED.has(entityName) && ownerEmail) {
       effectiveQuery = { ...(effectiveQuery || {}), user_email: ownerEmail };
     }
-    const items = effectiveQuery
-      ? await entity.filter(effectiveQuery, sort || null, limit, skip)
-      : await entity.list(sort || null, limit, skip);
-    const rows = Array.isArray(items) ? items : [];
+    if (body?.count === true) {
+      const counted = await countRows(entity, effectiveQuery);
+      return { status: 200, body: { success: true, count: counted.count, truncated: counted.truncated } };
+    }
+    let rows: any[] = [];
+    let nextCursor: string | null = null;
+    let hasMore = false;
+    if (cursor || fields) {
+      // Options-object read — cursor pagination and/or field projections go
+      // through the paged entity API ({sort, limit, skip, cursor, fields}).
+      // A cursor continues a previous page, so it replaces skip entirely.
+      const options: any = { sort: sort || undefined, limit };
+      if (!cursor && skip) options.skip = skip;
+      if (cursor) options.cursor = cursor;
+      if (fields) options.fields = fields;
+      const page = effectiveQuery
+        ? await entity.filter(effectiveQuery, options)
+        : await entity.list(options);
+      const pageRows = Array.isArray(page) ? page : page?.items;
+      rows = Array.isArray(pageRows) ? pageRows : [];
+      nextCursor = !Array.isArray(page) && typeof page?.next_cursor === 'string' && page.next_cursor
+        ? page.next_cursor : null;
+      hasMore = !Array.isArray(page) && (page?.has_more === true || Boolean(nextCursor));
+    } else {
+      const items = effectiveQuery
+        ? await entity.filter(effectiveQuery, sort || null, limit, skip)
+        : await entity.list(sort || null, limit, skip);
+      rows = Array.isArray(items) ? items : [];
+    }
     const scopedRows = OWNER_SCOPED.has(entityName) && ownerEmail
       ? rows.filter((row) => String(row?.user_email || '').trim().toLowerCase() === ownerEmail)
       : rows;
-    if (body?.count === true) {
-      return { status: 200, body: { success: true, count: scopedRows.length } };
-    }
-    return { status: 200, body: { success: true, items: scopedRows.map((row) => projectItem(entityName, row, user)) } };
+    // `truncated` means "there may be more rows past this window" — a full
+    // page or a live continuation cursor both raise it so callers can page on
+    // instead of mistaking a clamped read for the whole set.
+    const payload: any = {
+      success: true,
+      items: scopedRows.map((row) => projectItem(entityName, row, user)),
+      returned: scopedRows.length,
+      truncated: hasMore || Boolean(nextCursor) || rows.length >= limit,
+    };
+    if (nextCursor) payload.next_cursor = nextCursor;
+    return { status: 200, body: payload };
   } catch (error: any) {
     // A platform rate limit is transient whatever status it arrives with:
     // hand it back as 429 so the browser backs off and retries instead of
