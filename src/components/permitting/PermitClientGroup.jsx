@@ -50,6 +50,7 @@ export default function PermitClientGroup({
   today,
   sharedOfficeCount = 0,
   onSearchLocality,
+  onBuildPlan,
   queueState,
   expanded: controlledExpanded,
   onExpandedChange
@@ -204,6 +205,17 @@ export default function PermitClientGroup({
             >
               Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
             </button>
+          )}
+          {isRegistered && wo && onBuildPlan && (
+            <button
+              type="button"
+              className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 font-semibold text-violet-800 hover:bg-violet-100"
+              title="Build an AI permit plan for this job from its town's checked rules"
+              onClick={() => {
+                const loc = localities?.find(l => l.id === (group.lines || []).find(li => li?.locality_id)?.locality_id) || null;
+                onBuildPlan(wo, loc);
+              }}
+            >AI plan</button>
           )}
           {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
             <button
