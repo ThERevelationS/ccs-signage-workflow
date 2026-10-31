@@ -9,6 +9,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 // rejected at any depth so the payload can only ever describe a plain record.
 const WRITE_OPS: Record<string, Set<string>> = {
   AllInOneEstimate: new Set(['updateMany', 'delete']),
+  BrickStoneProject: new Set(['create']),
   BuilderPart: new Set(['create', 'updateMany']),
   BuilderPartGroup: new Set(['updateMany']),
   BuilderProduct: new Set(['create', 'updateMany']),
