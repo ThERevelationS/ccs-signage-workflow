@@ -75,6 +75,7 @@ import {
   saveCollapsedGroups,
   saveNavOrder,
 } from "@/components/layout/navPreferences";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -237,6 +238,9 @@ function LayoutContent({ children }) {
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
   const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
+  const { prefs: workspacePrefs, reportNavOrder } = useWorkspacePreferences();
+  const navPrefs = workspacePrefs.navigation || {};
+  const navHidden = navPrefs.hidden || [];
   
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView, orientation, toggleOrientation } = useMultiPageView();
@@ -257,6 +261,23 @@ function LayoutContent({ children }) {
   }, [location.pathname]);
 
   const orderedNavItems = useMemo(() => applyNavOrder(navigationItems, navOrder), [navOrder]);
+  // Hidden buttons are a render filter only — order/permissions untouched.
+  const visibleNavItems = useMemo(() => orderedNavItems.filter((i) => !navHidden.includes(i.url)), [orderedNavItems, navHidden]);
+
+  // Server-side order sync (other devices / settings reset) re-reads the
+  // bridged localStorage copy and repaints the bars.
+  useEffect(() => {
+    const sync = () => setNavOrder(loadNavOrder(currentUser?.email));
+    window.addEventListener("ccs-nav-order-sync", sync);
+    return () => window.removeEventListener("ccs-nav-order-sync", sync);
+  }, [currentUser?.email]);
+
+  // Personal landing page: only intercepts the bare root route.
+  useEffect(() => {
+    if (location.pathname === "/" && navPrefs.landingPage) {
+      navigate(navPrefs.landingPage, { replace: true });
+    }
+  }, [location.pathname, navPrefs.landingPage, navigate]);
 
   const isInSplitView = useCallback(
     (item) => Boolean(additionalPages.find((p) => item.url.includes(p.name))),
@@ -265,12 +286,15 @@ function LayoutContent({ children }) {
 
   const handleNavReorder = (result) => {
     if (!result.destination) return;
-    const urls = orderedNavItems.map((item) => item.url);
+    // Drag indexes address the visible list; hidden buttons keep their tail slot.
+    const urls = visibleNavItems.map((item) => item.url);
     const [moved] = urls.splice(result.source.index, 1);
     if (!moved) return;
     urls.splice(result.destination.index, 0, moved);
-    setNavOrder(urls);
-    saveNavOrder(currentUser?.email, urls);
+    const fullOrder = [...urls, ...orderedNavItems.filter((i) => navHidden.includes(i.url)).map((i) => i.url)];
+    setNavOrder(fullOrder);
+    saveNavOrder(currentUser?.email, fullOrder);
+    reportNavOrder(fullOrder);
   };
 
   const toggleNavGroup = (key) => {
