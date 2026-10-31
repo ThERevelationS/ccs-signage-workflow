@@ -18,23 +18,23 @@ export default function OfficeRoleOverview({ rows = [], onInspect, onNavigate })
   });
   const gaps = roles.filter(role => role.gap).length;
   return <section aria-label="Office role evidence overview" className="min-w-0 space-y-3 rounded border bg-white p-3 [overflow-wrap:anywhere]">
-    <h5 className="text-sm font-semibold">Role and evidence overview</h5>
+    <h5 className="text-sm font-semibold">Who does what — and the proof</h5>
     <p className="text-xs">Seven research roles · {roles.filter(role => role.findings.length).length} with saved findings · {gaps} with missing, incomplete or ambiguous metadata. “Metadata present” means checklist fields were recorded; it does not verify an office, authority, current source, project applicability or required permits.</p>
-    <p className="text-xs">Electrical permit issuance and inspection are separate responsibilities. Office names, links and populated fields do not establish authority, commercial-sign applicability or coverage of a project address. County membership does not prove responsibility.</p>
+    <p className="text-xs">Issuing the permit and inspecting are two different jobs. Names, links, and filled-in fields don't prove who's in charge or that it covers your address. Being in a county doesn't make an office responsible.</p>
     <label className="block text-sm">Show roles
       <select aria-label="Office role gap filter" value={filter} onChange={event => setFilter(event.target.value)} className="mt-1 min-h-11 w-full min-w-0 rounded border px-2">
         <option value="all">All seven roles</option><option value="gaps">Missing or incomplete metadata ({gaps})</option>
       </select>
     </label>
-    {filter === 'gaps' && gaps === 0 && <p role="status" className="text-sm">No missing checklist metadata detected. Staff review and location applicability are still required.</p>}
+    {filter === 'gaps' && gaps === 0 && <p role="status" className="text-sm">No checklist gaps found — staff still need to check it covers the job address.</p>}
     <div className="grid min-w-0 gap-2 sm:grid-cols-2">
       {roles.filter(role => filter === 'all' || role.gap).map(role => <article key={role.key} aria-label={'Role overview: ' + role.label} className="min-w-0 space-y-2 rounded border bg-gray-50 p-3 text-xs">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h6 className="text-sm font-semibold">{role.label}</h6>
           <span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${role.gap ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-blue-300 bg-blue-50 text-blue-900'}`} role="status">{statusLabel(role.assessment)}</span>
         </div>
-        {!role.findings.length ? <p>No saved finding for this role. Responsibility and applicability remain unknown.</p> : <>
-          {role.findings.length > 1 && <p className="rounded bg-amber-50 p-2">Multiple saved findings for this role. They remain separate; no office has been chosen automatically.</p>}
+        {!role.findings.length ? <p>Nothing saved for this job — who handles it is unknown.</p> : <>
+          {role.findings.length > 1 && <p className="rounded bg-amber-50 p-2">More than one saved answer for this job — none was picked; each stays separate.</p>}
           {role.findings.map(({ row, index }, number) => {
             const missing = role.assessment.findings.find(item => item.index === index)?.missing_fields || [];
             const missingEvidence = role.assessment.findings.find(item => item.index === index)?.missing_evidence || [];
