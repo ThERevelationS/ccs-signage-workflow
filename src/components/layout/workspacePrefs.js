@@ -105,7 +105,7 @@ export const SECTION_PATHS = {
   workflow: ["workflow"],
 };
 
-// Built-in profile presets — applied as one-shot blobs via applyProfilePreset.
+// Built-in profile presets — applied as one-shot blobs via patchPrefs.
 export const PROFILE_PRESETS = [
   {
     key: "focus",
