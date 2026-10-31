@@ -59,6 +59,7 @@ export default function ProductQueues() {
         <ProductQueue
           key={queue.key}
           title={queue.title}
+          queueLens={queue.key}
           dueField={queue.dueField}
           stageFilter={queue.stageFilter}
         />
