@@ -101,6 +101,7 @@ export const ESTIMATOR_RIGHT_TABS = [
       { label: "Maintenance Settings", to: "/MaintenanceSettings" },
       { label: "Installation Settings", to: "/InstallationSettings" },
       { label: "Quote Defaults", to: "/QuoteSettings" },
+      { label: "Pricing Admin", to: "/PricingAdmin" },
       { label: "Vinyl Inventory", to: "/VinylInventory" },
       { label: "Vinyl Settings", to: "/VinylSettings" },
       { label: "Admin Settings", to: "/AdminSettings" },
