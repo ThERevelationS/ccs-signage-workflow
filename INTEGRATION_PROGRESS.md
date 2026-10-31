@@ -3,7 +3,7 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 10 CoreBridge CSV migration UI (wizard + stepper + FileAttachTool + wiring); Phase 11 consolidated verification after. NOTE: a concurrent workstream (Personal Workspace Settings, phases 1-5) is active on App.jsx/Layout/index.css — re-read shared files before editing.
+Phase 11 consolidated verification + hardening (regression sweep, dead-end/UX audit, Playwright pass where reachable). NOTE: a concurrent workstream (Personal Workspace Settings, phases 1-5) is active on App.jsx/Layout/index.css — re-read shared files before editing.
 
 ## Phase status
 | Phase | Status | Checkpoint |
@@ -18,7 +18,7 @@ Phase 10 CoreBridge CSV migration UI (wizard + stepper + FileAttachTool + wiring
 | 7 financial | DONE | 6ae612ff/6ae61474/6ae6156f+parent |
 | 8 smtp | DONE | 6ae61923+deploy |
 | 9 ui kit | DONE | 6ae63a44 |
-| 10 migration | — | — |
+| 10 migration | DONE | 6ae64021 |
 | 11 verify | — | — |
 
 ## Log
