@@ -27,6 +27,11 @@ const {
   productValue,
   productCompletedAt,
   productDueDate,
+  partsNeededReport,
+  salesByMonthReport,
+  overridesAuditReport,
+  customerAnalyticsReport,
+  estimateFunnelReport,
   OPS_REPORTS,
   OPS_REPORT_MAP,
 } = await import(pathToFileURL(out).href);
@@ -235,6 +240,196 @@ for (const def of OPS_REPORTS) {
   assert.deepEqual(gamma.slice(2, 6), [0, 7, 0, 0], 'issue_date fallback');
   assert.equal(report.totals[1], 7);
   assert.equal(report.totals[6], 322);
+}
+
+// partsNeededReport: BuilderPart demand on WIP design/production products vs
+// on-hand stock and open PO lines; unlinked parts flagged.
+{
+  const rows = flattenQueueRows([
+    wo({ id: 'w1' }, [
+      { id: 'a', operational_status: 'in_production', builder_product_id: 'bp1', quantity: 2 },
+      { id: 'b', operational_status: 'in_design', builder_product_id: 'bp2', quantity: 1 },
+      { id: 'c', operational_status: 'quality_control', builder_product_id: 'bp1' }, // not a demand state
+      { id: 'd', operational_status: 'in_production' },                               // no builder link
+      { id: 'e', operational_status: 'in_production', builder_product_id: 'bp3' },    // product has no parts
+    ]),
+  ]);
+  const builderParts = [
+    { id: 'p1', builder_product_id: 'bp1', part_name: 'ACM Panel', quantity: 8, unit: 'sheet', inventory_item_id: 'inv1' },
+    { id: 'p2', builder_product_id: 'bp1', part_name: 'Vinyl Roll', quantity: 1, unit: 'roll', inventory_item_id: 'inv2' },
+    { id: 'p3', builder_product_id: 'bp2', part_name: 'LED Module', quantity: 4, unit: 'ea' },
+    { id: 'p4', builder_product_id: 'bp1', part_name: 'Dead Part', quantity: 9, is_active: false },
+  ];
+  const builderProducts = [{ id: 'bp1', quantity: 1 }, { id: 'bp2', quantity: 1 }, { id: 'bp3', quantity: 1 }];
+  const inventoryItems = [
+    { id: 'inv1', material_type: 'Aluminum', product_type: 'ACM', size: '4x8', quantity_on_hand: 4 },
+    { id: 'inv2', material_type: 'Vinyl', product_type: 'Cast', quantity_on_hand: 0 },
+    { id: 'invX', quantity_on_hand: 99, deleted: true }, // deleted stock ignored
+  ];
+  const purchaseOrders = [
+    { id: 'po1', status: 'sent', line_items: [{ inventory_item_id: 'inv1', quantity: 10, quantity_received: 4 }] },
+    { id: 'po2', status: 'received', line_items: [{ inventory_item_id: 'inv1', quantity: 5, quantity_received: 5 }] },
+    { id: 'po3', status: 'draft', line_items: [{ inventory_item_id: 'inv1', quantity: 7 }] },
+    { id: 'po4', status: 'partially_received', line_items: [{ inventory_item_id: 'inv2', quantity: 2, quantity_received: 1 }] },
+    { id: 'po5', status: 'cancelled', line_items: [{ inventory_item_id: 'inv1', quantity: 3 }] },
+  ];
+  const report = partsNeededReport({ queueRows: rows, builderParts, builderProducts, inventoryItems, purchaseOrders });
+  assert.equal(report.rows.length, 3, 'active parts only');
+  const [acm, vinyl, led] = report.rows;
+  // ACM: 8 × (qty 2 / bp qty 1) = 16 needed; on hand 4; on order 10-4=6 → short 6.
+  assert.equal(acm[0], 'ACM Panel');
+  assert.equal(acm[1], 16);
+  assert.equal(acm[3], 4);
+  assert.equal(acm[4], 6);
+  assert.equal(acm[5], 6);
+  assert.equal(acm[7], 'Short');
+  // Vinyl: needed 2, on hand 0, on order 2-1=1 → short 1.
+  assert.equal(vinyl[1], 2);
+  assert.equal(vinyl[4], 1);
+  assert.equal(vinyl[5], 1);
+  assert.equal(vinyl[7], 'Short');
+  // LED: unlinked → demand only, flagged no stock link.
+  assert.equal(led[1], 4);
+  assert.equal(led[3], null);
+  assert.equal(led[4], null);
+  assert.equal(led[5], null);
+  assert.equal(led[7], 'No stock link');
+  assert.ok(report.rowLinks[0] === '/Inventory' && report.rowLinks[2] === null);
+  // Scale check: bp quantity 2 halves the per-unit demand.
+  const scaled = partsNeededReport({
+    queueRows: rows, builderParts, inventoryItems, purchaseOrders,
+    builderProducts: [{ id: 'bp1', quantity: 2 }, { id: 'bp2', quantity: 1 }],
+  });
+  assert.equal(scaled.rows[0][1], 8, 'demand scales by wo qty / builder product qty');
+}
+
+// salesByMonthReport: invoiced vs collected per month; basis toggle moves the
+// invoice side between issue month (accrual) and paid month (cash).
+{
+  const invoices = [
+    { id: 'i1', status: 'sent', total: 1000, issue_date: '2026-10-05' },
+    { id: 'i2', status: 'paid', total: 500, issue_date: '2026-10-20', paid_date: '2026-11-02' },
+    { id: 'i3', status: 'paid', total: 300, issue_date: '2026-11-15', paid_date: '2026-11-20' },
+    { id: 'i4', status: 'void', total: 999, issue_date: '2026-10-01' },
+    { id: 'i5', status: 'draft', total: 888, issue_date: '2026-10-02' },
+  ];
+  const payments = [
+    { paid_date: '2026-10-25', amount: 200, status: 'recorded' },
+    { paid_date: '2026-11-02', amount: 500, status: 'recorded' },
+    { paid_date: '2026-11-20', amount: 300, status: 'recorded' },
+    { paid_date: '2026-11-21', amount: 50, status: 'void' },
+    { paid_date: '2026-11-22', amount: 25, status: 'refunded' },
+  ];
+  const issue = salesByMonthReport({ invoices, payments, basis: 'issue_date' });
+  assert.equal(issue.rows.length, 2);
+  const [oct, nov] = issue.rows;
+  assert.ok(String(oct[0]).includes('2026'));
+  assert.equal(oct[1], 2, 'two issued invoices in Oct (void/draft excluded)');
+  assert.equal(oct[2], 1500);
+  assert.equal(oct[3], 200, 'Oct collections bucket by payment paid_date');
+  assert.equal(nov[1], 1);
+  assert.equal(nov[2], 300);
+  assert.equal(nov[3], 800, 'void/refunded payments excluded');
+  assert.equal(issue.totals[2], 1800);
+  assert.equal(issue.totals[3], 1000);
+  const paid = salesByMonthReport({ invoices, payments, basis: 'paid_date' });
+  const novP = paid.rows.find((r) => r[1] === 2);
+  assert.equal(novP[2], 800, 'paid basis lands invoice totals on paid month');
+  assert.equal(paid.totals[2], 800);
+  assert.equal(paid.totals[3], 1000, 'collected basis-independent');
+}
+
+// customerAnalyticsReport: lifetime invoiced/collected/open AR per customer.
+{
+  const report = customerAnalyticsReport({ invoices: [
+    { id: 'i1', status: 'sent', total: 100, balance_due: 100, issue_date: '2026-11-01', customer_id: 'c1', customer_display_name: 'Acme' },
+    { id: 'i2', status: 'paid', total: 300, amount_paid: 300, balance_due: 0, issue_date: '2026-10-01', customer_id: 'c1', customer_display_name: 'Acme' },
+    { id: 'i3', status: 'partially_paid', total: 200, amount_paid: 50, balance_due: 150, issue_date: '2026-11-05', customer_id: 'c2', customer_display_name: 'Beta' },
+    { id: 'i4', status: 'draft', total: 999, customer_id: 'c1', customer_display_name: 'Acme' },
+    { id: 'i5', status: 'void', total: 888, customer_id: 'c1', customer_display_name: 'Acme' },
+  ] });
+  const acme = report.rows.find((r) => r[0] === 'Acme');
+  assert.equal(acme[1], 2, 'draft and void excluded');
+  assert.equal(acme[2], 400);
+  assert.equal(acme[3], 300);
+  assert.equal(acme[4], 100, 'open AR = sent balance');
+  assert.equal(acme[5], 200, 'avg order value');
+  assert.equal(acme[6], '2026-11-01', 'last order date');
+  const beta = report.rows.find((r) => r[0] === 'Beta');
+  assert.equal(beta[3], 50);
+  assert.equal(beta[4], 150);
+  assert.equal(report.totals[2], 600);
+  assert.ok(report.rowLinks[0]);
+}
+
+// estimateFunnelReport: created-month cohort reaching sent/approved/converted.
+{
+  const report = estimateFunnelReport({ estimates: [
+    { id: 'e1', created_date: '2026-10-05T10:00:00', status: 'sent', quote_issue_date: '2026-10-06', quote_total: 100 },
+    { id: 'e2', created_date: '2026-10-10T10:00:00', status: 'approved', accepted_at: '2026-10-12T10:00:00', work_order_id: 'w1', quote_total: 300 },
+    { id: 'e3', created_date: '2026-10-20T10:00:00', status: 'draft', quote_total: 50 },
+    { id: 'e4', created_date: '2026-11-02T10:00:00', status: 'cancelled', cancelled_at: '2026-11-03T10:00:00' },
+    { id: 'e5', created_date: '2026-11-05T10:00:00', status: 'approved', is_template: true, work_order_id: 'w9' },
+    { id: 'e6', status: 'sent' }, // no created_date → no cohort
+  ] });
+  assert.equal(report.rows.length, 2);
+  const [oct, nov] = report.rows;
+  assert.equal(oct[1], 3);
+  assert.equal(oct[2], 2, 'sent + converted count as sent');
+  assert.equal(oct[3], 1);
+  assert.equal(oct[4], 1);
+  assert.equal(oct[5], 0);
+  assert.ok(Math.abs(oct[6] - 1 / 3) < 1e-9);
+  assert.equal(oct[7], 450);
+  assert.equal(nov[1], 1, 'template excluded');
+  assert.equal(nov[5], 1, 'cancelled cohort');
+  assert.equal(report.totals[1], 4);
+  assert.equal(report.totals[4], 1);
+}
+
+// overridesAuditReport: one row per verifiable manual-price signal.
+{
+  const report = overridesAuditReport({
+    estimates: [
+      {
+        id: 'e1', estimate_number: 'EST-100', client_name: 'Acme', status: 'sent',
+        updated_date: '2026-11-01T00:00:00',
+        line_items: [
+          {
+            line_id: 'l1', client_product_name: 'Pylon Sign', price_state: 'manual',
+            total_snapshot: 1000, customer_quantity: 2, adjustment_percent: 10,
+            builder_product_id: 'bp1',
+          },
+          {
+            line_id: 'l2', client_product_name: 'Monument', price_state: 'current',
+            adjustment_percent: 0, builder_product_id: 'bp2',
+          },
+        ],
+      },
+      { id: 'e2', is_template: true, status: 'sent', line_items: [{ price_state: 'manual' }] },
+    ],
+    builderProducts: [
+      { id: 'bp1', price_state: 'manual', frozen_customer_price: 900 },
+      { id: 'bp2', price_state: 'current' },
+    ],
+    builderParts: [
+      { builder_product_id: 'bp1', part_name: 'Steel Post', manual_cost_override: true, manual_cost: 42, manual_cost_override_reason: 'customer deal', is_active: true },
+      { builder_product_id: 'bp1', part_name: 'Face Panel', builder_sync_state: 'detached_override', frozen_extended_cost: 80 },
+      { builder_product_id: 'bp2', part_name: 'Normal Part' },
+    ],
+  });
+  assert.equal(report.rows.length, 5, 'line manual + line adjustment + product manual + part manual + part detached');
+  const signals = report.rows.map((r) => r[4]).sort();
+  assert.deepEqual(signals, [
+    'Detached part price', 'Line price adjustment', 'Manual line price',
+    'Manual part cost', 'Manual product price',
+  ]);
+  const partRow = report.rows.find((r) => r[3] === 'Steel Post');
+  assert.equal(partRow[5], 'customer deal');
+  assert.equal(partRow[6], 42);
+  const adjRow = report.rows.find((r) => r[4] === 'Line price adjustment');
+  assert.equal(adjRow[6], 200, '10% of 1000 × qty 2');
+  assert.equal(report.rowLinks[0], '/EstimateDetail?id=e1');
 }
 
 rmSync(out);
