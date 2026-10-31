@@ -1,10 +1,22 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { OpportunityActivity, Customer } from "@/api/gatedEntities";
+import {
+  EmptyState,
+  FilterBar,
+  FilterField,
+  FilterSearchInput,
+  FilterSelect,
+  filterInputCls,
+  PageHeader,
+  RecordLink,
+  StatusChip,
+} from "@/components/kit";
+import { cn } from "@/lib/utils";
 import { createCrmEvent, completeCrmEvent } from "@/components/crm/crmActivityPersistence";
 import {
   CRM_EVENT_TYPES,
@@ -24,16 +36,8 @@ const PAGE_SIZES = [25, 50, 100, 200];
 const sel = "rounded border border-gray-300 bg-white px-1.5 py-1 text-xs";
 const lab = "text-[11px] font-semibold uppercase tracking-wide text-gray-500";
 
-const badge = (text, tone) => (
-  <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${tone}`}>{text}</span>
-);
-const outcomeTone = (o) => {
-  o = String(o || "").toLowerCase();
-  if (o === "completed") return "bg-emerald-100 text-emerald-800";
-  if (o === "cancelled") return "bg-gray-100 text-gray-600";
-  if (o === "rescheduled") return "bg-sky-100 text-sky-800";
-  return "bg-amber-100 text-amber-800"; // no_answer / left_message / other
-};
+// Outcome pills come from the shared kit (StatusChip + statusTones) -- one
+// tone vocabulary app-wide; outcomeLabel() still drives the wording.
 
 const dateOnly = (v) => String(v || "").slice(0, 10);
 // A date-only picker means "due by end of that day" — local end-of-day keeps
@@ -203,17 +207,29 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
     }
   };
 
+  const filtersActive =
+    filters.type !== "all" || filters.assignedTo !== "all" ||
+    filters.search !== "" || filters.includeCompleted;
+
   return (
     <div className="flex h-full flex-col gap-2 p-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">{filtered.length} shown · {openCount} open</span>
-          <button className={`${sel} font-semibold text-sky-700`} onClick={() => setAddOpen((v) => !v)}>
-            {addOpen ? "Close" : "Add Event"}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        className="mb-0"
+        breadcrumbs={[{ label: "Customers", to: "/EstimatorCustomers" }, { label: title }]}
+        title={title}
+        actions={(
+          <>
+            <span className="self-center text-xs text-gray-500">{filtered.length} shown · {openCount} open</span>
+            <button
+              type="button"
+              className={cn(filterInputCls, "w-auto cursor-pointer font-semibold text-violet-700 hover:bg-violet-50")}
+              onClick={() => setAddOpen((v) => !v)}
+            >
+              {addOpen ? "Close" : "Add Event"}
+            </button>
+          </>
+        )}
+      />
 
       {addOpen && (
         <AddEventForm
@@ -224,28 +240,53 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
         />
       )}
 
-      <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-gray-50 p-2">
-        <label className="flex flex-col gap-0.5"><span className={lab}>Event type</span>
-          <select className={sel} value={filters.type} onChange={(e) => set("type", e.target.value)}>
+      <FilterBar
+        className="mb-0 items-end"
+        search={(
+          <FilterField label="Search">
+            <FilterSearchInput
+              containerClassName="min-w-44"
+              placeholder="contact, company, subject…"
+              value={filters.search}
+              onChange={(e) => set("search", e.target.value)}
+            />
+          </FilterField>
+        )}
+        pageSize={(
+          <FilterField label="Per page">
+            <FilterSelect value={filters.pageSize} onChange={(e) => set("pageSize", Number(e.target.value))}>
+              {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+            </FilterSelect>
+          </FilterField>
+        )}
+        actions={(
+          <>
+            <label className="flex items-center gap-1 pb-1 text-xs text-gray-600 dark:text-slate-300">
+              <input type="checkbox" checked={filters.includeCompleted} onChange={(e) => set("includeCompleted", e.target.checked)} />
+              Show completed</label>
+            <button
+              type="button"
+              className={cn(filterInputCls, "w-auto cursor-pointer font-semibold text-slate-600 hover:bg-slate-50")}
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
+          </>
+        )}
+      >
+        <FilterField label="Event type">
+          <FilterSelect value={filters.type} onChange={(e) => set("type", e.target.value)}>
             <option value="all">All</option>
             {CRM_EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Salesperson</span>
-          <select className={sel} value={filters.assignedTo} onChange={(e) => set("assignedTo", e.target.value)}>
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Salesperson">
+          <FilterSelect value={filters.assignedTo} onChange={(e) => set("assignedTo", e.target.value)}>
             <option value="all">All</option>
             {assignees.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Search</span>
-          <input className={sel} placeholder="contact, company, subject…" value={filters.search} onChange={(e) => set("search", e.target.value)} /></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Per page</span>
-          <select className={sel} value={filters.pageSize} onChange={(e) => set("pageSize", Number(e.target.value))}>
-            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select></label>
-        <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
-          <input type="checkbox" checked={filters.includeCompleted} onChange={(e) => set("includeCompleted", e.target.checked)} />
-          Show completed</label>
-        <button className={sel} onClick={clearFilters}>Clear</button>
-      </div>
+          </FilterSelect>
+        </FilterField>
+      </FilterBar>
 
       <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200">
         <table className="w-full text-left text-xs">
@@ -270,9 +311,9 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
                 <tr key={key} className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
                   <td className="max-w-[160px] truncate px-2 py-1.5">
                     {r.customer_id ? (
-                      <Link className="text-sky-700 hover:underline" to={`/Customer360?id=${r.customer_id}`}>
+                      <RecordLink kind="customer" id={r.customer_id}>
                         {r.contact_name || r.company_name || "Customer"}
-                      </Link>
+                      </RecordLink>
                     ) : (
                       r.contact_name || <span className="text-gray-400">—</span>
                     )}
@@ -282,7 +323,7 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
                     <div className="font-medium text-gray-800">{eventName(r)}</div>
                     <div className="text-[10px] text-gray-500">{r.event_type}</div>
                     {r.opportunity_id && (
-                      <Link className="text-[10px] text-sky-700 hover:underline" to={`/Opportunities?open=${r.opportunity_id}`}>Linked opportunity</Link>
+                      <RecordLink kind="opportunity" id={r.opportunity_id} className="text-[10px]">Linked opportunity</RecordLink>
                     )}
                     {r.notes && <div className="mt-0.5 max-w-[260px] truncate text-[10px] italic text-gray-500" title={r.notes}>{r.notes}</div>}
                   </td>
@@ -294,7 +335,7 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
                   <td className="px-2 py-1.5">
                     {open
                       ? <span className="text-gray-400">—</span>
-                      : badge(outcomeLabel(r.outcome), outcomeTone(r.outcome))}
+                      : <StatusChip status={r.outcome} label={outcomeLabel(r.outcome)} size="sm" />}
                   </td>
                   <td className="px-2 py-1.5">
                     {open && (
@@ -315,8 +356,18 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
               );
             })}
             {!paged.length && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-400">
-                {isFetched ? "No events match these filters." : "Loading…"}
+              <tr><td colSpan={7} className="p-0">
+                {isFetched ? (
+                  <EmptyState
+                    compact
+                    title={filtersActive ? "No events match these filters." : "No CRM events yet."}
+                    message={filtersActive ? "Widen the search or clear a filter to see more rows." : "Calls, e-mails, visits and consultations land here once they are logged."}
+                    actionLabel={filtersActive ? "Clear filters" : "Add event"}
+                    onAction={filtersActive ? clearFilters : () => setAddOpen(true)}
+                  />
+                ) : (
+                  <div className="px-3 py-6 text-center text-gray-400">Loading…</div>
+                )}
               </td></tr>
             )}
           </tbody>
