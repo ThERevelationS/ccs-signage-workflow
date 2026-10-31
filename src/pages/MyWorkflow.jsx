@@ -32,6 +32,7 @@ import {
 import { updateGeneralTaskIfUnchanged } from "@/components/workflow/generalTaskPersistence";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import LoadErrorBanner from "@/components/LoadErrorBanner";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
@@ -123,6 +124,7 @@ export default function MyWorkflow() {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [expandedTasks, setExpandedTasks] = useState({});
@@ -292,8 +294,10 @@ export default function MyWorkflow() {
         }));
 
       setWorkOrders([...myOrders, ...myGeneralTasks]);
+      setLoadError("");
     } catch (error) {
       console.error("Error loading work orders:", error);
+      setLoadError(error?.message || "Your work list could not be loaded.");
     }
     setIsLoading(false);
   };
@@ -696,6 +700,7 @@ export default function MyWorkflow() {
   return (
     <div className="min-h-screen p-6">
       <div className="w-full">
+        <LoadErrorBanner message={loadError} onRetry={loadMyWorkOrders} />
         {/* Header */}
         <div className="clay-card p-3 mb-4">
           <div className="flex items-center gap-3">
