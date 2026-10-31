@@ -320,7 +320,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                         <h4 className="font-semibold text-sm text-gray-800 truncate">
                           {r.title || r.project_name || r.invoice_number || r.po_number || r.change_order_number}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">{subline(r)}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{subline(r)}{r.legacy_source_id ? ` · CB #${r.legacy_source_id}` : ""}</p>
                       </div>
                     ))}
                   </div>
