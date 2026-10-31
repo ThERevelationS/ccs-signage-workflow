@@ -14,7 +14,7 @@ function computePricing(estimate) {
     const unitRaw = acceptedCustomerUnitPrice(line);
     const quantity = Math.max(0, Number(line.customer_quantity ?? 1) || 0);
     const raw = unitRaw * quantity;
-    const adj = Number(line.adjustment_percent || 0);
+    const adj = Number(line.adjustment_percent || 0) + Number(estimate?.category_adjustments?.[line.product_category] || 0);
     return { ...line, unitRaw, quantity, raw, adjusted: raw * (1 + adj / 100) };
   });
   const rawTotal = sections.reduce((s, l) => s + l.raw, 0);

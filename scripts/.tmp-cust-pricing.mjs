@@ -11134,12 +11134,15 @@ function isPlatformRateLimit(err) {
     err?.response?.data?.message,
     err?.data?.error
   ].filter(Boolean).join(" ");
-  return /rate limit|too many requests/i.test(text);
+  return /rate limit|too many requests|traffic volume/i.test(text);
 }
 function retryAfterMs(err, capMs = 3e4) {
   const headers = err?.response?.headers;
   const raw = (typeof headers?.get === "function" ? headers.get("retry-after") : headers?.["retry-after"]) ?? err?.retryAfter;
-  if (raw == null || raw === "") return 0;
+  if (raw == null || raw === "") {
+    const bodyMs = Number(err?.response?.data?.retry_after_ms);
+    return Number.isFinite(bodyMs) && bodyMs > 0 ? Math.min(bodyMs, capMs) : 0;
+  }
   const seconds = Number(raw);
   const ms = Number.isFinite(seconds) ? seconds * 1e3 : Date.parse(String(raw)) - Date.now();
   return Number.isFinite(ms) && ms > 0 ? Math.min(ms, capMs) : 0;
@@ -11200,7 +11203,7 @@ function createRequestGovernor({
     const next = pool.waiters.shift();
     if (next) next();
   };
-  let cooldownUntil = 0;
+  let cooldownUntil2 = 0;
   let epoch = 0;
   const inflight = /* @__PURE__ */ new Map();
   const record = (label, ms, failed) => {
@@ -11231,7 +11234,7 @@ function createRequestGovernor({
     const started = now();
     for (let attempt = 0; ; attempt += 1) {
       if (respectCooldown && attempt === 0) {
-        const wait = cooldownUntil - now();
+        const wait = cooldownUntil2 - now();
         if (wait > 0) {
           stats.cooldownWaits += 1;
           await sleep2(wait);
@@ -11252,7 +11255,7 @@ function createRequestGovernor({
           stats.retries += 1;
           const backoff = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt) * (0.5 + rand());
           const delay = Math.max(backoff, limited ? retryAfterMs(err) : 0);
-          if (limited) cooldownUntil = Math.max(cooldownUntil, now() + delay);
+          if (limited) cooldownUntil2 = Math.max(cooldownUntil2, now() + delay);
           await sleep2(delay);
           continue;
         }
@@ -11292,6 +11295,27 @@ var init_requestGovernor = __esm({
     init_define_import_meta_env();
     SLOW_MS = 3e3;
     SLOW_KEEP = 25;
+  }
+});
+
+// src/api/rateLimitCooldown.js
+function noteRateLimit(retryMs = 0) {
+  const wait = Math.max(cooldownMs, Math.min(Number(retryMs) || 0, MAX_COOLDOWN_MS));
+  cooldownUntil = Math.max(cooldownUntil, Date.now() + wait);
+  cooldownMs = Math.min(cooldownMs * 2, MAX_COOLDOWN_MS);
+}
+function noteRateLimitSuccess() {
+  cooldownMs = BASE_COOLDOWN_MS;
+}
+var BASE_COOLDOWN_MS, MAX_COOLDOWN_MS, cooldownUntil, cooldownMs, isAppCoolingDown;
+var init_rateLimitCooldown = __esm({
+  "src/api/rateLimitCooldown.js"() {
+    init_define_import_meta_env();
+    BASE_COOLDOWN_MS = 2e4;
+    MAX_COOLDOWN_MS = 6e4;
+    cooldownUntil = 0;
+    cooldownMs = BASE_COOLDOWN_MS;
+    isAppCoolingDown = () => Date.now() < cooldownUntil;
   }
 });
 
@@ -41514,13 +41538,7 @@ function getSessionToken() {
     return "";
   }
 }
-function notifySessionRejected() {
-  try {
-    sessionRejectionListener?.();
-  } catch {
-  }
-}
-var import_react4, import_jsx_runtime13, TOKEN_KEY, sessionRejectionListener, AuthContext;
+var import_react4, import_jsx_runtime13, TOKEN_KEY, AuthContext;
 var init_EmailGate = __esm({
   "src/components/auth/EmailGate.jsx"() {
     init_define_import_meta_env();
@@ -41532,7 +41550,6 @@ var init_EmailGate = __esm({
     init_label();
     import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
     TOKEN_KEY = "sss_session_token";
-    sessionRejectionListener = null;
     AuthContext = (0, import_react4.createContext)(null);
   }
 });
@@ -41540,23 +41557,28 @@ var init_EmailGate = __esm({
 // src/components/fleet/fleetInvoke.js
 async function invokeFleet(name, payload = {}) {
   try {
-    return await base44.functions.invoke(name, {
-      session_token: getSessionToken(),
-      ...payload || {}
-    });
-  } catch (error) {
-    if (Number(error?.response?.status ?? error?.status) === 401) notifySessionRejected();
-    throw error;
+    return await invokeGovernor.run(
+      `invoke:${name}`,
+      () => base44.functions.invoke(name, {
+        session_token: getSessionToken(),
+        ...payload || {}
+      }),
+      // base44Client already retries retryable reads once — retrying here on
+      // top of that would multiply the attempts.
+      { retryOnRateLimit: !isRetryableFunction(name, payload) }
+    );
   } finally {
     if (!READ_ONLY_FUNCTIONS.has(name)) mutationEpoch += 1;
   }
 }
-var mutationEpoch, READ_ONLY_FUNCTIONS;
+var mutationEpoch, READ_ONLY_FUNCTIONS, invokeGovernor, isFleetCoolingDown;
 var init_fleetInvoke = __esm({
   "src/components/fleet/fleetInvoke.js"() {
     init_define_import_meta_env();
     init_base44Client();
     init_EmailGate();
+    init_requestGovernor();
+    init_rateLimitCooldown();
     mutationEpoch = 0;
     READ_ONLY_FUNCTIONS = /* @__PURE__ */ new Set([
       "fleetDataRead",
@@ -41565,59 +41587,239 @@ var init_fleetInvoke = __esm({
       "bouncieApi",
       "getGoogleMapsKey"
     ]);
+    invokeGovernor = createRequestGovernor({
+      maxConcurrent: 6,
+      maxRetries: 1,
+      baseDelayMs: 800,
+      maxDelayMs: 1e4
+    });
+    isFleetCoolingDown = isAppCoolingDown;
   }
 });
 
 // src/components/staff/staffEntities.js
 var staffEntities_exports = {};
 __export(staffEntities_exports, {
+  loadEntitiesBatch: () => loadEntitiesBatch,
   staffEntities: () => staffEntities
 });
-function bodyOf(response) {
-  if (!response || typeof response !== "object") return {};
-  const isEnvelope = Object.prototype.hasOwnProperty.call(response, "status") && Object.prototype.hasOwnProperty.call(response, "data");
-  const body = isEnvelope ? response.data : response;
-  return body && typeof body === "object" ? body : {};
-}
 function readArgs(sortOrOptions, limit, skip) {
   if (sortOrOptions && typeof sortOrOptions === "object" && !Array.isArray(sortOrOptions)) {
     return {
       paged: true,
       sort: sortOrOptions.sort,
       limit: sortOrOptions.limit,
-      skip: sortOrOptions.skip ?? sortOrOptions.offset
+      skip: sortOrOptions.skip ?? sortOrOptions.offset,
+      cursor: sortOrOptions.cursor,
+      fields: sortOrOptions.fields
     };
   }
   return { paged: false, sort: sortOrOptions, limit, skip };
 }
-function asRows(response) {
-  const rows = bodyOf(response).items;
-  return Array.isArray(rows) ? rows : [];
+async function flushBatch() {
+  flushScheduled = false;
+  const entries = [...pendingBatch.values()];
+  pendingBatch.clear();
+  if (entries.length === 0) return;
+  const batchable = [];
+  const individual = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const entry of entries) {
+    if (seen.has(entry.entity)) individual.push(entry);
+    else {
+      seen.add(entry.entity);
+      batchable.push(entry);
+    }
+  }
+  for (let i = 0; i < batchable.length; i += 16) {
+    const chunk = batchable.slice(i, i + 16);
+    try {
+      const r2 = await invokeFleet("staffDataRead", { entities: chunk.map((e) => ({ entity: e.entity, ...e.args })) });
+      const body = bodyOf(r2);
+      const out = body.entities || {};
+      const errs = body.errors || {};
+      const limited = Object.values(errs).find((d) => Number(d?.status) === 429);
+      if (limited) noteRateLimit(limited.retry_after_ms || body.retry_after_ms || 0);
+      (body.denied || []).forEach(markDenied);
+      chunk.forEach((e) => {
+        if (errs[e.entity]) {
+          const detail = errs[e.entity];
+          if (Number(detail.status) === 403) markDenied(e.entity);
+          e.reject(Object.assign(new Error(detail.error || "Staff read failed"), { status: detail.status }));
+        } else {
+          e.resolve(Array.isArray(out[e.entity]) ? out[e.entity] : []);
+        }
+      });
+    } catch (err) {
+      if (err?.status === 429 || err?.response?.status === 429) {
+        chunk.forEach((e) => e.reject(err));
+      } else {
+        individual.push(...chunk);
+      }
+    }
+  }
+  individual.forEach((e) => singleRead(e.entity, e.args).then(e.resolve, e.reject));
 }
-var page, METHODS, proxy, staffEntities;
+var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pageOf, pagedRead, pendingBatch, flushScheduled, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
 var init_staffEntities = __esm({
   "src/components/staff/staffEntities.js"() {
     init_define_import_meta_env();
     init_fleetInvoke();
+    init_EmailGate();
+    init_rateLimitCooldown();
+    hasSession = () => !!getSessionToken();
+    NO_SESSION_ERR = () => new Error("Sign-in required");
+    deniedEntities = /* @__PURE__ */ new Set();
+    syncDeniedScope = () => {
+      const token2 = getSessionToken();
+      if (token2 !== deniedSessionToken) {
+        deniedEntities.clear();
+        deniedSessionToken = token2;
+      }
+    };
+    markDenied = (entity) => {
+      if (!entity) return;
+      syncDeniedScope();
+      deniedEntities.add(entity);
+    };
+    isDenied = (entity) => {
+      syncDeniedScope();
+      return deniedEntities.has(entity);
+    };
+    isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
+    READ_CACHE_TTL_MS = 3e4;
+    readCache = /* @__PURE__ */ new Map();
+    readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
+    cachedRead = (key) => {
+      const entry = readCache.get(key);
+      if (!entry) return void 0;
+      if (entry.expires <= Date.now()) {
+        readCache.delete(key);
+        return void 0;
+      }
+      return entry.value;
+    };
+    cacheRead = (key, value2) => {
+      readCache.set(key, { value: value2, expires: Date.now() + READ_CACHE_TTL_MS });
+    };
+    bustReadCache = (entity) => {
+      const marker = `|${entity}|`;
+      for (const key of readCache.keys()) {
+        if (key.includes(marker)) readCache.delete(key);
+      }
+    };
+    bodyOf = (response) => {
+      if (!response || typeof response !== "object") return {};
+      const isEnvelope = Object.prototype.hasOwnProperty.call(response, "status") && Object.prototype.hasOwnProperty.call(response, "data");
+      const body = isEnvelope ? response.data : response;
+      return body && typeof body === "object" ? body : {};
+    };
+    asRows = (response) => {
+      const rows = bodyOf(response).items;
+      return Array.isArray(rows) ? rows : [];
+    };
     page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
+    pageOf = (response) => {
+      const b = bodyOf(response);
+      const rows = Array.isArray(b.items) ? b.items : [];
+      return { items: rows, has_more: b.truncated === true || typeof b.next_cursor === "string", next_cursor: b.next_cursor ?? null };
+    };
+    pagedRead = (entity, args, query) => invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, cursor: args.cursor, fields: args.fields }).then(
+      pageOf,
+      (err) => {
+        if (isForbidden(err)) markDenied(entity);
+        throw err;
+      }
+    );
+    pendingBatch = /* @__PURE__ */ new Map();
+    flushScheduled = false;
+    singleRead = (entity, args) => invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
+      if (isForbidden(err)) markDenied(entity);
+      throw err;
+    });
+    batchedRead = (entity, args) => {
+      if (!hasSession()) return Promise.resolve([]);
+      const key = entity + "|" + JSON.stringify(args);
+      const existing = pendingBatch.get(key);
+      if (existing) return existing.promise;
+      let resolveRef, rejectRef;
+      const promise = new Promise((resolve, reject) => {
+        resolveRef = resolve;
+        rejectRef = reject;
+      });
+      pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
+      if (!flushScheduled) {
+        flushScheduled = true;
+        queueMicrotask(flushBatch);
+      }
+      return promise;
+    };
     METHODS = {
       filter: (entity, query, sortOrOptions, limit, skip) => {
         const args = readArgs(sortOrOptions, limit, skip);
-        return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip }).then((r2) => args.paged ? page(asRows(r2)) : asRows(r2));
+        if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
+        const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
+        const cached = cachedRead(key);
+        if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+        if (args.paged) return pagedRead(entity, args, query);
+        return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
+          cacheRead(key, rows);
+          return rows;
+        });
       },
       list: (entity, sortOrOptions, limit, skip) => {
         const args = readArgs(sortOrOptions, limit, skip);
-        return invokeFleet("staffDataRead", { entity, sort: args.sort, limit: args.limit, skip: args.skip }).then((r2) => args.paged ? page(asRows(r2)) : asRows(r2));
+        if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
+        const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
+        const cached = cachedRead(key);
+        if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+        if (args.paged) return pagedRead(entity, args);
+        return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
+          cacheRead(key, rows);
+          return rows;
+        });
       },
-      get: (entity, id) => invokeFleet("staffDataRead", { entity, id }).then((r2) => bodyOf(r2).item ?? null),
+      get: (entity, id) => {
+        if (!hasSession() || isDenied(entity)) return Promise.resolve(null);
+        return invokeFleet("staffDataRead", { entity, id }).then(
+          (r2) => bodyOf(r2).item ?? null,
+          (err) => {
+            if (isForbidden(err)) markDenied(entity);
+            throw err;
+          }
+        );
+      },
       count: (entity, query, sortOrOptions, limit, skip) => {
         const args = readArgs(sortOrOptions, limit, skip);
-        return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then((r2) => bodyOf(r2).count ?? 0);
+        if (!hasSession() || isDenied(entity)) return Promise.resolve(0);
+        return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then(
+          (r2) => bodyOf(r2).count ?? 0,
+          (err) => {
+            if (isForbidden(err)) markDenied(entity);
+            throw err;
+          }
+        );
       },
-      create: (entity, data) => invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r2) => bodyOf(r2).record),
-      update: (entity, id, data) => invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r2) => bodyOf(r2).record),
-      updateMany: (entity, query, update) => invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r2) => bodyOf(r2).result),
-      delete: (entity, id) => invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r2) => bodyOf(r2).deleted === true),
+      create: (entity, data) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r2) => {
+        bustReadCache(entity);
+        return bodyOf(r2).record;
+      }) : Promise.reject(NO_SESSION_ERR()),
+      update: (entity, id, data) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r2) => {
+        bustReadCache(entity);
+        return bodyOf(r2).record;
+      }) : Promise.reject(NO_SESSION_ERR()),
+      updateMany: (entity, query, update) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r2) => {
+        bustReadCache(entity);
+        return bodyOf(r2).result;
+      }) : Promise.reject(NO_SESSION_ERR()),
+      delete: (entity, id) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r2) => {
+        bustReadCache(entity);
+        return bodyOf(r2).deleted === true;
+      }) : Promise.reject(NO_SESSION_ERR()),
+      deleteMany: (entity, query) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "deleteMany", query }).then((r2) => {
+        bustReadCache(entity);
+        return bodyOf(r2).result;
+      }) : Promise.reject(NO_SESSION_ERR()),
       // Staff sessions cannot use platform live-subscriptions (entity RLS is
       // backend-only), so subscribe polls staffDataRead and emits a synthetic
       // change event when the row set changes. Returns an unsubscribe function,
@@ -41628,19 +41830,19 @@ var init_staffEntities = __esm({
         let stopped = false;
         let last = "";
         const check = async () => {
-          if (typeof document !== "undefined" && document.hidden) return;
+          if (!hasSession() || isDenied(entity) || isFleetCoolingDown()) return;
           try {
-            const r2 = await invokeFleet("staffDataRead", { entity, sort: "-updated_date", limit: 1 });
-            const items = bodyOf(r2).items;
-            const top = Array.isArray(items) ? items[0] : null;
-            const stamp = top ? `${top.id}|${top.updated_date}` : "empty";
+            const r2 = await invokeFleet("staffDataRead", { entity, limit: 50, sort: "-updated_date" });
+            const rows = Array.isArray(bodyOf(r2).items) ? bodyOf(r2).items : [];
+            const stamp = rows.map((r3) => `${r3?.id}:${r3?.updated_date}`).join("|");
             if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
             last = stamp;
-          } catch {
+          } catch (err) {
+            if (isForbidden(err)) markDenied(entity);
           }
         };
         check();
-        const timer = setInterval(check, 6e4);
+        const timer = setInterval(check, 12e4);
         return () => {
           stopped = true;
           clearInterval(timer);
@@ -41660,6 +41862,16 @@ var init_staffEntities = __esm({
         return proxy(name);
       }
     });
+    loadEntitiesBatch = (requests) => {
+      if (!hasSession()) return Promise.resolve({});
+      const live = (requests || []).filter((r2) => !isDenied(r2?.entity));
+      if (live.length === 0) return Promise.resolve({});
+      return invokeFleet("staffDataRead", { entities: live }).then((r2) => {
+        const body = bodyOf(r2);
+        (body.denied || []).forEach(markDenied);
+        return body.entities || {};
+      });
+    };
   }
 });
 
@@ -41702,6 +41914,18 @@ function wrapEntity(name, target) {
   const wrapped = new Proxy(target, {
     get(t, prop) {
       const value2 = Reflect.get(t, prop);
+      if (prop === "subscribe" && STAFF_READ_ENTITIES.has(name)) {
+        return (callback) => {
+          let unsub = () => {
+          };
+          Promise.resolve().then(() => (init_staffEntities(), staffEntities_exports)).then(({ staffEntities: staffEntities2 }) => {
+            const u = staffEntities2[name]?.subscribe?.(callback);
+            if (typeof u === "function") unsub = u;
+          }).catch(() => {
+          });
+          return () => unsub();
+        };
+      }
       if (prop === "subscribe" || typeof value2 !== "function") return value2;
       if (STAFF_READ_ENTITIES.has(name) && READ_METHODS.has(String(prop))) {
         return async (...args) => {
@@ -41722,20 +41946,31 @@ function wrapEntity(name, target) {
       return (...args) => {
         if (isWrite) governor.bumpEpoch();
         const pending = governor.run(`${name}.${String(prop)}`, () => value2.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite });
-        return isWrite ? pending.finally(governor.bumpEpoch) : pending;
+        const tracked = pending.then(
+          (r2) => {
+            noteRateLimitSuccess();
+            return r2;
+          },
+          (e) => {
+            if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 6e4));
+            throw e;
+          }
+        );
+        return isWrite ? tracked.finally(governor.bumpEpoch) : tracked;
       };
     }
   });
   entityWrappers.set(name, wrapped);
   return wrapped;
 }
-var appId, serverUrl, token, functionsVersion, rawClient, governor, cloneValue, copyResponse, STAFF_READ_ENTITIES, READ_METHODS, isPlainObject2, entityWrappers, entitiesProxy, functionsProxy, base44;
+var appId, serverUrl, token, functionsVersion, rawClient, governor, cloneValue, copyResponse, STAFF_READ_ENTITIES, READ_METHODS, isPlainObject2, entityWrappers, entitiesProxy, authProxy, functionsProxy, base44;
 var init_base44Client = __esm({
   "src/api/base44Client.js"() {
     init_define_import_meta_env();
     init_dist3();
     init_app_params();
     init_requestGovernor();
+    init_rateLimitCooldown();
     ({ appId, serverUrl, token, functionsVersion } = appParams);
     rawClient = createClient({
       appId,
@@ -41764,6 +41999,8 @@ var init_base44Client = __esm({
       "BuilderProduct",
       "CalendarEvent",
       "CellHistory",
+      "ChannelLetterInstallEquipment",
+      "ChecklistSubItem",
       "Customer",
       "CustomerLocation",
       "EmailGroup",
@@ -41778,15 +42015,20 @@ var init_base44Client = __esm({
       "Inventory",
       "InventoryMovement",
       "JurisdictionProfile",
+      "OpportunityActivity",
       "Order",
       "PTOPolicy",
       "PermitLineItem",
       "PermitLocality",
+      "PortalMessage",
       "ProjectTemplate",
       "QuickProduct",
+      "MarkupTier",
       "QuickProductCategory",
+      "RegulationAlert",
       "SalesFilter",
       "Settings",
+      "SipChecklistTemplate",
       "TimeEntry",
       "TimeOffRequest",
       "UserCapacity",
@@ -41799,6 +42041,19 @@ var init_base44Client = __esm({
     entitiesProxy = new Proxy(rawClient.entities, {
       get(t, prop) {
         return wrapEntity(String(prop), Reflect.get(t, prop));
+      }
+    });
+    authProxy = new Proxy(rawClient.auth, {
+      get(t, prop) {
+        const value2 = Reflect.get(t, prop);
+        if (prop === "me" && typeof value2 === "function" && !token) {
+          return () => {
+            const err = new Error("Platform authentication required");
+            err.status = 401;
+            return Promise.reject(err);
+          };
+        }
+        return value2;
       }
     });
     functionsProxy = new Proxy(rawClient.functions, {
@@ -41814,11 +42069,21 @@ var init_base44Client = __esm({
               retryOnRateLimit: isRetryableFunction(fnName, payload),
               shouldRetry: fnName === "verifyLogin" ? isUnprocessedSignInFailure : null,
               // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
-              maxAttempts: fnName === "verifyLogin" ? 2 : void 0
+              maxAttempts: fnName === "verifyLogin" ? 2 : 1
             });
-            if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, exec, copyResponse);
+            const tracked = () => exec().then(
+              (r2) => {
+                noteRateLimitSuccess();
+                return r2;
+              },
+              (e) => {
+                if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 6e4));
+                throw e;
+              }
+            );
+            if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, tracked, copyResponse);
             governor.bumpEpoch();
-            return exec().finally(governor.bumpEpoch);
+            return tracked().finally(governor.bumpEpoch);
           };
         }
         return value2;
@@ -41828,6 +42093,7 @@ var init_base44Client = __esm({
       get(t, prop) {
         if (prop === "entities") return entitiesProxy;
         if (prop === "functions") return functionsProxy;
+        if (prop === "auth") return authProxy;
         const value2 = Reflect.get(t, prop);
         return typeof value2 === "function" ? value2.bind(t) : value2;
       }
@@ -41880,7 +42146,22 @@ function getVolumeDiscountPct(eligibleSubtotal, brackets) {
   }
   return 0;
 }
+var _applyCache = /* @__PURE__ */ new WeakMap();
 function applyMarkups(lines, tier, settings) {
+  if (!lines || typeof lines !== "object") return _applyMarkupsComputed(lines, tier, settings);
+  const settingsKey = JSON.stringify(settings || {});
+  let byTier = _applyCache.get(lines);
+  const hit = byTier?.get(tier);
+  if (hit && hit.key === settingsKey) return hit.out;
+  const out = _applyMarkupsComputed(lines, tier, settings);
+  if (!byTier) {
+    byTier = /* @__PURE__ */ new Map();
+    _applyCache.set(lines, byTier);
+  }
+  byTier.set(tier, { key: settingsKey, out });
+  return out;
+}
+function _applyMarkupsComputed(lines, tier, settings) {
   const { brackets = [], eligibleCategoryKeys = [], categoryFlags = {} } = settings || {};
   const isDiscountEligible = (key) => eligibleCategoryKeys.includes(key) && categoryFlags[key] !== false;
   const marked = lines.map((line) => {
@@ -41951,10 +42232,12 @@ function rowIdentity(row, index) {
 }
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function isRateLimitError(error) {
+  const status = error?.status ?? error?.response?.status;
+  if (status === 429) return true;
   const message = String(
     error?.message || error?.response?.data?.error || error?.data?.error || ""
   ).toLowerCase();
-  return message.includes("rate limit");
+  return message.includes("rate limit") || message.includes("too many requests");
 }
 async function withRateLimitRetry(fn) {
   for (let attempt = 0; attempt <= RATE_LIMIT_MAX_RETRIES; attempt += 1) {
@@ -41970,14 +42253,22 @@ async function withRateLimitRetry(fn) {
     }
   }
 }
+var readCache2 = /* @__PURE__ */ new Map();
+var CACHE_MAX_AGE_MS = 3e4;
 async function loadAllEntityRows({
   entity,
   query = null,
   sort = "created_date",
   pageSize = DEFAULT_PAGE_SIZE,
   maxRows = DEFAULT_MAX_ROWS,
-  label = "Estimator prerequisite catalog"
+  label = "Estimator prerequisite catalog",
+  cacheTtlMs = 0
 } = {}) {
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, maxRows]) : null;
+  if (cacheKey) {
+    const hit = readCache2.get(cacheKey);
+    if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
+  }
   const hasFilter = query && typeof query === "object";
   const reader = hasFilter ? entity?.filter : entity?.list;
   if (typeof reader !== "function") {
@@ -42002,7 +42293,10 @@ async function loadAllEntityRows({
       seen.add(key);
       collected.push(row);
     }
-    if (page2.length < safePageSize) return collected;
+    if (page2.length < safePageSize) {
+      if (cacheKey) readCache2.set(cacheKey, { at: Date.now(), rows: collected });
+      return collected;
+    }
     skip += safePageSize;
   }
   throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
