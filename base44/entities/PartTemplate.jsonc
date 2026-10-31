@@ -111,6 +111,14 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "income_account": {
+      "type": "string",
+      "description": "GL income account code this saved part's sales post to on accounting export (CoreBridge-style Manage Accounts mapping)."
+    },
+    "cogs_account": {
+      "type": "string",
+      "description": "GL cost-of-goods-sold account code this saved part's material cost posts to on accounting export."
     }
   },
   "required": [
