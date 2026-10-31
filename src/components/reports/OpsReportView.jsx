@@ -1,0 +1,359 @@
+import React, { useMemo, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { useAllWorkOrders } from "@/lib/workOrderCache";
+import { downloadCsv } from "@/components/shared/exportCsv";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
+import { BarChart3, Download, RefreshCw } from "lucide-react";
+import {
+  DEFAULT_QUEUE_FILTERS,
+  filterQueueRows,
+  flattenQueueRows,
+  parseLocalDate,
+} from "@/components/queues/productQueueModel";
+import { OPS_REPORTS, OPS_REPORT_GROUPS, OPS_REPORT_MAP } from "./opsReportModel";
+
+const clean = (v) => String(v ?? "").trim();
+const norm = (v) => clean(v).toLowerCase();
+
+const DEFAULT_FILTERS = {
+  from: "", to: "",
+  salesperson: "all", location: "all",
+  responsibility: "all", assignedTo: "all", designer: "all",
+};
+
+// Range filters share one from/to pair; the label tells the user which date
+// the range applies to for the active report.
+const RANGE_LABELS = { dueRange: "Due", createdRange: "Created", issueRange: "Issued" };
+
+const inputCls = "min-h-9 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
+const selectCls = `${inputCls} pr-7`;
+
+const usd = (n) => {
+  const v = Number(n || 0);
+  return `${v < 0 ? "-" : ""}$${Math.abs(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const fmt = (value, col) => {
+  if (value === null || value === undefined || value === "") return "—";
+  switch (col?.format) {
+    case "money": return usd(value);
+    case "int": return Number(value || 0).toLocaleString();
+    case "num1": return Number(value || 0).toFixed(1);
+    case "percent": return `${(Number(value || 0) * 100).toFixed(1)}%`;
+    default: return String(value);
+  }
+};
+
+const alignCls = (align) => (align === "right" ? "text-right" : "text-left");
+
+function ReportTable({ report }) {
+  const { columns, rows, totals, rowLinks } = report;
+  return (
+    <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
+      <table className="w-full min-w-[40rem] border-collapse text-sm">
+        <thead>
+          <tr className="sticky top-0 bg-slate-100 dark:bg-slate-800">
+            {columns.map((c) => (
+              <th
+                key={c.key}
+                className={`whitespace-nowrap px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 ${alignCls(c.align)}`}
+              >
+                {c.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} className="border-t border-slate-100 odd:bg-white even:bg-slate-50/60 dark:border-slate-800 dark:odd:bg-slate-900 dark:even:bg-slate-800/40">
+              {columns.map((c, ci) => {
+                const cell = fmt(row[ci], c);
+                const link = rowLinks?.[i];
+                return (
+                  <td key={c.key} className={`px-3 py-1.5 text-slate-800 dark:text-slate-200 ${alignCls(c.align)}`}>
+                    {ci === 0 && link ? (
+                      <Link className="text-sky-700 hover:underline dark:text-sky-400" to={link}>{cell}</Link>
+                    ) : cell}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={columns.length} className="px-3 py-8 text-center text-xs text-slate-400">
+                No data for this report.
+              </td>
+            </tr>
+          )}
+        </tbody>
+        {totals && (
+          <tfoot>
+            <tr className="border-t-2 border-slate-200 bg-slate-50 font-semibold dark:border-slate-700 dark:bg-slate-800/60">
+              {totals.map((cell, ci) => (
+                <td key={ci} className={`px-3 py-2 text-slate-900 dark:text-slate-100 ${alignCls(columns[ci]?.align)}`}>
+                  {fmt(cell, columns[ci])}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
+        )}
+      </table>
+    </div>
+  );
+}
+
+const uniqueSorted = (values) => [...new Set(values.map(clean).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+function FilterSelect({ label, value, onChange, options }) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</span>
+      <select className={selectCls} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="all">All</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </label>
+  );
+}
+
+export default function OpsReportView({ reportKey, onSelect }) {
+  const { sessionToken } = useAuth();
+  const def = OPS_REPORT_MAP[reportKey] || OPS_REPORTS[0];
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  useEffect(() => { setFilters(DEFAULT_FILTERS); }, [reportKey]);
+  const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
+
+  const { data: workOrders = [], isLoading: woLoading, error: woError, refetch: refetchWos } = useAllWorkOrders();
+
+  const estimatesQuery = useQuery({
+    queryKey: ["opsReports", "estimates"],
+    queryFn: () => loadAllEntityRows({
+      entity: staffEntities.AllInOneEstimate,
+      sort: "-created_date",
+      label: "Ops Reports estimates",
+    }),
+    enabled: def.needs === "estimates",
+    staleTime: 120000,
+  });
+
+  const invoicesQuery = useQuery({
+    queryKey: ["opsReports", "invoices", sessionToken],
+    queryFn: async () => {
+      const res = await base44.functions.invoke("invoicingAction", {
+        session_token: sessionToken,
+        action: "list_invoices",
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "Invoice data could not be verified completely.");
+      return data.invoices || [];
+    },
+    enabled: def.needs === "invoices" && Boolean(sessionToken),
+    staleTime: 120000,
+  });
+
+  const estimates = def.needs === "estimates" ? (estimatesQuery.data || []) : [];
+  const invoices = def.needs === "invoices" ? (invoicesQuery.data || []) : [];
+
+  const needs = def.needs;
+  const loading = needs === "workOrders" ? woLoading
+    : needs === "estimates" ? estimatesQuery.isLoading
+    : invoicesQuery.isLoading || !sessionToken;
+  const loadError = needs === "workOrders" ? woError
+    : needs === "estimates" ? estimatesQuery.error
+    : invoicesQuery.error;
+  const retry = () => {
+    if (needs === "workOrders") refetchWos();
+    else if (needs === "estimates") estimatesQuery.refetch();
+    else invoicesQuery.refetch();
+  };
+
+  // --- filter option lists ------------------------------------------------------
+  const options = useMemo(() => {
+    const flat = flattenQueueRows(workOrders);
+    return {
+      responsibility: uniqueSorted(flat.map((r) => r.responsibility)),
+      assignedTo: uniqueSorted(flat.map((r) => r.assignedTo)),
+      designer: uniqueSorted(flat.map((r) => r.designer)),
+      salesperson: uniqueSorted([
+        ...workOrders.map((w) => w?.sales_rep || w?.representative),
+        ...estimates.map((e) => e?.salesperson),
+      ]),
+      location: uniqueSorted(estimates.map((e) => e?.sales_center)),
+    };
+  }, [workOrders, estimates]);
+
+  // --- filtered inputs + build ---------------------------------------------------
+  const report = useMemo(() => {
+    const from = parseLocalDate(filters.from);
+    const to = parseLocalDate(filters.to);
+    const eod = to ? new Date(to.getTime() + 86399999) : null;
+    const inRange = (dateStr) => {
+      if (!from && !to) return true;
+      const d = parseLocalDate(dateStr);
+      if (!d) return false;
+      return (!from || d >= from) && (!eod || d <= eod);
+    };
+
+    let queueRows = [];
+    let wos = workOrders;
+    let ests = estimates;
+    let invs = invoices;
+
+    if (needs === "workOrders") {
+      queueRows = filterQueueRows(flattenQueueRows(workOrders), {
+        ...DEFAULT_QUEUE_FILTERS,
+        responsibility: filters.responsibility,
+        assignedTo: filters.assignedTo,
+        designer: filters.designer,
+      });
+      if (def.filters.includes("dueRange") && (from || to)) {
+        queueRows = queueRows.filter((r) => inRange(r.due || r.woDue));
+      }
+      wos = workOrders.filter((wo) => {
+        if (def.filters.includes("createdRange") && !inRange(wo?.created_date)) return false;
+        if (filters.salesperson !== "all" && norm(wo?.sales_rep || wo?.representative) !== norm(filters.salesperson)) return false;
+        return true;
+      });
+    } else if (needs === "estimates") {
+      ests = estimates.filter((est) => {
+        if (def.filters.includes("createdRange") && !inRange(est?.created_date)) return false;
+        if (filters.salesperson !== "all" && clean(est?.salesperson) !== filters.salesperson) return false;
+        if (filters.location !== "all" && clean(est?.sales_center) !== filters.location) return false;
+        return true;
+      });
+    } else if (needs === "invoices") {
+      invs = invoices.filter((inv) => !def.filters.includes("issueRange") || inRange(inv?.issue_date || inv?.due_date));
+    }
+
+    return def.build({ queueRows, workOrders: wos, estimates: ests, invoices: invs, now: new Date() });
+  }, [def, workOrders, estimates, invoices, filters, needs]);
+
+  const exportCsv = () => {
+    const headers = report.columns.map((c) => c.label);
+    const body = report.totals ? [...report.rows, report.totals] : report.rows;
+    downloadCsv(`${def.key}.csv`, headers, body);
+  };
+
+  const has = (f) => def.filters.includes(f);
+  const rangeKey = Object.keys(RANGE_LABELS).find((k) => def.filters.includes(k));
+  const rangeLabel = rangeKey ? RANGE_LABELS[rangeKey] : "Date";
+
+  return (
+    <div className="flex h-full min-h-0">
+      {/* Report picker */}
+      <aside className="w-56 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 dark:border-slate-700 dark:bg-slate-900">
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <BarChart3 className="h-4 w-4 text-slate-500" />
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Ops Reports</span>
+        </div>
+        {OPS_REPORT_GROUPS.map((group) => (
+          <div key={group} className="mb-4">
+            <div className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{group}</div>
+            {OPS_REPORTS.filter((r) => r.group === group).map((r) => (
+              <button
+                key={r.key}
+                onClick={() => onSelect(r.key)}
+                className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm ${
+                  r.key === def.key
+                    ? "bg-violet-100 font-semibold text-violet-800 dark:bg-violet-900/40 dark:text-violet-200"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+              >
+                {r.title}
+              </button>
+            ))}
+          </div>
+        ))}
+      </aside>
+
+      {/* Report body */}
+      <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{def.title}</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{def.description}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={retry}
+                className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                title="Reload data"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+              <button
+                onClick={exportCsv}
+                disabled={!report.rows.length}
+                className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                <Download className="h-3.5 w-3.5" /> Export CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="mb-3 flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+            {rangeKey && (
+              <>
+                <label className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{rangeLabel} From</span>
+                  <input type="date" className={inputCls} value={filters.from} onChange={(e) => set("from", e.target.value)} />
+                </label>
+                <label className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{rangeLabel} To</span>
+                  <input type="date" className={inputCls} value={filters.to} onChange={(e) => set("to", e.target.value)} />
+                </label>
+              </>
+            )}
+            {has("responsibility") && (
+              <FilterSelect label="Responsibility" value={filters.responsibility} onChange={(v) => set("responsibility", v)} options={options.responsibility} />
+            )}
+            {has("assignedTo") && (
+              <FilterSelect label="Assigned To" value={filters.assignedTo} onChange={(v) => set("assignedTo", v)} options={options.assignedTo} />
+            )}
+            {has("designer") && (
+              <FilterSelect label="Designer" value={filters.designer} onChange={(v) => set("designer", v)} options={options.designer} />
+            )}
+            {has("salesperson") && (
+              <FilterSelect label="Salesperson" value={filters.salesperson} onChange={(v) => set("salesperson", v)} options={options.salesperson} />
+            )}
+            {has("location") && (
+              <FilterSelect label="Sales Center" value={filters.location} onChange={(v) => set("location", v)} options={options.location} />
+            )}
+            {(filters.from || filters.to || filters.salesperson !== "all" || filters.location !== "all"
+              || filters.responsibility !== "all" || filters.assignedTo !== "all" || filters.designer !== "all") && (
+              <button onClick={() => setFilters(DEFAULT_FILTERS)} className="pb-1 text-xs font-medium text-violet-600 hover:underline dark:text-violet-300">
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {def.notes && (
+            <p className="mb-3 text-[11px] leading-snug text-slate-400 dark:text-slate-500">{def.notes}</p>
+          )}
+
+          {loading ? (
+            <TableSkeleton columns={5} rows={8} />
+          ) : loadError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+              <div className="font-semibold">{def.title} could not be verified completely.</div>
+              <div className="mt-1 text-xs">{loadError?.message || "Data could not be loaded."}</div>
+              <button onClick={retry} className="mt-2 rounded-lg border border-red-300 px-2.5 py-1 text-xs font-semibold hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-900/40">
+                Retry
+              </button>
+            </div>
+          ) : (
+            <ReportTable report={report} />
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
