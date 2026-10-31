@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { exchangeAuthorizationCode, saveConnection, fetchBouncieUser, upsertWebhook, APP_BASE } from '../../shared/bouncie.ts';
 
 const FLEET_ROUTE = '/fleettracking';
@@ -22,7 +23,7 @@ function html(body, status) {
 }
 
 export default async function(req) {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
