@@ -31,6 +31,14 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// <define:import.meta.env>
+var define_import_meta_env_default;
+var init_define_import_meta_env = __esm({
+  "<define:import.meta.env>"() {
+    define_import_meta_env_default = {};
+  }
+});
+
 // node_modules/axios/lib/helpers/bind.js
 function bind(fn, thisArg) {
   return function wrap() {
@@ -40,6 +48,7 @@ function bind(fn, thisArg) {
 var init_bind = __esm({
   "node_modules/axios/lib/helpers/bind.js"() {
     "use strict";
+    init_define_import_meta_env();
   }
 });
 
@@ -150,6 +159,7 @@ var toString, getPrototypeOf, iterator, toStringTag, hasOwnProperty, isUnsafeObj
 var init_utils = __esm({
   "node_modules/axios/lib/utils.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_bind();
     ({ toString } = Object.prototype);
     ({ getPrototypeOf } = Object);
@@ -603,6 +613,7 @@ var ignoreDuplicateOf, parseHeaders_default;
 var init_parseHeaders = __esm({
   "node_modules/axios/lib/helpers/parseHeaders.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     ignoreDuplicateOf = utils_default.toObjectSet([
       "age",
@@ -688,6 +699,7 @@ var INVALID_UNICODE_HEADER_VALUE_CHARS, INVALID_BYTE_STRING_HEADER_VALUE_CHARS, 
 var init_sanitizeHeaderValue = __esm({
   "node_modules/axios/lib/helpers/sanitizeHeaderValue.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     INVALID_UNICODE_HEADER_VALUE_CHARS = new RegExp("[\\u0000-\\u0008\\u000a-\\u001f\\u007f]+", "g");
     INVALID_BYTE_STRING_HEADER_VALUE_CHARS = new RegExp("[^\\u0009\\u0020-\\u007e\\u0080-\\u00ff]+", "g");
@@ -836,6 +848,7 @@ var $internals, parameterNameRE, isValidHeaderName, AxiosHeaders, AxiosHeaders_d
 var init_AxiosHeaders = __esm({
   "node_modules/axios/lib/core/AxiosHeaders.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_parseHeaders();
     init_sanitizeHeaderValue();
@@ -1111,6 +1124,7 @@ var REDACTED, AxiosError, AxiosError_default;
 var init_AxiosError = __esm({
   "node_modules/axios/lib/core/AxiosError.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_AxiosHeaders();
     REDACTED = "[REDACTED ****]";
@@ -1212,6 +1226,7 @@ var init_AxiosError = __esm({
 var null_default;
 var init_null = __esm({
   "node_modules/axios/lib/helpers/null.js"() {
+    init_define_import_meta_env();
     null_default = null;
   }
 });
@@ -1361,6 +1376,7 @@ var DEFAULT_FORM_DATA_MAX_DEPTH, predicates, toFormData_default;
 var init_toFormData = __esm({
   "node_modules/axios/lib/helpers/toFormData.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_AxiosError();
     init_null();
@@ -1395,6 +1411,7 @@ var prototype, AxiosURLSearchParams_default;
 var init_AxiosURLSearchParams = __esm({
   "node_modules/axios/lib/helpers/AxiosURLSearchParams.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_toFormData();
     prototype = AxiosURLSearchParams.prototype;
     prototype.append = function append(name, value2) {
@@ -1442,6 +1459,7 @@ function buildURL(url2, params, options) {
 var init_buildURL = __esm({
   "node_modules/axios/lib/helpers/buildURL.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_AxiosURLSearchParams();
   }
@@ -1482,6 +1500,7 @@ var $internals2, InterceptorManager, InterceptorManager_default;
 var init_InterceptorManager = __esm({
   "node_modules/axios/lib/core/InterceptorManager.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     $internals2 = Symbol("internals");
     InterceptorManager = class {
@@ -1597,6 +1616,7 @@ var transitional_default;
 var init_transitional = __esm({
   "node_modules/axios/lib/defaults/transitional.js"() {
     "use strict";
+    init_define_import_meta_env();
     transitional_default = {
       silentJSONParsing: true,
       forcedJSONParsing: true,
@@ -1613,6 +1633,7 @@ var URLSearchParams_default;
 var init_URLSearchParams = __esm({
   "node_modules/axios/lib/platform/browser/classes/URLSearchParams.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_AxiosURLSearchParams();
     URLSearchParams_default = typeof URLSearchParams !== "undefined" ? URLSearchParams : AxiosURLSearchParams_default;
   }
@@ -1623,6 +1644,7 @@ var FormData_default;
 var init_FormData = __esm({
   "node_modules/axios/lib/platform/browser/classes/FormData.js"() {
     "use strict";
+    init_define_import_meta_env();
     FormData_default = typeof FormData !== "undefined" ? FormData : null;
   }
 });
@@ -1632,6 +1654,7 @@ var Blob_default;
 var init_Blob = __esm({
   "node_modules/axios/lib/platform/browser/classes/Blob.js"() {
     "use strict";
+    init_define_import_meta_env();
     Blob_default = typeof Blob !== "undefined" ? Blob : null;
   }
 });
@@ -1640,6 +1663,7 @@ var init_Blob = __esm({
 var browser_default;
 var init_browser = __esm({
   "node_modules/axios/lib/platform/browser/index.js"() {
+    init_define_import_meta_env();
     init_URLSearchParams();
     init_FormData();
     init_Blob();
@@ -1667,6 +1691,7 @@ __export(utils_exports, {
 var hasBrowserEnv, _navigator, hasStandardBrowserEnv, hasStandardBrowserWebWorkerEnv, origin;
 var init_utils2 = __esm({
   "node_modules/axios/lib/platform/common/utils.js"() {
+    init_define_import_meta_env();
     hasBrowserEnv = typeof window !== "undefined" && typeof document !== "undefined";
     _navigator = typeof navigator === "object" && navigator || void 0;
     hasStandardBrowserEnv = hasBrowserEnv && (!_navigator || ["ReactNative", "NativeScript", "NS"].indexOf(_navigator.product) < 0);
@@ -1682,6 +1707,7 @@ var init_utils2 = __esm({
 var platform_default;
 var init_platform = __esm({
   "node_modules/axios/lib/platform/index.js"() {
+    init_define_import_meta_env();
     init_browser();
     init_utils2();
     platform_default = {
@@ -1707,6 +1733,7 @@ function toURLEncodedForm(data, options) {
 var init_toURLEncodedForm = __esm({
   "node_modules/axios/lib/helpers/toURLEncodedForm.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_toFormData();
     init_platform();
@@ -1782,6 +1809,7 @@ var MAX_DEPTH, formDataToJSON_default;
 var init_formDataToJSON = __esm({
   "node_modules/axios/lib/helpers/formDataToJSON.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_AxiosError();
     init_toFormData();
@@ -1795,6 +1823,7 @@ var methodList, methodList_default;
 var init_methodList = __esm({
   "node_modules/axios/lib/core/methodList.js"() {
     "use strict";
+    init_define_import_meta_env();
     methodList = Object.freeze([
       "get",
       "delete",
@@ -1830,6 +1859,7 @@ var own, defaults, defaults_default;
 var init_defaults = __esm({
   "node_modules/axios/lib/defaults/index.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_AxiosError();
     init_transitional();
@@ -1958,6 +1988,7 @@ function transformData(fns, response) {
 var init_transformData = __esm({
   "node_modules/axios/lib/core/transformData.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_defaults();
     init_AxiosHeaders();
@@ -1971,6 +2002,7 @@ function isCancel(value2) {
 var init_isCancel = __esm({
   "node_modules/axios/lib/cancel/isCancel.js"() {
     "use strict";
+    init_define_import_meta_env();
   }
 });
 
@@ -1979,6 +2011,7 @@ var CanceledError, CanceledError_default;
 var init_CanceledError = __esm({
   "node_modules/axios/lib/cancel/CanceledError.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_AxiosError();
     CanceledError = class extends AxiosError_default {
       /**
@@ -2018,6 +2051,7 @@ function settle(resolve, reject, response) {
 var init_settle = __esm({
   "node_modules/axios/lib/core/settle.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_AxiosError();
   }
 });
@@ -2037,6 +2071,7 @@ var urlParserControlCharacters;
 var init_normalizeURLForProtocolCheck = __esm({
   "node_modules/axios/lib/helpers/normalizeURLForProtocolCheck.js"() {
     "use strict";
+    init_define_import_meta_env();
     urlParserControlCharacters = /[\t\n\r]/g;
   }
 });
@@ -2049,6 +2084,7 @@ function parseProtocol(url2) {
 var init_parseProtocol = __esm({
   "node_modules/axios/lib/helpers/parseProtocol.js"() {
     "use strict";
+    init_define_import_meta_env();
   }
 });
 
@@ -2090,6 +2126,7 @@ var speedometer_default;
 var init_speedometer = __esm({
   "node_modules/axios/lib/helpers/speedometer.js"() {
     "use strict";
+    init_define_import_meta_env();
     speedometer_default = speedometer;
   }
 });
@@ -2131,6 +2168,7 @@ function throttle(fn, freq) {
 var throttle_default;
 var init_throttle = __esm({
   "node_modules/axios/lib/helpers/throttle.js"() {
+    init_define_import_meta_env();
     throttle_default = throttle;
   }
 });
@@ -2139,6 +2177,7 @@ var init_throttle = __esm({
 var progressEventReducer, progressEventDecorator, asyncDecorator;
 var init_progressEventReducer = __esm({
   "node_modules/axios/lib/helpers/progressEventReducer.js"() {
+    init_define_import_meta_env();
     init_speedometer();
     init_throttle();
     init_utils();
@@ -2188,6 +2227,7 @@ var init_progressEventReducer = __esm({
 var isURLSameOrigin_default;
 var init_isURLSameOrigin = __esm({
   "node_modules/axios/lib/helpers/isURLSameOrigin.js"() {
+    init_define_import_meta_env();
     init_platform();
     isURLSameOrigin_default = platform_default.hasStandardBrowserEnv ? /* @__PURE__ */ ((origin2, isMSIE) => (url2) => {
       url2 = new URL(url2, platform_default.origin);
@@ -2203,6 +2243,7 @@ var init_isURLSameOrigin = __esm({
 var cookies_default;
 var init_cookies = __esm({
   "node_modules/axios/lib/helpers/cookies.js"() {
+    init_define_import_meta_env();
     init_utils();
     init_platform();
     cookies_default = platform_default.hasStandardBrowserEnv ? (
@@ -2273,6 +2314,7 @@ function isAbsoluteURL(url2) {
 var init_isAbsoluteURL = __esm({
   "node_modules/axios/lib/helpers/isAbsoluteURL.js"() {
     "use strict";
+    init_define_import_meta_env();
   }
 });
 
@@ -2290,6 +2332,7 @@ function combineURLs(baseURL, relativeURL) {
 var init_combineURLs = __esm({
   "node_modules/axios/lib/helpers/combineURLs.js"() {
     "use strict";
+    init_define_import_meta_env();
   }
 });
 
@@ -2340,6 +2383,7 @@ var malformedHttpProtocol;
 var init_buildFullPath = __esm({
   "node_modules/axios/lib/core/buildFullPath.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_AxiosError();
     init_isAbsoluteURL();
     init_combineURLs();
@@ -2468,6 +2512,7 @@ var headersToObject, ownEnumerableKeys;
 var init_mergeConfig = __esm({
   "node_modules/axios/lib/core/mergeConfig.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_AxiosHeaders();
     headersToObject = (thing) => thing instanceof AxiosHeaders_default ? { ...thing } : thing;
@@ -2500,6 +2545,7 @@ var FORM_DATA_CONTENT_HEADERS;
 var init_setFormDataHeaders = __esm({
   "node_modules/axios/lib/core/setFormDataHeaders.js"() {
     "use strict";
+    init_define_import_meta_env();
     FORM_DATA_CONTENT_HEADERS = ["content-type", "content-length"];
   }
 });
@@ -2560,6 +2606,7 @@ function resolveConfig(config) {
 var encodeUTF8, resolveConfig_default;
 var init_resolveConfig = __esm({
   "node_modules/axios/lib/helpers/resolveConfig.js"() {
+    init_define_import_meta_env();
     init_platform();
     init_utils();
     init_AxiosError();
@@ -2582,6 +2629,7 @@ var init_resolveConfig = __esm({
 var isXHRAdapterSupported, xhr_default;
 var init_xhr = __esm({
   "node_modules/axios/lib/adapters/xhr.js"() {
+    init_define_import_meta_env();
     init_utils();
     init_settle();
     init_transitional();
@@ -2769,6 +2817,7 @@ var init_xhr = __esm({
 var composeSignals, composeSignals_default;
 var init_composeSignals = __esm({
   "node_modules/axios/lib/helpers/composeSignals.js"() {
+    init_define_import_meta_env();
     init_CanceledError();
     init_AxiosError();
     init_utils();
@@ -2826,6 +2875,7 @@ var init_composeSignals = __esm({
 var streamChunk, readBytes, readStream, trackStream;
 var init_trackStream = __esm({
   "node_modules/axios/lib/helpers/trackStream.js"() {
+    init_define_import_meta_env();
     streamChunk = function* (chunk, chunkSize) {
       let len = chunk.byteLength;
       if (!chunkSize || len < chunkSize) {
@@ -2918,6 +2968,7 @@ function estimateDataURLDecodedBytes(url2) {
 var isHexDigit, isPercentEncodedByte, hexValue, isBase64Char, isBase64Whitespace, base64Bytes, estimateBase64BufferAllocation, estimatePercentDecodedBase64Bytes, estimateDataURLBytes;
 var init_estimateDataURLDecodedBytes = __esm({
   "node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js"() {
+    init_define_import_meta_env();
     isHexDigit = (charCode) => charCode >= 48 && charCode <= 57 || charCode >= 65 && charCode <= 70 || charCode >= 97 && charCode <= 102;
     isPercentEncodedByte = (str, i, len) => i + 2 < len && isHexDigit(str.charCodeAt(i + 1)) && isHexDigit(str.charCodeAt(i + 2));
     hexValue = (charCode) => charCode <= 57 ? charCode - 48 : (charCode & 223) - 55;
@@ -3016,6 +3067,7 @@ var init_estimateDataURLDecodedBytes = __esm({
 var VERSION;
 var init_data = __esm({
   "node_modules/axios/lib/env/data.js"() {
+    init_define_import_meta_env();
     VERSION = "1.20.0";
   }
 });
@@ -3024,6 +3076,7 @@ var init_data = __esm({
 var DEFAULT_CHUNK_SIZE, DEFAULT_REQUEST_OPTIONS, isFunction2, encodeUTF82, decodeURIComponentSafe, test, maybeWithAuthCredentials, factory, seedCache, getFetch, adapter;
 var init_fetch = __esm({
   "node_modules/axios/lib/adapters/fetch.js"() {
+    init_define_import_meta_env();
     init_platform();
     init_utils();
     init_AxiosError();
@@ -3530,6 +3583,7 @@ function getAdapter(adapters, config) {
 var knownAdapters, renderReason, isResolvedHandle, adapters_default;
 var init_adapters = __esm({
   "node_modules/axios/lib/adapters/adapters.js"() {
+    init_define_import_meta_env();
     init_utils();
     init_null();
     init_xhr();
@@ -3622,6 +3676,7 @@ function dispatchRequest(_config) {
 var init_dispatchRequest = __esm({
   "node_modules/axios/lib/core/dispatchRequest.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_transformData();
     init_isCancel();
     init_defaults();
@@ -3662,6 +3717,7 @@ var validators, deprecatedWarnings, validator_default;
 var init_validator = __esm({
   "node_modules/axios/lib/helpers/validator.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_data();
     init_AxiosError();
     validators = {};
@@ -3712,6 +3768,7 @@ var validators2, Axios, Axios_default;
 var init_Axios = __esm({
   "node_modules/axios/lib/core/Axios.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_buildURL();
     init_InterceptorManager();
@@ -3946,6 +4003,7 @@ var CancelToken, CancelToken_default;
 var init_CancelToken = __esm({
   "node_modules/axios/lib/cancel/CancelToken.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_CanceledError();
     CancelToken = class _CancelToken {
       constructor(executor) {
@@ -4055,6 +4113,7 @@ function spread(callback) {
 var init_spread = __esm({
   "node_modules/axios/lib/helpers/spread.js"() {
     "use strict";
+    init_define_import_meta_env();
   }
 });
 
@@ -4065,6 +4124,7 @@ function isAxiosError(payload) {
 var init_isAxiosError = __esm({
   "node_modules/axios/lib/helpers/isAxiosError.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
   }
 });
@@ -4073,6 +4133,7 @@ var init_isAxiosError = __esm({
 var HttpStatusCode, HttpStatusCode_default;
 var init_HttpStatusCode = __esm({
   "node_modules/axios/lib/helpers/HttpStatusCode.js"() {
+    init_define_import_meta_env();
     HttpStatusCode = {
       Continue: 100,
       SwitchingProtocols: 101,
@@ -4177,6 +4238,7 @@ var axios, axios_default;
 var init_axios = __esm({
   "node_modules/axios/lib/axios.js"() {
     "use strict";
+    init_define_import_meta_env();
     init_utils();
     init_bind();
     init_Axios();
@@ -4222,6 +4284,7 @@ var init_axios = __esm({
 var Axios2, AxiosError2, CanceledError2, isCancel2, CancelToken2, VERSION2, all2, Cancel, isAxiosError2, spread2, toFormData2, AxiosHeaders2, HttpStatusCode2, formToJSON, getAdapter2, mergeConfig2, create;
 var init_axios2 = __esm({
   "node_modules/axios/index.js"() {
+    init_define_import_meta_env();
     init_axios();
     ({
       Axios: Axios2,
@@ -4249,6 +4312,7 @@ var init_axios2 = __esm({
 var isNode, isInIFrame, isReactNative2, generateUuid;
 var init_common = __esm({
   "node_modules/@base44/sdk/dist/utils/common.js"() {
+    init_define_import_meta_env();
     isNode = typeof window === "undefined";
     isInIFrame = !isNode && window.self !== window.top;
     isReactNative2 = !isNode && typeof document === "undefined";
@@ -4265,6 +4329,7 @@ function unsafeStringify(arr, offset = 0) {
 var byteToHex;
 var init_stringify = __esm({
   "node_modules/uuid/dist/stringify.js"() {
+    init_define_import_meta_env();
     byteToHex = [];
     for (let i = 0; i < 256; ++i) {
       byteToHex.push((i + 256).toString(16).slice(1));
@@ -4285,6 +4350,7 @@ function rng() {
 var getRandomValues, rnds8;
 var init_rng = __esm({
   "node_modules/uuid/dist/rng.js"() {
+    init_define_import_meta_env();
     rnds8 = new Uint8Array(16);
   }
 });
@@ -4293,6 +4359,7 @@ var init_rng = __esm({
 var randomUUID, native_default;
 var init_native = __esm({
   "node_modules/uuid/dist/native.js"() {
+    init_define_import_meta_env();
     randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
     native_default = { randomUUID };
   }
@@ -4328,6 +4395,7 @@ function v4(options, buf, offset) {
 var v4_default;
 var init_v4 = __esm({
   "node_modules/uuid/dist/v4.js"() {
+    init_define_import_meta_env();
     init_native();
     init_rng();
     init_stringify();
@@ -4338,6 +4406,7 @@ var init_v4 = __esm({
 // node_modules/uuid/dist/index.js
 var init_dist = __esm({
   "node_modules/uuid/dist/index.js"() {
+    init_define_import_meta_env();
     init_v4();
   }
 });
@@ -4357,6 +4426,7 @@ function getSharedInstance(name, factory2) {
 var windowObj;
 var init_sharedInstance = __esm({
   "node_modules/@base44/sdk/dist/utils/sharedInstance.js"() {
+    init_define_import_meta_env();
     windowObj = typeof window !== "undefined" ? window : { base44SharedInstances: {} };
   }
 });
@@ -4517,6 +4587,7 @@ function getAnalyticsSessionId() {
 var USER_HEARTBEAT_EVENT_NAME, ANALYTICS_INITIALIZATION_EVENT_NAME, ANALYTICS_SESSION_DURATION_EVENT_NAME, ANALYTICS_CONFIG_ENABLE_URL_PARAM_KEY, ANALYTICS_SESSION_ID_LOCAL_STORAGE_KEY, defaultConfiguration, ANALYTICS_SHARED_STATE_NAME, analyticsSharedState, createAnalyticsModule, ATTRIBUTION_PARAM_KEYS, sessionContextPromise;
 var init_analytics = __esm({
   "node_modules/@base44/sdk/dist/modules/analytics.js"() {
+    init_define_import_meta_env();
     init_sharedInstance();
     init_common();
     USER_HEARTBEAT_EVENT_NAME = "__user_heartbeat_event__";
@@ -4758,6 +4829,7 @@ function createAxiosClient({ baseURL, headers = {}, token: token2, interceptResp
 var Base44Error;
 var init_axios_client = __esm({
   "node_modules/@base44/sdk/dist/utils/axios-client.js"() {
+    init_define_import_meta_env();
     init_axios2();
     init_common();
     init_dist();
@@ -4982,6 +5054,7 @@ function createEntityHandler(axios2, appId2, entityName, getSocket) {
 var DEFAULT_PAGE_LIMIT;
 var init_entities = __esm({
   "node_modules/@base44/sdk/dist/modules/entities.js"() {
+    init_define_import_meta_env();
     DEFAULT_PAGE_LIMIT = 100;
   }
 });
@@ -5009,6 +5082,7 @@ function createCustomIntegrationsModule(axios2, appId2) {
 }
 var init_custom_integrations = __esm({
   "node_modules/@base44/sdk/dist/modules/custom-integrations.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5062,6 +5136,7 @@ function createIntegrationsModule(axios2, appId2) {
 }
 var init_integrations = __esm({
   "node_modules/@base44/sdk/dist/modules/integrations.js"() {
+    init_define_import_meta_env();
     init_custom_integrations();
   }
 });
@@ -5128,6 +5203,7 @@ function removeAccessToken(options) {
 }
 var init_auth_utils = __esm({
   "node_modules/@base44/sdk/dist/utils/auth-utils.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5350,6 +5426,7 @@ function createAuthModule(axios2, functionsAxiosClient, appId2, options) {
 var isStoredAccessToken;
 var init_auth = __esm({
   "node_modules/@base44/sdk/dist/modules/auth.js"() {
+    init_define_import_meta_env();
     init_auth_utils();
     init_analytics();
     isStoredAccessToken = (authorization) => authorization === `Bearer ${getAccessToken({ saveToStorage: false, removeFromUrl: false })}`;
@@ -5373,6 +5450,7 @@ function createSsoModule(axios2, appId2) {
 }
 var init_sso = __esm({
   "node_modules/@base44/sdk/dist/modules/sso.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5413,6 +5491,7 @@ function createBrowserModule(axios2) {
 }
 var init_browser2 = __esm({
   "node_modules/@base44/sdk/dist/modules/browser.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5542,6 +5621,7 @@ function createUserConnectorsModule(axios2, appId2) {
 var CONNECTOR_API_METHODS;
 var init_connectors = __esm({
   "node_modules/@base44/sdk/dist/modules/connectors.js"() {
+    init_define_import_meta_env();
     CONNECTOR_API_METHODS = /* @__PURE__ */ new Set([
       "GET",
       "POST",
@@ -5589,6 +5669,7 @@ function assertOwnOriginPath(path) {
 }
 var init_fetch_with_auth = __esm({
   "node_modules/@base44/sdk/dist/utils/fetch-with-auth.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5658,6 +5739,7 @@ function createFunctionsModule(axios2, appId2, config) {
 }
 var init_functions = __esm({
   "node_modules/@base44/sdk/dist/modules/functions.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5743,6 +5825,7 @@ function createAgentsModule({ axios: axios2, getSocket, appId: appId2, serverUrl
 }
 var init_agents = __esm({
   "node_modules/@base44/sdk/dist/modules/agents.js"() {
+    init_define_import_meta_env();
     init_auth_utils();
   }
 });
@@ -5768,6 +5851,7 @@ function createAiGatewayModule({ serverUrl: serverUrl2, token: token2, appId: ap
 var PROVIDER_PATHS;
 var init_ai_gateway = __esm({
   "node_modules/@base44/sdk/dist/modules/ai-gateway.js"() {
+    init_define_import_meta_env();
     init_auth_utils();
     PROVIDER_PATHS = {
       openai: "openai",
@@ -5798,6 +5882,7 @@ function createAppLogsModule(axios2, appId2) {
 }
 var init_app_logs = __esm({
   "node_modules/@base44/sdk/dist/modules/app-logs.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5811,6 +5896,7 @@ function createAppModule(axios2, appId2) {
 }
 var init_app = __esm({
   "node_modules/@base44/sdk/dist/modules/app.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5834,6 +5920,7 @@ function createUsersModule(axios2, appId2) {
 }
 var init_users = __esm({
   "node_modules/@base44/sdk/dist/modules/users.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -5841,6 +5928,7 @@ var init_users = __esm({
 var PACKET_TYPES, PACKET_TYPES_REVERSE, ERROR_PACKET;
 var init_commons = __esm({
   "node_modules/engine.io-parser/build/esm/commons.js"() {
+    init_define_import_meta_env();
     PACKET_TYPES = /* @__PURE__ */ Object.create(null);
     PACKET_TYPES["open"] = "0";
     PACKET_TYPES["close"] = "1";
@@ -5883,6 +5971,7 @@ function encodePacketToBinary(packet, callback) {
 var withNativeBlob, withNativeArrayBuffer, isView, encodePacket, encodeBlobAsBase64, TEXT_ENCODER;
 var init_encodePacket_browser = __esm({
   "node_modules/engine.io-parser/build/esm/encodePacket.browser.js"() {
+    init_define_import_meta_env();
     init_commons();
     withNativeBlob = typeof Blob === "function" || typeof Blob !== "undefined" && Object.prototype.toString.call(Blob) === "[object BlobConstructor]";
     withNativeArrayBuffer = typeof ArrayBuffer === "function";
@@ -5920,6 +6009,7 @@ var init_encodePacket_browser = __esm({
 var chars, lookup, decode;
 var init_base64_arraybuffer = __esm({
   "node_modules/engine.io-parser/build/esm/contrib/base64-arraybuffer.js"() {
+    init_define_import_meta_env();
     chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     lookup = typeof Uint8Array === "undefined" ? [] : new Uint8Array(256);
     for (let i = 0; i < chars.length; i++) {
@@ -5952,6 +6042,7 @@ var init_base64_arraybuffer = __esm({
 var withNativeArrayBuffer2, decodePacket, decodeBase64Packet, mapBinary;
 var init_decodePacket_browser = __esm({
   "node_modules/engine.io-parser/build/esm/decodePacket.browser.js"() {
+    init_define_import_meta_env();
     init_commons();
     init_base64_arraybuffer();
     withNativeArrayBuffer2 = typeof ArrayBuffer === "function";
@@ -6124,6 +6215,7 @@ function createPacketDecoderStream(maxPayload, binaryType) {
 var SEPARATOR, encodePayload, decodePayload, TEXT_DECODER, protocol;
 var init_esm = __esm({
   "node_modules/engine.io-parser/build/esm/index.js"() {
+    init_define_import_meta_env();
     init_encodePacket_browser();
     init_decodePacket_browser();
     init_commons();
@@ -6169,6 +6261,7 @@ function mixin(obj) {
 }
 var init_esm2 = __esm({
   "node_modules/@socket.io/component-emitter/lib/esm/index.js"() {
+    init_define_import_meta_env();
     Emitter.prototype.on = Emitter.prototype.addEventListener = function(event, fn) {
       this._callbacks = this._callbacks || {};
       (this._callbacks["$" + event] = this._callbacks["$" + event] || []).push(fn);
@@ -6239,6 +6332,7 @@ function createCookieJar() {
 var nextTick, globalThisShim, defaultBinaryType;
 var init_globals = __esm({
   "node_modules/engine.io-client/build/esm/globals.js"() {
+    init_define_import_meta_env();
     nextTick = (() => {
       const isPromiseAvailable = typeof Promise === "function" && typeof Promise.resolve === "function";
       if (isPromiseAvailable) {
@@ -6307,6 +6401,7 @@ function randomString() {
 var NATIVE_SET_TIMEOUT, NATIVE_CLEAR_TIMEOUT, BASE64_OVERHEAD;
 var init_util = __esm({
   "node_modules/engine.io-client/build/esm/util.js"() {
+    init_define_import_meta_env();
     init_globals();
     NATIVE_SET_TIMEOUT = globalThisShim.setTimeout;
     NATIVE_CLEAR_TIMEOUT = globalThisShim.clearTimeout;
@@ -6337,6 +6432,7 @@ function decode2(qs) {
 }
 var init_parseqs = __esm({
   "node_modules/engine.io-client/build/esm/contrib/parseqs.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -6344,6 +6440,7 @@ var init_parseqs = __esm({
 var TransportError, Transport;
 var init_transport = __esm({
   "node_modules/engine.io-client/build/esm/transport.js"() {
+    init_define_import_meta_env();
     init_esm();
     init_esm2();
     init_util();
@@ -6484,6 +6581,7 @@ var init_transport = __esm({
 var Polling;
 var init_polling = __esm({
   "node_modules/engine.io-client/build/esm/transports/polling.js"() {
+    init_define_import_meta_env();
     init_transport();
     init_util();
     init_esm();
@@ -6624,6 +6722,7 @@ var init_polling = __esm({
 var value, hasCORS;
 var init_has_cors = __esm({
   "node_modules/engine.io-client/build/esm/contrib/has-cors.js"() {
+    init_define_import_meta_env();
     value = false;
     try {
       value = typeof XMLHttpRequest !== "undefined" && "withCredentials" in new XMLHttpRequest();
@@ -6661,6 +6760,7 @@ function newRequest(opts) {
 var BaseXHR, Request, hasXHR2, XHR;
 var init_polling_xhr = __esm({
   "node_modules/engine.io-client/build/esm/transports/polling-xhr.js"() {
+    init_define_import_meta_env();
     init_polling();
     init_esm2();
     init_util();
@@ -6888,6 +6988,7 @@ var init_polling_xhr = __esm({
 var isReactNative3, BaseWS, WebSocketCtor, WS;
 var init_websocket = __esm({
   "node_modules/engine.io-client/build/esm/transports/websocket.js"() {
+    init_define_import_meta_env();
     init_transport();
     init_util();
     init_esm();
@@ -6991,6 +7092,7 @@ var init_websocket = __esm({
 var WT;
 var init_webtransport = __esm({
   "node_modules/engine.io-client/build/esm/transports/webtransport.js"() {
+    init_define_import_meta_env();
     init_transport();
     init_globals();
     init_esm();
@@ -7062,6 +7164,7 @@ var init_webtransport = __esm({
 var transports;
 var init_transports = __esm({
   "node_modules/engine.io-client/build/esm/transports/index.js"() {
+    init_define_import_meta_env();
     init_polling_xhr();
     init_websocket();
     init_webtransport();
@@ -7118,6 +7221,7 @@ function queryKey(uri, query) {
 var re, parts;
 var init_parseuri = __esm({
   "node_modules/engine.io-client/build/esm/contrib/parseuri.js"() {
+    init_define_import_meta_env();
     re = /^(?:(?![^:@\/?#]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@\/?#]*)(?::([^:@\/?#]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
     parts = [
       "source",
@@ -7142,6 +7246,7 @@ var init_parseuri = __esm({
 var withEventListeners, OFFLINE_EVENT_LISTENERS, SocketWithoutUpgrade, SocketWithUpgrade, Socket;
 var init_socket = __esm({
   "node_modules/engine.io-client/build/esm/socket.js"() {
+    init_define_import_meta_env();
     init_transports();
     init_util();
     init_parseqs();
@@ -7721,6 +7826,7 @@ var init_socket = __esm({
 // node_modules/engine.io-client/build/esm/transports/polling-fetch.js
 var init_polling_fetch = __esm({
   "node_modules/engine.io-client/build/esm/transports/polling-fetch.js"() {
+    init_define_import_meta_env();
     init_polling();
   }
 });
@@ -7729,6 +7835,7 @@ var init_polling_fetch = __esm({
 var protocol2;
 var init_esm3 = __esm({
   "node_modules/engine.io-client/build/esm/index.js"() {
+    init_define_import_meta_env();
     init_socket();
     init_socket();
     init_transport();
@@ -7785,6 +7892,7 @@ function url(uri, path = "", loc) {
 }
 var init_url = __esm({
   "node_modules/socket.io-client/build/esm/url.js"() {
+    init_define_import_meta_env();
     init_esm3();
   }
 });
@@ -7821,6 +7929,7 @@ function hasBinary(obj, toJSON) {
 var withNativeArrayBuffer3, isView2, toString3, withNativeBlob2, withNativeFile;
 var init_is_binary = __esm({
   "node_modules/socket.io-parser/build/esm/is-binary.js"() {
+    init_define_import_meta_env();
     withNativeArrayBuffer3 = typeof ArrayBuffer === "function";
     isView2 = (obj) => {
       return typeof ArrayBuffer.isView === "function" ? ArrayBuffer.isView(obj) : obj.buffer instanceof ArrayBuffer;
@@ -7894,6 +8003,7 @@ function _reconstructPacket(data, buffers) {
 }
 var init_binary = __esm({
   "node_modules/socket.io-parser/build/esm/binary.js"() {
+    init_define_import_meta_env();
     init_is_binary();
   }
 });
@@ -7938,6 +8048,7 @@ function isPacketValid(packet) {
 var RESERVED_EVENTS, protocol3, PacketType, Encoder, Decoder, BinaryReconstructor, isInteger;
 var init_esm4 = __esm({
   "node_modules/socket.io-parser/build/esm/index.js"() {
+    init_define_import_meta_env();
     init_esm2();
     init_binary();
     init_is_binary();
@@ -8218,6 +8329,7 @@ function on(obj, ev, fn) {
 }
 var init_on = __esm({
   "node_modules/socket.io-client/build/esm/on.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -8225,6 +8337,7 @@ var init_on = __esm({
 var RESERVED_EVENTS2, Socket2;
 var init_socket2 = __esm({
   "node_modules/socket.io-client/build/esm/socket.js"() {
+    init_define_import_meta_env();
     init_esm4();
     init_on();
     init_esm2();
@@ -9013,6 +9126,7 @@ function Backoff(opts) {
 }
 var init_backo2 = __esm({
   "node_modules/socket.io-client/build/esm/contrib/backo2.js"() {
+    init_define_import_meta_env();
     Backoff.prototype.duration = function() {
       var ms = this.ms * Math.pow(this.factor, this.attempts++);
       if (this.jitter) {
@@ -9041,6 +9155,7 @@ var init_backo2 = __esm({
 var Manager;
 var init_manager = __esm({
   "node_modules/socket.io-client/build/esm/manager.js"() {
+    init_define_import_meta_env();
     init_esm3();
     init_socket2();
     init_esm4();
@@ -9428,6 +9543,7 @@ function lookup2(uri, opts) {
 var cache;
 var init_esm5 = __esm({
   "node_modules/socket.io-client/build/esm/index.js"() {
+    init_define_import_meta_env();
     init_url();
     init_manager();
     init_socket2();
@@ -9612,6 +9728,7 @@ function RoomsSocket({ config }) {
 var ROOM_LEAVE_GRACE_MS;
 var init_socket_utils = __esm({
   "node_modules/@base44/sdk/dist/utils/socket-utils.js"() {
+    init_define_import_meta_env();
     init_esm5();
     init_auth_utils();
     init_analytics();
@@ -9814,6 +9931,7 @@ async function mountCheckout(element, checkout, options, deps) {
 var ALLOWED_SCRIPT_HOSTS, scriptLoads, loadScript, stripeInstances, stripeQueue, activeStripeCheckout;
 var init_payments_checkout = __esm({
   "node_modules/@base44/sdk/dist/modules/payments-checkout.js"() {
+    init_define_import_meta_env();
     ALLOWED_SCRIPT_HOSTS = {
       paypal: ["www.paypal.com", "www.sandbox.paypal.com"],
       stripe: ["js.stripe.com"]
@@ -9908,6 +10026,7 @@ function createServiceRolePaymentsModule(axios2, appId2) {
 }
 var init_payments = __esm({
   "node_modules/@base44/sdk/dist/modules/payments.js"() {
+    init_define_import_meta_env();
     init_payments_checkout();
   }
 });
@@ -9946,6 +10065,7 @@ function cloneEventNode(e) {
 var ErrorEvent, CloseEvent, Events, isNode2, cloneEvent, DEFAULT, didWarnAboutMissingWebSocket, ReconnectingWebSocket;
 var init_chunk_TPTC3KUF = __esm({
   "node_modules/partysocket/dist/chunk-TPTC3KUF.mjs"() {
+    init_define_import_meta_env();
     if (!globalThis.EventTarget || !globalThis.Event) {
       console.error(`
   PartySocket requires a global 'EventTarget' class to be available!
@@ -10391,6 +10511,7 @@ const partysocket = new PartySocket({
 // node_modules/partysocket/dist/chunk-SNLXKDCY.mjs
 var init_chunk_SNLXKDCY = __esm({
   "node_modules/partysocket/dist/chunk-SNLXKDCY.mjs"() {
+    init_define_import_meta_env();
     init_chunk_TPTC3KUF();
   }
 });
@@ -10398,6 +10519,7 @@ var init_chunk_SNLXKDCY = __esm({
 // node_modules/partysocket/dist/index.mjs
 var init_dist2 = __esm({
   "node_modules/partysocket/dist/index.mjs"() {
+    init_define_import_meta_env();
     init_chunk_SNLXKDCY();
     init_chunk_TPTC3KUF();
   }
@@ -10467,6 +10589,7 @@ function createActorsModule(config) {
 var PING_MS, DEAD_MS, PROXY_FALLBACK_STATUSES, TERMINAL_MINT_STATUSES, Connection;
 var init_actors = __esm({
   "node_modules/@base44/sdk/dist/modules/actors.js"() {
+    init_define_import_meta_env();
     init_dist2();
     PING_MS = 1e3;
     DEAD_MS = 3e3;
@@ -10850,6 +10973,7 @@ function createClient(config) {
 }
 var init_client = __esm({
   "node_modules/@base44/sdk/dist/client.js"() {
+    init_define_import_meta_env();
     init_axios_client();
     init_entities();
     init_integrations();
@@ -10875,36 +10999,42 @@ var init_client = __esm({
 // node_modules/@base44/sdk/dist/modules/app.types.js
 var init_app_types = __esm({
   "node_modules/@base44/sdk/dist/modules/app.types.js"() {
+    init_define_import_meta_env();
   }
 });
 
 // node_modules/@base44/sdk/dist/modules/agents.types.js
 var init_agents_types = __esm({
   "node_modules/@base44/sdk/dist/modules/agents.types.js"() {
+    init_define_import_meta_env();
   }
 });
 
 // node_modules/@base44/sdk/dist/modules/ai-gateway.types.js
 var init_ai_gateway_types = __esm({
   "node_modules/@base44/sdk/dist/modules/ai-gateway.types.js"() {
+    init_define_import_meta_env();
   }
 });
 
 // node_modules/@base44/sdk/dist/modules/connectors.types.js
 var init_connectors_types = __esm({
   "node_modules/@base44/sdk/dist/modules/connectors.types.js"() {
+    init_define_import_meta_env();
   }
 });
 
 // node_modules/@base44/sdk/dist/modules/analytics.types.js
 var init_analytics_types = __esm({
   "node_modules/@base44/sdk/dist/modules/analytics.types.js"() {
+    init_define_import_meta_env();
   }
 });
 
 // node_modules/@base44/sdk/dist/modules/types.js
 var init_types = __esm({
   "node_modules/@base44/sdk/dist/modules/types.js"() {
+    init_define_import_meta_env();
     init_app_types();
     init_agents_types();
     init_ai_gateway_types();
@@ -10916,6 +11046,7 @@ var init_types = __esm({
 // node_modules/@base44/sdk/dist/types.js
 var init_types2 = __esm({
   "node_modules/@base44/sdk/dist/types.js"() {
+    init_define_import_meta_env();
     init_types();
   }
 });
@@ -10923,12 +11054,14 @@ var init_types2 = __esm({
 // node_modules/@base44/sdk/dist/actor.js
 var init_actor = __esm({
   "node_modules/@base44/sdk/dist/actor.js"() {
+    init_define_import_meta_env();
   }
 });
 
 // node_modules/@base44/sdk/dist/index.js
 var init_dist3 = __esm({
   "node_modules/@base44/sdk/dist/index.js"() {
+    init_define_import_meta_env();
     init_client();
     init_axios_client();
     init_auth_utils();
@@ -10941,6 +11074,7 @@ var init_dist3 = __esm({
 var isNode3, windowObj2, storage, toSnakeCase, getAppParamValue, getAppParams, appParams;
 var init_app_params = __esm({
   "src/lib/app-params.js"() {
+    init_define_import_meta_env();
     isNode3 = typeof window === "undefined";
     windowObj2 = isNode3 ? { localStorage: /* @__PURE__ */ new Map() } : window;
     storage = windowObj2.localStorage;
@@ -10975,8 +11109,8 @@ var init_app_params = __esm({
     };
     getAppParams = () => {
       return {
-        appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
-        serverUrl: getAppParamValue("server_url", { defaultValue: import.meta.env.VITE_BASE44_BACKEND_URL }),
+        appId: getAppParamValue("app_id", { defaultValue: define_import_meta_env_default.VITE_BASE44_APP_ID }),
+        serverUrl: getAppParamValue("server_url", { defaultValue: define_import_meta_env_default.VITE_BASE44_BACKEND_URL }),
         token: getAppParamValue("access_token", { removeFromUrl: true }),
         fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),
         functionsVersion: getAppParamValue("functions_version")
@@ -11158,6 +11292,7 @@ function createRequestGovernor({
 var SLOW_MS, SLOW_KEEP;
 var init_requestGovernor = __esm({
   "src/api/requestGovernor.mjs"() {
+    init_define_import_meta_env();
     SLOW_MS = 3e3;
     SLOW_KEEP = 25;
   }
@@ -11175,6 +11310,7 @@ function noteRateLimitSuccess() {
 var BASE_COOLDOWN_MS, MAX_COOLDOWN_MS, cooldownUntil, cooldownMs, isAppCoolingDown;
 var init_rateLimitCooldown = __esm({
   "src/api/rateLimitCooldown.js"() {
+    init_define_import_meta_env();
     BASE_COOLDOWN_MS = 2e4;
     MAX_COOLDOWN_MS = 6e4;
     cooldownUntil = 0;
@@ -11187,6 +11323,7 @@ var init_rateLimitCooldown = __esm({
 var require_react_development = __commonJS({
   "node_modules/react/cjs/react.development.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -13061,6 +13198,7 @@ var require_react_development = __commonJS({
 var require_react = __commonJS({
   "node_modules/react/index.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       module.exports = null;
     } else {
@@ -13081,6 +13219,7 @@ function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForD
 var canUseDOM;
 var init_dist4 = __esm({
   "node_modules/@radix-ui/primitive/dist/index.mjs"() {
+    init_define_import_meta_env();
     canUseDOM = !!(typeof window !== "undefined" && window.document && window.document.createElement);
   }
 });
@@ -13123,6 +13262,7 @@ function useComposedRefs(...refs) {
 var React;
 var init_dist5 = __esm({
   "node_modules/@radix-ui/react-compose-refs/dist/index.mjs"() {
+    init_define_import_meta_env();
     React = __toESM(require_react(), 1);
   }
 });
@@ -13131,6 +13271,7 @@ var init_dist5 = __esm({
 var require_react_jsx_runtime_development = __commonJS({
   "node_modules/react/cjs/react-jsx-runtime.development.js"(exports) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -14024,6 +14165,7 @@ var require_react_jsx_runtime_development = __commonJS({
 var require_jsx_runtime = __commonJS({
   "node_modules/react/jsx-runtime.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       module.exports = null;
     } else {
@@ -14109,6 +14251,7 @@ function composeContextScopes(...scopes) {
 var React2, import_jsx_runtime;
 var init_dist6 = __esm({
   "node_modules/@radix-ui/react-context/dist/index.mjs"() {
+    init_define_import_meta_env();
     React2 = __toESM(require_react(), 1);
     import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
   }
@@ -14118,6 +14261,7 @@ var init_dist6 = __esm({
 var React3, useLayoutEffect2;
 var init_dist7 = __esm({
   "node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs"() {
+    init_define_import_meta_env();
     React3 = __toESM(require_react(), 1);
     useLayoutEffect2 = globalThis?.document ? React3.useLayoutEffect : () => {
     };
@@ -14135,6 +14279,7 @@ function useId(deterministicId) {
 var React4, useReactId, count;
 var init_dist8 = __esm({
   "node_modules/@radix-ui/react-id/dist/index.mjs"() {
+    init_define_import_meta_env();
     React4 = __toESM(require_react(), 1);
     init_dist7();
     useReactId = React4[" useId ".trim().toString()] || (() => void 0);
@@ -14209,6 +14354,7 @@ function isFunction3(value2) {
 var React5, React22, useInsertionEffect, SYNC_STATE;
 var init_dist9 = __esm({
   "node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs"() {
+    init_define_import_meta_env();
     React5 = __toESM(require_react(), 1);
     init_dist7();
     React22 = __toESM(require_react(), 1);
@@ -14221,6 +14367,7 @@ var init_dist9 = __esm({
 var require_scheduler_development = __commonJS({
   "node_modules/scheduler/cjs/scheduler.development.js"(exports) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -14671,6 +14818,7 @@ var require_scheduler_development = __commonJS({
 var require_scheduler = __commonJS({
   "node_modules/scheduler/index.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       module.exports = null;
     } else {
@@ -14683,6 +14831,7 @@ var require_scheduler = __commonJS({
 var require_react_dom_development = __commonJS({
   "node_modules/react-dom/cjs/react-dom.development.js"(exports) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -35847,6 +35996,7 @@ var require_react_dom_development = __commonJS({
 var require_react_dom = __commonJS({
   "node_modules/react-dom/index.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       checkDCE();
       module.exports = null;
@@ -35941,6 +36091,7 @@ function getElementRef(element) {
 var React6, import_jsx_runtime2, Slot, SLOTTABLE_IDENTIFIER;
 var init_dist10 = __esm({
   "node_modules/@radix-ui/react-slot/dist/index.mjs"() {
+    init_define_import_meta_env();
     React6 = __toESM(require_react(), 1);
     init_dist5();
     import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
@@ -35956,6 +36107,7 @@ function dispatchDiscreteCustomEvent(target, event) {
 var React7, ReactDOM, import_jsx_runtime3, NODES, Primitive;
 var init_dist11 = __esm({
   "node_modules/@radix-ui/react-primitive/dist/index.mjs"() {
+    init_define_import_meta_env();
     React7 = __toESM(require_react(), 1);
     ReactDOM = __toESM(require_react_dom(), 1);
     init_dist10();
@@ -36006,6 +36158,7 @@ function useCallbackRef(callback) {
 var React8;
 var init_dist12 = __esm({
   "node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs"() {
+    init_define_import_meta_env();
     React8 = __toESM(require_react(), 1);
   }
 });
@@ -36026,6 +36179,7 @@ function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.docum
 var React9;
 var init_dist13 = __esm({
   "node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs"() {
+    init_define_import_meta_env();
     React9 = __toESM(require_react(), 1);
     init_dist12();
   }
@@ -36114,6 +36268,7 @@ var React10, import_jsx_runtime4, DISMISSABLE_LAYER_NAME, CONTEXT_UPDATE, POINTE
 var init_dist14 = __esm({
   "node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React10 = __toESM(require_react(), 1);
     init_dist4();
     init_dist11();
@@ -36330,6 +36485,7 @@ var React11, import_jsx_runtime5, AUTOFOCUS_ON_MOUNT, AUTOFOCUS_ON_UNMOUNT, EVEN
 var init_dist15 = __esm({
   "node_modules/@radix-ui/react-focus-scope/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React11 = __toESM(require_react(), 1);
     init_dist5();
     init_dist11();
@@ -36465,6 +36621,7 @@ var React12, import_react_dom, import_jsx_runtime6, PORTAL_NAME, Portal;
 var init_dist16 = __esm({
   "node_modules/@radix-ui/react-portal/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React12 = __toESM(require_react(), 1);
     import_react_dom = __toESM(require_react_dom(), 1);
     init_dist11();
@@ -36600,6 +36757,7 @@ var React23, React13, Presence;
 var init_dist17 = __esm({
   "node_modules/@radix-ui/react-presence/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React23 = __toESM(require_react(), 1);
     init_dist5();
     init_dist7();
@@ -36645,6 +36803,7 @@ var React14, count2;
 var init_dist18 = __esm({
   "node_modules/@radix-ui/react-focus-guards/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React14 = __toESM(require_react(), 1);
     count2 = 0;
   }
@@ -36674,6 +36833,7 @@ function __spreadArray(to, from, pack) {
 var __assign;
 var init_tslib_es6 = __esm({
   "node_modules/tslib/tslib.es6.mjs"() {
+    init_define_import_meta_env();
     __assign = function() {
       __assign = Object.assign || function __assign2(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -36691,6 +36851,7 @@ var init_tslib_es6 = __esm({
 var zeroRightClassName, fullWidthClassName, noScrollbarsClassName, removedBarSizeVariable;
 var init_constants = __esm({
   "node_modules/react-remove-scroll-bar/dist/es2015/constants.js"() {
+    init_define_import_meta_env();
     zeroRightClassName = "right-scroll-bar-position";
     fullWidthClassName = "width-before-scroll-bar";
     noScrollbarsClassName = "with-scroll-bars-hidden";
@@ -36709,6 +36870,7 @@ function assignRef(ref, value2) {
 }
 var init_assignRef = __esm({
   "node_modules/use-callback-ref/dist/es2015/assignRef.js"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -36741,6 +36903,7 @@ function useCallbackRef2(initialValue, callback) {
 var import_react;
 var init_useRef = __esm({
   "node_modules/use-callback-ref/dist/es2015/useRef.js"() {
+    init_define_import_meta_env();
     import_react = __toESM(require_react());
   }
 });
@@ -36776,6 +36939,7 @@ function useMergeRefs(refs, defaultValue) {
 var React15, useIsomorphicLayoutEffect, currentValues;
 var init_useMergeRef = __esm({
   "node_modules/use-callback-ref/dist/es2015/useMergeRef.js"() {
+    init_define_import_meta_env();
     React15 = __toESM(require_react());
     init_assignRef();
     init_useRef();
@@ -36787,6 +36951,7 @@ var init_useMergeRef = __esm({
 // node_modules/use-callback-ref/dist/es2015/index.js
 var init_es2015 = __esm({
   "node_modules/use-callback-ref/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     init_useMergeRef();
   }
 });
@@ -36878,6 +37043,7 @@ function createSidecarMedium(options) {
 }
 var init_medium = __esm({
   "node_modules/use-sidecar/dist/es2015/medium.js"() {
+    init_define_import_meta_env();
     init_tslib_es6();
   }
 });
@@ -36890,6 +37056,7 @@ function exportSidecar(medium, exported) {
 var React16, SideCar;
 var init_exports = __esm({
   "node_modules/use-sidecar/dist/es2015/exports.js"() {
+    init_define_import_meta_env();
     init_tslib_es6();
     React16 = __toESM(require_react());
     SideCar = function(_a) {
@@ -36910,6 +37077,7 @@ var init_exports = __esm({
 // node_modules/use-sidecar/dist/es2015/index.js
 var init_es20152 = __esm({
   "node_modules/use-sidecar/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     init_medium();
     init_exports();
   }
@@ -36919,6 +37087,7 @@ var init_es20152 = __esm({
 var effectCar;
 var init_medium2 = __esm({
   "node_modules/react-remove-scroll/dist/es2015/medium.js"() {
+    init_define_import_meta_env();
     init_es20152();
     effectCar = createSidecarMedium();
   }
@@ -36928,6 +37097,7 @@ var init_medium2 = __esm({
 var React17, nothing, RemoveScroll;
 var init_UI = __esm({
   "node_modules/react-remove-scroll/dist/es2015/UI.js"() {
+    init_define_import_meta_env();
     init_tslib_es6();
     React17 = __toESM(require_react());
     init_constants();
@@ -36970,6 +37140,7 @@ var init_UI = __esm({
 var currentNonce, getNonce;
 var init_es20153 = __esm({
   "node_modules/get-nonce/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     getNonce = function() {
       if (currentNonce) {
         return currentNonce;
@@ -37008,6 +37179,7 @@ function insertStyleTag(tag) {
 var stylesheetSingleton;
 var init_singleton = __esm({
   "node_modules/react-style-singleton/dist/es2015/singleton.js"() {
+    init_define_import_meta_env();
     init_es20153();
     stylesheetSingleton = function() {
       var counter = 0;
@@ -37038,6 +37210,7 @@ var init_singleton = __esm({
 var React18, styleHookSingleton;
 var init_hook = __esm({
   "node_modules/react-style-singleton/dist/es2015/hook.js"() {
+    init_define_import_meta_env();
     React18 = __toESM(require_react());
     init_singleton();
     styleHookSingleton = function() {
@@ -37058,6 +37231,7 @@ var init_hook = __esm({
 var styleSingleton;
 var init_component = __esm({
   "node_modules/react-style-singleton/dist/es2015/component.js"() {
+    init_define_import_meta_env();
     init_hook();
     styleSingleton = function() {
       var useStyle = styleHookSingleton();
@@ -37074,6 +37248,7 @@ var init_component = __esm({
 // node_modules/react-style-singleton/dist/es2015/index.js
 var init_es20154 = __esm({
   "node_modules/react-style-singleton/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     init_component();
     init_singleton();
     init_hook();
@@ -37084,6 +37259,7 @@ var init_es20154 = __esm({
 var zeroGap, parse2, getOffset, getGapWidth;
 var init_utils3 = __esm({
   "node_modules/react-remove-scroll-bar/dist/es2015/utils.js"() {
+    init_define_import_meta_env();
     zeroGap = {
       left: 0,
       top: 0,
@@ -37124,6 +37300,7 @@ var init_utils3 = __esm({
 var React19, Style, lockAttribute, getStyles, getCurrentUseCounter, useLockAttribute, RemoveScrollBar;
 var init_component2 = __esm({
   "node_modules/react-remove-scroll-bar/dist/es2015/component.js"() {
+    init_define_import_meta_env();
     React19 = __toESM(require_react());
     init_es20154();
     init_constants();
@@ -37172,6 +37349,7 @@ var init_component2 = __esm({
 // node_modules/react-remove-scroll-bar/dist/es2015/index.js
 var init_es20155 = __esm({
   "node_modules/react-remove-scroll-bar/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     init_component2();
     init_constants();
     init_utils3();
@@ -37182,6 +37360,7 @@ var init_es20155 = __esm({
 var passiveSupported, options, nonPassive;
 var init_aggresiveCapture = __esm({
   "node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js"() {
+    init_define_import_meta_env();
     passiveSupported = false;
     if (typeof window !== "undefined") {
       try {
@@ -37205,6 +37384,7 @@ var init_aggresiveCapture = __esm({
 var alwaysContainsScroll, elementCanBeScrolled, elementCouldBeVScrolled, elementCouldBeHScrolled, locationCouldBeScrolled, getVScrollVariables, getHScrollVariables, elementCouldBeScrolled, getScrollVariables, getDirectionFactor, handleScroll;
 var init_handleScroll = __esm({
   "node_modules/react-remove-scroll/dist/es2015/handleScroll.js"() {
+    init_define_import_meta_env();
     alwaysContainsScroll = function(node) {
       return node.tagName === "TEXTAREA";
     };
@@ -37456,6 +37636,7 @@ function getOutermostShadowParent(node) {
 var React20, getTouchXY, getDeltaXY, extractRef, deltaCompare, generateStyle, idCounter, lockStack;
 var init_SideEffect = __esm({
   "node_modules/react-remove-scroll/dist/es2015/SideEffect.js"() {
+    init_define_import_meta_env();
     init_tslib_es6();
     React20 = __toESM(require_react());
     init_es20155();
@@ -37486,6 +37667,7 @@ var init_SideEffect = __esm({
 var sidecar_default;
 var init_sidecar = __esm({
   "node_modules/react-remove-scroll/dist/es2015/sidecar.js"() {
+    init_define_import_meta_env();
     init_es20152();
     init_SideEffect();
     init_medium2();
@@ -37497,6 +37679,7 @@ var init_sidecar = __esm({
 var React21, ReactRemoveScroll, Combination_default;
 var init_Combination = __esm({
   "node_modules/react-remove-scroll/dist/es2015/Combination.js"() {
+    init_define_import_meta_env();
     init_tslib_es6();
     React21 = __toESM(require_react());
     init_UI();
@@ -37512,6 +37695,7 @@ var init_Combination = __esm({
 // node_modules/react-remove-scroll/dist/es2015/index.js
 var init_es20156 = __esm({
   "node_modules/react-remove-scroll/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     init_Combination();
   }
 });
@@ -37520,6 +37704,7 @@ var init_es20156 = __esm({
 var getDefaultParent, counterMap, uncontrolledNodes, markerMap, lockCount, unwrapHost, correctTargets, applyAttributeToOthers, hideOthers;
 var init_es20157 = __esm({
   "node_modules/aria-hidden/dist/es2015/index.js"() {
+    init_define_import_meta_env();
     getDefaultParent = function(originalTarget) {
       if (typeof document === "undefined") {
         return null;
@@ -37650,6 +37835,7 @@ var React24, import_jsx_runtime7, DIALOG_NAME, createDialogContext, createDialog
 var init_dist19 = __esm({
   "node_modules/@radix-ui/react-dialog/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React24 = __toESM(require_react(), 1);
     init_dist4();
     init_dist5();
@@ -37970,6 +38156,7 @@ For more information, see https://radix-ui.com/primitives/docs/components/${titl
 var toKebabCase, mergeClasses;
 var init_utils4 = __esm({
   "node_modules/lucide-react/dist/esm/shared/src/utils.js"() {
+    init_define_import_meta_env();
     toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
     mergeClasses = (...classes) => classes.filter((className, index, array) => {
       return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
@@ -37981,6 +38168,7 @@ var init_utils4 = __esm({
 var defaultAttributes;
 var init_defaultAttributes = __esm({
   "node_modules/lucide-react/dist/esm/defaultAttributes.js"() {
+    init_define_import_meta_env();
     defaultAttributes = {
       xmlns: "http://www.w3.org/2000/svg",
       width: 24,
@@ -37999,6 +38187,7 @@ var init_defaultAttributes = __esm({
 var import_react2, Icon;
 var init_Icon = __esm({
   "node_modules/lucide-react/dist/esm/Icon.js"() {
+    init_define_import_meta_env();
     import_react2 = __toESM(require_react(), 1);
     init_defaultAttributes();
     init_utils4();
@@ -38039,6 +38228,7 @@ var init_Icon = __esm({
 var import_react3, createLucideIcon;
 var init_createLucideIcon = __esm({
   "node_modules/lucide-react/dist/esm/createLucideIcon.js"() {
+    init_define_import_meta_env();
     import_react3 = __toESM(require_react(), 1);
     init_utils4();
     init_Icon();
@@ -38061,6 +38251,7 @@ var init_createLucideIcon = __esm({
 var __iconNode, X;
 var init_x = __esm({
   "node_modules/lucide-react/dist/esm/icons/x.js"() {
+    init_define_import_meta_env();
     init_createLucideIcon();
     __iconNode = [
       ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
@@ -38073,6 +38264,7 @@ var init_x = __esm({
 // node_modules/lucide-react/dist/esm/lucide-react.js
 var init_lucide_react = __esm({
   "node_modules/lucide-react/dist/esm/lucide-react.js"() {
+    init_define_import_meta_env();
     init_x();
   }
 });
@@ -38093,6 +38285,7 @@ function clsx() {
 }
 var init_clsx = __esm({
   "node_modules/clsx/dist/clsx.mjs"() {
+    init_define_import_meta_env();
   }
 });
 
@@ -38141,6 +38334,7 @@ function createTailwindMerge(createConfigFirst, ...createConfigRest) {
 var CLASS_PART_SEPARATOR, createClassGroupUtils, getGroupRecursive, arbitraryPropertyRegex, getGroupIdForArbitraryProperty, createClassMap, processClassesRecursively, getPart, isThemeGetter, createLruCache, IMPORTANT_MODIFIER, MODIFIER_SEPARATOR, MODIFIER_SEPARATOR_LENGTH, createParseClassName, stripImportantModifier, createSortModifiers, createConfigUtils, SPLIT_CLASSES_REGEX, mergeClassList, toValue, fromTheme, arbitraryValueRegex, arbitraryVariableRegex, fractionRegex, tshirtUnitRegex, lengthUnitRegex, colorFunctionRegex, shadowRegex, imageRegex, isFraction, isNumber2, isInteger2, isPercent, isTshirtSize, isAny, isLengthOnly, isNever, isShadow, isImage, isAnyNonArbitrary, isArbitrarySize, isArbitraryValue, isArbitraryLength, isArbitraryNumber, isArbitraryPosition, isArbitraryImage, isArbitraryShadow, isArbitraryVariable, isArbitraryVariableLength, isArbitraryVariableFamilyName, isArbitraryVariablePosition, isArbitraryVariableSize, isArbitraryVariableImage, isArbitraryVariableShadow, getIsArbitraryValue, getIsArbitraryVariable, isLabelPosition, isLabelImage, isLabelSize, isLabelLength, isLabelNumber, isLabelFamilyName, isLabelShadow, getDefaultConfig, twMerge;
 var init_bundle_mjs = __esm({
   "node_modules/tailwind-merge/dist/bundle-mjs.mjs"() {
+    init_define_import_meta_env();
     CLASS_PART_SEPARATOR = "-";
     createClassGroupUtils = (config) => {
       const classMap = createClassMap(config);
@@ -41061,6 +41255,7 @@ function cn(...inputs) {
 var isIframe;
 var init_utils5 = __esm({
   "src/lib/utils.js"() {
+    init_define_import_meta_env();
     init_clsx();
     init_bundle_mjs();
     isIframe = window.self !== window.top;
@@ -41072,6 +41267,7 @@ var React25, import_jsx_runtime8, DialogPortal2, DialogOverlay2, DialogContent2,
 var init_dialog = __esm({
   "src/components/ui/dialog.jsx"() {
     "use client";
+    init_define_import_meta_env();
     React25 = __toESM(require_react(), 1);
     init_dist19();
     init_lucide_react();
@@ -41165,6 +41361,7 @@ var init_dialog = __esm({
 var falsyToString, cx, cva;
 var init_dist20 = __esm({
   "node_modules/class-variance-authority/dist/index.mjs"() {
+    init_define_import_meta_env();
     init_clsx();
     falsyToString = (value2) => typeof value2 === "boolean" ? `${value2}` : value2 === 0 ? "0" : value2;
     cx = clsx;
@@ -41213,6 +41410,7 @@ var init_dist20 = __esm({
 var React26, import_jsx_runtime9, buttonVariants, Button;
 var init_button = __esm({
   "src/components/ui/button.jsx"() {
+    init_define_import_meta_env();
     React26 = __toESM(require_react(), 1);
     init_dist10();
     init_dist20();
@@ -41262,6 +41460,7 @@ var init_button = __esm({
 var React27, import_jsx_runtime10, Input;
 var init_input = __esm({
   "src/components/ui/input.jsx"() {
+    init_define_import_meta_env();
     React27 = __toESM(require_react(), 1);
     init_utils5();
     import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
@@ -41288,6 +41487,7 @@ var React28, import_jsx_runtime11, NAME, Label, Root2;
 var init_dist21 = __esm({
   "node_modules/@radix-ui/react-label/dist/index.mjs"() {
     "use client";
+    init_define_import_meta_env();
     React28 = __toESM(require_react(), 1);
     init_dist11();
     import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
@@ -41316,6 +41516,7 @@ var init_dist21 = __esm({
 var React29, import_jsx_runtime12, labelVariants, Label2;
 var init_label = __esm({
   "src/components/ui/label.jsx"() {
+    init_define_import_meta_env();
     React29 = __toESM(require_react(), 1);
     init_dist21();
     init_dist20();
@@ -41340,6 +41541,7 @@ function getSessionToken() {
 var import_react4, import_jsx_runtime13, TOKEN_KEY, AuthContext;
 var init_EmailGate = __esm({
   "src/components/auth/EmailGate.jsx"() {
+    init_define_import_meta_env();
     import_react4 = __toESM(require_react(), 1);
     init_base44Client();
     init_dialog();
@@ -41372,6 +41574,7 @@ async function invokeFleet(name, payload = {}) {
 var mutationEpoch, READ_ONLY_FUNCTIONS, invokeGovernor, isFleetCoolingDown;
 var init_fleetInvoke = __esm({
   "src/components/fleet/fleetInvoke.js"() {
+    init_define_import_meta_env();
     init_base44Client();
     init_EmailGate();
     init_requestGovernor();
@@ -41460,6 +41663,7 @@ async function flushBatch() {
 var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pageOf, pagedRead, pendingBatch, flushScheduled, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
 var init_staffEntities = __esm({
   "src/components/staff/staffEntities.js"() {
+    init_define_import_meta_env();
     init_fleetInvoke();
     init_EmailGate();
     init_rateLimitCooldown();
@@ -41762,6 +41966,7 @@ function wrapEntity(name, target) {
 var appId, serverUrl, token, functionsVersion, rawClient, governor, cloneValue, copyResponse, STAFF_READ_ENTITIES, READ_METHODS, isPlainObject2, entityWrappers, entitiesProxy, authProxy, functionsProxy, base44;
 var init_base44Client = __esm({
   "src/api/base44Client.js"() {
+    init_define_import_meta_env();
     init_dist3();
     init_app_params();
     init_requestGovernor();
@@ -41906,7 +42111,11 @@ var init_base44Client = __esm({
   }
 });
 
+// src/components/masterInventory/inventoryPersistence.js
+init_define_import_meta_env();
+
 // src/components/estimator/builder/builderEntityPersistence.js
+init_define_import_meta_env();
 function isEntityNotFoundError(error) {
   const status = Number(error?.status || error?.response?.status || error?.response?.statusCode || error?.data?.status || 0);
   if (status === 404) return true;

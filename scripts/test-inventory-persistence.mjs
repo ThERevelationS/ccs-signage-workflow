@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const bundle = (name, dir = 'masterInventory') => {
   const out = resolve(here, `.tmp-${name}.mjs`);
-  buildSync({ entryPoints: [resolve(here, `../src/components/${dir}/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent' });
+  buildSync({ entryPoints: [resolve(here, `../src/components/${dir}/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent', define: { 'import.meta.env': '{}' }, });
   return pathToFileURL(out).href;
 };
 const { sameImportedValue, importedPayloadMatches, createImportedInventoryRowSafely } =
