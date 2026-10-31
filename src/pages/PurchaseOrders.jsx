@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { Link } from "react-router-dom";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import SavedViews from "@/components/workflow/SavedViews";
 import ReceivePanel from "@/components/procurement/ReceivePanel";
@@ -296,9 +297,9 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
 
             <div className="mt-3 text-xs text-slate-500">
               {po.ship_to && <div>Ship to: {po.ship_to}</div>}
-              {po.work_order_id && <div>WorkOrder: {po.work_order_id}</div>}
-              {po.estimate_id && <div>Estimate: <a className="text-violet-600 hover:underline dark:text-violet-300" href={`/EstimateDetail?id=${po.estimate_id}`}>{po.estimate_id}</a></div>}
-              {po.opportunity_id && <div>Opportunity: {po.opportunity_id}</div>}
+              {po.work_order_id && <div>WorkOrder: <Link className="text-violet-600 hover:underline dark:text-violet-300" to={`/JobWorkspace?wo=${po.work_order_id}`}>{po.work_order_id}</Link></div>}
+              {po.estimate_id && <div>Estimate: <Link className="text-violet-600 hover:underline dark:text-violet-300" to={`/EstimateDetail?id=${po.estimate_id}`}>{po.estimate_id}</Link></div>}
+              {po.opportunity_id && <div>Opportunity: <Link className="text-violet-600 hover:underline dark:text-violet-300" to={`/Opportunities?open=${po.opportunity_id}`}>{po.opportunity_id}</Link></div>}
               {po.notes && <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{po.notes}</div>}
             </div>
 
