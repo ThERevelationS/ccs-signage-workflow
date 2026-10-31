@@ -6,7 +6,7 @@ Remote sandbox is the source of truth — pull remote files before editing (`npx
 ## Verify
 
 - `node scripts/validate-opportunity-workspace.mjs` — contract checks (backend-only entities, guarded handoff, idempotent creates, routing, feature presence).
-- Hardening suites (esbuild-bundled under Node): `node scripts/test-aio-pricing.mjs`, `test-quote-lifecycle.mjs`, `test-customer-quote.mjs`, `test-customer-pricing.mjs`, `test-entity-persistence.mjs`, `test-estimate-cas.mjs`, `test-estimate-lifecycle.mjs`, `test-estimate-save-recovery.mjs`, `test-builder-persistence.mjs`, `test-module-registry.mjs`, `test-sales-activity.mjs`, `test-builder-service.mjs`, `test-builder-recovery.mjs`, `test-quick-price-persistence.mjs`, `test-customer-persistence.mjs` — all print `PASS <name>`.
+- Hardening suites (esbuild-bundled under Node): `node scripts/test-aio-pricing.mjs`, `test-quote-lifecycle.mjs`, `test-customer-quote.mjs`, `test-customer-pricing.mjs`, `test-entity-persistence.mjs`, `test-estimate-cas.mjs`, `test-estimate-lifecycle.mjs`, `test-estimate-save-recovery.mjs`, `test-builder-persistence.mjs`, `test-module-registry.mjs`, `test-sales-activity.mjs`, `test-builder-service.mjs`, `test-builder-recovery.mjs`, `test-quick-price-persistence.mjs`, `test-customer-persistence.mjs`, `test-staff-entity-write-authority.mjs` — all print `PASS <name>`.
 - JSX/TS syntax: `npx esbuild <file> --loader:.jsx=jsx --outfile=NUL` (TS files need no loader flag).
 
 ## Conventions

@@ -55,6 +55,42 @@ function rejectOperatorKeys(value: unknown, path = 'data'): void {
 const bad = (message: string, status = 400) =>
   Object.assign(new Error(message), { status });
 
+// Field-level authority for manager-owned data, mirroring fieldHistoryAction's
+// PRIVILEGED_FIELDS and recordEstimateQuoteDelivery's approve_quote gate: a
+// non-admin session may resubmit the loaded value (full-form saves) but may
+// never set, change, or clear these fields through this generic gateway.
+const ADMIN_ONLY_FIELDS: Record<string, Set<string>> = {
+  AllInOneEstimate: new Set(['internal_approval']),
+  WorkOrder: new Set(['status', 'payment_status', 'invoice_status', 'approved_by', 'approved_at', 'sales_quote_sent_verified_at']),
+};
+// Estimates are financial documents: permanent delete is admin-only; staff
+// use the soft-delete (Trash) path instead.
+const ADMIN_ONLY_OPS: Record<string, Set<string>> = {
+  AllInOneEstimate: new Set(['delete']),
+};
+
+const isBlankValue = (v: unknown) => v === undefined || v === null || v === '';
+const stableJson = (v: unknown) => JSON.stringify(v, (_k, x) =>
+  x && typeof x === 'object' && !Array.isArray(x)
+    ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+    : x);
+const sameFieldValue = (a: unknown, b: unknown) =>
+  (isBlankValue(a) && isBlankValue(b)) || stableJson(a) === stableJson(b);
+const readPath = (record: any, path: string) =>
+  path.split('.').reduce((acc: any, key) => (acc && typeof acc === 'object' ? acc[key] : undefined), record);
+
+function assertFieldAuthority(entityName: string, user: any, patch: Record<string, unknown>, current: any): void {
+  const fields = ADMIN_ONLY_FIELDS[entityName];
+  if (!fields || user?.role === 'admin') return;
+  for (const key of Object.keys(patch || {})) {
+    // Dotted keys ("internal_approval.approved_at") address the same field.
+    const root = key.split('.')[0];
+    if (fields.has(root) && !sameFieldValue(patch[key], readPath(current, key))) {
+      throw bad(`This field requires an admin session: ${root}`, 403);
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
@@ -79,6 +115,10 @@ Deno.serve(async (req) => {
     }
     if (entityName === 'SalesLocation' && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can manage locations.' }, { status: 403 });
+    }
+
+    if (ADMIN_ONLY_OPS[entityName]?.has(op) && user.role !== 'admin') {
+      return Response.json({ error: 'Only administrators can permanently delete this record type.' }, { status: 403 });
     }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
@@ -156,6 +196,7 @@ Deno.serve(async (req) => {
           if (existing?.id) return Response.json({ success: true, record: existing, deduplicated: true });
         }
       }
+      assertFieldAuthority(entityName, user, data, {});
       const created = await entity.create(data);
       return Response.json({ success: true, record: created });
     }
@@ -179,6 +220,7 @@ Deno.serve(async (req) => {
           data.change_log = log;
         }
       }
+      assertFieldAuthority(entityName, user, data, current);
       const saved = await entity.update(id, data);
       return Response.json({ success: true, record: saved });
     }
@@ -206,6 +248,7 @@ Deno.serve(async (req) => {
       rejectOperatorKeys(patch);
       // Identity/system fields are never client-supplied.
       for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
+      assertFieldAuthority(entityName, user, patch, current);
       const result = await entity.updateMany({ id: queryId, updated_date: queryVersion }, { $set: patch });
       return Response.json({ success: true, result });
     }
