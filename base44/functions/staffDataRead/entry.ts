@@ -121,6 +121,7 @@ const ADMIN_READABLE = new Set<string>([
   'EmailNotificationSettings',
   'FailedAdminAttempt',
   'FeatureReport',
+  'InventoryCostHistory',
   'SyncConflict',
   'TimeClockPunchException',
   'UserSession',

@@ -278,6 +278,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Master Inventory cost audit. Admin-only, matching the Master Inventory
+    // page gate; changed_by always comes from the session, never the client.
+    if (action === "record_cost_history") {
+      if (user?.role !== "admin") throw bad("Recording cost history requires a CCS admin.", 403);
+      const itemId = clean(body?.inventory_item_id);
+      if (!itemId) throw bad("An inventory item id is required.");
+      const changes = Array.isArray(body?.changes) ? body.changes : [];
+      if (changes.length === 0) return Response.json({ success: true, action, written: 0 });
+      if (changes.length > 50) throw bad("Too many cost changes in one request.");
+      const CostHistory = base44.asServiceRole.entities.InventoryCostHistory;
+      const entityKey = clean(body?.entity_key).slice(0, 100);
+      const note = clean(body?.note).slice(0, 500);
+      let written = 0;
+      for (const change of changes) {
+        const field = clean(change?.cost_field).slice(0, 100);
+        const oldCost = Number(change?.old_cost);
+        const newCost = Number(change?.new_cost);
+        if (!field || !Number.isFinite(oldCost) || !Number.isFinite(newCost)) continue;
+        await CostHistory.create({
+          inventory_item_id: itemId,
+          entity_key: entityKey,
+          cost_field: field,
+          old_cost: oldCost,
+          new_cost: newCost,
+          changed_by: actor,
+          note,
+        });
+        written += 1;
+      }
+      return Response.json({ success: true, action, written });
+    }
+
     throw bad(`Unsupported action "${action}".`);
   } catch (error: any) {
     const status = error?.statusCode || error?.status || 500;
