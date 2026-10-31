@@ -126,6 +126,9 @@ function FollowupRow({ item, defaultTo, actor, sessionToken, onChanged }) {
         subject: clean(value.subject),
         body: clean(value.body),
         kind: `followup:${item.kind}`,
+        // Replies route to the staff member working the queue (actor is their
+        // email); a non-email actor falls back to the SMTP_REPLY_TO default.
+        replyTo: clean(actor).includes("@") ? clean(actor) : undefined,
       });
     } catch (e) {
       setRow({ status: "failed", error: e?.message || "Email could not be sent." });
