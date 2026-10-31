@@ -1,11 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload } from "lucide-react";
+import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp, formatInCompanyTz } from "@/components/estimator/quoteLifecycle";
-import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate } from "@/components/estimator/estimatePersistence";
+import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, softDeleteEstimateFromLoadedSnapshot, expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
+import { duplicateEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
+import { ensureEstimateLifecycleRevision, getOpenEstimateRevision } from "@/components/estimator/estimateRevisionService";
 import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStatuses } from "@/components/estimator/estimateStatusTransitions";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -117,6 +119,9 @@ export default function EstimatorQueues() {
   const [customStatuses, setCustomStatuses] = useState([]);
   const [backupBusy, setBackupBusy] = useState(false);
   const importEstRef = useRef(null);
+  // Per-row retry anchors for the inline quick actions — a retried duplicate
+  // reuses its creation key instead of minting a second estimate.
+  const quickKeysRef = useRef({});
   // Re-import an exported estimate bundle (#451): creates a new draft with
   // its parts/products re-pointed, then opens it.
   const importEstimateJson = async (file) => {
@@ -253,6 +258,112 @@ export default function EstimatorQueues() {
       setEstimates((prev) => prev.filter((row) => row.id !== e.id));
     } catch (err) {
       setTrashError(err?.message || "The estimate could not be permanently deleted. Reload Trash before retrying.");
+    } finally {
+      setTrashBusyId("");
+    }
+  };
+
+  const queueSessionToken = () => localStorage.getItem("signShopSessionToken") || sessionStorage.getItem("signShopSessionToken") || "";
+
+  // Inline quick actions: duplicate / archive / trash straight from the queue
+  // row. All reuse the same CAS-safe helpers as EstimateDetail — nothing here
+  // touches inventory.
+  const handleQuickDuplicate = async (e) => {
+    if (trashBusyId || !e?.id || e.deleted === true) return;
+    setTrashBusyId(e.id);
+    setTrashError("");
+    try {
+      const key = `duplicate:${e.id}`;
+      quickKeysRef.current[key] = quickKeysRef.current[key] || newEstimateCreationKey();
+      const created = await duplicateEstimate({
+        source: e,
+        sessionToken: queueSessionToken(),
+        creationKey: quickKeysRef.current[key],
+        keepEstimateNumber: false,
+      });
+      delete quickKeysRef.current[key];
+      navigate(`/EstimateDetail?id=${created.id}`);
+    } catch (err) {
+      setTrashError(err?.message || "The estimate could not be duplicated.");
+    } finally {
+      setTrashBusyId("");
+    }
+  };
+
+  const handleQuickArchive = async (e) => {
+    if (trashBusyId || !e?.id || e.deleted === true) return;
+    if (!isEstimateStatusTransitionAllowed(e.status, "archived", statusMap)) {
+      setTrashError(`This estimate cannot go from ${e.status || "draft"} to archived directly.`);
+      return;
+    }
+    if (!window.confirm(`Archive "${e.project_name || "this estimate"}"? It stays restorable from the Archived queue.`)) return;
+    setTrashBusyId(e.id);
+    setTrashError("");
+    try {
+      const nextFields = {
+        status: "archived",
+        archived_at: new Date().toISOString(),
+        archived_reason: "Archived from estimate queue",
+      };
+      const saved = await replaceEstimateFieldsIfUnchanged({
+        entity: staffEntities.AllInOneEstimate,
+        estimateId: e.id,
+        expectedFields: expectedEstimateFields(e, nextFields),
+        guardFields: { updated_date: e.updated_date },
+        nextFields,
+        label: "Estimate archive",
+      });
+      setEstimates((prev) => prev.map((row) => (row.id === e.id ? saved : row)));
+      // Best-effort lifecycle audit row — same shape the merge path records,
+      // never blocks the archive itself.
+      try {
+        await ensureEstimateLifecycleRevision({
+          idempotencyKey: `queue_archive:${e.id}:${e.updated_date || "unknown"}`,
+          sessionToken: queueSessionToken(),
+          estimateBefore: e,
+          estimateAfter: { ...e, ...(saved || {}), ...nextFields },
+          reason: "Archived from estimate queue",
+          revisionType: "status_transition",
+          quoteTotalBefore: e.quote_total,
+          quoteTotalAfter: e.quote_total,
+          internalCostBefore: e.total_cost,
+          internalCostAfter: e.total_cost,
+        });
+      } catch {}
+    } catch (err) {
+      setTrashError(err?.message || "The estimate could not be archived.");
+    } finally {
+      setTrashBusyId("");
+    }
+  };
+
+  const handleQuickTrash = async (e) => {
+    if (trashBusyId || !e?.id || e.deleted === true) return;
+    if (e.work_order_id) {
+      // Same Work Order guard as EstimateDetail — blocked, but not a dead end.
+      if (window.confirm("This estimate is linked to a Work Order and cannot be moved to Trash. Open the job in Job Workspace?")) {
+        navigate(`/JobWorkspace?wo=${e.work_order_id}`);
+      }
+      return;
+    }
+    setTrashBusyId(e.id);
+    setTrashError("");
+    try {
+      const openRevision = await getOpenEstimateRevision(e.id);
+      if (openRevision?.id) {
+        setTrashError("This estimate has an open revision — save it from Estimate Detail before moving it to Trash.");
+        return;
+      }
+      if (!window.confirm(`Move "${e.project_name || "this estimate"}" to Trash? It will be hidden from all estimate lists until it is restored.`)) return;
+      const saved = await softDeleteEstimateFromLoadedSnapshot({
+        entity: staffEntities.AllInOneEstimate,
+        estimate: e,
+        deletedBy: myEmail || me?.email || "unknown",
+        label: "Estimate trash",
+      });
+      setEstimates((prev) => prev.map((row) => (row.id === e.id ? saved : row)));
+    } catch (err) {
+      setTrashError(err?.message || "The estimate could not be moved to Trash.");
     } finally {
       setTrashBusyId("");
     }
@@ -576,6 +687,37 @@ export default function EstimatorQueues() {
                       {e.created_date ? formatInCompanyTz(e.created_date, companyTz) : ""}
                     </div>
                     </Link>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button type="button"
+                        onClick={() => handleQuickDuplicate(e)}
+                        disabled={!!trashBusyId}
+                        title="Duplicate as a new draft"
+                        aria-label={`Duplicate ${e.project_name || "estimate"}`}
+                        className="w-7 h-7 inline-flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-gray-800 disabled:opacity-40"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                      {e.status !== "archived" && isEstimateStatusTransitionAllowed(e.status, "archived", statusMap) && (
+                        <button type="button"
+                          onClick={() => handleQuickArchive(e)}
+                          disabled={!!trashBusyId}
+                          title="Archive this estimate"
+                          aria-label={`Archive ${e.project_name || "estimate"}`}
+                          className="w-7 h-7 inline-flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-amber-300 hover:text-amber-700 disabled:opacity-40"
+                        >
+                          <Archive className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button type="button"
+                        onClick={() => handleQuickTrash(e)}
+                        disabled={!!trashBusyId}
+                        title={e.work_order_id ? "Linked to a Work Order — open the job" : "Move to Trash"}
+                        aria-label={`Move ${e.project_name || "estimate"} to Trash`}
+                        className="w-7 h-7 inline-flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-red-700 disabled:opacity-40"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
