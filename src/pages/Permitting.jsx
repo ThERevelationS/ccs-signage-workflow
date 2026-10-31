@@ -331,7 +331,7 @@ export default function Permitting() {
     if (updatedStep?.type === 'submitted_date' && updates.value && !item.submitted_date) {
       try {
         const skip = localStorage.getItem("permitting_skip_confirms") === "1";
-        if (!skip && !window.confirm(`Mark this application as filed with ${item.locality_name || "the office"}?`)) return;
+        if (!skip && !window.confirm(`Did you actually send this application to ${item.locality_name || "the office"}?\n\nOK = yes, I sent it. Cancel = not yet.`)) return;
       } catch {}
     }
 
