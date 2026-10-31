@@ -147,7 +147,7 @@ function WorkOrderPicker({ workOrders, estimateId }) {
           >
             <span>
               <span className="font-medium text-sky-700">{wo.corbridge_invoice_number || wo.title || wo.id}</span>
-              {wo.client_name && <span className="ml-2 text-gray-500">{wo.client_name}</span>}
+              {wo.client_name && wo.client_name !== (wo.corbridge_invoice_number || wo.title) && <span className="ml-2 text-gray-500">{wo.client_name}</span>}
             </span>
             <span className="text-xs text-gray-400">{WORKSPACE_STAGES[wo.current_stage] || wo.current_stage || ""}</span>
           </Link>
