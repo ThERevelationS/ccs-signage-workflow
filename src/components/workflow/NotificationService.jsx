@@ -77,6 +77,20 @@ INSTRUCTIONS:
   }
 };
 
+// generateAIEmail bodies are simple HTML (<p>/<br>); sendStaffEmail is a
+// plain-text-only bridge, so collapse the markup rather than send literal tags.
+const htmlEmailToText = (html) => String(html || '')
+  .replace(/<br\s*\/?>/gi, '\n')
+  .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+  .replace(/<[^>]+>/g, '')
+  .replace(/&nbsp;/g, ' ')
+  .replace(/&amp;/g, '&')
+  .replace(/&lt;/g, '<')
+  .replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"')
+  .replace(/&#39;/g, "'")
+  .trim();
+
 // Variable replacements for email templates
 const replaceVariables = (template, workOrder, extraData = {}) => {
   if (!template) return "";
@@ -231,13 +245,28 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
       // Generate AI-enhanced email
       const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
 
+      // EmailGate sessions carry neither platform auth nor a workflow
+      // capability, so a direct sendGmail invoke always 401s for them — route
+      // through the session-authenticated sendStaffEmail bridge instead.
+      // Platform-authed sessions keep the original sendGmail path (HTML body).
+      const ruleSessionToken = getSessionToken();
       for (const email of recipients) {
         try {
-          await base44.functions.invoke('sendGmail', {
-            to: email,
-            subject: subject,
-            body: body
-          });
+          if (ruleSessionToken) {
+            await base44.functions.invoke('sendStaffEmail', {
+              session_token: ruleSessionToken,
+              to: email,
+              subject: subject,
+              body: htmlEmailToText(body),
+              kind: 'notification_rule',
+            });
+          } else {
+            await base44.functions.invoke('sendGmail', {
+              to: email,
+              subject: subject,
+              body: body
+            });
+          }
           console.log(`Notification sent to ${email} for trigger: ${triggerType}`);
         } catch (emailError) {
           console.error(`Failed to send email to ${email}:`, emailError);
