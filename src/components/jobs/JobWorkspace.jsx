@@ -32,6 +32,15 @@ import {
   PAYMENT_STATUS_LABELS,
   WORKSPACE_STAGES,
 } from "./jobWorkspaceModel";
+import {
+  DataTableShell,
+  EmptyState,
+  FilterSearchInput,
+  KpiStrip,
+  PageHeader,
+  RecordLink,
+  StatusChip,
+} from "@/components/kit";
 
 const norm = (v) => String(v || "").trim().toLowerCase();
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -51,36 +60,11 @@ const invokeAction = async (sessionToken, body) => {
   return data;
 };
 
-const badge = (text, tone) => (
-  <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${tone}`}>{text}</span>
-);
-const TONE = {
-  estimate: "bg-sky-100 text-sky-800", wip: "bg-amber-100 text-amber-800",
-  built: "bg-violet-100 text-violet-800", done: "bg-emerald-100 text-emerald-800",
-  blocked: "bg-rose-100 text-rose-800", muted: "bg-gray-100 text-gray-600",
-};
-const statusTone = (s) => {
-  s = norm(s);
-  if (["awaiting_customer_action", "awaiting_proof_approval"].includes(s)) return TONE.blocked;
-  if (["proof_approved", "in_production", "quality_control"].includes(s)) return TONE.wip;
-  if (["permitting", "site_survey", "order_review", "design_review", "in_design"].includes(s)) return TONE.estimate;
-  if (["vended"].includes(s)) return TONE.built;
-  return TONE.muted;
-};
-const STAGE_TONE = {
-  estimating: TONE.muted, sales: TONE.estimate, permitting: TONE.blocked,
-  design: TONE.estimate, production: TONE.wip, fabrication: TONE.wip,
-  installation: TONE.built, completed: TONE.done,
-};
-const PAYMENT_TONE = {
-  uninvoiced: TONE.muted, invoiced_unpaid: TONE.blocked,
-  partial: TONE.wip, paid: TONE.done, overpaid: TONE.built,
-};
+// Status pills come from the shared kit (StatusChip + statusTones) -- one
+// tone vocabulary app-wide. Deposit chips keep their own two-tone map since
+// the depositGate model reports "required" | "invoiced", not a status enum.
 const INVOICE_STATUS_LABELS = {
   draft: "Draft", sent: "Sent", partially_paid: "Partially paid", paid: "Paid", void: "Void",
-};
-const INVOICE_STATUS_TONE = {
-  draft: TONE.muted, sent: TONE.estimate, partially_paid: TONE.wip, paid: TONE.done, void: TONE.blocked,
 };
 const METHOD_LABELS = { cash: "Cash", check: "Check", card: "Card", ach: "ACH", financing: "Financing", other: "Other" };
 const FIELD_LABELS = {
