@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { withEntityRateLimitRetry } from "../../shared/entityRateLimitRetry.ts";
 import { processWorkflowTriggerEvent } from "../../shared/workflowTriggerEngine.ts";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 import {
   createFoundationRecordWithRecovery,
   expectedFoundationFields,
@@ -29,6 +30,19 @@ const num = (value: any, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 const money = (value: number) => Math.round(value * 100) / 100;
+
+// Row-array coercion shared by EVERY action block. It used to be declared
+// inside attention_feed only, so every earlier action that called list()
+// (send_digest, bulk_remarkup, export/import_estimate, copy_bom,
+// copy_sections) threw a ReferenceError the first time it ran.
+const list = (v: any) => (Array.isArray(v) ? v : []);
+
+// Server-side search pushdown (same shape as functions/fleetSearch): escape
+// the user term, then $or it across the searchable fields.
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const regexOr = (fields: string[], term: string) => ({
+  $or: fields.map((field) => ({ [field]: { $regex: escapeRegex(term), $options: "i" } })),
+});
 
 // Module-scope row cache for attention_feed — that action reads 12 tables
 // per call and every signed-in tab polls it on a timer, which was the
@@ -242,15 +256,25 @@ Deno.serve(async (req) => {
       }
       const bundle: Record<string, any[]> = {};
       const errors: Record<string, string> = {};
+      const rowCounts: Record<string, number> = {};
       for (const name of names) {
         try {
-          const rows = await entities[name].filter({});
-          bundle[name] = Array.isArray(rows) ? rows : (rows?.items || []);
+          // Full-table paged read — a default filter({}) silently caps at 50
+          // rows, which made this "full" backup drop data without any error.
+          const rows = await loadAllEntityRows({
+            entity: entities[name],
+            sort: "created_date",
+            maxRows: 250000,
+            label: `Backup read for ${name}`,
+          });
+          bundle[name] = rows;
+          rowCounts[name] = rows.length;
         } catch (e: any) {
           errors[name] = e?.message || 'read failed';
         }
       }
-      return Response.json({ success: true, action, exported_at: new Date().toISOString(), entity_count: names.length, entities: bundle, errors });
+      const totalRows = Object.values(rowCounts).reduce((sum, count) => sum + count, 0);
+      return Response.json({ success: true, action, exported_at: new Date().toISOString(), entity_count: names.length, entities: bundle, errors, row_counts: rowCounts, total_rows: totalRows });
     }
 
     // Email digest (#333): compiles the attention-feed buckets for the
@@ -259,11 +283,14 @@ Deno.serve(async (req) => {
     if (action === "send_digest") {
       const email = clean(user?.email);
       if (!email) throw bad("A signed-in user is required for a digest.", 400);
+      const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
+      // Paged full reads — the digest counts every open/overdue row, so a
+      // capped read under-reports the very counts the email exists to send.
       const [requests, invoices, sentEstimates, opps] = await Promise.all([
-        EstimatingRequest.filter({}, "-created_date", 100).catch(() => []),
-        Invoice.filter({}, "-created_date", 200).catch(() => []),
-        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(() => []),
-        base44.asServiceRole.entities.Opportunity.filter({}, "-created_date", 300).catch(() => []),
+        loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Digest estimating requests" }).catch(() => []),
+        loadAllEntityRows({ entity: Invoice, sort: "-created_date", label: "Digest invoices" }).catch(() => []),
+        loadAllEntityRows({ entity: Estimate, query: { status: "sent" }, sort: "-updated_date", label: "Digest sent estimates" }).catch(() => []),
+        loadAllEntityRows({ entity: Opportunity, sort: "-created_date", label: "Digest opportunities" }).catch(() => []),
       ]);
       const openRequests = list(requests).filter((r) => OPEN_REQUEST_STATUSES.has(clean(r?.status))).length;
       const overdueInv = list(invoices).filter((i) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today).length;
@@ -351,7 +378,14 @@ Deno.serve(async (req) => {
       if (clean(user?.role) !== "admin") throw bad("Only administrators can re-markup estimates.", 403);
       const tier = num(body?.tier_number);
       if (!tier) throw bad("tier_number is required.", 400);
-      const rows = await Estimate.filter({ pricing_tier: tier }, "-updated_date", 500).catch(() => []);
+      // Paged read of every estimate on the tier — the old 500-row cap
+      // silently skipped older estimates that still needed the flag.
+      const rows = await loadAllEntityRows({
+        entity: Estimate,
+        query: { pricing_tier: tier },
+        sort: "-updated_date",
+        label: "Bulk re-markup estimates",
+      }).catch(() => []);
       const openStatuses = new Set(["draft", "calculated", "sent"]);
       let flagged = 0;
       for (const e of list(rows)) {
@@ -370,11 +404,11 @@ Deno.serve(async (req) => {
       const estimate = await Estimate.get(id).catch(() => null);
       if (!estimate?.id) throw bad("Estimate not found.", 404);
       const [products, parts, revisions, acceptances, deliveries] = await Promise.all([
-        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: id }).catch(() => []),
-        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: id }).catch(() => []),
-        base44.asServiceRole.entities.EstimateRevision.filter({ estimate_id: id }).catch(() => []),
-        base44.asServiceRole.entities.EstimateAcceptance.filter({ estimate_id: id }).catch(() => []),
-        base44.asServiceRole.entities.EstimateQuoteDelivery.filter({ estimate_id: id }).catch(() => []),
+        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.EstimateRevision.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.EstimateAcceptance.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.EstimateQuoteDelivery.filter({ estimate_id: id }, "-created_date", 500).catch(() => []),
       ]);
       return Response.json({ success: true, action, bundle: { exported_at: new Date().toISOString(), estimate, products: list(products), parts: list(parts), revisions: list(revisions), acceptances: list(acceptances), deliveries: list(deliveries) } });
     }
@@ -412,8 +446,8 @@ Deno.serve(async (req) => {
       if (!src?.id) throw bad("Source estimate not found.", 404);
       if (!dst?.id) throw bad("Target estimate not found.", 404);
       const [products, parts] = await Promise.all([
-        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: fromId }).catch(() => []),
-        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: fromId }).catch(() => []),
+        base44.asServiceRole.entities.BuilderProduct.filter({ estimate_id: fromId }, "-created_date", 500).catch(() => []),
+        base44.asServiceRole.entities.BuilderPart.filter({ estimate_id: fromId }, "-created_date", 500).catch(() => []),
       ]);
       let copiedProducts = 0, copiedParts = 0;
       for (const p of list(products)) {
@@ -552,7 +586,22 @@ Deno.serve(async (req) => {
       ]);
       if (!afCached && !afFailed) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = feedRows;
-      const list = (v: any) => (Array.isArray(v) ? v : []);
+      // Reads stay recency-capped on purpose (12 tables, polled per tab) — but
+      // the flags below keep the counts honest when a cap is actually hit.
+      const feedTruncated = {
+        unread_portal_messages: list(messages).length >= 200,
+        overdue_invoices: list(invoices).length >= 200,
+        overdue_pos: list(pos).length >= 200,
+        proposed_cos: list(cos).length >= 100,
+        overdue_follow_ups: list(opps).length >= 300,
+        open_estimating_requests: list(requests).length >= 200,
+        low_stock: list(stock).length >= 300,
+        overdue_jobs: list(workOrders).length >= 300,
+        permits: list(permits).length >= 300,
+        sent_estimates: list(sentEstimates).length >= 300,
+        sync_pending_estimates: list(syncPendingRows).length >= 100,
+        needs_recalc_parts: list(needsRecalcRows).length >= 150,
+      };
 
       const unreadMessages = list(messages).map((m: any) => ({
         id: clean(m?.id),
@@ -676,6 +725,7 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true, action, today,
         ...(afFailed ? { partial: true } : {}),
+        truncated: feedTruncated,
         unread_portal_messages: unreadMessages,
         overdue_invoices: overdueInvoices,
         overdue_invoice_total: overdueInvoiceTotal,
@@ -748,11 +798,23 @@ Deno.serve(async (req) => {
     }
 
     if (action === "search_customers") {
-      const query = clean(body?.query).toLowerCase();
-      const rows = await Customer.filter({});
+      const query = clean(body?.query);
+      const needle = query.toLowerCase();
+      const fields = ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email", "company_phone"];
+      const matchesQuery = (row: any) => !needle || fields.some((f) => clean(row?.[f]).toLowerCase().includes(needle));
+      // Server-side $regex pushdown (fleetSearch pattern). If the entity
+      // rejects $or/$regex, fall back to a full paged scan + client match —
+      // the old filter({}) silently searched only the first 50 customers.
+      let rows: any = needle
+        ? await Customer.filter(regexOr(fields, query), "-updated_date", 500).catch(() => null)
+        : null;
+      const regexPushdown = Array.isArray(rows);
+      if (!regexPushdown) {
+        rows = await loadAllEntityRows({ entity: Customer, sort: "-updated_date", label: "Customer search" }).catch(() => null);
+      }
       if (!Array.isArray(rows)) throw bad("Customer lookup failed.", 500);
-      const matches = rows
-        .filter((row: any) => !query || clean(row?.company_name).toLowerCase().includes(query))
+      const matched = rows.filter(matchesQuery);
+      const matches = matched
         .slice(0, 25)
         .map((row: any) => ({
           id: clean(row?.id),
@@ -762,17 +824,24 @@ Deno.serve(async (req) => {
           contact_phone: clean(row?.company_phone),
           customer_status: clean(row?.customer_status),
         }));
-      return Response.json({ success: true, action, customers: matches });
+      return Response.json({
+        success: true, action, customers: matches,
+        total_matched: matched.length,
+        truncated: matched.length > matches.length || (regexPushdown && rows.length >= 500),
+      });
     }
 
     if (action === "list_opportunities") {
       const includeClosed = body?.include_closed === true;
       const limit = Math.max(1, Math.min(200, Number(body?.limit) || 200));
-      const rows = await Opportunity.filter({}, "-last_activity_at", 500);
+      const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
+      // Full paged read — funnel stats and stage counts must cover every
+      // opportunity, not just the first 500 by recency.
+      const rows = await loadAllEntityRows({ entity: Opportunity, sort: "-last_activity_at", label: "Opportunity list" }).catch(() => null);
       if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
-      const visible = rows
-        .filter((row: any) => includeClosed || !CLOSED_STAGES.has(clean(row?.stage)))
-        .slice(0, limit);
+      const matched = rows
+        .filter((row: any) => includeClosed || !CLOSED_STAGES.has(clean(row?.stage)));
+      const visible = matched.slice(0, limit);
       const stageCounts: any = {};
       let openPipelineValue = 0;
       let wonValue = 0;
@@ -820,8 +889,8 @@ Deno.serve(async (req) => {
       // Estimate-status funnel â€” the same shape as the opportunity funnel but
       // keyed on the estimate lifecycle (draft -> calculated -> sent -> approved)
       // so the dashboard can show quote-side conversion separately from pipeline.
-      const estimateRows = await Estimate.filter({}, "-created_date", 500).catch(() => []);
-      const requestRows = await EstimatingRequest.filter({}, "-created_date", 500).catch(() => []);
+      const estimateRows = await loadAllEntityRows({ entity: Estimate, sort: "-created_date", label: "Estimate funnel rows" }).catch(() => []);
+      const requestRows = await loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Estimating request funnel rows" }).catch(() => []);
       const thirtyDaysAgo = Date.now() - 30 * 86400000;
       const staleRequests = (Array.isArray(requestRows) ? requestRows : []).filter((r: any) => {
         const ts = Date.parse(clean(r?.created_date));
@@ -930,26 +999,45 @@ Deno.serve(async (req) => {
         by_salesperson: salespeople,
         lost_reasons: lostReasons,
       };
-      return Response.json({ success: true, action, opportunities: visible, total: visible.length, funnel });
+      return Response.json({
+        success: true, action, opportunities: visible, total: visible.length,
+        matched_total: matched.length, total_loaded: rows.length,
+        truncated: matched.length > visible.length,
+        funnel,
+      });
     }
 
     if (action === "global_search") {
-      const query = clean(body?.query).toLowerCase();
+      const rawQuery = clean(body?.query).slice(0, 100);
+      const query = rawQuery.toLowerCase();
       const empty = { opportunities: [], estimates: [], invoices: [], purchase_orders: [], change_orders: [], customers: [], work_orders: [], orders: [] };
       if (query.length < 2) return Response.json({ success: true, action, results: empty });
+      // Push the match down to the entity store ($or/$regex over the same
+      // fields the client matcher uses). If an entity rejects regex filters,
+      // fall back to a full paged scan + the client-side has() check — never
+      // back to a bare default-limited read.
+      const SEARCH_LIMIT = 500;
+      const searchRead = async (entity: any, fields: string[], sort: string, label: string, hardFail: boolean) => {
+        try {
+          const hit = await entity.filter(regexOr(fields, rawQuery), sort, SEARCH_LIMIT);
+          if (Array.isArray(hit)) return hit;
+        } catch { /* regex/$or unsupported on this entity — scan instead */ }
+        const scanned = await loadAllEntityRows({ entity, sort, label: `${label} search` }).catch(() => null);
+        if (Array.isArray(scanned)) return scanned;
+        const legacy = await entity.filter({}, sort, SEARCH_LIMIT).catch(() => null);
+        if (!Array.isArray(legacy) && hardFail) throw bad(`${label} search failed.`, 500);
+        return legacy || [];
+      };
       const [opps, estimates, invoices, pos, cos, customers, wos, orders] = await Promise.all([
-        Opportunity.filter({}, "-last_activity_at", 500),
-        Estimate.filter({}, "-created_date", 500),
-        Invoice.filter({}),
-        PurchaseOrder.filter({}),
-        ChangeOrder.filter({}),
-        Customer.filter({}, "-updated_date", 500).catch(() => []),
-        WorkOrder.filter({}, "-updated_date", 500).catch(() => []),
-        Order.filter({}, "-updated_date", 500).catch(() => []),
+        searchRead(Opportunity, ["title", "customer_display_name", "salesperson"], "-last_activity_at", "Opportunity", true),
+        searchRead(Estimate, ["project_name", "client_name", "estimate_number"], "-created_date", "Estimate", true),
+        searchRead(Invoice, ["invoice_number", "customer_display_name"], "-updated_date", "Invoice", true),
+        searchRead(PurchaseOrder, ["po_number", "vendor_name"], "-updated_date", "PurchaseOrder", true),
+        searchRead(ChangeOrder, ["change_order_number", "title", "customer_display_name"], "-created_date", "ChangeOrder", true),
+        searchRead(Customer, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"], "-updated_date", "Customer", false),
+        searchRead(WorkOrder, ["title", "client_name", "current_task_description"], "-updated_date", "WorkOrder", false),
+        searchRead(Order, ["description", "vendor", "requestor_name", "request_type"], "-updated_date", "Order", false),
       ]);
-      for (const [label, rows] of [["Opportunity", opps], ["Estimate", estimates], ["Invoice", invoices], ["PurchaseOrder", pos], ["ChangeOrder", cos]] as const) {
-        if (!Array.isArray(rows)) throw bad(`${label} search failed.`, 500);
-      }
       const has = (row: any, fields: string[]) => fields.some((f) => clean(row?.[f]).toLowerCase().includes(query));
       return Response.json({
         success: true,
@@ -978,6 +1066,18 @@ Deno.serve(async (req) => {
             .slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status) })),
         },
+        // A group hitting the scan cap means more matches may exist than the
+        // 10 surfaced — honest signal for the UI's "see all" affordance.
+        truncated: {
+          opportunities: opps.length >= SEARCH_LIMIT,
+          estimates: estimates.length >= SEARCH_LIMIT,
+          invoices: invoices.length >= SEARCH_LIMIT,
+          purchase_orders: pos.length >= SEARCH_LIMIT,
+          change_orders: cos.length >= SEARCH_LIMIT,
+          customers: Array.isArray(customers) && customers.length >= SEARCH_LIMIT,
+          work_orders: Array.isArray(wos) && wos.length >= SEARCH_LIMIT,
+          orders: Array.isArray(orders) && orders.length >= SEARCH_LIMIT,
+        },
       });
     }
 
@@ -995,10 +1095,10 @@ Deno.serve(async (req) => {
         clean(opportunity?.compatibility_work_order_id)
           ? WorkOrder.get(clean(opportunity.compatibility_work_order_id)).catch(() => null)
           : null,
-        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 50),
-        Invoice.filter({ opportunity_id: opportunityId }),
-        PurchaseOrder.filter({ opportunity_id: opportunityId }),
-        ChangeOrder.filter({ opportunity_id: opportunityId }),
+        Estimate.filter({ opportunity_id: opportunityId }, "-created_date", 500),
+        Invoice.filter({ opportunity_id: opportunityId }, "-created_date", 500),
+        PurchaseOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500),
+        ChangeOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500),
         Activity.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
       ]);
       const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
@@ -1071,7 +1171,9 @@ Deno.serve(async (req) => {
 
     if (action === "list_estimating_requests") {
       const includeClosed = body?.include_closed === true;
-      let rows = await EstimatingRequest.filter({});
+      // Paged full read — the queue must reconcile and rank every request,
+      // not just the first 50.
+      let rows = await loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Estimating request list" }).catch(() => null);
       if (!Array.isArray(rows)) throw bad("Estimating request lookup failed.", 500);
       // Close out open requests whose linked estimate has gone to the customer.
       let reconciles = 0;
@@ -1114,11 +1216,17 @@ Deno.serve(async (req) => {
             updated_date: clean(r?.updated_date),
           };
         });
-      return Response.json({ success: true, action, estimating_requests: requests });
+      return Response.json({
+        success: true, action, estimating_requests: requests,
+        total: requests.length, matched_total: filtered.length,
+        truncated: filtered.length > requests.length,
+      });
     }
 
     if (action === "list_follow_ups") {
-      const rows = await Opportunity.filter({});
+      // Paged full read — every open opportunity with a next action belongs
+      // on the follow-up board, not just the first 50.
+      const rows = await loadAllEntityRows({ entity: Opportunity, sort: "-last_activity_at", label: "Follow-up opportunities" }).catch(() => null);
       if (!Array.isArray(rows)) throw bad("Opportunity lookup failed.", 500);
       const today = clean(body?.today) || new Date().toISOString().slice(0, 10);
       const items = rows
@@ -1145,7 +1253,7 @@ Deno.serve(async (req) => {
 
       // Stale sent quotes on quoted-stage opportunities become implicit follow-ups:
       // aging after 7 days without a response, "expired" past quote_valid_days.
-      const requests = await EstimatingRequest.filter({}).catch(() => []);
+      const requests = await loadAllEntityRows({ entity: EstimatingRequest, sort: "-created_date", label: "Follow-up estimating requests" }).catch(() => []);
       const estimateIdByOpp = new Map();
       for (const r of Array.isArray(requests) ? requests : []) {
         const oppId = clean(r?.opportunity_id);
@@ -1186,7 +1294,11 @@ Deno.serve(async (req) => {
       items.sort((a: any, b: any) =>
         Number(b.overdue) - Number(a.overdue)
         || (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
-      return Response.json({ success: true, action, follow_ups: items.slice(0, 200), today });
+      return Response.json({
+        success: true, action, follow_ups: items.slice(0, 200), today,
+        total: Math.min(items.length, 200), matched_total: items.length,
+        truncated: items.length > 200,
+      });
     }
 
     if (action === "assign_estimator") {
@@ -1731,14 +1843,16 @@ Deno.serve(async (req) => {
       const customerId = clean(body?.customer_id);
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
+      // Scoped paged reads — default-limited filters silently dropped rows
+      // past the first 50, which corrupted the summary totals and AR aging.
       const [contacts, locations, opportunities, invoices, workOrders, payments, estimates] = await Promise.all([
-        CustomerContact.filter({ customer_id: customerId }).catch(() => []),
-        CustomerLocation.filter({ customer_id: customerId }).catch(() => []),
-        Opportunity.filter({ customer_id: customerId }).catch(() => []),
-        Invoice.filter({ customer_id: customerId }).catch(() => []),
-        WorkOrder.filter({ customer_id: customerId }).catch(() => []),
-        Payment.filter({ customer_id: customerId }).catch(() => []),
-        Estimate.filter({ customer_id: customerId }).catch(() => []),
+        loadAllEntityRows({ entity: CustomerContact, query: { customer_id: customerId }, sort: "-created_date", label: "Customer contacts" }).catch(() => []),
+        loadAllEntityRows({ entity: CustomerLocation, query: { customer_id: customerId }, sort: "-created_date", label: "Customer locations" }).catch(() => []),
+        loadAllEntityRows({ entity: Opportunity, query: { customer_id: customerId }, sort: "-created_date", label: "Customer opportunities" }).catch(() => []),
+        loadAllEntityRows({ entity: Invoice, query: { customer_id: customerId }, sort: "-created_date", label: "Customer invoices" }).catch(() => []),
+        loadAllEntityRows({ entity: WorkOrder, query: { customer_id: customerId }, sort: "-created_date", label: "Customer work orders" }).catch(() => []),
+        loadAllEntityRows({ entity: Payment, query: { customer_id: customerId }, sort: "-created_date", label: "Customer payments" }).catch(() => []),
+        loadAllEntityRows({ entity: Estimate, query: { customer_id: customerId }, sort: "-created_date", label: "Customer estimates" }).catch(() => []),
       ]);
       const custEstimates = (Array.isArray(estimates) ? estimates : []).filter((e: any) => e?.deleted !== true)
         .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
@@ -1765,11 +1879,16 @@ Deno.serve(async (req) => {
         else aging.d90_plus += balance;
       }
       for (const key of Object.keys(aging)) (aging as any)[key] = money((aging as any)[key]);
+      const custPayments = (Array.isArray(payments) ? payments : [])
+        .filter((p: any) => clean(p?.status) !== "void")
+        .sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date)));
+      const custContacts = Array.isArray(contacts) ? contacts : [];
+      const custLocations = Array.isArray(locations) ? locations : [];
       return Response.json({
         success: true, action,
         customer,
-        contacts: Array.isArray(contacts) ? contacts : [],
-        locations: Array.isArray(locations) ? locations : [],
+        contacts: custContacts,
+        locations: custLocations,
         opportunities: opps.slice(0, 50).map((o: any) => ({
           id: clean(o?.id), title: clean(o?.title), stage: clean(o?.stage),
           budget_amount: num(o?.budget_amount), salesperson: clean(o?.salesperson),
@@ -1799,15 +1918,31 @@ Deno.serve(async (req) => {
               ? Math.max(0, Math.floor((Date.parse(asOf) - Date.parse(clean(i.due_date))) / 86400000))
               : 0,
           })),
-        payments: (Array.isArray(payments) ? payments : [])
-          .filter((p: any) => clean(p?.status) !== "void")
-          .sort((a: any, b: any) => clean(b?.paid_date || b?.created_date).localeCompare(clean(a?.paid_date || a?.created_date)))
+        payments: custPayments
           .slice(0, 100)
           .map((p: any) => ({
             id: clean(p?.id), invoice_id: clean(p?.invoice_id), status: clean(p?.status),
             paid_date: clean(p?.paid_date || p?.created_date).slice(0, 10),
             amount: num(p?.amount), method: clean(p?.method), reference_number: clean(p?.reference_number),
           })),
+        // Honest coverage: lists above stay display-capped; these report
+        // how much was actually loaded vs. returned.
+        totals: {
+          contacts: custContacts.length,
+          locations: custLocations.length,
+          opportunities: opps.length,
+          jobs: jobs.length,
+          estimates: custEstimates.length,
+          invoices: inv.length,
+          payments: custPayments.length,
+        },
+        truncated: {
+          opportunities: opps.length > 50,
+          jobs: jobs.length > 50,
+          estimates: custEstimates.length > 50,
+          invoices: inv.length > 50,
+          payments: custPayments.length > 100,
+        },
         summary: {
           open_opportunities: opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).length,
           open_pipeline_value: money(opps.filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage))).reduce((s: number, o: any) => s + num(o?.budget_amount), 0)),
