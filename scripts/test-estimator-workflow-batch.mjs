@@ -16,6 +16,8 @@ globalThis.__estimatorBatchInvoke = async (name, payload) => {
 const stubs = {
   '@/api/base44Client': 'export const base44 = { entities: {}, functions: { invoke: (...args) => globalThis.__estimatorBatchInvoke(...args) } };',
   '@/functions/sendGmail': 'export const sendGmail = () => { throw new Error("No real email in unit tests"); };',
+  '@/functions/generateDocNumber': 'export const generateDocNumber = async () => ({ data: { number: "EST-T-1" } });',
+  '@/components/staff/staffEntities': 'export const staffEntities = new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) });',
   '@/components/estimator/moduleRegistry': 'export const ESTIMATOR_MODULES = []; export const getModuleLabel = () => "Custom";',
   '@/components/estimator/customerPricing': 'export const acceptedCustomerUnitPrice = () => 10;',
   '@/components/estimator/aioPricing': 'export const money = (value) => String(value);',
