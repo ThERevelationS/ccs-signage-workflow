@@ -15,6 +15,8 @@ export const LegacyMigrationMap = {};
 `);
 const out = resolve(here, '.tmp-legacy-migrator.mjs');
 buildSync({ entryPoints: [resolve(here, '../src/components/masterInventory/legacyInventoryMigrator.jsx')], bundle: true, format: 'esm', outfile: out, logLevel: 'silent', define: { 'import.meta.env': '{}' }, alias: { '@/entities/all': stub } });
+globalThis.window = { addEventListener: () => {}, removeEventListener: () => {}, localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, location: { href: "http://t/", search: "", pathname: "/", hash: "", origin: "http://t" }, history: { replaceState: () => {} } };
+globalThis.document = { title: "" };
 const { classifyLegacyRow, previewLegacyMigration } = await import(pathToFileURL(out).href);
 
 // labor_service: permit/labor/freight signals.

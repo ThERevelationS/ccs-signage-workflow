@@ -9,7 +9,7 @@ const bundle = (name, dir = 'masterInventory') => {
   buildSync({ entryPoints: [resolve(here, `../src/components/${dir}/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent', define: { 'import.meta.env': '{}' }, });
   return pathToFileURL(out).href;
 };
-globalThis.window = { localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, location: { href: "http://t/", search: "", pathname: "/", hash: "", origin: "http://t" }, history: { replaceState: () => {} } };
+globalThis.window = { addEventListener: () => {}, removeEventListener: () => {}, localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, location: { href: "http://t/", search: "", pathname: "/", hash: "", origin: "http://t" }, history: { replaceState: () => {} } };
 globalThis.document = { title: "" };
 const { sameImportedValue, importedPayloadMatches, createImportedInventoryRowSafely } =
   await import(bundle('inventoryImportPersistence'));
