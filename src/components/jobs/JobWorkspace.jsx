@@ -116,8 +116,8 @@ function WorkOrderPicker({ workOrders, estimateId }) {
         {estimateId ? "Work Orders for this Estimate" : "Open a Job Workspace"}
       </h2>
       {!estimateId && (
-        <input
-          className="mb-2 w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm"
+        <FilterSearchInput
+          containerClassName="mb-2"
           placeholder="Search by order #, title, or customer…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -138,9 +138,7 @@ function WorkOrderPicker({ workOrders, estimateId }) {
           </Link>
         ))}
         {!candidates.length && (
-          <div className="px-3 py-6 text-center text-sm text-gray-400">
-            {estimateId ? "No work order is linked to this estimate." : "No work orders match."}
-          </div>
+          <EmptyState compact title={estimateId ? "No work order is linked to this estimate." : "No work orders match."} />
         )}
       </div>
       {estimateId && (
@@ -344,10 +342,13 @@ export default function JobWorkspace() {
   }
   if (isFetched && !wo) {
     return (
-      <div className="mx-auto max-w-2xl p-6 text-center">
-        <h2 className="mb-1 text-lg font-semibold">Work order not found</h2>
-        <p className="text-sm text-gray-500">No work order matches "{woParam || estimateParam}".</p>
-        <Link className="mt-2 inline-block text-sm text-sky-700 hover:underline" to="/JobWorkspace">Browse work orders</Link>
+      <div className="mx-auto max-w-2xl p-6">
+        <EmptyState
+          title="Work order not found"
+          message={`No work order matches "${woParam || estimateParam}".`}
+          actionLabel="Browse work orders"
+          actionTo="/JobWorkspace"
+        />
       </div>
     );
   }
