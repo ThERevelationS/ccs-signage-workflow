@@ -50,7 +50,7 @@ const DOC_TYPE_LABELS = {
   other: "Other"
 };
 
-export default function JurisdictionDetailPanel({ jurisdiction, permitLines = [], duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
+export default function JurisdictionDetailPanel({ jurisdiction, permitLines = [], onOpenJob, duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
   const { currentUser } = useAuth();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
@@ -642,7 +642,11 @@ Answer only from the provided excerpts and cite the document title and official 
                     const status = li.permit_received_date ? "Permit issued" : li.denial_date ? "Denied" : li.submitted_date ? "Submitted" : "Not submitted yet";
                     return (
                       <li key={li.id} className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate">{li.work_order_title || "Unnamed job"}</span>
+                        {onOpenJob ? (
+                          <button type="button" onClick={() => onOpenJob(li.work_order_title || "")} className="min-w-0 truncate font-medium text-indigo-800 underline decoration-dotted hover:text-indigo-950" title="Open this job in the tracker">{li.work_order_title || "Unnamed job"}</button>
+                        ) : (
+                          <span className="min-w-0 truncate">{li.work_order_title || "Unnamed job"}</span>
+                        )}
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status === "Permit issued" ? "bg-green-100 text-green-800" : status === "Denied" ? "bg-red-100 text-red-800" : status === "Submitted" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>{status}</span>
                       </li>
                     );
@@ -755,7 +759,7 @@ Answer only from the provided excerpts and cite the document title and official 
                     disabled={trust.verificationBlocked}
                     onClick={() => { setVerificationError(""); setVerificationNote(jurisdiction.verification_notes || ""); setVerificationTarget("verified"); }}
                     className="min-h-11 w-full justify-center border-green-300 px-3 text-xs text-green-800 hover:bg-green-50 sm:w-auto"
-                    title={trust.verificationBlocked ? "Resolve duplicate, placeholder, or unusable-source issues first" : "Confirm staff verification against official/current sources"}
+                    title={trust.verificationBlocked ? "Fix the duplicate or bad-source issues first" : "Mark this checked — you looked at the office's real page"}
                   >
                     Mark Verified
                   </Button>
@@ -1528,7 +1532,7 @@ Answer only from the provided excerpts and cite the document title and official 
       {/* Chat Interface */}
       <div className="border-t p-3 bg-cyan-50 border-l-4 border-l-cyan-400">
         <p className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1">
-          <MessageSquare className="w-3 h-3" /> Ask AI about this jurisdiction
+          <MessageSquare className="w-3 h-3" /> Ask AI about this office
         </p>
         {(chatHistory.length > 0 || asking) && (
           <div
