@@ -75,7 +75,7 @@ import {
   saveCollapsedGroups,
   saveNavOrder,
 } from "@/components/layout/navPreferences";
-import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
+import { useWorkspacePreferences, WorkspacePreferencesProvider } from "@/components/layout/WorkspacePreferencesProvider";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -1800,7 +1800,9 @@ function LayoutContentWrapper({ children, currentPageName }) {
 export default function Layout({ children, currentPageName }) {
   return (
     <AuthProvider>
-      <LayoutContentWrapper currentPageName={currentPageName}>{children}</LayoutContentWrapper>
+      <WorkspacePreferencesProvider>
+        <LayoutContentWrapper currentPageName={currentPageName}>{children}</LayoutContentWrapper>
+      </WorkspacePreferencesProvider>
     </AuthProvider>
   );
 }
