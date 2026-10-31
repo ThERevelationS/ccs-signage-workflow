@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { buildStatement } from "@/components/statements/statementModel";
+import StatementView from "@/components/statements/StatementView";
 import {
   Receipt,
   ShieldCheck,
@@ -184,6 +186,10 @@ function QuoteCard({ quote, onRespond, busy }) {
   const [open, setOpen] = useState(false);
   const respondable = quote.can_respond;
   const sections = Array.isArray(quote.sections) ? quote.sections : [];
+  // Proof-approval / payment terms render only when the estimate payload
+  // carries a terms field (optional-chained — absent keys stay hidden).
+  const quoteTerms = [quote?.proof_approval_terms, quote?.terms, quote?.payment_terms, quote?.quote_terms_conditions]
+    .find((v) => typeof v === "string" && v.trim()) || "";
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -297,6 +303,11 @@ function QuoteCard({ quote, onRespond, busy }) {
       {quote.status === "approved" && (
         <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-emerald-700"><CheckCircle2 className="h-4 w-4" />Approved — thank you. We'll take it from here.</p>
       )}
+      {quoteTerms && (
+        <p className="mt-3 whitespace-pre-line text-[11px] text-slate-500">
+          <span className="font-semibold text-slate-600">Terms:</span> {quoteTerms}
+        </p>
+      )}
     </div>
   );
 }
@@ -309,6 +320,16 @@ function JobCard({ job, onRequestChange, busy }) {
   const [changing, setChanging] = useState(false);
   const [note, setNote] = useState("");
   const active = !["completed", "cancelled"].includes(job.status);
+  // Deposit + terms surface only when the portal payload carries them — the
+  // concurrent WO deposit fields (deposit_required/deposit_amount) and any
+  // proof-approval terms flow through automatically once jobPortalView
+  // returns them; until then these stay undefined and nothing renders.
+  const depositAmount = Number(job?.deposit_amount) || Number(job?.deposit_total) || 0;
+  const depositPercent = Number(job?.deposit_percent) || 0;
+  const depositPaid = Number(job?.deposit_paid) || Number(job?.deposit_amount_paid) || 0;
+  const depositDue = job?.deposit_required === true || depositAmount > 0 || depositPercent > 0;
+  const jobTerms = [job?.proof_approval_terms, job?.terms, job?.terms_and_conditions]
+    .find((v) => typeof v === "string" && v.trim()) || "";
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -332,6 +353,17 @@ function JobCard({ job, onRequestChange, busy }) {
         {job.install_location && <span>Site: <span className="font-medium text-slate-700">{job.install_location}</span></span>}
         {progress && <span>Tasks: <span className="font-medium text-slate-700">{progress.completed}/{progress.total}</span></span>}
       </div>
+      {depositDue && (
+        <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-800">
+          Deposit required{depositAmount > 0 ? `: ${money(depositAmount)}` : depositPercent > 0 ? `: ${depositPercent}%` : ""}
+          {depositPaid > 0 ? ` · ${money(depositPaid)} received` : ""}
+        </div>
+      )}
+      {jobTerms && (
+        <p className="mt-2 whitespace-pre-line text-[11px] text-slate-500">
+          <span className="font-semibold text-slate-600">Terms:</span> {jobTerms}
+        </p>
+      )}
       {active && onRequestChange && !changing && (
         <button type="button" onClick={() => setChanging(true)} disabled={busy}
           className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
@@ -498,6 +530,7 @@ export default function CustomerPortal() {
   const [tab, setTab] = useState("overview");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
+  const [statement, setStatement] = useState(null);
   const [dismissed, setDismissed] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem(ANNOUNCEMENT_DISMISS_KEY) || "[]")); }
     catch { return new Set(); }
@@ -535,6 +568,10 @@ export default function CustomerPortal() {
   const invoices = data?.invoices || [];
   const messages = data?.messages || [];
   const openBalance = invoices.reduce((sum, i) => sum + (Number(i.balance_due) || 0), 0);
+  const openInvoices = invoices
+    .filter((i) => Number(i.balance_due) > 0)
+    .slice()
+    .sort((a, b) => String(a.issue_date || "").localeCompare(String(b.issue_date || "")));
   const awaiting = estimates.filter((e) => e.can_respond);
   const activeJobs = jobs.filter((j) => !["completed", "cancelled"].includes(j.status));
   const unreadFromStaff = data?.unread_for_customer || 0;
@@ -547,6 +584,27 @@ export default function CustomerPortal() {
       try { localStorage.setItem(ANNOUNCEMENT_DISMISS_KEY, JSON.stringify([...next])); } catch { /* storage unavailable */ }
       return next;
     });
+  };
+
+  // Statement of account: the portal bootstrap already carries invoices +
+  // payments_by_invoice, so the statement builds inline via the shared pure
+  // model — the staff invoicingAction statement path needs a session token
+  // a portal link cannot supply.
+  const openStatement = () => {
+    const payments = Object.entries(data?.payments_by_invoice || {}).flatMap(([invoiceId, rows]) =>
+      (Array.isArray(rows) ? rows : []).map((p) => ({
+        invoice_id: invoiceId,
+        paid_date: String(p?.paid_at ?? "").slice(0, 10),
+        amount: Number(p?.amount) || 0,
+        method: p?.method || "other",
+        status: "recorded",
+      })));
+    setStatement(buildStatement({
+      customer: { company_name: data?.customer?.name, terms: data?.customer?.terms },
+      invoices,
+      payments,
+      asOfDate: todayStamp(),
+    }));
   };
 
   const respond = async (quote, decision, note, section) => {
@@ -844,6 +902,58 @@ export default function CustomerPortal() {
 
             {tab === "invoices" && (
               <div className="space-y-4">
+                {/* Statements: open invoices + running balance. The printable
+                    sheet reuses the staff StatementView overlay (Print + CSV)
+                    built from portal bootstrap data — no staff session needed. */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Statements</h3>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {openInvoices.length} open invoice{openInvoices.length === 1 ? "" : "s"} · open balance{" "}
+                        <span className="font-semibold text-slate-800">{money(openBalance)}</span>
+                      </p>
+                    </div>
+                    <button type="button" onClick={openStatement}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+                      <FileText className="h-4 w-4" />Download statement
+                    </button>
+                  </div>
+                  {openInvoices.length > 0 && (
+                    <div className="mt-3 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wide text-slate-400">
+                            <th className="pb-1.5 pr-3">Issued</th>
+                            <th className="pb-1.5 pr-3">Invoice</th>
+                            <th className="pb-1.5 pr-3">Due</th>
+                            <th className="pb-1.5 pr-3 text-right">Total</th>
+                            <th className="pb-1.5 pr-3 text-right">Open</th>
+                            <th className="pb-1.5 text-right">Running</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            let running = 0;
+                            return openInvoices.map((i) => {
+                              running += Number(i.balance_due) || 0;
+                              return (
+                                <tr key={i.id} className="border-b border-slate-50 last:border-0">
+                                  <td className="py-1.5 pr-3 text-slate-500">{i.issue_date || "—"}</td>
+                                  <td className="py-1.5 pr-3 font-medium text-slate-800">{i.invoice_number || "Invoice"}</td>
+                                  <td className="py-1.5 pr-3 text-slate-500">{i.due_date || "—"}</td>
+                                  <td className="py-1.5 pr-3 text-right text-slate-600">{money(i.total)}</td>
+                                  <td className="py-1.5 pr-3 text-right font-medium text-red-700">{money(i.balance_due)}</td>
+                                  <td className="py-1.5 text-right font-semibold text-slate-900">{money(running)}</td>
+                                </tr>
+                              );
+                            });
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
                 {invoices.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No invoices on your account yet.</div>
                 )}
@@ -855,6 +965,14 @@ export default function CustomerPortal() {
 
             {tab === "messages" && (
               <Thread messages={messages} onSend={sendMessage} busy={busy} customerName={data?.customer?.name} />
+            )}
+
+            {statement && (
+              <StatementView
+                statements={[statement]}
+                company={{ company_name: data?.company?.name, company_logo_url: data?.company?.logo_url }}
+                onClose={() => setStatement(null)}
+              />
             )}
 
             <div className="flex items-center justify-between text-xs text-slate-400">
