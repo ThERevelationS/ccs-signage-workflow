@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ClipboardPaste, Clock, Eye, FileMinus, LockKeyhole, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, ClipboardPaste, Clock, Eye, FileMinus, LockKeyhole, PencilLine, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
@@ -147,6 +147,7 @@ export default function EstimateDetail() {
   const [clipboardOpen, setClipboardOpen] = useState(false);
   const [reconciliationWarnings, setReconciliationWarnings] = useState([]);
   const [trashing, setTrashing] = useState(false);
+  const [editStarting, setEditStarting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [duplicateChoiceOpen, setDuplicateChoiceOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
@@ -176,7 +177,11 @@ export default function EstimateDetail() {
       return;
     }
     if (estimate.work_order_id) {
-      window.alert("This estimate is linked to a Work Order. Close or manage the job from the workflow before trashing the source estimate.");
+      // Keep blocking trash while a Work Order is linked — but no dead end:
+      // the message now offers a direct link into the job.
+      if (window.confirm("This estimate is linked to a Work Order and cannot be moved to Trash. Open the job in Job Workspace?")) {
+        navigate(`/JobWorkspace?wo=${estimate.work_order_id}`);
+      }
       return;
     }
     if (!window.confirm("Move this estimate to Trash? It will be hidden from all estimate lists until it is restored.")) return;
@@ -444,6 +449,10 @@ export default function EstimateDetail() {
   const lines = estimate.line_items || [];
   const persistedStatus = persistedEstimate?.status || estimate.status || "draft";
   const readOnly = isEstimateProtected(persistedStatus) && !openRevision;
+  // Estimates are documents, not live inventory — a protected estimate can be
+  // reopened for editing as a recorded revision in one click. Cancelled stays
+  // terminal (see EstimateRevisionPanel "permanently locked").
+  const canEditWithRevision = readOnly && persistedStatus !== "cancelled";
 
   // Stale-quote guardrail: quote validity only applies once the estimate is
   // sent and both the issue date and validity window exist.
@@ -726,8 +735,35 @@ export default function EstimateDetail() {
     setRevisionRefreshKey((value) => value + 1);
   };
 
+  // One-click Edit on a protected estimate: reuses the existing revision
+  // machinery (handleStartRevision → startEstimateRevision → ensureOpenEstimateRevision)
+  // so the whole before-snapshot lands in audit history. If a revision is
+  // already open — e.g. another session started one after this page loaded —
+  // Edit jumps to it instead of creating a second open revision.
+  const handleEditProtected = async () => {
+    if (!estimate?.id || editStarting || openRevision) return;
+    setEditStarting(true);
+    try {
+      const existing = await getOpenEstimateRevision(estimate.id);
+      if (existing?.id) {
+        setOpenRevision(existing);
+        setRevisionRefreshKey((value) => value + 1);
+        return;
+      }
+      await handleStartRevision(`Edit — reopened ${persistedStatus} estimate for editing`);
+    } catch (error) {
+      window.alert(error?.message || "An edit revision could not be started for this estimate.");
+    } finally {
+      setEditStarting(false);
+    }
+  };
+
   const handleSave = async () => {
     if (readOnly) {
+      if (canEditWithRevision) {
+        await handleEditProtected();
+        return;
+      }
       setStep(3);
       window.alert("This estimate is protected. Open Finalize Estimate and start a revision before making changes.");
       return;
@@ -1400,6 +1436,8 @@ export default function EstimateDetail() {
         onSave={handleSave}
         saving={saving}
         readOnly={readOnly}
+        onEdit={canEditWithRevision ? handleEditProtected : null}
+        editStarting={editStarting}
         onDuplicate={handleDuplicate}
         duplicating={duplicating}
         onMerge={() => setMergeOpen(true)}
@@ -1535,6 +1573,8 @@ export default function EstimateDetail() {
           onSaveProgress={handleSave}
           saving={saving}
           readOnly={readOnly}
+          onEdit={canEditWithRevision ? handleEditProtected : null}
+          editStarting={editStarting}
         />
 
         <div className="flex-1 min-w-0 space-y-3">
@@ -1552,8 +1592,12 @@ export default function EstimateDetail() {
 
           {readOnly && (
             <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-[11px] text-amber-800"><LockKeyhole className="w-4 h-4" /><span><strong>Protected {persistedStatus} estimate.</strong> Viewing is available, but editing requires a recorded revision.</span></div>
-              <button type="button" onClick={() => setStep(3)} className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100">Open Finalize / Revise</button>
+              <div className="flex items-center gap-2 text-[11px] text-amber-800"><LockKeyhole className="w-4 h-4" /><span><strong>Protected {persistedStatus} estimate.</strong> {canEditWithRevision ? "Click Edit to open a recorded revision and make changes." : "Viewing is available; a cancelled estimate stays permanently locked."}</span></div>
+              {canEditWithRevision ? (
+                <button type="button" onClick={handleEditProtected} disabled={editStarting} className="h-[28px] px-3 inline-flex items-center gap-1 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"><PencilLine className="w-3 h-3" /> {editStarting ? "Opening…" : "Edit"}</button>
+              ) : (
+                <button type="button" onClick={() => setStep(3)} className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100">Open Finalize / History</button>
+              )}
             </div>
           )}
 
@@ -1646,7 +1690,7 @@ export default function EstimateDetail() {
                   <span className="text-sm font-medium text-gray-800">{openRevision ? "Save Revision Before Cancelling" : "Cancel Estimate"}</span>
                 </button>
               )}
-              {estimate.status !== "cancelled" && !estimate.work_order_id && (
+              {!estimate.work_order_id && (
                 <button type="button"
                   onClick={handleMoveToTrash}
                   disabled={!!openRevision || trashing}
