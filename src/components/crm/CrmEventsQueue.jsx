@@ -280,6 +280,9 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
                   <td className="px-2 py-1.5">
                     <div className="font-medium text-gray-800">{eventName(r)}</div>
                     <div className="text-[10px] text-gray-500">{r.event_type}</div>
+                    {r.opportunity_id && (
+                      <Link className="text-[10px] text-sky-700 hover:underline" to={`/Opportunities?open=${r.opportunity_id}`}>Linked opportunity</Link>
+                    )}
                     {r.notes && <div className="mt-0.5 max-w-[260px] truncate text-[10px] italic text-gray-500" title={r.notes}>{r.notes}</div>}
                   </td>
                   <td className="px-2 py-1.5 text-gray-500">{r.assigned_to || "—"}</td>
