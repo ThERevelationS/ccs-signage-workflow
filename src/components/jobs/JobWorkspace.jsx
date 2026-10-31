@@ -524,21 +524,17 @@ export default function JobWorkspace() {
       <div className="rounded border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-semibold">Financials</h2>
-          {badge(PAYMENT_STATUS_LABELS[summary.paymentStatus] || summary.paymentStatus, PAYMENT_TONE[summary.paymentStatus] || TONE.muted)}
+          <StatusChip status={summary.paymentStatus} label={PAYMENT_STATUS_LABELS[summary.paymentStatus] || summary.paymentStatus} />
         </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          {[
-            ["Quoted", summary.quotedTotal],
-            ["Invoiced", summary.invoicedTotal],
-            ["Paid", summary.paidTotal],
-            ["Balance Due", summary.balanceDue],
-          ].map(([label, val], i) => (
-            <div key={label} className="rounded border border-gray-100 bg-gray-50 p-2">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</div>
-              <div className={`mt-0.5 text-base font-bold ${i === 3 && val > 0 ? "text-rose-700" : "text-gray-900"}`}>{usd(val)}</div>
-            </div>
-          ))}
-        </div>
+        <KpiStrip
+          className="mb-0 md:grid-cols-4 lg:grid-cols-4"
+          tiles={[
+            { label: "Quoted", value: usd(summary.quotedTotal) },
+            { label: "Invoiced", value: usd(summary.invoicedTotal) },
+            { label: "Paid", value: usd(summary.paidTotal) },
+            { label: "Balance Due", value: usd(summary.balanceDue), tone: summary.balanceDue > 0 ? "red" : undefined },
+          ]}
+        />
 
         {/* Deposit requirement + invoiced flag. Both flags write through the
             CAS field path; the coverage hint only ever suggests marking. */}
@@ -570,7 +566,7 @@ export default function JobWorkspace() {
             )}
             {wo.deposit_required === true && wo.deposit_invoiced === true && (
               <>
-                <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">Deposit invoiced</span>
+                <StatusChip tone="emerald" label="Deposit invoiced" size="sm" />
                 <button type="button" disabled={depositBusy} onClick={() => setDepositInvoiced(false)}
                   className="text-gray-500 underline hover:text-gray-700 disabled:opacity-50">
                   Unmark
@@ -605,7 +601,7 @@ export default function JobWorkspace() {
                 <li key={inv.id} className="flex items-center justify-between px-2 py-1.5 text-xs">
                   <span className="font-medium text-gray-800">{inv.invoice_number || inv.id}</span>
                   <span className="flex items-center gap-2">
-                    {badge(INVOICE_STATUS_LABELS[inv.status] || inv.status || "—", INVOICE_STATUS_TONE[inv.status] || TONE.muted)}
+                    <StatusChip status={inv.status} label={INVOICE_STATUS_LABELS[inv.status] || inv.status || "—"} />
                     <span className="w-20 text-right font-medium">{usd(inv.total)}</span>
                     <span className="w-16 text-right text-gray-400">{fmtDate(inv.due_date)}</span>
                   </span>
@@ -626,7 +622,7 @@ export default function JobWorkspace() {
                   <span className="text-gray-700">{fmtDate(pay.paid_date || pay.created_date) || "—"}</span>
                   <span className="flex items-center gap-2">
                     <span className="text-gray-500">{METHOD_LABELS[pay.method] || pay.method || "—"}</span>
-                    {["void", "refunded"].includes(norm(pay.status)) && badge(pay.status, TONE.blocked)}
+                    {["void", "refunded"].includes(norm(pay.status)) && <StatusChip status={pay.status} tone="red" />}
                     <span className="w-20 text-right font-medium">{usd(pay.amount)}</span>
                   </span>
                 </li>
