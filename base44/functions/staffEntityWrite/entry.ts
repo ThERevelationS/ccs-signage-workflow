@@ -21,6 +21,8 @@ const WRITE_OPS: Record<string, Set<string>> = {
   JurisdictionProfile: new Set(['create', 'update']),
   LaborLevel: new Set(['create', 'updateMany']),
   MachineRate: new Set(['create', 'updateMany']),
+  LaborLevel: new Set(['create', 'updateMany']),
+  MachineRate: new Set(['create', 'updateMany']),
   PermitLocality: new Set(['create', 'update']),
   LegacyMigrationMap: new Set(['create']),
   // CRM event queue rows live on OpportunityActivity: staff create typed
@@ -30,7 +32,9 @@ const WRITE_OPS: Record<string, Set<string>> = {
   PermitLineItem: new Set(['create', 'update', 'updateMany', 'delete']),
   PermittingWorkflowDraft: new Set(['create', 'update']),
   PricingTierMatrix: new Set(['create', 'updateMany']),
+  PricingTierMatrix: new Set(['create', 'updateMany']),
   RegulationAlert: new Set(['update', 'delete']),
+  SavedQueueView: new Set(['create', 'updateMany', 'delete']),
   SavedQueueView: new Set(['create', 'updateMany', 'delete']),
   SipChecklistTemplate: new Set(['create', 'update', 'delete']),
   WorkOrder: new Set(['create', 'updateMany']),
