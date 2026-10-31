@@ -7988,6 +7988,12 @@ Deno.serve(async (req) => {
     if (action === 'register_device') {
       // Idempotent kiosk heartbeat - the kiosk registers on load and on every
       // punch so the admin sees it in the device list with a last_seen stamp.
+      // Only admins may write the device registry; a heartbeat never changes
+      // lifecycle status, so retired/offline devices stay that way until an
+      // admin changes them via update_device.
+      if (actor.role !== 'admin' || String(actor.id || '').startsWith('badge:')) {
+        return Response.json({ success: false, error: 'Manager access is required to register devices.' }, { status: 403 });
+      }
       const key = typeof body.device_key === 'string' && body.device_key.trim().length >= 3 && body.device_key.trim().length <= 100 ? body.device_key.trim() : '';
       if (!key) return Response.json({ success: false, error: 'device_key is required.' }, { status: 400 });
       const name = typeof body.device_name === 'string' ? body.device_name.trim().slice(0, 100) : '';
@@ -7997,8 +8003,8 @@ Deno.serve(async (req) => {
       const existing = await deviceEntity.filter({ device_key: key }, '-updated_date', 1).catch(() => []);
       const device = Array.isArray(existing) && existing.length > 0 ? existing[0] : null;
       if (device?.id) {
-        await deviceEntity.update(device.id, { device_name: name || device.device_name, location: loc || device.location, firmware_version: ver || device.firmware_version, last_seen_at: nowIso, status: 'active', is_active: true }).catch(() => null);
-        return Response.json({ success: true, device_id: device.id, registered: false });
+        await deviceEntity.update(device.id, { device_name: name || device.device_name, location: loc || device.location, firmware_version: ver || device.firmware_version, last_seen_at: nowIso }).catch(() => null);
+        return Response.json({ success: true, device_id: device.id, registered: false, status: device.status || 'active', is_active: device.is_active !== false });
       }
       const created = await deviceEntity.create({ device_key: key, device_name: name || key, location: loc, device_type: 'kiosk', firmware_version: ver, status: 'active', is_active: true, last_seen_at: nowIso, provisioned_at: nowIso, provisioned_by_email: actor.email || '' }).catch(() => null);
       if (!created?.id) return Response.json({ success: false, error: 'Device registration failed.' }, { status: 500 });
@@ -11623,13 +11629,20 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'report_camera_health') {
+      if (actor.role !== 'admin' || String(actor.id || '').startsWith('badge:')) {
+        return Response.json({ success: false, error: 'Manager access is required to report device health.' }, { status: 403 });
+      }
       const key = typeof body.device_key === 'string' ? body.device_key.trim() : '';
       if (!key) return Response.json({ success: false, error: 'device_key is required.' }, { status: 400 });
       const rows = await deviceEntity.filter({ device_key: key }, '-updated_date', 1).catch(() => []);
       const dev = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
       if (!dev?.id) return Response.json({ success: false, error: 'Device not registered.' }, { status: 404 });
+      if ((dev.status && dev.status !== 'active') || dev.is_active === false) {
+        return Response.json({ success: false, error: 'Device is not active.' }, { status: 409 });
+      }
       const config = dev.config && typeof dev.config === 'object' ? { ...dev.config } : {};
-      config.camera_health = String(body.health || 'unknown').slice(0, 20);
+      const health = String(body.health || 'unknown');
+      config.camera_health = ['ok', 'dark', 'blown', 'unknown'].includes(health) ? health : 'unknown';
       config.camera_health_at = new Date().toISOString();
       config.brightness = Number.isFinite(Number(body.brightness)) ? Math.round(Number(body.brightness)) : null;
       await deviceEntity.update(dev.id, { config }).catch(() => null);
