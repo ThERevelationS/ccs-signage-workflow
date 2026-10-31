@@ -75,6 +75,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { openProductsBlockingCompletion } from "@/components/estimator/productStageSync";
 import {
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
@@ -947,6 +948,13 @@ export default function WorkOrderDetailsDialog({
 
   const activeTasks = tasks.filter((n) => !n.completed);
   const completedTasks = tasks.filter((n) => n.completed);
+
+  // Products still in a non-terminal status — listed inside the complete
+  // confirm so a job with open product work is never closed silently.
+  const openProducts = React.useMemo(
+    () => openProductsBlockingCompletion(workOrder?.products),
+    [workOrder?.products]
+  );
 
   const workNotes = React.useMemo(() => {
     if (!workOrder?.work_notes) return [];
@@ -2047,6 +2055,22 @@ export default function WorkOrderDetailsDialog({
               This will send an email notification to the team.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {openProducts.length > 0 && (
+            <div className="mx-1 mb-2 rounded border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+              <span className="font-semibold">
+                {openProducts.length} product{openProducts.length === 1 ? "" : "s"} still open:
+              </span>
+              <ul className="mt-1 list-disc pl-4">
+                {openProducts.slice(0, 6).map((p) => (
+                  <li key={p.id || p.name}>
+                    {p.name}{p.status !== "none" ? ` (${p.status.replace(/_/g, " ")})` : ""}
+                  </li>
+                ))}
+              </ul>
+              {openProducts.length > 6 && <div className="mt-1">+{openProducts.length - 6} more</div>}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button">Cancel</AlertDialogCancel>
             <AlertDialogAction 
