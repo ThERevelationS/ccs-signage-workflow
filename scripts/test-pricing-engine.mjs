@@ -26,6 +26,8 @@ await build({
 const {
   resolveMatrixRow,
   resolveEffectivePrice,
+  resolveMarketPrice,
+  applyFormulaModifiers,
   pickUnitBreak,
   rowIsEffective,
   computeLaborCost,
@@ -197,6 +199,185 @@ const row = (over = {}) => ({ id: 'r', status: 'active', markup_pct: 50, minimum
   assert.equal(q.minimumsApplied[0].index, 0);
   assert.equal(q.subtotal, 393, '153 + 110 + 130');
   assert.equal(q.total, 393);
+  // Regression: no modifiers supplied → no audit entries, base === resolved.
+  assert.deepEqual(q.linePrices[0].modifiersApplied, []);
+  assert.equal(q.linePrices[0].baseUnitPrice, q.linePrices[0].unitPrice);
+  assert.equal(q.linePrices[0].pricingMode, 'markup', 'default pricing_mode stays markup');
+  assert.equal(q.linePrices[0].market, null);
+}
+
+// --- Market-based pricing -----------------------------------------------------
+{
+  const marketRow = row({ id: 'mkt', category: 'banners', pricing_mode: 'market', market_retail: 100, market_discount_pct: 20, markup_pct: 500 });
+
+  // retail 100 less 20% = 80 — markup_pct is ignored on a market row.
+  const priced = resolveEffectivePrice({ category: 'banners', qty: 2, unitCost: 10, matrices: [marketRow], now: NOW });
+  assert.equal(priced.pricingMode, 'market');
+  assert.equal(priced.source, 'market');
+  assert.equal(priced.unitPrice, 80);
+  assert.equal(priced.extended, 160);
+  assert.equal(priced.market.marketRetail, 100);
+  assert.equal(priced.market.marketDiscountPct, 20);
+
+  // A qualifying break only wins when it undercuts the market price.
+  const cheapBreak = row({ id: 'cb', category: 'banners', pricing_mode: 'market', market_retail: 100, market_discount_pct: 20, per_unit_breaks: [{ qty: 5, unit_price: 70 }] });
+  const broke = resolveEffectivePrice({ category: 'banners', qty: 5, unitCost: 10, matrices: [cheapBreak], now: NOW });
+  assert.equal(broke.source, 'qty_break', 'break below market wins');
+  assert.equal(broke.unitPrice, 70);
+  assert.equal(broke.breakApplied.qty, 5);
+  const priceyBreak = row({ id: 'pb', category: 'banners', pricing_mode: 'market', market_retail: 100, market_discount_pct: 20, per_unit_breaks: [{ qty: 5, unit_price: 90 }] });
+  const held = resolveEffectivePrice({ category: 'banners', qty: 5, unitCost: 10, matrices: [priceyBreak], now: NOW });
+  assert.equal(held.source, 'market', 'break above market loses');
+  assert.equal(held.unitPrice, 80);
+  assert.equal(held.breakApplied, null);
+
+  // minimum_charge still floors the extension.
+  const floored = resolveEffectivePrice({ category: 'banners', qty: 1, unitCost: 10, matrices: [row({ id: 'mm', category: 'banners', pricing_mode: 'market', market_retail: 20, minimum_charge: 25 })], now: NOW });
+  assert.equal(floored.source, 'market');
+  assert.equal(floored.unitPrice, 20);
+  assert.equal(floored.extended, 25);
+  assert.equal(floored.minimumApplied, true);
+
+  // Market row without market_retail falls back to the markup path.
+  const noRetail = row({ id: 'nr', category: 'banners', pricing_mode: 'market', markup_pct: 50 });
+  const back = resolveEffectivePrice({ category: 'banners', qty: 2, unitCost: 10, matrices: [noRetail], now: NOW });
+  assert.equal(back.source, 'matrix_markup');
+  assert.equal(back.unitPrice, 15);
+  // …and an explicit marketRetail arg still routes it through market mode.
+  const argd = resolveEffectivePrice({ category: 'banners', qty: 2, unitCost: 10, matrices: [noRetail], marketRetail: 50, marketDiscountPct: 10, now: NOW });
+  assert.equal(argd.source, 'market');
+  assert.equal(argd.unitPrice, 45, '50 x 0.90');
+
+  // Direct helper: standalone resolveMarketPrice honors row + overrides.
+  const direct = resolveMarketPrice({ matrixRow: marketRow, qty: 3 });
+  assert.equal(direct.unitPrice, 80);
+  assert.equal(direct.source, 'market');
+  const override = resolveMarketPrice({ matrixRow: marketRow, marketRetail: 200, marketDiscountPct: 50, qty: 1 });
+  assert.equal(override.unitPrice, 100);
+  const noRow = resolveMarketPrice({ matrixRow: null, marketRetail: 40, qty: 2 });
+  assert.equal(noRow.unitPrice, 40);
+  assert.equal(noRow.minimumApplied, false);
+
+  // pricing_mode 'markup' (or absent) ignores market fields entirely.
+  const markupRow = row({ id: 'mk', category: 'banners', markup_pct: 50, market_retail: 999, market_discount_pct: 90 });
+  const mk = resolveEffectivePrice({ category: 'banners', qty: 1, unitCost: 10, matrices: [markupRow], now: NOW });
+  assert.equal(mk.pricingMode, 'markup');
+  assert.equal(mk.source, 'matrix_markup');
+  assert.equal(mk.unitPrice, 15);
+}
+
+// --- Formula modifiers ----------------------------------------------------------
+{
+  // Each type, applied left-to-right.
+  let r = applyFormulaModifiers(100, [{ type: 'add_pct', value: 10 }]);
+  assert.equal(r.unitPrice, 110);
+  r = applyFormulaModifiers(100, [{ type: 'mul', value: 0.5 }]);
+  assert.equal(r.unitPrice, 50);
+  r = applyFormulaModifiers(100, [{ type: 'add_flat', value: 7.25 }]);
+  assert.equal(r.unitPrice, 107.25);
+  r = applyFormulaModifiers(100, [{ type: 'min', value: 120 }]);
+  assert.equal(r.unitPrice, 120, 'min floors upward');
+  r = applyFormulaModifiers(100, [{ type: 'max', value: 80 }]);
+  assert.equal(r.unitPrice, 80, 'max caps downward');
+
+  // Ordered chain: 100 → +10% → 110 → x0.5 → 55 → +5 → 60 → min 70 → 70 → max 65 → 65.
+  r = applyFormulaModifiers(100, [
+    { type: 'add_pct', value: 10 },
+    { type: 'mul', value: 0.5 },
+    { type: 'add_flat', value: 5 },
+    { type: 'min', value: 70 },
+    { type: 'max', value: 65 },
+  ]);
+  assert.equal(r.unitPrice, 65);
+  assert.equal(r.applied.length, 5);
+  assert.equal(r.applied[2].before, 55);
+  assert.equal(r.applied[2].after, 60);
+
+  // Invalid entries skip; modifiers never push below zero.
+  r = applyFormulaModifiers(50, [{ type: 'bogus', value: 5 }, { value: 5 }, { type: 'add_flat' }, { type: 'add_flat', value: -80 }]);
+  assert.equal(r.unitPrice, 0, 'clamped at zero');
+  assert.equal(r.applied.length, 1);
+  r = applyFormulaModifiers(42, null);
+  assert.equal(r.unitPrice, 42);
+  assert.deepEqual(r.applied, []);
+
+  // Row-level formula_modifiers adjust the resolved unit price before extension.
+  const modRow = row({ id: 'fm', category: 'banners', markup_pct: 50, formula_modifiers: [{ type: 'add_pct', value: 10 }, { type: 'min', value: 17 }] });
+  const line = resolveEffectivePrice({ category: 'banners', qty: 2, unitCost: 10, matrices: [modRow], now: NOW });
+  // cost 10 x 1.50 = 15 → +10% = 16.5 → min 17 = 17 → x2 = 34
+  assert.equal(line.baseUnitPrice, 15);
+  assert.equal(line.unitPrice, 17);
+  assert.equal(line.extended, 34);
+  assert.equal(line.modifiersApplied.length, 2);
+  assert.equal(line.modifiersApplied[0].type, 'add_pct');
+  // …and modifiers stack on market-mode prices too.
+  const modMarket = row({ id: 'fmm', category: 'banners', pricing_mode: 'market', market_retail: 100, market_discount_pct: 20, formula_modifiers: [{ type: 'add_flat', value: -30 }] });
+  const mline = resolveEffectivePrice({ category: 'banners', qty: 1, unitCost: 10, matrices: [modMarket], now: NOW });
+  assert.equal(mline.baseUnitPrice, 80);
+  assert.equal(mline.unitPrice, 50);
+  assert.equal(mline.extended, 50);
+  // …and on qty-break prices (they resolve, then modify).
+  const modBreak = row({ id: 'fmb', category: 'banners', markup_pct: 50, per_unit_breaks: [{ qty: 10, unit_price: 9 }], formula_modifiers: [{ type: 'mul', value: 0.9 }] });
+  const bline = resolveEffectivePrice({ category: 'banners', qty: 12, unitCost: 4, matrices: [modBreak], now: NOW });
+  assert.equal(bline.source, 'qty_break');
+  assert.equal(bline.unitPrice, 8.1, '9 x 0.9');
+  assert.equal(bline.extended, 97.2);
+}
+
+// --- priceQuote-level modifiers -------------------------------------------------
+{
+  const matrices = [
+    row({ id: 'both', name: 'Retail/Banners', category: 'banners', customer_tier: 'Retail', markup_pct: 40 }),
+  ];
+  const q = priceQuote({
+    lines: [
+      { label: 'Banner', category: 'banners', qty: 1, unitCost: 20 },  // 28 → +10% = 30.8
+      { label: 'Misc', category: 'other', qty: 2, unitCost: 5 },       // default 50% → 7.5 → +10% = 8.25 x2 = 16.5
+    ],
+    customerTier: 'Retail',
+    matrices,
+    defaultMarkupPct: 50,
+    modifiers: [{ type: 'add_pct', value: 10 }],
+    now: NOW,
+  });
+  assert.equal(q.linePrices[0].unitPrice, 30.8);
+  assert.equal(q.linePrices[0].baseUnitPrice, 28);
+  assert.equal(q.linePrices[0].modifiersApplied.length, 1);
+  assert.equal(q.linePrices[1].unitPrice, 8.25);
+  assert.equal(q.linesSubtotal, 47.3, '30.8 + 16.5');
+  assert.equal(q.total, 47.3);
+
+  // Quote-level modifiers append AFTER row-level formula_modifiers.
+  const stacked = priceQuote({
+    lines: [{ label: 'X', category: 'banners', qty: 1, unitCost: 10 }],
+    matrices: [row({ id: 's', category: 'banners', markup_pct: 0, formula_modifiers: [{ type: 'add_flat', value: 10 }] })],
+    modifiers: [{ type: 'mul', value: 2 }],
+    now: NOW,
+  });
+  // 10 → row +10 flat = 20 → quote x2 = 40
+  assert.equal(stacked.linePrices[0].unitPrice, 40);
+  assert.equal(stacked.linePrices[0].modifiersApplied.length, 2);
+  assert.equal(stacked.linePrices[0].modifiersApplied[0].type, 'add_flat');
+  assert.equal(stacked.linePrices[0].modifiersApplied[1].type, 'mul');
+}
+
+// --- Unchanged-behavior regressions ----------------------------------------------
+{
+  // Market fields on a markup row change nothing.
+  const plain = row({ id: 'p', category: 'decals', markup_pct: 10, minimum_charge: 25 });
+  const a = resolveEffectivePrice({ category: 'decals', qty: 1, unitCost: 10, matrices: [plain], now: NOW });
+  assert.equal(a.unitPrice, 11);
+  assert.equal(a.extended, 25);
+  assert.equal(a.source, 'matrix_markup');
+  // An empty modifiers array is a no-op.
+  const b = resolveEffectivePrice({ category: 'decals', qty: 1, unitCost: 10, matrices: [plain], modifiers: [], now: NOW });
+  assert.equal(b.unitPrice, a.unitPrice);
+  assert.equal(b.extended, a.extended);
+  assert.deepEqual(b.modifiersApplied, []);
+  // resolveMatrixRow matching is untouched by the new row fields.
+  const marketDefault = row({ id: 'md', customer_tier: 'Retail', pricing_mode: 'market', market_retail: 50 });
+  const win = resolveMatrixRow({ category: 'anything', customerTier: 'Retail', matrices: [marketDefault], now: NOW });
+  assert.equal(win.row.id, 'md', 'market row still matches on tier');
 }
 
 rmSync(out);
