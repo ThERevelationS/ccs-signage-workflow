@@ -3,6 +3,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { assertSafeExternalUrl, safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -303,6 +304,7 @@ const COMPANY_TIME_ZONE = 'America/New_York';
 const MISSED_PUNCH_PROMPT_MS = 18 * 60 * 60 * 1000;
 const MISSED_PUNCH_REPROMPT_MS = 8 * 60 * 60 * 1000;
 const LATE_CLOCK_IN_MINUTES = 8 * 60; // After 8:00 AM company time — matches the admin trigger label.
+const PUNCH_WEBHOOK_SETTING_KEY = 'timeclockPunchWebhookUrl';
 const FULL_SHIFT_HOURS = 8; // Clocking out under a full worked day counts as early.
 const LONG_SHIFT_HOURS = 10; // Worked length that raises the long-shift event.
 const PTO_LOW_HOURS_THRESHOLD = 8; // Available balance under one workday counts as low.
@@ -11221,15 +11223,35 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'punch_webhook') {
-      // Emit a punch event to a configured downstream URL - payroll/timekeeping
+      // Emit a punch event to the admin-configured downstream URL - payroll/timekeeping
       // sync. Fire-and-forget; failures never block the confirmed punch.
-      const url = typeof body.url === 'string' ? body.url.trim() : '';
-      if (!url || !/^https:\/\//.test(url)) return Response.json({ success: false, error: 'A valid https:// webhook URL is required.' }, { status: 400 });
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const settings = await base44.asServiceRole.entities.GlobalSettings.filter({ key: PUNCH_WEBHOOK_SETTING_KEY }).catch(() => []);
+      const url = Array.isArray(settings) && typeof settings[0]?.value === 'string' ? settings[0].value.trim() : '';
+      if (!url) return Response.json({ success: false, error: 'No punch webhook URL is configured.' }, { status: 409 });
       const payload = { event: 'timeclock_punch', employee: publicEmployee(target), action_type: String(body.punch_action || ''), at: new Date().toISOString(), entry_id: body.entry_id || null };
       try {
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => null);
+        await safeExternalFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, 0).catch(() => null);
       } catch {}
       return Response.json({ success: true });
+    }
+
+    if (action === 'set_punch_webhook_url') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
+      const raw = typeof body.url === 'string' ? body.url.trim() : '';
+      let value = '';
+      if (raw) {
+        if (!/^https:\/\//i.test(raw)) return Response.json({ success: false, error: 'A valid https:// webhook URL is required.' }, { status: 400 });
+        try {
+          value = (await assertSafeExternalUrl(raw)).toString();
+        } catch (error) {
+          return Response.json({ success: false, error: (error as Error)?.message || 'Webhook URL is not allowed.' }, { status: 400 });
+        }
+      }
+      const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ key: PUNCH_WEBHOOK_SETTING_KEY }).catch(() => []);
+      if (Array.isArray(existing) && existing[0]?.id) await base44.asServiceRole.entities.GlobalSettings.update(existing[0].id, { value }).catch(() => null);
+      else await base44.asServiceRole.entities.GlobalSettings.create({ key: PUNCH_WEBHOOK_SETTING_KEY, value }).catch(() => null);
+      return Response.json({ success: true, punch_webhook_url: value });
     }
 
     if (action === 'labor_split') {
