@@ -57,6 +57,15 @@ export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = nul
 
   const loadData = async () => {
     setIsLoading(true);
+    if (!sessionToken) {
+      // Guests can open the dialog but every data source here is
+      // session-authenticated — skip the calls instead of logging two
+      // guaranteed "sign-in required" failures per open.
+      setUsers([]);
+      setWorkOrders([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       const [directory, workOrdersData] = await Promise.all([
         loadAuthorizedUserDirectory({ sessionToken }),
