@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, X, Loader2, Save, Users } from "lucide-react";
+import { Plus, Trash2, X, Loader2, Save, Users, MessageSquarePlus } from "lucide-react";
 import { sopSaveSettings, sopAckReport } from "./sopService";
 
 // Admin drawer: department categories, named SOP editors, module defaults,
@@ -41,7 +41,7 @@ function CategoryRow({ cat, inUse, onChange, onRemove }) {
   );
 }
 
-export default function SopAdminPanel({ open, onClose, settings, settingsUpdatedDate, sops, onSaved }) {
+export default function SopAdminPanel({ open, onClose, settings, settingsUpdatedDate, sops, onSaved, onResolveSuggestion }) {
   const [form, setForm] = useState(null);
   const [editorInput, setEditorInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -62,6 +62,17 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
     const map = {};
     for (const sop of sops || []) map[sop.category] = (map[sop.category] || 0) + 1;
     return map;
+  }, [sops]);
+
+  // Staff-submitted edit suggestions still marked "open", newest first.
+  const openSuggestions = useMemo(() => {
+    const list = [];
+    for (const sop of sops || []) {
+      for (const sug of sop.suggestions || []) {
+        if (sug?.status === "open") list.push({ sop, sug });
+      }
+    }
+    return list.sort((a, b) => String(b.sug.created_at || "").localeCompare(String(a.sug.created_at || "")));
   }, [sops]);
 
   const patch = (fields) => setForm((f) => ({ ...f, ...fields }));
@@ -124,10 +135,16 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
         </SheetHeader>
 
         <Tabs defaultValue="categories" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="categories">Departments</TabsTrigger>
             <TabsTrigger value="editors">Editors</TabsTrigger>
             <TabsTrigger value="defaults">Defaults</TabsTrigger>
+            <TabsTrigger value="suggestions" className="gap-1">
+              Suggest
+              {openSuggestions.length > 0 && (
+                <Badge variant="secondary" className="bg-amber-100 text-amber-800 px-1.5">{openSuggestions.length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="acks" onClick={() => { if (!report && !reportBusy) loadReport(); }}>Receipts</TabsTrigger>
           </TabsList>
 
@@ -201,6 +218,41 @@ export default function SopAdminPanel({ open, onClose, settings, settingsUpdated
                 <Input type="number" min={1} max={500} value={form.max_video_upload_mb} onChange={(e) => patch({ max_video_upload_mb: e.target.value })} />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="suggestions" className="space-y-3 pt-3">
+            <p className="text-xs text-slate-500">Edit suggestions submitted by staff on published SOPs. Resolve marks them handled; dismiss hides them.</p>
+            {openSuggestions.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 py-10 text-center">
+                <MessageSquarePlus className="h-8 w-8 mx-auto text-slate-300" />
+                <p className="mt-2 text-sm text-slate-400">No open suggestions right now.</p>
+              </div>
+            ) : (
+              openSuggestions.map(({ sop, sug }) => {
+                const stepIdx = (sop.steps || []).findIndex((st) => st.id === sug.step_id);
+                const step = stepIdx >= 0 ? sop.steps[stepIdx] : null;
+                return (
+                  <div key={sug.id} className="rounded-lg border p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{sop.title}</p>
+                        <p className="text-xs text-slate-500">
+                          {step ? `Step ${stepIdx + 1}${step.title ? ` — ${step.title}` : ""}` : "General"}
+                          {" · "}{sug.name || sug.email || "Someone"}
+                          {sug.created_at ? ` · ${new Date(sug.created_at).toLocaleDateString()}` : ""}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-800 shrink-0">open</Badge>
+                    </div>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{sug.text}</p>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => onResolveSuggestion?.({ sop, suggestionId: sug.id, outcome: "dismissed" })}>Dismiss</Button>
+                      <Button type="button" size="sm" onClick={() => onResolveSuggestion?.({ sop, suggestionId: sug.id, outcome: "resolved" })}>Resolve</Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </TabsContent>
 
           <TabsContent value="acks" className="space-y-3 pt-3">
