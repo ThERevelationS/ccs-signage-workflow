@@ -155,6 +155,25 @@ const entitiesProxy = new Proxy(rawClient.entities, {
   },
 });
 
+// Staff sign in through EmailGate, not Base44 platform auth. Without a
+// platform access token, auth.me() is a guaranteed 401 round-trip on every
+// call — dozens per page across cards, dialogs and services. Reject it
+// locally with the same 401 shape so every caller's fallback path runs
+// unchanged without spending a request.
+const authProxy = new Proxy(rawClient.auth, {
+  get(t, prop) {
+    const value = Reflect.get(t, prop);
+    if (prop === 'me' && typeof value === 'function' && !token) {
+      return () => {
+        const err = new Error('Platform authentication required');
+        err.status = 401;
+        return Promise.reject(err);
+      };
+    }
+    return value;
+  },
+});
+
 const functionsProxy = new Proxy(rawClient.functions, {
   get(t, prop) {
     const value = Reflect.get(t, prop);
@@ -191,6 +210,7 @@ export const base44 = new Proxy(rawClient, {
   get(t, prop) {
     if (prop === 'entities') return entitiesProxy;
     if (prop === 'functions') return functionsProxy;
+    if (prop === 'auth') return authProxy;
     const value = Reflect.get(t, prop);
     return typeof value === 'function' ? value.bind(t) : value;
   },
