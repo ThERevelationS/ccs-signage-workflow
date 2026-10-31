@@ -1,9 +1,10 @@
-import { base44 } from '@/api/base44Client';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Scheduled digest — reads pending admin queues and emails all admins a
 // compact weekly summary. Runs without a session (service-role reads).
 export async function handler() {
   try {
+    const base44 = createClientFromRequest(new Request("https://internal/cron"));
     const ent = base44.asServiceRole.entities;
     const [pto, corrections, deletions, conflicts, requests] = await Promise.all([
       ent.TimeOffRequest.count({ status: 'pending' }).catch(() => null),
