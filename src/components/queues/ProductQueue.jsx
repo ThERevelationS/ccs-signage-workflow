@@ -39,6 +39,16 @@ import {
   isOwnView,
 } from "./savedViewsModel";
 import ProofPanel from "@/components/proofs/ProofPanel";
+import {
+  buildNotifyContext,
+  resolveCustomerEmail,
+  statusGateAllows,
+} from "@/components/comms/notifyModel";
+import {
+  loadCompanyDefaults,
+  loadCustomerById,
+  sendCustomerNotification,
+} from "@/components/comms/notifySend";
 
 export { flattenQueueRows };
 
@@ -67,6 +77,72 @@ const statusTone = (s) => {
 const NO_ID_TOOLTIP = "Product has no id — reopen the Work Order to repair it";
 
 const dateInputValue = (v) => String(v || "").slice(0, 10);
+
+// "Notify customer — proof ready" — appears under the proof-status select
+// while the product's proof is out for the customer (statusGateAllows).
+// Sends the proof_ready template through the sendStaffEmail bridge and writes
+// the standard OpportunityActivity audit row (details.notify_kind).
+function ProofNotifyButton({ row, workOrder, sessionToken, actor }) {
+  const [state, setState] = useState({ status: "idle", message: "", error: false });
+  const product = row?.product || {};
+  if (!statusGateAllows("proof_ready", product)) return null;
+  const busy = state.status === "sending" || state.status === "sent";
+
+  const send = async () => {
+    if (busy) return;
+    setState({ status: "sending", message: "", error: false });
+    try {
+      const customer = await loadCustomerById(workOrder?.customer_id);
+      const to = resolveCustomerEmail(customer, workOrder?.contact_email);
+      const company = await loadCompanyDefaults();
+      const ctx = buildNotifyContext({ customer, workOrder, product, company });
+      const res = await sendCustomerNotification({
+        kind: "proof_ready",
+        ctx,
+        to,
+        sessionToken,
+        actor,
+        log: {
+          targetId: `${row.workOrderId}:${row.productId}`,
+          targetRef: `${row.ref} — ${row.productName}`,
+          customerId: workOrder?.customer_id,
+          customerName: row.company,
+          contactName: ctx.contact_name,
+          workOrderId: row.workOrderId,
+          opportunityId: workOrder?.opportunity_id,
+        },
+      });
+      setState({
+        status: "sent",
+        message: res.logError
+          ? `Sent — but the log write failed: ${res.logError}. Resolve the log before resending.`
+          : `Sent to ${to}`,
+        error: Boolean(res.logError),
+      });
+    } catch (e) {
+      setState({ status: "failed", message: e?.message || "The notification could not be sent.", error: true });
+    }
+  };
+
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        className="rounded border border-violet-300 bg-violet-50 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={busy || !sessionToken || !row.editable}
+        title={row.editable ? "Email the customer that their proof is ready for review" : NO_ID_TOOLTIP}
+        onClick={send}
+      >
+        {state.status === "sending" ? "Sending…" : state.status === "sent" ? "Notified" : "Notify customer — proof ready"}
+      </button>
+      {state.message && (
+        <div className={`mt-0.5 max-w-[220px] text-[10px] ${state.error ? "text-rose-700" : "text-emerald-700"}`}>
+          {state.message}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function RowEditor({ row, actor, onSaved, onChanged, disabled }) {
   const p = row.product || {};
@@ -161,8 +237,12 @@ export default function ProductQueue({
   onOpenWorkOrder = null,
 }) {
   const { data: workOrders = [], isFetched } = useAllWorkOrders();
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const actor = String(currentUser?.email || "").trim();
+  const workOrderById = useMemo(
+    () => new Map((workOrders || []).map((wo) => [String(wo?.id || ""), wo])),
+    [workOrders]
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(0);
   const [busy, setBusy] = useState({});
@@ -417,6 +497,12 @@ export default function ProductQueue({
                       <option value="">—</option>
                       {PROOF_OPTIONS.map((o) => <option key={o} value={o}>{o.replace(/_/g, " ")}</option>)}
                     </select>
+                    <ProofNotifyButton
+                      row={r}
+                      workOrder={workOrderById.get(r.workOrderId)}
+                      sessionToken={sessionToken}
+                      actor={actor}
+                    />
                   </td>
                   <td className="px-2 py-1.5">
                     <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value={r.fulfillment === "none" ? "" : r.fulfillment}
