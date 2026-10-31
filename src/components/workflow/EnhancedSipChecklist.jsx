@@ -30,7 +30,7 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
+const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
