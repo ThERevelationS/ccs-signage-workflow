@@ -706,6 +706,8 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 ? <span className="rounded-md px-1.5 py-0.5 text-white" style={{ background: accent.ring }}>{trackerTime}</span>
                 : trackerTime}
               {prefs?.show_percent === true && clockedIn && <span className={`ml-1.5 font-semibold opacity-60 ${prefs?.size === "expanded" ? "text-[10px]" : "text-[9px]"}`}>{Math.round(Math.min(1, progress) * 100)}%</span>}
+              {prefs?.show_overtime !== false && overtime && prefs?.size !== "expanded" && <span className="ml-1.5 text-[9px] font-semibold text-violet-600 dark:text-violet-300">+{formatClock(overtimeMinutes, prefs?.time_format)} OT</span>}
+              {prefs?.show_overtime !== false && !overtime && otNear && prefs?.size !== "expanded" && <span className="ml-1.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400">{formatMinutes(Math.ceil(otNearMinutes))} to OT</span>}
             </span>
             {prefs?.display_style === "bar" && (
               <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
@@ -715,12 +717,12 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
                 />
               </span>
             )}
-            {prefs?.show_overtime !== false && overtime && (
+            {prefs?.show_overtime !== false && overtime && prefs?.size === "expanded" && (
               <span className="mt-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-300">
                 +{formatClock(overtimeMinutes, prefs?.time_format)} OT
               </span>
             )}
-            {prefs?.show_overtime !== false && otNear && (
+            {prefs?.show_overtime !== false && !overtime && otNear && prefs?.size === "expanded" && (
               <span className="mt-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                 {formatMinutes(Math.ceil(otNearMinutes))} to OT
               </span>
