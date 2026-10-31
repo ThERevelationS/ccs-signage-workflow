@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
@@ -8,7 +9,7 @@ const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g,
 // Check for approaching and overdue deadlines and trigger notifications
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkDeadlineReminders');
 
@@ -963,4 +964,3 @@ async function sendOpportunityDeadlineEmail(base44, config, opp, trigger_type) {
 
   return { emails_sent: sent.length, recipients: sent };
 }
-
