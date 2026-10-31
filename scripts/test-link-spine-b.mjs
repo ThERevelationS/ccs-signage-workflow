@@ -9,7 +9,7 @@
 // NOTE: the canonical customer record page is /Customer360?id= (recordRoutes
 // kind "customer"); /EstimatorCustomers?customer= remains the editor surface.
 import assert from "node:assert/strict";
-const hasLink = (src, lit, kind) => src.includes(lit) || new RegExp('RecordLink[^>]*kind=["' + String.fromCharCode(39) + ']' + kind + '["' + String.fromCharCode(39) + ']').test(src);
+const hasLink = (src, lit, kind) => src.includes(lit) || new RegExp('RecordLink[^>]*kind=["' + String.fromCharCode(39) + ']' + kind + '["' + String.fromCharCode(39) + ']').test(src) || new RegExp('RecordLink[^>]*kind=[{][^}]*["' + String.fromCharCode(39) + ']' + kind + '["' + String.fromCharCode(39) + ']').test(src);
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
