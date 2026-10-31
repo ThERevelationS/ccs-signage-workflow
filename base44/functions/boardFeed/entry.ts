@@ -140,19 +140,24 @@ Deno.serve(async (req) => {
     const rows: any[] = [];
     const seen = new Set<string>();
     let skip = 0;
+    let rowsHit = 0;
     let truncated = false;
     while (true) {
       const page = await entity.filter(query, sort, PAGE_SIZE, skip);
       if (!Array.isArray(page)) throw new Error(`${entityName} feed could not be verified completely.`);
+      rowsHit += page.length;
       for (const row of page) {
         const id = String(row?.id || '');
         if (id && seen.has(id)) continue;
         if (id) seen.add(id);
         rows.push(projectRow(row, fields, heavy));
       }
+      // A pull that scans MAX_ROWS rows is clamped — flag it on every pull
+      // type (full and delta alike) so callers never mistake a partial feed
+      // for a complete one.
+      if (rowsHit >= MAX_ROWS) { truncated = true; break; }
       if (page.length < PAGE_SIZE) break;
       skip += PAGE_SIZE;
-      if (skip >= MAX_ROWS) { truncated = true; break; }
     }
 
     const payload = {
@@ -172,4 +177,3 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Data could not be loaded. Try again.' }, { status: 500 });
   }
 });
-
