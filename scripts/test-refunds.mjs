@@ -52,7 +52,7 @@ assert.match(service, /Payment refund reversal/, "voiding a refund row restores 
 assert.match(service, /Fully refunded payments cannot be voided/, "refunded original protected from void");
 
 // void_invoice now guards on NET collected (fully credited/refunded invoice voids cleanly).
-assert.match(service, /Refund or void the collected payments before voiding/, "void guarded by net collected balance");
+assert.match(service, /netCollected > 0\.005/, "void guarded by net collected balance");
 
 // Restock: honest reporting — linkage check + explicit no-linkage note, no fake movement.
 assert.match(refundBlock, /inventory_item_id \|\| li\?\.item_id/, "restock requires line↔inventory linkage");
