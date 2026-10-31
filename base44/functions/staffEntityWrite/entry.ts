@@ -17,6 +17,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   Customer: new Set(['updateMany']),
   CustomerLocation: new Set(['create', 'updateMany']),
   GeneralTask: new Set(['create', 'update']),
+  GlobalSettings: new Set(['updateMany']),
   ImportJob: new Set(['create', 'update']),
   JurisdictionProfile: new Set(['create', 'update']),
   LaborLevel: new Set(['create', 'updateMany', 'delete']),
