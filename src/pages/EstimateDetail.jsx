@@ -45,6 +45,7 @@ import { duplicateEstimate, splitEstimate, newEstimateCreationKey, estimateLineS
 import MergeEstimateDialog from "@/components/estimator/aio/MergeEstimateDialog";
 import EstimateNotesTimeline from "@/components/estimator/aio/EstimateNotesTimeline";
 import { staffEntities } from "@/components/staff/staffEntities";
+import MatrixSuggestPanel from "@/components/pricing/MatrixSuggestPanel";
 
 const WORKSPACE_TITLES = {
   1: "Estimate Details",
@@ -1678,6 +1679,16 @@ export default function EstimateDetail() {
                 isRegistered={isRegistered}
               />
               <EstimateActivityPanel estimate={estimate} refreshKey={revisionRefreshKey + deliveryRefreshKey} />
+              {/* Matrix pricing suggestions (#pricing-engine): per-Product unit
+                  price advice from the PricingTierMatrix — writes into the
+                  line draft (patchLine → customer_price_snapshot), persisted
+                  only by the normal Save. Hidden in read-only Apply state. */}
+              <MatrixSuggestPanel
+                estimate={estimate}
+                lines={lines}
+                readOnly={readOnly}
+                onApplyLine={patchLine}
+              />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
                 <ConvertToWorkOrder
