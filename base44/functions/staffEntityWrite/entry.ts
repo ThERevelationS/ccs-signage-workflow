@@ -13,6 +13,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   BuilderPartGroup: new Set(['updateMany']),
   BuilderProduct: new Set(['create', 'updateMany']),
   CustomItemsProject: new Set(['create', 'update', 'updateMany', 'delete']),
+  Inventory: new Set(['create', 'updateMany']),
   Customer: new Set(['updateMany']),
   CustomerLocation: new Set(['create', 'updateMany']),
   GeneralTask: new Set(['create', 'update']),
