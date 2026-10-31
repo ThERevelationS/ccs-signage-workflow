@@ -8,7 +8,6 @@ import {
   Clock,
   Clock3,
   Loader2,
-  Play,
   QrCode,
   Square,
   User,
@@ -21,6 +20,7 @@ import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResol
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
 import MissedClockInDialog from "@/components/timeclock/MissedClockInDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
+import CrystalShiftButton from "@/components/timeclock/CrystalShiftButton";
 import {
   createFaceMatcher,
   createFaceScanSession,
@@ -177,6 +177,7 @@ export default function QuickClockSection({
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [crystalSuccess, setCrystalSuccess] = useState(null);
   const [persistenceError, setPersistenceError] = useState("");
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [recognitionMethod, setRecognitionMethodRaw] = useState(null); // face | qr | manual
@@ -339,6 +340,8 @@ export default function QuickClockSection({
   const showNotification = (type, userName, timestamp) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     setNotification({ type, userName, time: format(new Date(timestamp), "h:mm a") });
+    setCrystalSuccess(type === "in" ? "in" : "out");
+    setTimeout(() => setCrystalSuccess(null), 1400);
     if (!quietNow()) playSoundEffect(type === "in" ? "chime" : "ding");
     notificationTimerRef.current = setTimeout(() => setNotification(null), 5000);
   };
@@ -795,7 +798,7 @@ export default function QuickClockSection({
       const schedStart = data.todays_schedule?.scheduled_start || data.todays_schedule?.start_time || "";
       const early = schedStart ? (() => { const [sh, sm] = String(schedStart).split(":").map(Number); const sMin = sh * 60 + (sm || 0); const pMin = clockInAt.getHours() * 60 + clockInAt.getMinutes(); return sMin - pMin > 20 ? Math.round(sMin - pMin) : 0; })() : 0;
       setRecognitionStatus(
-        `Clocked in at ${format(clockInAt, "h:mm a")} — lunch reminder ~${format(lunchEta, "h:mm a")}.` +
+        `Clocked in at ${format(clockInAt, "h:mm a")} ??? lunch reminder ~${format(lunchEta, "h:mm a")}.` +
         (early ? ` (${early}m ahead of your ${schedStart} schedule)` : "")
       );
       setClockOutDismissed(data.entry?.id, true);
@@ -1846,31 +1849,13 @@ export default function QuickClockSection({
               <Clock3 className="w-4 h-4" />
               Forgot to Clock In? Set arrival time
             </button>
-            <button type="button"
-              onClick={startRecognition}
+            <CrystalShiftButton
+              onClockIn={startRecognition}
+              onClockOut={startRecognition}
               disabled={isLoading}
-              className="group relative w-64 h-32 rounded-3xl shadow-xl shadow-emerald-900/25 hover:shadow-2xl disabled:opacity-50 overflow-hidden motion-safe:hover:scale-[1.04] motion-safe:active:scale-[0.96] transition-[transform,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-700" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute inset-0 bg-gradient-to-tl from-rose-400 via-red-500 to-red-700" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.55) 50%, transparent calc(50% + 1px))" }} />
-              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
-              <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/25 to-transparent" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
-              <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/20 to-transparent" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-              <div className="punch-sheen absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent" aria-hidden="true" />
-              <div className="absolute top-4 left-5 text-white flex items-center gap-2.5 drop-shadow-md">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
-                  <Play className="w-4 h-4 fill-current" />
-                </span>
-                <span className="text-xl font-bold tracking-wide">In</span>
-              </div>
-              <div className="absolute bottom-4 right-5 text-white flex items-center gap-2.5 drop-shadow-md">
-                <span className="text-xl font-bold tracking-wide">Out</span>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 ring-1 ring-white/50 backdrop-blur-sm">
-                  <Square className="w-4 h-4 fill-current" />
-                </span>
-              </div>
-            </button>
+              verifying={isLoading}
+              success={crystalSuccess}
+            />
             {isLoading && <Loader2 className="w-6 h-6 animate-spin text-purple-600" />}
           </div>
         )}
