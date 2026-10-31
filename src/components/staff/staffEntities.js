@@ -92,8 +92,6 @@ function readArgs(sortOrOptions, limit, skip) {
       sort: sortOrOptions.sort,
       limit: sortOrOptions.limit,
       skip: sortOrOptions.skip ?? sortOrOptions.offset,
-      cursor: sortOrOptions.cursor,
-      fields: sortOrOptions.fields,
     };
   }
   return { paged: false, sort: sortOrOptions, limit, skip };
@@ -104,19 +102,13 @@ const asRows = (response) => {
   return Array.isArray(rows) ? rows : [];
 };
 const page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
-const pageOf = (response) => {
-  const b = bodyOf(response);
-  const rows = Array.isArray(b.items) ? b.items : [];
-  return { items: rows, has_more: b.truncated === true || typeof b.next_cursor === "string", next_cursor: b.next_cursor ?? null };
-};
-const pagedRead = (entity, args, query) =>
-  invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, cursor: args.cursor, fields: args.fields }).then(
-    pageOf,
-    (err) => { if (isForbidden(err)) markDenied(entity); throw err; },
-  );
 
 const pendingBatch = new Map();
 let flushScheduled = false;
+// queueMicrotask flushed after one tick, but sibling lazy chunks mount across
+// several ticks — each landing became its own batch (~9 invokes per page
+// mount). A short timer still reads as instant while merging those waves.
+const BATCH_WINDOW_MS = 30;
 
 const singleRead = (entity, args) =>
   invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
@@ -187,7 +179,7 @@ const batchedRead = (entity, args) => {
   let resolveRef, rejectRef;
   const promise = new Promise((resolve, reject) => { resolveRef = resolve; rejectRef = reject; });
   pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
-  if (!flushScheduled) { flushScheduled = true; queueMicrotask(flushBatch); }
+  if (!flushScheduled) { flushScheduled = true; setTimeout(flushBatch, BATCH_WINDOW_MS); }
   return promise;
 };
 
@@ -198,11 +190,10 @@ const METHODS = {
     const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
     const cached = cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-    if (args.paged) return pagedRead(entity, args, query);
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
         cacheRead(key, rows);
-        return rows;
+        return args.paged ? page(rows) : rows;
       });
   },
   list: (entity, sortOrOptions, limit, skip) => {
@@ -211,11 +202,10 @@ const METHODS = {
     const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
     const cached = cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-    if (args.paged) return pagedRead(entity, args);
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
         cacheRead(key, rows);
-        return rows;
+        return args.paged ? page(rows) : rows;
       });
   },
   get: (entity, id) => {
