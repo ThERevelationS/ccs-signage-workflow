@@ -403,6 +403,11 @@ export default function JobWorkspace() {
             </div>
           ))}
         </div>
+        {summary.milestoneBilling && (
+          <div className="mt-2 text-[11px] font-medium text-gray-500">
+            {summary.milestoneBilling.label} — {summary.milestoneBilling.billed_pct}% of contract invoiced
+          </div>
+        )}
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <div>
             <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
