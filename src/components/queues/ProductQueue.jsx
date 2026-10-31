@@ -444,6 +444,8 @@ export default function ProductQueue({
     try {
       const res = await transitionProductAndBuilderStatus({
         workOrderId: row.workOrderId, product: row.product, patch, actor, label: "Queue status",
+        // Pass the cached WO snapshot so the deposit gate does not re-read it.
+        workOrder: workOrderById.get(row.workOrderId) || null,
       });
       refreshAllWorkOrders();
       // Auto mode: the product write just landed — re-roll the saved
