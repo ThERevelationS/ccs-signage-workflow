@@ -171,7 +171,8 @@ export default function FeatureReports() {
                 </div>
                 <p style="color: #666;">View and manage this report in the Sign Shop Workflow app.</p>
               </div>
-            `
+            `,
+            session_token: sessionToken
           });
         } catch (e) {
           console.error("Failed to send notification email:", e);

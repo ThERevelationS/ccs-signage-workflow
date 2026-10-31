@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { verifyQuoteSendGrant } from '../../shared/quoteSendGrant.ts';
 
 const cleanHeader = (value: unknown) => String(value || '').replace(/[\r\n]+/g, ' ').trim();
 
@@ -26,16 +28,20 @@ Deno.serve(async (req) => {
         const payload = await req.json();
         const { to, cc = '', bcc = '', subject, body, attachments = [] } = payload;
 
-        // Require authentication for direct HTTP requests. Internal service
-        // invocations from other backend functions carry a capability token
-        // instead of a user session. The capability is a top-level request
-        // field — reading it off the email body both broke internal callers
-        // and let a crafted body object smuggle the credential.
+        // Internal service invocations from other backend functions carry a
+        // capability token instead of a user session. The capability is a
+        // top-level request field — reading it off the email body both broke
+        // internal callers and let a crafted body object smuggle the credential.
+        // Direct calls send arbitrary mail as the company Gmail account, so they
+        // require an admin staff session; non-admin staff may only send an
+        // approved quote to the recipients bound in a quote send grant.
         const isInternalService = await hasWorkflowInvocationCapability({ _workflow_capability: payload?._workflow_capability }, 'sendGmail');
         if (!isInternalService) {
-          const user = await base44.auth.me().catch(() => null);
-          if (!user) {
-            return Response.json({ error: 'Authentication required' }, { status: 401 });
+          const actor = await authenticateSignShopSession(base44, payload?.session_token);
+          const quoteGrantAllowed = actor?.role !== 'admin' && actor?.role !== 'badge' &&
+            await verifyQuoteSendGrant(payload?.quote_send_grant, { email: actor?.email, to, cc, bcc });
+          if (actor?.role !== 'admin' && !quoteGrantAllowed) {
+            return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
           }
         }
 
@@ -118,6 +124,8 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, messageId: sendResult.id });
 
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        const status = Number(error?.status || error?.statusCode || 500);
+        const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+        return Response.json({ error: error.message }, { status: safeStatus });
     }
 });

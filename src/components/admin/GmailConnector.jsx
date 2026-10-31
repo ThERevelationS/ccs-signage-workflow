@@ -35,7 +35,8 @@ export default function GmailConnector({ sessionToken }) {
       await sendGmail({
         to: user.email,
         subject: 'Test Email from Sign Shop Workflow',
-        body: 'This is a test email to confirm your Gmail integration is working correctly.'
+        body: 'This is a test email to confirm your Gmail integration is working correctly.',
+        session_token: sessionToken
       });
       alert(`Test email sent to ${user.email}!`);
     } catch (error) {
