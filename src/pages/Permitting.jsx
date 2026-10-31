@@ -1133,7 +1133,7 @@ export default function Permitting() {
             <div>
               <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">Permitting Tracker</h1>
               <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
-                {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed{unassignedCount ? " · " + unassignedCount + " need a jurisdiction" : ""}
+                {totalLines} permit lines · {activeLinesCount} still being worked · {completedLinesCount} done{unassignedCount ? " · " + unassignedCount + " need an office picked" : ""}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
