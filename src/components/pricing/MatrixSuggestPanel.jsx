@@ -3,6 +3,7 @@ import { Calculator, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { loadPricingCatalog } from "@/components/pricing/pricingPersistence";
 import { resolveEffectivePrice, round4 } from "@/components/pricing/pricingEngine";
 import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricing";
+import { EmptyState, StatusChip } from "@/components/kit";
 
 // Matrix pricing suggestions — read-only pricing-engine advice for the lines on
 // an open estimate. Each Product row is priced against the PricingTierMatrix
@@ -179,9 +180,9 @@ export default function MatrixSuggestPanel({ estimate, lines = [], onApplyLine, 
           </span>
         </span>
         {catalog && matchedCount > 0 && (
-          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">
+          <StatusChip tone="emerald" size="sm" showDot={false} className="whitespace-nowrap">
             {matchedCount} suggestion{matchedCount === 1 ? "" : "s"}
-          </span>
+          </StatusChip>
         )}
       </button>
 
@@ -256,8 +257,12 @@ export default function MatrixSuggestPanel({ estimate, lines = [], onApplyLine, 
                 <tbody>
                   {suggestions.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-4 py-6 text-center text-[11px] text-gray-400">
-                        No products on this estimate yet.
+                      <td colSpan={8} className="p-0">
+                        <EmptyState
+                          compact
+                          title="No products on this estimate yet."
+                          message="Add product lines to the estimate to see matrix-priced suggestions."
+                        />
                       </td>
                     </tr>
                   )}
@@ -299,17 +304,23 @@ export default function MatrixSuggestPanel({ estimate, lines = [], onApplyLine, 
                           {s.priced.matchedRow ? (
                             <span className="inline-flex items-center gap-1 min-w-0">
                               <span className="truncate text-gray-600" title={rowLabel}>{rowLabel}</span>
-                              <span className={`text-[9px] px-1 rounded border whitespace-nowrap ${
-                                s.priced.pricingMode === "market"
-                                  ? "border-sky-200 bg-sky-50 text-sky-700"
-                                  : s.priced.source === "qty_break"
-                                    ? "border-violet-200 bg-violet-50 text-violet-700"
-                                    : "border-gray-200 bg-gray-50 text-gray-500"
-                              }`}>
-                                {s.priced.pricingMode === "market" && s.priced.source !== "qty_break"
-                                  ? "market"
-                                  : SOURCE_LABEL[s.priced.source] || s.priced.source}
-                              </span>
+                              <StatusChip
+                                size="sm"
+                                showDot={false}
+                                className="whitespace-nowrap"
+                                tone={
+                                  s.priced.pricingMode === "market" && s.priced.source !== "qty_break"
+                                    ? "sky"
+                                    : s.priced.source === "qty_break"
+                                      ? "violet"
+                                      : "slate"
+                                }
+                                label={
+                                  s.priced.pricingMode === "market" && s.priced.source !== "qty_break"
+                                    ? "market"
+                                    : SOURCE_LABEL[s.priced.source] || s.priced.source
+                                }
+                              />
                             </span>
                           ) : (
                             <span className="text-gray-300" title="No PricingTierMatrix row matches this tier × category">no row</span>
