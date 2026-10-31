@@ -18,6 +18,13 @@ async function fixedJSON(url:string){
 }
 // Keep this revision in responses and scan events so preview/live routing can be verified.
 const ADDRESS_LOOKUP_REVISION='address-geocode-v5';
+// A persistent Google denial is a configuration fault, not a transient error.
+// Once observed, skip the doomed round-trip on later lookups until the cooldown
+// lets one probe through (admin geocode_diagnostic calls always probe so a key
+// fix can be verified without waiting). Free locators keep working meanwhile.
+let googleDeniedUntil=0;
+let googleDeniedService:any=null;
+const GOOGLE_DENIED_TTL_MS=10*60*1000;
 // Interpret provider text internally; only fixed diagnostic codes/messages leave this function.
 function geocodingRejection(raw:unknown){
  const message=typeof raw==='string'?raw.slice(0,2000).toLowerCase():'';
@@ -89,6 +96,7 @@ Deno.serve(async req=>{
    // Never return the dedicated server key through getGoogleMapsKey.
    const key=Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim() || Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim();
    if(!key){serviceFailure('NOT_CONFIGURED','The map location service is not configured. An administrator needs to check its server key. You do not need to re-enter this address.');throw Error('Map geocoding is not configured.');}
+   if(!diagnostic&&Date.now()<googleDeniedUntil)throw Object.assign(new Error('google-denied-cooldown'),{code:'GOOGLE_DENIED_COOLDOWN'});
    await reporter.emit({kind:'geocode_lookup',url:'https://maps.googleapis.com/maps/api/geocode/json',detail:`Searching for ${address}.`});
    const data=await fixedJSON(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${encodeURIComponent(key)}`);
    const serviceStatus=['OK','ZERO_RESULTS','REQUEST_DENIED','OVER_QUERY_LIMIT','OVER_DAILY_LIMIT','INVALID_REQUEST','UNKNOWN_ERROR'].includes(data.status)?data.status:'UNKNOWN_STATUS';
@@ -97,11 +105,11 @@ Deno.serve(async req=>{
    await reporter.emit({kind:'geocode_service_result',detail:`Google Geocoding responded: ${serviceStatus}; ${serviceResultCount} address results.`});
    if(serviceStatus==='OK'&&!serviceResultCount)serviceFailure('EMPTY_RESULT','The map service returned an empty response. Try again later; no jurisdiction has been selected.');
    else if(serviceStatus==='ZERO_RESULTS')geocodingService={status:serviceStatus,issue:false,message:'No address match was returned. Check the street address.'};
-   else if(serviceStatus==='REQUEST_DENIED'){const rejection=geocodingRejection(data.error_message);serviceFailure(serviceStatus,rejection.message,rejection.diagnostic_code);}
+   else if(serviceStatus==='REQUEST_DENIED'){const rejection=geocodingRejection(data.error_message);serviceFailure(serviceStatus,rejection.message,rejection.diagnostic_code);googleDeniedUntil=Date.now()+GOOGLE_DENIED_TTL_MS;googleDeniedService=geocodingService;}
    else if(serviceStatus!=='OK')serviceFailure(serviceStatus,serviceStatus==='OVER_QUERY_LIMIT'||serviceStatus==='OVER_DAILY_LIMIT'?'Google Geocoding reached its service limit. Try again later or ask an administrator to check quota and billing.':serviceStatus==='INVALID_REQUEST'?'The map service rejected the lookup request. An administrator needs to check the request setup.':'The map location service is temporarily unavailable. Try again later.');
    if(geocodingService)await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});
-   if(data.status==='OK'&&data.results?.length){const g=data.results[0];geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:strictGeocode(data.results,address),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
-  }catch{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}
+   if(data.status==='OK'&&data.results?.length){googleDeniedUntil=0;googleDeniedService=null;const g=data.results[0];geocode={lat:g.geometry?.location?.lat,lon:g.geometry?.location?.lng,display_name:g.formatted_address,location_exact:strictGeocode(data.results,address),address_parts:(g.address_components || []).reduce((a:any,c:any)=>{for(const t of c.types || [])a[t]=c.long_name;return a;},{})};}
+  }catch(err:any){if(err?.code==='GOOGLE_DENIED_COOLDOWN'){geocodingService=googleDeniedService||geocodingService||{status:'REQUEST_DENIED',issue:true,message:'Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing. You do not need to re-enter this address.'};await reporter.emit({kind:'geocode_service_result',detail:'Google Geocoding is still denied from the last check; trying the free locators first.'});await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding skipped during denial cooldown: ${geocodingService.message}`});}else{if(!geocodingService)serviceFailure('UNAVAILABLE','The map location service could not be reached. Try again later; no jurisdiction has been selected.');await reporter.emit({kind:'geocode_failed',detail:`Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}`});}}
   // Browser-resolved Census hint: the worker cannot reach census.gov (its fetch
  // hangs until abort), so the client geocodes via the browser and resubmits.
  const hint=body?.census_hint;
