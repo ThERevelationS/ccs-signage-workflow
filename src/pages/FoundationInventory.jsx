@@ -366,7 +366,7 @@ export default function FoundationInventoryPage({ embedded = false }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const user = await base44.auth.me();
+      const user = await base44.auth.me().catch(() => null);
       setIsAdmin(user?.role === 'admin');
     };
     checkAuth();
