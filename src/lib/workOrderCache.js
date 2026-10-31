@@ -110,7 +110,11 @@ if (boardChannel) {
 }
 // A full re-sync on a timer is the safety net for hard deletes and any row a
 // delta pass could not surface; delta sync alone cannot observe removals.
-const FULL_RESYNC_MS = 10 * 60 * 1000;
+// Full resyncs re-pull the entire table (~3.1k rows) and are the dominant
+// entity-read volume for warm sessions. 30 minutes keeps the board honest
+// while cutting steady-state feed traffic ~3x vs the old 10-minute cadence;
+// a truncated delta still forces a resync immediately.
+const FULL_RESYNC_MS = 30 * 60 * 1000;
 
 const rowUpdatedDate = (row) => String(row?.updated_date || row?.created_date || "");
 
