@@ -136,8 +136,10 @@ export default function UserSettingsTab({ currentUser, sessionToken: sessionToke
         </div>
       </div>
 
-      {/* Time Tracker Section (salary employees) */}
-      <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
+      {/* Time Tracker Section (salary employees) — anchor target for the Settings Center "Time Clock" pointer */}
+      <div id="time-tracker-settings" className="scroll-mt-4">
+        <TimeTrackerSettings currentUser={currentUser} sessionToken={sessionToken} />
+      </div>
 
       {/* Face Enrollment Dialog */}
       <FaceEnrollmentDialog
