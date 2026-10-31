@@ -140,6 +140,7 @@ const EXPECTED_ROUTES = {
   po: ['/PurchaseOrders', 'po'],
   customer: ['/Customer360', 'id'],
   opportunity: ['/Opportunities', 'open'],
+  changeorder: ['/ChangeOrders', 'co'],
 };
 assert.deepEqual(Object.keys(RECORD_ROUTES).sort(), Object.keys(EXPECTED_ROUTES).sort());
 for (const [kind, [path, param]] of Object.entries(EXPECTED_ROUTES)) {
