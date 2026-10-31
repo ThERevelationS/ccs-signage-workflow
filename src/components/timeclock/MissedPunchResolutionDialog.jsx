@@ -16,6 +16,76 @@ import {
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
 
+// Kiosk-friendly missed-clock-out picker: most "forgot to clock out" claims
+// are "yesterday at shift end". Day chips + big time buttons cover that in two
+// taps; the native datetime input stays behind a toggle for odd cases.
+const SHIFT_END_TIMES = ["15:30", "16:00", "16:30", "17:00", "17:30", "18:00"];
+function TimeQuickPick({ value, onChange, disabled, clockIn }) {
+  const [dayOffset, setDayOffset] = useState(1); // 1 = yesterday
+  const [showCustom, setShowCustom] = useState(false);
+  const clockInDate = clockIn ? new Date(clockIn) : null;
+  const clockInDay = clockInDate && !isNaN(clockInDate) ? Math.floor((Date.now() - clockInDate.getTime()) / 86400000) : null;
+  const maxDay = clockInDay != null ? Math.min(7, clockInDay) : 7;
+
+  const emit = (offset, time) => {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    const [h, m] = time.split(":").map(Number);
+    d.setHours(h, m, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    onChange(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(h)}:${pad(m)}`);
+  };
+
+  const chips = [];
+  for (let d = 1; d <= Math.max(1, maxDay); d += 1) chips.push(d);
+
+  return (
+    <div className="mt-3">
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map((d) => (
+          <button key={d} type="button" disabled={disabled} onClick={() => { setDayOffset(d); setShowCustom(false); }}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${dayOffset === d && !showCustom ? "border-amber-600 bg-amber-600 text-white" : "border-slate-300 bg-white text-slate-700 hover:border-amber-400"}`}>
+            {d === 1 ? "Yesterday" : d === 2 ? "2 days ago" : `${d} days ago`}
+          </button>
+        ))}
+      </div>
+      {!showCustom && (
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {SHIFT_END_TIMES.map((t) => {
+            const [h, m] = t.split(":").map(Number);
+            const hr12 = h > 12 ? h - 12 : h;
+            return (
+              <button key={t} type="button" disabled={disabled} onClick={() => emit(dayOffset, t)}
+                className="rounded-lg border border-slate-300 bg-white py-2 text-sm font-semibold text-slate-700 hover:border-amber-500 hover:bg-amber-50 disabled:opacity-50">
+                {hr12}:{String(m).padStart(2, "0")} PM
+              </button>
+            );
+          })}
+          <button type="button" disabled={disabled} onClick={() => setShowCustom(true)}
+            className="rounded-lg border border-dashed border-slate-300 py-2 text-xs font-medium text-slate-500 hover:border-amber-400">
+            Other time…
+          </button>
+        </div>
+      )}
+      {showCustom && (
+        <Input
+          id="missed-clock-out-time"
+          type="datetime-local"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="mt-2 bg-white dark:bg-slate-900"
+        />
+      )}
+      {value && !showCustom && (
+        <p className="mt-1.5 text-xs font-medium text-amber-800">
+          Stopping at {new Date(value.replace("T", " ")).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function MissedPunchResolutionDialog({
   open,
   entry,
@@ -100,16 +170,11 @@ export default function MissedPunchResolutionDialog({
             <Label htmlFor="missed-clock-out-time" className="font-semibold text-slate-900 dark:text-slate-100">
               I forgot to Clock Out — when did you actually stop working? ({TIME_CLOCK_COMPANY_TIME_LABEL})
             </Label>
-            <Input
-              id="missed-clock-out-time"
-              type="datetime-local"
+            <TimeQuickPick
               value={claimedClockOut}
-              onChange={(event) => {
-                setClaimedClockOut(event.target.value);
-                setLocalError("");
-              }}
+              onChange={(v) => { setClaimedClockOut(v); setLocalError(""); }}
               disabled={busy || resolution?.self_service_blocked}
-              className="mt-3 bg-white dark:bg-slate-900"
+              clockIn={entry?.clock_in}
             />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
               Enter the actual shop/company time in {TIME_CLOCK_COMPANY_TIME_LABEL}. This closes the old shift operationally, creates a manager-review correction for the time you enter, and then lets you Clock In now using server time.
