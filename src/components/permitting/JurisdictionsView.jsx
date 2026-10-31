@@ -463,11 +463,11 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
               </div>
               <div className="mt-1.5 space-y-1">
                 {[
-                  "County ≠ city ≠ township ≠ village — the office depends on the type, not the name",
-                  "Type the job's full street address — the tool checks the real boundaries",
-                  "Verified (green dot) means a source page confirmed it — gray means unverified",
-                  "If the office can't be found, the job goes to the county's office",
-                  "Save the office's phone + portal link on the jurisdiction after you call",
+                  "A county office is not the same as a city, township, or village office — even when the names match",
+                  "Type the job's full street address — the tool checks which town it's really in",
+                  "Green dot means our team checked the office — gray means nobody checked it yet",
+                  "If no town office is found, the county's office handles the permit",
+                  "After you call an office, save its phone number here so the next person has it",
                 ].map((item, idx) => (
                   <label key={idx} className="flex cursor-pointer items-start gap-2 text-[11px] text-indigo-800">
                     <input type="checkbox" checked={onboardingDone.includes(idx)} onChange={() => toggleOnboarding(idx)} className="mt-0.5" />
