@@ -269,11 +269,11 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
 }
 
 function HealthRing({ health }) {
-  if (health?.score == null) return <div className="h-14 w-14 rounded-full border-4 border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center shrink-0"><span className="text-[10px] font-bold text-gray-500">N/A</span><span className="text-[8px] text-gray-400">Health</span></div>;
+  if (health?.score == null) return <div className="h-14 w-14 rounded-full border-4 border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center shrink-0"><span className="text-[10px] font-bold text-gray-500">N/A</span><span className="text-[9px] text-gray-400">Health</span></div>;
   const color = health.score >= 90 ? "#059669" : health.score >= 75 ? "#16a34a" : health.score >= 60 ? "#d97706" : "#dc2626";
   return <div className="relative h-14 w-14 shrink-0" title={`${health.label} Fleet health · ${health.signals.join(" · ")}`}>
     <svg viewBox="0 0 44 44" className="h-14 w-14 -rotate-90" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="4" className="text-gray-200 dark:text-slate-700" /><circle cx="22" cy="22" r="18" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeDasharray={`${health.score * 1.131} 113.1`} /></svg>
-    <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-sm font-bold text-gray-900 dark:text-slate-100">{health.score}</span><span className="text-[8px] text-gray-400">Health</span></div>
+    <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-sm font-bold text-gray-900 dark:text-slate-100">{health.score}</span><span className="text-[9px] text-gray-400">Health</span></div>
   </div>;
 }
 
