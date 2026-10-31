@@ -31,7 +31,7 @@ import {
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const STAGES = [

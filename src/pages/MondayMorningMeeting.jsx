@@ -22,7 +22,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, mutateWorkOrderArrayField, mutateLocatedWorkOrderArrayItem } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 // Helper to parse date string as local date

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +54,7 @@ export default function AdminCalendarSettings() {
           settingKey: "calendarSettings",
           label: "Calendar settings",
         }),
-        base44.entities.WorkOrder.list("-created_date", 150).catch(() => []),
+        staffEntities.WorkOrder.list("-created_date", 150).catch(() => []),
       ]);
       setEvents(evs || []);
       setWorkOrders((wos || []).filter((w) => !w.deleted));

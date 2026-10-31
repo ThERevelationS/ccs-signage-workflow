@@ -992,50 +992,23 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__workorder_backend_only__"
+      }
     },
     "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__workorder_backend_only__"
+      }
     },
     "update": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__workorder_backend_only__"
+      }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__workorder_backend_only__"
       }
     }
   }
