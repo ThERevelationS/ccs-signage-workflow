@@ -118,8 +118,11 @@ async function findByCreationKey(entity: any, key: string) {
 async function recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor }: any) {
   const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
   if (!Array.isArray(payments)) throw bad("Payment lookup failed while updating the invoice.", 500);
+  // Counted ledger rows: positive payments and negative credit-memo rows stay
+  // "recorded"; refund rows carry "refunded". All net into amount_paid so
+  // credits/refunds reopen balance_due without deleting any record.
   const amountPaid = money(payments
-    .filter((p: any) => clean(p?.status) === "recorded")
+    .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status)))
     .reduce((s: number, p: any) => s + num(p?.amount), 0));
   const invoice = await Invoice.get(invoiceId);
   if (!invoice?.id) throw bad("The invoice no longer exists.", 409);
@@ -831,8 +834,16 @@ Deno.serve(async (req) => {
       if (!current?.id) throw bad("Invoice not found.", 404);
       if (clean(current.status) === "void") throw bad("Invoice is already void.", 409);
       const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
-      if (Array.isArray(payments) && payments.some((p: any) => clean(p?.status) === "recorded")) {
-        throw bad("Void the recorded payments before voiding this invoice.", 409);
+      // Guard on the net collected balance rather than row presence — a payment
+      // fully offset by credit-memo or refund rows nets to zero and no longer
+      // blocks the void. Any money still held does.
+      const netCollected = Array.isArray(payments)
+        ? money(payments
+            .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status)))
+            .reduce((s: number, p: any) => s + num(p?.amount), 0))
+        : 0;
+      if (netCollected > 0.005) {
+        throw bad("Refund or void the collected payments before voiding this invoice.", 409);
       }
       const desired = {
         status: "void",
@@ -891,7 +902,15 @@ Deno.serve(async (req) => {
       const paymentId = clean(body?.payment_id);
       const payment = await Payment.get(paymentId).catch(() => null);
       if (!payment?.id) throw bad("Payment not found.", 404);
-      if (clean(payment.status) !== "recorded") throw bad("Only recorded payments can be voided.", 409);
+      const status = clean(payment.status);
+      // A fully-refunded original (positive row flipped to "refunded") cannot be
+      // voided while its refund rows still point at it — void the refund row.
+      if (status === "refunded" && !clean(payment.refund_of_payment_id)) {
+        throw bad("Fully refunded payments cannot be voided — void the refund row to restore the balance.", 409);
+      }
+      if (!["recorded", "refunded"].includes(status)) {
+        throw bad("Only recorded payments or refund rows can be voided.", 409);
+      }
       const desired = {
         status: "void",
         void_reason: clean(body?.void_reason),
@@ -901,8 +920,198 @@ Deno.serve(async (req) => {
       await replaceFoundationFieldsIfUnchanged({
         entity: Payment, recordId: paymentId, expectedFields: expected, nextFields: desired, label: "Payment void",
       });
+      // Voiding a refund row restores the original payment's refundable amount
+      // (and flips it back to "recorded" if it had been marked fully refunded).
+      const originId = clean(payment.refund_of_payment_id);
+      if (status === "refunded" && originId) {
+        const original = await Payment.get(originId).catch(() => null);
+        if (original?.id) {
+          const restored = Math.max(0, money(num(original.refunded_amount) + num(payment.amount)));
+          const origDesired: any = { refunded_amount: restored };
+          if (clean(original.status) === "refunded" && restored < num(original.amount) - 0.005) {
+            origDesired.status = "recorded";
+          }
+          const origExpected = expectedFoundationFields(original, origDesired);
+          await replaceFoundationFieldsIfUnchanged({
+            entity: Payment, recordId: clean(original.id), expectedFields: origExpected, nextFields: origDesired,
+            label: "Payment refund reversal",
+          });
+        }
+      }
       const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId: clean(payment.invoice_id), actor });
       return Response.json({ success: true, action, invoice: updated });
+    }
+
+    if (action === "issue_credit_memo") {
+      // A credit memo is a negative "recorded" Payment row (method credit_memo)
+      // — it reopens the invoice balance while preserving the payment trail.
+      const invoiceId = clean(body?.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("Invoice not found.", 404);
+      if (clean(invoice.status) === "void") throw bad("Void invoices cannot be credited.", 409);
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
+      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const creditKey = clean(body?.creation_request_key) || `credit:${invoiceId}:${Date.now()}`;
+      // Net money held, excluding any row this same request already wrote so a
+      // retried call does not trip its own over-credit validation.
+      const netHeld = money(payments
+        .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status))
+          && clean(p?.creation_request_key) !== creditKey)
+        .reduce((s: number, p: any) => s + num(p?.amount), 0));
+      if (!(netHeld > 0)) throw bad("Nothing collected on this invoice to credit.", 409);
+      const requested = num(body?.amount, NaN);
+      const amount = Number.isFinite(requested) ? money(requested) : netHeld;
+      if (!(amount > 0)) throw bad("Credit amount must be positive.");
+      if (amount - netHeld > 0.005) {
+        throw bad(`Credit exceeds the collected amount of $${money(netHeld).toFixed(2)}.`, 409);
+      }
+      const reason = clean(body?.reason);
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Payment,
+        data: {
+          creation_request_key: creditKey,
+          invoice_id: invoiceId,
+          customer_id: clean(invoice.customer_id),
+          opportunity_id: clean(invoice.opportunity_id),
+          estimate_id: clean(invoice.estimate_id),
+          work_order_id: clean(invoice.work_order_id),
+          amount: money(-amount),
+          method: "credit_memo",
+          reference_number: clean(body?.reference_number),
+          paid_date: today(),
+          status: "recorded",
+          notes: reason ? `Credit memo: ${reason}` : "Credit memo",
+          created_by: actor,
+        },
+        readMatches: () => findByCreationKey(Payment, creditKey),
+        label: "Credit memo",
+      });
+      const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor });
+      return Response.json({ success: true, action, credit_memo: createdResult.record, credited_amount: amount, invoice: updated });
+    }
+
+    if (action === "refund_payment") {
+      // A refund is a negative "refunded" Payment row linked to the original via
+      // refund_of_payment_id. The original payment is never deleted — its
+      // refunded_amount accumulates and it flips to "refunded" only when fully
+      // returned, keeping the whole trail auditable.
+      const paymentId = clean(body?.payment_id);
+      const payment = await Payment.get(paymentId).catch(() => null);
+      if (!payment?.id) throw bad("Payment not found.", 404);
+      if (clean(payment.status) !== "recorded" || !(num(payment.amount) > 0)) {
+        throw bad("Only recorded payments can be refunded.", 409);
+      }
+      const invoiceId = clean(payment.invoice_id);
+      const invoice = await Invoice.get(invoiceId).catch(() => null);
+      if (!invoice?.id) throw bad("The invoice this payment applied to no longer exists.", 409);
+      if (clean(invoice.status) === "void") throw bad("Void invoices cannot be refunded.", 409);
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
+      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const refundKey = clean(body?.creation_request_key) || `refund:${paymentId}:${Date.now()}`;
+      // Sum existing refund rows for this payment, excluding any row this same
+      // request already wrote (retry-safe under creation_request_key).
+      const alreadyRefunded = money(payments
+        .filter((p: any) => clean(p?.refund_of_payment_id) === paymentId
+          && ["recorded", "refunded"].includes(clean(p?.status))
+          && clean(p?.creation_request_key) !== refundKey)
+        .reduce((s: number, p: any) => s + Math.abs(num(p?.amount)), 0));
+      const paymentRemaining = money(num(payment.amount) - alreadyRefunded);
+      // Also cap by the invoice's net collected balance so a refund cannot
+      // stack on top of a credit memo against the same dollars.
+      const netHeld = money(payments
+        .filter((p: any) => ["recorded", "refunded"].includes(clean(p?.status))
+          && clean(p?.creation_request_key) !== refundKey)
+        .reduce((s: number, p: any) => s + num(p?.amount), 0));
+      const refundable = money(Math.min(paymentRemaining, Math.max(0, netHeld)));
+      if (!(refundable > 0)) throw bad("This payment is already fully refunded or credited.", 409);
+      const requested = num(body?.amount, NaN);
+      const amount = Number.isFinite(requested) ? money(requested) : refundable;
+      if (!(amount > 0)) throw bad("Refund amount must be positive.");
+      if (amount - refundable > 0.005) {
+        throw bad(`Refund exceeds the refundable amount of $${money(refundable).toFixed(2)}.`, 409);
+      }
+      const reason = clean(body?.reason);
+      const createdResult = await createFoundationRecordWithRecovery({
+        entity: Payment,
+        data: {
+          creation_request_key: refundKey,
+          invoice_id: invoiceId,
+          customer_id: clean(payment.customer_id) || clean(invoice.customer_id),
+          opportunity_id: clean(payment.opportunity_id) || clean(invoice.opportunity_id),
+          estimate_id: clean(payment.estimate_id) || clean(invoice.estimate_id),
+          work_order_id: clean(payment.work_order_id) || clean(invoice.work_order_id),
+          amount: money(-amount),
+          method: clean(payment.method) || "other",
+          reference_number: clean(payment.reference_number),
+          paid_date: today(),
+          status: "refunded",
+          refund_of_payment_id: paymentId,
+          notes: reason ? `Refund: ${reason}` : `Refund on ${clean(invoice.invoice_number) || invoiceId}`,
+          created_by: actor,
+        },
+        readMatches: () => findByCreationKey(Payment, refundKey),
+        label: "Payment refund",
+      });
+      // Mark the original payment's cumulative refunded_amount (flips it to
+      // "refunded" at full return). Anchored CAS keeps concurrent refunds honest.
+      const nextRefunded = money(Math.min(num(payment.amount), alreadyRefunded + amount));
+      const origDesired: any = { refunded_amount: Math.max(num(payment.refunded_amount), nextRefunded) };
+      if (origDesired.refunded_amount >= num(payment.amount) - 0.005) origDesired.status = "refunded";
+      const origExpected = expectedFoundationFields(payment, origDesired);
+      await replaceFoundationFieldsIfUnchanged({
+        entity: Payment, recordId: paymentId, expectedFields: origExpected, nextFields: origDesired,
+        label: "Payment refund mark",
+      });
+      // Restock: real only when invoice lines reference inventory items. No
+      // linkage exists in the data model today, so the honest result is an
+      // explanatory note — never a fake movement.
+      const restock: any = { requested: body?.restock === true, performed: false, movements: [], note: "" };
+      if (restock.requested) {
+        const lines = Array.isArray(invoice.line_items) ? invoice.line_items : [];
+        const restockable = lines
+          .map((li: any) => ({ itemId: clean(li?.inventory_item_id || li?.item_id), qty: num(li?.quantity) }))
+          .filter((r: any) => r.itemId && r.qty > 0);
+        if (restockable.length === 0) {
+          restock.note = "No restock performed: invoice line items do not reference inventory items, so no stock could be returned. TODO: when line items carry inventory_item_id, refunds write InventoryMovement return rows automatically.";
+        } else {
+          const Inventory = base44.asServiceRole.entities.Inventory;
+          const Movement = base44.asServiceRole.entities.InventoryMovement;
+          for (const r of restockable) {
+            const item = await Inventory.get(r.itemId).catch(() => null);
+            if (!item?.id) continue;
+            const next = money(num(item.quantity_on_hand) + r.qty);
+            const invExpected = expectedFoundationFields(item, { quantity_on_hand: next });
+            await replaceFoundationFieldsIfUnchanged({
+              entity: Inventory, recordId: clean(item.id), expectedFields: invExpected,
+              nextFields: { quantity_on_hand: next }, label: "Refund restock",
+            });
+            const itemLabel = [item.material_type, item.product_type, item.size].map((v: any) => clean(v)).filter(Boolean).join(" · ");
+            const moveKey = `${refundKey}:restock:${r.itemId}`.slice(0, 256);
+            const moveResult = await createFoundationRecordWithRecovery({
+              entity: Movement,
+              data: {
+                creation_request_key: moveKey,
+                item_id: clean(item.id),
+                item_label: itemLabel,
+                reason: "return",
+                delta: money(r.qty),
+                unit_cost: num(item.cost_per_unit),
+                resulting_qty: next,
+                work_order_id: clean(invoice.work_order_id),
+                note: `Refund restock — ${clean(invoice.invoice_number) || invoiceId}`,
+                created_by: actor,
+              },
+              readMatches: async () => Movement.filter({ creation_request_key: moveKey }, undefined, 500),
+              label: "Refund restock movement",
+            });
+            restock.movements.push(moveResult.record);
+          }
+          restock.performed = restock.movements.length > 0;
+          if (!restock.performed) restock.note = "Restock requested but no linked inventory items could be loaded.";
+        }
+      }
+      const updated = await recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor });
+      return Response.json({ success: true, action, refund: createdResult.record, refunded_amount: amount, restock, invoice: updated });
     }
 
     throw bad(`Unsupported action "${action}".`);
