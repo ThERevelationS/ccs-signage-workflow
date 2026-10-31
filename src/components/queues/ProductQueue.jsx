@@ -496,22 +496,26 @@ export default function ProductQueue({
             <option value="all">All</option>{distinct("designer").map((d) => <option key={d} value={d}>{d}</option>)}
           </FilterSelect>
         </FilterField>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Responsibility</span>
-          <select className={sel} value={filters.responsibility} onChange={(e) => set("responsibility", e.target.value)}>
+        <FilterField label="Responsibility">
+          <FilterSelect value={filters.responsibility} onChange={(e) => set("responsibility", e.target.value)}>
             <option value="all">All</option>{distinct("responsibility").map((d) => <option key={d} value={d}>{d}</option>)}
-          </select></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Assigned To</span>
-          <select className={sel} value={filters.assignedTo} onChange={(e) => set("assignedTo", e.target.value)}>
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Assigned To">
+          <FilterSelect value={filters.assignedTo} onChange={(e) => set("assignedTo", e.target.value)}>
             <option value="all">All</option>{distinct("assignedTo").map((d) => <option key={d} value={d}>{d}</option>)}
-          </select></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Category</span>
-          <select className={sel} value={filters.category} onChange={(e) => set("category", e.target.value)}>
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Category">
+          <FilterSelect value={filters.category} onChange={(e) => set("category", e.target.value)}>
             <option value="all">All</option>{distinct("category").map((d) => <option key={d} value={d}>{d}</option>)}
-          </select></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Due</span>
-          <select className={sel} value={filters.duePreset} onChange={(e) => set("duePreset", e.target.value)}>
+          </FilterSelect>
+        </FilterField>
+        <FilterField label="Due">
+          <FilterSelect value={filters.duePreset} onChange={(e) => set("duePreset", e.target.value)}>
             {DUE_PRESETS.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
-          </select></label>
+          </FilterSelect>
+        </FilterField>
         <label className="flex flex-col gap-0.5"><span className={lab}>Search</span>
           <input className={sel} value={filters.search} onChange={(e) => set("search", e.target.value)} /></label>
         <label className="flex flex-col gap-0.5"><span className={lab}>Per page</span>
