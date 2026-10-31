@@ -3,6 +3,7 @@ import { Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pickEditableFields, savePricingChanges, PRICING_EDITABLE_FIELDS } from "@/components/pricing/pricingPersistence";
+import { EmptyState } from "@/components/kit";
 
 // Generic dirty-tracking CRUD grid for the flat pricing entities (LaborLevel,
 // MachineRate). Same save semantics as PricingMatrixTable: edits stay local,
@@ -135,8 +136,14 @@ export default function PricingCrudTable({ entityName, title, hint, columns, row
           </thead>
           <tbody>
             {live.length === 0 && (
-              <tr><td colSpan={columns.length + 1} className="px-4 py-6 text-center text-[11px] text-gray-400">
-                No rows yet — or the entity is not yet allowlisted in the staff gateways.
+              <tr><td colSpan={columns.length + 1} className="p-0">
+                <EmptyState
+                  compact
+                  title="No rows yet"
+                  message="Rows may also be gated until the entity is allowlisted in the staff gateways."
+                  actionLabel="Add row"
+                  onAction={() => setDrafts((p) => [...p, { _key: newDraftKey(), _original: null, ...newRow() }])}
+                />
               </td></tr>
             )}
             {live.map((d) => (
