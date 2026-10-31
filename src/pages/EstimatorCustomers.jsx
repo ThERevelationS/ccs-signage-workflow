@@ -464,8 +464,8 @@ export default function EstimatorCustomers() {
         if (!tierNumber || !tierName) throw new Error(`Every tier needs tier_number + tier_name (got ${JSON.stringify(row).slice(0, 80)}).`);
         const data = { tier_number: tierNumber, tier_name: tierName, markups, sort_order: Number(row.sort_order) || tierNumber };
         const existing = byNumber.get(tierNumber);
-        if (existing?.id) { await staffEntities.update("MarkupTier", existing.id, data); updated += 1; }
-        else { await staffEntities.create("MarkupTier", data); created += 1; }
+        if (existing?.id) { await staffEntities.MarkupTier.update(existing.id, data); updated += 1; }
+        else { await staffEntities.MarkupTier.create(data); created += 1; }
       }
       await load();
       window.alert(`Pricing tiers imported — ${created} created, ${updated} updated.`);
