@@ -1,4 +1,4 @@
-import { Layers, Link2, Save, RefreshCw, Copy, GitMerge } from "lucide-react";
+import { Layers, Link2, Save, RefreshCw, Copy, GitMerge, PencilLine } from "lucide-react";
 
 export default function AioEstimateHeader({
   status = "draft",
@@ -9,6 +9,8 @@ export default function AioEstimateHeader({
   subtitle = "One page, one set of project info, every estimator.",
   metaRight,
   readOnly = false,
+  onEdit = null,
+  editStarting = false,
   onDuplicate,
   duplicating = false,
   onMerge,
@@ -72,15 +74,28 @@ export default function AioEstimateHeader({
             <Copy className="w-4 h-4" />
           </button>
         )}
-        <button type="button"
-          onClick={onSave}
-          disabled={saving || readOnly}
-          aria-busy={saving}
-          aria-live="polite"
-          className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
-        >
-          <Save className="w-4 h-4" aria-hidden="true" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
-        </button>
+        {readOnly && onEdit ? (
+          <button type="button"
+            onClick={onEdit}
+            disabled={editStarting}
+            aria-busy={editStarting}
+            aria-live="polite"
+            title="Open a recorded revision and edit this estimate"
+            className="h-9 px-4 rounded bg-amber-500 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-amber-600 disabled:opacity-60"
+          >
+            <PencilLine className="w-4 h-4" aria-hidden="true" /> {editStarting ? "Opening…" : "Edit"}
+          </button>
+        ) : (
+          <button type="button"
+            onClick={onSave}
+            disabled={saving || readOnly}
+            aria-busy={saving}
+            aria-live="polite"
+            className="h-9 px-4 rounded bg-gray-800 text-white text-[13px] font-semibold flex items-center gap-2 hover:bg-gray-900 disabled:opacity-60"
+          >
+            <Save className="w-4 h-4" aria-hidden="true" /> {readOnly ? "Protected" : saving ? "Saving…" : "Save"}
+          </button>
+        )}
       </div>
     </div>
   );
