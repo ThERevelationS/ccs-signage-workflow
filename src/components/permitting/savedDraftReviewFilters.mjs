@@ -8,7 +8,7 @@ export function savedReviewDecision(step) {
 export function savedFollowUpAreas(step) {
   const flags = step?.staff_review?.follow_up || {};
   const known = PLANNING_FOLLOW_UP_AREAS.filter(([key]) => flags[key] === true).map(([, label]) => label);
-  if (Object.entries(flags).some(([key, value]) => value === true && !PLANNING_FOLLOW_UP_AREAS.some(([area]) => area === key))) known.push('Other recorded area');
+  if (Object.entries(flags).some(([key, value]) => value === true && !PLANNING_FOLLOW_UP_AREAS.some(([area]) => area === key))) known.push('Something else');
   return known;
 }
 const includes = (value, query) => String(value ?? '').toLowerCase().includes(query);
