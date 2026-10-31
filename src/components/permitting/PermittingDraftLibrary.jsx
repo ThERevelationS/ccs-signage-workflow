@@ -52,7 +52,7 @@ export default function PermittingDraftLibrary({ onClose }) {
   return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-2 sm:p-4">
     <section role="dialog" aria-modal="true" aria-labelledby="draft-library-title" className="flex max-h-[95dvh] w-full min-w-0 max-w-4xl flex-col rounded-2xl bg-white shadow-xl">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b p-3 sm:p-4">
-        <div><h2 id="draft-library-title" ref={heading} tabIndex={-1} className="text-lg font-bold">Permitting workflow drafts</h2><p className="text-sm text-gray-600">Saved proposals · not approved requirements or active job work</p></div>
+        <div><h2 id="draft-library-title" ref={heading} tabIndex={-1} className="text-lg font-bold">Permitting workflow drafts</h2><p className="text-sm text-gray-600">Saved drafts — nothing here is final or filed yet</p></div>
         <Button variant="outline" className="min-h-11" onClick={onClose}>Close library</Button>
       </header>
       <div className="min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3">
@@ -65,9 +65,9 @@ export default function PermittingDraftLibrary({ onClose }) {
           <label className="min-w-0 text-sm"><span className="mb-1 block font-medium">Planning review decision</span><select aria-label="Filter planning review decision" value={decision} onChange={event => setDecision(event.target.value)} className="min-h-11 w-full min-w-0 rounded-md border bg-white px-3"><option value="all">All planning decisions</option>{PLANNING_REVIEW_DECISIONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}<option value="unrecognized">Unrecognized saved decision</option></select></label>
           <label className="min-w-0 text-sm"><span className="mb-1 block font-medium">Open follow-up area</span><select aria-label="Filter open follow-up area" value={area} onChange={event => setArea(event.target.value)} className="min-h-11 w-full min-w-0 rounded-md border bg-white px-3"><option value="all">All follow-up areas</option><option value="any">Any recorded open area</option>{PLANNING_FOLLOW_UP_AREAS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         </div>
-        <p className="text-xs text-gray-600">All filters apply to loaded snapshots only. Decision and follow-up area must match the same saved step. Search covers draft fields and matching step/review notes. Saved ancestors and sibling branches remain separate; no single current revision is inferred.</p>
+        <p className="text-xs text-gray-600">Filters only cover the drafts loaded below — load more to search older ones.</p>
         {loading ? <p role="status">Loading saved drafts…</p> : error ? <div role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">{error}</div> : <>
-          <p className="text-xs text-gray-600">{visible.length} shown from {rows.length} loaded drafts. Search and all filters cover loaded drafts only. Matching steps within shown snapshots: {visible.reduce((count, view) => count + view.matchingSteps.length, 0)}. These are per-snapshot counts, not unique projects or statewide coverage.</p>
+          <p className="text-xs text-gray-600">Showing {visible.length} of {rows.length} loaded drafts{visible.length !== rows.length ? " — search and filters only cover what's loaded" : ""}.</p>
           {rows.length === 0 ? <div className="rounded-lg border p-5"><h3 className="font-semibold">No saved workflows yet</h3><p className="text-sm text-gray-600">Open a jurisdiction, choose the AI workflow designer, review the proposal and save a permitting draft.</p></div> : visible.length === 0 ? <p>No drafts match these filters.</p> : visible.map(({ row, steps, summary, matchingSteps }) => {
             const valid = row.snapshot && Array.isArray(row.snapshot.steps) && row.snapshot.jurisdiction;
             const gaps = (row.snapshot?.gaps?.length || 0) + steps.filter(s => s.basis !== 'approved_rule').length;
