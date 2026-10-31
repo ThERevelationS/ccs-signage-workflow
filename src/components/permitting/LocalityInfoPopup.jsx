@@ -19,14 +19,14 @@ export default function LocalityInfoPopup({ locality, isOpen, onClose }) {
         <div className="space-y-3">
           {locality.governing_body && (
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">Governing Body</p>
+              <p className="text-xs text-gray-500 mb-0.5">Who runs it</p>
               <p className="text-sm font-medium">{locality.governing_body}</p>
             </div>
           )}
 
           {locality.office_type && (
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">Office Type</p>
+              <p className="text-xs text-gray-500 mb-0.5">Kind of office</p>
               <p className="text-sm">{locality.office_type}</p>
             </div>
           )}
