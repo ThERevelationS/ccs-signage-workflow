@@ -41,6 +41,17 @@ import {
 } from "./savedViewsModel";
 import ProofPanel from "@/components/proofs/ProofPanel";
 import {
+  DataTableShell,
+  FilterBar,
+  FilterField,
+  FilterSearchInput,
+  FilterSelect,
+  RecordLink,
+  StatusChip,
+  filterInputCls,
+} from "@/components/kit";
+import { cn } from "@/lib/utils";
+import {
   buildNotifyContext,
   resolveCustomerEmail,
   statusGateAllows,
@@ -62,27 +73,13 @@ import {
 
 export { flattenQueueRows };
 
-const norm = (v) => String(v || "").trim().toLowerCase();
-
 const STATUS_OPTIONS = OPERATIONAL_STATUS_VALUES.filter((s) => s !== "none");
 const FULFILLMENT_OPTIONS = FULFILLMENT_STATE_VALUES.filter((s) => s !== "none");
 const PROOF_OPTIONS = PROOF_STATUS_VALUES.filter((s) => s !== "none");
 
-const badge = (text, tone) => (
-  <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${tone}`}>{text}</span>
-);
-const TONE = {
-  estimate: "bg-sky-100 text-sky-800", wip: "bg-amber-100 text-amber-800",
-  built: "bg-violet-100 text-violet-800", done: "bg-emerald-100 text-emerald-800",
-  blocked: "bg-rose-100 text-rose-800", muted: "bg-gray-100 text-gray-600",
-};
-const statusTone = (s) => {
-  s = norm(s);
-  if (["awaiting_customer_action", "awaiting_proof_approval"].includes(s)) return TONE.blocked;
-  if (["proof_approved", "in_production", "quality_control"].includes(s)) return TONE.wip;
-  if (["permitting", "site_survey", "order_review", "design_review", "in_design"].includes(s)) return TONE.estimate;
-  return TONE.muted;
-};
+// Status pills come from the shared kit (StatusChip + statusTones) -- one
+// tone vocabulary app-wide; the customer-facing label is passed through so
+// OPERATIONAL_STATUS_CUSTOMER_LABELS still drives the wording.
 
 const NO_ID_TOOLTIP = "Product has no id — reopen the Work Order to repair it";
 
