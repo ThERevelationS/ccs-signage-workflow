@@ -136,7 +136,11 @@ export default function WorkPauseOverlay({
     setPauseStateScope("");
     setShowResumePrompt(false);
     setError("");
-    loadStatus({ preservePausedOnError: false });
+    // The first status read yields to the page's own data on mount; a paused
+    // overlay appearing a beat later is preferable to delaying the board.
+    const initialStatusTimer = setTimeout(() => {
+      loadStatus({ preservePausedOnError: false });
+    }, 1200);
     // Hidden tabs and an open 429 breaker skip the poll; the visibility
     // handler refreshes on return.
     const interval = setInterval(() => { if (!document.hidden && !isFleetCoolingDown()) loadStatus(); }, 60000);
@@ -183,6 +187,7 @@ export default function WorkPauseOverlay({
       statusSequenceRef.current += 1;
       resumeSequenceRef.current += 1;
       resumeInFlightRef.current = false;
+      clearTimeout(initialStatusTimer);
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
