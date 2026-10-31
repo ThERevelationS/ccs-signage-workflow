@@ -3,7 +3,7 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 8 Ionos SMTP next (sendSmtpEmail/provider switch, reply_to, Deno.env creds).
+Phase 9 UI surface kit + design pass next (kit primitives + per-surface alignment + Playwright visual pass).
 
 ## Phase status
 | Phase | Status | Checkpoint |
@@ -16,7 +16,7 @@ Phase 8 Ionos SMTP next (sendSmtpEmail/provider switch, reply_to, Deno.env creds
 | 5 alerts | DONE | 6ae6051856c573ac5de4c89d |
 | 6 scale | DONE | 6ae60c29+6ae60e6c |
 | 7 financial | DONE | 6ae612ff/6ae61474/6ae6156f+parent |
-| 8 smtp | — | — |
+| 8 smtp | DONE | 6ae61923+deploy |
 | 9 ui kit | — | — |
 | 10 migration | — | — |
 | 11 verify | — | — |
@@ -35,3 +35,4 @@ Phase 8 Ionos SMTP next (sendSmtpEmail/provider switch, reply_to, Deno.env creds
 - Phase 7a (b86f93da refunds): negative-Payment-row model (credit_memo method + refund_of_payment_id + refunded_amount on Payment); issue_credit_memo+refund_payment actions, void_payment extended; recomputeInvoiceAfterPayments sums recorded+refunded (AR honest); restock DISABLED-TODO (no invoice-line→inventory linkage, honest note); Invoices UI credit/refund dialogs + badges. DEPLOYED invoicingAction.
 - Phase 7b (910bbdab): SalesLocation entity (backend-only RLS, seed row 6ae614546fa0852ea0490e9c); LocationsPanel CRUD (admin); ReconcileWizard select replaces free-text; WorkOrder.deposit_required/amount/invoiced fields; depositGate.js (gated statuses proof_approved/in_production/quality_control, warn-only confirm in shared transitionProductAndBuilderStatus); JobWorkspace deposit chip + editor + CAS mark-invoiced + auto-suggest. Gateways: SalesLocation added staffDataRead read + staffEntityWrite create/update + admin gate — BOTH DEPLOYED.
 - Phase 7c (4fcabb38): glExport.js shared model (gl_account resolve chain: explicit→MarkupCategory→Inventory/PartTemplate, unmapped counted); GL CSV export on Reconciliation batch detail + OpsReportView; CustomerPortal Statements section (open invoices+running balance+inline StatementView, deposit display defensive vs new WO fields); VendorStatement overlay (per-vendor POs, expected-vs-received, byStatus rollup); WalkInReceipt print view. PASS parity-items+walk-in. NOTE: WorkOrder deposit fields DO exist now (concurrent agent race — portal code is correctly defensive).
+- Phase 8 (bc8ab3dc): shared/smtpClient.ts raw Deno STARTTLS client (EHLO→STARTTLS→TLS upgrade→AUTH LOGIN→MAIL/RCPT/DATA/QUIT, 20s timeouts, SmtpError.kind taxonomy, zero credential logging); sendStaffEmail provider switch (SMTP_HOST+USER+PASS+FROM all set→SMTP else Gmail fallback byte-identical; SMTP failure=502 not silent reroute); reply_to request field overrides SMTP_REPLY_TO; plumbed replyTo in FollowupQueue (actor) + ReceivePanel (po.created_by); notification sends default to office reply-to. LIVE PROBE vs smtp.ionos.com:587 got proper 535 auth-reject = transport verified end-to-end. DEPLOYED. OWNER ACTION NEEDED: set Deno.env SMTP_HOST/PORT/USER/PASS/FROM(+REPLY_TO) in function settings + create noreply@ mailbox + Ionos SPF include:spf.perfora.net+spf.kundenserver.de; one real send check after.
