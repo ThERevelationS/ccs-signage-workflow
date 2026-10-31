@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import SavedViews from "@/components/workflow/SavedViews";
+import ReceivePanel from "@/components/procurement/ReceivePanel";
 import {
   CheckCircle2,
   ChevronRight,
@@ -13,7 +14,6 @@ import {
   RefreshCw,
   Search,
   Send,
-  Truck,
   X,
 } from "lucide-react";
 
@@ -214,7 +214,6 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(false);
-  const [receiveQtys, setReceiveQtys] = useState({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -242,7 +241,6 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
       if (Array.isArray(data?.stock_warnings) && data.stock_warnings.length > 0) {
         setNotice(`Received, but ${data.stock_warnings.length} stock update(s) need attention: ${data.stock_warnings.join(" ")}`);
       }
-      setReceiveQtys({});
       await load();
       onChanged?.();
     } catch (err) {
@@ -250,14 +248,6 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
     } finally {
       setBusy("");
     }
-  };
-
-  const receive = () => {
-    const lines = Object.entries(receiveQtys)
-      .map(([index, quantity]) => ({ index: Number(index), quantity: Number(quantity) }))
-      .filter((r) => r.quantity > 0);
-    if (lines.length === 0) { setError("Enter a quantity to receive on at least one line."); return; }
-    run("receive", { action: "receive_items", purchase_order_id: po.id, lines });
   };
 
   return (
@@ -289,46 +279,14 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
               <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
 
-            <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  <tr>
-                    <th className="px-3 py-2">Item</th><th className="px-3 py-2 text-right">Ordered</th>
-                    <th className="px-3 py-2 text-right">Received</th><th className="px-3 py-2 text-right">Cost</th>
-                    <th className="px-3 py-2 text-right">Total</th>
-                    {canReceive && <th className="px-3 py-2 text-right">Receive qty
-                      <button type="button" title="Fill every line with its full open quantity"
-                        onClick={() => setReceiveQtys(Object.fromEntries((po.line_items || []).map((r, i) => [i, Math.max(0, (Number(r.quantity) || 0) - (Number(r.quantity_received) || 0))])))}
-                        className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold normal-case text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-300">ALL</button>
-                    </th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(po.line_items || []).map((r, i) => {
-                    const open = Math.max(0, (Number(r.quantity) || 0) - (Number(r.quantity_received) || 0));
-                    return (
-                      <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
-                        <td className="px-3 py-2 text-slate-800 dark:text-slate-100">{r.description}</td>
-                        <td className="px-3 py-2 text-right">{r.quantity}</td>
-                        <td className="px-3 py-2 text-right">{r.quantity_received || 0}</td>
-                        <td className="px-3 py-2 text-right">{usd(r.unit_cost)}</td>
-                        <td className="px-3 py-2 text-right font-medium">{usd((Number(r.quantity) || 0) * (Number(r.unit_cost) || 0))}</td>
-                        {canReceive && (
-                          <td className="px-3 py-2 text-right">
-                            {open > 0 ? (
-                              <input className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm dark:border-slate-600 dark:bg-slate-800"
-                                type="number" min="0" max={open} step="any" placeholder={String(open)}
-                                value={receiveQtys[i] ?? ""}
-                                onChange={(e) => setReceiveQtys((s) => ({ ...s, [i]: e.target.value }))} />
-                            ) : <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-500" />}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                  {(po.line_items || []).length === 0 && <tr><td colSpan={6} className="px-3 py-4 text-center text-slate-400">No line items.</td></tr>}
-                </tbody>
-              </table>
+            <div className="mt-4">
+              <ReceivePanel
+                po={po}
+                sessionToken={sessionToken}
+                canReceive={canReceive}
+                busy={busy}
+                onReceive={(lines) => run("receive", { action: "receive_items", purchase_order_id: po.id, lines })}
+              />
             </div>
             <div className="mt-2 text-right text-sm">
               <span className="mr-4">Subtotal: <span className="font-medium">{usd(po.subtotal)}</span></span>
@@ -354,12 +312,6 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
                   <button type="button" onClick={() => setEditing(true)}
                     className="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">Edit</button>
                 </>
-              )}
-              {canReceive && (
-                <button type="button" onClick={receive} disabled={Boolean(busy)}
-                  className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
-                  {busy === "receive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}Record receipt
-                </button>
               )}
               {po.payment_status !== "paid" && po.payment_status !== "invoiced" && ["sent", "partially_received", "received"].includes(po.status) && (
                 <button type="button" onClick={() => {
