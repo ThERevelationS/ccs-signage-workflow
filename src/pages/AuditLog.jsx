@@ -16,6 +16,7 @@ const TYPES = [
 export default function AuditLog() {
   const [me, setMe] = useState(null);
   const [rows, setRows] = useState(null);
+  const [capped, setCapped] = useState(false);
   const [type, setType] = useState("");
   const [error, setError] = useState("");
 
@@ -41,7 +42,13 @@ export default function AuditLog() {
           label: String(a?.event_type || "activity").replaceAll("_", " "),
           body: `${a?.summary || ""}${a?.opportunity_id ? ` · opp ${a.opportunity_id.slice(0, 8)}` : ""}`,
         }));
-        if (live) setRows([...rev, ...act].sort((a, b) => String(b.ts).localeCompare(String(a.ts))).slice(0, 200));
+        const merged = [...rev, ...act].sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+        if (live) {
+          setRows(merged.slice(0, 200));
+          // Honest bound: each source read stops at 150 rows and the merged
+          // timeline at 200 — say so instead of implying the log is complete.
+          setCapped(revisions.length >= 150 || activities.length >= 150 || merged.length > 200);
+        }
       } catch (e) {
         if (live) { setError(e?.message || "Audit records could not be loaded."); setRows([]); }
       }
@@ -66,7 +73,7 @@ export default function AuditLog() {
         <div className="flex items-center gap-2 bg-white px-4 py-3">
           <History className="h-4 w-4 text-red-500" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">AUDIT LOG</h1>
-          <span className="ml-auto text-xs text-gray-400">{rows?.length ?? 0} records</span>
+          <span className="ml-auto text-xs text-gray-400">{rows?.length ?? 0} records{capped ? " · showing newest only (capped)" : ""}</span>
         </div>
         <div className="flex gap-1.5">
           {TYPES.map((t) => (
