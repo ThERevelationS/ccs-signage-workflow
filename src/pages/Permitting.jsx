@@ -126,18 +126,24 @@ export default function Permitting() {
     if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
-      // Batch the four catalog reads into one gateway call, then prime the
+      // Batch the catalog reads into one gateway call, then prime the
       // short-TTL cache so these loaders return instantly on remount.
+      // The gateway clamps any read at its page cap, so a batch result that
+      // returns the full requested limit may be a truncated first page —
+      // only a SHORTER result is known complete and honest to seed into the
+      // shared loadAllEntityRows cache as "all rows". Anything else falls
+      // through to the honest paged loader below.
+      const BATCH_READ_LIMIT = 500;
       const batched = await loadEntitiesBatch([
-        { entity: "PermitLineItem", sort: "-updated_date" },
-        { entity: "PermitLocality" },
-        { entity: "AuthorizedEmail" },
+        { entity: "PermitLineItem", sort: "-updated_date", limit: BATCH_READ_LIMIT },
+        { entity: "PermitLocality", limit: BATCH_READ_LIMIT },
+        { entity: "AuthorizedEmail", limit: BATCH_READ_LIMIT },
       ]).catch(() => null);
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
-        batched?.PermitLineItem
+        Array.isArray(batched?.PermitLineItem) && batched.PermitLineItem.length < BATCH_READ_LIMIT
           ? Promise.resolve(primeAndReturn("Permitting line items", null, "-updated_date", batched.PermitLineItem))
           : loadAllEntityRows({ entity: PermitLineItem, sort: "-updated_date", label: "Permitting line items", cacheTtlMs: 30000 }),
-        batched?.PermitLocality
+        Array.isArray(batched?.PermitLocality) && batched.PermitLocality.length < BATCH_READ_LIMIT
           ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
           : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
         fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
@@ -145,7 +151,7 @@ export default function Permitting() {
             .filter((wo) => wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
 
-        batched?.AuthorizedEmail
+        Array.isArray(batched?.AuthorizedEmail) && batched.AuthorizedEmail.length < BATCH_READ_LIMIT
           ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
           : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
         loadSingleGlobalSetting({
