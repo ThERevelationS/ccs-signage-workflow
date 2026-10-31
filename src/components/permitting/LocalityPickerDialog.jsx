@@ -200,7 +200,7 @@ function LocalityPickerSession({
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
       let data;
       try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
-      catch(firstErr){ if(/status code 5dd/.test(String(firstErr?.message||""))){ await new Promise(r=>setTimeout(r,1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
+      catch(firstErr){ const m=String(firstErr?.message||""); if(/status code (429|5\d\d)/.test(m)){ await new Promise(r=>setTimeout(r,/429/.test(m)?4000:1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
@@ -260,8 +260,16 @@ function LocalityPickerSession({
   const addressRolesNeedingReview = (addressAuthority?.roles_needing_review || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
 
   const addressCanApply=address.trim()?Boolean(result?.apply_allowed===true&&result?.location_resolution?.status==='location_verified'&&selectedLocalityId===result?.suggested_locality?.id):currentUser?.role==='admin';
+  // The address was pin-verified inside a boundary but the offices are not
+  // staff-checked — allow a deliberate "use it anyway" so the job isn't
+  // dead-ended. The applied lines keep their needs-check badges downstream.
+  const addressNeedsCheck=Boolean(address.trim()&&result?.suggested_locality&&!result.apply_allowed&&result?.location_resolution?.status==='location_verified'&&selectedLocalityId===result?.suggested_locality?.id);
   const handleApply = () => {
-    if (!openRef.current || !selectedLocalityId || searching || !addressCanApply) return;
+    if (!openRef.current || !selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)) return;
+    if (addressNeedsCheck) {
+      const name = result?.suggested_locality?.name || "this office";
+      if (!confirmOrSkip(`${name}'s offices haven't been checked by our team yet. Its permit lines will be marked "needs a check" until someone verifies them. Use it anyway?`)) return;
+    }
     // Unverified picks get one deliberate pause — address-flow applies are
     // already gated on a verified review; repository picks may not be.
     if (!address.trim() && selectedAuthority.officeCount === 0) {
@@ -298,12 +306,9 @@ function LocalityPickerSession({
   };
 
   const requestDraftFromRepository = (jurisdiction) => {
-    if(currentUser?.role!=="admin"||(address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
+    if(currentUser?.role!=="admin"){setDraftCreateError("Setting up a new office record is an admin job — ask an admin to do this step.");return;}
+    if((address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
-    if (hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction)) {
-      setDraftCreateError(`More than one saved office matches ${jurisdiction.name}, ${jurisdiction.state || ""} — someone on the team needs to fix the doubles first.`);
-      return;
-    }
     setDraftCandidate(jurisdiction);
   };
 
@@ -320,6 +325,7 @@ function LocalityPickerSession({
         rows:await loadAllEntityRows({entity:staffEntities.JurisdictionProfile,sort:"name",label:"Repository draft source recheck",cacheTtlMs:15000}),
         hasDuplicate:hasDuplicateRepositoryIdentity,
         toDraft:jurisdictionToDraftPermitLocality,
+        allowDuplicate:true,
       }),create:payload=>createPermitLocalityIfAbsent({
         entity: staffEntities.PermitLocality,
         data: payload,
@@ -631,7 +637,7 @@ function LocalityPickerSession({
                 Your GPS and the typed address disagree by more than 500 ft — double-check which location is the actual job site before applying.
               </p>
             )}
-            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Picked office" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Found office</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this office.":"We found the town or township — someone on the team still needs to check the offices before it can be used."}</p></section>}
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Picked office" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Found office</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this office.":result.suggested_locality?"We found the town or township — the offices haven't been checked yet, but you can still use it: the permit lines will be marked needs-a-check.":"We found the town or township — it's not set up here yet. An admin can make a record from the saved offices list below."}</p></section>}
             <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
@@ -792,7 +798,7 @@ function LocalityPickerSession({
 
                 <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>
                 {currentUser?.role==='admin'&&result&&<details className="rounded border bg-gray-50 p-2 text-[10px]"><summary className="cursor-pointer font-semibold text-gray-600">Show technical details</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify({geocoding_service:result.geocoding_service,location_resolution:result.location_resolution,authority_review:result.authority_review,match_confidence:result.match_confidence,match_method:result.match_method,apply_allowed:result.apply_allowed},null,2)}</pre></details>}
-                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. Someone on the team needs to check the sign and zoning offices before it can be used.</p>}
+                {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. The sign and zoning offices haven't been checked yet — you can still press Use it anyway below, and the lines will be marked needs-a-check.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
                 {!result.suggested_locality && (
                   <div className="border rounded-lg p-3 bg-violet-50 border-violet-200 space-y-2">
@@ -844,7 +850,8 @@ function LocalityPickerSession({
                               type="button"
                               size="sm"
                               variant="outline"
-                              disabled={duplicate || creatingDraft || (Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
+                              disabled={creatingDraft || currentUser?.role!=="admin" || (Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
+                              title={currentUser?.role!=="admin"?"An admin needs to do this step":undefined}
                               onClick={() => requestDraftFromRepository(jurisdiction)}
                               className="h-7 text-xs border-violet-300 text-violet-800 hover:bg-violet-100 flex-shrink-0"
                             >
@@ -853,7 +860,7 @@ function LocalityPickerSession({
                           </div>
                           {duplicate ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
-                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Two saved entries match this place — an admin needs to clean them up first.
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Two saved entries look the same — you'll use this exact copy. An admin should still clean up the double.
                             </p>
                           ) : trust.issues.length > 0 ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
@@ -942,6 +949,9 @@ function LocalityPickerSession({
                 This copies the saved office's contact info for {draftCandidate?.name || "this office"} into a new office record and adds three plain steps: Application Sent, Check Back, and Permit Came In. It does not copy rules, fees, deadlines, or approvals. Check the office and steps before filing.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {draftCandidate && hasDuplicateRepositoryIdentity(repositoryJurisdictions, draftCandidate) && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">Heads up: another saved entry has the same name — you're using this exact copy. An admin should still clean up the double later.</div>
+            )}
             {draftCreateError && (
               <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{draftCreateError}</div>
             )}
@@ -971,10 +981,10 @@ function LocalityPickerSession({
             </Button>
             <Button
               onClick={handleApply}
-              aria-label="Use the picked office" disabled={!selectedLocalityId || searching || !addressCanApply}
+              aria-label="Use the picked office" disabled={!selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
-              <Save className="w-4 h-4" /> Use this office
+              <Save className="w-4 h-4" /> {addressNeedsCheck ? "Use it anyway — needs a check" : "Use this office"}
             </Button>
           </div>
         </div>
