@@ -1,6 +1,7 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
-import { createRequestGovernor } from './requestGovernor.mjs';
+import { createRequestGovernor, isPlatformRateLimit, retryAfterMs } from './requestGovernor.mjs';
+import { noteRateLimit, noteRateLimitSuccess } from './rateLimitCooldown.js';
 
 const { appId, serverUrl, token, functionsVersion } = appParams;
 
@@ -20,7 +21,7 @@ const governor = createRequestGovernor({ pools: { read: 6 } });
 // Only read-only functions may retry on rate limit. Backend functions return
 // their own 429s after doing real work (login lockouts, sync budget), so
 // retrying anything else could duplicate a mutation.
-function isRetryableFunction(fnName, payload) {
+export function isRetryableFunction(fnName, payload) {
   if (fnName === 'verifySession') return true;
   if (fnName === 'permittingScanStatus') return true;
   // Read gateways never mutate, so a platform 429 can be retried safely.
@@ -135,7 +136,12 @@ function wrapEntity(name, target) {
       return (...args) => {
         if (isWrite) governor.bumpEpoch();
         const pending = governor.run(`${name}.${String(prop)}`, () => value.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite });
-        return isWrite ? pending.finally(governor.bumpEpoch) : pending;
+        // Feed the app-wide breaker after the governor's own retry decides.
+        const tracked = pending.then(
+          (r) => { noteRateLimitSuccess(); return r; },
+          (e) => { if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 60000)); throw e; },
+        );
+        return isWrite ? tracked.finally(governor.bumpEpoch) : tracked;
       };
     },
   });
@@ -162,13 +168,19 @@ const functionsProxy = new Proxy(rawClient.functions, {
           retryOnRateLimit: isRetryableFunction(fnName, payload),
           shouldRetry: fnName === 'verifyLogin' ? isUnprocessedSignInFailure : null,
           // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
-          maxAttempts: fnName === 'verifyLogin' ? 2 : undefined,
+          maxAttempts: fnName === 'verifyLogin' ? 2 : 1,
         });
-        if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, exec, copyResponse);
+        // One rate-limit note per invocation: dedupe followers share exec, so
+        // they must not each note the same 429.
+        const tracked = () => exec().then(
+          (r) => { noteRateLimitSuccess(); return r; },
+          (e) => { if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 60000)); throw e; },
+        );
+        if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, tracked, copyResponse);
         // A write may commit even when its response is lost, so reads requested
         // after it settles must never reuse a response fetched before it.
         governor.bumpEpoch();
-        return exec().finally(governor.bumpEpoch);
+        return tracked().finally(governor.bumpEpoch);
       };
     }
     return value;
