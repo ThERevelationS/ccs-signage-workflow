@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { getSessionToken } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const User = base44.entities.User;
 
@@ -131,8 +132,14 @@ const getRecipients = async (rule, workOrder) => {
         break;
       case "assigned_user":
         if (workOrder?.assigned_to) {
-          // Try to find user email from assigned_to field
-          const users = await loadAllEntityRows({ entity: User, sort: null, label: "Notification user catalog" });
+          // EmailGate staff can't read the platform User entity (guaranteed
+          // 401), so resolve assignees through the session-authenticated
+          // authorized-user directory instead.
+          const sessionToken = getSessionToken();
+          const directory = sessionToken
+            ? await loadAuthorizedUserDirectory({ sessionToken }).catch(() => null)
+            : null;
+          const users = directory?.users || [];
           const user = users.find(u => 
             u.email === workOrder.assigned_to || 
             u.full_name === workOrder.assigned_to
