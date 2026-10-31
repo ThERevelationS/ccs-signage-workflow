@@ -23,7 +23,8 @@ function normalizeSchedule(schedule) {
     pct = Math.min(100, Math.round(pct * 100) / 100);
     if (cumulative + pct > 100 + EPS) pct = money(100 - cumulative);
     cumulative = money(cumulative + pct);
-    out.push({ label: clean(row?.label) || `Milestone ${out.length + 1}`, pct });
+    const note = clean(row?.note);
+    out.push({ label: clean(row?.label) || `Milestone ${out.length + 1}`, pct, ...note ? { note } : {} });
   });
   return out;
 }
@@ -114,6 +115,12 @@ function buildEstimateBillingPayload({ estimateId, milestone, isFinal }) {
     notes: `Progress billing milestone "${milestone.label}" (${milestone.pct}%).`
   };
 }
+function scheduleToEntity(schedule) {
+  return normalizeSchedule(schedule);
+}
+function scheduleFromEntity(raw) {
+  return normalizeSchedule(Array.isArray(raw) ? raw : []);
+}
 export {
   DEFAULT_SCHEDULE,
   MILESTONE_STATUS,
@@ -123,5 +130,7 @@ export {
   deriveBillingState,
   milestoneAmounts,
   money,
-  normalizeSchedule
+  normalizeSchedule,
+  scheduleFromEntity,
+  scheduleToEntity
 };
