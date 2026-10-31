@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductQueue, { flattenQueueRows } from "@/components/queues/ProductQueue";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
+import { PageHeader } from "@/components/kit";
 
 // CoreBridge-style module queues over the shared product operational model.
 // Each tab is the same component with a different stage/due-date lens.
@@ -39,6 +40,12 @@ export default function ProductQueues() {
 
   return (
     <div className="flex h-full flex-col">
+      <PageHeader
+        breadcrumbs={[{ label: "Queues" }, { label: "Product Queues" }]}
+        title="Product Queues"
+        subtitle="Design, production and fulfillment lenses over the shared product operational model."
+        className="mb-0 px-3 pt-3"
+      />
       <nav className="flex gap-1 border-b border-gray-200 bg-white px-3 pt-2">
         {QUEUES.map((q) => (
           <button type="button"
