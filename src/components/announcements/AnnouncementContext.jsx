@@ -130,7 +130,7 @@ export function AnnouncementProvider({ children, currentPageName }) {
     } catch {}
   }, []);
 
-  usePolling(fetchActive, 300000);
+  usePolling(fetchActive, 300000, { initialDelayMs: 1500 });
 
   useEffect(() => {
     let unsubscribe = null;
