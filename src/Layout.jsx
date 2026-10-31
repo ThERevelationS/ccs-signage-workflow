@@ -238,7 +238,7 @@ function LayoutContent({ children }) {
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
   const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
-  const { prefs: workspacePrefs, reportNavOrder } = useWorkspacePreferences();
+  const { prefs: workspacePrefs, reportNavOrder, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();
   const navPrefs = workspacePrefs.navigation || {};
   const navHidden = navPrefs.hidden || [];
   
@@ -247,7 +247,19 @@ function LayoutContent({ children }) {
 
   // Per-user page-button order (drag and drop) and collapsed nav groups.
   const [navOrder, setNavOrder] = useState(() => loadNavOrder(currentUser?.email));
-  const [collapsedGroups, setCollapsedGroups] = useState(() => loadCollapsedGroups());
+  // Collapsed-group memory lives in the workspace blob (cross-device); the
+  // legacy localStorage copy is only a pre-hydration fallback.
+  const [collapsedGroups, setCollapsedGroups] = useState(() => {
+    const seeded = workspacePrefs.navigation?.collapsedGroups;
+    return seeded && Object.keys(seeded).length ? seeded : loadCollapsedGroups();
+  });
+  const collapsedHydratedRef = useRef(false);
+  useEffect(() => {
+    if (collapsedHydratedRef.current || !workspacePrefsLoaded) return;
+    collapsedHydratedRef.current = true;
+    const serverGroups = workspacePrefs.navigation?.collapsedGroups;
+    if (serverGroups && Object.keys(serverGroups).length) setCollapsedGroups(serverGroups);
+  }, [workspacePrefsLoaded, workspacePrefs.navigation?.collapsedGroups]);
 
   useEffect(() => {
     setNavOrder(loadNavOrder(currentUser?.email));
@@ -298,11 +310,10 @@ function LayoutContent({ children }) {
   };
 
   const toggleNavGroup = (key) => {
-    setCollapsedGroups((previous) => {
-      const next = { ...previous, [key]: !previous[key] };
-      saveCollapsedGroups(next);
-      return next;
-    });
+    const next = { ...collapsedGroups, [key]: !collapsedGroups[key] };
+    setCollapsedGroups(next);
+    saveCollapsedGroups(next);
+    updateWorkspacePrefs("navigation.collapsedGroups", next);
   };
   
   // Detect mobile + narrow-desktop widths (top bar auto-compacts below 1400px)
