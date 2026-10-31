@@ -220,6 +220,7 @@ const inventoryFn = readFileSync('base44/functions/inventoryAction/entry.ts', 'u
 const invPage = readFileSync('src/pages/Inventory.jsx', 'utf8');
 assert.match(invSchema, /quantity_on_hand/, 'Inventory must track on-hand quantity');
 assert.match(invSchema, /reorder_point/, 'Inventory must carry a reorder point');
+assert.match(invSchema, /"read":\s*\{\s*"user_condition":\s*\{\s*"role":\s*"__inventory_backend_only__"/, 'Inventory reads must stay backend-only (staffDataRead gateway)');
 assert.match(invMoveSchema, /backend_only/, 'InventoryMovement must be backend-only');
 assert.match(invMoveSchema, /creation_request_key/, 'movements must be retry-safe');
 assert.match(invMoveSchema, /resulting_qty/, 'movements must record the resulting balance');

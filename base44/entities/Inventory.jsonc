@@ -120,18 +120,9 @@
       }
     },
     "read": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "user"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__inventory_backend_only__"
+      }
     },
     "update": {
       "user_condition": {
