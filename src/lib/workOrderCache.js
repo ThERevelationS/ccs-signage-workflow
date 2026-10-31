@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { getSessionToken } from "@/components/auth/EmailGate";
 
 export const ALL_WORK_ORDERS_KEY = ["workOrders", "all"];
 export const ALL_ORDERS_KEY = ["orders", "all"];
@@ -124,6 +125,10 @@ async function boardFeed(payload) {
 
 async function fetchFeedRows(entity, { forceFull = false } = {}) {
   const state = stateFor(entity);
+  // Guests must never hydrate from the persisted snapshot — that cache holds
+  // the last signed-in session's board and would leak it to a signed-out tab
+  // on a shared device. Guests get an empty board, same as the gateways give.
+  if (!getSessionToken()) return [];
   if (state.inFlight) return state.inFlight;
   state.inFlight = (async () => {
     await ensureHydrated(entity);
