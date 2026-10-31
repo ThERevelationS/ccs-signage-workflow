@@ -110,6 +110,7 @@ export function TimeClockStatusProvider({ children }) {
 
   usePolling(() => refresh({ force: true }), 180000, {
     enabled: Boolean(email && token),
+    initialDelayMs: 1500,
   });
 
   useEffect(() => {
