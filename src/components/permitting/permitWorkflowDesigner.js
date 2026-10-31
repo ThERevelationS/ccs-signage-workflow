@@ -130,21 +130,30 @@ function sourceDocBrief(doc) {
  * backend function when available; falls back to null (staff must select manually).
  * Strict identity — no cross-jurisdiction promotion.
  */
-export async function resolveJurisdictionFromAddress(address) {
+export async function resolveJurisdictionFromAddress(address, sessionToken = "") {
   if (!address || !address.trim()) return null;
   try {
-    const res = await base44.functions.invoke("findLocalityByAddress", { address });
+    const res = await base44.functions.invoke("findLocalityByAddress", { address, session_token: sessionToken });
     const data = res?.data || res;
-    if (data?.apply_allowed === true && data?.suggested_locality?.jurisdiction_profile_id) {
+    // suggested_locality is an exact configured-catalog match. When offices are
+    // unverified (apply_allowed false) we still use its linked profile — the
+    // draft is a plan, not an approval — but we flag it so the UI can say so.
+    const suggested = data?.suggested_locality;
+    if (suggested?.jurisdiction_profile_id) {
       return {
-        jurisdiction_id: data.suggested_locality.jurisdiction_profile_id,
-        jurisdiction_name: data.suggested_locality.name || "",
-        state: data.suggested_locality.state || "",
-        locality_id: data.suggested_locality.id || "",
-        locality_name: data.suggested_locality.name || "",
+        jurisdiction_id: suggested.jurisdiction_profile_id,
+        jurisdiction_name: suggested.name || "",
+        state: suggested.state || "",
+        locality_id: suggested.id || "",
+        locality_name: suggested.name || "",
         matched_address: address,
+        offices_need_check: data.apply_allowed !== true,
       };
     }
+    // No configured match: return the resolver's best-guess town name so the
+    // manual picker can prefill its search. Never treated as resolved.
+    const guessName = data?.ai_locality_name || data?.location_resolution?.target?.name || "";
+    if (guessName) return { unresolved_hint: { name: guessName, state: data?.ai_state || data?.location_resolution?.target?.state || "" } };
   } catch {
     // findLocalityByAddress may not resolve; staff selects manually.
   }
@@ -343,11 +352,14 @@ export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdictio
  * @param {object} [preselectedJurisdiction] - If opened from a jurisdiction panel, skip resolution.
  * @returns {Promise<object>} The workflow draft.
  */
-export async function runDesignerPipeline(input, preselectedJurisdiction = null) {
+export async function runDesignerPipeline(input, preselectedJurisdiction = null, sessionToken = "") {
   // 1. Resolve jurisdiction (strict identity — no cross-jurisdiction promotion)
   let jurisdiction = preselectedJurisdiction;
+  let unresolvedHint = null;
   if (!jurisdiction && input.address) {
-    jurisdiction = await resolveJurisdictionFromAddress(input.address);
+    const found = await resolveJurisdictionFromAddress(input.address, sessionToken);
+    if (found?.jurisdiction_id) jurisdiction = found;
+    else unresolvedHint = found?.unresolved_hint || null;
   }
   if (!jurisdiction) {
     return {
@@ -359,6 +371,7 @@ export async function runDesignerPipeline(input, preselectedJurisdiction = null)
       input_summary: {},
       rule_counts: { approved: 0, pending: 0, draft_or_historical: 0 },
       jurisdiction_unresolved: true,
+      unresolved_hint: unresolvedHint,
     };
   }
 
