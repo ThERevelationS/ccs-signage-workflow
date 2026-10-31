@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Sparkles, X, AlertTriangle, CheckCircle, FileText, MapPin, ChevronDown, ChevronUp, Plus, ShieldCheck } from "lucide-react";
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
+import { useAuth } from "@/components/auth/EmailGate";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { createPermitLinesFromDraft, computeDeterministicRowName } from "./permitLineItemIntegration";
 import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import WorkflowCitationList from "./WorkflowCitationList";
@@ -89,6 +91,23 @@ export default function PermitWorkflowDesigner({
     zoningContext: "",
     exemptionStatus: "",
   });
+  const { sessionToken } = useAuth() || {};
+  const [pickedJurisdiction, setPickedJurisdiction] = useState(null);
+  const [townSearch, setTownSearch] = useState('');
+  const [townMatches, setTownMatches] = useState([]);
+  const [townSearching, setTownSearching] = useState(false);
+  const [townSearchError, setTownSearchError] = useState('');
+  const findTowns = async (query) => {
+    const q = String(query || '').trim().toLowerCase();
+    if (q.length < 2) { setTownMatches([]); return; }
+    setTownSearching(true); setTownSearchError('');
+    try {
+      const { items } = await staffEntities.JurisdictionProfile.filter({}, { sort: 'jurisdiction_name', limit: 500, fields: ['id', 'jurisdiction_name', 'state'] });
+      const rows = Array.isArray(items) ? items : [];
+      setTownMatches(rows.filter(r => String(r.jurisdiction_name || '').toLowerCase().includes(q)).slice(0, 12));
+    } catch { setTownSearchError("Couldn't load the town list — try again."); }
+    finally { setTownSearching(false); }
+  };
   const [savedDrafts, setSavedDrafts] = useState([]);
   const [draftTitle, setDraftTitle] = useState('');
   const [reviewNotes, setReviewNotes] = useState('');
@@ -161,11 +180,12 @@ export default function PermitWorkflowDesigner({
     setDraft(null);
     setCreateResult(null);
     try {
-      const result = await runDesignerPipeline(form, preselectedJurisdiction);
+      const result = await runDesignerPipeline(form, pickedJurisdiction || preselectedJurisdiction, sessionToken || '');
       setDraft(electricalPlanningHandoff
         ? { ...result, electrical_planning_handoff: electricalPlanningHandoff }
         : result);
       setDraftTitle(`${result.jurisdiction.jurisdiction_name || 'Town not picked'} — ${form.signTypes || 'Sign plan'}`);
+      if (result.unresolved_hint?.name && !townSearch) setTownSearch(result.unresolved_hint.name);
       setReviewed(false); setSaved(null); setRevisionSource(null); setEditingSteps(false); setReviewNotes('');
       // Auto-expand steps that need staff confirmation
       const needsConfirm = new Set(
@@ -401,6 +421,24 @@ export default function PermitWorkflowDesigner({
                 </select>
               </div>
 
+              <div className="rounded-lg border border-purple-200 bg-purple-50/60 p-3 space-y-2">
+                <Label htmlFor="pwd-town">Town / office area</Label>
+                <p className="text-xs text-purple-900">Type the town name to pick where the job is. This decides which checked rules and offices the plan can use.</p>
+                <div className="flex gap-2">
+                  <Input id="pwd-town" value={townSearch} onChange={e => { setTownSearch(e.target.value); findTowns(e.target.value); }} placeholder="e.g. Florence or Milford" className="min-h-11 flex-1" />
+                  {pickedJurisdiction && <Button type="button" variant="outline" className="min-h-11" onClick={() => setPickedJurisdiction(null)}>Clear</Button>}
+                </div>
+                {pickedJurisdiction && <p role="status" className="text-sm font-semibold text-purple-900">Using: {pickedJurisdiction.jurisdiction_name}{pickedJurisdiction.state ? `, ${pickedJurisdiction.state}` : ''}</p>}
+                {townSearching && <p className="text-xs text-purple-800">Searching towns…</p>}
+                {townSearchError && <p role="status" className="text-xs text-amber-800">{townSearchError}</p>}
+                {!pickedJurisdiction && townMatches.length > 0 && (
+                  <ul className="divide-y rounded border bg-white">
+                    {townMatches.map(row => (
+                      <li key={row.id}><button type="button" className="min-h-11 w-full px-3 py-2 text-left text-sm text-purple-800 hover:bg-purple-50" onClick={() => { setPickedJurisdiction({ jurisdiction_id: row.id, jurisdiction_name: row.jurisdiction_name || '', state: row.state || '' }); setTownMatches([]); setTownSearch(row.jurisdiction_name || ''); }}>{row.jurisdiction_name}{row.state ? `, ${row.state}` : ''}</button></li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="pwd-zoning">Zoning / Site Context</Label>
@@ -453,7 +491,7 @@ export default function PermitWorkflowDesigner({
                 <p>The sources it found are proof to check, not an office's OK. Anything unconfirmed stays unconfirmed when you save.</p>
                 {draft.draft_revision && <p>Copy {draft.draft_revision.revision_number} of {draft.draft_revision.parent_title || draft.draft_revision.parent_draft_id}. The older copy stays untouched.</p>}
                 {!editingSteps ? <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={beginStepEditing} disabled={saving || creating}>{saved ? 'Make a copy I can change' : 'Change the steps'}</Button> : <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">Editing is on. Steps you change keep their sources but get flagged "needs a staff check". Saving makes a new plan — it doesn't approve anything or add job lines.</p>}
-                {draft.jurisdiction_unresolved && <p className="text-amber-800">No office picked. This plan can't say who's in charge.</p>}
+                {draft.jurisdiction_unresolved && <p className="text-amber-800">No office picked. This plan can't say who's in charge — go back to Edit inputs and pick the town, then build again.</p>}
               </div>
               {(saved || revisionSource) && <section aria-label="Staff check progress" className="space-y-2 rounded border border-purple-200 bg-purple-50 p-3 text-sm">
                 <h3 className="font-semibold">Staff check</h3>
@@ -676,14 +714,22 @@ export default function PermitWorkflowDesigner({
               <Button onClick={handleSaveDraft} disabled={saving || Boolean(saved) || !reviewed || !draftTitle.trim() || reviewIssues.length > 0} className="min-h-11 bg-purple-600 hover:bg-purple-700">{saving ? "Saving..." : saved ? "Plan saved" : revisionSource ? "Save the changed plan" : "Save the plan"}</Button>
               <Button variant="ghost" onClick={closeDesigner} className="min-h-11">Close</Button>
               {workOrder?.id && draft.steps.length > 0 && (
-                <Button
-                  onClick={handleCreateLines}
-                  disabled={creating || !saved || draft.jurisdiction_unresolved || draft.steps.some(s => s.basis !== "approved_rule") || createResult?.created.length > 0}
-                  className="min-h-11 gap-2 bg-green-600 hover:bg-green-700"
-                >
-                  {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  {creating ? "Creating..." : `Create ${draft.steps.length} Permit Line(s)`}
-                </Button>
+                <div className="flex flex-col items-end gap-1">
+                  {draft.steps.some(s => s.basis !== "approved_rule") && saved && (
+                    <p className="max-w-52 text-right text-[11px] text-amber-800">Some steps still need a staff check — lines made from them are marked for review.</p>
+                  )}
+                  <Button
+                    onClick={handleCreateLines}
+                    disabled={creating || !saved || draft.jurisdiction_unresolved || createResult?.created.length > 0}
+                    className="min-h-11 gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                    {creating ? "Creating..." : `Create ${draft.steps.length} Permit Line(s)`}
+                  </Button>
+                </div>
+              )}
+              {!workOrder?.id && draft.steps.length > 0 && saved && (
+                <p className="text-[11px] text-gray-500">To turn this plan into job lines, open it from the job's permit group.</p>
               )}
             </div>
           </div>
