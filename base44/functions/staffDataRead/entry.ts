@@ -93,7 +93,6 @@ const STAFF_READABLE = new Set([
   // Screens that previously read these straight from the browser (which entity
   // RLS blocks for staff sessions): announcements, sales filters, calendar,
   // estimator revisions/acceptances, price revisions, templates and capacity.
-  'Announcement',
   'BuilderPriceRevision',
   'CalendarEvent',
   'EstimateAcceptance',
@@ -115,6 +114,9 @@ const STAFF_READABLE = new Set([
 const ADMIN_READABLE = new Set<string>([
   'AccountDeletionRequest',
   'AdminAuditLog',
+  // Full rows carry target_users / acknowledged_viewers; staff viewers get the
+  // targeted, projected feed from manageAnnouncements active_feed instead.
+  'Announcement',
   'AutomationRule',
   'CorebridgeLog',
   'EmailGroup',

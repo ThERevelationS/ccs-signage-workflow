@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { fetchActiveAnnouncementFeed, acknowledgeAnnouncement } from "./announcementPersistence";
 import { usePolling } from "@/lib/usePolling";
 
@@ -106,19 +105,9 @@ export function AnnouncementProvider({ children, currentPageName }) {
 
   const fetchActive = useCallback(async () => {
     try {
-      let rows;
-      try {
-        rows = await fetchActiveAnnouncementFeed();
-      } catch {
-        rows = await loadAllEntityRows({
-          entity: base44.entities.Announcement,
-          query: { is_active: true },
-          sort: null,
-          label: "Active announcements",
-        });
-      }
-      // Scheduled/expired broadcasts never reach the banner even if the
-      // server feed path is unavailable and stale rows linger in storage.
+      // The server feed already applies targeting and scheduling for this
+      // session; a failed fetch keeps the last feed rather than reading raw rows.
+      const rows = await fetchActiveAnnouncementFeed();
       const now = Date.now();
       setAllActive((rows || []).filter((ann) => {
         const exp = Date.parse(ann?.expires_at || "");
@@ -131,6 +120,17 @@ export function AnnouncementProvider({ children, currentPageName }) {
   }, []);
 
   usePolling(fetchActive, 300000);
+
+  // Targeting is resolved per session server-side, so a sign-in/out must drop
+  // the previous viewer's feed and refetch for the new identity.
+  const viewerEmail = currentUser?.email ? String(currentUser.email).toLowerCase() : "";
+  const feedViewerRef = useRef(viewerEmail);
+  useEffect(() => {
+    if (feedViewerRef.current === viewerEmail) return;
+    feedViewerRef.current = viewerEmail;
+    setAllActive([]);
+    fetchActive();
+  }, [viewerEmail, fetchActive]);
 
   useEffect(() => {
     let unsubscribe = null;
@@ -152,9 +152,6 @@ export function AnnouncementProvider({ children, currentPageName }) {
   useEffect(() => {
     const checkForAnnouncements = () => {
       const applicable = (allActive || []).filter((ann) => {
-        if (ann.target_users && ann.target_users.length > 0) {
-          if (!currentUser?.email || !ann.target_users.includes(currentUser.email)) return false;
-        }
         if (ann.display_pages && ann.display_pages.length > 0) {
           const pageTargets = currentPageName === "Permitting"
             ? [...ann.display_pages, ...(ann.display_pages.includes("PermittingRepository") ? ["Permitting"] : [])]
