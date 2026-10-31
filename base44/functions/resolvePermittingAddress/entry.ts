@@ -605,7 +605,7 @@ Deno.serve(async (req) => {
     if (!geocode) {
       try {
         await reporter.emit({ kind: "geocode_lookup", url: "https://nominatim.openstreetmap.org/search", detail: "Trying the public OpenStreetMap address locator." });
-        const osmResponse = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=" + encodeURIComponent(address), { headers: { "User-Agent": "ccs-signage-permitting-lookup/1.0" }, signal: AbortSignal.timeout(15e3) });
+        const osmResponse = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=" + encodeURIComponent(address), { headers: { "User-Agent": "ccs-signage-permitting-lookup/1.0" }, signal: AbortSignal.timeout(6e3) });
         const osm = osmResponse.ok ? await osmResponse.json() : [];
         const hit = Array.isArray(osm) ? osm[0] : null;
         const addr = hit?.address || {};
