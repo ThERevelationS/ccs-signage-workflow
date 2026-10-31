@@ -12,6 +12,7 @@ export async function loadAllEntityRows({
   sort = 'created_date',
   pageSize = DEFAULT_PAGE_SIZE,
   maxRows = DEFAULT_MAX_ROWS,
+  fields = null,
   label = 'Entity rows',
 }: {
   entity: any;
@@ -19,6 +20,10 @@ export async function loadAllEntityRows({
   sort?: string | null;
   pageSize?: number;
   maxRows?: number;
+  // Server-side projection (SDK 5th arg): an allowlist of fields to read.
+  // Omitting it keeps full-row reads — callers passing it must include every
+  // field their downstream code touches, including undeclared stored fields.
+  fields?: string[] | null;
   label?: string;
 }) {
   const hasFilter = !!query && typeof query === 'object';
@@ -27,7 +32,9 @@ export async function loadAllEntityRows({
     throw new Error(`${label} could not initialize its paged read.`);
   }
 
-  const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || DEFAULT_PAGE_SIZE));
+  // Pages may be up to the platform's 5,000-row list ceiling; callers paging
+  // large tables should opt in explicitly so request count drops ~10x.
+  const safePageSize = Math.max(1, Math.min(5000, Number(pageSize) || DEFAULT_PAGE_SIZE));
   const safeMaxRows = Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
   const rows: any[] = [];
   const seen = new Set<string>();
@@ -35,8 +42,8 @@ export async function loadAllEntityRows({
 
   while (skip < safeMaxRows) {
     const page = hasFilter
-      ? await entity.filter(query, sort || undefined, safePageSize, skip)
-      : await entity.list(sort || undefined, safePageSize, skip);
+      ? await entity.filter(query, sort || undefined, safePageSize, skip, fields || undefined)
+      : await entity.list(sort || undefined, safePageSize, skip, fields || undefined);
 
     if (!Array.isArray(page)) {
       throw new Error(`${label} could not be verified completely.`);
