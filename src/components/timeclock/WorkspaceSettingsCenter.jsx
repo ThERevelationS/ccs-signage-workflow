@@ -74,6 +74,7 @@ export default function WorkspaceSettingsCenter() {
   const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
     const all = [
+      { id: "timeclock", keys: ["time", "clock", "tracker", "goal", "milestone", "pill", "overtime", "pace", "badge", "qr", "face", "password", "pin"] },
       { id: "appearance", keys: ["theme", "dark", "light", "mode", "accent", "color", "font", "size", "text", "appearance"] },
       { id: "accessibility", keys: ["motion", "contrast", "accessibility", "reduce"] },
       { id: "taskbar", keys: ["taskbar", "nav", "navigation", "buttons", "labels", "icons", "tooltips", "hide", "favorite", "pin", "order", "drag"] },
@@ -128,6 +129,17 @@ export default function WorkspaceSettingsCenter() {
       </div>
 
       <div className="divide-y divide-slate-100 dark:divide-slate-800 px-4">
+        {shown("timeclock") && (
+          <section className="py-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Time Clock</h4>
+            <Row label="Tracker & clock controls" hint="Display style, goals, milestones, sounds, privacy blur, and badge/face options — saved through your Time Clock preferences">
+              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => document.getElementById("time-tracker-settings")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                Jump to Time Tracker
+              </Button>
+            </Row>
+          </section>
+        )}
+
         {shown("appearance") && (
           <section className="py-3">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Appearance</h4>
