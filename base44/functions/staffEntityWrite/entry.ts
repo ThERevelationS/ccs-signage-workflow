@@ -210,11 +210,12 @@ Deno.serve(async (req) => {
       // Client deleteMany is only used for CAS deletes ({id, updated_date,
       // ...guardFields}). Refuse unanchored queries so a staff caller can never
       // turn this op into a bulk table wipe.
-      if (!query || typeof query !== 'object' || !String((query as Record<string, unknown>).id || '').trim()) {
+      const delQuery = body?.query;
+      if (!delQuery || typeof delQuery !== 'object' || Array.isArray(delQuery) || !String((delQuery as Record<string, unknown>).id || '').trim()) {
         throw bad('deleteMany requires an id-anchored query.');
       }
-      rejectOperatorKeys(query, 'query');
-      const result = await entity.deleteMany(query);
+      rejectOperatorKeys(delQuery, 'query');
+      const result = await entity.deleteMany(delQuery);
       return Response.json({ success: true, result });
     }
 
