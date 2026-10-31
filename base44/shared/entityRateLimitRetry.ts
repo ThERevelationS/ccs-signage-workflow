@@ -19,7 +19,7 @@ export function withEntityRateLimitRetry(client: any, { paceMs = 0, maxRetries =
     queue = slot.catch(() => {});
     return slot;
   };
-  const isLimited = (e: any) => e?.status === 429 || /rate limit/i.test(String(e?.message || e?.data?.message || ''));
+  const isLimited = (e: any) => e?.status === 429 || /rate limit|traffic volume/i.test(String(e?.message || e?.data?.message || ''));
   const wrapEntity = (entity: any) => new Proxy(entity, {
     get(target, prop) {
       const value = target[prop];
