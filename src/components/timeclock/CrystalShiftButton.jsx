@@ -37,11 +37,12 @@ function Spark({ x, y, color }) {
   );
 }
 
-function Half({ side, onTap, disabled, children, tint, edge }) {
+function Half({ side, onSpark, onAct, disabled, children, tint, edge }) {
   return (
     <motion.button
       type="button"
-      onPointerDown={onTap}
+      onPointerDown={(e) => onSpark(side, e)}
+      onClick={() => onAct(side)}
       disabled={disabled}
       whileTap={{ scale: 0.955 }}
       whileHover={disabled ? undefined : { y: -2 }}
@@ -68,15 +69,19 @@ export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = f
   const [sparks, setSparks] = useState([]);
   const hostRef = useRef(null);
 
-  const fire = useCallback((side, e) => {
+  const spark = useCallback((side, e) => {
+    if (disabled || reduceMotion || !hostRef.current) return;
+    const r = hostRef.current.getBoundingClientRect();
+    const s = { id: ++sparkId, x: e.clientX - r.left, y: e.clientY - r.top, color: side === "in" ? "#a7f3d0" : "#fecdd3" };
+    setSparks((v) => [...v.slice(-5), s]);
+  }, [disabled, reduceMotion]);
+
+  // The action lives on click (not pointerdown) so keyboard Enter/Space and
+  // assistive-tech activation work ??? pointerdown only seeds the spark coords.
+  const act = useCallback((side) => {
     if (disabled) return;
-    if (!reduceMotion && hostRef.current) {
-      const r = hostRef.current.getBoundingClientRect();
-      const s = { id: ++sparkId, x: e.clientX - r.left, y: e.clientY - r.top, color: side === "in" ? "#a7f3d0" : "#fecdd3" };
-      setSparks((v) => [...v.slice(-5), s]);
-    }
     (side === "in" ? onClockIn : onClockOut)?.();
-  }, [disabled, reduceMotion, onClockIn, onClockOut]);
+  }, [disabled, onClockIn, onClockOut]);
 
   return (
     <div className="relative w-72 sm:w-80" ref={hostRef}>
@@ -173,12 +178,12 @@ export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = f
         </AnimatePresence>
 
         {/* the two real hit targets ??? equal halves, on top of everything visual */}
-        <Half side="in" onTap={(e) => fire("in", e)} disabled={disabled}
+        <Half side="in" onSpark={spark} onAct={act} disabled={disabled}
           tint="bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.35),transparent_60%)]"
           edge="shadow-[inset_0_0_0_3px_rgba(167,243,208,0.9)]">
           <span className="sr-only">Clock In</span>
         </Half>
-        <Half side="out" onTap={(e) => fire("out", e)} disabled={disabled}
+        <Half side="out" onSpark={spark} onAct={act} disabled={disabled}
           tint="bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.35),transparent_60%)]"
           edge="shadow-[inset_0_0_0_3px_rgba(254,205,211,0.9)]">
           <span className="sr-only">Clock Out</span>
