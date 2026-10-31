@@ -606,6 +606,25 @@
     "billing_address_line_2": {
       "type": "string"
     },
+    "billing_schedule": {
+      "type": "array",
+      "description": "Progress (milestone) billing schedule. Each row is a percentage of contract value; saved schedules are normalized so cumulative pct never exceeds 100.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "pct": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
     "sales_rep": {
       "type": "string"
     },
