@@ -28,6 +28,24 @@
       "default": 0,
       "description": "Markup percent over unit cost. 50 = sell at cost x 1.50. Ignored when a matching per_unit_breaks bracket applies."
     },
+    "pricing_mode": {
+      "type": "string",
+      "enum": [
+        "markup",
+        "market"
+      ],
+      "default": "markup",
+      "description": "Pricing path for this row. 'markup' prices at markup_pct over unit cost. 'market' prices at market_retail less market_discount_pct; a qualifying per_unit_breaks bracket still wins when it prices lower than the market price."
+    },
+    "market_retail": {
+      "type": "number",
+      "description": "Market-based pricing: prevailing retail unit price this row tracks. Required for pricing_mode = 'market'; a market row without it falls back to markup pricing."
+    },
+    "market_discount_pct": {
+      "type": "number",
+      "default": 0,
+      "description": "Market-based pricing: percent off market_retail. 10 = sell at 90% of retail."
+    },
     "minimum_charge": {
       "type": "number",
       "default": 0,
@@ -47,6 +65,29 @@
           "unit_price": {
             "type": "number",
             "description": "Sell price per unit inside this bracket."
+          }
+        }
+      }
+    },
+    "formula_modifiers": {
+      "type": "array",
+      "description": "Ordered unit-price adjustments applied after markup/market/break resolution, evaluated left to right. Each item: {type: 'add_pct'|'mul'|'add_flat'|'min'|'max', value} \u2014 add_pct: price x (1+value/100); mul: price x value; add_flat: price + value; min: floor at value; max: cap at value.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "add_pct",
+              "mul",
+              "add_flat",
+              "min",
+              "max"
+            ]
+          },
+          "value": {
+            "type": "number"
           }
         }
       }
