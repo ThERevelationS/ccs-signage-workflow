@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { escapeHtml } from "@/lib/escapeHtml";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
 import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
@@ -165,7 +166,7 @@ export default function AdminRosterPanels({ sessionToken }) {
             type="button"
             disabled={!roster.length}
             onClick={() => {
-              const rows = roster.map((r) => `<tr><td style="padding:10px 8px;border-bottom:1px solid #ccc;font-family:sans-serif">${r.name}</td><td style="border-bottom:1px solid #ccc;width:110px"></td><td style="border-bottom:1px solid #ccc;width:110px"></td><td style="border-bottom:1px solid #ccc;width:110px"></td></tr>`).join("");
+              const rows = roster.map((r) => `<tr><td style="padding:10px 8px;border-bottom:1px solid #ccc;font-family:sans-serif">${escapeHtml(r.name)}</td><td style="border-bottom:1px solid #ccc;width:110px"></td><td style="border-bottom:1px solid #ccc;width:110px"></td><td style="border-bottom:1px solid #ccc;width:110px"></td></tr>`).join("");
               const w = window.open("", "_blank");
               if (!w) return;
               w.document.write(`<html><head><title>Paper Punch Sheet</title></head><body style="padding:24px"><h2 style="font-family:sans-serif">Manual Punch Sheet - ${new Date().toLocaleDateString()}</h2><p style="font-family:sans-serif;color:#666;font-size:12px">Disaster mode: record punches on paper when all kiosks are down, then enter them as corrections when the system is back.</p><table style="border-collapse:collapse;width:100%"><tr><th style="text-align:left;font-family:sans-serif">Employee</th><th style="font-family:sans-serif;font-size:11px">Clock in</th><th style="font-family:sans-serif;font-size:11px">Clock out</th><th style="font-family:sans-serif;font-size:11px">Initials</th></tr>${rows}</table><script>window.print()</script></body></html>`);
