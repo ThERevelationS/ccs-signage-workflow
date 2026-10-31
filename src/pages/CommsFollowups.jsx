@@ -15,6 +15,8 @@ import {
   saveGlobalSettingValueIfUnchanged,
 } from "@/components/shared/globalSettingsPersistence";
 import FollowupQueue from "@/components/comms/FollowupQueue";
+import { PageHeader } from "@/components/kit";
+import { Send } from "lucide-react";
 import {
   DEFAULT_FOLLOWUP_RULES,
   normalizeFollowupRules,
@@ -223,13 +225,13 @@ export default function CommsFollowups() {
 
   return (
     <div className="flex h-full flex-col gap-3 overflow-auto p-3">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Communication follow-ups</h2>
-        <p className="text-xs text-slate-500">
-          Two-stage follow-ups on sent quotes and overdue invoices. Send writes an
-          OpportunityActivity log row so a handled follow-up is never suggested twice.
-        </p>
-      </div>
+      <PageHeader
+        className="mb-0"
+        breadcrumbs={[{ label: "Customers", to: "/EstimatorCustomers" }, { label: "Follow-ups" }]}
+        icon={Send}
+        title="Communication follow-ups"
+        subtitle="Two-stage follow-ups on sent quotes and overdue invoices. Send writes an OpportunityActivity log row so a handled follow-up is never suggested twice."
+      />
 
       <RulesPanel record={rulesRecord} rules={rules} />
 
