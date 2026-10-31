@@ -1168,19 +1168,11 @@ export default function TimeClockAdmin() {
         {dateRange === "custom" ? (
           <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg border border-purple-200">
             <Label className="text-sm text-purple-700 font-medium">From:</Label>
-            <Input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              className="w-40 h-9 bg-white"
-            />
+            <TimeQuickPick mode="date" value={customStartDate} onChange={setCustomStartDate}
+              dayOffsets={[0, 1, 7, 14, 30]} inputId="range-from" />
             <Label className="text-sm text-purple-700 font-medium">To:</Label>
-            <Input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              className="w-40 h-9 bg-white"
-            />
+            <TimeQuickPick mode="date" value={customEndDate} onChange={setCustomEndDate}
+              dayOffsets={[0, -1, 1, 7, 14]} inputId="range-to" />
           </div>
         ) : (
           <div className="flex items-center gap-1">
@@ -1691,7 +1683,7 @@ export default function TimeClockAdmin() {
             <p className="text-sm text-gray-600">Each entry will be closed at the chosen time <strong>on the day it started</strong>. Entries whose clock-in is after that time are skipped.</p>
             <div className="flex items-center gap-2">
               <Label className="text-xs whitespace-nowrap">Close at</Label>
-              <Input type="time" value={bulkCloseTime} onChange={(e) => setBulkCloseTime(e.target.value)} className="w-28" />
+              <TimeQuickPick mode="time" value={bulkCloseTime} onChange={setBulkCloseTime} inputId="bulk-close-time" />
             </div>
             <div>
               <Label className="text-xs">Reason (required)</Label>
