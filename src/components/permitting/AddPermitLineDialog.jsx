@@ -57,21 +57,21 @@ export default function AddPermitLineDialog({ isOpen, onClose, onSave, workOrder
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="clay-card border-none max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Permit Line Item</DialogTitle>
+          <DialogTitle>Add a permit line</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label className="text-sm">Work Order / Client</Label>
+            <Label className="text-sm">Job / customer</Label>
             <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search work orders..."
+              placeholder="Search jobs..."
               className="mb-2 h-8 text-sm"
             />
             <div className="max-h-40 overflow-y-auto border rounded-lg">
               {filteredWOs.length === 0 ? (
-                <div className="p-3 text-center text-sm text-gray-500">No matching work orders</div>
+                <div className="p-3 text-center text-sm text-gray-500">No jobs match</div>
               ) : (
                 filteredWOs.slice(0, 20).map(wo => (
                   <div
@@ -88,7 +88,7 @@ export default function AddPermitLineDialog({ isOpen, onClose, onSave, workOrder
           </div>
 
           <div>
-            <Label className="text-sm">Row Name (optional)</Label>
+            <Label className="text-sm">Line name (optional)</Label>
             <Input value={rowName} onChange={e => setRowName(e.target.value)} placeholder="e.g. Sign A, Building Permit..." className="h-8 text-sm" />
           </div>
 
@@ -97,7 +97,7 @@ export default function AddPermitLineDialog({ isOpen, onClose, onSave, workOrder
               <Label className="text-sm">Locality</Label>
               <Select value={localityId} onValueChange={setLocalityId}>
                 <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="Select locality..." />
+                  <SelectValue placeholder="Pick the town or township..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
