@@ -41845,9 +41845,7 @@ function readArgs(sortOrOptions, limit, skip) {
       paged: true,
       sort: sortOrOptions.sort,
       limit: sortOrOptions.limit,
-      skip: sortOrOptions.skip ?? sortOrOptions.offset,
-      cursor: sortOrOptions.cursor,
-      fields: sortOrOptions.fields
+      skip: sortOrOptions.skip ?? sortOrOptions.offset
     };
   }
   return { paged: false, sort: sortOrOptions, limit, skip };
@@ -41896,7 +41894,7 @@ async function flushBatch() {
   }
   individual.forEach((e) => singleRead(e.entity, e.args).then(e.resolve, e.reject));
 }
-var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pageOf, pagedRead, pendingBatch, flushScheduled, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
+var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pendingBatch, flushScheduled, BATCH_WINDOW_MS, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
 var init_staffEntities = __esm({
   "src/components/staff/staffEntities.js"() {
     init_define_import_meta_env();
@@ -41955,20 +41953,9 @@ var init_staffEntities = __esm({
       return Array.isArray(rows) ? rows : [];
     };
     page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
-    pageOf = (response) => {
-      const b = bodyOf(response);
-      const rows = Array.isArray(b.items) ? b.items : [];
-      return { items: rows, has_more: b.truncated === true || typeof b.next_cursor === "string", next_cursor: b.next_cursor ?? null };
-    };
-    pagedRead = (entity, args, query) => invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, cursor: args.cursor, fields: args.fields }).then(
-      pageOf,
-      (err) => {
-        if (isForbidden(err)) markDenied(entity);
-        throw err;
-      }
-    );
     pendingBatch = /* @__PURE__ */ new Map();
     flushScheduled = false;
+    BATCH_WINDOW_MS = 30;
     singleRead = (entity, args) => invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
       if (isForbidden(err)) markDenied(entity);
       throw err;
@@ -41986,7 +41973,7 @@ var init_staffEntities = __esm({
       pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
       if (!flushScheduled) {
         flushScheduled = true;
-        queueMicrotask(flushBatch);
+        setTimeout(flushBatch, BATCH_WINDOW_MS);
       }
       return promise;
     };
@@ -41997,10 +41984,9 @@ var init_staffEntities = __esm({
         const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
         const cached = cachedRead(key);
         if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-        if (args.paged) return pagedRead(entity, args, query);
         return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
           cacheRead(key, rows);
-          return rows;
+          return args.paged ? page(rows) : rows;
         });
       },
       list: (entity, sortOrOptions, limit, skip) => {
@@ -42009,10 +41995,9 @@ var init_staffEntities = __esm({
         const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
         const cached = cachedRead(key);
         if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-        if (args.paged) return pagedRead(entity, args);
         return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
           cacheRead(key, rows);
-          return rows;
+          return args.paged ? page(rows) : rows;
         });
       },
       get: (entity, id) => {

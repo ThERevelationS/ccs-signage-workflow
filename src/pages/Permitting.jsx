@@ -83,6 +83,7 @@ export default function Permitting() {
   const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [designerJurisdiction, setDesignerJurisdiction] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   // Deep links: /Permitting?queue=<queueKey>&wo=<workOrderId>&line=<permitLineItemId>
   // URL params win on initial load only; SavedViews and manual filters still apply afterwards.
@@ -126,24 +127,18 @@ export default function Permitting() {
     if (!showLoading && lineItemMutationCountRef.current > 0) return;
     if (showLoading) setIsLoading(true);
     try {
-      // Batch the catalog reads into one gateway call, then prime the
+      // Batch the four catalog reads into one gateway call, then prime the
       // short-TTL cache so these loaders return instantly on remount.
-      // The gateway clamps any read at its page cap, so a batch result that
-      // returns the full requested limit may be a truncated first page —
-      // only a SHORTER result is known complete and honest to seed into the
-      // shared loadAllEntityRows cache as "all rows". Anything else falls
-      // through to the honest paged loader below.
-      const BATCH_READ_LIMIT = 500;
       const batched = await loadEntitiesBatch([
-        { entity: "PermitLineItem", sort: "-updated_date", limit: BATCH_READ_LIMIT },
-        { entity: "PermitLocality", limit: BATCH_READ_LIMIT },
-        { entity: "AuthorizedEmail", limit: BATCH_READ_LIMIT },
+        { entity: "PermitLineItem", sort: "-updated_date" },
+        { entity: "PermitLocality" },
+        { entity: "AuthorizedEmail" },
       ]).catch(() => null);
       const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
-        Array.isArray(batched?.PermitLineItem) && batched.PermitLineItem.length < BATCH_READ_LIMIT
+        batched?.PermitLineItem
           ? Promise.resolve(primeAndReturn("Permitting line items", null, "-updated_date", batched.PermitLineItem))
           : loadAllEntityRows({ entity: PermitLineItem, sort: "-updated_date", label: "Permitting line items", cacheTtlMs: 30000 }),
-        Array.isArray(batched?.PermitLocality) && batched.PermitLocality.length < BATCH_READ_LIMIT
+        batched?.PermitLocality
           ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
           : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
         fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
@@ -151,7 +146,7 @@ export default function Permitting() {
             .filter((wo) => wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
 
-        Array.isArray(batched?.AuthorizedEmail) && batched.AuthorizedEmail.length < BATCH_READ_LIMIT
+        batched?.AuthorizedEmail
           ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
           : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
         loadSingleGlobalSetting({
@@ -1086,6 +1081,17 @@ export default function Permitting() {
                   onUpdateWorkOrderField={updateWorkOrderField}
                   onWorkNotesChanged={() => loadData(false)}
                   onFixPermittingStage={fixPermittingStage}
+                  onBuildPlan={(wo, locality) => {
+                    setSelectedWorkOrder(wo);
+                    setDesignerJurisdiction(locality ? {
+                      jurisdiction_id: locality.jurisdiction_profile_id || '',
+                      jurisdiction_name: locality.name || '',
+                      state: locality.state || '',
+                      locality_id: locality.id || '',
+                      locality_name: locality.name || '',
+                    } : null);
+                    setShowWorkflowDesigner(true);
+                  }}
                   currentUser={currentUser}
                   isRegistered={isRegistered}
                   localities={localities}
@@ -1458,8 +1464,9 @@ export default function Permitting() {
       {showWorkflowDesigner && (
         <PermitWorkflowDesigner
           isOpen={showWorkflowDesigner}
-          onClose={() => { setShowWorkflowDesigner(false); loadData(false); }}
+          onClose={() => { setShowWorkflowDesigner(false); setDesignerJurisdiction(null); loadData(false); }}
           workOrder={selectedWorkOrder}
+          preselectedJurisdiction={designerJurisdiction}
           onLinesCreated={() => loadData(false)}
         />
       )}
