@@ -11266,7 +11266,14 @@ Deno.serve(async (req) => {
 
     if (action === 'labor_vs_estimate') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : '';
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : '';
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: from && to ? companyRangeQuery('clock_in', from, to) : {},
+        sort: '-clock_in',
+        label: 'Labor vs estimate entries',
+      }).catch(() => []);
       const rollup = new Map();
       for (const e of (Array.isArray(rows) ? rows : [])) {
         if (e.archived_test_data === true || e.archived_admin === true) continue;
@@ -11305,7 +11312,12 @@ Deno.serve(async (req) => {
       const rate = Math.max(0, Number((await base44.asServiceRole.entities.GlobalSettings.filter({ key: 'defaultHourlyRate' }).catch(() => []))[0]?.value ?? 0));
       const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 7 * 86400000).toISOString());
       const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
-      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: companyRangeQuery('clock_in', from, to),
+        sort: '-clock_in',
+        label: 'Overtime report entries',
+      }).catch(() => []);
       const byEmp = new Map();
       for (const e of (Array.isArray(rows) ? rows : [])) {
         const dk = dateKeyInCompanyTime(e.clock_in);
@@ -11324,7 +11336,14 @@ Deno.serve(async (req) => {
 
     if (action === 'differential_hours_report') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 30 * 86400000).toISOString());
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: companyRangeQuery('clock_in', from, to),
+        sort: '-clock_in',
+        label: 'Differential hours entries',
+      }).catch(() => []);
       // cur.getHours() is UTC on the server; the differential window is a
       // company-time (America/New_York) 18:00-06:00 shift premium.
       const companyHour = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, hourCycle: 'h23', hour: '2-digit' });
