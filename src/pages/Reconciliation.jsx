@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import ReconcileWizard from "@/components/reconciliation/ReconcileWizard";
+import LocationsPanel from "@/components/reconciliation/LocationsPanel";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { BUCKET_LABELS, TENDER_BUCKETS } from "@/components/reconciliation/reconciliationModel";
 import {
   ChevronRight,
@@ -135,10 +137,11 @@ function BatchDetail({ sessionToken, batchId, onClose }) {
 }
 
 export default function Reconciliation() {
-  const { sessionToken, isRegistered } = useAuth();
+  const { sessionToken, isRegistered, currentUser } = useAuth();
   const [batches, setBatches] = useState([]);
   const [unreconciled, setUnreconciled] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [salesLocations, setSalesLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -154,6 +157,12 @@ export default function Reconciliation() {
       setBatches(data.batches || []);
       setUnreconciled(data.unreconciled || []);
       setLocations(data.locations || []);
+      // SalesLocation registry -- the wizard's location select reads active
+      // rows from here. Until the staff gateways allowlist the entity this
+      // resolves to an empty list and the select falls back to past batch
+      // locations rather than failing the page.
+      const salesLocationRows = await staffEntities.SalesLocation.list("name", 200).catch(() => []);
+      setSalesLocations(Array.isArray(salesLocationRows) ? salesLocationRows : []);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Load failed.");
     } finally {
@@ -199,6 +208,8 @@ export default function Reconciliation() {
           <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{batches.length}</div>
         </div>
       </div>
+
+      <LocationsPanel locations={salesLocations} isAdmin={currentUser?.role === "admin"} onChanged={load} />
 
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
       {notice && <div className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</div>}
@@ -249,6 +260,7 @@ export default function Reconciliation() {
           payments={unreconciled}
           batches={batches}
           locations={locations}
+          salesLocations={salesLocations}
           invoke={invokeAction}
           onClose={() => setShowWizard(false)}
           onClosed={(data) => {
