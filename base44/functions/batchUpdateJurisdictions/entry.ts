@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
@@ -34,6 +35,7 @@ Deno.serve(async (req) => {
 
         // Use the jurisdiction research agent for all searches
         const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+          _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           jurisdictionName: jurisdiction.name,
           jurisdictionState: jurisdiction.state,
           jurisdictionType: jurisdiction.type,
