@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2, Plus, Printer, Receipt, Search, Trash2, X } from "lucide-react";
 import { createWorkOrderWithRecovery } from "@/components/workflow/workOrderPersistence";
 import { ensureNewCustomer } from "@/components/estimator/customerCreationService";
+import { StatusChip } from "@/components/kit";
 import { generateDocNumber } from "@/functions/generateDocNumber";
 import {
   buildWalkInSale,
@@ -329,6 +330,7 @@ export default function WalkInSale({ customers = [], taxGroups = [], quickProduc
         <div className="flex items-center gap-2">
           <Receipt className="w-5 h-5 text-emerald-600" />
           <h2 className="text-base font-bold text-gray-800">Sale complete</h2>
+          {inv?.status ? <StatusChip status={inv.status} size="sm" /> : null}
         </div>
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
           <div className="text-lg font-bold text-emerald-800">{receipt.docNumber || receipt.workOrderId}</div>
@@ -355,7 +357,7 @@ export default function WalkInSale({ customers = [], taxGroups = [], quickProduc
             <tbody>
               {receipt.totals.items.map((row, i) => (
                 <tr key={i} className="border-t border-gray-100">
-                  <td className="px-3 py-2 text-gray-800">{row.description}{row.category ? <span className="ml-1 text-xs text-gray-400">({row.category})</span> : ""}{row.produces_work ? <span className="ml-1 text-[10px] font-bold text-sky-600">PROD</span> : ""}</td>
+                  <td className="px-3 py-2 text-gray-800">{row.description}{row.category ? <span className="ml-1 text-xs text-gray-400">({row.category})</span> : ""}{row.produces_work ? <StatusChip tone="sky" size="sm" showDot={false} className="ml-1">PROD</StatusChip> : ""}</td>
                   <td className="px-3 py-2 text-right">{row.quantity}</td>
                   <td className="px-3 py-2 text-right">{usd(row.unit_price)}</td>
                   <td className="px-3 py-2 text-right font-medium">{usd(row.line_total)}</td>
