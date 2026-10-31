@@ -20,41 +20,41 @@ const NEW_VS_REPLACEMENT_OPTIONS = ["New sign", "Face replacement", "Repair/Serv
 const TEMP_PERM_OPTIONS = ["Permanent", "Temporary"];
 
 function handoffText(value) {
-  if (typeof value === "string") return value.length ? value : "Not recorded · confirm with the responsible office";
-  if (value === null || value === undefined) return "Not recorded · confirm with the responsible office";
+  if (typeof value === "string") return value.length ? value : "Not saved · ask the office";
+  if (value === null || value === undefined) return "Not saved · ask the office";
   return String(value);
 }
 
 function ElectricalPlanningHandoffView({ handoff }) {
   const applicability = value => value === "potentially_applicable"
-    ? "potentially applicable · confirm the proposed work"
+    ? "maybe · check the planned work"
     : value === "not_applicable_candidate"
-      ? "not-applicable candidate · confirm before skipping"
+      ? "probably not needed · check before skipping"
       : value === "unknown" || !value
-        ? "unknown · unresolved"
+        ? "unknown · not settled"
         : handoffText(value);
-  return <section aria-label="Electrical planning handoff" className="min-w-0 space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 [overflow-wrap:anywhere]">
-    <h3 className="font-semibold text-amber-950">Electrical office planning handoff · saved research draft</h3>
-    <p className="text-sm text-amber-900">This context is unverified and does not approve requirements, determine applicability, select a provider, or create job tasks. Permit issuance and inspection responsibility remain separate.</p>
-    <p className="text-xs text-amber-900">Research method: {handoffText(handoff.research_method)} · Research date: {handoffText(handoff.researched_at)} · Jurisdiction: {handoffText(handoff.jurisdiction?.jurisdiction_name)}{handoff.jurisdiction?.state ? `, ${handoff.jurisdiction.state}` : ""}</p>
+  return <section aria-label="Electrical office handoff" className="min-w-0 space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 [overflow-wrap:anywhere]">
+    <h3 className="font-semibold text-amber-950">Electrical office notes · saved research</h3>
+    <p className="text-sm text-amber-900">This is unchecked research — it doesn't approve anything, decide what's needed, pick who does the work, or create job tasks. The permit office and the inspector stay separate.</p>
+    <p className="text-xs text-amber-900">How it was researched: {handoffText(handoff.research_method)} · When: {handoffText(handoff.researched_at)} · Office: {handoffText(handoff.jurisdiction?.jurisdiction_name)}{handoff.jurisdiction?.state ? `, ${handoff.jurisdiction.state}` : ""}</p>
     <div className="grid min-w-0 gap-3 sm:grid-cols-2">
       {(handoff.roles || []).map(role => <article key={role.role} aria-label={role.label} className="min-w-0 space-y-2 rounded border border-amber-200 bg-white p-3 text-xs">
         <h4 className="font-semibold">{role.label}</h4>
         {!role.findings?.length
-          ? <p>No saved finding for this responsibility. Office and applicability remain unresolved.</p>
+          ? <p>Nothing saved for this job. Which office handles it isn't settled.</p>
           : role.findings.map((finding, index) => {
             const source = safeGovernmentOfficeSourceUrl(finding.official_source_url);
             return <div key={index} className="space-y-2 border-t pt-2">
               <p className="font-medium">Finding {index + 1}: {handoffText(finding.office_name)}</p>
-              <p><strong>Recorded applicability:</strong> {applicability(finding.applicability)}</p>
-              <p><strong>Recorded service area:</strong> {handoffText(finding.service_area)}</p>
-              <p><strong>Responsibility evidence:</strong> {handoffText(finding.responsibility_quote)}</p>
-              <p><strong>Delegation/provider evidence:</strong> {handoffText(finding.delegation_quote)}</p>
+              <p><strong>Applies?</strong> {applicability(finding.applicability)}</p>
+              <p><strong>Covers:</strong> {handoffText(finding.service_area)}</p>
+              <p><strong>Who's responsible:</strong> {handoffText(finding.responsibility_quote)}</p>
+              <p><strong>Who can do it:</strong> {handoffText(finding.delegation_quote)}</p>
               {Object.entries(finding.contact_info || {}).map(([key, value]) => <p key={key}><strong>{key.replaceAll("_", " ")}:</strong> {handoffText(value)}</p>)}
               {Object.entries(finding.research_fields || {}).map(([key, value]) => <p key={key} className="whitespace-pre-wrap"><strong>{key.replaceAll("_", " ")}:</strong> {handoffText(value)}</p>)}
-              <p><strong>Research notes:</strong> {handoffText(finding.notes)}</p>
-              {source ? <a href={source} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center break-all text-blue-700 underline">Open recorded office research source</a>
-                : <p>Usable recorded source URL unavailable.</p>}
+              <p><strong>Notes:</strong> {handoffText(finding.notes)}</p>
+              {source ? <a href={source} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center break-all text-blue-700 underline">Open the saved source</a>
+                : <p>No usable source link saved.</p>}
             </div>;
           })}
       </article>)}
@@ -103,7 +103,7 @@ export default function PermitWorkflowDesigner({
   useEffect(() => {
     let active = true;
     if (isOpen) loadWorkflowDrafts(preselectedJurisdiction?.jurisdiction_id).then(rows => { if (active) setSavedDrafts(rows); })
-      .catch(() => { if (active) setDraftLoadError('Saved drafts could not be loaded. You can still preview a new workflow.'); });
+      .catch(() => { if (active) setDraftLoadError("Couldn't load saved plans — you can still build a new one."); });
     return () => { active = false; };
   }, [isOpen, preselectedJurisdiction?.jurisdiction_id]);
 
@@ -165,7 +165,7 @@ export default function PermitWorkflowDesigner({
       setDraft(electricalPlanningHandoff
         ? { ...result, electrical_planning_handoff: electricalPlanningHandoff }
         : result);
-      setDraftTitle(`${result.jurisdiction.jurisdiction_name || 'Unresolved location'} — ${form.signTypes || 'Sign workflow'}`);
+      setDraftTitle(`${result.jurisdiction.jurisdiction_name || 'Town not picked'} — ${form.signTypes || 'Sign plan'}`);
       setReviewed(false); setSaved(null); setRevisionSource(null); setEditingSteps(false); setReviewNotes('');
       // Auto-expand steps that need staff confirmation
       const needsConfirm = new Set(
@@ -173,7 +173,7 @@ export default function PermitWorkflowDesigner({
       );
       setExpandedSteps(needsConfirm);
     } catch (e) {
-      setError(e?.message || "Failed to generate workflow");
+      setError(e?.message || "Couldn't build the plan");
     } finally {
       setGenerating(false);
     }
@@ -183,7 +183,7 @@ export default function PermitWorkflowDesigner({
     const source = saved || revisionSource;
     if (source) {
       const nextRevision = (Number(source.snapshot?.draft_revision?.revision_number) || 1) + 1;
-      const rootTitle = source.snapshot?.draft_revision?.root_title || source.title || 'Permitting workflow';
+      const rootTitle = source.snapshot?.draft_revision?.root_title || source.title || 'Permit plan';
       setRevisionSource(source);
       setDraftTitle(`${rootTitle} — revision ${nextRevision}`);
       setReviewNotes(source.review_notes || '');
@@ -234,7 +234,7 @@ export default function PermitWorkflowDesigner({
 
   const handleSaveDraft = async () => {
     if (!draft || !reviewed || saving || saved) return;
-    if (reviewIssues.length) { setError("Resolve the staff planning review questions before saving this revision."); return; }
+    if (reviewIssues.length) { setError("Answer the review questions before saving this copy."); return; }
     setSaving(true); setError('');
     try {
       const snapshot = revisionSource ? {
@@ -252,7 +252,7 @@ export default function PermitWorkflowDesigner({
       setDraft(snapshot); setSaved(row); setRevisionSource(row); setEditingSteps(false);
       setSavedDrafts(prev => [row, ...prev]);
       onDraftSaved(row);
-    } catch (e) { setError(e?.message || 'Draft could not be saved. Your preview is still available.'); }
+    } catch (e) { setError(e?.message || "Couldn't save the plan — what you see is still here."); }
     finally { setSaving(false); }
   };
 
@@ -265,7 +265,7 @@ export default function PermitWorkflowDesigner({
       setCreateResult(result);
       if (result.created.length > 0) onLinesCreated(result);
     } catch (e) {
-      setError(e?.message || "Failed to create permit lines");
+      setError(e?.message || "Couldn't make the permit lines");
     } finally {
       setCreating(false);
     }
@@ -283,9 +283,9 @@ export default function PermitWorkflowDesigner({
   if (!isOpen) return null;
 
   const basisBadge = (basis) => {
-    if (basis === "approved_rule") return <Badge className="bg-green-100 text-green-700">Approved Rule</Badge>;
-    if (basis === "pending_review") return <Badge className="bg-amber-100 text-amber-700">Pending Review</Badge>;
-    return <Badge className="bg-red-100 text-red-700">Staff Confirmation Needed</Badge>;
+    if (basis === "approved_rule") return <Badge className="bg-green-100 text-green-700">Checked rule</Badge>;
+    if (basis === "pending_review") return <Badge className="bg-amber-100 text-amber-700">Needs checking</Badge>;
+    return <Badge className="bg-red-100 text-red-700">Needs a staff check</Badge>;
   };
 
   return (
@@ -295,7 +295,7 @@ export default function PermitWorkflowDesigner({
         <div className="flex items-center justify-between border-b p-3 sm:p-4">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-600" />
-            <h2 className="text-lg font-bold text-gray-900">AI Permit Workflow Designer</h2>
+            <h2 className="text-lg font-bold text-gray-900">AI Permit Plan Builder</h2>
             {preselectedJurisdiction?.jurisdiction_name && (
               <Badge className="bg-purple-100 text-purple-700">
                 <MapPin className="mr-1 h-3 w-3" />
@@ -313,10 +313,10 @@ export default function PermitWorkflowDesigner({
           {/* Input Form */}
           {!draft && (
             <div className="space-y-4">
-              <p className="rounded-lg bg-purple-50 p-3 text-sm text-purple-900">1. Describe the sign → 2. Review evidence and open questions → 3. Save a permitting draft</p>
+              <p className="rounded-lg bg-purple-50 p-3 text-sm text-purple-900">1. Tell us about the sign → 2. Check the plan and the open questions → 3. Save the plan</p>
               {draftLoadError && <p role="status" className="text-sm text-amber-700">{draftLoadError}</p>}
-              {savedDrafts.length > 0 && <section aria-label="Saved permitting drafts" className="rounded-lg border p-3">
-                <h3 className="text-sm font-semibold">Saved drafts · not approved for use</h3>
+              {savedDrafts.length > 0 && <section aria-label="Saved plans" className="rounded-lg border p-3">
+                <h3 className="text-sm font-semibold">Saved plans — not approved</h3>
                 {savedDrafts.map(row => <button type="button" key={row.id} className="block min-h-11 w-full break-words py-2 text-left text-sm text-purple-700" onClick={() => {
                   setDraft(row.snapshot); setForm(row.project_inputs || form); setDraftTitle(row.title); setReviewNotes(row.review_notes || '');
                   setSaved(row); setRevisionSource(row); setEditingSteps(false); setReviewed(true); setError(''); setCreateResult(null); setExpandedSteps(new Set());
@@ -436,11 +436,11 @@ export default function PermitWorkflowDesigner({
                 className="w-full min-h-12 gap-2 bg-purple-600 hover:bg-purple-700"
               >
                 {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                {generating ? "Generating workflow..." : "Generate Permit Workflow"}
+                {generating ? "Building the plan..." : "Build the permit plan"}
               </Button>
               <p className="text-center text-xs text-gray-500">
-                Uses approved rules first; extracted rules as pending guidance; draft/historical sources never operational.
-                Gaps are surfaced honestly — nothing is invented.
+                It uses checked rules first and treats unchecked ones as maybes.
+                Gaps show up honestly — nothing is invented.
               </p>
             </div>
           )}
@@ -449,20 +449,20 @@ export default function PermitWorkflowDesigner({
           {draft && (
             <div className="space-y-4">
               <div className="rounded-lg border border-purple-200 p-3 text-sm">
-                <p className="font-semibold">2. Review proposed workflow</p>
-                <p>Collected sources are evidence, not approval. Pending findings and open questions remain unverified when this draft is saved.</p>
-                {draft.draft_revision && <p>Revision {draft.draft_revision.revision_number} from {draft.draft_revision.parent_title || draft.draft_revision.parent_draft_id}. The earlier saved snapshot remains unchanged.</p>}
-                {!editingSteps ? <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={beginStepEditing} disabled={saving || creating}>{saved ? 'Create editable revision' : 'Edit proposed steps'}</Button> : <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">Step editing is on. Changed steps keep their citations and become Staff Confirmation Needed. Save creates a separate permitting draft; it does not approve requirements or create job lines.</p>}
-                {draft.jurisdiction_unresolved && <p className="text-amber-800">Location unresolved. This draft cannot establish jurisdiction authority.</p>}
+                <p className="font-semibold">2. Check the suggested steps</p>
+                <p>The sources it found are proof to check, not an office's OK. Anything unconfirmed stays unconfirmed when you save.</p>
+                {draft.draft_revision && <p>Copy {draft.draft_revision.revision_number} of {draft.draft_revision.parent_title || draft.draft_revision.parent_draft_id}. The older copy stays untouched.</p>}
+                {!editingSteps ? <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={beginStepEditing} disabled={saving || creating}>{saved ? 'Make a copy I can change' : 'Change the steps'}</Button> : <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">Editing is on. Steps you change keep their sources but get flagged "needs a staff check". Saving makes a new plan — it doesn't approve anything or add job lines.</p>}
+                {draft.jurisdiction_unresolved && <p className="text-amber-800">No office picked. This plan can't say who's in charge.</p>}
               </div>
-              {(saved || revisionSource) && <section aria-label="Staff planning review progress" className="space-y-2 rounded border border-purple-200 bg-purple-50 p-3 text-sm">
-                <h3 className="font-semibold">Staff planning review</h3>
-                <p>Reviewed for planning: {reviewSummary.reviewed_for_planning} / {draft.steps.length} · Needs follow-up: {reviewSummary.needs_follow_up} · Proposed not applicable: {reviewSummary.not_applicable_proposal} · Not reviewed: {reviewSummary.not_reviewed}</p>
-                <p>This is review progress only. It does not establish evidence completeness, authority approval or readiness for job work. {saved ? 'Create an editable revision to record decisions and follow-up.' : 'Save creates a separate immutable revision.'}</p>
-                {hasUnsavedReview && <p role="status" className="font-semibold">Unsaved staff review checklist changes</p>}
+              {(saved || revisionSource) && <section aria-label="Staff check progress" className="space-y-2 rounded border border-purple-200 bg-purple-50 p-3 text-sm">
+                <h3 className="font-semibold">Staff check</h3>
+                <p>Checked: {reviewSummary.reviewed_for_planning} of {draft.steps.length} · Still needs a look: {reviewSummary.needs_follow_up} · Marked not needed: {reviewSummary.not_applicable_proposal} · Not checked yet: {reviewSummary.not_reviewed}</p>
+                <p>This is just check-off progress — it proves nothing and starts no job work. {saved ? 'Make a copy you can change to record your calls.' : "Saving makes a new copy that can't be edited in place."}</p>
+                {hasUnsavedReview && <p role="status" className="font-semibold">You have unsaved check-off changes</p>}
                 {editingSteps && reviewIssues.length > 0 && <ul className="text-amber-900">{reviewIssues.map(issue => <li key={issue.index + issue.message}>Step {issue.index + 1}: {issue.message}</li>)}</ul>}
               </section>}
-              {saved?.id && <Button type="button" variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={event => setReviewPacket({ draftRow: structuredClone(saved), trigger: event.currentTarget })}>Open saved review packet</Button>}
+              {saved?.id && <Button type="button" variant="outline" className="min-h-11 h-auto whitespace-normal" onClick={event => setReviewPacket({ draftRow: structuredClone(saved), trigger: event.currentTarget })}>Open the saved check sheet</Button>}
               {saved && <PermittingDraftHistory key={saved.id} current={saved} onOpenCitation={(citation, draftRow, trigger) => setSourceEvidence({citation, draftRow, trigger})} />}
               {draft.electrical_planning_handoff && <ElectricalPlanningHandoffView handoff={draft.electrical_planning_handoff} /> }
               {/* Summary */}
@@ -475,11 +475,11 @@ export default function PermitWorkflowDesigner({
                       {draft.jurisdiction.jurisdiction_name}
                     </Badge>
                   )}
-                  <Badge className="bg-green-100 text-green-700">{draft.rule_counts.approved} approved rules</Badge>
-                  <Badge className="bg-amber-100 text-amber-700">{draft.rule_counts.pending} pending review</Badge>
+                  <Badge className="bg-green-100 text-green-700">{draft.rule_counts.approved} checked rules</Badge>
+                  <Badge className="bg-amber-100 text-amber-700">{draft.rule_counts.pending} need checking</Badge>
                   <Badge className="bg-blue-100 text-blue-700">{draft.steps.length} steps</Badge>
                   {draft.gaps.length > 0 && (
-                    <Badge className="bg-red-100 text-red-700">{draft.gaps.length} gaps</Badge>
+                    <Badge className="bg-red-100 text-red-700">{draft.gaps.length} open questions</Badge>
                   )}
                 </div>
               </div>
@@ -489,7 +489,7 @@ export default function PermitWorkflowDesigner({
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3">
                   <p className="mb-2 flex items-center gap-1 text-sm font-semibold text-red-800">
                     <AlertTriangle className="h-4 w-4" />
-                    Staff Confirmation Needed ({draft.gaps.length})
+                    Needs a staff check ({draft.gaps.length})
                   </p>
                   <ul className="space-y-1 text-xs text-red-700">
                     {draft.gaps.map((gap, i) => (
@@ -505,7 +505,7 @@ export default function PermitWorkflowDesigner({
               {/* Steps */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">Workflow Steps ({draft.steps.length})</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Planned steps ({draft.steps.length})</h3>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setExpandedSteps(new Set(draft.steps.map((s) => s.step_index)))} className="text-xs">
                       Expand all
@@ -545,29 +545,29 @@ export default function PermitWorkflowDesigner({
                       {isExpanded && (
                         <div id={`pwd-proposed-step-${idx}`} className="border-t p-3 space-y-2 text-xs">
                           {editingSteps && <fieldset className="min-w-0 space-y-3 rounded border border-amber-300 bg-amber-50 p-3">
-                            <legend className="px-1 font-semibold text-amber-950">Edit proposed step {idx + 1}</legend>
-                            <p className="text-amber-900">These are staff overrides of a proposal. Source citations stay attached, while this step requires confirmation.</p>
+                            <legend className="px-1 font-semibold text-amber-950">Change step {idx + 1}</legend>
+                            <p className="text-amber-900">You're changing what was suggested. Sources stay attached, but this step gets flagged for a staff check.</p>
                             <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                              <div className="min-w-0"><Label htmlFor={`pwd-step-office-${idx}`}>Office for step {idx + 1}</Label><Input id={`pwd-step-office-${idx}`} className="min-h-11" value={step.office || ''} onChange={event => updateStepField(idx, 'office', event.target.value)} /></div>
-                              <div className="min-w-0"><Label htmlFor={`pwd-step-office-type-${idx}`}>Office type for step {idx + 1}</Label><Input id={`pwd-step-office-type-${idx}`} className="min-h-11" value={step.office_type || ''} onChange={event => updateStepField(idx, 'office_type', event.target.value)} /></div>
-                              <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-permit-type-${idx}`}>Permit type for step {idx + 1}</Label><Input id={`pwd-step-permit-type-${idx}`} className="min-h-11" value={step.permit_type || ''} onChange={event => updateStepField(idx, 'permit_type', event.target.value)} /></div>
-                              <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-action-${idx}`}>Action for step {idx + 1}</Label><textarea id={`pwd-step-action-${idx}`} value={step.action || ''} onChange={event => updateStepField(idx, 'action', event.target.value)} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
-                              <div className="min-w-0"><Label htmlFor={`pwd-step-documents-${idx}`}>Required documents for step {idx + 1} · one per line</Label><textarea id={`pwd-step-documents-${idx}`} value={Array.isArray(step.required_documents) ? step.required_documents.join('\n') : typeof step.required_documents === 'string' ? step.required_documents : ''} onChange={event => updateStepField(idx, 'required_documents', event.target.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean))} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
-                              <div className="min-w-0"><Label htmlFor={`pwd-step-forms-${idx}`}>Required forms for step {idx + 1} · one per line</Label><textarea id={`pwd-step-forms-${idx}`} value={Array.isArray(step.required_forms) ? step.required_forms.join('\n') : typeof step.required_forms === 'string' ? step.required_forms : ''} onChange={event => updateStepField(idx, 'required_forms', event.target.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean))} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
-                              <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-fee-${idx}`}>Fee expectation for step {idx + 1}</Label><Input id={`pwd-step-fee-${idx}`} className="min-h-11" value={step.fee_expectation || ''} onChange={event => updateStepField(idx, 'fee_expectation', event.target.value)} /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-office-${idx}`}>Office</Label><Input id={`pwd-step-office-${idx}`} className="min-h-11" value={step.office || ''} onChange={event => updateStepField(idx, 'office', event.target.value)} /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-office-type-${idx}`}>Kind of office</Label><Input id={`pwd-step-office-type-${idx}`} className="min-h-11" value={step.office_type || ''} onChange={event => updateStepField(idx, 'office_type', event.target.value)} /></div>
+                              <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-permit-type-${idx}`}>Permit</Label><Input id={`pwd-step-permit-type-${idx}`} className="min-h-11" value={step.permit_type || ''} onChange={event => updateStepField(idx, 'permit_type', event.target.value)} /></div>
+                              <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-action-${idx}`}>What to do</Label><textarea id={`pwd-step-action-${idx}`} value={step.action || ''} onChange={event => updateStepField(idx, 'action', event.target.value)} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-documents-${idx}`}>Papers to bring — one per line</Label><textarea id={`pwd-step-documents-${idx}`} value={Array.isArray(step.required_documents) ? step.required_documents.join('\n') : typeof step.required_documents === 'string' ? step.required_documents : ''} onChange={event => updateStepField(idx, 'required_documents', event.target.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean))} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-forms-${idx}`}>Forms to file — one per line</Label><textarea id={`pwd-step-forms-${idx}`} value={Array.isArray(step.required_forms) ? step.required_forms.join('\n') : typeof step.required_forms === 'string' ? step.required_forms : ''} onChange={event => updateStepField(idx, 'required_forms', event.target.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean))} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-3 text-sm" /></div>
+                              <div className="min-w-0 sm:col-span-2"><Label htmlFor={`pwd-step-fee-${idx}`}>Expected fee</Label><Input id={`pwd-step-fee-${idx}`} className="min-h-11" value={step.fee_expectation || ''} onChange={event => updateStepField(idx, 'fee_expectation', event.target.value)} /></div>
                             </div>
                             <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                              <div className="min-w-0"><Label htmlFor={`pwd-step-target-days-${idx}`}>Target day for step {idx + 1}</Label><Input id={`pwd-step-target-days-${idx}`} type="number" inputMode="numeric" step="1" min="0" className="min-h-11" value={step.target_days_from_start ?? ''} onChange={event => { const raw = event.target.value; const value = raw === '' ? null : Number(raw); if (value === null || (Number.isSafeInteger(value) && value >= 0)) updateStepField(idx, 'target_days_from_start', value); }} /></div>
-                              <div className="min-w-0"><Label htmlFor={`pwd-step-followup-${idx}`}>Follow-up interval in days for step {idx + 1}</Label><Input id={`pwd-step-followup-${idx}`} type="number" inputMode="numeric" step="1" min="1" className="min-h-11" value={step.followup_interval_days ?? ''} onChange={event => { const raw = event.target.value; const value = raw === '' ? null : Number(raw); if (value === null || (Number.isSafeInteger(value) && value >= 1)) updateStepField(idx, 'followup_interval_days', value); }} /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-target-days-${idx}`}>Do it by day</Label><Input id={`pwd-step-target-days-${idx}`} type="number" inputMode="numeric" step="1" min="0" className="min-h-11" value={step.target_days_from_start ?? ''} onChange={event => { const raw = event.target.value; const value = raw === '' ? null : Number(raw); if (value === null || (Number.isSafeInteger(value) && value >= 0)) updateStepField(idx, 'target_days_from_start', value); }} /></div>
+                              <div className="min-w-0"><Label htmlFor={`pwd-step-followup-${idx}`}>Check back every (days)</Label><Input id={`pwd-step-followup-${idx}`} type="number" inputMode="numeric" step="1" min="1" className="min-h-11" value={step.followup_interval_days ?? ''} onChange={event => { const raw = event.target.value; const value = raw === '' ? null : Number(raw); if (value === null || (Number.isSafeInteger(value) && value >= 1)) updateStepField(idx, 'followup_interval_days', value); }} /></div>
                               <label className="flex min-h-11 items-center gap-2 rounded border bg-white p-3 sm:col-span-2">
                                 <input type="checkbox" checked={step.inspection_needed === true} onChange={event => updateStepField(idx, 'inspection_needed', event.target.checked)} />
-                                Inspection planned for step {idx + 1} · confirm provider and stages
+                                Inspection for step {idx + 1} — check who does it and when
                               </label>
                             </div>
                             <fieldset className="min-w-0 space-y-2 rounded border bg-white p-3">
-                              <legend className="px-1 font-medium">Prerequisite steps for step {idx + 1}</legend>
-                              {idx === 0 ? <p className="text-gray-600">This is the first step, so it has no earlier steps to select.</p> : <>
-                                <p className="text-gray-600">Select earlier steps that must happen first.</p>
+                              <legend className="px-1 font-medium">Steps that must happen before step {idx + 1}</legend>
+                              {idx === 0 ? <p className="text-gray-600">It's the first step — nothing comes before it.</p> : <>
+                                <p className="text-gray-600">Check the steps that have to happen first.</p>
                                 <div className="grid min-w-0 gap-2 sm:grid-cols-2">
                                   {draft.steps.slice(0, idx).map((prerequisite, prerequisiteIndex) => {
                                     const current = (Array.isArray(step.dependencies) ? step.dependencies : []).filter(dependency => Number.isInteger(dependency) && dependency >= 0 && dependency < idx);
@@ -578,14 +578,14 @@ export default function PermitWorkflowDesigner({
                                           : current.filter(dependency => dependency !== prerequisiteIndex);
                                         updateStepField(idx, 'dependencies', next);
                                       }} />
-                                      <span className="min-w-0 break-words">Step {prerequisiteIndex + 1}: {prerequisite.permit_type || 'Untitled step'}</span>
+                                      <span className="min-w-0 break-words">Step {prerequisiteIndex + 1}: {prerequisite.permit_type || 'Step with no name'}</span>
                                     </label>;
                                   })}
                                 </div>
                               </>}
                             </fieldset>
                           </fieldset>}
-                          {step.staff_override && <p className="rounded bg-amber-100 p-2 text-amber-950">Staff edited · source basis was {step.staff_override.original_basis}; the edited step remains unapproved. Edited fields: {Array.isArray(step.staff_override.edited_fields) ? step.staff_override.edited_fields.join(', ') : 'unavailable'}.</p>}
+                          {step.staff_override && <p className="rounded bg-amber-100 p-2 text-amber-950">Changed by staff — it was based on {step.staff_override.original_basis} and still isn't approved. Changed: {Array.isArray(step.staff_override.edited_fields) ? step.staff_override.edited_fields.join(', ') : 'not recorded'}.</p>}
                           <p className="text-gray-700">{step.action}</p>
                           {(step.required_documents?.length > 0 || step.required_forms?.length > 0) && (
                             <div className="space-y-1">
@@ -603,18 +603,18 @@ export default function PermitWorkflowDesigner({
                           )}
                           {step.submission_link && (
                             <a href={step.submission_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                              <FileText className="h-3 w-3" /> Online submission
+                              <FileText className="h-3 w-3" /> File it online
                             </a>
                           )}
                           {step.fee_expectation && <p className="text-gray-600"><span className="font-medium">Fee:</span> {step.fee_expectation}</p>}
                           {step.exemption_applicable && <p className="text-gray-600"><span className="font-medium">Exemption:</span> {step.exemption_applicable}</p>}
-                          {step.variance_needed && <p className="text-amber-700"><AlertTriangle className="mr-1 inline h-3 w-3" />Variance/conditional-use may be required</p>}
-                          {step.target_days_from_start != null && <p className="text-gray-600"><span className="font-medium">Target:</span> Day {step.target_days_from_start}</p>}
-                          {step.followup_interval_days != null && <p className="text-gray-600"><span className="font-medium">Follow-up:</span> Every {step.followup_interval_days} days</p>}
-                          {step.inspection_needed === true && <p className="text-gray-600"><ShieldCheck className="mr-1 inline h-3 w-3" />Inspection planned · confirm provider and required stages</p>}
-                          {step.inspection_needed === false && <p className="text-amber-700"><ShieldCheck className="mr-1 inline h-3 w-3" />No inspection currently identified · confirm before relying on this draft</p>}
+                          {step.variance_needed && <p className="text-amber-700"><AlertTriangle className="mr-1 inline h-3 w-3" />May need special approval (variance)</p>}
+                          {step.target_days_from_start != null && <p className="text-gray-600"><span className="font-medium">Do it by:</span> Day {step.target_days_from_start}</p>}
+                          {step.followup_interval_days != null && <p className="text-gray-600"><span className="font-medium">Check back:</span> Every {step.followup_interval_days} days</p>}
+                          {step.inspection_needed === true && <p className="text-gray-600"><ShieldCheck className="mr-1 inline h-3 w-3" />Inspection planned — check who does it and when</p>}
+                          {step.inspection_needed === false && <p className="text-amber-700"><ShieldCheck className="mr-1 inline h-3 w-3" />No inspection found — double-check before relying on this plan</p>}
                           {step.dependencies?.length > 0 && (
-                            <p className="text-gray-600"><span className="font-medium">Depends on:</span> Step(s) {step.dependencies.map(d => Number(d) + 1).join(", ")}</p>
+                            <p className="text-gray-600"><span className="font-medium">Must come after:</span> Step {step.dependencies.map(d => Number(d) + 1).join(", ")}</p>
                           )}
                           {step.gap_reason && <p className="text-red-700"><AlertTriangle className="mr-1 inline h-3 w-3" />{step.gap_reason}</p>}
                           {(saved || revisionSource) && <WorkflowPlanningReview step={step} index={idx} editable={editingSteps && !saved && !saving} onChange={(field, value) => updateStaffReview(idx, field, value)} />}
@@ -623,7 +623,7 @@ export default function PermitWorkflowDesigner({
                             if (!saved && onOpenSourceDocument) onOpenSourceDocument(sourceId);
                             else setSourceEvidence({ citation, draftRow: saved || { title: draftTitle, snapshot: draft }, trigger });
                           }} />
-                          <p className="text-[10px] text-gray-400">Dedup key: {rowName}</p>
+                          <p className="text-[10px] text-gray-400">Line name: {rowName}</p>
                         </div>
                       )}
                     </div>
@@ -631,17 +631,17 @@ export default function PermitWorkflowDesigner({
                 })}
               </div>
 
-              <section aria-label="Save permitting draft" className="space-y-3 rounded-lg border bg-gray-50 p-3">
-                <h3 className="text-sm font-semibold">3. Save draft for later review</h3>
-                <Label htmlFor="pwd-title">Draft name</Label>
+              <section aria-label="Save the plan" className="space-y-3 rounded-lg border bg-gray-50 p-3">
+                <h3 className="text-sm font-semibold">3. Save the plan to finish later</h3>
+                <Label htmlFor="pwd-title">Plan name</Label>
                 <Input id="pwd-title" value={draftTitle} disabled={Boolean(saved) || saving} onChange={e => setDraftTitle(e.target.value)} className="min-h-11" />
-                <Label htmlFor="pwd-review-notes">Review notes / questions to resolve</Label>
+                <Label htmlFor="pwd-review-notes">Notes / questions to answer</Label>
                 <textarea id="pwd-review-notes" value={reviewNotes} disabled={Boolean(saved) || saving} onChange={e => setReviewNotes(e.target.value)} className="min-h-24 w-full rounded-md border p-3 text-sm" />
                 <label className="flex min-h-11 items-start gap-2 text-sm">
                   <input type="checkbox" checked={reviewed} disabled={Boolean(saved) || saving} onChange={e => setReviewed(e.target.checked)} className="mt-1" />
-                  I reviewed the proposed steps and unresolved questions. Saving does not approve requirements or start job work.
+                  I checked the steps and the open questions. Saving doesn't approve anything or start the work.
                 </label>
-                {saved && <p role="status" className="text-sm font-semibold text-green-700">Saved permitting draft: {saved.title}. No job lines created by this save.</p>}
+                {saved && <p role="status" className="text-sm font-semibold text-green-700">Plan saved: {saved.title}. This didn't add any job lines.</p>}
               </section>
               {/* Create Result */}
               {createResult && (
@@ -653,7 +653,7 @@ export default function PermitWorkflowDesigner({
                   </p>
                   {createResult.skipped.length > 0 && (
                     <p className="mt-1 text-xs text-amber-700">
-                      {createResult.skipped.length} line(s) already existed (idempotent skip): {createResult.skipped.map(s => s.rowName).join(", ")}
+                      {createResult.skipped.length} line(s) already existed — skipped: {createResult.skipped.map(s => s.rowName).join(", ")}
                     </p>
                   )}
                 </div>
@@ -673,7 +673,7 @@ export default function PermitWorkflowDesigner({
               ← Edit inputs
             </Button>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleSaveDraft} disabled={saving || Boolean(saved) || !reviewed || !draftTitle.trim() || reviewIssues.length > 0} className="min-h-11 bg-purple-600 hover:bg-purple-700">{saving ? "Saving draft..." : saved ? "Draft saved" : revisionSource ? "Save revised permitting draft" : "Save permitting draft"}</Button>
+              <Button onClick={handleSaveDraft} disabled={saving || Boolean(saved) || !reviewed || !draftTitle.trim() || reviewIssues.length > 0} className="min-h-11 bg-purple-600 hover:bg-purple-700">{saving ? "Saving..." : saved ? "Plan saved" : revisionSource ? "Save the changed plan" : "Save the plan"}</Button>
               <Button variant="ghost" onClick={closeDesigner} className="min-h-11">Close</Button>
               {workOrder?.id && draft.steps.length > 0 && (
                 <Button
