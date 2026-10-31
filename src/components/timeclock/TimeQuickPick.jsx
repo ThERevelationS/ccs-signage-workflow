@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 // stays behind a toggle for odd cases.
 export const SHIFT_END_TIMES = ["15:30", "16:00", "16:30", "17:00", "17:30", "18:00"];
 export const SHIFT_START_TIMES = ["06:30", "07:00", "07:30", "08:00", "08:30", "09:00"];
+export const WORKDAY_TIMES = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
 const pad = (n) => String(n).padStart(2, "0");
 
