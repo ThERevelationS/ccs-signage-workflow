@@ -119,6 +119,7 @@ import { reviewAutomationOperation } from "@/components/admin/automationOperatio
 import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigation, storeAdminNavigation } from "@/components/admin/adminNavigationPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -2964,11 +2965,11 @@ export default function AdminSettings() {
                       onChange={(e) => saveQuietHours({ enabled: e.target.checked })} />
                     Quiet hours
                   </label>
-                  <input type="time" value={quietStart} disabled={quietBusy || !quietEnabled}
+                  <CcsTimeField value={quietStart} disabled={quietBusy || !quietEnabled}
                     onChange={(e) => saveQuietHours({ start: e.target.value })}
                     className="h-6 rounded border border-input bg-transparent px-1 text-xs" aria-label="Quiet hours start" />
                   <span className="text-xs text-gray-400">to</span>
-                  <input type="time" value={quietEnd} disabled={quietBusy || !quietEnabled}
+                  <CcsTimeField value={quietEnd} disabled={quietBusy || !quietEnabled}
                     onChange={(e) => saveQuietHours({ end: e.target.value })}
                     className="h-6 rounded border border-input bg-transparent px-1 text-xs" aria-label="Quiet hours end" />
                 </div>

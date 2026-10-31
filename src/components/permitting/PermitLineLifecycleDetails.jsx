@@ -5,6 +5,7 @@ import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -128,8 +129,7 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
           </button>
         )}
       </div>
-      <Input
-        type="date"
+      <CcsDateField
         aria-label={label}
         value={value || ""}
         onChange={(event) => onCommit(event.target.value || null)}

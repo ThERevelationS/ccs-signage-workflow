@@ -5,6 +5,7 @@ import { getQuoteAgingState, isQuoteAwaitingResponse } from "@/components/sales/
 import { isCurrentPipelineOpportunity } from "@/components/sales/salesRecordScopes";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const money = (value) => new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -185,8 +186,7 @@ export default function SalesDailyQueue({
                             <span className={`block text-[10px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
                               {expectedCloseOverdue ? "Expected close overdue — review timing" : "Expected close within 14 days"}
                             </span>
-                            <input
-                              type="date"
+                            <CcsDateField
                               value={expectedCloseStamp}
                               onChange={(event) => onUpdateWorkOrder?.(workOrder.id, "expected_close_date", event.target.value)}
                               aria-label={`Expected close date for ${workOrder.client_name || "opportunity"}`}
@@ -204,8 +204,7 @@ export default function SalesDailyQueue({
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                             <label className="min-w-0 flex-1">
                               <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
-                              <input
-                                type="date"
+                              <CcsDateField
                                 max={todayStamp}
                                 value={workOrder.date_estimate_sent || ""}
                                 onChange={(event) => setQuoteSentDate(workOrder, event.target.value)}

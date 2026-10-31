@@ -4,6 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Link } from "react-router-dom";
 import SavedViews from "@/components/workflow/SavedViews";
 import {
+import { CcsDateField } from "@/components/ui/ccs-date-field";
   AlertCircle,
   ChevronRight,
   Copy,
@@ -303,8 +304,8 @@ function InvoiceForm({ sessionToken, invoice, onClose, onSaved }) {
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelCls}>Invoice #</label><input className={inputCls} value={form.invoice_number} onChange={set("invoice_number")} placeholder="Auto" /></div>
             <div><label className={labelCls}>Terms</label><input className={inputCls} value={form.terms} onChange={set("terms")} placeholder="Net 30" /></div>
-            <div><label className={labelCls}>Issue date</label><input className={inputCls} type="date" value={form.issue_date} onChange={set("issue_date")} /></div>
-            <div><label className={labelCls}>Due date</label><input className={inputCls} type="date" value={form.due_date} onChange={set("due_date")} /></div>
+            <div><label className={labelCls}>Issue date</label><CcsDateField className={inputCls} value={form.issue_date} onChange={set("issue_date")} /></div>
+            <div><label className={labelCls}>Due date</label><CcsDateField className={inputCls} value={form.due_date} onChange={set("due_date")} /></div>
           </div>
         </div>
 
@@ -496,7 +497,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                   <select className={inputCls} value={pay.method} onChange={(e) => setPay((p) => ({ ...p, method: e.target.value }))}>
                     {Object.entries(METHOD_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
-                  <input className={inputCls} type="date" value={pay.paid_date} onChange={(e) => setPay((p) => ({ ...p, paid_date: e.target.value }))} />
+                  <CcsDateField className={inputCls} value={pay.paid_date} onChange={(e) => setPay((p) => ({ ...p, paid_date: e.target.value }))} />
                   <input className={inputCls} placeholder="Check # / reference" value={pay.reference_number} onChange={(e) => setPay((p) => ({ ...p, reference_number: e.target.value }))} />
                   <button type="button" onClick={recordPayment} disabled={Boolean(busy) || !(Number(pay.amount) > 0)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
@@ -705,7 +706,7 @@ function FromEstimateDialog({ sessionToken, onClose, onSaved }) {
 
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-500">Due date (optional)</label>
-              <input className={inputCls} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <CcsDateField className={inputCls} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
           </>
         )}

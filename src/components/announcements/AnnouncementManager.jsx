@@ -27,6 +27,7 @@ import {
 } from "./announcementPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
 const Announcement = base44.entities.Announcement;
@@ -698,8 +699,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-[11px] text-gray-500">Start showing</Label>
-                <Input
-                  type="datetime-local"
+                <CcsDateTimeField
                   value={form.scheduled_at}
                   onChange={e => handleField("scheduled_at", e.target.value)}
                   className="mt-1 h-8 text-sm"
@@ -724,8 +724,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
               </div>
             </div>
             {form.expires_choice === "custom" && (
-              <Input
-                type="datetime-local"
+              <CcsDateTimeField
                 value={form.expires_custom}
                 onChange={e => handleField("expires_custom", e.target.value)}
                 className="h-8 text-sm"

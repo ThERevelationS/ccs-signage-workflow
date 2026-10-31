@@ -34,6 +34,7 @@ import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import LoadErrorBanner from "@/components/LoadErrorBanner";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
@@ -893,7 +894,7 @@ export default function MyWorkflow() {
                                             onKeyDown={(e) => { if (e.key === 'Escape') clearEditTask(); }}
                                           />
                                           <div className="flex items-center gap-1">
-                                            <Input type="date" value={editTaskDue} onChange={(e) => setEditTaskDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
+                                            <CcsDateField value={editTaskDue} onChange={(e) => setEditTaskDue(e.target.value)} className="h-6 w-32 text-xs" title="Deadline" />
                                             <div className="flex-1 min-w-0">
                                               <MultiUserSelectInline users={allUsers} selectedUsers={editTaskAssignees} onSelectionChange={setEditTaskAssignees} placeholder="Assign..." className="h-6 w-full" />
                                             </div>

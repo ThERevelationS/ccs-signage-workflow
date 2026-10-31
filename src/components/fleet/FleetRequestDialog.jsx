@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { Loader2, X, Upload, ImagePlus } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 export default function FleetRequestDialog({ open, mode, request, equipment, parts = [], fluids = [], onClose, onSubmit }) {
   const [form, setForm] = useState(/** @type {any} */ ({}));
@@ -166,7 +167,7 @@ export default function FleetRequestDialog({ open, mode, request, equipment, par
         </div>
       </>}
 
-      {mode === "order" && <div className="grid sm:grid-cols-2 gap-4"><Field label="Estimated Delivery"><input className="fleet-request-input" type="date" value={form.estimated_delivery_date || ""} onChange={(e)=>set("estimated_delivery_date",e.target.value)}/></Field><Field label="Unit Cost"><input className="fleet-request-input" type="number" min="0" step="0.01" value={form.unit_cost ?? ""} onChange={(e)=>set("unit_cost",e.target.value)}/></Field></div>}
+      {mode === "order" && <div className="grid sm:grid-cols-2 gap-4"><Field label="Estimated Delivery"><CcsDateField className="fleet-request-input" value={form.estimated_delivery_date || ""} onChange={(e)=>set("estimated_delivery_date",e.target.value)}/></Field><Field label="Unit Cost"><input className="fleet-request-input" type="number" min="0" step="0.01" value={form.unit_cost ?? ""} onChange={(e)=>set("unit_cost",e.target.value)}/></Field></div>}
 
       {mode === "receive" && <>
         {linkedInventory && <div className="rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-800 dark:text-indigo-200"><div className="font-semibold">Exact Fleet inventory item linked</div><div className="mt-1">Current stock: {request?.item_type === "part" ? linkedInventory.quantity_on_hand ?? "—" : `${linkedInventory.quantity ?? "—"} ${linkedInventory.unit || ""}`} · Location: {linkedInventory.location || "—"}. Receiving will update this exact record.</div></div>}

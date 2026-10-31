@@ -7,6 +7,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { OpportunityActivity, Customer } from "@/api/gatedEntities";
 import { createCrmEvent, completeCrmEvent } from "@/components/crm/crmActivityPersistence";
 import {
+import { CcsDateField } from "@/components/ui/ccs-date-field";
   CRM_EVENT_TYPES,
   CRM_EVENT_OUTCOMES,
   eventsForQueue,
@@ -109,7 +110,7 @@ function AddEventForm({ actor, customers, onCreated, onCancel }) {
       <label className="flex flex-col gap-0.5"><span className={lab}>Assigned to</span>
         <input className={sel} value={form.assignedTo} onChange={(e) => set("assignedTo", e.target.value)} /></label>
       <label className="flex flex-col gap-0.5"><span className={lab}>Due date</span>
-        <input className={sel} type="date" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} /></label>
+        <CcsDateField className={sel} value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} /></label>
       <label className="flex flex-col gap-0.5"><span className={lab}>Notes</span>
         <input className={`${sel} w-56`} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></label>
       <button className={`${sel} font-semibold text-sky-700`} disabled={saving} onClick={save}>

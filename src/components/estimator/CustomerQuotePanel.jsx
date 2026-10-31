@@ -13,6 +13,7 @@ import { loadAllEntityRows } from "./loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { getSessionUser } from "@/components/auth/EmailGate";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const fmt = (value, round = false) => {
   const amount = Number(value || 0);
@@ -426,7 +427,7 @@ export default function CustomerQuotePanel({
               <Field label="Terms & conditions" value={estimate.quote_terms_conditions || ""} onChange={(value) => set("quote_terms_conditions", value)} textarea />
               <Field label="Footer text" value={estimate.quote_footer_text || ""} onChange={(value) => set("quote_footer_text", value)} textarea />
               <label className="text-[10px] font-bold tracking-wide text-gray-500 block">QUOTE VALID DAYS<input type="number" min="0" value={estimate.quote_valid_days ?? 30} onChange={(event) => set("quote_valid_days", Math.max(0, Number(event.target.value || 0)))} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
-              <label className="text-[10px] font-bold tracking-wide text-gray-500 block">EXPIRATION OVERRIDE<input type="date" value={estimate.quote_expiration_date || ""} onChange={(event) => set("quote_expiration_date", event.target.value || "")} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
+              <label className="text-[10px] font-bold tracking-wide text-gray-500 block">EXPIRATION OVERRIDE<CcsDateField value={estimate.quote_expiration_date || ""} onChange={(event) => set("quote_expiration_date", event.target.value || "")} className="mt-1 w-full h-[32px] px-2 border border-gray-300 rounded text-[11px]" /></label>
             </div>
           </div>
 

@@ -54,6 +54,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const PTOPolicy = base44.entities.PTOPolicy;
 const UserPTOBalance = staffEntities.UserPTOBalance;
@@ -751,8 +752,7 @@ export default function PTOManagement() {
                       placeholder="Holiday name"
                       className="flex-1 h-8 text-sm"
                     />
-                    <Input
-                      type="date"
+                    <CcsDateField
                       value={holiday.date}
                       onChange={(e) => updateHoliday(index, "date", e.target.value)}
                       className="w-40 h-8 text-sm"

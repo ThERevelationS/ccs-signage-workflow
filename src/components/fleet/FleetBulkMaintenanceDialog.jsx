@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FLEET_MAINTENANCE_TEMPLATES, prettyMaintenanceFrequency } from "@/components/fleet/fleetMaintenanceTemplates";
 import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Search, Sparkles, Truck, X } from "lucide-react";
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const EMPTY = {
   title: "",
@@ -226,7 +227,7 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Title *"><input value={form.title} onChange={event => set("title", event.target.value)} className="bulk-field" /></Field>
             <Field label="Schedule type"><select value={form.type} onChange={event => set("type", event.target.value)} className="bulk-field"><option value="recurring">Recurring</option><option value="one_off">One-time</option></select></Field>
-            <Field label="Start / due date"><input type="date" value={form.start_date} onChange={event => set("start_date", event.target.value)} className="bulk-field" /></Field>
+            <Field label="Start / due date"><CcsDateField value={form.start_date} onChange={event => set("start_date", event.target.value)} className="bulk-field" /></Field>
             {form.type === "recurring" && <Field label="Repeat"><select value={form.frequency} onChange={event => set("frequency", event.target.value)} className="bulk-field"><option value="daily">Every day</option><option value="weekly">Every week</option><option value="bi_weekly">Every 2 weeks</option><option value="monthly">Every month</option><option value="bi_monthly">Every 2 months</option><option value="quarterly">Every 3 months</option><option value="every_6_months">Every 6 months</option><option value="annually">Every year</option><option value="custom">Custom interval</option></select></Field>}
             {form.type === "recurring" && form.frequency === "custom" && <><Field label="Every"><input min="1" type="number" value={form.custom_frequency_value} onChange={event => set("custom_frequency_value", event.target.value)} className="bulk-field" /></Field><Field label="Custom unit"><select value={form.custom_frequency_unit} onChange={event => set("custom_frequency_unit", event.target.value)} className="bulk-field"><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select></Field></>}
             <Field label="Priority"><select value={form.priority} onChange={event => set("priority", event.target.value)} className="bulk-field"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></Field>

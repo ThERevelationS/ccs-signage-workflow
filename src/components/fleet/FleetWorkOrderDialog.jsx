@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { X, Plus, Trash2, Loader2, ImagePlus, Upload, RefreshCw, Sparkles } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const TYPE_OPTIONS = ["scheduled", "emergency", "inspection", "repair"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "critical"];
@@ -304,8 +305,8 @@ export default function FleetWorkOrderDialog({
               <Field label="Priority"><select value={form.priority || "medium"} onChange={(e) => set("priority", e.target.value)} className="fleet-input">{PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field>
               {!completing && <Field label="Status"><select value={form.status || "open"} onChange={(e) => set("status", e.target.value)} className="fleet-input">{STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v.replaceAll("_", " ")}</option>)}</select></Field>}
               <Field label="Actual Hours"><input type="number" min="0" step="0.25" value={form.actual_hours ?? ""} onChange={(e) => set("actual_hours", e.target.value)} className="fleet-input" /></Field>
-              <Field label="Started"><input type="date" value={form.started_date || ""} onChange={(e) => set("started_date", e.target.value)} className="fleet-input" /></Field>
-              <Field label="Projected Completion"><input type="date" value={form.projected_completion_date || ""} onChange={(e) => set("projected_completion_date", e.target.value)} className="fleet-input" /></Field>
+              <Field label="Started"><CcsDateField value={form.started_date || ""} onChange={(e) => set("started_date", e.target.value)} className="fleet-input" /></Field>
+              <Field label="Projected Completion"><CcsDateField value={form.projected_completion_date || ""} onChange={(e) => set("projected_completion_date", e.target.value)} className="fleet-input" /></Field>
             </div>
           </DialogSection>
 

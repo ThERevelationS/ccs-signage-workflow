@@ -7,6 +7,7 @@ import SavedViews from "@/components/workflow/SavedViews";
 import ReceivePanel from "@/components/procurement/ReceivePanel";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import {
+import { CcsDateField } from "@/components/ui/ccs-date-field";
   CheckCircle2,
   ChevronRight,
   Loader2,
@@ -176,8 +177,8 @@ function PoForm({ sessionToken, purchaseOrder, onClose, onSaved }) {
         <div className="mt-3 grid gap-3 md:grid-cols-4">
           <div><label className={labelCls}>PO #</label><input className={inputCls} value={form.po_number} onChange={set("po_number")} placeholder="Auto" /></div>
           <div><label className={labelCls}>Vendor ref #</label><input className={inputCls} value={form.vendor_reference} onChange={set("vendor_reference")} /></div>
-          <div><label className={labelCls}>Order date</label><input className={inputCls} type="date" value={form.order_date} onChange={set("order_date")} /></div>
-          <div><label className={labelCls}>Expected</label><input className={inputCls} type="date" value={form.expected_date} onChange={set("expected_date")} /></div>
+          <div><label className={labelCls}>Order date</label><CcsDateField className={inputCls} value={form.order_date} onChange={set("order_date")} /></div>
+          <div><label className={labelCls}>Expected</label><CcsDateField className={inputCls} value={form.expected_date} onChange={set("expected_date")} /></div>
         </div>
         <div className="mt-4"><label className={labelCls}>Line items</label><PoItemsEditor items={items} onChange={setItems} stockItems={stockItems} /></div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">

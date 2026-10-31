@@ -20,6 +20,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -262,8 +263,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className="text-xs mb-1 block">From Date</Label>
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={dateFrom}
                         onChange={(e) => setDateFrom(e.target.value)}
                         className="h-8 text-xs"
@@ -271,8 +271,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
                     </div>
                     <div>
                       <Label className="text-xs mb-1 block">To Date</Label>
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={dateTo}
                         onChange={(e) => setDateTo(e.target.value)}
                         className="h-8 text-xs"

@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import { formatShortDate } from "./applicationTracking";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 // Drafted → Submitted → Acknowledged → Under review → Approved.
 // Submitted comes from the workflow steps and Approved from the permit details,
@@ -19,8 +20,7 @@ export default function PermitApplicationTimeline({ stages, rejected, disabled, 
                 <span className={`truncate text-[11px] font-semibold ${reached ? "text-slate-800" : "text-slate-500"}`}>{stage.label}</span>
               </div>
               {stage.editable ? (
-                <input
-                  type="date"
+                <CcsDateField
                   aria-label={`${stage.label} date`}
                   value={stage.date || ""}
                   disabled={disabled}

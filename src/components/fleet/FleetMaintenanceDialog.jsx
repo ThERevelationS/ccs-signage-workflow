@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { FLEET_MAINTENANCE_TEMPLATES, prettyMaintenanceFrequency } from "@/components/fleet/fleetMaintenanceTemplates";
 import { ArrowLeft, ArrowRight, CalendarClock, Check, Loader2, Plus, Sparkles, Trash2, WandSparkles, X } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const EMPTY = {
   title: "",
@@ -255,7 +256,7 @@ export default function FleetMaintenanceDialog({ open, task, initialEquipmentId 
           {step === 2 && <div className="space-y-5">
             <div><h3 className="font-semibold text-gray-900 dark:text-slate-100">When should this maintenance happen?</h3><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Choose the due/start date and a simple recurrence. CCS keeps the underlying generation safeguards unchanged.</p></div>
             <div className="grid md:grid-cols-2 gap-4">
-              <Field label="Start / due date"><input type="date" value={form.start_date || ""} onChange={e => set("start_date", e.target.value)} className="field" /></Field>
+              <Field label="Start / due date"><CcsDateField value={form.start_date || ""} onChange={e => set("start_date", e.target.value)} className="field" /></Field>
               {form.type === "recurring" && <Field label="Repeat"><select value={form.frequency} onChange={e => set("frequency", e.target.value)} className="field"><option value="daily">Every day</option><option value="weekly">Every week</option><option value="bi_weekly">Every 2 weeks</option><option value="monthly">Every month</option><option value="bi_monthly">Every 2 months</option><option value="quarterly">Every 3 months</option><option value="every_6_months">Every 6 months</option><option value="annually">Every year</option><option value="custom">Custom interval</option></select></Field>}
               {form.type === "recurring" && form.frequency === "custom" && <div className="grid grid-cols-2 gap-2"><Field label="Every"><input min="1" type="number" value={form.custom_frequency_value} onChange={e => set("custom_frequency_value", e.target.value)} className="field" /></Field><Field label="Unit"><select value={form.custom_frequency_unit} onChange={e => set("custom_frequency_unit", e.target.value)} className="field"><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select></Field></div>}
             </div>

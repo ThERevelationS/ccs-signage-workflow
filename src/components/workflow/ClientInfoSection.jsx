@@ -20,6 +20,7 @@ import { ChevronDown, ChevronUp, Save, User, MapPin, FileText, Package, Wrench, 
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateField, CcsTimeField } from "@/components/ui/ccs-date-field";
 
 const TEAM_MEMBERS = [
   "Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"
@@ -289,8 +290,7 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
             </div>
             <div>
               <Label className="text-xs">Site Survey Date</Label>
-              <Input
-                type="date"
+              <CcsDateField
                 value={getValue("site_survey_date")}
                 onChange={(e) => handleChange("site_survey_date", e.target.value)}
                 className="h-8 text-sm"
@@ -299,8 +299,7 @@ export default function ClientInfoSection({ workOrder, onUpdate }) {
             <div className="grid grid-cols-2 gap-1">
               <div>
                 <Label className="text-xs">Time</Label>
-                <Input
-                  type="time"
+                <CcsTimeField
                   value={getValue("site_survey_time")}
                   onChange={(e) => handleChange("site_survey_time", e.target.value)}
                   className="h-8 text-sm"

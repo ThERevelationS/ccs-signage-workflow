@@ -22,6 +22,7 @@ import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunity
 import { appendSalesOpportunityHistoryPages } from "../../../base44/shared/salesOpportunityHistory.mjs";
 import { isUnverifiedSmartsheetSalesStage, salesStageDisplayValue, salesStageDisplayLabel } from "@/components/sales/salesStageTrust.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const FIELD_LABELS = {
   sales_status: "Sales status",
@@ -531,14 +532,14 @@ export default function SalesOpportunityDialog({
             <div className={`rounded-xl border bg-white p-4 ${attentionKeys.has("next_action") ? "border-amber-300 bg-amber-50/20" : ""}`}>
               <div className="flex items-center gap-2 font-semibold text-gray-800"><CalendarClock className="h-4 w-4 text-orange-600" />Next Action</div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Follow-up date</Label><CcsDateField value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">{closeout ? "Expected close (planned)" : "Expected close"}</Label>
-                  <Input type="date" value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className={`mt-1 h-11 sm:h-9 ${expectedCloseOverdue ? "border-rose-300 focus-visible:ring-rose-200" : expectedCloseNear ? "border-cyan-300 focus-visible:ring-cyan-200" : ""}`} />
+                  <CcsDateField value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className={`mt-1 h-11 sm:h-9 ${expectedCloseOverdue ? "border-rose-300 focus-visible:ring-rose-200" : expectedCloseNear ? "border-cyan-300 focus-visible:ring-cyan-200" : ""}`} />
                   {expectedCloseOverdue && <div className="mt-1 text-[11px] font-semibold text-rose-700">Expected close is overdue — confirm the forecast or resolve the opportunity.</div>}
                   {expectedCloseNear && <div className="mt-1 text-[11px] font-medium text-cyan-700">Expected close is within the next 14 days.</div>}
                 </div>
-                <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Task deadline</Label><CcsDateField value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">Task owner</Label>
                   <TaskAssigneeSelect key={workOrder.id} value={workOrder.current_task_assigned_to || ""} users={users} disabled={!isRegistered || closeout} onChange={(name) => update({ current_task_assigned_to: name })} className="mt-1 h-11 sm:h-9" context={opportunityDisplayName} />
@@ -628,7 +629,7 @@ export default function SalesOpportunityDialog({
                 <div>
                   <div className="text-xs text-gray-400">Quote sent date</div>
                   <div className="mt-1 flex items-center gap-2">
-                    <Input type="date" max={todayStamp} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-11 sm:h-9" />
+                    <CcsDateField max={todayStamp} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-11 sm:h-9" />
                     {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-11 px-3 text-xs sm:h-9" onClick={() => update({ date_estimate_sent: todayStamp })}>Today</Button>}
                   </div>
                   {quoteAging.awaitingResponse ? (

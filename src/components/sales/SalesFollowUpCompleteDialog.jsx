@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const FOLLOW_UP_OUTCOMES = [
   "Connected / Spoke with customer",
@@ -77,8 +78,7 @@ export default function SalesFollowUpCompleteDialog({ workOrder, error = "", onC
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Next follow-up</Label>
-              <Input
-                type="date"
+              <CcsDateField
                 min={todayStamp}
                 value={nextFollowUpDate}
                 onChange={(event) => {

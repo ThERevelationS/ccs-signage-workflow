@@ -73,6 +73,7 @@ import {
 } from "@/components/admin/authorizedUserAdminPersistence";
 import { getDeletionImpactRetryState } from "@/components/admin/deletionImpactRetryCoordinator";
 import { triggerNotification } from "@/components/workflow/NotificationService";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 export default function UserManagement() {
   const { sessionToken, currentUser } = useAuth();
@@ -1873,7 +1874,7 @@ export default function UserManagement() {
           </div>
           <div className="w-40">
             <Label className="text-xs text-gray-500">Access expires</Label>
-            <Input type="date" value={inviteExpiry} onChange={(e) => setInviteExpiry(e.target.value)}
+            <CcsDateField value={inviteExpiry} onChange={(e) => setInviteExpiry(e.target.value)}
               className="mt-1" aria-label="Access expiry date" />
           </div>
           <div className="w-32">

@@ -24,6 +24,7 @@ import {
   statusGateAllows,
 } from "@/components/comms/notifyModel";
 import { sendCustomerNotification } from "@/components/comms/notifySend";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
 const today = () => new Date().toISOString().slice(0, 10);
@@ -263,7 +264,7 @@ export default function CustomerStatements() {
         </div>
         <div>
           <label className={labelCls}>Statement as of</label>
-          <input type="date" className={inputCls} value={asOf} onChange={(e) => setAsOf(e.target.value || today())} />
+          <CcsDateField className={inputCls} value={asOf} onChange={(e) => setAsOf(e.target.value || today())} />
         </div>
         <div className="flex gap-2">
           <button type="button" disabled={!selectedCustomers.length || Boolean(busy)}

@@ -22,6 +22,7 @@ import {
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
 import { getStoredAdminSettingsCapability } from "@/components/auth/EmailGate";
+import { CcsDateField, CcsDateTimeField } from "@/components/ui/ccs-date-field";
 
 export default function AdminCalendarSettings() {
   const [events, setEvents] = useState([]);
@@ -424,7 +425,7 @@ export default function AdminCalendarSettings() {
                 <a href={`/MainWorkflow?wo=${w.id}`} className="font-medium truncate underline hover:text-blue-900" title="Open this work order">{w.title || w.id}</a>
                 {w.sales_status && <span className="text-blue-600/70">({w.sales_status})</span>}
                 <span className="ml-auto flex items-center gap-1">
-                  <input type="date" value={scheduleDates[w.id] || ""} onChange={(e) => setScheduleDates((cur) => ({ ...cur, [w.id]: e.target.value }))}
+                  <CcsDateField value={scheduleDates[w.id] || ""} onChange={(e) => setScheduleDates((cur) => ({ ...cur, [w.id]: e.target.value }))}
                     className="h-6 rounded border border-blue-200 bg-white px-1 text-[10px]" aria-label={`Schedule date for ${w.title || w.id}`} />
                   <Button type="button" size="sm" variant="outline" disabled={!scheduleDates[w.id] || schedulingId === w.id}
                     onClick={() => scheduleWorkOrder(w)} className="h-6 px-1.5 text-[10px]">
@@ -638,11 +639,11 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Start</Label>
-              <Input type="datetime-local" value={form.start_datetime} onChange={e => setForm(f => ({ ...f, start_datetime: e.target.value }))} className="mt-1" />
+              <CcsDateTimeField value={form.start_datetime} onChange={e => setForm(f => ({ ...f, start_datetime: e.target.value }))} className="mt-1" />
             </div>
             <div>
               <Label>End</Label>
-              <Input type="datetime-local" value={form.end_datetime} onChange={e => setForm(f => ({ ...f, end_datetime: e.target.value }))} className="mt-1" />
+              <CcsDateTimeField value={form.end_datetime} onChange={e => setForm(f => ({ ...f, end_datetime: e.target.value }))} className="mt-1" />
             </div>
           </div>
           <div>

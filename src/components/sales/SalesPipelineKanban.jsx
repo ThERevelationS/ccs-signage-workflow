@@ -8,6 +8,7 @@ import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 import { salesStageDisplayLabel, salesStageDisplayValue } from "@/components/sales/salesStageTrust.mjs";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -159,8 +160,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           <span className={`block text-[10px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
                             {expectedCloseOverdue ? "Review overdue close" : "Review near close"}
                           </span>
-                          <input
-                            type="date"
+                          <CcsDateField
                             value={workOrder.expected_close_date || ""}
                             onChange={(event) => onUpdateWorkOrder?.(workOrder.id, "expected_close_date", event.target.value)}
                             className={`mt-1 h-11 w-full rounded-md border bg-white px-2 text-xs text-gray-800 outline-none focus:ring-2 sm:h-8 ${expectedCloseOverdue ? "border-rose-200 focus:border-rose-400 focus:ring-rose-100" : "border-cyan-200 focus:border-cyan-400 focus:ring-cyan-100"}`}
@@ -174,8 +174,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           <label>
                             <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
                             <div className="mt-1 flex items-center gap-1.5">
-                              <input
-                                type="date"
+                              <CcsDateField
                                 max={futureDateStamp(0)}
                                 value={workOrder.date_estimate_sent || ""}
                                 onChange={(event) => {

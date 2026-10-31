@@ -35,6 +35,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { CcsDateField, CcsTimeField } from "@/components/ui/ccs-date-field";
 
 const TEAM_MEMBERS = [
   "Carl",
@@ -758,8 +759,7 @@ export default function WorkOrderForm({
               </div>
               <div>
                 <Label className="font-semibold">Initial Contact Date</Label>
-                <Input
-                  type="date"
+                <CcsDateField
                   value={formData.start_date}
                   onChange={(e) => handleChange("start_date", e.target.value)}
                   className="mt-1"
@@ -783,8 +783,7 @@ export default function WorkOrderForm({
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <Label className="font-semibold text-xs">Site Survey Date</Label>
-                  <Input
-                    type="date"
+                  <CcsDateField
                     value={formData.site_survey_date}
                     onChange={(e) => handleChange("site_survey_date", e.target.value)}
                     className="mt-1"
@@ -792,8 +791,7 @@ export default function WorkOrderForm({
                 </div>
                 <div>
                   <Label className="font-semibold text-xs">Time</Label>
-                  <Input
-                    type="time"
+                  <CcsTimeField
                     value={formData.site_survey_time}
                     onChange={(e) => handleChange("site_survey_time", e.target.value)}
                     className="mt-1"
@@ -1049,8 +1047,7 @@ export default function WorkOrderForm({
                   </label>
                   <div className="flex items-center gap-1 ml-2">
                     <Label className="text-xs">Due Date:</Label>
-                    <Input
-                      type="date"
+                    <CcsDateField
                       value={formData.due_date}
                       onChange={(e) => handleChange("due_date", e.target.value)}
                       className="w-36 h-7"

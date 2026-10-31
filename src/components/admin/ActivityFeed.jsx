@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const CellHistory = staffEntities.CellHistory;
 const ActivityLog = staffEntities.ActivityLog;
@@ -252,9 +253,9 @@ export default function ActivityFeed() {
               ))}
             </SelectContent>
           </Select>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+          <CcsDateField value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
             className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="From date" />
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+          <CcsDateField value={dateTo} onChange={(e) => setDateTo(e.target.value)}
             className="h-9 rounded-md border border-input bg-transparent px-2 text-xs" aria-label="To date" />
           {savedViews.length > 0 && (
             <Select value="" onValueChange={applySavedView}>

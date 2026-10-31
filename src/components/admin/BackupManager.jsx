@@ -29,6 +29,7 @@ import {
 import { format } from "date-fns";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
 import { useAuth } from "@/components/auth/EmailGate";
+import { CcsTimeField } from "@/components/ui/ccs-date-field";
 
 const DATA_TYPES = [
   { id: 'users', label: 'User Data', icon: Users, description: 'Employee accounts and settings' },
@@ -227,8 +228,7 @@ export default function BackupManager() {
             </Select>
 
             {settings.schedule !== 'none' && (
-              <Input
-                type="time"
+              <CcsTimeField
                 value={settings.scheduleTime}
                 onChange={(e) => setSettings(prev => ({ ...prev, scheduleTime: e.target.value }))}
               />

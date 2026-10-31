@@ -17,6 +17,7 @@ import {
   parseLocalDate,
 } from "@/components/queues/productQueueModel";
 import { OPS_REPORTS, OPS_REPORT_GROUPS, OPS_REPORT_MAP, SALES_DATE_BASES } from "./opsReportModel";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
 const norm = (v) => clean(v).toLowerCase();
@@ -450,11 +451,11 @@ export default function OpsReportView({ reportKey, onSelect }) {
               <>
                 <label className="flex flex-col gap-0.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{rangeLabel} From</span>
-                  <input type="date" className={inputCls} value={filters.from} onChange={(e) => set("from", e.target.value)} />
+                  <CcsDateField className={inputCls} value={filters.from} onChange={(e) => set("from", e.target.value)} />
                 </label>
                 <label className="flex flex-col gap-0.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{rangeLabel} To</span>
-                  <input type="date" className={inputCls} value={filters.to} onChange={(e) => set("to", e.target.value)} />
+                  <CcsDateField className={inputCls} value={filters.to} onChange={(e) => set("to", e.target.value)} />
                 </label>
               </>
             )}

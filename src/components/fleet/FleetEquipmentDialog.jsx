@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, X, Upload, ImagePlus, Trash2 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const EMPTY = {
   name: "",
@@ -163,9 +164,9 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Location"><input value={form.location} onChange={e => set("location", e.target.value)} className="field" /></Field>
               <Field label="Mileage / hours"><input type="number" min="0" step="0.1" value={form.mileage_hours} onChange={e => set("mileage_hours", e.target.value)} className="field" /></Field>
-              <Field label="Purchase date"><input type="date" value={form.purchase_date || ""} onChange={e => set("purchase_date", e.target.value)} className="field" /></Field>
-              <Field label="Last service"><input type="date" value={form.last_service_date || ""} onChange={e => set("last_service_date", e.target.value)} className="field" /></Field>
-              <Field label="Next service due"><input type="date" value={form.next_service_due || ""} onChange={e => set("next_service_due", e.target.value)} className="field" /></Field>
+              <Field label="Purchase date"><CcsDateField value={form.purchase_date || ""} onChange={e => set("purchase_date", e.target.value)} className="field" /></Field>
+              <Field label="Last service"><CcsDateField value={form.last_service_date || ""} onChange={e => set("last_service_date", e.target.value)} className="field" /></Field>
+              <Field label="Next service due"><CcsDateField value={form.next_service_due || ""} onChange={e => set("next_service_due", e.target.value)} className="field" /></Field>
               <Field label="Engine details"><input value={form.engine_details} onChange={e => set("engine_details", e.target.value)} className="field" /></Field>
             </div>
           </FormSection>

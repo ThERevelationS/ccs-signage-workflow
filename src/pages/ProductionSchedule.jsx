@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { buildWorkOrderSegments, stageColors, stageNames } from "@/components/workflow/workOrderTimelineSegments";
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
 const DAY_MS = 86400000;
@@ -163,8 +164,7 @@ export default function ProductionSchedule() {
             className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">This week</button>
           <button type="button" onClick={() => setWeekStart(new Date(weekStart.getTime() + 7 * DAY_MS))}
             className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"><ChevronRight className="h-4 w-4" /></button>
-          <input
-            type="date"
+          <CcsDateField
             value={dayKey(weekStart)}
             onChange={(e) => {
               const d = new Date(`${e.target.value}T00:00:00`);

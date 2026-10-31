@@ -77,6 +77,7 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 import { staffEntities } from "@/components/staff/staffEntities";
 import { openProductsBlockingCompletion } from "@/components/estimator/productStageSync";
 import {
+import { CcsDateField } from "@/components/ui/ccs-date-field";
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
   findWorkOrderArrayItemIndex,
@@ -1680,8 +1681,7 @@ export default function WorkOrderDetailsDialog({
                   <PopoverContent className="clay-card w-80">
                     <Label>Start Date</Label>
                     <div className="flex gap-2 mt-2 mb-3">
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={editValues.start_date || workOrder.start_date || ''}
                         onChange={(e) => setEditValues({ ...editValues, start_date: e.target.value })} />
                       <Button size="sm" onClick={() => saveEdit('start_date')}>
@@ -1690,8 +1690,7 @@ export default function WorkOrderDetailsDialog({
                     </div>
                     <Label>Due Date</Label>
                     <div className="flex gap-2 mt-2">
-                      <Input
-                        type="date"
+                      <CcsDateField
                         value={editValues.due_date || workOrder.due_date || ''}
                         onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
                       <Button size="sm" onClick={() => saveEdit('due_date')}>
@@ -1751,8 +1750,7 @@ export default function WorkOrderDetailsDialog({
                     <PopoverContent className="clay-card w-64">
                       <Label>Due Date</Label>
                       <div className="flex gap-2 mt-2">
-                        <Input
-                          type="date"
+                        <CcsDateField
                           value={editValues.due_date || workOrder.due_date || ''}
                           onChange={(e) => setEditValues({ ...editValues, due_date: e.target.value })} />
 

@@ -53,6 +53,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { staffEntities } from "@/components/staff/staffEntities";
 import { transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import {
+import { CcsDateField } from "@/components/ui/ccs-date-field";
   PRODUCT_STAGE_MODE_SETTING_KEY,
   STAGE_LABELS,
   productStageModeFromSetting,
@@ -212,9 +213,9 @@ function RowEditor({ row, actor, onSaved, onChanged, disabled }) {
           <label className="flex flex-col gap-0.5"><span className={lab}>Priority (0-99)</span>
             <input className={inp} type="number" min="0" max="99" disabled={disabled} value={form.queuePriority} onChange={(e) => set("queuePriority", e.target.value)} /></label>
           <label className="flex flex-col gap-0.5"><span className={lab}>Design Due</span>
-            <input className={inp} type="date" disabled={disabled} value={form.designDueDate} onChange={(e) => set("designDueDate", e.target.value)} /></label>
+            <CcsDateField className={inp} disabled={disabled} value={form.designDueDate} onChange={(e) => set("designDueDate", e.target.value)} /></label>
           <label className="flex flex-col gap-0.5"><span className={lab}>Product Due</span>
-            <input className={inp} type="date" disabled={disabled} value={form.productDueDate} onChange={(e) => set("productDueDate", e.target.value)} /></label>
+            <CcsDateField className={inp} disabled={disabled} value={form.productDueDate} onChange={(e) => set("productDueDate", e.target.value)} /></label>
           <label className="flex items-center gap-1 text-xs text-gray-600">
             <input type="checkbox" disabled={disabled} checked={form.hardDueDate} onChange={(e) => set("hardDueDate", e.target.checked)} />
             Hard due date</label>

@@ -3,6 +3,7 @@ import { Plus, Save, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pickEditableFields, savePricingChanges } from "@/components/pricing/pricingPersistence";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 // Editable PricingTierMatrix grid — one row per tier×category rule. Edits stay
 // local until Save; save batches creates / CAS updates / deletes through
@@ -266,8 +267,8 @@ export default function PricingMatrixTable({ rows = [], tierOptions = [], catego
                   <td className="px-1.5 py-1"><Input type="number" step="0.01" min="0" className={`${cell} w-16 text-right`} value={d.market_discount_pct ?? ""} onChange={(e) => patch(d._key, "market_discount_pct", e.target.value)} /></td>
                   <td className="px-1.5 py-1"><Input className={`${cell} w-36`} value={d._modsText ?? ""} onChange={(e) => patch(d._key, "_modsText", e.target.value)} placeholder="add_pct:10, min:50" /></td>
                   <td className="px-1.5 py-1"><Input className={`${cell} w-40`} value={d._breaksText} onChange={(e) => patch(d._key, "_breaksText", e.target.value)} placeholder="10=5.50, 25=4.75" /></td>
-                  <td className="px-1.5 py-1"><Input type="date" className={`${cell} w-32`} value={d.effective_from ?? ""} onChange={(e) => patch(d._key, "effective_from", e.target.value)} /></td>
-                  <td className="px-1.5 py-1"><Input type="date" className={`${cell} w-32`} value={d.effective_to ?? ""} onChange={(e) => patch(d._key, "effective_to", e.target.value)} /></td>
+                  <td className="px-1.5 py-1"><CcsDateField className={`${cell} w-32`} value={d.effective_from ?? ""} onChange={(e) => patch(d._key, "effective_from", e.target.value)} /></td>
+                  <td className="px-1.5 py-1"><CcsDateField className={`${cell} w-32`} value={d.effective_to ?? ""} onChange={(e) => patch(d._key, "effective_to", e.target.value)} /></td>
                   <td className="px-1.5 py-1 text-right">
                     <button
                       className="p-1 text-gray-400 hover:text-red-600"
