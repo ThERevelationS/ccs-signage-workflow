@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 
 // Standalone lifecycle trail: [{ label, to? }] where the last item renders
-// as the current page. Items without `to` render as static text — handy for
+// as the current page. Items without `to` render as static text -- handy for
 // non-navigable lifecycle steps (e.g. ["Estimate", "Sent", "Approved"]).
 const BreadcrumbBar = React.forwardRef(({ items = [], className, ...props }, ref) => {
   const trail = (Array.isArray(items) ? items : []).filter(
