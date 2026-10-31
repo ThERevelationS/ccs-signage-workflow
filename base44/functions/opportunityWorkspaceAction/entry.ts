@@ -1924,7 +1924,7 @@ Deno.serve(async (req) => {
         payments: customerPayments,
         purchase_orders: purchaseOrders,
         change_orders: customerChangeOrders,
-        activities,
+        activities: activities,
       };
       const truncated: Record<string, boolean> = {};
       const capped: Record<string, any[]> = {};
