@@ -82,6 +82,7 @@ function sameValue(a, b) {
   if (!emptyA && !emptyB && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
     return Math.abs(Number(a) - Number(b)) <= 1e-6;
   }
+  if (typeof a === "string" && typeof b === "string") return a.trim() === b.trim();
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 function matchesPayload(row, payload) {
