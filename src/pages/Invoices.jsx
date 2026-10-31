@@ -18,9 +18,20 @@ import {
   RefreshCw,
   Search,
   Send,
+  Ticket,
   X,
 } from "lucide-react";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
+import { IssueCreditDialog, RefundPaymentDialog } from "@/components/invoicing/CreditRefundDialogs";
+import {
+  creditableAmount,
+  creditedTotal,
+  isCreditMemoRow,
+  isRefundRow,
+  paymentRefundable,
+  refundedTotal,
+  usdSigned,
+} from "@/components/invoicing/refundMath";
 
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();
@@ -354,7 +365,11 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
   const [pay, setPay] = useState({ amount: "", method: "check", paid_date: "", reference_number: "", notes: "" });
+  const [creditOpen, setCreditOpen] = useState(false);
+  const [refundTarget, setRefundTarget] = useState(null);
   const payKeyRef = useRef(uuid());
+  const creditKeyRef = useRef(uuid());
+  const refundKeyRef = useRef(uuid());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -373,6 +388,12 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
   const inv = detail?.invoice;
   const payments = detail?.payments || [];
   const openBalance = Number(inv?.balance_due) || 0;
+  // Credit/refund affordances ride on the ledger rows: net money still held is
+  // creditable; each positive recorded payment is refundable up to its own
+  // un-returned remainder (also capped by the net held balance).
+  const collected = creditableAmount(payments);
+  const credits = creditedTotal(payments);
+  const refunds = refundedTotal(payments);
 
   const run = async (label, body, after) => {
     if (busy) return;
@@ -417,6 +438,16 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{inv.invoice_number}</h2>
                   <StatusBadge status={inv.status} />
+                  {credits > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/60 dark:text-violet-300">
+                      Credit {usdSigned(-credits)}
+                    </span>
+                  )}
+                  {refunds > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:bg-rose-900/60 dark:text-rose-300">
+                      Refunded {usdSigned(-refunds)}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
                   {clean(inv.customer_id) ? (
@@ -479,18 +510,37 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
             <div className="mt-4 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Payments</h3>
               {payments.length === 0 && <div className="mt-1 text-xs text-slate-500">None recorded.</div>}
-              {payments.map((p) => (
-                <div key={p.id} className="mt-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-sm dark:bg-slate-800/60">
-                  <span className={p.status === "void" ? "text-slate-400 line-through" : ""}>
-                    {usd(p.amount)} · {METHOD_LABELS[p.method] || p.method}{p.paid_date ? ` · ${p.paid_date}` : ""}{p.reference_number ? ` · ${p.reference_number}` : ""}
-                  </span>
-                  {p.status === "recorded" && (
-                    <button type="button" disabled={Boolean(busy)} onClick={() => run("voidpay", { action: "void_payment", payment_id: p.id, void_reason: "Voided from Invoices" })}
-                      className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50 dark:text-red-400">Void</button>
-                  )}
-                  {p.status === "void" && <span className="text-xs text-slate-400">void</span>}
-                </div>
-              ))}
+              {payments.map((p) => {
+                const negative = Number(p.amount) < 0;
+                const refundable = p.status === "recorded" && Number(p.amount) > 0 && paymentRefundable(p, payments) > 0;
+                const canVoid = p.status === "recorded" || (p.status === "refunded" && clean(p.refund_of_payment_id));
+                return (
+                  <div key={p.id} className="mt-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-sm dark:bg-slate-800/60">
+                    <span className={p.status === "void" ? "text-slate-400 line-through" : ""}>
+                      <span className={negative ? "font-medium text-red-600 dark:text-red-400" : ""}>{usdSigned(p.amount)}</span>
+                      {" · "}{p.method === "credit_memo" ? "Credit memo" : (METHOD_LABELS[p.method] || p.method)}
+                      {p.paid_date ? ` · ${p.paid_date}` : ""}{p.reference_number ? ` · ${p.reference_number}` : ""}
+                      {Number(p.refunded_amount) > 0 && p.status === "recorded" && (
+                        <span className="ml-1 text-xs text-amber-600 dark:text-amber-400">partially refunded {usdSigned(-p.refunded_amount)}</span>
+                      )}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {isCreditMemoRow(p) && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-bold text-violet-700 dark:bg-violet-900/60 dark:text-violet-300">CREDIT</span>}
+                      {isRefundRow(p) && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700 dark:bg-rose-900/60 dark:text-rose-300">REFUND</span>}
+                      {p.status === "refunded" && !clean(p.refund_of_payment_id) && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700 dark:bg-rose-900/60 dark:text-rose-300">REFUNDED</span>}
+                      {refundable && (
+                        <button type="button" disabled={Boolean(busy)} onClick={() => { refundKeyRef.current = uuid(); setRefundTarget(p); }}
+                          className="text-xs font-semibold text-rose-600 hover:underline disabled:opacity-50 dark:text-rose-400">Refund</button>
+                      )}
+                      {canVoid && (
+                        <button type="button" disabled={Boolean(busy)} onClick={() => run("voidpay", { action: "void_payment", payment_id: p.id, void_reason: "Voided from Invoices" })}
+                          className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50 dark:text-red-400">Void</button>
+                      )}
+                      {p.status === "void" && <span className="text-xs text-slate-400">void</span>}
+                    </span>
+                  </div>
+                );
+              })}
               {["sent", "partially_paid"].includes(inv.status) && (
                 <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-[110px_110px_130px_1fr_auto]">
                   <input className={inputCls} type="number" min="0" step="any" placeholder={`Balance ${usd(openBalance)}`} value={pay.amount} onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value }))} />
@@ -541,6 +591,12 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                     {busy === "remind" ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4" />}Send past-due reminder
                   </button>
                 )}
+                {collected > 0.005 && inv.status !== "void" && (
+                  <button type="button" onClick={() => { creditKeyRef.current = uuid(); setCreditOpen(true); }} disabled={Boolean(busy)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-violet-300 px-4 text-sm font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-60 dark:border-violet-800 dark:text-violet-300">
+                    <Ticket className="h-4 w-4" />Issue credit
+                  </button>
+                )}
                 {!["void", "paid"].includes(inv.status) && (
                   <button type="button" onClick={() => { if (confirm(`Void ${inv.invoice_number}?`)) run("void", { action: "void_invoice", invoice_id: invoiceId, void_reason: "Voided from Invoices" }); }} disabled={Boolean(busy)}
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-red-300 px-4 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-400">
@@ -558,6 +614,49 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
       {editing && inv && (
         <InvoiceForm sessionToken={sessionToken} invoice={inv} onClose={() => setEditing(false)}
           onSaved={async () => { setEditing(false); await load(); onChanged?.(); }} />
+      )}
+      {creditOpen && inv && (
+        <IssueCreditDialog
+          payments={payments}
+          busy={busy === "credit"}
+          onClose={() => setCreditOpen(false)}
+          onSubmit={({ amount, reason }) =>
+            run("credit", {
+              action: "issue_credit_memo",
+              invoice_id: invoiceId,
+              creation_request_key: creditKeyRef.current,
+              amount,
+              reason,
+            }, (d) => {
+              setCreditOpen(false);
+              creditKeyRef.current = uuid();
+              setNotice(`Credit memo issued for ${usdSigned(d?.credited_amount ?? amount)} — the invoice balance reopened by that amount.`);
+            })
+          }
+        />
+      )}
+      {refundTarget && inv && (
+        <RefundPaymentDialog
+          payment={refundTarget}
+          payments={payments}
+          busy={busy === "refund"}
+          onClose={() => setRefundTarget(null)}
+          onSubmit={({ amount, reason, restock }) =>
+            run("refund", {
+              action: "refund_payment",
+              payment_id: refundTarget.id,
+              creation_request_key: refundKeyRef.current,
+              amount,
+              reason,
+              restock,
+            }, (d) => {
+              setRefundTarget(null);
+              refundKeyRef.current = uuid();
+              const restockNote = d?.restock?.note ? ` ${d.restock.note}` : "";
+              setNotice(`Refund of ${usdSigned(d?.refunded_amount ?? amount)} recorded.${restockNote}`);
+            })
+          }
+        />
       )}
     </div>
   );
