@@ -92,6 +92,8 @@ function readArgs(sortOrOptions, limit, skip) {
       sort: sortOrOptions.sort,
       limit: sortOrOptions.limit,
       skip: sortOrOptions.skip ?? sortOrOptions.offset,
+      cursor: sortOrOptions.cursor,
+      fields: sortOrOptions.fields,
     };
   }
   return { paged: false, sort: sortOrOptions, limit, skip };
@@ -102,6 +104,16 @@ const asRows = (response) => {
   return Array.isArray(rows) ? rows : [];
 };
 const page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
+const pageOf = (response) => {
+  const b = bodyOf(response);
+  const rows = Array.isArray(b.items) ? b.items : [];
+  return { items: rows, has_more: b.truncated === true || typeof b.next_cursor === "string", next_cursor: b.next_cursor ?? null };
+};
+const pagedRead = (entity, args, query) =>
+  invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, cursor: args.cursor, fields: args.fields }).then(
+    pageOf,
+    (err) => { if (isForbidden(err)) markDenied(entity); throw err; },
+  );
 
 const pendingBatch = new Map();
 let flushScheduled = false;
@@ -186,10 +198,11 @@ const METHODS = {
     const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
     const cached = cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+    if (args.paged) return pagedRead(entity, args, query);
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
         cacheRead(key, rows);
-        return args.paged ? page(rows) : rows;
+        return rows;
       });
   },
   list: (entity, sortOrOptions, limit, skip) => {
@@ -198,10 +211,11 @@ const METHODS = {
     const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
     const cached = cachedRead(key);
     if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+    if (args.paged) return pagedRead(entity, args);
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
       .then((rows) => {
         cacheRead(key, rows);
-        return args.paged ? page(rows) : rows;
+        return rows;
       });
   },
   get: (entity, id) => {
