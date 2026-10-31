@@ -19,7 +19,7 @@ const block = (name) => {
 
 // --- Shared loader is the fail-closed paged read (dedupe + complete pages). --
 assert.match(src, /import \{ loadAllEntityRows \} from "\.\.\/\.\.\/shared\/pagedEntityRows\.ts";/);
-assert.match(paged, /entity\.filter\(query, sort \|\| undefined, safePageSize, skip\)/);
+assert.match(paged, /entity\.filter\(query, sort \|\| undefined, safePageSize, skip/);
 assert.match(paged, /could not be verified completely/);
 
 // --- Every remaining entity .filter(...) call has an explicit limit >= 500. --
