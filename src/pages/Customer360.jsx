@@ -359,8 +359,28 @@ export default function Customer360() {
           >
             Edit customer
           </Link>
+          </div>
+        }
+      >
+        {/* attribute flag chips -- custom colors kept, they are not statuses */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          {num(c.pricing_tier) > 0 &&
+            badge(`Tier ${num(c.pricing_tier)}`, "bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300")}
+          {c.tax_exempt &&
+            badge("Tax exempt", "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300")}
+          {c.credit_hold &&
+            badge("Credit hold", "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300")}
+          {clean(c.master_account) &&
+            badge("Master account", "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200")}
+          {num(c.in_store_credit) > 0 &&
+            badge(`Store credit ${usd(c.in_store_credit)}`, "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300")}
+          {c.require_purchase_order &&
+            badge("PO required", "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300")}
+          {c.is_active === false &&
+            badge("Archived", "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300")}
+          {balanceChip}
         </div>
-      </div>
+      </PageHeader>
 
       {/* degraded / error notices */}
       {backendMissing && (
