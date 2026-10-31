@@ -350,7 +350,7 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
                     <RecordLink kind="invoice" id={p.invoice_id} className={linkCls}>{invById.get(p.invoice_id) || "Invoice"}</RecordLink>
                   ) : "—",
               },
-              { label: "Method", render: (p) => chip(clean(p.method), statusTone("")) },
+              { label: "Method", render: (p) => <StatusChip value={p.method} /> },
               { label: "Reference", render: (p) => clean(p.reference_number) || "—" },
               { label: "Amount", align: "right", render: (p) => <span className="font-semibold">{usd(p.amount)}</span> },
             ]}
@@ -490,10 +490,10 @@ export function ActivityTab({ data, backendReady, truncatedNotice }) {
               label: "Status",
               render: (a) =>
                 clean(a.completed_at)
-                  ? chip(clean(a.outcome) || "completed", statusTone("completed"))
+                  ? <StatusChip value={clean(a.outcome) || "completed"} />
                   : isActivityOpen(a)
-                    ? chip("open", statusTone("sent"))
-                    : chip(activityKind(a), statusTone("")),
+                    ? <StatusChip value="open" />
+                    : <StatusChip value={activityKind(a)} />,
             },
           ]}
         />
