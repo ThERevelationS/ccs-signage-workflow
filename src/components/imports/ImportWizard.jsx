@@ -457,7 +457,7 @@ export default function ImportWizard({ onImportFinished }) {
           </AlertDescription></Alert>
         )}
 
-        <div className="border border-gray-200 rounded-md overflow-auto max-h-[420px] bg-white">
+        <div className="border border-gray-200 rounded-md overflow-auto ccs-scrollbar-hidden max-h-[420px] bg-white">
           <table className="w-full text-[11px]">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
@@ -565,7 +565,7 @@ export default function ImportWizard({ onImportFinished }) {
         </CardContent>
       </Card>
       {stats.errors.length > 0 && (
-        <div className="border border-red-200 rounded-md bg-red-50 p-3 max-h-[240px] overflow-auto">
+        <div className="border border-red-200 rounded-md bg-red-50 p-3 max-h-[240px] overflow-auto ccs-scrollbar-hidden">
           {stats.errors.slice(0, 100).map((e, i) => (
             <div key={i} className="text-[11px] text-red-800">Row {e.row || "—"}: {e.message}</div>
           ))}
