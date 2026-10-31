@@ -397,6 +397,8 @@ export default function PurchaseOrders() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const isOverdue = (p) => ["sent", "partially_received"].includes(p.status) && p.expected_date && p.expected_date < todayStr;
   const overdueCount = purchaseOrders.filter(isOverdue).length;
+  const woParam = new URLSearchParams(window.location.search).get("wo") || "";
+  const visibleOrders = woParam ? purchaseOrders.filter((p) => p.work_order_id === woParam) : purchaseOrders;
 
   return (
     <div className="mx-auto max-w-6xl p-4 md:p-6">
@@ -441,12 +443,18 @@ export default function PurchaseOrders() {
         />
       </div>
 
+      {woParam && (
+        <div className="mb-3 flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-800 dark:bg-sky-950/40 dark:text-sky-300">
+          Filtered to this job's purchase orders.
+          <a href="/PurchaseOrders" className="ml-auto text-xs font-semibold text-sky-600 hover:underline">Show all</a>
+        </div>
+      )}
       {error && <div className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading && purchaseOrders.length === 0 ? (
           <TableSkeleton columns={6} />
-        ) : purchaseOrders.length === 0 ? (
+        ) : visibleOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-500">
             <Package className="mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
             No purchase orders yet.
@@ -461,7 +469,7 @@ export default function PurchaseOrders() {
               </tr>
             </thead>
             <tbody>
-              {purchaseOrders.map((po) => (
+              {visibleOrders.map((po) => (
                 <tr key={po.id} onClick={() => setOpenId(po.id)} className="cursor-pointer border-t border-slate-100 hover:bg-violet-50/50 dark:border-slate-800 dark:hover:bg-slate-800/50">
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</td>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{po.vendor_name}</td>
