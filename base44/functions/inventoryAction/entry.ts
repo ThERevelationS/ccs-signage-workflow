@@ -5,6 +5,7 @@ import {
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -41,7 +42,7 @@ function stockSnapshot(row: any) {
 }
 
 async function nextPoNumber(PurchaseOrder: any) {
-  const rows = await PurchaseOrder.filter({});
+  const rows = await loadAllEntityRows({ entity: PurchaseOrder, label: "PO numbering rows" });
   if (!Array.isArray(rows)) throw bad("PO numbering lookup failed.", 500);
   let seq = rows.length + 1001;
   const existing = new Set(rows.map((r: any) => clean(r?.po_number)));
@@ -99,25 +100,28 @@ Deno.serve(async (req) => {
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
 
     if (action === "list_stock") {
-      const rows = await Inventory.filter({});
+      const rows = await loadAllEntityRows({ entity: Inventory, label: "Inventory stock rows" });
       if (!Array.isArray(rows)) throw bad("Inventory lookup failed.", 500);
       const query = clean(body?.query).toLowerCase();
       const lowOnly = body?.low_only === true;
-      const items = rows
-        .filter((r: any) => r?.legacy_compatibility !== true && r?.deleted !== true)
+      const active = rows
+        .filter((r: any) => r?.legacy_compatibility !== true && r?.deleted !== true);
+      const matched = active
         .map(stockSnapshot)
         .filter((r: any) => !lowOnly || r.low_stock)
         .filter((r: any) => !query
-          || [r.material_type, r.product_type, r.size, r.supplier].join(" ").toLowerCase().includes(query))
-        .slice(0, 400);
+          || [r.material_type, r.product_type, r.size, r.supplier].join(" ").toLowerCase().includes(query));
+      const items = matched.slice(0, 400);
       return Response.json({
         success: true,
         action,
         items,
-        low_stock_count: rows.filter((r: any) => {
+        total_count: matched.length,
+        returned: items.length,
+        truncated: items.length < matched.length,
+        low_stock_count: active.filter((r: any) => {
           const rp = num(r?.reorder_point, NaN);
-          return r?.legacy_compatibility !== true && r?.deleted !== true
-            && Number.isFinite(rp) && num(r?.quantity_on_hand) <= rp;
+          return Number.isFinite(rp) && num(r?.quantity_on_hand) <= rp;
         }).length,
       });
     }
@@ -128,7 +132,19 @@ Deno.serve(async (req) => {
       if (itemId) query.item_id = itemId;
       const rows = await Movement.filter(query, "-created_date", 200);
       if (!Array.isArray(rows)) throw bad("Movement lookup failed.", 500);
-      return Response.json({ success: true, action, movements: rows.slice(0, 200) });
+      const movements = rows.slice(0, 200);
+      // The 200-row window is an intentional bounded history — total_count
+      // tells the caller how deep the full movement log actually runs.
+      const counted = await Movement.count(query).then((n: any) => num(n, NaN)).catch(() => NaN);
+      const totalCount = Number.isFinite(counted) ? counted : movements.length;
+      return Response.json({
+        success: true,
+        action,
+        movements,
+        returned: movements.length,
+        total_count: totalCount,
+        truncated: totalCount > movements.length,
+      });
     }
 
     if (action === "create_reorder_po") {
