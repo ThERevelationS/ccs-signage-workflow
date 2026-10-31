@@ -22,10 +22,25 @@
 //   is no per-product created_date.
 // - Invoices arrive via invoicingAction.list_invoices (snapshot fields);
 //   open AR = status sent|partially_paid with balance_due > 0, matching the
-//   backend agingSummary() rule. Payments have no read action, so a
-//   "Customer Payments" report is not possible yet.
+//   backend agingSummary() rule. Payments have no list action, so payment
+//   detail comes from invoicingAction.export_ar → payments_csv, parsed by
+//   statementModel.paymentsFromArCsv (same path CustomerStatements uses).
 // - WorkOrder has no location/sales_center field; the location filter only
 //   applies to AllInOneEstimate.sales_center.
+// - Parts Needed joins WorkOrder products → BuilderPart (builder_product_id)
+//   → Inventory (inventory_item_id) → open PurchaseOrder lines. BuilderPart/
+//   BuilderProduct/Inventory are staffDataRead entities; PurchaseOrder is not
+//   staff-readable, so the view fetches open POs via purchaseOrderAction
+//   list_purchase_orders + get_purchase_order (line items only ship on the
+//   detail action — open-PO fetch is capped and documented on the def).
+// - Estimate funnel is a created-month COHORT report: sent/approved/converted
+//   flags describe whether the estimate ever reached the stage (quote_issue_
+//   date / accepted_at / work_order_id), not when — those transitions have no
+//   per-stage timestamp on the estimate row itself.
+// - Overrides audit only reports verifiable manual-price signals (line
+//   price_state = "manual", adjustment_percent, BuilderProduct price_state =
+//   "manual", BuilderPart manual_cost_override / detached_override). No
+//   inferred overrides.
 
 import {
   FULFILLED_STATES,
@@ -33,13 +48,26 @@ import {
   overdueDays,
   parseLocalDate,
 } from "../queues/productQueueModel";
+import { isVoidStatus } from "../statements/statementModel";
 
 const DAY = 86400000;
 const clean = (v) => String(v ?? "").trim();
 const norm = (v) => clean(v).toLowerCase();
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const money = (n) => Math.round(num(n) * 100) / 100;
+const qty = (n) => Math.round(num(n) * 1000) / 1000;
 const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+
+// "YYYY-MM" month key in local time; "" when undated.
+const monthKey = (value) => {
+  const d = parseLocalDate(value);
+  if (!d) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+const monthLabel = (key) => {
+  const d = parseLocalDate(`${key}-01`);
+  return d ? d.toLocaleDateString("en-US", { month: "short", year: "numeric" }) : key;
+};
 
 // --- label maps (enum values verified against WorkOrder.jsonc) -----------------
 
@@ -462,17 +490,423 @@ export function arAgingReport(invoices = [], now = new Date()) {
   };
 }
 
+// --- purchasing ------------------------------------------------------------------
+
+// Operational states where a WIP product's parts still need purchasing
+// attention: the design states plus active production. Earlier pipeline
+// states (order review, permitting, proofs) have no firm demand yet; later
+// states (QC, install, vended, fulfilled) should already have consumed stock.
+export const PART_DEMAND_STATUSES = ["design_review", "in_design", "in_production"];
+
+// Open PO statuses — draft/cancelled carry no commitment; received has nothing
+// left to arrive. "sent" is the ordered state in PurchaseOrder.jsonc.
+const OPEN_PO_STATUSES = new Set(["sent", "partially_received"]);
+
+const indexPartsByProduct = (builderParts = []) => {
+  const map = new Map();
+  for (const part of builderParts || []) {
+    if (!part || part.is_active === false) continue;
+    const bp = clean(part.builder_product_id);
+    if (!bp) continue;
+    if (!map.has(bp)) map.set(bp, []);
+    map.get(bp).push(part);
+  }
+  return map;
+};
+
+// Parts Needed — purchasing demand for WIP products in design/production.
+// Required qty comes from BuilderPart rows linked through the WorkOrder
+// product's builder_product_id (WorkOrder products carry no embedded BOM).
+// The Builder BOM is per BuilderProduct.quantity, so demand scales by
+// (work-order product qty ÷ builder product qty). On-hand joins
+// Inventory.quantity_on_hand by inventory_item_id; on-order sums the open
+// (unreceived) quantity on sent / partially_received PO lines for that item.
+// Parts without an inventory link still show demand — on-hand/on-order are
+// null and the row is flagged "No stock link".
+export function partsNeededReport({ queueRows = [], builderParts = [], builderProducts = [], inventoryItems = [], purchaseOrders = [] } = {}) {
+  const partsByProduct = indexPartsByProduct(builderParts);
+  const productById = new Map(
+    (builderProducts || []).map((p) => [clean(p?.id), p]).filter(([k]) => k),
+  );
+  const onHandByItem = new Map();
+  const itemLabelByItem = new Map();
+  for (const item of inventoryItems || []) {
+    const id = clean(item?.id);
+    if (!id || item?.deleted === true || item?.legacy_compatibility === true) continue;
+    onHandByItem.set(id, qty(num(onHandByItem.get(id)) + num(item?.quantity_on_hand)));
+    if (!itemLabelByItem.has(id)) {
+      itemLabelByItem.set(
+        id,
+        [clean(item?.material_type), clean(item?.product_type), clean(item?.size)]
+          .filter(Boolean).join(" · "),
+      );
+    }
+  }
+  const onOrderByItem = new Map();
+  for (const po of purchaseOrders || []) {
+    if (!OPEN_PO_STATUSES.has(norm(po?.status))) continue;
+    for (const line of Array.isArray(po?.line_items) ? po.line_items : []) {
+      const itemId = clean(line?.inventory_item_id);
+      if (!itemId) continue;
+      const open = num(line?.quantity) - num(line?.quantity_received);
+      if (open > 0) onOrderByItem.set(itemId, qty(num(onOrderByItem.get(itemId)) + open));
+    }
+  }
+
+  const groups = new Map();
+  for (const row of queueRows || []) {
+    if (!PART_DEMAND_STATUSES.includes(norm(row?.status))) continue;
+    const parts = partsByProduct.get(clean(row?.bp)) || [];
+    if (!parts.length) continue;
+    const bpQty = num(productById.get(clean(row?.bp))?.quantity) || 1;
+    const scale = (num(row?.product?.quantity) || 1) / bpQty;
+    for (const part of parts) {
+      const itemId = clean(part.inventory_item_id);
+      const key = itemId ? `item:${itemId}` : `name:${norm(part.part_name)}|${norm(part.unit)}`;
+      const g = groups.get(key) || {
+        key,
+        itemId,
+        label: clean(part.inventory_item_name) || clean(part.part_name) || itemLabelByItem.get(itemId) || "Unnamed part",
+        unit: clean(part.unit),
+        needed: 0,
+        products: new Set(),
+        orders: new Set(),
+      };
+      g.needed += num(part.quantity) * scale;
+      if (row?.productId) g.products.add(row.productId);
+      if (row?.workOrderId) g.orders.add(row.workOrderId);
+      groups.set(key, g);
+    }
+  }
+
+  const rows = [...groups.values()].map((g) => {
+    const linked = Boolean(g.itemId);
+    const onHand = linked ? num(onHandByItem.get(g.itemId)) : null;
+    const onOrder = linked ? num(onOrderByItem.get(g.itemId)) : null;
+    const short = linked ? Math.max(0, qty(g.needed - onHand - onOrder)) : null;
+    return {
+      ...g,
+      onHand,
+      onOrder,
+      short,
+      state: !linked ? "No stock link" : short > 0.004 ? "Short" : "OK",
+    };
+  });
+  rows.sort((a, b) =>
+    num(b.short) - num(a.short) || b.needed - a.needed || a.label.localeCompare(b.label));
+
+  return {
+    columns: [
+      { key: "part", label: "Part" },
+      { key: "needed", label: "Needed", align: "right", format: "num1" },
+      { key: "unit", label: "Unit" },
+      { key: "on_hand", label: "On Hand", align: "right", format: "num1" },
+      { key: "on_order", label: "On Order", align: "right", format: "num1" },
+      { key: "short", label: "Net Short", align: "right", format: "num1" },
+      { key: "orders", label: "Orders", align: "right", format: "int" },
+      { key: "state", label: "Status" },
+    ],
+    rows: rows.map((g) => [
+      g.label, qty(g.needed), g.unit, g.onHand, g.onOrder, g.short, g.orders.size, g.state,
+    ]),
+    totals: [
+      `Total — ${rows.length} part${rows.length === 1 ? "" : "s"}`,
+      qty(sum(rows, (g) => g.needed)),
+      "",
+      qty(sum(rows, (g) => g.onHand)),
+      qty(sum(rows, (g) => g.onOrder)),
+      qty(sum(rows, (g) => g.short)),
+      sum(rows, (g) => g.orders.size),
+      `${rows.filter((g) => g.state === "Short").length} short`,
+    ],
+    rowLinks: rows.map((g) => (g.itemId ? "/Inventory" : null)),
+  };
+}
+
+// --- sales / receivables -----------------------------------------------------------
+
+export const SALES_DATE_BASES = {
+  issue_date: "Issue date (invoiced)",
+  paid_date: "Paid date (cash)",
+};
+
+// Sales by Month — invoiced vs collected per calendar month. The date basis
+// toggle controls which date lands an invoice's total in a month: issue_date
+// (accrual — what we billed) or paid_date (cash — invoices that reached paid
+// status that month). Collected always buckets payments by their paid_date
+// (payments have no issue-side date). Void invoices and void/refunded
+// payments are excluded; drafts never counted as sales. Months with only
+// collections still appear.
+export function salesByMonthReport({ invoices = [], payments = [], basis = "issue_date" } = {}) {
+  const paidBasis = basis === "paid_date";
+  const months = new Map();
+  const bucketFor = (key) => {
+    if (!months.has(key)) months.set(key, { key, invoices: 0, invoiced: 0, collected: 0 });
+    return months.get(key);
+  };
+  let voidInvoices = 0;
+  let draftInvoices = 0;
+  let undatedInvoices = 0;
+  for (const inv of invoices || []) {
+    const status = norm(inv?.status);
+    if (status === "void") { voidInvoices += 1; continue; }
+    if (status === "draft") { draftInvoices += 1; continue; }
+    const key = paidBasis ? monthKey(inv?.paid_date) : monthKey(inv?.issue_date);
+    if (!key) { undatedInvoices += 1; continue; }
+    const b = bucketFor(key);
+    b.invoices += 1;
+    b.invoiced = money(b.invoiced + num(inv?.total));
+  }
+  let voidPayments = 0;
+  let undatedPayments = 0;
+  for (const p of payments || []) {
+    if (isVoidStatus(p?.status)) { voidPayments += 1; continue; }
+    const key = monthKey(p?.paid_date || p?.created_date);
+    if (!key) { undatedPayments += 1; continue; }
+    const b = bucketFor(key);
+    b.collected = money(b.collected + num(p?.amount));
+  }
+  const sorted = [...months.values()].sort((a, b) => a.key.localeCompare(b.key));
+  const exclusions = [
+    voidInvoices ? `${voidInvoices} void` : "",
+    draftInvoices ? `${draftInvoices} draft` : "",
+    undatedInvoices ? `${undatedInvoices} undated` : "",
+  ].filter(Boolean).join(", ");
+  const payExclusions = [
+    voidPayments ? `${voidPayments} void/refunded payments` : "",
+    undatedPayments ? `${undatedPayments} undated payments` : "",
+  ].filter(Boolean).join(", ");
+  const totalsLabel = ["Total", exclusions && `excl. ${exclusions} inv`, payExclusions && `excl. ${payExclusions}`]
+    .filter(Boolean).join(" — ");
+  return {
+    columns: [
+      { key: "month", label: "Month" },
+      { key: "invoices", label: "Invoices", align: "right", format: "int" },
+      { key: "invoiced", label: paidBasis ? "Paid-Invoice Total" : "Invoiced", align: "right", format: "money" },
+      { key: "collected", label: "Collected", align: "right", format: "money" },
+      { key: "net", label: "Invoiced − Collected", align: "right", format: "money" },
+    ],
+    rows: sorted.map((b) => [
+      monthLabel(b.key), b.invoices, b.invoiced, b.collected, money(b.invoiced - b.collected),
+    ]),
+    totals: [
+      totalsLabel,
+      sum(sorted, (b) => b.invoices),
+      money(sum(sorted, (b) => b.invoiced)),
+      money(sum(sorted, (b) => b.collected)),
+      money(sum(sorted, (b) => b.invoiced) - sum(sorted, (b) => b.collected)),
+    ],
+    rowLinks: sorted.map(() => null),
+  };
+}
+
+// Customer Analytics — per-customer lifetime invoicing picture from invoice
+// snapshots: total invoiced (excludes drafts and voids), collected
+// (amount_paid), open AR (sent/partially_paid balances), invoice count,
+// average order value, and the most recent issue date.
+export function customerAnalyticsReport({ invoices = [] } = {}) {
+  const groups = new Map();
+  for (const inv of invoices || []) {
+    const status = norm(inv?.status);
+    if (!status || status === "draft" || status === "void") continue;
+    const key = clean(inv?.customer_id) || clean(inv?.customer_display_name) || "unknown";
+    const g = groups.get(key) || {
+      key,
+      name: clean(inv?.customer_display_name) || "Unknown Customer",
+      invoices: 0, invoiced: 0, collected: 0, openAr: 0, lastOrder: "",
+    };
+    g.invoices += 1;
+    g.invoiced = money(g.invoiced + num(inv?.total));
+    g.collected = money(g.collected + num(inv?.amount_paid));
+    if (OPEN_AR_STATUSES.has(status)) g.openAr = money(g.openAr + num(inv?.balance_due));
+    const issued = clean(inv?.issue_date);
+    if (issued && issued > g.lastOrder) g.lastOrder = issued;
+    if (clean(inv?.customer_display_name)) g.name = clean(inv.customer_display_name);
+    groups.set(key, g);
+  }
+  const sorted = [...groups.values()].sort((a, b) => b.invoiced - a.invoiced || a.name.localeCompare(b.name));
+  return {
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "invoices", label: "Invoices", align: "right", format: "int" },
+      { key: "invoiced", label: "Lifetime Invoiced", align: "right", format: "money" },
+      { key: "collected", label: "Collected", align: "right", format: "money" },
+      { key: "open_ar", label: "Open AR", align: "right", format: "money" },
+      { key: "aov", label: "Avg Order", align: "right", format: "money" },
+      { key: "last_order", label: "Last Order", format: "date" },
+    ],
+    rows: sorted.map((g) => [
+      g.name, g.invoices, g.invoiced, g.collected, g.openAr,
+      g.invoices ? money(g.invoiced / g.invoices) : null, g.lastOrder || null,
+    ]),
+    totals: [
+      `Total — ${sorted.length} customer${sorted.length === 1 ? "" : "s"}`,
+      sum(sorted, (g) => g.invoices),
+      money(sum(sorted, (g) => g.invoiced)),
+      money(sum(sorted, (g) => g.collected)),
+      money(sum(sorted, (g) => g.openAr)),
+      null,
+      null,
+    ],
+    rowLinks: sorted.map(() => "/CustomerStatements"),
+  };
+}
+
+// --- estimates -------------------------------------------------------------------
+
+// Estimate Funnel — cohort funnel by creation month: of the estimates created
+// in each month, how many went on to be sent, approved, converted to a work
+// order, or cancelled. Stage definitions reuse the conversion report's rules:
+// sent = quote_issue_date stamped or status sent/approved (or later proof —
+// accepted_at / work_order_id); approved = accepted_at, status approved, or a
+// linked work order; converted = work_order_id set; cancelled = status
+// cancelled. Templates excluded. Conversion % = converted ÷ created.
+export function estimateFunnelReport({ estimates = [] } = {}) {
+  const cohorts = new Map();
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    const key = monthKey(est.created_date);
+    if (!key) continue;
+    const c = cohorts.get(key) || { key, created: 0, sent: 0, approved: 0, converted: 0, cancelled: 0, value: 0 };
+    c.created += 1;
+    c.value = money(c.value + num(est.quote_total));
+    const status = norm(est.status);
+    const accepted = Boolean(clean(est.accepted_at)) || status === "approved";
+    const converted = Boolean(clean(est.work_order_id));
+    const sent = status === "sent" || accepted || converted || Boolean(clean(est.quote_issue_date));
+    if (sent) c.sent += 1;
+    if (accepted || converted) c.approved += 1;
+    if (converted) c.converted += 1;
+    if (status === "cancelled") c.cancelled += 1;
+    cohorts.set(key, c);
+  }
+  const sorted = [...cohorts.values()].sort((a, b) => a.key.localeCompare(b.key));
+  const rowFor = (c) => [
+    monthLabel(c.key), c.created, c.sent, c.approved, c.converted, c.cancelled,
+    c.created ? c.converted / c.created : null, c.value,
+  ];
+  const total = sorted.reduce((t, c) => ({
+    created: t.created + c.created, sent: t.sent + c.sent, approved: t.approved + c.approved,
+    converted: t.converted + c.converted, cancelled: t.cancelled + c.cancelled,
+    value: money(t.value + c.value),
+  }), { created: 0, sent: 0, approved: 0, converted: 0, cancelled: 0, value: 0 });
+  return {
+    columns: [
+      { key: "month", label: "Created Month" },
+      { key: "created", label: "Created", align: "right", format: "int" },
+      { key: "sent", label: "Sent", align: "right", format: "int" },
+      { key: "approved", label: "Approved", align: "right", format: "int" },
+      { key: "converted", label: "Converted", align: "right", format: "int" },
+      { key: "cancelled", label: "Cancelled", align: "right", format: "int" },
+      { key: "conv", label: "Conv %", align: "right", format: "percent" },
+      { key: "value", label: "Quote Value", align: "right", format: "money" },
+    ],
+    rows: sorted.map(rowFor),
+    totals: [
+      "Total",
+      total.created, total.sent, total.approved, total.converted, total.cancelled,
+      total.created ? total.converted / total.created : null, total.value,
+    ],
+    rowLinks: sorted.map(() => null),
+  };
+}
+
+// Overrides Audit — every place a human overrode computed pricing. Reliable
+// signals (verified against AllInOneEstimate.jsonc / BuilderProduct.jsonc /
+// BuilderPart.jsonc):
+//   - estimate line_items[].price_state === "manual" (manual line price)
+//   - estimate line_items[].adjustment_percent !== 0 (manual ±% adjustment)
+//   - BuilderProduct.price_state === "manual" (manual product price)
+//   - BuilderPart.manual_cost_override === true (manual part cost, with the
+//     user's recorded reason) and builder_sync_state === "detached_override"
+//     (builder part frozen off its computed price)
+// Template estimates are excluded; one row per override signal.
+export function overridesAuditReport({ estimates = [], builderParts = [], builderProducts = [] } = {}) {
+  const productById = new Map(
+    (builderProducts || []).map((p) => [clean(p?.id), p]).filter(([k]) => k),
+  );
+  const partsByProduct = indexPartsByProduct(builderParts);
+  const detail = [];
+  const push = (est, line, partName, signal, info, value) => {
+    detail.push({
+      estimate: clean(est?.estimate_number) || clean(est?.id),
+      estimateId: clean(est?.id),
+      customer: clean(est?.client_name),
+      line: clean(line?.client_product_name) || clean(line?.builder_name) || clean(line?.project_name) || "Line",
+      part: partName || "",
+      signal,
+      info: info || "",
+      value: value == null ? null : money(value),
+      status: humanize(est?.status),
+      updated: clean(est?.updated_date),
+    });
+  };
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    for (const line of Array.isArray(est.line_items) ? est.line_items : []) {
+      if (!line) continue;
+      if (norm(line.price_state) === "manual") {
+        push(est, line, "", "Manual line price",
+          "price_state = manual", num(line.total_snapshot) * (num(line.customer_quantity) || 1));
+      }
+      const adj = num(line.adjustment_percent);
+      if (adj !== 0) {
+        push(est, line, "", "Line price adjustment",
+          `${adj > 0 ? "+" : ""}${adj}%`, num(line.total_snapshot) * (num(line.customer_quantity) || 1) * adj / 100);
+      }
+      const bpId = clean(line.builder_product_id);
+      const product = productById.get(bpId);
+      if (product && norm(product.price_state) === "manual") {
+        push(est, line, "", "Manual product price",
+          "BuilderProduct price_state = manual", num(product.frozen_customer_price));
+      }
+      for (const part of partsByProduct.get(bpId) || []) {
+        const partName = clean(part.part_name) || "Part";
+        if (part.manual_cost_override === true) {
+          push(est, line, partName, "Manual part cost",
+            clean(part.manual_cost_override_reason) || "manual_cost_override", num(part.manual_cost));
+        } else if (norm(part.builder_sync_state) === "detached_override") {
+          push(est, line, partName, "Detached part price",
+            clean(part.builder_detached_reason) || "builder_sync_state = detached_override", num(part.frozen_extended_cost));
+        }
+      }
+    }
+  }
+  detail.sort((a, b) => b.updated.localeCompare(a.updated) || a.estimate.localeCompare(b.estimate) || a.signal.localeCompare(b.signal));
+  const counts = new Map();
+  for (const d of detail) counts.set(d.signal, (counts.get(d.signal) || 0) + 1);
+  const summary = [...counts.entries()].map(([k, v]) => `${v} ${k.toLowerCase()}`).join(", ");
+  return {
+    columns: [
+      { key: "estimate", label: "Estimate" },
+      { key: "customer", label: "Customer" },
+      { key: "line", label: "Product Line" },
+      { key: "part", label: "Part" },
+      { key: "signal", label: "Override" },
+      { key: "info", label: "Detail" },
+      { key: "value", label: "Value", align: "right", format: "money" },
+      { key: "status", label: "Est. Status" },
+    ],
+    rows: detail.map((d) => [d.estimate, d.customer, d.line, d.part, d.signal, d.info, d.value, d.status]),
+    totals: [
+      `Total — ${detail.length} override${detail.length === 1 ? "" : "s"}${summary ? ` (${summary})` : ""}`,
+      "", "", "", "", "", null, "",
+    ],
+    rowLinks: detail.map((d) => (d.estimateId ? `/EstimateDetail?id=${d.estimateId}` : null)),
+  };
+}
+
 // --- report registry -------------------------------------------------------------
-// `needs` tells the view which dataset to load lazily. `filters` lists the
-// filter controls the view should render for the report; the view applies
-// them to the raw input before calling build().
+// `needs` lists the datasets the view must load lazily for the report.
+// `filters` lists the filter controls the view should render for the report;
+// the view applies them to the raw input before calling build().
 
 export const OPS_REPORTS = [
   {
     key: "wip_by_product_status",
     title: "WIP by Product Status",
     group: "Production",
-    needs: "workOrders",
+    needs: ["workOrders"],
     filters: ["responsibility", "assignedTo", "designer", "dueRange"],
     description: "Open products by operational status with quoted value.",
     notes: "Counts non-fulfilled products on active orders. Value = quoted totals.",
@@ -482,7 +916,7 @@ export const OPS_REPORTS = [
     key: "wip_by_order_stage",
     title: "WIP by Order Stage",
     group: "Production",
-    needs: "workOrders",
+    needs: ["workOrders"],
     filters: ["createdRange", "salesperson"],
     description: "Active work orders grouped by workflow stage.",
     notes: "Excludes completed and deleted orders. Value = sum of product quoted totals (estimate amount fallback).",
@@ -492,7 +926,7 @@ export const OPS_REPORTS = [
     key: "overdue_products",
     title: "Overdue Products",
     group: "Production",
-    needs: "workOrders",
+    needs: ["workOrders"],
     filters: ["responsibility", "assignedTo"],
     description: "Products past their product due date, by owner.",
     notes: "Owner = responsibility, falling back to assigned-to. Days overdue measured on the product due date.",
@@ -502,7 +936,7 @@ export const OPS_REPORTS = [
     key: "on_time",
     title: "On-Time vs Late",
     group: "Production",
-    needs: "workOrders",
+    needs: ["workOrders"],
     filters: ["createdRange", "salesperson"],
     description: "Fulfilled products delivered on or before their due date.",
     notes: "Completion = latest fulfillment status-history entry, else the completed order's last update (proxy). Days in WIP runs from order created date.",
@@ -512,7 +946,7 @@ export const OPS_REPORTS = [
     key: "days_in_status",
     title: "Days in Status",
     group: "Production",
-    needs: "workOrders",
+    needs: ["workOrders"],
     filters: ["responsibility", "assignedTo", "designer"],
     description: "Average and max days products have sat in their current status.",
     notes: "Uses operational_status_changed_at; products without the timestamp are counted separately.",
@@ -522,21 +956,74 @@ export const OPS_REPORTS = [
     key: "estimates_conversion",
     title: "Estimate Conversion by Salesperson",
     group: "Sales & Estimates",
-    needs: "estimates",
+    needs: ["estimates"],
     filters: ["createdRange", "salesperson", "location"],
     description: "Created / converted / cancelled estimates per salesperson.",
     notes: "Converted = linked work_order_id. Templates excluded; location = estimate sales center.",
     build: ({ estimates }) => estimatesConversion(estimates),
   },
   {
+    key: "estimate_funnel",
+    title: "Estimate Funnel by Month",
+    group: "Sales & Estimates",
+    needs: ["estimates"],
+    filters: ["createdRange", "salesperson", "location"],
+    description: "Cohort funnel: of each month's new estimates, how many sent / approved / converted / cancelled.",
+    notes: "Cohort = estimate created month. Sent = quote issued (or accepted/converted); approved = accepted_at / approved status / linked work order; converted = linked work_order_id. Templates excluded.",
+    build: ({ estimates }) => estimateFunnelReport({ estimates }),
+  },
+  {
+    key: "overrides_audit",
+    title: "Price Overrides Audit",
+    group: "Sales & Estimates",
+    needs: ["estimates", "builderProducts", "builderParts"],
+    filters: ["createdRange", "salesperson"],
+    description: "Estimate lines, products, and parts whose price was manually set instead of computed.",
+    notes: "Signals: line price_state = manual, non-zero line adjustment %, BuilderProduct price_state = manual, BuilderPart manual_cost_override / detached_override. Templates excluded.",
+    build: ({ estimates, builderProducts, builderParts }) =>
+      overridesAuditReport({ estimates, builderProducts, builderParts }),
+  },
+  {
+    key: "sales_by_month",
+    title: "Sales by Month",
+    group: "Receivables",
+    needs: ["invoices", "payments"],
+    filters: ["monthRange", "dateBasis"],
+    description: "Invoiced vs collected per month, on an issue-date or paid-date basis.",
+    notes: "Issue basis = what was billed that month (accrual); paid basis = invoices reaching paid status (cash). Collected always buckets by payment paid date. Void invoices/payments excluded. Invoice list is limited to the 250 most recent by the invoicing action.",
+    build: ({ invoices, payments, dateBasis }) =>
+      salesByMonthReport({ invoices, payments, basis: dateBasis }),
+  },
+  {
+    key: "customer_analytics",
+    title: "Customer Analytics",
+    group: "Receivables",
+    needs: ["invoices"],
+    filters: [],
+    description: "Lifetime invoiced, collected, open AR, and order stats per customer.",
+    notes: "Issued invoices only — drafts and voids excluded. Open AR = sent / partially-paid balances. Last order = most recent issue date. Invoice list is limited to the 250 most recent by the invoicing action.",
+    build: ({ invoices }) => customerAnalyticsReport({ invoices }),
+  },
+  {
     key: "ar_aging",
     title: "AR Aging",
     group: "Receivables",
-    needs: "invoices",
+    needs: ["invoices"],
     filters: ["issueRange"],
     description: "Unpaid invoice balances aged by days past due.",
     notes: "Open AR = sent / partially-paid invoices with a balance. Bucketed on due date (issue date fallback). Invoice list is limited to the 250 most recent by the invoicing action.",
     build: ({ invoices, now }) => arAgingReport(invoices, now),
+  },
+  {
+    key: "parts_needed",
+    title: "Parts Needed",
+    group: "Purchasing",
+    needs: ["workOrders", "builderParts", "builderProducts", "inventoryItems", "purchaseOrders"],
+    filters: ["responsibility", "assignedTo", "designer"],
+    description: "Parts required by products in design/production vs on-hand stock and open POs.",
+    notes: "Demand = BuilderPart quantities on WIP products in design review / in design / in production, scaled by work-order product qty. On hand = Inventory stock; on order = open qty on sent / partially-received PO lines (line detail fetched per open PO, capped at 60). Parts without an inventory link show demand only.",
+    build: ({ queueRows, builderParts, builderProducts, inventoryItems, purchaseOrders }) =>
+      partsNeededReport({ queueRows, builderParts, builderProducts, inventoryItems, purchaseOrders }),
   },
 ];
 
