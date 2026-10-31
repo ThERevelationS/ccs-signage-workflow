@@ -66,3 +66,12 @@ test("existing hardening stays in place", () => {
   assert.match(verifyLogin, /username\.length > 128 \|\| password\.length > 1024/, "input bounds stay enforced");
   assert.match(setPassword, /session_not_before: new Date\(\)\.toISOString\(\)/, "credential change still revokes older sessions");
 });
+
+test("verifyLogin never compares legacy plaintext credentials", () => {
+  assert.doesNotMatch(verifyLogin, /password === stored/, "stored credentials must not be compared as plaintext");
+  assert.doesNotMatch(verifyLogin, /bcrypt\.hash\(/, "sign-in must not upgrade plaintext credentials by accepting them");
+  const reject = verifyLogin.indexOf("if (!/^\\$2[aby]\\$/.test(stored))");
+  const compare = verifyLogin.indexOf("bcrypt.compare(password, stored)");
+  assert.ok(reject > 0 && reject < compare, "non-bcrypt credentials must be rejected before any comparison");
+  assert.match(verifyLogin, /\.test\(stored\)\) \{[\s\S]*?DUMMY_PASSWORD_HASH[\s\S]*?status: 401/, "rejection keeps bcrypt timing and a generic 401");
+});
