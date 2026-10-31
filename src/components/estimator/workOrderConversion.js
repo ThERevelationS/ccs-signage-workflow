@@ -2,6 +2,7 @@ import { getModuleLabel } from "./moduleRegistry";
 import { mutateWorkOrderArrayField } from "../workflow/workOrderPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { DEPOSIT_GATED_STATUSES, depositGateApplies, depositGateMessage } from "./depositGate";
 import { acceptedCustomerUnitPrice } from "./customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -363,7 +364,26 @@ export async function syncBuilderProductOperationalStatus({ builderProductId, fi
 
 // Transition a work-order product and best-effort sync the same patch to the
 // linked BuilderProduct in one call.
-export async function transitionProductAndBuilderStatus({ workOrderId, product, patch = {}, actor = "", overrideHardDue = false, label = "Product status" } = {}) {
+export async function transitionProductAndBuilderStatus({ workOrderId, product, patch = {}, actor = "", overrideHardDue = false, label = "Product status", workOrder = null } = {}) {
+  // Deposit gate (warn-only, never a hard block): a product moving INTO a
+  // production status on a job whose deposit is required but not yet invoiced
+  // asks once â€” "Deposit required $X â€” proceed anyway?" Callers holding the
+  // Work Order pass it via `workOrder`; otherwise the live record is fetched.
+  // The extra read only happens for production-bound moves, so ordinary
+  // status edits never pay for it, and re-picking the held status no-ops.
+  const targetStatus = norm(patch?.operationalStatus);
+  if (targetStatus && DEPOSIT_GATED_STATUSES.has(targetStatus) && targetStatus !== norm(product?.operational_status)) {
+    const woSnapshot = workOrder && typeof workOrder === "object"
+      ? workOrder
+      : await staffEntities.WorkOrder.get(String(workOrderId || "").trim()).catch(() => null);
+    if (
+      depositGateApplies(woSnapshot, product, targetStatus)
+      && typeof window !== "undefined" && typeof window.confirm === "function"
+      && !window.confirm(depositGateMessage(woSnapshot))
+    ) {
+      throw Object.assign(new Error("Deposit required â€” the move into production was not applied."), { depositCancelled: true });
+    }
+  }
   const saved = await transitionProductOperationalStatus({ workOrderId, productId: product?.id, patch, actor, overrideHardDue, label });
   const savedProducts = Array.isArray(saved?.products) ? saved.products : [];
   const savedProduct = savedProducts.find((row) => String(row?.id || "") === String(product?.id || "")) || null;
