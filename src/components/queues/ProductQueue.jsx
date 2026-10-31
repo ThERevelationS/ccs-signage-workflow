@@ -23,6 +23,21 @@ import {
   daysInStatus,
   parseLocalDate,
 } from "./productQueueModel";
+import {
+  loadSavedQueueViews,
+  saveSavedQueueView,
+  deleteSavedQueueView,
+  isSavedViewsUnavailableError,
+  SAVED_VIEWS_UNAVAILABLE,
+} from "./savedViewsPersistence";
+import {
+  sortViews,
+  matchView,
+  deserializeViewFilters,
+  findViewByName,
+  canDeleteView,
+  isOwnView,
+} from "./savedViewsModel";
 import ProofPanel from "@/components/proofs/ProofPanel";
 
 export { flattenQueueRows };
@@ -142,6 +157,7 @@ export default function ProductQueue({
   dueField = "product_due_date",
   stageFilter = null, // e.g. ["design","production"] limits which work orders contribute rows
   statusDefault = "all",
+  queueLens = "all",
   onOpenWorkOrder = null,
 }) {
   const { data: workOrders = [], isFetched } = useAllWorkOrders();
@@ -178,6 +194,83 @@ export default function ProductQueue({
 
   const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
   const clearFilters = () => setFilters(() => ({ ...DEFAULT_QUEUE_FILTERS }));
+
+  // Saved queue views ("pins") — own + shared views for this lens via the
+  // staff gateways. When SavedQueueView is not wired into the gateways the
+  // control collapses into a quiet "saved views unavailable" note.
+  const [savedViews, setSavedViews] = useState([]);
+  const [viewsStatus, setViewsStatus] = useState({ available: true, error: "" });
+  const [viewsReload, setViewsReload] = useState(0);
+
+  useEffect(() => {
+    if (!actor) {
+      setSavedViews([]);
+      return undefined;
+    }
+    let cancelled = false;
+    loadSavedQueueViews({ lens: queueLens, ownerEmail: actor }).then(
+      ({ views, available }) => {
+        if (cancelled) return;
+        setSavedViews(sortViews(views, actor));
+        setViewsStatus({ available, error: available ? "" : SAVED_VIEWS_UNAVAILABLE });
+      },
+      () => {
+        if (!cancelled) setViewsStatus({ available: true, error: "Saved views could not be loaded." });
+      }
+    );
+    return () => { cancelled = true; };
+  }, [queueLens, actor, viewsReload]);
+
+  const noteViewsError = (e) => {
+    if (isSavedViewsUnavailableError(e)) {
+      setViewsStatus({ available: false, error: SAVED_VIEWS_UNAVAILABLE });
+    } else {
+      setViewsStatus((s) => ({ ...s, error: e?.message || "The saved view could not be updated." }));
+    }
+  };
+
+  const applyView = (view) => {
+    // setFilters writes the URL params too — applied views stay shareable.
+    setFilters(() => ({ ...DEFAULT_QUEUE_FILTERS, ...deserializeViewFilters(view?.filters) }));
+  };
+
+  const saveCurrentAsView = async () => {
+    const name = window.prompt("Name this queue view:", "");
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const existing = findViewByName(savedViews, { name: trimmed, ownerEmail: actor, lens: queueLens });
+    if (existing && !window.confirm(`A saved view named "${existing.name}" already exists — overwrite it?`)) return;
+    try {
+      await saveSavedQueueView({ name: trimmed, lens: queueLens, filters, ownerEmail: actor, existing });
+      setViewsReload((n) => n + 1);
+    } catch (e) {
+      noteViewsError(e);
+    }
+  };
+
+  const removeView = async (view) => {
+    if (!view?.id) return;
+    if (!window.confirm(`Delete saved view "${view.name}"?`)) return;
+    try {
+      await deleteSavedQueueView(view);
+      setViewsReload((n) => n + 1);
+    } catch (e) {
+      noteViewsError(e);
+    }
+  };
+
+  const appliedView = matchView(savedViews, filters);
+  const appliedOwnView = canDeleteView(appliedView, actor) ? appliedView : null;
+
+  const onViewAction = (e) => {
+    const value = e.target.value;
+    e.target.value = "";
+    if (value === "__save__") { saveCurrentAsView(); return; }
+    if (value === "__delete__") { removeView(appliedOwnView); return; }
+    const view = savedViews.find((v) => v.id === value);
+    if (view) applyView(view);
+  };
 
   const allRows = useMemo(() => {
     let rows = flattenQueueRows(workOrders, { dueField, includeFulfilled: filters.includeFulfilled });
@@ -261,6 +354,21 @@ export default function ProductQueue({
         <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
           <input type="checkbox" checked={filters.includeFulfilled} onChange={(e) => set("includeFulfilled", e.target.checked)} />
           Include fulfilled</label>
+        {actor !== "" && (viewsStatus.available ? (
+          <label className="flex flex-col gap-0.5"><span className={lab}>Views</span>
+            <select className={sel} value="" onChange={onViewAction}>
+              <option value="">Views…</option>
+              {savedViews.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}{isOwnView(v, actor) ? "" : " (shared)"}</option>
+              ))}
+              <option value="__save__">Save current as view…</option>
+              {appliedOwnView && <option value="__delete__">Delete "{appliedOwnView.name}"</option>}
+            </select>
+            {viewsStatus.error && <span className="max-w-[160px] text-[10px] text-rose-700">{viewsStatus.error}</span>}
+          </label>
+        ) : (
+          <span className="pb-1 text-xs italic text-gray-400" title={viewsStatus.error}>{SAVED_VIEWS_UNAVAILABLE}</span>
+        ))}
         <button className={sel} onClick={clearFilters}>Clear</button>
       </div>
 
