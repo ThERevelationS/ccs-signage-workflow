@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Upload, ArrowLeft, ListChecks } from "lucide-react";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
-import { preflightBuilderSourceMutation } from "@/components/estimator/builder/partSync";
+import { preflightBuilderSourceMutation } from "@/components/estimator/builder/sourceProjectPersistence";
 
 const num = (v, d = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
 const newItem = () => ({ description: "", quantity: 1, item_total_cost: 0, item_type: "fabrication", unit: "item" });
