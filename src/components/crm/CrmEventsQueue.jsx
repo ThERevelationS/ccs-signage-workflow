@@ -16,6 +16,7 @@ import {
   isOpenEvent,
   isOverdue,
 } from "@/components/crm/crmEventsModel";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 export const CRM_EVENTS_QUERY_KEY = ["crm-events", "all"];
 const PAGE_SIZES = [25, 50, 100, 200];
