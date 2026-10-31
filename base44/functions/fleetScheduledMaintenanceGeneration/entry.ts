@@ -3,6 +3,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const DUE_TASK_STATUSES = new Set(['pending','overdue']);
@@ -318,7 +319,7 @@ Deno.serve(async (req) => {
         await advanceLockedTask(Task,Receipt,lockedTask.id,key,receipt.receipt,lockedTask.start_date);
         const stamp = nowIso();
         await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:stamp,error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),work_order_id:created.id,work_order_number:created.work_order_number}});
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{event_type:'work_order_created',target_id:created.id,event_token:key}).catch(()=>null);
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{ _internal_capability: INTERNAL_FUNCTION_CAPABILITY,event_type:'work_order_created',target_id:created.id,event_token:key}).catch(()=>null);
         results.push({task_id:lockedTask.id,status:byKey||byNumber?'recovered':'created',work_order_id:created.id,work_order_number:created.work_order_number});
       } catch (error:any) {
         const message = error?.message || String(error);
