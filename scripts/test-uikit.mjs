@@ -9,7 +9,7 @@ const kit = resolve(here, '../src/components/kit');
 
 // Every primitive file must exist, compile under esbuild, and carry its
 // named exports. JSX files are transform-checked (imports like react and
-// @/lib/utils can't resolve under Node) — the pure models get bundled and
+// @/lib/utils can't resolve under Node) -- the pure models get bundled and
 // imported for behavioral coverage below, same as the other test-*.mjs
 // hardening suites.
 const FILES = {
@@ -102,7 +102,7 @@ for (const [group, statuses] of Object.entries(REAL_ENUMS)) {
     assert.ok(s in STATUS_TONES, `${group}: "${s}" missing from STATUS_TONES`);
     assert.ok(
       TONE_NAMES.includes(statusTone(s)),
-      `${group}: statusTone("${s}") returned "${statusTone(s)}" — not a valid tone`
+      `${group}: statusTone("${s}") returned "${statusTone(s)}" -- not a valid tone`
     );
   }
 }
