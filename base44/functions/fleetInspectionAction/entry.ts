@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const INSPECTION_TYPES = new Set(['pre_trip','post_trip','daily','weekly','monthly','safety','custom']);
 const RESPONSE_TYPES = new Set(['pass_fail','checkbox','text','number']);
@@ -115,7 +116,7 @@ async function ensureFailureWorkOrder(base44: any, WorkOrder: any, Equipment: an
     problem_photos: response.photo_urls || [],
     notes: `Source FleetInspection: ${inspection.id}\nChecklist item: ${response.item_key}`,
   });
-  await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+  await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
     event_type: 'work_order_created',
     target_id: created.id,
     event_token: `inspection-created:${inspection.id}:${response.item_key}`,
