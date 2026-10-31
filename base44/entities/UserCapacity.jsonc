@@ -68,7 +68,11 @@
         "role": "__resource_capacity_backend_only__"
       }
     },
-    "read": {},
+    "read": {
+      "user_condition": {
+        "role": "__resource_capacity_backend_only__"
+      }
+    },
     "update": {
       "user_condition": {
         "role": "__resource_capacity_backend_only__"

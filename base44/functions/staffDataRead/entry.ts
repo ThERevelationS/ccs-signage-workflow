@@ -145,6 +145,20 @@ const FIELD_DENYLIST: Record<string, string[]> = {
   ],
 };
 
+// Fields readable only by admins. Non-admin staff still get the rest of the
+// row (Resource Allocation needs every coworker's capacity and time off), but
+// these are stripped from output and refused in filters and sorts.
+const ADMIN_ONLY_FIELDS: Record<string, string[]> = {
+  UserCapacity: ['hourly_cost_rate'],
+};
+
+function deniedFieldsFor(entityName: string, user?: any) {
+  return [
+    ...(FIELD_DENYLIST[entityName] || []),
+    ...(user?.role === 'admin' ? [] : (ADMIN_ONLY_FIELDS[entityName] || [])),
+  ];
+}
+
 const MAX_LIMIT = 500;
 const MAX_SKIP = 100000;
 const MAX_QUERY_BYTES = 4000;
@@ -166,7 +180,7 @@ const OWNER_SCOPED = new Set([
 const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
 
 function projectItem(entityName: string, item: any, user?: any) {
-  const denied = [...(FIELD_DENYLIST[entityName] || []),
+  const denied = [...deniedFieldsFor(entityName, user),
     ...((user?.admin_permissions?.denied_fields?.[entityName]) || [])];
   if (!denied || !item || typeof item !== 'object') return item;
   const clean = { ...item };
@@ -174,14 +188,14 @@ function projectItem(entityName: string, item: any, user?: any) {
   return clean;
 }
 
-function cleanSort(value: unknown, entityName: string) {
+function cleanSort(value: unknown, entityName: string, user?: any) {
   const sort = String(value || '').trim();
   if (!sort) return '';
   if (sort.length > 200 || !SORT_PATTERN.test(sort)) {
     throw Object.assign(new Error('Staff read sort is invalid.'), { status: 400 });
   }
   // Denylisted fields must not be usable as a sort oracle either.
-  const denied = new Set(FIELD_DENYLIST[entityName] || []);
+  const denied = new Set(deniedFieldsFor(entityName, user));
   for (const part of sort.split(',')) {
     const field = part.trim().replace(/^-/, '');
     if (denied.has(field)) {
@@ -229,7 +243,7 @@ function checkOperatorValue(operator: string, value: unknown) {
   }
 }
 
-function cleanQuery(value: unknown, entityName: string) {
+function cleanQuery(value: unknown, entityName: string, user?: any) {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw Object.assign(new Error('Staff read filter must be an object.'), { status: 400 });
@@ -237,12 +251,15 @@ function cleanQuery(value: unknown, entityName: string) {
   // Operators are allowed only directly on a top-level field, never on a
   // denylisted field (that would turn output-denied data into a boolean
   // oracle) and never nested deeper than one level.
-  const deniedFields = new Set(FIELD_DENYLIST[entityName] || []);
+  const deniedFields = new Set(deniedFieldsFor(entityName, user));
   const stack: any[] = [{ node: value, field: '', depth: 0 }];
   while (stack.length) {
     const { node, field, depth } = stack.pop();
     if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
     for (const [key, val] of Object.entries(node)) {
+      if (depth === 0 && deniedFields.has(key)) {
+        throw Object.assign(new Error('Staff read filter field is not permitted.'), { status: 400 });
+      }
       if (key.startsWith('$')) {
         if (depth !== 1 || !field) {
           throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
@@ -381,8 +398,8 @@ async function readOne(base44: any, user: any, body: any) {
       return { status: 200, body: { success: true, item: projectItem(entityName, item, user) } };
     }
 
-    const query = cleanQuery(body?.query, entityName);
-    const sort = cleanSort(body?.sort, entityName);
+    const query = cleanQuery(body?.query, entityName, user);
+    const sort = cleanSort(body?.sort, entityName, user);
     const limit = cleanLimit(body?.limit, 100);
     const skip = cleanSkip(body?.skip);
     let effectiveQuery = query;

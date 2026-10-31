@@ -65,3 +65,14 @@ test("no staff-facing file reads a role-gated entity directly", () => {
   const offenders = scanDirs.flatMap(walk).filter((f) => re.test(read(f)));
   assert.deepEqual(offenders, [], `direct gated reads remain: ${offenders.join(", ")}`);
 });
+
+test("staffDataRead keeps UserCapacity.hourly_cost_rate admin-only", () => {
+  assert.match(gateway, /ADMIN_ONLY_FIELDS[\s\S]*?UserCapacity: \['hourly_cost_rate'\]/);
+  assert.match(gateway, /user\?\.role === 'admin' \? \[\] : \(ADMIN_ONLY_FIELDS\[entityName\]/);
+  assert.match(gateway, /cleanQuery\(body\?\.query, entityName, user\)/);
+  assert.match(gateway, /cleanSort\(body\?\.sort, entityName, user\)/);
+  assert.match(gateway, /depth === 0 && deniedFields\.has\(key\)/);
+  const entity = JSON.parse(read("base44/entities/UserCapacity.jsonc"));
+  assert.equal(entity.rls?.read?.user_condition?.role, "__resource_capacity_backend_only__",
+    "UserCapacity must not be directly readable from the browser");
+});
