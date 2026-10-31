@@ -86,7 +86,9 @@ async function ensureHydrated(entity) {
     return;
   }
   if (boardChannel) {
-    boardChannel.postMessage({ type: 'request', entity });
+    try {
+      boardChannel.postMessage({ type: 'request', entity });
+    } catch { /* clone failures are non-fatal */ }
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
 }
