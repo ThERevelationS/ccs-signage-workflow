@@ -61,7 +61,6 @@ export default function WorkOrderForm({
   key // Force re-render when duplicating
 }) {
   const { currentUser, sessionToken } = useAuth();
-  const [users, setUsers] = useState([]);
   const [authorizedUsers, setAuthorizedUsers] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [customName, setCustomName] = useState("");
@@ -228,10 +227,11 @@ export default function WorkOrderForm({
   }, [isOpen, initialData]);
 
   useEffect(() => {
-    // These catalogs are only used inside the open form — loading them on
-    // mount fired a guaranteed-401 User list for every board page mount.
+    // loadUsers() used to fetch the platform User catalog here, but the
+    // result was never read — the assignee picker uses authorizedUsers.
+    // Product types are only needed inside the open form, so the catalog
+    // load waits for isOpen instead of firing on every board page mount.
     if (isOpen) {
-      loadUsers();
       loadProductTypes();
     }
     
@@ -284,19 +284,6 @@ export default function WorkOrderForm({
       });
     }
   }, [workOrder, isRider, parentWorkOrder, lockedStage, initialData]);
-
-  const loadUsers = async () => {
-    try {
-      const usersList = await loadAllEntityRows({
-        entity: base44.entities.User,
-        sort: null,
-        label: "Work Order form app users",
-      });
-      setUsers(usersList);
-    } catch (e) {
-      console.error("Error loading users:", e);
-    }
-  };
 
   const loadProductTypes = async () => {
     try {
