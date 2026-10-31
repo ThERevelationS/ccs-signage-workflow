@@ -12,6 +12,7 @@ import { pickEditableFields, savePricingChanges } from "@/components/pricing/pri
 const EDIT_KEYS = [
   "name", "status", "customer_tier", "category", "markup_pct",
   "minimum_charge", "per_unit_breaks", "effective_from", "effective_to", "sort_order",
+  "pricing_mode", "market_retail", "market_discount_pct",
 ];
 
 let draftSeq = 0;
@@ -35,16 +36,42 @@ export const parseBreaks = (text) => {
   });
 };
 
+// formula_modifiers edit as text: "add_pct:10, min:50" → [{type,value},...]
+const MODIFIER_TYPES = new Set(["add_pct", "mul", "add_flat", "min", "max"]);
+export const formatModifiers = (mods) =>
+  (Array.isArray(mods) ? mods : [])
+    .map((m) => (m && MODIFIER_TYPES.has(m.type) ? `${m.type}:${Number(m.value) || 0}` : ""))
+    .filter(Boolean)
+    .join(", ");
+
+export const parseModifiers = (text) => {
+  const s = String(text ?? "").trim();
+  if (!s) return [];
+  return s.split(",").map((pair) => {
+    const [t, v] = pair.split(":").map((x) => String(x).trim());
+    const n = Number(v);
+    if (!MODIFIER_TYPES.has(t) || !Number.isFinite(n)) {
+      throw new Error(`Bad modifier "${pair.trim()}" — use type:value pairs like add_pct:10, mul:1.1, add_flat:5, min:50, max:200.`);
+    }
+    return { type: t, value: n };
+  });
+};
+
 const toDraft = (row) => ({
   _key: row.id,
   _original: row,
   _breaksText: formatBreaks(row.per_unit_breaks),
+  _modsText: formatModifiers(row.formula_modifiers),
   ...pickEditableFields("PricingTierMatrix", row),
 });
 const blankDraft = () => ({
   _key: newDraftKey(),
   _original: null,
   _breaksText: "",
+  _modsText: "",
+  pricing_mode: "markup",
+  market_retail: "",
+  market_discount_pct: "",
   name: "",
   status: "active",
   customer_tier: "",
@@ -60,7 +87,7 @@ const draftChanged = (d) => {
   if (!d._original) return true;
   const base = toDraft(d._original);
   return EDIT_KEYS.some((k) => String(d[k] ?? "") !== String(base[k] ?? "")) ||
-    d._breaksText !== base._breaksText;
+    d._breaksText !== base._breaksText || d._modsText !== base._modsText;
 };
 
 export default function PricingMatrixTable({ rows = [], tierOptions = [], categoryOptions = [], onSaved, updatedBy = "" }) {
@@ -125,9 +152,13 @@ export default function PricingMatrixTable({ rows = [], tierOptions = [], catego
         const data = {
           ...pickEditableFields("PricingTierMatrix", d),
           per_unit_breaks: breaks,
+          formula_modifiers: parseModifiers(d._modsText),
           markup_pct: Number(d.markup_pct) || 0,
           minimum_charge: Number(d.minimum_charge) || 0,
           sort_order: Number(d.sort_order) || 0,
+          pricing_mode: d.pricing_mode === "market" ? "market" : "markup",
+          market_retail: Number(d.market_retail) || 0,
+          market_discount_pct: Number(d.market_discount_pct) || 0,
           updated_by: updatedBy || undefined,
         };
         if (!d._original) {
@@ -184,6 +215,10 @@ export default function PricingMatrixTable({ rows = [], tierOptions = [], catego
               <th className={th}>Category</th>
               <th className={th}>Markup %</th>
               <th className={th}>Min Charge</th>
+              <th className={th}>Mode</th>
+              <th className={th}>Mkt Retail</th>
+              <th className={th}>Mkt Disc %</th>
+              <th className={th}>Modifiers (type:value,…)</th>
               <th className={th}>Qty Breaks (qty=price,…)</th>
               <th className={th}>From</th>
               <th className={th}>To</th>
@@ -192,7 +227,7 @@ export default function PricingMatrixTable({ rows = [], tierOptions = [], catego
           </thead>
           <tbody>
             {live.length === 0 && (
-              <tr><td colSpan={10} className="px-4 py-6 text-center text-[11px] text-gray-400">
+              <tr><td colSpan={14} className="px-4 py-6 text-center text-[11px] text-gray-400">
                 No matrix rows yet — add one, or rows may be gated until the pricing entities are allowlisted in the staff gateways.
               </td></tr>
             )}
@@ -221,6 +256,15 @@ export default function PricingMatrixTable({ rows = [], tierOptions = [], catego
                   </td>
                   <td className="px-1.5 py-1"><Input type="number" step="0.01" className={`${cell} w-20 text-right`} value={d.markup_pct ?? ""} onChange={(e) => patch(d._key, "markup_pct", e.target.value)} /></td>
                   <td className="px-1.5 py-1"><Input type="number" step="0.01" min="0" className={`${cell} w-20 text-right`} value={d.minimum_charge ?? ""} onChange={(e) => patch(d._key, "minimum_charge", e.target.value)} /></td>
+                  <td className="px-1.5 py-1">
+                    <select className={`${cell} w-full border border-gray-200 rounded bg-white`} value={d.pricing_mode || "markup"} onChange={(e) => patch(d._key, "pricing_mode", e.target.value)}>
+                      <option value="markup">markup</option>
+                      <option value="market">market</option>
+                    </select>
+                  </td>
+                  <td className="px-1.5 py-1"><Input type="number" step="0.01" min="0" className={`${cell} w-20 text-right`} value={d.market_retail ?? ""} onChange={(e) => patch(d._key, "market_retail", e.target.value)} /></td>
+                  <td className="px-1.5 py-1"><Input type="number" step="0.01" min="0" className={`${cell} w-16 text-right`} value={d.market_discount_pct ?? ""} onChange={(e) => patch(d._key, "market_discount_pct", e.target.value)} /></td>
+                  <td className="px-1.5 py-1"><Input className={`${cell} w-36`} value={d._modsText ?? ""} onChange={(e) => patch(d._key, "_modsText", e.target.value)} placeholder="add_pct:10, min:50" /></td>
                   <td className="px-1.5 py-1"><Input className={`${cell} w-40`} value={d._breaksText} onChange={(e) => patch(d._key, "_breaksText", e.target.value)} placeholder="10=5.50, 25=4.75" /></td>
                   <td className="px-1.5 py-1"><Input type="date" className={`${cell} w-32`} value={d.effective_from ?? ""} onChange={(e) => patch(d._key, "effective_from", e.target.value)} /></td>
                   <td className="px-1.5 py-1"><Input type="date" className={`${cell} w-32`} value={d.effective_to ?? ""} onChange={(e) => patch(d._key, "effective_to", e.target.value)} /></td>
