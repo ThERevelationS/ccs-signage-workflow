@@ -18,7 +18,7 @@ const RECORD_GROUPS = [
 
 const PAGE_LABEL_OVERRIDES = {
   CrmEvents: "CRM Events", WalkIn: "Walk-in Sale", CustomerStatements: "Statements",
-  CommsFollowups: "Follow-ups",
+  CommsFollowups: "Follow-ups", Customer360: "Customer 360",
   Home: "Home", MainWorkflow: "Main Workflow", Opportunities: "Sales Opportunities",
   EstimatorCustomers: "Customers", Invoices: "Invoices", PurchaseOrders: "Purchase Orders",
   ChangeOrders: "Change Orders", JobCosting: "Job Costing", Inventory: "Inventory",
@@ -48,7 +48,7 @@ const EXTRA_PAGE_NAMES = [
   "FleetFluids", "FleetFuel", "FleetWarranties", "FleetReservations",
   "WorkOrderTraveler", "ProductionSchedule",
   "ProductQueues", "JobWorkspace", "WalkIn", "OpsReports", "CrmEvents", "Imports",
-  "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups",
+  "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups", "Customer360",
 ];
 
 const pageLabel = (name) =>
