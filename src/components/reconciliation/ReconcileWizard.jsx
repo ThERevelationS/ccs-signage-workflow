@@ -12,11 +12,32 @@ const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-
 // "New Reconciliation" wizard: lists every unreconciled payment grouped by
 // tender bucket with expected totals, takes counted amounts plus an optional
 // cash adjustment, and closes the batch through manageReconciliation.
-export default function ReconcileWizard({ sessionToken, payments, batches, locations, invoke, onClose, onClosed }) {
+export default function ReconcileWizard({ sessionToken, payments, batches, locations, salesLocations = [], invoke, onClose, onClosed }) {
   const expected = useMemo(() => batchTotals(payments), [payments]);
   const previewNumber = useMemo(() => nextBatchNumber(batches), [batches]);
   const [counted, setCounted] = useState(() => Object.fromEntries(TENDER_BUCKETS.map((b) => [b, ""])));
-  const [location, setLocation] = useState(clean(locations?.[0]));
+  // The batch location comes from the SalesLocation registry now (stored on
+  // the batch as the location name, same as the free-text days). Legacy
+  // locations that never became registry rows stay selectable below.
+  const locationOptions = useMemo(() => {
+    const opts = [];
+    const seen = new Set();
+    for (const loc of salesLocations || []) {
+      const name = clean(loc?.name);
+      if (!name || loc?.active === false || seen.has(name.toLowerCase())) continue;
+      seen.add(name.toLowerCase());
+      const code = clean(loc?.code);
+      opts.push({ value: name, label: code ? `${name} (${code})` : name });
+    }
+    for (const loc of locations || []) {
+      const name = clean(loc);
+      if (!name || seen.has(name.toLowerCase())) continue;
+      seen.add(name.toLowerCase());
+      opts.push({ value: name, label: name });
+    }
+    return opts;
+  }, [salesLocations, locations]);
+  const [location, setLocation] = useState(() => clean(locationOptions[0]?.value));
   const [adjustment, setAdjustment] = useState("");
   const [adjustmentNote, setAdjustmentNote] = useState("");
   const [notes, setNotes] = useState("");
@@ -83,10 +104,10 @@ export default function ReconcileWizard({ sessionToken, payments, batches, locat
             <label className={labelCls}>Location</label>
             <div className="relative">
               <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input className={`${inputCls} pl-9`} list="recon-locations" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Main office" />
-              <datalist id="recon-locations">
-                {(locations || []).map((l) => <option key={l} value={l} />)}
-              </datalist>
+              <select className={`${inputCls} pl-9`} value={location} onChange={(e) => setLocation(e.target.value)}>
+                {locationOptions.length === 0 && <option value="">No locations -- add one in the Locations panel</option>}
+                {locationOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
