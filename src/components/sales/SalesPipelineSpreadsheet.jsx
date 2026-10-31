@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format, differenceInDays } from "date-fns";
 import * as XLSX from "xlsx";
 import { Plus, Trash2, Loader2, Download, Upload, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import LoadErrorBanner from "@/components/LoadErrorBanner";
 
 // Helper to parse date string as local date (not UTC)
 const parseLocalDate = (dateString) => {
@@ -266,6 +267,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [archiveHasMore, setArchiveHasMore] = useState(false);
   const [archiveLoadingMore, setArchiveLoadingMore] = useState(false);
   const archiveSkipRef = useRef(0);
@@ -773,13 +775,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       setArchiveHasMore(hasMore);
       setWorkOrders((current) => mergeLoadedRows(rows, scopeAtStart, current));
       setUsers(usersData);
+      setLoadError("");
       // During explicit uncertain-save recovery a scoped page is only
       // sufficient if it actually includes each affected WorkOrder. A row
       // moved to another workspace must not be declared reviewed here.
       return requiredIds.every((id) => rows.some((row) => row?.id === id))
         ? true : "missing_required";
     } catch (error) {
-      if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
+      if (requestId === loadRequestRef.current) {
+        console.error("Error loading work orders:", error);
+        setLoadError(error?.message || "Sales Pipeline could not be loaded.");
+      }
       return false;
     } finally {
       if (requestId === loadRequestRef.current) setIsLoading(false);
@@ -3212,6 +3218,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       {destructiveActionWarning}
       {globalSettingsWarning}
       {archivePagingNotice}
+      <LoadErrorBanner message={loadError} onRetry={() => loadWorkOrders(true)} />
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
