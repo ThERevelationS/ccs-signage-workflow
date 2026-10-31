@@ -42,3 +42,23 @@ export async function sendStaffEmail({ to, subject, body, cc, kind, sessionToken
   }
   return data;
 }
+
+// The staff bridge is plain-text only — it escapes markup, so an HTML body
+// would reach the recipient as literal tags. Collapse simple email HTML
+// (paragraphs, breaks, divs/headings) into readable text before sending.
+export function emailBodyToPlainText(html) {
+  return String(html || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n- ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
