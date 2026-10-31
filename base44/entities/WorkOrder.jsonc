@@ -625,6 +625,21 @@
         "additionalProperties": true
       }
     },
+    "deposit_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this job requires a deposit before production work begins. Product moves into production statuses prompt a deposit warning until deposit_invoiced is set."
+    },
+    "deposit_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Deposit amount required on this order, in dollars."
+    },
+    "deposit_invoiced": {
+      "type": "boolean",
+      "default": false,
+      "description": "Deposit has been invoiced \u2014 maintained from the Job Workspace financials card with a compare-and-set write."
+    },
     "sales_rep": {
       "type": "string"
     },
