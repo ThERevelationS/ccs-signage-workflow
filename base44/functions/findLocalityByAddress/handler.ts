@@ -11,8 +11,8 @@ import {withEntityRateLimitRetry} from '../../shared/entityRateLimitRetry.ts';
 
 
 
-async function fixedJSON(url:string){
- const response=await fetch(url,{signal:AbortSignal.timeout(15000)});
+async function fixedJSON(url:string,timeoutMs=15000){
+ const response=await fetch(url,{signal:AbortSignal.timeout(timeoutMs)});
  if(!response.ok)throw Error('Location service returned HTTP '+response.status);
  const text=await response.text();if(text.length>8*1024*1024)throw Error('Location response exceeds its limit.');return JSON.parse(text);
 }
@@ -121,31 +121,11 @@ Deno.serve(async req=>{
    if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'browser_geocoder',fallback_message:'The browser map locator found an approximate map position after Google rejected the lookup.'};
   }
  }
- // Free fallback: US Census geocoder needs no API key. It gives coordinates and
- // a normalized address but not Google-style components; resolve state from the
- // matched address and never treat its output as parcel-exact proof.
- if(!geocode){
-  try{
-   await reporter.emit({kind:'geocode_lookup',url:'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress',detail:'Trying the public US Census address locator.'});
-   const cleaned=address.replace(/s+,/g,',').replace(/,?s*(USA|United States|US)$/i,'');
-   let match=null,matches=[];
-   for(const candidate of [...new Set([cleaned,address])]){
-    const census=await fixedJSON('https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address='+encodeURIComponent(candidate)+'&benchmark=Public_AR_Current&format=json');
-    matches=census?.result?.addressMatches || [];
-    if(matches.length){match=matches[0];break;}
-   }
-   await reporter.emit({kind:'geocode_service_result',detail:'Census address locator returned '+matches.length+' candidate match(es).'});
-   const components=match?.addressComponents || {},state=normalizeAddressState(components.state || (match?.matchedAddress || '').split(',').slice(-2,-1)[0] || ''),city=components.city || '',zip=components.zip || '';
-   if(match?.coordinates&&['oh','ky'].includes(state)){
-    geocode={lat:match.coordinates.y,lon:match.coordinates.x,display_name:match.matchedAddress || address,location_exact:false,approximate_source:'us_census',address_parts:{administrative_area_level_1:state,locality:city,postal_code:zip}};
-    await reporter.emit({kind:'geocode_service_result',detail:'Census address locator matched '+geocode.display_name+' as an approximate map location.'});
-    if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'us_census',fallback_message:'The public Census locator found an approximate map position after Google rejected the lookup.'};
-   }
-  }catch{await reporter.emit({kind:'geocode_failed',detail:'The Census backup locator could not confirm the address either.'});}
- }
- // Free fallback 2: OpenStreetMap Nominatim — no key; interpolation finds
+ // Free fallback 1: OpenStreetMap Nominatim — no key; interpolation finds
  // approximate positions where strict street-number matching fails. Policy: one
  // serialized request per lookup, honest User-Agent, treated as approximate only.
+ // OSM runs before Census because the worker historically cannot reach
+ // census.gov — a doomed 15s wait used to precede every OSM attempt.
  if(!geocode){
   try{
    await reporter.emit({kind:'geocode_lookup',url:'https://nominatim.openstreetmap.org/search',detail:'Trying the public OpenStreetMap address locator.'});
@@ -160,6 +140,28 @@ Deno.serve(async req=>{
     if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'nominatim',fallback_message:'The public OpenStreetMap locator found an approximate map position after other locators failed.'};
    }else await reporter.emit({kind:'geocode_service_result',detail:'OpenStreetMap locator returned no usable match.'});
   }catch{await reporter.emit({kind:'geocode_failed',detail:'The OpenStreetMap backup locator could not confirm the address either.'});}
+ }
+ // Free fallback 2 (last resort): US Census geocoder needs no key and returns
+ // normalized addresses, but the worker often cannot reach census.gov — keep it
+ // last with its own short timeout so an unreachable host cannot stall lookups.
+ if(!geocode){
+  try{
+   await reporter.emit({kind:'geocode_lookup',url:'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress',detail:'Trying the public US Census address locator.'});
+   const cleaned=address.replace(/s+,/g,',').replace(/,?s*(USA|United States|US)$/i,'');
+   let match=null,matches=[];
+   for(const candidate of [...new Set([cleaned,address])]){
+    const census=await fixedJSON('https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address='+encodeURIComponent(candidate)+'&benchmark=Public_AR_Current&format=json',5000);
+    matches=census?.result?.addressMatches || [];
+    if(matches.length){match=matches[0];break;}
+   }
+   await reporter.emit({kind:'geocode_service_result',detail:'Census address locator returned '+matches.length+' candidate match(es).'});
+   const components=match?.addressComponents || {},state=normalizeAddressState(components.state || (match?.matchedAddress || '').split(',').slice(-2,-1)[0] || ''),city=components.city || '',zip=components.zip || '';
+   if(match?.coordinates&&['oh','ky'].includes(state)){
+    geocode={lat:match.coordinates.y,lon:match.coordinates.x,display_name:match.matchedAddress || address,location_exact:false,approximate_source:'us_census',address_parts:{administrative_area_level_1:state,locality:city,postal_code:zip}};
+    await reporter.emit({kind:'geocode_service_result',detail:'Census address locator matched '+geocode.display_name+' as an approximate map location.'});
+    if(geocodingService?.issue)geocodingService={...geocodingService,fallback_used:'us_census',fallback_message:'The public Census locator found an approximate map position after Google rejected the lookup.'};
+   }
+  }catch{await reporter.emit({kind:'geocode_failed',detail:'The Census backup locator could not confirm the address either.'});}
  }
  if(diagnostic)return addressResponse({success:true,diagnostic_only:true,geocode,geocoding_service:geocodingService,authority_established:false,apply_allowed:false,llm_calls:0,record_writes:0});
   await reporter.emit({kind:'geocode_result',detail:geocode?`Map result: ${geocode.display_name}; latitude ${geocode.lat}, longitude ${geocode.lon}. ${geocode.location_exact?'Street and building coordinates matched.':'Approximate or corrected address; review required.'}`:'No map location found.'},{stage:'Checking government boundaries',indeterminate:true});
