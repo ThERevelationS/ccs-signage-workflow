@@ -8,7 +8,9 @@ import { usePolling } from "@/lib/usePolling";
 const AnnouncementContext = createContext(null);
 
 export function useAnnouncements() {
-  return useContext(AnnouncementContext);
+  // Null-safe: when the provider can't mount (backend unreachable), callers
+  // destructuring the context must not take the whole app down with them.
+  return useContext(AnnouncementContext) || { activeAnnouncement: null, dismiss: () => {}, acknowledge: () => {} };
 }
 
 // Stock sound generators using Web Audio API
