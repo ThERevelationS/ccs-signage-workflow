@@ -4,9 +4,9 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import AppErrorBoundary from '@/components/auth/AppErrorBoundary'
 import { CcsMantineProvider } from '@/components/ui/ccs-date-field'
-import '@/index.css'
 import '@mantine/core/styles.css'
 import '@mantine/dates/styles.css'
+import '@/index.css'
 
 const previewQaHost = isPermittingPreviewHost(window.location.hostname, import.meta.env.DEV);
 const root = ReactDOM.createRoot(document.getElementById('root'));
