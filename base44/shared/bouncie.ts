@@ -180,7 +180,14 @@ async function claimRefreshLock(base44, connection) {
       await Conn.update(conn.id, { refresh_claim_token: claim, refresh_claim_at: new Date().toISOString() });
       await sleep(250);
       const check = await Conn.get(conn.id).catch(() => null);
-      if (!check) throw new Error("BOUNCIE_NOT_CONNECTED");
+      // A failed verify read is transient (entity cap, network) — the
+      // connection itself may be fine. Reporting NOT_CONNECTED here would
+      // falsely tell the operator to re-link Bouncie.
+      if (!check) {
+        const err = new Error("BOUNCIE_REFRESH_IN_PROGRESS");
+        err.status = 503;
+        throw err;
+      }
       conn = check;
       if (conn.refresh_claim_token === claim) return { claimed: true, conn };
       continue;
