@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -319,7 +320,9 @@ export default function CustomerStatements() {
                       <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={on} onChange={() => toggle(c.id)} />
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="font-semibold text-slate-900 dark:text-slate-100">{customerLabel(c)}</div>
+                      <Link className="font-semibold text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${c.id}`} onClick={(e) => e.stopPropagation()}>
+                        {customerLabel(c)}
+                      </Link>
                       {clean(c.contact_email || c.billing_contact_email) && (
                         <div className="text-xs text-slate-500">{clean(c.contact_email) || clean(c.billing_contact_email)}</div>
                       )}
