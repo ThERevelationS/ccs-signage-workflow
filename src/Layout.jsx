@@ -1208,7 +1208,7 @@ function LayoutContent({ children }) {
                       {...provided.droppableProps}
                       className={compactView ? "space-y-0.5" : "space-y-1"}
                     >
-                      {orderedNavItems.map((item, index) => (
+                      {visibleNavItems.map((item, index) => (
                         <Draggable key={item.url} draggableId={`side-${item.url}`} index={index}>
                           {(dragProvided) => (
                             <NavPageLink
@@ -1383,7 +1383,7 @@ function LayoutContent({ children }) {
                           {...provided.droppableProps}
                           className={`flex flex-wrap items-center ${topBarCompact ? "gap-0.5" : "gap-1"}`}
                         >
-                          {orderedNavItems.map((item, index) => (
+                          {visibleNavItems.map((item, index) => (
                             <Draggable key={item.url} draggableId={`top-${item.url}`} index={index}>
                               {(dragProvided) => (
                                 <NavPageLink
