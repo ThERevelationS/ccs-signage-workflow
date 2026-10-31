@@ -236,7 +236,8 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
           await base44.functions.invoke('sendGmail', {
             to: email,
             subject: subject,
-            body: body
+            body: body,
+            session_token: getSessionToken()
           });
           console.log(`Notification sent to ${email} for trigger: ${triggerType}`);
         } catch (emailError) {

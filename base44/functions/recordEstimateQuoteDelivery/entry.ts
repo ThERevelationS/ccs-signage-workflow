@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { issueQuoteSendGrant } from '../../shared/quoteSendGrant.ts';
 import { estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
 import { createFoundationRecordWithRecovery } from '../../shared/opportunityFoundationPersistence.mjs';
 import { ensureQuoteRecipientContact } from '../../shared/quoteRecipientContact.mjs';
@@ -161,7 +162,21 @@ Deno.serve(async (req) => {
       }
       const authorizeTotal = Math.max(money(body?.quote_total), money(authorizeEstimate.quote_total));
       const gate = await assertQuoteSendAuthorized({ Settings, estimate: authorizeEstimate, quoteTotal: authorizeTotal, user });
-      return Response.json({ success: true, allowed: true, ...gate, internal_approval: recordedQuoteApproval(authorizeEstimate) });
+      const sendGrant = await issueQuoteSendGrant({
+        user,
+        estimateId: authorizeEstimate.id,
+        to: body?.recipient_email,
+        cc: body?.cc_emails,
+        bcc: body?.bcc_emails,
+      });
+      return Response.json({
+        success: true,
+        allowed: true,
+        ...gate,
+        internal_approval: recordedQuoteApproval(authorizeEstimate),
+        quote_send_grant: sendGrant.token,
+        quote_send_grant_expires_at: sendGrant.expiresAt,
+      });
     }
 
     const input = body?.delivery && typeof body.delivery === 'object' ? body.delivery : {};

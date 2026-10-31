@@ -93,7 +93,7 @@ export async function ensureQuoteDeliveryAudit(data = {}, sessionToken = "") {
   return result.delivery;
 }
 
-export async function authorizeEstimateQuoteSend({ estimateId, quoteTotal, sessionToken }) {
+export async function authorizeEstimateQuoteSend({ estimateId, quoteTotal, sessionToken, recipientEmail = "", ccEmails = "", bccEmails = "" }) {
   const estimateKey = String(estimateId || "").trim();
   if (!estimateKey) throw new Error("The estimate must be saved before its quote can be emailed.");
   let response;
@@ -103,6 +103,9 @@ export async function authorizeEstimateQuoteSend({ estimateId, quoteTotal, sessi
       action: "authorize_send",
       estimate_id: estimateKey,
       quote_total: Number(quoteTotal || 0),
+      recipient_email: recipientEmail,
+      cc_emails: ccEmails || "",
+      bcc_emails: bccEmails || "",
     });
   } catch (error) {
     throw new Error(error?.response?.data?.error || error?.data?.error || error?.message || "Quote send authorization could not be verified.");
@@ -155,7 +158,14 @@ export async function deliverEstimateQuote({
   // Internal approval gate: a quote over the configured threshold cannot be
   // emailed until a manager approves it. This server-side check runs before the
   // PDF is archived and before Gmail is invoked so a blocked quote never sends.
-  await authorizeEstimateQuoteSend({ estimateId: estimate?.id, quoteTotal, sessionToken });
+  const sendAuthorization = await authorizeEstimateQuoteSend({
+    estimateId: estimate?.id,
+    quoteTotal,
+    sessionToken,
+    recipientEmail,
+    ccEmails,
+    bccEmails,
+  });
   // Archive the exact bytes before sending so every successful email has a
   // retrievable source artifact. If archival fails, Gmail is not called.
   const archive = await archiveQuoteAttachment(attachment);
@@ -166,6 +176,8 @@ export async function deliverEstimateQuote({
     subject,
     body: quoteEmailBodyHtml(message, emailSignature),
     attachments: [attachment],
+    session_token: sessionToken,
+    quote_send_grant: sendAuthorization?.quote_send_grant || "",
   });
   const payload = response?.data || response || {};
   if (payload.error || payload.success === false) {

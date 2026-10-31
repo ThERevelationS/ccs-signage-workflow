@@ -1073,7 +1073,8 @@ export default function AdminSettings() {
       const response = await base44.functions.invoke("sendGmail", {
         to,
         subject: "CCS Signage - test notification",
-        body: "This is a test email sent from Admin Settings to verify notification delivery is working."
+        body: "This is a test email sent from Admin Settings to verify notification delivery is working.",
+        session_token: sessionToken
       });
       if (response?.data?.error) throw new Error(response.data.error);
       setTestEmailMsg(`Test email sent to ${to}.`);
