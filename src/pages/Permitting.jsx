@@ -1337,6 +1337,13 @@ export default function Permitting() {
           })}
         </div>
 
+        {queueFilter !== "all" && PERMIT_QUEUE_META[queueFilter] && (
+          <p className="mt-1.5 text-xs text-gray-600" role="status">
+            Showing only jobs that are <strong>{PERMIT_QUEUE_META[queueFilter].label.toLowerCase()}</strong> — {PERMIT_QUEUE_META[queueFilter].description}.{" "}
+            <button type="button" className="font-semibold text-purple-700 underline" onClick={() => setQueueFilter("all")}>Show all</button>
+          </p>
+        )}
+
         {workloadByAssignee.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-indigo-100 bg-indigo-50/50 px-3 py-2 text-[11px] text-slate-600" title="The day's calls, distributed — permit lines per assignee">
             <span className="font-semibold text-slate-700">Offices to chase:</span>
@@ -1381,9 +1388,17 @@ export default function Permitting() {
 
         <StageTasksPanel stage="permitting" />
 
-        {visibleQueueKeys.map((key) => (
-          <React.Fragment key={key}>{renderSection(key)}</React.Fragment>
-        ))}
+        {searchTerm && filteredGroups.length === 0 ? (
+          <div className="clay-card p-8 w-full mb-5 text-center">
+            <p className="text-lg font-semibold text-gray-700">Nothing found for “{searchTerm}”</p>
+            <p className="mt-1 text-sm text-gray-500">Try a client name, job number, town, or permit number — or clear the search.</p>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => setSearchTerm("")}>Clear search</Button>
+          </div>
+        ) : (
+          visibleQueueKeys.map((key) => (
+            <React.Fragment key={key}>{renderSection(key)}</React.Fragment>
+          ))
+        )}
       </div>
 
       <LocalityInfoPopup
