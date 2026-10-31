@@ -42,6 +42,32 @@ const isDenied = (entity) => {
 };
 const isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
 
+// Short-TTL positive cache for list/filter results. Page mounts re-read the
+// same semi-static catalogs on every navigation; a 30s hit turns a remount
+// into a free local read. Entries are keyed by session token so a sign-in
+// change can never see another session's rows, and every successful write
+// through this facade busts its entity's entries so the writer always
+// re-reads fresh rows. Hits return a copy so in-place sorts cannot corrupt
+// the cached array for other callers.
+const READ_CACHE_TTL_MS = 30000;
+const readCache = new Map();
+const readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
+const cachedRead = (key) => {
+  const entry = readCache.get(key);
+  if (!entry) return undefined;
+  if (entry.expires <= Date.now()) { readCache.delete(key); return undefined; }
+  return entry.value;
+};
+const cacheRead = (key, value) => {
+  readCache.set(key, { value, expires: Date.now() + READ_CACHE_TTL_MS });
+};
+const bustReadCache = (entity) => {
+  const marker = `|${entity}|`;
+  for (const key of readCache.keys()) {
+    if (key.includes(marker)) readCache.delete(key);
+  }
+};
+
 // The platform's function client resolves with the transport envelope
 // ({ status, data, ... }) rather than the JSON body, while a few call paths hand
 // back the body itself. Normalize once here so every staff read/write in the app
@@ -157,14 +183,26 @@ const METHODS = {
   filter: (entity, query, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
+    const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
+    const cached = cachedRead(key);
+    if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
     return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip })
-      .then((rows) => (args.paged ? page(rows) : rows));
+      .then((rows) => {
+        cacheRead(key, rows);
+        return args.paged ? page(rows) : rows;
+      });
   },
   list: (entity, sortOrOptions, limit, skip) => {
     const args = readArgs(sortOrOptions, limit, skip);
     if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
+    const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
+    const cached = cachedRead(key);
+    if (cached !== undefined) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
     return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip })
-      .then((rows) => (args.paged ? page(rows) : rows));
+      .then((rows) => {
+        cacheRead(key, rows);
+        return args.paged ? page(rows) : rows;
+      });
   },
   get: (entity, id) => {
     if (!hasSession() || isDenied(entity)) return Promise.resolve(null);
@@ -182,13 +220,13 @@ const METHODS = {
     );
   },
   create: (entity, data) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => bodyOf(r).record) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
   update: (entity, id, data) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r) => bodyOf(r).record) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r) => { bustReadCache(entity); return bodyOf(r).record; }) : Promise.reject(NO_SESSION_ERR()),
   updateMany: (entity, query, update) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => bodyOf(r).result) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
   delete: (entity, id) =>
-    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => bodyOf(r).deleted === true) : Promise.reject(NO_SESSION_ERR()),
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => { bustReadCache(entity); return bodyOf(r).deleted === true; }) : Promise.reject(NO_SESSION_ERR()),
   // Staff sessions cannot use platform live-subscriptions (entity RLS is
   // backend-only), so subscribe polls staffDataRead and emits a synthetic
   // change event when the row set changes. Returns an unsubscribe function,
