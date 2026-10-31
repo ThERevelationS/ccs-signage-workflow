@@ -1,5 +1,6 @@
 import React from "react";
 import { CloudOff } from "lucide-react";
+import { EmptyState } from "@/components/kit";
 
 const thCls =
   "px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400";
@@ -51,13 +52,19 @@ export function BackendRequired({ label = "These records" }) {
 //
 //   columns: [{ label, align?, className?, render(row) => node }]
 //   rows, rowKey(row), empty: string|node
-export function DataList({ columns, rows, rowKey, empty = "Nothing here yet." }) {
+//   emptyAction(node) or emptyActionLabel+emptyActionTo: next-step CTA rendered
+//   by the kit EmptyState so an empty section is never a dead end.
+export function DataList({ columns, rows, rowKey, empty = "Nothing here yet.", emptyAction, emptyActionLabel, emptyActionTo }) {
   const list = Array.isArray(rows) ? rows : [];
   if (list.length === 0) {
     return (
-      <div className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
-        {empty}
-      </div>
+      <EmptyState
+        compact
+        title={empty}
+        action={emptyAction}
+        actionLabel={emptyActionLabel}
+        actionTo={emptyActionTo}
+      />
     );
   }
   const alignCls = (a) =>
