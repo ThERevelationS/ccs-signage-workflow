@@ -245,9 +245,11 @@ export default function TimeTracker({ position = "top", hasTopBar = true, hasSid
       if (cancelled || document.hidden || isFleetCoolingDown()) return;
       refresh({ force: true }).catch(() => {});
     };
-    run();
+    // The header tracker is chrome — its first snapshot yields to the page's
+    // own data on mount, then resumes its normal poll cadence.
+    const initial = window.setTimeout(run, 1500);
     const id = window.setInterval(run, intervalSeconds * 1000);
-    return () => { cancelled = true; window.clearInterval(id); };
+    return () => { cancelled = true; window.clearTimeout(initial); window.clearInterval(id); };
   }, [sessionToken, email, intervalSeconds, refresh]);
 
   // Re-poll when Time Clock activity signals a state change. Every listener
