@@ -13,6 +13,7 @@ export function attachScanReporter(entity,id){
  let snapshot=null,trackingError='';
  async function emit(event,patch={}){
   try{
+   trackingError='';
    const current=await entity.get(id);if(current.status!=='running')return;
    const item={at:new Date().toISOString(),...event};
    if(item.resources){item.omitted_resources=Math.max(0,item.resources.length-100);item.resources=item.resources.slice(0,100).map(r=>({url:r.url,title:r.title,kind:r.referral_kind || r.doc_type}));}
@@ -24,7 +25,13 @@ export function attachScanReporter(entity,id){
  }
  async function finish(status='complete',error=''){
   const current=await entity.get(id).catch(()=>null);const completion=status==='complete'&&current?.total>0?{processed:current.total}:{};
-  await emit({kind:'finished',detail:error || status},{...completion,status,stage:status,indeterminate:false,finished_at:new Date().toISOString(),error:String(error).slice(0,1000)});
+  // Finish is terminal bookkeeping — a swallowed 429/5xx would leave the run
+  // stuck 'running' forever even though the answer was already returned.
+  for(let attempt=0;attempt<4;attempt++){
+   await emit({kind:'finished',detail:error || status},{...completion,status,stage:status,indeterminate:false,finished_at:new Date().toISOString(),error:String(error).slice(0,1000)});
+   if(!trackingError)break;
+   await new Promise(r=>setTimeout(r,1200*(attempt+1)));
+  }
   return snapshot?{...snapshot,tracking_error:trackingError || null}:null;
  }
  return {id,emit,finish};
