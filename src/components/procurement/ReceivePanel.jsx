@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { CheckCircle2, ClipboardCopy, Loader2, Mail, MailCheck, Truck } from "lucide-react";
 import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
+import { StatusChip } from "@/components/kit";
 import {
   LINE_STATUS_LABELS,
   buildReceiptLines,
@@ -13,17 +14,16 @@ import {
 const clean = (v) => String(v ?? "").trim();
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const LINE_BADGE_STYLES = {
-  open: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-  partial: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
-  received: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
-};
+// Tones match the old badge map: open slate, partial amber, received emerald.
+const LINE_STATUS_TONES = { open: "slate", partial: "amber", received: "emerald" };
 
 function LineStatusBadge({ status }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${LINE_BADGE_STYLES[status] || LINE_BADGE_STYLES.open}`}>
-      {LINE_STATUS_LABELS[status] || status}
-    </span>
+    <StatusChip
+      tone={LINE_STATUS_TONES[status] || "slate"}
+      label={LINE_STATUS_LABELS[status] || status}
+      size="sm"
+    />
   );
 }
 
@@ -125,12 +125,10 @@ export default function ReceivePanel({ po, sessionToken, canReceive, busy, onRec
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
           {receipt.percent_received}% received
           {receipt.totals.backordered > 0 && (
-            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">
-              Backorder {receipt.totals.backordered}
-            </span>
+            <StatusChip tone="red" label={`Backorder ${receipt.totals.backordered}`} size="sm" className="ml-2" />
           )}
           {receipt.overdue && (
-            <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>
+            <StatusChip tone="red" label="Overdue" size="sm" className="ml-2" />
           )}
         </span>
       </div>
