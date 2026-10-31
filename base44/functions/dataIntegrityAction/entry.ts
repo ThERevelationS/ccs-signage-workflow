@@ -1,5 +1,5 @@
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
-import { base44 } from '@/api/base44Client';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Read-only referential scan — reports orphaned rows; never deletes or repairs.
 const CHECKS = [
