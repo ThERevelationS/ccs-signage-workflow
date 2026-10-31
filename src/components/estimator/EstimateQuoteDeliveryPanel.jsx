@@ -5,6 +5,8 @@ import { formatQuoteIssueDate, isQuoteExpired, quoteExpirationDate } from "./quo
 import { listEstimateRevisions } from "./estimateRevisionService";
 import { loadAllEntityRows } from "./loadAllEntityRows";
 
+const safeArchiveUrl = (value) => (/^https?:\/\//i.test(String(value || "").trim()) ? String(value).trim() : "");
+
 const formatBytes = (value) => {
   const bytes = Number(value || 0);
   if (!bytes) return "";
@@ -150,7 +152,7 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
                   <span>Issued {row.quote_issue_date ? formatQuoteIssueDate(row.quote_issue_date) : "—"}</span>
                   {expirationDate && <span>Valid through {formatQuoteIssueDate(expirationDate)}</span>}
                   <span>Quote ${Number(row.quote_total || 0).toFixed(2)}</span>
-                  {row.attachment_file_url ? <a href={row.attachment_file_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open archived PDF</a> : row.attachment_filename && <span>{row.attachment_filename}</span>}
+                  {safeArchiveUrl(row.attachment_file_url) ? <a href={safeArchiveUrl(row.attachment_file_url)} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Open archived PDF</a> : row.attachment_filename && <span>{row.attachment_filename}</span>}
                   {row.attachment_size_bytes > 0 && <span>{formatBytes(row.attachment_size_bytes)}</span>}
                   {row.attachment_sha256 && <span title={row.attachment_sha256}>SHA-256 {row.attachment_sha256.slice(0, 12)}…</span>}
                   {row.gmail_message_id && <span>Gmail ID {row.gmail_message_id}</span>}
