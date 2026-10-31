@@ -99,28 +99,42 @@ Deno.serve(async (req) => {
     const deps = { Invoice, Payment, PurchaseOrder, ChangeOrder, LaborSegment, Movement };
 
     if (action === "list_job_costs") {
-      const rows = await WorkOrder.filter({}, "-created_date", 400);
+      const rows = await loadAllEntityRows({
+        entity: WorkOrder,
+        sort: "-created_date",
+        label: "Work order cost rows",
+      });
       if (!Array.isArray(rows)) throw bad("Work order lookup failed.", 500);
       const inputs = await loadCostInputs(deps);
       const search = clean(body?.query).toLowerCase();
-      const jobs = rows
+      const matched = rows
         .filter((w: any) => w?.deleted !== true)
         .map((w: any) => rollup(w, inputs))
         .filter((j: any) => !search
           || j.title.toLowerCase().includes(search)
-          || j.client_name.toLowerCase().includes(search))
-        .slice(0, 300);
+          || j.client_name.toLowerCase().includes(search));
+      const jobs = matched.slice(0, 300);
+      // Totals roll up every matching job, not just the displayed window — a
+      // capped read used to make the whole summary under-report.
       const totals = {
-        jobs: jobs.length,
-        contract_value: money(jobs.reduce((s: number, j: any) => s + j.contract_value, 0)),
-        po_committed: money(jobs.reduce((s: number, j: any) => s + j.po_committed, 0)),
-        stock_issued: money(jobs.reduce((s: number, j: any) => s + j.stock_issued, 0)),
-        labor_hours: money(jobs.reduce((s: number, j: any) => s + j.labor_hours, 0)),
-        invoiced: money(jobs.reduce((s: number, j: any) => s + j.invoiced, 0)),
-        collected: money(jobs.reduce((s: number, j: any) => s + j.collected, 0)),
-        open_ar: money(jobs.reduce((s: number, j: any) => s + j.open_ar, 0)),
+        jobs: matched.length,
+        contract_value: money(matched.reduce((s: number, j: any) => s + j.contract_value, 0)),
+        po_committed: money(matched.reduce((s: number, j: any) => s + j.po_committed, 0)),
+        stock_issued: money(matched.reduce((s: number, j: any) => s + j.stock_issued, 0)),
+        labor_hours: money(matched.reduce((s: number, j: any) => s + j.labor_hours, 0)),
+        invoiced: money(matched.reduce((s: number, j: any) => s + j.invoiced, 0)),
+        collected: money(matched.reduce((s: number, j: any) => s + j.collected, 0)),
+        open_ar: money(matched.reduce((s: number, j: any) => s + j.open_ar, 0)),
       };
-      return Response.json({ success: true, action, jobs, totals });
+      return Response.json({
+        success: true,
+        action,
+        jobs,
+        totals,
+        total_count: matched.length,
+        returned: jobs.length,
+        truncated: jobs.length < matched.length,
+      });
     }
 
     if (action === "get_job_cost") {
