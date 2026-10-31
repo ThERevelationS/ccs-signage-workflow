@@ -69,6 +69,7 @@ export function CcsDateField({
   placeholder = "mm/dd/yyyy", ...rest
 }) {
   const dropdownType = useDropdownType();
+  const showPresets = presets !== false && dropdownType !== "modal";
   return (
     <DatePickerInput
       value={value || null}
@@ -79,7 +80,7 @@ export function CcsDateField({
       placeholder={placeholder}
       clearable={clearable}
       dropdownType={dropdownType}
-      presets={presets === false ? undefined : presets}
+      presets={showPresets ? presets : undefined}
       weekendDays={[0, 6]}
       {...rest}
     />
@@ -101,7 +102,7 @@ export function CcsDateTimeField({
       placeholder={placeholder}
       clearable={clearable}
       dropdownType={dropdownType}
-      presets={presets === false ? undefined : presets}
+      presets={dropdownType !== "modal" && presets !== false ? presets : undefined}
       timePickerProps={{ withDropdown: true, format: "12h", minutesStep: 5 }}
       weekendDays={[0, 6]}
       {...rest}
