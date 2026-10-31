@@ -182,7 +182,16 @@ function FollowupRow({ item, defaultTo, actor, sessionToken, onChanged }) {
                 {item.customerName || "Customer"}
               </span>
             )}
-            <span className="text-xs text-slate-500">{item.targetRef}</span>
+            {item.targetId ? (
+              <Link
+                className="text-xs text-sky-600 hover:underline dark:text-sky-400"
+                to={item.target === "invoice" ? `/Invoices?invoice=${item.targetId}` : `/EstimateDetail?id=${item.targetId}`}
+              >
+                {item.targetRef}
+              </Link>
+            ) : (
+              <span className="text-xs text-slate-500">{item.targetRef}</span>
+            )}
             <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[11px] font-semibold text-rose-800">
               {item.daysOverdue}d overdue
             </span>
