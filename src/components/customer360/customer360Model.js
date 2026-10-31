@@ -68,10 +68,8 @@ export const locationLine = (l) =>
 // Mirror the entity enums in base44/entities/*.jsonc — kept here so the page can
 // classify rows without shipping schemas to the browser.
 export const OPEN_ESTIMATE_STATUSES = new Set(["draft", "calculated", "sent"]);
-export const LIVE_ESTIMATE_STATUSES = new Set(["draft", "calculated", "sent", "approved"]);
 export const CLOSED_OPPORTUNITY_STAGES = new Set(["won", "lost"]);
 export const OPEN_PO_STATUSES = new Set(["draft", "sent", "partially_received"]);
-export const NON_LIVE_INVOICE_STATUSES = new Set(["draft", "void"]);
 export const OPEN_CHANGE_ORDER_STATUSES = new Set(["proposed", "approved"]);
 
 export const EMPTY_TOTALS = {
@@ -97,21 +95,22 @@ export const isActivityOpen = (a) => Boolean(clean(a?.due_at)) && !clean(a?.comp
 export const isActivityOverdue = (a, nowIso) =>
   isActivityOpen(a) && clean(a?.due_at) < clean(nowIso || new Date().toISOString());
 
-// Computes the totals block client-side. Used when the workspace action did
-// not return `totals` (older deploy) or when only a partial, staff-readable
-// list set could be loaded because the action is not deployed yet. Keys that
-// need function-only entities (invoiced/paid/balance/open_po_count) stay 0
-// unless those lists were supplied — callers gate display on that.
+// Computes the totals block client-side with the same semantics the deployed
+// customer_workspace action uses: estimates/jobs count every non-deleted row,
+// open_estimate_value covers draft/calculated/sent, and invoice money sums run
+// over non-void rows (drafts included). Used when the action did not return
+// `totals` (older deploy) or when only a partial, staff-readable list set could
+// be loaded because the action is not deployed yet. Keys that need
+// function-only entities (invoiced/paid/balance/open_po_count) stay 0 unless
+// those lists were supplied — callers gate display on that.
 export function computeTotals(lists = {}) {
-  const estimates = liveRows(lists.estimates).filter(
-    (e) => clean(e?.status) !== "cancelled" && e?.is_template !== true,
-  );
+  const estimates = liveRows(lists.estimates);
   const openEstimates = estimates.filter((e) =>
     OPEN_ESTIMATE_STATUSES.has(clean(e?.status) || "draft"),
   );
   const workOrders = liveRows(lists.work_orders ?? lists.jobs);
   const invoices = liveRows(lists.invoices).filter(
-    (i) => !NON_LIVE_INVOICE_STATUSES.has(clean(i?.status)),
+    (i) => clean(i?.status) !== "void",
   );
   const payments = liveRows(lists.payments).filter((p) => clean(p?.status) !== "void");
   const purchaseOrders = liveRows(lists.purchase_orders).filter(
