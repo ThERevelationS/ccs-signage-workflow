@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const STATUSES = new Set(['new', 'in_review', 'in_progress', 'completed', 'declined']);
 const TYPES = new Set(['bug_report', 'feature_request', 'change_request']);
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
         if (!sameFeedbackCreate(reused, desired)) {
           return Response.json({ error: 'This create identity already belongs to different Fleet feedback details. Reopen the feedback form before submitting another report.' }, { status: 409 });
         }
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           event_type: 'system_report_created', target_id: reused.id, event_token: `system-report-created:${creationKey}`,
         }).catch(() => null);
         return Response.json({ success: true, reused: true, report: reused });
@@ -86,14 +87,14 @@ Deno.serve(async (req) => {
           if (!sameFeedbackCreate(winner, desired)) {
             return Response.json({ error: 'Another Fleet feedback submission won this identity with different details. The losing duplicate was discarded; reopen the form.' }, { status: 409 });
           }
-          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+          await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
             event_type: 'system_report_created', target_id: winner.id, event_token: `system-report-created:${creationKey}`,
           }).catch(() => null);
           return Response.json({ success: true, reused: true, report: winner });
         }
         for (const duplicate of contenders) if (duplicate.id !== winner.id) await Report.delete(duplicate.id).catch(() => null);
       }
-      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         event_type: 'system_report_created', target_id: created.id, event_token: `system-report-created:${creationKey}`,
       }).catch(() => null);
       return Response.json({ success: true, report: created });
