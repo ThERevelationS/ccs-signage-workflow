@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { getActiveConnection, callBouncieApi, WEBHOOK_EVENTS } from '../../shared/bouncie.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 export default async function(req) {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const isAdmin = user.role === 'admin';
