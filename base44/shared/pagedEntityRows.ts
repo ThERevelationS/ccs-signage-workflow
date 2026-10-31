@@ -1,4 +1,7 @@
-const DEFAULT_PAGE_SIZE = 500;
+// 2,000-row pages cut full-table pulls to ~4x fewer entity_list requests
+// than the old 500 default while keeping each response bounded (~8MB worst
+// case on blob-heavy rows). Callers can still pass a smaller pageSize.
+const DEFAULT_PAGE_SIZE = 2000;
 const DEFAULT_MAX_ROWS = 50000;
 
 function rowIdentity(row: any, index: number) {
