@@ -447,6 +447,7 @@ export default function PermitClientGroup({
                     onShowLocalityInfo={onShowLocalityInfo}
                     onShowJurisdictionInfo={onShowJurisdictionInfo}
                     localityState={localities?.find((locality) => locality.id === li.locality_id)?.state || ""}
+                    locality={localities?.find((locality) => locality.id === li.locality_id) || null}
                     officeAuthority={summarizePermitLineOfficeAuthority(li, localities)}
                     legacyOfficeOptions={legacyOfficeLinkOptions(li, localities)}
                     onLinkLegacyOffice={onLinkLegacyOffice}
