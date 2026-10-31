@@ -4,14 +4,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 import {officeResearchPrompt,officeResearchResponseSchema,normalizeOfficeResearch} from '../../shared/permittingOfficeResearch.mjs';
+import { hasInternalFunctionCapability } from '../../shared/internalFunctionCapability.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => null);
+    const internal = hasInternalFunctionCapability(body);
+    const user = await base44.auth.me().catch(() => null);
+    if (!internal) {
+      if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      if (user.role !== 'admin') return Response.json({ error: 'Admin access required' }, { status: 403 });
+    }
     let researchInput;
     try {
       researchInput = normalizePermittingResearchInput(body);
@@ -158,7 +162,7 @@ Before returning:
 ☐ null is used when data cannot be verified
 ☐ Parent county information is accurate if included`;
 
-    if(body?.scan_run_id && user.role==='admin'){
+    if(body?.scan_run_id && user?.role==='admin'){
       const row=await base44.asServiceRole.entities.PermittingScanRun.get(body.scan_run_id);
       if(row?.owner_id===user.id && row.target_name===jurisdictionName && row.status==='running')await attachScanReporter(base44.asServiceRole.entities.PermittingScanRun,row.id).emit({kind:'search_instructions',detail:researchPrompt},{stage:'AI research — instructions submitted',indeterminate:true});
     }

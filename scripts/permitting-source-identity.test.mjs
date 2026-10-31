@@ -132,8 +132,8 @@ test('research agent rejects synthetic wrong-state result rather than returning 
     InvokeLLM:async()=>({ai_summary:'The City of Springfield, Massachusetts requires permits.',documents:[{url:'https://wrong.example/form.pdf'}]}),
   }}}};
   new Function('Deno','createClientFromRequest','normalizePermittingResearchInput','sanitizeJurisdictionResearch',
-    'officeResearchPrompt','officeResearchResponseSchema','normalizeOfficeResearch','attachScanReporter','assertResearchSourceIdentity',compiled)(
-    {serve:fn=>{handler=fn;}},()=>sdk,body=>body,x=>x,()=>'',{},x=>x,()=>{},assertResearchSourceIdentity);
+    'officeResearchPrompt','officeResearchResponseSchema','normalizeOfficeResearch','attachScanReporter','assertResearchSourceIdentity','hasInternalFunctionCapability',compiled)(
+    {serve:fn=>{handler=fn;}},()=>sdk,body=>body,x=>x,()=>'',{},x=>x,()=>{},assertResearchSourceIdentity,()=>false);
   const response=await handler(new Request('https://synthetic.test',{method:'POST',body:JSON.stringify({
     jurisdictionName:'Springfield',jurisdictionState:'OH',jurisdictionType:'city',includeParentCounty:false,
   })}));

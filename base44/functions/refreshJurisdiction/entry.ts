@@ -1,4 +1,5 @@
 import {assertOfficialProfileResearchIdentity,assertResearchSourceIdentity} from '../../shared/permittingSourceIdentity.mjs';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 import { retainOfficeResearchResponseHistory } from '../../shared/officeResearchResponseHistory.mjs';
 import {validateSavedDiscoverySelection,discoverSelectedSavedDocument} from '../../shared/permittingSavedDocumentDiscovery.mjs';
 import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
@@ -156,6 +157,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     } else {
       await reporter.emit({kind:'search',detail:`Researching ${jurisdiction.name}, ${jurisdiction.state}: official permitting/zoning pages, sign rules, applications, fees, portals and contacts. Internal AI web queries are not exposed.`},{stage:'AI research',indeterminate:true});
       const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+        _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         jurisdictionName: jurisdiction.name,
         jurisdictionState: jurisdiction.state,
         jurisdictionType: jurisdiction.type,

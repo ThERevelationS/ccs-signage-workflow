@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -119,6 +120,7 @@ Deno.serve(async (req) => {
       try {
         // Use the research agent to get fresh data, then compare against stored data
         const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+          _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           jurisdictionName: jurisdiction.name,
           jurisdictionState: jurisdiction.state,
           jurisdictionType: jurisdiction.type,

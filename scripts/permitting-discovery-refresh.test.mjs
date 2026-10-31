@@ -17,7 +17,7 @@ function harness({profile={},ai={},pages={}}={}) {
   const deps={normalizeOfficeResearch,silentScanReporter,readPermittingResourceResponse,scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,applyDiscoveryFetchTimestamp,retainOfficeResearchResponseHistory,mergeJurisdictionResearchDocuments,
     assertOfficialProfileResearchIdentity,assertResearchSourceIdentity,
     safeExternalFetch:async url=>{fetched.push(url);if(!(url in pages))throw Error('fixture unavailable');return new Response(pages[url],{headers:{'content-type':'text/html'}});},
-    RESEARCH_FETCH_TIMEOUT_MS:12000,readResearchDocumentBytes:async response=>new Uint8Array(await response.arrayBuffer()),
+    INTERNAL_FUNCTION_CAPABILITY:'fixture-capability',RESEARCH_FETCH_TIMEOUT_MS:12000,readResearchDocumentBytes:async response=>new Uint8Array(await response.arrayBuffer()),
     sanitizeJurisdictionResearch:v=>v,gateResearchRegulatoryPromotion:({updateData})=>({blocked:false,updateData}),
     invalidateVerifiedJurisdictionAfterResearch:(_,v)=>v,jurisdictionProtectionGuards:()=>[],
     replaceJurisdictionFieldsIfUnchanged:async ({nextFields})=>{written=nextFields;return {...initial,...nextFields};},

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -101,6 +102,7 @@ async function auditSingleJurisdiction(base44, jurisdiction, options) {
 
     // Fetch fresh data from the research agent, then compare against stored data
     const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+      _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
       jurisdictionName: jurisdiction.name,
       jurisdictionState: jurisdiction.state,
       jurisdictionType: jurisdiction.type,
