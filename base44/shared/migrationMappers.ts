@@ -68,6 +68,32 @@ export function parseDateValue(value: any): string {
   return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
 }
 
+// Timestamp fields (due_at/completed_at/accepted_at/...) keep their time —
+// unlike parseDateValue this never slices to YYYY-MM-DD. ISO input passes
+// through; mdy with a time part is local-parsed; date-only mdy becomes UTC
+// midnight (deterministic, matching parseDateValue's convention).
+export function parseDateTimeValue(value: any): string {
+  const s = clean(value);
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}[T\s]/.test(s)) {
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? '' : s;
+  }
+  const mdy = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:[\s,]+(.*))?$/);
+  if (mdy) {
+    let year = Number(mdy[3]);
+    if (year < 100) year += year < 70 ? 2000 : 1900;
+    if (!clean(mdy[4])) {
+      const d = new Date(Date.UTC(year, Number(mdy[1]) - 1, Number(mdy[2])));
+      return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+    }
+    const d = new Date(`${Number(mdy[1])}/${Number(mdy[2])}/${year} ${clean(mdy[4])}`);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+  }
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+}
+
 export function parseBoolValue(value: any): boolean | null {
   if (typeof value === 'boolean') return value;
   const s = clean(value).toLowerCase();
@@ -137,6 +163,7 @@ interface MapperSpec {
   defaults: Record<string, any>;
   numbers: string[];
   dates: string[];
+  datetimes?: string[];                 // timestamp fields — keep full ISO (never date-truncated)
   bools: string[];
   phones: string[];
   aliases: Record<string, string[]>;
@@ -238,6 +265,10 @@ export function coerceRecordTypes(mapper: MapperSpec, rec: any) {
     if (clean(out[field]) === '') continue;
     out[field] = parseDateValue(out[field]);
   }
+  for (const field of mapper.datetimes || []) {
+    if (clean(out[field]) === '') continue;
+    out[field] = parseDateTimeValue(out[field]);
+  }
   for (const field of mapper.bools || []) {
     if (out[field] === undefined || out[field] === null || clean(out[field]) === '') continue;
     const b = parseBoolValue(out[field]);
@@ -338,6 +369,17 @@ export function buildMappingPreview(mapper: MapperSpec, columns: string[], sampl
         warnings.push(`column "${col}" -> "${field}": ${badDates.size} unparseable date(s) (${[...badDates].slice(0, 5).join(', ')}) — will be left blank`);
       }
     }
+    if ((mapper.datetimes || []).includes(field)) {
+      const badDates = new Set<string>();
+      for (const row of rows) {
+        const raw = clean(row?.[col]);
+        if (!raw) continue;
+        if (!parseDateTimeValue(raw)) badDates.add(raw);
+      }
+      if (badDates.size) {
+        warnings.push(`column "${col}" -> "${field}": ${badDates.size} unparseable timestamp(s) (${[...badDates].slice(0, 5).join(', ')}) — will be left blank`);
+      }
+    }
   }
   for (const parent of mapper.parents || []) {
     if (!targetSet.has(parent.field) && !parent.optional_hint) {
@@ -393,7 +435,8 @@ export const MIGRATION_MAPPERS: Record<string, MapperSpec> = {
     enum_fallback: { customer_status: 'active' },
     defaults: { customer_status: 'active', billing_country: 'United States' },
     numbers: ['credit_limit', 'in_store_credit', 'quote_valid_days', 'pricing_tier'],
-    dates: ['tax_exempt_expiration', 'last_contacted_at'],
+    dates: ['tax_exempt_expiration'],
+    datetimes: ['last_contacted_at'],
     bools: ['tax_exempt', 'billing_contact_same', 'require_purchase_order', 'credit_hold', 'is_active'],
     phones: ['company_phone', 'company_fax', 'additional_phone', 'contact_office_phone', 'contact_cell_phone', 'contact_additional_phone', 'billing_contact_phone'],
     aliases: {
@@ -727,7 +770,8 @@ export const MIGRATION_MAPPERS: Record<string, MapperSpec> = {
     enum_fallback: { status: 'archived', priority: 'normal' },
     defaults: { status: 'archived', priority: 'normal' },
     numbers: ['tax_percent', 'quote_total', 'total_cost', 'shipping_fee', 'permit_fee', 'discount_percent', 'deposit_percent', 'pricing_tier'],
-    dates: ['quote_issue_date', 'quote_expiration_date', 'target_install_date', 'accepted_at'],
+    dates: ['quote_issue_date', 'quote_expiration_date', 'target_install_date'],
+    datetimes: ['accepted_at'],
     bools: ['is_template', 'deleted'],
     phones: ['contact_phone', 'office_phone'],
     aliases: {
@@ -1305,7 +1349,8 @@ export const MIGRATION_MAPPERS: Record<string, MapperSpec> = {
     enum_fallback: { event_type: 'note', source: 'system' },
     defaults: { event_type: 'note', source: 'system' },
     numbers: [],
-    dates: ['due_at', 'completed_at'],
+    dates: [],
+    datetimes: ['due_at', 'completed_at'],
     bools: [],
     phones: [],
     aliases: {
