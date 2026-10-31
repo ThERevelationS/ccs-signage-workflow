@@ -61,6 +61,7 @@ import {
   shiftDurationSummary,
   formatCompanyDateTime,
 } from "@/components/timeclock/timeClockCompanyTime";
+import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -423,7 +424,7 @@ export default function TimeClockAdmin() {
     return Number.isFinite(clockIn.getTime()) && (Date.now() - clockIn.getTime()) > 24 * 60 * 60 * 1000;
   });
 
-  // Employees holding two or more simultaneously open shifts — a data
+  // Employees holding two or more simultaneously open shifts ??? a data
   // integrity problem, since only one active entry should exist per person.
   const activeEntryCounts = timeEntries.reduce((acc, entry) => {
     if (entry.status === "clocked_in" && !entry.archived_admin && !entry.archived_test_data && entry.user_email) {
@@ -435,7 +436,7 @@ export default function TimeClockAdmin() {
   const duplicateActiveEntries = timeEntries.filter(entry => entry.status === "clocked_in" && duplicateActiveEmails.includes(entry.user_email));
   const missingBreakEntries = completedEntries.filter(entry => (entry.total_hours || 0) >= 5 && !entry.lunch_minutes && !entry.pay_period_id);
 
-  // Overtime pacing — total hours this calendar week per employee; flag
+  // Overtime pacing ??? total hours this calendar week per employee; flag
   // anyone at 36h+ (approaching 40) or already over.
   const weekStart = new Date(); weekStart.setHours(0, 0, 0, 0);
   weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
@@ -447,8 +448,8 @@ export default function TimeClockAdmin() {
     row.hours += e.total_hours || 0;
   }
   const otWatch = Object.values(otByEmail).filter(r => r.hours >= 36).sort((a, b) => b.hours - a.hours);
-  // Projected week-end hours: current hours + (avg per worked weekday ×
-  // remaining weekdays) — rough payroll forecast for the open week.
+  // Projected week-end hours: current hours + (avg per worked weekday ??
+  // remaining weekdays) ??? rough payroll forecast for the open week.
   const workday = (weekStart.getDay() + 6) % 7; // Mon=0
   const workedDays = {};
   for (const e of timeEntries) {
@@ -651,7 +652,7 @@ export default function TimeClockAdmin() {
           entry_id: entry.id,
           expected_updated_date: entry.updated_date,
           decision: "approve",
-          note: "Bulk approved — no exceptions on this shift.",
+          note: "Bulk approved ??? no exceptions on this shift.",
         });
         if (!functionData(response)?.success) failed.push(entry.user_name || entry.user_email);
       } catch {
@@ -671,7 +672,7 @@ export default function TimeClockAdmin() {
     if (!old.length) { setRetentionMsg(`No completed entries older than ${years} years.`); return; }
     if (!window.confirm(`Archive ${old.length} completed entr${old.length === 1 ? "y" : "ies"} older than ${years} years? They will be hidden from the list but kept in history.`)) return;
     setRetentionBusy(true); setRetentionMsg("");
-    const reason = `Retention archive — entries older than ${years} years`;
+    const reason = `Retention archive ??? entries older than ${years} years`;
     let failed = 0;
     for (const entry of old) {
       try {
@@ -892,7 +893,7 @@ export default function TimeClockAdmin() {
       ).join("; ") || ""
     }));
 
-    // Per-employee summary sheet — totals at a glance before the detail rows.
+    // Per-employee summary sheet ??? totals at a glance before the detail rows.
     const byEmployee = new Map();
     for (const entry of filteredEntries) {
       const key = entry.user_email || "unknown";
@@ -985,7 +986,7 @@ export default function TimeClockAdmin() {
     const total = filteredEntries.filter((e) => e.user_email === user.email).reduce((s, e) => s + Number(e.total_hours || 0), 0);
     const w = window.open("", "_blank");
     if (!w) return;
-    w.document.write(`<html><head><title>Punch Card - ${user.name}</title></head><body style="padding:24px;font-family:sans-serif"><h2>Punch Card - ${user.name}</h2><p style="color:#666;font-size:12px">${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")} · generated ${new Date().toLocaleString()}</p><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Date</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">In</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Out</th><th style="text-align:right;padding:8px;border-bottom:2px solid #333">Hours</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Status</th></tr>${rows}</table><p style="margin-top:12px;font-weight:bold">Total: ${total.toFixed(2)} hours</p><script>window.print()</script></body></html>`);
+    w.document.write(`<html><head><title>Punch Card - ${user.name}</title></head><body style="padding:24px;font-family:sans-serif"><h2>Punch Card - ${user.name}</h2><p style="color:#666;font-size:12px">${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")} ?? generated ${new Date().toLocaleString()}</p><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Date</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">In</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Out</th><th style="text-align:right;padding:8px;border-bottom:2px solid #333">Hours</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Status</th></tr>${rows}</table><p style="margin-top:12px;font-weight:bold">Total: ${total.toFixed(2)} hours</p><script>window.print()</script></body></html>`);
     w.document.close();
   };
 
@@ -1239,7 +1240,7 @@ export default function TimeClockAdmin() {
           <Button type="button" variant="outline" size="sm" disabled={retentionBusy || !sessionToken}
             onClick={archiveOldEntries} className="h-9 text-xs"
             title="Archive completed entries older than the selected period">
-            {retentionBusy ? "Archiving…" : "Archive old"}
+            {retentionBusy ? "Archiving???" : "Archive old"}
           </Button>
         </div>
         <Button onClick={exportPayrollCsv} variant="outline" className="gap-2" title="CSV shaped for payroll import - per employee per day with reg/OT split">
@@ -1672,12 +1673,12 @@ export default function TimeClockAdmin() {
                   <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
                     <div className="text-sm">
                       <span className="font-medium text-gray-900">{entry.user_name || entry.user_email}</span>
-                      <span className="text-xs text-gray-600 ml-2">{safeFormat(entry.clock_in, "MMM d")} · {Number(entry.total_hours).toFixed(1)}h</span>
+                      <span className="text-xs text-gray-600 ml-2">{safeFormat(entry.clock_in, "MMM d")} ?? {Number(entry.total_hours).toFixed(1)}h</span>
                     </div>
                     <Button type="button" size="sm" variant="outline" onClick={() => setDetailEntry(entry)} className="bg-white/80">Review</Button>
                   </div>
                 ))}
-                {missingBreakEntries.length > 10 && <p className="text-xs text-amber-700">…and {missingBreakEntries.length - 10} more</p>}
+                {missingBreakEntries.length > 10 && <p className="text-xs text-amber-700">???and {missingBreakEntries.length - 10} more</p>}
               </div>
             </div>
           </div>
@@ -1694,10 +1695,10 @@ export default function TimeClockAdmin() {
             </div>
             <div>
               <Label className="text-xs">Reason (required)</Label>
-              <Textarea rows={2} value={bulkCloseReason} onChange={(e) => setBulkCloseReason(e.target.value)} placeholder="e.g. Employee forgot to clock out — closed by admin" className="mt-1" />
+              <Textarea rows={2} value={bulkCloseReason} onChange={(e) => setBulkCloseReason(e.target.value)} placeholder="e.g. Employee forgot to clock out ??? closed by admin" className="mt-1" />
             </div>
             <ul className="max-h-40 space-y-1 overflow-y-auto text-xs text-gray-600">
-              {staleActiveEntries.map(e => <li key={e.id}>{e.user_name || e.user_email} — in {safeFormat(e.clock_in, "MMM d 'at' h:mm a")}</li>)}
+              {staleActiveEntries.map(e => <li key={e.id}>{e.user_name || e.user_email} ??? in {safeFormat(e.clock_in, "MMM d 'at' h:mm a")}</li>)}
             </ul>
             {bulkCloseResults && (
               <p className={`text-xs ${bulkCloseResults.failed.length ? "text-amber-700" : "text-emerald-700"}`}>
@@ -1736,7 +1737,7 @@ export default function TimeClockAdmin() {
                   setBulkCloseBusy(false);
                   await loadData();
                 }}>
-                {bulkCloseBusy ? "Closing…" : "Close entries"}
+                {bulkCloseBusy ? "Closing???" : "Close entries"}
               </Button>
             </div>
           </div>
@@ -1747,13 +1748,13 @@ export default function TimeClockAdmin() {
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-orange-700 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <div className="font-semibold text-orange-900">Overtime watch — {otWatch.length} employee{otWatch.length === 1 ? "" : "s"} near or over 40h this week</div>
+              <div className="font-semibold text-orange-900">Overtime watch ??? {otWatch.length} employee{otWatch.length === 1 ? "" : "s"} near or over 40h this week</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {otWatch.map(r => (
                   <span key={r.name} className={`rounded-full border px-2 py-1 text-xs font-medium ${r.hours >= 40 ? "border-red-400 bg-red-100 text-red-800" : "border-orange-300 bg-white text-orange-800"}`}>
                     {(() => {
                       const p = otProjected.find(x => x.name === r.name);
-                      return `${r.name} · ${r.hours.toFixed(1)}h${p ? ` → ~${p.projected.toFixed(0)}h` : ""}`;
+                      return `${r.name} ?? ${r.hours.toFixed(1)}h${p ? ` ??? ~${p.projected.toFixed(0)}h` : ""}`;
                     })()}
                   </span>
                 ))}
@@ -1879,7 +1880,7 @@ export default function TimeClockAdmin() {
             {cleanReviewEntries.length > 0 && (
               <Button type="button" size="sm" variant="outline" disabled={bulkApproveBusy || isLoading}
                 onClick={approveAllClean} className="mt-2 min-h-10 w-full text-xs bg-white/80">
-                {bulkApproveBusy ? "Approving…" : `Approve ${cleanReviewEntries.length} clean`}
+                {bulkApproveBusy ? "Approving???" : `Approve ${cleanReviewEntries.length} clean`}
               </Button>
             )}
             {bulkApproveResult && <p className="text-[11px] text-green-700 mt-1">{bulkApproveResult}</p>}
@@ -1905,7 +1906,7 @@ export default function TimeClockAdmin() {
               <li key={req.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-blue-100 bg-white/70 px-2 py-1.5 text-xs">
                 <div className="min-w-0">
                   <span className="font-medium">{req.requester_email}</span>
-                  <span className="mx-1 text-gray-400">⇄</span>
+                  <span className="mx-1 text-gray-400">???</span>
                   <span className="font-medium">{req.partner_email}</span>
                   {req.reason && <p className="text-[10px] text-gray-500">"{req.reason}"</p>}
                 </div>
@@ -2126,7 +2127,7 @@ export default function TimeClockAdmin() {
               <ul className="mt-1 space-y-1">
                 {outliers.slice(0, 10).map((e) => (
                   <li key={e.id} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="text-gray-700">{e.user_email || "—"} · {e.clock_in ? new Date(e.clock_in).toLocaleDateString() : ""}</span>
+                    <span className="text-gray-700">{e.user_email || "???"} ?? {e.clock_in ? new Date(e.clock_in).toLocaleDateString() : ""}</span>
                     <span className="font-medium text-amber-700">{Math.round(dist((e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo).lat, (e.clock_in_geo?.lat ? e.clock_in_geo : e.clock_out_geo).lng, midLat, midLng))}m off-cluster</span>
                   </li>
                 ))}
@@ -2146,7 +2147,7 @@ export default function TimeClockAdmin() {
               <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white/80 px-3 py-2 text-xs">
                 <div>
                   <span className="font-medium text-gray-900">{d.device_name || d.device_key || "Device"}</span>
-                  <span className="ml-2 text-gray-500">{d.device_type || ""}{d.location ? ` · ${d.location}` : ""}</span>
+                  <span className="ml-2 text-gray-500">{d.device_type || ""}{d.location ? ` ?? ${d.location}` : ""}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`rounded-full px-2 py-0.5 font-medium ${d.status === "active" && d.is_active !== false ? "bg-green-100 text-green-700" : d.status === "offline" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-500"}`}>
@@ -2186,18 +2187,19 @@ export default function TimeClockAdmin() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Clock In -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-                  <Input
-                    type="datetime-local"
+                  <TimeQuickPick
                     value={editingClockInInput}
-                    onChange={(e) => { setEditingClockInInput(e.target.value); setTimeEntryError(""); }}
+                    onChange={(v) => { setEditingClockInInput(v); setTimeEntryError(""); }}
+                    times={SHIFT_START_TIMES}
+                    inputId="admin-edit-clock-in"
                   />
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Clock Out -- {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
-                  <Input
-                    type="datetime-local"
+                  <TimeQuickPick
                     value={editingClockOutInput}
-                    onChange={(e) => { setEditingClockOutInput(e.target.value); setTimeEntryError(""); }}
+                    onChange={(v) => { setEditingClockOutInput(v); setTimeEntryError(""); }}
+                    inputId="admin-edit-clock-out"
                   />
                 </div>
               </div>
