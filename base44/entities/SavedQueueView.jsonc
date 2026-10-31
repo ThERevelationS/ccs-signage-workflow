@@ -1,0 +1,100 @@
+{
+  "name": "SavedQueueView",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the saved queue view."
+    },
+    "queue_lens": {
+      "type": "string",
+      "enum": [
+        "design",
+        "production",
+        "fulfillment",
+        "all"
+      ],
+      "description": "Which product-queue lens this view was saved for."
+    },
+    "filters": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "substatus": {
+          "type": "string"
+        },
+        "designer": {
+          "type": "string"
+        },
+        "responsibility": {
+          "type": "string"
+        },
+        "assignedTo": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "moduleKey": {
+          "type": "string"
+        },
+        "duePreset": {
+          "type": "string"
+        },
+        "search": {
+          "type": "string"
+        },
+        "pageSize": {
+          "type": "number"
+        },
+        "includeFulfilled": {
+          "type": "boolean"
+        }
+      },
+      "description": "Serialized queue filter state. Every key is always present in a stable order so identical states serialize identically."
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the staff user who saved the view."
+    },
+    "is_shared": {
+      "type": "boolean",
+      "default": false,
+      "description": "Shared views are visible to every staff session; private views only to the owner."
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Idempotent-create retry key; a retried save converges on one row."
+    }
+  },
+  "required": [
+    "name",
+    "queue_lens",
+    "owner_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__savedqueueview_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__savedqueueview_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__savedqueueview_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__savedqueueview_backend_only__"
+      }
+    }
+  }
+}
