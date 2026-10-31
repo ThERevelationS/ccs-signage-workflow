@@ -252,6 +252,10 @@
       "default": "none",
       "description": "Customer proof approval state for this product; approval can trigger due-date recalculation."
     },
+    "operational_status_changed_at": {
+      "type": "string",
+      "description": "ISO timestamp of the last operational_status change on this product."
+    },
     "notes": {
       "type": "string"
     }
