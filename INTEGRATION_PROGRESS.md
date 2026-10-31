@@ -3,7 +3,7 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 5 unified alerts agent running (2f29efa8); then Phase 6 scale (backend-first per audit map).
+Phase 6 scale backend batch running (3ad3af59 oppws / 05b9e1c0 invoicing / f285e3ba remaining+staffDataRead); then frontend notices + silent-bug fixes; then Phase 7.
 
 ## Phase status
 | Phase | Status | Checkpoint |
@@ -13,7 +13,7 @@ Phase 5 unified alerts agent running (2f29efa8); then Phase 6 scale (backend-fir
 | 2 estimate relax | DONE | 6ae5f775924f04f67e10d33a |
 | 3 stage sync | DONE | 6ae5fafe32bb4d1670335192 |
 | 4 customer 360 | DONE | see below |
-| 5 alerts | — | — |
+| 5 alerts | DONE | 6ae6051856c573ac5de4c89d |
 | 6 scale | — | — |
 | 7 financial | — | — |
 | 8 smtp | — | — |
@@ -29,3 +29,4 @@ Phase 5 unified alerts agent running (2f29efa8); then Phase 6 scale (backend-fir
 - Phase 3: productStageSync.js (weakest-link rollup, PRODUCT_TO_STAGE map, never-regresses); GlobalSettings.productStatusDrivesStage off/suggest(default)/auto; suggestion banner in JobWorkspace, per-row stage chip in ProductQueue, rollup chip on WorkOrderCard; open-products warning in central complete dialogs (all completion paths funnel there). Auto-mode surprises documented (board-drop on completed, queue-lens drift, permit-guard notice, re-roll triggers, proof cascade). PASS product-stage-sync+queue-model+operational-status.
 - Phase 6 PREP (agent 4c4a6bd1 scale audit): loadAllEntityRows is SAFE (500/page, throws fail-closed at 50k). Real caps are backend: SDK default .filter()/.list()=50 rows — invoicingAction list_invoices fetches 50 then slices 250 (AR aging WRONG today >50 inv), export_ar 50/50, email_statement 50, full_backup 50/entity (not full!), global_search scans only 50 inv/PO/CO, search_customers only 50, list_opportunities 500+stats, list_purchase_orders/list_change_orders/list_stock 50→slice, jobCosting 400→300, customerPortal bootstrap 50/entity, dataIntegrity orphans newest-500, corebridgeApiAction throws >10k WOs. staffDataRead gateway: default 100, silently clamps >500, drops cursor+fields options, count() bounded. Permitting.jsx primes shared cache with 100-row partials (poisons other callers). boardFeed MAX_ROWS 20k, truncated only honored on delta pulls. Server-side pushdown EXISTS: filter(query,sort,limit,skip)+cursor+fields+regex ops; fleetSearch is the template. Pre-existing silent bugs: EstimatorQueues stale reload (RLS-blocked entity in catch), QuoteSettings TaxGroup TypeError (empty list), fields option dropped. Phase 6 becomes backend-first: paged reads via shared/pagedEntityRows.ts + regex pushdown, then staffDataRead cursor/count passthrough, then frontend notices + silent-bug fixes. Deploys needed beyond listed: invoicingAction, purchaseOrderAction, changeOrderAction, inventoryAction, jobCostingAction, customerPortalAction, boardFeed — granted under approved-flow autonomy (additive fixes, logged here).
 - Phase 4: customer_workspace action deployed (get_opportunity-style aggregate: customer+contacts+locations+opps+estimates+WOs+invoices+payments+POs+COs+activities+totals+truncated flags, POs matched via linked doc ids since no customer col); Customer360.jsx page (header badges, KPI strip, 6 tabs, all deep-links, graceful degraded mode via staff-readable entities, mobile cards); route+palette+label wired; repo rewrite 12 sites /EstimatorCustomers?customer=→/Customer360?id= incl palette RECORD_GROUPS + pre-existing AttentionFeed/SalesOpportunityDialog; reciprocal links detail-drawer Open 360 ↔ 360 Edit customer. PASS customer360+customer360-page+validator; build exit 0. Checkpoints: agent 6ae5fd47(backend) 6ae5feed(page) + mine 6ae5f411.
+- Phase 5: 8 trigger types (proof_sent/approved, product_transition, crm_event_completed, po_received/backordered, invoice_overdue, recon_variance) registered in AdminSettings+engine+dispatcher; emitters at 6 mutation points (shared transitionProductAndBuilderStatus covers all callers, ProofPanel, crmActivityPersistence, PO receive, ReconcileWizard) all fire-and-forget try/catch; 4 computed feed sections (overdue products/crm dues/followups-due/recon variance) deduped vs server-fed invoice/PO rows; bell badge adds computed count. processWorkflowTriggers+workflowTriggerEngine DEPLOYED (new events accepted server-side). invoice_overdue is computed-only by design. PASS unified-alerts.
