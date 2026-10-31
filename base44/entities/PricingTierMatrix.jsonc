@@ -1,0 +1,102 @@
+{
+  "name": "PricingTierMatrix",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display label for this matrix row, e.g. 'Retail / Banners qty breaks'."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive rows are ignored by the pricing engine."
+    },
+    "customer_tier": {
+      "type": "string",
+      "description": "MarkupTier this row applies to \u2014 tier_name, tier_number, or record id. Blank means the row is a category-wide default that applies to every tier."
+    },
+    "category": {
+      "type": "string",
+      "description": "Sign category key (MarkupCategory.category_key) this row prices. Blank means the row is a tier-wide default covering every category."
+    },
+    "markup_pct": {
+      "type": "number",
+      "default": 0,
+      "description": "Markup percent over unit cost. 50 = sell at cost x 1.50. Ignored when a matching per_unit_breaks bracket applies."
+    },
+    "minimum_charge": {
+      "type": "number",
+      "default": 0,
+      "description": "Line-level floor price. When the computed extension lands above zero but below this amount, the line is raised to the minimum."
+    },
+    "per_unit_breaks": {
+      "type": "array",
+      "description": "Quantity price breaks: when qty >= bracket qty, the bracket unit_price replaces markup_pct pricing.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "qty": {
+            "type": "number",
+            "description": "Minimum quantity that unlocks this bracket."
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "Sell price per unit inside this bracket."
+          }
+        }
+      }
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date",
+      "description": "First date (YYYY-MM-DD) this row is effective. Blank = no start bound."
+    },
+    "effective_to": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date (YYYY-MM-DD, inclusive) this row is effective. Blank = no end bound."
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of the staff user who last saved this row (audit)."
+    },
+    "updated_note": {
+      "type": "string",
+      "description": "Optional change note left by the last editor (audit)."
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__pricingtiermatrix_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__pricingtiermatrix_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__pricingtiermatrix_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__pricingtiermatrix_backend_only__"
+      }
+    }
+  }
+}
