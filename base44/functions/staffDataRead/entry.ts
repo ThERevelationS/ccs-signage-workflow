@@ -12,7 +12,9 @@ const STAFF_READABLE = new Set([
   'AuthorizedEmail',
   'EstimateClipboardItem',
   'ImportJob',
+  'LaborLevel',
   'LegacyMigrationMap',
+  'MachineRate',
   'PartTemplate',
   'PermittingOfficeAuthorityReview',
   'PermittingRule',
@@ -73,9 +75,11 @@ const STAFF_READABLE = new Set([
   'PermitLineItem',
   'PermitLocality',
   'PortalMessage',
+  'PricingTierMatrix',
   'Project',
   'QuoteDefaults',
   'RegulationAlert',
+  'SavedQueueView',
   'Settings',
   'SignHardwareInventory',
   'SignLightingInventory',
@@ -127,7 +131,7 @@ const ADMIN_READABLE = new Set<string>([
 ]);
 
 // Fields that must never leave the backend regardless of role. These hold
-// credentials, bearer tokens, biometric descriptors, and session-revocation
+// credentials, bearer ******, biometric descriptors, and session-revocation
 // state; no staff-facing page has a legitimate read for them.
 const FIELD_DENYLIST: Record<string, string[]> = {
   AuthorizedEmail: [
