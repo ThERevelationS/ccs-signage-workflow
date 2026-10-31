@@ -77,20 +77,6 @@ INSTRUCTIONS:
   }
 };
 
-// generateAIEmail bodies are simple HTML (<p>/<br>); sendStaffEmail is a
-// plain-text-only bridge, so collapse the markup rather than send literal tags.
-const htmlEmailToText = (html) => String(html || '')
-  .replace(/<br\s*\/?>/gi, '\n')
-  .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
-  .replace(/<[^>]+>/g, '')
-  .replace(/&nbsp;/g, ' ')
-  .replace(/&amp;/g, '&')
-  .replace(/&lt;/g, '<')
-  .replace(/&gt;/g, '>')
-  .replace(/&quot;/g, '"')
-  .replace(/&#39;/g, "'")
-  .trim();
-
 // Variable replacements for email templates
 const replaceVariables = (template, workOrder, extraData = {}) => {
   if (!template) return "";
@@ -257,7 +243,7 @@ export const triggerNotification = async (triggerType, workOrder, extraData = {}
               session_token: ruleSessionToken,
               to: email,
               subject: subject,
-              body: htmlEmailToText(body),
+              body: emailBodyToPlainText(body),
               kind: 'notification_rule',
             });
           } else {
