@@ -8,11 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
-
-const csvCell = (value) => {
-  const text = value === undefined || value === null ? "" : String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
+import { csvCell } from "@/components/shared/exportCsv";
 
 const downloadCsv = (filename, headers, rows) => {
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
