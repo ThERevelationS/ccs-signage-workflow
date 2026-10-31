@@ -10,6 +10,7 @@ import {
   WorkOrder,
 } from "@/api/gatedEntities";
 import KpiStrip from "@/components/customer360/KpiStrip";
+import { EmptyState, PageHeader } from "@/components/kit";
 import {
   ActivityTab,
   ContactsTab,
@@ -26,7 +27,6 @@ import {
   normalizeWorkspace,
   primaryContactName,
   readCustomerIdParam,
-  statusTone,
   truncatedListNames,
   usd,
 } from "@/components/customer360/customer360Model";
@@ -65,6 +65,9 @@ const TABS = [
   { key: "contacts", label: "Contacts & Locations" },
 ];
 
+// Flag chips (tier / tax / credit / PO / archived / balance) keep their own
+// colors -- they are account attributes, not record statuses. The record
+// status itself renders through PageHeader + kit StatusChip.
 const badge = (label, tone) => (
   <span
     key={label}
@@ -73,11 +76,6 @@ const badge = (label, tone) => (
     {label}
   </span>
 );
-
-function HeaderBadge({ value }) {
-  const s = clean(value);
-  return s ? badge(s.replace(/_/g, " "), statusTone(s)) : null;
-}
 
 export default function Customer360() {
   const { sessionToken, isRegistered } = useAuth();
