@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pickEditableFields, savePricingChanges } from "@/components/pricing/pricingPersistence";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
+import { EmptyState } from "@/components/kit";
 
 // Editable PricingTierMatrix grid — one row per tier×category rule. Edits stay
 // local until Save; save batches creates / CAS updates / deletes through
@@ -228,8 +229,14 @@ export default function PricingMatrixTable({ rows = [], tierOptions = [], catego
           </thead>
           <tbody>
             {live.length === 0 && (
-              <tr><td colSpan={14} className="px-4 py-6 text-center text-[11px] text-gray-400">
-                No matrix rows yet — add one, or rows may be gated until the pricing entities are allowlisted in the staff gateways.
+              <tr><td colSpan={14} className="p-0">
+                <EmptyState
+                  compact
+                  title="No matrix rows yet"
+                  message="Rows may also be gated until the pricing entities are allowlisted in the staff gateways."
+                  actionLabel="Add row"
+                  onAction={() => setDrafts((p) => [...p, blankDraft()])}
+                />
               </td></tr>
             )}
             {live.map((d) => {
