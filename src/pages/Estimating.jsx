@@ -352,7 +352,7 @@ export default function Estimating() {
             <p className="text-xs text-gray-400 mt-1">
               {queueStats.count} {queueStats.count === 1 ? "job" : "jobs"}
               {queueStats.hasAmounts &&
-                ` Â· $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                ` · $${queueStats.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             </p>
           </div>
           <div className="relative w-64 max-w-full">
