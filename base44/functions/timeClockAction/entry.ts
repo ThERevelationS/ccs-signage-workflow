@@ -3,6 +3,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -11221,15 +11222,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'punch_webhook') {
-      // Emit a punch event to a configured downstream URL - payroll/timekeeping
-      // sync. Fire-and-forget; failures never block the confirmed punch.
-      const url = typeof body.url === 'string' ? body.url.trim() : '';
-      if (!url || !/^https:\/\//.test(url)) return Response.json({ success: false, error: 'A valid https:// webhook URL is required.' }, { status: 400 });
+      // Emit a punch event to the server-configured downstream URL - payroll/
+      // timekeeping sync. The destination is never taken from the request.
+      // Fire-and-forget; failures never block the confirmed punch.
+      const url = String(Deno.env.get('TIMECLOCK_PUNCH_WEBHOOK_URL') || '').trim();
+      if (!url) return Response.json({ success: true, delivered: false });
+      if (!/^https:\/\//i.test(url)) return Response.json({ success: false, error: 'The configured punch webhook must use https://.' }, { status: 500 });
       const payload = { event: 'timeclock_punch', employee: publicEmployee(target), action_type: String(body.punch_action || ''), at: new Date().toISOString(), entry_id: body.entry_id || null };
+      let delivered = false;
       try {
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => null);
+        const response = await safeExternalFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(10000) }, 0);
+        delivered = response.ok;
       } catch {}
-      return Response.json({ success: true });
+      return Response.json({ success: true, delivered });
     }
 
     if (action === 'labor_split') {
