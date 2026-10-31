@@ -1,0 +1,45 @@
+import { useState, useEffect } from "react";
+import ProductQueue from "@/components/queues/ProductQueue";
+
+// CoreBridge-style module queues over the shared product operational model.
+// Each tab is the same component with a different stage/due-date lens.
+const QUEUES = [
+  { key: "design", label: "Design", stageFilter: ["design", "estimating", "sales"], dueField: "design_due_date", title: "Design Queue" },
+  { key: "production", label: "Production", stageFilter: ["production", "fabrication"], dueField: "product_due_date", title: "Production Queue" },
+  { key: "fulfillment", label: "Fulfillment", stageFilter: ["installation", "completed"], dueField: "product_due_date", title: "Fulfillment Queue" },
+  { key: "all", label: "All Active", stageFilter: null, dueField: "product_due_date", title: "All Active Products" },
+];
+
+export default function ProductQueues() {
+  const [active, setActive] = useState("design");
+
+  useEffect(() => { document.title = "Product Queues"; }, []);
+
+  const queue = QUEUES.find((q) => q.key === active) || QUEUES[0];
+
+  return (
+    <div className="flex h-full flex-col">
+      <nav className="flex gap-1 border-b border-gray-200 bg-white px-3 pt-2">
+        {QUEUES.map((q) => (
+          <button
+            key={q.key}
+            onClick={() => setActive(q.key)}
+            className={`rounded-t px-3 py-1.5 text-sm font-medium ${
+              active === q.key ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            {q.label}
+          </button>
+        ))}
+      </nav>
+      <div className="min-h-0 flex-1">
+        <ProductQueue
+          key={queue.key}
+          title={queue.title}
+          dueField={queue.dueField}
+          stageFilter={queue.stageFilter}
+        />
+      </div>
+    </div>
+  );
+}
