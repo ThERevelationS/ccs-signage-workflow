@@ -9,7 +9,6 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 // rejected at any depth so the payload can only ever describe a plain record.
 const WRITE_OPS: Record<string, Set<string>> = {
   AllInOneEstimate: new Set(['updateMany', 'delete']),
-  BrickStoneProject: new Set(['create']),
   BuilderPart: new Set(['create', 'updateMany']),
   BuilderPartGroup: new Set(['updateMany']),
   BuilderProduct: new Set(['create', 'updateMany']),
@@ -21,6 +20,10 @@ const WRITE_OPS: Record<string, Set<string>> = {
   JurisdictionProfile: new Set(['create', 'update']),
   PermitLocality: new Set(['create', 'update']),
   LegacyMigrationMap: new Set(['create']),
+  // CRM event queue rows live on OpportunityActivity: staff create typed
+  // contact events and close them out with the same single-record
+  // conditional updateMany every other estimator entity uses here.
+  OpportunityActivity: new Set(['create', 'updateMany']),
   PermitLineItem: new Set(['create', 'update', 'updateMany', 'delete']),
   PermittingWorkflowDraft: new Set(['create', 'update']),
   RegulationAlert: new Set(['update', 'delete']),
