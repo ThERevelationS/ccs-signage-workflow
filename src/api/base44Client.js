@@ -62,12 +62,14 @@ function isUnprocessedSignInFailure(err) {
 // staffDataRead gateway, so direct reads are routed there instead.
 const STAFF_READ_ENTITIES = new Set([
   'AllInOneEstimate', 'Announcement', 'AutomationRule', 'BuilderPart', 'BuilderPartGroup',
-  'BuilderPriceRevision', 'BuilderProduct', 'CalendarEvent', 'CellHistory', 'Customer',
+  'BuilderPriceRevision', 'BuilderProduct', 'CalendarEvent', 'CellHistory', 'ChannelLetterInstallEquipment', 'ChecklistSubItem',
+  'Customer',
   'CustomerLocation', 'EmailGroup', 'EmailNotificationSettings', 'EstimateAcceptance',
   'EstimateOption', 'EstimateQuoteDelivery', 'EstimateRevision', 'EstimateSectionAcceptance',
   'GeneralTask', 'GlobalSettings', 'Inventory', 'InventoryMovement', 'JurisdictionProfile',
   'OpportunityActivity', 'Order', 'PTOPolicy', 'PermitLineItem', 'PermitLocality', 'PortalMessage', 'ProjectTemplate', 'QuickProduct',
-  'QuickProductCategory', 'SalesFilter', 'Settings', 'TimeEntry', 'TimeOffRequest',
+  'MarkupTier', 'QuickProductCategory', 'RegulationAlert', 'SalesFilter', 'Settings',
+  'SipChecklistTemplate', 'TimeEntry', 'TimeOffRequest',
   'UserCapacity', 'UserPTOBalance', 'WorkOrder',
 ]);
 const READ_METHODS = new Set(['filter', 'list', 'get', 'count']);
