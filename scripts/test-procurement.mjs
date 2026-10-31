@@ -16,6 +16,7 @@ const {
 const {
   DEFAULT_SCHEDULE, normalizeSchedule, milestoneAmounts,
   deriveBillingState, buildMilestoneInvoicePayload, buildEstimateBillingPayload,
+  scheduleToEntity, scheduleFromEntity,
 } = await import(pathToFileURL(outBill).href);
 
 // ===================== receivingModel =====================
@@ -199,4 +200,34 @@ fb = buildEstimateBillingPayload({ estimateId: 'e1', milestone: { label: 'Comple
 assert.equal(fb.billing_mode, 'final');
 assert.equal('deposit_amount' in fb, false, 'final mode bills the server-computed remainder');
 
-console.log('PASS procurement (70 assertions)');
+// --- scheduleToEntity/scheduleFromEntity: WorkOrder.billing_schedule round trip
+const messySchedule = [
+  { label: 'Deposit', pct: 50, note: 'due at signing' },
+  { label: '  ', pct: 30 },
+  { label: 'Install', pct: 80 },
+  { label: 'junk', pct: 'abc' },
+  { label: 'neg', pct: -5 },
+  null,
+  'not a row',
+];
+const storedSchedule = scheduleToEntity(messySchedule);
+assert.equal(storedSchedule.length, 3, 'junk rows (bad/non-positive pct, non-objects) dropped');
+assert.deepEqual(storedSchedule.map((r) => r.pct), [50, 30, 20], 'entity write trims cumulative pct to 100');
+assert.equal(storedSchedule[0].note, 'due at signing', 'note survives normalization');
+assert.equal(storedSchedule[1].label, 'Milestone 2', 'blank labels still auto-named');
+assert.equal('note' in storedSchedule[1], false, 'rows without notes stay clean');
+assert.deepEqual(scheduleFromEntity(storedSchedule), storedSchedule, 'stored rows round-trip unchanged');
+assert.deepEqual(scheduleFromEntity(scheduleToEntity(messySchedule)), storedSchedule);
+
+// scheduleFromEntity tolerates missing/garbage field values
+assert.deepEqual(scheduleFromEntity(undefined), []);
+assert.deepEqual(scheduleFromEntity(null), []);
+assert.deepEqual(scheduleFromEntity('Deposit 50%'), []);
+assert.deepEqual(scheduleFromEntity({ label: 'A', pct: 50 }), []);
+assert.deepEqual(scheduleFromEntity([]), []);
+assert.deepEqual(scheduleFromEntity([{ label: 'x', pct: 0 }, { pct: -2 }, 42]), [], 'junk-only field normalizes to empty');
+
+// an under-100% entity schedule survives intact (unscheduled remainder is legal)
+assert.deepEqual(scheduleFromEntity([{ label: 'Deposit', pct: 40 }]), [{ label: 'Deposit', pct: 40 }]);
+
+console.log('PASS procurement (111 assertions)');
