@@ -5,6 +5,8 @@ import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 const PRIORITIES = new Set(['low','medium','high','critical']);
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_MAX_ACCEPTED = 5;
+const RATE_MAX_PER_EQUIPMENT = 10;
+const RATE_MAX_GLOBAL = 30;
 const MAX_PUBLIC_PHOTOS = 3;
 const MAX_PUBLIC_PHOTO_BYTES = 1_200_000;
 const MAX_PUBLIC_PHOTO_B64_CHARS = Math.ceil(MAX_PUBLIC_PHOTO_BYTES / 3) * 4 + 16;
@@ -83,17 +85,23 @@ function workOrderNumber(token: string) {
 }
 
 const toHex = (bytes: ArrayBuffer) => Array.from(new Uint8Array(bytes)).map((b)=>b.toString(16).padStart(2,'0')).join('');
-async function requestFingerprint(req: Request) {
-  const cfIp = String(req.headers.get('cf-connecting-ip') || '').trim();
-  const realIp = String(req.headers.get('x-real-ip') || '').trim();
-  const xff = String(req.headers.get('x-forwarded-for') || '').split(',').map(v=>v.trim()).filter(Boolean);
-  const networkOrigin = cfIp || realIp || xff[0] || '';
-  if (!networkOrigin) return '';
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(networkOrigin));
-  return toHex(digest);
+const sha256Hex = async (value: string) => toHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
+
+// Client identity comes only from the runtime-asserted socket address. Forwarding headers
+// (cf-connecting-ip, x-real-ip, x-forwarded-for) are client-controlled here and are ignored.
+function trustedClientIp(info: any) {
+  const addr = info?.remoteAddr;
+  if (!addr || (addr.transport && addr.transport !== 'tcp' && addr.transport !== 'udp')) return '';
+  return String(addr.hostname || '').trim();
 }
 
-async function consumeThrottleRow(Throttle:any, row:any, now:Date) {
+async function clientFingerprint(info: any) {
+  const ip = trustedClientIp(info);
+  // Fail closed: requests with no trusted client identity share one bucket.
+  return sha256Hex(ip ? `client:${ip}` : 'unidentified-client-origin');
+}
+
+async function consumeThrottleRow(Throttle:any, row:any, now:Date, max:number) {
   const stamp = now.toISOString();
   for (let attempt = 0; attempt < 8; attempt++) {
     const current = attempt === 0 ? row : await Throttle.get(row.id).catch(()=>null);
@@ -101,7 +109,7 @@ async function consumeThrottleRow(Throttle:any, row:any, now:Date) {
     const started = Date.parse(current.window_started_at || '') || 0;
     const expired = !started || now.getTime() - started >= RATE_WINDOW_MS;
     const count = Number(current.accepted_count || 0);
-    if (!expired && count >= RATE_MAX_ACCEPTED) return {limited:true,tracked:true};
+    if (!expired && count >= max) return {limited:true,tracked:true};
 
     const next = expired
       ? {window_started_at:stamp,accepted_count:1,last_seen_at:stamp}
@@ -116,14 +124,7 @@ async function consumeThrottleRow(Throttle:any, row:any, now:Date) {
   return {limited:true,tracked:true,conflict:true};
 }
 
-async function consumeThrottle(base44:any, req:Request) {
-  let fingerprint = await requestFingerprint(req);
-  // Fail closed: requests with no trusted client identity share one global
-  // bucket instead of bypassing the throttle entirely.
-  if (!fingerprint) {
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('unidentified-client-origin'));
-    fingerprint = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
+async function consumeThrottleBucket(base44:any, fingerprint:string, max:number) {
   const Throttle = base44.asServiceRole.entities.FleetPublicReportThrottle;
   const now = new Date();
   const rows = await Throttle.filter({fingerprint_hash:fingerprint});
@@ -138,13 +139,26 @@ async function consumeThrottle(base44:any, req:Request) {
       if (duplicate.id !== row.id) await Throttle.delete(duplicate.id).catch(()=>null);
     }
     if (row.id === created.id) return {limited:false,tracked:true};
-    return consumeThrottleRow(Throttle,row,now);
+    return consumeThrottleRow(Throttle,row,now,max);
   }
 
   for (const duplicate of rows || []) {
     if (duplicate.id !== row.id) await Throttle.delete(duplicate.id).catch(()=>null);
   }
-  return consumeThrottleRow(Throttle,row,now);
+  return consumeThrottleRow(Throttle,row,now,max);
+}
+
+async function consumeThrottle(base44:any, info:any, equipmentId:string) {
+  const buckets = [
+    {fingerprint:await clientFingerprint(info),max:RATE_MAX_ACCEPTED},
+    {fingerprint:await sha256Hex(`equipment:${equipmentId}`),max:RATE_MAX_PER_EQUIPMENT},
+    {fingerprint:await sha256Hex('global-public-reports'),max:RATE_MAX_GLOBAL},
+  ];
+  for (const bucket of buckets) {
+    const result = await consumeThrottleBucket(base44,bucket.fingerprint,bucket.max);
+    if (result.limited) return result;
+  }
+  return {limited:false,tracked:true};
 }
 
 async function readPublicJson(req:Request) {
@@ -185,7 +199,7 @@ async function readPublicJson(req:Request) {
   }
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req, info) => {
   try {
     const parsed = await readPublicJson(req);
     if (parsed.error) return Response.json({error:parsed.error},{status:parsed.status});
@@ -256,9 +270,9 @@ Deno.serve(async (req) => {
       return Response.json({success:true,reused:true,id:existing.id,work_order_number:existing.work_order_number,photo_warning:photoWarning});
     }
 
-    const throttle = await consumeThrottle(base44, req);
+    const throttle = await consumeThrottle(base44, info, equipment.id);
     if (throttle.limited) {
-      return Response.json({error:'Too many Fleet issue reports were submitted from this connection. Please try again later.'},{status:429,headers:{'Retry-After':'900'}});
+      return Response.json({error:'Too many Fleet issue reports have been submitted recently. Please try again later.'},{status:429,headers:{'Retry-After':'900'}});
     }
 
     const photoValidation = decodePublicPhotos(payload?.photos);
