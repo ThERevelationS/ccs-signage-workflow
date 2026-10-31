@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 async function requireAdmin(base44: any, sessionToken) {
   const user = (await base44.auth.me().catch(() => null)) || await resolveFleetStaffUser(base44, sessionToken);
@@ -98,7 +99,7 @@ function inventoryIsLow(itemType: string, item: any) {
 async function dispatchLowStock(base44: any, itemType: string, item: any, eventToken: string) {
   if (!inventoryIsLow(itemType, item)) return;
   try {
-    const result = await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+    const result = await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
       event_type: itemType === 'part' ? 'low_stock_part' : 'low_stock_fluid',
       target_id: item.id,
       event_token: eventToken,
@@ -457,7 +458,7 @@ Deno.serve(async (req) => {
       const effectiveAfter = num(effectiveSummary.after_quantity, afterQuantity);
       const minimum = itemType === 'part' ? num(updatedItem?.minimum_stock, NaN) : fluidMinimumInStockUnit(updatedItem);
       if (updatedItem?.enable_low_stock_alerts !== false && Number.isFinite(minimum) && effectiveBefore > minimum && effectiveAfter <= minimum) {
-        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
+        await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
           event_type: itemType === 'part' ? 'low_stock_part' : 'low_stock_fluid',
           target_id: id,
           event_token: operationKey,
