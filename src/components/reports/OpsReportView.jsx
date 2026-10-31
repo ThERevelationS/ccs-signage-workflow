@@ -390,9 +390,9 @@ export default function OpsReportView({ reportKey, onSelect }) {
   const rangeLabel = rangeKey ? RANGE_LABELS[rangeKey] : "Date";
 
   return (
-    <div className="flex h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col md:flex-row">
       {/* Report picker */}
-      <aside className="w-56 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-3 py-4 dark:border-slate-700 dark:bg-slate-900">
+      <aside className="w-full max-h-52 shrink-0 overflow-y-auto border-b border-slate-200 bg-white px-3 py-4 dark:border-slate-700 dark:bg-slate-900 md:w-56 md:max-h-none md:border-b-0 md:border-r">
         <div className="mb-3 flex items-center gap-2 px-1">
           <BarChart3 className="h-4 w-4 text-slate-500" />
           <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Ops Reports</span>
