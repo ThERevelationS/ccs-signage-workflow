@@ -48,7 +48,7 @@ const EXTRA_PAGE_NAMES = [
   "FleetFluids", "FleetFuel", "FleetWarranties", "FleetReservations",
   "WorkOrderTraveler", "ProductionSchedule",
   "ProductQueues", "JobWorkspace", "WalkIn", "OpsReports", "CrmEvents", "Imports",
-  "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups", "Customer360",
+  "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups", "Customer360", "CbMigration",
 ];
 
 const pageLabel = (name) =>
