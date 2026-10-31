@@ -7,6 +7,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { downloadCsv } from "@/components/shared/exportCsv";
+import { paymentsFromArCsv } from "@/components/statements/statementModel";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { BarChart3, Download, RefreshCw } from "lucide-react";
 import {
@@ -15,7 +16,7 @@ import {
   flattenQueueRows,
   parseLocalDate,
 } from "@/components/queues/productQueueModel";
-import { OPS_REPORTS, OPS_REPORT_GROUPS, OPS_REPORT_MAP } from "./opsReportModel";
+import { OPS_REPORTS, OPS_REPORT_GROUPS, OPS_REPORT_MAP, SALES_DATE_BASES } from "./opsReportModel";
 
 const clean = (v) => String(v ?? "").trim();
 const norm = (v) => clean(v).toLowerCase();
@@ -24,11 +25,21 @@ const DEFAULT_FILTERS = {
   from: "", to: "",
   salesperson: "all", location: "all",
   responsibility: "all", assignedTo: "all", designer: "all",
+  dateBasis: "issue_date",
 };
 
 // Range filters share one from/to pair; the label tells the user which date
 // the range applies to for the active report.
-const RANGE_LABELS = { dueRange: "Due", createdRange: "Created", issueRange: "Issued" };
+const RANGE_LABELS = { dueRange: "Due", createdRange: "Created", issueRange: "Issued", monthRange: "Month" };
+
+// Session-gated datasets: these reads carry the staff session token to a
+// function, so they cannot resolve (or even start) without a session.
+const SESSION_GATED = new Set(["invoices", "payments", "purchaseOrders"]);
+
+// Open purchase orders whose line detail the Parts Needed report will fetch.
+// list_purchase_orders returns header snapshots only — line_items ship on
+// get_purchase_order — so each open PO costs one invoke.
+const OPEN_PO_DETAIL_CAP = 60;
 
 const inputCls = "min-h-9 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
 const selectCls = `${inputCls} pr-7`;
@@ -131,6 +142,11 @@ export default function OpsReportView({ reportKey, onSelect }) {
 
   const { data: workOrders = [], isLoading: woLoading, error: woError, refetch: refetchWos } = useAllWorkOrders();
 
+  const needSet = useMemo(
+    () => new Set(Array.isArray(def.needs) ? def.needs : [def.needs]),
+    [def],
+  );
+
   const estimatesQuery = useQuery({
     queryKey: ["opsReports", "estimates"],
     queryFn: () => loadAllEntityRows({
@@ -138,7 +154,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
       sort: "-created_date",
       label: "Ops Reports estimates",
     }),
-    enabled: def.needs === "estimates",
+    enabled: needSet.has("estimates"),
     staleTime: 120000,
   });
 
@@ -153,25 +169,121 @@ export default function OpsReportView({ reportKey, onSelect }) {
       if (!data?.success) throw new Error(data?.error || "Invoice data could not be verified completely.");
       return data.invoices || [];
     },
-    enabled: def.needs === "invoices" && Boolean(sessionToken),
+    enabled: needSet.has("invoices") && Boolean(sessionToken),
     staleTime: 120000,
   });
 
-  const estimates = def.needs === "estimates" ? (estimatesQuery.data || []) : [];
-  const invoices = def.needs === "invoices" ? (invoicesQuery.data || []) : [];
+  // Payments have no list action — one export_ar call returns payments_csv,
+  // parsed exactly the way CustomerStatements does.
+  const paymentsQuery = useQuery({
+    queryKey: ["opsReports", "payments", sessionToken],
+    queryFn: async () => {
+      const res = await base44.functions.invoke("invoicingAction", {
+        session_token: sessionToken,
+        action: "export_ar",
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "Payment data could not be verified completely.");
+      return paymentsFromArCsv(data.payments_csv || "");
+    },
+    enabled: needSet.has("payments") && Boolean(sessionToken),
+    staleTime: 120000,
+  });
 
-  const needs = def.needs;
-  const loading = needs === "workOrders" ? woLoading
-    : needs === "estimates" ? estimatesQuery.isLoading
-    : invoicesQuery.isLoading || !sessionToken;
-  const loadError = needs === "workOrders" ? woError
-    : needs === "estimates" ? estimatesQuery.error
-    : invoicesQuery.error;
-  const retry = () => {
-    if (needs === "workOrders") refetchWos();
-    else if (needs === "estimates") estimatesQuery.refetch();
-    else invoicesQuery.refetch();
+  const builderPartsQuery = useQuery({
+    queryKey: ["opsReports", "builderParts"],
+    queryFn: () => loadAllEntityRows({
+      entity: staffEntities.BuilderPart,
+      sort: "-updated_date",
+      label: "Ops Reports builder parts",
+    }),
+    enabled: needSet.has("builderParts"),
+    staleTime: 120000,
+  });
+
+  const builderProductsQuery = useQuery({
+    queryKey: ["opsReports", "builderProducts"],
+    queryFn: () => loadAllEntityRows({
+      entity: staffEntities.BuilderProduct,
+      sort: "-updated_date",
+      label: "Ops Reports builder products",
+    }),
+    enabled: needSet.has("builderProducts"),
+    staleTime: 120000,
+  });
+
+  const inventoryQuery = useQuery({
+    queryKey: ["opsReports", "inventoryItems"],
+    queryFn: () => loadAllEntityRows({
+      entity: staffEntities.Inventory,
+      sort: "-updated_date",
+      label: "Ops Reports inventory",
+    }),
+    enabled: needSet.has("inventoryItems"),
+    staleTime: 120000,
+  });
+
+  // PurchaseOrder is not staff-readable — purchaseOrderAction it is. The list
+  // action returns header snapshots only; line_items (needed for on-order
+  // qty per inventory item) live on get_purchase_order, so open POs are
+  // fetched in small batches and capped to protect the invoke budget.
+  const purchaseOrdersQuery = useQuery({
+    queryKey: ["opsReports", "purchaseOrders", sessionToken],
+    queryFn: async () => {
+      const res = await base44.functions.invoke("purchaseOrderAction", {
+        session_token: sessionToken,
+        action: "list_purchase_orders",
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "Purchase order data could not be verified completely.");
+      const open = (data.purchase_orders || [])
+        .filter((po) => ["sent", "partially_received"].includes(clean(po?.status)))
+        .slice(0, OPEN_PO_DETAIL_CAP);
+      const out = [];
+      for (let i = 0; i < open.length; i += 5) {
+        // eslint-disable-next-line no-await-in-loop -- intentional small batches
+        const chunk = await Promise.all(open.slice(i, i + 5).map((po) =>
+          base44.functions.invoke("purchaseOrderAction", {
+            session_token: sessionToken,
+            action: "get_purchase_order",
+            purchase_order_id: po.id,
+          }).then((r) => (r?.data || r)?.purchase_order || null).catch(() => null)));
+        out.push(...chunk.filter(Boolean));
+      }
+      return out;
+    },
+    enabled: needSet.has("purchaseOrders") && Boolean(sessionToken),
+    staleTime: 120000,
+  });
+
+  const queryByNeed = {
+    workOrders: { isLoading: woLoading, error: woError, refetch: refetchWos },
+    estimates: estimatesQuery,
+    invoices: invoicesQuery,
+    payments: paymentsQuery,
+    builderParts: builderPartsQuery,
+    builderProducts: builderProductsQuery,
+    inventoryItems: inventoryQuery,
+    purchaseOrders: purchaseOrdersQuery,
   };
+  const dataByNeed = {
+    workOrders,
+    estimates: estimatesQuery.data || [],
+    invoices: invoicesQuery.data || [],
+    payments: paymentsQuery.data || [],
+    builderParts: builderPartsQuery.data || [],
+    builderProducts: builderProductsQuery.data || [],
+    inventoryItems: inventoryQuery.data || [],
+    purchaseOrders: purchaseOrdersQuery.data || [],
+  };
+
+  const needed = [...needSet];
+  const loading = needed.some((k) => queryByNeed[k]?.isLoading)
+    || needed.some((k) => SESSION_GATED.has(k) && !sessionToken);
+  const loadError = needed.map((k) => queryByNeed[k]?.error).find(Boolean) || null;
+  const retry = () => needed.forEach((k) => queryByNeed[k]?.refetch?.());
+
+  const estimates = dataByNeed.estimates;
 
   // --- filter option lists ------------------------------------------------------
   const options = useMemo(() => {
@@ -203,9 +315,10 @@ export default function OpsReportView({ reportKey, onSelect }) {
     let queueRows = [];
     let wos = workOrders;
     let ests = estimates;
-    let invs = invoices;
+    let invs = dataByNeed.invoices;
+    let pays = dataByNeed.payments;
 
-    if (needs === "workOrders") {
+    if (needSet.has("workOrders")) {
       queueRows = filterQueueRows(flattenQueueRows(workOrders), {
         ...DEFAULT_QUEUE_FILTERS,
         responsibility: filters.responsibility,
@@ -220,19 +333,51 @@ export default function OpsReportView({ reportKey, onSelect }) {
         if (filters.salesperson !== "all" && norm(wo?.sales_rep || wo?.representative) !== norm(filters.salesperson)) return false;
         return true;
       });
-    } else if (needs === "estimates") {
+    }
+    if (needSet.has("estimates")) {
       ests = estimates.filter((est) => {
         if (def.filters.includes("createdRange") && !inRange(est?.created_date)) return false;
         if (filters.salesperson !== "all" && clean(est?.salesperson) !== filters.salesperson) return false;
         if (filters.location !== "all" && clean(est?.sales_center) !== filters.location) return false;
         return true;
       });
-    } else if (needs === "invoices") {
-      invs = invoices.filter((inv) => !def.filters.includes("issueRange") || inRange(inv?.issue_date || inv?.due_date));
+    }
+    if (needSet.has("invoices")) {
+      invs = invs.filter((inv) => {
+        if (def.filters.includes("issueRange") && !inRange(inv?.issue_date || inv?.due_date)) return false;
+        // monthRange bounds the sales report's basis month — the invoice
+        // side lands on its basis date, payments on their paid date.
+        if (def.filters.includes("monthRange") && (from || to)) {
+          const basisDate = filters.dateBasis === "paid_date" ? inv?.paid_date : inv?.issue_date;
+          if (!inRange(basisDate)) return false;
+        }
+        return true;
+      });
+      if (def.filters.includes("monthRange") && (from || to)) {
+        pays = pays.filter((p) => inRange(p?.paid_date || p?.created_date));
+      }
     }
 
-    return def.build({ queueRows, workOrders: wos, estimates: ests, invoices: invs, now: new Date() });
-  }, [def, workOrders, estimates, invoices, filters, needs]);
+    return def.build({
+      queueRows,
+      workOrders: wos,
+      estimates: ests,
+      invoices: invs,
+      payments: pays,
+      builderParts: dataByNeed.builderParts,
+      builderProducts: dataByNeed.builderProducts,
+      inventoryItems: dataByNeed.inventoryItems,
+      purchaseOrders: dataByNeed.purchaseOrders,
+      dateBasis: filters.dateBasis,
+      now: new Date(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deps are the stable query data refs
+  }, [
+    def, workOrders, filters, needSet,
+    estimatesQuery.data, invoicesQuery.data, paymentsQuery.data,
+    builderPartsQuery.data, builderProductsQuery.data,
+    inventoryQuery.data, purchaseOrdersQuery.data,
+  ]);
 
   const exportCsv = () => {
     const headers = report.columns.map((c) => c.label);
@@ -299,6 +444,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
           </div>
 
           {/* Filters */}
+          {def.filters.length > 0 && (
           <div className="mb-3 flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
             {rangeKey && (
               <>
@@ -327,13 +473,25 @@ export default function OpsReportView({ reportKey, onSelect }) {
             {has("location") && (
               <FilterSelect label="Sales Center" value={filters.location} onChange={(v) => set("location", v)} options={options.location} />
             )}
+            {has("dateBasis") && (
+              <label className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Date Basis</span>
+                <select className={selectCls} value={filters.dateBasis} onChange={(e) => set("dateBasis", e.target.value)}>
+                  {Object.entries(SALES_DATE_BASES).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             {(filters.from || filters.to || filters.salesperson !== "all" || filters.location !== "all"
-              || filters.responsibility !== "all" || filters.assignedTo !== "all" || filters.designer !== "all") && (
+              || filters.responsibility !== "all" || filters.assignedTo !== "all" || filters.designer !== "all"
+              || filters.dateBasis !== DEFAULT_FILTERS.dateBasis) && (
               <button onClick={() => setFilters(DEFAULT_FILTERS)} className="pb-1 text-xs font-medium text-violet-600 hover:underline dark:text-violet-300">
                 Clear filters
               </button>
             )}
           </div>
+          )}
 
           {def.notes && (
             <p className="mb-3 text-[11px] leading-snug text-slate-400 dark:text-slate-500">{def.notes}</p>
