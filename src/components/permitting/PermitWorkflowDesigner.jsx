@@ -79,7 +79,8 @@ export default function PermitWorkflowDesigner({
   onOpenSourceDocument,
 }) {
   const [form, setForm] = useState({
-    address: preselectedJurisdiction?.jurisdiction_name ? `${preselectedJurisdiction.jurisdiction_name}, ${preselectedJurisdiction.state || ""}` : "",
+    address: [workOrder?.install_location, workOrder?.address_line_2, workOrder?.township_city, workOrder?.county, workOrder?.state].filter(Boolean).join(", ")
+      || (preselectedJurisdiction?.jurisdiction_name ? `${preselectedJurisdiction.jurisdiction_name}, ${preselectedJurisdiction.state || ""}` : ""),
     customer: workOrder?.client_name || "",
     signTypes: "",
     dimensions: "",
@@ -322,6 +323,9 @@ export default function PermitWorkflowDesigner({
                 <MapPin className="mr-1 h-3 w-3" />
                 {preselectedJurisdiction.jurisdiction_name}
               </Badge>
+            )}
+            {(draft?.jurisdiction?.offices_need_check || preselectedJurisdiction?.offices_need_check) && (
+              <Badge className="bg-amber-100 text-amber-800">Office setup needs a check</Badge>
             )}
           </div>
           <button type="button" onClick={closeDesigner} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Close">
