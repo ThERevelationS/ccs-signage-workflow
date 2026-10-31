@@ -148,7 +148,9 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                       const label = String(seg.label || "");
                       const fitsInside = ((parseFloat(pos.width) || 0) / 100) * chartPx >= label.length * 5.8 + 10;
                       const endPct = (parseFloat(pos.left) || 0) + (parseFloat(pos.width) || 0);
-                      const labelAfterBar = !fitsInside && endPct < 80;
+                      const labelPct = ((label.length * 5.8 + 10) / chartPx) * 100;
+                      const labelAfterBar = !fitsInside && (100 - endPct) >= labelPct;
+                      const labelBeforeBar = !fitsInside && !labelAfterBar && (parseFloat(pos.left) || 0) >= labelPct;
                       return (
                         <div
                           key={seg.id}
@@ -172,13 +174,13 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                             }}
                             onClick={() => onWorkOrderClick && onWorkOrderClick(seg.record)}
                           >
-                            {fitsInside && (
+                            {(fitsInside || (!labelAfterBar && !labelBeforeBar)) && (
                               <span className="text-[10px] font-medium text-gray-700 px-1 truncate">
                                 {label}
                               </span>
                             )}
                           </div>
-                          {!fitsInside && (
+                          {!fitsInside && (labelAfterBar || labelBeforeBar) && (
                             <span
                               className="pointer-events-none absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-gray-700"
                               style={labelAfterBar
