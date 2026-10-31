@@ -4,6 +4,9 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -24,10 +27,19 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// <define:import.meta.env>
+var define_import_meta_env_default;
+var init_define_import_meta_env = __esm({
+  "<define:import.meta.env>"() {
+    define_import_meta_env_default = {};
+  }
+});
+
 // node_modules/react/cjs/react.development.js
 var require_react_development = __commonJS({
   "node_modules/react/cjs/react.development.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -1902,6 +1914,7 @@ var require_react_development = __commonJS({
 var require_react = __commonJS({
   "node_modules/react/index.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       module.exports = null;
     } else {
@@ -1914,6 +1927,7 @@ var require_react = __commonJS({
 var require_react_jsx_runtime_development = __commonJS({
   "node_modules/react/cjs/react-jsx-runtime.development.js"(exports) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -2807,6 +2821,7 @@ var require_react_jsx_runtime_development = __commonJS({
 var require_jsx_runtime = __commonJS({
   "node_modules/react/jsx-runtime.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       module.exports = null;
     } else {
@@ -2819,6 +2834,7 @@ var require_jsx_runtime = __commonJS({
 var require_scheduler_development = __commonJS({
   "node_modules/scheduler/cjs/scheduler.development.js"(exports) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -3269,6 +3285,7 @@ var require_scheduler_development = __commonJS({
 var require_scheduler = __commonJS({
   "node_modules/scheduler/index.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       module.exports = null;
     } else {
@@ -3281,6 +3298,7 @@ var require_scheduler = __commonJS({
 var require_react_dom_development = __commonJS({
   "node_modules/react-dom/cjs/react-dom.development.js"(exports) {
     "use strict";
+    init_define_import_meta_env();
     if (true) {
       (function() {
         "use strict";
@@ -24445,6 +24463,7 @@ var require_react_dom_development = __commonJS({
 var require_react_dom = __commonJS({
   "node_modules/react-dom/index.js"(exports, module) {
     "use strict";
+    init_define_import_meta_env();
     if (false) {
       checkDCE();
       module.exports = null;
@@ -24454,12 +24473,17 @@ var require_react_dom = __commonJS({
   }
 });
 
+// src/components/estimator/customerSync.js
+init_define_import_meta_env();
+
 // scripts/.tmp-b44-stub.mjs
+init_define_import_meta_env();
 var base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), functions: { invoke: async () => ({}) }, auth: { me: async () => null }, asServiceRole: { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }) } };
 var staffEntities = base44.entities;
 var isRetryableFunction = () => false;
 
 // src/components/estimator/pipelineStatus.js
+init_define_import_meta_env();
 function resolvePipelineSalesStatus(estimateStatus, existingStatus = "") {
   if (estimateStatus === "approved") return "won";
   if (estimateStatus === "cancelled") return "lost";
@@ -24495,6 +24519,7 @@ function resolvePipelineLifecycleDates({
 }
 
 // src/components/estimator/estimateSalesActivity.mjs
+init_define_import_meta_env();
 var SALES_FIELDS = /* @__PURE__ */ new Set([
   "sales_status",
   "sales_rep",
@@ -24518,6 +24543,7 @@ function hasVerifiedEstimateSalesActivity(existing, fields = {}, {
 }
 
 // src/components/estimator/quoteLifecycle.js
+init_define_import_meta_env();
 function localDateStamp(value = /* @__PURE__ */ new Date()) {
   const date = value instanceof Date ? value : new Date(value);
   const year = date.getFullYear();
@@ -24526,10 +24552,21 @@ function localDateStamp(value = /* @__PURE__ */ new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+// src/components/estimator/loadAllEntityRows.js
+init_define_import_meta_env();
+
 // src/lib/workOrderCache.js
+init_define_import_meta_env();
 var import_react5 = __toESM(require_react(), 1);
 
+// node_modules/@tanstack/query-core/build/modern/index.js
+init_define_import_meta_env();
+
+// node_modules/@tanstack/query-core/build/modern/focusManager.js
+init_define_import_meta_env();
+
 // node_modules/@tanstack/query-core/build/modern/subscribable.js
+init_define_import_meta_env();
 var Subscribable = class {
   constructor() {
     this.listeners = /* @__PURE__ */ new Set();
@@ -24552,7 +24589,11 @@ var Subscribable = class {
   }
 };
 
+// node_modules/@tanstack/query-core/build/modern/utils.js
+init_define_import_meta_env();
+
 // node_modules/@tanstack/query-core/build/modern/timeoutManager.js
+init_define_import_meta_env();
 var defaultTimeoutProvider = {
   // We need the wrapper function syntax below instead of direct references to
   // global setTimeout etc.
@@ -24890,6 +24931,7 @@ var FocusManager = class extends Subscribable {
 var focusManager = new FocusManager();
 
 // node_modules/@tanstack/query-core/build/modern/thenable.js
+init_define_import_meta_env();
 function pendingThenable() {
   let resolve;
   let reject;
@@ -24923,6 +24965,7 @@ function pendingThenable() {
 }
 
 // node_modules/@tanstack/query-core/build/modern/notifyManager.js
+init_define_import_meta_env();
 var defaultScheduler = systemSetTimeoutZero;
 function createNotifyManager() {
   let queue = [];
@@ -25002,7 +25045,14 @@ function createNotifyManager() {
 }
 var notifyManager = createNotifyManager();
 
+// node_modules/@tanstack/query-core/build/modern/query.js
+init_define_import_meta_env();
+
+// node_modules/@tanstack/query-core/build/modern/retryer.js
+init_define_import_meta_env();
+
 // node_modules/@tanstack/query-core/build/modern/onlineManager.js
+init_define_import_meta_env();
 var OnlineManager = class extends Subscribable {
   #online = true;
   #cleanup;
@@ -25175,6 +25225,7 @@ function createRetryer(config) {
 }
 
 // node_modules/@tanstack/query-core/build/modern/removable.js
+init_define_import_meta_env();
 var Removable = class {
   #gcTimeout;
   destroy() {
@@ -25614,6 +25665,7 @@ function getDefaultState(options) {
 }
 
 // node_modules/@tanstack/query-core/build/modern/infiniteQueryBehavior.js
+init_define_import_meta_env();
 function infiniteQueryBehavior(pages) {
   return {
     onFetch: (context, query) => {
@@ -25722,7 +25774,11 @@ function getPreviousPageParam(options, { pages, pageParams }) {
   return pages.length > 0 ? options.getPreviousPageParam?.(pages[0], pages, pageParams[0], pageParams) : void 0;
 }
 
+// node_modules/@tanstack/query-core/build/modern/mutationCache.js
+init_define_import_meta_env();
+
 // node_modules/@tanstack/query-core/build/modern/mutation.js
+init_define_import_meta_env();
 var Mutation = class extends Removable {
   #client;
   #observers;
@@ -26099,6 +26155,7 @@ function scopeFor(mutation) {
 }
 
 // node_modules/@tanstack/query-core/build/modern/queryCache.js
+init_define_import_meta_env();
 var QueryCache = class extends Subscribable {
   constructor(config = {}) {
     super();
@@ -26189,6 +26246,7 @@ var QueryCache = class extends Subscribable {
 };
 
 // node_modules/@tanstack/query-core/build/modern/queryClient.js
+init_define_import_meta_env();
 var QueryClient = class {
   #queryCache;
   #mutationCache;
@@ -26476,6 +26534,7 @@ var QueryClient = class {
 };
 
 // src/lib/query-client.js
+init_define_import_meta_env();
 var queryClientInstance = new QueryClient({
   defaultOptions: {
     queries: {
@@ -26485,16 +26544,23 @@ var queryClientInstance = new QueryClient({
   }
 });
 
+// src/components/fleet/fleetInvoke.js
+init_define_import_meta_env();
+
 // src/components/auth/EmailGate.jsx
+init_define_import_meta_env();
 var import_react4 = __toESM(require_react(), 1);
 
 // src/components/ui/dialog.jsx
+init_define_import_meta_env();
 var React25 = __toESM(require_react(), 1);
 
 // node_modules/@radix-ui/react-dialog/dist/index.mjs
+init_define_import_meta_env();
 var React24 = __toESM(require_react(), 1);
 
 // node_modules/@radix-ui/primitive/dist/index.mjs
+init_define_import_meta_env();
 var canUseDOM = !!(typeof window !== "undefined" && window.document && window.document.createElement);
 function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForDefaultPrevented = true } = {}) {
   return function handleEvent(event) {
@@ -26506,6 +26572,7 @@ function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForD
 }
 
 // node_modules/@radix-ui/react-compose-refs/dist/index.mjs
+init_define_import_meta_env();
 var React = __toESM(require_react(), 1);
 function setRef(ref, value) {
   if (typeof ref === "function") {
@@ -26543,6 +26610,7 @@ function useComposedRefs(...refs) {
 }
 
 // node_modules/@radix-ui/react-context/dist/index.mjs
+init_define_import_meta_env();
 var React2 = __toESM(require_react(), 1);
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
 function createContext2(rootComponentName, defaultContext) {
@@ -26620,9 +26688,11 @@ function composeContextScopes(...scopes) {
 }
 
 // node_modules/@radix-ui/react-id/dist/index.mjs
+init_define_import_meta_env();
 var React4 = __toESM(require_react(), 1);
 
 // node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs
+init_define_import_meta_env();
 var React3 = __toESM(require_react(), 1);
 var useLayoutEffect2 = globalThis?.document ? React3.useLayoutEffect : () => {
 };
@@ -26639,6 +26709,7 @@ function useId(deterministicId) {
 }
 
 // node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
+init_define_import_meta_env();
 var React5 = __toESM(require_react(), 1);
 var React22 = __toESM(require_react(), 1);
 var useInsertionEffect = React5[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
@@ -26708,13 +26779,16 @@ function isFunction(value) {
 var SYNC_STATE = Symbol("RADIX:SYNC_STATE");
 
 // node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
+init_define_import_meta_env();
 var React10 = __toESM(require_react(), 1);
 
 // node_modules/@radix-ui/react-primitive/dist/index.mjs
+init_define_import_meta_env();
 var React7 = __toESM(require_react(), 1);
 var ReactDOM = __toESM(require_react_dom(), 1);
 
 // node_modules/@radix-ui/react-slot/dist/index.mjs
+init_define_import_meta_env();
 var React6 = __toESM(require_react(), 1);
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 // @__NO_SIDE_EFFECTS__
@@ -26840,6 +26914,7 @@ function dispatchDiscreteCustomEvent(target, event) {
 }
 
 // node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs
+init_define_import_meta_env();
 var React8 = __toESM(require_react(), 1);
 function useCallbackRef(callback) {
   const callbackRef = React8.useRef(callback);
@@ -26850,6 +26925,7 @@ function useCallbackRef(callback) {
 }
 
 // node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs
+init_define_import_meta_env();
 var React9 = __toESM(require_react(), 1);
 function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.document) {
   const onEscapeKeyDown = useCallbackRef(onEscapeKeyDownProp);
@@ -27070,6 +27146,7 @@ function handleAndDispatchCustomEvent(name, handler, detail, { discrete }) {
 }
 
 // node_modules/@radix-ui/react-focus-scope/dist/index.mjs
+init_define_import_meta_env();
 var React11 = __toESM(require_react(), 1);
 var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
@@ -27274,6 +27351,7 @@ function removeLinks(items) {
 }
 
 // node_modules/@radix-ui/react-portal/dist/index.mjs
+init_define_import_meta_env();
 var React12 = __toESM(require_react(), 1);
 var import_react_dom = __toESM(require_react_dom(), 1);
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
@@ -27288,6 +27366,7 @@ var Portal = React12.forwardRef((props, forwardedRef) => {
 Portal.displayName = PORTAL_NAME;
 
 // node_modules/@radix-ui/react-presence/dist/index.mjs
+init_define_import_meta_env();
 var React23 = __toESM(require_react(), 1);
 var React13 = __toESM(require_react(), 1);
 function useStateMachine(initialState, machine) {
@@ -27414,6 +27493,7 @@ function getElementRef2(element) {
 }
 
 // node_modules/@radix-ui/react-focus-guards/dist/index.mjs
+init_define_import_meta_env();
 var React14 = __toESM(require_react(), 1);
 var count2 = 0;
 function useFocusGuards() {
@@ -27441,7 +27521,14 @@ function createFocusGuard() {
   return element;
 }
 
+// node_modules/react-remove-scroll/dist/es2015/index.js
+init_define_import_meta_env();
+
+// node_modules/react-remove-scroll/dist/es2015/Combination.js
+init_define_import_meta_env();
+
 // node_modules/tslib/tslib.es6.mjs
+init_define_import_meta_env();
 var __assign = function() {
   __assign = Object.assign || function __assign2(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -27477,15 +27564,21 @@ function __spreadArray(to, from, pack) {
 var React21 = __toESM(require_react());
 
 // node_modules/react-remove-scroll/dist/es2015/UI.js
+init_define_import_meta_env();
 var React17 = __toESM(require_react());
 
 // node_modules/react-remove-scroll-bar/dist/es2015/constants.js
+init_define_import_meta_env();
 var zeroRightClassName = "right-scroll-bar-position";
 var fullWidthClassName = "width-before-scroll-bar";
 var noScrollbarsClassName = "with-scroll-bars-hidden";
 var removedBarSizeVariable = "--removed-body-scroll-bar-size";
 
+// node_modules/use-callback-ref/dist/es2015/index.js
+init_define_import_meta_env();
+
 // node_modules/use-callback-ref/dist/es2015/assignRef.js
+init_define_import_meta_env();
 function assignRef(ref, value) {
   if (typeof ref === "function") {
     ref(value);
@@ -27496,6 +27589,7 @@ function assignRef(ref, value) {
 }
 
 // node_modules/use-callback-ref/dist/es2015/useRef.js
+init_define_import_meta_env();
 var import_react = __toESM(require_react());
 function useCallbackRef2(initialValue, callback) {
   var ref = (0, import_react.useState)(function() {
@@ -27524,6 +27618,7 @@ function useCallbackRef2(initialValue, callback) {
 }
 
 // node_modules/use-callback-ref/dist/es2015/useMergeRef.js
+init_define_import_meta_env();
 var React15 = __toESM(require_react());
 var useIsomorphicLayoutEffect = typeof window !== "undefined" ? React15.useLayoutEffect : React15.useEffect;
 var currentValues = /* @__PURE__ */ new WeakMap();
@@ -27555,7 +27650,14 @@ function useMergeRefs(refs, defaultValue) {
   return callbackRef;
 }
 
+// node_modules/react-remove-scroll/dist/es2015/medium.js
+init_define_import_meta_env();
+
+// node_modules/use-sidecar/dist/es2015/index.js
+init_define_import_meta_env();
+
 // node_modules/use-sidecar/dist/es2015/medium.js
+init_define_import_meta_env();
 function ItoI(a) {
   return a;
 }
@@ -27642,6 +27744,7 @@ function createSidecarMedium(options) {
 }
 
 // node_modules/use-sidecar/dist/es2015/exports.js
+init_define_import_meta_env();
 var React16 = __toESM(require_react());
 var SideCar = function(_a) {
   var sideCar = _a.sideCar, rest = __rest(_a, ["sideCar"]);
@@ -27695,16 +27798,35 @@ RemoveScroll.classNames = {
   zeroRight: zeroRightClassName
 };
 
+// node_modules/react-remove-scroll/dist/es2015/sidecar.js
+init_define_import_meta_env();
+
 // node_modules/react-remove-scroll/dist/es2015/SideEffect.js
+init_define_import_meta_env();
 var React20 = __toESM(require_react());
 
+// node_modules/react-remove-scroll-bar/dist/es2015/index.js
+init_define_import_meta_env();
+
 // node_modules/react-remove-scroll-bar/dist/es2015/component.js
+init_define_import_meta_env();
 var React19 = __toESM(require_react());
 
+// node_modules/react-style-singleton/dist/es2015/index.js
+init_define_import_meta_env();
+
+// node_modules/react-style-singleton/dist/es2015/component.js
+init_define_import_meta_env();
+
 // node_modules/react-style-singleton/dist/es2015/hook.js
+init_define_import_meta_env();
 var React18 = __toESM(require_react());
 
+// node_modules/react-style-singleton/dist/es2015/singleton.js
+init_define_import_meta_env();
+
 // node_modules/get-nonce/dist/es2015/index.js
+init_define_import_meta_env();
 var currentNonce;
 var getNonce = function() {
   if (currentNonce) {
@@ -27787,6 +27909,7 @@ var styleSingleton = function() {
 };
 
 // node_modules/react-remove-scroll-bar/dist/es2015/utils.js
+init_define_import_meta_env();
 var zeroGap = {
   left: 0,
   top: 0,
@@ -27862,6 +27985,7 @@ var RemoveScrollBar = function(_a) {
 };
 
 // node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js
+init_define_import_meta_env();
 var passiveSupported = false;
 if (typeof window !== "undefined") {
   try {
@@ -27881,6 +28005,7 @@ var options;
 var nonPassive = passiveSupported ? { passive: false } : false;
 
 // node_modules/react-remove-scroll/dist/es2015/handleScroll.js
+init_define_import_meta_env();
 var alwaysContainsScroll = function(node) {
   return node.tagName === "TEXTAREA";
 };
@@ -28156,6 +28281,7 @@ ReactRemoveScroll.classNames = RemoveScroll.classNames;
 var Combination_default = ReactRemoveScroll;
 
 // node_modules/aria-hidden/dist/es2015/index.js
+init_define_import_meta_env();
 var getDefaultParent = function(originalTarget) {
   if (typeof document === "undefined") {
     return null;
@@ -28579,19 +28705,26 @@ var Title = DialogTitle;
 var Description = DialogDescription;
 var Close = DialogClose;
 
+// node_modules/lucide-react/dist/esm/lucide-react.js
+init_define_import_meta_env();
+
 // node_modules/lucide-react/dist/esm/createLucideIcon.js
+init_define_import_meta_env();
 var import_react3 = __toESM(require_react(), 1);
 
 // node_modules/lucide-react/dist/esm/shared/src/utils.js
+init_define_import_meta_env();
 var toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 var mergeClasses = (...classes) => classes.filter((className, index, array) => {
   return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
 }).join(" ").trim();
 
 // node_modules/lucide-react/dist/esm/Icon.js
+init_define_import_meta_env();
 var import_react2 = __toESM(require_react(), 1);
 
 // node_modules/lucide-react/dist/esm/defaultAttributes.js
+init_define_import_meta_env();
 var defaultAttributes = {
   xmlns: "http://www.w3.org/2000/svg",
   width: 24,
@@ -28651,13 +28784,18 @@ var createLucideIcon = (iconName, iconNode) => {
 };
 
 // node_modules/lucide-react/dist/esm/icons/x.js
+init_define_import_meta_env();
 var __iconNode = [
   ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
   ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
 ];
 var X = createLucideIcon("X", __iconNode);
 
+// src/lib/utils.js
+init_define_import_meta_env();
+
 // node_modules/clsx/dist/clsx.mjs
+init_define_import_meta_env();
 function r(e) {
   var t, f, n = "";
   if ("string" == typeof e || "number" == typeof e) n += e;
@@ -28673,6 +28811,7 @@ function clsx() {
 }
 
 // node_modules/tailwind-merge/dist/bundle-mjs.mjs
+init_define_import_meta_env();
 var CLASS_PART_SEPARATOR = "-";
 var createClassGroupUtils = (config) => {
   const classMap = createClassMap(config);
@@ -31716,9 +31855,11 @@ var DialogDescription2 = React25.forwardRef(({ className, ...props }, ref) => /*
 DialogDescription2.displayName = Description.displayName;
 
 // src/components/ui/button.jsx
+init_define_import_meta_env();
 var React26 = __toESM(require_react(), 1);
 
 // node_modules/class-variance-authority/dist/index.mjs
+init_define_import_meta_env();
 var falsyToString = (value) => typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
 var cx = clsx;
 var cva = (base, config) => (props) => {
@@ -31801,6 +31942,7 @@ var Button = React26.forwardRef(({ className, variant, size, asChild = false, ..
 Button.displayName = "Button";
 
 // src/components/ui/input.jsx
+init_define_import_meta_env();
 var React27 = __toESM(require_react(), 1);
 var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
 var Input = React27.forwardRef(({ className, type, ...props }, ref) => {
@@ -31820,9 +31962,11 @@ var Input = React27.forwardRef(({ className, type, ...props }, ref) => {
 Input.displayName = "Input";
 
 // src/components/ui/label.jsx
+init_define_import_meta_env();
 var React29 = __toESM(require_react(), 1);
 
 // node_modules/@radix-ui/react-label/dist/index.mjs
+init_define_import_meta_env();
 var React28 = __toESM(require_react(), 1);
 var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
 var NAME = "Label";
@@ -31865,6 +32009,7 @@ function getSessionToken() {
 var AuthContext = (0, import_react4.createContext)(null);
 
 // src/api/requestGovernor.mjs
+init_define_import_meta_env();
 function rateLimitStatus(err) {
   return err?.status ?? err?.response?.status;
 }
@@ -32033,6 +32178,9 @@ function createRequestGovernor({
   const getEpoch = () => epoch;
   return { run, dedupe, bumpEpoch, getEpoch, stats };
 }
+
+// src/api/rateLimitCooldown.js
+init_define_import_meta_env();
 
 // src/components/fleet/fleetInvoke.js
 var mutationEpoch = 0;
@@ -32240,7 +32388,17 @@ function fetchAllWorkOrders(options) {
   return fetchFeedRows("WorkOrder", options);
 }
 
+// src/components/workflow/workOrderPersistence.js
+init_define_import_meta_env();
+
+// src/components/shared/trackedFieldPersistence.js
+init_define_import_meta_env();
+
+// base44/shared/salesSaveAcknowledgmentGuard.mjs
+init_define_import_meta_env();
+
 // base44/shared/salesOpportunityHistory.mjs
+init_define_import_meta_env();
 var SALES_OPPORTUNITY_HISTORY_FIELDS = Object.freeze([
   "sales_status",
   "sales_stage_changed_at",
@@ -32296,6 +32454,7 @@ async function saveTrackedFields({ entityType, id, expectedFields, nextFields, g
 }
 
 // src/components/workflow/workOrderCreationIdentity.mjs
+init_define_import_meta_env();
 var NEW_WORKORDER_PROTECTED_SYNC_FIELDS = Object.freeze([
   "smartsheet_sheet_id",
   "smartsheet_row_id",
@@ -32309,11 +32468,16 @@ var NEW_WORKORDER_PROTECTED_SYNC_FIELDS = Object.freeze([
 ]);
 var PROTECTED = new Set(NEW_WORKORDER_PROTECTED_SYNC_FIELDS);
 
+// src/components/workflow/NotificationService.jsx
+init_define_import_meta_env();
+
 // src/components/user/authorizedUserDirectoryPersistence.js
+init_define_import_meta_env();
 var DIRECTORY_CACHE_MS = 5 * 60 * 1e3;
 var DIRECTORY_FAILURE_COOLDOWN_MS = 60 * 1e3;
 
 // src/lib/app-params.js
+init_define_import_meta_env();
 var isNode = typeof window === "undefined";
 var windowObj = isNode ? { localStorage: /* @__PURE__ */ new Map() } : window;
 var storage = windowObj.localStorage;
@@ -32348,8 +32512,8 @@ var getAppParamValue = (paramName, { defaultValue = void 0, removeFromUrl = fals
 };
 var getAppParams = () => {
   return {
-    appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
-    serverUrl: getAppParamValue("server_url", { defaultValue: import.meta.env.VITE_BASE44_BACKEND_URL }),
+    appId: getAppParamValue("app_id", { defaultValue: define_import_meta_env_default.VITE_BASE44_APP_ID }),
+    serverUrl: getAppParamValue("server_url", { defaultValue: define_import_meta_env_default.VITE_BASE44_BACKEND_URL }),
     token: getAppParamValue("access_token", { removeFromUrl: true }),
     fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),
     functionsVersion: getAppParamValue("functions_version")
@@ -32369,6 +32533,7 @@ async function replaceWorkOrderFieldsIfUnchanged({ workOrderId, expectedFields, 
 }
 
 // src/components/estimator/workOrderSyncPersistence.js
+init_define_import_meta_env();
 async function createEstimateLinkedWorkOrderWithRecovery({
   entity,
   estimateId,
@@ -32476,6 +32641,7 @@ function expectedWorkOrderFields(record = {}, nextFields = {}) {
 }
 
 // src/components/estimator/customerPersistence.js
+init_define_import_meta_env();
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
   if (!value || typeof value !== "object") return value;
