@@ -835,6 +835,22 @@
               "revision_requested"
             ]
           },
+          "proof_file_url": {
+            "type": "string",
+            "description": "URL of the current proof file version for this product."
+          },
+          "proof_file_name": {
+            "type": "string",
+            "description": "Display name of the current proof file."
+          },
+          "proof_version": {
+            "type": "number",
+            "description": "Current proof file version (1-based). 0 means no proof file."
+          },
+          "proof_approved_version": {
+            "type": "number",
+            "description": "Proof version the current approval applies to. 0 means no versioned approval; approvals do not carry to newer versions."
+          },
           "operational_status_changed_at": {
             "type": "string",
             "description": "ISO timestamp of the last operational_status change on this product."
