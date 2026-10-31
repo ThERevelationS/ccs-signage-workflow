@@ -5,6 +5,11 @@ import {
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import {
+  decodePortalAttachment,
+  enforcePortalWriteBudget,
+  readBoundedPortalJson,
+} from "../../shared/customerPortalLimits.mjs";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -219,7 +224,7 @@ async function loadCustomerThread(PortalMessage: any, customerId: string, markSt
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json().catch(() => ({}));
+    const body: any = await readBoundedPortalJson(req);
     const action = clean(body?.action);
     if (!action) throw bad("An action is required.");
 
@@ -390,13 +395,18 @@ Deno.serve(async (req) => {
       }
       // Optional file attachment — the customer uploads via the portal composer;
       // stored server-side via UploadFile so the staff thread shows a download link.
+      const attachment = decodePortalAttachment({
+        base64: body?.attachment_base64,
+        name: body?.attachment_name,
+        mime: body?.attachment_mime,
+      });
+      await enforcePortalWriteBudget(PortalMessage, clean(link.id), { withAttachment: Boolean(attachment) });
       let attachmentUrl = "";
-      const attachmentName = clean(body?.attachment_name).slice(0, 255);
-      const attachmentB64 = clean(body?.attachment_base64);
-      if (attachmentB64) {
-        if (!attachmentName) throw bad("An attached file needs a filename.");
+      const attachmentName = attachment?.name || "";
+      const attachmentMime = attachment?.mime || "";
+      if (attachment) {
         try {
-          const file = new File([Uint8Array.from(atob(attachmentB64), (c) => c.charCodeAt(0))], attachmentName, { type: clean(body?.attachment_mime) || "application/octet-stream" });
+          const file = new File([attachment.bytes], attachment.name, { type: attachment.mime });
           const upload = await base44.asServiceRole.integrations.Core.UploadFile({ file });
           attachmentUrl = clean(upload?.file_url || upload?.url);
         } catch (uploadError) {
@@ -416,7 +426,7 @@ Deno.serve(async (req) => {
           body: text,
           attachment_name: attachmentName,
           attachment_url: attachmentUrl,
-          attachment_mime: clean(body?.attachment_mime),
+          attachment_mime: attachmentMime,
           related_kind: ["estimate", "invoice", "work_order"].includes(relatedKind) ? relatedKind : "none",
           related_id: relatedId,
           related_label: relatedLabel,
@@ -438,6 +448,7 @@ Deno.serve(async (req) => {
       const sectionKey = clean(body?.section_key);
       const estimate = await Estimate.get(estimateId).catch(() => null);
       if (!estimate?.id || clean(estimate.customer_id) !== customerId) throw bad("Quote not found.", 404);
+      await enforcePortalWriteBudget(PortalMessage, clean(link.id));
       if (sectionKey) {
         if (clean(estimate.status) !== "sent") throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can receive section responses.`, 409);
         if (!["accepted", "rejected", "question"].includes(decision)) throw bad("section decision must be accepted, rejected, or question.");
@@ -686,6 +697,7 @@ Deno.serve(async (req) => {
       const invoiceId = clean(body?.invoice_id);
       const invoice = await Invoice.get(invoiceId).catch(() => null);
       if (!invoice?.id || clean(invoice.customer_id) !== customerId) throw bad("Invoice not found.", 404);
+      await enforcePortalWriteBudget(PortalMessage, clean(link.id));
       const note = clean(body?.note).slice(0, MESSAGE_MAX);
       const method = clean(body?.method).slice(0, 60) || "payment";
       const invLabel = clean(invoice.invoice_number) || "Invoice";
@@ -728,6 +740,7 @@ Deno.serve(async (req) => {
       const order = await WorkOrder.get(workOrderId).catch(() => null);
       if (!order?.id || clean(order.customer_id) !== customerId) throw bad("Job not found.", 404);
       if (order.deleted === true || ["cancelled", "completed"].includes(clean(order.current_stage)) || clean(order.sales_status) === "cancelled") throw bad("This job is no longer active.", 409);
+      await enforcePortalWriteBudget(PortalMessage, clean(link.id));
       const woLabel = clean(order.est_inv_at || order.work_order_number) || clean(order.title) || "Job";
 
       // Draft a proposed change order so the request lands in the CO queue.
@@ -1092,7 +1105,7 @@ Deno.serve(async (req) => {
     throw bad(`Unsupported customer portal action: ${action}`);
   } catch (error: any) {
     const status = Number(error?.status || error?.statusCode || 500);
-    const safeStatus = [400, 401, 403, 404, 409, 423, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 404, 409, 413, 415, 423, 429, 503].includes(status) ? status : 500;
     console.error("customerPortalAction error:", error?.message || error);
     return Response.json({
       success: false,

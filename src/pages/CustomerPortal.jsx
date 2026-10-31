@@ -408,6 +408,9 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
   );
 }
 
+const PORTAL_ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024;
+const PORTAL_ATTACHMENT_ACCEPT = ".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.heif,.tif,.tiff,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.ai,.eps";
+
 function Thread({ messages, onSend, busy, customerName }) {
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState(null);
@@ -462,9 +465,15 @@ function Thread({ messages, onSend, busy, customerName }) {
             placeholder={`Message CCS Signage about your ${customerName ? "account" : "project"}…`}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" />
           <label className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 cursor-pointer hover:border-blue-400">
-            <input type="file" className="hidden" onChange={(e) => {
+            <input type="file" className="hidden" accept={PORTAL_ATTACHMENT_ACCEPT} onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) { setAttachment(null); return; }
+              if (file.size > PORTAL_ATTACHMENT_MAX_BYTES) {
+                e.target.value = "";
+                setAttachment(null);
+                window.alert("Attached files must be 5 MB or smaller.");
+                return;
+              }
               const reader = new FileReader();
               reader.onload = () => setAttachment({ name: file.name, mime: file.type || "application/octet-stream", base64: String(reader.result || "").split(",")[1] || "" });
               reader.readAsDataURL(file);
