@@ -30,7 +30,7 @@
     },
     "amount": {
       "type": "number",
-      "description": "Positive amount applied to the invoice."
+      "description": "Signed amount applied to the invoice: positive for payments, negative for credit-memo and refund rows. Invoice amount_paid is the net sum of recorded + refunded rows."
     },
     "method": {
       "type": "string",
@@ -40,7 +40,8 @@
         "card",
         "ach",
         "financing",
-        "other"
+        "other",
+        "credit_memo"
       ],
       "default": "other"
     },
@@ -59,7 +60,8 @@
         "void",
         "refunded"
       ],
-      "default": "recorded"
+      "default": "recorded",
+      "description": "recorded = live row (payments positive, credit memos negative); refunded = a negative refund row or a fully-refunded original payment; void = reversed."
     },
     "void_reason": {
       "type": "string"
@@ -69,6 +71,15 @@
     },
     "notes": {
       "type": "string"
+    },
+    "refund_of_payment_id": {
+      "type": "string",
+      "description": "On refund rows: id of the original Payment this refund reverses."
+    },
+    "refunded_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "On original payments: cumulative refunded dollars so far (partial refunds allowed)."
     },
     "reconciliation_batch_id": {
       "type": "string",
