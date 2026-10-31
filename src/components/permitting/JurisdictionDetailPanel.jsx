@@ -824,14 +824,14 @@ Answer only from the provided excerpts and cite the document title and official 
         <AlertDialogContent className="clay-card w-[calc(100%-2rem)] max-w-lg border-none p-4 sm:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {verificationTarget === "verified" ? "Mark this jurisdiction verified?" : verificationTarget === "historical" ? "Mark this jurisdiction historical?" : "Require re-verification?"}
+              {verificationTarget === "verified" ? "Mark this office checked?" : verificationTarget === "historical" ? "Mark this office as old info?" : "Ask for a re-check?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {verificationTarget === "verified"
-                ? "Use Verified only after staff has checked the current permitting information against official jurisdiction sources. This does not freeze the record or guarantee future rules remain unchanged."
+                ? "Only mark this after you looked at the office's real page and the info matches. Rules can change — check again on the next job."
                 : verificationTarget === "historical"
-                  ? "Historical keeps this profile available for prior-job reference but clearly warns staff to verify current requirements before using it on new work."
-                  : "This keeps the existing research and prior verification history, but marks the profile as needing a fresh staff review before it should be relied on."}
+                  ? "Old info stays for past jobs, but everyone gets warned to re-check before filing anything new."
+                  : "Keeps the research and history, but flags this office as needing a fresh look before anyone relies on it."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
@@ -869,7 +869,7 @@ Answer only from the provided excerpts and cite the document title and official 
                 }
               }}
             >
-              {verificationSaving ? "Saving…" : verificationTarget === "verified" ? "Mark Verified" : verificationTarget === "historical" ? "Mark Historical" : "Require Re-verification"}
+              {verificationSaving ? "Saving…" : verificationTarget === "verified" ? "Mark Checked" : verificationTarget === "historical" ? "Mark Old" : "Ask for Re-check"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
