@@ -39,7 +39,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
 
   // usePolling already skips hidden tabs and open 429 breakers and only
   // refreshes on focus when the interval was due.
-  usePolling(load, 180000);
+  usePolling(load, 180000, { initialDelayMs: 2000 });
 
   return (
     <button
