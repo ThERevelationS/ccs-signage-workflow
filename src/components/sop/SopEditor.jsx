@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,25 +9,105 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Plus, Save, Send, Archive, Trash2, Loader2, Sparkles,
-  ImagePlus, Paperclip, X, AlertTriangle,
+  ImagePlus, Paperclip, X, AlertTriangle, ClipboardCheck,
 } from "lucide-react";
 import SopStepEditor from "./SopStepEditor";
 import MediaCapture from "./MediaCapture";
 import { newStep, newStepId, attachmentKindFromFile, stripHtml } from "./sopModel";
-import { uploadFile } from "./sopAi";
+import { uploadFile, reviewSopCompleteness } from "./sopAi";
 import { openExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 // SOP editor: metadata + drag-reorderable steps + safety notes + attachments.
 // Parent owns persistence (sopService create/update/set_status/delete) and
 // passes them down as async callbacks; version/CAS errors surface via onError.
+// In-progress forms autosave to localStorage (debounced) and offer a resume
+// banner on remount; "AI review" runs a completeness check over the draft.
+
+const SEVERITY_BADGE = {
+  high: "bg-red-100 text-red-700",
+  medium: "bg-amber-100 text-amber-800",
+  low: "bg-slate-200 text-slate-600",
+};
+
+// Step ids are regenerated when a form is re-seeded, so drafts compare equal
+// when only ids differ.
+const draftSnapshot = (f) =>
+  JSON.stringify({ ...f, steps: (f?.steps || []).map(({ id: _id, ...rest }) => rest) });
 
 export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, onPublish, onArchive, onDelete, onAiBuild, saving }) {
-  const [form, setForm] = useState(() => ({ ...sop, steps: Array.isArray(sop.steps) && sop.steps.length ? sop.steps : [newStep()] }));
+  const draftKey = `sop:draft:${sop?.id || "new"}`;
+  const initialFormRef = useRef(null);
+  if (initialFormRef.current === null) {
+    initialFormRef.current = { ...sop, steps: Array.isArray(sop.steps) && sop.steps.length ? sop.steps : [newStep()] };
+  }
+  const [form, setForm] = useState(initialFormRef.current);
+  const [resumable, setResumable] = useState(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return null;
+      const saved = JSON.parse(raw);
+      if (!saved?.form) return null;
+      return draftSnapshot(saved.form) !== draftSnapshot(initialFormRef.current) ? saved : null;
+    } catch {
+      return null;
+    }
+  });
+  const [reviewing, setReviewing] = useState(false);
+  const [review, setReview] = useState(null); // null = not run/dismissed | issue[]
+  const [reviewError, setReviewError] = useState("");
   const [mediaOpen, setMediaOpen] = useState(null); // 'cover' | 'attachment'
   const [tagInput, setTagInput] = useState("");
   const [attachBusy, setAttachBusy] = useState(false);
   const isAdmin = me?.role === "admin";
   const categories = settings?.categories || [];
+
+  // Debounced draft autosave — skipped on the initial render so an untouched
+  // form never writes a draft.
+  const skipFirstDraftWrite = useRef(true);
+  useEffect(() => {
+    if (skipFirstDraftWrite.current) {
+      skipFirstDraftWrite.current = false;
+      return;
+    }
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ form, at: Date.now() }));
+      } catch { /* storage unavailable/full — drafts are best-effort */ }
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [form, draftKey]);
+
+  const clearDraft = () => {
+    try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+  };
+  const resumeDraft = () => {
+    setForm({ ...resumable.form, steps: resumable.form.steps?.length ? resumable.form.steps : [newStep()] });
+    setResumable(null);
+  };
+  const discardDraft = () => {
+    clearDraft();
+    setResumable(null);
+  };
+  const handleSave = async () => {
+    const ok = await onSave?.(buildPayload(), "draft");
+    if (ok !== false) clearDraft();
+  };
+  const handlePublish = async () => {
+    const ok = await onPublish?.(buildPayload());
+    if (ok !== false) clearDraft();
+  };
+
+  const runReview = async () => {
+    setReviewing(true);
+    setReviewError("");
+    try {
+      setReview(await reviewSopCompleteness(form, settings?.categories));
+    } catch (e) {
+      setReview(null);
+      setReviewError(e?.message || "AI review failed — try again.");
+    }
+    setReviewing(false);
+  };
 
   const patch = (fields) => setForm((f) => ({ ...f, ...fields }));
   const patchStep = (i, next) => patch({ steps: form.steps.map((s, idx) => (idx === i ? next : s)) });
@@ -100,12 +180,51 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
           <ArrowLeft className="h-4 w-4" /> Cancel
         </Button>
         <Badge variant={isNew ? "secondary" : "outline"}>{isNew ? "New SOP" : `Editing${sop.status ? ` · ${sop.status}` : ""}`}</Badge>
-        {onAiBuild && (
-          <Button type="button" variant="outline" size="sm" onClick={onAiBuild} className="gap-1.5 ml-auto">
-            <Sparkles className="h-4 w-4 text-purple-500" /> Build with AI
+        <div className="ml-auto flex items-center gap-2">
+          {onAiBuild && (
+            <Button type="button" variant="outline" size="sm" onClick={onAiBuild} className="gap-1.5">
+              <Sparkles className="h-4 w-4 text-purple-500" /> Build with AI
+            </Button>
+          )}
+          <Button type="button" variant="outline" size="sm" onClick={runReview} disabled={reviewing} className="gap-1.5">
+            {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4 text-purple-500" />}
+            AI review
           </Button>
-        )}
+        </div>
       </div>
+
+      {resumable && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="flex-1">
+            Unsaved draft found{resumable.at ? ` from ${new Date(resumable.at).toLocaleString()}` : ""}.
+          </span>
+          <Button type="button" size="sm" variant="outline" onClick={resumeDraft} className="h-7">Resume</Button>
+          <Button type="button" size="sm" variant="ghost" onClick={discardDraft} className="h-7">Discard</Button>
+        </div>
+      )}
+
+      {review !== null && (
+        <div className="rounded-xl border border-purple-200 bg-purple-50/50 p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-1.5 text-purple-900"><ClipboardCheck className="h-4 w-4" /> AI review — completeness check</Label>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setReview(null)} className="h-7 w-7"><X className="h-4 w-4" /></Button>
+          </div>
+          {review.length === 0 ? (
+            <p className="text-sm text-emerald-700">No issues found — looks solid.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {review.map((issue, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                  <Badge variant="secondary" className={`capitalize shrink-0 ${SEVERITY_BADGE[issue.severity] || SEVERITY_BADGE.low}`}>{issue.severity || "low"}</Badge>
+                  <span>{issue.step ? <span className="font-medium">{issue.step === "general" ? "General" : `Step ${issue.step}`}: </span> : null}{issue.fix}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {reviewError && <p className="text-sm text-red-600">{reviewError}</p>}
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-4 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-3">
@@ -255,11 +374,11 @@ export default function SopEditor({ sop, settings, me, isNew, onCancel, onSave, 
       </div>
 
       <div className="sticky bottom-0 -mx-2 border-t bg-white/95 backdrop-blur p-3 flex flex-wrap items-center gap-2">
-        <Button type="button" onClick={() => onSave?.(buildPayload(), "draft")} disabled={!valid || saving} className="gap-1.5" variant="outline">
+        <Button type="button" onClick={handleSave} disabled={!valid || saving} className="gap-1.5" variant="outline">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isNew ? "Save draft" : "Save changes"}
         </Button>
-        <Button type="button" onClick={() => onPublish?.(buildPayload())} disabled={!valid || saving || !filledSteps.length} className="gap-1.5">
+        <Button type="button" onClick={handlePublish} disabled={!valid || saving || !filledSteps.length} className="gap-1.5">
           <Send className="h-4 w-4" /> Save &amp; publish
         </Button>
         {!isNew && sop.status === "published" && (
