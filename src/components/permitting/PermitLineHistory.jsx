@@ -8,29 +8,29 @@ import { staffEntities } from "@/components/staff/staffEntities";
 const CellHistory = staffEntities.CellHistory;
 
 const FIELD_LABELS = {
-  row_name: "Permit line name",
-  locality_id: "Locality link",
-  locality_name: "Locality",
-  office_type: "Office type",
-  office_types: "Office types",
+  row_name: "Line name",
+  locality_id: "Office link",
+  locality_name: "Town / office",
+  office_type: "Kind of office",
+  office_types: "Kinds of office",
   assigned_to: "Owner",
-  status: "Workflow status",
-  submitted_date: "Submitted date",
-  next_followup_date: "Follow-up date",
-  permit_received_date: "Permit received date",
-  application_reference_number: "Application / Reference #",
+  status: "Status",
+  submitted_date: "Sent",
+  next_followup_date: "Check back",
+  permit_received_date: "Permit came in",
+  application_reference_number: "Application #",
   permit_number: "Permit #",
-  approval_date: "Approval date",
-  expiration_date: "Expiration date",
-  jurisdiction_fee_amount: "Actual jurisdiction fee",
-  jurisdiction_fee_status: "Fee payment status",
-  jurisdiction_fee_paid_date: "Fee paid date",
-  correction_status: "Correction state",
-  corrections_received_date: "Corrections received date",
-  resubmitted_date: "Resubmitted date",
-  closeout_status: "Inspection / closeout state",
-  inspection_date: "Inspection date",
-  closeout_date: "Closeout date",
+  approval_date: "Approved",
+  expiration_date: "Expires",
+  jurisdiction_fee_amount: "Office fee",
+  jurisdiction_fee_status: "Fee status",
+  jurisdiction_fee_paid_date: "Fee paid",
+  correction_status: "Fix status",
+  corrections_received_date: "Fixes came in",
+  resubmitted_date: "Sent again",
+  closeout_status: "Inspection / wrap-up",
+  inspection_date: "Inspected",
+  closeout_date: "Wrapped up",
 };
 
 const DATE_FIELDS = new Set([
@@ -114,7 +114,7 @@ export default function PermitLineHistory({ lineItemId, lineUpdatedDate = "" }) 
       console.error("Permit line history could not be loaded:", loadError);
       setRows([]);
       setLoaded(true);
-      setError(loadError?.message || "Recent permit changes could not be loaded.");
+      setError(loadError?.message || "Couldn't load the changes.");
     } finally {
       lastLoadedLineVersionRef.current = String(lineUpdatedDate || "");
       setLoading(false);
@@ -160,7 +160,7 @@ export default function PermitLineHistory({ lineItemId, lineUpdatedDate = "" }) 
           ) : error ? (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
           ) : rows.length === 0 ? (
-            <div className="py-4 text-center text-xs text-slate-400">No tracked permit-line changes yet. New lifecycle edits will appear here.</div>
+            <div className="py-4 text-center text-xs text-slate-400">No changes saved yet. Edits to dates and status will show up here.</div>
           ) : (
             <div>
               <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
@@ -180,7 +180,7 @@ export default function PermitLineHistory({ lineItemId, lineUpdatedDate = "" }) 
               ))}
               </div>
               {rows.length >= 25 && (
-                <div className="pt-2 text-center text-[10px] text-slate-400">Showing the 25 most recent tracked changes.</div>
+                <div className="pt-2 text-center text-[10px] text-slate-400">Showing the 25 newest changes.</div>
               )}
             </div>
           )}
