@@ -49,6 +49,7 @@ export default function PermitClientGroup({
   taskDescriptions,
   today,
   sharedOfficeCount = 0,
+  onSearchLocality,
   queueState,
   expanded: controlledExpanded,
   onExpandedChange
@@ -195,9 +196,14 @@ export default function PermitClientGroup({
             <span className="inline-flex items-center rounded-full border border-red-400 bg-red-100 px-2 py-0.5 font-bold text-red-800">⚠ URGENT</span>
           )}
           {sharedOfficeCount > 1 && (
-            <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700" title="Another job uses this same permit office — coordinate the calls">
+            <button
+              type="button"
+              onClick={() => { const name = String(group.lines[0]?.locality_name || "").trim(); if (name && onSearchLocality) onSearchLocality(name); }}
+              className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700 hover:bg-indigo-100"
+              title="Show the other jobs that use this same permit office"
+            >
               Same office as {sharedOfficeCount - 1} other{sharedOfficeCount - 1 === 1 ? "" : "s"}
-            </span>
+            </button>
           )}
           {isRegistered && group.lines.length > 1 && group.lines.some(li => !li.submitted_date && !isPermitLineEffectivelyComplete(li)) && (
             <button
@@ -336,13 +342,13 @@ export default function PermitClientGroup({
             <div key={locality_id || 'unlinked'} className="mt-1 text-amber-950">
               <strong>{locality_name}:</strong>{' '}
               {authority.coverage_status === 'configured_offices_reviewed' ? (
-                <span>All configured offices staff-reviewed; additional required authorities may still exist.</span>
+                <span>All offices here are staff-checked — other offices may still be needed.</span>
               ) : authority.coverage_status === 'partial' ? (
-                <span>{authority.verified_office_count} configured office(s) verified; {authority.other_office_count} still need review.</span>
+                <span>{authority.verified_office_count} office(s) verified — {authority.other_office_count} still need a check.</span>
               ) : authority.coverage_status === 'not_verified' ? (
-                <span>No staff-verified authority; configured offices still need review.</span>
+                <span>No verified offices yet — they still need a check.</span>
               ) : authority.coverage_status === 'not_configured' ? (
-                <span>No configured offices; permitting authority not established.</span>
+                <span>No offices set up — we don't know who issues the permit.</span>
               ) : (
                 <span>Locality link missing or unavailable; review this permit line.</span>
               )}
@@ -410,7 +416,7 @@ export default function PermitClientGroup({
       {/* EXPANDED BODY */}
       {expanded && (
         <div>
-          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Check jurisdiction…</Button></div>}
+          {hasLines&&<div className="px-4 py-2"><Button type="button" variant="outline" className="min-h-11 text-xs" disabled={!isRegistered} onClick={()=>setShowLocalityPicker(true)}>Find the right office…</Button></div>}
           {!hasLines ? (
             <div className="px-4 py-4 bg-gray-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
               <span className="text-xs text-gray-500"><strong className="text-gray-700">Next step:</strong> find which town or township issues this job's permits.</span>
@@ -421,7 +427,7 @@ export default function PermitClientGroup({
                 variant="outline"
                 className="min-h-11 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
               >
-                <MapPin className="w-3.5 h-3.5" /> Choose jurisdiction…
+                <MapPin className="w-3.5 h-3.5" /> Pick the town's office…
               </Button>
             </div>
           ) : (
