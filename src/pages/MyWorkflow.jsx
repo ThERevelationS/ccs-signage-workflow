@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -150,7 +151,17 @@ export default function MyWorkflow() {
   }, []);
   const [editingSipTask, setEditingSipTask] = useState(null);
   const [dropdownConditions, setDropdownConditions] = useState([]);
-  const [stageFilter, setStageFilter] = useState("all");
+  // Stage filter persists per-employee via the workspace blob — local seed
+  // applies instantly, the server value lands once preferences hydrate.
+  const { prefs: workspacePrefs, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();
+  const [stageFilter, setStageFilter] = useState(() => workspacePrefs.workflow?.stageFilter || "all");
+  const stageHydratedRef = useRef(false);
+  useEffect(() => {
+    if (stageHydratedRef.current || !workspacePrefsLoaded) return;
+    stageHydratedRef.current = true;
+    const serverStage = workspacePrefs.workflow?.stageFilter;
+    if (serverStage && serverStage !== stageFilter) setStageFilter(serverStage);
+  }, [workspacePrefsLoaded, workspacePrefs.workflow?.stageFilter, stageFilter]);
 
   useEffect(() => {
     document.title = "My Workflow - Workflow Manager";
@@ -725,7 +736,7 @@ export default function MyWorkflow() {
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Label className="text-xs text-gray-500">Stage:</Label>
-              <Select value={stageFilter} onValueChange={setStageFilter}>
+              <Select value={stageFilter} onValueChange={(v) => { setStageFilter(v); updateWorkspacePrefs("workflow.stageFilter", v); }}>
                 <SelectTrigger className="h-8 w-32 sm:w-40 text-xs">
                   <SelectValue />
                 </SelectTrigger>
