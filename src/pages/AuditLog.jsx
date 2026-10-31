@@ -19,7 +19,7 @@ export default function AuditLog() {
   const [type, setType] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => { base44.auth.me().then(setMe).catch(() => {}); }, []);
+  useEffect(() => { base44.auth.me().then(setMe).catch(() => setMe(false)); }, []);
 
   useEffect(() => {
     if (me?.role !== "admin") return;
