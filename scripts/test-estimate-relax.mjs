@@ -29,7 +29,8 @@ assert.match(header, /readOnly && onEdit/, 'AioEstimateHeader must render Edit i
 assert.match(header, /PencilLine/, 'header Edit button must carry the edit icon');
 assert.match(rail, /readOnly && onEdit \? onEdit : onSaveProgress/, 'step rail button must route to Edit when protected');
 assert.match(detail, /onClick=\{handleEditProtected\} disabled=\{editStarting\}/, 'the protected banner must expose the Edit button');
-assert.match(detail, /handleStartRevision\(reason\)/, 'the manual revision panel path still exists alongside auto-Edit');
+assert.match(detail, /handleStartRevision = async \(reason\)/, 'the manual revision starter still exists alongside auto-Edit');
+assert.match(detail, /onStartRevision=\{handleStartRevision\}/, 'the revision panel still wires its reason dialog to the same starter');
 
 // --- 2. Trash/restore work for ALL estimates; the Work Order guard stays but links to the job.
 assert.match(detail, /softDeleteEstimateFromLoadedSnapshot/, 'trash must use the CAS soft-delete helper');
