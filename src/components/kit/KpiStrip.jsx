@@ -35,7 +35,7 @@ const KpiStrip = React.forwardRef(({ tiles = [], className, ...props }, ref) => 
                 tile.tone && TONE_TEXT_CLASSES[tile.tone]
               )}
             >
-              {tile.value ?? "—"}
+              {tile.value ?? "\u2014"}
             </div>
             {tile.hint && (
               <div className="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
