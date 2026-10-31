@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -470,7 +471,7 @@ export default function PayPeriodManager({
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{period.start_date} through {period.end_date}</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {readiness.completed.length} completed shift{readiness.completed.length === 1 ? "" : "s"} · {readiness.totalHours.toFixed(2)} tracked hours
+                      {readiness.completed.length} completed shift{readiness.completed.length === 1 ? "" : "s"} ?? {readiness.totalHours.toFixed(2)} tracked hours
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -530,26 +531,26 @@ export default function PayPeriodManager({
         <DialogContent className="clay-card border-none max-w-2xl">
           <DialogHeader><DialogTitle>Verified Payroll History</DialogTitle></DialogHeader>
           {historyLoading ? (
-            <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain…</div>
+            <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain???</div>
           ) : historyResult?.verified ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
                 <div className="flex items-start gap-2"><ShieldCheck className="w-5 h-5 shrink-0" /><span>Server verification passed. Every displayed payroll generation is bound to the tamper-evident snapshot chain.</span></div>
                 <Button size="sm" variant="outline" onClick={exportVerifiedHistory} className="bg-white text-green-800 border-green-300"><Download className="w-4 h-4 mr-1" />Export Verified Record</Button>
               </div>
-              <div className="text-xs text-gray-500">{historyResult.period?.label || historyPeriod?.label} · {historyResult.period?.start_date || historyPeriod?.start_date} through {historyResult.period?.end_date || historyPeriod?.end_date} · Verified {historyResult.verified_at || "now"}</div>
+              <div className="text-xs text-gray-500">{historyResult.period?.label || historyPeriod?.label} ?? {historyResult.period?.start_date || historyPeriod?.start_date} through {historyResult.period?.end_date || historyPeriod?.end_date} ?? Verified {historyResult.verified_at || "now"}</div>
               <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
                 {(historyResult.generations || []).map((generation) => (
                   <div key={`${generation.generation}:${generation.request_id}`} className="rounded-lg border bg-white p-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">Generation {generation.generation}</span><Badge variant="outline" className={generation.state === "active" ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{generation.state === "active" ? "Current" : "Retired"}</Badge></div>
-                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-600"><span>{generation.entry_count} shifts · {Number(generation.total_hours || 0).toFixed(2)} hours</span><span>{generation.employee_count} employee{generation.employee_count === 1 ? "" : "s"}</span><span>Finalized by {generation.finalized_by || "Unknown"}</span><span>{formatEvidenceTime(generation.finalized_at)}</span>{Number(generation.snapshot_version || 0) >= 7 && <><span>Approving managers: {(generation.approving_managers || []).join(", ") || "None"}</span><span>{generation.finalizer_approval_overlap ? "Finalizer also approved one or more shifts" : "Finalizer did not approve included shifts"}</span></>}{Number(generation.snapshot_version || 0) >= 8 && generation.supersedes_generation_request_id && <span className="sm:col-span-2">Replacement lineage verified: supersedes {generation.supersedes_generation_request_id} via reopen {generation.authorized_by_reopen_request_id}</span>}{Number(generation.snapshot_version || 0) >= 9 && <span className="sm:col-span-2">Verified payroll changes: {generation.generation_change_count || 0}{generation.generation_reopen_reason ? ` · Reopen reason: ${generation.generation_reopen_reason}` : ""}</span>}{Number(generation.snapshot_version || 0) >= 17 && <span className="sm:col-span-2">Generation-wide audit reconciliation: {generation.generation_audit_reconciliation_count || 0} eligible action{generation.generation_audit_reconciliation_count === 1 ? "" : "s"} accounted for</span>}</div>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-600"><span>{generation.entry_count} shifts ?? {Number(generation.total_hours || 0).toFixed(2)} hours</span><span>{generation.employee_count} employee{generation.employee_count === 1 ? "" : "s"}</span><span>Finalized by {generation.finalized_by || "Unknown"}</span><span>{formatEvidenceTime(generation.finalized_at)}</span>{Number(generation.snapshot_version || 0) >= 7 && <><span>Approving managers: {(generation.approving_managers || []).join(", ") || "None"}</span><span>{generation.finalizer_approval_overlap ? "Finalizer also approved one or more shifts" : "Finalizer did not approve included shifts"}</span></>}{Number(generation.snapshot_version || 0) >= 8 && generation.supersedes_generation_request_id && <span className="sm:col-span-2">Replacement lineage verified: supersedes {generation.supersedes_generation_request_id} via reopen {generation.authorized_by_reopen_request_id}</span>}{Number(generation.snapshot_version || 0) >= 9 && <span className="sm:col-span-2">Verified payroll changes: {generation.generation_change_count || 0}{generation.generation_reopen_reason ? ` ?? Reopen reason: ${generation.generation_reopen_reason}` : ""}</span>}{Number(generation.snapshot_version || 0) >= 17 && <span className="sm:col-span-2">Generation-wide audit reconciliation: {generation.generation_audit_reconciliation_count || 0} eligible action{generation.generation_audit_reconciliation_count === 1 ? "" : "s"} accounted for</span>}</div>
                     {generation.state === "retired" && <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800">Reopened by {generation.invalidated_by || "Unknown"}{generation.invalidated_at ? ` on ${formatEvidenceTime(generation.invalidated_at)}` : ""}.{generation.invalidated_by_role && <> Authority: {generation.invalidated_by_role}.</>}{generation.invalidation_authentication_method && <> Authentication: {generation.invalidation_authentication_method}.</>}{generation.invalidation_reason ? <> Reason: {generation.invalidation_reason}</> : null}</div>}
                     {Number(generation.snapshot_version || 0) >= 15 && (generation.generation_changes || []).some((change) => (change.causal_chain || []).length > 1) && (
                       <div className="mt-2 rounded border border-indigo-200 bg-indigo-50 p-2 text-xs text-indigo-900">
                         <div className="font-semibold">Verified ordered causal chains</div>
                         {(generation.generation_changes || []).filter((change) => (change.causal_chain || []).length > 1).map((change) => (
                           <div key={`chain:${change.time_entry_id}`} className="mt-1">
-                            Shift {change.time_entry_id}: {(change.causal_chain || []).map((link) => `${link.sequence}. ${link.action}`).join(" → ")}
+                            Shift {change.time_entry_id}: {(change.causal_chain || []).map((link) => `${link.sequence}. ${link.action}`).join(" ??? ")}
                           </div>
                         ))}
                       </div>
@@ -559,7 +560,7 @@ export default function PayPeriodManager({
                         <div className="font-semibold">Verified non-correction causes</div>
                         {(generation.generation_changes || []).filter((change) => change.action_provenance).map((change) => (
                           <div key={`${change.time_entry_id}:${change.action_provenance.audit_id}`} className="mt-1">
-                            Shift {change.time_entry_id}: {change.change_type} via {change.action_provenance.action}{change.action_provenance.actor_email ? ` by ${change.action_provenance.actor_email}` : ""}{change.action_provenance.reason ? ` · ${change.action_provenance.reason}` : ""}
+                            Shift {change.time_entry_id}: {change.change_type} via {change.action_provenance.action}{change.action_provenance.actor_email ? ` by ${change.action_provenance.actor_email}` : ""}{change.action_provenance.reason ? ` ?? ${change.action_provenance.reason}` : ""}
                           </div>
                         ))}
                       </div>
@@ -569,7 +570,7 @@ export default function PayPeriodManager({
                         <div className="font-semibold">Verified correction causes</div>
                         {(generation.generation_changes || []).filter((change) => change.correction_provenance).map((change) => (
                           <div key={`${change.time_entry_id}:${change.correction_provenance.correction_request_id}`} className="mt-1">
-                            Shift {change.time_entry_id}: {change.correction_provenance.review_decision || "approved correction"} by {change.correction_provenance.reviewed_by || "Unknown"}{change.correction_provenance.reviewer_reason ? ` · ${change.correction_provenance.reviewer_reason}` : ""}{change.correction_provenance.employee_reason ? ` · Employee reason: ${change.correction_provenance.employee_reason}` : ""}
+                            Shift {change.time_entry_id}: {change.correction_provenance.review_decision || "approved correction"} by {change.correction_provenance.reviewed_by || "Unknown"}{change.correction_provenance.reviewer_reason ? ` ?? ${change.correction_provenance.reviewer_reason}` : ""}{change.correction_provenance.employee_reason ? ` ?? Employee reason: ${change.correction_provenance.employee_reason}` : ""}
                           </div>
                         ))}
                       </div>
@@ -587,14 +588,14 @@ export default function PayPeriodManager({
                             <div className="mt-2 space-y-3">
                               <div className={`rounded-lg border p-2 text-xs ${reconciliation.reconciled ? "border-green-200 bg-green-50 text-green-800" : "border-red-300 bg-red-50 text-red-800"}`}>
                                 {reconciliation.reconciled
-                                  ? `Evidence reconciled: ${reconciliation.employees.length} employees · ${generation.shifts.length} shifts · ${reconciliation.totalHours.toFixed(2)} hours.`
+                                  ? `Evidence reconciled: ${reconciliation.employees.length} employees ?? ${generation.shifts.length} shifts ?? ${reconciliation.totalHours.toFixed(2)} hours.`
                                   : `RECONCILIATION FAILED: displayed shift evidence does not match the verified generation totals. Expected ${generation.employee_count} employees, ${generation.entry_count} shifts, ${Number(generation.total_hours || 0).toFixed(2)} hours; evidence contains ${reconciliation.employees.length} employees, ${generation.shifts.length} shifts, ${reconciliation.totalHours.toFixed(2)} hours.`}
                               </div>
                               {reconciliation.employees.map((employee) => (
                                 <div key={employee.email} className="rounded-lg border bg-gray-50 p-3">
                                   <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 text-xs">
                                     <span className="font-semibold text-gray-900">{employee.email}</span>
-                                    <span className="font-semibold text-gray-700">{employee.shifts.length} shift{employee.shifts.length === 1 ? "" : "s"} · {employee.totalHours.toFixed(2)} hours</span>
+                                    <span className="font-semibold text-gray-700">{employee.shifts.length} shift{employee.shifts.length === 1 ? "" : "s"} ?? {employee.totalHours.toFixed(2)} hours</span>
                                   </div>
                                   <div className="mt-2 space-y-2">
                                     {employee.shifts.map((shift) => (
@@ -719,10 +720,10 @@ export default function PayPeriodManager({
         <DialogContent className="clay-card border-none max-w-lg">
           <DialogHeader><DialogTitle>Create Pay Period</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Label</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Example: Sept 1–15" /></div>
+            <div><Label>Label</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Example: Sept 1???15" /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><Label>Start date</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-              <div><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+              <div><Label>Start date</Label><TimeQuickPick mode="date" value={startDate} onChange={setStartDate} dayOffsets={[0, 1, 7, 14, 15, 30]} inputId="period-start" /></div>
+              <div><Label>End date</Label><TimeQuickPick mode="date" value={endDate} onChange={setEndDate} dayOffsets={[0, -1, -7, -14, -15, -30]} inputId="period-end" /></div>
             </div>
             <p className="text-xs text-gray-500">No payroll cadence is assumed. Overlapping periods are rejected by the server.</p>
             <div className="flex gap-2 justify-end">
@@ -751,7 +752,7 @@ export default function PayPeriodManager({
               )}
               {actionDecision === "reopen" && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                  Reopening unlocks the period’s shifts for correction. The reason is preserved in the audit trail.
+                  Reopening unlocks the period???s shifts for correction. The reason is preserved in the audit trail.
                 </div>
               )}
               {(actionDecision === "finalize" || actionDecision === "reopen") && (
@@ -774,3 +775,4 @@ export default function PayPeriodManager({
     </div>
   );
 }
+
