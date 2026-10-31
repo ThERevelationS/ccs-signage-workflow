@@ -70,6 +70,10 @@
     "notes": {
       "type": "string"
     },
+    "reconciliation_batch_id": {
+      "type": "string",
+      "description": "ReconciliationBatch this payment was swept into at cash close. Empty = still unreconciled. Set only by manageReconciliation."
+    },
     "created_by": {
       "type": "string"
     }
