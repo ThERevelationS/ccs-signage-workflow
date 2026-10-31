@@ -74,6 +74,16 @@ const LAST_SEARCH_KEY="permitting_last_search_";
 const lastSearchKeyFor=(addr)=>LAST_SEARCH_KEY+normalizeAddress(addr).toLowerCase();
 const loadLastSearch=(addr)=>{try{const r=JSON.parse(localStorage.getItem(lastSearchKeyFor(addr))||"null");return r?.result||null;}catch{return null;}};
 const saveLastSearch=(addr,result)=>{try{localStorage.setItem(lastSearchKeyFor(addr),JSON.stringify({result,saved_at:Date.now()}));}catch{}};
+// Browser-side geocode → census_hint payload for the resolver. Shared by the
+// geocoding-issue resubmit and the total-failure last try.
+async function geocodeInBrowser(address){
+  const q=encodeURIComponent(normalizeAddress(address));
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=${q}`);
+  const hit=(await r.json())?.[0];
+  const st=hit?.address?.state||hit?.address?.state_district||'';
+  if(!hit?.lat||!hit?.lon||!/ohio|kentucky/i.test(st))return null;
+  return {lat:Number(hit.lat),lng:Number(hit.lon),matched_address:hit.display_name,address_parts:{state:st,city:hit.address?.city||hit.address?.town||hit.address?.village||'',zip:hit.address?.postcode||''}};
+}
 export default function LocalityPickerDialog(props) {
   const {sessionToken,currentUser}=useAuth();
   if(!sessionToken||!(currentUser?.id||currentUser?.email))return null;
@@ -101,6 +111,7 @@ function LocalityPickerSession({
   const [searchedFor, setSearchedFor] = useState("");
   const [firstRun, setFirstRun] = useState(() => { try { return localStorage.getItem("permitting_first_run_done") !== "1"; } catch { return true; } });
   const [showOptions, setShowOptions] = useState(() => { try { return localStorage.getItem("permitting_show_options") === "1"; } catch { return false; } });
+  const [advanced, setAdvanced] = useState(() => { try { return localStorage.getItem("permitting_advanced_view") === "1"; } catch { return false; } });
   const [bigText, setBigText] = useState(() => { try { return localStorage.getItem("permitting_big_text") === "1"; } catch { return false; } });
   const [lang, setLang] = useState(() => { try { return localStorage.getItem("permitting_lang") || "en"; } catch { return "en"; } });
   const t = (en, es) => (lang === "es" ? es : en);
@@ -111,6 +122,7 @@ function LocalityPickerSession({
   const [repositoryJurisdictions, setRepositoryJurisdictions] = useState([]);
   const [repositoryLoading, setRepositoryLoading] = useState(false);
   const [repositoryError, setRepositoryError] = useState("");
+  const [repositoryRetry, setRepositoryRetry] = useState(0);
   const [draftCandidate, setDraftCandidate] = useState(null);
   const [repositoryDraftId,setRepositoryDraftId]=useState("");
   const [draftCreateError, setDraftCreateError] = useState("");
@@ -163,6 +175,7 @@ function LocalityPickerSession({
       entity: staffEntities.JurisdictionProfile,
       sort: "name",
       label: "Permitting locality picker repository",
+      cacheTtlMs: 60000,
     }).then((rows) => {
       if (!cancelled) setRepositoryJurisdictions(Array.isArray(rows) ? rows : []);
     }).catch((e) => {
@@ -173,7 +186,7 @@ function LocalityPickerSession({
     });
 
     return () => { cancelled = true; };
-  }, [isOpen]);
+  }, [isOpen, repositoryRetry]);
 
   useEffect(() => {
     if (!searching) { setSlowSearch(false); return; }
@@ -205,19 +218,10 @@ function LocalityPickerSession({
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
         try {
-          const q = encodeURIComponent(normalizeAddress(address));
-          const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=${q}`);
-          const hit = (await r.json())?.[0];
-          const st = hit?.address?.state || hit?.address?.state_district || '';
-          if (hit?.lat && hit?.lon && /ohio|kentucky/i.test(st)) {
+          const hint = await geocodeInBrowser(address);
+          if (hint) {
             const retry = await invoke('resolvePermittingAddress', {
-              address: normalizeAddress(address),
-              session_token: sessionToken,
-              census_hint: {
-                lat: Number(hit.lat), lng: Number(hit.lon),
-                matched_address: hit.display_name,
-                address_parts: { state: st, city: hit.address?.city || hit.address?.town || hit.address?.village || '', zip: hit.address?.postcode || '' },
-              },
+              address: normalizeAddress(address), session_token: sessionToken, census_hint: hint,
             },`Looking up ${address.trim()}`);
             if (retry?.data?.success !== false) data = retry.data;
           }
@@ -238,6 +242,23 @@ function LocalityPickerSession({
     } catch (e) {
       if(version!==searchVersion.current||!openRef.current)return;
       serviceFails.current=(serviceFails.current||0)+1;
+      // Two failures → one last try from the browser before telling the user.
+      if(serviceFails.current>=2){
+        try{
+          const hint=await geocodeInBrowser(address);
+          if(hint){
+            const retry=await invoke('resolvePermittingAddress',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);
+            const d=retry?.data;
+            if(d&&d.success!==false){
+              setResult(d);setError("");serviceFails.current=0;setSearchedFor(norm);
+              if(d.suggested_locality?.id)setSelectedLocalityId(d.suggested_locality.id);
+              if(pendingSearch.current===version)pendingSearch.current=null;
+              if(version===searchVersion.current&&openRef.current)setSearching(false);
+              return;
+            }
+          }
+        }catch{ /* fall through to the error below */ }
+      }
       setError(serviceFails.current>=2
         ? "Our lookup service is having trouble right now — try again in a minute, or pick from the saved offices list below."
         : (e.message || "Search failed"));
@@ -376,9 +397,9 @@ function LocalityPickerSession({
           </DialogTitle>
         </DialogHeader>
 
-        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this office. That's it. <span className="cursor-help border-b border-dotted border-violet-400" title='"Office" means which town, township, or county office issues your permit — every level is different. "Checked" means our team looked at it. "Needs a look" means nobody confirmed it yet.'>what do these words mean?</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
+        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 mx-4 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this office. That's it. <span className="cursor-help border-b border-dotted border-violet-400" title='"Office" means which town, township, or county office issues your permit — every level is different. "Checked" means our team looked at it. "Needs a look" means nobody confirmed it yet.'>what do these words mean?</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
         {/* Address search bar */}
-        <div className="flex gap-2 items-end flex-wrap">
+        <div className="flex gap-2 items-end flex-wrap px-4">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
             <Label htmlFor="jurisdiction-job-address" className="text-xs">Job address</Label>
             <div className="relative">
@@ -429,11 +450,13 @@ function LocalityPickerSession({
                 That looks like a PO box or rural route — we found a postal area, not a physical sign location. Check the map pin before applying.
               </p>
             )}
-            <button type="button" onClick={() => { setMultiMode(!multiMode); setMultiResults([]); }} className="text-[10px] font-semibold text-purple-600 hover:underline">
-              {multiMode ? "Single address" : "Paste several addresses"}
-            </button>
+            {advanced && (
+              <button type="button" onClick={() => { setMultiMode(!multiMode); setMultiResults([]); }} className="text-[10px] font-semibold text-purple-600 hover:underline">
+                {multiMode ? "Single address" : "Paste several addresses"}
+              </button>
+            )}
           </div>
-          {multiMode && (
+          {advanced && multiMode && (
             <div className="space-y-2">
               <textarea
                 value={address}
@@ -504,6 +527,7 @@ function LocalityPickerSession({
           )}
 
           <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-violet-700 underline self-center" onClick={() => { const v = !showOptions; setShowOptions(v); try { localStorage.setItem("permitting_show_options", v ? "1" : "0"); } catch {} }}>{showOptions ? "Fewer options" : "More options…"}</button>
+          <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-violet-700 underline self-center" onClick={() => { const v = !advanced; setAdvanced(v); try { localStorage.setItem("permitting_advanced_view", v ? "1" : "0"); } catch {} }}>{advanced ? "Simple view" : "Advanced view"}</button>
 
           {showOptions && <>
           <button type="button" className="min-h-11 w-full sm:w-auto text-xs font-semibold text-slate-600 underline self-center" onClick={() => { try { const v = localStorage.getItem("permitting_skip_confirms") !== "1"; localStorage.setItem("permitting_skip_confirms", v ? "1" : "0"); window.alert(v ? "Confirmations are now skipped." : "Confirmations are back on."); } catch {} }}>Skip confirmations</button>
@@ -599,12 +623,12 @@ function LocalityPickerSession({
         </div>
 
         {slowSearch && searching && (
-          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-sm text-blue-800">
+          <div className="bg-blue-50 border border-blue-200 rounded mx-4 p-2 text-sm text-blue-800">
             This lookup is taking longer than usual — it can hang on slow government sites. You can keep waiting, or cancel and try again.
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded p-2 text-sm text-red-700 flex items-start gap-2">
+          <div className="bg-red-50 border border-red-200 rounded mx-4 p-2 text-sm text-red-700 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <span className="flex-1">{error}</span>
             {address.trim() && !searching && (
@@ -616,7 +640,7 @@ function LocalityPickerSession({
         )}
 
         {!address.trim() && !searching && recentAddresses.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 items-center">
+          <div className="flex flex-wrap gap-1.5 items-center px-4">
             <span className="text-[10px] text-gray-500 font-medium">Recent:</span>
             {recentAddresses.map((addr) => (
               <button type="button" key={addr} type="button" title={addr}
@@ -629,7 +653,7 @@ function LocalityPickerSession({
         )}
 
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto lg:grid-cols-[400px_minmax(0,1fr)] lg:overflow-hidden">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto px-4 pb-2 lg:grid-cols-[520px_minmax(0,1fr)] lg:overflow-hidden">
           <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <AddressSearchSummary address={address} searching={searching} result={result}/>
             {gpsMismatch && (
@@ -638,7 +662,7 @@ function LocalityPickerSession({
               </p>
             )}
             {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Picked office" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Found office</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this office.":result.suggested_locality?"We found the town or township — the offices haven't been checked yet, but you can still use it: the permit lines will be marked needs-a-check.":"We found the town or township — it's not set up here yet. An admin can make a record from the saved offices list below."}</p></section>}
-            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
+            {advanced && <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>}
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
@@ -697,10 +721,10 @@ function LocalityPickerSession({
                 )}
 
             {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this office.</p>}
-            {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
+            {advanced&&currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
               <h4 className="font-semibold text-sm">Set up a new office record from the saved list</h4>
               <p className="text-xs">This makes a draft — it does not confirm the address or the right office.</p>
-              {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError}</p>}
+              {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError} <button type="button" className="font-semibold underline" onClick={()=>setRepositoryRetry(n=>n+1)}>Try again</button></p>}
               <label className="block text-xs">Saved office record
                 <select aria-label="Repository jurisdiction for draft" className="block w-full min-h-11 border rounded bg-white" value={repositoryDraftId} disabled={repositoryLoading||Boolean(repositoryError)||creatingDraft} onChange={event=>{setRepositoryDraftId(event.target.value);setDraftCandidate(null);}}>
                   <option value="">{repositoryLoading?'Loading saved offices…':'Pick a saved office record'}</option>
@@ -796,7 +820,7 @@ function LocalityPickerSession({
                   )}
                 </div>
 
-                <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>
+                {advanced && <AutomaticAddressScanResults scanResult={result.automatic_scan} archives={result.address_archives}/>}
                 {currentUser?.role==='admin'&&result&&<details className="rounded border bg-gray-50 p-2 text-[10px]"><summary className="cursor-pointer font-semibold text-gray-600">Show technical details</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify({geocoding_service:result.geocoding_service,location_resolution:result.location_resolution,authority_review:result.authority_review,match_confidence:result.match_confidence,match_method:result.match_method,apply_allowed:result.apply_allowed},null,2)}</pre></details>}
                 {result.suggested_locality && !result.apply_allowed && <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">We found the spot. The sign and zoning offices haven't been checked yet — you can still press Use it anyway below, and the lines will be marked needs-a-check.</p>}
                 {/* Repository bridge — explicit draft creation only; never treat AI/repository data as verified workflow. */}
@@ -818,7 +842,7 @@ function LocalityPickerSession({
                     {repositoryError && (
                       <div className="text-xs text-red-700 flex items-start gap-1.5">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                        <span>{repositoryError}</span>
+                        <span>{repositoryError} <button type="button" className="font-semibold underline" onClick={()=>setRepositoryRetry(n=>n+1)}>Try again</button></span>
                       </div>
                     )}
 
@@ -917,7 +941,7 @@ function LocalityPickerSession({
                 )}
               </>
             )}
-            <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review and research tools</summary><div className="p-3 pt-0"><SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/></div></details>
+            {advanced && <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Review and research tools</summary><div className="p-3 pt-0"><SelectorScanActions key={selectedLocalityId || result?.geocode?.display_name || result?.ai_locality_name || 'empty'} locality={selectedLocality} result={result} profiles={repositoryJurisdictions} loading={repositoryLoading} unavailable={repositoryError} onProfileUpdated={profile=>setRepositoryJurisdictions(prev=>prev.some(row=>row.id===profile.id)?prev.map(row=>row.id===profile.id?profile:row):[...prev,profile])}/></div></details>}
             <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Saved research</summary><div className="p-3 pt-0"><SavedAddressResearch /></div></details>
           </div>
 
@@ -971,7 +995,7 @@ function LocalityPickerSession({
           </AlertDialogContent>
         </AlertDialog>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t pt-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t px-4 pb-3 pt-3">
           <div className="text-[11px] text-gray-500">
             {excludeElectrical ? "🚫 Electrical Inspectors will be excluded" : "⚡ Electrical Inspectors will be included"}
           </div>
