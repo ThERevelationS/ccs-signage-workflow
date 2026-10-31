@@ -2,21 +2,24 @@ import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Sparkles, Settings2, BookOpen, Pin, Clock, BellRing } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Plus, Sparkles, Settings2, BookOpen, Pin, Clock, BellRing, Check, CheckSquare } from "lucide-react";
 import { categoryByKey, needsAcknowledgement, stripHtml } from "./sopModel";
 
 // Browse view: search + department tabs + SOP cards. SOPs arrive already
 // visibility-filtered by manageSops (staff only get published rows).
 
-function SopCard({ sop, settings, me, onOpen }) {
+function SopCard({ sop, settings, me, onOpen, selecting, checked, onToggle }) {
   const cat = categoryByKey(settings, sop.category);
   const needsAck = needsAcknowledgement(sop, me?.email);
   const stepCount = Array.isArray(sop.steps) ? sop.steps.length : 0;
   return (
     <button
       type="button"
-      onClick={() => onOpen?.(sop)}
-      className="group text-left rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+      onClick={() => (selecting ? onToggle?.(sop.id) : onOpen?.(sop))}
+      className={`group text-left rounded-xl border bg-white overflow-hidden shadow-sm hover:shadow-md transition-all focus-visible:ring-2 focus-visible:ring-blue-500 outline-none ${
+        checked ? "border-blue-400 ring-2 ring-blue-500" : "border-slate-200 hover:border-slate-300"
+      }`}
     >
       <div className="h-32 bg-slate-100 relative">
         {sop.cover_image_url ? (
@@ -26,8 +29,13 @@ function SopCard({ sop, settings, me, onOpen }) {
             <BookOpen className="h-10 w-10" style={{ color: cat.color }} />
           </div>
         )}
+        {selecting && (
+          <span className={`absolute top-2 left-2 h-5 w-5 rounded border flex items-center justify-center shadow ${checked ? "bg-blue-600 border-blue-600" : "bg-white/90 border-slate-300"}`}>
+            {checked && <Check className="h-3.5 w-3.5 text-white" />}
+          </span>
+        )}
         {sop.pinned && (
-          <span className="absolute top-2 left-2 rounded-full bg-white/90 p-1 shadow" title="Pinned">
+          <span className={`absolute top-2 ${selecting ? "left-9" : "left-2"} rounded-full bg-white/90 p-1 shadow`} title="Pinned">
             <Pin className="h-3.5 w-3.5 text-amber-500" />
           </span>
         )}
@@ -65,9 +73,31 @@ function SopCard({ sop, settings, me, onOpen }) {
   );
 }
 
-export default function SopBrowser({ sops, settings, me, activeCategory, onCategoryChange, onOpen, onNew, onAiBuild, onAdmin }) {
+export default function SopBrowser({ sops, settings, me, activeCategory, onCategoryChange, onOpen, onNew, onAiBuild, onAdmin, onBulk }) {
   const [query, setQuery] = useState("");
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [moveCat, setMoveCat] = useState("");
   const categories = settings?.categories?.length ? settings.categories : [];
+
+  const toggleSelecting = () => {
+    setSelecting((v) => !v);
+    setSelected(new Set());
+    setMoveCat("");
+  };
+  const toggleSelected = (id) => {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const runBulk = (action, category) => {
+    if (!selected.size) return;
+    onBulk?.({ ids: [...selected], action, ...(action === "move" ? { category } : {}) });
+    setSelected(new Set());
+    setMoveCat("");
+  };
 
   const counts = useMemo(() => {
     const map = {};
@@ -108,6 +138,9 @@ export default function SopBrowser({ sops, settings, me, activeCategory, onCateg
         </div>
         {me?.canEdit && (
           <>
+            <Button type="button" variant={selecting ? "secondary" : "outline"} onClick={toggleSelecting} className="gap-1.5">
+              <CheckSquare className="h-4 w-4" /> {selecting ? "Done" : "Select"}
+            </Button>
             <Button type="button" variant="outline" onClick={onAiBuild} className="gap-1.5">
               <Sparkles className="h-4 w-4 text-purple-500" /> Build with AI
             </Button>
@@ -164,8 +197,37 @@ export default function SopBrowser({ sops, settings, me, activeCategory, onCateg
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((sop) => (
-            <SopCard key={sop.id} sop={sop} settings={settings} me={me} onOpen={onOpen} />
+            <SopCard
+              key={sop.id}
+              sop={sop}
+              settings={settings}
+              me={me}
+              onOpen={onOpen}
+              selecting={selecting}
+              checked={selected.has(sop.id)}
+              onToggle={toggleSelected}
+            />
           ))}
+        </div>
+      )}
+
+      {selecting && selected.size > 0 && (
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-3 shadow">
+          <span className="text-sm font-medium text-slate-700">{selected.size} selected</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-500">Move to:</span>
+            <Select value={moveCat} onValueChange={setMoveCat}>
+              <SelectTrigger className="h-8 w-40"><SelectValue placeholder="Department" /></SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button type="button" variant="outline" size="sm" onClick={() => runBulk("move", moveCat)} disabled={!moveCat} className="h-8">Apply</Button>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => runBulk("publish")} className="h-8">Publish</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => runBulk("archive")} className="h-8">Archive</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => runBulk("pin")} className="h-8 gap-1"><Pin className="h-3.5 w-3.5" /> Pin</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => runBulk("unpin")} className="h-8">Unpin</Button>
         </div>
       )}
     </div>
