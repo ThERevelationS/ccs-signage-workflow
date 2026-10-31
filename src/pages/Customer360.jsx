@@ -366,6 +366,12 @@ export default function Customer360() {
           >
             <FilePlus2 className="h-4 w-4" /> New estimate
           </Link>
+          <Link
+            to={`/EstimatorCustomers?customer=${customerId}`}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Edit customer
+          </Link>
         </div>
       </div>
 
