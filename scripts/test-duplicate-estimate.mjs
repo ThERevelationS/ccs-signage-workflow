@@ -108,10 +108,10 @@ await assert.rejects(
 );
 
 // Numbering choice: "same" keeps the source number, default/"new" blanks it.
-assert.equal(buildDuplicateEstimate(source, { numbering: 'same' }).estimate_number, 'EST-1042');
-assert.equal(buildDuplicateEstimate(source, { numbering: 'same' }).status, 'draft');
-assert.equal(buildDuplicateEstimate(source, { numbering: 'new' }).estimate_number, '');
-assert.equal(buildDuplicateEstimate({ ...source, estimate_number: '' }, { numbering: 'same' }).estimate_number, '');
+assert.equal(buildDuplicateEstimate(source, { keepEstimateNumber: true }).estimate_number, 'EST-1042');
+assert.equal(buildDuplicateEstimate(source, { keepEstimateNumber: true }).status, 'draft');
+assert.equal(buildDuplicateEstimate(source, { keepEstimateNumber: false }).estimate_number, '');
+assert.equal(buildDuplicateEstimate({ ...source, estimate_number: '' }, { keepEstimateNumber: true }).estimate_number, '');
 
 rmSync(stub, { force: true });
 rmSync(bundlePath, { force: true });
