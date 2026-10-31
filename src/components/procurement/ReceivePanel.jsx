@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { CheckCircle2, ClipboardCopy, Loader2, Mail, Truck } from "lucide-react";
+import { CheckCircle2, ClipboardCopy, Loader2, Mail, MailCheck, Truck } from "lucide-react";
+import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
 import {
   LINE_STATUS_LABELS,
   buildReceiptLines,
@@ -60,6 +61,7 @@ export default function ReceivePanel({ po, sessionToken, canReceive, busy, onRec
   const [localError, setLocalError] = useState("");
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [emailState, setEmailState] = useState({ status: "idle", error: "" });
   const receipt = useMemo(() => derivePoReceipt(po), [po]);
   const history = useReceiveHistory(sessionToken, po);
 
@@ -76,6 +78,29 @@ export default function ReceivePanel({ po, sessionToken, canReceive, busy, onRec
   );
 
   const mailto = vendorNotifyMailto(po, receipt);
+  const vendorEmail = clean(po?.vendor_email); // same field the mailto path uses
+  const poNumber = clean(po?.po_number) || "(no number)";
+
+  // Bridge send path — the same plain-text summary the clipboard copy uses.
+  // The mailto stays as the fallback: when no vendor_email is on file it opens
+  // the mail app with subject/body prefilled for the operator to address.
+  const sendVendorEmail = async () => {
+    if (!vendorEmail || emailState.status === "sending" || emailState.status === "sent") return;
+    setEmailState({ status: "sending", error: "" });
+    try {
+      await sendStaffEmail({
+        sessionToken,
+        to: vendorEmail,
+        subject: `PO ${poNumber} — receipt/backorder notice`,
+        body: receivingSummaryText(po, receipt),
+        kind: "po_vendor_notify",
+      });
+      setEmailState({ status: "sent", error: "" });
+    } catch (e) {
+      setEmailState({ status: "failed", error: e?.message || "Email could not be sent." });
+    }
+  };
+
   const copySummary = async () => {
     try {
       await navigator.clipboard.writeText(receivingSummaryText(po, receipt));
@@ -195,13 +220,28 @@ export default function ReceivePanel({ po, sessionToken, canReceive, busy, onRec
             {busy === "receive" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}Record receipt
           </button>
         )}
-        {/* Vendor notify: no backend email action exists for POs, so hand the
-            operator a prefilled mailto + a clipboard summary instead. */}
-        {mailto.to && (
+        {/* Vendor notify: primary path sends through the sendStaffEmail bridge
+            when the PO carries a vendor_email; the mailto link remains as the
+            fallback (always rendered until a send succeeds — with no
+            vendor_email it opens the mail app for manual addressing). */}
+        {vendorEmail && (
+          <button type="button" onClick={sendVendorEmail}
+            disabled={Boolean(busy) || emailState.status === "sending" || emailState.status === "sent"}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60">
+            {emailState.status === "sending"
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : emailState.status === "sent" ? <MailCheck className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+            {emailState.status === "sending" ? "Sending…" : emailState.status === "sent" ? "Email sent" : "Email vendor"}
+          </button>
+        )}
+        {emailState.status !== "sent" && (
           <a href={mailto.href}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
-            <Mail className="h-4 w-4" />Email vendor
+            <Mail className="h-4 w-4" />{vendorEmail ? "Open in mail app" : "Email vendor"}
           </a>
+        )}
+        {emailState.status === "sent" && (
+          <span className="self-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">Sent to {vendorEmail}</span>
         )}
         <button type="button" onClick={copySummary}
           className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
@@ -214,6 +254,12 @@ export default function ReceivePanel({ po, sessionToken, canReceive, busy, onRec
           </button>
         )}
       </div>
+
+      {emailState.status === "failed" && (
+        <div className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          Vendor email failed: {emailState.error} Use “Open in mail app” to send it manually.
+        </div>
+      )}
 
       {showHistory && (
         <div className="mt-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
