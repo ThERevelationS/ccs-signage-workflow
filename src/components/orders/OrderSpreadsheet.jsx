@@ -436,7 +436,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           label: workOrderFilter ? "Work Order purchasing orders" : "Order Spreadsheet orders",
         }),
         reloadAux
-          ? fetchAllWorkOrders().then((rows) =>
+          ? fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
             (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true))
           : Promise.resolve(cachedWorkOrdersRef.current || []),
         reloadAux
