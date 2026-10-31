@@ -1820,6 +1820,122 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Customer workspace (360): the same aggregate idea as get_opportunity but
+    // keyed on customer_id, so the customer page renders pipeline, quotes, jobs,
+    // AR and document history from one call. Entities with a customer_id column
+    // filter on it directly; purchase orders and activity rows carry only
+    // document links, so they match on the customer's opportunity / estimate /
+    // work order ids instead. Each list is capped at LIST_CAP (activities at
+    // ACTIVITY_CAP) with per-list truncated flags; totals are computed over
+    // every loaded row, capped or not.
+    if (action === "customer_workspace") {
+      const customerId = clean(body?.customer_id || body?.id);
+      if (!customerId) throw bad("customer_id is required.");
+      const customer = await Customer.get(customerId).catch(() => null);
+      if (!customer?.id) throw bad("Customer not found.", 404);
+
+      const LIST_CAP = 500;
+      const ACTIVITY_CAP = 50;
+      // Fetch deeper than the display cap so totals reflect more than the
+      // first page and a length beyond LIST_CAP reliably marks truncation.
+      const FETCH_LIMIT = 1000;
+      const rows = (v: any) => (Array.isArray(v) ? v : []);
+      const descCreated = (a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date));
+
+      const [contacts, locations, opportunities, estimates, workOrders, invoices, payments, changeOrders] = await Promise.all([
+        CustomerContact.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        CustomerLocation.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Opportunity.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Estimate.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        WorkOrder.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Invoice.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        Payment.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+        ChangeOrder.filter({ customer_id: customerId }, "-created_date", FETCH_LIMIT).catch(() => []),
+      ]);
+
+      const customerOpportunities = rows(opportunities).sort(descCreated);
+      const customerEstimates = rows(estimates).filter((e: any) => e?.deleted !== true).sort(descCreated);
+      const customerWorkOrders = rows(workOrders).filter((w: any) => w?.deleted !== true).sort(descCreated);
+      const customerInvoices = rows(invoices).sort(descCreated);
+      const customerPayments = rows(payments).filter((p: any) => clean(p?.status) !== "void").sort(descCreated);
+      const customerChangeOrders = rows(changeOrders).sort(descCreated);
+
+      const opportunityIds = new Set(customerOpportunities.map((o: any) => clean(o?.id)).filter(Boolean));
+      const estimateIds = new Set(customerEstimates.map((e: any) => clean(e?.id)).filter(Boolean));
+      const workOrderIds = new Set(customerWorkOrders.map((w: any) => clean(w?.id)).filter(Boolean));
+
+      const [poScan, activityScan] = await Promise.all([
+        // Purchase orders have no customer column — match the rows linked to
+        // any of the customer's documents (get_opportunity uses the same
+        // opportunity_id / estimate_id / work_order_id linkage for one opp).
+        PurchaseOrder.filter({}, "-created_date", 4000).catch(() => []),
+        // Activity rows link only by opportunity_id. A per-opp fan-out is
+        // exact for small accounts; past a dozen opportunities one scan of
+        // the recent activity tail is cheaper than N entity calls.
+        opportunityIds.size <= 12
+          ? Promise.all([...opportunityIds].map((oppId) =>
+              Activity.filter({ opportunity_id: oppId }, "-created_date", ACTIVITY_CAP + 1).catch(() => [])))
+              .then((sets: any[]) => sets.flat())
+          : Activity.filter({}, "-created_date", 3000).catch(() => []),
+      ]);
+      const purchaseOrders = rows(poScan)
+        .filter((p: any) =>
+          opportunityIds.has(clean(p?.opportunity_id))
+          || estimateIds.has(clean(p?.estimate_id))
+          || workOrderIds.has(clean(p?.work_order_id)))
+        .sort(descCreated);
+      const activities = rows(activityScan)
+        .flat()
+        .filter((a: any) => opportunityIds.has(clean(a?.opportunity_id)))
+        .sort(descCreated);
+
+      // invoicingAction semantics: live = non-void; invoiced = sum(total),
+      // paid = sum(amount_paid), balance = sum(balance_due) over live rows.
+      const liveInvoices = customerInvoices.filter((i: any) => clean(i?.status) !== "void");
+      const totals = {
+        estimate_count: customerEstimates.length,
+        estimate_value: money(customerEstimates.reduce((s: number, e: any) => s + num(e?.quote_total), 0)),
+        // draft/calculated/sent = still in play (bulk_remarkup open set);
+        // approved/archived/cancelled are decided.
+        open_estimate_value: money(customerEstimates
+          .filter((e: any) => ["draft", "calculated", "sent"].includes(clean(e?.status)))
+          .reduce((s: number, e: any) => s + num(e?.quote_total), 0)),
+        work_order_count: customerWorkOrders.length,
+        invoiced: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.total), 0)),
+        paid: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0)),
+        balance: money(liveInvoices.reduce((s: number, i: any) => s + num(i?.balance_due), 0)),
+        // PO_STATUSES: draft/sent/partially_received are open; received and
+        // cancelled are done.
+        open_po_count: purchaseOrders.filter((p: any) => ["draft", "sent", "partially_received"].includes(clean(p?.status))).length,
+        // Pending follow-ups = open-stage opportunities with a next action,
+        // the same predicate list_follow_ups uses.
+        open_activity_count: customerOpportunities
+          .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && (clean(o?.next_action) || clean(o?.next_action_due)))
+          .length,
+      };
+
+      const lists: Record<string, any[]> = {
+        contacts: rows(contacts).sort(descCreated),
+        locations: rows(locations).sort(descCreated),
+        opportunities: customerOpportunities,
+        estimates: customerEstimates,
+        work_orders: customerWorkOrders,
+        invoices: customerInvoices,
+        payments: customerPayments,
+        purchase_orders: purchaseOrders,
+        change_orders: customerChangeOrders,
+        activities,
+      };
+      const truncated: Record<string, boolean> = {};
+      const capped: Record<string, any[]> = {};
+      for (const [key, items] of Object.entries(lists)) {
+        const cap = key === "activities" ? ACTIVITY_CAP : LIST_CAP;
+        truncated[key] = items.length > cap;
+        capped[key] = items.slice(0, cap);
+      }
+      return Response.json({ success: true, action, customer, ...capped, totals, truncated });
+    }
+
     throw bad(`Unsupported opportunity workspace action: ${action}`);
   } catch (error: any) {
     const status = Number(error?.status || error?.statusCode || 500);
