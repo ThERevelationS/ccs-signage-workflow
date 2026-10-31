@@ -266,7 +266,7 @@ function LocalityPickerSession({
     try {
       const count = (parseInt(localStorage.getItem("permitting_apply_count") || "0", 10) || 0) + 1;
       localStorage.setItem("permitting_apply_count", String(count));
-      if (count <= 3) setTimeout(() => window.alert(count === 1 ? "Done — that's right! The jurisdiction is linked to this job." : "Good — jurisdiction linked. You've got this."), 350);
+      if (count <= 3) setTimeout(() => window.alert(count === 1 ? "Done — that's right! The office is linked to this job. Next step: scroll down and fill in the dates, or call the office." : "Good — office linked. You've got this."), 350);
     } catch {}
     onClose();
   };
