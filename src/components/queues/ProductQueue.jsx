@@ -119,7 +119,7 @@ function RowEditor({ row, actor, onSaved, disabled }) {
               <input type="checkbox" disabled={disabled} checked={overrideHardDue} onChange={(e) => setOverrideHardDue(e.target.checked)} />
               Override hard due date</label>
           )}
-          <button type="button" className={`${inp} font-semibold text-sky-700`} disabled={disabled || saving} onClick={save}>
+          <button className={`${inp} font-semibold text-sky-700`} disabled={disabled || saving} onClick={save}>
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
@@ -253,7 +253,7 @@ export default function ProductQueue({
         <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
           <input type="checkbox" checked={filters.includeFulfilled} onChange={(e) => set("includeFulfilled", e.target.checked)} />
           Include fulfilled</label>
-        <button type="button" className={sel} onClick={clearFilters}>Clear</button>
+        <button className={sel} onClick={clearFilters}>Clear</button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200">
@@ -280,9 +280,9 @@ export default function ProductQueue({
                 <tr className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
                   <td className="whitespace-nowrap px-2 py-1.5">
                     {onOpenWorkOrder ? (
-                      <button type="button" className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder(r.workOrderId)}>{r.ref}</button>
+                      <button className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder(r.workOrderId)}>{r.ref}</button>
                     ) : (
-                      <Link className="text-sky-700 hover:underline" to={`/MainWorkflow?wo=${r.workOrderId}`}>{r.ref}</Link>
+                      <Link className="text-sky-700 hover:underline" to={`/JobWorkspace?wo=${r.workOrderId}`}>{r.ref}</Link>
                     )}
                     <div className="text-[10px] text-gray-400">{r.position}</div>
                   </td>
@@ -320,10 +320,11 @@ export default function ProductQueue({
                       <option value="">Set status…</option>
                       {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s}</option>)}
                     </select>
-                    <button type="button" className={`${sel} ml-1`} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP}
+                    <button className={`${sel} ml-1`} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP}
                       onClick={() => setExpanded((x) => ({ ...x, [key]: !x[key] }))}>
                       {expanded[key] ? "Close" : "Edit"}
                     </button>
+                    <Link className="ml-1 text-[11px] text-sky-700 hover:underline" title="Open in Main Workflow" to={`/MainWorkflow?wo=${r.workOrderId}`}>WO</Link>
                     {isBusy && <span className="ml-1 text-[10px] text-gray-400">saving…</span>}
                     {rowError && <div className="mt-0.5 max-w-[220px] text-[10px] text-rose-700">{rowError}</div>}
                   </td>
@@ -351,10 +352,10 @@ export default function ProductQueue({
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>Page {page + 1} of {pages}</span>
         <div className="flex gap-1">
-          <button type="button" className={sel} disabled={page === 0} onClick={() => setPage(0)}>First</button>
-          <button type="button" className={sel} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Prev</button>
-          <button type="button" className={sel} disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>Next</button>
-          <button type="button" className={sel} disabled={page >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button>
+          <button className={sel} disabled={page === 0} onClick={() => setPage(0)}>First</button>
+          <button className={sel} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Prev</button>
+          <button className={sel} disabled={page >= pages - 1} onClick={() => setPage((p) => p + 1)}>Next</button>
+          <button className={sel} disabled={page >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button>
         </div>
       </div>
     </div>
