@@ -17,7 +17,7 @@ const stubs = {
   "react-router-dom": 'import React from "react"; export const Link = ({to,children,...props}) => <a href={to} {...props}>{children}</a>;',
   "lucide-react": 'import React from "react"; export const FileText=()=>null; export const User=()=>null; export const Calendar=()=>null;',
   "date-fns": 'export const format = (value) => String(value);',
-  "@/components/estimator/quoteLifecycle": 'export const isQuoteExpired=()=>false; export const localDateStamp=()=>""; export const quoteExpirationDate=()=>"";',
+  "@/components/estimator/quoteLifecycle": 'export const isQuoteExpired=()=>false; export const localDateStamp=()=>""; export const quoteExpirationDate=()=>""; export const estimateQuoteExpiration=()=>""; export const formatQuoteIssueDate=()=>""; export const resolveQuoteIssueMetadata=()=>({});',
   "@/components/staff/staffEntities": "export const staffEntities = { Customer: { get: (...args) => globalThis.__getCustomerForEstimateCard(...args) } };",
 };
 const outfile = resolve(temp, "estimate-card.mjs");
