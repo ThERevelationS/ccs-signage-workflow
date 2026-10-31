@@ -478,15 +478,29 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             </div>
           )}
           {repeatOffenders.length > 0 && (
-            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500" title="Jurisdictions where applications were denied — process problems surface here">
-              <span className="font-semibold text-slate-600">Denied applications:</span>
-              {repeatOffenders.map((j) => <span key={j.name} className="font-medium text-red-600">{j.name} ({j.count})</span>)}
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500" title="Offices that said no before — worth reading the notes before applying again">
+              <span className="font-semibold text-slate-600">Denied before:</span>
+              {repeatOffenders.map((j) => {
+                const match = jurisdictions.find((x) => String(x.name || "").trim().toLowerCase() === String(j.name || "").trim().toLowerCase());
+                return match ? (
+                  <button key={j.name} type="button" onClick={() => setSelectedJurisdiction(match)} className="font-medium text-red-600 underline decoration-dotted hover:text-red-800" title={`Open ${j.name}'s details`}>{j.name} ({j.count})</button>
+                ) : (
+                  <span key={j.name} className="font-medium text-red-600">{j.name} ({j.count})</span>
+                );
+              })}
             </div>
           )}
           {staleJurisdictions.length > 0 && (
-            <div className="mb-2 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800" title="Verified jurisdictions not re-checked in over 6 months — re-verify before relying on them">
-              {staleJurisdictions.length} verified jurisdiction{staleJurisdictions.length === 1 ? "" : "s"} haven't been re-checked in 6+ months
-            </div>
+            <details className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
+              <summary className="cursor-pointer" title="Offices our team checked a while ago — worth a fresh look before relying on them">
+                {staleJurisdictions.length} checked office{staleJurisdictions.length === 1 ? "" : "s"} haven't been looked at in 6+ months — click to see which
+              </summary>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                {staleJurisdictions.map((j) => (
+                  <button key={j.id || j.name} type="button" onClick={() => setSelectedJurisdiction(j)} className="text-amber-900 underline decoration-dotted hover:text-amber-950">{j.name}</button>
+                ))}
+              </div>
+            </details>
           )}
           {comparePicks.length === 2 && (
             <div className="mb-3 grid grid-cols-2 gap-3">
@@ -505,7 +519,14 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
           {mostApplied.length > 0 && (
             <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500" title="Where the permitting effort concentrates — jurisdictions with the most permit lines">
               <span className="font-semibold text-slate-600">Most applied:</span>
-              {mostApplied.map((j) => <span key={j.name} className="font-medium text-slate-700">{j.name} <span className="text-indigo-600">({j.count})</span></span>)}
+              {mostApplied.map((j) => {
+                const match = jurisdictions.find((x) => String(x.name || "").trim().toLowerCase() === String(j.name || "").trim().toLowerCase());
+                return match ? (
+                  <button key={j.name} type="button" onClick={() => setSelectedJurisdiction(match)} className="font-medium text-indigo-700 underline decoration-dotted hover:text-indigo-900" title={`Open ${j.name}'s details`}>{j.name} <span className="text-indigo-600">({j.count})</span></button>
+                ) : (
+                  <span key={j.name} className="font-medium text-slate-700">{j.name} <span className="text-indigo-600">({j.count})</span></span>
+                );
+              })}
             </div>
           )}
           <div className="flex gap-2 items-start">
