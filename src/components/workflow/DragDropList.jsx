@@ -30,10 +30,21 @@ export default function DragDropList({
 
   // Pre-compute riders and parents from the already-loaded list to avoid per-card API calls
   const enrichedWorkOrders = React.useMemo(() => {
+    // Index first — a per-card filter+find is O(n^2) and stalls large stages.
+    const byId = new Map();
+    const ridersByParent = new Map();
+    for (const wo of workOrders) {
+      if (wo?.id) byId.set(wo.id, wo);
+      if (wo?.is_rider && wo?.parent_work_order_id) {
+        const list = ridersByParent.get(wo.parent_work_order_id) || [];
+        list.push(wo);
+        ridersByParent.set(wo.parent_work_order_id, list);
+      }
+    }
     return workOrders.map(wo => ({
       ...wo,
-      _riders: workOrders.filter(r => r.parent_work_order_id === wo.id && r.is_rider),
-      _parent: wo.is_rider ? (workOrders.find(p => p.id === wo.parent_work_order_id) || null) : null,
+      _riders: ridersByParent.get(wo.id) || [],
+      _parent: wo.is_rider ? (byId.get(wo.parent_work_order_id) || null) : null,
     }));
   }, [workOrders]);
 
