@@ -15,6 +15,7 @@ import { base44 } from "@/api/base44Client";
 import { captureElectricalOfficeResponses } from "./electricalOfficeResponseHandoff.mjs";
 import { captureWorkflowSources, WORKFLOW_SOURCE_FIELDS } from "./workflowSourceEvidence.mjs";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 
 const ELECTRICAL_RESEARCH_ROLES = [
   { role: "electrical_permit", label: "Permit issuance" },
@@ -165,7 +166,7 @@ export async function resolveJurisdictionFromAddress(address, sessionToken = "")
  */
 export async function loadJurisdictionRules(jurisdictionName, jurisdictionId) {
   if (!jurisdictionName) return { approved: [], pending: [], draftOrHistorical: [] };
-  const { items } = await staffEntities.PermittingRule.filter(
+  const { items } = await withRateLimitRetry(() => staffEntities.PermittingRule.filter(
     jurisdictionId ? { jurisdiction_id: jurisdictionId } : { jurisdiction_name: jurisdictionName },
     { sort: "-is_operational", limit: 200, fields: [
       "id", "rule_category", "sign_type", "sign_type_normalized", "requirement",
@@ -173,7 +174,7 @@ export async function loadJurisdictionRules(jurisdictionName, jurisdictionId) {
       "exceptions", "status", "is_operational", "draft_context", "confidence",
       "citations", "jurisdiction_name", "issuing_office",
     ] },
-  );
+  ));
   return splitRulesByHierarchy(items);
 }
 
@@ -182,10 +183,10 @@ export async function loadJurisdictionRules(jurisdictionName, jurisdictionId) {
  */
 export async function loadJurisdictionSourceDocs(jurisdictionName, jurisdictionId) {
   if (!jurisdictionName) return { forms: [], feeSchedules: [], codeDocs: [], other: [], all: [] };
-  const { items } = await staffEntities.PermittingSourceDocument.filter(
+  const { items } = await withRateLimitRetry(() => staffEntities.PermittingSourceDocument.filter(
     jurisdictionId ? { jurisdiction_id: jurisdictionId } : { jurisdiction_name: jurisdictionName },
     { sort: "-classified_at", limit: 100, fields: WORKFLOW_SOURCE_FIELDS },
-  );
+  ));
   return { ...categorizeSourceDocs(items), all: items };
 }
 
@@ -403,15 +404,15 @@ export function reviewWorkflowSteps(steps, rules) {
 export async function saveWorkflowDraft(draft, inputs, title, notes) {
   if (!draft || !title.trim()) throw new Error('Name this draft before saving.');
   // Deliberately no work_order_id, customer relationship, job or permit-line writes.
-  return staffEntities.PermittingWorkflowDraft.create({
+  return withRateLimitRetry(() => staffEntities.PermittingWorkflowDraft.create({
     title: title.trim(), status: 'draft', jurisdiction_id: draft.jurisdiction.jurisdiction_id || '',
     jurisdiction_name: draft.jurisdiction.jurisdiction_name || '', state: draft.jurisdiction.state || '',
     snapshot: draft, project_inputs: inputs, review_notes: notes.trim(), reviewed_at: new Date().toISOString(),
-  });
+  }));
 }
 
 export async function loadWorkflowDrafts(jurisdictionId) {
   if (!jurisdictionId) return [];
-  const result = await staffEntities.PermittingWorkflowDraft.filter({jurisdiction_id: jurisdictionId}, {sort: '-created_date', limit: 20});
+  const result = await withRateLimitRetry(() => staffEntities.PermittingWorkflowDraft.filter({jurisdiction_id: jurisdictionId}, {sort: '-created_date', limit: 20}));
   return Array.isArray(result) ? result : result.items || [];
 }
