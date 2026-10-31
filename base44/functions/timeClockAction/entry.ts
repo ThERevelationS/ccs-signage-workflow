@@ -7949,16 +7949,19 @@ Deno.serve(async (req) => {
         for (const s of segs) { if (s?.work_order_title) row.jobs.add(s.work_order_title); }
         byKey.set(key, row);
       }
+      // Rows are written straight into a payroll CSV; neutralize spreadsheet
+      // formula triggers in free-text fields (employee-controlled names, etc.).
+      const csvText = (v: unknown) => { const s = String(v ?? ''); return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s; };
       const exportRows = [...byKey.values()].map((r) => ({
-        user_email: r.user_email, user_name: r.user_name, date: r.date,
+        user_email: r.user_email, user_name: csvText(r.user_name), date: r.date,
         regular_hours: Math.round(r.regular_hours * 100) / 100,
         overtime_hours: Math.round(r.overtime_hours * 100) / 100,
         total_hours: Math.round(r.total_hours * 100) / 100,
         entries: r.entries,
-        cost_code: [...r.cost_codes].join(', '),
-        union_local: [...r.union_locals].join(', '),
+        cost_code: csvText([...r.cost_codes].join(', ')),
+        union_local: csvText([...r.union_locals].join(', ')),
         certified_payroll: r.certified,
-        jobs: [...r.jobs].join(', '),
+        jobs: csvText([...r.jobs].join(', ')),
       })).sort((a, b) => a.user_email.localeCompare(b.user_email) || a.date.localeCompare(b.date));
       // Export audit trail (#223): every payroll export is logged with the
       // range, row count, and who ran it - required for certified-payroll
