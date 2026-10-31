@@ -14,6 +14,15 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { staffEntities } from "@/components/staff/staffEntities";
 
+// due_date is stored date-only ("YYYY-MM-DD"); a bare new Date(str) parses it
+// as UTC midnight and shifts it one day back in local time. Parse as local
+// midnight the same way MyWorkflow/SIPs do.
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 // Workflow reporting constants
 const STAGES = ["estimating", "sales", "permitting", "design", "production", "fabrication", "installation"];
 const STAGE_LABEL = {
@@ -59,7 +68,8 @@ function WorkflowReportingTab() {
     ? Math.round((completed.length / allWorkOrders.length) * 100) : 0;
   const asapCount = active.filter(wo => wo.asap).length;
   const today = new Date();
-  const overdueCount = active.filter(wo => wo.due_date && new Date(wo.due_date) < today).length;
+  const startOfToday = new Date(today); startOfToday.setHours(0, 0, 0, 0);
+  const overdueCount = active.filter(wo => wo.due_date && parseLocalDate(wo.due_date) < startOfToday).length;
 
   const stageData = STAGES.map(stage => ({
     name: STAGE_LABEL[stage],
@@ -78,7 +88,7 @@ function WorkflowReportingTab() {
   });
   const timelineData = next30.map(label => ({
     date: label,
-    count: active.filter(wo => wo.due_date && dateFnsFormat(new Date(wo.due_date), "MMM d") === label).length
+    count: active.filter(wo => wo.due_date && dateFnsFormat(parseLocalDate(wo.due_date), "MMM d") === label).length
   })).filter(d => d.count > 0);
 
   const assigneeCounts = {};
