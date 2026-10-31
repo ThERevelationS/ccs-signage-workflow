@@ -167,7 +167,7 @@ function LocalityPickerSession({
       if (!cancelled) setRepositoryJurisdictions(Array.isArray(rows) ? rows : []);
     }).catch((e) => {
       console.error("Could not load saved jurisdictions in locality picker:", e);
-      if (!cancelled) setRepositoryError("We could not load the saved jurisdictions list. You can still pick one that is already set up.");
+      if (!cancelled) setRepositoryError("We couldn't load the saved offices list — you can still pick one that's already set up.");
     }).finally(() => {
       if (!cancelled) setRepositoryLoading(false);
     });
@@ -239,7 +239,7 @@ function LocalityPickerSession({
       if(version!==searchVersion.current||!openRef.current)return;
       serviceFails.current=(serviceFails.current||0)+1;
       setError(serviceFails.current>=2
-        ? "Our lookup service is having trouble right now — try again in a minute, or pick from the saved jurisdictions list below."
+        ? "Our lookup service is having trouble right now — try again in a minute, or pick from the saved offices list below."
         : (e.message || "Search failed"));
     }
     if(pendingSearch.current===version)pendingSearch.current=null;
@@ -301,7 +301,7 @@ function LocalityPickerSession({
     if(currentUser?.role!=="admin"||(address.trim()&&!isDetectedCandidate(jurisdiction))||creatingDraft||pendingDraft.current||!openRef.current)return;
     setDraftCreateError("");
     if (hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction)) {
-      setDraftCreateError(`Multiple repository profiles match ${jurisdiction.name}, ${jurisdiction.state || ""}. Someone on the team needs to clean up the matching entries first.`);
+      setDraftCreateError(`More than one saved office matches ${jurisdiction.name}, ${jurisdiction.state || ""} — someone on the team needs to fix the doubles first.`);
       return;
     }
     setDraftCandidate(jurisdiction);
@@ -339,7 +339,7 @@ function LocalityPickerSession({
     } catch (e) {
       if(!openRef.current||draftVersion!==searchVersion.current)return;
       console.error("Could not create Permit locality draft from repository:", e);
-      setDraftCreateError(e?.message || "The draft locality could not be created safely. Nothing was applied to this Work Order.");
+      setDraftCreateError(e?.message || "Couldn't make the office record — nothing changed on this job.");
     } finally {
       if(openRef.current&&draftVersion===searchVersion.current)setCreatingDraft(false);
     }
@@ -370,7 +370,7 @@ function LocalityPickerSession({
           </DialogTitle>
         </DialogHeader>
 
-        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this jurisdiction. That's it. <span className="cursor-help border-b border-dotted border-violet-400" title='"Jurisdiction" just means which town, township, or county office issues your permit — every level is different. "Verified" means our team checked it. "Needs review" means nobody has confirmed it yet.'>what do these words mean?</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
+        {firstRun&&<div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900 flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 shrink-0"/><div className="flex-1"><strong>How this works:</strong> Type or paste the job address → we find the town or township → double-check the offices → press Use this office. That's it. <span className="cursor-help border-b border-dotted border-violet-400" title='"Office" means which town, township, or county office issues your permit — every level is different. "Checked" means our team looked at it. "Needs a look" means nobody confirmed it yet.'>what do these words mean?</span></div><button type="button" className="text-xs font-semibold underline" onClick={()=>{setFirstRun(false);try{localStorage.setItem("permitting_first_run_done","1");}catch{}}}>Got it</button></div>}
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap">
           <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
@@ -490,7 +490,7 @@ function LocalityPickerSession({
           ) : (
             <>
             <Button onClick={runSearch} disabled={!address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 min-h-11 w-full sm:w-auto">
-              <Search className="w-4 h-4" /> {t("Find my jurisdiction", "Encontrar mi jurisdicción")}
+              <Search className="w-4 h-4" /> {t("Find my office", "Encontrar mi oficina")}
             </Button>
             <button type="button" className="min-h-11 self-center rounded-md border border-slate-200 px-2 text-xs font-bold text-slate-500 hover:bg-slate-50" title="Keyboard shortcuts"
               onClick={() => window.alert("Shortcuts:\n• Enter — search the typed address\n• Esc — close this dialog\n• Paste a full address — searches automatically")}>?</button>
@@ -631,12 +631,12 @@ function LocalityPickerSession({
                 Your GPS and the typed address disagree by more than 500 ft — double-check which location is the actual job site before applying.
               </p>
             )}
-            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Selected jurisdiction" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Detected jurisdiction</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this jurisdiction.":"We found the town or township — someone on the team still needs to check the offices before it can be used."}</p></section>}
+            {(result?.suggested_locality||result?.ai_locality_name)&&<section aria-label="Picked office" className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm"><p className="text-xs text-gray-500">Found office</p><p className="font-semibold">{result.suggested_locality?.name||result.ai_locality_name}{(result.suggested_locality?.state||result.ai_state)?", "+(result.suggested_locality?.state||result.ai_state):""}</p><p className="text-xs text-gray-600">{result.apply_allowed?"Found it — double-check the office notes below, then press Use this office.":"We found the town or township — someone on the team still needs to check the offices before it can be used."}</p></section>}
             <details className="rounded-xl border border-slate-200 bg-white shadow-sm"><summary className="min-h-11 cursor-pointer px-4 py-3 text-sm font-semibold text-slate-800">Search activity</summary><div className="p-3 pt-0"><ResearchProgressBar inline /></div></details>
                 {/* Manual jurisdiction browsing; an entered address must pass location checks. */}
                 {!address.trim() && localities.length > 0 && (
                   <div className="border rounded-lg p-3 bg-white">
-                    <Label htmlFor="jurisdiction-choice" className="text-xs">Choose a jurisdiction</Label>
+                    <Label htmlFor="jurisdiction-choice" className="text-xs">Pick an office</Label>
                     <select id="jurisdiction-choice"
                       value={selectedLocalityId}
                       disabled={Boolean(address.trim())}
@@ -690,7 +690,7 @@ function LocalityPickerSession({
                   </div>
                 )}
 
-            {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this jurisdiction.</p>}
+            {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this office.</p>}
             {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
               <h4 className="font-semibold text-sm">Set up a new office record from the saved list</h4>
               <p className="text-xs">This makes a draft — it does not confirm the address or the right office.</p>
@@ -797,7 +797,7 @@ function LocalityPickerSession({
                 {!result.suggested_locality && (
                   <div className="border rounded-lg p-3 bg-violet-50 border-violet-200 space-y-2">
                     <div>
-                      <h4 className="font-semibold text-sm text-violet-950">Saved jurisdictions</h4>
+                      <h4 className="font-semibold text-sm text-violet-950">Saved offices</h4>
                       <p className="text-[11px] text-violet-800 mt-0.5">
                         These are saved records — not proof of which office handles permits. Check before using one.
                       </p>
@@ -831,7 +831,7 @@ function LocalityPickerSession({
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-900">{jurisdiction.name}{jurisdiction.state ? `, ${jurisdiction.state}` : ""}</p>
                               <p className="text-[11px] text-gray-500 capitalize">
-                                {jurisdiction.type || "jurisdiction"}{parentCounty ? ` • Parent: ${parentCounty}` : ""}
+                                {jurisdiction.type || "office"}{parentCounty ? ` • in ${parentCounty} County` : ""}
                               </p>
                               <span className={`inline-flex mt-1 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
                                 {trust.label}
@@ -937,9 +937,9 @@ function LocalityPickerSession({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Create a draft permit locality?</AlertDialogTitle>
+              <AlertDialogTitle>Make a new office record?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will copy the repository contact information for {draftCandidate?.name || "this jurisdiction"} into a new Permit locality and add only three generic tracking milestones: Application Submitted, Follow-up, and Permit Received. It will not copy AI permit requirements, fees, deadlines, or approval claims. Verify the responsible office and workflow before relying on it for submission.
+                This copies the saved office's contact info for {draftCandidate?.name || "this office"} into a new office record and adds three plain steps: Application Sent, Check Back, and Permit Came In. It does not copy rules, fees, deadlines, or approvals. Check the office and steps before filing.
               </AlertDialogDescription>
             </AlertDialogHeader>
             {draftCreateError && (
@@ -955,7 +955,7 @@ function LocalityPickerSession({
                 }}
               >
                 {creatingDraft ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin motion-reduce:animate-none" /> : null}
-                Create Draft & Apply
+                Make it & use it
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -971,10 +971,10 @@ function LocalityPickerSession({
             </Button>
             <Button
               onClick={handleApply}
-              aria-label="Use the selected jurisdiction" disabled={!selectedLocalityId || searching || !addressCanApply}
+              aria-label="Use the picked office" disabled={!selectedLocalityId || searching || !addressCanApply}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
-              <Save className="w-4 h-4" /> Use this jurisdiction
+              <Save className="w-4 h-4" /> Use this office
             </Button>
           </div>
         </div>
