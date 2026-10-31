@@ -18,7 +18,7 @@ const RECORD_GROUPS = [
 
 const PAGE_LABEL_OVERRIDES = {
   CrmEvents: "CRM Events", WalkIn: "Walk-in Sale", CustomerStatements: "Statements",
-  CommsFollowups: "Follow-ups", Customer360: "Customer 360",
+  CommsFollowups: "Follow-ups", Customer360: "Customer 360", CbMigration: "CB Migration",
   Home: "Home", MainWorkflow: "Main Workflow", Opportunities: "Sales Opportunities",
   EstimatorCustomers: "Customers", Invoices: "Invoices", PurchaseOrders: "Purchase Orders",
   ChangeOrders: "Change Orders", JobCosting: "Job Costing", Inventory: "Inventory",
