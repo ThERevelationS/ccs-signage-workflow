@@ -10,7 +10,12 @@
       "type": "string",
       "enum": [
         "sales_pipeline",
-        "orders"
+        "orders",
+        "customers",
+        "customer_contacts",
+        "customer_addresses",
+        "parts",
+        "vendor_associations"
       ],
       "description": "Type of import"
     },
@@ -124,9 +129,25 @@
     "total_items"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__importjob_backend_only__" } },
-    "read": { "user_condition": { "role": "__importjob_backend_only__" } },
-    "update": { "user_condition": { "role": "__importjob_backend_only__" } },
-    "delete": { "user_condition": { "role": "__importjob_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__importjob_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__importjob_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__importjob_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__importjob_backend_only__"
+      }
+    }
   }
 }
