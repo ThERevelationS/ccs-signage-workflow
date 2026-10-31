@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
+import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
 
 const PRIORITIES = new Set(['low','medium','high','critical']);
 const RATE_WINDOW_MS = 15 * 60 * 1000;
@@ -248,7 +249,7 @@ Deno.serve(async (req) => {
         if (uploaded.urls.length) await WorkOrder.update(existing.id,{problem_photos:uploaded.urls});
         if (uploaded.failed) photoWarning = `${uploaded.failed} photo${uploaded.failed === 1 ? '' : 's'} could not be attached. The Fleet issue report was still submitted.`;
       }
-      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         event_type:'work_order_created',
         target_id:existing.id,
         event_token:submissionKey,
@@ -288,7 +289,7 @@ Deno.serve(async (req) => {
       if (!samePublicSubmission(winner,retryIdentity)) {
         return Response.json({error:'This submission token was used concurrently with different Fleet issue details. The losing duplicate was discarded; reload the form before submitting another report.'},{status:409});
       }
-      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
+      await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
         event_type:'work_order_created',
         target_id:winner.id,
         event_token:submissionKey,
@@ -306,7 +307,7 @@ Deno.serve(async (req) => {
       if (uploaded.failed) photoWarning = `${uploaded.failed} photo${uploaded.failed === 1 ? '' : 's'} could not be attached. The Fleet issue report was still submitted.`;
     }
 
-    await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher',{
+    await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', { _internal_capability: INTERNAL_FUNCTION_CAPABILITY,
       event_type:'work_order_created',
       target_id:winner.id,
       event_token:submissionKey,
