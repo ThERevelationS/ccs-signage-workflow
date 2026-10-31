@@ -107,7 +107,7 @@ export default function PermitClientGroup({
             {wo?.client_name || "—"}
           </div>
           <div className="text-[10px] text-gray-400 flex-shrink-0">
-            {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : 'No lines'}
+            {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : (expanded ? 'No lines' : 'Tap to set up')}
           </div>
         </div>
 
@@ -269,7 +269,7 @@ export default function PermitClientGroup({
             {progress.handoffApplicableCount > 0 && (
               <span
                 className={`ml-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:ml-auto ${progress.handoffBlockedCount > 0 ? "border-red-200 bg-red-50 text-red-800" : progress.handoffIssueCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
-                title="Handoff readiness uses only recorded permit facts and does not change workflow status."
+                title="How many lines have everything filled in for handoff — this doesn't change any status."
               >
                 Handoff {progress.handoffReadyCount}/{progress.handoffApplicableCount} ready
               </span>
@@ -336,7 +336,7 @@ export default function PermitClientGroup({
         <div className="border-b border-amber-200 bg-amber-50/70 px-3 py-2 text-xs" role="status">
           <div className="mb-1 flex items-center gap-1.5 font-semibold text-amber-950">
             <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-            Authority review — configured offices only, not complete legal coverage
+            Office check — only the offices we have on file; there may be more
           </div>
           {authorityCoverage.map(({ locality_id, locality_name, authority }) => (
             <div key={locality_id || 'unlinked'} className="mt-1 text-amber-950">
