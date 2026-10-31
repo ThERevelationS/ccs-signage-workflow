@@ -1,0 +1,17 @@
+
+## Personal Workspace Settings System — Phase 1-5 built (2026-10-31)
+
+Sub-plan: `docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md`
+
+Foundation implemented and live-verified in sandbox preview (not published):
+
+- `base44/entities/UserWorkspacePreferences.jsonc` — backend-only RLS, `user_email` key, consolidated `preferences` blob + `profiles` array, `last_request_id` idempotency, `creation_request_key` first-create dedupe.
+- `base44/functions/workspacePrefsAction` (deployed) — `prefs_get`/`prefs_update`, session auth via `authenticateSignShopSession`, own-row only, request_id dedupe, 409 ambiguous-row guard, post-create race sweep.
+- `src/components/layout/workspacePrefs.js` — blob schema/defaults/`migratePrefs` (v1), deepMerge/setPath, NAV_CATALOG (lowercase `createPageUrl` urls), `applyAppearance` DOM side-effects, localStorage write-through cache.
+- `src/components/layout/WorkspacePreferencesProvider.jsx` — mounts inside EmailGate `AuthProvider` in `Layout.jsx`; instant localStorage seed → server hydrate (server-authoritative), 900ms debounced writes, `reportNavOrder` bridge, profiles CRUD, `ccs-nav-order-sync` event.
+- `src/components/timeclock/WorkspaceSettingsCenter.jsx` — Settings Center at top of Time Clock → Settings tab: search, Appearance (theme mode/accent/font scale), Density, Accessibility (reduced motion/high contrast), Taskbar (labels/tooltips/size/hidden/favorites), Startup landing page, Profiles, scoped resets w/ confirm.
+- `src/components/layout/NavPageLink.jsx` — prefs render modifiers (icons/abbreviated labels, tooltips toggle, size override); drag contract untouched.
+- `src/Layout.jsx` — `visibleNavItems` hidden-filter for top/side/mobile nav, reorder merges hidden tail + reports to server, `ccs-nav-order-sync` listener, landing-page redirect on bare `/`.
+- `src/index.css` — density/motion/contrast/accent rules appended.
+
+Verified: backend round-trip + request_id reuse; live preview — dark/system/light, accent var, fontScale, density, reduced-motion, hidden buttons, icon/abbreviated labels; drag/drop baseline 7/7 before wiring. Pending: TimeClock settings-tab visual check (page is data-gated by backend snapshot), cross-device order race, P1 page-level prefs (pipeline columns, workflow views, dashboard widgets).
