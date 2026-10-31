@@ -7,7 +7,6 @@ import SavedViews from "@/components/workflow/SavedViews";
 import ReceivePanel from "@/components/procurement/ReceivePanel";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import {
-import { CcsDateField } from "@/components/ui/ccs-date-field";
   CheckCircle2,
   ChevronRight,
   Loader2,
@@ -19,6 +18,7 @@ import { CcsDateField } from "@/components/ui/ccs-date-field";
   Send,
   X,
 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();

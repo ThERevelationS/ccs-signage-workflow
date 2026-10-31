@@ -4,7 +4,6 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Link } from "react-router-dom";
 import SavedViews from "@/components/workflow/SavedViews";
 import {
-import { CcsDateField } from "@/components/ui/ccs-date-field";
   AlertCircle,
   ChevronRight,
   Copy,
@@ -21,6 +20,7 @@ import { CcsDateField } from "@/components/ui/ccs-date-field";
   Send,
   X,
 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();

@@ -42,6 +42,7 @@ import {
   ExternalLink,
   Copy
 } from "lucide-react";
+import { CcsDateField } from "@/components/ui/ccs-date-field";
 import { format } from "date-fns";
 
 // Helper to parse date string as local date (not UTC)
@@ -77,7 +78,6 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 import { staffEntities } from "@/components/staff/staffEntities";
 import { openProductsBlockingCompletion } from "@/components/estimator/productStageSync";
 import {
-import { CcsDateField } from "@/components/ui/ccs-date-field";
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
   findWorkOrderArrayItemIndex,
