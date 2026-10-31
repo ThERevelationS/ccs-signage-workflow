@@ -73,6 +73,12 @@ test("Entities written through the SDK by Admin paths are server-gated", () => {
   }
 });
 
+test("CalendarEvent reads are backend-only (staff read via staffDataRead)", () => {
+  const role = entity("CalendarEvent").rls?.read?.user_condition?.role;
+  assert.equal(role, "__calendar_event_backend_only__",
+    "CalendarEvent.read must stay backend-only — an open read exposes staff emails, job sites and personal events");
+});
+
 test("Only the audited helpers perform direct entity writes inside admin components", () => {
   const allowed = new Set([
     "authorizedEmailPersistence.js",   // entity.create — AuthorizedEmail is admin-RLS
