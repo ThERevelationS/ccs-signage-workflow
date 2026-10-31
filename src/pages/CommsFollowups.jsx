@@ -19,6 +19,8 @@ import {
   DEFAULT_FOLLOWUP_RULES,
   normalizeFollowupRules,
 } from "@/components/comms/followupModel";
+import NotificationTemplateEditor from "@/components/comms/NotificationTemplateEditor";
+import { loadNotificationTemplates } from "@/components/comms/notificationTemplates";
 
 // Communication automation — the CoreBridge-style two-stage follow-up queue
 // for sent estimates/quotes and overdue invoices. The page loads the three
@@ -196,6 +198,22 @@ export default function CommsFollowups() {
     [rulesRecord],
   );
 
+  // Customer notification templates — the editor persists overrides to the
+  // GlobalSettings row keyed customerNotificationTemplates through the same
+  // concurrency-safe save path as the rules panel.
+  const { data: templateBundle } = useQuery({
+    queryKey: ["comms-followups", "notification-templates"],
+    queryFn: () =>
+      loadNotificationTemplates({
+        entity: GlobalSettings,
+        label: "Customer notification templates",
+      }),
+  });
+  const notificationTemplates = useMemo(
+    () => templateBundle?.templates || {},
+    [templateBundle],
+  );
+
   useEffect(() => {
     setLoadError(invoiceError ? invoiceError.message || "Invoices could not load." : "");
   }, [invoiceError]);
@@ -214,6 +232,14 @@ export default function CommsFollowups() {
       </div>
 
       <RulesPanel record={rulesRecord} rules={rules} />
+
+      <NotificationTemplateEditor
+        record={templateBundle?.record || null}
+        templates={notificationTemplates}
+        onSaved={() =>
+          queryClientInstance.invalidateQueries({ queryKey: ["comms-followups", "notification-templates"] })
+        }
+      />
 
       {loadError && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
