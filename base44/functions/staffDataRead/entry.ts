@@ -294,18 +294,66 @@ function cleanSkip(value: unknown) {
   return parsed;
 }
 
-// Module-scope cache — identical reads within the TTL (mount storms: parallel
-// component reads and subscribe checks) collapse to a single upstream entity
-// read while an isolate stays warm. Writes go through staffEntityWrite, so a
-// stale read for up to 45s is an accepted trade for the shared rate budget.
+// Module-scope per-entry cache — identical reads within the TTL (mount storms:
+// parallel component reads and subscribe checks) collapse to a single upstream
+// entity read while an isolate stays warm. Writes go through staffEntityWrite,
+// so a stale read for up to 45s is an accepted trade for the shared rate
+// budget. Only 200 results are cached: an error must never be served twice.
 const staffReadCache = new Map();
+const staffReadInFlight = new Map();
 const STAFF_READ_CACHE_MS = 45_000;
 
 const isRateLimited = (error: any) => Number(error?.status) === 429
-  || /rate limit|too many requests/i.test(String(error?.message || error));
+  || /rate limit|too many requests|traffic volume/i.test(String(error?.message || error));
+
+function rateLimitRetryAfterMs(error: any) {
+  const match = /retry after (\d+)\s*s/i.exec(String(error?.message || error));
+  const ms = match ? Number(match[1]) * 1000 : 3000;
+  return Math.min(Math.max(ms, 3000), 60000);
+}
 
 const MAX_BATCH = 16;
 const BATCH_CONCURRENCY = 4;
+
+// The cache key is the request itself plus the scoping the read actually
+// applies: role tier, the caller's email for OWNER_SCOPED entities (rows are
+// filtered to the owner), and the per-admin denied_fields projection scope.
+// Entries share across users and across different batch combinations.
+function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
+  const entity = String(request?.entity || '').trim();
+  const ownerScope = user.role !== 'admin' && OWNER_SCOPED.has(entity)
+    ? String(user.email || '').trim().toLowerCase() : '';
+  return JSON.stringify({
+    entity,
+    id: request?.id,
+    query: request?.query,
+    sort: request?.sort,
+    limit: request?.limit,
+    skip: request?.skip,
+    count: request?.count,
+  }) + '|' + (user.role === 'admin' ? 'admin' : 'staff') + '|' + ownerScope + '|' + deniedFieldScope;
+}
+
+// Cache + in-flight dedupe around readOne. Concurrent identical reads in the
+// isolate share one upstream call; only 200 results are retained.
+async function readOneCached(base44: any, user: any, request: any, deniedFieldScope: string) {
+  const key = staffReadEntryKey(request, user, deniedFieldScope);
+  const hit = staffReadCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.result;
+  const pending = staffReadInFlight.get(key);
+  if (pending) return pending;
+  const promise = readOne(base44, user, request)
+    .then((result: any) => {
+      if (result.status === 200) {
+        if (staffReadCache.size > 300) staffReadCache.clear();
+        staffReadCache.set(key, { result, expires: Date.now() + STAFF_READ_CACHE_MS });
+      }
+      return result;
+    })
+    .finally(() => { staffReadInFlight.delete(key); });
+  staffReadInFlight.set(key, promise);
+  return promise;
+}
 
 // One read for an already-authenticated staff user. Returns {status, body} so
 // a batch can report each read independently; the single-read path wraps it as
@@ -353,14 +401,15 @@ async function readOne(base44: any, user: any, body: any) {
     }
     return { status: 200, body: { success: true, items: scopedRows.map((row) => projectItem(entityName, row, user)) } };
   } catch (error: any) {
+    // A platform rate limit is transient whatever status it arrives with:
+    // hand it back as 429 so the browser backs off and retries instead of
+    // surfacing a hard failure.
+    if (isRateLimited(error)) {
+      return { status: 429, body: { error: 'Data could not be loaded. Try again.', retry_after_ms: rateLimitRetryAfterMs(error) } };
+    }
     const status = Number(error?.status || error?.response?.status || 500);
     if ([400, 401, 403, 404, 429].includes(status)) {
       return { status, body: { error: error?.message || 'Staff read failed.' } };
-    }
-    // A platform rate limit is transient: hand it back as 429 so the browser
-    // backs off and retries instead of surfacing a hard failure.
-    if (isRateLimited(error)) {
-      return { status: 429, body: { error: 'Data could not be loaded. Try again.', retry_after_ms: 3000 } };
     }
     console.error('staffDataRead error:', error);
     return { status: 500, body: { error: 'Data could not be loaded. Try again.' } };
@@ -368,7 +417,9 @@ async function readOne(base44: any, user: any, body: any) {
 }
 
 function toResponse(result: { status: number, body: any }) {
-  const headers: Record<string, string> = result.status === 429 ? { 'Retry-After': '3' } : {};
+  const retryMs = Number(result.body?.retry_after_ms) || 3000;
+  const headers: Record<string, string> = result.status === 429
+    ? { 'Retry-After': String(Math.max(1, Math.ceil(retryMs / 1000))) } : {};
   return Response.json(result.body, { status: result.status, headers });
 }
 
@@ -380,21 +431,10 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const user = await resolveFleetStaffUser(base44, body?.session_token);
     if (!user?.email) return Response.json({ error: 'Authentication required' }, { status: 401 });
-    // Cache scope: role tier plus request body — shared across users on the
-    // same tier. Per-user scoping stays in the key wherever the read path
-    // actually applies it: OWNER_SCOPED entities filter rows to the caller's
-    // email, and per-admin denied_fields change the field projection.
-    const cacheRequestEntities = Array.isArray(body?.entities) ? body.entities : [body];
-    const ownerScopedRead = user.role !== 'admin'
-      && cacheRequestEntities.some((r) => OWNER_SCOPED.has(String(r?.entity || '').trim()));
+    // Per-admin denied_fields change the field projection, so they scope the
+    // per-entry cache alongside the role tier and owner-scoped email.
     const deniedFieldScope = user?.admin_permissions?.denied_fields
       ? JSON.stringify(user.admin_permissions.denied_fields) : '';
-    const readCacheKey = JSON.stringify(body)
-      + '|' + (user.role === 'admin' ? 'admin' : 'staff')
-      + '|' + (ownerScopedRead ? String(user.email).trim().toLowerCase() : '')
-      + '|' + deniedFieldScope;
-    const cachedRead = staffReadCache.get(readCacheKey);
-    if (cachedRead && cachedRead.expires > Date.now()) return Response.json(cachedRead.payload);
 
     // Batch: many reads behind a single session verification. The "entities"
     // shape returns rows keyed by entity name with per-entity errors beside
@@ -413,9 +453,16 @@ Deno.serve(async (req) => {
       const errors: Record<string, any> = {};
       const denied: string[] = [];
       const results: any[] = new Array(requests.length);
+      // Once a slice surfaces a rate limit the remaining reads are not issued
+      // at all — they resolve as the same 429 so the caller backs off as one.
+      let rateLimited = false;
+      let rateLimitError = 'Data could not be loaded. Try again.';
+      let batchRetryAfterMs = 0;
       for (let start = 0; start < requests.length; start += BATCH_CONCURRENCY) {
         const slice = requests.slice(start, start + BATCH_CONCURRENCY);
-        const settled = await Promise.all(slice.map((request: any) => readOne(base44, user, request)));
+        const settled = rateLimited
+          ? slice.map(() => ({ status: 429, body: { error: rateLimitError, retry_after_ms: batchRetryAfterMs || 3000 } }))
+          : await Promise.all(slice.map((request: any) => readOneCached(base44, user, request, deniedFieldScope)));
         settled.forEach((result, offset) => {
           results[start + offset] = result;
           const name = String(requests[start + offset]?.entity || '').trim();
@@ -428,9 +475,23 @@ Deno.serve(async (req) => {
             entities[name] = [];
             if (!denied.includes(name)) denied.push(name);
           } else if (name) {
-            errors[name] = { status: result.status, error: result.body?.error || 'Staff read failed.' };
+            errors[name] = {
+              status: result.status,
+              error: result.body?.error || 'Staff read failed.',
+              ...(result.status === 429 ? { retry_after_ms: Number(result.body?.retry_after_ms) || 3000 } : {}),
+            };
+          }
+          if (result.status === 429) {
+            batchRetryAfterMs = Math.max(batchRetryAfterMs, Number(result.body?.retry_after_ms) || 3000);
           }
         });
+        if (!rateLimited) {
+          const limited = settled.find((result) => result.status === 429);
+          if (limited) {
+            rateLimited = true;
+            rateLimitError = limited.body?.error || rateLimitError;
+          }
+        }
       }
       const batchPayload = entityMode
         ? {
@@ -438,29 +499,25 @@ Deno.serve(async (req) => {
             entities,
             ...(denied.length ? { denied } : {}),
             ...(Object.keys(errors).length ? { errors } : {}),
+            ...(batchRetryAfterMs ? { retry_after_ms: batchRetryAfterMs } : {}),
           }
-        : { success: true, results };
-      if (staffReadCache.size > 300) staffReadCache.clear();
-      staffReadCache.set(readCacheKey, { payload: batchPayload, expires: Date.now() + STAFF_READ_CACHE_MS });
+        : { success: true, results, ...(batchRetryAfterMs ? { retry_after_ms: batchRetryAfterMs } : {}) };
       return Response.json(batchPayload);
     }
 
-    const result = await readOne(base44, user, body);
-    if (result.status === 200) {
-      if (staffReadCache.size > 300) staffReadCache.clear();
-      staffReadCache.set(readCacheKey, { payload: result.body, expires: Date.now() + STAFF_READ_CACHE_MS });
-    }
+    const result = await readOneCached(base44, user, body, deniedFieldScope);
     return toResponse(result);
   } catch (error: any) {
+    if (isRateLimited(error)) {
+      const retryAfterMs = rateLimitRetryAfterMs(error);
+      return Response.json(
+        { error: 'Data could not be loaded. Try again.', retry_after_ms: retryAfterMs },
+        { status: 429, headers: { 'Retry-After': String(Math.max(1, Math.ceil(retryAfterMs / 1000))) } },
+      );
+    }
     const status = Number(error?.status || error?.response?.status || 500);
     if ([400, 401, 403, 429].includes(status)) {
       return Response.json({ error: error?.message || 'Staff read failed.' }, { status });
-    }
-    if (isRateLimited(error)) {
-      return Response.json(
-        { error: 'Data could not be loaded. Try again.', retry_after_ms: 3000 },
-        { status: 429, headers: { 'Retry-After': '3' } },
-      );
     }
     console.error('staffDataRead error:', error);
     return Response.json({ error: 'Data could not be loaded. Try again.' }, { status: 500 });
