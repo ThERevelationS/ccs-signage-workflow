@@ -1433,7 +1433,7 @@ function LayoutContent({ children }) {
               {mobileMenuOpen && (
                 <div className="lg:hidden mt-2 border-t border-gray-200 pt-2">
                   <div className="ccs-topbar-menu-grid grid grid-cols-3 gap-1">
-                    {[...orderedNavItems, ...meetingsNavItems, ...reportsNavItems].map((item) => {
+                    {[...visibleNavItems, ...meetingsNavItems, ...reportsNavItems].filter((item) => !navHidden.includes(item.url)).map((item) => {
                       const isActive = location.pathname === item.url;
                       const isInSplit = additionalPages.find(p => item.url.includes(p.name));
                       return (
@@ -1742,7 +1742,7 @@ function LayoutContent({ children }) {
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-2">
-                    {[...orderedNavItems, ...meetingsNavItems, ...reportsNavItems].map((item) => {
+                    {[...visibleNavItems, ...meetingsNavItems, ...reportsNavItems].filter((item) => !navHidden.includes(item.url)).map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <Link
