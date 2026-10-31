@@ -365,6 +365,13 @@ assert.match(palette, /pagesConfig\?\.Pages/, 'command palette must index routed
 assert.match(palette, /\/Opportunities\?open=/, 'command palette must deep-link opportunities');
 assert.match(palette, /\/Invoices\?invoice=/, 'command palette must deep-link invoices');
 assert.match(appShell, /<CommandPalette \/>/, 'app shell must mount the command palette');
+for (const p of ['ProductQueues','JobWorkspace','WalkIn','OpsReports','CrmEvents','Imports','Reconciliation','CustomerStatements','PricingAdmin','CommsFollowups']) {
+  assert.ok(palette.includes(p), 'command palette must index ' + p);
+}
+assert.ok(palette.includes('/JobWorkspace?wo='), 'command palette must deep-link work orders to job workspace');
+assert.match(layoutShell, /OpsReports/, 'sidebar must link ops reports');
+assert.match(layoutShell, /CustomerStatements/, 'sidebar must link statements');
+assert.match(layoutShell, /Reconciliation/, 'sidebar must link reconciliation');
 assert.match(poPage, /Overdue/, 'PO list must flag overdue rows');
 assert.match(entry, /lost_reasons: lostReasons/, 'funnel must report loss reasons');
 assert.match(entry, /No reason given/, 'funnel must bucket unreasoned losses');
