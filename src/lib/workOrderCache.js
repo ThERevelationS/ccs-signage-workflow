@@ -123,15 +123,25 @@ async function boardFeed(payload) {
   return data;
 }
 
-async function fetchFeedRows(entity, { forceFull = false } = {}) {
+async function fetchFeedRows(entity, { forceFull = false, preferSnapshot = false } = {}) {
   const state = stateFor(entity);
   // Guests must never hydrate from the persisted snapshot — that cache holds
   // the last signed-in session's board and would leak it to a signed-out tab
   // on a shared device. Guests get an empty board, same as the gateways give.
   if (!getSessionToken()) return [];
-  if (state.inFlight) return state.inFlight;
+  if (state.inFlight) {
+    // A snapshot-first caller joins a running refresh only through hydration;
+    // it must not wait out the network pass it did not start.
+    if (preferSnapshot && !forceFull) {
+      await (state.hydratePromise || Promise.resolve());
+      if (state.rows.size > 0) return [...state.rows.values()];
+    }
+    return state.inFlight;
+  }
   state.inFlight = (async () => {
-    await ensureHydrated(entity);
+    const hydrate = ensureHydrated(entity);
+    state.hydratePromise = hydrate;
+    await hydrate;
     const needsFull = forceFull || !state.cursor || Date.now() - state.fullSyncAt > FULL_RESYNC_MS;
     let data = await boardFeed({ entity, sort: "-updated_date", since: needsFull ? null : state.cursor });
     if (!needsFull && data.truncated) {
@@ -158,6 +168,13 @@ async function fetchFeedRows(entity, { forceFull = false } = {}) {
   })().finally(() => {
     state.inFlight = null;
   });
+  // Snapshot-first reads paint the hydrated board immediately while the
+  // refresh continues in the background; publishSnapshot still lands the
+  // delta for react-query subscribers and sibling tabs when it completes.
+  if (preferSnapshot && !forceFull) {
+    await (state.hydratePromise || state.inFlight);
+    if (state.rows.size > 0) return [...state.rows.values()];
+  }
   return state.inFlight;
 }
 
