@@ -6,6 +6,7 @@ import {
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -101,18 +102,29 @@ Deno.serve(async (req) => {
         const v = clean(body?.[key]);
         if (v) query[key] = v;
       }
-      const rows = await ChangeOrder.filter(query);
+      const rows = await loadAllEntityRows({
+        entity: ChangeOrder,
+        query,
+        sort: "-created_date",
+        label: "Change order rows",
+      });
       if (!Array.isArray(rows)) throw bad("Change order lookup failed.", 500);
       const search = clean(body?.query).toLowerCase();
-      const changeOrders = rows
+      const matched = rows
         .filter((r: any) => !search
           || clean(r?.change_order_number).toLowerCase().includes(search)
           || clean(r?.title).toLowerCase().includes(search)
           || clean(r?.customer_display_name).toLowerCase().includes(search))
-        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
-        .slice(0, 250)
-        .map(coSnapshot);
-      return Response.json({ success: true, action, change_orders: changeOrders });
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const changeOrders = matched.slice(0, 250).map(coSnapshot);
+      return Response.json({
+        success: true,
+        action,
+        change_orders: changeOrders,
+        total_count: matched.length,
+        returned: changeOrders.length,
+        truncated: changeOrders.length < matched.length,
+      });
     }
 
     if (action === "get_change_order") {
