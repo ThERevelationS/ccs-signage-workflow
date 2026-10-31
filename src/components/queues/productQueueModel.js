@@ -82,6 +82,7 @@ export function flattenQueueRows(workOrders = [], { dueField = "product_due_date
         position: `${idx + 1}/${products.length}`,
         ref: wo.corbridge_invoice_number || wo.title || wo.id,
         company: wo.client_name || "",
+        customerId: wo.customer_id || "",
         productName: p.description || p.client_product_name || `Product ${idx + 1}`,
         status: p.operational_status || "none",
         substatus: p.operational_substatus || "",
