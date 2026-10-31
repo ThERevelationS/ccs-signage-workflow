@@ -15,6 +15,7 @@ import {
   formatCompanyDateTime,
   parseCompanyDateTimeInput,
 } from "@/components/timeclock/timeClockCompanyTime";
+import TimeQuickPick, { WORKDAY_TIMES } from "@/components/timeclock/TimeQuickPick";
 
 export default function WorkPauseMenu({
   open,
@@ -147,26 +148,28 @@ export default function WorkPauseMenu({
                     <Label htmlFor="missed-pause-start" className="text-xs font-semibold text-purple-900 dark:text-violet-100">
                       Pause started ({TIME_CLOCK_COMPANY_TIME_LABEL})
                     </Label>
-                    <Input
-                      id="missed-pause-start"
-                      type="datetime-local"
+                    <TimeQuickPick
                       value={startedInput}
-                      onChange={(e) => { setStartedInput(e.target.value); setLocalError(""); }}
+                      onChange={(v) => { setStartedInput(v); setLocalError(""); }}
                       disabled={reportBusy || !canReportMissed}
-                      className="mt-1 bg-white dark:bg-slate-900"
+                      dayOffsets={[0, 1]}
+                      times={WORKDAY_TIMES}
+                      confirmLabel="Paused at"
+                      inputId="missed-pause-start"
                     />
                   </div>
                   <div>
                     <Label htmlFor="missed-pause-end" className="text-xs font-semibold text-purple-900 dark:text-violet-100">
                       Pause ended ({TIME_CLOCK_COMPANY_TIME_LABEL})
                     </Label>
-                    <Input
-                      id="missed-pause-end"
-                      type="datetime-local"
+                    <TimeQuickPick
                       value={resumedInput}
-                      onChange={(e) => { setResumedInput(e.target.value); setLocalError(""); }}
+                      onChange={(v) => { setResumedInput(v); setLocalError(""); }}
                       disabled={reportBusy || !canReportMissed}
-                      className="mt-1 bg-white dark:bg-slate-900"
+                      dayOffsets={[0, 1]}
+                      times={WORKDAY_TIMES}
+                      confirmLabel="Resumed at"
+                      inputId="missed-pause-end"
                     />
                   </div>
                 </div>
@@ -214,3 +217,4 @@ export default function WorkPauseMenu({
     </Dialog>
   );
 }
+
