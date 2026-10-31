@@ -56,6 +56,9 @@ export function defaultPrefs() {
     workspace: {
       showWelcomeBanner: true,
     },
+    pipeline: {
+      defaultView: "",        // "" = app default; table | board | daily | insights
+    },
   };
 }
 
@@ -94,7 +97,40 @@ export const SECTION_PATHS = {
   appearance: ["appearance", "density"],
   navigation: ["navigation"],
   workspace: ["workspace"],
+  pipeline: ["pipeline"],
 };
+
+// Built-in profile presets — applied as one-shot blobs via applyProfilePreset.
+export const PROFILE_PRESETS = [
+  {
+    key: "focus",
+    name: "Focus",
+    description: "Compact density, short labels, minimal chrome",
+    prefs: {
+      density: "compact",
+      navigation: { labels: "abbreviated", size: "compact", tooltips: true },
+    },
+  },
+  {
+    key: "presentation",
+    name: "Presentation",
+    description: "Spacious density, larger text — for screens and sharing",
+    prefs: {
+      density: "spacious",
+      appearance: { fontScale: 1.1 },
+      navigation: { labels: "full", size: "roomy", tooltips: true },
+    },
+  },
+  {
+    key: "field",
+    name: "Field Tablet",
+    description: "Big touch targets, icons only, dark-friendly",
+    prefs: {
+      density: "comfortable",
+      navigation: { labels: "icons", size: "roomy", tooltips: true },
+    },
+  },
+];
 
 export function migratePrefs(raw) {
   const base = defaultPrefs();
@@ -115,6 +151,7 @@ export function migratePrefs(raw) {
   if (!ACCENTS[merged.appearance.accent]) merged.appearance.accent = "indigo";
   if (!["compact", "comfortable", "spacious"].includes(merged.density)) merged.density = "comfortable";
   if (nav.landingPage && !NAV_CATALOG.some((i) => i.url === nav.landingPage)) nav.landingPage = "";
+  if (!["", "table", "board", "daily", "insights"].includes(merged.pipeline.defaultView)) merged.pipeline.defaultView = "";
   return merged;
 }
 
