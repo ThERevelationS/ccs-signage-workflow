@@ -36,7 +36,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
 
 const stageColors = {

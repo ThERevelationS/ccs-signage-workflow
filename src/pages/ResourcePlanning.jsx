@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {

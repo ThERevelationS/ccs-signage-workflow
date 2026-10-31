@@ -20,7 +20,7 @@ import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDir
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const UserCapacity = base44.entities.UserCapacity;
 
 const SUBCONTRACTOR_KEY = "subcontractorDirectory";

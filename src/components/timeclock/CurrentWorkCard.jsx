@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Briefcase, Clock3, Loader2, Search, Square, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const ACTIVITY_OPTIONS = [
   ["fabrication", "Fabrication"], ["cnc", "CNC"], ["laser", "Laser"], ["paint", "Paint"],

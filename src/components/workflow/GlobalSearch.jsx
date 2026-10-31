@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 const stageOrder = ['permitting', 'design', 'production', 'fabrication', 'installation'];
 

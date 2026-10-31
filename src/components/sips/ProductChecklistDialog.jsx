@@ -20,7 +20,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
 
 const parseDateOnly = (dateString) => {

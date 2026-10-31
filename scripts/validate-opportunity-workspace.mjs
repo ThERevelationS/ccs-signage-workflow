@@ -12,6 +12,9 @@ for (const entity of ['Opportunity', 'OpportunityIntake', 'EstimatingRequest', '
   assert.match(schema, /backend_only/, `${entity} must remain backend-only via RLS`);
   assert.match(schema, /creation_request_key/, `${entity} requires a retry-safe creation key`);
 }
+const workOrderSchema = readFileSync('base44/entities/WorkOrder.jsonc', 'utf8');
+assert.match(workOrderSchema, /"__workorder_backend_only__"/, 'WorkOrder must be backend-only via RLS');
+assert.doesNotMatch(workOrderSchema, /"role":\s*"user"/, 'WorkOrder RLS must not grant the platform user role');
 for (const entity of ['CustomerContact', 'CustomerLocation']) {
   const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
   assert.ok(schema.includes('"customer_id"'), `${entity} must link its owning Customer`);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
@@ -9,7 +9,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 
-const WorkOrder = base44.entities.WorkOrder;
+const WorkOrder = staffEntities.WorkOrder;
 
 function scoreRecord(wo) {
   // Higher score = more data = better to keep
