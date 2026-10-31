@@ -104,7 +104,7 @@ export default function RegulationAlertPanel() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-blue-600" />
-            <h2 className="font-bold text-lg text-gray-900">Regulation Alerts</h2>
+            <h2 className="font-bold text-lg text-gray-900">Rule changes</h2>
             {unreadCount > 0 && (
               <Badge className="bg-red-500 text-white ml-2">{unreadCount} new</Badge>
             )}
@@ -117,18 +117,18 @@ export default function RegulationAlertPanel() {
             {isMonitoring ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Monitoring...
+                Checking...
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                Run Monitor
+                Check now
               </>
             )}
           </Button>
         </div>
         <p className="text-sm text-gray-600">
-          Track changes in permitting regulations across all jurisdictions. Alerts are sent automatically when significant changes are detected.
+          Watches permit rules across all the offices we track. You get an alert when something important changes.
         </p>
       </div>
 
@@ -155,8 +155,8 @@ export default function RegulationAlertPanel() {
       {alerts.length === 0 ? (
         <div className="clay-card p-12 text-center text-gray-500">
           <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <p className="font-medium">No alerts to display</p>
-          <p className="text-xs">All regulation changes are up to date</p>
+          <p className="font-medium">Nothing to show</p>
+          <p className="text-xs">All caught up — no rule changes right now</p>
         </div>
       ) : (
         <div className="space-y-3">
