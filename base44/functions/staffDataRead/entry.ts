@@ -111,7 +111,7 @@ const STAFF_READABLE = new Set([
 // Admin-settings data: readable by admins only. AuthorizedEmail is
 // staff-readable because dozens of staff views resolve user identities from
 // it; its secret fields are stripped by FIELD_DENYLIST below before any row
-// leaves the backend.
+// leaves the backend, and its personal HR fields by OWNER_OR_ADMIN_FIELDS.
 const ADMIN_READABLE = new Set<string>([
   'AccountDeletionRequest',
   'AdminAuditLog',
@@ -145,6 +145,36 @@ const FIELD_DENYLIST: Record<string, string[]> = {
   ],
 };
 
+// Personal fields readable only by an admin or the record's own user (matched
+// on the row's `email`). Stripped for every other staff caller, and never
+// usable by them as a filter or sort oracle.
+const OWNER_OR_ADMIN_FIELDS: Record<string, string[]> = {
+  AuthorizedEmail: ['hr_data'],
+};
+
+function isRecordOwner(item: any, user: any) {
+  const caller = String(user?.email || '').trim().toLowerCase();
+  return !!caller && String(item?.email || '').trim().toLowerCase() === caller;
+}
+
+// Fields a caller may never filter or sort on for this entity.
+function blockedQueryFields(entityName: string, user: any) {
+  const blocked = new Set(FIELD_DENYLIST[entityName] || []);
+  if (user?.role !== 'admin') {
+    for (const field of OWNER_OR_ADMIN_FIELDS[entityName] || []) blocked.add(field);
+  }
+  return blocked;
+}
+
+// A field path is blocked if it names a blocked field or any nested path
+// under it (e.g. `hr_data.date_of_birth`).
+function isBlockedField(field: string, blocked: Set<string>) {
+  for (const name of blocked) {
+    if (field === name || field.startsWith(`${name}.`)) return true;
+  }
+  return false;
+}
+
 const MAX_LIMIT = 500;
 const MAX_SKIP = 100000;
 const MAX_QUERY_BYTES = 4000;
@@ -166,25 +196,28 @@ const OWNER_SCOPED = new Set([
 const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
 
 function projectItem(entityName: string, item: any, user?: any) {
+  if (!item || typeof item !== 'object') return item;
   const denied = [...(FIELD_DENYLIST[entityName] || []),
     ...((user?.admin_permissions?.denied_fields?.[entityName]) || [])];
-  if (!denied || !item || typeof item !== 'object') return item;
+  if (user?.role !== 'admin' && !isRecordOwner(item, user)) {
+    denied.push(...(OWNER_OR_ADMIN_FIELDS[entityName] || []));
+  }
   const clean = { ...item };
   for (const field of denied) delete clean[field];
   return clean;
 }
 
-function cleanSort(value: unknown, entityName: string) {
+function cleanSort(value: unknown, entityName: string, user: any) {
   const sort = String(value || '').trim();
   if (!sort) return '';
   if (sort.length > 200 || !SORT_PATTERN.test(sort)) {
     throw Object.assign(new Error('Staff read sort is invalid.'), { status: 400 });
   }
   // Denylisted fields must not be usable as a sort oracle either.
-  const denied = new Set(FIELD_DENYLIST[entityName] || []);
+  const denied = blockedQueryFields(entityName, user);
   for (const part of sort.split(',')) {
     const field = part.trim().replace(/^-/, '');
-    if (denied.has(field)) {
+    if (isBlockedField(field, denied)) {
       throw Object.assign(new Error('Staff read sort field is not permitted.'), { status: 400 });
     }
   }
@@ -229,20 +262,24 @@ function checkOperatorValue(operator: string, value: unknown) {
   }
 }
 
-function cleanQuery(value: unknown, entityName: string) {
+function cleanQuery(value: unknown, entityName: string, user: any) {
   if (value == null) return null;
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw Object.assign(new Error('Staff read filter must be an object.'), { status: 400 });
   }
-  // Operators are allowed only directly on a top-level field, never on a
-  // denylisted field (that would turn output-denied data into a boolean
-  // oracle) and never nested deeper than one level.
-  const deniedFields = new Set(FIELD_DENYLIST[entityName] || []);
+  // Operators are allowed only directly on a top-level field and never nested
+  // deeper than one level. Denied fields (including nested paths under them)
+  // cannot be referenced at all — equality or operator — since that would turn
+  // output-denied data into a boolean oracle.
+  const deniedFields = blockedQueryFields(entityName, user);
   const stack: any[] = [{ node: value, field: '', depth: 0 }];
   while (stack.length) {
     const { node, field, depth } = stack.pop();
     if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
     for (const [key, val] of Object.entries(node)) {
+      if (depth === 0 && !key.startsWith('$') && isBlockedField(key, deniedFields)) {
+        throw Object.assign(new Error('Staff read filter field is not permitted.'), { status: 400 });
+      }
       if (key.startsWith('$')) {
         if (depth !== 1 || !field) {
           throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
@@ -250,7 +287,7 @@ function cleanQuery(value: unknown, entityName: string) {
         if (!ALLOWED_OPERATORS.has(key)) {
           throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
         }
-        if (deniedFields.has(field)) {
+        if (isBlockedField(field, deniedFields)) {
           throw Object.assign(new Error('Staff read filter operators are not allowed.'), { status: 400 });
         }
         checkOperatorValue(key, val);
@@ -317,11 +354,12 @@ const BATCH_CONCURRENCY = 4;
 
 // The cache key is the request itself plus the scoping the read actually
 // applies: role tier, the caller's email for OWNER_SCOPED entities (rows are
-// filtered to the owner), and the per-admin denied_fields projection scope.
+// filtered to the owner) and for OWNER_OR_ADMIN_FIELDS entities (the caller's
+// own row keeps those fields), and the per-admin denied_fields projection scope.
 // Entries share across users and across different batch combinations.
 function staffReadEntryKey(request: any, user: any, deniedFieldScope: string) {
   const entity = String(request?.entity || '').trim();
-  const ownerScope = user.role !== 'admin' && OWNER_SCOPED.has(entity)
+  const ownerScope = user.role !== 'admin' && (OWNER_SCOPED.has(entity) || OWNER_OR_ADMIN_FIELDS[entity])
     ? String(user.email || '').trim().toLowerCase() : '';
   return JSON.stringify({
     entity,
@@ -381,8 +419,8 @@ async function readOne(base44: any, user: any, body: any) {
       return { status: 200, body: { success: true, item: projectItem(entityName, item, user) } };
     }
 
-    const query = cleanQuery(body?.query, entityName);
-    const sort = cleanSort(body?.sort, entityName);
+    const query = cleanQuery(body?.query, entityName, user);
+    const sort = cleanSort(body?.sort, entityName, user);
     const limit = cleanLimit(body?.limit, 100);
     const skip = cleanSkip(body?.skip);
     let effectiveQuery = query;
