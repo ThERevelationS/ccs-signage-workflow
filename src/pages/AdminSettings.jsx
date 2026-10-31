@@ -120,6 +120,7 @@ import { getAdminNavigationStorageKey, readAdminNavigation, resolveAdminNavigati
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { CcsTimeField } from "@/components/ui/ccs-date-field";
+import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
 
 const AutomationRule = base44.entities.AutomationRule;
 const EmailGroup = base44.entities.EmailGroup;
@@ -1069,13 +1070,18 @@ export default function AdminSettings() {
     const to = testEmailAddr.trim();
     if (!to || !to.includes("@") || testEmailBusy) return;
     setTestEmailBusy(true); setTestEmailMsg("");
+    const body = "This is a test email sent from Admin Settings to verify notification delivery is working.";
+    const subject = "CCS Signage - test notification";
     try {
-      const response = await base44.functions.invoke("sendGmail", {
-        to,
-        subject: "CCS Signage - test notification",
-        body: "This is a test email sent from Admin Settings to verify notification delivery is working."
-      });
-      if (response?.data?.error) throw new Error(response.data.error);
+      // Staff (EmailGate) sessions cannot call sendGmail directly — it only
+      // trusts platform auth or the workflow capability. Route through the
+      // session-authed sendStaffEmail bridge when a staff session exists.
+      if (sessionToken) {
+        await sendStaffEmail({ sessionToken, to, subject, body, kind: "admin_test" });
+      } else {
+        const response = await base44.functions.invoke("sendGmail", { to, subject, body });
+        if (response?.data?.error) throw new Error(response.data.error);
+      }
       setTestEmailMsg(`Test email sent to ${to}.`);
     } catch (e) {
       setTestEmailMsg(e?.response?.data?.error || e?.message || "Send failed - check the Gmail connection.");
