@@ -12,6 +12,7 @@ export default function ClientSearchInput({ value, onChange, onSelectProject, cl
   const [loading, setLoading] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [showRecent, setShowRecent] = useState(false);
+  const [scannedCap, setScannedCap] = useState(false);
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -46,6 +47,9 @@ export default function ClientSearchInput({ value, onChange, onSelectProject, cl
           if (unique.length >= 8) break;
         }
         setRecentClients(unique);
+        // Recents are built from a bounded scan of the last 100 projects —
+        // flag a full window so the dropdown can disclose it.
+        setScannedCap((projs || []).length >= 100);
       })
       .catch(() => {});
   }, []);
@@ -134,6 +138,11 @@ export default function ClientSearchInput({ value, onChange, onSelectProject, cl
               )}
             </div>
           ))}
+          {scannedCap && (
+            <div className="px-3 py-1 text-[9px] text-slate-400 bg-slate-50 border-t border-slate-100">
+              From the 100 most recent projects
+            </div>
+          )}
         </div>
       )}
       {isOpen && enabled && results.length > 0 && (
