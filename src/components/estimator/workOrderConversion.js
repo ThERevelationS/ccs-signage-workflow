@@ -38,6 +38,18 @@ export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
       category: line.product_category || "",
       customer_description: line.customer_description || "",
       estimator_notes: line.product_notes || "",
+      operational_status: line.operational_status || "order_review",
+      operational_substatus: line.operational_substatus || "",
+      customer_facing_status: line.customer_facing_status || "",
+      fulfillment_state: line.fulfillment_state || "none",
+      design_due_date: line.design_due_date || "",
+      product_due_date: line.product_due_date || "",
+      hard_due_date: Boolean(line.hard_due_date),
+      designer: line.designer || "",
+      assigned_to: line.assigned_to || "",
+      responsibility: line.responsibility || "",
+      queue_priority: num(line.queue_priority, 0),
+      proof_status: line.proof_status || "none",
     };
   });
 }
