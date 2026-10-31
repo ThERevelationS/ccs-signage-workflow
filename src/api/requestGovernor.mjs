@@ -10,7 +10,7 @@ export function isPlatformRateLimit(err) {
     err?.response?.data?.message,
     err?.data?.error,
   ].filter(Boolean).join(" ");
-  return /rate limit|too many requests/i.test(text);
+  return /rate limit|too many requests|traffic volume/i.test(text);
 }
 
 // Retry-After from a 429 response, in ms (seconds or HTTP-date form). Capped so
@@ -19,7 +19,10 @@ export function retryAfterMs(err, capMs = 30000) {
   const headers = err?.response?.headers;
   const raw = (typeof headers?.get === 'function' ? headers.get('retry-after') : headers?.['retry-after'])
     ?? err?.retryAfter;
-  if (raw == null || raw === '') return 0;
+  if (raw == null || raw === '') {
+    const bodyMs = Number(err?.response?.data?.retry_after_ms);
+    return Number.isFinite(bodyMs) && bodyMs > 0 ? Math.min(bodyMs, capMs) : 0;
+  }
   const seconds = Number(raw);
   const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(String(raw)) - Date.now();
   return Number.isFinite(ms) && ms > 0 ? Math.min(ms, capMs) : 0;
