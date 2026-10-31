@@ -79,6 +79,7 @@ const STAFF_READABLE = new Set([
   'Project',
   'QuoteDefaults',
   'RegulationAlert',
+  'SalesLocation',
   'SavedQueueView',
   'Settings',
   'SignHardwareInventory',
