@@ -78,22 +78,130 @@ export const OPERATIONAL_STATUS_CUSTOMER_LABELS = {
 
 export const OPERATIONAL_STATUS_VALUES = Object.keys(OPERATIONAL_STATUS_CUSTOMER_LABELS);
 
+export const PROOF_STATUS_VALUES = ["none", "draft", "sent", "awaiting_approval", "approved", "revision_requested"];
+
+export const FULFILLMENT_STATE_VALUES = [
+  "none", "awaiting_pickup", "awaiting_installation", "awaiting_shipping",
+  "awaiting_delivery", "picked_up", "installed", "shipped", "delivered",
+];
+
+// Operational fields mirrored between WorkOrder.products[] rows and the linked
+// BuilderProduct record.
+export const PRODUCT_OPERATIONAL_FIELDS = [
+  "operational_status", "operational_substatus", "customer_facing_status",
+  "fulfillment_state", "design_due_date", "product_due_date", "hard_due_date",
+  "designer", "assigned_to", "responsibility", "queue_priority", "proof_status",
+  "operational_status_changed_at",
+];
+
 export function customerFacingStatusLabel(operationalStatus, explicit = "") {
   if (String(explicit || "").trim()) return String(explicit).trim();
   return OPERATIONAL_STATUS_CUSTOMER_LABELS[norm(operationalStatus)] || "";
 }
 
-export function buildProductOperationalPatch({ operationalStatus, operationalSubstatus, proofStatus, fulfillmentState } = {}) {
+const requireEnum = (value, allowed, label) => {
+  const v = norm(value) || "none";
+  if (!allowed.includes(v)) throw new Error(`Unknown ${label} "${String(value).trim()}".`);
+  return v;
+};
+
+const requireDateString = (value, label = "due date") => {
+  const v = String(value || "").trim();
+  if (!v) return "";
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00`) : new Date(v);
+  if (Number.isNaN(parsed.getTime())) throw new Error(`Invalid ${label} "${v}".`);
+  return v;
+};
+
+export function buildProductOperationalPatch({
+  operationalStatus, operationalSubstatus, proofStatus, fulfillmentState,
+  designer, assignedTo, responsibility, queuePriority,
+  designDueDate, productDueDate, hardDueDate, now,
+} = {}) {
   const patch = {};
   if (operationalStatus !== undefined) {
-    const status = norm(operationalStatus) || "none";
+    const status = requireEnum(operationalStatus, OPERATIONAL_STATUS_VALUES, "product status");
     patch.operational_status = status;
     patch.customer_facing_status = customerFacingStatusLabel(status);
+    patch.operational_status_changed_at = (now ? new Date(now) : new Date()).toISOString();
   }
   if (operationalSubstatus !== undefined) patch.operational_substatus = String(operationalSubstatus || "").trim();
-  if (proofStatus !== undefined) patch.proof_status = norm(proofStatus) || "none";
-  if (fulfillmentState !== undefined) patch.fulfillment_state = norm(fulfillmentState) || "none";
+  if (proofStatus !== undefined) patch.proof_status = requireEnum(proofStatus, PROOF_STATUS_VALUES, "proof status");
+  if (fulfillmentState !== undefined) patch.fulfillment_state = requireEnum(fulfillmentState, FULFILLMENT_STATE_VALUES, "fulfillment state");
+  if (designer !== undefined) patch.designer = String(designer || "").trim();
+  if (assignedTo !== undefined) patch.assigned_to = String(assignedTo || "").trim();
+  if (responsibility !== undefined) patch.responsibility = String(responsibility || "").trim();
+  if (queuePriority !== undefined) {
+    const n = Number(queuePriority);
+    patch.queue_priority = Math.max(0, Math.min(99, Math.round(Number.isFinite(n) ? n : 0)));
+  }
+  if (designDueDate !== undefined) patch.design_due_date = requireDateString(designDueDate);
+  if (productDueDate !== undefined) patch.product_due_date = requireDateString(productDueDate);
+  if (hardDueDate !== undefined) patch.hard_due_date = Boolean(hardDueDate);
   return patch;
+}
+
+const sameField = (a, b) => {
+  if (typeof a === "boolean" || typeof b === "boolean") return a === b;
+  if (typeof a === "number" || typeof b === "number") return Number(a) === Number(b);
+  return String(a ?? "") === String(b ?? "");
+};
+
+// Pure patch application: validates input, enforces the hard-due-date rule,
+// auto-advances proof_approved when a proof is approved, and appends a capped
+// status_history audit trail. Returns the SAME product object when nothing
+// changes so callers can no-op.
+export function applyProductOperationalPatch(product, patchInput, { now, actor = "", overrideHardDue = false } = {}) {
+  const patch = buildProductOperationalPatch({ ...(patchInput || {}), now });
+  const nowIso = (now ? new Date(now) : new Date()).toISOString();
+
+  if (
+    product?.hard_due_date === true &&
+    typeof patch.product_due_date === "string" && patch.product_due_date &&
+    String(product?.product_due_date || "") &&
+    new Date(requireDateString(patch.product_due_date)).getTime() > new Date(requireDateString(product.product_due_date)).getTime() &&
+    patch.hard_due_date !== false &&
+    !overrideHardDue
+  ) {
+    throw new Error("This product has a hard due date; moving it later requires an explicit override.");
+  }
+
+  // Approving a proof while the product waits on that approval advances the
+  // operational status automatically.
+  if (
+    patch.proof_status === "approved" &&
+    patch.operational_status === undefined &&
+    norm(product?.operational_status) === "awaiting_proof_approval"
+  ) {
+    patch.operational_status = "proof_approved";
+    patch.customer_facing_status = customerFacingStatusLabel("proof_approved");
+    patch.operational_status_changed_at = nowIso;
+  }
+
+  const trackable = [
+    "operational_status", "operational_substatus", "customer_facing_status",
+    "proof_status", "fulfillment_state", "design_due_date", "product_due_date",
+    "hard_due_date", "designer", "assigned_to", "responsibility", "queue_priority",
+  ];
+  const changed = {};
+  for (const field of trackable) {
+    if (patch[field] !== undefined && !sameField(product?.[field], patch[field])) changed[field] = patch[field];
+  }
+  if (!Object.keys(changed).length) return product;
+
+  const entries = Object.keys(changed)
+    .filter((field) => field !== "customer_facing_status")
+    .map((field) => ({ at: nowIso, field, from: product?.[field] ?? "", to: changed[field], by: actor }));
+  if (changed.operational_status !== undefined) changed.operational_status_changed_at = patch.operational_status_changed_at || nowIso;
+
+  return {
+    ...product,
+    ...changed,
+    status_history: [
+      ...(Array.isArray(product?.status_history) ? product.status_history : []),
+      ...entries,
+    ].slice(-50),
+  };
 }
 
 // CoreBridge rule mirrored: when every product on an estimate converts to an
@@ -174,18 +282,22 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
 
 // Apply an operational-status patch to a single product inside WorkOrder.products
 // through the CAS-backed array mutation helper. Returns the saved WorkOrder.
-export async function transitionProductOperationalStatus({ workOrderId, productId, patch = {}, label = "Product status" } = {}) {
-  const apply = buildProductOperationalPatch(patch);
-  if (!Object.keys(apply).length) throw new Error();
+export async function transitionProductOperationalStatus({ workOrderId, productId, patch = {}, actor = "", overrideHardDue = false, label = "Product status" } = {}) {
   const targetId = String(productId || "").trim();
-  if (!targetId) throw new Error();
+  if (!targetId) throw new Error(`${label}: this product has no id. Reopen the Work Order to repair it.`);
   return mutateWorkOrderArrayField({
     workOrderId,
     field: "products",
     label,
-    mutate: (products) => products.map((product) =>
-      String(product?.id || "") === targetId ? { ...product, ...apply } : product
-    ),
+    mutate: (products) => {
+      const index = products.findIndex((product) => String(product?.id || "") === targetId);
+      if (index < 0) throw new Error(`${label}: this product is no longer on the Work Order. Reload and try again.`);
+      const next = applyProductOperationalPatch(products[index], patch, { actor, overrideHardDue });
+      if (next === products[index]) return products;
+      const nextProducts = [...products];
+      nextProducts[index] = next;
+      return nextProducts;
+    },
   });
 }
 
@@ -206,8 +318,16 @@ export function recalculateProductDueDateOnProofApproval({ product = {}, leadTim
 // estimator-side record stays truthful. CAS on updated_date; a sync failure
 // returns synced:false rather than throwing so the WorkOrder transition is
 // never rolled back by a builder-record write issue.
-export async function syncBuilderProductOperationalStatus({ builderProductId, patch = {}, expectedUpdatedDate = "" } = {}) {
-  const apply = buildProductOperationalPatch(patch);
+export async function syncBuilderProductOperationalStatus({ builderProductId, fields = null, patch = {}, expectedUpdatedDate = "" } = {}) {
+  let apply;
+  if (fields && typeof fields === "object") {
+    apply = {};
+    for (const field of PRODUCT_OPERATIONAL_FIELDS) {
+      if (fields[field] !== undefined) apply[field] = fields[field];
+    }
+  } else {
+    apply = buildProductOperationalPatch(patch);
+  }
   const id = String(builderProductId || "").trim();
   if (!id || !Object.keys(apply).length) return { synced: false, reason: "nothing_to_apply" };
   const entity = staffEntities?.BuilderProduct;
@@ -224,11 +344,17 @@ export async function syncBuilderProductOperationalStatus({ builderProductId, pa
 
 // Transition a work-order product and best-effort sync the same patch to the
 // linked BuilderProduct in one call.
-export async function transitionProductAndBuilderStatus({ workOrderId, product, patch = {}, label = "Product status" } = {}) {
-  const saved = await transitionProductOperationalStatus({ workOrderId, productId: product?.id, patch, label });
-  const builderId = product?.builder_product_id || product?.id;
-  const sync = await syncBuilderProductOperationalStatus({ builderProductId: builderId, patch }).catch(() => ({ synced: false, reason: "error" }));
-  return { workOrder: saved, builderSynced: sync.synced === true };
+export async function transitionProductAndBuilderStatus({ workOrderId, product, patch = {}, actor = "", overrideHardDue = false, label = "Product status" } = {}) {
+  const saved = await transitionProductOperationalStatus({ workOrderId, productId: product?.id, patch, actor, overrideHardDue, label });
+  const savedProducts = Array.isArray(saved?.products) ? saved.products : [];
+  const savedProduct = savedProducts.find((row) => String(row?.id || "") === String(product?.id || "")) || null;
+  let sync = { synced: false, reason: "no_builder_link" };
+  if (product?.builder_product_id) {
+    sync = await syncBuilderProductOperationalStatus({
+      builderProductId: product.builder_product_id,
+      fields: savedProduct || {},
+    }).catch(() => ({ synced: false, reason: "error" }));
+  }
+  return { workOrder: saved, product: savedProduct, builderSynced: sync.synced === true };
 }
-
 
