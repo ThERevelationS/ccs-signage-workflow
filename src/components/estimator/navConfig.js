@@ -38,6 +38,7 @@ export const ESTIMATOR_TABS = [
     items: [
       { label: "All Customers", to: "/EstimatorCustomers" },
       { label: "CRM Events", to: "/CrmEvents" },
+      { label: "Statements", to: "/CustomerStatements" },
       { label: "Active", to: "/EstimatorCustomers?status=active" },
       { label: "Prospects", to: "/EstimatorCustomers?status=prospect" },
       { label: "Inactive", to: "/EstimatorCustomers?status=inactive" },
