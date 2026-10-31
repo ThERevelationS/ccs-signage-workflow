@@ -243,15 +243,21 @@ export default function Customer360() {
   if (!customerId) {
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900">
-          <Building2 className="h-9 w-9 text-slate-300 dark:text-slate-600" />
-          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Customer 360</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Open this page with a customer id — <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">/Customer360?id=&lt;customerId&gt;</code> (or <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">?customer=</code>).
-          </p>
-          <Link to="/EstimatorCustomers" className="mt-1 inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
-            <ArrowLeft className="h-4 w-4" /> Go to Customers
-          </Link>
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+          <EmptyState
+            icon={Building2}
+            title="Customer 360"
+            message={
+              <>
+                Open this page with a customer id — <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">/Customer360?id=&lt;customerId&gt;</code> (or <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">?customer=</code>).
+              </>
+            }
+            action={
+              <Link to="/EstimatorCustomers" className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">
+                <ArrowLeft className="h-4 w-4" /> Go to Customers
+              </Link>
+            }
+          />
         </div>
       </div>
     );
