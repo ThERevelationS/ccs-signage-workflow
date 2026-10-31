@@ -16,6 +16,7 @@ function attachScanReporter(entity, id) {
   let snapshot = null, trackingError = "";
   async function emit(event, patch = {}) {
     try {
+      trackingError = "";
       const current = await entity.get(id);
       if (current.status !== "running") return;
       const item = { at: (/* @__PURE__ */ new Date()).toISOString(), ...event };
@@ -34,7 +35,11 @@ function attachScanReporter(entity, id) {
   async function finish(status = "complete", error = "") {
     const current = await entity.get(id).catch(() => null);
     const completion = status === "complete" && current?.total > 0 ? { processed: current.total } : {};
-    await emit({ kind: "finished", detail: error || status }, { ...completion, status, stage: status, indeterminate: false, finished_at: (/* @__PURE__ */ new Date()).toISOString(), error: String(error).slice(0, 1e3) });
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await emit({ kind: "finished", detail: error || status }, { ...completion, status, stage: status, indeterminate: false, finished_at: (/* @__PURE__ */ new Date()).toISOString(), error: String(error).slice(0, 1e3) });
+      if (!trackingError) break;
+      await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+    }
     return snapshot ? { ...snapshot, tracking_error: trackingError || null } : null;
   }
   return { id, emit, finish };
@@ -69,7 +74,20 @@ async function loadAllEntityRows({
   const seen = /* @__PURE__ */ new Set();
   let skip = 0;
   while (skip < safeMaxRows) {
-    const page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip) : await entity.list(sort || void 0, safePageSize, skip);
+    let page, pageErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip) : await entity.list(sort || void 0, safePageSize, skip);
+        pageErr = null;
+        break;
+      } catch (error) {
+        pageErr = error;
+        const s = Number(error?.status || error?.response?.status || 0);
+        if (s !== 429 && s < 500) break;
+        await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+      }
+    }
+    if (pageErr) throw pageErr;
     if (!Array.isArray(page)) {
       throw new Error(`${label} could not be verified completely.`);
     }
@@ -159,7 +177,17 @@ async function authenticateSignShopSession(base44, token) {
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
   if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
-  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
+  let users;
+  for (let a = 0; a < 4; a++) {
+    try {
+      users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
+      break;
+    } catch (error) {
+      const s = Number(error?.status || error?.response?.status || 0);
+      if (s !== 429 && s < 500 || a === 3) throw error;
+      await new Promise((r) => setTimeout(r, 1200 * (a + 1)));
+    }
+  }
   if (!Array.isArray(users)) {
     throw Object.assign(new Error("Authenticated user identity could not be verified"), { status: 503 });
   }
@@ -167,13 +195,23 @@ async function authenticateSignShopSession(base44, token) {
   if (users.length !== 1) {
     throw Object.assign(new Error("Authenticated user identity is ambiguous"), { status: 409 });
   }
-  try {
-    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
-    if (Array.isArray(revoked) && revoked.length > 0) {
-      throw Object.assign(new Error("Authentication required"), { status: 401 });
+  let revoked = null;
+  for (let a = 0; a < 4; a++) {
+    try {
+      revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+      break;
+    } catch (e) {
+      if (e?.status === 401) throw e;
+      const s = Number(e?.status || e?.response?.status || 0);
+      if (s !== 429 && s < 500 || a === 3) {
+        revoked = null;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 1200 * (a + 1)));
     }
-  } catch (e) {
-    if (e?.status === 401) throw e;
+  }
+  if (Array.isArray(revoked) && revoked.length > 0) {
+    throw Object.assign(new Error("Authentication required"), { status: 401 });
   }
   const user = stripExpiredGrant(users[0]);
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
@@ -398,7 +436,7 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
     });
     return slot;
   };
-  const isLimited = (e) => e?.status === 429 || /rate limit/i.test(String(e?.message || e?.data?.message || ""));
+  const isLimited = (e) => e?.status === 429 || /rate limit|traffic volume/i.test(String(e?.message || e?.data?.message || ""));
   const wrapEntity = (entity) => new Proxy(entity, {
     get(target, prop) {
       const value = target[prop];
@@ -452,13 +490,43 @@ function addressResponse(data, init = {}) {
   response.headers.set("X-CCS-Address-Revision", ADDRESS_LOOKUP_REVISION);
   return response;
 }
+var catalogCache = /* @__PURE__ */ new Map();
+var catalogInflight = /* @__PURE__ */ new Map();
+var CATALOG_TTL_MS = 5 * 60 * 1e3;
+async function loadCatalogs(base44, stateFilter) {
+  const key = stateFilter?.state || "all";
+  const hit = catalogCache.get(key);
+  if (hit && Date.now() - hit.ts < CATALOG_TTL_MS) return hit.data;
+  if (catalogInflight.has(key)) return catalogInflight.get(key);
+  const p = (async () => {
+    const [localities, profiles] = await Promise.all([
+      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: "created_date", label: "Location matching catalog" }),
+      loadAllEntityRows({ entity: base44.asServiceRole.entities.JurisdictionProfile, query: stateFilter, sort: "created_date", label: "Location county identities" })
+    ]);
+    catalogCache.set(key, { ts: Date.now(), data: { localities, profiles } });
+    return { localities, profiles };
+  })().finally(() => catalogInflight.delete(key));
+  catalogInflight.set(key, p);
+  return p;
+}
+var sessionCache = /* @__PURE__ */ new Map();
+var SESSION_TTL_MS = 90 * 1e3;
+async function cachedSession(base44, token) {
+  const key = String(token || "");
+  const hit = sessionCache.get(key);
+  if (hit && Date.now() - hit.ts < SESSION_TTL_MS) return hit.actor;
+  const actor = await authenticateSignShopSession(base44, token);
+  if (sessionCache.size > 500) sessionCache.clear();
+  sessionCache.set(key, { ts: Date.now(), actor });
+  return actor;
+}
 Deno.serve(async (req) => {
   let reporter = silentScanReporter;
   let diagnostic = false;
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 }), body = await req.json();
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 4 }), body = await req.json();
     diagnostic = body?.action === "geocode_diagnostic";
-    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await authenticateSignShopSession(base44, body?.session_token);
+    const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);
     if (diagnostic && actor?.role !== "admin") return addressResponse({ success: false, error: "Admin access required." }, { status: 403 });
     const address = typeof body.address === "string" ? body.address.trim() : "";
     if (!address || address.length > 500) return addressResponse({ success: false, error: "Enter a full street address of 500 characters or fewer." }, { status: 400 });
@@ -541,10 +609,7 @@ Deno.serve(async (req) => {
     if (hasServiceIssue) resolution.reason = geocodingService.message;
     await reporter.emit({ kind: "location_result", detail: resolution.reason }, { stage: "Checking saved jurisdictions", indeterminate: true });
     const stateFilter = resolution.state ? { state: resolution.state } : null;
-    const [localities, profiles] = await Promise.all([
-      loadAllEntityRows({ entity: base44.asServiceRole.entities.PermitLocality, query: stateFilter, sort: "created_date", label: "Location matching catalog" }),
-      loadAllEntityRows({ entity: base44.asServiceRole.entities.JurisdictionProfile, query: stateFilter, sort: "created_date", label: "Location county identities" })
-    ]);
+    const { localities, profiles } = await loadCatalogs(base44, stateFilter);
     const matched = exactConfiguredLocality(localities, resolution, profiles);
     await reporter.emit({ kind: "catalog_check", detail: `Checked ${localities.length} saved jurisdictions. ${matched ? `Unique location match: ${matched.name}. ${matched.offices?.some((office) => office.authority_verification_status === "staff_verified") ? "Checking reviewed office roles." : "Office setup needs review; website research stays in the review tools."}` : "No unique confirmed match. Website research stays available in the review tools."}` });
     const authority = summarizeMatchedLocalityAuthority(matched);
@@ -556,7 +621,7 @@ Deno.serve(async (req) => {
     return addressResponse({ success: true, scan_run: await reporter.finish(hasServiceIssue ? "completed_with_errors" : "complete", hasServiceIssue ? geocodingService.message : void 0), geocode, geocoding_service: geocodingService, location_resolution: resolution, automatic_scan: automatic, address_archives: addressArchives, research_deferred: true, suggested_locality: matched ? { id: matched.id, name: matched.name, state: matched.state, zip: matched.zip, jurisdiction_profile_id: matched.jurisdiction_profile_id } : null, authority_review: authority, apply_allowed: applyAllowed, not_matched: !matched, ai_locality_name: resolution.target?.name || "", ai_state: resolution.state || "", ai_county: resolution.target?.county || "", match_confidence: matched ? "high" : "unresolved", match_method: matched ? "government_boundary_intersection" : "none", match_reason: reason, notes: !applyAllowed ? "An administrator must confirm the location and sign/zoning office setup before this address is used." : "" });
   } catch (error) {
     const errorStatus = Number(error?.status || error?.response?.status || 0);
-    if (errorStatus === 429 || /rate limit|too many requests/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3 }, { status: 429, headers: { "Retry-After": "3" } });
+    if (errorStatus === 429 || /rate limit|too many requests/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3, error_detail: String(error?.message || error).slice(0, 300) }, { status: 429, headers: { "Retry-After": "3" } });
     const status = [400, 401, 409, 503].includes(errorStatus) ? errorStatus : 500;
     return addressResponse({ success: false, scan_run: await reporter.finish("failed", "Address lookup could not finish safely."), error: status === 500 ? "Address lookup could not finish safely. Please try again." : error.message, ...diagnostic || status !== 500 ? { error_detail: String(error?.message || error).slice(0, 300) } : {} }, { status });
   }
