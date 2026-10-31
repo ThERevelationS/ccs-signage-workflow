@@ -3,7 +3,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import AppErrorBoundary from '@/components/auth/AppErrorBoundary'
+import { CcsMantineProvider } from '@/components/ui/ccs-date-field'
 import '@/index.css'
+import '@mantine/core/styles.css'
+import '@mantine/dates/styles.css'
 
 const previewQaHost = isPermittingPreviewHost(window.location.hostname, import.meta.env.DEV);
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -13,7 +16,7 @@ if (previewQaHost && new URLSearchParams(window.location.search).get('permitting
     root.render(<AppErrorBoundary><Fixture /></AppErrorBoundary>);
   });
 } else {
-  root.render(<AppErrorBoundary><App /></AppErrorBoundary>);
+  root.render(<AppErrorBoundary><CcsMantineProvider><App /></CcsMantineProvider></AppErrorBoundary>);
 }
 
 if (import.meta.hot) {
