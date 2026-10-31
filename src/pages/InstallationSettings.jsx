@@ -288,7 +288,7 @@ function FieldGrid({ keys, values, rowByName, onChange, disabled }) {
 }
 
 function Field({ name, label, description, value, onChange, disabled, type = "number", suffix }) {
-  return <div><div className="flex items-baseline justify-between gap-2"><Label className="text-[10px] text-gray-600">{label}</Label>{suffix && <span className="text-[9px] text-gray-400">{suffix}</span>}</div>{type === "text" ? <Input value={value ?? ""} onChange={(e) => onChange(name, e.target.value)} disabled={disabled} className="h-[30px] mt-1 text-[11px]" /> : <Input type="number" step="0.01" value={value ?? ""} onChange={(e) => onChange(name, e.target.value)} disabled={disabled} className="h-[30px] mt-1 text-[11px] text-right" />}{description && <p className="text-[9px] text-gray-400 mt-1">{description}</p>}<div className="text-[8px] text-gray-300 font-mono mt-0.5 truncate">{name}</div></div>;
+  return <div><div className="flex items-baseline justify-between gap-2"><Label className="text-[10px] text-gray-600">{label}</Label>{suffix && <span className="text-[9px] text-gray-400">{suffix}</span>}</div>{type === "text" ? <Input value={value ?? ""} onChange={(e) => onChange(name, e.target.value)} disabled={disabled} className="h-[30px] mt-1 text-[11px]" /> : <Input type="number" step="0.01" value={value ?? ""} onChange={(e) => onChange(name, e.target.value)} disabled={disabled} className="h-[30px] mt-1 text-[11px] text-right" />}{description && <p className="text-[9px] text-gray-400 mt-1">{description}</p>}<div className="text-[9px] text-gray-300 font-mono mt-0.5 truncate">{name}</div></div>;
 }
 
 function SeverityEditor({ title, prefix, values, onChange, disabled }) {
