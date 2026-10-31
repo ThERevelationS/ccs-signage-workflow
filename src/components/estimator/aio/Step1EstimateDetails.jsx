@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Sparkles } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerSearchDialog from "./CustomerSearchDialog";
 import NewCustomerDialog from "./NewCustomerDialog";
 
@@ -61,7 +61,7 @@ export default function Step1EstimateDetails({
       entity && typeof entity.filter === "function"
         ? entity.filter({ customer_id: form.customer_id }).catch(() => [])
         : Promise.resolve([]);
-    Promise.all([load(base44.entities?.CustomerLocation), load(base44.entities?.CustomerContact), load(staffEntities?.CustomerNote)]).then(
+    Promise.all([load(staffEntities.CustomerLocation), load(staffEntities.CustomerContact), load(staffEntities.CustomerNote)]).then(
       ([locations, contacts, notes]) => {
         if (!active) return;
         setEntityLocations(locations || []);

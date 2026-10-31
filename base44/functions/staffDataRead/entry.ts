@@ -51,6 +51,7 @@ const STAFF_READABLE = new Set([
   'ChannelLetterInstallation',
   'ChecklistSubItem',
   'Customer',
+  'CustomerContact',
   'CustomerLocation',
   'CustomerNote',
   'DimensionalLetterMaterial',
