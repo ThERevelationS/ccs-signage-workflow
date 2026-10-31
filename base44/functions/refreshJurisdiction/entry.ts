@@ -17,6 +17,7 @@ import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResear
 import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments, applyDiscoveryFetchTimestamp } from '../../shared/permittingDiscoveryScan.mjs';
 import { RESEARCH_FETCH_TIMEOUT_MS } from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
+import { gateResearchSourceUrls } from '../../shared/permittingResearchUrlTrust.mjs';
 
 Deno.serve(async (req) => {
   let reporter:any=silentScanReporter;
@@ -151,6 +152,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       throw Object.assign(new Error('Discovery requires a saved official permitting URL and unprotected document collection.'), { status: 400 });
     }
     let researchData: any;
+    let sourceUrlReview: any[] = [];
     if (discoveryOnly) {
       researchData = { permitting_url: jurisdiction.permitting_url, documents: [] };
     } else {
@@ -164,6 +166,11 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       });
       researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
       assertResearchSourceIdentity(jurisdiction,researchData);
+      ({ research: researchData, review: sourceUrlReview } = gateResearchSourceUrls(jurisdiction, researchData));
+      if (sourceUrlReview.length) {
+        console.warn(`Held ${sourceUrlReview.length} AI source URL(s) for review on ${jurisdiction.name || id}: ${sourceUrlReview.map(r => r.reason).join(', ')}`);
+        await reporter.emit({kind:'source_url_review',detail:'AI returned URLs outside the established official host or vetted government domains; held for admin review and not applied.',resources:sourceUrlReview.map(r=>({url:r.url,title:r.field,doc_type:r.reason}))});
+      }
       await reporter.emit({kind:'found',detail:'AI returned source candidates; discovery and authority review still required.',resources:researchData?.documents || []});
       if(agentResult?.data?.research_instructions)await reporter.emit({kind:'search_instructions',detail:agentResult.data.research_instructions});
     }
@@ -172,11 +179,14 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     // Harvest even when AI returns a partial document list. Discovery-only
     // requests follow linked official pages without spending research credits.
     let discoveryScan: any = null;
-    if (researchData.permitting_url && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
+    // A held host change never becomes the crawl boundary; keep crawling the saved official URL.
+    const heldPermittingUrl = sourceUrlReview.some(r => r.field === 'permitting_url');
+    const discoverySeedUrl = researchData.permitting_url || (heldPermittingUrl && seedUrlValid ? jurisdiction.permitting_url : null);
+    if (discoverySeedUrl && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
       try {
         discoveryScan = await scanOfficialPermittingPages({
           onProgress:(event:any)=>reporter.emit(event,event.progress || {}),
-          jurisdiction, seedUrl: researchData.permitting_url, maxPages: rescanSourceUrl?1:discoveryOnly ? 3 : 1,rescanUrl:rescanSourceUrl, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
+          jurisdiction, seedUrl: discoverySeedUrl, maxPages: rescanSourceUrl?1:discoveryOnly ? 3 : 1,rescanUrl:rescanSourceUrl, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
           resume: jurisdiction.discovery_scan_state || null, existingDocuments: jurisdiction.documents || [],
           fetchPage: async (url: string) => {
             const response = await safeExternalFetch(url, {
@@ -300,5 +310,5 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         updated = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
       }
     }
-    return { success: true, jurisdiction: updated, archival, discovery_scan: discoveryScan, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
+    return { success: true, jurisdiction: updated, archival, discovery_scan: discoveryScan, source_url_review: sourceUrlReview, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
 }

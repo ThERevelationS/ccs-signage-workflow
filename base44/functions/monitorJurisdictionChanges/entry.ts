@@ -5,6 +5,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { constantTimeEqual } from '../../shared/constantTime.ts';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { gateResearchSourceUrls } from '../../shared/permittingResearchUrlTrust.mjs';
 
 // Fire-and-forget automation emit — a failure must never break the monitor
 // scan, so this swallows and logs like the other emit helpers.
@@ -153,9 +154,11 @@ Deno.serve(async (req) => {
           if (data.updated_profile) {
             const profileUpdate = {};
             const up = data.updated_profile;
+            const { research: urls, review: sourceUrlReview } = gateResearchSourceUrls(jurisdiction, { website_url: up.website_url, permitting_url: up.permitting_url });
+            if (sourceUrlReview.length) console.warn(`Held ${sourceUrlReview.length} monitor URL change(s) for review on ${jurisdiction.name}: ${sourceUrlReview.map(r => r.reason).join(', ')}`);
 
-            if (up.website_url && !jurisdiction._manual_website_url) profileUpdate.website_url = up.website_url;
-            if (up.permitting_url && !jurisdiction._manual_permitting_url) profileUpdate.permitting_url = up.permitting_url;
+            if (urls.website_url && !jurisdiction._manual_website_url) profileUpdate.website_url = urls.website_url;
+            if (urls.permitting_url && !jurisdiction._manual_permitting_url) profileUpdate.permitting_url = urls.permitting_url;
 
             if (up.permit_requirements && !jurisdiction._manual_requirements) {
               const existing = jurisdiction.permit_requirements || {};
