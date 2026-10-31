@@ -1,6 +1,7 @@
 import { OpportunityActivity } from "@/api/gatedEntities";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { markEventCompletePatch, newCrmEventFields } from "@/components/crm/crmEventsModel";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 // Persistence for typed CRM event rows on OpportunityActivity. Reads route
 // through the staffDataRead gateway; writes go through staffEntityWrite —
@@ -39,7 +40,13 @@ export async function completeCrmEvent({ activity, outcome = "completed", now } 
   if (result && typeof result.updated === "number") {
     if (result.updated === 1) {
       const saved = await OpportunityActivity.get(id).catch(() => null);
-      return saved || { ...activity, ...patch };
+      const completed = saved || { ...activity, ...patch };
+      // Unified alerts: crm_event_completed rides the automation/notify
+      // pipeline — fire-and-forget, it never blocks the close.
+      try {
+        void NotificationTriggers.crmEventCompleted(completed, { outcome: patch.outcome });
+      } catch { /* notify is best-effort */ }
+      return completed;
     }
     if (result.updated === 0) {
       const current = await OpportunityActivity.get(id).catch(() => null);
