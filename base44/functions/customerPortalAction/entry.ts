@@ -5,6 +5,7 @@ import {
   expectedFoundationFields,
   replaceFoundationFieldsIfUnchanged,
 } from "../../shared/opportunityFoundationPersistence.mjs";
+import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
 const clean = (value: any) => String(value ?? "").trim();
 const num = (value: any, fallback = 0) => {
@@ -38,7 +39,7 @@ function linkIsUsable(link: any) {
 
 async function resolveLink(PortalLink: any, token: string) {
   if (token.length < 16 || token.length > 128) throw bad("Portal link not recognized.", 404);
-  const links = await PortalLink.filter({ token }).catch(() => []);
+  const links = await loadAllEntityRows({ entity: PortalLink, query: { token }, label: "Portal link lookup" }).catch(() => []);
   const link = (Array.isArray(links) ? links : []).find(linkIsUsable);
   if (!link) throw bad("This portal link is invalid, expired, or revoked.", 404);
   return link;
@@ -99,7 +100,7 @@ async function estimatePortalView(estimate: any) {
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const SectionAcceptance = base44.asServiceRole.entities.EstimateSectionAcceptance;
   const quoteVersion = Math.max(1, whole(estimate?.quote_version, 1));
-  const decisionRows = await SectionAcceptance.filter({ estimate_id: clean(estimate?.id), quote_version: quoteVersion }).catch(() => []);
+  const decisionRows = await loadAllEntityRows({ entity: SectionAcceptance, query: { estimate_id: clean(estimate?.id), quote_version: quoteVersion }, label: "Portal section decisions" }).catch(() => []);
   const decisionBySection = {};
   (Array.isArray(decisionRows) ? decisionRows : []).sort((a: any, b: any) => new Date(clean(a?.decided_at)).getTime() - new Date(clean(b?.decided_at)).getTime()).forEach((r: any) => { decisionBySection[clean(r?.section_key)] = clean(r?.decision); });
   const sections = items
@@ -196,7 +197,7 @@ function messageView(m: any) {
 }
 
 async function loadCustomerThread(PortalMessage: any, customerId: string, markStaffRead = false) {
-  const rows = await PortalMessage.filter({ customer_id: customerId }).catch(() => []);
+  const rows = await loadAllEntityRows({ entity: PortalMessage, query: { customer_id: customerId }, sort: "created_date", label: "Portal message thread" }).catch(() => []);
   const list = (Array.isArray(rows) ? rows : [])
     .sort((a: any, b: any) => clean(a?.created_date).localeCompare(clean(b?.created_date)));
   if (markStaffRead) {
@@ -239,7 +240,7 @@ Deno.serve(async (req) => {
     // "customerportal" display page — empty display_pages means "all staff app
     // pages", which must never leak into the customer-facing surface.
     const loadPortalAnnouncements = async (customerId = "") => {
-      const rows = await Announcement.filter({ is_active: true }).catch(() => []);
+      const rows = await loadAllEntityRows({ entity: Announcement, query: { is_active: true }, sort: "-created_date", label: "Portal announcements" }).catch(() => []);
       const rank: any = { urgent: 0, high: 1, normal: 2, low: 3 };
       return (Array.isArray(rows) ? rows : [])
         .filter((a: any) => Array.isArray(a?.display_pages) && a.display_pages.some((p: any) => clean(p).toLowerCase() === "customerportal"))
@@ -257,7 +258,7 @@ Deno.serve(async (req) => {
     };
 
     const opportunityIdForEstimate = async (estimateId: string) => {
-      const requests = await EstimatingRequest.filter({ estimate_id: estimateId }).catch(() => []);
+      const requests = await loadAllEntityRows({ entity: EstimatingRequest, query: { estimate_id: estimateId }, sort: "-created_date", label: "Portal estimating requests" }).catch(() => []);
       return clean((Array.isArray(requests) ? requests : [])[0]?.opportunity_id);
     };
 
@@ -270,7 +271,7 @@ Deno.serve(async (req) => {
       if (clean(link.kind) === "invoice") {
         const invoice = await Invoice.get(clean(link.record_id)).catch(() => null);
         if (!invoice?.id) throw bad("The linked record is no longer available.", 404);
-        const payments = await Payment.filter({ invoice_id: clean(invoice.id) }).catch(() => []);
+        const payments = await loadAllEntityRows({ entity: Payment, query: { invoice_id: clean(invoice.id) }, sort: "-created_date", label: "Portal invoice payments" }).catch(() => []);
         const announcements = await loadPortalAnnouncements(clean(link.customer_id) || clean(invoice.customer_id) || "");
         return Response.json({
           success: true,
@@ -315,16 +316,16 @@ Deno.serve(async (req) => {
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const customer = await Customer.get(customerId).catch(() => null);
       const [estimates, orders, invoices, payments, thread, announcements] = await Promise.all([
-        Estimate.filter({ customer_id: customerId }).catch(() => []),
-        WorkOrder.filter({ customer_id: customerId }).catch(() => []),
-        Invoice.filter({ customer_id: customerId }).catch(() => []),
-        Payment.filter({ customer_id: customerId }).catch(() => []),
+        loadAllEntityRows({ entity: Estimate, query: { customer_id: customerId }, sort: "-created_date", label: "Portal estimates" }).catch(() => []),
+        loadAllEntityRows({ entity: WorkOrder, query: { customer_id: customerId }, sort: "-created_date", label: "Portal work orders" }).catch(() => []),
+        loadAllEntityRows({ entity: Invoice, query: { customer_id: customerId }, sort: "-created_date", label: "Portal invoices" }).catch(() => []),
+        loadAllEntityRows({ entity: Payment, query: { customer_id: customerId }, sort: "-created_date", label: "Portal payments" }).catch(() => []),
         loadCustomerThread(PortalMessage, customerId, true),
         loadPortalAnnouncements(customerId),
       ]);
       // Company branding from QuoteDefaults so portal quote/invoice views can
       // render the shop logo/name (estimate-level fields override per quote).
-      const quoteDefaults = await base44.asServiceRole.entities.QuoteDefaults.filter({ config_name: "default" }).catch(() => []);
+      const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: "default" }, label: "Portal quote defaults" }).catch(() => []);
       const qd = (Array.isArray(quoteDefaults) ? quoteDefaults : [])[0] || {};
       const companyBranding = { name: clean(qd?.company_name) || "CCS Signage", logo_url: clean(qd?.company_logo_url) };
       const invoiceList = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
@@ -536,7 +537,7 @@ Deno.serve(async (req) => {
         // canonical row is never modified or duplicated.
         const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;
         const quoteVersion = Math.max(1, whole(saved?.quote_version ?? estimate?.quote_version, 1));
-        const existingAcceptance = await Acceptance.filter({ estimate_id: estimateId, quote_version: quoteVersion }).catch(() => []);
+        const existingAcceptance = await loadAllEntityRows({ entity: Acceptance, query: { estimate_id: estimateId, quote_version: quoteVersion }, label: "Portal acceptances" }).catch(() => []);
         if (!Array.isArray(existingAcceptance) || existingAcceptance.length === 0) {
           try {
             await Acceptance.create({
@@ -731,7 +732,7 @@ Deno.serve(async (req) => {
       const woLabel = clean(order.est_inv_at || order.work_order_number) || clean(order.title) || "Job";
 
       // Draft a proposed change order so the request lands in the CO queue.
-      const coRows = await ChangeOrder.filter({}).catch(() => []);
+      const coRows = await loadAllEntityRows({ entity: ChangeOrder, query: {}, label: "Portal CO numbering rows" }).catch(() => []);
       let seq = (Array.isArray(coRows) ? coRows.length : 0) + 1001;
       const taken = new Set((Array.isArray(coRows) ? coRows : []).map((r: any) => clean(r?.change_order_number)));
       while (taken.has(`CO-${seq}`)) seq += 1;
@@ -797,10 +798,10 @@ Deno.serve(async (req) => {
     const actorName = clean(user?.full_name) || clean(user?.name) || actor;
 
     if (action === "mark_all_read") {
-      const rows = await PortalMessage.filter({ author_side: "customer", read_by_staff: false }).catch(() => []);
+      const rows = await loadAllEntityRows({ entity: PortalMessage, query: { author_side: "customer", read_by_staff: false }, label: "Portal unread messages" }).catch(() => []);
       const list = Array.isArray(rows) ? rows : [];
       let marked = 0;
-      for (const m of list.slice(0, 500)) {
+      for (const m of list.slice(0, 1000)) {
         const saved = await replaceFoundationFieldsIfUnchanged({
           entity: PortalMessage,
           recordId: clean(m?.id),
@@ -809,7 +810,8 @@ Deno.serve(async (req) => {
           label: "Portal staff mark-all-read",
         }).catch(() => null);
         if (saved) marked += 1;
-      }      return Response.json({ success: true, action, marked });
+      }
+      return Response.json({ success: true, action, marked, unread_total: list.length, remaining: Math.max(0, list.length - marked) });
     }
 
     if (action === "create_link") {
@@ -835,7 +837,7 @@ Deno.serve(async (req) => {
         customerId = recordId;
         label = label || (clean(customer.name) || clean(customer.company_name) || "Customer portal");
       }
-      const existing = await PortalLink.filter({ kind, record_id: recordId }).catch(() => []);
+      const existing = await loadAllEntityRows({ entity: PortalLink, query: { kind, record_id: recordId }, sort: "-created_date", label: "Portal links for record" }).catch(() => []);
       const active = (Array.isArray(existing) ? existing : []).find(linkIsUsable);
       if (active) {
         return Response.json({ success: true, action, link: active, token: clean(active.token), reused: true });
@@ -894,7 +896,7 @@ Deno.serve(async (req) => {
       if (invoiceId) { filter.kind = "invoice"; filter.record_id = invoiceId; }
       else if (customerId) { filter.customer_id = customerId; }
       else throw bad("invoice_id or customer_id is required.");
-      const rows = await PortalLink.filter(filter).catch(() => []);
+      const rows = await loadAllEntityRows({ entity: PortalLink, query: filter, sort: "-created_date", label: "Portal link list" }).catch(() => []);
       return Response.json({
         success: true,
         action,
@@ -933,7 +935,7 @@ Deno.serve(async (req) => {
           m.read_by_staff = true;
         }
       }
-      const links = await PortalLink.filter({ customer_id: customerId }).catch(() => []);
+      const links = await loadAllEntityRows({ entity: PortalLink, query: { customer_id: customerId }, sort: "-created_date", label: "Portal customer links" }).catch(() => []);
       return Response.json({
         success: true,
         action,
@@ -985,7 +987,7 @@ Deno.serve(async (req) => {
       const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
       if (!/^https?:\/\//.test(portalBase)) throw bad("portal_base is required.");
 
-      const existing = await PortalLink.filter({ kind: "customer", record_id: customerId }).catch(() => []);
+      const existing = await loadAllEntityRows({ entity: PortalLink, query: { kind: "customer", record_id: customerId }, sort: "-created_date", label: "Portal customer link" }).catch(() => []);
       let link = (Array.isArray(existing) ? existing : []).find(linkIsUsable);
       if (!link) {
         const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
@@ -1063,7 +1065,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "portal_inbox") {
-      const rows = await PortalMessage.filter({ read_by_staff: false }).catch(() => []);
+      const rows = await loadAllEntityRows({ entity: PortalMessage, query: { read_by_staff: false }, label: "Portal staff inbox" }).catch(() => []);
       const unread = (Array.isArray(rows) ? rows : []).filter((m: any) => clean(m?.author_side) === "customer");
       const byCustomer = new Map();
       for (const m of unread) {
