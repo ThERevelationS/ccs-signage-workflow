@@ -23,7 +23,7 @@ export const RECORD_KINDS = Object.keys(RECORD_ROUTES);
 
 const normKind = (v) => String(v || "").trim().toLowerCase();
 
-// A few natural aliases callers already use — "wo" and "work_order" show up
+// A few natural aliases callers already use -- "wo" and "work_order" show up
 // in row data, "purchase_order" in procurement code.
 const KIND_ALIASES = {
   wo: "workorder",
