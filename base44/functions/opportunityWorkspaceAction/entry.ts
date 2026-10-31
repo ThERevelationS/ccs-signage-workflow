@@ -1096,7 +1096,7 @@ Deno.serve(async (req) => {
           work_orders: mergeLegacy("work_orders", (Array.isArray(wos) ? wos : [])
             .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description", "sales_import_source_id"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date), legacy_source_id: clean(r?.legacy_source_id) || clean(r?.sales_import_source_id).replace(/^corebridge:/, "") || undefined })),
           orders: mergeLegacy("orders", (Array.isArray(orders) ? orders : [])
             .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"])))
             .slice(0, 10)
