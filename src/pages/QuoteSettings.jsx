@@ -204,7 +204,7 @@ function TaxGroupsSection({ canEdit }) {
   const [newPct, setNewPct] = useState("");
 
   const load = async () => {
-    try { setGroups(await staffEntities.list("TaxGroup", "sort_order", 200)); }
+    try { setGroups(await staffEntities.TaxGroup.list("sort_order", 200)); }
     catch (e) { setErr(e?.message || "Could not load tax groups."); }
   };
   useEffect(() => { load(); }, []);
@@ -213,7 +213,7 @@ function TaxGroupsSection({ canEdit }) {
     if (!newName.trim()) return;
     setBusy(true); setErr("");
     try {
-      await staffEntities.create("TaxGroup", {
+      await staffEntities.TaxGroup.create({
         group_name: newName.trim(),
         tax_percent: Math.max(0, Math.min(100, Number(newPct) || 0)),
         is_active: true,
@@ -227,7 +227,7 @@ function TaxGroupsSection({ canEdit }) {
 
   const patchRow = async (row, patchFields) => {
     setBusy(true); setErr("");
-    try { await staffEntities.update("TaxGroup", row.id, patchFields); await load(); }
+    try { await staffEntities.TaxGroup.update(row.id, patchFields); await load(); }
     catch (e) { setErr(e?.message || "Could not update tax group."); }
     finally { setBusy(false); }
   };
@@ -235,7 +235,7 @@ function TaxGroupsSection({ canEdit }) {
   const remove = async (row) => {
     if (!window.confirm(`Delete tax group "${row.group_name || row.name}"?`)) return;
     setBusy(true); setErr("");
-    try { await staffEntities.delete("TaxGroup", row.id); await load(); }
+    try { await staffEntities.TaxGroup.delete(row.id); await load(); }
     catch (e) { setErr(e?.message || "Could not delete tax group."); }
     finally { setBusy(false); }
   };
