@@ -220,6 +220,8 @@ export function EstimatesTab({ data, truncatedNotice }) {
         rows={rows}
         rowKey={(e) => e.id}
         empty="No estimates for this customer yet."
+        emptyActionLabel="New estimate"
+        emptyActionTo={data.customer?.id ? `/NewAllInOneEstimate?customer=${data.customer.id}` : "/NewAllInOneEstimate"}
         columns={[
           {
             label: "Estimate",
@@ -254,6 +256,8 @@ export function JobsTab({ data, truncatedNotice }) {
         rows={rows}
         rowKey={(w) => w.id}
         empty="No work orders for this customer yet."
+        emptyActionLabel="Browse work orders"
+        emptyActionTo="/JobWorkspace"
         columns={[
           {
             label: "Job",
@@ -303,6 +307,8 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
           rows={invoices}
           rowKey={(i) => i.id}
           empty="No invoices on file."
+          emptyActionLabel="View invoices"
+          emptyActionTo="/Invoices"
           columns={[
             {
               label: "Invoice",
@@ -341,6 +347,8 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
             rows={payments}
             rowKey={(p) => p.id}
             empty="No payments recorded."
+            emptyActionLabel="View invoices"
+            emptyActionTo="/Invoices"
             columns={[
               { label: "Date", render: (p) => fmtDate(p.paid_date || p.created_date) },
               {
@@ -362,6 +370,8 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
             rows={pos}
             rowKey={(p) => p.id}
             empty="No purchase orders."
+            emptyActionLabel="View purchase orders"
+            emptyActionTo="/PurchaseOrders"
             columns={[
               {
                 label: "PO",
@@ -386,6 +396,8 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
           rows={cos}
           rowKey={(c) => c.id}
           empty="No change orders."
+          emptyActionLabel="View change orders"
+          emptyActionTo="/ChangeOrders"
           columns={[
             {
               label: "Change order",
@@ -436,6 +448,8 @@ export function ActivityTab({ data, backendReady, truncatedNotice }) {
             rows={opportunities}
             rowKey={(o) => o.id}
             empty="No opportunities for this customer."
+            emptyActionLabel="View pipeline"
+            emptyActionTo="/Opportunities"
             columns={[
               {
                 label: "Opportunity",
@@ -461,6 +475,8 @@ export function ActivityTab({ data, backendReady, truncatedNotice }) {
           rows={activities}
           rowKey={(a, i) => a.id || i}
           empty="No activity recorded for this customer."
+          emptyActionLabel="Log an event"
+          emptyActionTo="/CrmEvents"
           columns={[
             {
               label: "When",
