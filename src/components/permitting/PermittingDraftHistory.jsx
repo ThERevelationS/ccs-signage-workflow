@@ -13,14 +13,14 @@ function SavedValue({ value }) {
   return <span className="whitespace-pre-wrap">{String(value)}</span>;
 }
 function revisionLabel(row) {
-  return row.snapshot?.draft_revision?.revision_number ? 'Revision ' + row.snapshot.draft_revision.revision_number : 'Original saved draft';
+  return row.snapshot?.draft_revision?.revision_number ? 'Copy ' + row.snapshot.draft_revision.revision_number : 'First saved copy';
 }
 
 function CitationSourceActions({ citations, draftRow, side, onOpenCitation }) {
   if (!Array.isArray(citations) || !onOpenCitation) return null;
   return <div className="mt-2 space-y-2">{citations.map((citation, index) => citation && typeof citation === 'object' && <div key={index}>
-    <Button type="button" variant="outline" className="min-h-11 h-auto w-full whitespace-normal text-xs" onClick={event => onOpenCitation(citation, draftRow, event.currentTarget)}>Open {side} citation {index + 1} source</Button>
-    {!citationSourceId(citation) && <p>No saved source record linked; the retained citation can still be reviewed.</p>}
+    <Button type="button" variant="outline" className="min-h-11 h-auto w-full whitespace-normal text-xs" onClick={event => onOpenCitation(citation, draftRow, event.currentTarget)}>Open source {index + 1} ({side === 'earlier' ? 'older copy' : 'this copy'})</Button>
+    {!citationSourceId(citation) && <p>No saved source on file — you can still read what was saved.</p>}
   </div>)}</div>;
 }
 export default function PermittingDraftHistory({ current, onOpenCitation }) {
@@ -49,37 +49,37 @@ export default function PermittingDraftHistory({ current, onOpenCitation }) {
       if (!active.current) return;
       setAncestors(previous => [...previous, row]); setSelectedId(row.id);
     } catch {
-      if (active.current) setError('Earlier revision could not be loaded or its links could not be verified. It may be unavailable or outside your access. Loaded comparisons are still available; retry to check again.');
+      if (active.current) setError("Couldn't load the older copy. You can still compare what's already shown — try again for more.");
     } finally {
       pending.current = false;
       if (active.current) setLoading(false);
     }
   };
-  return <section aria-label="Saved draft revision history" className="min-w-0 space-y-3 rounded-lg border border-purple-200 p-3 [overflow-wrap:anywhere]">
-    <Button type="button" variant="outline" aria-expanded={open} className="min-h-11 h-auto whitespace-normal" onClick={() => setOpen(value => !value)}>{open ? 'Hide revision history' : 'Show revision history & comparison'}</Button>
+  return <section aria-label="Older saved copies" className="min-w-0 space-y-3 rounded-lg border border-purple-200 p-3 [overflow-wrap:anywhere]">
+    <Button type="button" variant="outline" aria-expanded={open} className="min-h-11 h-auto whitespace-normal" onClick={() => setOpen(value => !value)}>{open ? 'Hide older copies' : 'See older copies & what changed'}</Button>
     {open && <>
-      <h3 className="font-semibold">Saved revision history</h3>
-      <p className="text-sm text-gray-600">Read-only saved snapshots. Earlier revisions load one at a time through recorded parent links. This view covers the opened draft and its ancestors; newer revisions and other branches are not listed. No AI call or job changes.</p>
-      <p className="text-sm"><strong>Opened draft:</strong> {revisionLabel(current)} · {current.title} · Saved {current.created_date || current.reviewed_at || 'date not recorded'}</p>
+      <h3 className="font-semibold">Older saved copies</h3>
+      <p className="text-sm text-gray-600">Saved copies you can look at but not change. Older copies load one at a time. This only shows this plan and the copies it came from — nothing here changes the job.</p>
+      <p className="text-sm"><strong>This copy:</strong> {revisionLabel(current)} · {current.title} · Saved {current.created_date || current.reviewed_at || 'date not recorded'}</p>
       <div className="flex flex-wrap gap-2">
-        {ancestors.map(row => <Button key={row.id} type="button" variant={selectedId === row.id ? 'default' : 'outline'} aria-pressed={selectedId === row.id} className="min-h-11 h-auto max-w-full whitespace-normal text-left" onClick={() => setSelectedId(row.id)}>Compare with {revisionLabel(row)} · {row.title || 'Untitled draft'}</Button>)}
+        {ancestors.map(row => <Button key={row.id} type="button" variant={selectedId === row.id ? 'default' : 'outline'} aria-pressed={selectedId === row.id} className="min-h-11 h-auto max-w-full whitespace-normal text-left" onClick={() => setSelectedId(row.id)}>Compare with {revisionLabel(row)} · {row.title || 'Untitled plan'}</Button>)}
       </div>
-      {parentId ? <Button type="button" variant="outline" className="min-h-11" disabled={loading} onClick={loadPrevious}>{loading ? 'Loading earlier revision…' : error ? 'Retry earlier revision' : 'Load previous revision'}</Button>
-        : <p className="text-sm text-gray-600">{ancestors.length ? 'Reached the earliest linked snapshot.' : 'No earlier revision is linked to this saved draft.'}</p>}
-      {loading && <p role="status" className="text-sm">Loading the recorded earlier snapshot…</p>}
+      {parentId ? <Button type="button" variant="outline" className="min-h-11" disabled={loading} onClick={loadPrevious}>{loading ? 'Loading the older copy…' : error ? 'Try again' : 'Load the older copy'}</Button>
+        : <p className="text-sm text-gray-600">{ancestors.length ? "That's the oldest saved copy." : 'No older copies were saved before this one.'}</p>}
+      {loading && <p role="status" className="text-sm">Loading the older copy…</p>}
       {error && <p role="alert" className="rounded bg-red-50 p-2 text-sm text-red-800">{error}</p>}
-      {selected && <section aria-label="Saved revision comparison" className="min-w-0 space-y-3">
-        <h4 className="font-semibold">{changed} changed fields · {revisionLabel(selected)} → {revisionLabel(current)}</h4>
-        <p className="text-xs text-gray-600">Earlier: {selected.title} · Saved {selected.created_date || selected.reviewed_at || 'date not recorded'}. Steps are compared by saved position. Evidence is displayed exactly as saved and has not been refreshed or approved.</p>
-        <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={showUnchanged} onChange={event => setShowUnchanged(event.target.checked)} />Show all unchanged fields</label>
-        <p className="text-xs text-gray-600">Citations, gaps and review notes remain visible even when unchanged.</p>
-        {groups.map(group => <section key={group} aria-label={group + ' comparison'} className="min-w-0 space-y-2">
+      {selected && <section aria-label="What changed between copies" className="min-w-0 space-y-3">
+        <h4 className="font-semibold">{changed} things changed · {revisionLabel(selected)} → {revisionLabel(current)}</h4>
+        <p className="text-xs text-gray-600">Older: {selected.title} · Saved {selected.created_date || selected.reviewed_at || 'date not recorded'}. Steps are compared in the order they were saved. Sources show exactly as saved — nobody re-checked them.</p>
+        <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={showUnchanged} onChange={event => setShowUnchanged(event.target.checked)} />Show what stayed the same</label>
+        <p className="text-xs text-gray-600">Sources, open questions, and notes always show.</p>
+        {groups.map(group => <section key={group} aria-label={group + ' changes'} className="min-w-0 space-y-2">
           <h5 className="font-semibold text-purple-900">{group}</h5>
           {visible.filter(row => row.group === group).map(row => <article key={row.label} className="min-w-0 rounded border p-2 text-xs">
-            <h6 className="font-semibold">{row.label} · {row.changed ? 'Changed' : 'Unchanged'}</h6>
+            <h6 className="font-semibold">{row.label} · {row.changed ? 'Changed' : 'Same'}</h6>
             <div className="mt-2 grid min-w-0 gap-3 sm:grid-cols-2">
-              <div className="min-w-0 rounded bg-gray-50 p-2"><p className="mb-1 font-semibold">Earlier snapshot</p><SavedValue value={row.before} />{group === 'Citations' && <CitationSourceActions citations={row.before} draftRow={selected} side="earlier" onOpenCitation={onOpenCitation} />}</div>
-              <div className="min-w-0 rounded bg-purple-50 p-2"><p className="mb-1 font-semibold">Opened snapshot</p><SavedValue value={row.after} />{group === 'Citations' && <CitationSourceActions citations={row.after} draftRow={current} side="opened" onOpenCitation={onOpenCitation} />}</div>
+              <div className="min-w-0 rounded bg-gray-50 p-2"><p className="mb-1 font-semibold">Older copy</p><SavedValue value={row.before} />{group === 'Sources' && <CitationSourceActions citations={row.before} draftRow={selected} side="earlier" onOpenCitation={onOpenCitation} />}</div>
+              <div className="min-w-0 rounded bg-purple-50 p-2"><p className="mb-1 font-semibold">This copy</p><SavedValue value={row.after} />{group === 'Sources' && <CitationSourceActions citations={row.after} draftRow={current} side="opened" onOpenCitation={onOpenCitation} />}</div>
             </div>
           </article>)}
         </section>)}
