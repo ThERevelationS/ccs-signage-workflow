@@ -196,7 +196,7 @@ function RowEditor({ row, actor, onSaved, onChanged, disabled }) {
     <tr className="border-t border-gray-100 bg-sky-50/40">
       <td colSpan={10} className="px-3 py-2">
         <div className="mb-1 text-[10px] text-gray-500">
-          Customer: {row.customerId ? <Link className="text-sky-700 hover:underline" to={`/Customer360?id=${row.customerId}`}>{row.company || "—"}</Link> : (row.company || "—")}
+          Customer: <RecordLink kind="customer" id={row.customerId}>{row.company || "—"}</RecordLink>
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-0.5"><span className={lab}>Substatus</span>
@@ -459,7 +459,6 @@ export default function ProductQueue({
   };
 
   const sel = "rounded border border-gray-300 bg-white px-1.5 py-1 text-xs";
-  const lab = "text-[11px] font-semibold uppercase tracking-wide text-gray-500";
 
   return (
     <div className="flex h-full flex-col gap-2 p-3">
