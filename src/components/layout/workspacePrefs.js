@@ -102,6 +102,7 @@ export const SECTION_PATHS = {
   navigation: ["navigation"],
   workspace: ["workspace"],
   pipeline: ["pipeline"],
+  workflow: ["workflow"],
 };
 
 // Built-in profile presets — applied as one-shot blobs via applyProfilePreset.
