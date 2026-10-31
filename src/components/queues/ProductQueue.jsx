@@ -654,14 +654,7 @@ export default function ProductQueue({
                 </React.Fragment>
               );
             })}
-            {!paged.length && (
-              <tr><td colSpan={10} className="px-3 py-6 text-center text-gray-400">
-                {isFetched ? "No products match these filters." : "Loading…"}
-              </td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      </DataTableShell>
 
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>Page {page + 1} of {pages}</span>
