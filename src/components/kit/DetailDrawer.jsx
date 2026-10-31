@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-// Right-side sheet for quick edits — the consistent-width drawer so pages
+// Right-side sheet for quick edits -- the consistent-width drawer so pages
 // stop hand-rolling SheetContent layout (header / scrollable body / footer).
 //
 //   <DetailDrawer open={!!editing} onOpenChange={(v) => !v && setEditing(null)}
@@ -59,7 +59,7 @@ const DetailDrawer = React.forwardRef(
           </SheetHeader>
         ) : (
           // Radix requires a Title for screen readers even when the design
-          // shows no header — keep an invisible one so no warning fires.
+          // shows no header -- keep an invisible one so no warning fires.
           <SheetTitle className="sr-only">Details</SheetTitle>
         )}
         <div className={cn("min-h-0 flex-1 overflow-y-auto px-5 py-4", bodyClassName)}>
