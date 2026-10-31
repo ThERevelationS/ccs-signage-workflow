@@ -33,6 +33,8 @@ import {
   GitBranch,
   Receipt,
   FileDiff,
+  FileText,
+  Scale,
   Package,
   BookOpen,
   Minimize2,
@@ -107,7 +109,9 @@ const reportsNavItems = [
   { title: "Purchase Orders", url: createPageUrl("PurchaseOrders"), icon: Package, accent: "#0EA5E9" },
   { title: "Job Costing", url: createPageUrl("JobCosting"), icon: BarChart3, accent: "#8B5CF6" },
   { title: "Inventory", url: createPageUrl("Inventory"), icon: Package, accent: "#84CC16" },
-  
+  { title: "Ops Reports", url: createPageUrl("OpsReports"), icon: BarChart3, accent: "#22D3EE" },
+  { title: "Statements", url: createPageUrl("CustomerStatements"), icon: FileText, accent: "#F59E0B" },
+  { title: "Reconciliation", url: createPageUrl("Reconciliation"), icon: Scale, accent: "#34D399" },
 ];
 
 
