@@ -30,14 +30,21 @@ assert.ok(ed.includes("estimate.work_order_id &&"), "EstimateDetail gates the li
 assert.ok(ed.includes("Open Job Workspace"), "EstimateDetail renders the Open Job Workspace label");
 
 // 3. Product queue rows -> customer record (table cell + expanded row editor).
+//    Customer links go through kit RecordLink (kind "customer" ->
+//    /Customer360?id= per recordRoutes.js): the customer hub is the canonical
+//    record page; EstimatorCustomers remains the editor surface.
 const pq = src("src/components/queues/ProductQueue.jsx");
 assert.ok(
-  pq.includes("/EstimatorCustomers?customer=${r.customerId}"),
-  "ProductQueue company cell links to /EstimatorCustomers?customer="
+  pq.includes("RecordLink kind=\"customer\" id={r.customerId}"),
+  "ProductQueue company cell links to the customer record via RecordLink"
 );
 assert.ok(
-  pq.includes("/EstimatorCustomers?customer=${row.customerId}"),
-  "ProductQueue row editor links to /EstimatorCustomers?customer="
+  pq.includes("RecordLink kind=\"customer\" id={row.customerId}"),
+  "ProductQueue row editor links to the customer record via RecordLink"
+);
+assert.ok(
+  pq.includes("RecordLink kind=\"workorder\" id={r.workOrderId}"),
+  "ProductQueue WO ref links to /JobWorkspace?wo= via RecordLink"
 );
 const pqModel = src("src/components/queues/productQueueModel.js");
 assert.ok(pqModel.includes("customerId: wo.customer_id"), "queue row model carries customerId");
@@ -46,8 +53,12 @@ assert.ok(pqModel.includes("customerId: wo.customer_id"), "queue row model carri
 //    orders, and customer statement (all keyed off the work order row).
 const jw = src("src/components/jobs/JobWorkspace.jsx");
 assert.ok(
-  jw.includes("/EstimatorCustomers?customer=${wo.customer_id}"),
-  "JobWorkspace customer cell links to /EstimatorCustomers?customer="
+  jw.includes("RecordLink kind=\"customer\" id={wo.customer_id}"),
+  "JobWorkspace customer cell links to the customer record via RecordLink"
+);
+assert.ok(
+  jw.includes("RecordLink kind=\"estimate\" id={wo.estimate_id}"),
+  "JobWorkspace links its source estimate via RecordLink (/EstimateDetail?id=)"
 );
 assert.ok(
   jw.includes("/JobCosting?job=${wo.id}"),
@@ -60,6 +71,23 @@ assert.ok(
 assert.ok(
   jw.includes("/CustomerStatements?customer=${wo.customer_id}"),
   "JobWorkspace links customer Statement via the customer= param"
+);
+
+// 5. Canonical record routes -- RecordLink kind -> href map (the customer
+//    record page is /Customer360?id=; /EstimatorCustomers?customer= stays the
+//    editor surface and is linked explicitly where editing is intended).
+const rr = src("src/components/kit/recordRoutes.js");
+assert.ok(
+  rr.includes("customer: { path: \"/Customer360\", param: \"id\""),
+  "RecordLink routes customer records to /Customer360?id="
+);
+assert.ok(
+  rr.includes("workorder: { path: \"/JobWorkspace\", param: \"wo\""),
+  "RecordLink routes work orders to /JobWorkspace?wo="
+);
+assert.ok(
+  rr.includes("estimate: { path: \"/EstimateDetail\", param: \"id\""),
+  "RecordLink routes estimates to /EstimateDetail?id="
 );
 
 console.log("PASS link-spine-a");
