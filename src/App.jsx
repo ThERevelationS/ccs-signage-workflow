@@ -9,6 +9,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import CommandPalette from '@/components/CommandPalette';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { WorkspacePreferencesProvider } from '@/components/layout/WorkspacePreferencesProvider';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { Suspense } from 'react';
 import { lazyPage } from '@/lib/lazyPage';
@@ -285,6 +286,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <WorkspacePreferencesProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <NavigationTracker />
@@ -293,6 +295,7 @@ function App() {
         <Toaster />
         <VisualEditAgent />
       </QueryClientProvider>
+      </WorkspacePreferencesProvider>
     </AuthProvider>
   )
 }
