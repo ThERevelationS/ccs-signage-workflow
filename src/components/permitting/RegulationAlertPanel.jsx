@@ -9,7 +9,7 @@ import { usePolling } from "@/lib/usePolling";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function RegulationAlertPanel() {
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -50,7 +50,7 @@ export default function RegulationAlertPanel() {
       await staffEntities.RegulationAlert.update(alertId, {
         is_read: true,
         read_at: new Date().toISOString(),
-        read_by: (await base44.auth.me()).email
+        read_by: currentUser?.email || "unknown"
       });
       await loadAlerts();
     } catch (e) {
