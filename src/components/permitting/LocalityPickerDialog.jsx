@@ -214,8 +214,26 @@ function LocalityPickerSession({
       const invoke=runAction;
       const lookup=payload=>invoke('resolvePermittingAddress',payload,`Looking up ${address.trim()}`);
       let data;
-      try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
-      catch(firstErr){ const m=String(firstErr?.message||""); if(/status code (429|5\d\d)/.test(m)){ await new Promise(r=>setTimeout(r,/429/.test(m)?4000:1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
+      // Patient retry: the app shares one function budget, so 429s come in
+      // bursts. Wait out a burst (up to ~22s) before giving up on the user.
+      const retryDelays=[4000,6000,8000];
+      for(let attempt=0;;attempt++){
+        try{ ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); break; }
+        catch(callErr){
+          const m=String(callErr?.message||"");
+          const retriable=/status code (429|5\d\d)/.test(m);
+          if(!retriable||attempt>=retryDelays.length)throw callErr;
+          if(version!==searchVersion.current||!openRef.current)return;
+          await new Promise(r=>setTimeout(r,retryDelays[attempt]));
+        }
+      }
+      // "Address lookup is busy" — the resolver's own queue guard. Wait and
+      // retry instead of making the user press Find again.
+      for(let busy=0;data?.success===false&&Number(data?.retry_after_ms)>0&&busy<2;busy++){
+        if(version!==searchVersion.current||!openRef.current)return;
+        await new Promise(r=>setTimeout(r,Math.min(Number(data.retry_after_ms)||3000,8000)));
+        try{({data}=await lookup({address:normalizeAddress(address),session_token:sessionToken}));}catch{break;}
+      }
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
@@ -261,9 +279,14 @@ function LocalityPickerSession({
           }
         }catch{ /* fall through to the error below */ }
       }
+      const busy429=/status code 429/.test(String(e?.message||""));
       setError(serviceFails.current>=2
         ? "Our lookup service is having trouble right now — try again in a minute, or pick from the saved offices list below."
-        : (e.message || "Search failed"));
+        : busy429
+          ? "The system is busy right now — wait a few seconds and press Find my office again."
+          : /status code 5\d\d/.test(String(e?.message||""))
+            ? "Our lookup service hit a temporary problem — try again, or pick from the saved offices list below."
+            : (e.message || "Search failed"));
     }
     if(pendingSearch.current===version)pendingSearch.current=null;
     if(version===searchVersion.current&&openRef.current)setSearching(false);
