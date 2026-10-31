@@ -52,6 +52,7 @@ export function defaultPrefs() {
       tooltips: true,
       size: "auto",              // auto | compact | roomy
       landingPage: "",           // url opened on login ("" = default)
+      collapsedGroups: {},       // side-nav group collapse memory (meetings/reports…)
     },
     workspace: {
       showWelcomeBanner: true,
@@ -150,6 +151,7 @@ export function migratePrefs(raw) {
   merged.appearance.fontScale = Math.min(1.15, Math.max(0.9, Number(merged.appearance.fontScale) || 1));
   if (!ACCENTS[merged.appearance.accent]) merged.appearance.accent = "indigo";
   if (!["compact", "comfortable", "spacious"].includes(merged.density)) merged.density = "comfortable";
+  if (!isObj(nav.collapsedGroups)) nav.collapsedGroups = {};
   if (nav.landingPage && !NAV_CATALOG.some((i) => i.url === nav.landingPage)) nav.landingPage = "";
   if (!isObj(merged.pipeline)) merged.pipeline = base.pipeline;
   if (!["", "table", "board", "daily", "insights"].includes(merged.pipeline.defaultView)) merged.pipeline.defaultView = "";
