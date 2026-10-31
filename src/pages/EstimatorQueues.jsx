@@ -235,7 +235,7 @@ export default function EstimatorQueues() {
 
   const handlePermanentDelete = async (e) => {
     if (trashBusyId) return;
-    const acceptances = await base44.entities.EstimateAcceptance
+    const acceptances = await staffEntities.EstimateAcceptance
       .filter({ estimate_id: e.id }, "-created_date", 5)
       .catch(() => []);
     const linked = [];
