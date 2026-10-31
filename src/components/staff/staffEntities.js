@@ -227,6 +227,8 @@ const METHODS = {
     hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
   delete: (entity, id) =>
     hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r) => { bustReadCache(entity); return bodyOf(r).deleted === true; }) : Promise.reject(NO_SESSION_ERR()),
+  deleteMany: (entity, query) =>
+    hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "deleteMany", query }).then((r) => { bustReadCache(entity); return bodyOf(r).result; }) : Promise.reject(NO_SESSION_ERR()),
   // Staff sessions cannot use platform live-subscriptions (entity RLS is
   // backend-only), so subscribe polls staffDataRead and emits a synthetic
   // change event when the row set changes. Returns an unsubscribe function,
