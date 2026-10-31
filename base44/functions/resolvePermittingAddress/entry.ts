@@ -16,6 +16,7 @@ function attachScanReporter(entity, id) {
   let snapshot = null, trackingError = "";
   async function emit(event, patch = {}) {
     try {
+      trackingError = "";
       const current = await entity.get(id);
       if (current.status !== "running") return;
       const item = { at: (/* @__PURE__ */ new Date()).toISOString(), ...event };
@@ -34,7 +35,11 @@ function attachScanReporter(entity, id) {
   async function finish(status = "complete", error = "") {
     const current = await entity.get(id).catch(() => null);
     const completion = status === "complete" && current?.total > 0 ? { processed: current.total } : {};
-    await emit({ kind: "finished", detail: error || status }, { ...completion, status, stage: status, indeterminate: false, finished_at: (/* @__PURE__ */ new Date()).toISOString(), error: String(error).slice(0, 1e3) });
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await emit({ kind: "finished", detail: error || status }, { ...completion, status, stage: status, indeterminate: false, finished_at: (/* @__PURE__ */ new Date()).toISOString(), error: String(error).slice(0, 1e3) });
+      if (!trackingError) break;
+      await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+    }
     return snapshot ? { ...snapshot, tracking_error: trackingError || null } : null;
   }
   return { id, emit, finish };
@@ -69,7 +74,20 @@ async function loadAllEntityRows({
   const seen = /* @__PURE__ */ new Set();
   let skip = 0;
   while (skip < safeMaxRows) {
-    const page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip) : await entity.list(sort || void 0, safePageSize, skip);
+    let page, pageErr;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        page = hasFilter ? await entity.filter(query, sort || void 0, safePageSize, skip) : await entity.list(sort || void 0, safePageSize, skip);
+        pageErr = null;
+        break;
+      } catch (error) {
+        pageErr = error;
+        const s = Number(error?.status || error?.response?.status || 0);
+        if (s !== 429 && s < 500) break;
+        await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+      }
+    }
+    if (pageErr) throw pageErr;
     if (!Array.isArray(page)) {
       throw new Error(`${label} could not be verified completely.`);
     }
@@ -159,7 +177,17 @@ async function authenticateSignShopSession(base44, token) {
   const tokenHash = await signShopSessionTokenHash(rawToken);
   const cachedAuth = sessionAuthCache.get(tokenHash);
   if (cachedAuth && cachedAuth.expires > Date.now()) return stripExpiredGrant(cachedAuth.user);
-  const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
+  let users;
+  for (let a = 0; a < 4; a++) {
+    try {
+      users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
+      break;
+    } catch (error) {
+      const s = Number(error?.status || error?.response?.status || 0);
+      if (s !== 429 && s < 500 || a === 3) throw error;
+      await new Promise((r) => setTimeout(r, 1200 * (a + 1)));
+    }
+  }
   if (!Array.isArray(users)) {
     throw Object.assign(new Error("Authenticated user identity could not be verified"), { status: 503 });
   }
@@ -167,13 +195,23 @@ async function authenticateSignShopSession(base44, token) {
   if (users.length !== 1) {
     throw Object.assign(new Error("Authenticated user identity is ambiguous"), { status: 409 });
   }
-  try {
-    const revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
-    if (Array.isArray(revoked) && revoked.length > 0) {
-      throw Object.assign(new Error("Authentication required"), { status: 401 });
+  let revoked = null;
+  for (let a = 0; a < 4; a++) {
+    try {
+      revoked = await base44.asServiceRole.entities.UserSession.filter({ token_hash: tokenHash, revoked: true });
+      break;
+    } catch (e) {
+      if (e?.status === 401) throw e;
+      const s = Number(e?.status || e?.response?.status || 0);
+      if (s !== 429 && s < 500 || a === 3) {
+        revoked = null;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 1200 * (a + 1)));
     }
-  } catch (e) {
-    if (e?.status === 401) throw e;
+  }
+  if (Array.isArray(revoked) && revoked.length > 0) {
+    throw Object.assign(new Error("Authentication required"), { status: 401 });
   }
   const user = stripExpiredGrant(users[0]);
   if (sessionAuthCache.size > 500) sessionAuthCache.clear();
@@ -257,19 +295,6 @@ function summarizeMatchedLocalityAuthority(locality) {
 var CENSUS = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb";
 var LOCATION_SOURCES = { county: `${CENSUS}/State_County/MapServer/1`, place: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/4`, township: `${CENSUS}/Places_CouSub_ConCity_SubMCD/MapServer/1`, oh_city: "https://maps.ohio.gov/arcgis/rest/services/Hosted/Ohio_Municipal_Boundaries/FeatureServer/0", oh_township: "https://maps.ohio.gov/arcgis/rest/services/OGRIP/boundaryData/MapServer/3", ky_city: "https://kygisserver.ky.gov/arcgis/rest/services/WGS84WM_Services/Ky_CityBnd_Polygon_WGS84WM/MapServer/0" };
 var norm = (value) => String(value || "").trim().toLowerCase().replace(/^(city|village|town) of\s+/, "").replace(/\s+(city|village|town|county|township)$/, "").replace(/\s+/g, " ");
-function ringCentroid(rings) {
-  let best = null;
-  for (const ring of rings || []) {
-    if (Array.isArray(ring) && ring.length > (best?.length || 0)) best = ring;
-  }
-  if (!best) return null;
-  let x = 0, y = 0, n = 0;
-  for (const c of best) {
-    if (Number.isFinite(c?.[0]) && Number.isFinite(c?.[1])) { x += c[0]; y += c[1]; n++; }
-  }
-  return n ? { lng: x / n, lat: y / n } : null;
-}
-
 function boundaryPosition(rings, point) {
   if (!Array.isArray(rings) || !rings.length || !Number.isFinite(point?.lat) || !Number.isFinite(point?.lng)) throw Error("Invalid boundary geometry.");
   let inside = false, distance = Infinity, count = 0;
@@ -339,14 +364,6 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
       target = { name: t[0].attributes.NAME, state, type: "township", geoid: t[0].attributes.GEOID, county: countyName, county_geoid: countyId, geometry: t[0].geometry, source_url: s[0].source_url };
     } else target = { name: countyName, state, type: "county", geoid: countyId, county: countyName, county_geoid: countyId, geometry: countyRow.geometry, source_url: countyRow.source_url };
     base.targets = [{ ...target, geometry: void 0 }, { name: countyName, state, type: "county", geoid: countyId, county: countyName }].filter((t, i, all) => all.findIndex((other) => other.geoid === t.geoid) === i);
-    const targetCenter = ringCentroid(target.geometry?.rings);
-    if (targetCenter && base.targets[0]) {
-      const dLat = (targetCenter.lat - point.lat) * 111320;
-      const dLng = (targetCenter.lng - point.lng) * 111320 * Math.cos(point.lat * Math.PI / 180);
-      base.targets[0].center = targetCenter;
-      base.targets[0].center_distance_miles = Math.round((Math.hypot(dLat, dLng) / 1609.344) * 10) / 10;
-    }
-
     base.boundaries = [{ type: "Feature", properties: { name: target.name, source_url: target.source_url }, geometry: { type: "MultiLineString", coordinates: target.geometry.rings } }];
     const relevant = [...counties, ...places, ...statePlaces, ...cities.length === 0 ? [...townships, ...stateTownships] : []];
     const edge = geocode.approximate_source ? 150 : 25;
@@ -419,7 +436,7 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
     });
     return slot;
   };
-  const isLimited = (e) => e?.status === 429 || /rate limit/i.test(String(e?.message || e?.data?.message || ""));
+  const isLimited = (e) => e?.status === 429 || /rate limit|traffic volume/i.test(String(e?.message || e?.data?.message || ""));
   const wrapEntity = (entity) => new Proxy(entity, {
     get(target, prop) {
       const value = target[prop];
@@ -577,7 +594,7 @@ Deno.serve(async (req) => {
     return addressResponse({ success: true, scan_run: await reporter.finish(hasServiceIssue ? "completed_with_errors" : "complete", hasServiceIssue ? geocodingService.message : void 0), geocode, geocoding_service: geocodingService, location_resolution: resolution, automatic_scan: automatic, address_archives: addressArchives, research_deferred: true, suggested_locality: matched ? { id: matched.id, name: matched.name, state: matched.state, zip: matched.zip, jurisdiction_profile_id: matched.jurisdiction_profile_id } : null, authority_review: authority, apply_allowed: applyAllowed, not_matched: !matched, ai_locality_name: resolution.target?.name || "", ai_state: resolution.state || "", ai_county: resolution.target?.county || "", match_confidence: matched ? "high" : "unresolved", match_method: matched ? "government_boundary_intersection" : "none", match_reason: reason, notes: !applyAllowed ? "An administrator must confirm the location and sign/zoning office setup before this address is used." : "" });
   } catch (error) {
     const errorStatus = Number(error?.status || error?.response?.status || 0);
-    if (errorStatus === 429 || /rate limit|too many requests/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3 }, { status: 429, headers: { "Retry-After": "3" } });
+    if (errorStatus === 429 || /rate limit|too many requests/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3, error_detail: String(error?.message || error).slice(0, 300) }, { status: 429, headers: { "Retry-After": "3" } });
     const status = [400, 401, 409, 503].includes(errorStatus) ? errorStatus : 500;
     return addressResponse({ success: false, scan_run: await reporter.finish("failed", "Address lookup could not finish safely."), error: status === 500 ? "Address lookup could not finish safely. Please try again." : error.message, ...diagnostic || status !== 500 ? { error_detail: String(error?.message || error).slice(0, 300) } : {} }, { status });
   }
