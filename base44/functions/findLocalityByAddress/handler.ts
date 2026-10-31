@@ -35,15 +35,48 @@ function addressResponse(data:any,init:any={}){
  response.headers.set('X-CCS-Address-Revision',ADDRESS_LOOKUP_REVISION);
  return response;
 }
+// Reference catalogs change rarely; cache them briefly per isolate so bursts of
+// lookups do not multiply service-role entity reads against the shared rate budget.
+const catalogCache=new Map<string,{ts:number,data:{localities:any[],profiles:any[]}}>();
+const catalogInflight=new Map<string,Promise<any>>();
+const CATALOG_TTL_MS=5*60*1000;
+async function loadCatalogs(base44:any,stateFilter:any){
+ const key=stateFilter?.state||'all';
+ const hit=catalogCache.get(key);
+ if(hit&&Date.now()-hit.ts<CATALOG_TTL_MS)return hit.data;
+ if(catalogInflight.has(key))return catalogInflight.get(key);
+ const p=(async()=>{
+  const [localities,profiles]=await Promise.all([
+   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
+   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'})]);
+  catalogCache.set(key,{ts:Date.now(),data:{localities,profiles}});
+  return {localities,profiles};
+ })().finally(()=>catalogInflight.delete(key));
+ catalogInflight.set(key,p);
+ return p;
+}
+// Session tokens are stable; cache the actor briefly so repeated searches do not
+// burn two auth reads per lookup against the shared entity rate budget.
+const sessionCache=new Map<string,{ts:number,actor:any}>();
+const SESSION_TTL_MS=90*1000;
+async function cachedSession(base44:any,token:any){
+ const key=String(token||'');
+ const hit=sessionCache.get(key);
+ if(hit&&Date.now()-hit.ts<SESSION_TTL_MS)return hit.actor;
+ const actor=await authenticateSignShopSession(base44,token);
+ if(sessionCache.size>500)sessionCache.clear();
+ sessionCache.set(key,{ts:Date.now(),actor});
+ return actor;
+}
 Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
  let diagnostic=false;
  try{
-  const base44=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:1}),body=await req.json();
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:4}),body=await req.json();
   // Admin diagnostics use normal platform authentication; ordinary searches keep
   // the existing Sign Shop session requirement and authority gates.
   diagnostic=body?.action==='geocode_diagnostic';
-  const actor=diagnostic?await base44.auth.me().catch(()=>null):await authenticateSignShopSession(base44,body?.session_token);
+  const actor=diagnostic?await base44.auth.me().catch(()=>null):await cachedSession(base44,body?.session_token);
   if(diagnostic&&actor?.role!=='admin')return addressResponse({success:false,error:'Admin access required.'},{status:403});
   const address=typeof body.address==='string'?body.address.trim():'';
   if(!address||address.length>500)return addressResponse({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
@@ -109,9 +142,7 @@ Deno.serve(async req=>{
   if(hasServiceIssue)resolution.reason=geocodingService.message;
   await reporter.emit({kind:'location_result',detail:resolution.reason},{stage:'Checking saved jurisdictions',indeterminate:true});
   const stateFilter=resolution.state?{state:resolution.state}:null;
-  const [localities,profiles]=await Promise.all([
-   loadAllEntityRows({entity:base44.asServiceRole.entities.PermitLocality,query:stateFilter,sort:'created_date',label:'Location matching catalog'}),
-   loadAllEntityRows({entity:base44.asServiceRole.entities.JurisdictionProfile,query:stateFilter,sort:'created_date',label:'Location county identities'})]);
+  const {localities,profiles}=await loadCatalogs(base44,stateFilter);
   const matched=exactConfiguredLocality(localities,resolution,profiles);
   await reporter.emit({kind:'catalog_check',detail:`Checked ${localities.length} saved jurisdictions. ${matched?`Unique location match: ${matched.name}. ${matched.offices?.some(office=>office.authority_verification_status==='staff_verified')?'Checking reviewed office roles.':'Office setup needs review; website research stays in the review tools.'}`:'No unique confirmed match. Website research stays available in the review tools.'}`});
   // Never ask an LLM to choose a locality ID; never write research into approved
@@ -130,6 +161,6 @@ Deno.serve(async req=>{
   const errorStatus=Number(error?.status||error?.response?.status||0);
   // A platform rate limit is transient: hand it back as 429 so the browser
   // backs off instead of treating the lookup as a deterministic failure.
-  if(errorStatus===429||/rate limit|too many requests/i.test(String(error?.message||'')))return addressResponse({success:false,error:'Address lookup is busy. Try again shortly.',retry_after_ms:3000},{status:429,headers:{'Retry-After':'3'}});
+  if(errorStatus===429||/rate limit|too many requests/i.test(String(error?.message||'')))return addressResponse({success:false,error:'Address lookup is busy. Try again shortly.',retry_after_ms:3000,error_detail:String(error?.message||error).slice(0,300)},{status:429,headers:{'Retry-After':'3'}});
   const status=[400,401,409,503].includes(errorStatus)?errorStatus:500;return addressResponse({success:false,scan_run:await reporter.finish('failed','Address lookup could not finish safely.'),error:status===500?'Address lookup could not finish safely. Please try again.':error.message,...(diagnostic||status!==500?{error_detail:String(error?.message||error).slice(0,300)}:{})},{status});}
 });
