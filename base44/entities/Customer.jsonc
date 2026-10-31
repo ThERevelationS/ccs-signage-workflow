@@ -255,6 +255,11 @@
       "type": "boolean",
       "description": "When true, new estimates warn that the customer is on credit hold \u2014 a visible badge on the new-estimate and detail views."
     },
+    "in_store_credit": {
+      "type": "number",
+      "default": 0,
+      "description": "Unapplied in-store credit balance owed to this customer (CoreBridge 'In-Store Credit'). Distinct from credit_limit, which caps open account charges."
+    },
     "pricing_tier": {
       "type": "number",
       "default": 1,
@@ -267,6 +272,11 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "auto_inactive_after_months": {
+      "type": "number",
+      "default": 0,
+      "description": "Months without activity after which this customer auto-marks inactive (CoreBridge 'auto-inactive'). 0 disables the automation."
     },
     "notes": {
       "type": "string"
