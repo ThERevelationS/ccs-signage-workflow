@@ -110,13 +110,13 @@ async function nextInvoiceNumber(Invoice: any, svc: any) {
 }
 
 async function findByCreationKey(entity: any, key: string) {
-  const rows = await entity.filter({ creation_request_key: clean(key) });
+  const rows = await entity.filter({ creation_request_key: clean(key) }, undefined, 500);
   if (!Array.isArray(rows)) throw bad("Creation receipt lookup did not return a record list.", 409);
   return rows;
 }
 
 async function recomputeInvoiceAfterPayments({ Invoice, Payment, invoiceId, actor }: any) {
-  const payments = await Payment.filter({ invoice_id: invoiceId });
+  const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
   if (!Array.isArray(payments)) throw bad("Payment lookup failed while updating the invoice.", 500);
   const amountPaid = money(payments
     .filter((p: any) => clean(p?.status) === "recorded")
@@ -203,17 +203,32 @@ Deno.serve(async (req) => {
     if (action === "list_invoices") {
       const status = clean(body?.status);
       if (status && !INVOICE_STATUSES.includes(status)) throw bad("Unknown invoice status filter.");
-      const rows = await Invoice.filter(status ? { status } : {});
-      if (!Array.isArray(rows)) throw bad("Invoice lookup failed.", 500);
+      // Page the full status-scoped set — AR aging and counts must reflect
+      // every matching invoice, not just the first default-size page.
+      const rows = await loadAllEntityRows({
+        entity: Invoice,
+        query: status ? { status } : {},
+        sort: '-created_date',
+        label: 'Invoice list',
+      });
       const query = clean(body?.query).toLowerCase();
-      const invoices = rows
+      const limit = Math.max(1, Math.min(500, Math.floor(Number(body?.limit) || 250)));
+      const matched = rows
         .filter((r: any) => !query
           || clean(r?.invoice_number).toLowerCase().includes(query)
           || clean(r?.customer_display_name).toLowerCase().includes(query))
-        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)))
-        .slice(0, 250)
-        .map(invoiceSnapshot);
-      return Response.json({ success: true, action, invoices, aging: agingSummary(rows) });
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const invoices = matched.slice(0, limit).map(invoiceSnapshot);
+      return Response.json({
+        success: true,
+        action,
+        invoices,
+        total_count: matched.length,
+        showing: invoices.length,
+        truncated: matched.length > invoices.length,
+        limit,
+        aging: agingSummary(rows),
+      });
     }
 
     if (action === "revenue_summary") {
@@ -273,8 +288,12 @@ Deno.serve(async (req) => {
     if (action === "export_ar") {
       const status = clean(body?.status);
       if (status && !INVOICE_STATUSES.includes(status)) throw bad("Unknown invoice status filter.");
-      const rows = await Invoice.filter(status ? { status } : {});
-      if (!Array.isArray(rows)) throw bad("Invoice lookup failed.", 500);
+      const rows = await loadAllEntityRows({
+        entity: Invoice,
+        query: status ? { status } : {},
+        sort: '-created_date',
+        label: 'AR export invoices',
+      });
       const query = clean(body?.query).toLowerCase();
       const startDate = clean(body?.start_date);
       const endDate = clean(body?.end_date);
@@ -301,8 +320,12 @@ Deno.serve(async (req) => {
           ]));
         }),
       ];
-      const payments = await Payment.filter({});
-      if (!Array.isArray(payments)) throw bad("Payment lookup failed.", 500);
+      const payments = await loadAllEntityRows({
+        entity: Payment,
+        query: {},
+        sort: 'created_date',
+        label: 'AR export payments',
+      });
       const invoiceById = new Map(invoices.map((r: any) => [clean(r?.id), r]));
       const paymentLines = [
         csvRow(["Date", "Invoice Number", "Customer", "Amount", "Method", "Reference", "Status", "Notes"]),
@@ -318,6 +341,7 @@ Deno.serve(async (req) => {
         success: true,
         action,
         invoice_count: invoices.length,
+        payment_count: paymentLines.length - 1,
         invoices_csv: invoiceLines.join("\n"),
         payments_csv: paymentLines.join("\n"),
       });
@@ -328,7 +352,7 @@ Deno.serve(async (req) => {
       const invoice = await Invoice.get(invoiceId).catch(() => null);
       if (!invoice?.id) throw bad("Invoice not found.", 404);
       const [payments, customer, estimate, workOrder, opportunity] = await Promise.all([
-        Payment.filter({ invoice_id: invoiceId }),
+        Payment.filter({ invoice_id: invoiceId }, undefined, 500),
         clean(invoice.customer_id) ? Customer.get(clean(invoice.customer_id)).catch(() => null) : null,
         clean(invoice.estimate_id) ? Estimate.get(clean(invoice.estimate_id)).catch(() => null) : null,
         clean(invoice.work_order_id) ? WorkOrder.get(clean(invoice.work_order_id)).catch(() => null) : null,
@@ -349,24 +373,37 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list_invoiceable_estimates") {
-      const rows = await Estimate.filter({ status: "approved" }, "-created_date", 100);
-      if (!Array.isArray(rows)) throw bad("Estimate lookup failed.", 500);
+      // Page all approved estimates + all invoices so already_billed reflects
+      // complete billing history, not just the first default-size page.
+      const rows = await loadAllEntityRows({
+        entity: Estimate,
+        query: { status: "approved" },
+        sort: '-created_date',
+        label: 'Invoiceable estimates',
+      });
       const query = clean(body?.query).toLowerCase();
-      const invoices = await Invoice.filter({});
-      if (!Array.isArray(invoices)) throw bad("Invoice lookup failed.", 500);
+      const invoices = await loadAllEntityRows({
+        entity: Invoice,
+        query: {},
+        sort: '-created_date',
+        label: 'Estimate billed-invoice map',
+      });
       const billedByEstimate = new Map<string, number>();
       for (const inv of invoices) {
         const eid = clean(inv?.estimate_id);
         if (!eid || clean(inv?.status) === "void") continue;
         billedByEstimate.set(eid, money((billedByEstimate.get(eid) || 0) + num(inv?.total)));
       }
-      const estimates = rows
+      const limit = Math.max(1, Math.min(500, Math.floor(Number(body?.limit) || 50)));
+      const matchedEstimates = rows
         .filter((e: any) => !e?.deleted && num(e?.quote_total) > 0)
         .filter((e: any) => !query
           || clean(e?.project_name).toLowerCase().includes(query)
           || clean(e?.client_name).toLowerCase().includes(query)
           || clean(e?.estimate_number).toLowerCase().includes(query))
-        .slice(0, 50)
+        .sort((a: any, b: any) => clean(b?.created_date).localeCompare(clean(a?.created_date)));
+      const estimates = matchedEstimates
+        .slice(0, limit)
         .map((e: any) => {
           const billed = billedByEstimate.get(clean(e?.id)) || 0;
           return {
@@ -380,7 +417,15 @@ Deno.serve(async (req) => {
             remaining_billable: money(num(e?.quote_total) - billed),
           };
         });
-      return Response.json({ success: true, action, estimates });
+      return Response.json({
+        success: true,
+        action,
+        estimates,
+        total_count: matchedEstimates.length,
+        showing: estimates.length,
+        truncated: matchedEstimates.length > estimates.length,
+        limit,
+      });
     }
 
     if (action === "create_from_estimate") {
@@ -391,7 +436,7 @@ Deno.serve(async (req) => {
       const quoteTotal = num(estimate.quote_total);
       if (!(quoteTotal > 0)) throw bad("The approved estimate has no billable total.", 409);
 
-      const prior = await Invoice.filter({ estimate_id: estimateId });
+      const prior = await Invoice.filter({ estimate_id: estimateId }, undefined, 500);
       if (!Array.isArray(prior)) throw bad("Prior invoice lookup failed.", 500);
       const live = prior.filter((inv: any) => clean(inv?.status) !== "void");
       const billed = money(live.reduce((s: number, inv: any) => s + num(inv?.total), 0));
@@ -621,7 +666,7 @@ Deno.serve(async (req) => {
       // Reuse or mint an invoice-scoped portal link so the recipient can view/pay online.
       const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
       let portalUrl = "";
-      const existing = await PortalLink.filter({ kind: "invoice", record_id: invoiceId }).catch(() => []);
+      const existing = await PortalLink.filter({ kind: "invoice", record_id: invoiceId }, undefined, 500).catch(() => []);
       let link = (Array.isArray(existing) ? existing : []).find((l: any) => l?.id && l?.revoked !== true && (!l?.expires_at || Date.parse(String(l.expires_at)) > Date.now()));
       if (!link) {
         const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
@@ -641,7 +686,7 @@ Deno.serve(async (req) => {
             revoked: false,
             open_count: 0,
           },
-          readMatches: () => PortalLink.filter({ creation_request_key: key }),
+          readMatches: () => PortalLink.filter({ creation_request_key: key }, undefined, 500),
           label: "Invoice portal link",
         });
         link = created.record;
@@ -691,8 +736,15 @@ Deno.serve(async (req) => {
       if (!customer?.id) throw bad("Customer not found.", 404);
       const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email) || clean(customer?.billing_contact_email);
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
-      const rows = await Invoice.filter({ customer_id: cid }).catch(() => []);
-      const open = (Array.isArray(rows) ? rows : [])
+      // Full paged invoice history for this customer — a statement built from
+      // a truncated first page would silently understate the open balance.
+      const rows = await loadAllEntityRows({
+        entity: Invoice,
+        query: { customer_id: cid },
+        sort: 'created_date',
+        label: 'Statement invoices',
+      });
+      const open = rows
         .filter((i: any) => OPEN_AR_STATUSES.has(clean(i?.status)) && num(i?.balance_due) > 0)
         .sort((a: any, b: any) => clean(a?.due_date).localeCompare(clean(b?.due_date)));
       if (!open.length) throw bad("This customer has no open balance — nothing to put on a statement.", 409);
@@ -701,13 +753,18 @@ Deno.serve(async (req) => {
       const overdue = open.filter((i: any) => clean(i?.due_date) && clean(i?.due_date) < today);
       // Estimate-level subtotals: resolve the linked estimate for each open
       // invoice so the statement shows quote context, not just invoice numbers.
-      const stmtEstimates = await Estimate.filter({ customer_id: cid }).catch(() => []);
+      const stmtEstimates = await loadAllEntityRows({
+        entity: Estimate,
+        query: { customer_id: cid },
+        sort: 'created_date',
+        label: 'Statement estimates',
+      }).catch(() => []);
       const estById = new Map((Array.isArray(stmtEstimates) ? stmtEstimates : []).map((e: any) => [clean(e?.id), e]));
 
       const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
       const PortalLink = base44.asServiceRole.entities.CustomerPortalLink;
       let portalUrl = "";
-      const existing = await PortalLink.filter({ kind: "customer", record_id: cid }).catch(() => []);
+      const existing = await PortalLink.filter({ kind: "customer", record_id: cid }, undefined, 500).catch(() => []);
       let link = (Array.isArray(existing) ? existing : []).find((l: any) => l?.id && l?.revoked !== true && (!l?.expires_at || Date.parse(String(l.expires_at)) > Date.now()));
       if (!link) {
         const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
@@ -727,7 +784,7 @@ Deno.serve(async (req) => {
             revoked: false,
             open_count: 0,
           },
-          readMatches: () => PortalLink.filter({ creation_request_key: key }),
+          readMatches: () => PortalLink.filter({ creation_request_key: key }, undefined, 500),
           label: "Customer portal link",
         });
         link = created.record;
@@ -773,7 +830,7 @@ Deno.serve(async (req) => {
       const current = await Invoice.get(invoiceId).catch(() => null);
       if (!current?.id) throw bad("Invoice not found.", 404);
       if (clean(current.status) === "void") throw bad("Invoice is already void.", 409);
-      const payments = await Payment.filter({ invoice_id: invoiceId });
+      const payments = await Payment.filter({ invoice_id: invoiceId }, undefined, 500);
       if (Array.isArray(payments) && payments.some((p: any) => clean(p?.status) === "recorded")) {
         throw bad("Void the recorded payments before voiding this invoice.", 409);
       }
