@@ -28,6 +28,11 @@ const stateFor = (entity) => {
       fullSyncAt: 0,
       inFlight: null,
       hydrated: false,
+      // True when the last FULL pull hit the backend row cap — the row set is
+      // then the first N rows, not the whole table. Boards read this through
+      // the meta key/hook below and show an honest "showing first N" notice
+      // instead of silently presenting a partial board as complete.
+      truncated: false,
     });
   }
   return boardState.get(entity);
@@ -64,14 +69,16 @@ async function idbWrite(entity, state) {
   if (!db) return;
   try {
     db.transaction(IDB_STORE, 'readwrite').objectStore(IDB_STORE)
-      .put({ rows: state.rows, cursor: state.cursor, fullSyncAt: state.fullSyncAt, savedAt: Date.now() }, entity);
+      .put({ rows: state.rows, cursor: state.cursor, fullSyncAt: state.fullSyncAt, truncated: state.truncated === true, savedAt: Date.now() }, entity);
   } catch { /* quota or serialization failures are non-fatal */ }
 }
 const publishSnapshot = (entity, state) => {
   const key = FEED_ENTITIES[entity]?.queryKey;
   if (key) queryClientInstance.setQueryData(key, [...state.rows.values()]);
+  // Boards subscribe to this meta key for the honest completeness flag.
+  queryClientInstance.setQueryData(boardMetaKey(entity), getBoardFeedMeta(entity));
   try {
-    boardChannel?.postMessage({ type: 'snapshot', entity, rows: state.rows, cursor: state.cursor, fullSyncAt: state.fullSyncAt });
+    boardChannel?.postMessage({ type: 'snapshot', entity, rows: state.rows, cursor: state.cursor, fullSyncAt: state.fullSyncAt, truncated: state.truncated === true });
   } catch { /* cross-context clone failures are non-fatal */ }
 };
 async function ensureHydrated(entity) {
@@ -83,6 +90,7 @@ async function ensureHydrated(entity) {
     state.rows = snap.rows;
     state.cursor = snap.cursor || '';
     state.fullSyncAt = snap.fullSyncAt || 0;
+    state.truncated = snap.truncated === true;
     publishSnapshot(entity, state);
     return;
   }
@@ -102,6 +110,7 @@ if (boardChannel) {
       state.rows = msg.rows;
       state.cursor = msg.cursor || '';
       state.fullSyncAt = msg.fullSyncAt || 0;
+      state.truncated = msg.truncated === true;
       publishSnapshot(msg.entity, state);
     } else if (msg.type === 'request' && state.rows.size > 0) {
       publishSnapshot(msg.entity, state);
@@ -148,15 +157,29 @@ async function fetchFeedRows(entity, { forceFull = false, preferSnapshot = false
     await hydrate;
     const needsFull = forceFull || !state.cursor || Date.now() - state.fullSyncAt > FULL_RESYNC_MS;
     let data = await boardFeed({ entity, sort: "-updated_date", since: needsFull ? null : state.cursor });
+    // A delta pull merges onto the current base; only a full pull replaces it
+    // and can prove the row set complete again.
+    let dataIsFullPull = needsFull;
     if (!needsFull && data.truncated) {
       // More changed than one delta can carry — resync rather than merge a
       // partial change window over stale rows.
       data = await boardFeed({ entity, sort: "-updated_date" });
       state.rows = new Map();
       state.fullSyncAt = Date.now();
+      dataIsFullPull = true;
     } else if (needsFull) {
       state.rows = new Map();
       state.fullSyncAt = Date.now();
+    }
+    if (dataIsFullPull) {
+      // "truncated" is the backend's hard row-cap flag and a FULL pull can
+      // arrive truncated too — the branch above only catches the delta case.
+      // Keep the flag on state so boards can warn "showing first N" instead
+      // of silently presenting a clamped feed as the whole table.
+      state.truncated = data.truncated === true;
+      if (state.truncated) {
+        console.warn(`[workOrderCache] ${entity} feed truncated at ${data.rows.length} rows — the board is showing a partial set.`);
+      }
     }
     let maxUpdated = state.cursor;
     for (const row of data.rows) {
@@ -180,6 +203,26 @@ async function fetchFeedRows(entity, { forceFull = false, preferSnapshot = false
     if (state.rows.size > 0) return [...state.rows.values()];
   }
   return state.inFlight;
+}
+
+const boardMetaKey = (entity) => ["boardFeedMeta", entity];
+
+export function getBoardFeedMeta(entity) {
+  const state = stateFor(entity);
+  return { truncated: state.truncated === true, count: state.rows.size };
+}
+
+// Boards subscribe here for the honest completeness flag — re-renders when a
+// pull publishes fresh meta (including a truncated full pull).
+export function useBoardFeedMeta(entity) {
+  const query = useQuery({
+    queryKey: boardMetaKey(entity),
+    queryFn: () => getBoardFeedMeta(entity),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+  });
+  return query.data || getBoardFeedMeta(entity);
 }
 
 export function fetchAllWorkOrders(options) {
