@@ -105,6 +105,40 @@ export async function polishStepText(text) {
   return cleaned;
 }
 
+export async function reviewSopCompleteness(form, categories) {
+  const steps = (form?.steps || []).map((s, i) => `${i + 1}. ${s.title || ""} — ${String(s.body || "").replace(/<[^>]*>/g, " ").trim()}`).join("\n");
+  const res = await base44.integrations.Core.InvokeLLM({
+    prompt: `You are a strict SOP reviewer for a commercial sign shop. Review this draft procedure and list concrete issues ONLY — things a worker could get wrong, hurt, or confused by. Check: missing PPE/safety warnings, ambiguous wording, missing measurements/tools/materials, inconsistent units, steps with no clear action, missing "what good looks like" criteria, missing prerequisites.
+
+Return at most 8 issues, each: severity (high|medium|low), step number or "general", and one-sentence fix. If the SOP is solid, return an empty issues array.
+
+TITLE: ${form?.title || ""}
+CATEGORY: ${form?.category || ""}
+SAFETY NOTES: ${(form?.safety_notes || []).join(" | ") || "none"}
+STEPS:
+${steps || "(none)"}`,
+    response_json_schema: {
+      type: "object",
+      properties: {
+        issues: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              severity: { type: "string", enum: ["high", "medium", "low"] },
+              step: { type: "string" },
+              fix: { type: "string" },
+            },
+            required: ["severity", "fix"],
+          },
+        },
+      },
+      required: ["issues"],
+    },
+  });
+  return Array.isArray(res?.issues) ? res.issues : [];
+}
+
 export async function stepTextFromImage(imageUrl) {
   const res = await base44.integrations.Core.InvokeLLM({
     prompt: `You write SOP steps for a commercial sign shop. Look at this photo and write one procedure step that describes what is being done or what the reader must do/notice here. Return a short step title and 1-4 imperative sentences. Base it only on what is visible.`,
