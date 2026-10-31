@@ -315,7 +315,7 @@ export default function Estimating() {
     try {
       const deleted = await softDeleteWorkOrderFromLoadedSnapshot({
         workOrder,
-        deletedBy: (await base44.auth.me())?.email || "unknown",
+        deletedBy: currentUser?.email || "unknown",
         label: "Estimating Work Order delete",
       });
       Object.assign(workOrder, deleted);
