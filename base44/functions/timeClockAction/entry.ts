@@ -11368,7 +11368,14 @@ Deno.serve(async (req) => {
 
     if (action === 'buddy_punch_report') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await entryEntity.filter({}, '-clock_in', 2000).catch(() => []);
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 30 * 86400000).toISOString());
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: companyRangeQuery('clock_in', from, to),
+        sort: '-clock_in',
+        label: 'Buddy punch entries',
+      }).catch(() => []);
       const clean = (Array.isArray(rows) ? rows : []).filter((e: any) => e.clock_in && e.archived_test_data !== true && e.archived_admin !== true);
       const pairs = [];
       const byDay = new Map();
@@ -11523,8 +11530,8 @@ Deno.serve(async (req) => {
       // Scoped presence list - employees see names+status in their own
       // department only, managers see everyone. Counts only, no times.
       const todayKey = dateKeyInCompanyTime(new Date().toISOString());
-      const rows = await entryEntity.filter({}, '-clock_in', 1000).catch(() => []);
-      const roster = await authorized.filter({}).catch(() => []);
+      const rows = await entryEntity.filter(companyRangeQuery('clock_in', todayKey, todayKey), '-clock_in', 500).catch(() => []);
+      const roster = await loadAllEntityRows({ entity: authorized, label: 'Crew view roster' }).catch(() => []);
       const dept = Array.isArray(roster) && roster.length ? (roster.find((u: any) => asEmail(u.email) === actor.email)?.department || '') : '';
       const today = (Array.isArray(rows) ? rows : []).filter((e: any) => dateKeyInCompanyTime(e.clock_in) === todayKey && e.archived_test_data !== true && e.archived_admin !== true);
       const visible = actor.role === 'admin' ? today : today.filter((e: any) => {
@@ -11536,7 +11543,14 @@ Deno.serve(async (req) => {
 
     if (action === 'device_usage_report') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await entryEntity.filter({}, '-clock_in', 3000).catch(() => []);
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 30 * 86400000).toISOString());
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: companyRangeQuery('clock_in', from, to),
+        sort: '-clock_in',
+        label: 'Device usage entries',
+      }).catch(() => []);
       const counts = new Map();
       for (const e of (Array.isArray(rows) ? rows : [])) {
         if (!e.device_key || e.archived_test_data === true || e.archived_admin === true) continue;
