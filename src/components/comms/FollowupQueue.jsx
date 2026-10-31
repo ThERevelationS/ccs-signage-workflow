@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
 import { OpportunityActivity } from "@/api/gatedEntities";
+import { EmptyState, RecordLink, StatusChip } from "@/components/kit";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
 import {
@@ -42,12 +43,14 @@ const btn =
 const btnSend = `${btn} bg-violet-600 text-white hover:bg-violet-700`;
 const btnGhost = `${btn} border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800`;
 
+// Row action states render through the kit chip -- tone names come from
+// statusTones' shared vocabulary (sky working, emerald done, red failed).
 const STATUS_BADGE = {
-  sending: ["Sending…", "bg-sky-100 text-sky-800"],
-  sent: ["Sent", "bg-emerald-100 text-emerald-800"],
-  writing: ["Logging…", "bg-sky-100 text-sky-800"],
-  done: ["Done", "bg-slate-200 text-slate-600"],
-  failed: ["Failed", "bg-rose-100 text-rose-800"],
+  sending: { label: "Sending…", tone: "sky" },
+  sent: { label: "Sent", tone: "emerald" },
+  writing: { label: "Logging…", tone: "sky" },
+  done: { label: "Done", tone: "slate" },
+  failed: { label: "Failed", tone: "red" },
 };
 
 const DISPOSITION_SOURCE = {
@@ -174,33 +177,31 @@ function FollowupRow({ item, defaultTo, actor, sessionToken, onChanged }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {item.customerId ? (
-              <Link
-                className="truncate text-sm font-semibold text-sky-700 hover:underline dark:text-sky-400"
-                to={`/Customer360?id=${item.customerId}`}
+              <RecordLink
+                kind="customer"
+                id={item.customerId}
+                className="truncate text-sm font-semibold"
               >
                 {item.customerName || "Customer"}
-              </Link>
+              </RecordLink>
             ) : (
               <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {item.customerName || "Customer"}
               </span>
             )}
             {item.targetId ? (
-              <Link
-                className="text-xs text-sky-600 hover:underline dark:text-sky-400"
-                to={item.target === "invoice" ? `/Invoices?invoice=${item.targetId}` : `/EstimateDetail?id=${item.targetId}`}
+              <RecordLink
+                kind={item.target === "invoice" ? "invoice" : "estimate"}
+                id={item.targetId}
+                className="text-xs"
               >
                 {item.targetRef}
-              </Link>
+              </RecordLink>
             ) : (
               <span className="text-xs text-slate-500">{item.targetRef}</span>
             )}
-            <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[11px] font-semibold text-rose-800">
-              {item.daysOverdue}d overdue
-            </span>
-            {badge && (
-              <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${badge[1]}`}>{badge[0]}</span>
-            )}
+            <StatusChip tone="red" size="sm">{item.daysOverdue}d overdue</StatusChip>
+            {badge && <StatusChip tone={badge.tone} label={badge.label} size="sm" />}
           </div>
           <div className="mt-0.5 text-[11px] text-slate-500">
             {meta.label} · follow-up due {item.dueDate} · {ageLine}
@@ -292,9 +293,13 @@ export default function FollowupQueue({
       </div>
 
       {due.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-400 dark:border-slate-700">
-          All caught up — no follow-ups are due.
-        </div>
+        <EmptyState
+          compact
+          icon={CheckCircle2}
+          className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700"
+          title="All caught up"
+          message="No follow-ups are due."
+        />
       )}
 
       {FOLLOWUP_SECTIONS.map((section) => {
@@ -306,9 +311,7 @@ export default function FollowupQueue({
               <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                 {SECTION_TITLES[section]}
               </h4>
-              <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
-                {items.length}
-              </span>
+              <StatusChip tone="slate" size="sm" showDot={false}>{items.length}</StatusChip>
             </div>
             {items.map((item) => (
               <FollowupRow
