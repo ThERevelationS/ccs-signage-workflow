@@ -23,6 +23,9 @@ export const ESTIMATOR_TABS = [
       { label: "Archived", to: "/EstimatorQueues?status=archived" },
       { label: "Cancelled", to: "/EstimatorQueues?status=cancelled" },
       { label: "Sync Issues", to: "/EstimatorQueues?status=sync_issues" },
+      { label: "Design Products", to: "/ProductQueues?queue=design" },
+      { label: "Production Products", to: "/ProductQueues?queue=production" },
+      { label: "Fulfillment Products", to: "/ProductQueues?queue=fulfillment" },
     ],
   },
   {
