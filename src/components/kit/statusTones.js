@@ -78,6 +78,13 @@ export const STATUS_TONES = {
   left_message: "amber",
   rescheduled: "sky",
 
+  // Sales / opportunity outcomes -- customer360 work_order.sales_status and
+  // opportunity stage columns (CLOSED_OPPORTUNITY_STAGES = won/lost).
+  won: "emerald",
+  lost: "red",
+  quoted: "sky", // issued quote matches the sent/sky doc tone
+  applied: "emerald", // payment applications are terminal
+
   // Payment rollup states -- components/jobs/JobWorkspace.jsx PAYMENT_TONE.
   uninvoiced: "slate",
   invoiced_unpaid: "amber",
