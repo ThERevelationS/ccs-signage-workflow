@@ -1,4 +1,4 @@
-// Shared page-level UI kit. Pure presentation — no business logic, no data
+// Shared page-level UI kit. Pure presentation -- no business logic, no data
 // access. Import from the barrel: import { PageHeader, StatusChip } from "@/components/kit";
 
 export { PageHeader } from "./PageHeader";
@@ -12,7 +12,7 @@ export { DataTableShell, Tr, Th, Td } from "./DataTable";
 export { showUndo } from "./UndoToast";
 export { DetailDrawer } from "./DetailDrawer";
 
-// Pure models (dependency-free — safe to bundle under Node for tests).
+// Pure models (dependency-free -- safe to bundle under Node for tests).
 export {
   STATUS_TONES,
   TONE_NAMES,
