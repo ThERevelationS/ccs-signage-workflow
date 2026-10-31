@@ -3,6 +3,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -318,6 +319,18 @@ function dateKeyInCompanyTime(value: any) {
   }).formatToParts(date);
   const get = (type: string) => parts.find(part => part.type === type)?.value || '';
   return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+// Company-local [from, to] date keys padded into a conservative UTC window
+// for a server-side range filter on a date-time field. New York sits 4-5h
+// behind UTC; the one-day pad on each side covers every real timezone
+// offset, so the database pre-filters while dateKeyInCompanyTime stays the
+// exact judge of company-day membership.
+function shiftCompanyDateKey(dateKey: string, days: number) {
+  return new Date(Date.parse(`${dateKey}T00:00:00.000Z`) + days * 86400000).toISOString().slice(0, 10);
+}
+function companyRangeQuery(field: string, from: string, to: string) {
+  return { [field]: { $gte: `${shiftCompanyDateKey(from, -1)}T00:00:00.000Z`, $lt: `${shiftCompanyDateKey(to, 2)}T00:00:00.000Z` } };
 }
 
 function payrollMembershipEnvelope(clockIn: any) {
@@ -7923,7 +7936,12 @@ Deno.serve(async (req) => {
       const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : '';
       const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : '';
       if (!from || !to) return Response.json({ success: false, error: 'from and to dates (YYYY-MM-DD) are required.' }, { status: 400 });
-      const rows = await entryEntity.filter({}, '-clock_in', 4000).catch(() => []);
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: companyRangeQuery('clock_in', from, to),
+        sort: '-clock_in',
+        label: 'Payroll export entries',
+      }).catch(() => null);
       if (!Array.isArray(rows)) throw new Error('TimeEntry lookup did not return a record list.');
       const included = rows.filter((e: any) => {
         const dk = dateKeyInCompanyTime(e.clock_in);
