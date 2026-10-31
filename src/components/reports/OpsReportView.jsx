@@ -7,6 +7,8 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { downloadCsv } from "@/components/shared/exportCsv";
+import { loadGlLookup } from "@/components/shared/loadGlLookup";
+import { GL_EXPORT_HEADERS, glExportRows, reportToGlEntries } from "@/components/shared/glExport";
 import { paymentsFromArCsv } from "@/components/statements/statementModel";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { BarChart3, Download, RefreshCw } from "lucide-react";
@@ -138,7 +140,9 @@ export default function OpsReportView({ reportKey, onSelect }) {
   const { sessionToken } = useAuth();
   const def = OPS_REPORT_MAP[reportKey] || OPS_REPORTS[0];
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  useEffect(() => { setFilters(DEFAULT_FILTERS); }, [reportKey]);
+  const [glNote, setGlNote] = useState("");
+  const [glBusy, setGlBusy] = useState(false);
+  useEffect(() => { setFilters(DEFAULT_FILTERS); setGlNote(""); }, [reportKey]);
   const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
 
   const { data: workOrders = [], isLoading: woLoading, error: woError, refetch: refetchWos } = useAllWorkOrders();
@@ -386,6 +390,30 @@ export default function OpsReportView({ reportKey, onSelect }) {
     downloadCsv(`${def.key}.csv`, headers, body);
   };
 
+  // GL-coded export: same report rows as Export CSV — the totals row stays
+  // out so a journal import never double-counts the rollup — mapped to
+  // date/memo/entity_ref/gl_account/debit/credit. gl_account resolves via the
+  // MarkupCategory/Inventory/PartTemplate mappings; unmapped rows still
+  // export and are counted so Manage Accounts can be completed.
+  const exportGl = async () => {
+    if (glBusy || !report.rows.length) return;
+    setGlBusy(true);
+    setGlNote("");
+    try {
+      const lookup = await loadGlLookup();
+      const entries = reportToGlEntries({ columns: report.columns, rows: report.rows, source: def.title });
+      const { rows, unmapped } = glExportRows(entries, lookup);
+      downloadCsv(`${def.key}-gl.csv`, GL_EXPORT_HEADERS, rows);
+      setGlNote(unmapped
+        ? `${unmapped} of ${rows.length} GL rows have no account mapping — map categories/items in Manage Accounts.`
+        : `${rows.length} GL rows exported — all mapped.`);
+    } catch (e) {
+      setGlNote(e?.message || "GL export failed.");
+    } finally {
+      setGlBusy(false);
+    }
+  };
+
   const has = (f) => def.filters.includes(f);
   const rangeKey = Object.keys(RANGE_LABELS).find((k) => def.filters.includes(k));
   const rangeLabel = rangeKey ? RANGE_LABELS[rangeKey] : "Date";
@@ -441,8 +469,20 @@ export default function OpsReportView({ reportKey, onSelect }) {
               >
                 <Download className="h-3.5 w-3.5" /> Export CSV
               </button>
+              <button
+                onClick={exportGl}
+                disabled={glBusy || !report.rows.length}
+                title="Journal-style CSV (date, memo, entity_ref, gl_account, debit, credit) with GL account codes"
+                className="flex items-center gap-1.5 rounded-lg border border-violet-300 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-950/40"
+              >
+                {glBusy ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                Download GL export
+              </button>
             </div>
           </div>
+          {glNote && (
+            <p className="mb-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">{glNote}</p>
+          )}
 
           {/* Filters */}
           {def.filters.length > 0 && (
