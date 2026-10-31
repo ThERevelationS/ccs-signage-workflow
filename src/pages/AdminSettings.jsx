@@ -3064,7 +3064,7 @@ export default function AdminSettings() {
                           )}
                           {!ruleIsRunnable(rule) && (
                             <Badge className="text-xs bg-amber-100 text-amber-800 border border-amber-300">
-                              Won't run - not wired yet
+                              Won't run — not wired yet
                             </Badge>
                           )}
                           {(() => {
