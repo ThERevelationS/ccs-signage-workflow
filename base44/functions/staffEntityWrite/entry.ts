@@ -52,6 +52,16 @@ function rejectOperatorKeys(value: unknown, path = 'data'): void {
   }
 }
 
+// Platform-managed identity/audit fields — never client-supplied.
+const SYSTEM_FIELDS = [
+  'id', 'created_date', 'updated_date',
+  'created_by', 'created_by_id', 'updated_by', 'updated_by_id', 'is_sample',
+];
+
+function stripSystemFields(record: Record<string, unknown>): void {
+  for (const f of SYSTEM_FIELDS) delete record[f];
+}
+
 const bad = (message: string, status = 400) =>
   Object.assign(new Error(message), { status });
 
@@ -85,7 +95,7 @@ Deno.serve(async (req) => {
     if (JSON.stringify(data).length > 200000) throw bad('Record payload is too large.');
     rejectOperatorKeys(data);
     // Identity/system fields are never client-supplied.
-    for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (data as any)[f];
+    stripSystemFields(data);
 
     if (entityName === 'MarkupTier' && (op === 'create' || op === 'update')) {
       const tierNum = Math.floor(Number(data?.tier_number));
@@ -205,7 +215,7 @@ Deno.serve(async (req) => {
       if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw bad('An update payload is required.');
       rejectOperatorKeys(patch);
       // Identity/system fields are never client-supplied.
-      for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
+      stripSystemFields(patch);
       const result = await entity.updateMany({ id: queryId, updated_date: queryVersion }, { $set: patch });
       return Response.json({ success: true, result });
     }
