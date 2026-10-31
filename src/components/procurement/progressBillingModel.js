@@ -33,7 +33,8 @@ export function normalizeSchedule(schedule) {
     pct = Math.min(100, Math.round(pct * 100) / 100);
     if (cumulative + pct > 100 + EPS) pct = money(100 - cumulative);
     cumulative = money(cumulative + pct);
-    out.push({ label: clean(row?.label) || `Milestone ${out.length + 1}`, pct });
+    const note = clean(row?.note);
+    out.push({ label: clean(row?.label) || `Milestone ${out.length + 1}`, pct, ...(note ? { note } : {}) });
   });
   return out;
 }
@@ -153,4 +154,17 @@ export function buildEstimateBillingPayload({ estimateId, milestone, isFinal }) 
     ...(isFinal ? {} : { deposit_amount: money(milestone.amount) }),
     notes: `Progress billing milestone "${milestone.label}" (${milestone.pct}%).`,
   };
+}
+
+// WorkOrder.billing_schedule round trip. The entity field stores normalized
+// {label, pct, note} rows — scheduleToEntity clamps pct > 0, caps cumulative
+// at 100 and drops junk rows before write; scheduleFromEntity re-normalizes
+// on read so malformed or legacy rows never reach the UI. An empty result
+// means "no usable schedule stored" and callers fall back to cache/defaults.
+export function scheduleToEntity(schedule) {
+  return normalizeSchedule(schedule);
+}
+
+export function scheduleFromEntity(raw) {
+  return normalizeSchedule(Array.isArray(raw) ? raw : []);
 }
