@@ -41,6 +41,7 @@ export const MaintenanceProject = staffEntities.MaintenanceProject;
 export const MarkupCategory = staffEntities.MarkupCategory;
 export const MarkupTier = staffEntities.MarkupTier;
 export const MetalProject = staffEntities.MetalProject;
+export const OpportunityActivity = staffEntities.OpportunityActivity;
 export const Order = staffEntities.Order;
 export const PartTemplate = staffEntities.PartTemplate;
 export const PermitLineItem = staffEntities.PermitLineItem;
