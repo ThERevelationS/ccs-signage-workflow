@@ -4,7 +4,6 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { emailBodyToPlainText } from "@/components/comms/sendStaffEmail";
 import { appParams } from "@/lib/app-params";
-import { emailBodyToPlainText } from "@/components/comms/sendStaffEmail";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const User = base44.entities.User;
 
