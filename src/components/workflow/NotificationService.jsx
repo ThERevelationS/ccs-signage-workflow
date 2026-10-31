@@ -3,6 +3,7 @@ import { getSessionToken } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { appParams } from "@/lib/app-params";
+import { emailBodyToPlainText } from "@/components/comms/sendStaffEmail";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const User = base44.entities.User;
 
