@@ -5,6 +5,7 @@ import {authenticateSignShopSession} from '../../shared/signShopSession.ts';
 import {createScanReporter,silentScanReporter} from '../../shared/permittingScanReporter.mjs';
 import { readPermittingResourceResponse } from '../../shared/permittingResourceResponse.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
@@ -21,7 +22,7 @@ import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchive
 Deno.serve(async (req) => {
   let reporter:any=silentScanReporter;
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
 
     let body: any = {};
     try { body = await req.json(); } catch {}
