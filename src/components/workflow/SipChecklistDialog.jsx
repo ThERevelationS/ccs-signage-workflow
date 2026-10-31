@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import {
   ClipboardList, FileText, Copy, Star 
 } from "lucide-react";
 
-const SipChecklistTemplate = base44.entities.SipChecklistTemplate;
+const SipChecklistTemplate = staffEntities.SipChecklistTemplate;
 
 // Default checklist items if no template exists
 const DEFAULT_CHECKLIST = [
