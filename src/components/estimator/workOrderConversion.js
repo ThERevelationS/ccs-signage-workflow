@@ -371,7 +371,14 @@ export async function transitionProductAndBuilderStatus({ workOrderId, product, 
   // Work Order pass it via `workOrder`; otherwise the live record is fetched.
   // The extra read only happens for production-bound moves, so ordinary
   // status edits never pay for it, and re-picking the held status no-ops.
-  const targetStatus = norm(patch?.operationalStatus);
+  // The effective target is the explicit status, or the auto-advance to
+  // proof_approved that applyProductOperationalPatch performs when a proof is
+  // approved while the product awaits approval (the proof-approval path
+  // releases the product to production, so it is gated the same way).
+  let targetStatus = norm(patch?.operationalStatus);
+  if (!targetStatus && norm(patch?.proofStatus) === "approved" && norm(product?.operational_status) === "awaiting_proof_approval") {
+    targetStatus = "proof_approved";
+  }
   if (targetStatus && DEPOSIT_GATED_STATUSES.has(targetStatus) && targetStatus !== norm(product?.operational_status)) {
     const woSnapshot = workOrder && typeof workOrder === "object"
       ? workOrder
