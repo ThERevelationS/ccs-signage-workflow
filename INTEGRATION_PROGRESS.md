@@ -3,7 +3,7 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 6 frontend agent running (6fef3c5c notices+silent-bugs); then Phase 7 financial trio.
+Phase 7 agents running (b86f93da refunds / 910bbdab SalesLocation+deposits / 4fcabb38 portal-vendor-receipts).
 
 ## Phase status
 | Phase | Status | Checkpoint |
@@ -14,7 +14,7 @@ Phase 6 frontend agent running (6fef3c5c notices+silent-bugs); then Phase 7 fina
 | 3 stage sync | DONE | 6ae5fafe32bb4d1670335192 |
 | 4 customer 360 | DONE | see below |
 | 5 alerts | DONE | 6ae6051856c573ac5de4c89d |
-| 6 scale | — | — |
+| 6 scale | DONE | 6ae60c29+6ae60e6c |
 | 7 financial | — | — |
 | 8 smtp | — | — |
 | 9 ui kit | — | — |
@@ -31,3 +31,4 @@ Phase 6 frontend agent running (6fef3c5c notices+silent-bugs); then Phase 7 fina
 - Phase 4: customer_workspace action deployed (get_opportunity-style aggregate: customer+contacts+locations+opps+estimates+WOs+invoices+payments+POs+COs+activities+totals+truncated flags, POs matched via linked doc ids since no customer col); Customer360.jsx page (header badges, KPI strip, 6 tabs, all deep-links, graceful degraded mode via staff-readable entities, mobile cards); route+palette+label wired; repo rewrite 12 sites /EstimatorCustomers?customer=→/Customer360?id= incl palette RECORD_GROUPS + pre-existing AttentionFeed/SalesOpportunityDialog; reciprocal links detail-drawer Open 360 ↔ 360 Edit customer. PASS customer360+customer360-page+validator; build exit 0. Checkpoints: agent 6ae5fd47(backend) 6ae5feed(page) + mine 6ae5f411.
 - Phase 5: 8 trigger types (proof_sent/approved, product_transition, crm_event_completed, po_received/backordered, invoice_overdue, recon_variance) registered in AdminSettings+engine+dispatcher; emitters at 6 mutation points (shared transitionProductAndBuilderStatus covers all callers, ProofPanel, crmActivityPersistence, PO receive, ReconcileWizard) all fire-and-forget try/catch; 4 computed feed sections (overdue products/crm dues/followups-due/recon variance) deduped vs server-fed invoice/PO rows; bell badge adds computed count. processWorkflowTriggers+workflowTriggerEngine DEPLOYED (new events accepted server-side). invoice_overdue is computed-only by design. PASS unified-alerts.
 - Phase 6 BACKEND DONE: all silently-capped reads fixed + deployed. invoicingAction (list_invoices/export_ar/email_statement/invoiceable paged, aging on full set, fail-closed statements, +total_count/truncated/showing; portal-link latent bug fixed). opportunityWorkspaceAction (full_backup truly full 250k paged+row_counts; global_search+search_customers regex pushdown; list_opportunities/estimating_requests/follow_ups/get_customer_360 paged; send_digest+list_opportunities PRE-EXISTING ReferenceErrors fixed, module list() hoisted; bulk_remarkup paged). purchaseOrderAction/changeOrderAction/inventoryAction (low_stock honest)/jobCostingAction/customerPortalAction (bootstrap+inbox paged)/boardFeed (truncated on full+delta)/dataIntegrityAction (paged orphan scan)/staffDataRead (cursor+fields passthrough, real entity.count(), truncated/returned on all responses)/timeClockAction (10 report actions server-side date ranges+paged). 11 functions deployed total. PASS scale-reads+scale-invoicing+scale-functions+regressions. Checkpoints agents 6ae606bc/6ae60844/6ae60b51 + mine. Also fixed AdminSettings em-dash badge (test-admin-automation-honesty green).
+- Phase 6 FRONTEND DONE (6fef3c5c): Permitting prime honest (500-limit batch, prime only when full); workOrderCache truncated flag survives hydration/broadcast + MainWorkflow banner; EstimatorQueues stale-reload + QuoteSettings TaxGroup + EstimatorCustomers MarkupTier Proxy-TypeError bugs fixed (all were RLS/Proxy silent-swallow); permitLineItemIntegration dropped-fields removed x2; AuditLog/ClientSearchInput honest caps; AttentionFeed already honest. +MY FIXES: staffEntities.js readArgs now forwards cursor+fields, options-object calls return real {items,has_more,next_cursor} via direct (unbatched) gateway read; EstimatorQueues EstimateAcceptance→staffEntities (RLS). PASS scale-frontend + esbuild clean. NOTE: sandbox run does NOT support stdin (hangs) — use sandbox write+run for scripts.
