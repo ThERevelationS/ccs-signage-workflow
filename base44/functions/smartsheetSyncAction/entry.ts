@@ -1403,6 +1403,7 @@ async function pullDataset(
           : base44.asServiceRole.entities.Order,
         query: { smartsheet_sheet_id: sheetId },
         sort: 'id',
+        ...(dataset === 'sales' ? { fields: syncPullFields(dataset, bindings) } : {}),
         label: dataset === 'sales'
           ? 'Sales Smartsheet sync metadata verification'
           : 'Order Form sync metadata verification',
@@ -2792,6 +2793,7 @@ async function pushDataset(
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: record.id },
           sort: 'id',
+          fields: syncPullFields(dataset, bindings),
           label: 'Sales push sync metadata verification',
         });
         const metadataFailures = findUnverifiedSyncMetadata([expectedMetadata], verifiedMetadataRows);
@@ -2825,6 +2827,7 @@ async function pushDataset(
       const recent = await loadAllEntityRows({
         entity: base44.asServiceRole.entities.WorkOrder,
         query: { id: { $in: approvalIds } }, sort: 'id',
+        fields: syncPullFields(dataset, bindings),
         label: 'Approved Sales review version preflight',
       });
       const latestById = new Map(recent.map((row: any) => [String(row.id), row]));
@@ -2908,6 +2911,7 @@ async function pushDataset(
         const fresh = await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: { $in: ids } }, sort: 'id',
+          fields: syncPullFields(dataset, bindings),
           label: 'Sales remote PUT local revision preflight',
         });
         const latestById = new Map(fresh.map((row: any) => [String(row.id), row]));
@@ -3101,6 +3105,7 @@ async function pushDataset(
         const current = await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: {id: {$in: batch.map(([id]) => id)}}, sort: 'id',
+          fields: syncPullFields(dataset, bindings),
           label: 'Sales rate-limited PUT fresh WorkOrder verification',
         });
         const latest = new Map(current.map((record: any) => [String(record.id), record]));
@@ -3566,6 +3571,7 @@ async function pushDataset(
             entity: base44.asServiceRole.entities.WorkOrder,
             query: { id: { $in: verifiedSalesUpdates.map((update: any) => update.id) } },
             sort: 'id',
+            fields: syncPullFields(dataset, bindings),
             label: 'Sales push sync metadata verification',
           });
           const metadataFailures = findUnverifiedSyncMetadata(verifiedSalesUpdates, verifiedRecords);
@@ -3931,10 +3937,13 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({success:false,error:'The configured Sales sheet identity could not be verified.'},{status:409});
       }
       const entity = base44.asServiceRole.entities.WorkOrder;
+      const ownershipFields = syncPullFields('sales', {});
       const [links,attempts] = await Promise.all([
         loadAllEntityRows({entity,query:{smartsheet_row_id:{$exists:true}},sort:'id',
+          fields:ownershipFields,
           label:'Sales permanent row ownership linked records'}),
         loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},sort:'id',
+          fields:ownershipFields,
           label:'Sales permanent row ownership durable attempt records'}),
       ]);
       return Response.json({success:true,dataset:'sales',
@@ -3960,7 +3969,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       const attempts = await loadAllEntityRows({
         entity:base44.asServiceRole.entities.WorkOrder,
         query:{smartsheet_create_attempt:{$exists:true}},
-        sort:'id',label:'Admin read-only Sales create attempts',
+        sort:'id',fields:syncPullFields('sales', bindings),label:'Admin read-only Sales create attempts',
       });
       if (action === 'audit_sales_create_attempts') {
         return Response.json({success:true,read_only:true,writes_attempted:false,
@@ -5125,6 +5134,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         entity: base44.asServiceRole.entities.WorkOrder,
         query: { in_pipeline: true },
         sort: 'id',
+        fields: syncPullFields('sales', bindings),
         label: 'Sales snapshot preview full push population',
       });
       if (!Array.isArray(raw)) throw new Error('Sales snapshot preview could not verify its read window.');
