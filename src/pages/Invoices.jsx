@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { Link } from "react-router-dom";
 import SavedViews from "@/components/workflow/SavedViews";
 import {
   AlertCircle,
@@ -416,7 +417,14 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{inv.invoice_number}</h2>
                   <StatusBadge status={inv.status} />
                 </div>
-                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">{inv.customer_display_name || inv.customer_name || inv.customer_id || "Unknown customer"}</div>
+                <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                  {clean(inv.customer_id) ? (
+                    <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${inv.customer_id}`}>{inv.customer_display_name || inv.customer_name || inv.customer_id}</Link>
+                  ) : (inv.customer_display_name || inv.customer_name || "Unknown customer")}
+                  {clean(inv.customer_id) && (
+                    <Link className="ml-2 text-xs font-semibold text-sky-600 hover:underline dark:text-sky-400" to={`/CustomerStatements?customer=${inv.customer_id}`}>Statement</Link>
+                  )}
+                </div>
                 <div className="mt-0.5 text-xs text-slate-500">
                   {inv.issue_date ? `Issued ${inv.issue_date}` : "Not issued"}{inv.due_date ? ` · Due ${inv.due_date}` : ""}{inv.terms ? ` · ${inv.terms}` : ""}
                 </div>
@@ -450,9 +458,9 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                 {inv.internal_notes && <div><span className="text-xs font-semibold uppercase text-slate-400">Internal:</span> {inv.internal_notes}</div>}
                 {(inv.estimate_id || inv.work_order_id || inv.opportunity_id) && (
                   <div className="text-xs text-slate-500">
-                    {inv.estimate_id && <div>Estimate: <a className="text-violet-600 hover:underline dark:text-violet-300" href={`/EstimateDetail?id=${inv.estimate_id}`}>{inv.estimate_id}</a></div>}
-                    {inv.work_order_id && <div>WorkOrder: {inv.work_order_id}</div>}
-                    {inv.opportunity_id && <div>Opportunity: {inv.opportunity_id}</div>}
+                    {inv.estimate_id && <div>Estimate: <Link className="text-violet-600 hover:underline dark:text-violet-300" to={`/EstimateDetail?id=${inv.estimate_id}`}>{inv.estimate_id}</Link></div>}
+                    {inv.work_order_id && <div>WorkOrder: <Link className="text-violet-600 hover:underline dark:text-violet-300" to={`/JobWorkspace?wo=${inv.work_order_id}`}>{inv.work_order_id}</Link></div>}
+                    {inv.opportunity_id && <div>Opportunity: <Link className="text-violet-600 hover:underline dark:text-violet-300" to={`/Opportunities?open=${inv.opportunity_id}`}>{inv.opportunity_id}</Link></div>}
                   </div>
                 )}
               </div>
@@ -947,7 +955,13 @@ export default function Invoices() {
                     ) : null}
                   </td>
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
-                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">{inv.customer_display_name || inv.customer_name || inv.customer_id || "Unknown customer"}</td>
+                  <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                    {clean(inv.customer_id) ? (
+                      <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${inv.customer_id}`} onClick={(e) => e.stopPropagation()}>
+                        {inv.customer_display_name || inv.customer_name || inv.customer_id}
+                      </Link>
+                    ) : (inv.customer_display_name || inv.customer_name || "Unknown customer")}
+                  </td>
                   <td className="px-4 py-2.5 text-slate-500">
                     {inv.due_date || "—"}
                     {overdue && <span className="ml-1.5 inline-flex rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:bg-red-950/60 dark:text-red-300">Overdue</span>}
