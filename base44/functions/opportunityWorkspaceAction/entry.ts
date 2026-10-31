@@ -1035,36 +1035,72 @@ Deno.serve(async (req) => {
         searchRead(PurchaseOrder, ["po_number", "vendor_name"], "-updated_date", "PurchaseOrder", true),
         searchRead(ChangeOrder, ["change_order_number", "title", "customer_display_name"], "-created_date", "ChangeOrder", true),
         searchRead(Customer, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"], "-updated_date", "Customer", false),
-        searchRead(WorkOrder, ["title", "client_name", "current_task_description"], "-updated_date", "WorkOrder", false),
+        searchRead(WorkOrder, ["title", "client_name", "current_task_description", "sales_import_source_id"], "-updated_date", "WorkOrder", false),
         searchRead(Order, ["description", "vendor", "requestor_name", "request_type"], "-updated_date", "Order", false),
       ]);
+      // Legacy-number resolution: migrated rows link back through
+      // LegacyMigrationMap (source_id = the old CoreBridge number). A hit
+      // resolves "the old CB invoice/order # typed into search" to the
+      // migrated record even though its own fields never stored that number.
+      const LEGACY_GROUP: Record<string, string> = {
+        AllInOneEstimate: "estimates", WorkOrder: "work_orders", Invoice: "invoices",
+        PurchaseOrder: "purchase_orders", ChangeOrder: "change_orders",
+        Customer: "customers", Opportunity: "opportunities", Order: "orders",
+      };
+      const legacyRows: Record<string, Map<string, { row: any; legacy: string }>> = {};
+      try {
+        const MapEntity = (base44.asServiceRole.entities as any).LegacyMigrationMap;
+        const entityFor: Record<string, any> = {
+          AllInOneEstimate: Estimate, WorkOrder, Invoice, PurchaseOrder, ChangeOrder, Customer, Opportunity, Order,
+        };
+        const mapRows = await MapEntity.filter(regexOr(["source_id"], rawQuery), "-updated_date", 200).catch(() => []);
+        const targets = new Map<string, { entity: string; sid: string }>();
+        for (const m of mapRows || []) {
+          const tEntity = clean(m?.target_entity);
+          const tId = clean(m?.target_id);
+          if (!tId || tId === "__error__" || !entityFor[tEntity] || !LEGACY_GROUP[tEntity]) continue;
+          if (!targets.has(tId)) targets.set(tId, { entity: tEntity, sid: clean(m?.source_id) });
+        }
+        await Promise.all([...targets.entries()].slice(0, 25).map(async ([tId, meta]) => {
+          const row = await entityFor[meta.entity].get(tId).catch(() => null);
+          if (row?.id) (legacyRows[LEGACY_GROUP[meta.entity]] ||= new Map()).set(tId, { row, legacy: meta.sid });
+        }));
+      } catch { /* legacy resolution is best-effort — never fail the search */ }
+      const mergeLegacy = (group: string, list: any[]) => {
+        const out = [...list];
+        const seen = new Set(out.map((r) => clean(r?.id)));
+        for (const [tId, meta] of legacyRows[group] || []) {
+          if (!seen.has(tId)) out.push({ ...meta.row, legacy_source_id: meta.legacy });
+        }
+        return out;
+      };
       const has = (row: any, fields: string[]) => fields.some((f) => clean(row?.[f]).toLowerCase().includes(query));
       return Response.json({
         success: true,
         action,
         results: {
-          opportunities: opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage) })),
-          estimates: estimates.filter((r: any) => !r?.deleted && has(r, ["project_name", "client_name", "estimate_number"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status) })),
-          invoices: invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"])).slice(0, 10)
+          opportunities: mergeLegacy("opportunities", opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          estimates: mergeLegacy("estimates", estimates.filter((r: any) => !r?.deleted && has(r, ["project_name", "client_name", "estimate_number"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          invoices: mergeLegacy("invoices", invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"]))).slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), invoice_number: clean(r?.invoice_number), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), total: num(r?.total) })),
-          purchase_orders: pos.filter((r: any) => has(r, ["po_number", "vendor_name"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total) })),
-          change_orders: cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"])).slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status) })),
-          customers: (Array.isArray(customers) ? customers : [])
-            .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"]))
+          purchase_orders: mergeLegacy("purchase_orders", pos.filter((r: any) => has(r, ["po_number", "vendor_name"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), po_number: clean(r?.po_number), vendor_name: clean(r?.vendor_name), status: clean(r?.status), total: num(r?.total), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          change_orders: mergeLegacy("change_orders", cos.filter((r: any) => has(r, ["change_order_number", "title", "customer_display_name"]))).slice(0, 10)
+            .map((r: any) => ({ id: clean(r?.id), change_order_number: clean(r?.change_order_number), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          customers: mergeLegacy("customers", (Array.isArray(customers) ? customers : [])
+            .filter((r: any) => has(r, ["company_name", "contact_first_name", "contact_last_name", "contact_email", "email"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status) })),
-          work_orders: (Array.isArray(wos) ? wos : [])
-            .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description"]))
+            .map((r: any) => ({ id: clean(r?.id), company_name: clean(r?.company_name), contact_name: [clean(r?.contact_first_name), clean(r?.contact_last_name)].filter(Boolean).join(" "), customer_status: clean(r?.customer_status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          work_orders: mergeLegacy("work_orders", (Array.isArray(wos) ? wos : [])
+            .filter((r: any) => !r?.deleted && has(r, ["title", "client_name", "current_task_description", "sales_import_source_id"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date) })),
-          orders: (Array.isArray(orders) ? orders : [])
-            .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"]))
+            .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), client_name: clean(r?.client_name), current_stage: clean(r?.current_stage), due_date: clean(r?.due_date), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
+          orders: mergeLegacy("orders", (Array.isArray(orders) ? orders : [])
+            .filter((r: any) => !r?.deleted && has(r, ["description", "vendor", "requestor_name", "request_type"])))
             .slice(0, 10)
-            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status) })),
+            .map((r: any) => ({ id: clean(r?.id), customer_name: clean(r?.customer_name || r?.vendor_name), description: clean(r?.description), vendor: clean(r?.vendor || r?.vendor_name), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
         },
         // A group hitting the scan cap means more matches may exist than the
         // 10 surfaced — honest signal for the UI's "see all" affordance.
