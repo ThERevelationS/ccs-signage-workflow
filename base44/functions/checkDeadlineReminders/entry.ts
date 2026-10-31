@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { sanitizeEmailSubject } from '../../shared/emailSubject.mjs';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -580,6 +581,7 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type, taskC
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
     body = body.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
   }
+  subject = sanitizeEmailSubject(subject);
 
   // Generate default body if empty
   if (!body) {
@@ -790,6 +792,7 @@ async function sendOrderDeadlineEmail(base44, config, order, trigger_type) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
     body = body.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
   }
+  subject = sanitizeEmailSubject(subject);
 
   if (!body) {
     const safeCustomer = esc(order.customer_name);
@@ -910,6 +913,7 @@ async function sendOpportunityDeadlineEmail(base44, config, opp, trigger_type) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
     body = body.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
   }
+  subject = sanitizeEmailSubject(subject);
 
   if (!body) {
     const safeTitle = esc(title);
