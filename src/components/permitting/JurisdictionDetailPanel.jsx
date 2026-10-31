@@ -50,7 +50,7 @@ const DOC_TYPE_LABELS = {
   other: "Other"
 };
 
-export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
+export default function JurisdictionDetailPanel({ jurisdiction, permitLines = [], duplicateCount = 1, onSetVerification, onClose, onUpdate, onSaveOfficeResearch }) {
   const { currentUser } = useAuth();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
@@ -633,6 +633,23 @@ Answer only from the provided excerpts and cite the document title and official 
                 <ExternalLink className="h-4 w-4 flex-shrink-0" />
                 <span className="min-w-0 break-words">Official Permitting Page</span>
               </a>
+            )}
+            {permitLines.length > 0 && (
+              <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
+                <p className="font-semibold">Jobs using this office ({permitLines.length})</p>
+                <ul className="mt-1 space-y-0.5">
+                  {permitLines.slice(0, 6).map((li) => {
+                    const status = li.permit_received_date ? "Permit issued" : li.denial_date ? "Denied" : li.submitted_date ? "Submitted" : "Not submitted yet";
+                    return (
+                      <li key={li.id} className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 truncate">{li.work_order_title || "Unnamed job"}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${status === "Permit issued" ? "bg-green-100 text-green-800" : status === "Denied" ? "bg-red-100 text-red-800" : status === "Submitted" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700"}`}>{status}</span>
+                      </li>
+                    );
+                  })}
+                  {permitLines.length > 6 && <li className="text-indigo-700">…and {permitLines.length - 6} more</li>}
+                </ul>
+              </div>
             )}
           </div>
           <div className="flex w-full gap-2 sm:w-auto sm:justify-end">
