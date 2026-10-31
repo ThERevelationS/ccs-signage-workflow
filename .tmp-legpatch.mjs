@@ -1,6 +1,8 @@
 import fs from "node:fs";
 const f = "base44/functions/opportunityWorkspaceAction/entry.ts";
-let s = fs.readFileSync(f, "utf8");
+let s = fs.readFileSync(f, "utf8").replace(/
+/g, "
+");
 const must = (old, nu) => {
   if (!s.includes(old)) { console.error("MISS:", JSON.stringify(old.slice(0, 70))); process.exit(1); }
   s = s.replace(old, nu);
