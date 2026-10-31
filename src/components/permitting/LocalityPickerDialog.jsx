@@ -104,7 +104,7 @@ function LocalityPickerSession({
   const pendingSearch=useRef(null),pendingDraft=useRef(null);
   const openRef=useRef(isOpen);openRef.current=isOpen;
   useEffect(()=>()=>{openRef.current=false;searchVersion.current++;},[]);
-  const [address, setAddress] = useState("");
+  const [address, setAddressRaw] = useState("");
   const [searching, setSearching] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState(() => loadRecentAddresses());
   const [slowSearch, setSlowSearch] = useState(false);
@@ -132,6 +132,8 @@ function LocalityPickerSession({
   const [autoSearchNonce, setAutoSearchNonce] = useState(0);
   const [multiRunning, setMultiRunning] = useState(false);
   const [gpsCoords, setGpsCoords] = useState(null);
+  // A new or edited address invalidates an earlier "Use my location" fix — the >500ft warning must never compare fresh coordinates against a stale pin.
+  const setAddress = (v) => { setAddressRaw(v); setGpsCoords(null); };
   const [scanningQR, setScanningQR] = useState(false);
   const scanVideoRef = useRef(null);
   const scanStreamRef = useRef(null);
