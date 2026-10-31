@@ -264,9 +264,13 @@ export async function createPermitLinesFromDraft(draft, workOrder, signIdentity 
 export async function generateReviewSuggestions(workOrderId, affectedSourceDocIds) {
   if (!workOrderId || !affectedSourceDocIds?.length) return [];
 
+  // NOTE: the staff read facade only forwards sort/limit/skip from an
+  // options object — a "fields" projection would be silently dropped, so the
+  // rows come back whole. The options form stays for its paged {items}
+  // return contract.
   const { items } = await staffEntities.PermitLineItem.filter(
     { work_order_id: workOrderId },
-    { limit: 100, fields: ["id", "row_name", "notes", "status", "office_types", "locality_name", "steps"] },
+    { limit: 100 },
   );
 
   const suggestions = [];
