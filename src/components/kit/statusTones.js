@@ -3,7 +3,7 @@
 // One flat status -> tone map covers the app's real enums so every surface
 // (queues, invoices, POs, estimates, CRM, work-order stages) renders the same
 // color for the same status word. Pure and import-free on purpose: StatusChip
-// and PageHeader read it, and scripts/test-uikit.mjs bundles it under Node —
+// and PageHeader read it, and scripts/test-uikit.mjs bundles it under Node --
 // same convention as components/queues/productQueueModel.js.
 //
 // Tone semantics (locked for the kit):
@@ -15,14 +15,14 @@
 //   violet  = waiting on the customer (explicit awaiting_* statuses)
 
 export const STATUS_TONES = {
-  // Product operational statuses — keep in sync with
+  // Product operational statuses -- keep in sync with
   // OPERATIONAL_STATUS_CUSTOMER_LABELS in components/estimator/workOrderConversion.js.
   order_review: "sky",
   site_survey: "sky",
   awaiting_customer_action: "violet",
   awaiting_proof_approval: "violet",
   permitting: "amber",
-  proof_approved: "sky", // released to production — still in progress
+  proof_approved: "sky", // released to production -- still in progress
   design_review: "sky",
   in_design: "sky",
   in_production: "sky",
@@ -32,12 +32,12 @@ export const STATUS_TONES = {
   vended: "emerald",
   none: "slate",
 
-  // Proof statuses — PROOF_STATUS_VALUES (none/draft/sent shared with docs).
+  // Proof statuses -- PROOF_STATUS_VALUES (none/draft/sent shared with docs).
   awaiting_approval: "violet",
   approved: "emerald",
   revision_requested: "amber",
 
-  // Fulfillment states — FULFILLMENT_STATE_VALUES.
+  // Fulfillment states -- FULFILLMENT_STATE_VALUES.
   awaiting_pickup: "amber",
   awaiting_installation: "amber",
   awaiting_shipping: "amber",
@@ -47,7 +47,7 @@ export const STATUS_TONES = {
   shipped: "emerald",
   delivered: "emerald",
 
-  // Work-order stages — WO_STAGE_ORDER in components/estimator/productStageSync.js.
+  // Work-order stages -- WO_STAGE_ORDER in components/estimator/productStageSync.js.
   estimating: "slate",
   sales: "sky",
   design: "sky",
@@ -56,29 +56,29 @@ export const STATUS_TONES = {
   installation: "sky",
   completed: "emerald",
 
-  // Estimate statuses — estimateStatusTransitions.js.
+  // Estimate statuses -- estimateStatusTransitions.js.
   draft: "slate",
   calculated: "amber",
   sent: "sky", // issued doc matches the blue chips in Invoices/PurchaseOrders
   archived: "slate",
   cancelled: "red",
 
-  // Invoice statuses — src/pages/Invoices.jsx STATUS_LABELS.
+  // Invoice statuses -- src/pages/Invoices.jsx STATUS_LABELS.
   partially_paid: "amber",
   paid: "emerald",
   overdue: "red", // derived display state, not a stored status
   void: "red",
 
-  // Purchase-order statuses — src/pages/PurchaseOrders.jsx STATUS_LABELS.
+  // Purchase-order statuses -- src/pages/PurchaseOrders.jsx STATUS_LABELS.
   partially_received: "amber",
   received: "emerald",
 
-  // CRM event outcomes — components/crm/crmEventsModel.js CRM_EVENT_OUTCOMES.
+  // CRM event outcomes -- components/crm/crmEventsModel.js CRM_EVENT_OUTCOMES.
   no_answer: "amber",
   left_message: "amber",
   rescheduled: "sky",
 
-  // Payment rollup states — components/jobs/JobWorkspace.jsx PAYMENT_TONE.
+  // Payment rollup states -- components/jobs/JobWorkspace.jsx PAYMENT_TONE.
   uninvoiced: "slate",
   invoiced_unpaid: "amber",
   partial: "amber",
@@ -151,7 +151,7 @@ export function statusTone(status) {
 // table covers statuses whose natural wording differs (e.g. no_answer).
 export function statusLabel(status) {
   const s = normStatus(status);
-  if (!s) return "—";
+  if (!s) return "\u2014";
   if (STATUS_LABEL_OVERRIDES[s]) return STATUS_LABEL_OVERRIDES[s];
   return s
     .split("_")
@@ -179,7 +179,7 @@ export const TONE_DOT_CLASSES = {
   violet: "bg-violet-500",
 };
 
-// Plain colored text (KPI values, emphasis) — no background.
+// Plain colored text (KPI values, emphasis) -- no background.
 export const TONE_TEXT_CLASSES = {
   sky: "text-sky-700 dark:text-sky-300",
   emerald: "text-emerald-700 dark:text-emerald-300",
