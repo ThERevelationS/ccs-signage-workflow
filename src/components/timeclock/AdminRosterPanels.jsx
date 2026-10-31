@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import TimeQuickPick, { SHIFT_START_TIMES } from "@/components/timeclock/TimeQuickPick";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Loader2, Printer, ScanFace, ShieldCheck, Users } from "lucide-react";
@@ -108,7 +109,7 @@ export default function AdminRosterPanels({ sessionToken }) {
           <Badge className={staff.length ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}>{staff.length} clocked in</Badge>
         </div>
         {loading ? (
-          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading…</div>
+          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading???</div>
         ) : error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
         ) : staff.length === 0 ? (
@@ -136,7 +137,7 @@ export default function AdminRosterPanels({ sessionToken }) {
           </Badge>
         </div>
         {loading ? (
-          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading…</div>
+          <div className="py-4 flex items-center justify-center text-gray-500"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading???</div>
         ) : roster.length === 0 ? (
           <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No employee records returned.</div>
         ) : (
@@ -189,7 +190,7 @@ export default function AdminRosterPanels({ sessionToken }) {
       <div className="clay-card p-4 lg:col-span-2">
         <button type="button" onClick={() => setShowSchedules((v) => !v)} className="flex w-full items-center justify-between text-left">
           <h3 className="font-semibold">Shift schedules <span className="text-xs font-normal text-slate-400">powers early/late notices on the tracker</span></h3>
-          <span className="text-xs text-slate-400">{templates.length} · {showSchedules ? "Hide" : "Show"}</span>
+          <span className="text-xs text-slate-400">{templates.length} ?? {showSchedules ? "Hide" : "Show"}</span>
         </button>
         {showSchedules && (
           <div className="mt-3 space-y-3">
@@ -204,13 +205,13 @@ export default function AdminRosterPanels({ sessionToken }) {
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">Start</label>
-                <input type="time" value={schedForm.start} onChange={(e) => setSchedForm({ ...schedForm, start: e.target.value })}
-                  className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs" />
+                <TimeQuickPick mode="time" value={schedForm.start} onChange={(v) => setSchedForm({ ...schedForm, start: v })}
+                  times={SHIFT_START_TIMES} inputId="sched-start" />
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">End</label>
-                <input type="time" value={schedForm.end} onChange={(e) => setSchedForm({ ...schedForm, end: e.target.value })}
-                  className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs" />
+                <TimeQuickPick mode="time" value={schedForm.end} onChange={(v) => setSchedForm({ ...schedForm, end: v })}
+                  inputId="sched-end" />
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">Days</label>
@@ -242,7 +243,7 @@ export default function AdminRosterPanels({ sessionToken }) {
                   <div key={t.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">
                     <div className="min-w-0">
                       <p className="truncate font-medium text-slate-700">{roster.find((r) => r.email === t.user_email)?.name || t.user_email}</p>
-                      <p className="text-[11px] text-slate-400">{(t.days || []).map((d) => d.slice(0, 3)).join(", ")} · {t.start_time}-{t.end_time}</p>
+                      <p className="text-[11px] text-slate-400">{(t.days || []).map((d) => d.slice(0, 3)).join(", ")} ?? {t.start_time}-{t.end_time}</p>
                     </div>
                     <button type="button"
                       onClick={async () => {
@@ -278,11 +279,11 @@ export default function AdminRosterPanels({ sessionToken }) {
 
       <div className="clay-card p-4">
         <h3 className="font-semibold mb-2">Time Clock nudges</h3>
-        <p className="mb-2 text-[11px] text-slate-500">Send targeted announcements straight to the kiosk — reminder for the late clock-ins, a wake-up for anyone still on the clock 12+ hours, or a manager digest.</p>
+        <p className="mb-2 text-[11px] text-slate-500">Send targeted announcements straight to the kiosk ??? reminder for the late clock-ins, a wake-up for anyone still on the clock 12+ hours, or a manager digest.</p>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("nudge_missing_clockins")}>{announceBusy === "nudge_missing_clockins" ? "Sending…" : "Nudge missing clock-ins"}</Button>
-          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("alert_missed_clockouts")}>{announceBusy === "alert_missed_clockouts" ? "Sending…" : "Alert 12h+ clock-outs"}</Button>
-          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("manager_digest")}>{announceBusy === "manager_digest" ? "Sending…" : "Manager digest"}</Button>
+          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("nudge_missing_clockins")}>{announceBusy === "nudge_missing_clockins" ? "Sending???" : "Nudge missing clock-ins"}</Button>
+          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("alert_missed_clockouts")}>{announceBusy === "alert_missed_clockouts" ? "Sending???" : "Alert 12h+ clock-outs"}</Button>
+          <Button size="sm" variant="outline" disabled={!!announceBusy} onClick={() => fireAnnouncement("manager_digest")}>{announceBusy === "manager_digest" ? "Sending???" : "Manager digest"}</Button>
         </div>
         {announceMsg && <p className="mt-1.5 text-xs text-emerald-700">{announceMsg}</p>}
       </div>
@@ -317,7 +318,7 @@ export default function AdminRosterPanels({ sessionToken }) {
               <div key={p.month} className="rounded-lg border border-slate-200 px-3 py-2">
                 <p className="text-[11px] font-semibold text-slate-500">{p.month}</p>
                 <p className="text-lg font-bold text-indigo-700">{p.hours}h</p>
-                <p className="text-[10px] text-slate-400">{p.entries} shifts · {p.employees} people</p>
+                <p className="text-[10px] text-slate-400">{p.entries} shifts ?? {p.employees} people</p>
               </div>
             ))}
           </div>
@@ -333,8 +334,8 @@ export default function AdminRosterPanels({ sessionToken }) {
               <div key={i} className="flex items-center justify-between rounded-md bg-white/70 px-3 py-1.5 text-xs">
                 <span className="font-medium text-slate-700 truncate">{roster.find((r) => r.email === p.user_email)?.name || p.user_email || "unknown"}</span>
                 <span className="text-slate-500">
-                  {[p.status, p.break_status, p.work_pause_status, p.labor_status].filter((s) => s && s !== "idle").join(" · ") || "pending"}
-                  {p.pending_since ? ` · since ${formatCompanyDateTime(p.pending_since)}` : ""}
+                  {[p.status, p.break_status, p.work_pause_status, p.labor_status].filter((s) => s && s !== "idle").join(" ?? ") || "pending"}
+                  {p.pending_since ? ` ?? since ${formatCompanyDateTime(p.pending_since)}` : ""}
                 </span>
               </div>
             ))}
@@ -389,7 +390,7 @@ export default function AdminRosterPanels({ sessionToken }) {
             const rows = Object.entries(byReviewer).sort((a, b) => b[1] - a[1]).slice(0, 4);
             return rows.length ? (
               <span className="ml-auto flex items-center gap-2 text-[10px] text-slate-400">
-                Reviews: {rows.map(([email, n]) => `${email.split("@")[0]} ${n}`).join(" · ")}
+                Reviews: {rows.map(([email, n]) => `${email.split("@")[0]} ${n}`).join(" ?? ")}
               </span>
             ) : null;
           })()}
