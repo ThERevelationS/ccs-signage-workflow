@@ -30,6 +30,43 @@ const LINK_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const linkDays = (body: any) => Math.min(365, Math.max(7, whole(body?.link_days, 90)));
 const linkExpiry = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 const MESSAGE_MAX = 4000;
+const PORTAL_BASE = String(Deno.env.get("PUBLIC_APP_URL") || "https://clay-flow-signage-suite-387da97c.base44.app").replace(/\/+$/, "");
+
+// Only the published app origin (plus any PORTAL_ALLOWED_ORIGINS) may receive
+// emailed portal tokens; anything else falls back to the published origin.
+function trustedPortalBase(requested: any) {
+  const allowed = new Set([PORTAL_BASE, ...String(Deno.env.get("PORTAL_ALLOWED_ORIGINS") || "").split(",").map((o) => clean(o).replace(/\/+$/, ""))].filter(Boolean));
+  const candidate = clean(requested).replace(/\/+$/, "");
+  return allowed.has(candidate) ? candidate : PORTAL_BASE;
+}
+
+const escapeHtml = (value: any) => String(value ?? "").replace(/[&<>"']/g, (c) => (
+  { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as Record<string, string>
+)[c]);
+
+const maskToken = (token: any) => (clean(token) ? "••••" + clean(token).slice(-6) : "");
+const tokenForCaller = (user: any, token: any) => (user?.role === "admin" ? clean(token) : maskToken(token));
+const linkForCaller = (user: any, link: any) => (link ? { ...link, token: tokenForCaller(user, link.token) } : link);
+
+function customerEmailsOnFile(customer: any) {
+  return [customer?.email, customer?.contact_email, customer?.billing_contact_email, customer?.billing_email]
+    .map((e) => clean(e))
+    .filter((e) => e.includes("@"));
+}
+
+async function auditPortalLink(base44: any, actor: string, action: string, link: any, detail: string) {
+  try {
+    await base44.asServiceRole.entities.AdminAuditLog.create({
+      actor_email: actor,
+      action,
+      target_email: `CustomerPortalLink:${clean(link?.id)}`,
+      detail: `${detail} kind=${clean(link?.kind)} record=${clean(link?.record_id)} customer=${clean(link?.customer_id)} token=${maskToken(link?.token)}`.slice(0, 1000),
+      at: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error("Portal link audit failed:", error?.message || error);
+  }
+}
 
 function linkIsUsable(link: any) {
   if (!link?.id || link.revoked === true) return false;
@@ -840,7 +877,8 @@ Deno.serve(async (req) => {
       const existing = await loadAllEntityRows({ entity: PortalLink, query: { kind, record_id: recordId }, sort: "-created_date", label: "Portal links for record" }).catch(() => []);
       const active = (Array.isArray(existing) ? existing : []).find(linkIsUsable);
       if (active) {
-        return Response.json({ success: true, action, link: active, token: clean(active.token), reused: true });
+        await auditPortalLink(base44, actor, "portal_link_reuse", active, "create_link returned existing link;");
+        return Response.json({ success: true, action, link: linkForCaller(user, active), token: tokenForCaller(user, active.token), reused: true });
       }
       const token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
       const key = `portal-link:${kind}:${recordId}:${clean(body?.creation_request_key) || String(Date.now())}`.slice(0, 256);
@@ -862,11 +900,12 @@ Deno.serve(async (req) => {
         label: "Customer portal link",
       });
       const link = result.record;
+      await auditPortalLink(base44, actor, "portal_link_create", link, `create_link status=${result.status};`);
       return Response.json({
         success: true,
         action,
-        link,
-        token: linkIsUsable(link) ? clean(link.token) : token,
+        link: linkForCaller(user, link),
+        token: tokenForCaller(user, linkIsUsable(link) ? link.token : token),
         reused: result.status !== "created",
       });
     }
@@ -907,7 +946,7 @@ Deno.serve(async (req) => {
             kind: clean(l?.kind),
             record_id: clean(l?.record_id),
             label: clean(l?.label),
-            token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
+            token: tokenForCaller(user, l?.token),
             revoked: l?.revoked === true,
             usable: linkIsUsable(l),
             expires_at: clean(l?.expires_at),
@@ -941,7 +980,7 @@ Deno.serve(async (req) => {
         action,
         messages: thread.slice(-200).map(messageView),
         links: (Array.isArray(links) ? links : []).map((l: any) => ({
-          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: user?.role === 'admin' ? clean(l?.token) : (clean(l?.token) ? '••••' + clean(l?.token).slice(-6) : ''),
+          id: clean(l?.id), kind: clean(l?.kind), label: clean(l?.label), token: tokenForCaller(user, l?.token),
           usable: linkIsUsable(l), revoked: l?.revoked === true, open_count: num(l?.open_count),
           last_opened_at: clean(l?.last_opened_at), expires_at: clean(l?.expires_at),
         })),
@@ -982,10 +1021,12 @@ Deno.serve(async (req) => {
       if (!customerId) throw bad("customer_id is required.");
       const customer = await Customer.get(customerId).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const to = clean(body?.email) || clean(customer.email) || clean(customer.contact_email) || clean(customer.billing_contact_email) || clean(customer.billing_email);
-      if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
-      const portalBase = clean(body?.portal_base).replace(/\/+$/, "");
-      if (!/^https?:\/\//.test(portalBase)) throw bad("portal_base is required.");
+      const onFile = customerEmailsOnFile(customer);
+      if (!onFile.length) throw bad("This customer has no email address on file — add one to the customer record first.");
+      const requested = clean(body?.email);
+      const to = requested ? onFile.find((e) => e.toLowerCase() === requested.toLowerCase()) : onFile[0];
+      if (!to) throw bad("Portal links can only be emailed to an address on the customer record.", 403);
+      const portalBase = trustedPortalBase(body?.portal_base);
 
       const existing = await loadAllEntityRows({ entity: PortalLink, query: { kind: "customer", record_id: customerId }, sort: "-created_date", label: "Portal customer link" }).catch(() => []);
       let link = (Array.isArray(existing) ? existing : []).find(linkIsUsable);
@@ -1010,17 +1051,20 @@ Deno.serve(async (req) => {
           label: "Customer portal link",
         });
         link = created.record;
+        await auditPortalLink(base44, actor, "portal_link_create", link, `email_link status=${created.status};`);
       }
       const portalToken = linkIsUsable(link) ? clean(link.token) : "";
       if (!portalToken) throw bad("A usable portal link could not be created.");
       const url = `${portalBase}/customerportal?token=${encodeURIComponent(portalToken)}`;
       const customerName = [clean(customer.contact_first_name), clean(customer.contact_last_name)].filter(Boolean).join(" ") || clean(customer.contact_name) || clean(customer.name) || clean(customer.company_name) || "there";
-      const companyName = clean(body?.company_name) || "CCS Signage";
-      const subject = `${companyName} — your customer portal link`;
+      const companyName = clean(body?.company_name).slice(0, 120) || "CCS Signage";
+      const companyHtml = escapeHtml(companyName);
+      const urlHtml = escapeHtml(url);
+      const subject = `${companyName.replace(/[\r\n]+/g, " ")} — your customer portal link`;
       const html = `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
-        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyName} Customer Portal</h2>
+        <h2 style="color:#1d4ed8;margin-bottom:4px">${companyHtml} Customer Portal</h2>
         <p style="margin-top:0;color:#64748b;font-size:13px">Quotes · job tracking · invoices · messages</p>
-        <p>Hi ${customerName},</p>
+        <p>Hi ${escapeHtml(customerName)},</p>
         <p>You now have a secure portal where you can:</p>
         <ul style="line-height:1.7;padding-left:20px">
           <li>Review and <strong>approve quotes</strong>, or request changes</li>
@@ -1029,10 +1073,10 @@ Deno.serve(async (req) => {
           <li>Message our team — replies land right in the portal</li>
         </ul>
         <p style="text-align:center;margin:28px 0">
-          <a href="${url}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">Open your portal</a>
+          <a href="${urlHtml}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">Open your portal</a>
         </p>
         <p style="font-size:12px;color:#64748b">No account or password needed — this link is yours alone and works for ${linkDays(body)} days. Bookmark it or keep this email.</p>
-        <p style="font-size:12px;color:#94a3b8">If the button does not work, paste this into your browser:<br><span style="word-break:break-all">${url}</span></p>
+        <p style="font-size:12px;color:#94a3b8">If the button does not work, paste this into your browser:<br><span style="word-break:break-all">${urlHtml}</span></p>
       </div>`;
       const sent = await base44.asServiceRole.functions
         .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc" })
@@ -1061,7 +1105,8 @@ Deno.serve(async (req) => {
         readMatches: () => PortalMessage.filter({ creation_request_key: msgKey }),
         label: "Portal email notice",
       }).catch(() => null);
-      return Response.json({ success: true, action, sent_to: to, link });
+      await auditPortalLink(base44, actor, "portal_link_email", link, `emailed to ${to};`);
+      return Response.json({ success: true, action, sent_to: to, link: linkForCaller(user, link) });
     }
 
     if (action === "portal_inbox") {

@@ -309,6 +309,12 @@ assert.match(portalFn, /action === "email_link"/, 'staff must be able to email t
 assert.match(portalFn, /invoke\("sendGmail"/, 'email_link must send through the gmail function');
 assert.match(portalFn, /portal_base/, 'email_link must build the portal URL from the caller origin');
 assert.match(portalFn, /Portal link emailed to \$\{to\} by \$\{actorName\}/, 'portal emails must be logged to the thread');
+assert.doesNotMatch(portalFn, /link: active, token: clean\(active\.token\)/, 'create_link must not return raw tokens to non-admin staff');
+assert.match(portalFn, /link: linkForCaller\(user, link\)[\s\S]*sent_to: to, link: linkForCaller\(user, link\)/, 'create_link/email_link must mask tokens for non-admins');
+assert.match(portalFn, /customerEmailsOnFile\(customer\)/, 'email_link must only send to addresses on the customer record');
+assert.match(portalFn, /trustedPortalBase\(body\?\.portal_base\)/, 'email_link must not embed tokens in caller-chosen origins');
+assert.match(portalFn, /escapeHtml\(customerName\)/, 'portal email must escape customer-controlled HTML');
+assert.match(portalFn, /auditPortalLink\(base44, actor, "portal_link_create"/, 'portal link creation must be audited');
 assert.match(portalFn, /action === "request_job_revision"/, 'customers must be able to request job changes');
 assert.match(portalFn, /clean\(order\.customer_id\) !== customerId/, 'job revision requests must be ownership-scoped');
 assert.match(portalFn, /status: "proposed"[\s\S]*?reason: "Customer request via portal"/, 'job revisions must draft a proposed change order');
