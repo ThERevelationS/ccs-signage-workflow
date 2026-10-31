@@ -1,0 +1,5 @@
+s = open('src/pages/AdminSettings.jsx', encoding='utf8').read()
+n = s.count("run - not wired yet")
+s = s.replace("run - not wired yet", "run \u2014 not wired yet")
+open('src/pages/AdminSettings.jsx', 'w', encoding='utf8').write(s)
+print('replaced', n)
