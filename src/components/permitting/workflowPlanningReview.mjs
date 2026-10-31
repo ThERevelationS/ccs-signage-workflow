@@ -1,13 +1,13 @@
 // Planning annotations only. Never authority approval or operational eligibility.
 export const PLANNING_REVIEW_DECISIONS = [
-  ['not_reviewed', 'Not reviewed'],
-  ['needs_follow_up', 'Needs follow-up'],
-  ['reviewed_for_planning', 'Reviewed for planning'],
-  ['not_applicable_proposal', 'Proposed not applicable'],
+  ['not_reviewed', 'Not checked yet'],
+  ['needs_follow_up', 'Still needs a look'],
+  ['reviewed_for_planning', 'Checked'],
+  ['not_applicable_proposal', 'Marked not needed'],
 ];
-export const PLANNING_FOLLOW_UP_AREAS = [['evidence', 'Evidence'], ['office', 'Office / provider'], ['documents', 'Documents / forms']];
+export const PLANNING_FOLLOW_UP_AREAS = [['evidence', 'Proof'], ['office', 'Office'], ['documents', 'Forms / papers']];
 export function planningReviewDecisionLabel(value) {
-  return PLANNING_REVIEW_DECISIONS.find(([key]) => key === value)?.[1] || (value ? 'Unrecognized saved decision: ' + value : 'Not reviewed');
+  return PLANNING_REVIEW_DECISIONS.find(([key]) => key === value)?.[1] || (value ? 'Saved status not recognized: ' + value : 'Not checked yet');
 }
 export function editPlanningReview(previous, field, value, timestamp = new Date().toISOString()) {
   const prior = previous && typeof previous === 'object' ? previous : {};
@@ -32,9 +32,9 @@ export function planningReviewIssues(steps = []) {
     if (!review) return [];
     const issues = [];
     const decision = review.decision || 'not_reviewed';
-    if (!PLANNING_REVIEW_DECISIONS.some(([key]) => key === decision)) issues.push('Choose a recognized planning review decision.');
-    if (['needs_follow_up', 'not_applicable_proposal'].includes(decision) && !String(review.reason || '').trim()) issues.push('Add a reason for follow-up or a proposed not-applicable decision.');
-    if (decision !== 'needs_follow_up' && Object.values(review.follow_up || {}).some(value => value === true)) issues.push('Open follow-up areas require Needs follow-up. Clear them only after resolving the questions.');
+    if (!PLANNING_REVIEW_DECISIONS.some(([key]) => key === decision)) issues.push('Pick a review status from the list.');
+    if (['needs_follow_up', 'not_applicable_proposal'].includes(decision) && !String(review.reason || '').trim()) issues.push('Say why it still needs a look or why it is not needed.');
+    if (decision !== 'needs_follow_up' && Object.values(review.follow_up || {}).some(value => value === true)) issues.push('Open items mean the step still needs a look. Clear them only after the questions are answered.');
     return issues.map(message => ({ index, message }));
   });
 }
