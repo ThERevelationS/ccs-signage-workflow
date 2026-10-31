@@ -548,18 +548,18 @@ export default function ProductQueue({
         </button>
       </FilterBar>
 
-      <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200">
-        <table className="w-full text-left text-xs">
-          <thead className="sticky top-0 bg-gray-100 text-[11px] uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-2 py-1.5">#</th><th className="px-2 py-1.5">Product</th>
-              <th className="px-2 py-1.5">Company</th><th className="px-2 py-1.5">Product Name</th>
-              <th className="px-2 py-1.5">Status / Substatus</th><th className="px-2 py-1.5">Proof</th>
-              <th className="px-2 py-1.5">Fulfillment</th><th className="px-2 py-1.5">Resp.</th>
-              <th className="px-2 py-1.5">Due</th><th className="px-2 py-1.5" />
-            </tr>
-          </thead>
-          <tbody>
+      <DataTableShell
+        dense
+        className="min-h-0 flex-1"
+        head={["#", "Product", "Company", "Product Name", "Status / Substatus", "Proof", "Fulfillment", "Resp.", "Due", ""]}
+        isEmpty={!paged.length}
+        emptyState={{
+          icon: isFetched ? undefined : null,
+          title: isFetched ? "No products match these filters." : "Loading…",
+          actionLabel: isFetched ? "Clear filters" : undefined,
+          onAction: isFetched ? clearFilters : undefined,
+        }}
+      >
             {paged.map((r) => {
               const key = `${r.workOrderId}:${r.productId}`;
               const isBusy = !!busy[key];
@@ -576,17 +576,17 @@ export default function ProductQueue({
                     {onOpenWorkOrder ? (
                       <button className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder(r.workOrderId)}>{r.ref}</button>
                     ) : (
-                      <Link className="text-sky-700 hover:underline" to={`/JobWorkspace?wo=${r.workOrderId}`}>{r.ref}</Link>
+                      <RecordLink kind="workorder" id={r.workOrderId}>{r.ref}</RecordLink>
                     )}
                     <div className="text-[10px] text-gray-400">{r.position}</div>
                   </td>
                   <td className="px-2 py-1.5 text-gray-500">{r.moduleKey || "—"}</td>
                   <td className="max-w-[140px] truncate px-2 py-1.5">
-                    {r.customerId ? <Link className="text-sky-700 hover:underline" to={`/Customer360?id=${r.customerId}`}>{r.company || "Customer"}</Link> : r.company}
+                    <RecordLink kind="customer" id={r.customerId}>{r.company || "Customer"}</RecordLink>
                   </td>
                   <td className="max-w-[200px] truncate px-2 py-1.5" title={r.productName}>{r.productName}</td>
                   <td className="px-2 py-1.5">
-                    {badge(OPERATIONAL_STATUS_CUSTOMER_LABELS[r.status] || r.status || "none", statusTone(r.status))}
+                    <StatusChip status={r.status} label={OPERATIONAL_STATUS_CUSTOMER_LABELS[r.status] || r.status || "none"} />
                     {r.substatus && <div className="mt-0.5 text-[10px] italic text-gray-500">{r.substatus}</div>}
                     {r.hardDue && <div className="mt-0.5 text-[10px] font-semibold text-rose-600">HARD DUE</div>}
                     {inStatus != null && <div className="mt-0.5 text-[10px] text-gray-400">{inStatus}d in status</div>}
