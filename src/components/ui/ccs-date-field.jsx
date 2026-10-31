@@ -7,9 +7,10 @@
 import { useSyncExternalStore } from "react";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { MantineProvider, createTheme } from "@mantine/core";
+import { MantineProvider, Menu, createTheme } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { DatePickerInput, DateTimePicker, TimePicker } from "@mantine/dates";
+import { CalendarClock, X } from "lucide-react";
+import { DateInput, DatePickerInput, DateTimePicker, TimePicker } from "@mantine/dates";
 
 dayjs.extend(customParseFormat);
 
@@ -64,26 +65,80 @@ const toMantineDateTime = (v) => (v ? `${v.replace("T", " ").slice(0, 16)}:00` :
 const fromMantineDateTime = (v) => (v ? v.replace(" ", "T").slice(0, 16) : "");
 const trimTime = (v) => (v ? String(v).slice(0, 5) : "");
 
+
+const TYPED_FORMATS = ["MM/DD/YYYY", "M/D/YYYY", "MM-DD-YYYY", "M-D-YYYY", "YYYY-MM-DD", "MM/DD/YY", "M/D/YY", "MMMM D, YYYY", "MMM D, YYYY", "YYYY/MM/DD"];
+
+const parseTypedDate = (raw) => {
+  const v = String(raw ?? "").trim();
+  if (!v) return null;
+  for (const f of TYPED_FORMATS) {
+    const d = dayjs(v, f, true);
+    if (d.isValid()) return d.format("YYYY-MM-DD");
+  }
+  const loose = dayjs(v);
+  return loose.isValid() ? loose.format("YYYY-MM-DD") : null;
+};
+
+const sectionBtn = "inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200";
+
+function ShortcutMenu({ presets, onPick }) {
+  return (
+    <Menu withinPortal position="bottom-end" shadow="md" width={160}>
+      <Menu.Target>
+        <button type="button" tabIndex={-1} aria-label="Date shortcuts" className={sectionBtn}>
+          <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Shortcuts</Menu.Label>
+        {presets.map((p) => (
+          <Menu.Item key={p.value} onClick={() => onPick(p.value)}>{p.label}</Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
+
 export function CcsDateField({
   value, onChange, min, max, presets = datePresets(), clearable = true,
-  placeholder = "mm/dd/yyyy", className, classNames, ...rest
+  placeholder = "mm/dd/yyyy", className, classNames, disabled, readOnly, ...rest
 }) {
-  const dropdownType = useDropdownType();
-  const showPresets = presets !== false && dropdownType !== "modal";
+  const showPresets = presets !== false && Array.isArray(presets) && presets.length > 0;
+  const canInteract = !disabled && !readOnly;
+  const showClear = canInteract && clearable && !!value;
+  const rightSection = canInteract && (showPresets || showClear) ? (
+    <span className="inline-flex items-center gap-0.5">
+      {showClear ? (
+        <button type="button" tabIndex={-1} aria-label="Clear date"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => { e.stopPropagation(); fire(onChange, ""); }}
+          className={sectionBtn}>
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      ) : null}
+      {showPresets ? <ShortcutMenu presets={presets} onPick={(v) => fire(onChange, v)} /> : null}
+    </span>
+  ) : undefined;
   return (
-    <DatePickerInput
+    <DateInput
       className="w-full"
-      classNames={{ input: className, ...classNames }}
+      classNames={{ wrapper: "w-full", input: className, ...classNames }}
       value={value || null}
-      onChange={(v) => fire(onChange, v)}
+      onChange={(v) => fire(onChange, typeof v === "string" ? v : v ? dayjs(v).format("YYYY-MM-DD") : "")}
+      dateParser={parseTypedDate}
+      valueFormat="MM/DD/YYYY"
+      fixOnBlur
       minDate={min || undefined}
       maxDate={max || undefined}
-      valueFormat="MM/DD/YYYY"
       placeholder={placeholder}
-      clearable={clearable}
-      dropdownType={dropdownType}
-      presets={showPresets ? presets : undefined}
+      clearable={!rightSection && clearable}
+      rightSection={rightSection}
+      rightSectionPointerEvents="all"
+      rightSectionWidth={rightSection ? (showClear ? 52 : 30) : undefined}
+      popoverProps={{ withinPortal: true, shadow: "md" }}
       weekendDays={[0, 6]}
+      disabled={disabled}
+      readOnly={readOnly}
       {...rest}
     />
   );
