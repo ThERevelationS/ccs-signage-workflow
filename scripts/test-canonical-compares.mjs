@@ -16,6 +16,7 @@ export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get
 export const staffEntities = base44.entities;
 export const assertEstimateProductMutationAllowed = async () => null;
 export const getOpenEstimateRevision = async () => null;
+export const isRetryableFunction = () => false;
 `);
 const out1 = resolve(here, '.tmp-custsync.mjs');
 const out2 = resolve(here, '.tmp-srcproj.mjs');

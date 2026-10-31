@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, '.tmp-builder-service.mjs');
 const stub = resolve(here, '.tmp-builder-service-sdk.mjs');
-writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };');
+writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };' + String.fromCharCode(10) + 'export const isRetryableFunction = () => false;');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/builderService.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',

@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const stub = resolve(here, '.tmp-customer-sync-sdk.mjs');
-writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };');
+writeFileSync(stub, 'export const base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }) };' + String.fromCharCode(10) + 'export const isRetryableFunction = () => false;');
 const bundle = (name) => {
   const out = resolve(here, `.tmp-${name}.mjs`);
   buildSync({ entryPoints: [resolve(here, `../src/components/estimator/${name}.js`)], bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
