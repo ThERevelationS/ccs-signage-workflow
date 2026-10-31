@@ -442,6 +442,11 @@ assert.match(attentionFeed, /overdue_jobs/, 'attention feed UI must show overdue
 assert.match(attentionFeed, /expiring_permits/, 'attention feed UI must show expiring permits');
 assert.match(attentionFeed, /permit_fees_due/, 'attention feed UI must show permit fees due');
 assert.match(invoicing, /email_statement/, 'invoicing must expose statement emails');
+{
+  const stmt = invoicing.slice(invoicing.indexOf('action === "email_statement"'), invoicing.indexOf('action === "void_invoice"'));
+  assert.match(stmt, /const to = resolveOnFileRecipient\(customer, body\?\.email\)/, 'email_statement must restrict recipients to on-file customer emails');
+  assert.doesNotMatch(stmt, /const to = clean\(body\?\.email\)/, 'email_statement must not send to an arbitrary caller-supplied email');
+}
 assert.match(invoicesPage, /email_statement/, 'invoice detail must offer email statement');
 const quoteDelivery = readFileSync('base44/functions/recordEstimateQuoteDelivery/entry.ts', 'utf8');
 assert.match(quoteDelivery, /safeUrl/, 'quote delivery must route attachment_file_url through safeUrl');

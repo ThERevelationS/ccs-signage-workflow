@@ -31,6 +31,16 @@ const dueDateFromTerms = (terms: string, baseDate: string): string => {
 
 const INVOICE_STATUSES = ["draft", "sent", "partially_paid", "paid", "void"];
 const OPEN_AR_STATUSES = new Set(["sent", "partially_paid"]);
+
+// Customer-facing emails (which may carry portal bearer links) only go to
+// addresses already on the customer record; a requested address is honored
+// only when it is one of them.
+const resolveOnFileRecipient = (customer: any, requestedEmail: any) => {
+  const onFile = [customer?.email, customer?.contact_email, customer?.billing_email, customer?.contact_office_email, customer?.billing_contact_email]
+    .map((v: any) => clean(v).toLowerCase()).filter((v: string) => v.includes("@"));
+  const requested = clean(requestedEmail).toLowerCase();
+  return (requested && onFile.includes(requested)) ? requested : (onFile[0] || "");
+};
 const PAYMENT_METHODS = ["cash", "check", "card", "ach", "financing", "other"];
 
 const EDITABLE_INVOICE_FIELDS = [
@@ -611,10 +621,7 @@ Deno.serve(async (req) => {
       const customer = clean(invoice.customer_id)
         ? await Customer.get(clean(invoice.customer_id)).catch(() => null)
         : null;
-      const onFile = [customer?.email, customer?.contact_email, customer?.billing_email, customer?.contact_office_email, customer?.billing_contact_email]
-        .map((v: any) => clean(v).toLowerCase()).filter((v: string) => v.includes("@"));
-      const requested = clean(body?.email).toLowerCase();
-      const to = (requested && onFile.includes(requested)) ? requested : (onFile[0] || '');
+      const to = resolveOnFileRecipient(customer, body?.email);
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
       const portalBase = (String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/+$/, ''));
 
@@ -689,7 +696,7 @@ Deno.serve(async (req) => {
       if (!cid) throw bad("customer_id or invoice_id is required.");
       const customer = await Customer.get(cid).catch(() => null);
       if (!customer?.id) throw bad("Customer not found.", 404);
-      const to = clean(body?.email) || clean(customer?.email) || clean(customer?.contact_email) || clean(customer?.billing_email) || clean(customer?.billing_contact_email);
+      const to = resolveOnFileRecipient(customer, body?.email);
       if (!to.includes("@")) throw bad("This customer has no email address on file — add one to the customer record first.");
       const rows = await Invoice.filter({ customer_id: cid }).catch(() => []);
       const open = (Array.isArray(rows) ? rows : [])
