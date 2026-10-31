@@ -27,6 +27,7 @@ export const ESTIMATOR_TABS = [
       { label: "Production Products", to: "/ProductQueues?queue=production" },
       { label: "Fulfillment Products", to: "/ProductQueues?queue=fulfillment" },
       { label: "Job Workspace", to: "/JobWorkspace" },
+      { label: "Ops Reports", to: "/OpsReports" },
     ],
   },
   {
@@ -34,6 +35,7 @@ export const ESTIMATOR_TABS = [
     to: "/EstimatorCustomers",
     items: [
       { label: "All Customers", to: "/EstimatorCustomers" },
+      { label: "CRM Events", to: "/CrmEvents" },
       { label: "Active", to: "/EstimatorCustomers?status=active" },
       { label: "Prospects", to: "/EstimatorCustomers?status=prospect" },
       { label: "Inactive", to: "/EstimatorCustomers?status=inactive" },
@@ -108,6 +110,7 @@ export const ESTIMATOR_RIGHT_TABS = [
     items: [
       { label: "Tools Home", to: "/EstimatorTools" },
       { label: "Quick Price", to: "/QuickPrice" },
+      { label: "Walk-in Sale", to: "/WalkIn" },
       { label: "Main Workflow", to: "/MainWorkflow" },
       { label: "Sales Pipeline", to: "/SalesPipeline" },
       { label: "Reports", to: "/FeatureReports" },
