@@ -1,58 +1,36 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
+import { useAuth } from "@/components/auth/EmailGate";
 import {
   OPERATIONAL_STATUS_CUSTOMER_LABELS,
   OPERATIONAL_STATUS_VALUES,
+  PROOF_STATUS_VALUES,
+  FULFILLMENT_STATE_VALUES,
   transitionProductAndBuilderStatus,
 } from "@/components/estimator/workOrderConversion";
+import {
+  DUE_PRESETS,
+  FULFILLMENT_LABELS,
+  PAGE_SIZES,
+  DEFAULT_QUEUE_FILTERS,
+  flattenQueueRows,
+  filterQueueRows,
+  sortQueueRows,
+  parseQueueFilters,
+  serializeQueueFilters,
+  overdueDays,
+  daysInStatus,
+  parseLocalDate,
+} from "./productQueueModel";
+
+export { flattenQueueRows };
 
 const norm = (v) => String(v || "").trim().toLowerCase();
-const DAY = 86400000;
 
 const STATUS_OPTIONS = OPERATIONAL_STATUS_VALUES.filter((s) => s !== "none");
-const FULFILLMENT_OPTIONS = ["awaiting_pickup", "awaiting_installation", "awaiting_shipping", "awaiting_delivery", "picked_up", "installed", "shipped", "delivered"];
-const PROOF_OPTIONS = ["draft", "sent", "awaiting_approval", "approved", "revision_requested"];
-
-const DUE_PRESETS = [
-  { key: "all", label: "All" },
-  { key: "past_due", label: "Past Due" },
-  { key: "past_due_today", label: "Past Due & Due Today" },
-  { key: "past_due_tomorrow", label: "Past Due & Due Tomorrow" },
-  { key: "today", label: "Due Today" },
-  { key: "tomorrow", label: "Due Tomorrow" },
-  { key: "this_week", label: "Due this Week" },
-  { key: "next_7", label: "Due next 7 Days" },
-  { key: "hard_due_only", label: "Hard Due Dates Only" },
-];
-
-const endOfDay = (d) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; };
-const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-const endOfWeek = (d) => { const x = endOfDay(d); x.setDate(x.getDate() + (7 - x.getDay())); return x; };
-
-function duePresetMatch(dueStr, preset, now) {
-  if (!dueStr) return preset === "all" || preset === "hard_due_only";
-  const due = new Date(dueStr);
-  if (Number.isNaN(due.getTime())) return preset === "all";
-  const sod = startOfDay(now), eod = endOfDay(now);
-  const eot = endOfDay(new Date(now.getTime() + DAY));
-  switch (preset) {
-    case "all": return true;
-    case "past_due": return due < sod;
-    case "past_due_today": return due <= eod;
-    case "past_due_tomorrow": return due <= eot;
-    case "today": return due >= sod && due <= eod;
-    case "tomorrow": return due >= startOfDay(new Date(now.getTime() + DAY)) && due <= eot;
-    case "this_week": return due >= sod && due <= endOfWeek(now);
-    case "next_7": return due >= sod && due <= endOfDay(new Date(now.getTime() + 7 * DAY));
-    default: return true;
-  }
-}
-
-const FULFILLMENT_LABELS = {
-  awaiting_pickup: "Awaiting Pickup", awaiting_installation: "Awaiting Installation",
-  awaiting_shipping: "Awaiting Shipping", awaiting_delivery: "Awaiting Delivery",
-  picked_up: "Picked Up", installed: "Installed", shipped: "Shipped", delivered: "Delivered",
-};
+const FULFILLMENT_OPTIONS = FULFILLMENT_STATE_VALUES.filter((s) => s !== "none");
+const PROOF_OPTIONS = PROOF_STATUS_VALUES.filter((s) => s !== "none");
 
 const badge = (text, tone) => (
   <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${tone}`}>{text}</span>
@@ -70,47 +48,86 @@ const statusTone = (s) => {
   return TONE.muted;
 };
 
-// Flatten work orders into CoreBridge-style queue rows: one row per product.
-export function flattenQueueRows(workOrders = [], { dueField = "product_due_date" } = {}) {
-  const rows = [];
-  for (const wo of workOrders || []) {
-    if (!wo?.id || wo.deleted === true) continue;
-    const products = Array.isArray(wo.products) ? wo.products : [];
-    products.forEach((p, idx) => {
-      if (!p) return;
-      rows.push({
-        workOrderId: wo.id,
-        product: p,
-        productId: p.id || `${wo.id}-${idx}`,
-        position: `${idx + 1}/${products.length}`,
-        ref: wo.corbridge_invoice_number || wo.title || wo.id,
-        company: wo.client_name || "",
-        productName: p.description || p.client_product_name || `Product ${idx + 1}`,
-        status: p.operational_status || "none",
-        substatus: p.operational_substatus || "",
-        fulfillment: p.fulfillment_state || "none",
-        proof: p.proof_status || "none",
-        designer: p.designer || "",
-        assignedTo: p.assigned_to || "",
-        responsibility: p.responsibility || "",
-        priority: Number(p.queue_priority) || 0,
-        category: p.category || p.product_type || "",
-        moduleKey: p.module_key || "",
-        due: p[dueField] || "",
-        hardDue: p.hard_due_date === true,
-        stage: wo.current_stage || "",
-        woDue: wo.project_install_date || "",
-      });
-    });
-  }
-  return rows;
-}
+const NO_ID_TOOLTIP = "Product has no id — reopen the Work Order to repair it";
 
-const EMPTY_FILTERS = {
-  status: "all", substatus: "", designer: "all", responsibility: "all",
-  assignedTo: "all", category: "all", moduleKey: "all", duePreset: "all",
-  search: "", pageSize: 50,
-};
+const dateInputValue = (v) => String(v || "").slice(0, 10);
+
+function RowEditor({ row, actor, onSaved, disabled }) {
+  const p = row.product || {};
+  const [form, setForm] = useState({
+    operationalSubstatus: p.operational_substatus || "",
+    designer: p.designer || "",
+    assignedTo: p.assigned_to || "",
+    responsibility: p.responsibility || "",
+    queuePriority: Number.isFinite(Number(p.queue_priority)) ? Number(p.queue_priority) : 0,
+    designDueDate: dateInputValue(p.design_due_date),
+    productDueDate: dateInputValue(p.product_due_date),
+    hardDueDate: p.hard_due_date === true,
+  });
+  const [overrideHardDue, setOverrideHardDue] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const inp = "rounded border border-gray-300 bg-white px-1.5 py-1 text-xs";
+  const lab = "text-[10px] font-semibold uppercase tracking-wide text-gray-500";
+
+  const save = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await transitionProductAndBuilderStatus({
+        workOrderId: row.workOrderId,
+        product: row.product,
+        actor,
+        overrideHardDue,
+        patch: { ...form, queuePriority: Number(form.queuePriority) },
+        label: "Queue product edit",
+      });
+      refreshAllWorkOrders();
+      onSaved?.();
+    } catch (e) {
+      setError(e?.message || "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <tr className="border-t border-gray-100 bg-sky-50/40">
+      <td colSpan={10} className="px-3 py-2">
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-0.5"><span className={lab}>Substatus</span>
+            <input className={inp} disabled={disabled} value={form.operationalSubstatus} onChange={(e) => set("operationalSubstatus", e.target.value)} /></label>
+          <label className="flex flex-col gap-0.5"><span className={lab}>Designer</span>
+            <input className={inp} disabled={disabled} value={form.designer} onChange={(e) => set("designer", e.target.value)} /></label>
+          <label className="flex flex-col gap-0.5"><span className={lab}>Assigned To</span>
+            <input className={inp} disabled={disabled} value={form.assignedTo} onChange={(e) => set("assignedTo", e.target.value)} /></label>
+          <label className="flex flex-col gap-0.5"><span className={lab}>Responsibility</span>
+            <input className={inp} disabled={disabled} value={form.responsibility} onChange={(e) => set("responsibility", e.target.value)} /></label>
+          <label className="flex flex-col gap-0.5"><span className={lab}>Priority (0-99)</span>
+            <input className={inp} type="number" min="0" max="99" disabled={disabled} value={form.queuePriority} onChange={(e) => set("queuePriority", e.target.value)} /></label>
+          <label className="flex flex-col gap-0.5"><span className={lab}>Design Due</span>
+            <input className={inp} type="date" disabled={disabled} value={form.designDueDate} onChange={(e) => set("designDueDate", e.target.value)} /></label>
+          <label className="flex flex-col gap-0.5"><span className={lab}>Product Due</span>
+            <input className={inp} type="date" disabled={disabled} value={form.productDueDate} onChange={(e) => set("productDueDate", e.target.value)} /></label>
+          <label className="flex items-center gap-1 text-xs text-gray-600">
+            <input type="checkbox" disabled={disabled} checked={form.hardDueDate} onChange={(e) => set("hardDueDate", e.target.checked)} />
+            Hard due date</label>
+          {p.hard_due_date === true && (
+            <label className="flex items-center gap-1 text-xs text-rose-700">
+              <input type="checkbox" disabled={disabled} checked={overrideHardDue} onChange={(e) => setOverrideHardDue(e.target.checked)} />
+              Override hard due date</label>
+          )}
+          <button className={`${inp} font-semibold text-sky-700`} disabled={disabled || saving} onClick={save}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+        {error && <div className="mt-1 text-xs text-rose-700">{error}</div>}
+      </td>
+    </tr>
+  );
+}
 
 export default function ProductQueue({
   title = "Product Queue",
@@ -120,55 +137,70 @@ export default function ProductQueue({
   onOpenWorkOrder = null,
 }) {
   const { data: workOrders = [], isFetched } = useAllWorkOrders();
-  const [filters, setFilters] = useState({ ...EMPTY_FILTERS, status: statusDefault });
+  const { currentUser } = useAuth();
+  const actor = String(currentUser?.email || "").trim();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(0);
   const [busy, setBusy] = useState({});
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
+  const [expanded, setExpanded] = useState({});
   const now = useMemo(() => new Date(), []);
 
+  // Filters live in the URL so a queue view can be shared or bookmarked.
+  const filters = useMemo(() => {
+    const parsed = parseQueueFilters(searchParams);
+    if (statusDefault !== "all" && !searchParams.get("status")) parsed.status = statusDefault;
+    return parsed;
+  }, [searchParams, statusDefault]);
+
+  const setFilters = useCallback((updater) => {
+    setPage(0);
+    setSearchParams((prev) => {
+      const nextFilters = typeof updater === "function" ? updater(parseQueueFilters(prev)) : updater;
+      const next = new URLSearchParams(prev);
+      for (const key of ["status", "substatus", "designer", "responsibility", "assignedTo", "category", "moduleKey", "due", "q", "size", "fulfilled"]) {
+        next.delete(key);
+      }
+      for (const [key, value] of Object.entries(serializeQueueFilters(nextFilters))) {
+        next.set(key, value);
+      }
+      return next;
+    });
+  }, [setSearchParams]);
+
+  const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
+  const clearFilters = () => setFilters(() => ({ ...DEFAULT_QUEUE_FILTERS }));
+
   const allRows = useMemo(() => {
-    let rows = flattenQueueRows(workOrders, { dueField });
+    let rows = flattenQueueRows(workOrders, { dueField, includeFulfilled: filters.includeFulfilled });
     if (stageFilter?.length) rows = rows.filter((r) => stageFilter.includes(r.stage));
     return rows;
-  }, [workOrders, dueField, stageFilter]);
+  }, [workOrders, dueField, stageFilter, filters.includeFulfilled]);
 
   const distinct = useCallback((key) =>
     [...new Set(allRows.map((r) => r[key]).filter(Boolean))].sort(), [allRows]);
 
-  const filtered = useMemo(() => allRows.filter((r) => {
-    if (filters.status !== "all" && r.status !== filters.status) return false;
-    if (filters.substatus && !norm(r.substatus).includes(norm(filters.substatus))) return false;
-    if (filters.designer !== "all" && r.designer !== filters.designer) return false;
-    if (filters.responsibility !== "all" && r.responsibility !== filters.responsibility) return false;
-    if (filters.assignedTo !== "all" && r.assignedTo !== filters.assignedTo) return false;
-    if (filters.category !== "all" && r.category !== filters.category) return false;
-    if (filters.moduleKey !== "all" && r.moduleKey !== filters.moduleKey) return false;
-    if (filters.duePreset === "hard_due_only" && !r.hardDue) return false;
-    if (!duePresetMatch(r.due || r.woDue, filters.duePreset, now)) return false;
-    const q = norm(filters.search);
-    if (q && ![r.ref, r.company, r.productName, r.substatus].some((f) => norm(f).includes(q))) return false;
-    return true;
-  }).sort((a, b) => {
-    if ((b.priority || 0) !== (a.priority || 0)) return (b.priority || 0) - (a.priority || 0);
-    return String(a.due || "9999").localeCompare(String(b.due || "9999"));
-  }), [allRows, filters, now]);
+  const filtered = useMemo(
+    () => sortQueueRows(filterQueueRows(allRows, filters, now)),
+    [allRows, filters, now]
+  );
+
+  useEffect(() => { setPage(0); }, [filters]);
 
   const paged = filtered.slice(page * filters.pageSize, (page + 1) * filters.pageSize);
   const pages = Math.max(1, Math.ceil(filtered.length / filters.pageSize));
 
-  const set = (key, value) => { setPage(0); setFilters((f) => ({ ...f, [key]: value })); };
-
   const transition = async (row, patch) => {
     const key = `${row.workOrderId}:${row.productId}`;
     setBusy((b) => ({ ...b, [key]: true }));
-    setError("");
+    setErrors((e) => ({ ...e, [key]: "" }));
     try {
       await transitionProductAndBuilderStatus({
-        workOrderId: row.workOrderId, product: row.product, patch, label: "Queue status",
+        workOrderId: row.workOrderId, product: row.product, patch, actor, label: "Queue status",
       });
       refreshAllWorkOrders();
     } catch (e) {
-      setError(e?.message || "Status update failed.");
+      setErrors((prev) => ({ ...prev, [key]: e?.message || "Status update failed." }));
     } finally {
       setBusy((b) => ({ ...b, [key]: false }));
     }
@@ -216,11 +248,13 @@ export default function ProductQueue({
           <input className={sel} value={filters.search} onChange={(e) => set("search", e.target.value)} /></label>
         <label className="flex flex-col gap-0.5"><span className={lab}>Per page</span>
           <select className={sel} value={filters.pageSize} onChange={(e) => set("pageSize", Number(e.target.value))}>
-            {[15, 30, 50, 100, 250].map((n) => <option key={n} value={n}>{n}</option>)}
+            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
           </select></label>
+        <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
+          <input type="checkbox" checked={filters.includeFulfilled} onChange={(e) => set("includeFulfilled", e.target.checked)} />
+          Include fulfilled</label>
+        <button className={sel} onClick={clearFilters}>Clear</button>
       </div>
-
-      {error && <div className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700">{error}</div>}
 
       <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200">
         <table className="w-full text-left text-xs">
@@ -237,10 +271,19 @@ export default function ProductQueue({
             {paged.map((r) => {
               const key = `${r.workOrderId}:${r.productId}`;
               const isBusy = !!busy[key];
+              const locked = !r.editable || isBusy;
+              const overdue = overdueDays(r, now);
+              const inStatus = daysInStatus(r, now);
+              const rowError = errors[key];
               return (
-                <tr key={key} className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
+                <React.Fragment key={key}>
+                <tr className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
                   <td className="whitespace-nowrap px-2 py-1.5">
-                    <button className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder?.(r.workOrderId)}>{r.ref}</button>
+                    {onOpenWorkOrder ? (
+                      <button className="text-sky-700 hover:underline" onClick={() => onOpenWorkOrder(r.workOrderId)}>{r.ref}</button>
+                    ) : (
+                      <Link className="text-sky-700 hover:underline" to={`/MainWorkflow?wo=${r.workOrderId}`}>{r.ref}</Link>
+                    )}
                     <div className="text-[10px] text-gray-400">{r.position}</div>
                   </td>
                   <td className="px-2 py-1.5 text-gray-500">{r.moduleKey || "—"}</td>
@@ -250,32 +293,50 @@ export default function ProductQueue({
                     {badge(OPERATIONAL_STATUS_CUSTOMER_LABELS[r.status] || r.status || "none", statusTone(r.status))}
                     {r.substatus && <div className="mt-0.5 text-[10px] italic text-gray-500">{r.substatus}</div>}
                     {r.hardDue && <div className="mt-0.5 text-[10px] font-semibold text-rose-600">HARD DUE</div>}
+                    {inStatus != null && <div className="mt-0.5 text-[10px] text-gray-400">{inStatus}d in status</div>}
                   </td>
                   <td className="px-2 py-1.5">
-                    <select className={sel} disabled={isBusy} value={r.proof === "none" ? "" : r.proof}
+                    <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value={r.proof === "none" ? "" : r.proof}
                       onChange={(e) => transition(r, { proofStatus: e.target.value })}>
                       <option value="">—</option>
                       {PROOF_OPTIONS.map((o) => <option key={o} value={o}>{o.replace(/_/g, " ")}</option>)}
                     </select>
                   </td>
                   <td className="px-2 py-1.5">
-                    <select className={sel} disabled={isBusy} value={r.fulfillment === "none" ? "" : r.fulfillment}
+                    <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value={r.fulfillment === "none" ? "" : r.fulfillment}
                       onChange={(e) => transition(r, { fulfillmentState: e.target.value })}>
                       <option value="">—</option>
                       {FULFILLMENT_OPTIONS.map((o) => <option key={o} value={o}>{FULFILLMENT_LABELS[o]}</option>)}
                     </select>
                   </td>
                   <td className="px-2 py-1.5 text-gray-500">{r.responsibility || r.assignedTo || "—"}</td>
-                  <td className="whitespace-nowrap px-2 py-1.5">{r.due ? new Date(r.due).toLocaleDateString() : <span className="text-gray-400">—</span>}</td>
+                  <td className={`whitespace-nowrap px-2 py-1.5 ${overdue > 0 ? "font-semibold text-rose-700" : ""}`}>
+                    {r.due && parseLocalDate(r.due) ? parseLocalDate(r.due).toLocaleDateString() : <span className="text-gray-400">—</span>}
+                    {overdue > 0 && <div className="text-[10px]">{overdue}d overdue</div>}
+                  </td>
                   <td className="px-2 py-1.5">
-                    <select className={sel} disabled={isBusy} value=""
+                    <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value=""
                       onChange={(e) => { if (e.target.value) transition(r, { operationalStatus: e.target.value }); e.target.value = ""; }}>
                       <option value="">Set status…</option>
                       {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s}</option>)}
                     </select>
+                    <button className={`${sel} ml-1`} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP}
+                      onClick={() => setExpanded((x) => ({ ...x, [key]: !x[key] }))}>
+                      {expanded[key] ? "Close" : "Edit"}
+                    </button>
                     {isBusy && <span className="ml-1 text-[10px] text-gray-400">saving…</span>}
+                    {rowError && <div className="mt-0.5 max-w-[220px] text-[10px] text-rose-700">{rowError}</div>}
                   </td>
                 </tr>
+                {expanded[key] && (
+                  <RowEditor
+                    row={r}
+                    actor={actor}
+                    disabled={!r.editable}
+                    onSaved={() => setExpanded((x) => ({ ...x, [key]: false }))}
+                  />
+                )}
+                </React.Fragment>
               );
             })}
             {!paged.length && (
