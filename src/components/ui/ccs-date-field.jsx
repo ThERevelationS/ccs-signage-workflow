@@ -66,12 +66,13 @@ const trimTime = (v) => (v ? String(v).slice(0, 5) : "");
 
 export function CcsDateField({
   value, onChange, min, max, presets = datePresets(), clearable = true,
-  placeholder = "mm/dd/yyyy", ...rest
+  placeholder = "mm/dd/yyyy", className, classNames, ...rest
 }) {
   const dropdownType = useDropdownType();
   const showPresets = presets !== false && dropdownType !== "modal";
   return (
     <DatePickerInput
+      classNames={{ input: className, ...classNames }}
       value={value || null}
       onChange={(v) => fire(onChange, v)}
       minDate={min || undefined}
@@ -89,11 +90,12 @@ export function CcsDateField({
 
 export function CcsDateTimeField({
   value, onChange, min, max, presets = datePresets(), clearable = true,
-  placeholder = "mm/dd/yyyy hh:mm", ...rest
+  placeholder = "mm/dd/yyyy hh:mm", className, classNames, ...rest
 }) {
   const dropdownType = useDropdownType();
   return (
     <DateTimePicker
+      classNames={{ input: className, ...classNames }}
       value={toMantineDateTime(value)}
       onChange={(v) => fire(onChange, fromMantineDateTime(v))}
       minDate={min || undefined}
@@ -111,10 +113,11 @@ export function CcsDateTimeField({
 }
 
 export function CcsTimeField({
-  value, onChange, min, max, clearable = true, placeholder = "--:--", ...rest
+  value, onChange, min, max, clearable = true, placeholder = "--:--", className, classNames, ...rest
 }) {
   return (
     <TimePicker
+      classNames={{ input: className, ...classNames }}
       value={trimTime(value)}
       onChange={(v) => fire(onChange, trimTime(v))}
       min={min || undefined}
@@ -131,12 +134,13 @@ export function CcsTimeField({
 
 export function CcsDateRangeField({
   value = [null, null], onChange, presets, clearable = true,
-  placeholder = "Pick range", ...rest
+  placeholder = "Pick range", className, classNames, ...rest
 }) {
   const dropdownType = useDropdownType();
   return (
     <DatePickerInput
       type="range"
+      classNames={{ input: className, ...classNames }}
       value={value}
       onChange={(v) => onChange && onChange(v)}
       valueFormat="MM/DD/YYYY"
