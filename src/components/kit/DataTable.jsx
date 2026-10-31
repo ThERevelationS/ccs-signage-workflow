@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "./EmptyState";
 
-// Light conventions wrapper over a plain <table> — same markup the
+// Light conventions wrapper over a plain <table> -- same markup the
 // PurchaseOrders/Invoices lists hand-roll (rounded-2xl slate border card,
 // sticky slate-50 thead, border-t rows, violet hover). Two densities:
 // default matches the financial pages (px-4 py-2.5), `dense` matches the
@@ -93,7 +93,7 @@ const DataTableShell = React.forwardRef(
 );
 DataTableShell.displayName = "DataTableShell";
 
-// Row with the shared border + hover defaults baked in — callers can still
+// Row with the shared border + hover defaults baked in -- callers can still
 // add cursor-pointer etc. via className.
 const Tr = React.forwardRef(({ className, ...props }, ref) => (
   <tr
