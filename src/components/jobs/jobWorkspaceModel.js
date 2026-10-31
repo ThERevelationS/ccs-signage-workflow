@@ -2,6 +2,8 @@
 // "Order.aspx" equivalent). Kept React-free so the logic is unit-testable
 // under Node.
 
+import { deriveBillingState, scheduleFromEntity } from "../procurement/progressBillingModel";
+
 const num = (v, fallback = 0) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
 const clean = (v) => String(v ?? "").trim();
 const money = (v) => Math.round(num(v, 0) * 100) / 100;
@@ -108,6 +110,28 @@ export function jobFinancialSummary({ workOrder, invoices = [], payments = [] } 
     paymentStatus = "invoiced_unpaid";
   }
 
+  // Progress billing surface: when the work order carries a milestone
+  // schedule, count how many the invoiced dollars already cover — same basis
+  // as the Job Costing panel (draft invoices don't bill a milestone), so this
+  // strip agrees with its "Bill next" state.
+  const schedule = scheduleFromEntity(wo.billing_schedule);
+  let milestoneBilling = null;
+  if (schedule.length) {
+    const billableInvoiced = money(
+      linked
+        .filter((inv) => clean(inv?.status) !== "draft")
+        .reduce((sum, inv) => sum + num(inv?.total), 0)
+    );
+    const billing = deriveBillingState({ jobTotal: quotedTotal, schedule, invoiced: billableInvoiced });
+    const billed = billing.milestones.filter((m) => m.status === "billed").length;
+    milestoneBilling = {
+      total: schedule.length,
+      billed,
+      billed_pct: billing.billed_pct,
+      label: `${billed} of ${schedule.length} milestones billed`,
+    };
+  }
+
   return {
     quotedTotal,
     invoicedTotal,
@@ -116,6 +140,7 @@ export function jobFinancialSummary({ workOrder, invoices = [], payments = [] } 
     invoiceCount: linked.length,
     unpaidInvoiceCount,
     paymentStatus,
+    milestoneBilling,
   };
 }
 
