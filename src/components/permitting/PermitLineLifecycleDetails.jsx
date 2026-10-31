@@ -140,7 +140,7 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
   );
 }
 
-export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
+export default function PermitLineLifecycleDetails({ lineItem, locality = null, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem, today), [lineItem, today]);
   const correctionStatus = String(lineItem?.correction_status || "").toLowerCase();
@@ -214,6 +214,19 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           )}
         </div>
       </div>
+
+      {locality && (locality.offices || []).length > 0 && (
+        <div className="mb-2 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-[11px] text-indigo-900">
+          {(locality.offices || []).map((o) => (
+            <div key={o.id || o.name} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-0.5">
+              <span className="font-semibold">{o.name || "Office"}</span>
+              {o.contact_phone && <a className="font-medium underline" href={`tel:${String(o.contact_phone).replace(/[^+\d]/g, "")}`}>Call {o.contact_phone}</a>}
+              {o.contact_website && <a className="font-medium underline" href={o.contact_website} target="_blank" rel="noopener noreferrer">Permit site ↗</a>}
+              {o.contact_address && <a className="font-medium underline" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(o.contact_address)} target="_blank" rel="noopener noreferrer">Directions ↗</a>}
+            </div>
+          ))}
+        </div>
+      )}
 
       {(lineItem.submitted_date || lineItem.permit_received_date) && (
         <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-600">
