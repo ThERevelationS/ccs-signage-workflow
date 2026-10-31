@@ -53,6 +53,7 @@ export function WorkspacePreferencesProvider({ children }) {
         } else if (!serverAt && merged.navigation.order.length) {
           saveNavOrder(email, merged.navigation.order);
         }
+        if (merged.navigation.order.length) window.dispatchEvent(new Event("ccs-nav-order-sync"));
         setPrefs(merged);
         setProfiles(Array.isArray(serverProfiles) ? serverProfiles : []);
         localSavePrefs(email, merged, serverProfiles);
