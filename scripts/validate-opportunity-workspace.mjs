@@ -79,8 +79,8 @@ assert.match(globalSearch, /action: "global_search"/, 'search must request globa
 assert.ok(!globalSearch.includes('entities.Invoice'), 'search must not touch backend-only entities directly');
 
 // Lifecycle hub: the Opportunity detail must surface linked financial records.
-assert.match(entry, /Invoice\.filter\(\{ opportunity_id: opportunityId \}\)/, 'detail must load linked invoices');
-assert.match(entry, /PurchaseOrder\.filter\(\{ opportunity_id: opportunityId \}\)/, 'detail must load linked POs');
+assert.match(entry, /Invoice\.filter\(\{ opportunity_id: opportunityId \},\s*"[^"]+",\s*\d{3,}\)/, 'detail must load linked invoices with an explicit limit');
+assert.match(entry, /PurchaseOrder\.filter\(\{ opportunity_id: opportunityId \},\s*"[^"]+",\s*\d{3,}\)/, 'detail must load linked POs with an explicit limit');
 assert.match(entry, /financials: \{/, 'detail must return a financial rollup');
 assert.match(page, /detail\?\.financials|detail\.financials/, 'page must render the financial rollup');
 
@@ -379,7 +379,7 @@ assert.match(portalFn, /display_pages.*customerportal|customerportal.*display_pa
 assert.match(portalPage, /data\?\.announcements/, 'portal page must render announcements');
 const annManager = readFileSync('src/components/announcements/AnnouncementManager.jsx', 'utf8');
 assert.match(annManager, /customerportal/, 'announcement manager must offer the portal page target');
-assert.match(entry, /payments: \(Array\.isArray\(payments\)/, 'customer 360 must return payments for the statement');
+assert.match(entry, /payments: custPayments|payments: \(Array\.isArray\(payments\)/, 'customer 360 must return payments for the statement');
 assert.match(custDetailPage, /statementHtml/, 'customer 360 must render a printable statement');
 assert.match(custDetailPage, /escHtml/, 'statement must escape customer-supplied values');
 assert.match(invoicing, /action === "revenue_summary"/, 'invoicing must expose a revenue summary for reporting');
