@@ -459,12 +459,12 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         <>
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Corrections / resubmission</span>
-          <span className="text-[10px] text-slate-500">Track the current correction cycle for this office line.</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fixes the office asked for</span>
+          <span className="text-[10px] text-slate-500">The office wants something changed — track it here.</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="min-w-0">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Correction state</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Fix status</span>
             <Select
               value={lineItem.correction_status || "__none__"}
               onValueChange={(value) => update("correction_status", value === "__none__" ? null : value)}
@@ -502,12 +502,12 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
 
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Inspection / closeout</span>
-          <span className="text-[10px] text-slate-500">Optional — record only when this permit line has a required post-issuance inspection or closeout step.</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Inspection + wrap-up</span>
+          <span className="text-[10px] text-slate-500">Only fill this in if the office requires an inspection after the permit is issued.</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="min-w-0">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Closeout state</span>
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Wrap-up status</span>
             <Select
               value={lineItem.closeout_status || "__none__"}
               onValueChange={(value) => update("closeout_status", value === "__none__" ? null : value)}
