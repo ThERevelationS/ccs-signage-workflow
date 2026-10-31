@@ -1,0 +1,80 @@
+{
+  "name": "MachineRate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Machine label, e.g. '54in Vinyl Plotter', 'CNC Router Table A'."
+    },
+    "machine_type": {
+      "type": "string",
+      "enum": [
+        "vinyl",
+        "cnc",
+        "laser",
+        "printer",
+        "other"
+      ],
+      "description": "Equipment class this rate row prices."
+    },
+    "setup_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "One-time setup minutes billed at the runtime rate each time the machine is used."
+    },
+    "runtime_rate_per_hour": {
+      "type": "number",
+      "description": "Machine rate in $ per runtime hour (also bills setup time)."
+    },
+    "maintenance_rate_per_hour": {
+      "type": "number",
+      "default": 0,
+      "description": "Additional $ per runtime hour covering wear, blades/bits, and maintenance."
+    },
+    "material_waste_pct": {
+      "type": "number",
+      "default": 0,
+      "description": "Percent of the job's material cost added to cover machine spoilage/waste."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive machine rows are ignored by the pricing engine."
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of the staff user who last saved this row (audit)."
+    }
+  },
+  "required": [
+    "name",
+    "machine_type",
+    "runtime_rate_per_hour"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__machinerate_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__machinerate_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__machinerate_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__machinerate_backend_only__"
+      }
+    }
+  }
+}
