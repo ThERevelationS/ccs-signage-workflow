@@ -1,70 +1,91 @@
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import dayjs from "dayjs";
+import { DatePicker } from "@mantine/dates";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+function toStr(d) {
+  return d instanceof Date && !isNaN(d) ? dayjs(d).format("YYYY-MM-DD") : null;
+}
+function toDate(s) {
+  return s ? dayjs(s, "YYYY-MM-DD").toDate() : null;
+}
+
+function matchOne(m, d) {
+  if (typeof m === "boolean") return m;
+  if (m instanceof Date) return dayjs(d).isSame(m, "day");
+  if (typeof m === "function") return !!m(dayjs(d).toDate());
+  if (m == null || typeof m !== "object") return false;
+  if (typeof m.before !== "undefined" && m.before instanceof Date)
+    return dayjs(d).isBefore(m.before, "day");
+  if (typeof m.after !== "undefined" && m.after instanceof Date)
+    return dayjs(d).isAfter(m.after, "day");
+  if (m.from instanceof Date && m.to instanceof Date) {
+    const x = dayjs(d);
+    return !x.isBefore(m.from, "day") && !x.isAfter(m.to, "day");
+  }
+  if (Array.isArray(m.dayOfWeek)) return m.dayOfWeek.includes(dayjs(d).day());
+  if (m instanceof Date) return dayjs(d).isSame(m, "day");
+  return false;
+}
+
+function matcherToExclude(disabled) {
+  if (disabled == null || disabled === false) return undefined;
+  const list = Array.isArray(disabled) ? disabled : [disabled];
+  if (list.length === 1 && typeof list[0] === "boolean")
+    return list[0] ? () => true : undefined;
+  return (d) => list.some((m) => matchOne(m, d));
+}
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  mode = "single",
+  selected,
+  onSelect,
+  disabled,
+  month,
+  defaultMonth,
   ...props
 }) {
+  const isAllDisabled = disabled === true ||
+    (Array.isArray(disabled) && disabled.length === 1 && disabled[0] === true);
+
+  const handleChange = (value) => {
+    if (!onSelect) return;
+    if (mode === "range") {
+      onSelect({ from: toDate(value?.[0]), to: toDate(value?.[1]) });
+    } else if (mode === "multiple") {
+      onSelect((value || []).map(toDate).filter(Boolean));
+    } else {
+      onSelect(value ? toDate(value) : undefined);
+    }
+  };
+
+  const value =
+    mode === "range"
+      ? [toStr(selected?.from), toStr(selected?.to)]
+      : mode === "multiple"
+        ? (selected || []).map(toStr).filter(Boolean)
+        : toStr(selected);
+
   return (
-    (<DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
-      classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: cn(
-          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md",
-          props.mode === "range"
-            ? "[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
-            : "[&:has([aria-selected])]:rounded-md"
-        ),
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-8 w-8 p-0 font-normal aria-selected:opacity-100"
-        ),
-        day_range_start: "day-range-start",
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside:
-          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        ),
-      }}
-      {...props} />)
+    <div
+      className={cn("p-3", className, isAllDisabled && "opacity-60 pointer-events-none")}
+      aria-disabled={isAllDisabled || undefined}
+    >
+      <DatePicker
+        type={mode === "range" ? "range" : mode === "multiple" ? "multiple" : "default"}
+        value={value}
+        onChange={handleChange}
+        date={toStr(month || defaultMonth) || undefined}
+        excludeDate={matcherToExclude(disabled)}
+        hideOutsideDates={!showOutsideDays}
+        size="sm"
+        {...props}
+      />
+    </div>
   );
 }
-Calendar.displayName = "Calendar"
+Calendar.displayName = "Calendar";
 
-export { Calendar }
+export { Calendar };
