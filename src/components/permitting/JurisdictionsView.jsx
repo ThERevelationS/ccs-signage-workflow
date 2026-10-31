@@ -384,7 +384,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
                 <MapPin className="w-5 h-5 text-purple-600" />
                 Jurisdictions
               </h1>
-              <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions{currentUser?.role === 'admin' ? ` · ${totalDocs} documents` : ''}</p>
+              <p className="text-xs text-gray-500">The saved list of towns, townships, and counties we file permits with — {jurisdictions.length} saved{currentUser?.role === 'admin' ? ` · ${totalDocs} documents` : ''}</p>
               {isAdmin && (
                 <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
                   <span className="text-green-700">{trustCounts.verified || 0} verified</span>
