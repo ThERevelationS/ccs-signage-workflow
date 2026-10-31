@@ -144,6 +144,52 @@
         }
       }
     },
+    "suggestions": {
+      "type": "array",
+      "default": [],
+      "description": "Staff-proposed edits; editors review/resolve in the admin panel",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "step_id": {
+            "type": "string",
+            "description": "Step this suggestion targets (empty = whole SOP)"
+          },
+          "text": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved",
+              "dismissed"
+            ],
+            "default": "open"
+          },
+          "resolved_by": {
+            "type": "string"
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
     "pinned": {
       "type": "boolean",
       "default": false,
