@@ -139,7 +139,7 @@ export default function Permitting() {
         batched?.PermitLocality
           ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
           : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
