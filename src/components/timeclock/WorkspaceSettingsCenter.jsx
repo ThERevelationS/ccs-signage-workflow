@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
-import { NAV_CATALOG, ACCENTS } from "@/components/layout/workspacePrefs";
+import { NAV_CATALOG, ACCENTS, PROFILE_PRESETS } from "@/components/layout/workspacePrefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -78,6 +78,7 @@ export default function WorkspaceSettingsCenter() {
       { id: "accessibility", keys: ["motion", "contrast", "accessibility", "reduce"] },
       { id: "taskbar", keys: ["taskbar", "nav", "navigation", "buttons", "labels", "icons", "tooltips", "hide", "favorite", "pin", "order", "drag"] },
       { id: "startup", keys: ["landing", "startup", "home", "start", "page"] },
+      { id: "pipeline", keys: ["pipeline", "sales", "board", "table", "view", "kanban"] },
       { id: "density", keys: ["density", "compact", "spacious", "spacing", "comfortable"] },
       { id: "profiles", keys: ["profile", "preset", "save", "switch", "workspace"] },
       { id: "reset", keys: ["reset", "restore", "default"] },
@@ -225,9 +226,35 @@ export default function WorkspaceSettingsCenter() {
           </section>
         )}
 
+        {shown("pipeline") && (
+          <section className="py-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Sales Pipeline</h4>
+            <Row label="Default view" hint="Which pipeline layout opens first — also remembers your last pick">
+              <select value={prefs.pipeline?.defaultView || ""} onChange={(e) => wp.updatePrefs("pipeline.defaultView", e.target.value)}
+                className="h-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs px-2 text-slate-800 dark:text-slate-200">
+                <option value="">App default (Table)</option>
+                <option value="table">Table</option>
+                <option value="board">Board</option>
+                <option value="daily">Daily</option>
+                <option value="insights">Insights</option>
+              </select>
+            </Row>
+            <p className="text-xs text-slate-400 pb-1">Column presets and saved filters live inside the pipeline itself — they are already per-user.</p>
+          </section>
+        )}
+
         {shown("profiles") && (
           <section className="py-3">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Workspace Profiles</h4>
+            <div className="flex flex-wrap gap-2 pb-2">
+              {PROFILE_PRESETS.map((p) => (
+                <button key={p.key} type="button" title={p.description} onClick={() => wp.patchPrefs(p.prefs)}
+                  className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+                  {p.name}
+                </button>
+              ))}
+              <span className="text-[11px] text-slate-400 self-center">one-click presets</span>
+            </div>
             <div className="flex items-center gap-2 py-1.5">
               <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Profile name (e.g. Field tablet)"
                 className="h-8 w-56 text-xs" maxLength={40} />
