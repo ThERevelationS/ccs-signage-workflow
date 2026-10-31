@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Loader2, Plus, Receipt, Search, Trash2, X } from "lucide-react";
+import { AlertCircle, Loader2, Plus, Printer, Receipt, Search, Trash2, X } from "lucide-react";
 import { createWorkOrderWithRecovery } from "@/components/workflow/workOrderPersistence";
 import { ensureNewCustomer } from "@/components/estimator/customerCreationService";
 import { generateDocNumber } from "@/functions/generateDocNumber";
@@ -16,6 +16,7 @@ import {
   WALK_IN_PAYMENT_METHODS,
   WALK_IN_PAYMENT_METHOD_LABELS,
 } from "./walkInModel";
+import WalkInReceipt from "./WalkInReceipt";
 
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const clean = (v) => String(v ?? "").trim();
@@ -116,6 +117,7 @@ export default function WalkInSale({ customers = [], taxGroups = [], quickProduc
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState(null);
+  const [showReceiptPrint, setShowReceiptPrint] = useState(false);
   const submitRef = useRef(false);
   // Retry-safe attempt state: the doc number, creation keys, and ids of any
   // records already created. A retry resumes where it left off instead of
@@ -376,9 +378,18 @@ export default function WalkInSale({ customers = [], taxGroups = [], quickProduc
           ))}
           <div className="text-base font-bold text-violet-700">Balance due: {usd(receipt.noInvoice ? receipt.walkInSale.balance_due : num(inv?.balance_due, receipt.walkInSale.balance_due))}</div>
         </div>
-        <Button onClick={resetSale} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
-          New walk-in sale
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => setShowReceiptPrint(true)}
+            className="clay-button border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold">
+            <Printer className="w-4 h-4 mr-1" /> Print receipt
+          </Button>
+          <Button onClick={resetSale} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
+            New walk-in sale
+          </Button>
+        </div>
+        {showReceiptPrint && (
+          <WalkInReceipt receipt={receipt} onClose={() => setShowReceiptPrint(false)} />
+        )}
       </div>
     );
   }
