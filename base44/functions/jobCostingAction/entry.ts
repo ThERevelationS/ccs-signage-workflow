@@ -143,11 +143,11 @@ Deno.serve(async (req) => {
       if (!workOrder?.id) throw bad("Work order not found.", 404);
       const inputs = await loadCostInputs(deps);
       const [invoices, purchaseOrders, changeOrders, segments, movements] = await Promise.all([
-        Invoice.filter({ work_order_id: workOrderId }),
-        PurchaseOrder.filter({ work_order_id: workOrderId }),
-        ChangeOrder.filter({ work_order_id: workOrderId }),
-        LaborSegment.filter({ work_order_id: workOrderId }),
-        Movement.filter({ work_order_id: workOrderId }),
+        loadAllEntityRows({ entity: Invoice, query: { work_order_id: workOrderId }, label: "Job cost invoices" }),
+        loadAllEntityRows({ entity: PurchaseOrder, query: { work_order_id: workOrderId }, label: "Job cost purchase orders" }),
+        loadAllEntityRows({ entity: ChangeOrder, query: { work_order_id: workOrderId }, label: "Job cost change orders" }),
+        loadAllEntityRows({ entity: LaborSegment, query: { work_order_id: workOrderId }, label: "Job cost labor segments" }),
+        loadAllEntityRows({ entity: Movement, query: { work_order_id: workOrderId }, label: "Job cost stock movements" }),
       ]);
       const laborByUser = new Map<string, number>();
       for (const s of (Array.isArray(segments) ? segments : [])) {
