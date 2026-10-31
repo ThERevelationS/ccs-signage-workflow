@@ -170,8 +170,8 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     setQuery(''); setType('all'); setGroup('all'); setAvailability('all'); setViewingPDF(null);
   };
   return <section aria-label="Document repository catalog" className="mb-4 space-y-3 rounded-lg border border-green-200 bg-white p-3">
-    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Browse documents & source details</h3><Button ref={refreshButton} variant="outline" className="min-h-11" disabled={currentState.loading} onClick={() => setRefresh(v => v + 1)}>Refresh source catalog</Button></div>
-    <p className="text-xs text-gray-600">Saved classifications and currentness describe retained records. Collection, extraction and AI research do not approve a requirement or confirm applicability to a project.</p>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Documents & source details</h3><Button ref={refreshButton} variant="outline" className="min-h-11" disabled={currentState.loading} onClick={() => setRefresh(v => v + 1)}>Refresh</Button></div>
+    <p className="text-xs text-gray-600">Labels describe what was saved. Collecting, extracting, and AI research don't approve a rule or prove it applies to your job.</p>
     {previewNotice && <p role="status" className="rounded bg-amber-50 p-3 text-sm">{previewNotice}</p>}
     {scopedPreview && <div ref={previewRegion} role="region" aria-label="Retained PDF preview" className="scroll-mt-3 min-w-0 overflow-hidden rounded-lg border border-blue-300">
       <p className="bg-blue-50 p-3 text-xs [overflow-wrap:anywhere]">Retained copy · saved currentness: {label(scopedPreview.status)} · classification: {label(scopedPreview.classification)}. Viewing does not approve authority or verify the cited version.</p>
@@ -179,8 +179,8 @@ export default function DocumentRepositoryBrowser({ jurisdictionId, documents = 
     </div>}
     {selected && <div className="space-y-2 rounded border border-blue-200 bg-blue-50 p-3 text-sm [overflow-wrap:anywhere]">
       <p className="font-semibold">Linked source record: {selectedId}</p>
-      <p className="text-xs">Confirm this record's retained version against the citation or monitoring evidence. Opening it does not approve authority or clear source alerts.</p>
-      {selected.loading ? <p role="status">Loading linked saved source…</p> : selected.error ? <p role="alert" className="text-red-700">{selected.error}</p> : !selected.row ? <p role="alert">No linked source record found in this jurisdiction. It may be missing, unlinked or inaccessible. No title or URL match has been substituted.</p> : <p role="status">Selected source: {selected.row.title || 'Untitled document'}</p>}
+      <p className="text-xs">Check the saved version against its sources. Opening it doesn't make it official or clear alerts.</p>
+      {selected.loading ? <p role="status">Loading the saved source…</p> : selected.error ? <p role="alert" className="text-red-700">{selected.error}</p> : !selected.row ? <p role="alert">No linked source found for this office — it may be missing or unlinked. Nothing was guessed.</p> : <p role="status">Picked source: {selected.row.title || 'Document with no name'}</p>}
       {!selected.loading && (!selected.row || selected.error) && <Button variant="outline" className="min-h-11" onClick={() => setSourceRetry(value => value + 1)}>Retry linked source</Button>}
       {onNavigate && <Button variant="outline" className="min-h-11" onClick={() => onNavigate('documents')}>Clear source selection</Button>}
     </div>}
