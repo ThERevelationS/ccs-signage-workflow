@@ -48,10 +48,10 @@ test("verifyLogin counts failures with a CAS-guarded write and locks at threshol
 });
 
 test("verifyLogin resets the counter on successful sign-in", () => {
-  const reset = verifyLogin.indexOf("failed_login_count: 0");
+  const reset = verifyLogin.indexOf("failed_login_count = 0");
   const sign = verifyLogin.indexOf("signShopSessionPayload(payload)");
   assert.ok(reset > 0 && reset < sign, "the counter reset must run before the session token is issued");
-  assert.match(verifyLogin, /login_locked_until: null/);
+  assert.match(verifyLogin, /login_locked_until = null/);
 });
 
 test("credential changes clear the lockout", () => {
