@@ -110,6 +110,7 @@ export default function PermitSpreadsheetRow({
   onShowLocalityInfo,
   onShowJurisdictionInfo,
   localityState,
+  locality = null,
   officeAuthority,
   legacyOfficeOptions = [],
   onLinkLegacyOffice,
@@ -478,7 +479,7 @@ export default function PermitSpreadsheetRow({
                 value={lineItem.assigned_to || "__unassigned__"}
                 onValueChange={(value) => {
                   const next = value === "__unassigned__" ? "" : value;
-                  if (lineItem.assigned_to && lineItem.assigned_to !== next && !( (()=>{try{return localStorage.getItem("permitting_skip_confirms")==="1";}catch{return false;}})() || window.confirm(`${lineItem.assigned_to} owns this line — reassign${next ? ` to ${next}` : ""}?`))) return;
+                  if (lineItem.assigned_to && lineItem.assigned_to !== next && !( (()=>{try{return localStorage.getItem("permitting_skip_confirms")==="1";}catch{return false;}})() || window.confirm(`This line belongs to ${lineItem.assigned_to} — give it to ${next || "nobody"} instead?`))) return;
                   onUpdateField(lineItem.id, 'assigned_to', next);
                 }}
                 disabled={!isRegistered}
@@ -621,6 +622,7 @@ export default function PermitSpreadsheetRow({
 
       <PermitLineLifecycleDetails
         lineItem={lineItem}
+        locality={locality}
         onUpdateField={onUpdateField}
         isRegistered={isRegistered}
         today={today}
