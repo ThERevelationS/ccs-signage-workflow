@@ -444,7 +444,7 @@ export default function JobWorkspace() {
           </div>
         )}
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-3 lg:grid-cols-6">
-          <div><div className="font-semibold uppercase tracking-wide text-gray-400">Customer</div><div className="mt-0.5 text-sm text-gray-800">{wo.customer_id ? <Link className="text-sky-700 hover:underline" to={`/Customer360?id=${wo.customer_id}`}>{wo.client_name || "—"}</Link> : (wo.client_name || "—")}</div></div>
+          <div><div className="font-semibold uppercase tracking-wide text-gray-400">Customer</div><div className="mt-0.5 text-sm text-gray-800"><RecordLink kind="customer" id={wo.customer_id}>{wo.client_name || "—"}</RecordLink></div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Contact</div><div className="mt-0.5 text-sm text-gray-800">{contactBits.join(" · ") || "—"}</div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Salesperson</div><div className="mt-0.5 text-sm text-gray-800">{wo.sales_rep || wo.representative || "—"}</div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Install Date</div><div className="mt-0.5 text-sm text-gray-800">{fmtDate(wo.project_install_date) || "—"}</div></div>
@@ -454,24 +454,16 @@ export default function JobWorkspace() {
       </div>
 
       {/* Products */}
-      <div className="overflow-auto rounded border border-gray-200 bg-white">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-gray-100 text-[11px] uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-2 py-1.5">#</th>
-              <th className="px-2 py-1.5">Product</th>
-              <th className="px-2 py-1.5">Qty</th>
-              <th className="px-2 py-1.5">Unit</th>
-              <th className="px-2 py-1.5">Total</th>
-              <th className="px-2 py-1.5">Status / Substatus</th>
-              <th className="px-2 py-1.5">Proof</th>
-              <th className="px-2 py-1.5">Fulfillment</th>
-              <th className="px-2 py-1.5">Due</th>
-              <th className="px-2 py-1.5">History</th>
-              <th className="px-2 py-1.5" />
-            </tr>
-          </thead>
-          <tbody>
+      <DataTableShell
+        dense
+        head={["#", "Product", "Qty", "Unit", "Total", "Status / Substatus", "Proof", "Fulfillment", "Due", "History", ""]}
+        isEmpty={!rows.length}
+        emptyState={{
+          title: "No products on this work order.",
+          actionLabel: "Open work order",
+          actionTo: `/MainWorkflow?wo=${wo.id}`,
+        }}
+      >
             {rows.map((r) => {
               const isBusy = !!busy[r.productId];
               const locked = !r.editable || isBusy;
@@ -488,7 +480,7 @@ export default function JobWorkspace() {
                   <td className="whitespace-nowrap px-2 py-1.5">{usd(r.quotedUnitPrice)}</td>
                   <td className="whitespace-nowrap px-2 py-1.5 font-medium">{usd(r.quotedTotal)}</td>
                   <td className="px-2 py-1.5">
-                    {badge(label, statusTone(r.status))}
+                    <StatusChip status={r.status} label={label} />
                     {r.substatus && <div className="mt-0.5 text-[10px] italic text-gray-500">{r.substatus}</div>}
                     {r.hardDue && <div className="mt-0.5 text-[10px] font-semibold text-rose-600">HARD DUE</div>}
                   </td>
@@ -526,12 +518,7 @@ export default function JobWorkspace() {
                 </tr>
               );
             })}
-            {!rows.length && (
-              <tr><td colSpan={11} className="px-3 py-6 text-center text-gray-400">No products on this work order.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      </DataTableShell>
 
       {/* Financials */}
       <div className="rounded border border-gray-200 bg-white p-3">
