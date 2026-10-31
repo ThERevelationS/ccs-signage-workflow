@@ -87,9 +87,13 @@ export function buildLineNotes(idempotencyKey, citations, additionalNotes = "") 
  */
 export async function findExistingLines(workOrderId, rowNames) {
   if (!workOrderId || !rowNames.length) return {};
+  // NOTE: the staff read facade only forwards sort/limit/skip from an
+  // options object — a "fields" projection would be silently dropped, so the
+  // rows come back whole. The options form stays for its paged {items}
+  // return contract.
   const { items } = await staffEntities.PermitLineItem.filter(
     { work_order_id: workOrderId, row_name: { $in: rowNames } },
-    { limit: 100, fields: ["id", "row_name", "status", "notes", "office_types", "locality_name"] },
+    { limit: 100 },
   );
   const map = {};
   for (const item of items) map[item.row_name] = item;
