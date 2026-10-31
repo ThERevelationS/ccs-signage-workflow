@@ -229,7 +229,7 @@ function LocalityPickerSession({
       }
       // "Address lookup is busy" — the resolver's own queue guard. Wait and
       // retry instead of making the user press Find again.
-      for(let busy=0;data?.success===false&&Number(data?.retry_after_ms)>0&&busy<2;busy++){
+      for(let busy=0;data?.success===false&&Number(data?.retry_after_ms)>0&&busy<6;busy++){
         if(version!==searchVersion.current||!openRef.current)return;
         await new Promise(r=>setTimeout(r,Math.min(Number(data.retry_after_ms)||3000,8000)));
         try{({data}=await lookup({address:normalizeAddress(address),session_token:sessionToken}));}catch{break;}
@@ -249,7 +249,9 @@ function LocalityPickerSession({
       }
       if(version!==searchVersion.current||!openRef.current)return;
       if (data?.success === false) {
-        setError(data.error || "Search failed");
+        setError(/busy|try again/i.test(String(data?.error||""))
+          ? "The checker is working on another lookup right now — wait a few seconds and press Find my office again."
+          : (data.error || "Search failed"));
       } else {
         setResult(data);
         setError("");
