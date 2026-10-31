@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -14,11 +14,15 @@ import {
   FileWarning,
   GitBranch,
   Inbox,
+  Layers,
   Loader2,
+  Mail,
   Package,
+  Phone,
   Receipt,
   RefreshCw,
   RotateCcw,
+  Scale,
   Settings,
   ShoppingCart,
   Volume2,
@@ -26,6 +30,22 @@ import {
   Wrench,
   X,
 } from "lucide-react";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { useAllWorkOrders } from "@/lib/workOrderCache";
+import { AllInOneEstimate, GlobalSettings, OpportunityActivity } from "@/api/gatedEntities";
+import { FOLLOWUP_KIND_META } from "@/components/comms/followupModel";
+import {
+  COMPUTED_SECTION_KEYS,
+  dedupeById,
+  dueCommsFollowups,
+  dueCrmEvents,
+  overdueInvoices,
+  overdueOpenPos,
+  overdueProducts,
+  publishComputedAttention,
+  varianceBatches,
+} from "./attentionComputedModel";
 
 const money = (n) => `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -33,6 +53,9 @@ export default function AttentionFeed() {
   const { sessionToken } = useAuth();
   const navigate = useNavigate();
   const [feed, setFeed] = useState(null);
+  const [computed, setComputed] = useState(null);
+  const { data: allWorkOrders = [] } = useAllWorkOrders({ enabled: !!sessionToken });
+  const overdueProductRows = useMemo(() => overdueProducts(allWorkOrders), [allWorkOrders]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState("");
@@ -97,6 +120,39 @@ export default function AttentionFeed() {
     });
   };
 
+  // Computed sections (unified alerts): rows the server attention_feed does
+  // not cover. Every source fails soft — one dead gateway never blanks the
+  // strip.
+  const loadComputed = useCallback(async () => {
+    if (!sessionToken) return;
+    const soft = (p) => p.catch(() => null);
+    const [activities, estimates, rulesRow, invoiceRes, poRes, reconRes] = await Promise.all([
+      soft(loadAllEntityRows({ entity: OpportunityActivity, sort: "-updated_date", label: "Attention feed activities" })),
+      soft(loadAllEntityRows({ entity: AllInOneEstimate, query: { status: "sent" }, sort: "-updated_date", label: "Attention feed estimates" })),
+      soft(loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: "followupAutomationRules", label: "Attention feed follow-up rules" })),
+      soft(base44.functions.invoke("invoicingAction", { session_token: sessionToken, action: "list_invoices" })),
+      soft(base44.functions.invoke("purchaseOrderAction", { session_token: sessionToken, action: "list_purchase_orders" })),
+      soft(base44.functions.invoke("manageReconciliation", { session_token: sessionToken, action: "bootstrap" })),
+    ]);
+    const invoices = (invoiceRes?.data || invoiceRes)?.invoices || [];
+    const purchaseOrders = (poRes?.data || poRes)?.purchase_orders || [];
+    const batches = (reconRes?.data || reconRes)?.batches || [];
+    const now = new Date();
+    setComputed({
+      crm_events_due: dueCrmEvents(activities || [], now),
+      comms_followups_due: dueCommsFollowups({
+        estimates: estimates || [],
+        invoices,
+        activities: activities || [],
+        rules: rulesRow?.setting_value,
+        now,
+      }),
+      overdue_invoices: overdueInvoices(invoices, now),
+      overdue_open_pos: overdueOpenPos(purchaseOrders, now),
+      recon_variance_batches: varianceBatches(batches),
+    });
+  }, [sessionToken]);
+
   const load = useCallback(async () => {
     if (!sessionToken) return;
     setLoading(true);
@@ -118,11 +174,33 @@ export default function AttentionFeed() {
       if (d?.success) setFeed(d);
       const hits = (watchRes?.data || watchRes)?.hits;
       setWatchHits(Array.isArray(hits) ? hits : []);
+      void loadComputed();
     } catch { /* fail-soft — strip hides itself */ }
     finally { setLoading(false); }
-  }, [sessionToken]);
+  }, [sessionToken, loadComputed]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Share the latest computed sections with the bell badge — invoice/PO rows
+  // the server feed already reports are excluded so the badge never
+  // double-counts.
+  useEffect(() => {
+    const serverInvoiceIds = new Set((feed?.overdue_invoices || []).map((i) => String(i?.id || "")));
+    const serverPoIds = new Set((feed?.overdue_pos || []).map((p) => String(p?.id || "")));
+    publishComputedAttention({
+      overdue_products: overdueProductRows,
+      crm_events_due: computed?.crm_events_due || [],
+      comms_followups_due: computed?.comms_followups_due || [],
+      recon_variance_batches: computed?.recon_variance_batches || [],
+      overdue_invoices_extra: (computed?.overdue_invoices || []).filter((i) => !serverInvoiceIds.has(String(i?.id || ""))),
+      overdue_open_pos_extra: (computed?.overdue_open_pos || []).filter((p) => !serverPoIds.has(String(p?.id || ""))),
+    });
+  }, [feed, computed, overdueProductRows]);
+
+  // Client-computed invoice/PO rows union with the server feed's lists —
+  // dedupeById keeps a record reported by both paths from showing twice.
+  const mergedInvoices = dedupeById([...(feed?.overdue_invoices || []), ...(computed?.overdue_invoices || [])]);
+  const mergedPos = dedupeById([...(feed?.overdue_pos || []), ...(computed?.overdue_open_pos || [])]);
 
   const markAllRead = async () => {
     if (!sessionToken) return;
@@ -153,10 +231,10 @@ export default function AttentionFeed() {
     {
       key: "invoices",
       label: `overdue invoices${feed.overdue_invoice_total ? ` (${money(feed.overdue_invoice_total)})` : ""}`,
-      count: (feed.overdue_invoices || []).length,
+      count: mergedInvoices.length,
       icon: Receipt,
       tone: "text-red-700 bg-red-50 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800",
-      items: (feed.overdue_invoices || []).slice(0, 6).map((i) => ({
+      items: mergedInvoices.slice(0, 6).map((i) => ({
         id: i.id,
         primary: `${i.invoice_number || "Invoice"}${i.customer_name ? ` · ${i.customer_name}` : ""}`,
         secondary: `due ${i.due_date} · ${money(i.balance_due)} open${i.salesperson_email ? ` · ${i.salesperson_email}` : ""}`,
@@ -166,10 +244,10 @@ export default function AttentionFeed() {
     {
       key: "pos",
       label: "overdue POs",
-      count: (feed.overdue_pos || []).length,
+      count: mergedPos.length,
       icon: ShoppingCart,
       tone: "text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-      items: (feed.overdue_pos || []).slice(0, 6).map((p) => ({
+      items: mergedPos.slice(0, 6).map((p) => ({
         id: p.id,
         primary: `${p.po_number || "PO"}${p.vendor_name ? ` · ${p.vendor_name}` : ""}`,
         secondary: `expected ${p.expected_date} · ${p.status}`,
@@ -332,6 +410,61 @@ export default function AttentionFeed() {
         href: p.estimate_id ? `/EstimateDetail?id=${p.estimate_id}` : "/EstimatorQueues",
       })),
     },
+    // --- Computed sections (unified alerts) --------------------------------
+    // Client-computed from staff-readable sources; invoice/PO overdue rows
+    // merge into the server-fed categories above.
+    {
+      key: "overdue_products",
+      label: "overdue products",
+      count: overdueProductRows.length,
+      icon: Layers,
+      tone: "text-cyan-700 bg-cyan-50 border-cyan-300 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800",
+      items: overdueProductRows.slice(0, 6).map((r) => ({
+        id: `product:${r.workOrderId}:${r.productId}`,
+        primary: `${r.productName}${r.company ? ` · ${r.company}` : ""}`,
+        secondary: `${r.status} · due ${r.due}${r.hardDue ? " · hard due" : ""}`,
+        href: "/ProductQueues?queue=all",
+      })),
+    },
+    {
+      key: "crm_events_due",
+      label: "CRM events due",
+      count: (computed?.crm_events_due || []).length,
+      icon: Phone,
+      tone: "text-fuchsia-700 bg-fuchsia-50 border-fuchsia-300 dark:bg-fuchsia-950/40 dark:text-fuchsia-300 dark:border-fuchsia-800",
+      items: (computed?.crm_events_due || []).slice(0, 6).map((a) => ({
+        id: `crm:${a.id}`,
+        primary: `${a.subject || a.summary || a.event_type || "CRM event"}${a.company_name ? ` · ${a.company_name}` : ""}`,
+        secondary: `${a.event_type || "event"} · due ${String(a.due_at || "").slice(0, 10)}${a.assigned_to ? ` · ${a.assigned_to}` : ""}`,
+        href: "/CrmEvents",
+      })),
+    },
+    {
+      key: "comms_followups_due",
+      label: "comms follow-ups due",
+      count: (computed?.comms_followups_due || []).length,
+      icon: Mail,
+      tone: "text-lime-700 bg-lime-50 border-lime-300 dark:bg-lime-950/40 dark:text-lime-300 dark:border-lime-800",
+      items: (computed?.comms_followups_due || []).slice(0, 6).map((f) => ({
+        id: `followup:${f.kind}:${f.targetId}`,
+        primary: `${f.targetRef || "Follow-up"}${f.customerName ? ` · ${f.customerName}` : ""}`,
+        secondary: `${FOLLOWUP_KIND_META[f.kind]?.label || f.kind} · due ${f.dueDate}${f.daysOverdue ? ` · ${f.daysOverdue}d over` : ""}`,
+        href: "/CommsFollowups",
+      })),
+    },
+    {
+      key: "recon_variance_batches",
+      label: "recon variance",
+      count: (computed?.recon_variance_batches || []).length,
+      icon: Scale,
+      tone: "text-yellow-700 bg-yellow-50 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800",
+      items: (computed?.recon_variance_batches || []).slice(0, 6).map((b) => ({
+        id: `recon:${b.id}`,
+        primary: `${b.batch_number || "Batch"}${b.location ? ` · ${b.location}` : ""}`,
+        secondary: `closed ${String(b.closed_at || "").slice(0, 10)} · ${Number(b.variance) > 0 ? "over" : "short"} ${money(Math.abs(Number(b.variance) || 0))}`,
+        href: "/Reconciliation",
+      })),
+    },
   ].filter((c) => c.count > 0 && !hiddenSections.has(c.key) && !(snoozed[c.key] && snoozed[c.key] > Date.now())) : [];
 
   if (!feed) return null;
@@ -385,7 +518,7 @@ export default function AttentionFeed() {
                 </button>
               )}
               <p className="mb-1 border-t border-slate-100 pt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800">Sections</p>
-              {["portal","invoices","pos","cos","follow","sent","requests","unassigned","stock","jobs","permits","fees","recalc"].map((key) => {
+              {[...["portal","invoices","pos","cos","follow","sent","requests","unassigned","stock","jobs","permits","fees","recalc"], ...COMPUTED_SECTION_KEYS].map((key) => {
                 const cat = categories.find((c) => c.key === key);
                 const label = cat?.label || key;
                 const isSnoozed = snoozed[key] && snoozed[key] > Date.now();
