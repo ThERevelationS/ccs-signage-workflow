@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -201,20 +202,24 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, ses
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Start Date</Label>
-              <Input
-                type="date"
+              <TimeQuickPick
+                mode="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1"
+                onChange={setStartDate}
+                dayOffsets={[0, -1, -2, -3, -7, -14]}
+                confirmLabel="Starts"
+                inputId="pto-start"
               />
             </div>
             <div>
               <Label>End Date</Label>
-              <Input
-                type="date"
+              <TimeQuickPick
+                mode="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="mt-1"
+                onChange={setEndDate}
+                dayOffsets={[0, -1, -2, -3, -7, -14]}
+                confirmLabel="Ends"
+                inputId="pto-end"
               />
             </div>
           </div>
