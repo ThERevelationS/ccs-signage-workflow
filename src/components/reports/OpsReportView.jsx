@@ -65,7 +65,7 @@ const alignCls = (align) => (align === "right" ? "text-right" : "text-left");
 function ReportTable({ report }) {
   const { columns, rows, totals, rowLinks } = report;
   return (
-    <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
+    <div className="max-h-[70vh] overflow-auto ccs-scrollbar-hidden rounded-xl border border-slate-200 dark:border-slate-700">
       <table className="w-full min-w-[40rem] border-collapse text-sm">
         <thead>
           <tr className="sticky top-0 bg-slate-100 dark:bg-slate-800">
