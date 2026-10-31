@@ -7,7 +7,7 @@ import { recordHref } from "./recordRoutes";
 // Typed record deep-link. The kind -> route map lives in recordRoutes.js:
 //   <RecordLink kind="estimate" id={est.id}>Q-1042</RecordLink>
 // renders <Link to="/EstimateDetail?id=...">. When the id is blank or the
-// kind is unknown it degrades to a <span> — never a broken href.
+// kind is unknown it degrades to a <span> -- never a broken href.
 const RecordLink = React.forwardRef(
   ({ kind, id, children, className, ...props }, ref) => {
     const href = recordHref(kind, id);
