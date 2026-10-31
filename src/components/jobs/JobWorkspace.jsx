@@ -382,21 +382,22 @@ export default function JobWorkspace() {
 
       {/* Header */}
       <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900">{ref}</h1>
-              {badge(WORKSPACE_STAGES[stage] || wo.current_stage || "—", STAGE_TONE[stage] || TONE.muted)}
-              {wo.sales_status && badge(wo.sales_status, TONE.muted)}
-              {depositChipData && badge(depositChipData.text, depositChipData.tone === "invoiced" ? TONE.done : TONE.wip)}
-            </div>
-            <div className="mt-1 text-sm text-gray-500">{wo.title && wo.title !== ref ? wo.title : wo.description || ""}</div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+        <PageHeader
+          className="mb-0 items-start"
+          breadcrumbs={[
+            { label: wo.client_name || "Customer", to: wo.customer_id ? `/Customer360?id=${wo.customer_id}` : undefined },
+            { label: ref },
+          ]}
+          title={ref}
+          status={stage}
+          statusLabel={WORKSPACE_STAGES[stage] || wo.current_stage || "—"}
+          subtitle={wo.title && wo.title !== ref ? wo.title : wo.description || ""}
+          actions={
+            <div className="flex flex-wrap items-center gap-2 text-sm">
             {wo.estimate_id && (
-              <Link className="rounded border border-gray-300 px-2 py-1 text-sky-700 hover:bg-sky-50" to={`/EstimateDetail?id=${wo.estimate_id}`}>
+              <RecordLink kind="estimate" id={wo.estimate_id} className="rounded border border-gray-300 px-2 py-1 hover:bg-sky-50">
                 Estimate
-              </Link>
+              </RecordLink>
             )}
             <Link className="rounded border border-gray-300 px-2 py-1 text-sky-700 hover:bg-sky-50" to={`/MainWorkflow?wo=${wo.id}`}>
               Work Order
@@ -415,8 +416,18 @@ export default function JobWorkspace() {
                 Statement
               </Link>
             )}
-          </div>
-        </div>
+            </div>
+          }
+        >
+          {(wo.sales_status || depositChipData) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {wo.sales_status && <StatusChip status={wo.sales_status} />}
+              {depositChipData && (
+                <StatusChip tone={depositChipData.tone === "invoiced" ? "emerald" : "amber"} label={depositChipData.text} />
+              )}
+            </div>
+          )}
+        </PageHeader>
         {stageSyncMode !== "off" && stageSuggestion && (
           <div className="mt-2 flex flex-wrap items-center gap-2 rounded border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs text-sky-800">
             <span>
