@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-globalThis.window = globalThis.window || { localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, location: { origin: 'http://localhost', hostname: 'localhost', pathname: '/' }, self: {}, top: {} };
+globalThis.window = globalThis.window || { localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, location: { origin: 'http://localhost', hostname: 'localhost', pathname: '/', href: 'http://localhost/' }, history: { replaceState: () => {} }, self: {}, top: {} };
 globalThis.window.self = globalThis.window;
 globalThis.window.top = globalThis.window;
 globalThis.document = globalThis.document || { createElement: () => ({ style: {} }), head: { appendChild: () => {} } };
