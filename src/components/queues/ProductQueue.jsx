@@ -23,6 +23,7 @@ import {
   daysInStatus,
   parseLocalDate,
 } from "./productQueueModel";
+import ProofPanel from "@/components/proofs/ProofPanel";
 
 export { flattenQueueRows };
 
@@ -52,7 +53,7 @@ const NO_ID_TOOLTIP = "Product has no id — reopen the Work Order to repair it"
 
 const dateInputValue = (v) => String(v || "").slice(0, 10);
 
-function RowEditor({ row, actor, onSaved, disabled }) {
+function RowEditor({ row, actor, onSaved, onChanged, disabled }) {
   const p = row.product || {};
   const [form, setForm] = useState({
     operationalSubstatus: p.operational_substatus || "",
@@ -123,6 +124,13 @@ function RowEditor({ row, actor, onSaved, disabled }) {
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
+        <ProofPanel
+          workOrderId={row.workOrderId}
+          product={row.product}
+          actor={actor}
+          disabled={disabled}
+          onChanged={onChanged}
+        />
         {error && <div className="mt-1 text-xs text-rose-700">{error}</div>}
       </td>
     </tr>
@@ -335,6 +343,7 @@ export default function ProductQueue({
                     actor={actor}
                     disabled={!r.editable}
                     onSaved={() => setExpanded((x) => ({ ...x, [key]: false }))}
+                    onChanged={refreshAllWorkOrders}
                   />
                 )}
                 </React.Fragment>
