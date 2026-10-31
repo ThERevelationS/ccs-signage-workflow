@@ -152,6 +152,7 @@ export function migratePrefs(raw) {
   if (!["compact", "comfortable", "spacious"].includes(merged.density)) merged.density = "comfortable";
   if (nav.landingPage && !NAV_CATALOG.some((i) => i.url === nav.landingPage)) nav.landingPage = "";
   if (!isObj(merged.pipeline)) merged.pipeline = base.pipeline;
+  if (!isObj(merged.pipeline)) merged.pipeline = base.pipeline;
   if (!["", "table", "board", "daily", "insights"].includes(merged.pipeline.defaultView)) merged.pipeline.defaultView = "";
   return merged;
 }
