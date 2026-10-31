@@ -41,10 +41,11 @@ function splitTopLevel(args) {
   return parts;
 }
 
-// Entity reads are `<Capitalized>.filter/list(`, `entity.filter/list(`, or
-// `entities.X[.]/entities[x].filter/list(` — array .filter((x)=>...) receivers
-// are lowercase locals and never match.
-const ENTITY_READ = /\b(?:[A-Z][A-Za-z0-9_]*|entity|entities(?:\.[A-Z][A-Za-z0-9_]*|\[[^\]]*\]))\s*\.\s*(filter|list)\s*\(/g;
+// Entity reads are `<Capitalized>.filter/list(`, `entity.filter/list(`,
+// `<name>Entity.filter/list(` (entryEntity, auditEntity, ...), or
+// `entities.X / entities[x].filter/list(` — array .filter((x)=>...) receivers
+// are lowercase locals that never match.
+const ENTITY_READ = /\b(?:[A-Z][A-Za-z0-9_]*|\w*[Ee]ntity|entities(?:\.[A-Z][A-Za-z0-9_]*|\[[^\]]*\]))\s*\.\s*(filter|list)\s*\(/g;
 
 function findEntityReads(src) {
   const calls = [];
@@ -87,6 +88,7 @@ function underLimitedReads(src) {
   for (const { method, args, call } of findEntityReads(src)) {
     if (/creation_request_key/.test(args)) continue;
     if (/\blimit\b/.test(args)) continue; // options-object read carrying its own limit
+    if (/GlobalSettings\.filter\(\s*\{\s*key\s*:/.test(call)) continue; // unique settings-key point lookup
     const parts = splitTopLevel(args).map((p) => p.trim());
     const hasLimit = method === 'filter' ? parts.length >= 3 && parts[2] !== '' : parts.length >= 2 && parts[1] !== '';
     if (hasLimit) continue;
@@ -97,7 +99,7 @@ function underLimitedReads(src) {
 
 function actionBlocks(entry) {
   const marks = [];
-  const blockRe = /if \(action === "([a-z_0-9]+)"\) \{/g;
+  const blockRe = /if \(action === ["']([a-z_0-9]+)["']\) \{/g;
   let m;
   while ((m = blockRe.exec(entry))) marks.push({ name: m[1], start: m.index });
   const blocks = {};
@@ -233,6 +235,33 @@ const PAGED_IMPORT = /import\s*\{\s*loadAllEntityRows\s*\}\s*from\s*["']\.\.\/\.
   assert.match(entry, /returned: scopedRows\.length/, 'list responses must include returned');
   assert.match(entry, /truncated: hasMore \|\| Boolean\(nextCursor\) \|\| rows\.length >= limit/, 'list responses must include truncated');
   assert.match(entry, /count: counted\.count, truncated: counted\.truncated/, 'count responses must flag a capped tally');
+}
+
+// ==== 9. timeClockAction ==================================================
+{
+  const entry = read('timeClockAction');
+  assert.match(entry, /import \{ loadAllEntityRows \} from '\.\.\/\.\.\/shared\/pagedEntityRows\.ts';/, 'timeClockAction must import loadAllEntityRows');
+  assert.match(entry, /function companyRangeQuery\(/, 'companyRangeQuery helper required');
+  const blocks = actionBlocks(entry);
+  const ranged = [
+    'payroll_export', 'labor_vs_estimate', 'overtime_cost_report',
+    'differential_hours_report', 'buddy_punch_report', 'device_usage_report',
+    'break_compliance_report',
+  ];
+  for (const action of ranged) {
+    assert.ok(blocks[action], `${action} block missing`);
+    assert.match(blocks[action], /companyRangeQuery\('clock_in'/, `${action} must push the date range server-side`);
+    assert.doesNotMatch(blocks[action], /entryEntity\.filter\(\{\}, '-clock_in'/, `${action} must not read the unfiltered table`);
+    assert.deepEqual(underLimitedReads(blocks[action]), [], `${action} still has an under-limited read`);
+  }
+  for (const action of ['payroll_export', 'overtime_cost_report', 'break_compliance_report', 'labor_vs_estimate', 'differential_hours_report', 'buddy_punch_report', 'device_usage_report', 'pause_reason_rollup']) {
+    assert.match(blocks[action], /loadAllEntityRows\(/, `${action} must use the paged loader`);
+  }
+  assert.match(blocks.pause_reason_rollup, /companyRangeQuery\('started_at'/, 'pause_reason_rollup must range started_at');
+  assert.match(blocks.crew_view, /entryEntity\.filter\(companyRangeQuery\('clock_in', todayKey, todayKey\), '-clock_in', 500\)/, 'crew_view must range to today with an explicit bound');
+  assert.match(blocks.crew_view, /loadAllEntityRows\(\{ entity: authorized/, 'crew_view roster must be paged');
+  assert.match(blocks.list_timeclock_audit, /auditEntity\.filter\(\{\}, '-created_date', 500\)/, 'list_timeclock_audit must sort server-side');
+  assert.doesNotMatch(blocks.list_timeclock_audit, /auditEntity\.filter\(\{\}\)/, 'list_timeclock_audit must not do an unordered read');
 }
 
 console.log('PASS scale-functions');
