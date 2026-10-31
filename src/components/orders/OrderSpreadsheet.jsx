@@ -1899,7 +1899,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       )}
 
       {/* Spreadsheet Table */}
-      <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 300px)' }}>
+      <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden ccs-scrollbar-hidden" style={{ height: 'calc(100vh - 300px)' }}>
       <table className="w-full border-collapse border rounded-lg order-spreadsheet" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
