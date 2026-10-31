@@ -189,7 +189,7 @@ export default function MyWorkflow() {
     setIsLoading(true);
     try {
       const [allOrders, allGeneralTasks] = await Promise.all([
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || []).filter((wo) => wo.completed !== true && wo.deleted !== true)
         ),
         loadAllEntityRows({
