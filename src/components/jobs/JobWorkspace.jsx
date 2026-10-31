@@ -13,6 +13,14 @@ import {
 } from "@/components/estimator/workOrderConversion";
 import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { FULFILLMENT_LABELS, overdueDays, parseLocalDate } from "@/components/queues/productQueueModel";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import {
+  PRODUCT_STAGE_MODE_SETTING_KEY,
+  productStageModeFromSetting,
+  suggestStageForProducts,
+} from "@/components/estimator/productStageSync";
 import {
   findWorkOrder,
   findWorkOrdersForEstimate,
@@ -169,6 +177,7 @@ export default function JobWorkspace() {
   const [busy, setBusy] = useState({});
   const [errors, setErrors] = useState({});
   const [transitionError, setTransitionError] = useState("");
+  const [stageSyncNotice, setStageSyncNotice] = useState("");
   const now = useMemo(() => new Date(), []);
 
   const wo = useMemo(() => {
@@ -211,16 +220,59 @@ export default function JobWorkspace() {
   const rows = useMemo(() => workspaceProductRows(wo), [wo]);
   const timeline = useMemo(() => jobActivityTimeline(wo), [wo]);
 
+  // Product → stage sync mode (GlobalSettings.productStatusDrivesStage):
+  // "off" renders nothing, "suggest" shows a one-click Apply chip, "auto"
+  // applies the suggestion whenever a product write lands — and always says
+  // so through stageSyncNotice, never silently.
+  const { data: stageSyncMode = "suggest" } = useQuery({
+    queryKey: ["productStatusDrivesStage"],
+    staleTime: 60000,
+    queryFn: async () => {
+      const record = await loadSingleGlobalSetting({
+        entity: staffEntities.GlobalSettings,
+        settingKey: PRODUCT_STAGE_MODE_SETTING_KEY,
+        label: "Product status stage sync",
+      }).catch(() => null);
+      return productStageModeFromSetting(record);
+    },
+  });
+
+  const stageSuggestion = useMemo(
+    () => (stageSyncMode === "off" ? null : suggestStageForProducts(wo?.products, wo?.current_stage)),
+    [wo, stageSyncMode]
+  );
+
+  const applyStageSuggestion = async (snapshot, suggestion) => {
+    if (!snapshot?.id || !suggestion?.suggested) return;
+    try {
+      await transitionWorkOrderFromLoadedSnapshot({
+        workOrder: snapshot,
+        newStage: suggestion.suggested,
+        label: "Job workspace product-stage sync",
+      });
+      setStageSyncNotice(`Stage moved to ${WORKSPACE_STAGES[suggestion.suggested] || suggestion.suggested} — ${suggestion.reason}.`);
+      refreshAllWorkOrders();
+    } catch (e) {
+      setTransitionError(e?.message || "The suggested stage move could not be applied.");
+    }
+  };
+
   const transition = async (row, patch) => {
     const key = row.productId;
     setBusy((b) => ({ ...b, [key]: true }));
     setErrors((e) => ({ ...e, [key]: "" }));
     setTransitionError("");
     try {
-      await transitionProductAndBuilderStatus({
+      const res = await transitionProductAndBuilderStatus({
         workOrderId: wo.id, product: row.product, patch, actor, label: "Job workspace",
       });
       refreshAllWorkOrders();
+      // Auto mode: the product write just landed, so re-roll the saved
+      // snapshot and move the board stage when products imply a later one.
+      if (stageSyncMode === "auto" && res?.workOrder) {
+        const auto = suggestStageForProducts(res.workOrder.products, res.workOrder.current_stage);
+        if (auto) await applyStageSuggestion(res.workOrder, auto);
+      }
     } catch (e) {
       const msg = e?.message || "Status update failed.";
       setErrors((prev) => ({ ...prev, [key]: msg }));
@@ -268,6 +320,12 @@ export default function JobWorkspace() {
           {transitionError}
         </div>
       )}
+      {stageSyncNotice && (
+        <div className="flex items-center justify-between gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+          <span>{stageSyncNotice}</span>
+          <button type="button" className="font-semibold hover:underline" onClick={() => setStageSyncNotice("")}>Dismiss</button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="rounded border border-gray-200 bg-white p-3">
@@ -305,6 +363,21 @@ export default function JobWorkspace() {
             )}
           </div>
         </div>
+        {stageSyncMode !== "off" && stageSuggestion && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs text-sky-800">
+            <span>
+              Products suggest stage: <span className="font-semibold">{WORKSPACE_STAGES[stageSuggestion.suggested] || stageSuggestion.suggested}</span>
+              <span className="text-sky-600"> — {stageSuggestion.reason}</span>
+            </span>
+            <button
+              type="button"
+              className="rounded border border-sky-300 bg-white px-1.5 py-0.5 font-semibold text-sky-700 hover:bg-sky-100"
+              onClick={() => applyStageSuggestion(wo, stageSuggestion)}
+            >
+              Apply
+            </button>
+          </div>
+        )}
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-3 lg:grid-cols-6">
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Customer</div><div className="mt-0.5 text-sm text-gray-800">{wo.customer_id ? <Link className="text-sky-700 hover:underline" to={`/EstimatorCustomers?customer=${wo.customer_id}`}>{wo.client_name || "—"}</Link> : (wo.client_name || "—")}</div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Contact</div><div className="mt-0.5 text-sm text-gray-800">{contactBits.join(" · ") || "—"}</div></div>
