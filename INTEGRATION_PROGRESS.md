@@ -3,13 +3,13 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 1 — deep-link spine + breadcrumbs. See plan file phase 1 spec. Agent batches pending.
+Phase 2 — estimate lifecycle relaxation (auto-revision Edit, trash/restore, no-inventory guarantee).
 
 ## Phase status
 | Phase | Status | Checkpoint |
 |---|---|---|
 | 0 discoverability | DONE | 6ae5eb989403141a197b3e9c |
-| 1 deep-link spine | NEXT | — |
+| 1 deep-link spine | DONE | 6ae5f41181aa42baa4d60652 |
 | 2 estimate relax | — | — |
 | 3 stage sync | — | — |
 | 4 customer 360 | — | — |
@@ -24,3 +24,4 @@ Phase 1 — deep-link spine + breadcrumbs. See plan file phase 1 spec. Agent bat
 ## Log
 - Phase 0: CommandPalette +10 pages (EXTRA_PAGE_NAMES, label overrides, WO→/JobWorkspace?wo=); Layout sidebar +Ops Reports/Statements/Reconciliation (+FileText/Scale icons); validator palette-coverage+sidebar asserts; PASS validator; esbuild clean.
 - Line endings vary per file (CommandPalette=CRLF, Layout=LF) — check before multi-line sandbox edits; JSON edit payloads must not contain lone backslashes (use [?] char-class).
+- Phase 1: deep-link spine landed (agents 2717acb6+6576e21b). WorkOrderDetailsDialog/EstimateDetail/ProductQueue→JobWorkspace+customer links; JobWorkspace→JobCosting(?job=)/POs(?wo=)/Statement/customer; Invoices/JobCosting/PO/CrmEvents/FollowupQueue/Statements cross-links. I wired PurchaseOrders ?wo= filter+banner and CustomerStatements ?customer= preselect (were dead params). JobCosting convention is ?job= NOT ?wo=. Imports skipped (no per-record ids). PASS link-spine-a+b.
