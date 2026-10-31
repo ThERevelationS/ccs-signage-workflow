@@ -1,5 +1,6 @@
 import { getModuleLabel } from "./moduleRegistry";
 import { mutateWorkOrderArrayField } from "../workflow/workOrderPersistence";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { acceptedCustomerUnitPrice } from "./customerPricing";
 
@@ -372,6 +373,23 @@ export async function transitionProductAndBuilderStatus({ workOrderId, product, 
       builderProductId: product.builder_product_id,
       fields: savedProduct || {},
     }).catch(() => ({ synced: false, reason: "error" }));
+  }
+  // Unified alerts: one product_transition event per actual status change —
+  // emitting here in the shared helper covers every caller (product queues,
+  // proof panel, job workspace). Fire-and-forget; a notify failure never
+  // blocks the transition.
+  const previousStatus = String(product?.operational_status || "none").trim() || "none";
+  const nextStatus = String(savedProduct?.operational_status || previousStatus).trim() || previousStatus;
+  if (saved?.id && savedProduct && previousStatus !== nextStatus) {
+    try {
+      void NotificationTriggers.productTransition(saved, {
+        productId: savedProduct.id || product?.id,
+        productDescription: savedProduct.description || product?.description,
+        previousStatus,
+        newStatus: nextStatus,
+        changedBy: actor,
+      });
+    } catch { /* notify is best-effort */ }
   }
   return { workOrder: saved, product: savedProduct, builderSynced: sync.synced === true };
 }
