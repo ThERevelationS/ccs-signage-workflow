@@ -17,6 +17,7 @@ export const RECORD_ROUTES = {
   po: { path: "/PurchaseOrders", param: "po", label: "Purchase Order" },
   customer: { path: "/Customer360", param: "id", label: "Customer" },
   opportunity: { path: "/Opportunities", param: "open", label: "Opportunity" },
+  changeorder: { path: "/ChangeOrders", param: "co", label: "Change Order" },
 };
 
 export const RECORD_KINDS = Object.keys(RECORD_ROUTES);
@@ -36,6 +37,9 @@ const KIND_ALIASES = {
   invoices: "invoice",
   customers: "customer",
   opportunities: "opportunity",
+  change_order: "changeorder",
+  changeorders: "changeorder",
+  co: "changeorder",
 };
 
 export function recordRoute(kind) {
