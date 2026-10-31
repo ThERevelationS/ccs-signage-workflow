@@ -422,13 +422,13 @@ export function getPermitGroupReadiness(group, today = "") {
     reviews.push(...handoff.reviews);
   });
 
-  if (lines.length === 0) blockers.push("Permit workflow has not been configured yet.");
+  if (lines.length === 0) blockers.push("This job's permit steps aren't set up yet.");
 
   openLines.forEach((line) => {
     const label = lineLabel(line);
-    if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} is missing its locality.`);
-    if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no workflow steps configured.`);
-    if (line?.submitted_date && !line?.permit_received_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was submitted but has no next follow-up scheduled.`);
+    if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} doesn't have an office picked yet.`);
+    if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no steps set up yet.`);
+    if (line?.submitted_date && !line?.permit_received_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was sent in — set a date to check back.`);
   });
 
   const hasOwner = [
@@ -436,7 +436,7 @@ export function getPermitGroupReadiness(group, today = "") {
     wo?.assigned_to,
     ...openLines.map((line) => line?.assigned_to),
   ].some((value) => normalizedAssignment(value));
-  if (openLines.length > 0 && !hasOwner) reviews.push("No responsible person is assigned to this permitting job.");
+  if (openLines.length > 0 && !hasOwner) reviews.push("Nobody is assigned to this job yet.");
 
   if (wo?._permittingRoutingMismatch) {
     reviews.push(wo._permittingRoutingWarning || "Work Order stage and Permitting task routing do not agree.");
@@ -533,10 +533,10 @@ export function getPermitGroupQueueState(group, today) {
     return {
       key: "needs_setup",
       nextAction: missingLocality && missingWorkflow
-        ? `Select the locality and workflow for ${lineLabel(setupLine)}.`
+        ? `Pick the office + steps for ${lineLabel(setupLine)}.`
         : missingLocality
-          ? `Select the locality for ${lineLabel(setupLine)}.`
-          : `Configure the permit workflow steps for ${lineLabel(setupLine)}.`,
+          ? `Pick the office for ${lineLabel(setupLine)}.`
+          : `Set up the steps for ${lineLabel(setupLine)}.`,
       followupDate: "",
       timingLabel: "Setup needed",
       urgencyDays: null,
@@ -583,7 +583,7 @@ export function getPermitGroupQueueState(group, today) {
   if (inspectionRequiredLine) {
     return {
       key: "needs_action",
-      nextAction: `Schedule the required inspection for ${lineLabel(inspectionRequiredLine)}.`,
+      nextAction: `Book the inspection for ${lineLabel(inspectionRequiredLine)}.`,
       followupDate: "",
       timingLabel: "Inspection needed",
       urgencyDays: null,
@@ -651,7 +651,7 @@ export function getPermitGroupQueueState(group, today) {
   if (receivedButOpenLine) {
     return {
       key: "needs_action",
-      nextAction: `Review the issued permit for ${lineLabel(receivedButOpenLine)} and mark the workflow line complete when its recorded obligations are finished.`,
+      nextAction: `The permit for ${lineLabel(receivedButOpenLine)} came back — check it over and mark the line done when everything's finished.`,
       followupDate: "",
       timingLabel: "Permit received",
       urgencyDays: null,
