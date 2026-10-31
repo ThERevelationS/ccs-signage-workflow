@@ -297,6 +297,18 @@ const TRIGGER_TYPES = [
   { value: "feature_report_submitted", label: "Feature / Bug Report Submitted", category: "Reports" },
   { value: "feature_report_status_changed", label: "Feature Report Status Changed", category: "Reports" },
   { value: "feature_report_completed", label: "Feature Report Marked Complete", category: "Reports" },
+
+  // -- Proofs / Products (unified alerts) --
+  { value: "proof_sent", label: "Proof Sent for Approval", category: "Proofs" },
+  { value: "proof_approved", label: "Proof Approved", category: "Proofs" },
+  { value: "product_transition", label: "Product Status Changed", category: "Products" },
+
+  // -- CRM / Purchasing / Invoicing / Reconciliation (unified alerts) --
+  { value: "crm_event_completed", label: "CRM Event Completed", category: "CRM" },
+  { value: "po_received", label: "Purchase Order Fully Received", category: "Purchasing" },
+  { value: "po_backordered", label: "Purchase Order Partially Received (Backordered)", category: "Purchasing" },
+  { value: "invoice_overdue", label: "Invoice Overdue", category: "Invoices" },
+  { value: "recon_variance", label: "Reconciliation Closed with Variance", category: "Reconciliation" },
 ];
 // Plain-English explanations shown when a trigger is picked — written for
 // non-technical users so they know exactly when a rule will fire.
@@ -307,6 +319,8 @@ const TRIGGER_ENTITY = {
   time_entry: "TimeEntry", permit_line: "PermitLineItem", jurisdiction_profile: "JurisdictionProfile",
   user: "AuthorizedEmail", estimate: "Estimate", quote: "Quote", email_group: "EmailGroup",
   automation: "AutomationRule", pending_import: "PendingImport", monitor_scan: "MonitorScanRun",
+  proof: "WorkOrder", product: "WorkOrder", crm_event: "OpportunityActivity",
+  po: "PurchaseOrder", invoice: "Invoice", recon: "ReconciliationBatch",
 };
 const entityForTrigger = (triggerType) => {
   const prefix = String(triggerType || "").split("_").slice(0, 2).join("_");
@@ -337,6 +351,14 @@ const TRIGGER_HELP = {
   time_entry_missing_clockout: "Fires when an employee forgets to clock out.",
   time_entry_long_shift: "Fires when a shift runs unusually long.",
   punch_exception: "Fires when a punch problem needs admin attention.",
+  proof_sent: "Fires when a product proof is sent to the customer for approval.",
+  proof_approved: "Fires when a product proof version is approved.",
+  product_transition: "Fires when a work-order product's operational status changes.",
+  crm_event_completed: "Fires when a CRM event is closed with an outcome.",
+  po_received: "Fires when a purchase order is fully received.",
+  po_backordered: "Fires when a purchase order receipt leaves open quantity on backorder.",
+  invoice_overdue: "Computed in the attention feed (due date passed with an open balance) - nothing emits this event yet.",
+  recon_variance: "Fires when a reconciliation batch closes with a non-zero variance.",
 };
 
 // Plain-English descriptions for each admin group — shown as button tooltips
@@ -414,6 +436,7 @@ const WORKFLOW_ENGINE_TRIGGER_SET = new Set([
   "assigned_to_changed",
   "permit_submitted", "permit_received",
   "permit_followup_due", "permit_followup_overdue",
+  "proof_sent", "proof_approved", "product_transition",
 ]);
 
 const ORDER_TRIGGER_SET = new Set([
@@ -492,6 +515,15 @@ const JURISDICTION_TRIGGER_SET = new Set([
   "regulation_alert_created",
 ]);
 
+// Unified-alerts record events - emitted client-side after verified writes
+// (CRM close-out, PO receiving, batch close). Record context, so send_email,
+// add_task, and add_note are the supported actions. invoice_overdue is
+// deliberately absent: nothing emits it (the attention feed computes overdue
+// invoices), so the editor keeps marking it "cannot run yet".
+const OPS_RECORD_TRIGGER_SET = new Set([
+  "crm_event_completed", "po_received", "po_backordered", "recon_variance",
+]);
+
 const ORDER_SUPPORTED_ACTIONS = new Set(["send_email"]);
 const RECORD_SUPPORTED_ACTIONS = new Set(["send_email", "add_task", "add_note"]);
 
@@ -511,7 +543,8 @@ const getTriggerSupportedActions = (triggerType) => {
   if (ORDER_DEADLINE_TRIGGER_SET.has(triggerType) || SALES_DEADLINE_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (TIME_CLOCK_TRIGGER_SET.has(triggerType)) return ORDER_SUPPORTED_ACTIONS;
   if (PENDING_IMPORT_TRIGGER_SET.has(triggerType) || FEATURE_REPORT_TRIGGER_SET.has(triggerType) ||
-      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType)) return RECORD_SUPPORTED_ACTIONS;
+      USER_TRIGGER_SET.has(triggerType) || JURISDICTION_TRIGGER_SET.has(triggerType) ||
+      OPS_RECORD_TRIGGER_SET.has(triggerType)) return RECORD_SUPPORTED_ACTIONS;
   if (DEADLINE_TRIGGER_SET.has(triggerType)) return DEADLINE_SUPPORTED_ACTIONS;
   return null;
 };
@@ -2944,6 +2977,11 @@ export default function AdminSettings() {
                 <Plus className="w-5 h-5 mr-2" /> New Automation
               </Button>
               </div>
+              <p className="mt-1 text-right text-[10px] text-gray-400">
+                Global settings keys: <code>automations_paused</code> and <code>notificationQuietHours</code> (controls above);{" "}
+                <code>productStatusDrivesStage</code> = <code>off | suggest | auto</code> (reserved: product-status to work-order stage coupling).
+                Per-notification-type toggles are each rule's own Enabled flag - the trigger registry has no per-type switch.
+              </p>
             </div>
 
             {/* Stats are authoritative only after a complete successful read. */}
