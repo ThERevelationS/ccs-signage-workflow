@@ -126,7 +126,16 @@
     "read": {
       "$or": [
         {
-          "data.product_group": "global"
+          "$and": [
+            {
+              "data.product_group": "global"
+            },
+            {
+              "user_condition": {
+                "role": "user"
+              }
+            }
+          ]
         },
         {
           "created_by_id": "{{user.id}}"
