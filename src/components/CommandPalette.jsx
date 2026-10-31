@@ -120,7 +120,7 @@ export default function CommandPalette() {
       for (const [key, group, Icon, sub, href] of RECORD_GROUPS) {
         for (const r of (records[key] || []).slice(0, 4)) {
           const title = r.title || r.company_name || r.project_name || r.invoice_number || r.po_number || r.change_order_number || r.estimate_number || r.description || "Record";
-          out.push({ kind: "record", label: title, sub: `${group} · ${sub(r)}`, path: href(r), icon: Icon });
+          out.push({ kind: "record", label: title, sub: `${group} · ${sub(r)}${r.legacy_source_id ? ` · CB #${r.legacy_source_id}` : ""}`, path: href(r), icon: Icon });
         }
       }
     }
