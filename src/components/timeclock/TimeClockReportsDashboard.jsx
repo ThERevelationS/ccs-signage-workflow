@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import TimeQuickPick from "@/components/timeclock/TimeQuickPick";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -377,18 +378,20 @@ export default function TimeClockReportsDashboard() {
 
           {dateRange === "custom" && (
             <div className="flex items-center gap-2">
-              <Input
-                type="date"
+              <TimeQuickPick
+                mode="date"
                 value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="w-36"
+                onChange={setCustomStartDate}
+                dayOffsets={[0, 1, 7, 14, 30]}
+                inputId="report-range-from"
               />
               <span className="text-gray-400">to</span>
-              <Input
-                type="date"
+              <TimeQuickPick
+                mode="date"
                 value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="w-36"
+                onChange={setCustomEndDate}
+                dayOffsets={[0, -1, 1, 7, 14]}
+                inputId="report-range-to"
               />
             </div>
           )}
