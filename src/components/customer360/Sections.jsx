@@ -10,6 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { Section, DataList, BackendRequired } from "./DataList";
+import { EmptyState, RecordLink, StatusChip as KitStatusChip } from "@/components/kit";
 import {
   activityKind,
   activityLabel,
@@ -30,23 +31,20 @@ import {
   opportunityLabel,
   primaryContactName,
   purchaseOrderLabel,
-  statusTone,
   usd,
   workOrderLabel,
   workOrderStage,
   CLOSED_OPPORTUNITY_STAGES,
 } from "./customer360Model";
 
-const chip = (label, tone) =>
-  label ? (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${tone}`}>
-      {label.replace(/_/g, " ")}
-    </span>
+// Shared kit chip: one status -> tone vocabulary app-wide. Blank values still
+// render the bare em-dash the old chip() helper emitted.
+const StatusChip = ({ value }) =>
+  clean(value) ? (
+    <KitStatusChip status={value} size="sm" />
   ) : (
     <span className="text-slate-300 dark:text-slate-600">—</span>
   );
-
-const StatusChip = ({ value }) => chip(clean(value), statusTone(value));
 
 const linkCls = "font-medium text-sky-600 hover:underline dark:text-sky-400";
 const sub = "mt-0.5 text-xs text-slate-400 dark:text-slate-500";
