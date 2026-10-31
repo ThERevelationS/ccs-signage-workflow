@@ -2,6 +2,7 @@ import { base44 } from "@/api/base44Client";
 import { getSessionToken } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
+import { appParams } from "@/lib/app-params";
 const EmailNotificationSettings = base44.entities.EmailNotificationSettings;
 const User = base44.entities.User;
 
@@ -151,8 +152,12 @@ const getRecipients = async (rule, workOrder) => {
         if (workOrder?.created_by) emails.add(workOrder.created_by);
         break;
       case "all_admins":
-        const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
-        admins.forEach(admin => emails.add(admin.email));
+        // Platform User reads only succeed for Base44-authenticated sessions —
+        // for EmailGate staff this was a guaranteed 401 per rule trigger.
+        if (appParams.token) {
+          const admins = await loadAllEntityRows({ entity: User, query: { role: "admin" }, sort: null, label: "Notification admin recipients" });
+          admins.forEach(admin => emails.add(admin.email));
+        }
         break;
       case "custom_list":
         if (recipient.value) {
