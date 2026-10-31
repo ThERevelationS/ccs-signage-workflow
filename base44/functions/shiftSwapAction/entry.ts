@@ -1,8 +1,9 @@
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
-import { base44 } from '@/api/base44Client';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 export async function handler(request: Request) {
   try {
+    const base44 = createClientFromRequest(request);
     const body = await request.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     const swaps = base44.asServiceRole.entities.ShiftSwapRequest;
