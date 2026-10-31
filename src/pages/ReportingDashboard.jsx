@@ -45,7 +45,7 @@ export default function ReportingDashboard() {
     setReadError("");
     try {
       const [wos, us] = await Promise.all([
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
