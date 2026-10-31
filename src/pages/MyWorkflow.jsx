@@ -155,6 +155,17 @@ export default function MyWorkflow() {
     document.title = "My Workflow - Workflow Manager";
   }, []);
 
+  // Mount the first rows immediately and append the rest in idle batches so a
+  // long work list does not block first paint. Appending at the end is safe.
+  const [visibleRows, setVisibleRows] = useState(60);
+  useEffect(() => {
+    if (visibleRows >= workOrders.length) return;
+    const schedule = window.requestIdleCallback || ((fn) => window.setTimeout(fn, 50));
+    const cancel = window.cancelIdleCallback || window.clearTimeout;
+    const id = schedule(() => setVisibleRows((c) => Math.min(c + 80, workOrders.length)));
+    return () => cancel(id);
+  }, [visibleRows, workOrders.length]);
+
   useEffect(() => {
     if (currentUser) {
       loadMyWorkOrders();
@@ -746,7 +757,7 @@ export default function MyWorkflow() {
               </tr>
             </thead>
             <tbody>
-              {visibleWorkOrders.map((wo, index) => {
+              {visibleWorkOrders.slice(0, visibleRows).map((wo, index) => {
                 const myTasks = getMyTasksForWorkOrder(wo);
                 
                 return (
