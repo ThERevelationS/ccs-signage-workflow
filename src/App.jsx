@@ -40,6 +40,7 @@ const VinylSettings = lazyPage(() => import('./pages/VinylSettings'));
 const VinylInventory = lazyPage(() => import('./pages/VinylInventory'));
 const SalesHome = lazyPage(() => import('./pages/SalesHome'));
 const EstimatorQueues = lazyPage(() => import('./pages/EstimatorQueues'));
+const ProductQueues = lazyPage(() => import('./pages/ProductQueues'));
 const EstimatorCustomers = lazyPage(() => import('./pages/EstimatorCustomers'));
 const QuickPrice = lazyPage(() => import('./pages/QuickPrice'));
 const EstimatorProducts = lazyPage(() => import('./pages/EstimatorProducts'));
@@ -100,6 +101,7 @@ const ESTIMATOR_PAGES = {
   VinylInventory,
   SalesHome,
   EstimatorQueues,
+  ProductQueues,
   EstimatorCustomers,
   QuickPrice,
   EstimatorProducts,
