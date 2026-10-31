@@ -67,6 +67,11 @@ const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   jurisdiction_profile_created: 'JurisdictionProfile',
   jurisdiction_profile_updated: 'JurisdictionProfile',
   regulation_alert_created: 'RegulationAlert',
+  crm_event_completed: 'OpportunityActivity',
+  po_received: 'PurchaseOrder',
+  po_backordered: 'PurchaseOrder',
+  invoice_overdue: 'Invoice',
+  recon_variance: 'ReconciliationBatch',
 };
 
 // Human labels for record-bearing domains — drives the default email subject.
@@ -81,6 +86,10 @@ const RECORD_LABELS: Record<string, string> = {
   AuthorizedEmail: 'User Account',
   JurisdictionProfile: 'Jurisdiction Profile',
   RegulationAlert: 'Regulation Alert',
+  OpportunityActivity: 'CRM Event',
+  PurchaseOrder: 'Purchase Order',
+  Invoice: 'Invoice',
+  ReconciliationBatch: 'Reconciliation Batch',
 };
 
 // Named events arrive with event_type === the UI's trigger vocabulary; the
@@ -260,6 +269,14 @@ async function matchesTrigger(base44: any, trigger: any, eventType: string, work
     case 'jurisdiction_profile_created':
     case 'jurisdiction_profile_updated':
     case 'regulation_alert_created':
+    case 'proof_sent':
+    case 'proof_approved':
+    case 'product_transition':
+    case 'crm_event_completed':
+    case 'po_received':
+    case 'po_backordered':
+    case 'invoice_overdue':
+    case 'recon_variance':
     case 'pto_balance_low':
     case 'permit_submitted':
     case 'permit_received':
