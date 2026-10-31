@@ -3,7 +3,7 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 11 consolidated verification + hardening (regression sweep, dead-end/UX audit, Playwright pass where reachable). NOTE: a concurrent workstream (Personal Workspace Settings, phases 1-5) is active on App.jsx/Layout/index.css — re-read shared files before editing.
+All 11 plan phases complete. Playwright visual pass blocked (no sandbox preview URL; browser tests need playwright installed). Remaining: owner-side SMTP env vars + real CoreBridge CSVs for the migration run. NOTE: a concurrent workstream (Personal Workspace Settings, phases 1-5) is active on App.jsx/Layout/index.css — re-read shared files before editing.
 
 ## Phase status
 | Phase | Status | Checkpoint |
@@ -19,7 +19,7 @@ Phase 11 consolidated verification + hardening (regression sweep, dead-end/UX au
 | 8 smtp | DONE | 6ae61923+deploy |
 | 9 ui kit | DONE | 6ae63a44 |
 | 10 migration | DONE | 6ae64021 |
-| 11 verify | — | — |
+| 11 verify | DONE* | 6ae64d34 |
 
 ## Log
 - Phase 0: CommandPalette +10 pages (EXTRA_PAGE_NAMES, label overrides, WO→/JobWorkspace?wo=); Layout sidebar +Ops Reports/Statements/Reconciliation (+FileText/Scale icons); validator palette-coverage+sidebar asserts; PASS validator; esbuild clean.
