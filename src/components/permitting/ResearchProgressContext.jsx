@@ -16,7 +16,7 @@ export function ResearchProgressProvider({children}){
   let stopped=false,polling=false,lastRun=null,knownFailure=false,lastProgressAt=Date.now(),lastProgressKey="";
   const statusPayload=()=>({action_token:id,...(typeof window!=='undefined'&&window.localStorage?.getItem('sss_session_token')?{session_token:window.localStorage.getItem('sss_session_token')}:{})});
   async function poll(){if(stopped||polling||dismissedActions.current.has(id)||document.hidden||isFleetCoolingDown())return;polling=true;const version=nextStatusVersion(id);try{const res=await base44.functions.invoke('permittingScanStatus',statusPayload());if(stopped||statusVersions.current.get(id)!==version)return;const run=res?.data?.run;if(run){const key=[run.status,run.stage,run.processed,run.updated_date].join("|");if(key!==lastProgressKey){lastProgressKey=key;lastProgressAt=Date.now();}lastRun=run;savedRuns.current.set(id,run);put(id,{...run,id,label});}}catch{if(!stopped&&statusVersions.current.get(id)===version)put(id,{activity_warning:'Live activity temporarily unavailable; request may still be running.'});}finally{polling=false;}}
-  const pollDelay=()=>Date.now()-lastProgressAt>30000?9000:3000;let timer=null;const tick=()=>{poll().finally(()=>{if(!stopped)timer=setTimeout(tick,pollDelay());});};timer=setTimeout(tick,pollDelay());
+  const pollDelay=()=>Date.now()-lastProgressAt>30000?15000:5000;let timer=null;const tick=()=>{poll().finally(()=>{if(!stopped)timer=setTimeout(tick,pollDelay());});};timer=setTimeout(tick,pollDelay());
   try{
    const res=await base44.functions.invoke(name,{...statusPayload(),...payload,action_token:id});const data=res?.data || res;
    await poll();nextStatusVersion(id);if(data.scan_run)put(id,{...data.scan_run,id,label});
