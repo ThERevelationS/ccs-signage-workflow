@@ -5,6 +5,9 @@ import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../..
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
+// Drive file/folder IDs are URL-safe base64-like strings; 'root' is the My Drive alias.
+const isDriveFileId = (value: unknown) => typeof value === 'string' && /^[A-Za-z0-9_-]{1,256}$/.test(value);
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -37,8 +40,12 @@ Deno.serve(async (req) => {
     // Action: List folders for folder picker
     if (action === 'listFolders') {
       const parentId = body.parentId || 'root';
+      if (!isDriveFileId(parentId)) {
+        return Response.json({ error: 'Invalid parentId' }, { status: 400 });
+      }
+      const query = encodeURIComponent(`'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
       const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q='${parentId}'+in+parents+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id,name)&orderBy=name`,
+        `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)&orderBy=name`,
         {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         }
@@ -57,6 +64,9 @@ Deno.serve(async (req) => {
     // Action: Create a new folder
     if (action === 'createFolder') {
       const { folderName, parentId } = body;
+      if (parentId && !isDriveFileId(parentId)) {
+        return Response.json({ error: 'Invalid parentId' }, { status: 400 });
+      }
       const metadata = {
         name: folderName || 'SignShop Backups',
         mimeType: 'application/vnd.google-apps.folder',

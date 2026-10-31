@@ -14,7 +14,7 @@
           "with": {
             "function_name": "checkDeadlineReminders",
             "args": {
-              "_workflow_capability": "ccs-wf-cap-4ba01eaa5cf22c282aae8f728b31ce78"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_CHECK_DEADLINE_REMINDERS}"
             }
           },
           "then": "end"

@@ -30,3 +30,6 @@ dist-ssr
 .env
 base44/.app.jsonc
 dist-nomin
+
+# esbuild bundles written by scripts/test-*.mjs
+scripts/.tmp-*

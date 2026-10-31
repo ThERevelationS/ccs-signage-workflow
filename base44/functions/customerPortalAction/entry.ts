@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { getWorkflowInvocationCapability } from "../../shared/workflowInvocationCapability.ts";
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
   createFoundationRecordWithRecovery,
@@ -1033,7 +1034,7 @@ Deno.serve(async (req) => {
         <p style="font-size:12px;color:#94a3b8">If the button does not work, paste this into your browser:<br><span style="word-break:break-all">${url}</span></p>
       </div>`;
       const sent = await base44.asServiceRole.functions
-        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: "ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc" })
+        .invoke("sendGmail", { to, subject, body: html, _workflow_capability: getWorkflowInvocationCapability("sendGmail") })
         .catch((e: any) => ({ data: { error: e?.message || String(e) } }));
       const sendResult = sent?.data || sent;
       if (sendResult?.error || sendResult?.success === false) {

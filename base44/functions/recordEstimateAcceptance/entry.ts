@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const METHODS = new Set(['signed_quote', 'email', 'verbal', 'in_person', 'other']);
@@ -231,7 +232,7 @@ Deno.serve(async (req) => {
 Total: $${Number(estimate.quote_total || 0).toFixed(2)}
 Method: ${acceptanceMethod}
 ${notes ? `Notes: ${notes}` : ''}`.trim(),
-          _workflow_capability: 'ccs-sendGmail-acceptance-notify',
+          _workflow_capability: getWorkflowInvocationCapability('sendGmail'),
         });
       }
     } catch (notifyError) {
@@ -246,7 +247,7 @@ ${notes ? `Notes: ${notes}` : ''}`.trim(),
           to: acceptedByEmail,
           subject: `Quote acceptance confirmed: ${custProject}`,
           body: `Thank you${acceptedByName ? `, ${acceptedByName}` : ''} — your approval of quote version ${quoteVersion} for ${custProject} ($${Number(estimate.quote_total || 0).toFixed(2)}) has been recorded. We'll be in touch about next steps.`,
-          _workflow_capability: 'ccs-sendGmail-acceptance-confirm',
+          _workflow_capability: getWorkflowInvocationCapability('sendGmail'),
         });
       }
     } catch (confirmError) {

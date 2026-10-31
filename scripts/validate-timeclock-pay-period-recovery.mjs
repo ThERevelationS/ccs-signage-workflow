@@ -10,8 +10,19 @@ import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembersh
 
 const secret = 'synthetic-session-signing-key';
 const staleMonitorWorkflow = readFileSync(new URL('../base44/workflows/Time Clock Stale Shift Monitor.jsonc', import.meta.url), 'utf8');
-const staleMonitorCapability = staleMonitorWorkflow.match(/"_workflow_capability"\s*:\s*"([^"]+)"/)?.[1] || '';
-assert.ok(staleMonitorCapability, 'Synthetic stale-shift monitor workflow capability must be present');
+const staleMonitorCapabilitySecret = 'WORKFLOW_CAPABILITY_TIME_CLOCK_STALE_SHIFT_MONITOR';
+assert.equal(
+  staleMonitorWorkflow.match(/"_workflow_capability"\s*:\s*"([^"]+)"/)?.[1],
+  '${secret:' + staleMonitorCapabilitySecret + '}',
+  'Stale-shift monitor workflow must reference its deploy-time secret, never a raw capability',
+);
+const staleMonitorCapability = 'synthetic-stale-shift-monitor-capability-0123456789abcdef';
+const capabilitySource = readFileSync(new URL('../base44/shared/workflowInvocationCapability.ts', import.meta.url), 'utf8')
+  .replace(/^export /gm, '');
+const syntheticEnv = {
+  SESSION_SIGNING_SECRET: secret,
+  [staleMonitorCapabilitySecret]: staleMonitorCapability,
+};
 const source = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
 const compiled = transformSync(
   source
@@ -25,6 +36,8 @@ const compiled = transformSync(
       'const buildStatusLite = () => ({ requires_full_status: true });')
     .replace("import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';",
       'const processWorkflowTriggerEvent = async (args) => { const { base44: _ignored, ...rest } = args || {}; globalThis.__emittedWorkflowEvents.push(JSON.parse(JSON.stringify(rest))); };')
+    .replace("import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';",
+      () => `const { hasWorkflowInvocationCapability } = (() => {\n${capabilitySource}\nreturn { hasWorkflowInvocationCapability };\n})();`)
     .replace("import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';",
       'const { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } = globalThis.__payrollMembershipEvidence;'),
   { loader: 'ts', format: 'cjs', target: 'es2022' },
@@ -130,7 +143,7 @@ function setup({ entryCount = 1, serverNow = null, auditIdForRequest = null } = 
     __syntheticClient: () => client,
     __emittedWorkflowEvents: emittedEvents,
     __payrollMembershipEvidence: { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence },
-    Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => key === 'SESSION_SIGNING_SECRET' ? secret : '' } },
+    Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => syntheticEnv[key] || '' } },
     crypto: webcrypto, TextEncoder, TextDecoder, Response, Request, btoa, atob,
     Date: ServerDate, console: { error: () => {} },
   });

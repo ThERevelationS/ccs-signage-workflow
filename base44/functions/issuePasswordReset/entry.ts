@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
@@ -116,7 +117,7 @@ Deno.serve(async (req) => {
       to: target.email,
       subject: 'Reset Your Sign Shop Workflow Password',
       body: emailBody,
-      _workflow_capability: 'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc',
+      _workflow_capability: getWorkflowInvocationCapability('sendGmail'),
     });
     const sendResult = sendResponse?.data || sendResponse;
     if (sendResult?.error || sendResult?.success === false) {
