@@ -53,6 +53,7 @@ const CustomerStatements = lazyPage(() => import('./pages/CustomerStatements'));
 const PricingAdmin = lazyPage(() => import('./pages/PricingAdmin'));
 const CommsFollowups = lazyPage(() => import('./pages/CommsFollowups'));
 const Customer360 = lazyPage(() => import('./pages/Customer360'));
+const CbMigration = lazyPage(() => import('./pages/CbMigration'));
 const EstimatorProducts = lazyPage(() => import('./pages/EstimatorProducts'));
 const EstimatorParts = lazyPage(() => import('./pages/EstimatorParts'));
 const EstimatorSettings = lazyPage(() => import('./pages/EstimatorSettings'));
@@ -124,6 +125,7 @@ const ESTIMATOR_PAGES = {
   PricingAdmin,
   CommsFollowups,
   Customer360,
+  CbMigration,
   EstimatorProducts,
   EstimatorParts,
   EstimatorSettings,
