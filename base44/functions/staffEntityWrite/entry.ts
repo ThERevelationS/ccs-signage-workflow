@@ -35,6 +35,7 @@ const WRITE_OPS: Record<string, Set<string>> = {
   PricingTierMatrix: new Set(['create', 'updateMany', 'delete']),
   RegulationAlert: new Set(['update', 'delete']),
   SavedQueueView: new Set(['create', 'updateMany', 'delete']),
+  SalesLocation: new Set(['create', 'update']),
   SipChecklistTemplate: new Set(['create', 'update', 'delete']),
   WorkOrder: new Set(['create', 'updateMany']),
   TaxGroup: new Set(['create', 'update', 'delete']),
@@ -75,6 +76,9 @@ Deno.serve(async (req) => {
     // Tax rates feed every quote's tax_percent — admin-gated like jurisdictions.
     if ((entityName === 'TaxGroup' || entityName === 'MarkupTier') && user.role !== 'admin') {
       return Response.json({ error: 'Only administrators can manage tax groups.' }, { status: 403 });
+    }
+    if (entityName === 'SalesLocation' && user.role !== 'admin') {
+      return Response.json({ error: 'Only administrators can manage locations.' }, { status: 403 });
     }
 
     const data = body?.data && typeof body.data === 'object' && !Array.isArray(body.data) ? body.data : {};
