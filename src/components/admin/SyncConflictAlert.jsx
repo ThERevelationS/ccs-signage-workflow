@@ -36,7 +36,7 @@ export default function SyncConflictAlert({currentUser,sessionToken}) {
   usePolling(async()=>{
     if(isFleetCoolingDown())return;
     try{const v=await loadConflictCount(sessionToken);setCount(v.count);setRecords(v.records);setError('');}catch{setError('Conflict alerts unavailable');}
-  },60000,{enabled:currentUser?.role==='admin'});
+  },60000,{enabled:currentUser?.role==='admin',initialDelayMs:3000});
   if(currentUser?.role!=='admin'||!count&&!error)return null;
   return <Link to="/AdminSettings?tab=sync_conflicts" role="status" className="fixed bottom-20 right-3 z-40 flex min-h-11 max-w-xs items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm font-medium shadow-lg"><AlertTriangle className="h-4 w-4 shrink-0"/>{error||`${count} value differences across ${records} record${records===1?'':'s'} — not write errors`}</Link>;
 }
