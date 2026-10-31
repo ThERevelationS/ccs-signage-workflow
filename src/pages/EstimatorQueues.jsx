@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { localDateStamp, formatInCompanyTz } from "@/components/estimator/quoteLifecycle";
+import { localDateStamp, formatInCompanyTz, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, softDeleteEstimateFromLoadedSnapshot, expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { duplicateEstimate, newEstimateCreationKey } from "@/components/estimator/estimateCreationService";
 import { ensureEstimateLifecycleRevision, getOpenEstimateRevision } from "@/components/estimator/estimateRevisionService";
@@ -62,10 +62,9 @@ function expiryOf(e) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(override)) return override;
   const validDays = e.quote_valid_days ?? e.valid_days;
   if ((e.status || "draft") !== "sent" || !e.quote_issue_date || !validDays) return null;
-  const d = new Date(e.quote_issue_date);
-  if (Number.isNaN(d.getTime())) return null;
-  d.setDate(d.getDate() + Number(validDays));
-  return localDateStamp(d);
+  // quote_issue_date is date-only; the shared helper parses it as local
+  // midnight (a bare new Date would shift the result one day early).
+  return quoteExpirationDate(e.quote_issue_date, Number(validDays)) || null;
 }
 
 // The EXPIRED badge is computed at read, but reporting needs a persisted
