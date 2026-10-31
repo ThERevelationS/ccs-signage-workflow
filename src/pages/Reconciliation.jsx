@@ -7,6 +7,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { BUCKET_LABELS, TENDER_BUCKETS } from "@/components/reconciliation/reconciliationModel";
 import {
   ChevronRight,
+  Download,
   Loader2,
   Plus,
   RefreshCw,
@@ -14,6 +15,13 @@ import {
   Vault,
   X,
 } from "lucide-react";
+import { loadGlLookup } from "@/components/shared/loadGlLookup";
+import { downloadCsv } from "@/components/shared/exportCsv";
+import {
+  GL_EXPORT_HEADERS,
+  glExportRows,
+  paymentsToGlEntries,
+} from "@/components/shared/glExport";
 
 const clean = (v) => String(v ?? "").trim();
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -48,6 +56,8 @@ function BatchDetail({ sessionToken, batchId, onClose }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [glNote, setGlNote] = useState("");
+  const [glBusy, setGlBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -62,12 +72,42 @@ function BatchDetail({ sessionToken, batchId, onClose }) {
   const batch = detail?.batch;
   const payments = detail?.payments || [];
 
+  // GL export: one receipt journal line per swept payment. gl_account resolves
+  // through the MarkupCategory/Inventory/PartTemplate mappings; unmapped rows
+  // still export and are counted so Manage Accounts can be completed.
+  const downloadGl = async () => {
+    if (glBusy || payments.length === 0) return;
+    setGlBusy(true);
+    setGlNote("");
+    try {
+      const lookup = await loadGlLookup();
+      const { rows, unmapped } = glExportRows(paymentsToGlEntries({ payments, batch }), lookup);
+      const name = clean(batch?.batch_number) || "batch";
+      downloadCsv(`gl-export-${name}.csv`, GL_EXPORT_HEADERS, rows);
+      setGlNote(unmapped
+        ? `${unmapped} of ${rows.length} rows exported without a GL account — map categories/items in Manage Accounts.`
+        : `${rows.length} rows exported — all GL-mapped.`);
+    } catch (e) {
+      setGlNote(e?.message || "GL export failed.");
+    } finally {
+      setGlBusy(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4" onClick={onClose}>
       <div className="my-8 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{clean(batch?.batch_number) || "Batch"}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={downloadGl} disabled={loading || glBusy || payments.length === 0}
+              title="Journal-style CSV (date, memo, entity_ref, gl_account, debit, credit) for this batch's receipts"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
+              {glBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              Download GL export
+            </button>
+            <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
+          </div>
         </div>
         {loading ? (
           <div className="flex items-center justify-center py-12 text-slate-500"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading batch…</div>
@@ -129,6 +169,7 @@ function BatchDetail({ sessionToken, batchId, onClose }) {
                 </tbody>
               </table>
             </div>
+            {glNote && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{glNote}</p>}
           </>
         ) : null}
       </div>
