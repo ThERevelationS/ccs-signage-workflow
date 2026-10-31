@@ -452,7 +452,8 @@ const acceptFn = readFileSync('base44/functions/recordEstimateAcceptance/entry.t
 assert.match(acceptFn, /javascript\|data\|vbscript/, 'acceptance evidence_reference must reject dangerous URL schemes');
 
 const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
-assert.match(poPageV, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
+const receivePanelSrc = existsSync('src/components/procurement/ReceivePanel.jsx') ? readFileSync('src/components/procurement/ReceivePanel.jsx', 'utf8') : '';
+assert.match(poPageV + receivePanelSrc, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
 const layoutShell = readFileSync('src/Layout.jsx', 'utf8');
 assert.match(layoutShell, /AttentionBell/, 'shell must mount the attention bell');
 assert.ok(existsSync('src/components/workflow/AttentionBell.jsx'), 'attention bell component must exist');
