@@ -12,6 +12,7 @@ export function usePolling(
     runOnMount = true,
     refreshOnFocus = true,
     minFocusGapMs = 15000,
+    initialDelayMs = 0,
   } = {},
 ) {
   const fnRef = useRef(fn);
@@ -79,7 +80,20 @@ export function usePolling(
       if (document.visibilityState === "visible") refreshIfDue();
     };
 
-    if (runOnMount) run();
+    let initialTimer = null;
+    if (runOnMount) {
+      // Chrome widgets (bells, banners, badges) pass initialDelayMs so their
+      // first call yields the request pool to the page's own data on load.
+      if (initialDelayMs > 0) {
+        initialTimer = setTimeout(() => {
+          initialTimer = null;
+          if (isHidden() || isFleetCoolingDown()) return;
+          run();
+        }, jitteredDelay(initialDelayMs, jitter));
+      } else {
+        run();
+      }
+    }
     schedule();
 
     if (refreshOnFocus) {
@@ -90,13 +104,14 @@ export function usePolling(
 
     return () => {
       clearTimer();
+      if (initialTimer !== null) clearTimeout(initialTimer);
       if (refreshOnFocus) {
         document.removeEventListener("visibilitychange", onVisibilityChange);
         window.removeEventListener("focus", refreshIfDue);
         window.removeEventListener("online", refreshIfDue);
       }
     };
-  }, [enabled, intervalMs, pauseWhenHidden, jitter, runOnMount, refreshOnFocus, minFocusGapMs, run]);
+  }, [enabled, intervalMs, pauseWhenHidden, jitter, runOnMount, refreshOnFocus, minFocusGapMs, initialDelayMs, run]);
 
   return { runNow };
 }
