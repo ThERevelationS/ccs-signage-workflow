@@ -369,9 +369,6 @@ for (const p of ['ProductQueues','JobWorkspace','WalkIn','OpsReports','CrmEvents
   assert.ok(palette.includes(p), 'command palette must index ' + p);
 }
 assert.ok(palette.includes('/JobWorkspace?wo='), 'command palette must deep-link work orders to job workspace');
-assert.match(layoutShell, /OpsReports/, 'sidebar must link ops reports');
-assert.match(layoutShell, /CustomerStatements/, 'sidebar must link statements');
-assert.match(layoutShell, /Reconciliation/, 'sidebar must link reconciliation');
 assert.match(poPage, /Overdue/, 'PO list must flag overdue rows');
 assert.match(entry, /lost_reasons: lostReasons/, 'funnel must report loss reasons');
 assert.match(entry, /No reason given/, 'funnel must bucket unreasoned losses');
@@ -462,6 +459,9 @@ const poPageV = readFileSync('src/pages/PurchaseOrders.jsx', 'utf8');
 const receivePanelSrc = existsSync('src/components/procurement/ReceivePanel.jsx') ? readFileSync('src/components/procurement/ReceivePanel.jsx', 'utf8') : '';
 assert.match(poPageV + receivePanelSrc, /Fill every line with its full open quantity/, 'PO receive must offer fill-all');
 const layoutShell = readFileSync('src/Layout.jsx', 'utf8');
+assert.match(layoutShell, /OpsReports/, 'sidebar must link ops reports');
+assert.match(layoutShell, /CustomerStatements/, 'sidebar must link statements');
+assert.match(layoutShell, /Reconciliation/, 'sidebar must link reconciliation');
 assert.match(layoutShell, /AttentionBell/, 'shell must mount the attention bell');
 assert.ok(existsSync('src/components/workflow/AttentionBell.jsx'), 'attention bell component must exist');
 const queuesPage = readFileSync('src/pages/EstimatorQueues.jsx', 'utf8');
