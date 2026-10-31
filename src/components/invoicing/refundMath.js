@@ -54,11 +54,13 @@ export function paymentRefundable(payment, payments = [], excludeKey = "") {
 }
 
 // Totals for display chips: sum of issued credits / refunds (positive numbers).
+// Only counted rows contribute — a voided credit/refund row is still visible in
+// the ledger but no longer reduces the collected balance.
 export function creditedTotal(payments = []) {
-  return money((payments || []).filter(isCreditMemoRow).reduce((sum, p) => sum + Math.abs(Number(p?.amount) || 0), 0));
+  return money((payments || []).filter((p) => isCountedRow(p) && isCreditMemoRow(p)).reduce((sum, p) => sum + Math.abs(Number(p?.amount) || 0), 0));
 }
 export function refundedTotal(payments = []) {
-  return money((payments || []).filter(isRefundRow).reduce((sum, p) => sum + Math.abs(Number(p?.amount) || 0), 0));
+  return money((payments || []).filter((p) => isCountedRow(p) && isRefundRow(p)).reduce((sum, p) => sum + Math.abs(Number(p?.amount) || 0), 0));
 }
 
 // Signed currency display: "-$30.00" rather than "$-30.00".
