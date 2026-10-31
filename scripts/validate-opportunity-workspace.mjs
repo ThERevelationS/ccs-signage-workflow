@@ -15,6 +15,7 @@ for (const entity of ['Opportunity', 'OpportunityIntake', 'EstimatingRequest', '
 for (const entity of ['CustomerContact', 'CustomerLocation']) {
   const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
   assert.ok(schema.includes('"customer_id"'), `${entity} must link its owning Customer`);
+  assert.match(schema, /"read":\s*\{\s*"user_condition":\s*\{\s*"role":\s*"__[a-z_]+backend_only__"/, `${entity} read must stay backend-only (served via staffDataRead)`);
   assert.match(schema, /"delete":\s*\{[^}]*"role":\s*"(__[a-z_]+__|admin|__[a-z_]+backend_only__)"/, `${entity} delete must stay restricted`);
 }
 
