@@ -60,7 +60,10 @@ export default function CustomerStatements() {
   const actor = clean(currentUser?.email || currentUser?.full_name);
   const [query, setQuery] = useState("");
   const [asOf, setAsOf] = useState(today());
-  const [selected, setSelected] = useState(new Set());
+  const [selected, setSelected] = useState(() => {
+    const id = new URLSearchParams(window.location.search).get("customer");
+    return new Set(id && String(id).trim() ? [id] : []);
+  });
   const [statements, setStatements] = useState(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
