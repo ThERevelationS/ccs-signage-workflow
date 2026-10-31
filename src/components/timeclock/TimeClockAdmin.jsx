@@ -1,5 +1,6 @@
 import { useState, useEffect, Fragment } from "react";
 import { base44 } from "@/api/base44Client";
+import { escapeHtml } from "@/lib/escapeHtml";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -977,15 +978,16 @@ export default function TimeClockAdmin() {
   // Printable punch card for one employee across the filtered range - used
   // for disputes and payroll verification.
   const printPunchCard = (user) => {
+    const safeName = escapeHtml(user.name);
     const rows = filteredEntries
       .filter((e) => e.user_email === user.email)
       .sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in))
-      .map((e) => `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "yyyy-MM-dd")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "h:mm a")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.clock_out ? safeFormat(e.clock_out, "h:mm a") : "Active"}</td><td style="padding:8px;border-bottom:1px solid #ddd;text-align:right">${Number(e.total_hours || 0).toFixed(2)}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.approval_status || "unreviewed"}</td></tr>`)
+      .map((e) => `<tr><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "yyyy-MM-dd")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${safeFormat(e.clock_in, "h:mm a")}</td><td style="padding:8px;border-bottom:1px solid #ddd">${e.clock_out ? safeFormat(e.clock_out, "h:mm a") : "Active"}</td><td style="padding:8px;border-bottom:1px solid #ddd;text-align:right">${Number(e.total_hours || 0).toFixed(2)}</td><td style="padding:8px;border-bottom:1px solid #ddd">${escapeHtml(e.approval_status || "unreviewed")}</td></tr>`)
       .join("");
     const total = filteredEntries.filter((e) => e.user_email === user.email).reduce((s, e) => s + Number(e.total_hours || 0), 0);
     const w = window.open("", "_blank");
     if (!w) return;
-    w.document.write(`<html><head><title>Punch Card - ${user.name}</title></head><body style="padding:24px;font-family:sans-serif"><h2>Punch Card - ${user.name}</h2><p style="color:#666;font-size:12px">${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")} · generated ${new Date().toLocaleString()}</p><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Date</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">In</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Out</th><th style="text-align:right;padding:8px;border-bottom:2px solid #333">Hours</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Status</th></tr>${rows}</table><p style="margin-top:12px;font-weight:bold">Total: ${total.toFixed(2)} hours</p><script>window.print()</script></body></html>`);
+    w.document.write(`<html><head><title>Punch Card - ${safeName}</title></head><body style="padding:24px;font-family:sans-serif"><h2>Punch Card - ${safeName}</h2><p style="color:#666;font-size:12px">${format(start, "yyyy-MM-dd")} to ${format(end, "yyyy-MM-dd")} · generated ${new Date().toLocaleString()}</p><table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Date</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">In</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Out</th><th style="text-align:right;padding:8px;border-bottom:2px solid #333">Hours</th><th style="text-align:left;padding:8px;border-bottom:2px solid #333">Status</th></tr>${rows}</table><p style="margin-top:12px;font-weight:bold">Total: ${total.toFixed(2)} hours</p><script>window.print()</script></body></html>`);
     w.document.close();
   };
 
