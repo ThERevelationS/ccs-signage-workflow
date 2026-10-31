@@ -8065,7 +8065,7 @@ Deno.serve(async (req) => {
 
     if (action === 'list_timeclock_audit') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await auditEntity.filter({});
+      const rows = await auditEntity.filter({}, '-created_date', 500);
       if (!Array.isArray(rows)) throw new Error('Audit list did not return records.');
       const events = rows
         .filter((r: any) => r?.id)
@@ -11563,7 +11563,12 @@ Deno.serve(async (req) => {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
       const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 30 * 86400000).toISOString());
       const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
-      const rows = await entryEntity.filter({}, '-clock_in', 4000).catch(() => []);
+      const rows = await loadAllEntityRows({
+        entity: entryEntity,
+        query: companyRangeQuery('clock_in', from, to),
+        sort: '-clock_in',
+        label: 'Break compliance entries',
+      }).catch(() => []);
       const range = (Array.isArray(rows) ? rows : []).filter((e: any) => { const dk = dateKeyInCompanyTime(e.clock_in); return dk && dk >= from && dk <= to && e.archived_test_data !== true && e.archived_admin !== true && e.clock_out; });
       const missedLunch = range.filter((e: any) => Number(e.total_hours || 0) > 6 && !(Array.isArray(e.breaks) && e.breaks.some((b: any) => Number(b.duration_minutes || 0) >= 30)));
       return Response.json({ success: true, from, to, missed_lunches: missedLunch.length, entries: missedLunch.slice(0, 50).map((e: any) => ({ user: e.user_name || e.user_email, date: dateKeyInCompanyTime(e.clock_in), hours: e.total_hours })) });
@@ -11571,7 +11576,14 @@ Deno.serve(async (req) => {
 
     if (action === 'pause_reason_rollup') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Manager access is required.' }, { status: 403 });
-      const rows = await workPauseEntity.filter({}, '-started_at', 1000).catch(() => []);
+      const from = typeof body.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.from) ? body.from : dateKeyInCompanyTime(new Date(Date.now() - 30 * 86400000).toISOString());
+      const to = typeof body.to === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.to) ? body.to : dateKeyInCompanyTime(new Date().toISOString());
+      const rows = await loadAllEntityRows({
+        entity: workPauseEntity,
+        query: companyRangeQuery('started_at', from, to),
+        sort: '-started_at',
+        label: 'Work pause rollup rows',
+      }).catch(() => []);
       const rollup = new Map();
       for (const p of (Array.isArray(rows) ? rows : [])) {
         const reason = String(p.reason || p.pause_type || 'other').trim().toLowerCase();
