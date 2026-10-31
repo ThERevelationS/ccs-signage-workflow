@@ -3,7 +3,7 @@
 Append-only run log. Resume rule: read this file, verify last checkpoint vs remote, continue at CURRENT line.
 
 ## CURRENT
-Phase 9 UI surface kit + design pass next (kit primitives + per-surface alignment + Playwright visual pass).
+Phase 10 CoreBridge CSV migration UI (wizard + stepper + FileAttachTool + wiring); Phase 11 consolidated verification after. NOTE: a concurrent workstream (Personal Workspace Settings, phases 1-5) is active on App.jsx/Layout/index.css — re-read shared files before editing.
 
 ## Phase status
 | Phase | Status | Checkpoint |
@@ -17,7 +17,7 @@ Phase 9 UI surface kit + design pass next (kit primitives + per-surface alignmen
 | 6 scale | DONE | 6ae60c29+6ae60e6c |
 | 7 financial | DONE | 6ae612ff/6ae61474/6ae6156f+parent |
 | 8 smtp | DONE | 6ae61923+deploy |
-| 9 ui kit | — | — |
+| 9 ui kit | DONE | 6ae63a44 |
 | 10 migration | — | — |
 | 11 verify | — | — |
 
@@ -36,6 +36,8 @@ Phase 9 UI surface kit + design pass next (kit primitives + per-surface alignmen
 - Phase 7b (910bbdab): SalesLocation entity (backend-only RLS, seed row 6ae614546fa0852ea0490e9c); LocationsPanel CRUD (admin); ReconcileWizard select replaces free-text; WorkOrder.deposit_required/amount/invoiced fields; depositGate.js (gated statuses proof_approved/in_production/quality_control, warn-only confirm in shared transitionProductAndBuilderStatus); JobWorkspace deposit chip + editor + CAS mark-invoiced + auto-suggest. Gateways: SalesLocation added staffDataRead read + staffEntityWrite create/update + admin gate — BOTH DEPLOYED.
 - Phase 7c (4fcabb38): glExport.js shared model (gl_account resolve chain: explicit→MarkupCategory→Inventory/PartTemplate, unmapped counted); GL CSV export on Reconciliation batch detail + OpsReportView; CustomerPortal Statements section (open invoices+running balance+inline StatementView, deposit display defensive vs new WO fields); VendorStatement overlay (per-vendor POs, expected-vs-received, byStatus rollup); WalkInReceipt print view. PASS parity-items+walk-in. NOTE: WorkOrder deposit fields DO exist now (concurrent agent race — portal code is correctly defensive).
 - Phase 8 (bc8ab3dc): shared/smtpClient.ts raw Deno STARTTLS client (EHLO→STARTTLS→TLS upgrade→AUTH LOGIN→MAIL/RCPT/DATA/QUIT, 20s timeouts, SmtpError.kind taxonomy, zero credential logging); sendStaffEmail provider switch (SMTP_HOST+USER+PASS+FROM all set→SMTP else Gmail fallback byte-identical; SMTP failure=502 not silent reroute); reply_to request field overrides SMTP_REPLY_TO; plumbed replyTo in FollowupQueue (actor) + ReceivePanel (po.created_by); notification sends default to office reply-to. LIVE PROBE vs smtp.ionos.com:587 got proper 535 auth-reject = transport verified end-to-end. DEPLOYED. OWNER ACTION NEEDED: set Deno.env SMTP_HOST/PORT/USER/PASS/FROM(+REPLY_TO) in function settings + create noreply@ mailbox + Ionos SPF include:spf.perfora.net+spf.kundenserver.de; one real send check after.
+
+- Phase 9: src/components/kit/ built (14 files: PageHeader, BreadcrumbBar, FilterBar+FilterSearchInput/FilterSelect/FilterField, StatusChip+statusTone one-vocabulary tones sky/emerald/amber/red/slate/violet, KpiStrip, EmptyState, RecordLink+recordRoutes, DataTableShell+Th/Td, UndoToast/sonner, DetailDrawer). Applied via 3 disjoint agent passes: queues+JobWorkspace+Customer360; financial (Invoices/POs/Recon/Statements/JobCosting); ops (CrmEvents/CommsFollowups/OpsReports/PricingAdmin/Imports/WalkIn). Print surfaces guarded. onClick-baseline handler preservation verified. recordRoutes changeorder kind added by parent (gap flagged by agent). Contract-drift fixes: test-uikit kinds + link-spine-b hasLink() helper (literal OR RecordLink incl dynamic kind={} ). DEPLOYED manageMigration (8 actions, 11 real mappers incl vendors->GlobalSettings [no Vendor entity], idempotent unimport via created-status map rows, creation_request_key where supported, 500-row chunks). 17 suites PASS + build green. Checkpoint 6ae63a44.
 
 ## Sub-plans
 - `docs/plans/CCS_PERSONALIZED_WORKSPACE_MASTERPLAN.md` — Personalized Workspace Settings System (per-user prefs, settings center in Time Clock settings tab, taskbar preservation contract). Phase 0 audit DONE; P0–P3 classification + entity/function pattern chosen. Supersedes the earlier sidebar-replacement idea — draggable taskbar is protected.
