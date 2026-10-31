@@ -23,11 +23,13 @@ const out2 = resolve(here, '.tmp-srcproj.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/customerSync.js')],
   bundle: true, format: 'esm', outfile: out1, logLevel: 'silent',
+  define: { 'import.meta.env': '{}' },
   alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub },
 });
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/builder/sourceProjectPersistence.js')],
   bundle: true, format: 'esm', outfile: out2, logLevel: 'silent',
+  define: { 'import.meta.env': '{}' },
   alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub, '@/components/estimator/estimateMutationGuard': stub },
 });
 const { canonicalEstimateWorkOrder } = await import(pathToFileURL(out1).href);
