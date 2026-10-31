@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { Link } from "react-router-dom";
 import SavedViews from "@/components/workflow/SavedViews";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { downloadCsv } from "@/components/shared/exportCsv";
@@ -82,8 +83,14 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
           <>
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{j.title || "Work order"}</h2>
-                <div className="mt-0.5 text-sm text-slate-500">{j.client_name} · {j.current_stage || j.sales_status || "—"}</div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <Link className="hover:underline" to={`/JobWorkspace?wo=${workOrderId}`}>{j.title || "Work order"}</Link>
+                </h2>
+                <div className="mt-0.5 text-sm text-slate-500">
+                  {clean(detail?.work_order?.customer_id) ? (
+                    <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${detail.work_order.customer_id}`}>{j.client_name}</Link>
+                  ) : j.client_name} · {j.current_stage || j.sales_status || "—"}
+                </div>
               </div>
               <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
@@ -377,6 +384,13 @@ export default function JobCosting() {
                                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Margin vs materials</div>
                                 <div><MarginCell value={j.margin_vs_materials} /> <MarginPct job={j} /></div>
                               </div>
+                              <Link
+                                to={`/JobWorkspace?wo=${j.work_order_id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="rounded-lg border border-sky-300 px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-400"
+                              >
+                                Workspace
+                              </Link>
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setOpenId(j.work_order_id); }}
