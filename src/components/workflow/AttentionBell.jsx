@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { usePolling } from "@/lib/usePolling";
+import { computedAttentionCount } from "./attentionComputedModel";
 
 const SECTION_KEYS = [
   "unread_portal_messages",
@@ -33,7 +34,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
         today: new Date().toLocaleDateString("en-CA"),
       });
       const feed = r?.data || r || {};
-      setCount(SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0));
+      setCount(SECTION_KEYS.reduce((sum, key) => sum + (Array.isArray(feed[key]) ? feed[key].length : 0), 0) + computedAttentionCount());
     } catch { /* fail soft — bell just stays quiet */ }
   }, [sessionToken]);
 
