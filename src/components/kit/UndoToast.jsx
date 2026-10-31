@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-// Sonner-based undo helper. One call site for the "X deleted — Undo" pattern:
+// Sonner-based undo helper. One call site for the "X deleted -- Undo" pattern:
 //
 //   showUndo({
 //     message: "Invoice voided",
