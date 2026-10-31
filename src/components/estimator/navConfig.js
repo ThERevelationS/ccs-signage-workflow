@@ -28,6 +28,7 @@ export const ESTIMATOR_TABS = [
       { label: "Fulfillment Products", to: "/ProductQueues?queue=fulfillment" },
       { label: "Job Workspace", to: "/JobWorkspace" },
       { label: "Ops Reports", to: "/OpsReports" },
+      { label: "Reconciliation", to: "/Reconciliation" },
       { label: "Imports", to: "/Imports" },
     ],
   },

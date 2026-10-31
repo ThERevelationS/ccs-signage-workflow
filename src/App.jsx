@@ -44,6 +44,7 @@ const ProductQueues = lazyPage(() => import('./pages/ProductQueues'));
 const JobWorkspace = lazyPage(() => import('./pages/JobWorkspace'));
 const EstimatorCustomers = lazyPage(() => import('./pages/EstimatorCustomers'));
 const QuickPrice = lazyPage(() => import('./pages/QuickPrice'));
+const Reconciliation = lazyPage(() => import('./pages/Reconciliation'));
 const Imports = lazyPage(() => import('./pages/Imports'));
 const CrmEvents = lazyPage(() => import('./pages/CrmEvents'));
 const WalkIn = lazyPage(() => import('./pages/WalkIn'));
@@ -110,6 +111,7 @@ const ESTIMATOR_PAGES = {
   JobWorkspace,
   EstimatorCustomers,
   QuickPrice,
+  Reconciliation,
   Imports,
   CrmEvents,
   WalkIn,
