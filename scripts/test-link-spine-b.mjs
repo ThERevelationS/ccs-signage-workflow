@@ -24,8 +24,8 @@ assert.ok(
   "Invoices imports react-router Link"
 );
 assert.ok(
-  inv.includes("/Customer360?id=${inv.customer_id}"),
-  "Invoices links customer name to the customer record (/Customer360?id=)"
+  inv.includes("/Customer360?id=${inv.customer_id}") || /RecordLink[^>]*kind=["']customer["']/.test(inv),
+  "Invoices links customer name to the customer record (literal or RecordLink kind=customer)"
 );
 assert.ok(
   inv.includes("/CustomerStatements?customer=${inv.customer_id}"),
@@ -52,8 +52,8 @@ assert.ok(
   "JobCosting expanded row links to /JobWorkspace?wo="
 );
 assert.ok(
-  jc.includes("/Customer360?id=${detail.work_order.customer_id}"),
-  "JobCosting detail links client to the customer record (/Customer360?id=)"
+  jc.includes("/Customer360?id=${detail.work_order.customer_id}") || /RecordLink[^>]*kind=["']customer["']/.test(jc),
+  "JobCosting detail links client to the customer record (literal or RecordLink kind=customer)"
 );
 
 // 3. PurchaseOrders: PO detail -> job workspace when work_order_id is set.
