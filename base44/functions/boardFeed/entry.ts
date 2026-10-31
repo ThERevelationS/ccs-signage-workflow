@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
+import { FEED_FIELDS } from '../../shared/boardFeedFields.ts';
 
 // Board/list feed for the app's largest tables. Workflow boards used to page
 // the full WorkOrder table (~3.1k rows, ~15 MB) through entity reads on every
@@ -104,6 +105,10 @@ function projectRow(row: any, fields: string[] | null, heavy: string[]) {
 // delta cursor still covers the gap.
 let feedCache: { key: string; payload: any; expires: number } | null = null;
 const FEED_CACHE_TTL_MS = 30_000;
+// Set false permanently for the isolate if a projected filter is rejected —
+// one fallback pulls the same page unprojected, and later calls skip the
+// extra argument entirely. Keeps older SDK builds working unchanged.
+let projectionSupported = true;
 
 Deno.serve(async (req) => {
   try {
@@ -130,6 +135,16 @@ Deno.serve(async (req) => {
     const fields = cleanFields(body?.fields);
     const includeHeavy = body?.include_heavy === true;
     const heavy = includeHeavy ? [] : spec.heavy;
+    // Server-side projection — the SDK's 5th filter arg keeps the heavy sync
+    // blobs out of the entity read itself (~85% of WorkOrder row bytes),
+    // instead of transferring them and stripping them in projectRow. Caller
+    // field lists are pushed down too; the system fields dedupe and the
+    // delta cursor need ride along either way.
+    const projection = includeHeavy
+      ? null
+      : fields
+        ? [...new Set([...fields, 'id', 'created_date', 'updated_date'])]
+        : FEED_FIELDS[entityName] || null;
     const cacheable = !since && !fields && !includeHeavy;
     const cacheKey = entityName + "|" + JSON.stringify(query) + "|" + sort;
     if (cacheable && feedCache && feedCache.key === cacheKey && feedCache.expires > Date.now()) {
@@ -143,7 +158,15 @@ Deno.serve(async (req) => {
     let rowsHit = 0;
     let truncated = false;
     while (true) {
-      const page = await entity.filter(query, sort, PAGE_SIZE, skip);
+      let page: any[] | null = null;
+      if (projection && projectionSupported) {
+        try {
+          page = await entity.filter(query, sort, PAGE_SIZE, skip, projection);
+        } catch {
+          projectionSupported = false;
+        }
+      }
+      if (page === null) page = await entity.filter(query, sort, PAGE_SIZE, skip);
       if (!Array.isArray(page)) throw new Error(`${entityName} feed could not be verified completely.`);
       rowsHit += page.length;
       for (const row of page) {
