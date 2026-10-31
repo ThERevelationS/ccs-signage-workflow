@@ -61,7 +61,7 @@ export default function TimeQuickPick({
   const confirmText = value
     ? isTime
       ? value
-      : new Date(value.replace("T", " ")).toLocaleString(undefined, isDate
+      : new Date(isDate ? `${value}T12:00` : value.replace("T", " ")).toLocaleString(undefined, isDate
           ? { weekday: "short", month: "short", day: "numeric" }
           : { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
     : "";
