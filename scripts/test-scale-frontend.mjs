@@ -80,7 +80,11 @@ assert.ok(
   !/fields:\s*\[/.test(permitIntegration),
   'permitLineItemIntegration must not pass a fields option the gateway facade drops',
 );
-assert.match(permitIntegration, /staffEntities\.PermitLineItem\.filter\(/, 'dedup read keeps the staffEntities filter');
+assert.equal(
+  (permitIntegration.match(/staffEntities\.PermitLineItem\.filter\(/g) || []).length,
+  2,
+  'both dedup reads keep the staffEntities filter',
+);
 
 // ── Visible-cap notices ──
 assert.match(auditLog, /setCapped\(/, 'AuditLog must flag capped loads');
