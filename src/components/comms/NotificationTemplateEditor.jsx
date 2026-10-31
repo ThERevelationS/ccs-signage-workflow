@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GlobalSettings } from "@/api/gatedEntities";
+import { StatusChip } from "@/components/kit";
 import { renderTemplate } from "@/components/comms/emailTemplates";
 import {
   NOTIFICATION_KINDS,
@@ -82,9 +83,7 @@ function KindCard({ kind, value, onChange }) {
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{entry.label}</h4>
             {overridden && (
-              <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
-                customized
-              </span>
+              <StatusChip tone="violet" size="sm" showDot={false}>customized</StatusChip>
             )}
           </div>
           <p className="mt-0.5 text-[11px] text-slate-500">{entry.statusGate?.description}</p>
