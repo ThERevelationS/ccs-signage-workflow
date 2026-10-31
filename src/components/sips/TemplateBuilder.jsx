@@ -22,7 +22,7 @@ import {
 } from "./templateBuilderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
-const ChecklistSubItem = base44.entities.ChecklistSubItem;
+const ChecklistSubItem = staffEntities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
 
 // Keep the condition menu inside the visible viewport, including above the
