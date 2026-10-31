@@ -14,9 +14,11 @@ export async function runPickerDraftAction({pending,isCurrent,prepare,create,app
 }
 
 // Recheck the reviewed source; persistence still owns durable draft deduplication.
-export function requireReviewedRepositoryProfile({reviewed,rows,hasDuplicate,toDraft}) {
+// allowDuplicate: the admin picked one specific row, which resolves the
+// sibling-name ambiguity the duplicate check otherwise guards against.
+export function requireReviewedRepositoryProfile({reviewed,rows,hasDuplicate,toDraft,allowDuplicate}) {
  const matches=Array.isArray(rows) ? rows.filter(row=>row?.id===reviewed?.id) : [];
- if(!reviewed?.id || matches.length!==1 || hasDuplicate(rows,matches[0]))
+ if(!reviewed?.id || matches.length!==1 || (!allowDuplicate && hasDuplicate(rows,matches[0])))
   throw Error('This repository profile is missing or ambiguous. Reopen the picker and review it again.');
  const current=matches[0];
  const snapshot=row=>JSON.stringify([row.name,row.state,row.type,row.parent_county,toDraft(row)]);
