@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, Loader2, MapPin, X } from "lucide-react";
 import { TENDER_BUCKETS, BUCKET_LABELS, batchTotals, computeVariance, nextBatchNumber } from "./reconciliationModel";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 const clean = (v) => String(v ?? "").trim();
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -49,6 +50,15 @@ export default function ReconcileWizard({ sessionToken, payments, batches, locat
         adjustment_note: clean(adjustmentNote),
         notes: clean(notes),
       });
+      // Unified alerts: closing with a non-zero variance emits recon_variance —
+      // fire-and-forget, it never blocks the batch close.
+      try {
+        const batchVariance = Number(data?.batch?.variance);
+        const resolvedVariance = Number.isFinite(batchVariance) ? batchVariance : variance;
+        if (data?.batch?.id && Math.abs(resolvedVariance) >= 0.005) {
+          void NotificationTriggers.reconVariance(data.batch, { variance: resolvedVariance });
+        }
+      } catch { /* notify is best-effort */ }
       onClosed?.(data);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "The batch could not be closed.");
