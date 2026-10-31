@@ -8,6 +8,7 @@ import { Loader2, Sparkles, X, AlertTriangle, CheckCircle, FileText, MapPin, Che
 import { runDesignerPipeline, saveWorkflowDraft, loadWorkflowDrafts } from "./permitWorkflowDesigner";
 import { useAuth } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 import { createPermitLinesFromDraft, computeDeterministicRowName } from "./permitLineItemIntegration";
 import { safeGovernmentOfficeSourceUrl } from "./governmentOfficeCatalog";
 import WorkflowCitationList from "./WorkflowCitationList";
@@ -102,7 +103,7 @@ export default function PermitWorkflowDesigner({
     if (q.length < 2) { setTownMatches([]); return; }
     setTownSearching(true); setTownSearchError('');
     try {
-      const { items } = await staffEntities.JurisdictionProfile.filter({}, { sort: 'jurisdiction_name', limit: 500, fields: ['id', 'jurisdiction_name', 'state'] });
+      const { items } = await withRateLimitRetry(() => staffEntities.JurisdictionProfile.filter({}, { sort: 'jurisdiction_name', limit: 500, fields: ['id', 'jurisdiction_name', 'state'] }));
       const rows = Array.isArray(items) ? items : [];
       setTownMatches(rows.filter(r => String(r.jurisdiction_name || '').toLowerCase().includes(q)).slice(0, 12));
     } catch { setTownSearchError("Couldn't load the town list — try again."); }
