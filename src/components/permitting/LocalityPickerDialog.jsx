@@ -692,16 +692,16 @@ function LocalityPickerSession({
 
             {selectedLocalityId && !address.trim() && currentUser?.role!=='admin' && <p role="status" className="rounded border bg-blue-50 p-3 text-sm">Enter the job address above so we can check its location before you use this jurisdiction.</p>}
             {currentUser?.role==='admin'&&!address.trim()&&<section aria-label="Manual repository draft" className="rounded border bg-violet-50 p-3 space-y-2">
-              <h4 className="font-semibold text-sm">Create a tracker from the repository</h4>
+              <h4 className="font-semibold text-sm">Set up a new office record from the saved list</h4>
               <p className="text-xs">This makes a draft — it does not confirm the address or the right office.</p>
               {repositoryError&&<p role="alert" className="text-xs text-red-700">{repositoryError}</p>}
-              <label className="block text-xs">Repository jurisdiction
+              <label className="block text-xs">Saved office record
                 <select aria-label="Repository jurisdiction for draft" className="block w-full min-h-11 border rounded bg-white" value={repositoryDraftId} disabled={repositoryLoading||Boolean(repositoryError)||creatingDraft} onChange={event=>{setRepositoryDraftId(event.target.value);setDraftCandidate(null);}}>
-                  <option value="">{repositoryLoading?'Loading repository…':'Select a repository jurisdiction'}</option>
-                  {repositoryJurisdictions.map(row=><option key={row.id} value={row.id} disabled={hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)}>{row.name} · {row.state || 'State unknown'} · {row.type || 'Type unknown'}{row.parent_county?.name?' · '+row.parent_county.name+' County':''}{hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)?' · Duplicate — needs review':''}</option>)}
+                  <option value="">{repositoryLoading?'Loading saved offices…':'Pick a saved office record'}</option>
+                  {repositoryJurisdictions.map(row=><option key={row.id} value={row.id} disabled={hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)}>{row.name} · {row.state || 'State unknown'} · {row.type || 'Type unknown'}{row.parent_county?.name?' · '+row.parent_county.name+' County':''}{hasDuplicateRepositoryIdentity(repositoryJurisdictions,row)?' · two copies — needs a fix':''}</option>)}
                 </select>
               </label>
-              <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Review draft creation</Button>
+              <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Check the draft before making it</Button>
             </section>}
             {result && searchedFor && normalizeAddress(address).toLowerCase() !== searchedFor.toLowerCase() && (
               <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">The address changed since this result — press Find again to re-check.</div>
