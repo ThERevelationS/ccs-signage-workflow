@@ -17,8 +17,8 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 // accepted when presented but is not required to read.
 
 const FEEDABLE: Record<string, { heavy: string[] }> = {
-  WorkOrder: { heavy: ['smartsheet_sync_snapshot', 'work_notes'] },
-  Order: { heavy: ['smartsheet_sync_snapshot', 'work_notes'] },
+  WorkOrder: { heavy: ['smartsheet_sync_snapshot', 'work_notes', 'sales_import_snapshot', 'smartsheet_create_attempt'] },
+  Order: { heavy: ['smartsheet_sync_snapshot', 'work_notes', 'smartsheet_create_attempt'] },
   JurisdictionProfile: { heavy: [] },
 };
 
