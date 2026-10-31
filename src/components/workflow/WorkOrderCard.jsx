@@ -94,7 +94,7 @@ export default function WorkOrderCard({
   const isTopPriority = priorityNumber === 1;
   const isAsap = workOrder.asap || false;
   
-  const { isRegistered, promptForEmail, sessionToken } = useAuth();
+  const { isRegistered, promptForEmail, sessionToken, currentUser } = useAuth();
   
   const requireAuth = (callback) => {
     return (e) => {
@@ -130,7 +130,6 @@ export default function WorkOrderCard({
   const [editedNoteText, setEditedNoteText] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [newNoteText, setNewNoteText] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [showRiderWarning, setShowRiderWarning] = useState(false);
@@ -179,10 +178,9 @@ export default function WorkOrderCard({
   const activeNotes = notes.filter((note) => !note.completed);
   const completedNotes = notes.filter((note) => note.completed);
 
-  React.useEffect(() => {
-    loadUser();
-  }, []);
-
+  // currentUser now comes from useAuth() — the per-card base44.auth.me()
+  // call used to fire once per card per mount and always 401 for staff
+  // sessions (EmailGate is not platform auth).
   React.useEffect(() => {
     if (!sessionToken) {
       setAllUsers([]);
@@ -231,15 +229,6 @@ export default function WorkOrderCard({
     };
     checkForRidersAndParent();
   }, [workOrder.id, workOrder.is_rider, workOrder.parent_work_order_id]);
-
-  const loadUser = async () => {
-    try {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
-    } catch (error) {
-      console.error("Error loading user:", error);
-    }
-  };
 
   const handleImageUpload = async (e) => {
     if (!isRegistered) {
