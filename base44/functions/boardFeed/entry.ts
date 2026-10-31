@@ -13,7 +13,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 //   - `since` applies an updated_date delta cursor server-side, so a steady
 //     board refresh transfers only changed rows in one read instead of
 //     re-paging the whole table.
-// Read scope matches these entities' open read RLS ??? a valid staff session is
+// Read scope matches these entities' open read RLS — a valid staff session is
 // accepted when presented but is not required to read.
 
 const FEEDABLE: Record<string, { heavy: string[] }> = {
@@ -25,7 +25,7 @@ const FEEDABLE: Record<string, { heavy: string[] }> = {
 const ALLOWED_OPERATORS = new Set(['$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin']);
 const MAX_QUERY_BYTES = 4000;
 // One 5k page pulls the whole active table in a single entity_list call
-// (~2-5s) instead of ~7 sequential 500-row pages ??? both faster for the
+// (~2-5s) instead of ~7 sequential 500-row pages — both faster for the
 // caller and ~7x cheaper against the shared entity_list rate budget.
 const PAGE_SIZE = 5000;
 const MAX_ROWS = 20000;
@@ -96,7 +96,7 @@ function projectRow(row: any, fields: string[] | null, heavy: string[]) {
   return clean;
 }
 
-// Module-scope result cache ??? Deno isolates are reused across invocations,
+// Module-scope result cache — Deno isolates are reused across invocations,
 // so a burst of identical full pulls (post-publish reloads, many staff tabs
 // opening at once) collapses to one upstream read set instead of ~7 paged
 // entity reads per tab. Delta pulls and custom projections are never
@@ -110,10 +110,10 @@ Deno.serve(async (req) => {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
 
-    // Staff session required ??? WorkOrder/Order read RLS is role-gated, so an
+    // Staff session required — WorkOrder/Order read RLS is role-gated, so an
     // anonymous service-role feed would reopen the access that lockdown closed.
     // The earlier .catch(() => null) let anonymous callers pull the whole feed;
-    // fail closed instead ??? a stale token gets a 401 the client can re-auth,
+    // fail closed instead — a stale token gets a 401 the client can re-auth,
     // not silent access to every work order on file.
     await authenticateSignShopSession(base44, body.session_token);
 
