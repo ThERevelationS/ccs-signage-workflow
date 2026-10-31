@@ -155,10 +155,10 @@ export function OverviewTab({ data, customer, backendReady, truncatedNotice }) {
             {openOpps.slice(0, 6).map((o) => (
               <li key={o.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <div className="min-w-0">
-                  <RowLink to={`/Opportunities?open=${o.id}`}>
+                  <RecordLink kind="opportunity" id={o.id} className={linkCls}>
                     <Briefcase className="mr-1 inline h-3.5 w-3.5 text-slate-400" />
                     {opportunityLabel(o)}
-                  </RowLink>
+                  </RecordLink>
                   <div className={sub}>
                     {[clean(o.stage).replace(/_/g, " "), clean(o.salesperson), clean(o.desired_install_date) && `install ${clean(o.desired_install_date).slice(0, 10)}`]
                       .filter(Boolean)
@@ -225,10 +225,10 @@ export function EstimatesTab({ data, truncatedNotice }) {
             label: "Estimate",
             render: (e) => (
               <div className="min-w-0">
-                <RowLink to={`/EstimateDetail?id=${e.id}`}>
+                <RecordLink kind="estimate" id={e.id} className={linkCls}>
                   <FileText className="mr-1 inline h-3.5 w-3.5 text-slate-400" />
                   {estimateLabel(e)}
-                </RowLink>
+                </RecordLink>
                 {estimateNumber(e) && clean(e.project_name) && <div className={sub}>{estimateNumber(e)}</div>}
               </div>
             ),
@@ -259,7 +259,7 @@ export function JobsTab({ data, truncatedNotice }) {
             label: "Job",
             render: (w) => (
               <div className="min-w-0">
-                <RowLink to={`/JobWorkspace?wo=${w.id}`}>{workOrderLabel(w)}</RowLink>
+                <RecordLink kind="workorder" id={w.id} className={linkCls}>{workOrderLabel(w)}</RecordLink>
                 {clean(w.client_name) && clean(w.client_name) !== clean(w.title) && (
                   <div className={sub}>{clean(w.client_name)}</div>
                 )}
@@ -307,10 +307,10 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
             {
               label: "Invoice",
               render: (i) => (
-                <RowLink to={`/Invoices?invoice=${i.id}`}>
+                <RecordLink kind="invoice" id={i.id} className={linkCls}>
                   <Receipt className="mr-1 inline h-3.5 w-3.5 text-slate-400" />
                   {invoiceNumber(i)}
-                </RowLink>
+                </RecordLink>
               ),
             },
             { label: "Status", render: (i) => <StatusChip value={i.status} /> },
@@ -347,7 +347,7 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
                 label: "Invoice",
                 render: (p) =>
                   clean(p.invoice_id) ? (
-                    <RowLink to={`/Invoices?invoice=${p.invoice_id}`}>{invById.get(p.invoice_id) || "Invoice"}</RowLink>
+                    <RecordLink kind="invoice" id={p.invoice_id} className={linkCls}>{invById.get(p.invoice_id) || "Invoice"}</RecordLink>
                   ) : "—",
               },
               { label: "Method", render: (p) => chip(clean(p.method), statusTone("")) },
@@ -366,10 +366,10 @@ export function FinancialsTab({ data, backendReady, truncatedNotice, asOf }) {
               {
                 label: "PO",
                 render: (p) => (
-                  <RowLink to={`/PurchaseOrders?po=${p.id}`}>
+                  <RecordLink kind="po" id={p.id} className={linkCls}>
                     <ShoppingCart className="mr-1 inline h-3.5 w-3.5 text-slate-400" />
                     {purchaseOrderLabel(p)}
-                  </RowLink>
+                  </RecordLink>
                 ),
               },
               { label: "Vendor", render: (p) => clean(p.vendor_name) || "—" },
@@ -440,10 +440,10 @@ export function ActivityTab({ data, backendReady, truncatedNotice }) {
               {
                 label: "Opportunity",
                 render: (o) => (
-                  <RowLink to={`/Opportunities?open=${o.id}`}>
+                  <RecordLink kind="opportunity" id={o.id} className={linkCls}>
                     <Briefcase className="mr-1 inline h-3.5 w-3.5 text-slate-400" />
                     {opportunityLabel(o)}
-                  </RowLink>
+                  </RecordLink>
                 ),
               },
               { label: "Stage", render: (o) => <StatusChip value={o.stage} /> },
