@@ -1053,7 +1053,7 @@ Deno.serve(async (req) => {
         const entityFor: Record<string, any> = {
           AllInOneEstimate: Estimate, WorkOrder, Invoice, PurchaseOrder, ChangeOrder, Customer, Opportunity, Order,
         };
-        const mapRows = await MapEntity.filter(regexOr(["source_id"], rawQuery), "-updated_date", 200).catch(() => []);
+        const mapRows = await MapEntity.filter(regexOr(["source_id"], rawQuery), "-updated_date", 500).catch(() => []);
         const targets = new Map<string, { entity: string; sid: string }>();
         for (const m of mapRows || []) {
           const tEntity = clean(m?.target_entity);
