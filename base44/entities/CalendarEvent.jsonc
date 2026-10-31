@@ -125,7 +125,11 @@
         "role": "__calendar_event_backend_only__"
       }
     },
-    "read": {},
+    "read": {
+      "user_condition": {
+        "role": "__calendar_event_backend_only__"
+      }
+    },
     "update": {
       "user_condition": {
         "role": "__calendar_event_backend_only__"
