@@ -7,7 +7,7 @@ import MobileSelect from "@/components/mobile/MobileSelect";
 import { ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import { useAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
+import { useAllWorkOrders, refreshAllWorkOrders, useBoardFeedMeta } from "@/lib/workOrderCache";
 import { hasAnyTimelineSegment, earliestSegmentDue } from "@/components/workflow/workOrderTimelineSegments";
 import AttentionFeed from "@/components/workflow/AttentionFeed";
 
@@ -15,6 +15,7 @@ const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production',
 
 export default function MainWorkflow() {
   const { data: allWorkOrders, isLoading, error: workOrdersError } = useAllWorkOrders();
+  const boardMeta = useBoardFeedMeta("WorkOrder");
   const readError = workOrdersError?.message || (workOrdersError ? "Main Workflow Work Orders could not be verified completely." : "");
   const [sortBy, setSortBy] = useState("due_date");
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
@@ -114,6 +115,11 @@ export default function MainWorkflow() {
         {readError && workOrders.length > 0 && (
           <div className="mb-2 px-3 py-2 rounded border border-amber-200 bg-amber-50 text-xs text-amber-800">
             Workflow refresh could not be verified completely. Showing the last verified timeline until the next successful refresh.
+          </div>
+        )}
+        {boardMeta?.truncated && (
+          <div className="mb-2 px-3 py-2 rounded border border-amber-200 bg-amber-50 text-xs text-amber-800">
+            Showing the first {boardMeta.count} work orders — the board feed hit its row cap, so some jobs may be missing from this view.
           </div>
         )}
         <div className="clay-card p-4">
