@@ -11,11 +11,18 @@ import {
   AlertCircle,
   FileText,
   Loader2,
+  Mail,
   Printer,
   RefreshCw,
   Search,
   Users,
 } from "lucide-react";
+import {
+  buildNotifyContext,
+  resolveCustomerEmail,
+  statusGateAllows,
+} from "@/components/comms/notifyModel";
+import { sendCustomerNotification } from "@/components/comms/notifySend";
 
 const clean = (v) => String(v ?? "").trim();
 const today = () => new Date().toISOString().slice(0, 10);
@@ -48,7 +55,8 @@ const matchesQuery = (c, q) => {
 };
 
 export default function CustomerStatements() {
-  const { sessionToken, isRegistered } = useAuth();
+  const { sessionToken, isRegistered, currentUser } = useAuth();
+  const actor = clean(currentUser?.email || currentUser?.full_name);
   const [query, setQuery] = useState("");
   const [asOf, setAsOf] = useState(today());
   const [selected, setSelected] = useState(new Set());
@@ -115,48 +123,52 @@ export default function CustomerStatements() {
    * Payments come from one export_ar call (payments_csv is uncapped) matched
    * to the customer's invoice numbers.
    */
+  const buildForTargets = useCallback(async (targets) => {
+    const [first, ar] = await Promise.all([
+      invokeAction(sessionToken, { action: "list_invoices" }),
+      invokeAction(sessionToken, { action: "export_ar" }).catch(() => ({ payments_csv: "" })),
+    ]);
+    const payments = paymentsFromArCsv(ar?.payments_csv || "");
+    const hitListCap = (first.invoices || []).length >= 250;
+
+    const invoicePools = new Map();
+    if (!hitListCap) {
+      const byCustomer = new Map();
+      for (const inv of first.invoices || []) {
+        const cid = clean(inv.customer_id);
+        if (!byCustomer.has(cid)) byCustomer.set(cid, []);
+        byCustomer.get(cid).push(inv);
+      }
+      for (const c of targets) invoicePools.set(c.id, byCustomer.get(c.id) || []);
+    } else {
+      for (const c of targets) {
+        const data = await invokeAction(sessionToken, {
+          action: "list_invoices",
+          query: clean(c.company_name),
+        });
+        invoicePools.set(
+          c.id,
+          (data.invoices || []).filter((inv) => clean(inv.customer_id) === c.id)
+        );
+      }
+    }
+
+    const built = targets.map((c) => {
+      const invs = invoicePools.get(c.id) || [];
+      const numbers = new Set(invs.map((i) => clean(i.invoice_number)).filter(Boolean));
+      const custPayments = payments.filter((p) => numbers.has(clean(p.invoice_number)));
+      return buildStatement({ customer: c, invoices: invs, payments: custPayments, asOfDate: asOf });
+    });
+    return { built, hitListCap };
+  }, [sessionToken, asOf]);
+
   const generate = useCallback(async (targets) => {
     if (!sessionToken || !targets.length || busy) return;
     setBusy("generate");
     setError("");
     setNotice("");
     try {
-      const [first, ar] = await Promise.all([
-        invokeAction(sessionToken, { action: "list_invoices" }),
-        invokeAction(sessionToken, { action: "export_ar" }).catch(() => ({ payments_csv: "" })),
-      ]);
-      const payments = paymentsFromArCsv(ar?.payments_csv || "");
-      const hitListCap = (first.invoices || []).length >= 250;
-
-      const invoicePools = new Map();
-      if (!hitListCap) {
-        const byCustomer = new Map();
-        for (const inv of first.invoices || []) {
-          const cid = clean(inv.customer_id);
-          if (!byCustomer.has(cid)) byCustomer.set(cid, []);
-          byCustomer.get(cid).push(inv);
-        }
-        for (const c of targets) invoicePools.set(c.id, byCustomer.get(c.id) || []);
-      } else {
-        for (const c of targets) {
-          const data = await invokeAction(sessionToken, {
-            action: "list_invoices",
-            query: clean(c.company_name),
-          });
-          invoicePools.set(
-            c.id,
-            (data.invoices || []).filter((inv) => clean(inv.customer_id) === c.id)
-          );
-        }
-      }
-
-      const built = targets.map((c) => {
-        const invs = invoicePools.get(c.id) || [];
-        const numbers = new Set(invs.map((i) => clean(i.invoice_number)).filter(Boolean));
-        const custPayments = payments.filter((p) => numbers.has(clean(p.invoice_number)));
-        return buildStatement({ customer: c, invoices: invs, payments: custPayments, asOfDate: asOf });
-      });
-
+      const { built, hitListCap } = await buildForTargets(targets);
       setStatements(built);
       if (hitListCap) {
         setNotice("More than 250 invoices on file — per-customer lookups were used; very high-volume accounts may still be capped.");
@@ -170,7 +182,52 @@ export default function CustomerStatements() {
     } finally {
       setBusy("");
     }
-  }, [sessionToken, asOf, busy]);
+  }, [sessionToken, asOf, busy, buildForTargets]);
+
+  // "Email statement" — renders the monthly_statement notification template
+  // against the freshly built statement and sends through the sendStaffEmail
+  // bridge, then writes the standard OpportunityActivity audit row
+  // (details.notify_kind = monthly_statement) so sends are dedupe-able.
+  const emailStatement = useCallback(async (customer) => {
+    if (!sessionToken || !customer?.id || busy) return;
+    setBusy(`email:${customer.id}`);
+    setError("");
+    setNotice("");
+    try {
+      const { built } = await buildForTargets([customer]);
+      const statement = built[0];
+      if (!statement || !statusGateAllows("monthly_statement", statement)) {
+        throw new Error(`No statement activity for ${customerLabel(customer)} on or before ${statement?.asOf || asOf}.`);
+      }
+      const to = resolveCustomerEmail(customer);
+      if (!to.includes("@")) {
+        throw new Error(`${customerLabel(customer)} has no email address on file.`);
+      }
+      const ctx = buildNotifyContext({ customer, statement, company });
+      const res = await sendCustomerNotification({
+        kind: "monthly_statement",
+        ctx,
+        to,
+        sessionToken,
+        actor,
+        log: {
+          targetId: `statement:${customer.id}:${statement.asOf}`,
+          targetRef: `Statement as of ${statement.asOf}`,
+          customerId: customer.id,
+          customerName: customerLabel(customer),
+          contactName: ctx.contact_name,
+        },
+      });
+      setNotice(
+        `Statement emailed to ${to}.` +
+        (res.logError ? ` The log write failed: ${res.logError} — resolve the log before resending.` : "")
+      );
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "The statement email could not be sent.");
+    } finally {
+      setBusy("");
+    }
+  }, [sessionToken, actor, asOf, busy, buildForTargets, company]);
 
   if (!isRegistered) return null;
 
@@ -270,10 +327,18 @@ export default function CustomerStatements() {
                     <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{contact || "—"}</td>
                     <td className="px-3 py-2.5 text-slate-500">{clean(c.terms) || "—"}</td>
                     <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button type="button" disabled={Boolean(busy)} onClick={() => generate([c])}
-                        className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-violet-300 px-2.5 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300">
-                        <FileText className="h-3.5 w-3.5" />Statement
-                      </button>
+                      <div className="inline-flex items-center gap-1.5">
+                        <button type="button" disabled={Boolean(busy)} onClick={() => generate([c])}
+                          className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-violet-300 px-2.5 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300">
+                          <FileText className="h-3.5 w-3.5" />Statement
+                        </button>
+                        <button type="button" disabled={Boolean(busy)} onClick={() => emailStatement(c)}
+                          title={`Email the ${asOf} statement to ${customerLabel(c)}`}
+                          className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-sky-300 px-2.5 text-xs font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-50 dark:border-sky-800 dark:text-sky-300">
+                          {busy === `email:${c.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                          Email statement
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
