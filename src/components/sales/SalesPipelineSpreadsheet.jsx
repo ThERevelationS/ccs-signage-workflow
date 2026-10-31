@@ -718,12 +718,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       let hasMore = false;
 
       if (scope === "current") {
-        rows = (await fetchAllWorkOrders()).filter((wo) =>
+        rows = (await fetchAllWorkOrders({ preferSnapshot: true })).filter((wo) =>
           wo.is_rider !== true && wo.completed !== true && wo.in_pipeline === true &&
           !["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
         ).sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
       } else if (scope === "outcomes") {
-        rows = (await fetchAllWorkOrders()).filter((wo) =>
+        rows = (await fetchAllWorkOrders({ preferSnapshot: true })).filter((wo) =>
           wo.is_rider !== true && wo.in_pipeline === true &&
           ["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
         ).sort((a, b) => (b.close_date || "").localeCompare(a.close_date || ""));
@@ -735,7 +735,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       } else {
         const [activePage, modernOutcomes, completedLegacy, neutralClosed] = await Promise.all([
           readArchivePage(ALL_RECORDS_ACTIVE_QUERY, 0),
-          fetchAllWorkOrders().then((allRows) => allRows.filter((wo) =>
+          fetchAllWorkOrders({ preferSnapshot: true }).then((allRows) => allRows.filter((wo) =>
             wo.is_rider !== true && wo.in_pipeline === true &&
             ["won", "lost"].includes(String(wo.sales_status || "")) && wo.deleted !== true
           ).sort((a, b) => (b.close_date || "").localeCompare(a.close_date || ""))),
