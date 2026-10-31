@@ -521,8 +521,22 @@ export default function PermitSpreadsheetRow({
                     ].filter(([, v]) => v);
                     const win = window.open("", "_blank", "width=620,height=800");
                     if (!win) return;
-                    win.document.write(`<html><head><title>Permit ${lineItem.permit_number}</title><style>body{font-family:sans-serif;padding:24px}h1{font-size:18px;margin:0 0 12px}table{border-collapse:collapse;width:100%}td{border:1px solid #ccc;padding:6px 10px;font-size:12px}td:first-child{font-weight:600;width:140px;color:#555}</style></head><body><h1>Permit packet — ${lineItem.work_order_title || lineItem.row_name || "Permit"}</h1><table>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table></body></html>`);
-                    win.document.close(); win.print();
+                    const doc = win.document;
+                    doc.open(); doc.write("<!DOCTYPE html><html><head></head><body></body></html>"); doc.close();
+                    doc.title = `Permit ${lineItem.permit_number}`;
+                    const style = doc.createElement("style");
+                    style.textContent = "body{font-family:sans-serif;padding:24px}h1{font-size:18px;margin:0 0 12px}table{border-collapse:collapse;width:100%}td{border:1px solid #ccc;padding:6px 10px;font-size:12px}td:first-child{font-weight:600;width:140px;color:#555}";
+                    doc.head.appendChild(style);
+                    const heading = doc.createElement("h1");
+                    heading.textContent = `Permit packet — ${lineItem.work_order_title || lineItem.row_name || "Permit"}`;
+                    const table = doc.createElement("table");
+                    rows.forEach(([k, v]) => {
+                      const tr = table.insertRow();
+                      tr.insertCell().textContent = String(k);
+                      tr.insertCell().textContent = String(v);
+                    });
+                    doc.body.append(heading, table);
+                    win.print();
                   }}
                 >
                   Print packet
