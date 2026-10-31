@@ -31,3 +31,9 @@ export const sopSaveSettings = ({ settings, expectedUpdatedDate }) =>
   invoke("save_settings", { settings, expected_updated_date: expectedUpdatedDate });
 
 export const sopAckReport = () => invoke("ack_report");
+
+export const sopSuggestEdit = ({ id, stepId, text }) =>
+  invoke("suggest_edit", { id, step_id: stepId, text });
+
+export const sopResolveSuggestion = ({ id, suggestionId, outcome, expectedUpdatedDate }) =>
+  invoke("resolve_suggestion", { id, suggestion_id: suggestionId, outcome, expected_updated_date: expectedUpdatedDate });
