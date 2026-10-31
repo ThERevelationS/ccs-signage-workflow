@@ -139,7 +139,7 @@ for (const action of ['list_invoiceable_estimates', 'create_from_estimate']) {
 assert.match(invoicing, /Only approved estimates can be invoiced/, 'billing must require an approved estimate');
 assert.match(invoicing, /billing_type/, 'invoices must carry a progress-billing type');
 assert.match(invoicing, /already has .* invoiced|already fully invoiced|exceed the billable remainder/, 'billing must guard against over-billing');
-assert.match(invoicing, /Estimate\.filter\(\{ status: "approved" \}/, 'invoiceable list must only offer approved estimates');
+assert.match(invoicing, /Estimate\.filter\(\{ status: "approved" \}|query: \{ status: "approved" \}/, 'invoiceable list must only offer approved estimates');
 assert.match(invoicesPage, /action: "list_invoiceable_estimates"/, 'page must list invoiceable estimates');
 assert.match(invoicesPage, /action: "create_from_estimate"/, 'page must create invoices from estimates');
 assert.match(readFileSync('base44/entities/Invoice.jsonc', 'utf8'), /"deposit".*"progress".*"final"|deposit.*progress.*final/s, 'billing_type enum must include deposit/progress/final');
