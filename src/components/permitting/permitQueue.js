@@ -457,37 +457,37 @@ export const PERMIT_QUEUE_META = {
   needs_setup: {
     label: "Needs Setup",
     shortLabel: "Setup",
-    description: "Locality/workflow still needs to be selected",
+    description: "Pick which town or office to file with",
     className: "border-violet-200 bg-violet-50 text-violet-800",
   },
   overdue: {
     label: "Overdue",
     shortLabel: "Overdue",
-    description: "Follow-up date has passed",
+    description: "A follow-up is late — call or check now",
     className: "border-red-200 bg-red-50 text-red-800",
   },
   due_today: {
     label: "Due Today",
     shortLabel: "Today",
-    description: "Follow-up is due today",
+    description: "Follow up today",
     className: "border-amber-200 bg-amber-50 text-amber-800",
   },
   needs_action: {
     label: "Needs Action",
     shortLabel: "Action",
-    description: "Active permit work with no future follow-up holding it",
+    description: "Needs your next step — nothing scheduled",
     className: "border-blue-200 bg-blue-50 text-blue-800",
   },
   waiting: {
     label: "Waiting",
     shortLabel: "Waiting",
-    description: "Waiting for a future follow-up date",
+    description: "Waiting — next check-in is scheduled",
     className: "border-slate-200 bg-slate-50 text-slate-700",
   },
   completed: {
     label: "Completed",
     shortLabel: "Done",
-    description: "All permit lines are complete",
+    description: "All done",
     className: "border-green-200 bg-green-50 text-green-800",
   },
 };
