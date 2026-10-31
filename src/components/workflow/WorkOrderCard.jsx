@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Circle,
   Eye,
-  EyeOff } from
+  EyeOff,
+  Package } from
 "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
@@ -61,6 +62,11 @@ import {
   mutateWorkOrderArrayField,
   replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
+import {
+  openProductsBlockingCompletion,
+  productStatusRollup,
+  productStatusRollupLabel,
+} from "@/components/estimator/productStageSync";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -177,6 +183,20 @@ export default function WorkOrderCard({
 
   const activeNotes = notes.filter((note) => !note.completed);
   const completedNotes = notes.filter((note) => note.completed);
+
+  // Per-product operational status rollup — one quiet line on the card so
+  // boards can see product progress without opening the workspace.
+  const productRollup = React.useMemo(
+    () => productStatusRollup(workOrder.products),
+    [workOrder.products]
+  );
+  const productRollupLabel = productStatusRollupLabel(productRollup);
+  // Products still in a non-terminal status — listed inside the complete
+  // confirm so a job with open product work is never closed silently.
+  const openProducts = React.useMemo(
+    () => openProductsBlockingCompletion(workOrder.products),
+    [workOrder.products]
+  );
 
   // currentUser now comes from useAuth() — the per-card base44.auth.me()
   // call used to fire once per card per mount and always 401 for staff
@@ -1020,6 +1040,12 @@ export default function WorkOrderCard({
                   <span className="text-xs font-medium">{format(parseLocalDate(workOrder.due_date), "MMM d")}</span>
                 </div>
               }
+              {productRollupLabel &&
+              <div className="flex items-center gap-1 text-gray-500" title={`${productRollup.total} product${productRollup.total === 1 ? "" : "s"} by operational status`}>
+                  <Package className="w-3 h-3 flex-shrink-0 text-violet-500" />
+                  <span className="text-[10px] font-medium">{productRollupLabel}</span>
+                </div>
+              }
               {riders.length > 0 && !workOrder.is_rider &&
               <div className="flex gap-1 flex-wrap">
                   {riders.map((rider, index) =>
@@ -1611,6 +1637,22 @@ export default function WorkOrderCard({
               This will send an email notification to the team.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {openProducts.length > 0 && (
+            <div className="mx-1 mb-2 rounded border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+              <span className="font-semibold">
+                {openProducts.length} product{openProducts.length === 1 ? "" : "s"} still open:
+              </span>
+              <ul className="mt-1 list-disc pl-4">
+                {openProducts.slice(0, 6).map((p) => (
+                  <li key={p.id || p.name}>
+                    {p.name}{p.status !== "none" ? ` (${p.status.replace(/_/g, " ")})` : ""}
+                  </li>
+                ))}
+              </ul>
+              {openProducts.length > 6 && <div className="mt-1">+{openProducts.length - 6} more</div>}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel
               className="clay-button border-none text-gray-800"
