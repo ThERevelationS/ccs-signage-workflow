@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import SavedViews from "@/components/workflow/SavedViews";
 import ReceivePanel from "@/components/procurement/ReceivePanel";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import {
   CheckCircle2,
   ChevronRight,
@@ -239,6 +240,16 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
     setNotice("");
     try {
       const data = await invokeAction(sessionToken, body);
+      // Unified alerts: po_received / po_backordered fire on the verified
+      // receive result — a full receive notifies "received", a receipt that
+      // leaves open quantity notifies "backordered". Fire-and-forget.
+      if (body?.action === "receive_items" && data?.purchase_order?.id) {
+        try {
+          const nextStatus = clean(data.purchase_order.status);
+          if (nextStatus === "received") void NotificationTriggers.purchaseOrderReceived(data.purchase_order);
+          else if (nextStatus === "partially_received") void NotificationTriggers.purchaseOrderBackordered(data.purchase_order);
+        } catch { /* notify is best-effort */ }
+      }
       if (Array.isArray(data?.stock_warnings) && data.stock_warnings.length > 0) {
         setNotice(`Received, but ${data.stock_warnings.length} stock update(s) need attention: ${data.stock_warnings.join(" ")}`);
       }
