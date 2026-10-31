@@ -25,7 +25,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 const JurisdictionProfile = staffEntities.JurisdictionProfile;
 const PermitLineItem = staffEntities.PermitLineItem;
 
-export default function JurisdictionsView({ focusJurisdiction = null }) {
+export default function JurisdictionsView({ focusJurisdiction = null, onOpenJob }) {
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'admin';
   const {runAction}=useResearchProgress();
@@ -668,6 +668,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
           <JurisdictionDetailPanel
             jurisdiction={selectedJurisdiction}
             permitLines={permitLines.filter((li) => String(li.locality_name || "").trim().toLowerCase() === String(selectedJurisdiction.name || "").trim().toLowerCase())}
+            onOpenJob={onOpenJob}
             duplicateCount={duplicateCountFor(selectedJurisdiction)}
             onSetVerification={handleVerificationChange}
             onClose={() => setSelectedJurisdiction(null)}
