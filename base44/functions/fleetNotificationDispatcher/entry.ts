@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
+import { hasInternalFunctionCapability } from '../../shared/internalFunctionCapability.ts';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const replaceVars = (text: string, vars: Record<string,string>) => Object.entries(vars).reduce((out,[k,v]) => out.split(k).join(v), text || '');
@@ -18,9 +19,14 @@ const fluidIsLowStock = (item: any) => {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user || user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     const body = await req.json().catch(() => ({}));
+    // Backend callers (fleet* actions) invoke service-role — they carry no user,
+    // so the admin check alone 403'd every legitimate enqueue. An internal
+    // capability token distinguishes them from anonymous invokes, which also
+    // have no user.
+    const internal = hasInternalFunctionCapability(body);
+    const user = internal ? null : await base44.auth.me().catch(() => null);
+    if (!internal && (!user || user.role !== 'admin')) return Response.json({ error: 'Forbidden' }, { status: 403 });
     const eventType = String(body?.event_type || '').trim();
     const targetId = String(body?.target_id || '').trim();
     if (!eventType || !targetId) return Response.json({ error: 'event_type and target_id are required.' }, { status: 400 });
