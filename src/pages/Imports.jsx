@@ -2,26 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/EmailGate";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Upload, History, RefreshCw, ShieldAlert } from "lucide-react";
 import ImportWizard from "@/components/imports/ImportWizard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-
-const STATUS_STYLES = {
-  completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  running: "bg-blue-100 text-blue-800 border-blue-200",
-  paused: "bg-amber-100 text-amber-800 border-amber-200",
-  failed: "bg-red-100 text-red-800 border-red-200",
-  cancelled: "bg-gray-100 text-gray-700 border-gray-200",
-};
+import { EmptyState, PageHeader, StatusChip } from "@/components/kit";
 
 const fmtDate = (v) => {
   const t = Date.parse(String(v || ""));
   return Number.isFinite(t) ? new Date(t).toLocaleString() : "—";
 };
 
-function ImportHistory({ reloadKey }) {
+function ImportHistory({ reloadKey, onNewImport }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,9 +67,7 @@ function ImportHistory({ reloadKey }) {
               <td className="px-3 py-1.5 text-gray-800 font-medium">{j.import_type || "—"}</td>
               <td className="px-3 py-1.5 text-gray-600 max-w-[200px] truncate">{j.file_name || "—"}</td>
               <td className="px-3 py-1.5">
-                <Badge className={STATUS_STYLES[j.status] || "bg-gray-100 text-gray-700 border-gray-200"}>
-                  {j.status || "—"}
-                </Badge>
+                <StatusChip status={j.status} size="sm" />
               </td>
               <td className="px-3 py-1.5 text-gray-600 max-w-[320px]">
                 <span className="block truncate" title={j.result_message || j.error_message || ""}>
@@ -88,7 +78,15 @@ function ImportHistory({ reloadKey }) {
             </tr>
           ))}
           {jobs.length === 0 && (
-            <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-400">No imports recorded yet.</td></tr>
+            <tr><td colSpan={6} className="p-0">
+              <EmptyState
+                compact
+                title="No imports recorded yet."
+                message="Finished imports land here with row counts, errors, and who ran them."
+                actionLabel={onNewImport ? "New Import" : undefined}
+                onAction={onNewImport}
+              />
+            </td></tr>
           )}
         </tbody>
       </table>
@@ -103,29 +101,23 @@ export default function Imports() {
 
   if (currentUser && currentUser.role !== "admin") {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 text-center">
-        <ShieldAlert className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-        <div className="text-[14px] font-bold text-gray-900">Administrators only</div>
-        <p className="text-[11px] text-gray-500 mt-1">
-          Bulk imports change shared catalog and customer data. Ask an administrator to run them.
-        </p>
-      </div>
+      <EmptyState
+        icon={ShieldAlert}
+        className="mx-auto max-w-3xl px-4 py-10"
+        title="Administrators only"
+        message="Bulk imports change shared catalog and customer data. Ask an administrator to run them."
+      />
     );
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-5">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded bg-indigo-50 text-indigo-700 flex items-center justify-center">
-          <Upload className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-[18px] font-bold text-gray-900">Imports</h1>
-          <p className="text-[10px] text-gray-500">
-            CoreBridge bulk imports — customers, contacts, addresses, parts, and vendor associations.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Queues", to: "/EstimatorQueues" }, { label: "Imports" }]}
+        icon={Upload}
+        title="Imports"
+        subtitle="CoreBridge bulk imports — customers, contacts, addresses, parts, and vendor associations."
+      />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="h-[32px]">
@@ -136,7 +128,7 @@ export default function Imports() {
           <ImportWizard onImportFinished={() => setReloadKey((k) => k + 1)} />
         </TabsContent>
         <TabsContent value="history" className="mt-4">
-          <ImportHistory reloadKey={reloadKey} />
+          <ImportHistory reloadKey={reloadKey} onNewImport={() => setTab("new")} />
         </TabsContent>
       </Tabs>
     </div>
