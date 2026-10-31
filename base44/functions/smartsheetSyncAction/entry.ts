@@ -94,6 +94,36 @@ const MAX_RESPONSE_BYTES = 2_000_000;
 const SETTING_KEY = 'smartsheetSyncConfig';
 const ORDER_REQUEST_TYPES_SETTING_KEY = 'orderRequestTypes';
 
+// Linked-record pull projection: every field the pull→compare→write path can
+// touch. Sync-critical blobs stay (smartsheet_sync_snapshot is the drift
+// baseline; create_attempt drives duplicate-risk review); the fat
+// production/narrative fields the sync never reads stay in storage, which
+// keeps a large share of row bytes out of the entity-read volume budget.
+// Coverage was verified against every smartsheet shared module: mappable keys,
+// configured bindings, sync metadata, and every record.* field read.
+const SYNC_PULL_SYSTEM_FIELDS = ['id', 'created_date', 'updated_date', 'created_by', 'created_by_id'];
+const SYNC_PULL_META_FIELDS = [
+  'deleted', 'deleted_at', 'deleted_by',
+  'smartsheet_sheet_id', 'smartsheet_row_id', 'smartsheet_parent_row_id',
+  'smartsheet_last_synced_at', 'smartsheet_sync_snapshot', 'smartsheet_create_attempt',
+  'smartsheet_pending_local_sync', 'sales_import_snapshot', 'sales_import_source_id',
+  'sales_import_last_synced_at', 'duplicate_review_status', 'automation_deadline_fired',
+];
+const SYNC_PULL_SIDE_FIELDS = [
+  '_salesTaskAdoption', '_salesStageTransition', '_salesAssigneeNeedsReview',
+  'title', 'client_name', 'customer_name', 'customer_id', 'description', 'in_pipeline',
+  'current_stage', 'sales_status', 'sales_stage_changed_at', 'corbridge_invoice_number',
+  'est_inv_at', 'work_order_id', 'row_number',
+];
+function syncPullFields(dataset: string, bindingsObj: any): string[] {
+  const mappable = getMappableFields(dataset === 'orders' ? 'orders' : 'sales')
+    .map((f: any) => String(f?.key || '').trim())
+    .filter(Boolean)
+    .map((k: string) => (k === 'notes_serialized' ? 'work_notes' : k));
+  const bound = Object.keys(bindingsObj || {}).map((k) => (k === 'notes_serialized' ? 'work_notes' : k));
+  return [...new Set([...SYNC_PULL_SYSTEM_FIELDS, ...SYNC_PULL_META_FIELDS, ...SYNC_PULL_SIDE_FIELDS, ...mappable, ...bound])];
+}
+
 function normalizeOrderRequestTypes(value: unknown): string[] {
   const source = Array.isArray(value) ? value : [];
   const seen = new Set<string>();
@@ -278,6 +308,7 @@ async function pullDataset(
       entity: base44.asServiceRole.entities.WorkOrder,
       query: { smartsheet_sheet_id: sheetId },
       sort: 'id',
+      fields: syncPullFields(dataset, bindings),
       label: 'Sales Smartsheet pull linked WorkOrders',
     });
   } else {
@@ -1128,6 +1159,7 @@ async function pullDataset(
         entity: base44.asServiceRole.entities.WorkOrder,
         query: { smartsheet_sheet_id: sheetId },
         sort: 'id',
+        fields: syncPullFields(dataset, bindings),
         label: 'Sales pull business-field verification',
       });
       const verifiedSalesById = new Map(
@@ -1945,12 +1977,13 @@ async function saveSyncStatusForRun(base44: any, status: any, startedAt: string,
 // permanent WorkOrder link. Incomplete paged reads fail closed.
 async function readSalesCreateRowClaims(base44: any, sheetId: string, rowId: string) {
   const entity = base44.asServiceRole.entities.WorkOrder;
+  const claimsFields = syncPullFields('sales', {});
   const [linked, allAttempts] = await Promise.all([
     // A legacy linked row with a missing sheet ID is still a competing claim.
     loadAllEntityRows({entity,query:{smartsheet_row_id:rowId},
-      sort:'id',label:'Sales create permanent-row linked owner verification'}),
+      sort:'id',fields:claimsFields,label:'Sales create permanent-row linked owner verification'}),
     loadAllEntityRows({entity,query:{smartsheet_create_attempt:{$exists:true}},
-      sort:'id',label:'Sales create permanent-row durable attempt verification'}),
+      sort:'id',fields:claimsFields,label:'Sales create permanent-row durable attempt verification'}),
   ]);
   const attempts = allAttempts.filter((candidate: any) =>
     (!/^\d+$/.test(String(candidate?.smartsheet_create_attempt?.sheet_id ?? '')) ||
@@ -2025,12 +2058,14 @@ async function pushDataset(
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: { $in: requestedRecordIds } },
           sort: 'id',
+          fields: syncPullFields(dataset, bindings),
           label: 'Sales Pipeline targeted Save & Sync WorkOrders',
         })
       : await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { in_pipeline: true },
           sort: 'id',
+          fields: syncPullFields(dataset, bindings),
           label: 'Sales Pipeline full Smartsheet push WorkOrders',
         });
   } else {
