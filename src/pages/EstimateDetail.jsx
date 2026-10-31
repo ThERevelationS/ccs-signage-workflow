@@ -1413,6 +1413,14 @@ export default function EstimateDetail() {
           </a>
         </div>
       )}
+      {estimate.work_order_id && (
+        <div className="px-3 pb-2">
+          <a href={`/JobWorkspace?wo=${estimate.work_order_id}`}
+            className="inline-flex items-center gap-1.5 rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-100">
+            Open Job Workspace
+          </a>
+        </div>
+      )}
 
       {/* Watch rule (#349): "tell me when this estimate is approved" — the
           rule persists in GlobalSettings and `check_watches` surfaces hits. */}
