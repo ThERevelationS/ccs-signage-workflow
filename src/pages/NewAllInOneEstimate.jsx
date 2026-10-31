@@ -13,6 +13,7 @@ import { ensureEstimateCustomerLocation } from "@/components/estimator/customerL
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const TERMS_OPTIONS = ["Due on Receipt", "Net 15", "Net 30", "Net 60", "50% Deposit"];
 const SALES_CENTERS = ["Cincinnati Custom Signs"];
@@ -77,7 +78,7 @@ const EMPTY = {
 
 export default function NewAllInOneEstimate() {
   const navigate = useNavigate();
-  const { sessionToken } = useAuth();
+  const { sessionToken, currentUser } = useAuth();
   const [form, setForm] = useState(EMPTY);
   const [customers, setCustomers] = useState([]);
   const [recentCustomerIds, setRecentCustomerIds] = useState(() => loadRecentCustomerIds());
@@ -89,7 +90,6 @@ export default function NewAllInOneEstimate() {
   };
   const [taxGroups, setTaxGroups] = useState([]);
   const [users, setUsers] = useState([]);
-  const [me, setMe] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveSiteAsLocation, setSaveSiteAsLocation] = useState(false);
   const savingRef = useRef(false);
@@ -112,10 +112,20 @@ export default function NewAllInOneEstimate() {
       } catch {}
     }).catch((err) => setError(err?.message || "Customers could not be loaded."));
     loadAllEntityRows({ entity: staffEntities.TaxGroup, sort: null, label: "New Estimate tax groups" }).then((r) => setTaxGroups(r || [])).catch((err) => setError(err?.message || "Tax groups could not be loaded."));
-    loadAllEntityRows({ entity: base44.entities.User, sort: null, label: "New Estimate app users" }).then((r) => setUsers(r || [])).catch((err) => setError(err?.message || "Users could not be loaded."));
     loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "New Estimate duplicate sources" }).then((r) => setDupSources(r || [])).catch(() => {});
-    base44.auth.me().then(setMe).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!sessionToken) {
+      setUsers([]);
+      return;
+    }
+    let cancelled = false;
+    loadAuthorizedUserDirectory({ sessionToken })
+      .then((d) => { if (!cancelled) setUsers(d.users || []); })
+      .catch(() => { if (!cancelled) setUsers([]); });
+    return () => { cancelled = true; };
+  }, [sessionToken]);
 
   const patch = (changes) => setForm((prev) => ({ ...prev, ...changes }));
 
@@ -361,7 +371,7 @@ export default function NewAllInOneEstimate() {
             salesCenters={SALES_CENTERS}
             onGenerateNumber={handleGenerate}
             generating={generating}
-            enteredBy={me?.full_name || me?.email}
+            enteredBy={currentUser?.full_name || currentUser?.email}
             onCustomerCreated={(c) => setCustomers((prev) => [c, ...prev])}
             saveSiteAsLocation={saveSiteAsLocation}
             onSaveSiteAsLocationChange={setSaveSiteAsLocation}
