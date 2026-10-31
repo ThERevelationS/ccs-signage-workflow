@@ -77,7 +77,7 @@ export default function TimeClockReportsDashboard() {
     try {
       const [entries, orders] = await Promise.all([
         loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock entries" }),
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
