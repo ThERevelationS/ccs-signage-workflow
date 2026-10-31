@@ -165,6 +165,93 @@
     "legacy_bom_reconciled_at": {
       "type": "string"
     },
+    "operational_status": {
+      "type": "string",
+      "enum": [
+        "order_review",
+        "site_survey",
+        "awaiting_customer_action",
+        "awaiting_proof_approval",
+        "permitting",
+        "proof_approved",
+        "design_review",
+        "in_design",
+        "in_production",
+        "quality_control",
+        "service_repair",
+        "install_or_removal_only",
+        "vended",
+        "none"
+      ],
+      "default": "none",
+      "description": "CoreBridge-style WIP operational state for this product, independent of the work-order stage."
+    },
+    "operational_substatus": {
+      "type": "string",
+      "description": "Free-text persistent quick-tag layered on operational_status (e.g. waiting-on reason)."
+    },
+    "customer_facing_status": {
+      "type": "string",
+      "description": "Customer-safe display label mapped from operational_status; portals show this instead of internal states."
+    },
+    "fulfillment_state": {
+      "type": "string",
+      "enum": [
+        "none",
+        "awaiting_pickup",
+        "awaiting_installation",
+        "awaiting_shipping",
+        "awaiting_delivery",
+        "picked_up",
+        "installed",
+        "shipped",
+        "delivered"
+      ],
+      "default": "none",
+      "description": "Built/completed fulfillment disposition for this product. Distinct from operational_status and from invoice payment state."
+    },
+    "design_due_date": {
+      "type": "string",
+      "description": "Design deadline for this product, computed from part lead times or manually set."
+    },
+    "product_due_date": {
+      "type": "string",
+      "description": "Production deadline for this product. The work-order due date derives from the latest product due date."
+    },
+    "hard_due_date": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, automated due-date recalculation (e.g. on proof approval) must not move this product past its current due date."
+    },
+    "designer": {
+      "type": "string",
+      "description": "Assigned designer for this product."
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Production/operations assignee for this product."
+    },
+    "responsibility": {
+      "type": "string",
+      "description": "Queue prioritization responsibility (department/person/group) used by production queues."
+    },
+    "queue_priority": {
+      "type": "number",
+      "description": "Numeric queue priority 1-99 within responsibility, mirroring CoreBridge queue prioritization."
+    },
+    "proof_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "draft",
+        "sent",
+        "awaiting_approval",
+        "approved",
+        "revision_requested"
+      ],
+      "default": "none",
+      "description": "Customer proof approval state for this product; approval can trigger due-date recalculation."
+    },
     "notes": {
       "type": "string"
     }
@@ -173,9 +260,25 @@
     "builder_name"
   ],
   "rls": {
-    "create": { "user_condition": { "role": "__builderproduct_backend_only__" } },
-    "read": { "user_condition": { "role": "__builderproduct_backend_only__" } },
-    "update": { "user_condition": { "role": "__builderproduct_backend_only__" } },
-    "delete": { "user_condition": { "role": "__builderproduct_backend_only__" } }
+    "create": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__builderproduct_backend_only__"
+      }
+    }
   }
 }
