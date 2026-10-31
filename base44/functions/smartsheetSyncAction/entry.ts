@@ -114,6 +114,8 @@ const SYNC_PULL_SIDE_FIELDS = [
   'title', 'client_name', 'customer_name', 'customer_id', 'description', 'in_pipeline',
   'current_stage', 'sales_status', 'sales_stage_changed_at', 'corbridge_invoice_number',
   'est_inv_at', 'work_order_id', 'row_number',
+  'close_date', 'follow_up_date', 'lost_reason',
+  'sales_last_activity_at', 'sales_neutral_closed_at', 'sales_quote_sent_verified_at',
 ];
 function syncPullFields(dataset: string, bindingsObj: any): string[] {
   const mappable = getMappableFields(dataset === 'orders' ? 'orders' : 'sales')
