@@ -1023,6 +1023,12 @@ export default function WorkOrderDetailsDialog({
                       <FileText className="w-3.5 h-3.5" /> Source Estimate <ExternalLink className="w-3 h-3" />
                     </Link>
                     }
+                    <Link
+                      to={`/JobWorkspace?wo=${workOrder.id}`}
+                      className="h-7 px-2.5 inline-flex items-center gap-1.5 rounded border border-sky-200 bg-sky-50 text-[11px] font-semibold text-sky-700 hover:bg-sky-100"
+                      title="Open the job workspace for this work order">
+                      <FolderOpen className="w-3.5 h-3.5" /> Job Workspace
+                    </Link>
                       </>
                   }
                 </div>
