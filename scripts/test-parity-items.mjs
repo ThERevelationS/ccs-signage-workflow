@@ -70,8 +70,14 @@ const glSrc = read("src/components/shared/glExport.js");
 check("glExport.js ships the entry adapters",
   glSrc.includes("paymentsToGlEntries") && glSrc.includes("reportToGlEntries") && glSrc.includes("resolveGlAccount"));
 check("glExport.js reports the unmapped count", glSrc.includes("unmapped"));
-check("loadGlLookup reads MarkupCategory/Inventory/PartTemplate GL fields",
-  read("src/components/shared/loadGlLookup.js").includes("gl_code"));
+const lookupSrc = read("src/components/shared/loadGlLookup.js");
+check("loadGlLookup reads the three GL-mapped catalogs",
+  lookupSrc.includes("staffEntities.MarkupCategory") &&
+  lookupSrc.includes("staffEntities.Inventory") &&
+  lookupSrc.includes("staffEntities.PartTemplate") &&
+  lookupSrc.includes("buildGlLookup"));
+check("glExport resolves catalog GL fields (gl_code/income_account)",
+  glSrc.includes("gl_code") && glSrc.includes("income_account"));
 
 const recon = read("src/pages/Reconciliation.jsx");
 check("Reconciliation wires the GL export", recon.includes("paymentsToGlEntries") && recon.includes("glExportRows"));
