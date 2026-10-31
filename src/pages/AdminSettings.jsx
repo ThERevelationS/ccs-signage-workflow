@@ -650,6 +650,10 @@ export default function AdminSettings() {
       return next;
     });
   }, [isUnlocked, selectedAdminTab]);
+  const [emailGroups, setEmailGroups] = useState([]);
+  const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
+  const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
+  const emailGroupsLoadSequence = useRef(0);
   const userTeamSections = useMemo(() => {
     const email = String(currentUser?.email || '').toLowerCase();
     if (!email || !Array.isArray(emailGroups)) return [];
@@ -847,10 +851,6 @@ export default function AdminSettings() {
       return next;
     });
   };
-  const [emailGroups, setEmailGroups] = useState([]);
-  const [emailGroupsLoading, setEmailGroupsLoading] = useState(true);
-  const [emailGroupsLoadError, setEmailGroupsLoadError] = useState(false);
-  const emailGroupsLoadSequence = useRef(0);
   const [testEmailAddr, setTestEmailAddr] = useState("");
   const [testEmailBusy, setTestEmailBusy] = useState(false);
   const [testEmailMsg, setTestEmailMsg] = useState("");
