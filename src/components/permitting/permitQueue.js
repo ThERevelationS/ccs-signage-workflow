@@ -234,7 +234,7 @@ export function getPermitLineLifecycleSummary(line) {
   }
   if (correctionStatus === "resubmitted") return { key: "resubmitted", label: "Resubmitted", shortLabel: "Resubmitted", tone: "info" };
   if (asDateKey(line?.submitted_date)) return { key: "submitted", label: "Submitted", shortLabel: "Submitted", tone: "info" };
-  return { key: "pre_submission", label: "Pre-submission", shortLabel: "Pre-submission", tone: "neutral" };
+  return { key: "pre_submission", label: "Not submitted yet", shortLabel: "Not sent", tone: "neutral" };
 }
 
 const PERMIT_LIFECYCLE_PROGRESS_ORDER = [
