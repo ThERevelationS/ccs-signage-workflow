@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import ProductQueue, { flattenQueueRows } from "@/components/queues/ProductQueue";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 
@@ -12,8 +13,15 @@ const QUEUES = [
 ];
 
 export default function ProductQueues() {
-  const [active, setActive] = useState("design");
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: workOrders = [] } = useAllWorkOrders();
+  const activeParam = searchParams.get("queue");
+  const active = QUEUES.some((q) => q.key === activeParam) ? activeParam : "design";
+  const setActive = (key) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev);
+    next.set("queue", key);
+    return next;
+  });
 
   useEffect(() => { document.title = "Product Queues"; }, []);
 
