@@ -282,6 +282,15 @@ assert.match(portalEntity, /"creation_request_key"/, 'portal link entity must ca
 const portalMsgEntity = readFileSync('base44/entities/PortalMessage.jsonc', 'utf8');
 assert.match(portalMsgEntity, /"__portal_message_backend_only__"/, 'portal message entity must be backend-only');
 assert.match(portalMsgEntity, /"estimate_revision_requested"/, 'portal messages must cover revision requests');
+
+// Inventory cost history exposes supplier cost moves; it is backend-only and served via session-gated functions.
+const costHistoryRls = JSON.parse(readFileSync('base44/entities/InventoryCostHistory.jsonc', 'utf8')).rls;
+for (const op of ['create', 'read', 'update', 'delete']) {
+  assert.equal(costHistoryRls?.[op]?.user_condition?.role, '__inventory_cost_history_backend_only__', `InventoryCostHistory ${op} must stay backend-only`);
+}
+const costHistoryClient = readFileSync('src/components/masterInventory/inventoryPersistence.js', 'utf8');
+assert.doesNotMatch(costHistoryClient, /base44\.entities\.InventoryCostHistory/, 'InventoryCostHistory must not be accessed directly from the browser');
+assert.match(readFileSync('base44/functions/inventoryAction/entry.ts', 'utf8'), /action === "record_cost_history"[\s\S]{0,200}user\?\.role !== "admin"/, 'cost history writes must require a CCS admin session');
 const portalFn = readFileSync('base44/functions/customerPortalAction/entry.ts', 'utf8');
 assert.match(portalFn, /action === "bootstrap"/, 'portal function must expose token bootstrap');
 assert.match(portalFn, /token\.length < 16/, 'bootstrap must reject short tokens');
