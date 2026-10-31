@@ -69,7 +69,7 @@ export default function AddTaskDialog({ isOpen, onClose, lockedWorkOrderId = nul
     try {
       const [directory, workOrdersData] = await Promise.all([
         loadAuthorizedUserDirectory({ sessionToken }),
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")))
