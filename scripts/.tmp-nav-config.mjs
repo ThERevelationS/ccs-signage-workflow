@@ -1,0 +1,139 @@
+// src/components/estimator/moduleRegistry.js
+var ESTIMATOR_MODULES = [
+  { key: "foundation", label: "Concrete | Masonry | Poles", entity: "FoundationProject", page: "FoundationEstimator" },
+  { key: "channel_letters", label: "Channel & Dimensional Letters", entity: "ChannelLetterInstallation", page: "ChannelLetterEstimator" },
+  { key: "vinyl", label: "Vinyl & Graphics", entity: "VinylProject", page: "VinylEstimator" },
+  { key: "cnc", label: "CNC Router", entity: "CNCProject", page: "CNCEstimator" },
+  { key: "laser", label: "Laser", entity: "LaserProject", page: "LaserEstimator" },
+  { key: "metal", label: "Metal Fabrication", entity: "MetalProject", page: "MetalEstimator" },
+  { key: "brick_stone", label: "Brick & Stone", entity: "BrickStoneProject", page: "BrickStoneEstimator" },
+  { key: "maintenance", label: "Sign Maintenance", entity: "MaintenanceProject", page: "MaintenanceEstimator" },
+  { key: "painting", label: "Painting", entity: "Project", page: "PaintingEstimator" },
+  { key: "custom_items", label: "Custom line items", entity: "CustomItemsProject", page: "CustomItemsEstimator" }
+];
+
+// src/components/estimator/navConfig.js
+var ESTIMATOR_TABS = [
+  {
+    label: "Sales Home",
+    to: "/SalesHome",
+    items: [
+      { label: "Notifications & Activity", to: "/SalesHome" },
+      { label: "Estimate Queues", to: "/EstimatorQueues" },
+      { label: "New Estimate", to: "/NewAllInOneEstimate" }
+    ]
+  },
+  {
+    label: "Queues",
+    to: "/EstimatorQueues",
+    items: [
+      { label: "All Estimates", to: "/EstimatorQueues" },
+      { label: "In Draft", to: "/EstimatorQueues?status=draft" },
+      { label: "Awaiting Approval", to: "/EstimatorQueues?status=sent" },
+      { label: "Approved", to: "/EstimatorQueues?status=approved" },
+      { label: "Archived", to: "/EstimatorQueues?status=archived" },
+      { label: "Cancelled", to: "/EstimatorQueues?status=cancelled" },
+      { label: "Sync Issues", to: "/EstimatorQueues?status=sync_issues" },
+      { label: "Design Products", to: "/ProductQueues?queue=design" },
+      { label: "Production Products", to: "/ProductQueues?queue=production" },
+      { label: "Fulfillment Products", to: "/ProductQueues?queue=fulfillment" },
+      { label: "Job Workspace", to: "/JobWorkspace" },
+      { label: "Ops Reports", to: "/OpsReports" },
+      { label: "Reconciliation", to: "/Reconciliation" },
+      { label: "Imports", to: "/Imports" },
+      { label: "CB Migration", to: "/CbMigration" }
+    ]
+  },
+  {
+    label: "Customers",
+    to: "/EstimatorCustomers",
+    items: [
+      { label: "All Customers", to: "/EstimatorCustomers" },
+      { label: "CRM Events", to: "/CrmEvents" },
+      { label: "Statements", to: "/CustomerStatements" },
+      { label: "Follow-ups", to: "/CommsFollowups" },
+      { label: "Active", to: "/EstimatorCustomers?status=active" },
+      { label: "Prospects", to: "/EstimatorCustomers?status=prospect" },
+      { label: "Inactive", to: "/EstimatorCustomers?status=inactive" }
+    ]
+  },
+  {
+    label: "Quick Price",
+    to: "/QuickPrice",
+    items: [
+      { label: "Full Estimate", to: "/NewAllInOneEstimate" },
+      { label: "QUICK ESTIMATORS", header: true },
+      ...ESTIMATOR_MODULES.map((m) => ({
+        label: m.label,
+        to: `/QuickPrice?module=${m.key}`
+      }))
+    ]
+  },
+  {
+    label: "Estimates",
+    to: "/Estimator",
+    items: [
+      { label: "All Estimates", to: "/Estimator" },
+      { label: "New Estimate", to: "/NewAllInOneEstimate" }
+    ]
+  },
+  {
+    label: "Products",
+    to: "/EstimatorProducts",
+    items: [
+      { label: "Product Library", to: "/EstimatorProducts" },
+      { label: "Quick Products", to: "/EstimatorProducts?view=quick" },
+      { label: "PRODUCT BUILDERS", header: true },
+      ...ESTIMATOR_MODULES.map((m) => ({
+        label: m.label,
+        to: `/EstimatorProducts?module=${m.key}`
+      }))
+    ]
+  },
+  {
+    label: "Parts",
+    to: "/EstimatorParts",
+    items: [
+      { label: "Part Library", to: "/EstimatorParts" }
+    ]
+  }
+];
+var ESTIMATOR_RIGHT_TABS = [
+  {
+    label: "Settings",
+    to: "/EstimatorSettings",
+    items: [
+      { label: "Estimator Settings", to: "/EstimatorSettings" },
+      { label: "Foundation Catalog", to: "/FoundationCatalog" },
+      { label: "Foundation Settings", to: "/FoundationSettings" },
+      { label: "Painting Settings", to: "/PaintingSettings" },
+      { label: "CNC Settings", to: "/CNCSettings" },
+      { label: "Laser Settings", to: "/LaserSettings" },
+      { label: "Metal Settings", to: "/MetalSettings" },
+      { label: "Maintenance Settings", to: "/MaintenanceSettings" },
+      { label: "Installation Settings", to: "/InstallationSettings" },
+      { label: "Quote Defaults", to: "/QuoteSettings" },
+      { label: "Pricing Admin", to: "/PricingAdmin" },
+      { label: "Vinyl Inventory", to: "/VinylInventory" },
+      { label: "Vinyl Settings", to: "/VinylSettings" },
+      { label: "Admin Settings", to: "/AdminSettings" },
+      { label: "My Info", to: "/UserSettings" }
+    ]
+  },
+  {
+    label: "Tools",
+    to: "/EstimatorTools",
+    items: [
+      { label: "Tools Home", to: "/EstimatorTools" },
+      { label: "Quick Price", to: "/QuickPrice" },
+      { label: "Walk-in Sale", to: "/WalkIn" },
+      { label: "Main Workflow", to: "/MainWorkflow" },
+      { label: "Sales Pipeline", to: "/SalesPipeline" },
+      { label: "Reports", to: "/FeatureReports" }
+    ]
+  }
+];
+export {
+  ESTIMATOR_RIGHT_TABS,
+  ESTIMATOR_TABS
+};

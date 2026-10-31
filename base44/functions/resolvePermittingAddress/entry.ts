@@ -454,8 +454,8 @@ function withEntityRateLimitRetry(client, { paceMs = 0, maxRetries = 5 } = {}) {
 }
 
 // base44/functions/findLocalityByAddress/handler.ts
-async function fixedJSON(url) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(15e3) });
+async function fixedJSON(url, timeoutMs = 15e3) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   if (!response.ok) throw Error("Location service returned HTTP " + response.status);
   const text = await response.text();
   if (text.length > 8 * 1024 * 1024) throw Error("Location response exceeds its limit.");
@@ -582,11 +582,28 @@ Deno.serve(async (req) => {
     }
     if (!geocode) {
       try {
+        await reporter.emit({ kind: "geocode_lookup", url: "https://nominatim.openstreetmap.org/search", detail: "Trying the public OpenStreetMap address locator." });
+        const osmResponse = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=" + encodeURIComponent(address), { headers: { "User-Agent": "ccs-signage-permitting-lookup/1.0" }, signal: AbortSignal.timeout(6e3) });
+        const osm = osmResponse.ok ? await osmResponse.json() : [];
+        const hit = Array.isArray(osm) ? osm[0] : null;
+        const addr = hit?.address || {};
+        const st = normalizeAddressState(addr.state || "");
+        if (hit && Number.isFinite(Number(hit.lat)) && Number.isFinite(Number(hit.lon)) && ["oh", "ky"].includes(st)) {
+          geocode = { lat: Number(hit.lat), lon: Number(hit.lon), display_name: hit.display_name || address, location_exact: false, approximate_source: "nominatim", address_parts: { administrative_area_level_1: st, locality: addr.city || addr.town || addr.village || addr.municipality || "", postal_code: addr.postcode || "" } };
+          await reporter.emit({ kind: "geocode_service_result", detail: "OpenStreetMap locator matched " + geocode.display_name + " as an approximate map location." });
+          if (geocodingService?.issue) geocodingService = { ...geocodingService, fallback_used: "nominatim", fallback_message: "The public OpenStreetMap locator found an approximate map position after other locators failed." };
+        } else await reporter.emit({ kind: "geocode_service_result", detail: "OpenStreetMap locator returned no usable match." });
+      } catch {
+        await reporter.emit({ kind: "geocode_failed", detail: "The OpenStreetMap backup locator could not confirm the address either." });
+      }
+    }
+    if (!geocode) {
+      try {
         await reporter.emit({ kind: "geocode_lookup", url: "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress", detail: "Trying the public US Census address locator." });
         const cleaned = address.replace(/s+,/g, ",").replace(/,?s*(USA|United States|US)$/i, "");
         let match = null, matches = [];
         for (const candidate of [.../* @__PURE__ */ new Set([cleaned, address])]) {
-          const census = await fixedJSON("https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=" + encodeURIComponent(candidate) + "&benchmark=Public_AR_Current&format=json");
+          const census = await fixedJSON("https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=" + encodeURIComponent(candidate) + "&benchmark=Public_AR_Current&format=json", 5e3);
           matches = census?.result?.addressMatches || [];
           if (matches.length) {
             match = matches[0];
@@ -602,23 +619,6 @@ Deno.serve(async (req) => {
         }
       } catch {
         await reporter.emit({ kind: "geocode_failed", detail: "The Census backup locator could not confirm the address either." });
-      }
-    }
-    if (!geocode) {
-      try {
-        await reporter.emit({ kind: "geocode_lookup", url: "https://nominatim.openstreetmap.org/search", detail: "Trying the public OpenStreetMap address locator." });
-        const osmResponse = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&addressdetails=1&q=" + encodeURIComponent(address), { headers: { "User-Agent": "ccs-signage-permitting-lookup/1.0" }, signal: AbortSignal.timeout(6e3) });
-        const osm = osmResponse.ok ? await osmResponse.json() : [];
-        const hit = Array.isArray(osm) ? osm[0] : null;
-        const addr = hit?.address || {};
-        const st = normalizeAddressState(addr.state || "");
-        if (hit && Number.isFinite(Number(hit.lat)) && Number.isFinite(Number(hit.lon)) && ["oh", "ky"].includes(st)) {
-          geocode = { lat: Number(hit.lat), lon: Number(hit.lon), display_name: hit.display_name || address, location_exact: false, approximate_source: "nominatim", address_parts: { administrative_area_level_1: st, locality: addr.city || addr.town || addr.village || addr.municipality || "", postal_code: addr.postcode || "" } };
-          await reporter.emit({ kind: "geocode_service_result", detail: "OpenStreetMap locator matched " + geocode.display_name + " as an approximate map location." });
-          if (geocodingService?.issue) geocodingService = { ...geocodingService, fallback_used: "nominatim", fallback_message: "The public OpenStreetMap locator found an approximate map position after other locators failed." };
-        } else await reporter.emit({ kind: "geocode_service_result", detail: "OpenStreetMap locator returned no usable match." });
-      } catch {
-        await reporter.emit({ kind: "geocode_failed", detail: "The OpenStreetMap backup locator could not confirm the address either." });
       }
     }
     if (diagnostic) return addressResponse({ success: true, diagnostic_only: true, geocode, geocoding_service: geocodingService, authority_established: false, apply_allowed: false, llm_calls: 0, record_writes: 0 });
