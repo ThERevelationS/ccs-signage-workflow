@@ -30,6 +30,7 @@ export const ESTIMATOR_TABS = [
       { label: "Ops Reports", to: "/OpsReports" },
       { label: "Reconciliation", to: "/Reconciliation" },
       { label: "Imports", to: "/Imports" },
+      { label: "CB Migration", to: "/CbMigration" },
     ],
   },
   {
