@@ -328,6 +328,38 @@ Deno.serve(async (req) => {
       return Response.json({ acknowledged: true, deferred: true });
     }
 
+    if (action === 'suggest_edit') {
+      // Any signed-in staff may flag a step or the SOP itself — editors review.
+      const id = String(body?.id || '').trim();
+      const text = cleanText(body?.text, 1000);
+      if (!id || !text) return Response.json({ error: 'SOP id and a suggestion are required.' }, { status: 400 });
+      const stepId = cleanText(body?.step_id, 60);
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const row = await Sop.get(id).catch(() => null);
+        if (!row?.id || row.status !== 'published') {
+          return Response.json({ error: 'SOP not found.' }, { status: 404 });
+        }
+        const list = Array.isArray(row.suggestions) ? row.suggestions : [];
+        const suggestion = {
+          id: `sg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+          email: String(user.email).toLowerCase(),
+          name: String(user.full_name || user.email).trim(),
+          step_id: stepId,
+          text,
+          created_at: new Date().toISOString(),
+          status: 'open',
+        };
+        const result = await Sop.updateMany(
+          { id: row.id, updated_date: row.updated_date },
+          { $set: { suggestions: [...list, suggestion].slice(-200) } },
+        );
+        if (result && result.updated === 1) {
+          return Response.json({ suggested: true, suggestion });
+        }
+      }
+      return Response.json({ suggested: true, deferred: true });
+    }
+
     // Everything below mutates records — requires admin or named-editor rights.
     if (!canEdit) return Response.json({ error: 'SOP editing requires an admin or SOP editor account.' }, { status: 403 });
 
@@ -361,6 +393,20 @@ Deno.serve(async (req) => {
         updated_by_email: String(user.email).toLowerCase(),
       });
       return Response.json({ record: saved, version_bumped: versionBump === 1 });
+    }
+
+    if (action === 'resolve_suggestion') {
+      const id = String(body?.id || '').trim();
+      const sugId = cleanText(body?.suggestion_id, 60);
+      const outcome = ['resolved', 'dismissed'].includes(String(body?.outcome)) ? String(body.outcome) : 'resolved';
+      const current = await Sop.get(id).catch(() => null);
+      if (!current?.id) return Response.json({ error: 'SOP no longer exists.' }, { status: 404 });
+      const list = Array.isArray(current.suggestions) ? current.suggestions : [];
+      const next = list.map((s: any) => s?.id === sugId && s?.status === 'open'
+        ? { ...s, status: outcome, resolved_by: String(user.email).toLowerCase(), resolved_at: new Date().toISOString() }
+        : s);
+      const saved = await updateExact(Sop, body, { suggestions: next });
+      return Response.json({ record: saved });
     }
 
     if (action === 'set_status') {
