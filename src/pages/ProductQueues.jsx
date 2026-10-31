@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import ProductQueue from "@/components/queues/ProductQueue";
+import { useState, useEffect, useMemo } from "react";
+import ProductQueue, { flattenQueueRows } from "@/components/queues/ProductQueue";
+import { useAllWorkOrders } from "@/lib/workOrderCache";
 
 // CoreBridge-style module queues over the shared product operational model.
 // Each tab is the same component with a different stage/due-date lens.
@@ -12,8 +13,19 @@ const QUEUES = [
 
 export default function ProductQueues() {
   const [active, setActive] = useState("design");
+  const { data: workOrders = [] } = useAllWorkOrders();
 
   useEffect(() => { document.title = "Product Queues"; }, []);
+
+  const counts = useMemo(() => {
+    const map = {};
+    for (const q of QUEUES) {
+      let rows = flattenQueueRows(workOrders);
+      if (q.stageFilter?.length) rows = rows.filter((r) => q.stageFilter.includes(r.stage));
+      map[q.key] = rows.length;
+    }
+    return map;
+  }, [workOrders]);
 
   const queue = QUEUES.find((q) => q.key === active) || QUEUES[0];
 
@@ -29,6 +41,9 @@ export default function ProductQueues() {
             }`}
           >
             {q.label}
+            {counts[q.key] > 0 && (
+              <span className="ml-1.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800">{counts[q.key]}</span>
+            )}
           </button>
         ))}
       </nav>
