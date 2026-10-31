@@ -54,11 +54,13 @@ export async function handler(request: Request) {
       if (row.status !== 'pending') return Response.json({ success: false, error: 'Request already decided' }, { status: 409 });
       const note = String(body?.note || '').trim().slice(0, 300);
       // Approving applies the grant: 'full_admin' → full admin, 'breakglass'
-      // → full admin for 4 hours (auto-lapses via admin_grant_expires),
-      // otherwise sections merge into admin_permissions.sections. Only the
+      // → full admin for 4 hours (auto-lapses via admin_grant_expires), no
+      // sections → admin role. Section-scoped requests only merge into
+      // admin_permissions.sections and never change the requester's role, so
+      // backend admin gates (role === 'admin') stay closed to them. Only the
       // requester's record is written — the approver's access never changes.
       const sections0 = Array.isArray(row.requested_sections) ? row.requested_sections : [];
-      const needsSecondAdmin = sections0.includes('full_admin') || sections0.includes('breakglass');
+      const needsSecondAdmin = sections0.length === 0 || sections0.includes('full_admin') || sections0.includes('breakglass');
       if (needsSecondAdmin && row.proposer_email && String(row.proposer_email).toLowerCase() === String(actor.email).toLowerCase()) {
         return Response.json({ success: false, error: 'Two-admin rule: a different admin must approve full-admin and break-glass grants.' }, { status: 403 });
       }
@@ -70,15 +72,19 @@ export async function handler(request: Request) {
         }
         const target = targetRows[0];
         const sections = Array.isArray(row.requested_sections) ? row.requested_sections : [];
-        const next: Record<string, unknown> = { role: 'admin' };
+        const next: Record<string, unknown> = {};
         if (sections.includes('breakglass')) {
+          next.role = 'admin';
           next.is_full_admin = true;
           next.admin_grant_expires = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
         } else if (sections.includes('full_admin')) {
+          next.role = 'admin';
           next.is_full_admin = true;
         } else if (sections.length) {
-          const perms = target.admin_permissions && typeof target.admin_permissions === 'object' ? target.admin_permissions : {};
+          const perms = target.admin_permissions && typeof target.admin_permissions === 'object' && !Array.isArray(target.admin_permissions) ? target.admin_permissions : {};
           next.admin_permissions = { ...perms, sections: [...new Set([...(Array.isArray(perms.sections) ? perms.sections : []), ...sections])] };
+        } else {
+          next.role = 'admin';
         }
         await users.update(target.id, next);
       }
