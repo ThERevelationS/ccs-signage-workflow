@@ -413,7 +413,7 @@ const woDialog = readFileSync('src/components/workflow/WorkOrderDetailsDialog.js
 assert.match(woDialog, /Print Traveler/, 'work order dialog must link to the traveler');
 assert.match(oppPage3, /PipelineBoard/, 'opportunities must include a kanban board view');
 assert.match(oppPage3, /text\/opp-id/, 'board must support drag-drop stage moves');
-assert.match(entry, /work_orders: \(Array\.isArray\(wos\)/, 'global search must include work orders');
+assert.match(entry, /work_orders:s*(?:mergeLegacy([^)]*,s*)?(Array.isArray(wos)/, 'global search must include work orders');
 assert.match(palette, /work_orders/, 'command palette must surface work orders');
 assert.match(mainWorkflow, /\?wo=|get\("wo"\)/, 'main workflow must deep-link work orders');
 const coPage2 = readFileSync('src/pages/ChangeOrders.jsx', 'utf8');
