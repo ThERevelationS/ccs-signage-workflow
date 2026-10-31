@@ -214,6 +214,13 @@ function LocalityPickerSession({
       let data;
       try { ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); }
       catch(firstErr){ const m=String(firstErr?.message||""); if(/status code (429|5\d\d)/.test(m)){ await new Promise(r=>setTimeout(r,/429/.test(m)?4000:1500)); ({ data } = await lookup({ address: normalizeAddress(address), session_token: sessionToken })); } else throw firstErr; }
+      // "Address lookup is busy" — the resolver's own queue guard. Wait and
+      // retry instead of making the user press Find again.
+      for(let busy=0;data?.success===false&&Number(data?.retry_after_ms)>0&&busy<2;busy++){
+        if(version!==searchVersion.current||!openRef.current)return;
+        await new Promise(r=>setTimeout(r,Math.min(Number(data.retry_after_ms)||3000,8000)));
+        try{({data}=await lookup({address:normalizeAddress(address),session_token:sessionToken}));}catch{break;}
+      }
       // The worker cannot reach external geocoders reliably; when its lookups
       // all fail, geocode from the browser and resubmit the coordinates.
       if (data?.success !== false && !data?.geocode && data?.geocoding_service?.issue) {
@@ -655,7 +662,7 @@ function LocalityPickerSession({
         {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto px-4 pb-2 lg:grid-cols-[520px_minmax(0,1fr)] lg:overflow-hidden">
           <div className="w-full space-y-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-            <AddressSearchSummary address={address} searching={searching} result={result}/>
+            <AddressSearchSummary address={address} searching={searching} result={result} advanced={advanced}/>
             {gpsMismatch && (
               <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
                 Your GPS and the typed address disagree by more than 500 ft — double-check which location is the actual job site before applying.
