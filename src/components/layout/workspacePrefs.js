@@ -60,6 +60,9 @@ export function defaultPrefs() {
     pipeline: {
       defaultView: "",        // "" = app default; table | board | daily | insights
     },
+    workflow: {
+      stageFilter: "all",      // My Workflow stage dropdown — remembers last pick
+    },
   };
 }
 
@@ -155,6 +158,8 @@ export function migratePrefs(raw) {
   if (nav.landingPage && !NAV_CATALOG.some((i) => i.url === nav.landingPage)) nav.landingPage = "";
   if (!isObj(merged.pipeline)) merged.pipeline = base.pipeline;
   if (!["", "table", "board", "daily", "insights"].includes(merged.pipeline.defaultView)) merged.pipeline.defaultView = "";
+  if (!isObj(merged.workflow)) merged.workflow = base.workflow;
+  if (typeof merged.workflow.stageFilter !== "string" || !merged.workflow.stageFilter || merged.workflow.stageFilter.length > 80) merged.workflow.stageFilter = "all";
   return merged;
 }
 
