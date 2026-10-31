@@ -6,6 +6,8 @@
 //   follow-up queue row -> customer record (pre-existing), estimate/invoice
 //   statement table     -> customer record
 // Asserts each anchor string is present in the remote file contents.
+// NOTE: the canonical customer record page is /Customer360?id= (recordRoutes
+// kind "customer"); /EstimatorCustomers?customer= remains the editor surface.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -22,8 +24,8 @@ assert.ok(
   "Invoices imports react-router Link"
 );
 assert.ok(
-  inv.includes("/EstimatorCustomers?customer=${inv.customer_id}"),
-  "Invoices links customer name to /EstimatorCustomers?customer="
+  inv.includes("/Customer360?id=${inv.customer_id}"),
+  "Invoices links customer name to the customer record (/Customer360?id=)"
 );
 assert.ok(
   inv.includes("/CustomerStatements?customer=${inv.customer_id}"),
@@ -50,8 +52,8 @@ assert.ok(
   "JobCosting expanded row links to /JobWorkspace?wo="
 );
 assert.ok(
-  jc.includes("/EstimatorCustomers?customer=${detail.work_order.customer_id}"),
-  "JobCosting detail links client to /EstimatorCustomers?customer="
+  jc.includes("/Customer360?id=${detail.work_order.customer_id}"),
+  "JobCosting detail links client to the customer record (/Customer360?id=)"
 );
 
 // 3. PurchaseOrders: PO detail -> job workspace when work_order_id is set.
@@ -69,8 +71,8 @@ assert.ok(
 //    opportunity ref -> opportunity record.
 const ceq = src("src/components/crm/CrmEventsQueue.jsx");
 assert.ok(
-  ceq.includes("/EstimatorCustomers?customer=${r.customer_id}"),
-  "CrmEventsQueue links the customer ref to /EstimatorCustomers?customer="
+  ceq.includes("/Customer360?id=${r.customer_id}"),
+  "CrmEventsQueue links the customer ref to the customer record (/Customer360?id=)"
 );
 assert.ok(
   ceq.includes("/Opportunities?open=${r.opportunity_id}"),
@@ -81,8 +83,8 @@ assert.ok(
 //    target ref -> invoice detail (?invoice=) or estimate detail (?id=).
 const fq = src("src/components/comms/FollowupQueue.jsx");
 assert.ok(
-  fq.includes("/EstimatorCustomers?customer=${item.customerId}"),
-  "FollowupQueue links the customer to /EstimatorCustomers?customer="
+  fq.includes("/Customer360?id=${item.customerId}"),
+  "FollowupQueue links the customer to the customer record (/Customer360?id=)"
 );
 assert.ok(
   fq.includes("/Invoices?invoice=${item.targetId}"),
@@ -100,8 +102,8 @@ assert.ok(
   "CustomerStatements imports react-router Link"
 );
 assert.ok(
-  cs.includes("/EstimatorCustomers?customer=${c.id}"),
-  "CustomerStatements links the customer cell to /EstimatorCustomers?customer="
+  cs.includes("/Customer360?id=${c.id}"),
+  "CustomerStatements links the customer cell to the customer record (/Customer360?id=)"
 );
 
 console.log("PASS link-spine-b");
