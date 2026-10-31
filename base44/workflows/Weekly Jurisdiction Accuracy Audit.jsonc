@@ -32,7 +32,7 @@
           "with": {
             "function_name": "auditJurisdictionAccuracy",
             "args": {
-              "_workflow_capability": "ccs-wf-cap-4f091f61a8e966786231ed0b6d43e450"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_AUDIT_JURISDICTION_ACCURACY}"
             }
           },
           "then": "end"

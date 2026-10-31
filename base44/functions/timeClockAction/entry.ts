@@ -3,6 +3,7 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { buildStatusLite } from '../../shared/timeClockStatusLite.ts';
 import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 // Fire-and-forget automation emit — emit failures must never break a verified
 // clock/PTO write, so this swallows and logs like the permit emit.
@@ -307,7 +308,6 @@ const FULL_SHIFT_HOURS = 8; // Clocking out under a full worked day counts as ea
 const LONG_SHIFT_HOURS = 10; // Worked length that raises the long-shift event.
 const PTO_LOW_HOURS_THRESHOLD = 8; // Available balance under one workday counts as low.
 const PTO_LOW_ALERT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // At most one low-balance alert per type per week.
-const STALE_SHIFT_MONITOR_CAPABILITY_HASH = '5228d94ea9970926dcb7f6365da6f336f9b8c633c109991da94feba223ccfe17';
 
 function dateKeyInCompanyTime(value: any) {
   const date = new Date(String(value || ''));
@@ -343,10 +343,7 @@ function minutesOfDayInCompanyTime(value: any) {
 }
 
 async function hasStaleShiftMonitorCapability(body: any) {
-  const token = String(body?._workflow_capability || '').trim();
-  if (!/^[A-Za-z0-9_-]{40,128}$/.test(token)) return false;
-  const actualHash = await sha256Hex(token);
-  return constantTimeEqual(actualHash, STALE_SHIFT_MONITOR_CAPABILITY_HASH);
+  return hasWorkflowInvocationCapability(body, 'timeClockStaleShiftMonitor');
 }
 
 function staleShiftMonitorEligibility(entry: any, serverNow: Date) {

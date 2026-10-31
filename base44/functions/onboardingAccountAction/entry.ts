@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
@@ -131,7 +132,7 @@ Deno.serve(async (req) => {
       } catch (aiError) {
         console.error('Onboarding invitation AI formatting failed; using safe fallback for user id:', target.id);
       }
-      const sent = await base44.asServiceRole.functions.invoke('sendGmail', { to: target.email, subject, body: html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d' });
+      const sent = await base44.asServiceRole.functions.invoke('sendGmail', { to: target.email, subject, body: html, _workflow_capability: getWorkflowInvocationCapability('sendGmail') });
       const sendResult = sent?.data || sent;
       if (sendResult?.error || sendResult?.success === false) {
         console.error('Onboarding invitation email failed for user id:', target.id);

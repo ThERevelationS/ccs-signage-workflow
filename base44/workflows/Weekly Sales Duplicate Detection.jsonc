@@ -15,7 +15,7 @@
           "with": {
             "function_name": "detectSalesDuplicates",
             "args": {
-              "_workflow_capability": "ccs-wf-cap-2db16aaa662400b5258ce571cb66ec9a"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_DETECT_SALES_DUPLICATES}"
             }
           },
           "then": "end"

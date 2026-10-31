@@ -15,7 +15,7 @@
           "with": {
             "function_name": "backupToGoogleDrive",
             "args": {
-              "_workflow_capability": "ccs-wf-cap-f6db9bad700305bb54c274015f506a21"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_BACKUP_TO_GOOGLE_DRIVE}"
             }
           },
           "then": "end"

@@ -4,6 +4,8 @@ import { ensureConvergentRegulationAlertCreate } from '../../shared/regulationAl
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
+const MAX_AUDIT_BATCH_SIZE = 20;
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
@@ -20,7 +22,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { jurisdictionId, batchSize = 1, auditOptions = {} } = body;
+    const { jurisdictionId, auditOptions = {} } = body;
+    const requestedBatchSize = Math.floor(Number(body?.batchSize ?? 1));
+    const batchSize = Number.isFinite(requestedBatchSize)
+      ? Math.min(Math.max(requestedBatchSize, 1), MAX_AUDIT_BATCH_SIZE)
+      : 1;
 
     const options = {
       checkUrls: true,

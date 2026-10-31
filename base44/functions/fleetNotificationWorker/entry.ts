@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { getWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
@@ -147,7 +148,7 @@ Deno.serve(async (req) => {
       const attempts = Number(item.attempts || 0) + 1;
       await Queue.update(item.id, { status: 'sending', attempts, last_attempt_at: now });
       try {
-        const { data } = await base44.asServiceRole.functions.invoke('sendGmail', { to: item.recipient_email, subject: item.subject, body: item.body_html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc' });
+        const { data } = await base44.asServiceRole.functions.invoke('sendGmail', { to: item.recipient_email, subject: item.subject, body: item.body_html, _workflow_capability: getWorkflowInvocationCapability('sendGmail') });
         if (data?.error) throw new Error(data.error);
         const stamp = nowIso();
         await Queue.update(item.id, { status: 'sent', sent_at: stamp, last_error: '' });

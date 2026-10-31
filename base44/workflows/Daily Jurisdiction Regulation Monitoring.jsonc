@@ -32,7 +32,7 @@
           "with": {
             "function_name": "monitorJurisdictionChanges",
             "args": {
-              "_workflow_capability": "ccs-wf-cap-e34e9284f5842cd43c40426f760678a3"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_MONITOR_JURISDICTION_CHANGES}"
             }
           },
           "then": "end"

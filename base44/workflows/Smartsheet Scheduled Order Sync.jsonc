@@ -33,7 +33,7 @@
             "function_name": "smartsheetSyncAction",
             "args": {
               "action": "run_order_sync",
-              "_workflow_capability": "ccs-wf-cap-43a05c1d8374673451a34f9db402cf3b"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_SMARTSHEET_SYNC_ACTION}"
             }
           },
           "then": "end",

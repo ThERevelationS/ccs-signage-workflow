@@ -31,7 +31,7 @@
             "function_name": "timeClockAction",
             "args": {
               "action": "monitor_stale_shifts",
-              "_workflow_capability": "ccs-wf-cap-e5cdff14c9262cbfe5f0e339b9edc50f"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_TIME_CLOCK_STALE_SHIFT_MONITOR}"
             }
           },
           "then": "end"

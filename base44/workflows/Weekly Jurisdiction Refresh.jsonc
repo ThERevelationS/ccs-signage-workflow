@@ -14,7 +14,7 @@
           "with": {
             "function_name": "refreshJurisdiction",
             "args": {
-              "_workflow_capability": "ccs-wf-cap-468da33e39cbc3954e164f2dd79d27df"
+              "_workflow_capability": "${secret:WORKFLOW_CAPABILITY_REFRESH_JURISDICTION}"
             }
           },
           "then": "end"
