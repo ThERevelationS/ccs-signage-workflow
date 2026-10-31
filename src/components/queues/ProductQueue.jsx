@@ -188,6 +188,9 @@ function RowEditor({ row, actor, onSaved, onChanged, disabled }) {
   return (
     <tr className="border-t border-gray-100 bg-sky-50/40">
       <td colSpan={10} className="px-3 py-2">
+        <div className="mb-1 text-[10px] text-gray-500">
+          Customer: {row.customerId ? <Link className="text-sky-700 hover:underline" to={`/EstimatorCustomers?customer=${row.customerId}`}>{row.company || "—"}</Link> : (row.company || "—")}
+        </div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-0.5"><span className={lab}>Substatus</span>
             <input className={inp} disabled={disabled} value={form.operationalSubstatus} onChange={(e) => set("operationalSubstatus", e.target.value)} /></label>
@@ -483,7 +486,9 @@ export default function ProductQueue({
                     <div className="text-[10px] text-gray-400">{r.position}</div>
                   </td>
                   <td className="px-2 py-1.5 text-gray-500">{r.moduleKey || "—"}</td>
-                  <td className="max-w-[140px] truncate px-2 py-1.5">{r.company}</td>
+                  <td className="max-w-[140px] truncate px-2 py-1.5">
+                    {r.customerId ? <Link className="text-sky-700 hover:underline" to={`/EstimatorCustomers?customer=${r.customerId}`}>{r.company || "Customer"}</Link> : r.company}
+                  </td>
                   <td className="max-w-[200px] truncate px-2 py-1.5" title={r.productName}>{r.productName}</td>
                   <td className="px-2 py-1.5">
                     {badge(OPERATIONAL_STATUS_CUSTOMER_LABELS[r.status] || r.status || "none", statusTone(r.status))}
