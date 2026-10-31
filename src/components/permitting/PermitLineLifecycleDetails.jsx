@@ -556,7 +556,7 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Jurisdiction fee</span>
-          <span className="text-[10px] text-slate-500">Record the actual office fee only; do not copy estimator or repository estimates.</span>
+          <span className="text-[10px] text-slate-500">Type the real fee the office charged — don't copy the estimate.</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <CommitMoneyField
