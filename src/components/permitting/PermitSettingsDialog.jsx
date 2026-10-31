@@ -41,7 +41,7 @@ function OfficeSourceStatus({ provenance }) {
       <span className="min-w-0 max-w-full truncate" title={metadata?.source_url || ""}>
         {metadata?.source_url ? `Official source: ${metadata.source_url}` : "Official source not recorded"}
       </span>
-      <span className="text-gray-500">Locality authority must be verified separately.</span>
+      <span className="text-gray-500">Each office still needs its own check.</span>
     </div>
   );
 }
@@ -547,7 +547,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <DialogTitle>Permitting Settings</DialogTitle>
+              <DialogTitle>Permit settings</DialogTitle>
               {anyDirty && (
                 <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium border border-amber-300">
                   Unsaved changes
@@ -589,7 +589,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
         {localitySaveError && (
           <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-start justify-between gap-3">
             <div>
-              <div className="font-medium">Permitting settings update blocked</div>
+              <div className="font-medium">Couldn't save the permit settings</div>
               <div className="mt-1">{localitySaveError}</div>
             </div>
             <Button type="button" size="sm" variant="outline" className="h-7 shrink-0 border-red-300 bg-white text-red-800" onClick={() => setLocalitySaveError("")}>Dismiss</Button>
@@ -598,9 +598,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid w-full grid-cols-3 bg-gray-200 h-9">
-            <TabsTrigger value="localities" className="text-sm">Localities</TabsTrigger>
-            <TabsTrigger value="catalog" className="text-sm">Office Catalog</TabsTrigger>
-            <TabsTrigger value="types" className="text-sm">Office Type Catalog</TabsTrigger>
+            <TabsTrigger value="localities" className="text-sm">Places</TabsTrigger>
+            <TabsTrigger value="catalog" className="text-sm">Saved offices</TabsTrigger>
+            <TabsTrigger value="types" className="text-sm">Office types</TabsTrigger>
           </TabsList>
 
           {/* LOCALITIES */}
@@ -656,7 +656,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h4 className="text-sm font-semibold">Offices</h4>
-                          <p className="text-[11px] text-gray-500">Each office becomes a separate line when this locality is selected on a work order.</p>
+                          <p className="text-[11px] text-gray-500">Each office becomes its own permit line when this place gets picked on a job.</p>
                         </div>
                         <Button size="sm" variant="outline" onClick={addBlankOffice} className="h-7 text-xs gap-1">
                           <Plus className="w-3 h-3" /> Blank Office
@@ -665,13 +665,13 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
                       {/* Search office catalog to add */}
                       <div className="mb-3 p-2 bg-white border border-dashed rounded">
-                        <p className="text-[10px] text-gray-500 mb-1.5 font-medium uppercase tracking-wide">Add from Office Catalog:</p>
+                        <p className="text-[10px] text-gray-500 mb-1.5 font-medium uppercase tracking-wide">Add a saved office:</p>
                         <div className="relative">
                           <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
                           <Input
                             value={catalogSearch}
                             onChange={e => setCatalogSearch(e.target.value)}
-                            placeholder={officeCatalog.length === 0 ? "Office catalog is empty — add offices in the Office Catalog tab" : "Search offices by name or type..."}
+                            placeholder={officeCatalog.length === 0 ? "No saved offices yet — add them in the Saved offices tab" : "Search offices by name or type..."}
                             className="h-7 text-xs pl-7"
                             disabled={officeCatalog.length === 0}
                           />
@@ -706,7 +706,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                       <div className="space-y-2">
                         {form.offices.length === 0 && (
                           <div className="p-4 bg-white border border-dashed rounded text-center text-xs text-gray-400">
-                            No offices added yet. Search the catalog above or add a blank office.
+                            No offices added yet. Search saved offices above or add a blank one.
                           </div>
                         )}
                         {form.offices.map(office => (
@@ -728,7 +728,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
                     <div className="flex gap-2 pt-3 border-t sticky bottom-0 bg-gray-50">
                       <Button onClick={saveLocality} className="bg-purple-600 hover:bg-purple-700 gap-1">
-                        <Save className="w-4 h-4" /> Save Locality
+                        <Save className="w-4 h-4" /> Save place
                       </Button>
                       {editingLocality !== "new" && (
                         <Button variant="destructive" onClick={() => requestDeleteLocality(editingLocality)}>
@@ -739,7 +739,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-                    Select a locality or create a new one
+                    Pick a place on the left or make a new one
                   </div>
                 )}
               </div>
@@ -758,9 +758,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           {/* OFFICE TYPE CATALOG (simple labels) */}
           <TabsContent value="types" className="flex-1 overflow-y-auto min-h-0 p-3" style={{ marginTop: 0 }}>
             <div className="max-w-lg">
-              <h3 className="font-semibold text-sm mb-1">Office Type Catalog</h3>
+              <h3 className="font-semibold text-sm mb-1">Office types</h3>
               <p className="text-xs text-gray-500 mb-4">
-                Simple labels used to categorize offices (e.g. Zoning, Building, Electrical). These appear in the office type dropdown when configuring an office. No workflow steps are attached here.
+                Short labels that say what kind of office it is (Zoning, Building, Electrical). They show up in the office type dropdown. No steps come with them.
               </p>
 
               <div className="flex gap-2 mb-4">
