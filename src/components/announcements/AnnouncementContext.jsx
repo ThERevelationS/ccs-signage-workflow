@@ -100,9 +100,9 @@ export function AnnouncementProvider({ children, currentPageName }) {
   const subscribeDebounceRef = useRef(null);
   const deviceKeyRef = useRef(null);
   if (!deviceKeyRef.current) deviceKeyRef.current = deviceViewerKey();
-  const viewerKey = currentUser?.email
-    ? `user:${String(currentUser.email).toLowerCase()}`
-    : deviceKeyRef.current;
+  // The server derives signed-in identity from the session; this key only
+  // identifies anonymous devices.
+  const viewerKey = deviceKeyRef.current;
 
   const fetchActive = useCallback(async () => {
     try {

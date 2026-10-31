@@ -12,6 +12,17 @@ function cleanText(value: unknown, max: number) {
   return String(value || '').trim().slice(0, max);
 }
 
+// Anonymous viewers may only identify as an opaque device key, stored under
+// an `anon:` namespace so it can never pass for a signed-in staff identity.
+const ANON_VIEWER_KEY = /^device:[a-z0-9-]{1,64}$/;
+
+function acknowledgingViewer(actor: any, rawViewerKey: unknown) {
+  const email = String(actor?.email || '').trim().toLowerCase();
+  if (email) return email;
+  const key = cleanText(rawViewerKey, 160).toLowerCase();
+  return ANON_VIEWER_KEY.test(key) ? `anon:${key}` : '';
+}
+
 function cleanList(value: unknown, maxItems: number, maxLen: number) {
   if (!Array.isArray(value)) return [];
   return [...new Set(value.map((item) => cleanText(item, maxLen)).filter(Boolean))].slice(0, maxItems);
@@ -228,9 +239,9 @@ Deno.serve(async (req) => {
     // persists dismissal locally, so a lost ack never re-shows the banner.
     if (action === 'acknowledge') {
       const id = String(body?.id || '').trim();
-      const viewerKey = cleanText(body?.viewer_key, 160).toLowerCase();
-      if (!id || !viewerKey) return Response.json({ error: 'Announcement id and viewer key are required.' }, { status: 400 });
-      const viewer = actor?.email ? String(actor.email).trim().toLowerCase() : viewerKey;
+      if (!id) return Response.json({ error: 'Announcement id is required.' }, { status: 400 });
+      const viewer = acknowledgingViewer(actor, body?.viewer_key);
+      if (!viewer) return Response.json({ error: 'A signed-in session or device viewer key is required.' }, { status: 400 });
       for (let attempt = 0; attempt < 3; attempt += 1) {
         const row = await Announcement.get(id).catch(() => null);
         if (!row?.id) return Response.json({ acknowledged: true, already_absent: true });
