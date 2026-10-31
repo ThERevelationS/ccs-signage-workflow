@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { claimClientWorkflowEvent, verifyClientWorkflowEvent } from '../../shared/clientWorkflowEventEvidence.mjs';
 
 // Every event type the app can emit. Permit events verify the durable
 // PermitLineItem fields below; order events carry an Order; the rest carry a
@@ -53,7 +54,8 @@ const WORK_ORDER_EVENTS = new Set([
   'assigned_to_changed',
   'proof_sent', 'proof_approved', 'product_transition',
 ]);
-// Time Clock / PTO events emitted by timeClockAction after verified writes.
+// Time Clock / PTO events emitted by timeClockAction after verified writes;
+// it calls the engine directly, so this endpoint never accepts them.
 const TIME_CLOCK_EVENTS = new Set([
   'time_clock_in', 'time_clock_out', 'time_clock_in_late', 'time_clock_out_early',
   'time_entry_long_shift', 'time_entry_no_clock_out', 'time_entry_notes_updated',
@@ -85,7 +87,37 @@ const SERVER_RECORD_EVENTS = new Set([
   'pending_import_created', 'duplicate_detected',
   'feature_report_submitted', 'feature_report_status_changed', 'feature_report_completed',
   'user_registered', 'user_password_reset', 'regulation_alert_created',
+  ...TIME_CLOCK_EVENTS,
 ]);
+
+// Record events a browser reports after its own gated write, by source entity.
+const CLIENT_RECORD_ENTITIES: Record<string, string> = {
+  user_role_changed: 'AuthorizedEmail',
+  user_face_enrolled: 'AuthorizedEmail',
+  jurisdiction_profile_created: 'JurisdictionProfile',
+  jurisdiction_profile_updated: 'JurisdictionProfile',
+};
+
+// Every client-reported event must be backed by a fresh, matching write on
+// the re-read record and is claimed once per record version before any rule
+// runs. Only server-verified extras reach the engine; old_data never does.
+async function verifyAndClaim(base44: any, eventType: string, entityType: string, recordId: string, extras: unknown, claimedBy: string) {
+  const record = await base44.asServiceRole.entities[entityType].get(recordId).catch(() => null);
+  if (!record?.id) throw Object.assign(new Error(`${entityType} not found`), { status: 404 });
+  const verifiedExtras = verifyClientWorkflowEvent({ eventType, entityType, record, extras });
+  await claimClientWorkflowEvent({
+    entity: base44.asServiceRole.entities.WorkflowEventClaim,
+    eventType, entityType, record, claimedBy,
+  });
+  return verifiedExtras;
+}
+
+// Rule names, recipients and action receipts stay server-side.
+const summarize = (result: any) => ({
+  success: result?.success === true,
+  paused: result?.paused === true,
+  triggered_count: Number(result?.triggered_count) || 0,
+});
 
 Deno.serve(async (req) => {
   try {
@@ -141,55 +173,63 @@ Deno.serve(async (req) => {
         },
         changedByOverride: changedBy,
       });
-      return Response.json(result);
+      return Response.json(summarize(result));
     }
 
     if (ORDER_EVENTS.has(eventType)) {
       const orderId = String(payload?.order?.id || payload?.order_id || '').trim();
       if (!orderId) throw Object.assign(new Error('Missing order id'), { status: 400 });
+      const extras = await verifyAndClaim(base44, eventType, 'Order', orderId, payload?.extras, changedBy);
       const result = await processWorkflowTriggerEvent({
         base44,
         payload: {
           event_type: eventType,
           order: { id: orderId },
-          extras: payload?.extras,
+          extras,
         },
         changedByOverride: changedBy,
       });
-      return Response.json(result);
+      return Response.json(summarize(result));
     }
 
-    if (RECORD_EVENTS.has(eventType) || TIME_CLOCK_EVENTS.has(eventType)) {
+    if (RECORD_EVENTS.has(eventType)) {
+      const recordEntity = CLIENT_RECORD_ENTITIES[eventType];
+      if (!recordEntity) {
+        throw Object.assign(new Error('This automation event requires a verified backend write.'), { status: 403 });
+      }
       const recordId = String(payload?.record?.id || payload?.record_id || '').trim();
       if (!recordId) throw Object.assign(new Error('Missing record id'), { status: 400 });
+      const extras = await verifyAndClaim(base44, eventType, recordEntity, recordId, payload?.extras, changedBy);
       const result = await processWorkflowTriggerEvent({
         base44,
         payload: {
           event_type: eventType,
           record: { id: recordId },
-          extras: payload?.extras,
+          extras,
         },
         changedByOverride: changedBy,
       });
-      return Response.json(result);
+      return Response.json(summarize(result));
     }
 
-    // Work-order events: the engine re-reads the record server-side, so the
-    // client only supplies the id plus event extras (stage/task/note details).
+    if (!WORK_ORDER_EVENTS.has(eventType)) {
+      throw Object.assign(new Error('Unsupported automation event type'), { status: 400 });
+    }
     const workOrderId = String(payload?.work_order?.id || payload?.work_order_id || '').trim();
     if (!workOrderId) throw Object.assign(new Error('Missing work_order id'), { status: 400 });
+    const extras = await verifyAndClaim(base44, eventType, 'WorkOrder', workOrderId, payload?.extras, changedBy);
 
     const result = await processWorkflowTriggerEvent({
       base44,
       payload: {
         event_type: eventType,
         work_order: { id: workOrderId },
-        extras: payload?.extras,
-        old_data: payload?.old_data,
+        extras,
+        old_data: {},
       },
       changedByOverride: changedBy,
     });
-    return Response.json(result);
+    return Response.json(summarize(result));
   } catch (error) {
     const status = Number(error?.status || 500);
     const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;

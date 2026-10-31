@@ -17,6 +17,7 @@ const ts = require("typescript");
 const policy = await import(pathToFileURL(file("base44/shared/automationRecordPolicy.mjs")));
 const persistence = await import(pathToFileURL(file("base44/shared/workOrderFieldPersistence.mjs")));
 const model = await import(pathToFileURL(file("src/components/admin/automationBuilderModel.mjs")));
+const evidence = await import(pathToFileURL(file("base44/shared/clientWorkflowEventEvidence.mjs")));
 
 function load(relative, dependencies = {}, serve = () => {}) {
   const source = readFileSync(file(relative), "utf8");
@@ -26,6 +27,7 @@ function load(relative, dependencies = {}, serve = () => {}) {
     if (specifier.endsWith("automationRecordPolicy.mjs")) return policy;
     if (specifier.endsWith("workOrderFieldPersistence.mjs")) return persistence;
     if (specifier.endsWith("pagedEntityRows.ts")) return load("base44/shared/pagedEntityRows.ts");
+    if (specifier.endsWith("clientWorkflowEventEvidence.mjs")) return evidence;
     if (specifier in dependencies) return dependencies[specifier];
     throw new Error(`Unexpected test dependency: ${specifier}`);
   };
@@ -165,8 +167,13 @@ test("public endpoint rejects manufactured backend/account events before record 
   let engineCalls = 0;
   let handler;
   let actor = { role: "employee", email: "synthetic@example.invalid" };
+  const claims = [];
   load("base44/functions/processWorkflowTriggers/entry.ts", {
-    "npm:@base44/sdk@0.8.23": { createClientFromRequest: () => ({}) },
+    "npm:@base44/sdk@0.8.23": { createClientFromRequest: () => ({ asServiceRole: { entities: {
+      AuthorizedEmail: { get: async id => ({ id, updated_date: new Date().toISOString(), face_descriptors: [[0.1]] }) },
+      WorkflowEventClaim: { filter: async () => claims.slice(), create: async data => { claims.push({ ...data, id: "claim1" }); return claims[0]; } },
+    } } }) },
+    "../../shared/entityRateLimitRetry.ts": { withEntityRateLimitRetry: client => client },
     "../../shared/workflowTriggerEngine.ts": { processWorkflowTriggerEvent: async () => { engineCalls++; return { success: true }; } },
     "../../shared/signShopSession.ts": { authenticateSignShopSession: async () => actor },
   }, value => { handler = value; });
