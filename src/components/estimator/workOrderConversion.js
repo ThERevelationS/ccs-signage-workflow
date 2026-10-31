@@ -52,6 +52,10 @@ export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
       responsibility: line.responsibility || "",
       queue_priority: num(line.queue_priority, 0),
       proof_status: line.proof_status || "none",
+      proof_file_url: line.proof_file_url || "",
+      proof_file_name: line.proof_file_name || "",
+      proof_version: num(line.proof_version, 0),
+      proof_approved_version: num(line.proof_approved_version, 0),
     };
   });
 }
@@ -91,6 +95,7 @@ export const PRODUCT_OPERATIONAL_FIELDS = [
   "operational_status", "operational_substatus", "customer_facing_status",
   "fulfillment_state", "design_due_date", "product_due_date", "hard_due_date",
   "designer", "assigned_to", "responsibility", "queue_priority", "proof_status",
+  "proof_file_url", "proof_file_name", "proof_version", "proof_approved_version",
   "operational_status_changed_at",
 ];
 
@@ -116,7 +121,8 @@ const requireDateString = (value, label = "due date") => {
 export function buildProductOperationalPatch({
   operationalStatus, operationalSubstatus, proofStatus, fulfillmentState,
   designer, assignedTo, responsibility, queuePriority,
-  designDueDate, productDueDate, hardDueDate, now,
+  designDueDate, productDueDate, hardDueDate,
+  proofFileUrl, proofFileName, proofVersion, proofApprovedVersion, now,
 } = {}) {
   const patch = {};
   if (operationalStatus !== undefined) {
@@ -138,6 +144,17 @@ export function buildProductOperationalPatch({
   if (designDueDate !== undefined) patch.design_due_date = requireDateString(designDueDate);
   if (productDueDate !== undefined) patch.product_due_date = requireDateString(productDueDate);
   if (hardDueDate !== undefined) patch.hard_due_date = Boolean(hardDueDate);
+  // Proof file/version fields: version 0 means "none" (no file / no approval).
+  if (proofFileUrl !== undefined) patch.proof_file_url = String(proofFileUrl || "").trim();
+  if (proofFileName !== undefined) patch.proof_file_name = String(proofFileName || "").trim();
+  if (proofVersion !== undefined) {
+    const n = Number(proofVersion);
+    patch.proof_version = Math.max(0, Math.round(Number.isFinite(n) ? n : 0));
+  }
+  if (proofApprovedVersion !== undefined) {
+    const n = Number(proofApprovedVersion);
+    patch.proof_approved_version = Math.max(0, Math.round(Number.isFinite(n) ? n : 0));
+  }
   return patch;
 }
 
@@ -182,6 +199,7 @@ export function applyProductOperationalPatch(product, patchInput, { now, actor =
     "operational_status", "operational_substatus", "customer_facing_status",
     "proof_status", "fulfillment_state", "design_due_date", "product_due_date",
     "hard_due_date", "designer", "assigned_to", "responsibility", "queue_priority",
+    "proof_file_url", "proof_file_name", "proof_version", "proof_approved_version",
   ];
   const changed = {};
   for (const field of trackable) {
@@ -357,4 +375,3 @@ export async function transitionProductAndBuilderStatus({ workOrderId, product, 
   }
   return { workOrder: saved, product: savedProduct, builderSynced: sync.synced === true };
 }
-
