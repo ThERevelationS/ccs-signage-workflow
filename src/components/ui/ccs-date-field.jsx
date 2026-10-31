@@ -72,6 +72,7 @@ export function CcsDateField({
   const showPresets = presets !== false && dropdownType !== "modal";
   return (
     <DatePickerInput
+      className="w-full"
       classNames={{ input: className, ...classNames }}
       value={value || null}
       onChange={(v) => fire(onChange, v)}
@@ -95,6 +96,7 @@ export function CcsDateTimeField({
   const dropdownType = useDropdownType();
   return (
     <DateTimePicker
+      className="w-full"
       classNames={{ input: className, ...classNames }}
       value={toMantineDateTime(value)}
       onChange={(v) => fire(onChange, fromMantineDateTime(v))}
@@ -117,6 +119,7 @@ export function CcsTimeField({
 }) {
   return (
     <TimePicker
+      className="w-full"
       classNames={{ input: className, ...classNames }}
       value={trimTime(value)}
       onChange={(v) => fire(onChange, trimTime(v))}
@@ -140,6 +143,7 @@ export function CcsDateRangeField({
   return (
     <DatePickerInput
       type="range"
+      className="w-full"
       classNames={{ input: className, ...classNames }}
       value={value}
       onChange={(v) => onChange && onChange(v)}
