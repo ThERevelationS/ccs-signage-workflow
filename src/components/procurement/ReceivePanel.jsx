@@ -94,6 +94,9 @@ export default function ReceivePanel({ po, sessionToken, canReceive, busy, onRec
         subject: `PO ${poNumber} — receipt/backorder notice`,
         body: receivingSummaryText(po, receipt),
         kind: "po_vendor_notify",
+        // Vendor replies route to the buyer on record (po.created_by holds the
+        // creator's staff email); a non-email value falls back to the default.
+        replyTo: clean(po?.created_by).includes("@") ? clean(po?.created_by) : undefined,
       });
       setEmailState({ status: "sent", error: "" });
     } catch (e) {
