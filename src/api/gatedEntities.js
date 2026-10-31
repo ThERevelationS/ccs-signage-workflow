@@ -55,6 +55,7 @@ export const Project = staffEntities.Project;
 export const QuickProduct = staffEntities.QuickProduct;
 export const QuoteDefaults = staffEntities.QuoteDefaults;
 export const RegulationAlert = staffEntities.RegulationAlert;
+export const SalesLocation = staffEntities.SalesLocation;
 export const Settings = staffEntities.Settings;
 export const SignHardwareInventory = staffEntities.SignHardwareInventory;
 export const SignLightingInventory = staffEntities.SignLightingInventory;
