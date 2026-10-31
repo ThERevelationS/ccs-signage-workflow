@@ -840,7 +840,7 @@ function LocalityPickerSession({
                     <div>
                       <p className="text-sm text-amber-900"><strong>{result.geocoding_service?.issue ? (result.geocoding_service.fallback_used ? 'Our main map service was down — a backup found the general area.' : 'Our map tool had a problem.') : result.location_resolution?.status==='location_verified' ? 'Found the spot — the offices still need checking.' : 'We could not pin down the exact spot.'}</strong></p>
                       <p className="text-xs text-amber-800 mt-2">{result.automatic_scan?.started ? 'We started looking up info on the town’s website — someone on the team still needs to check it.' : 'Someone on the team can dig deeper using the tools below.'} You do not need to choose a place or guess.</p>
-                      {result.match_reason && (
+                      {advanced && result.match_reason && (
                         <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
                       )}
                     </div>
