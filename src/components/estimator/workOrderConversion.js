@@ -1,5 +1,6 @@
 import { getModuleLabel } from "./moduleRegistry";
 import { mutateWorkOrderArrayField } from "../workflow/workOrderPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { acceptedCustomerUnitPrice } from "./customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -200,4 +201,34 @@ export function recalculateProductDueDateOnProofApproval({ product = {}, leadTim
   base.setDate(base.getDate() + days);
   return base.toISOString();
 }
+
+// Sync an operational-status patch back to the linked BuilderProduct so the
+// estimator-side record stays truthful. CAS on updated_date; a sync failure
+// returns synced:false rather than throwing so the WorkOrder transition is
+// never rolled back by a builder-record write issue.
+export async function syncBuilderProductOperationalStatus({ builderProductId, patch = {}, expectedUpdatedDate = "" } = {}) {
+  const apply = buildProductOperationalPatch(patch);
+  const id = String(builderProductId || "").trim();
+  if (!id || !Object.keys(apply).length) return { synced: false, reason: "nothing_to_apply" };
+  const entity = staffEntities?.BuilderProduct;
+  if (!entity?.updateMany) return { synced: false, reason: "unavailable" };
+  const live = await entity.get(id).catch(() => null);
+  if (!live?.id) return { synced: false, reason: "not_found" };
+  if (expectedUpdatedDate && String(live.updated_date || "") !== String(expectedUpdatedDate)) {
+    return { synced: false, reason: "stale" };
+  }
+  const result = await entity.updateMany({ id, updated_date: live.updated_date }, { $set: apply }).catch(() => null);
+  if (!result || (typeof result.updated === "number" && result.updated < 1)) return { synced: false, reason: "write_failed" };
+  return { synced: true };
+}
+
+// Transition a work-order product and best-effort sync the same patch to the
+// linked BuilderProduct in one call.
+export async function transitionProductAndBuilderStatus({ workOrderId, product, patch = {}, label = "Product status" } = {}) {
+  const saved = await transitionProductOperationalStatus({ workOrderId, productId: product?.id, patch, label });
+  const builderId = product?.builder_product_id || product?.id;
+  const sync = await syncBuilderProductOperationalStatus({ builderProductId: builderId, patch }).catch(() => ({ synced: false, reason: "error" }));
+  return { workOrder: saved, builderSynced: sync.synced === true };
+}
+
 
