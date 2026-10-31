@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -86,9 +87,19 @@ const EMPTY_PIPELINE_SUMMARY = {
 
 export default function SalesPipeline() {
   const { isRegistered, currentUser, sessionToken } = useAuth();
+  const { prefs: workspacePrefs, updatePrefs: updateWorkspacePrefs, loaded: workspacePrefsLoaded } = useWorkspacePreferences();
   const [filterStatus, setFilterStatus] = useState("all");
   const [recordScope, setRecordScope] = useState("current");
-  const [viewMode, setViewMode] = useState("table");
+  // Personal default view — local seed applies instantly; the server value
+  // lands once preferences hydrate (applied once via the loaded flag).
+  const [viewMode, setViewMode] = useState(() => workspacePrefs.pipeline?.defaultView || "table");
+  const viewHydratedRef = useRef(false);
+  useEffect(() => {
+    if (viewHydratedRef.current || !workspacePrefsLoaded) return;
+    viewHydratedRef.current = true;
+    const serverView = workspacePrefs.pipeline?.defaultView;
+    if (serverView && serverView !== viewMode) setViewMode(serverView);
+  }, [workspacePrefsLoaded, workspacePrefs.pipeline?.defaultView, viewMode]);
   const [attentionFilter, setAttentionFilter] = useState("all");
   const [outcomePeriod, setOutcomePeriod] = useState("all");
   const [pipelineSummary, setPipelineSummary] = useState(EMPTY_PIPELINE_SUMMARY);
@@ -415,6 +426,7 @@ export default function SalesPipeline() {
     if (nextView === "daily" || nextView === "insights") setSearchTerm("");
     if (nextView === "daily") spreadsheetRef.current?.clearColumnHeaderFilter?.();
     setViewMode(nextView);
+    updateWorkspacePrefs("pipeline.defaultView", nextView);
     if (nextView === "daily" || nextView === "insights") {
       setAttentionFilter("all");
       setFilterStatus("all");
