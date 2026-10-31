@@ -1117,7 +1117,7 @@ export default function Permitting() {
           </div>
         </div>
         <div className="min-h-0 flex-1">
-          <JurisdictionsView focusJurisdiction={jurisdictionFocus} />
+          <JurisdictionsView focusJurisdiction={jurisdictionFocus} onOpenJob={(title) => { returnToPermitWork(); setSearchTerm(title); }} />
           {showDraftLibrary && <PermittingDraftLibrary onClose={() => setShowDraftLibrary(false)} />}
         </div>
       </div>
