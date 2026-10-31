@@ -211,8 +211,12 @@ Deno.serve(async (req) => {
       // ...guardFields}). Refuse unanchored queries so a staff caller can never
       // turn this op into a bulk table wipe.
       const delQuery = body?.query;
-      if (!delQuery || typeof delQuery !== 'object' || Array.isArray(delQuery) || !String((delQuery as Record<string, unknown>).id || '').trim()) {
-        throw bad('deleteMany requires an id-anchored query.');
+      if (
+        !delQuery || typeof delQuery !== 'object' || Array.isArray(delQuery)
+        || !String((delQuery as Record<string, unknown>).id || '').trim()
+        || !String((delQuery as Record<string, unknown>).updated_date || '').trim()
+      ) {
+        throw bad('deleteMany requires an id and updated_date anchored query.');
       }
       rejectOperatorKeys(delQuery, 'query');
       const result = await entity.deleteMany(delQuery);
