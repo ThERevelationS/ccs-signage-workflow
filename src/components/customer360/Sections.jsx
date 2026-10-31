@@ -149,7 +149,7 @@ export function OverviewTab({ data, customer, backendReady, truncatedNotice }) {
         {!backendReady ? (
           <BackendRequired label="Opportunities" />
         ) : openOpps.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">No open opportunities.</div>
+          <EmptyState compact title="No open opportunities." actionLabel="View pipeline" actionTo="/Opportunities" />
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {openOpps.slice(0, 6).map((o) => (
@@ -191,7 +191,7 @@ export function OverviewTab({ data, customer, backendReady, truncatedNotice }) {
         notice={!backendReady ? "Showing only staff-readable activity rows." : undefined}
       >
         {recentActivity.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">No activity recorded.</div>
+          <EmptyState compact title="No activity recorded." actionLabel="Log an event" actionTo="/CrmEvents" />
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {recentActivity.map((a) => (
@@ -591,7 +591,7 @@ export function ContactsTab({ data, customer, backendReady, truncatedNotice }) {
         notice={!backendReady ? "Showing the contact fields stored on the Customer record — the full contact list needs the Customer 360 backend." : truncatedNotice}
       >
         {backendReady && contacts.length === 0 && builtin.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-400">No contacts recorded.</div>
+          <EmptyState compact title="No contacts recorded." actionLabel="Edit customer" actionTo={c.id ? `/EstimatorCustomers?customer=${c.id}` : "/EstimatorCustomers"} />
         ) : (
           <div className="space-y-2 px-4 py-3">
             {contacts.map((p) => (
@@ -627,7 +627,7 @@ export function ContactsTab({ data, customer, backendReady, truncatedNotice }) {
         notice={!backendReady ? "Showing address fields stored on the Customer record — saved locations need the Customer 360 backend." : undefined}
       >
         {backendReady && locations.length === 0 && fallbackLocations.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-400">No locations on file.</div>
+          <EmptyState compact title="No locations on file." actionLabel="Edit customer" actionTo={c.id ? `/EstimatorCustomers?customer=${c.id}` : "/EstimatorCustomers"} />
         ) : (
           <div className="space-y-2 px-4 py-3">
             {locations.map((l) => (
