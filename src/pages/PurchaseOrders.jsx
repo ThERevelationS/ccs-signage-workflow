@@ -5,10 +5,12 @@ import { Link } from "react-router-dom";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import SavedViews from "@/components/workflow/SavedViews";
 import ReceivePanel from "@/components/procurement/ReceivePanel";
+import VendorStatement from "@/components/procurement/VendorStatement";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import {
   CheckCircle2,
   ChevronRight,
+  FileText,
   Loader2,
   Package,
   Plus,
@@ -217,6 +219,7 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState(false);
+  const [showVendorStatement, setShowVendorStatement] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -316,6 +319,11 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setShowVendorStatement(true)} disabled={Boolean(busy)}
+                title="Printable per-vendor statement — all POs, expected vs received, status rollup"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
+                <FileText className="h-4 w-4" />Vendor statement
+              </button>
               {po.status === "draft" && (
                 <>
                   <button type="button" onClick={() => run("send", { action: "mark_sent", purchase_order_id: po.id })} disabled={Boolean(busy)}
@@ -362,6 +370,9 @@ function PoDetail({ sessionToken, purchaseOrderId, onClose, onChanged }) {
       {editing && po && (
         <PoForm sessionToken={sessionToken} purchaseOrder={po} onClose={() => setEditing(false)}
           onSaved={async () => { setEditing(false); await load(); onChanged?.(); }} />
+      )}
+      {showVendorStatement && po && (
+        <VendorStatement sessionToken={sessionToken} vendorName={po.vendor_name} onClose={() => setShowVendorStatement(false)} />
       )}
     </div>
   );
