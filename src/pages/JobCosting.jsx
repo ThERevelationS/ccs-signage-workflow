@@ -4,6 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { downloadCsv } from "@/components/shared/exportCsv";
+import ProgressBillingPanel from "@/components/jobcosting/ProgressBillingPanel";
 import {
   ArrowDown,
   ArrowUp,
@@ -54,21 +55,19 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let live = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await invokeAction(sessionToken, { action: "get_job_cost", work_order_id: workOrderId });
-        if (live) setDetail(data);
-      } catch (err) {
-        if (live) setError(err?.response?.data?.error || err?.message || "Load failed.");
-      } finally {
-        if (live) setLoading(false);
-      }
-    })();
-    return () => { live = false; };
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setDetail(await invokeAction(sessionToken, { action: "get_job_cost", work_order_id: workOrderId }));
+      setError("");
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || "Load failed.");
+    } finally {
+      setLoading(false);
+    }
   }, [sessionToken, workOrderId]);
+
+  useEffect(() => { load(); }, [load]);
 
   const j = detail?.job;
 
@@ -166,6 +165,7 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
                   </div>
                 ))}
               </div>
+              <ProgressBillingPanel sessionToken={sessionToken} job={j} workOrder={detail.work_order} onChanged={load} />
             </div>
           </>
         )}
