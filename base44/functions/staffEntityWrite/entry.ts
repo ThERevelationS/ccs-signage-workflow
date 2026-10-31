@@ -12,6 +12,8 @@ const WRITE_OPS: Record<string, Set<string>> = {
   BuilderPart: new Set(['create', 'updateMany']),
   BuilderPartGroup: new Set(['updateMany']),
   BuilderProduct: new Set(['create', 'updateMany']),
+  ChannelLetterInstallEquipment: new Set(['updateMany', 'deleteMany']),
+  ChecklistSubItem: new Set(['create', 'updateMany', 'deleteMany']),
   CustomItemsProject: new Set(['create', 'update', 'updateMany', 'delete']),
   Inventory: new Set(['create', 'updateMany']),
   Customer: new Set(['updateMany']),
@@ -201,6 +203,18 @@ Deno.serve(async (req) => {
       // Identity/system fields are never client-supplied.
       for (const f of ['id', 'created_date', 'updated_date', 'created_by']) delete (patch as any)[f];
       const result = await entity.updateMany({ id: queryId, updated_date: queryVersion }, { $set: patch });
+      return Response.json({ success: true, result });
+    }
+
+    if (op === 'deleteMany') {
+      // Client deleteMany is only used for CAS deletes ({id, updated_date,
+      // ...guardFields}). Refuse unanchored queries so a staff caller can never
+      // turn this op into a bulk table wipe.
+      if (!query || typeof query !== 'object' || !String((query as Record<string, unknown>).id || '').trim()) {
+        throw bad('deleteMany requires an id-anchored query.');
+      }
+      rejectOperatorKeys(query, 'query');
+      const result = await entity.deleteMany(query);
       return Response.json({ success: true, result });
     }
 
