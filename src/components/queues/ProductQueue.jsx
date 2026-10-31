@@ -49,6 +49,15 @@ import {
   loadCustomerById,
   sendCustomerNotification,
 } from "@/components/comms/notifySend";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
+import { transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import {
+  PRODUCT_STAGE_MODE_SETTING_KEY,
+  STAGE_LABELS,
+  productStageModeFromSetting,
+  suggestStageForProducts,
+} from "@/components/estimator/productStageSync";
 
 export { flattenQueueRows };
 
@@ -251,6 +260,9 @@ export default function ProductQueue({
   const [busy, setBusy] = useState({});
   const [errors, setErrors] = useState({});
   const [expanded, setExpanded] = useState({});
+  const [stageSyncMode, setStageSyncMode] = useState("suggest");
+  const [stageSyncNotice, setStageSyncNotice] = useState("");
+  const [stageBusy, setStageBusy] = useState({});
   const now = useMemo(() => new Date(), []);
 
   // Filters live in the URL so a queue view can be shared or bookmarked.
@@ -303,6 +315,43 @@ export default function ProductQueue({
     );
     return () => { cancelled = true; };
   }, [queueLens, actor, viewsReload]);
+
+  // Product → stage sync mode (GlobalSettings.productStatusDrivesStage):
+  // "off" hides the hints, "suggest" renders a quiet → stage chip on each
+  // row whose WO could move forward, "auto" applies the suggestion
+  // immediately after a product write lands (always announced, never silent).
+  useEffect(() => {
+    let cancelled = false;
+    loadSingleGlobalSetting({
+      entity: staffEntities.GlobalSettings,
+      settingKey: PRODUCT_STAGE_MODE_SETTING_KEY,
+      label: "Product status stage sync",
+    }).then(
+      (record) => { if (!cancelled) setStageSyncMode(productStageModeFromSetting(record)); },
+      () => { if (!cancelled) setStageSyncMode("suggest"); }
+    );
+    return () => { cancelled = true; };
+  }, []);
+
+  const applyStageForWorkOrder = async (woSnapshot, suggestion, refLabel = "") => {
+    if (!woSnapshot?.id || !suggestion?.suggested) return;
+    const key = `wo:${woSnapshot.id}`;
+    setStageBusy((b) => ({ ...b, [key]: true }));
+    setStageSyncNotice("");
+    try {
+      await transitionWorkOrderFromLoadedSnapshot({
+        workOrder: woSnapshot,
+        newStage: suggestion.suggested,
+        label: "Queue product-stage sync",
+      });
+      setStageSyncNotice(`${refLabel || woSnapshot.corbridge_invoice_number || woSnapshot.title || woSnapshot.id} moved to ${STAGE_LABELS[suggestion.suggested] || suggestion.suggested} — ${suggestion.reason}.`);
+      refreshAllWorkOrders();
+    } catch (e) {
+      setStageSyncNotice(e?.message || "The suggested stage move could not be applied.");
+    } finally {
+      setStageBusy((b) => ({ ...b, [key]: false }));
+    }
+  };
 
   const noteViewsError = (e) => {
     if (isSavedViewsUnavailableError(e)) {
@@ -374,15 +423,34 @@ export default function ProductQueue({
   const paged = filtered.slice(page * filters.pageSize, (page + 1) * filters.pageSize);
   const pages = Math.max(1, Math.ceil(filtered.length / filters.pageSize));
 
+  // In "suggest" mode each row gets a quiet → stage hint whenever the whole
+  // work order's products imply a later board stage than it sits at.
+  const stageHints = useMemo(() => {
+    const map = new Map();
+    if (stageSyncMode !== "suggest") return map;
+    for (const r of paged) {
+      if (map.has(r.workOrderId)) continue;
+      const wo = workOrderById.get(r.workOrderId);
+      map.set(r.workOrderId, wo ? suggestStageForProducts(wo.products, wo.current_stage) : null);
+    }
+    return map;
+  }, [paged, workOrderById, stageSyncMode]);
+
   const transition = async (row, patch) => {
     const key = `${row.workOrderId}:${row.productId}`;
     setBusy((b) => ({ ...b, [key]: true }));
     setErrors((e) => ({ ...e, [key]: "" }));
     try {
-      await transitionProductAndBuilderStatus({
+      const res = await transitionProductAndBuilderStatus({
         workOrderId: row.workOrderId, product: row.product, patch, actor, label: "Queue status",
       });
       refreshAllWorkOrders();
+      // Auto mode: the product write just landed — re-roll the saved
+      // snapshot and move the board stage when products imply a later one.
+      if (stageSyncMode === "auto" && res?.workOrder) {
+        const auto = suggestStageForProducts(res.workOrder.products, res.workOrder.current_stage);
+        if (auto) await applyStageForWorkOrder(res.workOrder, auto, row.ref);
+      }
     } catch (e) {
       setErrors((prev) => ({ ...prev, [key]: e?.message || "Status update failed." }));
     } finally {
@@ -399,6 +467,13 @@ export default function ProductQueue({
         <h2 className="text-lg font-semibold">{title}</h2>
         <span className="text-xs text-gray-500">{filtered.length} of {allRows.length} products</span>
       </div>
+
+      {stageSyncNotice && (
+        <div className="flex items-center justify-between gap-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
+          <span>{stageSyncNotice}</span>
+          <button type="button" className="font-semibold hover:underline" onClick={() => setStageSyncNotice("")}>Dismiss</button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-gray-50 p-2">
         <label className="flex flex-col gap-0.5"><span className={lab}>Status</span>
@@ -474,6 +549,8 @@ export default function ProductQueue({
               const overdue = overdueDays(r, now);
               const inStatus = daysInStatus(r, now);
               const rowError = errors[key];
+              const stageHint = stageHints.get(r.workOrderId);
+              const stageHintBusy = !!stageBusy[`wo:${r.workOrderId}`];
               return (
                 <React.Fragment key={key}>
                 <tr className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
@@ -495,6 +572,17 @@ export default function ProductQueue({
                     {r.substatus && <div className="mt-0.5 text-[10px] italic text-gray-500">{r.substatus}</div>}
                     {r.hardDue && <div className="mt-0.5 text-[10px] font-semibold text-rose-600">HARD DUE</div>}
                     {inStatus != null && <div className="mt-0.5 text-[10px] text-gray-400">{inStatus}d in status</div>}
+                    {stageHint && (
+                      <button
+                        type="button"
+                        className="mt-0.5 rounded border border-sky-200 bg-sky-50 px-1 py-0 text-[10px] font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+                        disabled={stageHintBusy}
+                        title={`Products suggest moving this Work Order to ${STAGE_LABELS[stageHint.suggested] || stageHint.suggested} (${stageHint.reason})`}
+                        onClick={() => applyStageForWorkOrder(workOrderById.get(r.workOrderId), stageHint, r.ref)}
+                      >
+                        {stageHintBusy ? "moving…" : `→ ${STAGE_LABELS[stageHint.suggested] || stageHint.suggested}`}
+                      </button>
+                    )}
                   </td>
                   <td className="px-2 py-1.5">
                     <select className={sel} disabled={locked} title={r.editable ? "" : NO_ID_TOOLTIP} value={r.proof === "none" ? "" : r.proof}
