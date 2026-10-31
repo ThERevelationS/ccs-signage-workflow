@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { verifyOAuthState } from '../../shared/oauthState.ts';
 
 Deno.serve(async (req) => {
@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!code || !state) {
       return new Response('Authorization failed', { status: 400 });
     }
-    const identity = await verifyOAuthState(state, 'drive_oauth');
+    const identity = await verifyOAuthState(base44, state, 'drive_oauth');
 
     const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
