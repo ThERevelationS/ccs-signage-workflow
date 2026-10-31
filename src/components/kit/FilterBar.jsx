@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-// Filter row with a fixed control order — every list page lays its controls
+// Filter row with a fixed control order -- every list page lays its controls
 // out the same way, so callers only supply the pieces they actually have:
 //
 //   [search] [children = primary selects] [presets] [views] [pageSize] [actions]
@@ -32,7 +32,7 @@ const FilterBar = React.forwardRef(
 );
 FilterBar.displayName = "FilterBar";
 
-// Shared input styles — the PurchaseOrders/Invoices `inputCls` vocabulary.
+// Shared input styles -- the PurchaseOrders/Invoices `inputCls` vocabulary.
 const filterInputCls =
   "min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
 
@@ -62,7 +62,7 @@ const FilterSelect = React.forwardRef(({ className, children, ...props }, ref) =
 FilterSelect.displayName = "FilterSelect";
 
 // Label + control wrapper for the labelled-filter layout the queue pages use
-// ("STATUS ▾"). Wrap any kit input/select: <FilterField label="Status"><FilterSelect/></FilterField>
+// ("STATUS v"). Wrap any kit input/select: <FilterField label="Status"><FilterSelect/></FilterField>
 const FilterField = React.forwardRef(({ label, className, children, ...props }, ref) => (
   <label ref={ref} className={cn("flex flex-col gap-0.5", className)} {...props}>
     {label && (
