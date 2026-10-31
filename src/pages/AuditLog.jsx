@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { History, Loader2, ShieldAlert } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 
@@ -29,7 +30,7 @@ export default function AuditLog() {
       setError("");
       try {
         const [revisions, activities] = await Promise.all([
-          type === "activity" ? Promise.resolve([]) : base44.entities.EstimateRevision.filter({}, "-updated_date", 150).catch(() => []),
+          type === "activity" ? Promise.resolve([]) : staffEntities.EstimateRevision.filter({}, "-updated_date", 150).catch(() => []),
           type === "revision" ? Promise.resolve([]) : base44.entities.OpportunityActivity.filter({}, "-created_date", 150).catch(() => []),
         ]);
         const rev = (Array.isArray(revisions) ? revisions : []).map((r) => ({
