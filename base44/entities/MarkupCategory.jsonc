@@ -20,6 +20,19 @@
     "volume_discount_eligible": {
       "type": "boolean",
       "description": "When false, this category is excluded from volume discounts even if listed in the global eligible-keys setting."
+    },
+    "gl_code": {
+      "type": "string",
+      "description": "General ledger income account code this category posts to on accounting export (CoreBridge-style Manage Accounts mapping)."
+    },
+    "gl_parent": {
+      "type": "string",
+      "description": "Optional parent GL account code/grouping for rollup reporting."
+    },
+    "gl_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "When false, this category's GL mapping is inactive and exports should flag its lines for review."
     }
   },
   "required": [
