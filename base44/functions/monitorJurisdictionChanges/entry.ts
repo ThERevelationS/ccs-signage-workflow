@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -72,7 +73,7 @@ async function authenticateAdminSession(base44: any, token: unknown) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'monitorJurisdictionChanges');
     const user = isScheduledRun ? null : await authenticateAdminSession(base44, body?.session_token);
