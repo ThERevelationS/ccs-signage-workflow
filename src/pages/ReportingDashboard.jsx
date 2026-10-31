@@ -9,6 +9,15 @@ import { BarChart3, CheckCircle2, Clock, Users, TrendingUp, Loader2 } from "luci
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
+
+// due_date is stored date-only ("YYYY-MM-DD"); a bare new Date(str) parses it
+// as UTC midnight and shifts it one day back in local time. Parse as local
+// midnight the same way MyWorkflow/SIPs do.
+const parseLocalDate = (dateString) => {
+  if (!dateString) return undefined;
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 import AttentionFeed from "@/components/workflow/AttentionFeed";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -94,6 +103,7 @@ export default function ReportingDashboard() {
 
   // Due dates in next 30 days
   const today = new Date();
+  const startOfToday = new Date(today); startOfToday.setHours(0, 0, 0, 0);
   const next30 = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
@@ -103,7 +113,7 @@ export default function ReportingDashboard() {
     date: label,
     count: active.filter(wo => {
       if (!wo.due_date) return false;
-      return format(new Date(wo.due_date), "MMM d") === label;
+      return format(parseLocalDate(wo.due_date), "MMM d") === label;
     }).length
   })).filter(d => d.count > 0);
 
@@ -164,7 +174,7 @@ export default function ReportingDashboard() {
   // Overdue
   const overdueCount = active.filter(wo => {
     if (!wo.due_date) return false;
-    return new Date(wo.due_date) < today;
+    return parseLocalDate(wo.due_date) < startOfToday;
   }).length;
 
   if (loading) {
