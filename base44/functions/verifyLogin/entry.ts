@@ -3,6 +3,13 @@ import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { signShopSessionPayload } from '../../shared/signShopSession.ts';
 import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
+import {
+  LOGIN_ATTEMPT_BAD_PASSWORD,
+  LOGIN_ATTEMPT_LOCKED_OUT,
+  markLoginAttempt,
+  releaseLoginAttempt,
+  reserveLoginAttempt,
+} from '../../shared/loginAttemptThrottle.mjs';
 
 // Fixed bcrypt work factor for invalid/unknown credentials. This is not a real
 // account credential; it only keeps failed-login timing closer to valid-user
@@ -10,25 +17,73 @@ import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
 const DUMMY_PASSWORD_HASH = '$2a$10$ApDRjqUs6Q5EbAw/6UybWuLWQOAa5Eg4dLKs/F9iQRZUXfcubNGKa';
 
 // Brute-force lockout: after MAX_FAILED_LOGINS consecutive failures the
-// account refuses sign-in attempts for LOCKOUT_MINUTES minutes. The counter
-// and deadline live on AuthorizedEmail so they survive across invocations.
+// account refuses sign-in attempts for LOCKOUT_MINUTES minutes. Attempts are
+// counted as append-only FailedAdminAttempt rows reserved before the password
+// compare (see loginAttemptThrottle.mjs), so concurrent attempts cannot share
+// one counter tick. AuthorizedEmail.failed_login_count / login_locked_until
+// mirror that count for admins and as a fast-path lock check.
 const MAX_FAILED_LOGINS = 10;
 const LOCKOUT_MINUTES = 15;
 
-async function persistLoginSecurityFields(authorized, user, nextFields) {
-  try {
-    await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
-      entity: authorized,
-      user,
-      nextFields,
-      guardFields: { email: user.email },
-      label: `Login attempt tracking for ${user.email}`,
-    });
-  } catch (error) {
-    // Login security bookkeeping must never block or leak into the sign-in
-    // response; a lost counter update just delays the lockout by one attempt.
-    console.error('Could not persist login attempt tracking:', error?.message || error);
+function sameResetMarker(a, b) {
+  return String(a ?? '') === String(b ?? '');
+}
+
+// Bookkeeping on AuthorizedEmail is a display/fast-path mirror of the
+// authoritative FailedAdminAttempt row count, so it is computed from a fresh
+// read on every try instead of from the request's stale snapshot.
+async function persistLoginSecurityFields(authorized, user, buildFields, { abortIfReset = false } = {}) {
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const current = await authorized.get(user.id);
+      if (!current?.id) throw new Error('user could not be re-read');
+      if (abortIfReset && (
+        !sameResetMarker(current.last_login_at, user.last_login_at)
+        || !sameResetMarker(current.session_not_before, user.session_not_before)
+      )) {
+        // A successful sign-in or credential change reset the counter after this
+        // attempt started; do not re-lock the account from stale failures.
+        return;
+      }
+      const nextFields = buildFields(current);
+      if (!nextFields || Object.keys(nextFields).length === 0) return;
+      await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+        entity: authorized,
+        user: current,
+        nextFields,
+        guardFields: { email: user.email },
+        label: `Login attempt tracking for ${user.email}`,
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
   }
+  // The lockout gate is the append-only attempt count, so a lost mirror
+  // update here never widens the password-guessing budget.
+  console.error('Could not persist login attempt tracking:', lastError?.message || lastError);
+}
+
+function lockoutFields(current, failures) {
+  const currentCount = Number.isFinite(Number(current?.failed_login_count)) ? Number(current.failed_login_count) : 0;
+  const nextFields: Record<string, unknown> = {};
+  if (failures > currentCount) nextFields.failed_login_count = failures;
+  if (failures >= MAX_FAILED_LOGINS) {
+    const lockedUntil = Date.now() + LOCKOUT_MINUTES * 60 * 1000;
+    const existing = Date.parse(String(current?.login_locked_until || ''));
+    if (!Number.isFinite(existing) || existing < lockedUntil) {
+      nextFields.login_locked_until = new Date(lockedUntil).toISOString();
+    }
+  }
+  return nextFields;
+}
+
+function lockedOutResponse(minutes) {
+  return Response.json({
+    success: false,
+    error: `Too many failed sign-in attempts. Try again in ${Math.max(1, minutes)} minutes.`,
+  }, { status: 429 });
 }
 
 Deno.serve(async (req) => {
@@ -74,16 +129,39 @@ Deno.serve(async (req) => {
       // Keep bcrypt timing on the lockout path so locked accounts cannot be
       // distinguished from ordinary bad-password responses by response time.
       await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
-      return Response.json({
-        success: false,
-        error: `Too many failed sign-in attempts. Try again in ${Math.max(1, Math.ceil((lockedUntil - Date.now()) / 60000))} minutes.`,
-      }, { status: 429 });
+      return lockedOutResponse(Math.ceil((lockedUntil - Date.now()) / 60000));
     }
 
     const stored = user.password_hash || '';
     if (!stored) {
       await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+    }
+
+    // Reserve this attempt's slot before comparing the password. If the attempt
+    // cannot be recorded and counted, fail closed rather than allow an
+    // uncounted guess.
+    const attempts = base44.asServiceRole.entities.FailedAdminAttempt;
+    let attempt;
+    try {
+      attempt = await reserveLoginAttempt({
+        attempts,
+        user,
+        maxFailures: MAX_FAILED_LOGINS,
+        windowMinutes: LOCKOUT_MINUTES,
+      });
+    } catch (attemptError) {
+      console.error('verifyLogin could not record sign-in attempt:', attemptError?.message || attemptError);
+      return Response.json(
+        { success: false, error: 'Sign in is temporarily unavailable. Try again shortly.' },
+        { status: 503 },
+      );
+    }
+    if (!attempt.allowed) {
+      await markLoginAttempt({ attempts, reservation: attempt.reservation, reason: LOGIN_ATTEMPT_LOCKED_OUT });
+      await persistLoginSecurityFields(authorized, user, current => lockoutFields(current, attempt.count), { abortIfReset: true });
+      await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
+      return lockedOutResponse(LOCKOUT_MINUTES);
     }
 
     // Support both bcrypt hashes ($2a/$2b/$2y) and legacy plaintext passwords.
@@ -97,20 +175,13 @@ Deno.serve(async (req) => {
       if (!isBcrypt) {
         await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
       }
-      const failures = (Number.isFinite(Number(user.failed_login_count)) ? Number(user.failed_login_count) : 0) + 1;
-      const nextFields: Record<string, unknown> = { failed_login_count: failures };
-      if (failures >= MAX_FAILED_LOGINS) {
-        nextFields.login_locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000).toISOString();
-      }
-      await persistLoginSecurityFields(authorized, user, nextFields);
-      try {
-        await base44.asServiceRole.entities.FailedAdminAttempt.create({
-          email: user.email, reason: 'bad_password',
-          at: new Date().toISOString(),
-        });
-      } catch { /* attempt logging is best-effort */ }
+      await markLoginAttempt({ attempts, reservation: attempt.reservation, reason: LOGIN_ATTEMPT_BAD_PASSWORD });
+      const failures = attempt.count;
+      await persistLoginSecurityFields(authorized, user, current => lockoutFields(current, failures), { abortIfReset: true });
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
+
+    await releaseLoginAttempt({ attempts, reservation: attempt.reservation });
 
     if (!isBcrypt) {
       const upgradedHash = await bcrypt.hash(password, 10);
@@ -143,12 +214,14 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, requires_password_reset: true, error: 'Password reset required. Please see an administrator for a new password.' }, { status: 403 });
     }
 
-    const loginSecurityFields: Record<string, unknown> = { last_login_at: new Date().toISOString() };
-    if (Number(user.failed_login_count) > 0 || user.login_locked_until) {
-      loginSecurityFields.failed_login_count = 0;
-      loginSecurityFields.login_locked_until = null;
-    }
-    await persistLoginSecurityFields(authorized, user, loginSecurityFields);
+    await persistLoginSecurityFields(authorized, user, (current) => {
+      const loginSecurityFields: Record<string, unknown> = { last_login_at: new Date().toISOString() };
+      if (Number(current.failed_login_count) > 0 || current.login_locked_until) {
+        loginSecurityFields.failed_login_count = 0;
+        loginSecurityFields.login_locked_until = null;
+      }
+      return loginSecurityFields;
+    });
 
     // Build signed session token with the shared sign-shop signing primitive.
     const payload = {
