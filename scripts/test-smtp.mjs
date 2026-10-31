@@ -62,12 +62,15 @@ assert.match(client, /withTimeout/, "timeout wrapper applied");
 assert.match(client, /Promise\.race/, "timeout via Promise.race");
 assert.match(client, /setTimeout/, "timeout via setTimeout");
 assert.match(client, /DEFAULT_TIMEOUT_MS\s*=\s*20_?000/, "~20s per-operation timeout default");
-// Failure classes: auth vs connect vs relay reject.
+// Failure classes: auth vs connect vs relay reject. Stage kinds reach
+// SmtpError through the exchange() helper's `kind` argument.
 assert.match(client, /SmtpError\('connect'/, "connect failure class");
 assert.match(client, /SmtpError\('tls'/, "tls failure class");
-assert.match(client, /SmtpError\('auth'/, "auth failure class");
-assert.match(client, /SmtpError\('recipient'/, "recipient/relay-reject failure class");
-assert.match(client, /SmtpError\('sender'/, "sender-reject failure class");
+assert.match(client, /SmtpError\('config'/, "config failure class");
+assert.match(client, /'auth', timeoutMs/, "auth failure class");
+assert.match(client, /'recipient', timeoutMs/, "recipient/relay-reject failure class");
+assert.match(client, /'sender', timeoutMs/, "sender-reject failure class");
+assert.match(client, /'data', timeoutMs/, "data failure class");
 assert.match(client, /SmtpError\('timeout'/, "timeout failure class");
 // MIME message: Reply-To + multipart alternative + UTF-8 subject.
 assert.match(client, /`Reply-To: \$\{o\.replyTo\}`/, "Reply-To header emitted when set");
@@ -93,7 +96,7 @@ assert.match(entry, /if \(smtpConfigured\)/, "SMTP path engages only when fully 
 assert.match(entry, /await sendSmtp\(\{/, "sends via smtpClient when configured");
 assert.match(entry, /\.invoke\('sendGmail'/, "Gmail connector fallback preserved");
 assert.match(entry, /_workflow_capability:\s*'ccs-sendGmail-internal-svc-cap-791d5baab4d78cfc'/, "capability pass-through unchanged");
-assert.ok(entry.indexOf("sendSmtp({") < entry.indexOf("'sendGmail'"), "SMTP branch precedes the Gmail fallback");
+assert.ok(entry.indexOf("sendSmtp({") < entry.indexOf(".invoke('sendGmail'"), "SMTP branch precedes the Gmail fallback");
 assert.match(entry, /else \{[\s\S]{0,200}sendGmail authenticates this call/, "Gmail path sits on the else branch");
 // reply_to request field: validated, request wins over env default.
 assert.match(entry, /body\?\.reply_to/, "accepts request reply_to field");
@@ -125,4 +128,4 @@ assert.match(notify, /invokeStaffEmail\(\{ sessionToken, to: recipient, subject,
 assert.match(queue, /replyTo: clean\(actor\)\.includes\("@"\) \? clean\(actor\) : undefined/, "follow-up replies route to the sending staff member");
 assert.match(panel, /replyTo: clean\(po\?\.created_by\)\.includes\("@"\) \? clean\(po\?\.created_by\) : undefined/, "vendor notify replies route to the PO buyer");
 
-console.log("PASS smtp (84 assertions)");
+console.log("PASS smtp (86 assertions)");
