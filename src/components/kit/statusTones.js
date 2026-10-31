@@ -91,6 +91,10 @@ export const STATUS_TONES = {
   partial: "amber",
   overpaid: "violet",
 
+  // Import batch statuses -- ImportJob.status on the Imports history table.
+  running: "sky",
+  paused: "amber",
+
   // Generic statuses that show up across lists and details.
   open: "sky",
   active: "sky",
