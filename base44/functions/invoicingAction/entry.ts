@@ -843,7 +843,7 @@ Deno.serve(async (req) => {
             .reduce((s: number, p: any) => s + num(p?.amount), 0))
         : 0;
       if (netCollected > 0.005) {
-        throw bad("Refund or void the collected payments before voiding this invoice.", 409);
+        throw bad("Void the recorded payments before voiding this invoice — refund collected money first.", 409);
       }
       const desired = {
         status: "void",
