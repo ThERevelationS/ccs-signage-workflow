@@ -15,7 +15,8 @@ import { getModuleLabel } from "@/components/estimator/moduleRegistry";
 import { FULFILLMENT_LABELS, overdueDays, parseLocalDate } from "@/components/queues/productQueueModel";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { transitionWorkOrderFromLoadedSnapshot, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { depositChip, depositCoveredByFinancials } from "@/components/estimator/depositGate";
 import {
   PRODUCT_STAGE_MODE_SETTING_KEY,
   productStageModeFromSetting,
@@ -178,6 +179,13 @@ export default function JobWorkspace() {
   const [errors, setErrors] = useState({});
   const [transitionError, setTransitionError] = useState("");
   const [stageSyncNotice, setStageSyncNotice] = useState("");
+  // Deposit controls for the Financials card. Form state mirrors the loaded
+  // WO snapshot; every write goes through the CAS field path anchored on that
+  // snapshot, so a concurrent edit reverts instead of silently clobbering.
+  const [depositForm, setDepositForm] = useState({ required: false, amount: "" });
+  const [depositBusy, setDepositBusy] = useState(false);
+  const [depositError, setDepositError] = useState("");
+  const [depositNotice, setDepositNotice] = useState("");
   const now = useMemo(() => new Date(), []);
 
   const wo = useMemo(() => {
@@ -195,6 +203,14 @@ export default function JobWorkspace() {
     const ref = wo ? (wo.corbridge_invoice_number || wo.title || wo.id) : "";
     document.title = ref ? `Job ${ref}` : "Job Workspace";
   }, [wo]);
+
+  // Keep the deposit form pinned to the loaded WO snapshot.
+  useEffect(() => {
+    setDepositForm({
+      required: wo?.deposit_required === true,
+      amount: Number(wo?.deposit_amount) > 0 ? String(wo.deposit_amount) : "",
+    });
+  }, [wo?.id, wo?.deposit_required, wo?.deposit_amount]);
 
   const { data: financials, isLoading: financialsLoading } = useQuery({
     queryKey: ["jobWorkspaceFinancials", wo?.id || ""],
@@ -219,6 +235,13 @@ export default function JobWorkspace() {
   );
   const rows = useMemo(() => workspaceProductRows(wo), [wo]);
   const timeline = useMemo(() => jobActivityTimeline(wo), [wo]);
+  // Auto-suggest: once linked financials cover the deposit, the card nudges
+  // staff to flip deposit_invoiced. Suggest-only -- the flag is still set by
+  // an explicit audited write, never silently derived.
+  const depositCoverage = useMemo(
+    () => depositCoveredByFinancials(wo, { invoices: financials?.invoices || [], payments: financials?.payments || [] }),
+    [wo, financials]
+  );
 
   // Product → stage sync mode (GlobalSettings.productStatusDrivesStage):
   // "off" renders nothing, "suggest" shows a one-click Apply chip, "auto"
@@ -257,6 +280,50 @@ export default function JobWorkspace() {
     }
   };
 
+  const saveDepositSettings = async () => {
+    if (!wo?.id || depositBusy) return;
+    setDepositBusy(true);
+    setDepositError("");
+    setDepositNotice("");
+    try {
+      const nextAmount = depositForm.required ? Math.max(0, Number(depositForm.amount) || 0) : 0;
+      await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: wo.id,
+        expectedFields: {
+          deposit_required: wo.deposit_required === true,
+          deposit_amount: Number(wo.deposit_amount) || 0,
+        },
+        nextFields: { deposit_required: depositForm.required, deposit_amount: nextAmount },
+      });
+      setDepositNotice("Deposit settings saved.");
+      refreshAllWorkOrders();
+    } catch (e) {
+      setDepositError(e?.message || "Deposit settings could not be saved.");
+    } finally {
+      setDepositBusy(false);
+    }
+  };
+
+  const setDepositInvoiced = async (value) => {
+    if (!wo?.id || depositBusy) return;
+    setDepositBusy(true);
+    setDepositError("");
+    setDepositNotice("");
+    try {
+      await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: wo.id,
+        expectedFields: { deposit_invoiced: wo.deposit_invoiced === true },
+        nextFields: { deposit_invoiced: value },
+      });
+      setDepositNotice(value ? "Deposit marked as invoiced." : "Deposit invoiced flag cleared.");
+      refreshAllWorkOrders();
+    } catch (e) {
+      setDepositError(e?.message || "The deposit flag could not be updated.");
+    } finally {
+      setDepositBusy(false);
+    }
+  };
+
   const transition = async (row, patch) => {
     const key = row.productId;
     setBusy((b) => ({ ...b, [key]: true }));
@@ -264,7 +331,7 @@ export default function JobWorkspace() {
     setTransitionError("");
     try {
       const res = await transitionProductAndBuilderStatus({
-        workOrderId: wo.id, product: row.product, patch, actor, label: "Job workspace",
+        workOrderId: wo.id, product: row.product, patch, actor, label: "Job workspace", workOrder: wo,
       });
       refreshAllWorkOrders();
       // Auto mode: the product write just landed, so re-roll the saved
@@ -306,6 +373,7 @@ export default function JobWorkspace() {
 
   const ref = wo.corbridge_invoice_number || wo.title || wo.id;
   const stage = norm(wo.current_stage);
+  const depositChipData = depositChip(wo);
   const contactBits = [wo.contact_name, wo.contact_email, wo.contact_phone].filter((f) => String(f || "").trim());
 
   return (
@@ -335,6 +403,7 @@ export default function JobWorkspace() {
               <h1 className="text-xl font-bold text-gray-900">{ref}</h1>
               {badge(WORKSPACE_STAGES[stage] || wo.current_stage || "—", STAGE_TONE[stage] || TONE.muted)}
               {wo.sales_status && badge(wo.sales_status, TONE.muted)}
+              {depositChipData && badge(depositChipData.text, depositChipData.tone === "invoiced" ? TONE.done : TONE.wip)}
             </div>
             <div className="mt-1 text-sm text-gray-500">{wo.title && wo.title !== ref ? wo.title : wo.description || ""}</div>
           </div>
@@ -486,6 +555,53 @@ export default function JobWorkspace() {
               <div className={`mt-0.5 text-base font-bold ${i === 3 && val > 0 ? "text-rose-700" : "text-gray-900"}`}>{usd(val)}</div>
             </div>
           ))}
+        </div>
+
+        {/* Deposit requirement + invoiced flag. Both flags write through the
+            CAS field path; the coverage hint only ever suggests marking. */}
+        <div className="mt-2 rounded border border-gray-200 bg-gray-50 px-2.5 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="font-semibold uppercase tracking-wide text-gray-400">Deposit</span>
+            <label className="flex items-center gap-1 font-medium text-gray-700">
+              <input type="checkbox" disabled={depositBusy}
+                checked={depositForm.required}
+                onChange={(e) => setDepositForm((f) => ({ ...f, required: e.target.checked }))} />
+              Required
+            </label>
+            <label className="flex items-center gap-1 text-gray-700">
+              <span>$</span>
+              <input type="number" min="0" step="0.01" disabled={depositBusy || !depositForm.required}
+                className="w-24 rounded border border-gray-300 bg-white px-1.5 py-0.5 disabled:opacity-50"
+                placeholder="0.00" value={depositForm.amount}
+                onChange={(e) => setDepositForm((f) => ({ ...f, amount: e.target.value }))} />
+            </label>
+            <button type="button" disabled={depositBusy} onClick={saveDepositSettings}
+              className="rounded border border-gray-300 bg-white px-1.5 py-0.5 font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-50">
+              {depositBusy ? "Saving…" : "Save deposit"}
+            </button>
+            {wo.deposit_required === true && wo.deposit_invoiced !== true && (
+              <button type="button" disabled={depositBusy} onClick={() => setDepositInvoiced(true)}
+                className="rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                Mark deposit invoiced
+              </button>
+            )}
+            {wo.deposit_required === true && wo.deposit_invoiced === true && (
+              <>
+                <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">Deposit invoiced</span>
+                <button type="button" disabled={depositBusy} onClick={() => setDepositInvoiced(false)}
+                  className="text-gray-500 underline hover:text-gray-700 disabled:opacity-50">
+                  Unmark
+                </button>
+              </>
+            )}
+          </div>
+          {wo.deposit_required === true && wo.deposit_invoiced !== true && depositCoverage.covered && (
+            <div className="mt-1.5 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800">
+              {depositCoverage.reason} Review and mark the deposit invoiced.
+            </div>
+          )}
+          {depositError && <div className="mt-1.5 text-rose-700">{depositError}</div>}
+          {depositNotice && <div className="mt-1.5 text-emerald-700">{depositNotice}</div>}
         </div>
         {summary.milestoneBilling && (
           <div className="mt-2 text-[11px] font-medium text-gray-500">
