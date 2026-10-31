@@ -1081,6 +1081,7 @@ export default function Permitting() {
                   users={users}
                   taskDescriptions={taskDescriptions}
                   today={today}
+                  onSearchLocality={(name) => setSearchTerm(name)}
                   sharedOfficeCount={(() => {
                     const names = new Set((group.lines || []).map(li => String(li.locality_name || "").trim().toLowerCase()).filter(Boolean));
                     let count = 0;
