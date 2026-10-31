@@ -18,6 +18,14 @@ for (const entity of ['CustomerContact', 'CustomerLocation']) {
   assert.match(schema, /"delete":\s*\{[^}]*"role":\s*"(__[a-z_]+__|admin|__[a-z_]+backend_only__)"/, `${entity} delete must stay restricted`);
 }
 
+// UserCapacity holds staff emails, cost rates and time-off reasons: reads stay
+// scoped to the record owner or an admin, never open to every caller.
+{
+  const capacity = readFileSync('base44/entities/UserCapacity.jsonc', 'utf8');
+  assert.doesNotMatch(capacity, /"read":\s*\{\s*\}/, 'UserCapacity read must not be open to everyone');
+  assert.match(capacity, /"read":\s*\{\s*"\$or":\s*\[\s*\{\s*"data\.user_email":\s*"\{\{user\.email\}\}"/, 'UserCapacity read must be scoped to the owner or an admin');
+}
+
 // Backend contract: session auth, service role, all supported actions present.
 assert.ok(existsSync('base44/functions/opportunityWorkspaceAction/entry.ts'), 'workspace function must exist');
 assert.match(entry, /authenticateSignShopSession/, 'function must authenticate the sign-shop session');
