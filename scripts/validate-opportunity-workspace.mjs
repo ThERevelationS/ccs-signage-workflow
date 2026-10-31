@@ -447,7 +447,13 @@ const quoteDelivery = readFileSync('base44/functions/recordEstimateQuoteDelivery
 assert.match(quoteDelivery, /safeUrl/, 'quote delivery must route attachment_file_url through safeUrl');
 assert.match(quoteDelivery, /attachment_file_url:\s*safeUrl/, 'attachment_file_url must be URL-safe-filtered');
 const revAudit = readFileSync('base44/functions/updateEstimateRevisionAudit/entry.ts', 'utf8');
-assert.match(revAudit, /https\?:/, 'delivery evidence must gate attachment_file_url to http(s) schemes');
+const revAuditShared = readFileSync('base44/shared/estimateRevisionAudit.ts', 'utf8');
+assert.match(revAuditShared, /export function safeDeliveryEvidence[\s\S]*https\?:/, 'delivery evidence must gate attachment_file_url to http(s) schemes');
+assert.match(revAudit, /safeDeliveryEvidence\(body\?\.delivery_evidence/, 'revision audit must sanitize caller delivery evidence');
+const lifecycleRev = readFileSync('base44/functions/ensureEstimateLifecycleRevision/entry.ts', 'utf8');
+assert.match(lifecycleRev, /delivery_evidence:[^\n]*safeDeliveryEvidence\(revision\.delivery_evidence\)/, 'lifecycle revision must sanitize caller delivery evidence');
+const deliveryPanel = readFileSync('src/components/estimator/EstimateQuoteDeliveryPanel.jsx', 'utf8');
+assert.match(deliveryPanel, /href=\{safeArchiveUrl\(/, 'delivery panel must only link http(s) archive URLs');
 const acceptFn = readFileSync('base44/functions/recordEstimateAcceptance/entry.ts', 'utf8');
 assert.match(acceptFn, /javascript\|data\|vbscript/, 'acceptance evidence_reference must reject dangerous URL schemes');
 

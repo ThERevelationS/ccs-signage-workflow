@@ -61,3 +61,21 @@ export function estimateQuoteIssueKey(estimateId: unknown, quoteVersion: unknown
   const version = Math.max(0, Math.floor(estimateAuditNumber(quoteVersion)));
   return id && version > 0 ? `estimate:${id}:quote:v${version}` : '';
 }
+
+const evidenceText = (value: unknown, max: number) => String(value || '').trim().slice(0, max);
+
+export function safeDeliveryEvidence(input: any = {}) {
+  const sentAt = evidenceText(input?.sent_at, 80);
+  const fileUrl = evidenceText(input?.attachment_file_url, 4000);
+  return {
+    delivery_id: evidenceText(input?.delivery_id, 128),
+    gmail_message_id: evidenceText(input?.gmail_message_id, 512),
+    recipient_email: evidenceText(input?.recipient_email, 320),
+    sent_at: sentAt && Number.isFinite(Date.parse(sentAt)) ? new Date(sentAt).toISOString() : '',
+    // Only http(s) evidence URLs are stored — javascript:/data: and other
+    // schemes can never be persisted as delivery evidence.
+    attachment_file_url: /^https?:\/\//i.test(fileUrl) ? fileUrl : '',
+    attachment_sha256: evidenceText(input?.attachment_sha256, 128),
+    attachment_size_bytes: Math.max(0, Number(input?.attachment_size_bytes || 0) || 0),
+  };
+}
