@@ -1,7 +1,7 @@
 {
   "name": "OpportunityActivity",
   "type": "object",
-  "description": "Append-only audit log for an Opportunity: stage transitions, field edits, links, estimating handoffs, and reconciliation advances. Written only by opportunityWorkspaceAction via service role.",
+  "description": "Append-only audit log for an Opportunity: stage transitions, field edits, links, estimating handoffs, and reconciliation advances \u2014 written by opportunityWorkspaceAction via service role. Also carries typed CRM contact events (calls, e-mails, visits, consultations) created from the CRM Events queue: those rows use the CoreBridge-style event_type taxonomy values plus subject/due_at/assigned_to/outcome fields, are written through the staffEntityWrite gateway, and may omit opportunity_id.",
   "properties": {
     "schema_version": {
       "type": "number",
@@ -12,7 +12,8 @@
       "description": "Stable retry-safe receipt for one activity entry."
     },
     "opportunity_id": {
-      "type": "string"
+      "type": "string",
+      "description": "Linked Opportunity for audit rows. Optional for standalone CRM events (prospecting calls, customer follow-ups) that have no pursuit yet."
     },
     "event_type": {
       "type": "string",
@@ -26,7 +27,26 @@
         "estimate_status_changed",
         "estimator_assigned",
         "reconciled",
-        "note"
+        "note",
+        "Call: Accounts Receivable",
+        "Call: Collections",
+        "Call: Estimate Follow Up",
+        "Call: Install Scheduling",
+        "Call: Post delivery follow up",
+        "Call: Proof",
+        "Call: Prospecting",
+        "Call: Sales Follow Up",
+        "Consultation",
+        "E-Mail: Estimate",
+        "E-Mail: Follow Up",
+        "E-Mail: Information Request",
+        "ReDo Work",
+        "Visit: Installation",
+        "Visit: Networking/Marketing",
+        "Visit: Sales Appointment",
+        "Visit: Sales Cold Call",
+        "Visit: Sales Relationship",
+        "Visit: Site Survey"
       ]
     },
     "summary": {
@@ -38,10 +58,63 @@
     "details": {
       "type": "object",
       "additionalProperties": true
+    },
+    "subject": {
+      "type": "string",
+      "description": "CRM event subject line (CoreBridge 'Event Name'). Falls back to the event_type label in the queue when blank."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form CRM event notes."
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Display name of the person this CRM event touches."
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Canonical CustomerContact id when resolved."
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Display company/customer name for queue rendering."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Canonical Customer id when resolved \u2014 deep-links the queue row to the customer record."
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Linked WorkOrder when the CRM event concerns an active job."
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Staff user (email or screen name) responsible for this CRM event \u2014 the queue's salesperson filter."
+    },
+    "due_at": {
+      "type": "string",
+      "description": "ISO timestamp the CRM event is due; overdue rows sort first in the queue."
+    },
+    "completed_at": {
+      "type": "string",
+      "description": "ISO timestamp the CRM event was marked complete. Blank while open."
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Close-out result for a completed CRM event (completed, cancelled, no_answer, left_message, rescheduled)."
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "auto_followup",
+        "system"
+      ],
+      "default": "manual",
+      "description": "How the CRM event was created \u2014 manual queue entry, automated follow-up generation, or system."
     }
   },
   "required": [
-    "opportunity_id",
     "event_type",
     "summary"
   ],
