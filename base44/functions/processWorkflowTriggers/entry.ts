@@ -51,6 +51,7 @@ const WORK_ORDER_EVENTS = new Set([
   'image_uploaded',
   'asap_toggled_on', 'asap_toggled_off',
   'assigned_to_changed',
+  'proof_sent', 'proof_approved', 'product_transition',
 ]);
 // Time Clock / PTO events emitted by timeClockAction after verified writes.
 const TIME_CLOCK_EVENTS = new Set([
@@ -72,6 +73,9 @@ const RECORD_EVENTS = new Set([
   'user_role_changed',
   'jurisdiction_profile_created', 'jurisdiction_profile_updated',
   'regulation_alert_created',
+  'crm_event_completed',
+  'po_received', 'po_backordered', 'recon_variance',
+  'invoice_overdue',
 ]);
 const ALLOWED_EVENTS = new Set([...PERMIT_EVENTS, ...ORDER_EVENTS, ...WORK_ORDER_EVENTS, ...TIME_CLOCK_EVENTS, ...RECORD_EVENTS]);
 
