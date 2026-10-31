@@ -5,7 +5,6 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { invokeFleet } from "@/components/fleet/fleetInvoke";
 
 export const ALL_WORK_ORDERS_KEY = ["workOrders", "all"];
-export const ALL_ORDERS_KEY = ["orders", "all"];
 
 // Shared row store for the app's biggest tables. Every consumer — board pages,
 // spreadsheets, schedulers — reads through boardFeed instead of paging the
@@ -15,7 +14,6 @@ export const ALL_ORDERS_KEY = ["orders", "all"];
 // rate budget and surfaced as 500s.
 const FEED_ENTITIES = {
   WorkOrder: { queryKey: ALL_WORK_ORDERS_KEY },
-  Order: { queryKey: ALL_ORDERS_KEY },
 };
 
 const boardState = new Map();
@@ -156,10 +154,6 @@ async function fetchFeedRows(entity, { forceFull = false } = {}) {
 
 export function fetchAllWorkOrders(options) {
   return fetchFeedRows("WorkOrder", options);
-}
-
-export function fetchAllOrders(options) {
-  return fetchFeedRows("Order", options);
 }
 
 export function refreshAllWorkOrders() {

@@ -13,13 +13,13 @@ import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 //   - `since` applies an updated_date delta cursor server-side, so a steady
 //     board refresh transfers only changed rows in one read instead of
 //     re-paging the whole table.
-// Read scope matches these entities' open read RLS — a valid staff session is
-// accepted when presented but is not required to read.
+// Reads run through the service role, so a valid staff (admin/user) session
+// is mandatory — the same gate staffDataRead applies to these entities.
+// Backend-only entities (Order, JurisdictionProfile) are not feedable; heavy
+// fields never leave this endpoint (detail views read them via staffDataRead).
 
 const FEEDABLE: Record<string, { heavy: string[] }> = {
   WorkOrder: { heavy: ['smartsheet_sync_snapshot', 'work_notes'] },
-  Order: { heavy: ['smartsheet_sync_snapshot', 'work_notes'] },
-  JurisdictionProfile: { heavy: [] },
 };
 
 const ALLOWED_OPERATORS = new Set(['$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin']);
@@ -34,6 +34,40 @@ const SORT_PATTERN = /^(-?[A-Za-z_][\w.]*)(\s*,\s*-?[A-Za-z_][\w.]*){0,3}$/;
 
 function bad(message: string) {
   return Object.assign(new Error(message), { status: 400 });
+}
+
+function unauthorized() {
+  return Object.assign(new Error('Authentication required'), { status: 401 });
+}
+
+async function requireStaffSession(base44: any, token: unknown) {
+  let actor: any;
+  try {
+    actor = await authenticateSignShopSession(base44, token);
+  } catch (error: any) {
+    const status = Number(error?.status || 0);
+    if (status === 401 || status === 409) throw unauthorized();
+    throw error;
+  }
+  if (!['admin', 'user'].includes(String(actor?.role || ''))) throw unauthorized();
+  return actor;
+}
+
+// Withheld fields cannot be filtered or sorted on either — that would turn
+// them into a boolean/ordering oracle.
+function assertNoWithheldFields(query: any, sort: string, withheld: Set<string>) {
+  const stack: any[] = [query];
+  while (stack.length) {
+    const node = stack.pop();
+    if (!node || typeof node !== 'object') continue;
+    for (const [key, val] of Object.entries(node)) {
+      if (withheld.has(key.split('.')[0])) throw bad('Feed filter field is not permitted.');
+      if (val && typeof val === 'object') stack.push(val);
+    }
+  }
+  for (const part of sort.split(',')) {
+    if (withheld.has(part.trim().replace(/^-/, '').split('.')[0])) throw bad('Feed sort field is not permitted.');
+  }
 }
 
 function cleanQuery(value: unknown) {
@@ -84,15 +118,17 @@ function cleanSince(value: unknown) {
   return new Date(ms).toISOString();
 }
 
-function projectRow(row: any, fields: string[] | null, heavy: string[]) {
+function projectRow(row: any, fields: string[] | null, withheld: Set<string>) {
   if (!row || typeof row !== 'object') return row;
   if (fields) {
     const out: any = { id: row.id, created_date: row.created_date, updated_date: row.updated_date };
-    for (const field of fields) out[field] = row[field];
+    for (const field of fields) {
+      if (!withheld.has(field.split('.')[0])) out[field] = row[field];
+    }
     return out;
   }
   const clean = { ...row };
-  for (const field of heavy) delete clean[field];
+  for (const field of withheld) delete clean[field];
   return clean;
 }
 
@@ -110,11 +146,9 @@ Deno.serve(async (req) => {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 1 });
     const body = await req.json().catch(() => ({}));
 
-    // Staff session required — WorkOrder/Order read RLS is role-gated, so an
-    // anonymous service-role feed would reopen the access that lockdown closed.
-    // Reads stay open to match the entity read RLS — a stale or expired staff
-    // token must not turn the feed into a permanent loading screen.
-    await authenticateSignShopSession(base44, body.session_token).catch(() => null);
+    // Staff session required before any service-role read — WorkOrder read
+    // RLS is role-gated, so an anonymous feed would bypass it.
+    const actor = await requireStaffSession(base44, body?.session_token);
 
     const entityName = String(body?.entity || '').trim();
     const spec = FEEDABLE[entityName];
@@ -127,10 +161,14 @@ Deno.serve(async (req) => {
     }
     const sort = cleanSort(body?.sort) || '-updated_date';
     const fields = cleanFields(body?.fields);
-    const includeHeavy = body?.include_heavy === true;
-    const heavy = includeHeavy ? [] : spec.heavy;
-    const cacheable = !since && !fields && !includeHeavy;
-    const cacheKey = entityName + "|" + JSON.stringify(query) + "|" + sort;
+    const deniedForUser = actor?.admin_permissions?.denied_fields?.[entityName];
+    const withheld = new Set<string>([
+      ...spec.heavy,
+      ...(Array.isArray(deniedForUser) ? deniedForUser.map((f: unknown) => String(f)) : []),
+    ]);
+    assertNoWithheldFields(query, sort, withheld);
+    const cacheable = !since && !fields;
+    const cacheKey = entityName + "|" + JSON.stringify(query) + "|" + sort + "|" + JSON.stringify([...withheld].sort());
     if (cacheable && feedCache && feedCache.key === cacheKey && feedCache.expires > Date.now()) {
       return Response.json(feedCache.payload);
     }
@@ -147,7 +185,7 @@ Deno.serve(async (req) => {
         const id = String(row?.id || '');
         if (id && seen.has(id)) continue;
         if (id) seen.add(id);
-        rows.push(projectRow(row, fields, heavy));
+        rows.push(projectRow(row, fields, withheld));
       }
       if (page.length < PAGE_SIZE) break;
       skip += PAGE_SIZE;
@@ -164,7 +202,7 @@ Deno.serve(async (req) => {
     return Response.json(payload);
   } catch (error: any) {
     const status = Number(error?.status || error?.response?.status || 500);
-    if ([400, 401, 403, 429].includes(status)) {
+    if ([400, 401, 403, 409, 429, 503].includes(status)) {
       return Response.json({ error: error?.message || 'Board feed failed.' }, { status });
     }
     console.error('boardFeed error:', error);
