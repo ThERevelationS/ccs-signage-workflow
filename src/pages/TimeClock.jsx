@@ -612,13 +612,13 @@ export default function TimeClock() {
     <div className="min-h-screen p-4 sm:p-6 ambient-mesh">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <div className="clay-card p-3">
               <Clock className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Time Clock</h1>
+              <h1 className="text-2xl font-bold text-gray-800 whitespace-nowrap">Time Clock</h1>
               <p className="text-gray-600 text-sm">Track your work hours</p>
             </div>
             {loggedInUser && (
