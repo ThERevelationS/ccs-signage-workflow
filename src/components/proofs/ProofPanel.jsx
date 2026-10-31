@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { FileCheck2, ExternalLink, History, Loader2, Upload } from "lucide-react";
 import { UploadFile } from "@/integrations/Core";
 import { transitionProductAndBuilderStatus } from "@/components/estimator/workOrderConversion";
+import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import {
   canApproveProof,
@@ -56,13 +57,20 @@ export default function ProofPanel({ workOrderId, product, actor = "", disabled 
     setError("");
     try {
       const patch = nextProofPatch(p, action, { leadTimeDays, ...extra });
-      await transitionProductAndBuilderStatus({
+      const res = await transitionProductAndBuilderStatus({
         workOrderId,
         product: p,
         patch,
         actor,
         label: "Proof workflow",
       });
+      // Unified alerts: proof lifecycle events ride the automation/notify
+      // pipeline — fire-and-forget, they never block the transition.
+      try {
+        const meta = { productId: p.id, productDescription: p.description, proofVersion: version, changedBy: actor };
+        if (action === "send_proof") void NotificationTriggers.proofSent(res?.workOrder, meta);
+        else if (action === "approve") void NotificationTriggers.proofApproved(res?.workOrder, meta);
+      } catch { /* notify is best-effort */ }
       onChanged?.();
     } catch (e) {
       setError(e?.message || "Proof update failed.");
