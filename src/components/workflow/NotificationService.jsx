@@ -616,4 +616,58 @@ if (anyField) {
       });
     }
   },
+
+  // --- Unified alerts (ops) ---------------------------------------------------
+  // Work-order-context events: the engine re-reads the Work Order server-side,
+  // so every automation action can run; product details ride in extras.
+  proofSent: async (workOrder, { productId, productDescription, proofVersion, changedBy } = {}) => {
+    await triggerNotification("proof_sent", workOrder, {
+      productId, productDescription, proofVersion, changedBy,
+      eventDescription: `Proof sent for approval${productDescription ? `: ${productDescription}` : ""}`,
+    });
+  },
+
+  proofApproved: async (workOrder, { productId, productDescription, proofVersion, changedBy } = {}) => {
+    await triggerNotification("proof_approved", workOrder, {
+      productId, productDescription, proofVersion, changedBy,
+      eventDescription: `Proof approved${productDescription ? `: ${productDescription}` : ""}`,
+    });
+  },
+
+  productTransition: async (workOrder, { productId, productDescription, previousStatus, newStatus, changedBy } = {}) => {
+    await triggerNotification("product_transition", workOrder, {
+      productId, productDescription, previousStatus, newStatus, changedBy,
+      eventDescription: `Product "${productDescription || productId || "item"}" moved from ${previousStatus || "none"} to ${newStatus || "none"}`,
+    });
+  },
+
+  // Record-context events: only the record id crosses the wire; the engine
+  // resolves the entity via RECORD_CONTEXT_EVENTS and re-reads it server-side.
+  crmEventCompleted: async (activity, { outcome, changedBy } = {}) => {
+    await triggerNotification("crm_event_completed", null, {
+      recordData: activity, outcome, changedBy,
+      eventDescription: `CRM event "${activity?.summary || activity?.event_type || "event"}" closed as ${outcome || "completed"}`,
+    });
+  },
+
+  purchaseOrderReceived: async (purchaseOrder, changedBy) => {
+    await triggerNotification("po_received", null, {
+      recordData: purchaseOrder, poNumber: purchaseOrder?.po_number, vendor: purchaseOrder?.vendor_name, changedBy,
+      eventDescription: `Purchase order ${purchaseOrder?.po_number || purchaseOrder?.id || ""} fully received`,
+    });
+  },
+
+  purchaseOrderBackordered: async (purchaseOrder, changedBy) => {
+    await triggerNotification("po_backordered", null, {
+      recordData: purchaseOrder, poNumber: purchaseOrder?.po_number, vendor: purchaseOrder?.vendor_name, changedBy,
+      eventDescription: `Purchase order ${purchaseOrder?.po_number || purchaseOrder?.id || ""} partially received - remainder on backorder`,
+    });
+  },
+
+  reconVariance: async (batch, { variance, changedBy } = {}) => {
+    await triggerNotification("recon_variance", null, {
+      recordData: batch, variance, changedBy,
+      eventDescription: `Reconciliation ${batch?.batch_number || batch?.id || ""} closed ${Number(variance) > 0 ? "over" : "short"} by $${Math.abs(Number(variance) || 0).toFixed(2)}`,
+    });
+  },
 };
