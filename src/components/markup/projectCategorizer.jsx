@@ -248,6 +248,16 @@ function _impl_categorizeVinylProject(p) {
   return lines;
 }
 
+export const categorizeChannelLetterProject = (p) => _catMemo(p, _impl_categorizeChannelLetterProject);
+export const categorizeFoundationProject = (p) => _catMemo(p, _impl_categorizeFoundationProject);
+export const categorizePaintProject = (p) => _catMemo(p, _impl_categorizePaintProject);
+export const categorizeLaserProject = (p) => _catMemo(p, _impl_categorizeLaserProject);
+export const categorizeCNCProject = (p) => _catMemo(p, _impl_categorizeCNCProject);
+export const categorizeMetalProject = (p) => _catMemo(p, _impl_categorizeMetalProject);
+export const categorizeBrickStoneProject = (p) => _catMemo(p, _impl_categorizeBrickStoneProject);
+export const categorizeMaintenanceProject = (p) => _catMemo(p, _impl_categorizeMaintenanceProject);
+export const categorizeVinylProject = (p) => _catMemo(p, _impl_categorizeVinylProject);
+
 export const MODULE_CATEGORIZERS = {
   channel_letter_installation: categorizeChannelLetterProject,
   foundation: categorizeFoundationProject,
@@ -259,12 +269,3 @@ export const MODULE_CATEGORIZERS = {
   brick_stone: categorizeBrickStoneProject,
   maintenance: categorizeMaintenanceProject,
 };
-export const categorizeChannelLetterProject = (p) => _catMemo(p, _impl_categorizeChannelLetterProject);
-export const categorizeFoundationProject = (p) => _catMemo(p, _impl_categorizeFoundationProject);
-export const categorizePaintProject = (p) => _catMemo(p, _impl_categorizePaintProject);
-export const categorizeLaserProject = (p) => _catMemo(p, _impl_categorizeLaserProject);
-export const categorizeCNCProject = (p) => _catMemo(p, _impl_categorizeCNCProject);
-export const categorizeMetalProject = (p) => _catMemo(p, _impl_categorizeMetalProject);
-export const categorizeBrickStoneProject = (p) => _catMemo(p, _impl_categorizeBrickStoneProject);
-export const categorizeMaintenanceProject = (p) => _catMemo(p, _impl_categorizeMaintenanceProject);
-export const categorizeVinylProject = (p) => _catMemo(p, _impl_categorizeVinylProject);
