@@ -8,7 +8,7 @@ import { Calculator, FileDiff, FileText, GitBranch, KanbanSquare, Loader2, Packa
 const RECORD_GROUPS = [
   ["customers", "Customers", Users, (r) => `${r.contact_name || "—"} · ${(r.customer_status || "").replace(/_/g, " ")}`, (r) => `/EstimatorCustomers?customer=${r.id}`],
   ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${(r.stage || "").replace(/_/g, " ")}`, (r) => `/Opportunities?open=${r.id}`],
-  ["work_orders", "Work Orders", KanbanSquare, (r) => `${r.client_name || "—"} · ${(r.current_stage || "").replace(/_/g, " ")}`, (r) => `/MainWorkflow?wo=${r.id}`],
+  ["work_orders", "Work Orders", KanbanSquare, (r) => `${r.client_name || "—"} · ${(r.current_stage || "").replace(/_/g, " ")}`, (r) => `/JobWorkspace?wo=${r.id}`],
   ["orders", "Orders", ShoppingCart, (r) => `${r.customer_name || "—"} · ${(r.status || "").replace(/_/g, " ")}${r.vendor ? ` · ${r.vendor}` : ""}`, (r) => `/OrderForm?order=${r.id}`],
   ["estimates", "Estimates", Calculator, (r) => `${r.client_name || "—"} · ${r.estimate_number || r.status || "—"}`, (r) => `/EstimateDetail?id=${r.id}`],
   ["invoices", "Invoices", Receipt, (r) => `${r.customer_display_name || "—"} · ${r.status || "—"}`, (r) => `/Invoices?invoice=${r.id}`],
@@ -17,6 +17,8 @@ const RECORD_GROUPS = [
 ];
 
 const PAGE_LABEL_OVERRIDES = {
+  CrmEvents: "CRM Events", WalkIn: "Walk-in Sale", CustomerStatements: "Statements",
+  CommsFollowups: "Follow-ups",
   Home: "Home", MainWorkflow: "Main Workflow", Opportunities: "Sales Opportunities",
   EstimatorCustomers: "Customers", Invoices: "Invoices", PurchaseOrders: "Purchase Orders",
   ChangeOrders: "Change Orders", JobCosting: "Job Costing", Inventory: "Inventory",
@@ -45,6 +47,8 @@ const EXTRA_PAGE_NAMES = [
   "FleetEquipmentDetail", "FleetMaintenance", "FleetInspections", "FleetWorkOrders", "FleetParts",
   "FleetFluids", "FleetFuel", "FleetWarranties", "FleetReservations",
   "WorkOrderTraveler", "ProductionSchedule",
+  "ProductQueues", "JobWorkspace", "WalkIn", "OpsReports", "CrmEvents", "Imports",
+  "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups",
 ];
 
 const pageLabel = (name) =>
