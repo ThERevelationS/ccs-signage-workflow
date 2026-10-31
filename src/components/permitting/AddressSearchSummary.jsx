@@ -1,5 +1,5 @@
 import {CheckCircle2,AlertTriangle,MapPin,Loader2} from 'lucide-react';
-export default function AddressSearchSummary({address,searching,result}){
+export default function AddressSearchSummary({address,searching,result,advanced}){
  const located=result?.location_resolution?.status==='location_verified';
  const ready=located&&result?.apply_allowed===true&&Boolean(result?.suggested_locality?.id);
  const scans=result?.automatic_scan?.scans || [];
@@ -18,8 +18,8 @@ export default function AddressSearchSummary({address,searching,result}){
   <h3 className="flex items-center gap-2 text-base font-semibold"><Icon aria-hidden="true" className={'h-5 w-5 shrink-0 '+(searching?'animate-spin motion-reduce:animate-none':'')}/>{heading}</h3>
   {(result||searching)&&<p className="text-sm break-words">{result?.geocode?.display_name || address}</p>}
   <ol className="space-y-2 text-sm">{steps.map(([label,status],index)=><li key={label} className="flex items-start gap-2"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-white text-xs font-semibold">{index+1}</span><div className="min-w-0"><span className="font-medium">{label}</span><p className="text-xs text-gray-600">{status}</p></div></li>)}</ol>
-  <p role="status" className="text-sm">{searching?'Hang on — this can take a little bit.':!result?'Type the full street address and press Find my jurisdiction.':ready?'Press Use this jurisdiction at the bottom to finish.':result.geocoding_service?.issue?'The map lookup had trouble. You can still see the general area on the map, but nothing is picked yet.':located?'We found the town or township, but someone on the team still has to check which office handles sign permits before it can be used.':'Please do not pick the town just because the ZIP code matches — we need to confirm the exact spot first.'}</p>
-  {result&&started&&<p className="rounded-lg border bg-white/70 p-2 text-xs"><strong>What we found online:</strong> {links} useful links · {problems} things that still need checking. This does not pick the jurisdiction for you.</p>}
-  {result&&!ready&&!started&&<p className="text-xs">More research tools are below if you want to dig deeper.</p>}
+  <p role="status" className="text-sm">{searching?'Hang on — this can take a little bit.':!result?'Type the full street address and press Find my office.':ready?'Press Use this office at the bottom to finish.':result.geocoding_service?.issue?'The map lookup had trouble. You can still see the general area on the map, but nothing is picked yet.':located?'We found the town or township — you can still use it; its lines will be marked needs-a-check.':'Please do not pick the town just because the ZIP code matches — we need to confirm the exact spot first.'}</p>
+  {advanced&&result&&started&&<p className="rounded-lg border bg-white/70 p-2 text-xs"><strong>What we found online:</strong> {links} useful links · {problems} things that still need checking. This does not pick the office for you.</p>}
+  {advanced&&result&&!ready&&!started&&<p className="text-xs">More research tools are below if you want to dig deeper.</p>}
  </section>;
 }
