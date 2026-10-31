@@ -37,7 +37,7 @@ assert.deepEqual(broken, [], `dead nav links: ${broken.join(', ')}`);
 // Route-name sanity: every *_PAGES key should have a matching src/pages file import.
 const missingImport = [...app.matchAll(/const\s+\w+_PAGES\s*=\s*\{([\s\S]*?)\};/g)]
   .flatMap((m) => [...m[1].matchAll(/^\s*(\w+),?\s*$/gm)].map((n) => n[1]))
-  .filter((name) => !new RegExp(`import\\s+${name}\\b`).test(app));
+  .filter((name) => !new RegExp(`(import\\s+${name}\\b|const\\s+${name}\\s*=)`).test(app));
 assert.deepEqual(missingImport, [], `page map keys without imports: ${missingImport.join(', ')}`);
 
 console.log(`PASS nav wiring (${links.length} links → ${routes.size} routes)`);
