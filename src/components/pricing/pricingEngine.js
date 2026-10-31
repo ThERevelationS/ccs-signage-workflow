@@ -10,6 +10,16 @@
 //     unlike markupEngine.jsx where tiers store multipliers (1.50).
 //   - All returned money figures are rounded to cents (round2); unit prices to
 //     4 decimals so extensions stay exact.
+//
+// Pricing modes (PricingTierMatrix.pricing_mode):
+//   - 'markup' (default) — unit price = unitCost x (1 + markup_pct/100), or a
+//     qualifying per_unit_breaks bracket when one exists.
+//   - 'market' — unit price = market_retail x (1 - market_discount_pct/100); a
+//     qualifying break still wins when it prices BELOW the market price. A
+//     market row with no market_retail falls back to the markup path.
+// In both modes row.formula_modifiers (and any caller-level modifiers passed to
+// priceQuote/resolveEffectivePrice) then adjust the resolved unit price before
+// the extension and the minimum_charge floor are computed.
 
 const num = (v, fallback = 0) => {
   const n = Number(v);
@@ -149,11 +159,104 @@ export function pickUnitBreak(breaks, qty) {
   return pick;
 }
 
+// --- Formula modifiers --------------------------------------------------------
+
+// Ordered unit-price adjustments, applied left-to-right. Each modifier is
+// {type, value}:
+//   add_pct  — price = price x (1 + value/100)   (percent markup/discount;
+//                                               negative value discounts)
+//   mul      — price = price x value             (raw multiplier)
+//   add_flat — price = price + value             (flat dollars per unit)
+//   min      — price = max(price, value)         (unit floor)
+//   max      — price = min(price, value)         (unit cap)
+// Unknown types, missing/non-finite values, and non-array input are skipped or
+// ignored. A modifier can never push a unit price below zero. Returns the
+// adjusted unit price plus an `applied` audit list ({type, value, before,
+// after}) so callers can render exactly which steps ran.
+export function applyFormulaModifiers(unitPrice, modifiers) {
+  let price = num(unitPrice);
+  const applied = [];
+  for (const m of Array.isArray(modifiers) ? modifiers : []) {
+    const type = normStr(m?.type);
+    const value = Number(m?.value);
+    if (!Number.isFinite(value)) continue;
+    const before = price;
+    if (type === "add_pct") price = price * (1 + value / 100);
+    else if (type === "mul") price = price * value;
+    else if (type === "add_flat") price = price + value;
+    else if (type === "min") price = Math.max(price, value);
+    else if (type === "max") price = Math.min(price, value);
+    else continue;
+    price = Math.max(0, price);
+    applied.push({ type, value, before: round4(before), after: round4(price) });
+  }
+  return { unitPrice: round4(price), applied };
+}
+
+// --- Market-based pricing -------------------------------------------------------
+
+/**
+ * Market-based price for one line under a pricing_mode='market' matrix row.
+ * unit = marketRetail x (1 - marketDiscountPct/100).
+ * marketRetail / marketDiscountPct args override the row's market_retail /
+ * market_discount_pct fields; the row's values are the default source.
+ *
+ * per_unit_breaks precedence: a qualifying bracket only wins when its
+ * unit_price undercuts the market unit price (a volume deal must actually beat
+ * market). minimum_charge floors the extension exactly like the markup path.
+ */
+export function resolveMarketPrice({
+  matrixRow = null,
+  marketRetail,
+  marketDiscountPct,
+  qty,
+  label = "",
+  category = "",
+} = {}) {
+  const q = num(qty);
+  const retail = Number.isFinite(Number(marketRetail))
+    ? Number(marketRetail)
+    : num(matrixRow?.market_retail);
+  const discountPct = Number.isFinite(Number(marketDiscountPct))
+    ? Number(marketDiscountPct)
+    : num(matrixRow?.market_discount_pct);
+  const marketUnit = Math.max(0, retail * (1 - discountPct / 100));
+
+  const brk = matrixRow ? pickUnitBreak(matrixRow.per_unit_breaks, q) : null;
+  const useBreak = !!brk && num(brk.unit_price) < marketUnit;
+  const unitPrice = useBreak ? num(brk.unit_price) : marketUnit;
+  const source = useBreak ? "qty_break" : "market";
+
+  const minimum = num(matrixRow?.minimum_charge);
+  const computed = unitPrice * q;
+  const minimumApplied = minimum > 0 && computed > 0 && computed < minimum;
+  const extended = minimumApplied ? minimum : computed;
+
+  return {
+    label,
+    category: category || matrixRow?.category || "",
+    qty: q,
+    pricingMode: "market",
+    marketRetail: retail,
+    marketDiscountPct: discountPct,
+    unitPrice: round4(unitPrice),
+    extended: round2(extended),
+    computedExtended: round2(computed),
+    source,
+    breakApplied: useBreak ? brk : null,
+    minimumCharge: minimum,
+    minimumApplied,
+  };
+}
+
 /**
  * Resolve the effective price for one line.
- * Precedence inside a matched row: qualifying per_unit_breaks bracket >
- * markup_pct over cost. Without any row: defaultMarkupPct over cost.
- * minimum_charge then floors the extension (never fires on a zero/qty<=0 line).
+ * Precedence inside a matched row: a pricing_mode='market' row with a
+ * market_retail prices off market (a qualifying break only wins when cheaper);
+ * otherwise qualifying per_unit_breaks bracket > markup_pct over cost. Without
+ * any row: defaultMarkupPct over cost. Row formula_modifiers then any
+ * caller-level `modifiers` adjust the resolved unit price before
+ * minimum_charge floors the extension (never fires on a zero/qty<=0 line).
  */
 export function resolveEffectivePrice({
   category,
@@ -164,18 +267,44 @@ export function resolveEffectivePrice({
   defaultMarkupPct = 0,
   now,
   label = "",
+  marketRetail,
+  marketDiscountPct,
+  modifiers = [],
 } = {}) {
   const q = num(qty);
   const cost = num(unitCost);
   const match = resolveMatrixRow({ category, customerTier, matrices, now });
   const row = match?.row || null;
+  const pricingMode = normStr(row?.pricing_mode) === "market" ? "market" : "markup";
 
   const brk = row ? pickUnitBreak(row.per_unit_breaks, q) : null;
+  const retail = Number.isFinite(Number(marketRetail))
+    ? Number(marketRetail)
+    : num(row?.market_retail, NaN);
   let unitPrice;
   let source;
-  if (brk) {
+  let breakApplied = null;
+  let marketInfo = null;
+  if (pricingMode === "market" && Number.isFinite(retail) && retail > 0) {
+    const mkt = resolveMarketPrice({
+      matrixRow: row,
+      marketRetail,
+      marketDiscountPct,
+      qty: q,
+      label,
+      category,
+    });
+    unitPrice = mkt.unitPrice;
+    source = mkt.source;
+    breakApplied = mkt.breakApplied;
+    marketInfo = {
+      marketRetail: mkt.marketRetail,
+      marketDiscountPct: mkt.marketDiscountPct,
+    };
+  } else if (brk) {
     unitPrice = num(brk.unit_price);
     source = "qty_break";
+    breakApplied = brk;
   } else if (row) {
     unitPrice = cost * (1 + num(row.markup_pct) / 100);
     source = "matrix_markup";
@@ -183,6 +312,15 @@ export function resolveEffectivePrice({
     unitPrice = cost * (1 + num(defaultMarkupPct) / 100);
     source = "default_markup";
   }
+
+  // Ordered formula modifiers run after the source price resolves:
+  // row.formula_modifiers first, then the caller-level `modifiers` list.
+  const baseUnitPrice = unitPrice;
+  const modResult = applyFormulaModifiers(unitPrice, [
+    ...(Array.isArray(row?.formula_modifiers) ? row.formula_modifiers : []),
+    ...(Array.isArray(modifiers) ? modifiers : []),
+  ]);
+  unitPrice = modResult.unitPrice;
 
   const minimum = row ? num(row.minimum_charge) : 0;
   const computed = unitPrice * q;
@@ -195,14 +333,18 @@ export function resolveEffectivePrice({
     qty: q,
     unitCost: cost,
     unitPrice: round4(unitPrice),
+    baseUnitPrice: round4(baseUnitPrice),
     extended: round2(extended),
     computedExtended: round2(computed),
     source,
+    pricingMode,
+    market: marketInfo,
     matchedRow: row,
     matchedRowId: row?.id || null,
     matchedRowName: row?.name || null,
     specificity: match?.specificity ?? null,
-    breakApplied: brk || null,
+    breakApplied,
+    modifiersApplied: modResult.applied,
     minimumCharge: minimum,
     minimumApplied,
   };
@@ -323,6 +465,9 @@ export function computeMachineCost({
 /**
  * Price a full quote.
  * @param {Array} lines  [{label?, category, qty, unitCost}]
+ * @param {Array} modifiers  Optional quote-level formula modifiers applied to
+ *   every line's resolved unit price after its own row.formula_modifiers —
+ *   each line's breakdown carries the audit trail in `modifiersApplied`.
  * @returns {{
  *   linePrices: Array, linesSubtotal: number,
  *   laborCost: Object, machineCost: Object,
@@ -347,6 +492,7 @@ export function priceQuote({
   setupMinutes,
   defaultMarkupPct = 0,
   now,
+  modifiers = [],
 } = {}) {
   const linePrices = (lines || []).map((line, index) =>
     resolveEffectivePrice({
@@ -358,6 +504,7 @@ export function priceQuote({
       matrices,
       defaultMarkupPct,
       now,
+      modifiers,
     }));
 
   const linesSubtotal = round2(linePrices.reduce((s, l) => s + l.extended, 0));
