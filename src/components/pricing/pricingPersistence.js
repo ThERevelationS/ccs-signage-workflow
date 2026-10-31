@@ -113,6 +113,7 @@ export const PRICING_EDITABLE_FIELDS = {
     "name", "status", "customer_tier", "category", "markup_pct",
     "minimum_charge", "per_unit_breaks", "effective_from", "effective_to",
     "sort_order", "updated_by", "updated_note",
+    "pricing_mode", "market_retail", "market_discount_pct", "formula_modifiers",
   ],
   LaborLevel: [
     "name", "level_rank", "description", "hourly_rate",
