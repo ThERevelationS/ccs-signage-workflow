@@ -130,6 +130,29 @@ export default function FleetEquipment() {
     });
   }, [equipment, query, viewFilter, runtimeConflicts]);
 
+  // Per-card lookups — cards used to re-filter the full work order and task
+  // tables inside render (O(cards x rows)); index them once instead.
+  const ordersByEquipment = useMemo(() => {
+    const map = new Map();
+    for (const order of workOrders) {
+      if (!order?.equipment_id) continue;
+      const list = map.get(order.equipment_id) || [];
+      list.push(order);
+      map.set(order.equipment_id, list);
+    }
+    return map;
+  }, [workOrders]);
+  const tasksByEquipment = useMemo(() => {
+    const map = new Map();
+    for (const task of tasks) {
+      if (!task?.equipment_id) continue;
+      const list = map.get(task.equipment_id) || [];
+      list.push(task);
+      map.set(task.equipment_id, list);
+    }
+    return map;
+  }, [tasks]);
+
   const reactivateEquipment = async () => {
     if (!reactivateTarget) return;
     setReactivating(true);
@@ -185,8 +208,8 @@ export default function FleetEquipment() {
         {loading ? <ListSkeleton rows={6} /> : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map(eq => {
-              const activeOrders = workOrders.filter(order => order.equipment_id === eq.id && !["completed", "cancelled"].includes(order.status));
-              const eqTasks = tasks.filter(task => task.equipment_id === eq.id);
+              const activeOrders = (ordersByEquipment.get(eq.id) || []).filter(order => !["completed", "cancelled"].includes(order.status));
+              const eqTasks = tasksByEquipment.get(eq.id) || [];
               const activeTasks = eqTasks.filter(task => task.status !== "completed");
               const today = todayText();
               const horizon = new Date(`${today}T12:00:00`); horizon.setDate(horizon.getDate() + 14);
@@ -263,17 +286,17 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
         <Link to={requestUrl} className="min-h-11 inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-slate-700 px-2 py-2 text-xs font-semibold text-gray-700 dark:text-slate-200"><ShoppingCart className="w-3.5 h-3.5" />Request Item</Link>
         <a href={reportUrl} className="col-span-2 min-h-11 inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20 px-2 py-2 text-xs font-semibold text-amber-800 dark:text-amber-300"><AlertTriangle className="w-3.5 h-3.5" />Report Problem</a>
       </div>}
-      {isAdmin && <button type="button" onClick={onEdit} className="w-full min-h-11 text-xs text-gray-500 dark:text-slate-400 inline-flex items-center justify-center gap-1 py-1"><Pencil className="w-3.5 h-3.5" />Edit equipment</button>}
+      {isAdmin && <button onClick={onEdit} className="w-full min-h-11 text-xs text-gray-500 dark:text-slate-400 inline-flex items-center justify-center gap-1 py-1"><Pencil className="w-3.5 h-3.5" />Edit equipment</button>}
     </div>
   </article>;
 }
 
 function HealthRing({ health }) {
-  if (health?.score == null) return <div className="h-14 w-14 rounded-full border-4 border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center shrink-0"><span className="text-[10px] font-bold text-gray-500">N/A</span><span className="text-[9px] text-gray-400">Health</span></div>;
+  if (health?.score == null) return <div className="h-14 w-14 rounded-full border-4 border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center shrink-0"><span className="text-[10px] font-bold text-gray-500">N/A</span><span className="text-[8px] text-gray-400">Health</span></div>;
   const color = health.score >= 90 ? "#059669" : health.score >= 75 ? "#16a34a" : health.score >= 60 ? "#d97706" : "#dc2626";
   return <div className="relative h-14 w-14 shrink-0" title={`${health.label} Fleet health · ${health.signals.join(" · ")}`}>
     <svg viewBox="0 0 44 44" className="h-14 w-14 -rotate-90" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="4" className="text-gray-200 dark:text-slate-700" /><circle cx="22" cy="22" r="18" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeDasharray={`${health.score * 1.131} 113.1`} /></svg>
-    <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-sm font-bold text-gray-900 dark:text-slate-100">{health.score}</span><span className="text-[9px] text-gray-400">Health</span></div>
+    <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-sm font-bold text-gray-900 dark:text-slate-100">{health.score}</span><span className="text-[8px] text-gray-400">Health</span></div>
   </div>;
 }
 
