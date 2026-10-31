@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { CheckCircle2, Loader2, Pencil, Plus, Receipt, X } from "lucide-react";
 import {
   DEFAULT_SCHEDULE,
@@ -9,6 +10,8 @@ import {
   deriveBillingState,
   money,
   normalizeSchedule,
+  scheduleFromEntity,
+  scheduleToEntity,
 } from "../procurement/progressBillingModel";
 
 const clean = (v) => String(v ?? "").trim();
@@ -24,7 +27,10 @@ const inputCls = "min-h-9 w-full rounded-lg border border-slate-300 bg-white px-
 
 const storageKey = (workOrderId) => `ccs.progressBilling.${clean(workOrderId)}`;
 
-function loadSchedule(workOrderId) {
+// localStorage is now only a per-device cache/fallback — the WorkOrder's
+// billing_schedule field is the durable home. Returns [] when nothing usable
+// is cached so callers can distinguish "empty" from "never saved".
+function loadCachedSchedule(workOrderId) {
   try {
     const raw = window.localStorage.getItem(storageKey(workOrderId));
     if (raw) {
@@ -32,27 +38,120 @@ function loadSchedule(workOrderId) {
       if (Array.isArray(parsed) && parsed.length > 0) return normalizeSchedule(parsed);
     }
   } catch { /* ignore corrupt storage */ }
-  return DEFAULT_SCHEDULE;
+  return [];
 }
 
-// Progress (milestone) billing for one job. The schedule is kept client-side
-// (localStorage per work order — the WorkOrder entity has no schedule field);
-// invoiced dollars are the source of truth for how much of it is billed.
-// Billing goes through invoicingAction create_invoice (milestone metadata in
-// source_summary) or create_from_estimate when the work order has no customer.
+// First-load precedence: entity schedule → localStorage cache → built-in
+// default. `source` tells the panel whether a silent migration write is owed.
+function resolveInitialSchedule(workOrder, workOrderId) {
+  const remote = scheduleFromEntity(workOrder?.billing_schedule);
+  if (remote.length) return { rows: remote, source: "entity" };
+  const cached = loadCachedSchedule(workOrderId);
+  if (cached.length) return { rows: cached, source: "cache" };
+  return { rows: DEFAULT_SCHEDULE, source: "default" };
+}
+
+const sameSchedule = (a, b) =>
+  JSON.stringify(scheduleToEntity(a)) === JSON.stringify(scheduleToEntity(b));
+
+// Progress (milestone) billing for one job. The schedule persists on the
+// WorkOrder's billing_schedule field through the staffEntityWrite
+// updateMany({id, updated_date}, {$set}) CAS contract; localStorage stays as
+// a write-through cache so the panel keeps working when the entity write is
+// unavailable, and a localStorage-only schedule is silently back-filled to
+// the entity on first load. Invoiced dollars remain the source of truth for
+// how much of the schedule is billed — via invoicingAction create_invoice
+// (milestone metadata in source_summary) or create_from_estimate when the
+// work order has no customer.
 export default function ProgressBillingPanel({ sessionToken, job, workOrder, onChanged }) {
   const workOrderId = clean(job?.work_order_id || workOrder?.id);
-  const [schedule, setSchedule] = useState(() => loadSchedule(workOrderId));
+  const [initial] = useState(() => resolveInitialSchedule(workOrder, workOrderId));
+  const [schedule, setSchedule] = useState(initial.rows);
+  // synced = entity holds this schedule · pending = write in flight ·
+  // local = device cache only (entity write failed or unavailable) ·
+  // idle = nothing stored anywhere yet (implicit default)
+  const [syncState, setSyncState] = useState(initial.source === "cache" ? "pending" : "idle");
   const [editing, setEditing] = useState(false);
   const [draftRows, setDraftRows] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  // CAS anchor: the record's updated_date as last loaded. After a successful
+  // write the record is re-read for the fresh version so consecutive saves in
+  // one mount never trip the conditional update.
+  const versionRef = useRef(clean(workOrder?.updated_date));
+  useEffect(() => {
+    const v = clean(workOrder?.updated_date);
+    if (v) versionRef.current = v;
+  }, [workOrder?.updated_date]);
+
   const state = useMemo(
     () => deriveBillingState({ jobTotal: job?.contract_value, schedule, invoiced: job?.invoiced }),
     [job?.contract_value, job?.invoiced, schedule],
   );
+
+  // Write-through: the caller mirrors to localStorage before invoking this.
+  // The entity write is anchored on the CAS version; on a lost race the record
+  // is re-read — an identical remote schedule counts as synced, anything else
+  // gets one retry against the fresh version ($set is scoped to
+  // billing_schedule, so the retry can never touch another field).
+  const persistSchedule = async (rows) => {
+    const norm = scheduleToEntity(rows);
+    const id = clean(workOrder?.id) || workOrderId;
+    const attempt = async () => staffEntities.WorkOrder.updateMany(
+      { id, updated_date: clean(versionRef.current) },
+      { $set: { billing_schedule: norm } },
+    );
+    if (!id || !clean(versionRef.current)) { setSyncState("local"); return false; }
+    try {
+      let result = await attempt();
+      if (result && typeof result.updated === "number" && result.updated !== 1) {
+        const current = await staffEntities.WorkOrder.get(id).catch(() => null);
+        if (current?.updated_date) versionRef.current = clean(current.updated_date);
+        if (result.updated === 0 && current) {
+          if (sameSchedule(scheduleFromEntity(current.billing_schedule), norm)) {
+            setSyncState("synced");
+            return true;
+          }
+          result = await attempt();
+        }
+      }
+      if (result && result.updated === 1) {
+        const saved = await staffEntities.WorkOrder.get(id).catch(() => null);
+        if (saved?.updated_date) versionRef.current = clean(saved.updated_date);
+        setSyncState("synced");
+        return true;
+      }
+      setSyncState("local");
+      return false;
+    } catch {
+      setSyncState("local");
+      return false;
+    }
+  };
+  const persistRef = useRef(persistSchedule);
+  persistRef.current = persistSchedule;
+
+  // Silent back-fill: a work order whose schedule only ever lived in this
+  // browser's localStorage gets it written to the entity once — no prompt.
+  // When the entity already carries a schedule it wins and is adopted (a
+  // remote schedule arriving after mount replaces a stale local one).
+  const migratedRef = useRef(false);
+  useEffect(() => {
+    const remote = scheduleFromEntity(workOrder?.billing_schedule);
+    if (remote.length) {
+      migratedRef.current = true;
+      setSchedule((cur) => (sameSchedule(cur, remote) ? cur : remote));
+      setSyncState("synced");
+      return;
+    }
+    if (migratedRef.current) return;
+    if (!loadCachedSchedule(workOrderId).length) return;
+    migratedRef.current = true;
+    persistRef.current(schedule);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workOrder?.billing_schedule, workOrderId]);
 
   const startEdit = () => {
     setDraftRows(schedule.map((m) => ({ ...m })));
@@ -60,13 +159,15 @@ export default function ProgressBillingPanel({ sessionToken, job, workOrder, onC
     setError("");
   };
 
-  const saveSchedule = () => {
+  const saveSchedule = async () => {
     const norm = normalizeSchedule(draftRows);
     if (norm.length === 0) { setError("Add at least one milestone with a positive %."); return; }
     setSchedule(norm);
-    try { window.localStorage.setItem(storageKey(workOrderId), JSON.stringify(norm)); } catch { /* best effort */ }
+    try { window.localStorage.setItem(storageKey(workOrderId), JSON.stringify(scheduleToEntity(norm))); } catch { /* best effort */ }
     setEditing(false);
     setError("");
+    setSyncState("pending");
+    await persistSchedule(norm);
   };
 
   const billNext = async () => {
@@ -166,6 +267,15 @@ export default function ProgressBillingPanel({ sessionToken, job, workOrder, onC
               </div>
             )}
           </div>
+
+          {syncState === "pending" && (
+            <div className="mt-1 text-[11px] italic text-slate-400">Syncing schedule to the work order…</div>
+          )}
+          {syncState === "local" && (
+            <div className="mt-1 text-[11px] italic text-amber-600 dark:text-amber-400">
+              Schedule saved on this device only — not synced to the work order.
+            </div>
+          )}
 
           {/* schedule editor */}
           {editing && (
