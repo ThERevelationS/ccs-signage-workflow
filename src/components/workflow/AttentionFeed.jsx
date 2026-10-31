@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
+  AlertTriangle,
   Bell,
   ChevronDown,
   ChevronUp,
