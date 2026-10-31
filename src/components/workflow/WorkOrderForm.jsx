@@ -228,8 +228,12 @@ export default function WorkOrderForm({
   }, [isOpen, initialData]);
 
   useEffect(() => {
-    loadUsers();
-    loadProductTypes();
+    // These catalogs are only used inside the open form — loading them on
+    // mount fired a guaranteed-401 User list for every board page mount.
+    if (isOpen) {
+      loadUsers();
+      loadProductTypes();
+    }
     
     // Handle custom name for initialData (duplicating)
     if (initialData && initialData.assigned_to && !TEAM_MEMBERS.includes(initialData.assigned_to)) {
