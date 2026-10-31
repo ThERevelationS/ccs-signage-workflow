@@ -516,32 +516,37 @@ export default function ProductQueue({
             {DUE_PRESETS.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
           </FilterSelect>
         </FilterField>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Search</span>
-          <input className={sel} value={filters.search} onChange={(e) => set("search", e.target.value)} /></label>
-        <label className="flex flex-col gap-0.5"><span className={lab}>Per page</span>
-          <select className={sel} value={filters.pageSize} onChange={(e) => set("pageSize", Number(e.target.value))}>
-            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select></label>
-        <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
-          <input type="checkbox" checked={filters.includeFulfilled} onChange={(e) => set("includeFulfilled", e.target.checked)} />
-          Include fulfilled</label>
         {actor !== "" && (viewsStatus.available ? (
-          <label className="flex flex-col gap-0.5"><span className={lab}>Views</span>
-            <select className={sel} value="" onChange={onViewAction}>
+          <FilterField label="Views">
+            <FilterSelect value="" onChange={onViewAction}>
               <option value="">Views…</option>
               {savedViews.map((v) => (
                 <option key={v.id} value={v.id}>{v.name}{isOwnView(v, actor) ? "" : " (shared)"}</option>
               ))}
               <option value="__save__">Save current as view…</option>
               {appliedOwnView && <option value="__delete__">Delete "{appliedOwnView.name}"</option>}
-            </select>
+            </FilterSelect>
             {viewsStatus.error && <span className="max-w-[160px] text-[10px] text-rose-700">{viewsStatus.error}</span>}
-          </label>
+          </FilterField>
         ) : (
           <span className="pb-1 text-xs italic text-gray-400" title={viewsStatus.error}>{SAVED_VIEWS_UNAVAILABLE}</span>
         ))}
-        <button className={sel} onClick={clearFilters}>Clear</button>
-      </div>
+        <FilterField label="Per page">
+          <FilterSelect value={filters.pageSize} onChange={(e) => set("pageSize", Number(e.target.value))}>
+            {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+          </FilterSelect>
+        </FilterField>
+        <label className="flex items-center gap-1 pb-1 text-xs text-gray-600">
+          <input type="checkbox" checked={filters.includeFulfilled} onChange={(e) => set("includeFulfilled", e.target.checked)} />
+          Include fulfilled</label>
+        <button
+          type="button"
+          className={cn(filterInputCls, "w-auto cursor-pointer font-semibold text-slate-600 hover:bg-slate-50")}
+          onClick={clearFilters}
+        >
+          Clear
+        </button>
+      </FilterBar>
 
       <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200">
         <table className="w-full text-left text-xs">
