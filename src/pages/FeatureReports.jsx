@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { sendGmail } from "@/functions/sendGmail";
+import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
 import { useAuth } from "@/components/auth/EmailGate";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { Button } from "@/components/ui/button";
@@ -154,25 +155,34 @@ export default function FeatureReports() {
         await createFeatureReportWithRecovery({ data: payload, sessionToken, label: `Feature report “${payload.title}”` });
 
         // Send email only after the report create is confirmed or uniquely recovered.
+        // Staff (EmailGate) sessions cannot call sendGmail directly — it only
+        // trusts platform auth or the workflow capability — so they route
+        // through the session-authed sendStaffEmail bridge with a text body.
         try {
           const typeLabel = TYPE_CONFIG[formData.type]?.label || formData.type;
-          await sendGmail({
-            to: "brett@Cincisigns.com",
-            subject: `New ${typeLabel}: ${formData.title}`,
-            body: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #7C3AED;">New ${typeLabel} Submitted</h2>
-                <div style="background: #f5f3ff; padding: 20px; border-radius: 12px; margin: 20px 0;">
-                  <p><strong>Title:</strong> ${formData.title}</p>
-                  <p><strong>Type:</strong> ${typeLabel}</p>
-                  <p><strong>Priority:</strong> ${formData.priority}</p>
-                  <p><strong>Submitted by:</strong> ${currentUser?.full_name || "Unknown"} (${currentUser?.email || "unknown"})</p>
-                  ${formData.description ? `<p><strong>Description:</strong></p><p>${formData.description}</p>` : ''}
+          const subject = `New ${typeLabel}: ${formData.title}`;
+          const textBody = `New ${typeLabel} Submitted\n\nTitle: ${formData.title}\nType: ${typeLabel}\nPriority: ${formData.priority}\nSubmitted by: ${currentUser?.full_name || "Unknown"} (${currentUser?.email || "unknown"})${formData.description ? `\n\nDescription:\n${formData.description}` : ''}\n\nView and manage this report in the Sign Shop Workflow app.`;
+          if (sessionToken) {
+            await sendStaffEmail({ sessionToken, to: "brett@Cincisigns.com", subject, body: textBody, kind: "feature_report" });
+          } else {
+            await sendGmail({
+              to: "brett@Cincisigns.com",
+              subject,
+              body: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #7C3AED;">New ${typeLabel} Submitted</h2>
+                  <div style="background: #f5f3ff; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <p><strong>Title:</strong> ${formData.title}</p>
+                    <p><strong>Type:</strong> ${typeLabel}</p>
+                    <p><strong>Priority:</strong> ${formData.priority}</p>
+                    <p><strong>Submitted by:</strong> ${currentUser?.full_name || "Unknown"} (${currentUser?.email || "unknown"})</p>
+                    ${formData.description ? `<p><strong>Description:</strong></p><p>${formData.description}</p>` : ''}
+                  </div>
+                  <p style="color: #666;">View and manage this report in the Sign Shop Workflow app.</p>
                 </div>
-                <p style="color: #666;">View and manage this report in the Sign Shop Workflow app.</p>
-              </div>
-            `
-          });
+              `
+            });
+          }
         } catch (e) {
           console.error("Failed to send notification email:", e);
         }
