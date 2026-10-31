@@ -184,7 +184,7 @@ export default function EstimatorQueues() {
     if (skipped.length) notes.push(`${skipped.length} skipped — status change not allowed: ${skipped.slice(0, 3).join(" · ")}${skipped.length > 3 ? ` (+${skipped.length - 3} more)` : ""}`);
     if (failures.length) notes.push(`Bulk update partially failed: ${failures.slice(0, 3).join(" · ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
     if (notes.length) setBulkError(notes.join(" "));
-    try { const reloaded = await loadAllEntityRows({ entity: base44.entities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
+    try { const reloaded = await loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
   };
 
   const writeParams = (key, value) => {
