@@ -64,6 +64,7 @@ function useDropdownType() {
 const toMantineDateTime = (v) => (v ? `${v.replace("T", " ").slice(0, 16)}:00` : null);
 const fromMantineDateTime = (v) => (v ? v.replace(" ", "T").slice(0, 16) : "");
 const trimTime = (v) => (v ? String(v).slice(0, 5) : "");
+const toMantineTime = (v) => { const t = trimTime(v); return t ? `${t}:00` : ""; };
 
 
 const TYPED_FORMATS = ["MM/DD/YYYY", "M/D/YYYY", "MM-DD-YYYY", "M-D-YYYY", "YYYY-MM-DD", "MM/DD/YY", "M/D/YY", "MMMM D, YYYY", "MMM D, YYYY", "YYYY/MM/DD"];
@@ -176,10 +177,10 @@ export function CcsTimeField({
     <TimePicker
       className="w-full"
       classNames={{ input: className, ...classNames }}
-      value={trimTime(value)}
+      value={value ? toMantineTime(value) : ""}
       onChange={(v) => fire(onChange, trimTime(v))}
-      min={min || undefined}
-      max={max || undefined}
+      min={min ? toMantineTime(min) : undefined}
+      max={max ? toMantineTime(max) : undefined}
       placeholder={placeholder}
       clearable={clearable}
       format="12h"
