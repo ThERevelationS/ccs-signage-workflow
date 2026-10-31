@@ -70,6 +70,20 @@ const EDITABLE_OPPORTUNITY_FIELDS = [
   "next_action", "next_action_due", "next_action_assignee", "notes",
 ];
 
+// Watch rules may only target workflow-state fields on business records.
+// check_watches reads through the service role and returns the raw value, so
+// anything outside this allowlist (credentials, tokens, settings) is refused.
+const WATCHABLE_FIELDS: Record<string, string[]> = {
+  AllInOneEstimate: ["status"],
+  Opportunity: ["stage"],
+  EstimatingRequest: ["status"],
+  WorkOrder: ["current_stage", "sales_status"],
+  Order: ["status"],
+};
+const isWatchable = (entity: any, field: any) =>
+  Object.prototype.hasOwnProperty.call(WATCHABLE_FIELDS, entity) &&
+  WATCHABLE_FIELDS[entity].includes(field);
+
 const bad = (message: string, status = 400) =>
   Object.assign(new Error(message), { statusCode: status });
 
@@ -306,6 +320,7 @@ Deno.serve(async (req) => {
         label: clean(body?.label),
       };
       if (!rule.entity || !rule.record_id || !rule.field) throw bad("entity, record_id and field are required to watch a record.", 400);
+      if (!isWatchable(rule.entity, rule.field)) throw bad("That field cannot be watched.", 400);
       map[key] = (map[key] || []).filter((w: any) => !(w.entity === rule.entity && w.record_id === rule.record_id && w.field === rule.field));
       map[key].push(rule);
       if (row) await GlobalSettings.update(row.id, { watch_rules: JSON.stringify(map) });
@@ -333,6 +348,7 @@ Deno.serve(async (req) => {
       const key = clean(user?.email) || actor;
       const hits: any[] = [];
       for (const w of (map[key] || [])) {
+        if (!isWatchable(w?.entity, w?.field)) continue;
         try {
           const rec = await (base44.asServiceRole.entities as any)[w.entity]?.filter({ id: w.record_id }).catch(() => []);
           const row0 = Array.isArray(rec) ? rec[0] : rec;

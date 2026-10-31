@@ -469,3 +469,8 @@ for (const t of ['test-nav-wiring.mjs','test-mutation-guard.mjs','test-quick-pri
 for (const t of ['test-estimate-cas.mjs','test-estimate-lifecycle.mjs','test-estimate-save-recovery.mjs','test-customer-sync.mjs','test-mutation-guard.mjs','test-builder-persistence.mjs','test-builder-recovery.mjs','test-builder-service.mjs','test-builder-product.mjs','test-quick-price-persistence.mjs','test-customer-persistence.mjs','test-module-registry.mjs','test-sales-activity.mjs','test-profitability.mjs','test-quote-defaults.mjs','test-nav-wiring.mjs','test-extract-parts.mjs','test-foundation-schema.mjs','test-inventory-persistence.mjs','test-exclusive-toggle.mjs','test-import-mappers.mjs','test-inventory-sources.mjs','test-labor-schema.mjs','test-priority-reorder.mjs','test-revision-service.mjs']) {
   assert.ok(existsSync(`scripts/${t}`), `hardening test ${t} must exist`);
 }
+
+// Watch rules must not become an arbitrary service-role field read.
+assert.match(entry, /const WATCHABLE_FIELDS/, 'watch rules must use an entity/field allowlist');
+assert.match(entry, /if \(!isWatchable\(rule\.entity, rule\.field\)\) throw bad/, 'set_watch must reject non-allowlisted entity/field');
+assert.match(entry, /if \(!isWatchable\(w\?\.entity, w\?\.field\)\) continue;/, 'check_watches must skip non-allowlisted stored rules');
