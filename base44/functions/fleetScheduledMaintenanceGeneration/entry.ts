@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
@@ -161,7 +162,7 @@ async function releaseTaskGenerationLock(Task:any, task:any, receipt:any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const requestBody = await req.json().catch(() => ({}));
     const user = (await base44.auth.me().catch(()=>null)) || await resolveFleetStaffUser(base44, requestBody?.session_token);
     if (!user || user.role !== 'admin') return Response.json({error:'Forbidden'},{status:403});
@@ -360,7 +361,7 @@ Deno.serve(async (req) => {
     return Response.json({success:true,disabled:false,date:today,due:due.length,created:createdCount,results,meter_generation:meterGeneration});
   } catch (error) {
     console.error('fleetScheduledMaintenanceGeneration error:',error);
-    try { await logRun(createClientFromRequest(req),'error','Fleet scheduled maintenance generation failed.',{error:error?.message || String(error)}); } catch {}
+    try { await logRun(withEntityRateLimitRetry(createClientFromRequest(req)),'error','Fleet scheduled maintenance generation failed.',{error:error?.message || String(error)}); } catch {}
     return Response.json({error:error?.message || 'Fleet scheduled maintenance generation failed.'},{status:500});
   }
 });
