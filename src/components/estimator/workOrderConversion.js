@@ -54,6 +54,55 @@ export function buildEstimateWorkOrderProducts(estimate = {}, pricing = {}) {
   });
 }
 
+
+// CoreBridge-style customer-facing labels: internal operational_status values are
+// never shown to the customer directly; each maps to a safe display label.
+export const OPERATIONAL_STATUS_CUSTOMER_LABELS = {
+  order_review: "Prepping Your Order",
+  site_survey: "Site Survey",
+  awaiting_customer_action: "Customer Action Needed",
+  awaiting_proof_approval: "Requires Proof Approval",
+  permitting: "Permitting",
+  proof_approved: "Proof Approved",
+  design_review: "In Design",
+  in_design: "In Design",
+  in_production: "In Production",
+  quality_control: "Quality Control",
+  service_repair: "Service/Repair",
+  install_or_removal_only: "Install or Removal Only",
+  vended: "In Production",
+  none: "",
+};
+
+export const OPERATIONAL_STATUS_VALUES = Object.keys(OPERATIONAL_STATUS_CUSTOMER_LABELS);
+
+export function customerFacingStatusLabel(operationalStatus, explicit = "") {
+  if (String(explicit || "").trim()) return String(explicit).trim();
+  return OPERATIONAL_STATUS_CUSTOMER_LABELS[norm(operationalStatus)] || "";
+}
+
+export function buildProductOperationalPatch({ operationalStatus, operationalSubstatus, proofStatus, fulfillmentState } = {}) {
+  const patch = {};
+  if (operationalStatus !== undefined) {
+    const status = norm(operationalStatus) || "none";
+    patch.operational_status = status;
+    patch.customer_facing_status = customerFacingStatusLabel(status);
+  }
+  if (operationalSubstatus !== undefined) patch.operational_substatus = String(operationalSubstatus || "").trim();
+  if (proofStatus !== undefined) patch.proof_status = norm(proofStatus) || "none";
+  if (fulfillmentState !== undefined) patch.fulfillment_state = norm(fulfillmentState) || "none";
+  return patch;
+}
+
+// CoreBridge rule mirrored: when every product on an estimate converts to an
+// approved operational state, the order itself may advance. Keep this as a
+// pure predicate so the work-order stage change stays an explicit caller step.
+export function allProductsOperationallyApproved(products = []) {
+  const list = (products || []).filter((product) => product && product.id);
+  if (!list.length) return false;
+  return list.every((product) => norm(product.operational_status) === "proof_approved" || norm(product.proof_status) === "approved");
+}
+
 const productKey = (product = {}) => {
   if (product.id) return `id:${product.id}`;
   return `name:${norm(product.description)}|type:${norm(product.product_type)}`;
