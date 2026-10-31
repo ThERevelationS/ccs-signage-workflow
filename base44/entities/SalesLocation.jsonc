@@ -1,0 +1,55 @@
+{
+  "name": "SalesLocation",
+  "type": "object",
+  "description": "Point-of-sale location (till/drawer) for reconciliation batches and counter sales \u2014 the CoreBridge 'Location' registry. Admin-managed on the Reconciliation page. ReconcileWizard picks the batch location from active rows and stores the location name on the batch, so batches closed before this registry existed stay readable.",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the location (e.g. 'Main', 'East counter')."
+    },
+    "code": {
+      "type": "string",
+      "description": "Short uppercase code used on receipts and batch references (e.g. MAIN)."
+    },
+    "tax_group": {
+      "type": "string",
+      "description": "TaxGroup group_name applied to sales rung up at this location."
+    },
+    "address": {
+      "type": "string"
+    },
+    "hours": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Inactive locations stay on historical batches but are hidden from new selects."
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__saleslocation_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__saleslocation_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__saleslocation_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__saleslocation_backend_only__"
+      }
+    }
+  }
+}
