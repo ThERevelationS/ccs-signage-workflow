@@ -1,4 +1,5 @@
 import { getModuleLabel } from "./moduleRegistry";
+import { mutateWorkOrderArrayField } from "../workflow/workOrderPersistence";
 import { acceptedCustomerUnitPrice } from "./customerPricing";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -169,3 +170,34 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
     products,
   };
 }
+
+// Apply an operational-status patch to a single product inside WorkOrder.products
+// through the CAS-backed array mutation helper. Returns the saved WorkOrder.
+export async function transitionProductOperationalStatus({ workOrderId, productId, patch = {}, label = "Product status" } = {}) {
+  const apply = buildProductOperationalPatch(patch);
+  if (!Object.keys(apply).length) throw new Error();
+  const targetId = String(productId || "").trim();
+  if (!targetId) throw new Error();
+  return mutateWorkOrderArrayField({
+    workOrderId,
+    field: "products",
+    label,
+    mutate: (products) => products.map((product) =>
+      String(product?.id || "") === targetId ? { ...product, ...apply } : product
+    ),
+  });
+}
+
+// CoreBridge due-date rule mirrored: when a product reaches proof approval its
+// due date may be recalculated from part lead times, but a hard due date is
+// never moved. Returns the next due-date ISO string, or the existing one when
+// no recalculation is permitted.
+export function recalculateProductDueDateOnProofApproval({ product = {}, leadTimeDays = 0, fromDate = new Date() } = {}) {
+  if (product.hard_due_date === true) return product.product_due_date || "";
+  const days = Math.max(0, num(leadTimeDays, 0));
+  const base = new Date(fromDate);
+  if (Number.isNaN(base.getTime())) return product.product_due_date || "";
+  base.setDate(base.getDate() + days);
+  return base.toISOString();
+}
+
