@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { OpportunityActivity } from "@/api/gatedEntities";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { sendStaffEmail } from "@/components/comms/sendStaffEmail";
 import {
   FOLLOWUP_KIND_META,
   FOLLOWUP_SECTIONS,
@@ -15,8 +15,9 @@ import {
 // list_invoices), OpportunityActivity rows, customers, and rules — this
 // component renders the grouped queue and performs the three row actions.
 //
-// Send path: base44.functions.invoke("sendEmail", { session_token, to,
-// subject, body }) — the deployed email gateway. Only AFTER a confirmed send
+// Send path: sendStaffEmail({ sessionToken, to, subject, body, kind }) — the
+// session-authed staff email bridge that invokes sendGmail internally (the old
+// sendEmail gateway is intentionally disabled). Only AFTER a confirmed send
 // (or a Skip / Mark-done choice) do we append an OpportunityActivity log row
 // through the same ensureIdempotentEntityCreate path CRM events use, so the
 // follow-up can never be suggested twice. Every action row is written closed
@@ -117,16 +118,15 @@ function FollowupRow({ item, defaultTo, actor, sessionToken, onChanged }) {
     }
     setRow({ status: "sending", error: "" });
     try {
-      const res = await base44.functions.invoke("sendEmail", {
-        session_token: sessionToken,
+      // sendStaffEmail throws on backend {error} and maps a 404 /
+      // missing-function response to "Email bridge is not deployed yet."
+      await sendStaffEmail({
+        sessionToken,
         to,
         subject: clean(value.subject),
         body: clean(value.body),
+        kind: `followup:${item.kind}`,
       });
-      const data = res?.data || res;
-      if (data?.error || data?.success === false) {
-        throw new Error(data?.error || "Email could not be sent.");
-      }
     } catch (e) {
       setRow({ status: "failed", error: e?.message || "Email could not be sent." });
       return;
@@ -195,7 +195,7 @@ function FollowupRow({ item, defaultTo, actor, sessionToken, onChanged }) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button className={btnSend} disabled={busy} onClick={send} title="Send via the sendEmail function">
+          <button className={btnSend} disabled={busy} onClick={send} title="Send via the sendStaffEmail bridge">
             {row.status === "sending" ? "Sending…" : "Send"}
           </button>
           <button className={btnGhost} disabled={busy} onClick={() => mark("skipped")}>Skip</button>
