@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,7 @@ import { replaceRelationshipIdsIfUnchanged, setExclusiveBooleanSafely } from "./
 import { createInventoryRecordWithRecovery, findInventoryPartReferences } from "./inventoryPersistence";
 
 const FoundationInventoryEntity = base44.entities.FoundationInventory;
-const ChannelLetterInstallEquipmentEntity = base44.entities.ChannelLetterInstallEquipment;
+const ChannelLetterInstallEquipmentEntity = staffEntities.ChannelLetterInstallEquipment;
 
 // ── small helpers ──────────────────────────────────────────────────────────
 const FOUNDATION_EQUIPMENT_TYPES = ["excavation_equipment", "attachment", "sub_attachment"];
