@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Calculator, Clock, Cog, Plus, Table2, Trash2 } from "lucide-react";
+import { Calculator, Clock, Cog, Plus, Table2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/kit";
 import PricingMatrixTable from "@/components/pricing/PricingMatrixTable";
 import PricingCrudTable from "@/components/pricing/PricingCrudTable";
 import { loadPricingCatalog } from "@/components/pricing/pricingPersistence";
@@ -107,20 +107,16 @@ export default function PricingAdmin() {
   return (
     <div className="min-h-full bg-gray-50">
       <div className="max-w-6xl mx-auto p-4 sm:p-5 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-4 h-4" /> Estimator Settings
-          </Link>
-          <Button variant="outline" className="h-[30px] text-[11px]" onClick={() => { setLoading(true); reload(); }}>Reload catalog</Button>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-md px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center"><Calculator className="w-5 h-5" /></div>
-          <div>
-            <h1 className="text-[18px] font-bold text-gray-900">Pricing Admin</h1>
-            <p className="text-[10px] text-gray-500">CoreBridge-style tier matrices, labor levels, machine rates, and live quote simulation.</p>
-          </div>
-        </div>
+        <PageHeader
+          className="mb-0"
+          breadcrumbs={[{ label: "Estimator Settings", to: "/EstimatorSettings" }, { label: "Pricing Admin" }]}
+          icon={Calculator}
+          title="Pricing Admin"
+          subtitle="CoreBridge-style tier matrices, labor levels, machine rates, and live quote simulation."
+          actions={(
+            <Button variant="outline" className="h-[30px] text-[11px]" onClick={() => { setLoading(true); reload(); }}>Reload catalog</Button>
+          )}
+        />
 
         {error && <div className="px-3 py-2 rounded border border-red-200 bg-red-50 text-[11px] text-red-700">{error}</div>}
 
