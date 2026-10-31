@@ -1,5 +1,6 @@
 import { invokeFleet, isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
 import { getSessionToken } from "@/components/auth/EmailGate";
+import { noteRateLimit } from "@/api/rateLimitCooldown";
 
 // Read facade for role-gated non-Fleet entities. Staff sessions are EmailGate
 // sessions and cannot satisfy entity RLS directly, so reads route through the
@@ -109,6 +110,10 @@ async function flushBatch() {
       const body = bodyOf(r);
       const out = body.entities || {};
       const errs = body.errors || {};
+      // A 429 inside a batch still means the shared budget is saturated — the
+      // invoke resolved, so base44Client never saw the limit; note it here.
+      const limited = Object.values(errs).find((d) => Number(d?.status) === 429);
+      if (limited) noteRateLimit(limited.retry_after_ms || body.retry_after_ms || 0);
       // Denied entities resolve as empty reads and go into the negative cache
       // so nothing in this session asks for them again.
       (body.denied || []).forEach(markDenied);
@@ -195,12 +200,12 @@ const METHODS = {
     const check = async () => {
       if (!hasSession() || isDenied(entity) || isFleetCoolingDown()) return;
       try {
-        // -updated_date puts mutations into the 500-row window — an unsorted
-        // default order would cap the digest to the oldest rows and silently
-        // drop change events for anything past position 500.
-        const r = await invokeFleet("staffDataRead", { entity, limit: 500, sort: "-updated_date" });
+        // -updated_date puts mutations into the 50 most-recently-updated rows —
+        // an unsorted default order would cap the digest to the oldest rows and
+        // silently drop change events for anything past position 50.
+        const r = await invokeFleet("staffDataRead", { entity, limit: 50, sort: "-updated_date" });
         const rows = Array.isArray(bodyOf(r).items) ? bodyOf(r).items : [];
-        const stamp = JSON.stringify(rows);
+        const stamp = rows.map((r) => `${r?.id}:${r?.updated_date}`).join("|");
         if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
         last = stamp;
       } catch (err) {
