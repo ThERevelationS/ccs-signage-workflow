@@ -462,6 +462,9 @@ async function fixedJSON(url) {
   return JSON.parse(text);
 }
 var ADDRESS_LOOKUP_REVISION = "address-geocode-v5";
+var googleDeniedUntil = 0;
+var googleDeniedService = null;
+var GOOGLE_DENIED_TTL_MS = 10 * 60 * 1e3;
 function geocodingRejection(raw) {
   const message = typeof raw === "string" ? raw.slice(0, 2e3).toLowerCase() : "";
   const suffix = " You do not need to re-enter this address.";
@@ -532,6 +535,7 @@ Deno.serve(async (req) => {
         serviceFailure("NOT_CONFIGURED", "The map location service is not configured. An administrator needs to check its server key. You do not need to re-enter this address.");
         throw Error("Map geocoding is not configured.");
       }
+      if (!diagnostic && Date.now() < googleDeniedUntil) throw Object.assign(new Error("google-denied-cooldown"), { code: "GOOGLE_DENIED_COOLDOWN" });
       await reporter.emit({ kind: "geocode_lookup", url: "https://maps.googleapis.com/maps/api/geocode/json", detail: `Searching for ${address}.` });
       const data = await fixedJSON(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${encodeURIComponent(key)}`);
       const serviceStatus = ["OK", "ZERO_RESULTS", "REQUEST_DENIED", "OVER_QUERY_LIMIT", "OVER_DAILY_LIMIT", "INVALID_REQUEST", "UNKNOWN_ERROR"].includes(data.status) ? data.status : "UNKNOWN_STATUS";
@@ -543,18 +547,28 @@ Deno.serve(async (req) => {
       else if (serviceStatus === "REQUEST_DENIED") {
         const rejection = geocodingRejection(data.error_message);
         serviceFailure(serviceStatus, rejection.message, rejection.diagnostic_code);
+        googleDeniedUntil = Date.now() + GOOGLE_DENIED_TTL_MS;
+        googleDeniedService = geocodingService;
       } else if (serviceStatus !== "OK") serviceFailure(serviceStatus, serviceStatus === "OVER_QUERY_LIMIT" || serviceStatus === "OVER_DAILY_LIMIT" ? "Google Geocoding reached its service limit. Try again later or ask an administrator to check quota and billing." : serviceStatus === "INVALID_REQUEST" ? "The map service rejected the lookup request. An administrator needs to check the request setup." : "The map location service is temporarily unavailable. Try again later.");
       if (geocodingService) await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}` });
       if (data.status === "OK" && data.results?.length) {
+        googleDeniedUntil = 0;
+        googleDeniedService = null;
         const g = data.results[0];
         geocode = { lat: g.geometry?.location?.lat, lon: g.geometry?.location?.lng, display_name: g.formatted_address, location_exact: strictGeocode(data.results, address), address_parts: (g.address_components || []).reduce((a, c) => {
           for (const t of c.types || []) a[t] = c.long_name;
           return a;
         }, {}) };
       }
-    } catch {
-      if (!geocodingService) serviceFailure("UNAVAILABLE", "The map location service could not be reached. Try again later; no jurisdiction has been selected.");
-      await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}` });
+    } catch (err) {
+      if (err?.code === "GOOGLE_DENIED_COOLDOWN") {
+        geocodingService = googleDeniedService || geocodingService || { status: "REQUEST_DENIED", issue: true, message: "Google rejected the map location request. An administrator needs to check the server key, Geocoding API access and billing. You do not need to re-enter this address." };
+        await reporter.emit({ kind: "geocode_service_result", detail: "Google Geocoding is still denied from the last check; trying the free locators first." });
+        await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding skipped during denial cooldown: ${geocodingService.message}` });
+      } else {
+        if (!geocodingService) serviceFailure("UNAVAILABLE", "The map location service could not be reached. Try again later; no jurisdiction has been selected.");
+        await reporter.emit({ kind: "geocode_failed", detail: `Google Geocoding returned ${geocodingService.status}: ${geocodingService.message}` });
+      }
     }
     const hint = body?.census_hint;
     if (!geocode && hint && Number.isFinite(Number(hint.lat)) && Number.isFinite(Number(hint.lng))) {
