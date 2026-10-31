@@ -56,8 +56,11 @@ function StepMedia({ step, onImageClick }) {
   );
 }
 
-export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowledge, onPrint, acknowledging }) {
+export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowledge, onPrint, onRun, onQr, onClone, onSuggest, acknowledging }) {
   const [lightbox, setLightbox] = useState(null); // {images, index}
+  const [suggestStep, setSuggestStep] = useState(null); // step id or "" for general
+  const [suggestText, setSuggestText] = useState("");
+  const [suggestBusy, setSuggestBusy] = useState(false);
   if (!sop) return null;
   const cat = categoryByKey(settings, sop.category);
   const version = Number(sop.version) || 1;
@@ -71,6 +74,12 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
           <ArrowLeft className="h-4 w-4" /> All SOPs
         </Button>
         <div className="ml-auto flex items-center gap-2">
+          <Button type="button" size="sm" onClick={() => onRun?.(sop)} className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+            <CheckCircle2 className="h-4 w-4" /> Run
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => onQr?.(sop)} className="gap-1.5" title="Machine QR sticker">
+            QR
+          </Button>
           {me?.canEdit && (
             <Button type="button" variant="outline" size="sm" onClick={() => onEdit?.(sop)} className="gap-1.5">
               <Pencil className="h-4 w-4" /> Edit
@@ -78,6 +87,12 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
           )}
           <Button type="button" variant="outline" size="sm" onClick={() => onPrint?.(sop)} className="gap-1.5">
             <Printer className="h-4 w-4" /> Print
+          </Button>
+          {me?.canEdit && (
+            <Button type="button" variant="outline" size="sm" onClick={() => onClone?.(sop)} title="Duplicate this SOP">Clone</Button>
+          )}
+          <Button type="button" variant="ghost" size="sm" onClick={() => { setSuggestStep(""); setSuggestText(""); }} title="Suggest an improvement" className="text-slate-500">
+            Suggest edit
           </Button>
         </div>
       </div>
@@ -135,6 +150,9 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
                   />
                 )}
                 <StepMedia step={step} onImageClick={(images, index) => setLightbox({ images, index })} />
+                <button type="button" onClick={() => { setSuggestStep(step.id || String(i)); setSuggestText(""); }} className="mt-2 text-[11px] text-slate-400 hover:text-blue-600">
+                  Suggest edit on this step
+                </button>
               </div>
             </div>
           </li>
@@ -192,6 +210,30 @@ export default function SopDetail({ sop, settings, me, onBack, onEdit, onAcknowl
         {sop.created_by_name ? `Created by ${sop.created_by_name} · ` : ""}
         {sop.updated_date ? `Last updated ${new Date(sop.updated_date).toLocaleString()}` : ""}
       </p>
+
+      {suggestStep !== null && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/50 p-4" onClick={() => setSuggestStep(null)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-slate-900">Suggest an improvement{suggestStep ? " for this step" : ""}</p>
+            <textarea
+              value={suggestText}
+              onChange={(e) => setSuggestText(e.target.value)}
+              rows={3}
+              placeholder="e.g. The bolt is now M8, not M6 — updated after the retrofit"
+              className="mt-2 w-full rounded-lg border border-slate-300 p-2 text-sm"
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={() => setSuggestStep(null)}>Cancel</Button>
+              <Button type="button" size="sm" disabled={suggestBusy || !suggestText.trim()} onClick={async () => {
+                setSuggestBusy(true);
+                await onSuggest?.({ sopId: sop.id, stepId: suggestStep, text: suggestText });
+                setSuggestBusy(false);
+                setSuggestStep(null);
+              }}>{suggestBusy ? "Sending…" : "Send suggestion"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {lightbox && (
         <ImageLightbox
