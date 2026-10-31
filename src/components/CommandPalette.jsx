@@ -6,7 +6,7 @@ import { pagesConfig } from "@/pages.config";
 import { Calculator, FileDiff, FileText, GitBranch, KanbanSquare, Loader2, Package, Receipt, Search, ShoppingCart, Users } from "lucide-react";
 
 const RECORD_GROUPS = [
-  ["customers", "Customers", Users, (r) => `${r.contact_name || "—"} · ${(r.customer_status || "").replace(/_/g, " ")}`, (r) => `/EstimatorCustomers?customer=${r.id}`],
+  ["customers", "Customers", Users, (r) => `${r.contact_name || "—"} · ${(r.customer_status || "").replace(/_/g, " ")}`, (r) => `/Customer360?id=${r.id}`],
   ["opportunities", "Opportunities", GitBranch, (r) => `${r.customer_display_name || "—"} · ${(r.stage || "").replace(/_/g, " ")}`, (r) => `/Opportunities?open=${r.id}`],
   ["work_orders", "Work Orders", KanbanSquare, (r) => `${r.client_name || "—"} · ${(r.current_stage || "").replace(/_/g, " ")}`, (r) => `/JobWorkspace?wo=${r.id}`],
   ["orders", "Orders", ShoppingCart, (r) => `${r.customer_name || "—"} · ${(r.status || "").replace(/_/g, " ")}${r.vendor ? ` · ${r.vendor}` : ""}`, (r) => `/OrderForm?order=${r.id}`],

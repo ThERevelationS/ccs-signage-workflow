@@ -419,7 +419,7 @@ function InvoiceDetail({ sessionToken, invoiceId, onClose, onChanged }) {
                 </div>
                 <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
                   {clean(inv.customer_id) ? (
-                    <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${inv.customer_id}`}>{inv.customer_display_name || inv.customer_name || inv.customer_id}</Link>
+                    <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/Customer360?id=${inv.customer_id}`}>{inv.customer_display_name || inv.customer_name || inv.customer_id}</Link>
                   ) : (inv.customer_display_name || inv.customer_name || "Unknown customer")}
                   {clean(inv.customer_id) && (
                     <Link className="ml-2 text-xs font-semibold text-sky-600 hover:underline dark:text-sky-400" to={`/CustomerStatements?customer=${inv.customer_id}`}>Statement</Link>
@@ -957,7 +957,7 @@ export default function Invoices() {
                   <td className="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</td>
                   <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
                     {clean(inv.customer_id) ? (
-                      <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${inv.customer_id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/Customer360?id=${inv.customer_id}`} onClick={(e) => e.stopPropagation()}>
                         {inv.customer_display_name || inv.customer_name || inv.customer_id}
                       </Link>
                     ) : (inv.customer_display_name || inv.customer_name || "Unknown customer")}

@@ -173,7 +173,7 @@ function FollowupRow({ item, defaultTo, actor, sessionToken, onChanged }) {
             {item.customerId ? (
               <Link
                 className="truncate text-sm font-semibold text-sky-700 hover:underline dark:text-sky-400"
-                to={`/EstimatorCustomers?customer=${item.customerId}`}
+                to={`/Customer360?id=${item.customerId}`}
               >
                 {item.customerName || "Customer"}
               </Link>

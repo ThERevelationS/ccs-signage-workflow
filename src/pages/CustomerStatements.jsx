@@ -323,7 +323,7 @@ export default function CustomerStatements() {
                       <input type="checkbox" className="h-4 w-4 accent-violet-600" checked={on} onChange={() => toggle(c.id)} />
                     </td>
                     <td className="px-3 py-2.5">
-                      <Link className="font-semibold text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${c.id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link className="font-semibold text-sky-600 hover:underline dark:text-sky-400" to={`/Customer360?id=${c.id}`} onClick={(e) => e.stopPropagation()}>
                         {customerLabel(c)}
                       </Link>
                       {clean(c.contact_email || c.billing_contact_email) && (

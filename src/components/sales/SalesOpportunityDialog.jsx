@@ -596,7 +596,7 @@ export default function SalesOpportunityDialog({
                 <div className="flex items-center gap-2 font-semibold text-gray-800"><Contact className="h-4 w-4 text-blue-600" />Customer & Contact</div>
                 {workOrder.customer_id && (
                   <Button variant="outline" size="sm" className="h-11 justify-center sm:h-8" asChild>
-                    <a href={`/EstimatorCustomers?customer=${encodeURIComponent(workOrder.customer_id)}`} target="_blank" rel="noreferrer">Open Customer<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a>
+                    <a href={`/Customer360?id=${encodeURIComponent(workOrder.customer_id)}`} target="_blank" rel="noreferrer">Open Customer<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a>
                   </Button>
                 )}
               </div>

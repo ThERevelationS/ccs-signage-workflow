@@ -147,7 +147,7 @@ export default function AttentionFeed() {
         id: m.id,
         primary: m.related_label || m.author_name || "Customer message",
         secondary: m.excerpt,
-        href: m.customer_id ? `/EstimatorCustomers?customer=${m.customer_id}` : "/EstimatorCustomers",
+        href: m.customer_id ? `/Customer360?id=${m.customer_id}` : "/EstimatorCustomers",
       })),
     },
     {

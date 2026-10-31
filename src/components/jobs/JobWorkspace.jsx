@@ -379,7 +379,7 @@ export default function JobWorkspace() {
           </div>
         )}
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-3 lg:grid-cols-6">
-          <div><div className="font-semibold uppercase tracking-wide text-gray-400">Customer</div><div className="mt-0.5 text-sm text-gray-800">{wo.customer_id ? <Link className="text-sky-700 hover:underline" to={`/EstimatorCustomers?customer=${wo.customer_id}`}>{wo.client_name || "—"}</Link> : (wo.client_name || "—")}</div></div>
+          <div><div className="font-semibold uppercase tracking-wide text-gray-400">Customer</div><div className="mt-0.5 text-sm text-gray-800">{wo.customer_id ? <Link className="text-sky-700 hover:underline" to={`/Customer360?id=${wo.customer_id}`}>{wo.client_name || "—"}</Link> : (wo.client_name || "—")}</div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Contact</div><div className="mt-0.5 text-sm text-gray-800">{contactBits.join(" · ") || "—"}</div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Salesperson</div><div className="mt-0.5 text-sm text-gray-800">{wo.sales_rep || wo.representative || "—"}</div></div>
           <div><div className="font-semibold uppercase tracking-wide text-gray-400">Install Date</div><div className="mt-0.5 text-sm text-gray-800">{fmtDate(wo.project_install_date) || "—"}</div></div>

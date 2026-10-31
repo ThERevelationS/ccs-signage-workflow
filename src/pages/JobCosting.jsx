@@ -88,7 +88,7 @@ function JobDetail({ sessionToken, workOrderId, onClose }) {
                 </h2>
                 <div className="mt-0.5 text-sm text-slate-500">
                   {clean(detail?.work_order?.customer_id) ? (
-                    <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/EstimatorCustomers?customer=${detail.work_order.customer_id}`}>{j.client_name}</Link>
+                    <Link className="text-sky-600 hover:underline dark:text-sky-400" to={`/Customer360?id=${detail.work_order.customer_id}`}>{j.client_name}</Link>
                   ) : j.client_name} · {j.current_stage || j.sales_status || "—"}
                 </div>
               </div>

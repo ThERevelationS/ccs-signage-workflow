@@ -269,7 +269,7 @@ export default function CrmEventsQueue({ title = "CRM Events" }) {
                 <tr key={key} className="border-t border-gray-100 odd:bg-white even:bg-gray-50/60">
                   <td className="max-w-[160px] truncate px-2 py-1.5">
                     {r.customer_id ? (
-                      <Link className="text-sky-700 hover:underline" to={`/EstimatorCustomers?customer=${r.customer_id}`}>
+                      <Link className="text-sky-700 hover:underline" to={`/Customer360?id=${r.customer_id}`}>
                         {r.contact_name || r.company_name || "Customer"}
                       </Link>
                     ) : (
