@@ -80,6 +80,7 @@ export default function WorkspaceSettingsCenter() {
       { id: "taskbar", keys: ["taskbar", "nav", "navigation", "buttons", "labels", "icons", "tooltips", "hide", "favorite", "pin", "order", "drag"] },
       { id: "startup", keys: ["landing", "startup", "home", "start", "page"] },
       { id: "pipeline", keys: ["pipeline", "sales", "board", "table", "view", "kanban"] },
+      { id: "workflow", keys: ["workflow", "stage", "filter", "my", "tasks", "work"] },
       { id: "density", keys: ["density", "compact", "spacious", "spacing", "comfortable"] },
       { id: "profiles", keys: ["profile", "preset", "save", "switch", "workspace"] },
       { id: "reset", keys: ["reset", "restore", "default"] },
@@ -234,6 +235,18 @@ export default function WorkspaceSettingsCenter() {
                 <option value="">Default (My Workflow)</option>
                 {NAV_CATALOG.map((i) => <option key={i.url} value={i.url}>{i.title}</option>)}
               </select>
+            </Row>
+          </section>
+        )}
+
+        {shown("workflow") && (
+          <section className="py-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">My Workflow</h4>
+            <Row label="Stage filter" hint="The stage dropdown on My Workflow remembers your last pick">
+              <Button size="sm" variant="outline" className="h-8 text-xs" disabled={(prefs.workflow?.stageFilter || "all") === "all"}
+                onClick={() => wp.updatePrefs("workflow.stageFilter", "all")}>
+                Reset to All {(prefs.workflow?.stageFilter || "all") !== "all" ? `(${prefs.workflow.stageFilter})` : ""}
+              </Button>
             </Row>
           </section>
         )}
