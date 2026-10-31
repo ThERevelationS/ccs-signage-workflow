@@ -11,6 +11,14 @@ import { loadGlLookup } from "@/components/shared/loadGlLookup";
 import { GL_EXPORT_HEADERS, glExportRows, reportToGlEntries } from "@/components/shared/glExport";
 import { paymentsFromArCsv } from "@/components/statements/statementModel";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
+import {
+  EmptyState,
+  FilterBar,
+  FilterField,
+  FilterSelect,
+  PageHeader,
+  filterInputCls,
+} from "@/components/kit";
 import { BarChart3, Download, RefreshCw } from "lucide-react";
 import {
   DEFAULT_QUEUE_FILTERS,
@@ -44,8 +52,8 @@ const SESSION_GATED = new Set(["invoices", "payments", "purchaseOrders"]);
 // get_purchase_order — so each open PO costs one invoke.
 const OPEN_PO_DETAIL_CAP = 60;
 
-const inputCls = "min-h-9 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-violet-400 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100";
-const selectCls = `${inputCls} pr-7`;
+// Filter controls share the kit's filterInputCls vocabulary (FilterBar and
+// its FilterField/FilterSelect children carry the same styles).
 
 const usd = (n) => {
   const v = Number(n || 0);
@@ -65,7 +73,7 @@ const fmt = (value, col) => {
 
 const alignCls = (align) => (align === "right" ? "text-right" : "text-left");
 
-function ReportTable({ report }) {
+function ReportTable({ report, onClearFilters }) {
   const { columns, rows, totals, rowLinks } = report;
   return (
     <div className="max-h-[70vh] overflow-auto ccs-scrollbar-hidden rounded-xl border border-slate-200 dark:border-slate-700">
@@ -100,8 +108,14 @@ function ReportTable({ report }) {
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-8 text-center text-xs text-slate-400">
-                No data for this report.
+              <td colSpan={columns.length} className="p-0">
+                <EmptyState
+                  compact
+                  title="No data for this report."
+                  message="Widen the date range or adjust the filters to see more rows."
+                  actionLabel={onClearFilters ? "Clear filters" : undefined}
+                  onAction={onClearFilters}
+                />
               </td>
             </tr>
           )}
@@ -124,15 +138,16 @@ function ReportTable({ report }) {
 
 const uniqueSorted = (values) => [...new Set(values.map(clean).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
-function FilterSelect({ label, value, onChange, options }) {
+// Labelled "All + options" select for the report filter bar -- the kit
+// FilterField supplies the label styling, FilterSelect the control.
+function ReportFilterSelect({ label, value, onChange, options }) {
   return (
-    <label className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</span>
-      <select className={selectCls} value={value} onChange={(e) => onChange(e.target.value)}>
+    <FilterField label={label}>
+      <FilterSelect value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="all">All</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </label>
+      </FilterSelect>
+    </FilterField>
   );
 }
 
@@ -417,6 +432,10 @@ export default function OpsReportView({ reportKey, onSelect }) {
   const has = (f) => def.filters.includes(f);
   const rangeKey = Object.keys(RANGE_LABELS).find((k) => def.filters.includes(k));
   const rangeLabel = rangeKey ? RANGE_LABELS[rangeKey] : "Date";
+  const filtersActive = filters.from || filters.to || filters.salesperson !== "all" || filters.location !== "all"
+    || filters.responsibility !== "all" || filters.assignedTo !== "all" || filters.designer !== "all"
+    || filters.dateBasis !== DEFAULT_FILTERS.dateBasis;
+  const clearFilters = () => setFilters(DEFAULT_FILTERS);
 
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
@@ -449,89 +468,91 @@ export default function OpsReportView({ reportKey, onSelect }) {
       {/* Report body */}
       <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{def.title}</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{def.description}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={retry}
-                className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
-                title="Reload data"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </button>
-              <button
-                onClick={exportCsv}
-                disabled={!report.rows.length}
-                className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
-              >
-                <Download className="h-3.5 w-3.5" /> Export CSV
-              </button>
-              <button
-                onClick={exportGl}
-                disabled={glBusy || !report.rows.length}
-                title="Journal-style CSV (date, memo, entity_ref, gl_account, debit, credit) with GL account codes"
-                className="flex items-center gap-1.5 rounded-lg border border-violet-300 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-950/40"
-              >
-                {glBusy ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                Download GL export
-              </button>
-            </div>
-          </div>
+          <PageHeader
+            className="mb-1"
+            breadcrumbs={[{ label: "Ops Reports" }, { label: def.title }]}
+            title={def.title}
+            subtitle={def.description}
+            actions={(
+              <>
+                <button
+                  type="button"
+                  onClick={retry}
+                  className="rounded-lg border border-slate-300 p-2 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+                  title="Reload data"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={exportCsv}
+                  disabled={!report.rows.length}
+                  className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+                >
+                  <Download className="h-3.5 w-3.5" /> Export CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={exportGl}
+                  disabled={glBusy || !report.rows.length}
+                  title="Journal-style CSV (date, memo, entity_ref, gl_account, debit, credit) with GL account codes"
+                  className="flex items-center gap-1.5 rounded-lg border border-violet-300 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-950/40"
+                >
+                  {glBusy ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                  Download GL export
+                </button>
+              </>
+            )}
+          />
           {glNote && (
             <p className="mb-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">{glNote}</p>
           )}
 
           {/* Filters */}
           {def.filters.length > 0 && (
-          <div className="mb-3 flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+          <FilterBar
+            className="items-end bg-white dark:bg-slate-900"
+            actions={filtersActive ? (
+              <button type="button" onClick={clearFilters} className="pb-1 text-xs font-medium text-violet-600 hover:underline dark:text-violet-300">
+                Clear filters
+              </button>
+            ) : null}
+          >
             {rangeKey && (
               <>
-                <label className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{rangeLabel} From</span>
-                  <CcsDateField className={inputCls} value={filters.from} onChange={(e) => set("from", e.target.value)} />
-                </label>
-                <label className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{rangeLabel} To</span>
-                  <CcsDateField className={inputCls} value={filters.to} onChange={(e) => set("to", e.target.value)} />
-                </label>
+                <FilterField label={`${rangeLabel} From`}>
+                  <CcsDateField className={filterInputCls} value={filters.from} onChange={(e) => set("from", e.target.value)} />
+                </FilterField>
+                <FilterField label={`${rangeLabel} To`}>
+                  <CcsDateField className={filterInputCls} value={filters.to} onChange={(e) => set("to", e.target.value)} />
+                </FilterField>
               </>
             )}
             {has("responsibility") && (
-              <FilterSelect label="Responsibility" value={filters.responsibility} onChange={(v) => set("responsibility", v)} options={options.responsibility} />
+              <ReportFilterSelect label="Responsibility" value={filters.responsibility} onChange={(v) => set("responsibility", v)} options={options.responsibility} />
             )}
             {has("assignedTo") && (
-              <FilterSelect label="Assigned To" value={filters.assignedTo} onChange={(v) => set("assignedTo", v)} options={options.assignedTo} />
+              <ReportFilterSelect label="Assigned To" value={filters.assignedTo} onChange={(v) => set("assignedTo", v)} options={options.assignedTo} />
             )}
             {has("designer") && (
-              <FilterSelect label="Designer" value={filters.designer} onChange={(v) => set("designer", v)} options={options.designer} />
+              <ReportFilterSelect label="Designer" value={filters.designer} onChange={(v) => set("designer", v)} options={options.designer} />
             )}
             {has("salesperson") && (
-              <FilterSelect label="Salesperson" value={filters.salesperson} onChange={(v) => set("salesperson", v)} options={options.salesperson} />
+              <ReportFilterSelect label="Salesperson" value={filters.salesperson} onChange={(v) => set("salesperson", v)} options={options.salesperson} />
             )}
             {has("location") && (
-              <FilterSelect label="Sales Center" value={filters.location} onChange={(v) => set("location", v)} options={options.location} />
+              <ReportFilterSelect label="Sales Center" value={filters.location} onChange={(v) => set("location", v)} options={options.location} />
             )}
             {has("dateBasis") && (
-              <label className="flex flex-col gap-0.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Date Basis</span>
-                <select className={selectCls} value={filters.dateBasis} onChange={(e) => set("dateBasis", e.target.value)}>
+              <FilterField label="Date Basis">
+                <FilterSelect value={filters.dateBasis} onChange={(e) => set("dateBasis", e.target.value)}>
                   {Object.entries(SALES_DATE_BASES).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
-                </select>
-              </label>
+                </FilterSelect>
+              </FilterField>
             )}
-            {(filters.from || filters.to || filters.salesperson !== "all" || filters.location !== "all"
-              || filters.responsibility !== "all" || filters.assignedTo !== "all" || filters.designer !== "all"
-              || filters.dateBasis !== DEFAULT_FILTERS.dateBasis) && (
-              <button onClick={() => setFilters(DEFAULT_FILTERS)} className="pb-1 text-xs font-medium text-violet-600 hover:underline dark:text-violet-300">
-                Clear filters
-              </button>
-            )}
-          </div>
+          </FilterBar>
           )}
 
           {def.notes && (
@@ -549,7 +570,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
               </button>
             </div>
           ) : (
-            <ReportTable report={report} />
+            <ReportTable report={report} onClearFilters={filtersActive ? clearFilters : undefined} />
           )}
         </div>
       </main>
