@@ -263,7 +263,7 @@ export default function Financials() {
     setDataReadError("");
     try {
       const [orders, usersData] = await Promise.all([
-        fetchAllWorkOrders().then((rows) =>
+        fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.is_rider !== true && wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
