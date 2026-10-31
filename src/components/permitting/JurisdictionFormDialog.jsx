@@ -255,7 +255,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
             </div>
             {form.type !== "county" && (
               <div className="col-span-2">
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Parent County <span className="font-normal text-gray-400">(recommended when names repeat)</span></label>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">County above this place <span className="font-normal text-gray-400">(fill in when names repeat)</span></label>
                 <Input
                   value={form.parent_county?.name || ""}
                   onChange={e => setForm(f => ({
@@ -266,7 +266,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
                   }))}
                   placeholder="e.g. Clermont County"
                 />
-                <p className="mt-1 text-[10px] text-gray-500">Used to distinguish jurisdictions with the same name in the same state, such as townships in different counties.</p>
+                <p className="mt-1 text-[10px] text-gray-500">Some states have towns or townships with the same name in different counties — this tells them apart.</p>
               </div>
             )}
           </div>
@@ -277,7 +277,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
             disabled={aiLoading || !form.name || !form.state}
             className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
           >
-            {aiLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> AI Researching...</> : <><Wand2 className="w-4 h-4" /> AI Auto-Fill (Research & Discover Documents)</>}
+            {aiLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> AI looking it up...</> : <><Wand2 className="w-4 h-4" /> AI Fill-In — finds office info &amp; documents</>}
           </Button>
 
           {/* URLs */}
@@ -287,7 +287,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
               <Input value={form.website_url || ""} onChange={e => set("website_url", e.target.value)} placeholder="https://..." />
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 mb-1 block">Permitting/Zoning Page</label>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">Official permit page</label>
               <Input value={form.permitting_url || ""} onChange={e => set("permitting_url", e.target.value)} placeholder="https://..." />
             </div>
           </div>
@@ -302,8 +302,8 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
 
           {/* Notes */}
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Manual Notes</label>
-            <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={2} placeholder="Internal notes..." className="text-sm" />
+            <label className="text-xs font-medium text-gray-600 mb-1 block">Notes</label>
+            <Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={2} placeholder="Notes for our team..." className="text-sm" />
           </div>
 
           {/* Contact Info */}
