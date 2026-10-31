@@ -99,7 +99,10 @@ function CustomerDetail({ sessionToken, customerId, onClose }) {
                 <h2 className="text-lg font-bold text-gray-900">{c?.company_name || "Customer"}</h2>
                 <div className="text-xs text-gray-500 capitalize">{c?.customer_status || "prospect"}</div>
               </div>
-              <button type="button" onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
+              <div className="flex items-center gap-2">
+                <Link to={`/Customer360?id=${customerId}`} className="inline-flex h-8 items-center rounded-md border border-sky-200 bg-white px-2.5 text-xs font-semibold text-sky-700 hover:bg-sky-50">Open 360</Link>
+                <button type="button" onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
