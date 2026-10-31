@@ -331,7 +331,7 @@ export default function Customer360() {
             .join(" · ") || "Customer 360 hub — estimates, jobs, financials and CRM in one place."
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <>
           <button
             type="button"
             onClick={refresh}
@@ -359,7 +359,7 @@ export default function Customer360() {
           >
             Edit customer
           </Link>
-          </div>
+          </>
         }
       >
         {/* attribute flag chips -- custom colors kept, they are not statuses */}
