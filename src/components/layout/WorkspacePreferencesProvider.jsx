@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
+import { useAuth } from "@/components/auth/EmailGate";
 import {
   defaultPrefs, migratePrefs, deepMerge, setPath, getPath, SECTION_PATHS,
   localLoadPrefs, localSavePrefs, localOrderStamp, saveOrderStamp,
@@ -13,8 +13,8 @@ const sessionToken = () => { try { return localStorage.getItem("sss_session_toke
 const WRITE_DEBOUNCE_MS = 900;
 
 export function WorkspacePreferencesProvider({ children }) {
-  const { user, isAuthenticated } = useAuth();
-  const email = String(user?.email || "").toLowerCase();
+  const { currentUser } = useAuth();
+  const email = String(currentUser?.email || "").toLowerCase();
   const [prefs, setPrefs] = useState(() => {
     const local = email ? localLoadPrefs(email) : null;
     return migratePrefs(local?.prefs);
@@ -33,7 +33,7 @@ export function WorkspacePreferencesProvider({ children }) {
 
   // Seed from localStorage instantly (no flicker), then hydrate from server.
   useEffect(() => {
-    if (!isAuthenticated || !email || loadedForRef.current === email) return;
+    if (!currentUser || !email || loadedForRef.current === email) return;
     loadedForRef.current = email;
     const local = localLoadPrefs(email);
     if (local?.prefs) { setPrefs(migratePrefs(local.prefs)); setProfiles(Array.isArray(local.profiles) ? local.profiles : []); }
@@ -63,7 +63,7 @@ export function WorkspacePreferencesProvider({ children }) {
         setLoaded(true);
       }
     })();
-  }, [isAuthenticated, email]);
+  }, [currentUser, email]);
 
   // Side effects: theme class, density attr, font scale, accent, motion.
   useEffect(() => { applyAppearance(prefs); }, [prefs]);
