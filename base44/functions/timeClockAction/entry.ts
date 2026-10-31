@@ -11418,6 +11418,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'my_data_export') {
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to export punch history.' }, { status: 403 });
       const entries = await entryEntity.filter({ user_email: target.email }, '-clock_in', 1000).catch(() => []);
       const clean = (Array.isArray(entries) ? entries : []).filter((e: any) => e.archived_test_data !== true && e.archived_admin !== true);
       return Response.json({ success: true, employee: publicEmployee(target), entries: clean, exported_at: new Date().toISOString() });
