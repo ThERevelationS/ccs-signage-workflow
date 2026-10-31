@@ -1,0 +1,69 @@
+{
+  "name": "LaborLevel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name, e.g. 'Apprentice', 'Journeyman Installer', 'Lead Fabricator'."
+    },
+    "level_rank": {
+      "type": "number",
+      "default": 0,
+      "description": "Seniority/skill rank used for sorting; higher levels typically bill at higher rates."
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional notes about what work this level covers."
+    },
+    "hourly_rate": {
+      "type": "number",
+      "description": "Billable rate in $/hour for work performed at this level."
+    },
+    "applies_to_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional list of category keys (MarkupCategory.category_key) this level applies to. Empty = usable on every category."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Inactive levels are ignored by the pricing engine."
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of the staff user who last saved this row (audit)."
+    }
+  },
+  "required": [
+    "name",
+    "hourly_rate"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__laborlevel_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__laborlevel_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__laborlevel_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__laborlevel_backend_only__"
+      }
+    }
+  }
+}
