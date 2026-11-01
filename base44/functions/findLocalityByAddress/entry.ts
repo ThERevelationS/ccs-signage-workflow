@@ -461,7 +461,7 @@ async function fixedJSON(url, timeoutMs = 15e3) {
   if (text.length > 8 * 1024 * 1024) throw Error("Location response exceeds its limit.");
   return JSON.parse(text);
 }
-var ADDRESS_LOOKUP_REVISION = "address-geocode-v5";
+var ADDRESS_LOOKUP_REVISION = "address-geocode-v6";
 var googleDeniedUntil = 0;
 var googleDeniedService = null;
 var GOOGLE_DENIED_TTL_MS = 10 * 60 * 1e3;
