@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
         if (!jurisdiction) continue;
 
         // Use the jurisdiction research agent for all searches
-        const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+        const agentResult = await base44.asServiceRole.functions.invoke('jurisdiction_research', {
           jurisdictionName: jurisdiction.name,
           jurisdictionState: jurisdiction.state,
           jurisdictionType: jurisdiction.type,
