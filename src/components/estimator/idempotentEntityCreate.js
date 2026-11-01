@@ -111,6 +111,12 @@ export async function ensureIdempotentEntityCreate({
   }
 
   if (afterCreate.length === 1) {
+    // Our create returned an id but the only visible same-key row is a
+    // different record — a concurrent create landed too and ours is still
+    // indexing. Fail closed instead of silently orphaning our row as a dup.
+    if (created?.id && String(afterCreate[0].id) !== String(created.id)) {
+      throw new Error(`${label} was created concurrently more than once. No uncertain duplicate was deleted; reload and review records with this retry key.`);
+    }
     if (!matchesPayload(afterCreate[0], payload)) {
       throw new Error(`${label} retry key exists but its live data does not match this create. No row was changed or deleted.`);
     }
