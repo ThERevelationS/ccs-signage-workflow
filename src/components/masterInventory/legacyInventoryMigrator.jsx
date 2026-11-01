@@ -67,7 +67,10 @@ export function classifyLegacyRow(row) {
 }
 
 // Build the target-entity payload for a row given its classification.
-function buildPayload(row, target) {
+// Exported for test coverage — every target classifyLegacyRow can emit must
+// produce a payload (an unknown target returns null and the runner fails
+// closed on it rather than writing to the wrong entity).
+export function buildPayload(row, target) {
   const name = row.product_type || row.material_type || "Imported Item";
   const cost = parseFloat(row.cost_per_unit) || 0;
 
@@ -149,7 +152,7 @@ function buildPayload(row, target) {
   return null;
 }
 
-const TARGET_ENTITY = {
+export const TARGET_ENTITY = {
   labor_service: LaborServiceInventory,
   sign_parts_supplies: SignPartsSuppliesInventory,
   substrate: DimensionalLetterMaterial,
