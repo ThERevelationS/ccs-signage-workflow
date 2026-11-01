@@ -1779,6 +1779,9 @@ Deno.serve(async (req) => {
       const wo = await WorkOrder.get(workOrderId).catch(() => null);
       if (!wo?.id) throw bad("WorkOrder not found.", 404);
       const stage = clean(body?.stage) || clean(wo.sales_status);
+      if (stage && !["lead", "quoted", "follow_up", "on_hold", "won", "lost"].includes(stage)) {
+        throw bad("stage must be one of lead, quoted, follow_up, on_hold, won, lost.");
+      }
       if (!stage) return Response.json({ success: true, action, work_order_id: workOrderId, synced: 0 });
       // Optional explicit stage override also corrects the WO itself.
       if (clean(body?.stage) && clean(wo.sales_status) !== clean(body.stage)) {
