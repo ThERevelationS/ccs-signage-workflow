@@ -52,11 +52,11 @@ export default function EstimateActivityPanel({ estimate, refreshKey }) {
   return (
     <div className="bg-white rounded-md border border-gray-200 p-4">
       <h3 className="text-xs font-bold tracking-wide text-gray-600 flex items-center gap-1.5">
-        <History className="h-3.5 w-3.5 text-gray-400" /> ACTIVITY LOG
+        <History className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" /> ACTIVITY LOG
       </h3>
-      {error && <div className="mt-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+      {error && <div role="alert" className="mt-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
       {rows === null ? (
-        <div className="flex items-center justify-center py-8 text-gray-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading activity…</div>
+        <div className="flex items-center justify-center py-8 text-gray-400"><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />Loading activity…</div>
       ) : rows.length === 0 ? (
         <p className="mt-2 text-[11px] text-gray-400">No activity recorded for this estimate yet.</p>
       ) : (
