@@ -244,10 +244,11 @@ function SignaturePad({ onChange }) {
   );
 }
 
-function QuoteCard({ quote, onRespond, busy }) {
+function QuoteCard({ quote, onRespond, onCounter, busy }) {
   const [mode, setMode] = useState("");
   const [note, setNote] = useState("");
   const [signature, setSignature] = useState("");
+  const [counterTotal, setCounterTotal] = useState("");
   const [open, setOpen] = useState(false);
   const respondable = quote.can_respond;
   const sections = Array.isArray(quote.sections) ? quote.sections : [];
@@ -330,6 +331,12 @@ function QuoteCard({ quote, onRespond, busy }) {
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
             Request changes
           </button>
+          {onCounter && (
+            <button type="button" onClick={() => setMode("counter")} disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50">
+              Counter offer
+            </button>
+          )}
         </div>
       )}
       {respondable && mode === "approve" && (
@@ -363,6 +370,27 @@ function QuoteCard({ quote, onRespond, busy }) {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Decline quote
             </button>
             <button type="button" onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
+      {respondable && mode === "counter" && onCounter && (
+        <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+          <p className="text-sm font-medium text-indigo-900">
+            Propose a total for {quote.estimate_number || "this quote"}{Number(quote.quote_total) > 0 ? ` (quoted ${money(quote.quote_total)})` : ""} — we'll review it and follow up.
+          </p>
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className="text-sm font-semibold text-indigo-900">$</span>
+            <input type="number" min="0" step="0.01" inputMode="decimal" value={counterTotal} onChange={(e) => setCounterTotal(e.target.value)} placeholder="0.00"
+              className="w-40 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm" />
+          </div>
+          <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note — what would make this work for you?"
+            className="mt-2 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={() => { onCounter(quote, Number(counterTotal), note); setMode(""); setCounterTotal(""); setNote(""); }} disabled={busy || !(Number(counterTotal) > 0)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send counter offer
+            </button>
+            <button type="button" onClick={() => { setMode(""); setCounterTotal(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -528,17 +556,38 @@ function InvoiceRow({ invoice, payments, onNotice, busy }) {
   );
 }
 
+const PORTAL_ATTACHMENT_MAX_BYTES = 6 * 1024 * 1024;
+const fmtBytes = (b) => (Number(b) >= 1048576 ? `${(Number(b) / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(Number(b) / 1024))} KB`);
+
 function Thread({ messages, onSend, busy, customerName }) {
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState(null);
+  const [fileError, setFileError] = useState("");
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
+  // Photo/PDF only, 6MB cap — the backend upload_file action enforces the
+  // same limits; this keeps bad picks from ever reading into memory.
+  const pickFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    setFileError("");
+    if (!file) return;
+    const isImage = (file.type || "").startsWith("image/");
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    if (!isImage && !isPdf) { setAttachment(null); setFileError("Only photos (JPG, PNG, etc.) or PDF drawings can be attached."); return; }
+    if (file.size > PORTAL_ATTACHMENT_MAX_BYTES) { setAttachment(null); setFileError(`Files up to ${fmtBytes(PORTAL_ATTACHMENT_MAX_BYTES)} can be attached — "${file.name}" is ${fmtBytes(file.size)}.`); return; }
+    const reader = new FileReader();
+    reader.onload = () => setAttachment({ name: file.name, size: file.size, mime: file.type || (isPdf ? "application/pdf" : "image/jpeg"), base64: String(reader.result || "").split(",")[1] || "" });
+    reader.onerror = () => setFileError("That file could not be read — try again.");
+    reader.readAsDataURL(file);
+  };
   const send = () => {
     const text = draft.trim();
     if (!text && !attachment?.base64) return;
     onSend(text, attachment);
     setDraft("");
     setAttachment(null);
+    setFileError("");
   };
   return (
     <div className="flex min-h-[420px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -581,17 +630,12 @@ function Thread({ messages, onSend, busy, customerName }) {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={`Message CCS Signage about your ${customerName ? "account" : "project"}…`}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" />
-          <label className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 cursor-pointer hover:border-blue-400">
-            <input type="file" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) { setAttachment(null); return; }
-              const reader = new FileReader();
-              reader.onload = () => setAttachment({ name: file.name, mime: file.type || "application/octet-stream", base64: String(reader.result || "").split(",")[1] || "" });
-              reader.readAsDataURL(file);
-            }} />
-            {attachment ? attachment.name : "Attach file"}
+          <label className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 cursor-pointer hover:border-blue-400" title="Attach a site photo or marked-up drawing (photo or PDF, up to 6 MB)">
+            <input type="file" accept="image/*,application/pdf,.pdf" className="hidden" onChange={pickFile} />
+            {attachment ? `${attachment.name} · ${fmtBytes(attachment.size)}` : "Attach photo or PDF"}
             {attachment && <button type="button" onClick={(e) => { e.preventDefault(); setAttachment(null); }} className="ml-1 text-slate-400 hover:text-red-500">×</button>}
           </label>
+          {fileError && <p className="mt-1 text-[11px] font-medium text-red-600">{fileError}</p>}
           </div>
           <button type="button" onClick={send} disabled={busy || (!draft.trim() && !attachment)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
@@ -624,6 +668,7 @@ export default function CustomerPortal() {
     catch { return new Set(); }
   });
   const msgKeyRef = useRef(crypto.randomUUID());
+  const counterKeyRef = useRef("");
 
   const load = useCallback(async () => {
     try {
@@ -711,6 +756,22 @@ export default function CustomerPortal() {
     } finally { setBusy(false); }
   };
 
+  // Counter offer (#257): one attempt key per form session so a retried or
+  // double-clicked submit reuses the server-side idempotency receipt instead
+  // of double-logging the event.
+  const sendCounter = async (quote, proposedTotal, note) => {
+    setBusy(true);
+    try {
+      if (!counterKeyRef.current) counterKeyRef.current = crypto.randomUUID();
+      await call({ action: "counter_offer", token, estimate_id: quote.id, proposed_total: proposedTotal, note, creation_request_key: counterKeyRef.current });
+      counterKeyRef.current = "";
+      setToast(`Counter offer of ${money(proposedTotal)} sent — we'll review it and follow up.`);
+      await load();
+    } catch (error) {
+      setToast(error?.message || "Could not send the counter offer.");
+    } finally { setBusy(false); }
+  };
+
   const notice = async (invoice, note) => {
     setBusy(true);
     try {
@@ -746,12 +807,12 @@ export default function CustomerPortal() {
   const sendMessage = async (text, attachment) => {
     setBusy(true);
     try {
-      const payload = { action: "post_message", token, body: text, creation_request_key: msgKeyRef.current };
-      if (attachment?.base64) {
-        payload.attachment_name = attachment.name;
-        payload.attachment_mime = attachment.mime;
-        payload.attachment_base64 = attachment.base64;
-      }
+      // Files go through the dedicated upload_file action — it validates the
+      // type/size server-side, stores the blob, and posts the thread message
+      // carrying the stored URL in one atomic call.
+      const payload = attachment?.base64
+        ? { action: "upload_file", token, body: text, file_name: attachment.name, file_mime: attachment.mime, file_base64: attachment.base64, creation_request_key: msgKeyRef.current }
+        : { action: "post_message", token, body: text, creation_request_key: msgKeyRef.current };
       await call(payload);
       msgKeyRef.current = crypto.randomUUID();
       await load();
@@ -821,7 +882,7 @@ export default function CustomerPortal() {
                     This quote is waiting for your response — approve it, request changes, or respond per section below.
                   </div>
                 )}
-                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} busy={busy} />)}
+                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} onCounter={sendCounter} busy={busy} />)}
                 <p className="text-center text-[11px] text-slate-400">Approve or respond right from this link — no account needed.</p>
               </div>
             )}
@@ -1024,7 +1085,7 @@ export default function CustomerPortal() {
                 {estimates.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No quotes shared with you yet.</div>
                 )}
-                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} busy={busy} />)}
+                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} onCounter={sendCounter} busy={busy} />)}
               </div>
             )}
 
