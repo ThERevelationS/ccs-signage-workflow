@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const ESTIMATE_REFERENCE_ENTITIES = [
@@ -82,7 +83,7 @@ async function canDiscardRaceDuplicate(base44: any, row: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
     const creationKey = clean(body?.creation_key);
