@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Settings as SettingsEntity } from "@/api/gatedEntities";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, Save, Scissors, Trash2 } from "lucide-react";
+import { ArrowLeft, Beaker, Clock, DollarSign, Paintbrush, Plus, RotateCcw, Save, Scissors, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { liquidPaintRatePerSqft } from "@/components/estimator/paint/paintCalc";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
+import { PAINTING_SETTINGS_DEFAULTS, resetValuesToDefaults } from "@/components/estimator/settings/moduleSettingDefaults";
 
 const PAINT_CATEGORIES = new Set(["painting_pricing", "painting_labor", "painting_supplies"]);
 const UNIT_OPTIONS = ["oz", "pint", "quart", "liter", "gallon"];
@@ -159,6 +160,12 @@ export default function PaintingSettings() {
     patch("paint_consumables_inventory", JSON.stringify(consumables.filter((_, i) => i !== index)));
   };
 
+  // #83 — stage every managed key back to the calculator's documented fallback.
+  const handleResetDefaults = () => {
+    setValues((prev) => resetValuesToDefaults(prev, PAINTING_SETTINGS_DEFAULTS, Object.keys(prev)));
+    setMessage("Defaults staged — click Save to persist them.");
+  };
+
   const handleSave = async () => {
     if (settingsSaveRef.current) return;
     settingsSaveRef.current = true;
@@ -190,7 +197,7 @@ export default function PaintingSettings() {
       <div className="max-w-[1180px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="painting-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button onClick={handleSave} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="painting-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button variant="outline" onClick={handleResetDefaults} disabled={saving} className="h-[32px] text-[12px] font-semibold" title="Stage calculator fallback defaults — Save to persist"><RotateCcw className="w-4 h-4 mr-1.5" /> Reset to defaults</Button><Button onClick={handleSave} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3 flex items-center gap-3">
