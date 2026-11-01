@@ -39,7 +39,7 @@ function CabinetRow({ cabinet, onChange, onRemove }) {
           {money((cabinet.unit_cost || 0) * (cabinet.quantity || 1))}
         </span>
         <button type="button" onClick={onRemove} className="text-gray-400 hover:text-red-600" title="Remove">
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -99,7 +99,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                     onClick={() => add("foundation", index)}
                     className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
                   >
-                    <Plus className="w-3 h-3" /> Add Cabinet
+                    <Plus className="w-3 h-3" aria-hidden="true" /> Add Cabinet
                   </button>
                 </div>
                 {rows.length === 0 ? (
@@ -143,7 +143,7 @@ export default function SignageCabinetsPanel({ cabinets = [], items = [], poles 
                     onClick={() => add("pole", index)}
                     className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
                   >
-                    <Plus className="w-3 h-3" /> Add Cabinet
+                    <Plus className="w-3 h-3" aria-hidden="true" /> Add Cabinet
                   </button>
                 </div>
                 {rows.length === 0 ? (
