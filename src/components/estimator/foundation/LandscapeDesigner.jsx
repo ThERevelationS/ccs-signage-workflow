@@ -39,7 +39,7 @@ export default function LandscapeDesigner({ landscape, onChange }) {
           }}
           className="h-[26px] px-2 flex items-center gap-1 rounded-sm border border-gray-300 text-[11px] text-gray-600 hover:bg-gray-50"
         >
-          <Trash2 className="w-3 h-3" /> Clear
+          <Trash2 className="w-3 h-3" aria-hidden="true" /> Clear
         </button>
       </div>
 
