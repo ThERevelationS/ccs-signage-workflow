@@ -39,6 +39,12 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 const num = (value, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
 
+// (#407) Large part lists render in chunks of PART_ROW_PAGE so a 300-part
+// product doesn't mount hundreds of PartRow trees at once. A "Show more"
+// control reveals the next chunk; searching bypasses the window so every
+// match stays reachable.
+const PART_ROW_PAGE = 100;
+
 const typeLabel = (part) =>
   String(part?.part_type || "part")
     .replaceAll("_", " ")
@@ -266,6 +272,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
 
 function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onSelect, onChanged, builderProductId, onEditBuilder, estimateId, expectedEstimateUpdatedAt = "", availableProducts = [], readOnly = false }) {
   const [open, setOpen] = useState(!group.is_collapsed);
+  const [visibleParts, setVisibleParts] = useState(PART_ROW_PAGE);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(group.group_name || "Part Group");
   const [copying, setCopying] = useState(false);
@@ -464,7 +471,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
       </div>
       {open && (
         <div className="p-2 space-y-2 border-t border-gray-200">
-          {parts.map((part, index) => (
+          {parts.slice(0, visibleParts).map((part, index) => (
             <PartRow
               key={part.id}
               part={part}
@@ -479,6 +486,15 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               readOnly={readOnly}
             />
           ))}
+          {parts.length > visibleParts && (
+            <button
+              type="button"
+              onClick={() => setVisibleParts((value) => value + PART_ROW_PAGE)}
+              className="w-full h-[28px] rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50"
+            >
+              Show {Math.min(PART_ROW_PAGE, parts.length - visibleParts)} more parts ({parts.length - visibleParts} remaining)
+            </button>
+          )}
         </div>
       )}
       <MovePartGroupModal
@@ -535,6 +551,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
   const [partLibraryOpen, setPartLibraryOpen] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [partSearch, setPartSearch] = useState("");
+  const [ungroupedVisible, setUngroupedVisible] = useState(PART_ROW_PAGE);
   const [bulkRemoving, setBulkRemoving] = useState(false);
   const [bulkDetaching, setBulkDetaching] = useState(false);
   const groupCreateRef = useRef(false);
@@ -874,7 +891,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           </div>
         );
       })}
-      {grouped.ungrouped.map((part, index) => (
+      {grouped.ungrouped.slice(0, partQuery ? grouped.ungrouped.length : ungroupedVisible).map((part, index) => (
         <PartRow
           key={part.id}
           part={part}
@@ -892,6 +909,15 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           readOnly={readOnly}
         />
       ))}
+      {!partQuery && grouped.ungrouped.length > ungroupedVisible && (
+        <button
+          type="button"
+          onClick={() => setUngroupedVisible((value) => value + PART_ROW_PAGE)}
+          className="w-full h-[28px] rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50"
+        >
+          Show {Math.min(PART_ROW_PAGE, grouped.ungrouped.length - ungroupedVisible)} more parts ({grouped.ungrouped.length - ungroupedVisible} remaining)
+        </button>
+      )}
       {partQuery && !visibleParts.length && (
         <div className="py-4 text-center text-[11px] text-gray-400">No Parts match "{partSearch}".</div>
       )}
