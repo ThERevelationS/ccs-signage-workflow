@@ -124,7 +124,7 @@ test('saved contradictory research blocks continuation before any network reques
   assert.deepEqual(f.row().documents,f.original.documents);
 });
 test('research agent rejects synthetic wrong-state result rather than returning source candidates', async () => {
-  const source=fs.readFileSync('base44/functions/jurisdictionResearchAgent/entry.ts','utf8')
+  const source=fs.readFileSync('base44/functions/jurisdiction_research/entry.ts','utf8')
     .replace(/^import .*;\r?\n/gm,'');
   const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText;
   let handler;
