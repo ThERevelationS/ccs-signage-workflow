@@ -4,10 +4,20 @@ import { ESTIMATOR_TABS, ESTIMATOR_RIGHT_TABS } from "@/components/estimator/nav
 
 function TabMenu({ tab, isActive, open, onOpen, onToggle, onClose, align = "left" }) {
   return (
-    <div className="relative" onMouseEnter={onOpen}>
+    <div
+      className="relative"
+      onMouseEnter={onOpen}
+      onFocus={onOpen}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) onClose();
+      }}
+    >
       <Link
         to={tab.to}
         onClick={onClose}
+        aria-current={isActive ? "page" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open}
         className={`h-[26px] px-4 flex items-center text-[13px] font-semibold whitespace-nowrap transition-colors ${
           isActive || open ? "bg-red-800 text-white" : "text-white hover:bg-red-700"
         }`}
@@ -16,6 +26,8 @@ function TabMenu({ tab, isActive, open, onOpen, onToggle, onClose, align = "left
       </Link>
       {open && (
         <div
+          role="group"
+          aria-label={`${tab.label} submenu`}
           className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} z-[60] min-w-[230px] py-1 bg-white shadow-2xl border border-gray-200`}
         >
           {tab.items.map((item, i) =>
@@ -76,8 +88,9 @@ export default function EstimatorNav() {
   );
 
   return (
-    <div
+    <nav
       ref={ref}
+      aria-label="Estimator sections"
       className="bg-red-600 relative z-50"
       onMouseLeave={() => setOpenTab(null)}
     >
@@ -87,6 +100,6 @@ export default function EstimatorNav() {
           {ESTIMATOR_RIGHT_TABS.map((t) => renderTab(t, "right"))}
         </div>
       </div>
-    </div>
+    </nav>
   );
 }
