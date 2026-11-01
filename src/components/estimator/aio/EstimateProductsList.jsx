@@ -70,6 +70,46 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
     return sum + acceptedCustomerUnitPrice(line) * quantity * (1 + Number(line.adjustment_percent || 0) / 100);
   }, 0);
 
+  // #311/#323 — ?open=<product_id> / ?line=<id> deep links: make the target
+  // row visible (clearing search/module filters when they would hide it),
+  // then scroll it into view with a highlight flash. `open` matches the
+  // same id set EstimateDetail uses (project_id / id) plus line-level ids.
+  const rowRefs = useRef({});
+  const deepLinkedLineRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedLineRef.current || lines.length === 0) return;
+    let wantOpen = "", wantLine = "";
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      wantOpen = sp.get("open") || "";
+      wantLine = sp.get("line") || "";
+    } catch {}
+    if (!wantOpen && !wantLine) return;
+    const matchIndex = lines.findIndex((line, index) => {
+      const lineId = estimateLineSelectionKey(line, index);
+      if (wantLine && (lineId === wantLine || line?.line_id === wantLine || line?.id === wantLine)) return true;
+      if (wantOpen && [line?.project_id, line?.id, line?.line_id, line?.builder_product_id, line?.product_id, line?.quick_product_source_id].includes(wantOpen)) return true;
+      return false;
+    });
+    if (matchIndex < 0) { deepLinkedLineRef.current = true; return; }
+    const targetKey = estimateLineSelectionKey(lines[matchIndex], matchIndex);
+    const isVisible = visible.some(({ line, index }) => estimateLineSelectionKey(line, index) === targetKey);
+    if (!isVisible) {
+      if (query) setQuery("");
+      if (moduleFilter !== "all") setModuleFilter("all");
+      return;
+    }
+    deepLinkedLineRef.current = true;
+    const el = rowRefs.current[targetKey];
+    if (el) {
+      window.setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-4", "ring-blue-400", "rounded-md");
+        window.setTimeout(() => el.classList.remove("ring-4", "ring-blue-400", "rounded-md"), 3500);
+      }, 150);
+    }
+  }, [lines, visible, query, moduleFilter]);
+
   return (
     <div className="bg-white border border-gray-200 rounded-md">
       <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between gap-2">
@@ -136,7 +176,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
           {visible.map(({ line, index }) => {
             const lineId = estimateLineSelectionKey(line, index);
             return (
-            <div key={lineId} className="relative">
+            <div key={lineId} data-line-id={lineId} ref={(el) => { if (el) rowRefs.current[lineId] = el; else delete rowRefs.current[lineId]; }} className="relative">
               {splitMode && !readOnly && (
                 <label className="absolute left-1 top-1 z-10 flex items-center justify-center w-5 h-5 rounded border border-indigo-300 bg-white cursor-pointer">
                   <input type="checkbox" disabled={splitting} checked={splitIds.has(lineId)} onChange={() => toggleSplitId(lineId)} className="w-3.5 h-3.5 accent-indigo-600" aria-label={`Select ${line.client_product_name || line.project_name || line.description || `product ${index + 1}`} to split`} />
