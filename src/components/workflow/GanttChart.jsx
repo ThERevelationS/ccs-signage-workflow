@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from "react";
 import { format, differenceInDays, addDays, startOfWeek } from "date-fns";
 import ProjectHealthBadge from "./ProjectHealthBadge";
 import { buildWorkOrderSegments } from "./workOrderTimelineSegments";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Panes narrower than this (portrait monitors, split view) switch to a shorter
 // window that fills the available width instead of scrolling a fixed 1200px
@@ -46,9 +47,18 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
     const duration = differenceInDays(end, start);
 
     const left = (daysFromStart / daysToShow) * 100;
-    const width = (duration / daysToShow) * 100;
+    const endPct = left + (duration / daysToShow) * 100;
 
-    return { left: `${Math.max(0, left)}%`, width: `${Math.max(2, width)}%` };
+    // Clamp to the visible window and flag edges that continue out of range —
+    // previously bars ran past the chart edge with no continuation indicator.
+    const cLeft = Math.max(0, Math.min(100, left));
+    const cRight = Math.max(0, Math.min(100, endPct));
+    return {
+      left: `${cLeft}%`,
+      width: `${Math.max(2, cRight - cLeft)}%`,
+      overLeft: left < 0,
+      overRight: endPct > 100,
+    };
   };
 
   const formatSegmentDates = (seg) => {
@@ -162,7 +172,8 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                             className="absolute h-5 rounded-lg flex items-center justify-center transition-all duration-300 hover:opacity-80 cursor-pointer"
                             title={`${label} · ${formatSegmentDates(seg)}`}
                             style={{
-                              ...pos,
+                              left: pos.left,
+                              width: pos.width,
                               background: `linear-gradient(135deg, ${seg.color}ee 0%, ${seg.color}aa 100%)`,
                               boxShadow: "1px 1px 3px rgba(0,0,0,0.1), inset 1px 1px 2px rgba(255,255,255,0.5)",
                               ...(seg.kind === "rider"
@@ -180,6 +191,12 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                               </span>
                             )}
                           </div>
+                          {pos.overLeft && (
+                            <ChevronLeft className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                          )}
+                          {pos.overRight && (
+                            <ChevronRight className="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                          )}
                           {!fitsInside && (labelAfterBar || labelBeforeBar) && (
                             <span
                               className="pointer-events-none absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-gray-700"
