@@ -108,7 +108,7 @@ export default function EstimateQuoteDeliveryPanel({ estimate, refreshKey = 0 })
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
         <div className="text-[12px] font-bold text-gray-900 flex items-center gap-2">
-          <MailCheck className="w-4 h-4 text-red-600" /> Quote Delivery History
+          <MailCheck className="w-4 h-4 text-red-600" aria-hidden="true" /> Quote Delivery History
         </div>
         <div className="mt-0.5 text-[10px] text-gray-500">Customer-facing delivery audit by issued quote version. Internal Product cost is never shown here.</div>
       </div>
