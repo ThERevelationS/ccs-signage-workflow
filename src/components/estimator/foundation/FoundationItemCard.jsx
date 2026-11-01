@@ -44,7 +44,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
     <div className="bg-white rounded-sm border border-gray-200 border-l-4 border-l-amber-500 p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <Box className="w-4 h-4 text-amber-500" />
+          <Box className="w-4 h-4 text-amber-500" aria-hidden="true" />
           <span className="text-[12px] font-bold text-gray-700">Foundation #{index + 1}</span>
           <select
             value={item.foundation_type || "spread_foot"}
@@ -64,7 +64,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
         <div className="flex items-center gap-2">
           {onDuplicate && (
             <button type="button" onClick={() => onDuplicate(index)} className="text-gray-400 hover:text-blue-600" title="Duplicate">
-              <Copy className="w-4 h-4" />
+              <Copy className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
           <button type="button"
@@ -75,7 +75,7 @@ export default function FoundationItemCard({ item, index, catalog, onChange, onR
             className="text-gray-400 hover:text-red-600"
             title="Delete"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
