@@ -378,7 +378,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 331. **[F][DONE]** Notification click → deep-link — persisted rows carry `deep_link` and navigate on click (marking read); every feed-section item href now lives in shared `attentionFeedCategories.js` used by strip + dropdown
 332. **[F][DONE]** Snooze-notification per item — feed items get a per-item 4h snooze persisted in `NotificationPreference.dismissed_feed_items` (`dismiss_feed_item` mode=snooze); Notification rows get a real `snoozed_until` field via `notificationAction.snooze`
 333. **[F][DONE]** Daily digest — in-app only (email stays disabled): `daily_digest` persists one deduped `digest` Notification per user per local day with section counts; opt-in via prefs; bell poll requests it
-334. **[H]** `attention_feed` — per-section `limit` to avoid unbounded feeds
+334. **[H][DONE]** attention_feed per-section limit — every section routes through section(name, rows, cap) with explicit caps (50–300 rows) + matched_totals + truncated flag; no unbounded feed sections remain
 335. **[F][DONE]** Estimate-request assigned → notify — `estimator_assigned` OpportunityActivity events persist `estimate_assigned` notifications to the resolved assignee (dedupe by activity id)
 336. **[F][DONE]** Quote-approved celebration toast — `ToastCard` in `AttentionBell` pops `quote_approved` notifications on every page (bell is global, incl. EstimatorQueues); 🎉 + emerald styling + beep
 337. **[F][DONE]** Low-stock → PO-draft — verified already wired: low_stock items link `/PurchaseOrders?draft_item=<id>` and the page honors `?draft_item=`

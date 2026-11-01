@@ -1240,7 +1240,7 @@ Deno.serve(async (req) => {
       };
       const [opps, estimates, invoices, pos, cos, customers, wos, orders] = await Promise.all([
         searchRead(Opportunity, ["title", "customer_display_name", "salesperson"], "-last_activity_at", "Opportunity", true),
-        searchRead(Estimate, ["project_name", "client_name", "estimate_number"], "-created_date", "Estimate", true),
+        searchRead(Estimate, ["project_name", "client_name", "estimate_number", "notes"], "-created_date", "Estimate", true),
         searchRead(Invoice, ["invoice_number", "customer_display_name"], "-updated_date", "Invoice", true),
         searchRead(PurchaseOrder, ["po_number", "vendor_name"], "-updated_date", "PurchaseOrder", true),
         searchRead(ChangeOrder, ["change_order_number", "title", "customer_display_name"], "-created_date", "ChangeOrder", true),
@@ -1284,14 +1284,32 @@ Deno.serve(async (req) => {
         }
         return out;
       };
+      // (#301) Deep estimate search: line_items is a nested array that the
+      // regex filter can't reach — merge a bounded recent-estimates scan so a
+      // client-side match over line-item VALUES covers it. Honest bound: deep
+      // matching spans the SEARCH_LIMIT most-recent estimates; older rows still
+      // match by name/number/notes via the regex path.
+      let estimatesScanned = estimates;
+      try {
+        const scanRows = await Estimate.filter({}, "-created_date", SEARCH_LIMIT).catch(() => []);
+        if (Array.isArray(scanRows) && scanRows.length) {
+          const seenIds = new Set((estimates || []).map((r: any) => clean(r?.id)));
+          estimatesScanned = [...(estimates || []), ...scanRows.filter((r: any) => !seenIds.has(clean(r?.id)))];
+        }
+      } catch { /* deep scan is best-effort — never fail the search */ }
+      const lineItemText = (r: any) => (Array.isArray(r?.line_items) ? r.line_items : [])
+        .map((li: any) => Object.values(li || {}).map((v) => clean(v)).join(" ")).join(" ").toLowerCase();
       const has = (row: any, fields: string[]) => fields.some((f) => clean(row?.[f]).toLowerCase().includes(query));
+      const hasEstimate = (row: any) =>
+        has(row, ["project_name", "client_name", "estimate_number", "notes"]) ||
+        lineItemText(row).includes(query);
       return Response.json({
         success: true,
         action,
         results: {
           opportunities: mergeLegacy("opportunities", opps.filter((r: any) => has(r, ["title", "customer_display_name", "salesperson"]))).slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), title: clean(r?.title), customer_display_name: clean(r?.customer_display_name), stage: clean(r?.stage), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
-          estimates: mergeLegacy("estimates", estimates.filter((r: any) => !r?.deleted && has(r, ["project_name", "client_name", "estimate_number"]))).slice(0, 10)
+          estimates: mergeLegacy("estimates", estimatesScanned.filter((r: any) => !r?.deleted && hasEstimate(r))).slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), project_name: clean(r?.project_name), client_name: clean(r?.client_name), estimate_number: clean(r?.estimate_number), status: clean(r?.status), legacy_source_id: clean(r?.legacy_source_id) || undefined })),
           invoices: mergeLegacy("invoices", invoices.filter((r: any) => has(r, ["invoice_number", "customer_display_name"]))).slice(0, 10)
             .map((r: any) => ({ id: clean(r?.id), invoice_number: clean(r?.invoice_number), customer_display_name: clean(r?.customer_display_name), status: clean(r?.status), total: num(r?.total) })),
