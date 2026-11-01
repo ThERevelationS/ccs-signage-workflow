@@ -137,17 +137,19 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
 
       <div className="px-4 py-2 flex flex-wrap items-center gap-2 border-b border-gray-100">
         <div className="flex-1 relative">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" aria-hidden="true" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search products..."
+            aria-label="Search products in this estimate"
             className="w-full h-[30px] pl-7 pr-2 border border-gray-200 rounded text-[12px]"
           />
         </div>
         <select
           value={moduleFilter}
           onChange={(e) => setModuleFilter(e.target.value)}
+          aria-label="Filter by product type"
           className="h-[30px] px-2 border border-gray-200 rounded text-[12px] text-gray-600 bg-white"
         >
           <option value="all">All product types</option>
