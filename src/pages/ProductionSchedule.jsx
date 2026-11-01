@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { buildWorkOrderSegments, stageColors, stageNames } from "@/components/workflow/workOrderTimelineSegments";
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, MapPin, Search } from "lucide-react";
