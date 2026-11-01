@@ -292,6 +292,33 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Single-quote link: an 'estimate' link opens exactly one quote's portal
+      // view — approve / request-changes / section responses work, scoped to
+      // this record in estimate_respond below. No invoices or other jobs.
+      if (clean(link.kind) === "estimate") {
+        const estimate = await Estimate.get(clean(link.record_id)).catch(() => null);
+        if (!estimate?.id || estimate?.deleted === true) throw bad("The linked quote is no longer available.", 404);
+        const announcements = await loadPortalAnnouncements(clean(link.customer_id) || clean(estimate.customer_id) || "");
+        const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: "default" }, label: "Portal quote defaults" }).catch(() => []);
+        const qd = (Array.isArray(quoteDefaults) ? quoteDefaults : [])[0] || {};
+        const companyBranding = { name: clean(qd?.company_name) || "CCS Signage", logo_url: clean(qd?.company_logo_url) };
+        const view = await estimatePortalView(estimate);
+        return Response.json({
+          success: true,
+          action,
+          kind: "estimate",
+          label: clean(link.label),
+          expires_at: clean(link.expires_at),
+          announcements,
+          company: companyBranding,
+          estimate: view,
+          estimates: [view],
+          customer: {
+            name: clean(link.label) || clean(estimate.client_name) || "Customer",
+          },
+        });
+      }
+
       // Single-job status tracker: a 'work_order' link opens exactly one job's
       // customer-safe status view — no invoices, payments, or other jobs.
       if (clean(link.kind) === "work_order") {
@@ -457,9 +484,13 @@ Deno.serve(async (req) => {
 
     if (action === "estimate_respond") {
       const link = await resolveLink(PortalLink, clean(body?.token));
-      if (clean(link.kind) !== "customer") throw bad("This portal link cannot respond to quotes.", 403);
+      const linkKind = clean(link.kind);
+      if (linkKind !== "customer" && linkKind !== "estimate") throw bad("This portal link cannot respond to quotes.", 403);
       const customerId = clean(link.customer_id) || clean(link.record_id);
       const estimateId = clean(body?.estimate_id);
+      // An estimate-scoped link may only respond to its own quote — never
+      // any other estimate id the caller names.
+      if (linkKind === "estimate" && clean(link.record_id) !== estimateId) throw bad("Quote not found.", 404);
       const decision = clean(body?.decision);
       const sectionKey = clean(body?.section_key);
       const estimate = await Estimate.get(estimateId).catch(() => null);
@@ -841,16 +872,18 @@ Deno.serve(async (req) => {
 
     if (action === "create_link") {
       const kind = clean(body?.kind) || "invoice";
-      const recordId = kind === "customer" ? clean(body?.customer_id) : kind === "staff_view" ? clean(body?.estimate_id) : kind === "work_order" ? clean(body?.work_order_id) : clean(body?.invoice_id);
-      if (!["invoice", "customer", "staff_view", "work_order"].includes(kind)) throw bad("kind must be invoice, customer, staff_view, or work_order.");
+      const recordId = kind === "customer" ? clean(body?.customer_id) : kind === "staff_view" || kind === "estimate" ? clean(body?.estimate_id) : kind === "work_order" ? clean(body?.work_order_id) : clean(body?.invoice_id);
+      if (!["invoice", "customer", "staff_view", "estimate", "work_order"].includes(kind)) throw bad("kind must be invoice, customer, staff_view, estimate, or work_order.");
       if (!recordId) throw bad(`${kind === "customer" ? "customer_id" : kind === "staff_view" ? "estimate_id" : "invoice_id"} is required.`);
       let customerId = "";
       let label = clean(body?.label);
-      if (kind === "staff_view") {
+      if (kind === "staff_view" || kind === "estimate") {
         const estimate = await Estimate.get(recordId).catch(() => null);
         if (!estimate?.id) throw bad("Estimate not found.", 404);
         customerId = clean(estimate.customer_id);
-        label = label || `Shared view ${clean(estimate.estimate_number) || recordId}`;
+        label = label || (kind === "estimate"
+          ? `Quote ${clean(estimate.estimate_number) || recordId}`
+          : `Shared view ${clean(estimate.estimate_number) || recordId}`);
       } else if (kind === "invoice") {
         const invoice = await Invoice.get(recordId).catch(() => null);
         if (!invoice?.id) throw bad("Invoice not found.", 404);

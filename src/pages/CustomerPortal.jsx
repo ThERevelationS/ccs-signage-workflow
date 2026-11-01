@@ -564,6 +564,7 @@ export default function CustomerPortal() {
   const data = state.data;
   const isCustomer = data?.kind === "customer";
   const isWorkOrder = data?.kind === "work_order";
+  const isEstimate = data?.kind === "estimate";
   const estimates = data?.estimates || [];
   const jobs = data?.jobs || [];
   const invoices = data?.invoices || [];
@@ -714,6 +715,17 @@ export default function CustomerPortal() {
 
         {!state.loading && data && !isCustomer && (
           <>
+            {isEstimate && (
+              <div className="space-y-4">
+                {estimates.filter((q) => q.can_respond).length > 0 && (
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-900">
+                    This quote is waiting for your response — approve it, request changes, or respond per section below.
+                  </div>
+                )}
+                {estimates.map((q) => <QuoteCard key={q.id} quote={q} onRespond={respond} busy={busy} />)}
+                <p className="text-center text-[11px] text-slate-400">Approve or respond right from this link — no account needed.</p>
+              </div>
+            )}
             {isWorkOrder && data.job && (
               <div className="space-y-4">
                 <JobCard job={data.job} busy={false} />

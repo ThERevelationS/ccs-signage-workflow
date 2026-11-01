@@ -44,6 +44,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
   const [deliveryId, setDeliveryId] = useState("");
   const [portalBusy, setPortalBusy] = useState(false);
   const [portalCopied, setPortalCopied] = useState(false);
+  const [quoteCopied, setQuoteCopied] = useState(false);
   const [portalError, setPortalError] = useState("");
   const { sessionToken } = useAuth();
 
@@ -169,6 +170,24 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     }
   };
 
+  const copyQuoteLink = async () => {
+    if (!estimate?.id || !sessionToken || portalBusy) return;
+    setPortalBusy(true);
+    setPortalError("");
+    try {
+      const data = await invokePortal(sessionToken, { action: "create_link", kind: "estimate", estimate_id: estimate.id, creation_request_key: crypto.randomUUID() });
+      const token = String(data?.token || data?.link?.token || "").trim();
+      if (!token) throw new Error("No quote link is available for this estimate.");
+      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);
+      setQuoteCopied(true);
+      window.setTimeout(() => setQuoteCopied(false), 2500);
+    } catch (err) {
+      setPortalError(err?.message || "The quote approval link could not be prepared.");
+    } finally {
+      setPortalBusy(false);
+    }
+  };
+
   const copyPortalLink = async () => {
     if (!portalCustomerId || !sessionToken || portalBusy) return;
     setPortalBusy(true);
@@ -245,10 +264,15 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
         )}
         {isRegistered && persistedStatus === "sent" && portalCustomerId && (
           <div className="mt-3 rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-center justify-between gap-3">
-            <div className="text-[10px] text-blue-800"><strong>Share the customer portal link</strong> so the customer can review and approve Quote Version {quoteVersion} online.</div>
-            <button type="button" onClick={copyPortalLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
-              {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />} {portalCopied ? "Link Copied" : "Copy Approval Link"}
-            </button>
+            <div className="text-[10px] text-blue-800"><strong>Share a link</strong> so the customer can approve Quote Version {quoteVersion} online — the quote link opens only this quote; the portal link opens their whole account.</div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button type="button" onClick={copyQuoteLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+                {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />} {quoteCopied ? "Quote link copied" : "Copy Quote Link"}
+              </button>
+              <button type="button" onClick={copyPortalLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
+                {portalCopied ? "Link Copied" : "Copy Portal Link"}
+              </button>
+            </div>
           </div>
         )}
         {portalError && <div className="mt-2 text-[9px] text-red-600">{portalError}</div>}
