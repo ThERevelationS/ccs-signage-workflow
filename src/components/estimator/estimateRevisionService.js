@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
 import { estimateAuditSnapshot } from "./estimateLifecycle";
 import { loadAllEntityRows, withRateLimitRetry } from "./loadAllEntityRows";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -124,6 +125,74 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ses
   if (result?.error) throw new Error(result.error);
   if (!result?.revision?.id) throw new Error("Estimate lifecycle revision could not be verified after recording.");
   return result.revision;
+}
+
+/**
+ * (#205) Guarded revert: restore the estimate to a target revision's
+ * `estimate_snapshot_before`, CAS-anchored on the estimate's CURRENT
+ * `updated_date` (plus per-field baselines) so a concurrent save can never
+ * be silently overwritten — a conflict aborts with "changed in another
+ * session" before anything is written. The revert itself is recorded as a
+ * new completed lifecycle revision (manual_revision type; the schema enum
+ * is closed so the reason/notes carry the revert identity), preserving the
+ * forward-only audit trail. The fresh estimate row is re-read inside the
+ * helper — the caller's loaded row is never trusted.
+ */
+export async function revertEstimateToRevision({
+  estimateId,
+  revisionId,
+  sessionToken = "",
+  entity = base44.entities.AllInOneEstimate,
+} = {}) {
+  const id = String(estimateId || "").trim();
+  if (!id) throw new Error("Estimate is required to revert.");
+  const revId = String(revisionId || "").trim();
+  if (!revId) throw new Error("A target revision is required to revert.");
+
+  const [revision, estimate] = await Promise.all([
+    base44.entities.EstimateRevision.get(revId),
+    entity.get(id),
+  ]);
+  if (!revision?.id) throw new Error("The target revision could not be loaded — reload the revision history.");
+  if (!estimate?.id) throw new Error("The estimate could not be loaded — reload before reverting.");
+  if (String(revision.estimate_id || "") !== id) {
+    throw new Error("That revision belongs to a different estimate.");
+  }
+  const snapshot = revision.estimate_snapshot_before;
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot) || !Object.keys(snapshot).length) {
+    throw new Error("This revision does not carry a restorable estimate snapshot.");
+  }
+
+  // Restore only fields the snapshot carries — fields introduced after the
+  // snapshot was taken keep their current values. edit_reason is cleared so
+  // the restored row doesn't look like a pending manual revision.
+  const nextFields = { ...snapshot, edit_reason: "" };
+  const saved = await replaceEstimateFieldsIfUnchanged({
+    entity,
+    estimateId: id,
+    expectedFields: expectedEstimateFields(estimate, nextFields),
+    guardFields: { updated_date: estimate.updated_date },
+    nextFields,
+    label: `Estimate revert to revision ${revision.revision_number || revId}`,
+  });
+
+  const revisionRow = await ensureEstimateLifecycleRevision({
+    // Anchored on the pre-write version: a retry after a partial commit
+    // re-reads the estimate (new updated_date → new key → a new audit row
+    // is recorded rather than silently skipped).
+    idempotencyKey: `revert:${revId}:${estimate.updated_date}`,
+    sessionToken,
+    estimateBefore: estimate,
+    estimateAfter: saved,
+    reason: `Reverted estimate to revision #${revision.revision_number || "?"} (${revision.reason || "no reason recorded"})`,
+    revisionType: "manual_revision",
+    quoteTotalBefore: estimate.quote_total,
+    quoteTotalAfter: snapshot.quote_total,
+    internalCostBefore: estimate.total_cost,
+    internalCostAfter: snapshot.total_cost,
+    workOrderId: saved.work_order_id || estimate.work_order_id || "",
+  });
+  return { estimate: saved, revertRevision: revisionRow, targetRevision: revision };
 }
 
 export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence, sessionToken = "" }) {
