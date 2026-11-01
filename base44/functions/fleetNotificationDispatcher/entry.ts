@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { getCanonicalFleetSettings } from '../../shared/fleetSettingsSingleton.ts';
 import { hasInternalFunctionCapability } from '../../shared/internalFunctionCapability.ts';
@@ -18,7 +19,7 @@ const fluidIsLowStock = (item: any) => {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     // Backend callers (fleet* actions) invoke service-role — they carry no user,
     // so the admin check alone 403'd every legitimate enqueue. An internal
