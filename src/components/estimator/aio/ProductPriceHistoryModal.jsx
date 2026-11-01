@@ -51,7 +51,7 @@ export default function ProductPriceHistoryModal({ open, line, onClose }) {
       <DialogContent className="sm:max-w-[820px] p-0 overflow-hidden border-gray-300 shadow-2xl">
         <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
           <DialogTitle className="text-white text-[16px] flex items-center gap-2">
-            <History className="w-5 h-5 text-lime-300" /> Product Price History
+            <History className="w-5 h-5 text-lime-300" aria-hidden="true" /> Product Price History
           </DialogTitle>
           <p className="text-[11px] text-gray-300 mt-1">
             Immutable accepted-pricing revisions. Internal cost and customer selling price are shown separately.
@@ -71,12 +71,12 @@ export default function ProductPriceHistoryModal({ open, line, onClose }) {
           </div>
 
           {loading ? (
-            <div className="py-10 text-center text-[12px] text-gray-400">Loading pricing history…</div>
+            <div role="status" className="py-10 text-center text-[12px] text-gray-400">Loading pricing history…</div>
           ) : error ? (
-            <div className="rounded border border-red-200 bg-red-50 px-3 py-3 text-[11px] text-red-700">{error}</div>
+            <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-3 text-[11px] text-red-700">{error}</div>
           ) : rows.length === 0 ? (
             <div className="py-10 text-center text-gray-400">
-              <PackageSearch className="w-7 h-7 mx-auto mb-2 text-gray-300" />
+              <PackageSearch className="w-7 h-7 mx-auto mb-2 text-gray-300" aria-hidden="true" />
               <div className="text-[12px]">No accepted pricing revisions have been recorded for this Product yet.</div>
             </div>
           ) : (
@@ -100,12 +100,12 @@ export default function ProductPriceHistoryModal({ open, line, onClose }) {
                       </div>
                       <div className="px-2 py-2.5 flex items-center gap-1.5 whitespace-nowrap">
                         <span>{money(row.previous_total_cost || 0)}</span>
-                        <ArrowRight className="w-3 h-3 text-gray-300" />
+                        <ArrowRight className="w-3 h-3 text-gray-300" aria-hidden="true" />
                         <strong className="text-gray-900">{money(row.new_total_cost || 0)}</strong>
                       </div>
                       <div className="px-2 py-2.5 flex items-center gap-1.5 whitespace-nowrap">
                         <span>{money(row.previous_customer_price || 0)}</span>
-                        <ArrowRight className="w-3 h-3 text-gray-300" />
+                        <ArrowRight className="w-3 h-3 text-gray-300" aria-hidden="true" />
                         <strong className="text-gray-900">{money(row.new_customer_price || 0)}</strong>
                       </div>
                       <div className="px-2 py-2.5">{changedParts} changed</div>
