@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, History, LockKeyhole, PencilLine, RefreshCw,
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { isEstimateProtected, requiresEstimateLifecycleReason, summarizeEstimateChanges } from "./estimateLifecycle";
 import { listEstimateRevisions, revertEstimateToRevision } from "./estimateRevisionService";
+import { staffEntities } from "@/components/staff/staffEntities";
 
 const TYPE_LABELS = {
   manual_revision: "Manual revision",
@@ -192,6 +193,10 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
         estimateId: estimate?.id,
         revisionId: row.id,
         sessionToken,
+        // Staff sessions write through the gateway — the base44 entity client
+        // only works for platform-authenticated users on this backend-RLS
+        // entity.
+        entity: sessionToken ? staffEntities.AllInOneEstimate : undefined,
       });
       reloadRevisions();
       onReverted?.(result);
