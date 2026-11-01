@@ -7,6 +7,22 @@ function normalize(value) {
   }, {});
 }
 
+/**
+ * CAS field compare — intended null / undefined / "" semantics:
+ * - The three empty-ish values are DISTINCT: a stored null never equals a
+ *   missing key (undefined) or an empty string. Clearing a field to null
+ *   therefore counts as a change vs both absent and "" — deliberate, so a
+ *   concurrent clear is never silently treated as "already unchanged".
+ * - Inside objects, a key explicitly set to undefined serializes identically
+ *   to a missing key (JSON.stringify drops both) — only top-level undefined
+ *   is distinguishable.
+ * - Numeric tolerance: when BOTH sides are non-empty and coerce to finite
+ *   numbers, compare with a 1e-6 epsilon, so "12.5" equals 12.5 but the
+ *   empty-ish values never take the numeric branch.
+ * - Everything else compares JSON.stringify of the normalize tree, whose
+ *   object keys are sorted recursively — object key order never affects
+ *   equality; array order still does (arrays are positional).
+ */
 function sameValue(a, b) {
   if (a !== null && a !== undefined && a !== "" && b !== null && b !== undefined && b !== "") {
     if (Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
@@ -20,11 +36,13 @@ export function expectedEstimateFields(record = {}, nextFields = {}) {
   const expected = Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
   );
-  // Guard the trash flag when the loaded row stored it — a CAS write that
-  // doesn't itself touch `deleted` must still fail when the loaded row has
-  // since been trashed. Skipping absent `deleted` keys keeps undefined-vs-
-  // false/null storage shapes from breaking the compare on rows that never
-  // persisted the flag.
+  // Carry the loaded trash flag into the baseline so Trash-lifecycle writes
+  // (soft-delete/restore declare `deleted` in nextFields) compare against the
+  // real stored value rather than an absent key. Writes that do NOT declare
+  // `deleted` are instead blocked outright by the refuse-on-trashed check
+  // inside replaceEstimateFieldsIfUnchanged. Skipping absent `deleted` keys
+  // keeps undefined-vs-false/null storage shapes from breaking the compare on
+  // rows that never persisted the flag.
   if (!Object.prototype.hasOwnProperty.call(expected, "deleted") && Object.prototype.hasOwnProperty.call(record || {}, "deleted")) {
     expected.deleted = record?.deleted;
   }
