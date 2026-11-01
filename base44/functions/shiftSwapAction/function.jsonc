@@ -1,4 +1,4 @@
 {
   "name": "shiftSwapAction",
-  "entry": "base44/functions/shiftSwapAction/entry.ts"
+  "entry": "entry.ts"
 }

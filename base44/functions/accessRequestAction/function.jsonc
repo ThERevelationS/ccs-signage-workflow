@@ -1,4 +1,4 @@
 {
   "name": "accessRequestAction",
-  "entry": "base44/functions/accessRequestAction/entry.ts"
+  "entry": "entry.ts"
 }

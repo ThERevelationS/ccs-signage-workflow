@@ -1,4 +1,4 @@
 {
   "name": "dailyAnomalyDigest",
-  "entry": "base44/functions/dailyAnomalyDigest/entry.ts"
+  "entry": "entry.ts"
 }

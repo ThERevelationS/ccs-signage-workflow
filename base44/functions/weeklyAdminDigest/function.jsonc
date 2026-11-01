@@ -1,4 +1,4 @@
 {
   "name": "weeklyAdminDigest",
-  "entry": "base44/functions/weeklyAdminDigest/entry.ts"
+  "entry": "entry.ts"
 }
