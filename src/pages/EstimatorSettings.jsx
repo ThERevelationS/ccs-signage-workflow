@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Settings, ArrowRight, ShieldCheck, Save, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -25,6 +25,23 @@ const LINKS = [
 ];
 
 export default function EstimatorSettings() {
+  // #316 — ?tab=<section> deep-link. This hub page has no tab UI; the only
+  // tab-addressable section is the Quote Approval card (?tab=quote_approval
+  // scrolls + flashes it). Nothing writes the param back since there is no
+  // tab control to change. Per-module settings tabs live on their own pages.
+  const approvalRef = useRef(null);
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab") || "";
+    if (tab !== "quote_approval") return;
+    const el = approvalRef.current;
+    if (!el) return;
+    const t = window.setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.classList.add("ring-4", "ring-blue-300");
+      window.setTimeout(() => el.classList.remove("ring-4", "ring-blue-300"), 3500);
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, []);
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-3">
@@ -45,7 +62,9 @@ export default function EstimatorSettings() {
           ))}
         </div>
 
-        <QuoteApprovalCard />
+        <div ref={approvalRef}>
+          <QuoteApprovalCard />
+        </div>
       </div>
     </div>
   );
