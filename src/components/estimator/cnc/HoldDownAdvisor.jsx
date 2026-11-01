@@ -11,7 +11,7 @@ export default function HoldDownAdvisor({ advice }) {
       }`}
     >
       <div className="flex items-center gap-1.5 font-semibold mb-1">
-        {warn ? <AlertTriangle className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+        {warn ? <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" /> : <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />}
         Hold-Down Advisor
       </div>
       <p>{advice.recommendation}</p>
