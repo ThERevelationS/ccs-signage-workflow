@@ -32,7 +32,7 @@ export default function ProductNotesModal({ open, line, onClose, onSave }) {
       <DialogContent className="sm:max-w-[620px] p-0 overflow-hidden border-gray-300 shadow-xl">
         <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
           <DialogTitle className="text-white text-[16px] flex items-center gap-2">
-            <StickyNote className="w-5 h-5 text-lime-300" /> Manage Product Notes
+            <StickyNote className="w-5 h-5 text-lime-300" aria-hidden="true" /> Manage Product Notes
           </DialogTitle>
           <p className="text-[11px] text-gray-300 mt-1">
             Internal Product notes are preserved with clones, Quick Products and clipboard copies. They are separate from the customer-facing description.
@@ -55,7 +55,7 @@ export default function ProductNotesModal({ open, line, onClose, onSave }) {
               className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-[12px] leading-5 resize-y min-h-[150px]"
             />
           </label>
-          {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
           <div className="flex justify-end gap-2">
             <button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
             <button type="submit" disabled={saving} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">
