@@ -45,6 +45,51 @@ await assert.rejects(
   loadAllEntityRows({ entity: {} }),
   /could not initialize/, 'missing reader throws');
 
+// --- loadAllEntityRows: `limit` bounds total rows and never over-fetches (#403)
+{
+  // limit: 4 with pageSize 3 -> page 1 takes 3, page 2 requests only 1 more.
+  const calls = [];
+  const entity = {
+    list: async (sort, limit, skip) => {
+      calls.push({ limit, skip });
+      return Array.from({ length: limit }, (_, i) => ({ id: `r${skip + i}` }));
+    },
+  };
+  const rows = await loadAllEntityRows({ entity, pageSize: 3, limit: 4 });
+  assert.equal(rows.length, 4, 'bounded read returns exactly the limit');
+  assert.deepEqual(calls, [{ limit: 3, skip: 0 }, { limit: 1, skip: 3 }], 'page size shrinks to the remaining bound');
+}
+{
+  // limit below pageSize -> a single bounded request, no full page fetched.
+  const calls = [];
+  const entity = {
+    list: async (sort, limit, skip) => { calls.push(limit); return Array.from({ length: limit }, (_, i) => ({ id: `r${i}` })); },
+  };
+  const rows = await loadAllEntityRows({ entity, pageSize: 500, limit: 50 });
+  assert.equal(rows.length, 50, 'limit: 50 costs one 50-row request');
+  assert.deepEqual(calls, [50], 'never fetched the 500-row page');
+}
+{
+  // limit with fewer rows than the bound -> all rows, normal early return.
+  const entity = { list: async (sort, limit) => [{ id: 'a' }, { id: 'b' }].slice(0, limit) };
+  const rows = await loadAllEntityRows({ entity, pageSize: 10, limit: 100 });
+  assert.equal(rows.length, 2, 'short catalog returns everything');
+}
+{
+  // Dedupe still applies inside a bounded read.
+  const entity = { list: async (sort, limit, skip) => (skip === 0 ? [{ id: 'x' }, { id: 'x' }, { id: 'y' }] : []) };
+  const rows = await loadAllEntityRows({ entity, pageSize: 3, limit: 6 });
+  assert.equal(rows.length, 2, 'bounded read dedupes by id');
+}
+{
+  // maxRows (the safety net) still throws when a full scan would pass it —
+  // unlike `limit`, which is a normal truncation.
+  const entity = { list: async (sort, limit) => Array.from({ length: limit }, (_, i) => ({ id: `r${i}` })) };
+  await assert.rejects(
+    loadAllEntityRows({ entity, pageSize: 10, maxRows: 10 }),
+    /safety limit/, 'unbounded scan past maxRows still fails closed');
+}
+
 // --- newCreationRequestKey
 {
   const k = newCreationRequestKey('estimate');
@@ -92,4 +137,4 @@ await assert.rejects(
   })(),
   /Do not retry blindly/, 'unverifiable failed create refuses blind retry');
 
-console.log('PASS entity persistence (16 cases)');
+console.log('PASS entity persistence (23 cases)');
