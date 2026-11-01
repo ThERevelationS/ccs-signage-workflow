@@ -1,5 +1,5 @@
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+// html2canvas + jspdf (~1.3MB) load on demand inside the export handler —
+// not when the estimator bundle loads.
 import { formatQuoteIssueDate, quoteExpirationDate } from "./quoteLifecycle";
 
 const safeFilePart = (value, fallback) => {
@@ -21,6 +21,10 @@ export async function generateCustomerQuotePdf({
   quoteVersion = 0,
   quoteValidDays = 30,
 }) {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
   const source = document.getElementById(elementId);
   if (!source) throw new Error("Customer quote preview is not available.");
 
