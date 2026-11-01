@@ -68,6 +68,7 @@ export async function withRateLimitRetry(fn) {
  *   pageSize?: number,
  *   maxRows?: number,
  *   label?: string,
+ *   limit?: number | null,
  * }} [options]
  */
 // Short-TTL in-memory cache for slow-changing catalogs (jurisdiction/locality
@@ -90,8 +91,15 @@ export async function loadAllEntityRows({
   maxRows = DEFAULT_MAX_ROWS,
   label = "Estimator prerequisite catalog",
   cacheTtlMs = 0,
+  // (#403) `limit` bounds the total rows returned for callers that only need a
+  // window (e.g. "the 50 newest"), not a verified-complete catalog. Reaching
+  // the bound is a normal truncation — unlike `maxRows`, which stays a
+  // runaway-scan safety net and still throws when a full scan would pass it.
+  limit = null,
 } = {}) {
-  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, maxRows]) : null;
+  const parsedLimit = limit == null ? null : Math.floor(Number(limit));
+  const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, safeLimit ?? maxRows]) : null;
   if (cacheKey) {
     const hit = readCache.get(cacheKey);
     if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
@@ -103,16 +111,19 @@ export async function loadAllEntityRows({
   }
 
   const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || DEFAULT_PAGE_SIZE));
-  const safeMaxRows = Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
+  // A bounded read never fetches a page larger than the rows still wanted —
+  // `limit: 50` costs exactly one 50-row request, not a 500-row page.
+  const safeMaxRows = safeLimit ?? Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
   const collected = [];
   const seen = new Set();
   let skip = 0;
 
   while (skip < safeMaxRows) {
+    const pageLimit = Math.min(safePageSize, safeMaxRows - skip);
     const page = await withRateLimitRetry(() =>
       hasFilter
-        ? entity.filter(query, sort || undefined, safePageSize, skip)
-        : entity.list(sort || undefined, safePageSize, skip)
+        ? entity.filter(query, sort || undefined, pageLimit, skip)
+        : entity.list(sort || undefined, pageLimit, skip)
     );
 
     if (!Array.isArray(page)) {
@@ -127,12 +138,16 @@ export async function loadAllEntityRows({
       collected.push(row);
     }
 
-    if (page.length < safePageSize) {
+    if (page.length < pageLimit) {
       if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
       return collected;
     }
-    skip += safePageSize;
+    skip += pageLimit;
   }
 
+  if (safeLimit != null) {
+    if (cacheKey) readCache.set(cacheKey, { at: Date.now(), rows: collected });
+    return collected;
+  }
   throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
 }
