@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
+import { Search, Zap } from "lucide-react";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { createQuickPriceProjectWithRecovery } from "@/components/estimator/quickPricePersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -50,6 +50,29 @@ export default function QuickPrice() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState(readHistory);
   const createRef = useRef(false);
+  // #321 — history search over name/client/module, seeded from ?q= and
+  // written back via replaceState (satisfies the documented prerequisite:
+  // the history list previously had no search input at all).
+  const [historyQuery, setHistoryQuery] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    try {
+      const next = new URLSearchParams(window.location.search);
+      const v = historyQuery.trim();
+      if (v) next.set("q", v); else next.delete("q");
+      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+    } catch {}
+  }, [historyQuery]);
+  const filteredHistory = useMemo(() => {
+    const q = historyQuery.trim().toLowerCase();
+    if (!q) return history;
+    return history.filter((entry) =>
+      [entry.project_name, entry.client_name, entry.module_label, entry.module_key]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [history, historyQuery]);
 
   const recordHistory = (entry) => {
     const next = [entry, ...history.filter((row) => row.id !== entry.id)].slice(0, HISTORY_LIMIT);
@@ -169,7 +192,7 @@ export default function QuickPrice() {
 
         {history.length > 0 && (
           <div className="bg-white p-4 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-xs font-bold tracking-wide text-gray-600">RECENT QUICK PRICES</h2>
               <button type="button"
                 onClick={clearHistory}
@@ -178,8 +201,20 @@ export default function QuickPrice() {
                 Clear history
               </button>
             </div>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <Input
+                value={historyQuery}
+                onChange={(e) => setHistoryQuery(e.target.value)}
+                placeholder="Filter by name, client or module..."
+                className="h-8 pl-8 text-xs bg-white/80"
+              />
+            </div>
             <ul className="divide-y divide-gray-100">
-              {history.map((entry) => {
+              {filteredHistory.length === 0 && (
+                <li className="py-3 text-center text-xs text-gray-400">No recent quick prices match.</li>
+              )}
+              {filteredHistory.map((entry) => {
                 const mod = ESTIMATOR_MODULES.find((m) => m.key === entry.module_key);
                 return (
                   <li key={entry.id} className="py-2 flex items-center gap-2">
