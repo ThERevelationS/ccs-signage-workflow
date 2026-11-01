@@ -2,7 +2,8 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive } from "lucide-react";
+import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive, Briefcase, Layers } from "lucide-react";
+import { convertEstimateToWorkOrder, convertEstimatesToSharedWorkOrder } from "@/components/estimator/estimateConversionService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp, formatInCompanyTz, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { restoreEstimateFromLoadedTrashSnapshot, permanentlyDeleteTrashedEstimate, softDeleteEstimateFromLoadedSnapshot, expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
@@ -111,6 +112,8 @@ export default function EstimatorQueues() {
   const [bulkStatus, setBulkStatus] = useState("sent");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkError, setBulkError] = useState("");
+  const [convertBusy, setConvertBusy] = useState("");
+  const [convertResults, setConvertResults] = useState(null);
   const mine = params.get("mine") === "1";
   const [me, setMe] = useState(null);
   const [companyTz, setCompanyTz] = useState("");
@@ -184,6 +187,89 @@ export default function EstimatorQueues() {
     if (failures.length) notes.push(`Bulk update partially failed: ${failures.slice(0, 3).join(" · ")}${failures.length > 3 ? ` (+${failures.length - 3} more)` : ""}`);
     if (notes.length) setBulkError(notes.join(" "));
     try { const reloaded = await loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
+  };
+
+  // (#192 / #180) Queue-level conversion through the same shared pipeline as
+  // ConvertToWorkOrder: separate-jobs bulk mode converts each Approved pick
+  // independently; combined mode merges every pick onto ONE canonical Work
+  // Order. Credit holds block non-interactively here — a hold/limit override
+  // still happens in Estimate Detail where the confirm is interactive. Every
+  // estimate reports its own outcome; nothing fails silently.
+  const runBulkConvert = async (combine = false) => {
+    if (convertBusy || bulkBusy) return;
+    const picks = [...selectedIds].map((id) => estimates.find((e) => e.id === id)).filter(Boolean);
+    const eligible = picks.filter((e) => e?.deleted !== true && (e.status || "draft") === "approved");
+    const ineligible = picks.length - eligible.length;
+    if (!eligible.length || (combine && eligible.length < 2)) {
+      setConvertResults({
+        errors: [combine && eligible.length < 2
+          ? "Combined conversion needs at least two selected Approved estimates."
+          : "Select at least one Approved estimate to convert."],
+        rows: [],
+        skipped: ineligible,
+      });
+      return;
+    }
+    if (combine && !window.confirm(
+      `Combine ${eligible.length} approved estimates into ONE shared Work Order?\n\n` +
+      "Sections, tasks and material manifests merge on the job and every estimate links to it. " +
+      "All picks must resolve to the same customer.",
+    )) return;
+    setConvertBusy(combine ? "combine" : "bulk");
+    setConvertResults(null);
+    setTrashError("");
+    try {
+      const sessionToken = queueSessionToken();
+      const ents = { Estimate: staffEntities.AllInOneEstimate, WorkOrder: staffEntities.WorkOrder };
+      if (combine) {
+        const res = await convertEstimatesToSharedWorkOrder({
+          estimates: eligible,
+          sessionToken,
+          currentUser: me || user,
+          entities: ents,
+        });
+        setConvertResults({
+          workOrderId: res.work_order_id || "",
+          reason: res.reason || "",
+          rows: [...(res.results || []), ...(res.rejected || []).map((r) => ({ ...r, status: "rejected" }))],
+          skipped: ineligible,
+        });
+      } else {
+        const out = [];
+        for (const e of eligible) {
+          try {
+            const r = await convertEstimateToWorkOrder({
+              estimate: e,
+              pricing: { quoteTotal: Number.isFinite(Number(e.quote_total)) ? Number(e.quote_total) : undefined },
+              sessionToken,
+              currentUser: me || user,
+              entities: ents,
+            });
+            out.push({
+              estimate_id: e.id,
+              estimate_number: e.estimate_number || e.project_name || e.id.slice(0, 8),
+              status: r.status,
+              work_order_id: r.workOrder?.id || "",
+              reason: r.reason || "",
+            });
+          } catch (err) {
+            out.push({
+              estimate_id: e.id,
+              estimate_number: e.estimate_number || e.project_name || e.id.slice(0, 8),
+              status: "failed",
+              reason: err?.message || "Conversion failed.",
+            });
+          }
+        }
+        setConvertResults({ rows: out, skipped: ineligible });
+      }
+      setSelectedIds(new Set());
+      try { const reloaded = await loadAllEntityRows({ entity: staffEntities.AllInOneEstimate, sort: "-created_date", label: "Estimator queue" }); setEstimates(reloaded); } catch {}
+    } catch (err) {
+      setConvertResults({ errors: [err?.message || "Conversion failed."], rows: [], skipped: ineligible });
+    } finally {
+      setConvertBusy("");
+    }
   };
 
   const writeParams = (key, value) => {
@@ -595,9 +681,39 @@ export default function EstimatorQueues() {
                   <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="h-7 rounded border border-gray-300 bg-white px-2 text-[11px] font-semibold text-gray-700">
                     {allEstimateStatuses(customStatuses).map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applyingâ€¦" : "Apply status"}</button>
+                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy || !!convertBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applyingâ€¦" : "Apply status"}</button>
+                  <button type="button" onClick={() => runBulkConvert(false)} disabled={bulkBusy || !!convertBusy} title="Convert each selected Approved estimate to its own Work Order (per-estimate results below)" className="h-7 px-3 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 disabled:opacity-50 inline-flex items-center gap-1"><Briefcase className="w-3 h-3" />{convertBusy === "bulk" ? "Converting…" : "Convert to Work Orders"}</button>
+                  <button type="button" onClick={() => runBulkConvert(true)} disabled={bulkBusy || !!convertBusy} title="Merge all selected Approved estimates (same customer) into one shared Work Order" className="h-7 px-3 rounded border border-sky-300 bg-sky-50 text-sky-700 text-[11px] font-bold hover:bg-sky-100 disabled:opacity-50 inline-flex items-center gap-1"><Layers className="w-3 h-3" />{convertBusy === "combine" ? "Combining…" : "Combine into one WO"}</button>
                   <button type="button" onClick={() => setSelectedIds(new Set())} className="h-7 px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-red-300">Clear</button>
                   {bulkError && <span role="status" className="text-[10px] text-red-600">{bulkError}</span>}
+                </div>
+              )}
+              {convertResults && (
+                <div role="status" className="px-4 py-2.5 bg-emerald-50/50 border-b border-emerald-100 text-[11px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-emerald-800">
+                      Work Order conversion results
+                      {convertResults.workOrderId ? ` · shared WO ${String(convertResults.workOrderId).slice(0, 8)}` : ""}
+                    </span>
+                    <button type="button" onClick={() => setConvertResults(null)} className="text-emerald-600 font-bold">Dismiss</button>
+                  </div>
+                  {(convertResults.errors || []).map((err, i) => (
+                    <div key={`e${i}`} className="mt-1 text-red-700">{err}</div>
+                  ))}
+                  {convertResults.reason ? <div className="mt-1 text-amber-700">{convertResults.reason}</div> : null}
+                  {convertResults.skipped ? <div className="mt-1 text-gray-500">{convertResults.skipped} selected row{convertResults.skipped === 1 ? "" : "s"} skipped — only Approved estimates convert.</div> : null}
+                  <ul className="mt-1 space-y-0.5">
+                    {(convertResults.rows || []).map((r) => (
+                      <li key={r.estimate_id || r.estimate_number} className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-700">{r.estimate_number || String(r.estimate_id || "").slice(0, 8)}</span>
+                        <span className={r.status === "converted" || r.status === "linked" ? "text-emerald-700 font-bold" : "text-red-700 font-semibold"}>
+                          {r.status === "converted" ? "→ Work Order created/linked" : r.status === "linked" ? "→ linked to shared Work Order" : r.status}
+                        </span>
+                        {r.work_order_id && <span className="text-gray-400">WO {String(r.work_order_id).slice(0, 8)}</span>}
+                        {r.reason && <span className="text-gray-500">— {r.reason}</span>}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {rows.slice(0, visibleCount).map((e) => {
