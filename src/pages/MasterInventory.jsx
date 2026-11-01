@@ -34,6 +34,15 @@ export default function MasterInventory() {
   const [itemsBySource, setItemsBySource] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
+  // #319 — ?status= / ?sort= read at load and written back via writeParam.
+  // Items have no status field; is_active is the honest stand-in (rows that
+  // simply lack the column count as active).
+  const [statusFilter, setStatusFilter] = useState(() => {
+    try { const v = new URLSearchParams(window.location.search).get("status") || ""; return ["active", "inactive"].includes(v) ? v : ""; } catch { return ""; }
+  });
+  const [sort, setSort] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("sort") || ""; } catch { return ""; }
+  });
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showImporter, setShowImporter] = useState(false);
@@ -112,14 +121,25 @@ export default function MasterInventory() {
   const items = itemsBySource[activeKey] || [];
 
   const filteredItems = useMemo(() => {
-    if (!search.trim()) return items;
-    const q = search.toLowerCase();
-    return items.filter((it) =>
-      Object.values(it).some(
-        (v) => v !== null && v !== undefined && String(v).toLowerCase().includes(q)
-      )
-    );
-  }, [items, search]);
+    let list = items;
+    if (statusFilter === "active") list = list.filter((it) => it.is_active !== false);
+    else if (statusFilter === "inactive") list = list.filter((it) => it.is_active === false);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((it) =>
+        Object.values(it).some(
+          (v) => v !== null && v !== undefined && String(v).toLowerCase().includes(q)
+        )
+      );
+    }
+    const nameOf = (it) => String(it?.[activeSource?.nameField] ?? "");
+    const sorted = [...list];
+    if (sort === "name_asc") sorted.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+    else if (sort === "name_desc") sorted.sort((a, b) => nameOf(b).localeCompare(nameOf(a)));
+    else if (sort === "newest") sorted.sort((a, b) => String(b.created_date || "").localeCompare(String(a.created_date || "")));
+    else if (sort === "oldest") sorted.sort((a, b) => String(a.created_date || "").localeCompare(String(b.created_date || "")));
+    return sorted;
+  }, [items, search, statusFilter, sort, activeSource]);
 
   const exportCsvFor = (source) => {
     const cols = (source?.fields || []).filter((f) => f?.table && f?.name);
@@ -316,6 +336,28 @@ export default function MasterInventory() {
                             className="pl-9"
                           />
                         </div>
+                        <select
+                          aria-label="Active status filter"
+                          value={statusFilter}
+                          onChange={(e) => { const v = e.target.value; setStatusFilter(v); writeParam("status", v); }}
+                          className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600"
+                        >
+                          <option value="">All statuses</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                        <select
+                          aria-label="Sort items"
+                          value={sort}
+                          onChange={(e) => { const v = e.target.value; setSort(v); writeParam("sort", v); }}
+                          className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600"
+                        >
+                          <option value="">Default order</option>
+                          <option value="name_asc">Name A-Z</option>
+                          <option value="name_desc">Name Z-A</option>
+                          <option value="newest">Newest</option>
+                          <option value="oldest">Oldest</option>
+                        </select>
                         <Button
                           type="button"
                           variant="outline"
