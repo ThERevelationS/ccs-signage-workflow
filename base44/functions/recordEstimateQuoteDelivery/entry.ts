@@ -314,7 +314,7 @@ Deno.serve(async (req) => {
         payload.contact_warning = "Quote delivery is recorded, but the recipient could not be added to Customer Contacts.";
       }
       // last_contacted_at tracks real customer contact (quote sent) for reporting.
-      const customerId = clean(estimate?.customer_id);
+      const customerId = cleanText(estimate?.customer_id);
       if (customerId) {
         await base44.asServiceRole.entities.Customer.updateMany(
           { id: customerId },
