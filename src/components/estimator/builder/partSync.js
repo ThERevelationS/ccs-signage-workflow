@@ -3011,6 +3011,21 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     return created;
   };
 
+  // (#419) Writes keep their per-row CAS guards — updateMany can't express a
+  // different expected-state/patch per row — but they now run in a bounded
+  // pool so a large sync doesn't spend N serial round-trips on the wire.
+  // `synced` slots are reserved at queue time so result order stays
+  // deterministic and matches descriptor order.
+  const WRITE_CONCURRENCY = 4;
+  const writeJobs = [];
+  const queueWrite = (work) => {
+    const slot = synced.length;
+    synced.push(null);
+    writeJobs.push(async () => {
+      synced[slot] = await work();
+    });
+  };
+
   for (let index = 0; index < descriptors.length; index += 1) {
     const descriptor = descriptors[index];
     seen.add(descriptor.part_key);
@@ -3034,7 +3049,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       };
       if (!skipUnchangedWrites || patchDiffers(old, corePatch)) {
         const patch = { ...corePatch, last_price_check_at: syncNow() };
-        synced.push(await writePartUpdate(old, patch));
+        queueWrite(() => writePartUpdate(old, patch));
       } else {
         synced.push(old);
       }
@@ -3094,7 +3109,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         changedCount += 1;
         newPartCount += 1;
       }
-      const created = await writePartCreate({
+      queueWrite(() => writePartCreate({
         builder_product_id: builderProduct.id,
         part_key: descriptor.part_key,
         sort_order: index,
@@ -3146,8 +3161,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           : establishBaseline
             ? ""
             : "New Builder Part added after the Product price was frozen. Frozen cost remains $0 until Update Price is explicitly accepted.",
-      });
-      synced.push(created);
+      }));
       continue;
     }
 
@@ -3205,10 +3219,35 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
 
     if (!skipUnchangedWrites || patchDiffers(old, patch)) {
       const writePatch = { ...patch, last_price_check_at: timestamp };
-      synced.push(await writePartUpdate(old, writePatch));
+      queueWrite(() => writePartUpdate(old, writePatch));
     } else {
       synced.push(old);
     }
+  }
+
+  // (#419) Manual add-ons each used to pay a serial inventory row read; fetch
+  // the needed rows in one bounded parallel pre-pass before the update loop.
+  const addonRowKeys = new Map();
+  for (const old of existing || []) {
+    if (seen.has(old.part_key) || old.is_active === false) continue;
+    if (old.builder_sync_state !== "manual_addon") continue;
+    if (!old.inventory_entity || !old.inventory_item_id || old.manual_cost_override) continue;
+    const key = `${old.inventory_entity}:${old.inventory_item_id}`;
+    if (!inventoryRowsOverride?.has(key) && !addonRowKeys.has(key)) addonRowKeys.set(key, old);
+  }
+  const addonRows = new Map();
+  const addonKeys = [...addonRowKeys.keys()];
+  for (let i = 0; i < addonKeys.length; i += WRITE_CONCURRENCY) {
+    await Promise.all(addonKeys.slice(i, i + WRITE_CONCURRENCY).map(async (key) => {
+      const part = addonRowKeys.get(key);
+      try {
+        addonRows.set(key, await staffEntities[part.inventory_entity].get(part.inventory_item_id));
+      } catch (error) {
+        if (strictCatalogs) {
+          throw new Error(`${part.inventory_entity} inventory could not be verified for Part “${part.part_name || "Part"}”: ${error?.message || "read failed"}`);
+        }
+      }
+    }));
   }
 
   for (const old of existing || []) {
@@ -3222,20 +3261,16 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
       // Intentional independent add-ons are not produced by the Builder, but
       // they still track their own Master Inventory record for current-price
       // comparison and remain part of the Product economics on every Builder save.
-      let refreshed = old;
+      // Reserve the synced slot now; a queued refresh write overwrites it.
+      const syncedSlot = synced.length;
+      synced.push(old);
       if (old.inventory_entity && old.inventory_item_id && !old.manual_cost_override) {
         let currentRow = null;
         const inventoryKey = `${old.inventory_entity}:${old.inventory_item_id}`;
         if (inventoryRowsOverride?.has(inventoryKey)) {
           currentRow = inventoryRowsOverride.get(inventoryKey);
         } else {
-          try {
-            currentRow = await staffEntities[old.inventory_entity].get(old.inventory_item_id);
-          } catch (error) {
-            if (strictCatalogs) {
-              throw new Error(`${old.inventory_entity} inventory could not be verified for Part “${old.part_name || "Part"}”: ${error?.message || "read failed"}`);
-            }
-          }
+          currentRow = addonRows.get(inventoryKey) || null;
         }
         if (currentRow) {
           const currentUnit = independentPartUnitCost(old, currentRow);
@@ -3255,7 +3290,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           if (changed) changedCount += 1;
           if (!skipUnchangedWrites || patchDiffers(old, patch)) {
             const writePatch = { ...patch, last_price_check_at: syncNow() };
-            refreshed = await writePartUpdate(old, writePatch);
+            writeJobs.push(async () => { synced[syncedSlot] = await writePartUpdate(old, writePatch); });
           }
         } else {
           const patch = {
@@ -3268,16 +3303,15 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
           // user uses Switch Part, but do not trigger the Builder reattach modal.
           if (!skipUnchangedWrites || patchDiffers(old, patch)) {
             const writePatch = { ...patch, last_price_check_at: syncNow() };
-            refreshed = await writePartUpdate(old, writePatch);
+            writeJobs.push(async () => { synced[syncedSlot] = await writePartUpdate(old, writePatch); });
           }
         }
       }
-      synced.push(refreshed);
       continue;
     }
     const frozenRemovedCost = num(old.frozen_extended_cost);
     if (Math.abs(frozenRemovedCost) <= 0.005) {
-      await writePartUpdate(old, {
+      writeJobs.push(() => writePartUpdate(old, {
         is_active: false,
         current_unit_cost: 0,
         current_extended_cost: 0,
@@ -3286,7 +3320,7 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
         price_delta_percent: 0,
         last_price_check_at: syncNow(),
         notes: `${old.notes ? `${old.notes}\n` : ""}Part removed from Builder before it carried a frozen cost; historical row retained inactive.`,
-      });
+      }));
       continue;
     }
 
@@ -3306,12 +3340,19 @@ export async function syncBuilderParts({ builderProduct, sourceProject, acceptPr
     };
     if (!skipUnchangedWrites || patchDiffers(old, pendingRemoval)) {
       const writePatch = { ...pendingRemoval, last_price_check_at: syncNow() };
-      synced.push(await writePartUpdate(old, writePatch));
+      queueWrite(() => writePartUpdate(old, writePatch));
     } else {
       synced.push(old);
     }
     changedCount += 1;
     removedPartCount += 1;
+  }
+
+  // (#419) Drain the write queue through a bounded pool. Jobs start in
+  // descriptor order (Promise.all invokes each chunk in order), so
+  // partWritePlan keeps its deterministic order; per-row CAS is unchanged.
+  for (let i = 0; i < writeJobs.length; i += WRITE_CONCURRENCY) {
+    await Promise.all(writeJobs.slice(i, i + WRITE_CONCURRENCY).map((run) => run()));
   }
 
   const activeEconomicParts = synced.filter((part) => part.is_active !== false);
