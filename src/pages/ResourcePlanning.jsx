@@ -30,10 +30,10 @@ import {
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {
   const { currentUser, sessionToken, isRegistered } = useAuth();
@@ -85,7 +85,7 @@ export default function ResourcePlanning() {
     setIsLoading(true);
     try {
       const [capacitiesData, ordersData] = await Promise.all([
-        loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Planning user capacities" }),
+        loadAllEntityRows({ entity: staffEntities.UserCapacity, sort: null, label: "Resource Planning user capacities" }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
@@ -218,7 +218,7 @@ export default function ResourcePlanning() {
     } catch (error) {
       console.error("Capacity save blocked:", error);
       setCapacityError(error?.message || "This employee capacity changed in another session. Reload before saving.");
-      const latest = await loadSingleUserCapacity({ entity: UserCapacity, userEmail: editingCapacity.email, label: "Employee capacity" }).catch(() => null);
+      const latest = await loadSingleUserCapacity({ entity: staffEntities.UserCapacity, userEmail: editingCapacity.email, label: "Employee capacity" }).catch(() => null);
       setCapacityRecord(latest);
       if (latest) {
         setCapacityForm({
