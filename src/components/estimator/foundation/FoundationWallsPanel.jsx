@@ -24,7 +24,7 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
         <div className="flex items-center gap-3">
           <span className="font-bold text-gray-900">{money(c.totalCost)}</span>
           <Button variant="ghost" size="icon" onClick={() => onRemove(index)}>
-            <Trash2 className="w-4 h-4 text-red-500" />
+            <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -114,7 +114,7 @@ function WallRow({ wall, index, options, onChange, onRemove }) {
 
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setShowEditor((v) => !v)}>
-          <PenLine className="w-4 h-4" /> {showEditor ? "Hide outline" : "Wall outline"}
+          <PenLine className="w-4 h-4" aria-hidden="true" /> {showEditor ? "Hide outline" : "Wall outline"}
         </Button>
         {!wall.shape?.segments?.length && (
           <span className="text-xs text-amber-600">
@@ -151,7 +151,7 @@ export default function FoundationWallsPanel({ walls = [], options = [], onChang
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-gray-900">Masonry Walls</h2>
         <Button variant="outline" size="sm" onClick={addWall}>
-          <Plus className="w-4 h-4" /> Wall
+          <Plus className="w-4 h-4" aria-hidden="true" /> Wall
         </Button>
       </div>
 
