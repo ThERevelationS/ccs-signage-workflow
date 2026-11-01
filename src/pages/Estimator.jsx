@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { ArrowUpDown, Calculator, Plus, Search } from "lucide-react";
+import { ArrowUpDown, Calculator, History, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import EstimateCard from "@/components/estimator/EstimateCard";
@@ -12,6 +12,8 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { useAuth } from "@/components/auth/EmailGate";
+import { estimateMatchesSearch, pushRecentSearch, readRecentSearches, useEstimateDeepLink } from "@/components/estimator/deepLinks";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -53,6 +55,14 @@ export default function Estimator() {
     new URLSearchParams(window.location.search).get("new") === "1"
   );
   const backfillStartedRef = useRef(false);
+  // #302 — /Estimator?estimate=<id> forwards to the estimate detail.
+  useEstimateDeepLink();
+  // #313 — last-5 searches per user, dropdown under the search input.
+  const { currentUser } = useAuth();
+  const userEmail = currentUser?.email || "";
+  const [recentOpen, setRecentOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches("estimator", userEmail));
+  const commitRecentSearch = (v) => setRecentSearches(pushRecentSearch("estimator", userEmail, v));
 
   const load = async () => {
     try {
@@ -124,12 +134,9 @@ export default function Estimator() {
       : status
         ? liveEstimates.filter((e) => (e.status || "draft") === status)
         : liveEstimates;
+    // #301 — global estimate search: header fields + notes + line items.
     if (term) {
-      list = list.filter((e) =>
-        [e.project_name, e.client_name, e.estimate_number]
-          .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(term))
-      );
+      list = list.filter((e) => estimateMatchesSearch(e, term));
     }
     const val = (e) => Number(e.quote_total || e.total_cost || 0);
     const exp = (e) => expiryOf(e) || "9999-12-31";
@@ -197,9 +204,32 @@ export default function Estimator() {
             <Input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setParam("q", e.target.value); }}
-              placeholder="Search by description, client or estimate number"
+              onFocus={() => { setRecentSearches(readRecentSearches("estimator", userEmail)); setRecentOpen(true); }}
+              onBlur={() => { commitRecentSearch(search); window.setTimeout(() => setRecentOpen(false), 150); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { commitRecentSearch(search); setRecentOpen(false); }
+                else if (e.key === "Escape") setRecentOpen(false);
+              }}
+              placeholder="Search by description, client, estimate number, notes or products"
               className="pl-9 clay-card border-none h-11"
             />
+            {recentOpen && recentSearches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
+                  <History className="h-3 w-3" /> Recent searches
+                </div>
+                {recentSearches.map((recent) => (
+                  <button
+                    key={recent}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); setSearch(recent); setParam("q", recent); commitRecentSearch(recent); setRecentOpen(false); }}
+                    className="block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-red-50"
+                  >
+                    {recent}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
