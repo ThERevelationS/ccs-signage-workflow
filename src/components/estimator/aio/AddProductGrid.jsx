@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 import { listQuickProducts } from "@/components/estimator/products/quickProductService";
+import { listInventoryKits, kitLabel } from "@/components/estimator/products/kitService";
 import { money } from "@/components/estimator/aioPricing";
 
 const META = {
@@ -104,7 +105,7 @@ const getMeta = (key) =>
     keywords: "",
   };
 
-export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, className = "" }) {
+export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQuickProduct, onAddKit, className = "" }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
@@ -115,6 +116,8 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
   const [quickProducts, setQuickProducts] = useState([]);
   const [quickLoading, setQuickLoading] = useState(false);
   const [quickError, setQuickError] = useState("");
+  const [kits, setKits] = useState([]);
+  const [kitsError, setKitsError] = useState("");
   const [actionError, setActionError] = useState("");
   const searchRef = useRef(null);
   const actionRef = useRef(false);
@@ -133,6 +136,9 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
       .then((rows) => setQuickProducts(rows || []))
       .catch((error) => setQuickError(error?.message || "Quick Product Library could not be verified."))
       .finally(() => setQuickLoading(false));
+    listInventoryKits()
+      .then((rows) => setKits(rows || []))
+      .catch(() => setKitsError("Inventory kits could not be loaded."));
     return () => clearTimeout(timer);
   }, [open]);
 
