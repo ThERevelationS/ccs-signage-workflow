@@ -12,10 +12,8 @@ const LINKS = [
   { label: "Parts", desc: "Part catalog used by the module estimators", to: "/EstimatorParts" },
   { label: "Master Inventory", desc: "Stocked materials across modules", to: "/MasterInventory" },
   { label: "Quote Settings", desc: "Customer quote branding, terms and defaults", to: "/QuoteSettings" },
-  { label: "Estimator Settings", desc: "Estimator module defaults, pricing admin, audit log and display preferences", to: "/EstimatorSettings" },
-  { label: "Pricing Admin", desc: "Markup tiers, tier matrices, labor levels, machine rates and quote simulator", to: "/PricingAdmin" },
-  { label: "Export all estimates", desc: "Admin JSON backup of estimates, customers, inventory and audit data — the Backup (JSON) button on Estimate Queues", to: "/EstimatorQueues" },
-  { label: "Audit Log", desc: "Admin-only who-changed-what timeline on Estimator Settings", to: "/EstimatorSettings?tab=audit_log" },
+  { label: "Estimator Settings", desc: "Estimator module defaults", to: "/EstimatorSettings" },
+  { label: "Data backup", desc: "Admin full estimate + parts + audit export (JSON) on Estimate Queues", to: "/EstimatorQueues" },
   { label: "Main Workflow", desc: "Jump to the shop workflow board", to: "/MainWorkflow" },
   { label: "Sales Pipeline", desc: "Leads, quotes and follow-ups", to: "/SalesPipeline" },
   { label: "Reports & Requests", desc: "Submit a bug or feature request", to: "/FeatureReports" },
@@ -39,18 +37,18 @@ export default function EstimatorTools() {
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-3">
         <div className="bg-white px-4 py-3 flex items-center gap-2">
-          <Wrench className="w-4 h-4 text-red-500" />
+          <Wrench className="w-4 h-4 text-red-500" aria-hidden="true" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">TOOLS</h1>
         </div>
 
         <div className="bg-white divide-y divide-gray-100">
           {LINKS.map((l) => (
-            <Link key={l.label} to={l.to} className="flex items-center justify-between px-4 py-3 hover:bg-red-50/50">
+            <Link key={l.to} to={l.to} className="flex items-center justify-between px-4 py-3 hover:bg-red-50/50">
               <div>
                 <div className="text-sm font-semibold text-gray-800">{l.label}</div>
                 <div className="text-xs text-gray-500">{l.desc}</div>
               </div>
-              <ArrowRight className="w-4 h-4 text-red-400" />
+              <ArrowRight className="w-4 h-4 text-red-400" aria-hidden="true" />
             </Link>
           ))}
         </div>
