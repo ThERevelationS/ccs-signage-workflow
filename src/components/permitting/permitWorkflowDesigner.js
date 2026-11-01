@@ -412,8 +412,9 @@ export async function saveWorkflowDraft(draft, inputs, title, notes) {
   }));
 }
 
-export async function loadWorkflowDrafts(jurisdictionId) {
-  if (!jurisdictionId) return [];
-  const result = await withRateLimitRetry(() => staffEntities.PermittingWorkflowDraft.filter({jurisdiction_id: jurisdictionId}, {sort: '-created_date', limit: 20}));
+export async function loadWorkflowDrafts(jurisdictionId, jurisdictionName = "") {
+  const filter = jurisdictionId ? {jurisdiction_id: jurisdictionId} : jurisdictionName ? {jurisdiction_name: jurisdictionName} : null;
+  if (!filter) return [];
+  const result = await withRateLimitRetry(() => staffEntities.PermittingWorkflowDraft.filter(filter, {sort: '-created_date', limit: 20}));
   return Array.isArray(result) ? result : result.items || [];
 }
