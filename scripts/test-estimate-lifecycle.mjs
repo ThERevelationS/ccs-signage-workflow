@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildSync } from 'esbuild';
+import { build, buildSync } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -59,7 +59,7 @@ const stubBase44 = {
   },
 };
 const svcOut = resolve(here, '.tmp-estimate-revision-service.mjs');
-buildSync({
+await build({
   entryPoints: [resolve(here, '../src/components/estimator/estimateRevisionService.js')],
   bundle: true, format: 'esm', outfile: svcOut, logLevel: 'silent', plugins: [stubBase44],
 });
