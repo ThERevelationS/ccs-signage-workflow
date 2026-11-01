@@ -525,8 +525,9 @@ Deno.serve(async (req) => {
       const key = Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() || Deno.env.get("GOOGLE_MAPS_API_KEY")?.trim();
       if (!key) return addressResponse({ success: false, error: "Map service not configured." }, { status: 500 });
       try {
-        const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", { method: "POST", headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key }, body: JSON.stringify({ input, includedRegionCodes: ["us"], includedPrimaryTypes: ["street_address", "subpremise", "premise", "route", "intersection", "locality"], languageCode: "en", regionCode: "us" }), signal: AbortSignal.timeout(6e3) });
+        const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", { method: "POST", headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key }, body: JSON.stringify({ input, includedRegionCodes: ["us"], includedPrimaryTypes: ["street_address", "subpremise", "premise", "route", "locality"], languageCode: "en", regionCode: "us" }), signal: AbortSignal.timeout(6e3) });
         const data = await res.json();
+        if (data?.error) return addressResponse({ success: true, suggestions: [], autocomplete_error: String(data.error.status || "PLACES_ERROR") });
         const suggestions = Array.isArray(data?.suggestions) ? data.suggestions.slice(0, 8).map((s) => {
           const p = s?.placePrediction || {};
           return { place_id: p.placeId || "", text: p.text?.text || "", main: p.structuredFormat?.mainText?.text || "", secondary: p.structuredFormat?.secondaryText?.text || "" };
