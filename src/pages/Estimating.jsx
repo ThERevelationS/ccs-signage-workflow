@@ -379,10 +379,11 @@ export default function Estimating() {
             </p>
           </div>
           <div className="relative w-64 max-w-full">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search estimating requests"
               onFocus={() => { setRecentSearches(readRecentSearches("estimating", currentUser?.email)); setRecentOpen(true); }}
               onBlur={() => { commitRecentSearch(searchQuery); window.setTimeout(() => setRecentOpen(false), 150); }}
               onKeyDown={(e) => {
@@ -395,7 +396,7 @@ export default function Estimating() {
             {recentOpen && recentSearches.length > 0 && (
               <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                 <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
-                  <History className="h-3 w-3" /> Recent searches
+                  <History className="h-3 w-3" aria-hidden="true" /> Recent searches
                 </div>
                 {recentSearches.map((recent) => (
                   <button
