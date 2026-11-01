@@ -18,14 +18,14 @@ export default function AioEstimateHeader({
   return (
     <div className="bg-white border border-gray-200 rounded-md m-3 px-4 py-3 flex items-center justify-between">
       <div className="flex items-start gap-2">
-        <Layers className="w-5 h-5 text-gray-700 mt-0.5" />
+        <Layers className="w-5 h-5 text-gray-700 mt-0.5" aria-hidden="true" />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[17px] font-bold text-gray-900">{title}</h1>
             <span className="text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
               {status}
             </span>
-            <span className="w-2 h-2 rounded-full bg-yellow-400" />
+            <span className="w-2 h-2 rounded-full bg-yellow-400" aria-hidden="true" />
           </div>
           <p className="text-[11px] text-gray-400">
             {subtitle}
@@ -61,7 +61,7 @@ export default function AioEstimateHeader({
             aria-label="Merge another estimate"
             className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50"
           >
-            <GitMerge className="w-4 h-4" />
+            <GitMerge className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
         {onDuplicate && (
@@ -69,9 +69,10 @@ export default function AioEstimateHeader({
             onClick={onDuplicate}
             disabled={duplicating}
             title="Duplicate this estimate as a new draft"
+            aria-label="Duplicate this estimate as a new draft"
             className="w-9 h-9 border border-gray-200 rounded flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-50"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
         {readOnly && onEdit ? (
