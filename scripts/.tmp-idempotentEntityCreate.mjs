@@ -18,7 +18,7 @@ async function deleteBuilderEntityIfUnchanged({
   if (!id || !updatedDate || typeof entity?.deleteMany !== "function" || typeof entity?.get !== "function") {
     throw new Error(`${label} could not initialize its concurrency-safe delete.`);
   }
-  const query = { id, updated_date: updatedDate, ...guardFields };
+  const query = { ...guardFields, id, updated_date: updatedDate };
   let result;
   try {
     result = await entity.deleteMany(query);
@@ -61,6 +61,8 @@ async function deleteBuilderEntityIfUnchanged({
 var deleteEntityIfUnchanged = deleteBuilderEntityIfUnchanged;
 
 // src/components/estimator/idempotentEntityCreate.js
+var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+var VERIFY_RETRY_DELAY_MS = 700;
 var canonicalRecord = (rows = []) => [...rows].sort((a, b) => {
   const aStamp = String(a?.created_date || "");
   const bStamp = String(b?.created_date || "");
@@ -127,14 +129,30 @@ async function ensureIdempotentEntityCreate({
   } catch (error) {
     createError = error;
   }
-  let afterCreate;
+  let afterCreate = null;
+  let verifyError = null;
   try {
     afterCreate = await load();
-  } catch (verifyError) {
+  } catch (error) {
+    verifyError = error;
+  }
+  if ((!Array.isArray(afterCreate) || afterCreate.length === 0) && (createError || !created?.id)) {
+    await sleep(VERIFY_RETRY_DELAY_MS);
+    try {
+      const retryRows = await load();
+      if (Array.isArray(retryRows)) afterCreate = retryRows;
+    } catch (error) {
+      verifyError = verifyError || error;
+    }
+  }
+  if (!Array.isArray(afterCreate)) {
     if (created?.id && matchesPayload(created, payload)) return created;
     throw new Error(`${label} create outcome could not be verified. Do not retry blindly; reload first. ${verifyError?.message || "Recovery lookup failed."}`);
   }
   if (afterCreate.length === 1) {
+    if (created?.id && String(afterCreate[0].id) !== String(created.id)) {
+      throw new Error(`${label} was created concurrently more than once. No uncertain duplicate was deleted; reload and review records with this retry key.`);
+    }
     if (!matchesPayload(afterCreate[0], payload)) {
       throw new Error(`${label} retry key exists but its live data does not match this create. No row was changed or deleted.`);
     }
