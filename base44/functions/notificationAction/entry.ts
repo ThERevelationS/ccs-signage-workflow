@@ -86,7 +86,7 @@ function resolveStaffEmail(raw: any, directory: any[]) {
 }
 
 async function getOwnPrefRow(Pref: any, me: string) {
-  const rows = await Pref.filter({ user_email: me }, null, 3).catch(() => []);
+  const rows = await Pref.filter({ user_email: me }, "-created_date", 3).catch(() => []);
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
