@@ -638,7 +638,9 @@ function FollowUps({ sessionToken, onOpenOpportunity }) {
     setLoading(true);
     setError("");
     try {
-      const data = await invoke(sessionToken, { action: "list_follow_ups" });
+      // #492 — pass the client-local day boundary: the backend falls back to a UTC
+      // `today`, which flags rows overdue one day early for US timezones.
+      const data = await invoke(sessionToken, { action: "list_follow_ups", today: localDateStamp() });
       setItems(data.follow_ups || []);
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || "Follow-ups failed to load.");
@@ -1254,7 +1256,7 @@ export default function Opportunities() {
     try {
       const r = await base44.functions.invoke("opportunityWorkspaceAction", {
         session_token: sessionToken,
-        action: "list_opportunities",
+        action: "list_opportunities", today: localDateStamp(),
         include_closed: includeClosed,
       });
       const data = r?.data || r;
