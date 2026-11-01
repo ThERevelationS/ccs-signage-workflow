@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Search } from "lucide-react";
+import { History, Search } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
@@ -14,8 +14,24 @@ import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, tra
 import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { pushRecentSearch, readRecentSearches, useEstimateDeepLink } from "@/components/estimator/deepLinks";
 
 const WorkOrder = staffEntities.WorkOrder;
+
+// Work orders carry no line_items — the honest "notes-level" search set is
+// the description/notes/estimate-number columns the entity actually has.
+const WO_SEARCH_FIELDS = [
+  "title",
+  "client_name",
+  "contact_name",
+  "customer_description",
+  "description",
+  "notes",
+  "estimator_notes",
+  "work_notes",
+  "source_estimate_number",
+  "current_task_description",
+];
 
 export default function Estimating() {
   const { currentUser, isRegistered } = useAuth();
@@ -41,6 +57,12 @@ export default function Estimating() {
   const listContainerRef = useRef(null);
   const [cardContainers, setCardContainers] = useState({});
   const deepLinkedWorkOrderRef = useRef(false);
+  // #302 — /Estimating?estimate=<id> forwards to the estimate detail.
+  useEstimateDeepLink();
+  // #313 — last-5 searches per user, dropdown under the search input.
+  const [recentOpen, setRecentOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches("estimating", currentUser?.email));
+  const commitRecentSearch = (v) => setRecentSearches(pushRecentSearch("estimating", currentUser?.email, v));
 
   useEffect(() => {
     document.title = "Estimating - Workflow Manager";
@@ -91,9 +113,10 @@ export default function Estimating() {
   const filteredWorkOrders = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return workOrders;
+    // #301 — extended beyond title/client into the notes/description fields
+    // a Work Order row actually carries (no line_items exist here).
     return workOrders.filter((wo) =>
-      (wo.title || "").toLowerCase().includes(query) ||
-      (wo.client_name || "").toLowerCase().includes(query)
+      WO_SEARCH_FIELDS.some((f) => String(wo[f] ?? "").toLowerCase().includes(query))
     );
   }, [workOrders, searchQuery]);
 
@@ -360,9 +383,32 @@ export default function Estimating() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search title or client..."
+              onFocus={() => { setRecentSearches(readRecentSearches("estimating", currentUser?.email)); setRecentOpen(true); }}
+              onBlur={() => { commitRecentSearch(searchQuery); window.setTimeout(() => setRecentOpen(false), 150); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { commitRecentSearch(searchQuery); setRecentOpen(false); }
+                else if (e.key === "Escape") setRecentOpen(false);
+              }}
+              placeholder="Search title, client or notes..."
               className="pl-8 bg-white/80"
             />
+            {recentOpen && recentSearches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
+                  <History className="h-3 w-3" /> Recent searches
+                </div>
+                {recentSearches.map((recent) => (
+                  <button
+                    key={recent}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); setSearchQuery(recent); commitRecentSearch(recent); setRecentOpen(false); }}
+                    className="block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-blue-50"
+                  >
+                    {recent}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
