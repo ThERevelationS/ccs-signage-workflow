@@ -279,7 +279,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
         onClick={() => setOpen(true)}
         className={`h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-700 bg-[#454545] text-white text-[12px] font-semibold shadow-sm hover:bg-[#353535] active:translate-y-px ${className}`}
       >
-        <Plus className="w-3.5 h-3.5 text-lime-300" />
+        <Plus className="w-3.5 h-3.5 text-lime-300" aria-hidden="true" />
         Add Product
       </button>
 
@@ -288,7 +288,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
           <DialogHeader className="px-5 pt-5 pb-4 bg-gradient-to-r from-slate-950 to-slate-800 text-white border-b border-slate-700">
             <div className="flex items-start gap-3 pr-8">
               <div className="w-10 h-10 rounded-md bg-lime-300 text-slate-950 flex items-center justify-center shadow-sm flex-shrink-0">
-                <PackagePlus className="w-5 h-5" />
+                <PackagePlus className="w-5 h-5" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <DialogTitle className="text-[18px] font-bold text-white leading-tight">Find a Product</DialogTitle>
@@ -299,12 +299,13 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
             </div>
 
             <div className="relative mt-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
               <input
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
+                aria-label="Search products"
                 placeholder="Search products — try acrylic, graphics, masonry, service, letters..."
                 className="w-full h-[42px] pl-10 pr-4 rounded-md bg-white text-[13px] text-gray-900 placeholder:text-gray-400 border border-white/20 shadow-inner outline-none focus:ring-2 focus:ring-lime-300"
               />
@@ -314,7 +315,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
           <div className="bg-white">
             <div className="px-5 py-2.5 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/80">
               <div className="flex items-center gap-2 min-w-0">
-                <Sparkles className="w-3.5 h-3.5 text-lime-600 flex-shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-lime-600 flex-shrink-0" aria-hidden="true" />
                 <span className="text-[11px] font-semibold text-gray-700">
                   {query ? `${results.length + quickResults.length + (customMatches ? 1 : 0)} matching product${results.length + quickResults.length + (customMatches ? 1 : 0) === 1 ? "" : "s"}` : "Blank Products, Builders & Quick Products"}
                 </span>
@@ -326,16 +327,16 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
             </div>
 
             <div className="p-3 max-h-[520px] overflow-y-auto">
-              {actionError && <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{actionError}</div>}
-              {quickError && <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800"><strong>Quick Products unavailable.</strong> {quickError} Builders and Blank / Custom Product remain available.</div>}
+              {actionError && <div role="alert" className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{actionError}</div>}
+              {quickError && <div role="alert" className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800"><strong>Quick Products unavailable.</strong> {quickError} Builders and Blank / Custom Product remain available.</div>}
               {!customMatches && results.length === 0 && quickResults.length === 0 && !quickLoading ? (
                 <div className="py-14 px-6 text-center">
                   <div className="mx-auto w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                    <Search className="w-5 h-5 text-gray-400" />
+                    <Search className="w-5 h-5 text-gray-400" aria-hidden="true" />
                   </div>
                   <div className="text-[13px] font-bold text-gray-800">No products found</div>
                   <p className="mt-1 text-[11px] text-gray-500">
-                    Try a broader term such as “vinyl,” “metal,” “service,” “letters,” or “concrete.”
+                    Try a broader term such as "vinyl," "metal," "service," "letters," or "concrete."
                   </p>
                   <button
                     type="button"
@@ -355,11 +356,11 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                       className="w-full text-left border-2 border-lime-300 rounded-md p-4 bg-lime-50/70 hover:bg-lime-100/80 hover:border-lime-500 transition-all shadow-sm disabled:opacity-60 disabled:cursor-wait"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-[#454545] text-lime-300 flex items-center justify-center"><PackagePlus className="w-5 h-5" /></div>
+                        <div className="w-10 h-10 rounded-md bg-[#454545] text-lime-300 flex items-center justify-center"><PackagePlus className="w-5 h-5" aria-hidden="true" /></div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2"><span className="text-[13px] font-extrabold text-gray-900">Blank / Custom Product</span><span className="text-[9px] px-2 py-0.5 rounded bg-lime-200 border border-lime-300 text-gray-700 font-bold">BUILD FROM PARTS</span></div>
                           <p className="mt-1 text-[10px] text-gray-600">Name the Product yourself and add any Parts directly from the Master Inventory. No dedicated Builder is attached.</p>
-                          <div className="mt-2 text-[10px] font-bold text-gray-800 inline-flex items-center gap-1">{addingKey === "custom" ? "Creating product…" : "Create blank product"}{addingKey !== "custom" && <ArrowRight className="w-3 h-3" />}</div>
+                          <div className="mt-2 text-[10px] font-bold text-gray-800 inline-flex items-center gap-1">{addingKey === "custom" ? "Creating product…" : "Create blank product"}{addingKey !== "custom" && <ArrowRight className="w-3 h-3" aria-hidden="true" />}</div>
                         </div>
                       </div>
                     </button>
@@ -384,7 +385,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                       >
                         <div className="flex items-start gap-3 h-full">
                           <div className={`w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 ${meta.iconBg}`}>
-                            <Icon className={`w-[18px] h-[18px] ${meta.color}`} />
+                            <Icon className={`w-[18px] h-[18px] ${meta.color}`} aria-hidden="true" />
                           </div>
 
                           <div className="min-w-0 flex-1">
@@ -399,7 +400,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                             <p className="mt-1 text-[10px] leading-[1.45] text-gray-500 line-clamp-2">{meta.blurb}</p>
                             <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">
                               {adding ? "Adding product…" : "Add to estimate"}
-                              {!adding && <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />}
+                              {!adding && <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />}
                             </div>
                           </div>
                         </div>
@@ -417,7 +418,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                         <span className="font-medium normal-case tracking-normal">{quickLoading ? "Loading…" : `${quickResults.length} available`}</span>
                       </div>
                       {quickLoading ? (
-                        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-6 text-center text-[11px] text-gray-400">Loading Quick Products…</div>
+                        <div role="status" className="rounded border border-gray-200 bg-gray-50 px-3 py-6 text-center text-[11px] text-gray-400">Loading Quick Products…</div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {quickResults.map((product) => {
@@ -441,7 +442,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                                 className="group min-h-[86px] text-left border border-cyan-200 rounded-md p-3 bg-cyan-50/40 hover:border-cyan-400 hover:bg-cyan-50 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-wait"
                               >
                                 <div className="flex items-start gap-3">
-                                  <div className="w-9 h-9 rounded-md bg-cyan-100 text-cyan-700 flex items-center justify-center flex-shrink-0"><PackagePlus className="w-[18px] h-[18px]" /></div>
+                                  <div className="w-9 h-9 rounded-md bg-cyan-100 text-cyan-700 flex items-center justify-center flex-shrink-0"><PackagePlus className="w-[18px] h-[18px]" aria-hidden="true" /></div>
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="text-[12px] font-bold text-gray-900 truncate">{product.product_name}</span>
@@ -455,7 +456,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                                         {quickQuantity !== 1 && quickUnitPrice > 0 && <div className="text-[8px] text-gray-400">{quickQuantity} × {money(quickUnitPrice)}</div>}
                                       </div>
                                     </div>
-                                    <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding Quick Product…" : "Add Quick Product"}{!adding && <ArrowRight className="w-3 h-3" />}</div>
+                                    <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding Quick Product…" : "Add Quick Product"}{!adding && <ArrowRight className="w-3 h-3" aria-hidden="true" />}</div>
                                   </div>
                                 </div>
                               </button>
@@ -486,7 +487,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                           className="group min-h-[74px] text-left border border-violet-200 rounded-md p-3 bg-violet-50/40 hover:border-violet-400 hover:bg-violet-50 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-wait"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-9 h-9 rounded-md bg-violet-100 text-violet-700 flex items-center justify-center flex-shrink-0"><PackagePlus className="w-[18px] h-[18px]" /></div>
+                            <div className="w-9 h-9 rounded-md bg-violet-100 text-violet-700 flex items-center justify-center flex-shrink-0"><PackagePlus className="w-[18px] h-[18px]" aria-hidden="true" /></div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-[12px] font-bold text-gray-900 truncate">{kitLabel(kit)}</span>
@@ -494,7 +495,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                               </div>
                               <div className="mt-1 text-[10px] text-gray-500 truncate">{(kit.kit_items || []).length} component{(kit.kit_items || []).length === 1 ? "" : "s"} — expands into Parts on add</div>
                               <div className="mt-1.5 flex items-center justify-between gap-2">
-                                <span className="flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding kit…" : "Add kit"}{!adding && <ArrowRight className="w-3 h-3" />}</span>
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding kit…" : "Add kit"}{!adding && <ArrowRight className="w-3 h-3" aria-hidden="true" />}</span>
                                 <span className="text-[11px] font-bold text-gray-800">{kitPrice !== null ? money(kitPrice) : "Σ parts"}</span>
                               </div>
                             </div>
@@ -525,7 +526,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
       <Dialog open={customNameOpen} onOpenChange={(next) => !addingKey && setCustomNameOpen(next)}>
         <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><PackagePlus className="w-5 h-5 text-lime-300" /> Create Blank / Custom Product</DialogTitle>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><PackagePlus className="w-5 h-5 text-lime-300" aria-hidden="true" /> Create Blank / Custom Product</DialogTitle>
             <p className="text-[11px] text-gray-300 mt-1">Give the Product its client-facing name. You can add and group Master Inventory Parts immediately afterward.</p>
           </DialogHeader>
           <form onSubmit={(event) => { event.preventDefault(); handleAddCustom(); }} className="p-5 bg-white space-y-4">
@@ -535,7 +536,7 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
             <div className="rounded border border-lime-200 bg-lime-50 px-3 py-2 text-[10px] text-gray-700">This Product has no dedicated Builder. Its price is the sum of its Parts, with frozen Master Inventory snapshots and explicit Update Price control.</div>
             <div className="flex justify-end gap-2">
               <button type="button" disabled={!!addingKey} onClick={() => setCustomNameOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
-              <button type="submit" disabled={!!addingKey || !customName.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{addingKey === "custom" ? "Creating…" : "Create Product"}</button>
+              <button type="submit" disabled={!!addingKey || !customName.trim()} className="min-h-[44px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{addingKey === "custom" ? "Creating…" : "Create Product"}</button>
             </div>
           </form>
         </DialogContent>
