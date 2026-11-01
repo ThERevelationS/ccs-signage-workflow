@@ -46,3 +46,48 @@ assert.deepEqual(summarizeEstimateChanges({}, {}), ['Estimate saved with no mate
 }
 
 console.log('PASS estimate lifecycle (14 cases)');
+
+// #255/#271 — quote rejection + acceptance supersede helpers. The service
+// module imports @/api/base44Client for its entity writes, so the bundle
+// stubs that specifier with a tiny inline plugin (the pure helpers never
+// touch it).
+const stubBase44 = {
+  name: 'stub-base44-client',
+  setup(build) {
+    build.onResolve({ filter: /^@\/api\/base44Client$/ }, () => ({ path: 'stub-base44', namespace: 'stub' }));
+    build.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: 'export const base44 = { entities: {}, functions: {} };' }));
+  },
+};
+const svcOut = resolve(here, '.tmp-estimate-revision-service.mjs');
+buildSync({
+  entryPoints: [resolve(here, '../src/components/estimator/estimateRevisionService.js')],
+  bundle: true, format: 'esm', outfile: svcOut, logLevel: 'silent', plugins: [stubBase44],
+});
+const {
+  isEstimateAcceptanceSuperseded,
+  activeEstimateAcceptances,
+  cleanQuoteRejectReason,
+  quoteRejectFollowUpKey,
+  quoteRejectRevisionKey,
+  supersedeAcceptanceRevisionKey,
+} = await import(pathToFileURL(svcOut).href);
+
+assert.equal(isEstimateAcceptanceSuperseded({ status: 'accepted' }), false, 'accepted row active');
+assert.equal(isEstimateAcceptanceSuperseded({}), false, 'legacy row without status counts active');
+assert.equal(isEstimateAcceptanceSuperseded({ status: 'superseded' }), true, 'superseded status');
+assert.equal(isEstimateAcceptanceSuperseded({ superseded_at: '2026-11-01T00:00:00Z' }), true, 'superseded_at marker');
+assert.deepEqual(
+  activeEstimateAcceptances([{ id: 'a', status: 'accepted' }, { id: 'b', status: 'superseded' }, { id: 'c', superseded_at: 'x' }]).map((r) => r.id),
+  ['a'], 'active filter drops superseded');
+assert.deepEqual(activeEstimateAcceptances(null), [], 'non-array yields empty');
+
+assert.equal(cleanQuoteRejectReason('  price too high  '), 'price too high', 'reason trimmed');
+assert.equal(cleanQuoteRejectReason('   '), '', 'blank reason rejected — a lost quote is never silent');
+assert.equal(cleanQuoteRejectReason('x'.repeat(600)).length, 500, 'reason capped at 500 chars');
+
+assert.equal(quoteRejectFollowUpKey('e1'), 'staff-reject-request:e1', 'stable follow-up key per estimate');
+assert.equal(quoteRejectRevisionKey('e1', 'v42'), 'quote_reject:e1:v42', 'revision key anchored on pre-write version');
+assert.equal(quoteRejectRevisionKey('e1', ''), 'quote_reject:e1:unknown', 'missing anchor falls back');
+assert.equal(supersedeAcceptanceRevisionKey('a9'), 'supersede_acceptance:a9', 'supersede key anchored on acceptance id');
+
+console.log('PASS acceptance supersede + quote reject helpers (13 cases)');
