@@ -35,7 +35,7 @@ export default function MovePartGroupModal({ open, group, sourceBuilderProductId
       <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border border-gray-300 shadow-xl">
         <div className="bg-[#444] border-b-4 border-lime-300 px-5 py-4 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2 text-[16px]"><ArrowRightLeft className="w-5 h-5 text-lime-300" /> Move Part Group</DialogTitle>
+            <DialogTitle className="text-white flex items-center gap-2 text-[16px]"><ArrowRightLeft className="w-5 h-5 text-lime-300" aria-hidden="true" /> Move Part Group</DialogTitle>
           </DialogHeader>
           <p className="text-[11px] text-gray-200 mt-1">Moves the entire group and all child Parts as one unit. Frozen/current pricing moves with it.</p>
         </div>
@@ -54,7 +54,7 @@ export default function MovePartGroupModal({ open, group, sourceBuilderProductId
             </select>
           </label>
           <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] text-blue-800">Direct Move is available only for groups made entirely from independent/manual Parts. Builder-owned Parts must use Clone or Copy so the source Builder stays internally consistent.</div>
-          {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
           <div className="flex justify-end gap-2">
             <button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[12px] font-semibold text-gray-700">Cancel</button>
             <button type="button" disabled={saving || !targetId} onClick={submit} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[12px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{saving ? "Moving…" : "Move Group"}</button>
