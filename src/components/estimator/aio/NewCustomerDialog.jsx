@@ -136,13 +136,13 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
         </DialogHeader>
 
         {error && (
-          <div className="px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
+          <div role="alert" className="px-3 py-2 bg-red-50 border border-red-200 rounded text-[12px] text-red-700">
             {error}
           </div>
         )}
 
         {duplicateName && (
-          <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded text-[12px] text-amber-700">
+          <div role="status" className="px-3 py-2 bg-amber-50 border border-amber-200 rounded text-[12px] text-amber-700">
             A customer with this name already exists
           </div>
         )}
