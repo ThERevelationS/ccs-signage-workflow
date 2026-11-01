@@ -1,0 +1,100 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_email": {
+      "type": "string",
+      "description": "Staff email this notification belongs to (AuthorizedEmail.email, lowercased)"
+    },
+    "category": {
+      "type": "string",
+      "description": "Notification category \u2014 quote_approved, estimate_sent, estimate_assigned, quote_expiring, invoice_overdue, unassigned_escalation, sync_pending, needs_recalc, watch_hit, digest, system"
+    },
+    "severity": {
+      "type": "string",
+      "description": "Display severity \u2014 info (default), warning, critical, celebration"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short headline rendered in the notification center"
+    },
+    "body": {
+      "type": "string",
+      "description": "Secondary detail line"
+    },
+    "deep_link": {
+      "type": "string",
+      "description": "In-app route the notification navigates to on click"
+    },
+    "source_event": {
+      "type": "string",
+      "description": "Trigger that produced this row \u2014 evaluate_triggers detector name or record() caller event"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Source record id the notification is about (estimate id, request id, invoice id, watch record id)"
+    },
+    "dedupe_key": {
+      "type": "string",
+      "description": "Globally-unique deterministic key \u2014 evaluate_triggers/record refuse to create a second row with the same key"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Idempotent-create key; mirrors dedupe_key when present so retried writes never duplicate"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Structured extras \u2014 digest counts, actor, watch rule snapshot"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the recipient opened/marked it read; unset = unread"
+    },
+    "snoozed_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Hidden from the active list until this timestamp passes"
+    },
+    "handled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the recipient marked it handled \u2014 removed from the active list, kept for history"
+    },
+    "handled_by": {
+      "type": "string",
+      "description": "Actor email that marked it handled"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Actor or detector that wrote the row"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "category",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
