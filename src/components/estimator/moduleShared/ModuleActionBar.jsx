@@ -37,22 +37,22 @@ export default function ModuleActionBar({
     <>
       {onTemplates ? (
         <Button type="button" variant="outline" size={size} onClick={onTemplates} disabled={disabled}>
-          <LayoutTemplate className="w-4 h-4 mr-1" /> Templates
+          <LayoutTemplate className="w-4 h-4 mr-1" aria-hidden="true" /> Templates
         </Button>
       ) : null}
       {onSaveAsTemplate ? (
         <Button type="button" variant="outline" size={size} onClick={onSaveAsTemplate} disabled={disabled}>
-          <BookmarkPlus className="w-4 h-4 mr-1" /> Save as Template
+          <BookmarkPlus className="w-4 h-4 mr-1" aria-hidden="true" /> Save as Template
         </Button>
       ) : null}
       {onSaveAsCopy ? (
         <Button type="button" variant="outline" size={size} onClick={onSaveAsCopy} disabled={disabled}>
-          <Copy className="w-4 h-4 mr-1" /> Save As Copy
+          <Copy className="w-4 h-4 mr-1" aria-hidden="true" /> Save As Copy
         </Button>
       ) : null}
       {estimateId ? (
         <Button type="button" variant="outline" size={size} onClick={share} disabled={disabled || sharing} title="Copy a read-only link to this estimate">
-          {sharing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Link2 className="w-4 h-4 mr-1" />} Share Link
+          {sharing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" aria-hidden="true" /> : <Link2 className="w-4 h-4 mr-1" aria-hidden="true" />} Share Link
         </Button>
       ) : null}
     </>
