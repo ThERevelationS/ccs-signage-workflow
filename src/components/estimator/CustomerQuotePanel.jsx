@@ -395,7 +395,7 @@ export default function CustomerQuotePanel({
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="no-print px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3 bg-gray-50">
         <div>
-          <div className="text-[13px] font-bold text-gray-900 flex items-center gap-2"><Settings2 className="w-4 h-4 text-red-600" /> Customer Quote</div>
+          <div className="text-[13px] font-bold text-gray-900 flex items-center gap-2"><Settings2 className="w-4 h-4 text-red-600" aria-hidden="true" /> Customer Quote</div>
           <div className="text-[10px] text-gray-500 mt-0.5">Live preview uses the same frozen Product pricing waterfall as the estimate. Quote settings are stored on this estimate.</div>
         </div>
         <div className="flex items-center gap-2">
@@ -407,7 +407,7 @@ export default function CustomerQuotePanel({
             title={readOnly ? "Start a revision before changing quote settings on this protected estimate." : "Replace this estimate's quote settings with the current company defaults. Pricing and lifecycle fields are not changed."}
             className="h-[31px] text-[11px]"
           >
-            {applyingDefaults ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+            {applyingDefaults ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />}
             {applyingDefaults ? "Applying…" : "Apply Company Defaults"}
           </Button>
           {sendNeedsApproval && sessionCanApproveQuotes && !readOnly && (
@@ -419,7 +419,7 @@ export default function CustomerQuotePanel({
               title={`Record your manager approval for this ${fmt(quoteTotalNow)} quote so it can be emailed.`}
               className="h-[31px] text-[11px]"
             >
-              {approvingQuote ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />}
+              {approvingQuote ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />}
               {approvingQuote ? "Approving…" : "Approve Quote"}
             </Button>
           )}
@@ -430,17 +430,17 @@ export default function CustomerQuotePanel({
             title={sendNeedsApproval ? `Over ${approvalThresholdLabel} — manager approval required` : revisionInProgress ? "Save the open revision before emailing the customer quote." : persistedStatus === "cancelled" ? "Cancelled estimates cannot be emailed." : !issuingNewQuote && quoteVersion === 0 ? "This protected estimate has no issued customer quote version to send." : issuingNewQuote ? "Email this quote as the next issued customer version." : currentVersionDelivered ? "Email the currently issued quote version again." : "Email the currently issued quote version for the first time."}
             className="h-[31px] text-[11px] bg-gray-800 hover:bg-gray-900 text-white"
           >
-            <Mail className="w-3.5 h-3.5 mr-1.5" />
+            <Mail className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
             {revisionInProgress ? "Save Revision Before Sending" : emailActionLabel}
           </Button>
-          <Button type="button" variant="outline" onClick={previewPdf} disabled={revisionInProgress || previewBusy} title={revisionInProgress ? "Save the open revision before previewing the customer quote PDF." : "Generate and preview the customer quote PDF in a new tab before downloading or emailing."} className="h-[31px] text-[11px]">{previewBusy ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />} {previewBusy ? "Generating…" : revisionInProgress ? "Save Revision Before Preview" : "Preview PDF"}</Button>
-          <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
+          <Button type="button" variant="outline" onClick={previewPdf} disabled={revisionInProgress || previewBusy} title={revisionInProgress ? "Save the open revision before previewing the customer quote PDF." : "Generate and preview the customer quote PDF in a new tab before downloading or emailing."} className="h-[31px] text-[11px]">{previewBusy ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" /> : <FileText className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />} {previewBusy ? "Generating…" : revisionInProgress ? "Save Revision Before Preview" : "Preview PDF"}</Button>
+          <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
         </div>
       </div>
 
       {quoteApproval && (
         <div className="no-print px-4 py-2 border-b border-emerald-200 bg-emerald-50 text-[10px] text-emerald-800 flex items-center gap-2">
-          <ShieldCheck className="w-3.5 h-3.5" />
+          <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Manager approval recorded{quoteApproval.approved_by_email ? ` by ${quoteApproval.approved_by_email}` : ""}{approvalWhenLabel ? ` on ${approvalWhenLabel}` : ""}{Number(quoteApproval.threshold_at_approval) > 0 ? ` (threshold ${fmt(quoteApproval.threshold_at_approval, true)})` : ""}.</span>
         </div>
       )}
@@ -589,7 +589,7 @@ export default function CustomerQuotePanel({
       <Dialog open={sendOpen} onOpenChange={(next) => !sending && setSendOpen(next)}>
         <DialogContent className="sm:max-w-[620px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Mail className="w-5 h-5 text-lime-300" /> {currentVersionDelivered && !issuingNewQuote ? "Resend Customer Quote" : "Send Customer Quote"}</DialogTitle>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Mail className="w-5 h-5 text-lime-300" aria-hidden="true" /> {currentVersionDelivered && !issuingNewQuote ? "Resend Customer Quote" : "Send Customer Quote"}</DialogTitle>
             <p className="mt-1 text-[10px] text-gray-300">{issuingNewQuote ? "The PDF is generated from the current customer quote preview. The estimate is marked Sent only after Gmail accepts the message." : currentVersionDelivered ? `This resends Quote Version ${quoteVersion} without creating a new quote version.` : `This sends the already-issued Quote Version ${quoteVersion} for the first recorded time.`}</p>
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
@@ -620,7 +620,7 @@ export default function CustomerQuotePanel({
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={sending} onClick={() => setSendOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
               <button type="button" disabled={sending || !recipientEmail.trim() || !emailSubject.trim() || !emailMessage.trim()} onClick={sendQuote} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">
-                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} {sending ? "Generating & Sending…" : emailActionLabel}
+                {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Mail className="w-3.5 h-3.5" aria-hidden="true" />} {sending ? "Generating & Sending…" : emailActionLabel}
               </button>
             </div>
           </div>
