@@ -139,6 +139,9 @@ export function invokeCalls() { return globalThis.__invokeCalls || []; }
 export function bundleFunction({ here, entry, stubFile, outFile }) {
   buildSync({
     entryPoints: [resolve(here, entry)],
+    // platform: node resolves node:* builtins (smartsheetTraceContext uses
+    // node:async_hooks) instead of failing on the default browser platform.
+    platform: 'node',
     bundle: true, format: 'esm', outfile: outFile, logLevel: 'silent',
     alias: {
       'npm:@base44/sdk@0.8.25': stubFile,
