@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings, ArrowRight, ShieldCheck, Save, Loader2 } from "lucide-react";
+import { Settings, ArrowRight, ShieldCheck, Save, Loader2, Clock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { getSessionToken, getSessionUser } from "@/components/auth/EmailGate";
 import { listAuthorizedUsersAdmin, updateAuthorizedUserAdmin } from "@/components/admin/authorizedUserAdminPersistence";
+import EstimatorAuditPanel from "@/components/estimator/EstimatorAuditPanel";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
+import { isValidTimeZone, resolveUserTimeZone } from "@/components/estimator/userDateDisplay";
 
 const LINKS = [
   { label: "Master Inventory", desc: "Unified inventory for substrates, vinyl, equipment, labor, lighting, hardware, supplies, metals and concrete", to: "/MasterInventory" },
@@ -20,20 +23,24 @@ const LINKS = [
   { label: "Vinyl Inventory", desc: "Shared vinyl, laminate and transfer-tape catalog", to: "/VinylInventory" },
   { label: "Vinyl Settings", desc: "Printers, cutters, laminators, geometry, ink, blade and machine rates", to: "/VinylSettings" },
   { label: "Quote Defaults", desc: "Company branding, quote content, validity and default customer-facing display settings for new estimates", to: "/QuoteSettings" },
+  { label: "Pricing Admin", desc: "Markup tiers, tier matrices, labor levels, machine rates and the quote simulator", to: "/PricingAdmin" },
   { label: "Admin Settings", desc: "Users, backups, workflow rules", to: "/AdminSettings" },
+  { label: "Audit Log", desc: "Admin-only who-changed-what timeline (estimate revisions, opportunity activity, admin actions)", to: "/EstimatorSettings?tab=audit_log" },
   { label: "My Info", desc: "Your profile and preferences", to: "/UserSettings" },
 ];
 
 export default function EstimatorSettings() {
-  // #316 — ?tab=<section> deep-link. This hub page has no tab UI; the only
-  // tab-addressable section is the Quote Approval card (?tab=quote_approval
-  // scrolls + flashes it). Nothing writes the param back since there is no
-  // tab control to change. Per-module settings tabs live on their own pages.
+  // #316 — ?tab=<section> deep-link. This hub page has no tab UI; the
+  // tab-addressable sections are the Quote Approval card (?tab=quote_approval)
+  // and the admin Audit Log card (?tab=audit_log) — both scroll + flash.
+  // Nothing writes the param back since there is no tab control to change.
   const approvalRef = useRef(null);
+  const auditRef = useRef(null);
+  const isAdmin = getSessionUser()?.role === "admin";
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("tab") || "";
-    if (tab !== "quote_approval") return;
-    const el = approvalRef.current;
+    const ref = tab === "quote_approval" ? approvalRef : tab === "audit_log" ? auditRef : null;
+    const el = ref?.current;
     if (!el) return;
     const t = window.setTimeout(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -62,10 +69,90 @@ export default function EstimatorSettings() {
           ))}
         </div>
 
+        <MyDisplayPrefsCard />
+
         <div ref={approvalRef}>
           <QuoteApprovalCard />
         </div>
+
+        {isAdmin && (
+          <div ref={auditRef}>
+            <EstimatorAuditPanel />
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+// #488 — per-user display preferences that live in the workspace-prefs blob
+// (UserWorkspacePreferences.preferences). Currently: the viewer's timezone,
+// which estimator surfaces honor when rendering dates/timestamps.
+function MyDisplayPrefsCard() {
+  const { prefs, updatePrefs, saving } = useWorkspacePreferences();
+  const savedTz = String(prefs?.locale?.timezone || "");
+  const [value, setValue] = useState(savedTz);
+  const [error, setError] = useState("");
+  const [savedFlash, setSavedFlash] = useState(false);
+  useEffect(() => { setValue(savedTz); }, [savedTz]);
+
+  const resolved = resolveUserTimeZone(prefs, "");
+  const save = () => {
+    const v = String(value || "").trim();
+    setError("");
+    if (v && !isValidTimeZone(v)) {
+      setError(`"${v}" is not a valid IANA timezone — try e.g. America/New_York, America/Chicago, America/Denver, America/Los_Angeles.`);
+      return;
+    }
+    updatePrefs("locale.timezone", v);
+    setSavedFlash(true);
+    window.setTimeout(() => setSavedFlash(false), 2500);
+  };
+
+  return (
+    <div className="bg-white px-4 py-4 border-t-4 border-sky-300">
+      <div className="flex items-center gap-2">
+        <Clock className="w-4 h-4 text-red-500" />
+        <div className="text-xs font-bold tracking-wide text-gray-600">MY DISPLAY PREFERENCES</div>
+      </div>
+      <p className="mt-1 text-[11px] text-gray-500">
+        Per-user preferences that follow your account across devices. The timezone is honored on due-date and audit/activity timestamp displays.
+      </p>
+      {error && <div className="mt-2 border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+      {savedFlash && <div className="mt-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] text-emerald-800">Preference saved{resolved ? ` — dates will display in ${resolved}` : " — dates will display in your browser timezone"}.</div>}
+      <div className="mt-3 flex items-end gap-2">
+        <label className="text-[10px] font-bold tracking-wide text-gray-500">
+          MY TIMEZONE (IANA)
+          <input
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            onKeyDown={(event) => { if (event.key === "Enter") save(); }}
+            placeholder="blank = browser local"
+            list="ccs-tz-options"
+            className="mt-1 h-[32px] w-56 rounded border border-gray-300 px-2 text-[11px] font-normal text-gray-800"
+          />
+          <datalist id="ccs-tz-options">
+            <option value="America/New_York" />
+            <option value="America/Chicago" />
+            <option value="America/Denver" />
+            <option value="America/Los_Angeles" />
+            <option value="America/Phoenix" />
+            <option value="America/Anchorage" />
+            <option value="Pacific/Honolulu" />
+            <option value="UTC" />
+          </datalist>
+        </label>
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="h-[32px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40 inline-flex items-center gap-1.5"
+        >
+          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+      <p className="mt-1.5 text-[9px] text-gray-400">Company-wide fallback is set on Quote Defaults → Display timezone. Your pick wins when both are set.</p>
     </div>
   );
 }
