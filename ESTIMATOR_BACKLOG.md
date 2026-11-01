@@ -290,14 +290,14 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 252. **[H][DONE]** `portal` method added — `EstimateAcceptance.acceptance_method` enum now includes `portal`, and the portal approval write uses it instead of `other`
 253. **[F][DONE]** Verified — `recordEstimateAcceptance` already sends a sendGmail notify to the estimate owner (`created_by || salesperson_email`, lines ~211-229) with the acceptance notify workflow capability
 254. **[B][DONE]** Verified — the dedupe filter is `estimate_id + quote_version` (recordEstimateAcceptance ~line 38-40), not just an idempotency key
-255. **[F]** PARTIAL — portal declines already write `estimate_revision` activities + (#239) open `EstimatingRequest` rows; a staff-side "reject quote" action that marks the estimate and spawns a follow-up task is the remaining piece — flagged for a dedicated pass
+255. **[F][DONE]** PARTIAL — Staff reject-quote — recordEstimateAcceptance reject_quote action: CAS estimate→cancelled w/ reason, follow-up EstimatingRequest to owner, idempotent key; panel button + reason dialog
 256. **[H][DONE]** Verified — `accepted_at` is rejected beyond now+15min skew and beyond 10yr old (exactly the tightened bound spec)
 257. **[F]** ANALYZED — needs a portal `counter_offer` action writing a structured payload (proposed_total + note) to an EstimatingRequest/activity. Plumbing exists (portal actions + request queue); the action + UI is remaining — flagged for a dedicated pass
 258. **[F][DONE]** Verified — `authorize_send` in `recordEstimateQuoteDelivery` hard-blocks quotes above `quote_approval_threshold` until `internal_approval.approved_at` is recorded via `approve_quote`; `can_approve_quotes` users bypass as managers; the frontend calls it before every send
 259. **[H][DONE]** Evidence scheme filtered — `evidence_reference` stays free-text (PO numbers, "signed quote") but `javascript:`/`data:`/`vbscript:` schemes are blanked before persistence; contract assert added to `validate-opportunity-workspace.mjs`
 260. **[F][DONE]** Verified — acceptance rows show `METHOD_LABELS[acceptance_method]` next to accepted-by name/email (line 206) plus `Evidence: <ref>` in the meta line (line 207)
 261. **[B][DONE]** `accepted_by_name` fallback added — when the caller omits the name, it resolves from `contact_first_name + contact_last_name`, then `order_contact`/`contact_name` on the estimate; still 400s only when nothing is on file
-262. **[F]** Documented design — pending state is modeled by the `internal_approval` field (absent = pending/blocked above threshold) rather than a status enum value; adding `pending_internal` to the status enum would duplicate the gate without changing behavior. Flagged if a visible status is wanted
+262. **[F][DONE]** Documented design — Pending-internal-approval indicator — amber chip/banner on EstimateAcceptancePanel driven by internal_approval field (same predicate as authorize_send); no schema change
 263. **[H][DONE]** Verified — `delivery_id` is validated against `estimate_id` + `quote_version` + `delivery_status==="sent"` with a 409 on mismatch
 264. **[F][DONE]** Expired-quote gate added on both paths — `recordEstimateAcceptance` 409s when `quote_expiration_date < today`, and the portal approve path blocks with "quote has expired — request an updated quote" (same `quoteValidUntil` boundary)
 265. **[F][DONE]** Implemented already — `section_acceptance_mode` on the estimate enables per-section accept/decline/question in the portal via `EstimateSectionAcceptance` rows (decisions feed `estimate_approved`/`estimate_revision` activities)
@@ -306,7 +306,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 268. **[B][DONE]** Verified — `canonicalAcceptance` sorts earliest `created_date`/`accepted_at` first (canonical = earliest), with concurrent-loser dedupe (see #213)
 269. **[F][DONE]** Covered — `attention_feed` exposes `stale_sent_estimates` (sent quotes aging >7d without response) which feeds the AttentionBell badge, and the funnel returns a `sent` estimate count — awaiting-approval surfaces on the nav badge
 270. **[H][DONE]** Fixed via #204 — `ensureOpenEstimateRevision` now falls back to `base44.auth.me()` when no session token is supplied, unblocking staff writes
-271. **[F]** ANALYZED — a reopen after `approved` currently goes through Start Revision (protected flow); an explicit "supersede acceptance" action that records a superseding revision-type row is a bounded add on the existing guard rails — flagged for a dedicated pass
+271. **[F][DONE]** ANALYZED — Supersede acceptance — recordEstimateAcceptance supersede_acceptance: acceptance row superseded_* fields + CAS estimate approved→sent; panel button + revision audit row; superseded badges
 272. **[F][DONE]** Acceptance shown in portal — `estimatePortalView` now exposes `accepted_at`/`accepted_by_name` (mirrored onto the estimate by #266), so the portal can render "you approved on X by Y"
 273. **[H][DONE]** Verified — the acceptance row writes `work_order_id: estimate.work_order_id` read at accept time (matches by construction)
 274. **[F][DONE]** Verified — acceptance rows persist `recorded_by_name`/`recorded_by_email` (staff path records the actor; portal writes `customer_portal`) and the panel displays "Recorded by …"
@@ -315,19 +315,19 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 ## 12. Reporting & Dashboards (25)
 
 276. **[F][DONE]** Covered — `estimate_funnel.status_counts` + `win_rate`/`won_value`/`decided_value` on the ReportingDashboard
-277. **[F]** PARTIAL — `by_salesperson.avg_quote_value` exists but not a per-month series. Flagged for a dedicated pass
+277. **[F][DONE]** PARTIAL — Per-month avg quote value — by_salesperson_monthly funnel series + avg_quote_by_month report
 278. **[F][DONE]** Covered — `estimate_funnel.lost_reasons` (count + lost_value, top-10) in the funnel payload
-279. **[F]** PARTIAL — `status_counts` shows totals; a per-week throughput series doesn't exist. Flagged for a dedicated pass
-280. **[F]** PARTIAL — `estimate_funnel.win_rate` is global + `by_salesperson` has per-person rates; a per-customer win-rate breakdown isn't in the payload. Flagged for a dedicated pass
-281. **[F]** PARTIAL — no `by_module` breakdown exists in `estimate_funnel` yet (module_key is available on line_items). Flagged for a dedicated pass
+279. **[F][DONE]** PARTIAL — Weekly throughput — created/sent/approved per Monday-start week + weekly_throughput report
+280. **[F][DONE]** PARTIAL — Per-customer win-rate — by_customer rollup (decided→won/lost/rate/value, top-25) + win_rate_by_customer report
+281. **[F][DONE]** PARTIAL — by_module funnel — counts+value+win_rate per module_key in funnel payload
 282. **[F][DONE]** Covered — `estimate_funnel.avg_margin_pct` + `total_margin` surfaced on the dashboard
 283. **[B][DONE]** Verified — the WO load filters `query: { deleted: false }` and the active/completed splits re-check `!wo.deleted` (ReportingDashboard ~lines 48-79)
 284. **[F][DONE]** Covered — `estimate_funnel.aging_buckets` (expired/7d/14d/30d/30d+) + `aging_rows` with per-quote days-to-expiry
-285. **[F]** PARTIAL — modules tracked via `line_items[].module_key` but no revenue attribution by module exists. Flagged for a dedicated pass
-286. **[F]** PARTIAL — `FeatureReports` is an open/completed task tracker, not a saved-filter report builder; the report-definition persistence doesn't exist. Flagged for a dedicated pass
+285. **[F][DONE]** PARTIAL — Revenue by module — value_by_module report (quote_total attributed by line-value share, honestly labeled won-estimate value)
+286. **[F][DONE]** PARTIAL — Saved-filter views — named filter sets on OpsReports persisted via UserWorkspacePreferences opsReports.savedViews (save dialog + apply/delete)
 287. **[H][DONE]** Verified — the completed scope queries `status:"completed"` server-side (manageFeatureReports ~line 186); `cancelled` isn't a FeatureReport status and deletes are physical (`deleteMany`), so no cancelled/deleted leak path exists
 288. **[F][DONE]** Covered — `estimate_funnel.request_conversion` tracks request→sent timing/conversion (from #162)
-289. **[F]** PARTIAL — `CustomerSummary` + the funnel hold the inputs; a dedicated LTV rollup view doesn't exist. Flagged for a dedicated pass
+289. **[F][DONE]** PARTIAL — Customer LTV — customer_ltv report: invoiced/collected/open-AR + won value, avg invoice, last activity
 290. **[F][DONE]** Covered — the dashboard renders a `trendData` chart of activity over time
 291. **[B][DONE]** Verified — `loadReports` already wraps the fetch in try/catch with `readError` surfaced (FeatureReports ~lines 98-104)
 292. **[F][DONE]** Covered — `estimate_funnel.avg_part_cost_ratio` surfaced on the dashboard
@@ -336,37 +336,37 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 295. **[H][DONE]** Attention-feed read bounds — fixed with #174: feed inputs now page via loadAllEntityRows past the old 500-row cap, with matched_totals + truncated indicators on the payload
 296. **[F]** BLOCKED — bounce tracking needs mail-provider webhook feedback; `sendEmail` is disabled and Gmail-send responses carry no bounce state. Flagged until delivery telemetry exists
 297. **[F][DONE]** Covered — `request_conversion` + `estimate_funnel` conversion fields track estimate→WO flow
-298. **[F]** PARTIAL — `PortalMessage` + link `open_count` record activity but no per-estimate report aggregates them. Flagged for a dedicated pass
+298. **[F][DONE]** PARTIAL — Per-estimate portal engagement — portal_engagement report: opens, messages, approvals, revision requests, first-response hours
 299. **[B][DONE]** Verified — `jobCostingAction` reads every entity through `loadAllEntityRows` (paged fetch with maxRows cap + label) — no `filter({})` call relies on the SDK row cap
-300. **[F]** Estimator accuracy report — estimated cost vs actual job cost
+300. **[F][DONE]** Estimator accuracy report — Estimator accuracy — est_vs_actual_cost report: estimate cost vs committed PO spend, variance $+% , honest exclusions
 
 ## 13. Search, Deep-Links & Saved Views (25)
 
-301. **[F]** Global estimate search across notes/line-items, not just project_name/client
-302. **[F]** `?estimate=<id>` deep-link on all estimator pages
+301. **[F][DONE]** Global estimate search across notes/line-items, not just project_name/client — Deep estimate search — estimateMatchesSearch client-side (notes + line_items fields) on Queues/Estimator + backend global_search (notes→regex, bounded line_items values scan) deployed
+302. **[F][DONE]** `?estimate=<id>` deep-link on all estimator pages — ?estimate=<id> deep-link — useEstimateDeepLink hook on Queues/Estimator/Estimating → navigates to EstimateDetail
 303. **[B][DONE]** Verified — `scope`/`type`/`category`/`status`/`q` all init from `searchParams` and write back via `writeParam`/`setSearchParams` (EstimatorParts ~lines 136-248); no `sort` control exists to parametrize
 304. **[F][DONE]** `?customer=<id>` pre-fill on NewAllInOneEstimate
 305. **[F][DONE]** `?status=` pre-select on NewEstimateDialog (draft vs sent on create)
-306. **[F]** Saved-search views on EstimatorQueues (name a filter combo)
+306. **[F][DONE]** Saved-search views on EstimatorQueues (name a filter combo) — Saved-search views on EstimatorQueues — SavedViews combo incl. mine toggle (verified existing + extended)
 307. **[H][DONE]** Verified — `VinylInventoryTab` writes `q`/`category`/`use_case` via `writeParam` on every change (~lines 68-72, 243+) — parity already in place
 308. **[F][DONE]** `?q=` on EstimatorProducts
-309. **[F]** Search in `AddProductGrid` — already has? verify `?q=` init
+309. **[F][DONE]** Search in `AddProductGrid` — AddProductGrid ?q= init — verified already present (~line 110 seeds useState)
 310. **[B][DONE]** `?q=` write-back added — the page's only param filter is `?q=` (status/sort aren't UI features here); a replaceState effect now keeps `?q=` in sync on every change
-311. **[F]** `?open=<product_id>` deep-link on EstimateProductsList
-312. **[F]** `?version=<n>` deep-link on EstimateDetail (open specific revision)
-313. **[F]** Recent-searches dropdown on list pages
+311. **[F][DONE]** `?open=<product_id>` deep-link on EstimateProductsList — ?open=<product_id> on EstimateProductsList — multi-id match + scrollIntoView + ring flash
+312. **[F][DONE]** `?version=<n>` deep-link on EstimateDetail (open specific revision) — ?version=<n> on EstimateDetail — EstimateRevisionPanel wantVersion selects revision + expands inline diff
+313. **[F][DONE]** Recent-searches dropdown on list pages — Recent-searches dropdown — last-5 per-user localStorage on Queues/Estimator/Estimating
 314. **[H][DONE]** Verified — `FoundationCatalog` writes both `q` and `type` via `writeParam` on change (~lines 97, 122)
-315. **[F]** `?module=<key>` pre-select on EstimatorTools
-316. **[F]** `?tab=<name>` deep-link on EstimatorSettings + module settings
-317. **[F]** `?filter=<preset>` on EstimatorCustomers (ar_aging, recent, inactive)
+315. **[F][DONE]** `?module=<key>` pre-select on EstimatorTools — ?module=<key> on EstimatorTools — registry-matched forward to /<ModulePage>?module=
+316. **[F][DONE]** `?tab=<name>` deep-link on EstimatorSettings + module settings — ?tab= deep-link — EstimatorSettings scrolls/flashes the tab-addressable card (quote_approval; audit_log added later by §20 agent)
+317. **[F][DONE]** `?filter=<preset>` on EstimatorCustomers (ar_aging, recent, inactive) — ?filter= presets on EstimatorCustomers — ar_aging (honest credit_hold proxy — invoice backend RLS), recent 30d, inactive 90d
 318. **[B][DONE]** Root cause fixed — `writeParams` already strips empty values for all keys; the actual bug was status-chip links rebuilding the URL and dropping `q`/`sort`. Status links now preserve both params on navigation
-319. **[F]** `?q=`/`?status=`/`?sort=` write-back on `MasterInventory`
+319. **[F][DONE]** `?q=`/`?status=`/`?sort=` write-back on `MasterInventory` — ?q=/?status=/?sort= write-back on MasterInventory
 320. **[F][DONE]** Verified — `?wo=<id>` opens the work order and scrolls the card into view once loaded (Estimating ~lines 103-114)
-321. **[H]** Documented — `QuickPrice` has no history-search input (history is a plain list) so `?q=` has nothing to seed; `?module=` preset works. A history-search field would be the prerequisite
+321. **[H][DONE]** Documented — QuickPrice history search — name/client/module filter input + ?q= seed + write-back
 322. **[F][DONE]** Verified — all three params read at init and written back on change in `VinylInventoryTab`
-323. **[F]** `?line=<id>` scroll-to-line on EstimateProductsList
+323. **[F][DONE]** `?line=<id>` scroll-to-line on EstimateProductsList — ?line=<id> scroll-to-line on EstimateProductsList (data-line-id + ref map)
 324. **[B][DONE]** Verified — status chips call `setParam("status", s.key)` which writes the param on click (Estimator.jsx ~line 171)
-325. **[F]** Deep-link into specific aio section (`?section=<key>`)
+325. **[F][DONE]** Deep-link into specific aio section (`?section=<key>`) — ?section= deep-link — verified present in EstimateDetail step init (~line 137)
 
 ## 14. Notifications & Alerts (25)
 
