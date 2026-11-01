@@ -351,8 +351,11 @@ function LocalityPickerSession({
   // tracker locality yet, an admin may still create a draft — but only for the
   // profile matching the detected name/type/county, never a same-name sibling.
   const detectedTarget = result?.location_resolution?.target;
+  // needs_review means the boundary resolved a town/county but the pin wasn't
+  // exact — a draft record (which stays review-flagged downstream) is still
+  // the honest next step, so admins may create one there too.
   const isDetectedCandidate = (j) => {
-    if (!j || !detectedTarget || result?.location_resolution?.status !== 'location_verified' || result?.suggested_locality) return false;
+    if (!j || !detectedTarget || !['location_verified', 'needs_review'].includes(result?.location_resolution?.status) || result?.suggested_locality) return false;
     const typeMap = { municipality: ['city', 'village', 'municipality'], township: ['township'], county: ['county'] };
     const countyOf = (v) => String(v || '').toLowerCase().replace(/\s*county$/u, '').trim();
     return (typeMap[detectedTarget.type] || [detectedTarget.type]).includes(String(j.type || '').toLowerCase())
@@ -423,7 +426,16 @@ function LocalityPickerSession({
     if (selectedLocalityId && (addressCanApply || addressNeedsCheck)) return "";
     if (!address.trim()) return selectedLocalityId ? "Now enter the job address above so we can check this office is right for that spot." : "Type or paste the job address above — then the Use button lights up.";
     if (!result) return "Press Find my office to check this address.";
-    if (!result.suggested_locality) return "No office matched that spot yet — pick a saved office above, or check the address.";
+    if (!result.suggested_locality) {
+      const named = repositoryMatches.filter(isDetectedCandidate);
+      if (named.length) {
+        const nm = named[0].name + (named[0].state ? `, ${named[0].state}` : "");
+        return currentUser?.role === 'admin'
+          ? `We found ${nm} — press Create draft & apply next to it above.`
+          : `We found ${nm} — an admin needs to press Create draft & apply above.`;
+      }
+      return "No office matched that spot yet — check the address, or ask an admin to set the office up.";
+    }
     if (result.location_resolution?.status !== 'location_verified') return "We haven't pinned down the exact spot — the map has to confirm it before an office can be used.";
     if (selectedLocalityId && selectedLocalityId !== result.suggested_locality.id) return "The office picked doesn't match the searched spot — press Find my office again.";
     if (!selectedLocalityId) return "This office isn't linked to a record yet — pick a saved office above or ask an admin.";
@@ -953,12 +965,19 @@ function LocalityPickerSession({
                               type="button"
                               size="sm"
                               variant="outline"
-                              disabled={creatingDraft || currentUser?.role!=="admin" || (Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
-                              title={currentUser?.role!=="admin"?"An admin needs to do this step":undefined}
-                              onClick={() => requestDraftFromRepository(jurisdiction)}
+                              disabled={creatingDraft || (currentUser?.role === 'admin' && Boolean(address.trim()) && !isDetectedCandidate(jurisdiction))}
+                              title={currentUser?.role!=="admin"?"Copies a ready-made message you can send to an admin":"Create a draft office record and use it"}
+                              onClick={() => {
+                                if (currentUser?.role !== 'admin') {
+                                  navigator.clipboard?.writeText(`Please set up the permitting office for ${jurisdiction.name}${jurisdiction.state ? ', ' + jurisdiction.state : ''}${jurisdiction.parent_county?.name ? ' (' + jurisdiction.parent_county.name + ' County)' : ''} — the address picker found it but only an admin can create the record.`).catch(() => {});
+                                  setDraftCreateError("Copied! Send that note to an admin — it asks them to set this office up.");
+                                  return;
+                                }
+                                requestDraftFromRepository(jurisdiction);
+                              }}
                               className="h-7 text-xs border-violet-300 text-violet-800 hover:bg-violet-100 flex-shrink-0"
                             >
-                              Create draft & apply
+                              {currentUser?.role === 'admin' ? "Create draft & apply" : "Ask an admin to set up"}
                             </Button>
                           </div>
                           {duplicate ? (
@@ -1052,6 +1071,9 @@ function LocalityPickerSession({
                 This copies the saved office's contact info for {draftCandidate?.name || "this office"} into a new office record and adds three plain steps: Application Sent, Check Back, and Permit Came In. It does not copy rules, fees, deadlines, or approvals. Check the office and steps before filing.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {draftCandidate && result?.location_resolution?.status === 'needs_review' && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">The map found the area but not the exact spot — double-check the pin on the map is the right property before filing.</div>
+            )}
             {draftCandidate && hasDuplicateRepositoryIdentity(repositoryJurisdictions, draftCandidate) && (
               <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">Heads up: another saved entry has the same name — you're using this exact copy. An admin should still clean up the double later.</div>
             )}
