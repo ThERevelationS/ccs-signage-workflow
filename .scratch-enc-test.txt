@@ -1,0 +1,3 @@
+line one ASCII
+const arrow = "→";
+const dot = "·";
