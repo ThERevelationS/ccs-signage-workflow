@@ -50,11 +50,11 @@ export default function SettingsTransferBar({ values = {}, allowedKeys = [], fil
     <div className="flex items-center gap-2">
       <button type="button" onClick={exportJson} title="Download this page's settings as JSON"
         className="h-8 px-2.5 inline-flex items-center gap-1 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:bg-gray-50">
-        <Download className="w-3.5 h-3.5" /> Export
+        <Download className="w-3.5 h-3.5" aria-hidden="true" /> Export
       </button>
       <button type="button" onClick={() => inputRef.current?.click()} disabled={busy} title="Import settings from a JSON export"
         className="h-8 px-2.5 inline-flex items-center gap-1 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-        <Upload className="w-3.5 h-3.5" /> {busy ? "Importing…" : "Import"}
+        <Upload className="w-3.5 h-3.5" aria-hidden="true" /> {busy ? "Importing…" : "Import"}
       </button>
       <input ref={inputRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importJson(e.target.files?.[0])} />
       {msg && <span className="text-[10px] text-gray-500 max-w-[220px] truncate" title={msg}>{msg}</span>}
