@@ -2,6 +2,10 @@ import { base44 } from "@/api/base44Client";
 import { assertEstimateProductMutationAllowed } from "@/components/estimator/estimateMutationGuard";
 import { staffEntities } from "@/components/staff/staffEntities";
 
+// String fields can differ only by stray or repeated whitespace; normalize
+// whitespace (but not case) so stored rows match their intended patches.
+const cleanString = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
+
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
   if (!value || typeof value !== "object") return value;
@@ -19,6 +23,9 @@ function sameValue(a, b) {
     if (Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
       return Math.abs(Number(a) - Number(b)) <= 0.000001;
     }
+  }
+  if (typeof a === "string" && typeof b === "string") {
+    return cleanString(a) === cleanString(b);
   }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
