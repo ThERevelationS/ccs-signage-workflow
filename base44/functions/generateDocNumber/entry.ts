@@ -16,6 +16,7 @@ export default async function (req) {
     // padded sequence) — falls back to the EST-/INV- convention.
     let numberFormat = docType === 'order' ? 'INV-{seq}' : 'EST-{seq}';
     let padLen = 5;
+    let reissuePolicy = 'never_reuse';
     try {
       const defaults = await svc.entities.QuoteDefaults.filter({ config_name: 'default' });
       const d = Array.isArray(defaults) && defaults.length ? defaults[0] : null;
@@ -33,6 +34,17 @@ export default async function (req) {
       }
       const pad = Math.floor(Number(d?.doc_number_padding));
       if (Number.isFinite(pad) && pad >= 3 && pad <= 10) padLen = pad;
+      // #484 number-reissue policy. The configured policy is honored as a
+      // fail-safe: only 'never_reuse' exists, and this counter never hands
+      // out a previously allocated number regardless. Deleted estimates
+      // leave gaps — the number may already be quoted to a customer, so
+      // reuse could collide with paperwork in the field. Any other value is
+      // logged and treated as 'never_reuse'.
+      reissuePolicy = String(d?.number_reissue_policy || 'never_reuse').trim() || 'never_reuse';
+      if (reissuePolicy !== 'never_reuse') {
+        console.warn(`generateDocNumber: unsupported number_reissue_policy "${reissuePolicy}" ignored; numbers are never reissued.`);
+        reissuePolicy = 'never_reuse';
+      }
     } catch { /* defaults lookup failure falls back to standard format */ }
 
     const prefix = docType === 'order' ? 'INV-' : 'EST-';
@@ -97,7 +109,7 @@ export default async function (req) {
         numbers.push(numberFormat.includes('{seq}') ? numberFormat.replace('{seq}', seq) : prefix + seq);
       }
 
-      return Response.json({ numbers, number: numbers[0], next_seq: nextSeq });
+      return Response.json({ numbers, number: numbers[0], next_seq: nextSeq, number_reissue_policy: reissuePolicy });
     }
 
     throw new Error('Document number allocation was busy because the shared counter kept changing. Try again.');
