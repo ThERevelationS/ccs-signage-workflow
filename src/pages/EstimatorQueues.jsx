@@ -338,7 +338,7 @@ export default function EstimatorQueues() {
     const cascade = linked.length
       ? `\n\nWARNING: this estimate has ${linked.join(" and ")}. Linked records are NOT deleted automatically and will keep pointing at a removed estimate.`
       : "";
-    if (!window.confirm(`Permanently delete â€” this cannot be undone${cascade}`)) return;
+    if (!window.confirm(`Permanently delete — this cannot be undone${cascade}`)) return;
     setTrashBusyId(e.id);
     setTrashError("");
     try {
@@ -561,11 +561,11 @@ export default function EstimatorQueues() {
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-3">
         <div className="bg-white px-4 py-3 flex items-center gap-2">
-          <ListFilter className="w-4 h-4 text-red-500" />
+          <ListFilter className="w-4 h-4 text-red-500" aria-hidden="true" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
-          <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
-          {me?.role === "admin" && <button type="button" onClick={exportBackup} disabled={backupBusy} className="h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" />{backupBusy ? " Exporting…" : " Backup (JSON)"}</button>}
-          <button type="button" onClick={() => importEstRef.current?.click()} className="h-6 px-2 rounded border border-emerald-300 bg-emerald-50 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 inline-flex items-center gap-1" title="Import an exported estimate JSON bundle (#451)"><Upload className="w-3 h-3" />Import estimate</button>
+          <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" aria-hidden="true" /> CSV</button>
+          {me?.role === "admin" && <button type="button" onClick={exportBackup} disabled={backupBusy} className="h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" aria-hidden="true" />{backupBusy ? " Exporting…" : " Backup (JSON)"}</button>}
+          <button type="button" onClick={() => importEstRef.current?.click()} className="h-6 px-2 rounded border border-emerald-300 bg-emerald-50 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 inline-flex items-center gap-1" title="Import an exported estimate JSON bundle (#451)"><Upload className="w-3 h-3" aria-hidden="true" />Import estimate</button>
           <input ref={importEstRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importEstimateJson(e.target.files?.[0])} />
           <button type="button" onClick={async () => {
             const moduleKey = window.prompt("Module key? (foundation, metal, channel_letters, vinyl, cnc, brick_stone, maintenance, laser, sign_hardware, digital_print)", "");
@@ -581,7 +581,7 @@ export default function EstimatorQueues() {
             } catch (e) { window.alert(e?.message || "Wrap failed."); }
           }}
             className="h-6 px-2 rounded border border-sky-300 bg-sky-50 text-[10px] font-bold text-sky-700 hover:bg-sky-100 inline-flex items-center gap-1" title="Wrap a standalone module project into a new AIO estimate (#455)">From project</button>
-          <span className="text-xs text-gray-400">{rows.length} shown Â· {compact(visibleTotal)}</span>
+          <span className="text-xs text-gray-400">{rows.length} shown · {compact(visibleTotal)}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Estimate status filter"
@@ -608,11 +608,11 @@ export default function EstimatorQueues() {
                     ? "bg-red-600 text-white border-red-600"
                     : "bg-white/70 text-gray-600 border-gray-200 hover:border-red-300"
                 }`}
-                title={`${b.count} Â· ${money0(b.total)}`}
+                title={`${b.count} · ${money0(b.total)}`}
               >
                 {s.label}
                 <span className={`ml-1.5 ${status === s.key ? "text-red-100" : "text-gray-400"}`}>
-                  {b.count}{b.total > 0 ? ` Â· ${compact(b.total)}` : ""}
+                  {b.count}{b.total > 0 ? ` · ${compact(b.total)}` : ""}
                 </span>
               </Link>
             );
@@ -631,23 +631,24 @@ export default function EstimatorQueues() {
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-48">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
             <input
               value={query}
               onChange={(e) => { const v = e.target.value; setQuery(v); writeParams("q", v); }}
+              aria-label="Search estimates"
               onFocus={() => { setRecentSearches(readRecentSearches("estimator_queues", myEmail)); setRecentOpen(true); }}
               onBlur={() => { commitRecentSearch(query); window.setTimeout(() => setRecentOpen(false), 150); }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") { commitRecentSearch(query); setRecentOpen(false); }
                 else if (e.key === "Escape") setRecentOpen(false);
               }}
-              placeholder="Search project, client, estimate #, notes or productsâ€¦"
+              placeholder="Search project, client, estimate #, notes or products…"
               className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 pl-9 pr-3 text-sm outline-none focus:border-red-300"
             />
             {recentOpen && recentSearches.length > 0 && (
               <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                 <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
-                  <History className="h-3 w-3" /> Recent searches
+                  <History className="h-3 w-3" aria-hidden="true" /> Recent searches
                 </div>
                 {recentSearches.map((term) => (
                   <button
@@ -663,10 +664,11 @@ export default function EstimatorQueues() {
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
             <select
               value={sort}
               onChange={(e) => { const v = e.target.value; setSort(v); writeParams("sort", v); }}
+              aria-label="Sort estimates"
               className="rounded-lg border border-gray-200 bg-white/80 px-2 py-2 text-xs font-semibold text-gray-600 outline-none focus:border-red-300"
             >
               {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
@@ -708,12 +710,12 @@ export default function EstimatorQueues() {
               {selectedIds.size > 0 && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-red-50/60 border-b border-red-100">
                   <span className="text-[11px] font-bold text-red-700">{selectedIds.size} selected</span>
-                  <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} className="h-7 rounded border border-gray-300 bg-white px-2 text-[11px] font-semibold text-gray-700">
+                  <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value)} aria-label="Bulk status to apply" className="h-7 rounded border border-gray-300 bg-white px-2 text-[11px] font-semibold text-gray-700">
                     {allEstimateStatuses(customStatuses).map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy || !!convertBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applyingâ€¦" : "Apply status"}</button>
-                  <button type="button" onClick={() => runBulkConvert(false)} disabled={bulkBusy || !!convertBusy} title="Convert each selected Approved estimate to its own Work Order (per-estimate results below)" className="h-7 px-3 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 disabled:opacity-50 inline-flex items-center gap-1"><Briefcase className="w-3 h-3" />{convertBusy === "bulk" ? "Converting…" : "Convert to Work Orders"}</button>
-                  <button type="button" onClick={() => runBulkConvert(true)} disabled={bulkBusy || !!convertBusy} title="Merge all selected Approved estimates (same customer) into one shared Work Order" className="h-7 px-3 rounded border border-sky-300 bg-sky-50 text-sky-700 text-[11px] font-bold hover:bg-sky-100 disabled:opacity-50 inline-flex items-center gap-1"><Layers className="w-3 h-3" />{convertBusy === "combine" ? "Combining…" : "Combine into one WO"}</button>
+                  <button type="button" onClick={applyBulkStatus} disabled={bulkBusy || !!convertBusy} className="h-7 px-3 rounded bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 disabled:opacity-50">{bulkBusy ? "Applying…" : "Apply status"}</button>
+                  <button type="button" onClick={() => runBulkConvert(false)} disabled={bulkBusy || !!convertBusy} title="Convert each selected Approved estimate to its own Work Order (per-estimate results below)" className="h-7 px-3 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 disabled:opacity-50 inline-flex items-center gap-1"><Briefcase className="w-3 h-3" aria-hidden="true" />{convertBusy === "bulk" ? "Converting…" : "Convert to Work Orders"}</button>
+                  <button type="button" onClick={() => runBulkConvert(true)} disabled={bulkBusy || !!convertBusy} title="Merge all selected Approved estimates (same customer) into one shared Work Order" className="h-7 px-3 rounded border border-sky-300 bg-sky-50 text-sky-700 text-[11px] font-bold hover:bg-sky-100 disabled:opacity-50 inline-flex items-center gap-1"><Layers className="w-3 h-3" aria-hidden="true" />{convertBusy === "combine" ? "Combining…" : "Combine into one WO"}</button>
                   <button type="button" onClick={() => setSelectedIds(new Set())} className="h-7 px-2 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 hover:border-red-300">Clear</button>
                   {bulkError && <span role="status" className="text-[10px] text-red-600">{bulkError}</span>}
                 </div>
@@ -763,9 +765,9 @@ export default function EstimatorQueues() {
                         </Link>
                         <div className="text-xs text-gray-500 truncate">
                           {e.client_name}
-                          {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
+                          {e.estimate_number ? ` · ${e.estimate_number}` : ""}
                           {e.priority && e.priority !== "normal" ? ` · ${String(e.priority).toUpperCase()} PRIORITY` : ""}
-                          {e.deleted_at ? ` Â· deleted ${formatInCompanyTz(e.deleted_at, companyTz)}` : ""}
+                          {e.deleted_at ? ` · deleted ${formatInCompanyTz(e.deleted_at, companyTz)}` : ""}
                           {e.deleted_by ? ` by ${e.deleted_by}` : ""}
                         </div>
                       </div>
@@ -779,7 +781,7 @@ export default function EstimatorQueues() {
                           disabled={!!trashBusyId}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 disabled:opacity-40"
                         >
-                          <RotateCcw className="w-3 h-3" /> Restore
+                          <RotateCcw className="w-3 h-3" aria-hidden="true" /> Restore
                         </button>
                         <button
                           type="button"
@@ -787,7 +789,7 @@ export default function EstimatorQueues() {
                           disabled={!!trashBusyId}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-red-200 bg-red-50 text-red-700 hover:border-red-300 disabled:opacity-40"
                         >
-                          <Trash2 className="w-3 h-3" /> Delete permanently
+                          <Trash2 className="w-3 h-3" aria-hidden="true" /> Delete permanently
                         </button>
                       </div>
                     </div>
@@ -810,9 +812,9 @@ export default function EstimatorQueues() {
                       <div className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1.5">{myEmail && e.personal_tags?.[myEmail]?.color ? <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${TAG_DOT[e.personal_tags[myEmail].color] || ""}`} title={`My label: ${e.personal_tags[myEmail].color}`} /> : null}{e.project_name}</div>
                       <div className="text-xs text-gray-500 truncate">
                         {e.client_name}
-                        {e.estimate_number ? ` Â· ${e.estimate_number}` : ""}
+                        {e.estimate_number ? ` · ${e.estimate_number}` : ""}
                           {e.priority && e.priority !== "normal" ? ` · ${String(e.priority).toUpperCase()} PRIORITY` : ""}
-                        {age != null ? ` Â· ${age}d open` : ""}
+                        {age != null ? ` · ${age}d open` : ""}
                         {e.status === "archived" && e.archived_reason ? ` · ${e.archived_reason}` : ""}
                       </div>
                     </div>
@@ -840,7 +842,7 @@ export default function EstimatorQueues() {
                         aria-label={`Duplicate ${e.project_name || "estimate"}`}
                         className="w-7 h-7 inline-flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-gray-800 disabled:opacity-40"
                       >
-                        <Copy className="w-3.5 h-3.5" />
+                        <Copy className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                       {e.status !== "archived" && isEstimateStatusTransitionAllowed(e.status, "archived", statusMap) && (
                         <button type="button"
@@ -850,7 +852,7 @@ export default function EstimatorQueues() {
                           aria-label={`Archive ${e.project_name || "estimate"}`}
                           className="w-7 h-7 inline-flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-amber-300 hover:text-amber-700 disabled:opacity-40"
                         >
-                          <Archive className="w-3.5 h-3.5" />
+                          <Archive className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       )}
                       <button type="button"
@@ -860,7 +862,7 @@ export default function EstimatorQueues() {
                         aria-label={`Move ${e.project_name || "estimate"} to Trash`}
                         className="w-7 h-7 inline-flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-red-700 disabled:opacity-40"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
