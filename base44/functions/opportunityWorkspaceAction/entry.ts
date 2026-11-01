@@ -125,18 +125,57 @@ async function reconcileEstimatingRequest({ EstimatingRequest, Estimate, request
   return { request: saved, completed: true, estimate_status: clean(estimate.status) };
 }
 
-async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any) {
+// (#170) Reverse-sync: after a Work Order's pipeline stage moves, stamp every
+// linked estimate's sales_stage so Estimator queues reflect the same stage.
+// Links resolve three ways — WO.estimate_id (single-link), WO.estimate_ids[]
+// (combined conversion), and the estimate.work_order_id back-link. Advisory
+// metadata: each estimate gets its own CAS write and a conflict is skipped,
+// never fatal to the stage change itself.
+async function syncEstimateSalesStageFromWorkOrder(Estimate: any, wo: any, stage: any) {
+  const next = clean(stage);
+  if (!Estimate || !next || !wo?.id) return;
+  const woId = clean(wo.id);
+  const linked = new Map<string, any>();
+  const push = (row: any) => {
+    if (row?.id && row.deleted !== true && !linked.has(clean(row.id))) linked.set(clean(row.id), row);
+  };
+  push(await Estimate.get(clean(wo.estimate_id)).catch(() => null));
+  for (const id of Array.isArray(wo.estimate_ids) ? wo.estimate_ids : []) {
+    push(await Estimate.get(clean(id)).catch(() => null));
+  }
+  for (const row of list(await Estimate.filter({ work_order_id: woId }).catch(() => []))) push(row);
+  const stamp = new Date().toISOString();
+  for (const [estId, est] of linked) {
+    if (clean(est.sales_stage) === next) continue;
+    const desired = { sales_stage: next, sales_stage_changed_at: stamp };
+    await replaceFoundationFieldsIfUnchanged({
+      entity: Estimate,
+      recordId: estId,
+      expectedFields: expectedFoundationFields(est, desired),
+      nextFields: desired,
+      label: "Estimate sales stage reverse-sync",
+    }).catch((error: any) => console.warn("Estimate sales_stage reverse-sync skipped:", error?.message || error));
+  }
+}
+
+async function syncWorkOrderStage(WorkOrder: any, workOrderId: any, stage: any, Estimate: any = null) {
   const next = OPP_TO_WO_STAGE[clean(stage)];
   const wo = await WorkOrder.get(clean(workOrderId)).catch(() => null);
-  if (!next || !wo?.id || clean(wo.sales_status) === next) return "";
+  if (!next || !wo?.id || clean(wo.sales_status) === next) {
+    // Already at target — still back-fill linked estimates whose sales_stage
+    // drifted (combined-conversion rows, or estimates linked after the fact).
+    if (next && wo?.id && Estimate) await syncEstimateSalesStageFromWorkOrder(Estimate, wo, next);
+    return "";
+  }
   const desired = { sales_status: next };
-  await replaceFoundationFieldsIfUnchanged({
+  const saved = await replaceFoundationFieldsIfUnchanged({
     entity: WorkOrder,
     recordId: clean(wo.id),
     expectedFields: expectedFoundationFields(wo, desired),
     nextFields: desired,
     label: "Work order sales status",
   });
+  if (Estimate) await syncEstimateSalesStageFromWorkOrder(Estimate, saved || wo, next);
   return next;
 }
 
@@ -570,40 +609,46 @@ Deno.serve(async (req) => {
       const afCached = !!(attentionFeedRowsCache && attentionFeedRowsCache.expires > Date.now());
       let afFailed = false;
       const afFail = () => { afFailed = true; return []; };
+      // (#174/#295/#420) Recency-bounded first-page reads escalate to a paged
+      // full scan the moment a cap actually trips — sections, matched_totals
+      // and the truncated map then cover ALL rows, not the old bounded
+      // window. The 2-minute module cache still shields the shared
+      // entity_list budget between bell pollers.
+      const feedRead = async (entity: any, query: Record<string, any> | null, sort: string, cap: number, label: string) => {
+        const first = query && typeof query === "object"
+          ? await entity.filter(query, sort, cap, 0)
+          : await entity.list(sort, cap, 0);
+        if (!Array.isArray(first)) return null;
+        return first.length < cap ? first : loadAllEntityRows({ entity, query, sort, label });
+      };
       const feedRows: any[] = afCached ? attentionFeedRowsCache!.rows : await Promise.all([
-        PortalMessage.filter({ author_side: "customer", read_by_staff: false }, "-created_date", 200).catch(afFail),
-        Invoice.filter({}, "-updated_date", 200).catch(afFail),
-        PurchaseOrder.filter({}, "-updated_date", 200).catch(afFail),
-        ChangeOrder.filter({ status: "proposed" }, "-created_date", 100).catch(afFail),
-        Opportunity.filter({}, "-last_activity_at", 300).catch(afFail),
-        EstimatingRequest.filter({}, "-created_date", 200).catch(afFail),
-        Inventory.filter({}, "-updated_date", 300).catch(afFail),
-        WorkOrder.filter({}, "-updated_date", 300).catch(afFail),
-        PermitLineItem.filter({}, "-updated_date", 300).catch(afFail),
-        Estimate.filter({ status: "sent" }, "-updated_date", 300).catch(afFail),
-        Estimate.filter({ pipeline_sync_pending: true }, "-updated_date", 100).catch(afFail),
-        BuilderPart.filter({ needs_recalc: true }, "-updated_date", 150).catch(afFail),
+        feedRead(PortalMessage, { author_side: "customer", read_by_staff: false }, "-created_date", 200, "Feed portal messages").catch(afFail),
+        feedRead(Invoice, null, "-updated_date", 200, "Feed invoices").catch(afFail),
+        feedRead(PurchaseOrder, null, "-updated_date", 200, "Feed purchase orders").catch(afFail),
+        feedRead(ChangeOrder, { status: "proposed" }, "-created_date", 100, "Feed change orders").catch(afFail),
+        feedRead(Opportunity, null, "-last_activity_at", 300, "Feed opportunities").catch(afFail),
+        feedRead(EstimatingRequest, null, "-created_date", 200, "Feed estimating requests").catch(afFail),
+        feedRead(Inventory, null, "-updated_date", 300, "Feed inventory").catch(afFail),
+        feedRead(WorkOrder, null, "-updated_date", 300, "Feed work orders").catch(afFail),
+        feedRead(PermitLineItem, null, "-updated_date", 300, "Feed permit lines").catch(afFail),
+        feedRead(Estimate, { status: "sent" }, "-updated_date", 300, "Feed sent estimates").catch(afFail),
+        feedRead(Estimate, { pipeline_sync_pending: true }, "-updated_date", 100, "Feed sync-pending estimates").catch(afFail),
+        feedRead(BuilderPart, { needs_recalc: true }, "-updated_date", 150, "Feed needs-recalc parts").catch(afFail),
       ]);
       if (!afCached && !afFailed) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
       const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = feedRows;
-      // Reads stay recency-capped on purpose (12 tables, polled per tab) — but
-      // the flags below keep the counts honest when a cap is actually hit.
-      const feedTruncated = {
-        unread_portal_messages: list(messages).length >= 200,
-        overdue_invoices: list(invoices).length >= 200,
-        overdue_pos: list(pos).length >= 200,
-        proposed_cos: list(cos).length >= 100,
-        overdue_follow_ups: list(opps).length >= 300,
-        open_estimating_requests: list(requests).length >= 200,
-        low_stock: list(stock).length >= 300,
-        overdue_jobs: list(workOrders).length >= 300,
-        permits: list(permits).length >= 300,
-        sent_estimates: list(sentEstimates).length >= 300,
-        sync_pending_estimates: list(syncPendingRows).length >= 100,
-        needs_recalc_parts: list(needsRecalcRows).length >= 150,
+      // Response arrays stay display-capped at the historic per-section
+      // ceilings so the payload shape is unchanged; matched_totals and the
+      // truncated map now report the post-filter count across ALL rows.
+      const matchedTotals: Record<string, number> = {};
+      const feedTruncated: Record<string, boolean> = {};
+      const section = <T,>(key: string, matched: T[], displayCap: number): T[] => {
+        matchedTotals[key] = matched.length;
+        feedTruncated[key] = matched.length > displayCap;
+        return matched.slice(0, displayCap);
       };
 
-      const unreadMessages = list(messages).map((m: any) => ({
+      const unreadMessages = section("unread_portal_messages", list(messages).map((m: any) => ({
         id: clean(m?.id),
         customer_id: clean(m?.customer_id),
         kind: clean(m?.kind) || "message",
@@ -611,9 +656,9 @@ Deno.serve(async (req) => {
         excerpt: clean(m?.body).slice(0, 120),
         author_name: clean(m?.author_name),
         created_date: clean(m?.created_date),
-      }));
+      })), 200);
 
-      const overdueInvoices = list(invoices)
+      const overdueInvoicesAll = list(invoices)
         .filter((i: any) => num(i?.balance_due) > 0 && ["sent", "partially_paid"].includes(clean(i?.status)) && clean(i?.due_date) && clean(i?.due_date) < today)
         .map((i: any) => ({
           id: clean(i?.id),
@@ -624,9 +669,11 @@ Deno.serve(async (req) => {
           customer_id: clean(i?.customer_id),
           salesperson_email: clean(i?.salesperson_email) || clean(i?.salesperson),
         }));
-      const overdueInvoiceTotal = money(overdueInvoices.reduce((s: number, i: any) => s + i.balance_due, 0));
+      const overdueInvoices = section("overdue_invoices", overdueInvoicesAll, 200);
+      // The exposure total runs over ALL matched rows, not the display slice.
+      const overdueInvoiceTotal = money(overdueInvoicesAll.reduce((s: number, i: any) => s + i.balance_due, 0));
 
-      const overduePos = list(pos)
+      const overduePos = section("overdue_pos", list(pos)
         .filter((p: any) => ["sent", "partially_received"].includes(clean(p?.status)) && clean(p?.expected_date) && clean(p?.expected_date) < today)
         .map((p: any) => ({
           id: clean(p?.id),
@@ -634,20 +681,20 @@ Deno.serve(async (req) => {
           vendor_name: clean(p?.vendor_name),
           expected_date: clean(p?.expected_date),
           status: clean(p?.status),
-        }));
+        })), 200);
 
-      const proposedCos = list(cos).map((c: any) => ({
+      const proposedCos = section("proposed_cos", list(cos).map((c: any) => ({
         id: clean(c?.id),
         change_order_number: clean(c?.change_order_number),
         customer_display_name: clean(c?.customer_display_name),
         amount_delta: money(num(c?.amount_delta)),
         proposed_by: clean(c?.proposed_by),
         created_date: clean(c?.created_date),
-      }));
+      })), 100);
 
       // Sent estimates aging past 7 days without a response â€” surfaces quotes
       // that aren't opportunity-linked (which list_follow_ups already covers).
-      const staleSentEstimates = list(sentEstimates)
+      const staleSentEstimates = section("stale_sent_estimates", list(sentEstimates)
         .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.updated_date) && Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000) >= 7)
         .map((e: any) => ({
           id: clean(e?.id),
@@ -657,13 +704,13 @@ Deno.serve(async (req) => {
           quote_total: num(e?.quote_total),
           days_sent: Math.floor((Date.parse(today) - Date.parse(clean(e?.updated_date))) / 86400000),
           updated_date: clean(e?.updated_date),
-        }));
+        })), 300);
 
       // Forward-looking quote expiry (#346): quotes that hit their
       // expiration date inside the next 7 days, still in 'sent' — notify the
       // responsible salesperson before the quote lapses.
       const sevenDaysOut = new Date(Date.parse(today) + 7 * 86400000).toISOString().slice(0, 10);
-      const quotesExpiringSoon = list(sentEstimates)
+      const quotesExpiringSoon = section("quotes_expiring_soon", list(sentEstimates)
         .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && clean(e?.quote_expiration_date) && clean(e?.quote_expiration_date) >= today && clean(e?.quote_expiration_date) <= sevenDaysOut)
         .map((e: any) => ({
           id: clean(e?.id),
@@ -674,10 +721,10 @@ Deno.serve(async (req) => {
           quote_expiration_date: clean(e?.quote_expiration_date),
           days_until_expiry: Math.floor((Date.parse(clean(e?.quote_expiration_date)) - Date.parse(today)) / 86400000),
           salesperson_email: clean(e?.salesperson_email) || clean(e?.salesperson),
-        }));
+        })), 300);
       // Already past expiry but still 'sent' — the quote lapsed without a
       // customer response or a staff expiry update.
-      const quotesExpired = list(sentEstimates)
+      const quotesExpired = section("quotes_expired", list(sentEstimates)
         .filter((e: any) => e?.deleted !== true && clean(e?.status) === "sent" && (e?.quote_expired === true || (clean(e?.quote_expiration_date) && clean(e?.quote_expiration_date) < today)))
         .map((e: any) => ({
           id: clean(e?.id),
@@ -687,9 +734,9 @@ Deno.serve(async (req) => {
           quote_total: num(e?.quote_total),
           quote_expiration_date: clean(e?.quote_expiration_date),
           salesperson_email: clean(e?.salesperson_email) || clean(e?.salesperson),
-        }));
+        })), 300);
 
-      const overdueFollowUps = list(opps)
+      const overdueFollowUps = section("overdue_follow_ups", list(opps)
         .filter((o: any) => !CLOSED_STAGES.has(clean(o?.stage)) && clean(o?.next_action_due) && clean(o?.next_action_due) < today)
         .map((o: any) => ({
           id: clean(o?.id),
@@ -698,9 +745,9 @@ Deno.serve(async (req) => {
           next_action: clean(o?.next_action),
           next_action_due: clean(o?.next_action_due),
           salesperson: clean(o?.salesperson),
-        }));
+        })), 300);
 
-      const openRequests = list(requests)
+      const openRequestsAll = list(requests)
         .filter((r: any) => OPEN_REQUEST_STATUSES.has(clean(r?.status)))
         .map((r: any) => ({
           id: clean(r?.id),
@@ -711,8 +758,20 @@ Deno.serve(async (req) => {
           assigned_estimator: clean(r?.assigned_estimator) || clean(r?.estimator),
           created_date: clean(r?.created_date),
         }));
+      const openRequests = section("open_estimating_requests", openRequestsAll, 200);
 
-      const lowStock = list(stock)
+      // (#167) Assigned-to-me surfacing: the signed-in estimator's open
+      // requests as their own section so the bell/feed can show MY queue,
+      // not just the shop-wide list. assign_estimator already writes
+      // estimator_assigned activity + this field — no email is added.
+      const meEmail = clean(user?.email).toLowerCase();
+      const meName = clean(user?.name || user?.full_name).toLowerCase();
+      const assignedToMeRequests = section("estimate_requests", openRequestsAll.filter((r: any) => {
+        const assignee = clean(r.assigned_estimator).toLowerCase();
+        return Boolean(assignee) && (assignee === meEmail || (meName !== "" && assignee === meName));
+      }), 50);
+
+      const lowStock = section("low_stock", list(stock)
         .filter((it: any) => num(it?.reorder_point) > 0 && num(it?.quantity_on_hand) <= num(it?.reorder_point))
         .map((it: any) => ({
           id: clean(it?.id),
@@ -720,12 +779,13 @@ Deno.serve(async (req) => {
           quantity_on_hand: num(it?.quantity_on_hand),
           reorder_point: num(it?.reorder_point),
           supplier: clean(it?.vendor) || clean(it?.supplier),
-        }));
+        })), 300);
 
       return Response.json({
         success: true, action, today,
         ...(afFailed ? { partial: true } : {}),
         truncated: feedTruncated,
+        matched_totals: matchedTotals,
         unread_portal_messages: unreadMessages,
         overdue_invoices: overdueInvoices,
         overdue_invoice_total: overdueInvoiceTotal,
@@ -736,30 +796,28 @@ Deno.serve(async (req) => {
         quotes_expiring_soon: quotesExpiringSoon,
         quotes_expired: quotesExpired,
         open_estimating_requests: openRequests,
+        estimate_requests: assignedToMeRequests,
         // Escalation: still-unassigned after 2 days — flagged to managers.
-        unassigned_estimating_requests: openRequests
-          .filter((r: any) => !r.assigned_estimator && Date.parse(r.created_date) < Date.now() - 2 * 86400000)
-          .slice(0, 25),
+        unassigned_estimating_requests: section("unassigned_estimating_requests", openRequestsAll
+          .filter((r: any) => !r.assigned_estimator && Date.parse(r.created_date) < Date.now() - 2 * 86400000), 25),
         low_stock: lowStock,
-        needs_recalc_parts: list(needsRecalcRows)
-          .slice(0, 25)
+        needs_recalc_parts: section("needs_recalc_parts", list(needsRecalcRows)
           .map((p: any) => ({
             id: clean(p?.id),
             part_name: clean(p?.part_name) || clean(p?.part_key),
             builder_product_id: clean(p?.builder_product_id),
             estimate_id: clean(p?.estimate_id),
-          })),
-        sync_pending_estimates: list(syncPendingRows)
+          })), 25),
+        sync_pending_estimates: section("sync_pending_estimates", list(syncPendingRows)
           .filter((e: any) => Date.parse(clean(e?.updated_date)) < Date.now() - 86400000)
-          .slice(0, 25)
           .map((e: any) => ({
             id: clean(e?.id),
             project_name: clean(e?.project_name),
             estimate_number: clean(e?.estimate_number),
             status: clean(e?.status),
             updated_date: clean(e?.updated_date),
-          })),
-        overdue_jobs: list(workOrders)
+          })), 25),
+        overdue_jobs: section("overdue_jobs", list(workOrders)
           .filter((w: any) => clean(w?.current_stage) !== "completed" && clean(w?.due_date) && clean(w?.due_date) < today)
           .map((w: any) => ({
             id: clean(w?.id),
@@ -767,13 +825,12 @@ Deno.serve(async (req) => {
             client_name: clean(w?.client_name),
             current_stage: clean(w?.current_stage),
             due_date: clean(w?.due_date),
-          })),
-        expiring_permits: (() => {
+          })), 300),
+        expiring_permits: section("expiring_permits", (() => {
           const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
           return list(permits)
             .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.expiration_date) && clean(p?.expiration_date) <= soon)
             .sort((a: any, b: any) => clean(a?.expiration_date).localeCompare(clean(b?.expiration_date)))
-            .slice(0, 50)
             .map((p: any) => ({
               id: clean(p?.id),
               row_name: clean(p?.row_name),
@@ -783,8 +840,8 @@ Deno.serve(async (req) => {
               expiration_date: clean(p?.expiration_date),
               expired: clean(p?.expiration_date) < today,
             }));
-        })(),
-        permit_fees_due: list(permits)
+        })(), 50),
+        permit_fees_due: section("permit_fees_due", list(permits)
           .filter((p: any) => clean(p?.status) !== "completed" && clean(p?.jurisdiction_fee_status) === "due")
           .map((p: any) => ({
             id: clean(p?.id),
@@ -793,7 +850,7 @@ Deno.serve(async (req) => {
             work_order_id: clean(p?.work_order_id),
             work_order_title: clean(p?.work_order_title),
             fee_amount: money(num(p?.jurisdiction_fee_amount)),
-          })),
+          })), 300),
       });
     }
 
@@ -1137,6 +1194,12 @@ Deno.serve(async (req) => {
         ChangeOrder.filter({ opportunity_id: opportunityId }, "-created_date", 500),
         Activity.filter({ opportunity_id: opportunityId }, "-created_date", 100).catch(() => []),
       ]);
+      // (#170) Reconcile-on-read: pipeline UIs can move a WO's stage without
+      // routing through this function — re-stamp linked estimates from the
+      // WO's current stage whenever the workspace is opened.
+      if (workOrder?.id && clean(workOrder.sales_status)) {
+        await syncEstimateSalesStageFromWorkOrder(Estimate, workOrder, workOrder.sales_status).catch(() => {});
+      }
       const liveInvoices = (Array.isArray(invoices) ? invoices : []).filter((i: any) => clean(i?.status) !== "void");
       const billedTotal = money(liveInvoices.filter((i: any) => clean(i?.status) !== "draft").reduce((s: number, i: any) => s + num(i?.total), 0));
       const collectedTotal = money(liveInvoices.reduce((s: number, i: any) => s + num(i?.amount_paid), 0));
@@ -1168,7 +1231,7 @@ Deno.serve(async (req) => {
           label: "Opportunity stage advance",
         }).catch(() => opportunity);
         try {
-          await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted");
+          await syncWorkOrderStage(WorkOrder, clean(finalOpportunity?.compatibility_work_order_id), "quoted", Estimate);
         } catch {}
         await logActivity(Activity, {
           opportunity_id: opportunityId, actor,
@@ -1568,7 +1631,7 @@ Deno.serve(async (req) => {
         const linkedWoId = clean(saved?.compatibility_work_order_id) || clean(current?.compatibility_work_order_id);
         if (linkedWoId) {
           try {
-            syncedStage = await syncWorkOrderStage(WorkOrder, linkedWoId, saved?.stage);
+            syncedStage = await syncWorkOrderStage(WorkOrder, linkedWoId, saved?.stage, Estimate);
           } catch (e: any) {
             stageSyncWarning = e?.message || "Work order stage sync failed.";
           }
@@ -1683,7 +1746,7 @@ Deno.serve(async (req) => {
       let syncedStage = "";
       let stageSyncWarning = "";
       try {
-        syncedStage = await syncWorkOrderStage(WorkOrder, workOrderId, savedOpportunity?.stage);
+        syncedStage = await syncWorkOrderStage(WorkOrder, workOrderId, savedOpportunity?.stage, Estimate);
       } catch (e: any) {
         stageSyncWarning = e?.message || "Work order stage sync failed.";
       }
@@ -1704,6 +1767,34 @@ Deno.serve(async (req) => {
         stage_sync_warning: stageSyncWarning || undefined,
         reused: clean(opportunity.compatibility_work_order_id) === workOrderId && !Object.keys(woDesired).length,
       });
+    }
+
+    // (#170) Explicit reverse-sync endpoint: any client that moves a Work
+    // Order's pipeline stage directly (e.g. the Sales Pipeline spreadsheet's
+    // sales_status updates) can call this afterward to stamp the linked
+    // estimate(s). Also covers one-off repairs. Idempotent.
+    if (action === "sync_estimate_sales_stage") {
+      const workOrderId = clean(body?.work_order_id);
+      if (!workOrderId) throw bad("work_order_id is required.", 400);
+      const wo = await WorkOrder.get(workOrderId).catch(() => null);
+      if (!wo?.id) throw bad("WorkOrder not found.", 404);
+      const stage = clean(body?.stage) || clean(wo.sales_status);
+      if (!stage) return Response.json({ success: true, action, work_order_id: workOrderId, synced: 0 });
+      // Optional explicit stage override also corrects the WO itself.
+      if (clean(body?.stage) && clean(wo.sales_status) !== clean(body.stage)) {
+        const desired = { sales_status: clean(body.stage) };
+        const saved = await replaceFoundationFieldsIfUnchanged({
+          entity: WorkOrder,
+          recordId: workOrderId,
+          expectedFields: expectedFoundationFields(wo, desired),
+          nextFields: desired,
+          label: "Work order sales status",
+        });
+        await syncEstimateSalesStageFromWorkOrder(Estimate, saved || wo, clean(body.stage));
+      } else {
+        await syncEstimateSalesStageFromWorkOrder(Estimate, wo, stage);
+      }
+      return Response.json({ success: true, action, work_order_id: workOrderId, sales_stage: stage });
     }
 
     if (action === "request_estimate") {
