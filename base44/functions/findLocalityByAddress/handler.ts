@@ -79,7 +79,7 @@ Deno.serve(async req=>{
  let reporter:any=silentScanReporter;
  let diagnostic=false;
  try{
-  const base44=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:4}),body=await req.json();
+  const base44=withEntityRateLimitRetry(createClientFromRequest(req),{maxRetries:2}),body=await req.json();
   // Admin diagnostics use normal platform authentication; ordinary searches keep
   // the existing Sign Shop session requirement and authority gates.
   diagnostic=body?.action==='geocode_diagnostic';
@@ -203,6 +203,6 @@ Deno.serve(async req=>{
   const errorStatus=Number(error?.status||error?.response?.status||0);
   // A platform rate limit is transient: hand it back as 429 so the browser
   // backs off instead of treating the lookup as a deterministic failure.
-  if(errorStatus===429||/rate limit|too many requests/i.test(String(error?.message||'')))return addressResponse({success:false,error:'Address lookup is busy. Try again shortly.',retry_after_ms:3000,error_detail:String(error?.message||error).slice(0,300)},{status:429,headers:{'Retry-After':'3'}});
+  if(errorStatus===429||/rate limit|too many requests|traffic volume/i.test(String(error?.message||'')))return addressResponse({success:false,error:'Address lookup is busy. Try again shortly.',retry_after_ms:3000,error_detail:String(error?.message||error).slice(0,300)},{status:429,headers:{'Retry-After':'3'}});
   const status=[400,401,409,503].includes(errorStatus)?errorStatus:500;return addressResponse({success:false,scan_run:await reporter.finish('failed','Address lookup could not finish safely.'),error:status===500?'Address lookup could not finish safely. Please try again.':error.message,...(diagnostic||status!==500?{error_detail:String(error?.message||error).slice(0,300)}:{})},{status});}
 });
