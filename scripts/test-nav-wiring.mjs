@@ -29,15 +29,28 @@ for (const tab of [...ESTIMATOR_TABS, ...ESTIMATOR_RIGHT_TABS]) {
   collect(tab?.items);
 }
 
+// #487 — also cover the EstimatorTools hub LINKS array (static links in the
+// tools page itself, incl. admin surfaces like Pricing Admin, export and the
+// audit-log deep link). Query strings are stripped by base().
+const toolsSrc = readFileSync(resolve(here, '../src/pages/EstimatorTools.jsx'), 'utf8');
+const toolsBlock = toolsSrc.match(/const\s+LINKS\s*=\s*\[([\s\S]*?)\];/);
+assert.ok(toolsBlock, 'EstimatorTools LINKS array found');
+const toolLinks = [...toolsBlock[1].matchAll(/to:\s*"([^"]+)"/g)].map((m) => m[1]);
+assert.ok(toolLinks.length >= 6, `expected hub links, got ${toolLinks.length}`);
+const brokenToolLinks = toolLinks.filter((to) => !routes.has(base(to)));
+assert.deepEqual(brokenToolLinks, [], `dead EstimatorTools hub links: ${brokenToolLinks.join(', ')}`);
+
 const broken = links.filter((to) => !routes.has(base(to)));
 assert.equal(ESTIMATOR_TABS.length >= 5, true, 'estimator tabs registered');
 assert.ok(links.length > 15, `expected a real nav surface, got ${links.length} links`);
 assert.deepEqual(broken, [], `dead nav links: ${broken.join(', ')}`);
 
-// Route-name sanity: every *_PAGES key should have a matching src/pages file import.
+// Route-name sanity: every *_PAGES key should have a matching src/pages file
+// import — either a static `import Name ...` or a lazy `import('./pages/Name')`.
 const missingImport = [...app.matchAll(/const\s+\w+_PAGES\s*=\s*\{([\s\S]*?)\};/g)]
   .flatMap((m) => [...m[1].matchAll(/^\s*(\w+),?\s*$/gm)].map((n) => n[1]))
-  .filter((name) => !new RegExp(`(import\\s+${name}\\b|const\\s+${name}\\s*=)`).test(app));
+  .filter((name) => !new RegExp(`import\\s+${name}\\b`).test(app)
+    && !new RegExp(`import\\(['"\`]\\./pages/${name}['"\`]\\)`).test(app));
 assert.deepEqual(missingImport, [], `page map keys without imports: ${missingImport.join(', ')}`);
 
 console.log(`PASS nav wiring (${links.length} links → ${routes.size} routes)`);
