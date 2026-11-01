@@ -6,6 +6,7 @@ import { loadAllEntityRows } from "./loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { createEstimateLinkedWorkOrderWithRecovery, deleteCreatedDuplicateWorkOrderIfUnchanged, expectedWorkOrderFields } from "./workOrderSyncPersistence";
+import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
 import { expectedCustomerFields, replaceCustomerFieldsIfUnchanged } from "./customerPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -342,6 +343,34 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
         duplicateLabel: "Sales Pipeline record",
       }),
     });
+  }
+
+  // (#170) Forward stamp: the estimate's sales_stage mirrors the Work Order
+  // stage this sync produced. The reverse direction (a WO stage change
+  // written back onto linked estimates) lives in opportunityWorkspaceAction's
+  // syncWorkOrderStage / sync_estimate_sales_stage path. This write is
+  // advisory metadata only — a CAS conflict just means another session is
+  // mid-save; the pipeline sync itself never fails over it.
+  if (workOrder?.id && String(workOrder.sales_status || "").trim()
+    && String(estimate.sales_stage || "") !== String(workOrder.sales_status)) {
+    try {
+      await replaceEstimateFieldsIfUnchanged({
+        entity: staffEntities.AllInOneEstimate,
+        estimateId: estimate.id,
+        expectedFields: expectedEstimateFields(estimate, {
+          sales_stage: workOrder.sales_status,
+          sales_stage_changed_at: new Date().toISOString(),
+        }),
+        guardFields: { updated_date: estimate.updated_date },
+        nextFields: {
+          sales_stage: workOrder.sales_status,
+          sales_stage_changed_at: new Date().toISOString(),
+        },
+        label: "Estimate sales_stage sync stamp",
+      });
+    } catch (stampError) {
+      console.warn("Estimate sales_stage stamp skipped:", stampError?.message || stampError);
+    }
   }
 
   // Permit line auto-seed: a brand-new job with a site address gets one open
