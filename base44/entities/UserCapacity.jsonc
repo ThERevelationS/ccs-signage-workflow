@@ -68,7 +68,18 @@
         "role": "__resource_capacity_backend_only__"
       }
     },
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "__resource_capacity_backend_only__"
