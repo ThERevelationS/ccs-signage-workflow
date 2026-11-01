@@ -9,7 +9,6 @@ import {
   Clock3,
   Loader2,
   QrCode,
-  Square,
   User,
   X,
 } from "lucide-react";
@@ -1798,7 +1797,7 @@ export default function QuickClockSection({
         )}
 
         {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && selectedUser && activeEntry && (
-          <div className="flex flex-col items-center gap-4 w-64" data-summary-entry-id={activeEntry.id}>
+          <div className="flex flex-col items-center gap-4 w-72" data-summary-entry-id={activeEntry.id}>
             <div className="w-full rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <span className="relative flex h-2.5 w-2.5">
@@ -1815,15 +1814,13 @@ export default function QuickClockSection({
                 {activeEntry.approval_status === "needs_review" && " - pending manager review"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => { setClockOutDismissed(activeEntry?.id, false); setShowClockOut(true); }}
+            <CrystalShiftButton
+              single="out"
+              onClockOut={() => { setClockOutDismissed(activeEntry?.id, false); setShowClockOut(true); }}
               disabled={isLoading}
-              className="w-64 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-red-900/25 transition-[transform,box-shadow] duration-200 hover:shadow-xl motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/60"
-            >
-              <Square className="w-4 h-4 fill-current" />
-              Clock Out
-            </button>
+              verifying={isLoading}
+              success={crystalSuccess}
+            />
             <button
               type="button"
               onClick={resetState}
