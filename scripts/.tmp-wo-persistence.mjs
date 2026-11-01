@@ -42230,9 +42230,16 @@ async function loadAllEntityRows({
   pageSize = DEFAULT_PAGE_SIZE,
   maxRows = DEFAULT_MAX_ROWS,
   label = "Estimator prerequisite catalog",
-  cacheTtlMs = 0
+  cacheTtlMs = 0,
+  // (#403) `limit` bounds the total rows returned for callers that only need a
+  // window (e.g. "the 50 newest"), not a verified-complete catalog. Reaching
+  // the bound is a normal truncation — unlike `maxRows`, which stays a
+  // runaway-scan safety net and still throws when a full scan would pass it.
+  limit = null
 } = {}) {
-  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, maxRows]) : null;
+  const parsedLimit = limit == null ? null : Math.floor(Number(limit));
+  const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+  const cacheKey = cacheTtlMs > 0 ? JSON.stringify([label, query, sort, pageSize, safeLimit ?? maxRows]) : null;
   if (cacheKey) {
     const hit = readCache2.get(cacheKey);
     if (hit && Date.now() - hit.at < Math.min(cacheTtlMs, CACHE_MAX_AGE_MS)) return hit.rows;
@@ -42243,13 +42250,14 @@ async function loadAllEntityRows({
     throw new Error(`${label} could not initialize its paged read.`);
   }
   const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || DEFAULT_PAGE_SIZE));
-  const safeMaxRows = Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
+  const safeMaxRows = safeLimit ?? Math.max(safePageSize, Number(maxRows) || DEFAULT_MAX_ROWS);
   const collected = [];
   const seen = /* @__PURE__ */ new Set();
   let skip = 0;
   while (skip < safeMaxRows) {
+    const pageLimit = Math.min(safePageSize, safeMaxRows - skip);
     const page2 = await withRateLimitRetry(
-      () => hasFilter ? entity.filter(query, sort || void 0, safePageSize, skip) : entity.list(sort || void 0, safePageSize, skip)
+      () => hasFilter ? entity.filter(query, sort || void 0, pageLimit, skip) : entity.list(sort || void 0, pageLimit, skip)
     );
     if (!Array.isArray(page2)) {
       throw new Error(`${label} could not be verified completely. Estimating was blocked rather than using a partial catalog.`);
@@ -42261,11 +42269,15 @@ async function loadAllEntityRows({
       seen.add(key);
       collected.push(row);
     }
-    if (page2.length < safePageSize) {
+    if (page2.length < pageLimit) {
       if (cacheKey) readCache2.set(cacheKey, { at: Date.now(), rows: collected });
       return collected;
     }
-    skip += safePageSize;
+    skip += pageLimit;
+  }
+  if (safeLimit != null) {
+    if (cacheKey) readCache2.set(cacheKey, { at: Date.now(), rows: collected });
+    return collected;
   }
   throw new Error(`${label} exceeds the ${safeMaxRows.toLocaleString()}-record estimator safety limit.`);
 }
