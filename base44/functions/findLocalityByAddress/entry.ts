@@ -531,6 +531,7 @@ Deno.serve(async (req) => {
     const serviceFailure = (status, message, diagnostic_code) => geocodingService = { status, issue: true, message, ...diagnostic_code ? { diagnostic_code } : {} };
     try {
       const key = Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() || Deno.env.get("GOOGLE_MAPS_API_KEY")?.trim();
+      const keySource = Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() ? "geocoding" : Deno.env.get("GOOGLE_MAPS_API_KEY")?.trim() ? "maps" : "none";
       if (!key) {
         serviceFailure("NOT_CONFIGURED", "The map location service is not configured. An administrator needs to check its server key. You do not need to re-enter this address.");
         throw Error("Map geocoding is not configured.");
@@ -540,13 +541,17 @@ Deno.serve(async (req) => {
       const data = await fixedJSON(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${encodeURIComponent(key)}`);
       const serviceStatus = ["OK", "ZERO_RESULTS", "REQUEST_DENIED", "OVER_QUERY_LIMIT", "OVER_DAILY_LIMIT", "INVALID_REQUEST", "UNKNOWN_ERROR"].includes(data.status) ? data.status : "UNKNOWN_STATUS";
       const serviceResultCount = Array.isArray(data.results) ? data.results.length : 0;
-      console.info("CCS address geocoder v5", { status: serviceStatus, result_count: serviceResultCount });
+      console.info("CCS address geocoder v5", { status: serviceStatus, result_count: serviceResultCount, google_error_message: String(data?.error_message || "").slice(0, 300), key_source: Deno.env.get("GOOGLE_GEOCODING_API_KEY")?.trim() ? "geocoding" : "maps" });
       await reporter.emit({ kind: "geocode_service_result", detail: `Google Geocoding responded: ${serviceStatus}; ${serviceResultCount} address results.` });
       if (serviceStatus === "OK" && !serviceResultCount) serviceFailure("EMPTY_RESULT", "The map service returned an empty response. Try again later; no jurisdiction has been selected.");
       else if (serviceStatus === "ZERO_RESULTS") geocodingService = { status: serviceStatus, issue: false, message: "No address match was returned. Check the street address." };
       else if (serviceStatus === "REQUEST_DENIED") {
         const rejection = geocodingRejection(data.error_message);
         serviceFailure(serviceStatus, rejection.message, rejection.diagnostic_code);
+        if (geocodingService) {
+          geocodingService.google_error = String(data?.error_message || "").slice(0, 300);
+          geocodingService.key_source = keySource;
+        }
         googleDeniedUntil = Date.now() + GOOGLE_DENIED_TTL_MS;
         googleDeniedService = geocodingService;
       } else if (serviceStatus !== "OK") serviceFailure(serviceStatus, serviceStatus === "OVER_QUERY_LIMIT" || serviceStatus === "OVER_DAILY_LIMIT" ? "Google Geocoding reached its service limit. Try again later or ask an administrator to check quota and billing." : serviceStatus === "INVALID_REQUEST" ? "The map service rejected the lookup request. An administrator needs to check the request setup." : "The map location service is temporarily unavailable. Try again later.");
