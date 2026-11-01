@@ -282,6 +282,10 @@ assert.match(portalEntity, /"creation_request_key"/, 'portal link entity must ca
 const portalMsgEntity = readFileSync('base44/entities/PortalMessage.jsonc', 'utf8');
 assert.match(portalMsgEntity, /"__portal_message_backend_only__"/, 'portal message entity must be backend-only');
 assert.match(portalMsgEntity, /"estimate_revision_requested"/, 'portal messages must cover revision requests');
+// Fleet alert rules are admin-only (fleetAlertSettingsAction requires a CCS admin); the platform user role must not read them directly.
+const fleetAlertSettingRls = JSON.parse(readFileSync('base44/entities/FleetAlertSetting.jsonc', 'utf8')).rls;
+assert.equal(fleetAlertSettingRls?.read?.user_condition?.role, 'admin', 'FleetAlertSetting read must stay admin-only');
+assert.doesNotMatch(JSON.stringify(fleetAlertSettingRls), /"role":"user"/, 'FleetAlertSetting RLS must not grant the platform user role');
 const portalFn = readFileSync('base44/functions/customerPortalAction/entry.ts', 'utf8');
 assert.match(portalFn, /action === "bootstrap"/, 'portal function must expose token bootstrap');
 assert.match(portalFn, /token\.length < 16/, 'bootstrap must reject short tokens');
