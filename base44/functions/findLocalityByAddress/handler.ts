@@ -17,7 +17,7 @@ async function fixedJSON(url:string,timeoutMs=15000){
  const text=await response.text();if(text.length>8*1024*1024)throw Error('Location response exceeds its limit.');return JSON.parse(text);
 }
 // Keep this revision in responses and scan events so preview/live routing can be verified.
-const ADDRESS_LOOKUP_REVISION='address-geocode-v5';
+const ADDRESS_LOOKUP_REVISION='address-geocode-v6';
 // A persistent Google denial is a configuration fault, not a transient error.
 // Once observed, skip the doomed round-trip on later lookups until the cooldown
 // lets one probe through (admin geocode_diagnostic calls always probe so a key
