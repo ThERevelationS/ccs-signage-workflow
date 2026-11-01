@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { verifyAdminSettingsCapability } from '../../shared/adminSettingsCapability.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
@@ -611,7 +612,7 @@ async function deletePolicy(Policy: any, Balance: any, Audit: any, body: any, ad
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const admin = await verifyAdminSettingsCapability(base44, body?.admin_capability);
 
