@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -15,6 +15,7 @@ import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { downloadCsv } from "@/components/shared/exportCsv";
 import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerMergeDialog from "@/components/estimator/CustomerMergeDialog";
+import { CUSTOMER_FILTER_PRESETS, customerMatchesFilterPreset } from "@/components/estimator/deepLinks";
 
 const FILTERS = [
   { key: "", label: "All" },
@@ -262,6 +263,10 @@ export default function EstimatorCustomers() {
   const searchParams = new URLSearchParams(location.search);
   const status = searchParams.get("status") || "";
   const linkedCustomerId = searchParams.get("customer") || "";
+  const navigate = useNavigate();
+  // #317 — ?filter=<preset> activity/AR preset chips (see deepLinks.js for
+  // the honest field mapping; Invoice balances are backend-only).
+  const presetFilter = searchParams.get("filter") || "";
   const [customers, setCustomers] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -495,6 +500,7 @@ export default function EstimatorCustomers() {
 
   const rows = customers
     .filter((c) => (linkedCustomerId ? c.id === linkedCustomerId : status ? (c.customer_status || "prospect") === status : true))
+    .filter((c) => (linkedCustomerId ? true : customerMatchesFilterPreset(c, presetFilter)))
     .filter((c) => (tagFilter ? (Array.isArray(c.tags) && c.tags.includes(tagFilter)) : true))
     .filter((c) =>
       linkedCustomerId
@@ -591,6 +597,28 @@ export default function EstimatorCustomers() {
                 {f.label}
               </Link>
             ))}
+            <span className="mx-1 w-px self-stretch bg-gray-200" aria-hidden="true" />
+            {CUSTOMER_FILTER_PRESETS.map((p) => (
+              <Link
+                key={p.key}
+                to={(() => {
+                  const sp = new URLSearchParams();
+                  if (status) sp.set("status", status);
+                  if (presetFilter !== p.key) sp.set("filter", p.key);
+                  const qt = search.trim();
+                  if (qt) sp.set("q", qt);
+                  return `/EstimatorCustomers${sp.size ? `?${sp.toString()}` : ""}`;
+                })()}
+                title={p.key === "ar_aging" ? "Customers flagged on credit hold (open-balance data is backend-only)" : undefined}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                  presetFilter === p.key
+                    ? "bg-slate-700 text-white border-slate-700"
+                    : "bg-white/70 text-gray-600 border-gray-200 hover:border-slate-400"
+                }`}
+              >
+                {p.label}
+              </Link>
+            ))}
           </div>
         )}
 
@@ -607,10 +635,18 @@ export default function EstimatorCustomers() {
             </div>
             <SavedViews
               storageKey="views.estimator_customers"
-              autoApply={!searchParams.get("q") && !searchParams.get("filter")}
-              getState={() => ({ search })}
+              autoApply={!searchParams.get("q") && !searchParams.get("filter") && !status}
+              getState={() => ({ search, filter: presetFilter, status })}
               activeName={viewName}
-              onApply={(s, name) => { setSearch(s.search || ""); setViewName(name || ""); }}
+              onApply={(s, name) => {
+                setSearch(s?.search || "");
+                setViewName(name || "");
+                const sp = new URLSearchParams();
+                if (s?.status) sp.set("status", s.status);
+                if (s?.filter) sp.set("filter", s.filter);
+                if (String(s?.search || "").trim()) sp.set("q", String(s.search).trim());
+                navigate(`/EstimatorCustomers${sp.size ? `?${sp.toString()}` : ""}`, { replace: true });
+              }}
             />
           </div>
         )}
