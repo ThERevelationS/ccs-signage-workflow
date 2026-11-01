@@ -347,9 +347,9 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
         <div>
-          <div className="text-[12px] font-bold text-gray-900 flex items-center gap-2 flex-wrap"><FileCheck2 className="w-4 h-4 text-red-600" /> Customer Acceptance
+          <div className="text-[12px] font-bold text-gray-900 flex items-center gap-2 flex-wrap"><FileCheck2 className="w-4 h-4 text-red-600" aria-hidden="true" /> Customer Acceptance
             {pendingInternalApproval && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-800"><ShieldAlert className="w-3 h-3" /> Pending internal approval</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-800"><ShieldAlert className="w-3 h-3" aria-hidden="true" /> Pending internal approval</span>
             )}
           </div>
           <div className="mt-0.5 text-[10px] text-gray-500">Records who accepted a specific issued quote version and how the approval was received.</div>
@@ -357,17 +357,17 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
         <div className="flex items-center gap-2 shrink-0">
           {canAct && (
             <button type="button" onClick={openDialog} className="h-[31px] px-3 rounded border border-emerald-300 bg-emerald-50 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 inline-flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> {repairingApprovedAcceptance ? "Repair Approval Tracking" : recoveringRecordedAcceptance ? "Finalize Recorded Acceptance" : "Record Customer Acceptance"}
+              <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> {repairingApprovedAcceptance ? "Repair Approval Tracking" : recoveringRecordedAcceptance ? "Finalize Recorded Acceptance" : "Record Customer Acceptance"}
             </button>
           )}
           {canSupersedeAcceptance && (
             <button type="button" onClick={openSupersedeDialog} className="h-[31px] px-3 rounded border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-800 hover:bg-amber-100 inline-flex items-center gap-1.5">
-              <Undo2 className="w-3.5 h-3.5" /> Supersede Acceptance
+              <Undo2 className="w-3.5 h-3.5" aria-hidden="true" /> Supersede Acceptance
             </button>
           )}
           {canRejectQuote && (
             <button type="button" onClick={openRejectDialog} className="h-[31px] px-3 rounded border border-red-300 bg-red-50 text-[11px] font-bold text-red-800 hover:bg-red-100 inline-flex items-center gap-1.5">
-              <XCircle className="w-3.5 h-3.5" /> Reject Quote
+              <XCircle className="w-3.5 h-3.5" aria-hidden="true" /> Reject Quote
             </button>
           )}
         </div>
@@ -396,8 +396,8 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[10px] font-bold text-gray-900 flex items-center gap-1.5">
                     {isEstimateAcceptanceSuperseded(row)
-                      ? <><Undo2 className="w-3.5 h-3.5 text-amber-600" /> Quote Version {row.quote_version} accepted <span className="rounded-full bg-amber-100 text-amber-800 px-1.5 py-px text-[8px] font-bold uppercase tracking-wide">Superseded</span></>
-                      : <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Quote Version {row.quote_version} accepted</>}
+                      ? <><Undo2 className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" /> Quote Version {row.quote_version} accepted <span className="rounded-full bg-amber-100 text-amber-800 px-1.5 py-px text-[8px] font-bold uppercase tracking-wide">Superseded</span></>
+                      : <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" /> Quote Version {row.quote_version} accepted</>}
                   </div>
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.accepted_at ? new Date(row.accepted_at).toLocaleString() : ""}</div>
                 </div>
@@ -433,7 +433,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             <div className="text-[10px] text-blue-800"><strong>Share a link</strong> so the customer can approve Quote Version {quoteVersion} online — the quote link opens only this quote; the portal link opens their whole account.</div>
             <div className="flex items-center gap-2 shrink-0">
               <button type="button" onClick={copyQuoteLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
-                {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />} {quoteCopied ? "Quote link copied" : "Copy Quote Link"}
+                {portalBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Link2 className="w-3.5 h-3.5" aria-hidden="true" />} {quoteCopied ? "Quote link copied" : "Copy Quote Link"}
               </button>
               <button type="button" onClick={copyPortalLink} disabled={portalBusy} className="h-[28px] px-3 rounded border border-blue-300 bg-white text-[10px] font-bold text-blue-700 hover:bg-blue-100 inline-flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap">
                 {portalCopied ? "Link Copied" : "Copy Portal Link"}
@@ -447,7 +447,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
       <Dialog open={dialogOpen} onOpenChange={(next) => !saving && setDialogOpen(next)}>
         <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-lime-300" /> {repairingApprovedAcceptance ? "Repair Approval Tracking" : recoveringRecordedAcceptance ? "Finalize Recorded Acceptance" : "Record Customer Acceptance"}</DialogTitle>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-lime-300" aria-hidden="true" /> {repairingApprovedAcceptance ? "Repair Approval Tracking" : recoveringRecordedAcceptance ? "Finalize Recorded Acceptance" : "Record Customer Acceptance"}</DialogTitle>
             <p className="mt-1 text-[10px] text-gray-300">{repairingApprovedAcceptance ? `Quote Version ${quoteVersion} is already accepted and the estimate is Approved, but its downstream approval tracking is incomplete. Repairing will reuse the immutable acceptance, re-sync the Sales Pipeline, and ensure exactly one acceptance lifecycle revision.` : recoveringRecordedAcceptance ? `Acceptance of Quote Version ${quoteVersion} is already recorded. Finalizing will reuse that immutable record and retry the Sent → Approved lifecycle tracking.` : `This records acceptance of Quote Version ${quoteVersion}. Saving will move the estimate to Approved and preserve the lifecycle transition in Estimate Revision History.`}</p>
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
@@ -467,10 +467,10 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
               </div>
             )}
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">NOTES<textarea disabled={recoveringRecordedAcceptance} value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 text-[12px] font-normal text-gray-800 resize-y disabled:bg-gray-100 disabled:text-gray-500" /></label>
-            {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+            {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={saving} onClick={() => setDialogOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
-              <button type="button" disabled={saving || !acceptedByName.trim() || !acceptedAt} onClick={submit} className="h-[32px] px-4 rounded border border-emerald-400 bg-emerald-100 text-[11px] font-bold text-emerald-900 hover:bg-emerald-200 disabled:opacity-50 inline-flex items-center gap-1.5">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} {saving ? (repairingApprovedAcceptance ? "Repairing…" : recoveringRecordedAcceptance ? "Finalizing…" : "Recording…") : (repairingApprovedAcceptance ? "Repair Tracking" : recoveringRecordedAcceptance ? "Finalize Approval" : "Record Acceptance")}</button>
+              <button type="button" disabled={saving || !acceptedByName.trim() || !acceptedAt} onClick={submit} className="h-[32px] px-4 rounded border border-emerald-400 bg-emerald-100 text-[11px] font-bold text-emerald-900 hover:bg-emerald-200 disabled:opacity-50 inline-flex items-center gap-1.5">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />} {saving ? (repairingApprovedAcceptance ? "Repairing…" : recoveringRecordedAcceptance ? "Finalizing…" : "Recording…") : (repairingApprovedAcceptance ? "Repair Tracking" : recoveringRecordedAcceptance ? "Finalize Approval" : "Record Acceptance")}</button>
             </div>
           </div>
         </DialogContent>
@@ -479,7 +479,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
       <Dialog open={rejectOpen} onOpenChange={(next) => !rejectBusy && setRejectOpen(next)}>
         <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-red-400">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><XCircle className="w-5 h-5 text-red-300" /> Reject Quote</DialogTitle>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><XCircle className="w-5 h-5 text-red-300" aria-hidden="true" /> Reject Quote</DialogTitle>
             <p className="mt-1 text-[10px] text-gray-300">Marks Quote Version {quoteVersion} rejected — the estimate moves to the cancelled/lost lifecycle state, a cancel revision is recorded, and an estimator follow-up task is queued for the estimate owner. This mirrors a customer declining in the portal.</p>
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
@@ -489,7 +489,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             {rejectError && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{rejectError}</div>}
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={rejectBusy} onClick={() => setRejectOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
-              <button type="button" disabled={rejectBusy || !cleanQuoteRejectReason(rejectReason)} onClick={submitReject} className="h-[32px] px-4 rounded border border-red-400 bg-red-100 text-[11px] font-bold text-red-900 hover:bg-red-200 disabled:opacity-50 inline-flex items-center gap-1.5">{rejectBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />} {rejectBusy ? "Rejecting…" : "Reject Quote"}</button>
+              <button type="button" disabled={rejectBusy || !cleanQuoteRejectReason(rejectReason)} onClick={submitReject} className="h-[32px] px-4 rounded border border-red-400 bg-red-100 text-[11px] font-bold text-red-900 hover:bg-red-200 disabled:opacity-50 inline-flex items-center gap-1.5">{rejectBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <XCircle className="w-3.5 h-3.5" aria-hidden="true" />} {rejectBusy ? "Rejecting…" : "Reject Quote"}</button>
             </div>
           </div>
         </DialogContent>
@@ -498,7 +498,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
       <Dialog open={supersedeOpen} onOpenChange={(next) => !supersedeBusy && setSupersedeOpen(next)}>
         <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-amber-300">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Undo2 className="w-5 h-5 text-amber-300" /> Supersede Acceptance</DialogTitle>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><Undo2 className="w-5 h-5 text-amber-300" aria-hidden="true" /> Supersede Acceptance</DialogTitle>
             <p className="mt-1 text-[10px] text-gray-300">Supersedes the recorded acceptance of Quote Version {quoteVersion} — the acceptance row stays in audit history marked Superseded, the estimate returns to Sent so the quote can be resent or revised, and the transition is recorded in Estimate Revision History.</p>
           </DialogHeader>
           <div className="p-5 space-y-3 bg-white">
@@ -510,7 +510,7 @@ export default function EstimateAcceptancePanel({ estimate, persistedEstimate, o
             {supersedeError && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{supersedeError}</div>}
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" disabled={supersedeBusy} onClick={() => setSupersedeOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600 disabled:opacity-50">Cancel</button>
-              <button type="button" disabled={supersedeBusy} onClick={submitSupersede} className="h-[32px] px-4 rounded border border-amber-400 bg-amber-100 text-[11px] font-bold text-amber-900 hover:bg-amber-200 disabled:opacity-50 inline-flex items-center gap-1.5">{supersedeBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Undo2 className="w-3.5 h-3.5" />} {supersedeBusy ? "Superseding…" : "Supersede Acceptance"}</button>
+              <button type="button" disabled={supersedeBusy} onClick={submitSupersede} className="h-[32px] px-4 rounded border border-amber-400 bg-amber-100 text-[11px] font-bold text-amber-900 hover:bg-amber-200 disabled:opacity-50 inline-flex items-center gap-1.5">{supersedeBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Undo2 className="w-3.5 h-3.5" aria-hidden="true" />} {supersedeBusy ? "Superseding…" : "Supersede Acceptance"}</button>
             </div>
           </div>
         </DialogContent>
