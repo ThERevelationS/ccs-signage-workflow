@@ -53,6 +53,13 @@ export default function FoundationCatalog() {
       .filter(Boolean).join(" ").toLowerCase().includes(q);
   });
 
+  // (#421) The catalog fetches paged via loadAllEntityRows and the type chips
+  // need whole-table counts; the rendered list windows instead of mounting
+  // every row at once. Resets when the type or search changes.
+  const ROW_PAGE = 60;
+  const [visibleCount, setVisibleCount] = useState(ROW_PAGE);
+  useEffect(() => { setVisibleCount(ROW_PAGE); }, [activeType, q]);
+
   const handleDelete = async (row) => {
     if (!row?.id || loadError || deleteRef.current.has(row.id)) return;
     deleteRef.current.add(row.id);
@@ -145,7 +152,7 @@ export default function FoundationCatalog() {
           </div>
         ) : (
           <div className="space-y-2">
-            {visible.map((row) => (
+            {visible.slice(0, visibleCount).map((row) => (
               <div
                 key={row.id}
                 className="bg-white rounded-xl border border-gray-200 p-3 flex items-center justify-between gap-3"
@@ -179,6 +186,15 @@ export default function FoundationCatalog() {
                 </div>
               </div>
             ))}
+            {visible.length > visibleCount && (
+              <button
+                type="button"
+                onClick={() => setVisibleCount((c) => c + ROW_PAGE)}
+                className="w-full h-[30px] rounded-lg border border-gray-300 bg-white text-[11px] font-bold text-gray-600 hover:bg-gray-50"
+              >
+                Show {Math.min(ROW_PAGE, visible.length - visibleCount)} more ({visible.length - visibleCount} remaining)
+              </button>
+            )}
           </div>
         )}
       </div>
