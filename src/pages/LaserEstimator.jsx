@@ -19,6 +19,9 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { TrendingUp } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
 
@@ -82,10 +85,13 @@ export default function LaserEstimator({ embedded = false, embeddedProjectId = n
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
@@ -533,6 +539,54 @@ async function extractLaserDims(file) {
       setIsSaving(false);
     }
   };
+
+  // #78 — clone the current save payload into a brand-new Laser project.
+  const handleSaveAsCopy = async () => {
+    setIsSaving(true);
+    try {
+      const calculated = calculateTotals();
+      const copy = await saveModuleProjectCopy({
+        entity: LaserProject,
+        payload: {
+          ...project,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          items: calculated.items,
+          total_machine_cost: calculated.total_machine_cost,
+          total_supplies_cost: calculated.total_supplies_cost,
+          total_labor_cost: calculated.total_labor_cost,
+          total_cost: calculated.total_machine_cost + calculated.total_supplies_cost + calculated.total_labor_cost,
+          status: 'calculated'
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "laser_project_copy",
+        baseName: project.project_name || "Laser",
+        label: "Laser project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/LaserEstimator?edit=${copy.id}`);
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildLaserTemplateData = (p) => ({
+    items: p.items || [],
+    machine_rate_per_hour: p.machine_rate_per_hour,
+    labor_rate: p.labor_rate,
+    engraving_machine_rate_per_hour: p.engraving_machine_rate_per_hour,
+    engraving_labor_rate: p.engraving_labor_rate,
+    parameter_handling_time_percentage: p.parameter_handling_time_percentage,
+    engraving_handling_time_percentage: p.engraving_handling_time_percentage,
+    fixed_setup_hours: p.fixed_setup_hours,
+    fixed_material_setup_cost: p.fixed_material_setup_cost,
+    notes: p.notes,
+  });
 
   const downloadEstimate = () => {
     const totalCost = (project.total_machine_cost || 0) + (project.total_supplies_cost || 0) + (project.total_labor_cost || 0);
@@ -1938,11 +1992,31 @@ Best regards`;
                 <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name) || project.items.length === 0} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 mt-4">
                   {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> {isEditing ? 'Update Estimate' : 'Save Estimate'}</>}
                 </Button>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <ModuleActionBar
+                    onTemplates={() => setTemplateMode("load")}
+                    onSaveAsTemplate={() => setTemplateMode("save")}
+                    onSaveAsCopy={handleSaveAsCopy}
+                    estimateId={estimateId}
+                    saving={isSaving}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="laser"
+        title="Laser"
+        buildTemplateData={buildLaserTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
     </div>);
 
 }
