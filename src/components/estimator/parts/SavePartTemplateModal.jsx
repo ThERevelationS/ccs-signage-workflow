@@ -78,12 +78,12 @@ export default function SavePartTemplateModal({
     <Dialog open={open} onOpenChange={(next) => !next && !saving && onClose?.()}>
       <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden border-gray-300 shadow-2xl">
         <DialogHeader className="px-5 py-4 bg-[#3f3f3f] text-white border-b-4 border-lime-300">
-          <DialogTitle className="text-white text-[17px] flex items-center gap-2"><BookmarkPlus className="w-5 h-5 text-lime-300" /> Save to Part Library</DialogTitle>
+          <DialogTitle className="text-white text-[17px] flex items-center gap-2"><BookmarkPlus className="w-5 h-5 text-lime-300" aria-hidden="true" /> Save to Part Library</DialogTitle>
           <p className="text-[10px] text-gray-300 mt-1">Creates a permanent reusable snapshot. Master Inventory records remain unchanged.</p>
         </DialogHeader>
         <form onSubmit={save} className="p-5 bg-white space-y-4">
           <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2.5 flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center text-gray-600"><Layers3 className="w-4 h-4" /></div>
+            <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center text-gray-600"><Layers3 className="w-4 h-4" aria-hidden="true" /></div>
             <div className="min-w-0 flex-1"><div className="text-[11px] font-bold text-gray-800">{isGroup ? group?.group_name || "Part Group" : part?.part_name || "Part"}</div><div className="text-[9px] text-gray-500">{isGroup ? `${partCount} Parts saved together as one reusable component assembly` : `${part?.part_type || "Part"} · ${part?.inventory_item_name || "manual / Builder cost"}`}</div></div>
             <div className="text-right"><div className="text-[9px] text-gray-400">FROZEN COST</div><div className="text-[13px] font-bold text-gray-900">{money(frozenCost)}</div></div>
           </div>
@@ -98,8 +98,8 @@ export default function SavePartTemplateModal({
           </div>
 
           <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-800">When reused, this snapshot becomes an independent Part{isGroup ? " Group" : ""} in the target Product. Builder recalculation will not overwrite the inserted copy. Existing Master Inventory links and frozen/current snapshots are preserved for traceability.</div>
-          {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
-          <div className="flex justify-end gap-2"><button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button><button type="submit" disabled={saving || !name.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5"><Save className="w-3.5 h-3.5" /> {saving ? "Saving…" : "Save Part"}</button></div>
+          {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          <div className="flex justify-end gap-2"><button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button><button type="submit" disabled={saving || !name.trim()} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5"><Save className="w-3.5 h-3.5" aria-hidden="true" /> {saving ? "Saving…" : "Save Part"}</button></div>
         </form>
       </DialogContent>
     </Dialog>
