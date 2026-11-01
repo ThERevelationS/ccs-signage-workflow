@@ -75,7 +75,7 @@ function EquipmentCard({ equipment, selectedEquipment, onUpdate, onRemove, allAt
           </div>
           <div className="flex gap-1">
             <Button size="sm" variant="ghost" className="text-red-500" onClick={onRemove}>
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-3 h-3" aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -102,6 +102,7 @@ function EquipmentCard({ equipment, selectedEquipment, onUpdate, onRemove, allAt
             <Label className="text-xs">Duration</Label>
             <input
               type="number"
+              aria-label="Rental duration"
               className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={rentalDuration}
               min={1}
@@ -132,7 +133,7 @@ function EquipmentCard({ equipment, selectedEquipment, onUpdate, onRemove, allAt
         {compatibleAttachments.length > 0 && (
           <div>
             <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 block">
-              <Wrench className="w-3 h-3 inline mr-1" />
+              <Wrench className="w-3 h-3 inline mr-1" aria-hidden="true" />
               Attachments
             </Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -173,7 +174,7 @@ function EquipmentCard({ equipment, selectedEquipment, onUpdate, onRemove, allAt
         {visibleSubAttachments.length > 0 && (
           <div className="pt-2">
             <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 block">
-              <Plus className="w-3 h-3 inline mr-1" />
+              <Plus className="w-3 h-3 inline mr-1" aria-hidden="true" />
               Sub-Attachments
             </Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
