@@ -286,7 +286,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 11. Acceptance & Approval Flow (25)
 
-251. **[F]** ANALYZED — needs a canvas signature component + UploadFile to storage + `evidence_reference` write on the acceptance. The storage/field plumbing exists (`UploadFile` in quoteDeliveryService; `evidence_reference` on EstimateAcceptance); the canvas UI is the remaining work — flagged for a dedicated pass
+251. **[F][DONE]** Customer e-signature — SignaturePad canvas in the portal quote card; PNG data URL uploaded via service role to EstimateAcceptance.evidence_reference (UploadFile plumbing reused); fallback stores signature as a portal message attachment — approval never blocked on upload failure
 252. **[H][DONE]** `portal` method added — `EstimateAcceptance.acceptance_method` enum now includes `portal`, and the portal approval write uses it instead of `other`
 253. **[F][DONE]** Verified — `recordEstimateAcceptance` already sends a sendGmail notify to the estimate owner (`created_by || salesperson_email`, lines ~211-229) with the acceptance notify workflow capability
 254. **[B][DONE]** Verified — the dedupe filter is `estimate_id + quote_version` (recordEstimateAcceptance ~line 38-40), not just an idempotency key
