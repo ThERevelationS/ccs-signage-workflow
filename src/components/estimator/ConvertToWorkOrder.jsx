@@ -4,25 +4,13 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Briefcase, CheckCircle2 } from "lucide-react";
-import { getModuleLabel } from "./moduleRegistry";
-import { acceptedInternalEstimateCost, acceptedCustomerUnitPrice } from "./customerPricing";
-import { hasVerifiedEstimateSalesActivity } from "./estimateSalesActivity.mjs";
-import { ensureEstimateLifecycleRevision } from "./estimateRevisionService";
-import { getPendingEstimatePriceAcceptance } from "./estimateMutationGuard";
-import { localDateStamp } from "./quoteLifecycle";
-import { convergeCreatedEstimateWorkOrder, loadAllCustomers, resolveCustomerForEstimate } from "./customerSync";
-import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
-import { createEstimateLinkedWorkOrderWithRecovery, expectedWorkOrderFields } from "./workOrderSyncPersistence";
-import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "./estimatePersistence";
-import {
-  buildConvertedWorkOrderFields,
-  buildEstimateWorkOrderProducts,
-  mergeWorkOrderProducts,
-  selectExistingEstimateWorkOrder,
-} from "./workOrderConversion";
+import { convertEstimateToWorkOrder } from "./estimateConversionService";
 
 // Turns an approved estimate into a job in the main workflow, carrying the
-// shared Customer link, the estimate link and the section list across.
+// shared Customer link, the estimate link and the section list across. The
+// conversion pipeline itself lives in estimateConversionService so the
+// queue-level bulk actions reuse the exact same guarded steps; this
+// component only owns the interactive confirms and the linked-Job card.
 export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, disabledReason = "", persistedStatus = "draft", sessionToken = "" }) {
   const [busy, setBusy] = useState(false);
   const { currentUser } = useAuth();
@@ -50,224 +38,45 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
     if (disabled) return;
     setBusy(true);
     try {
-      const sections = (estimate.line_items || [])
-        .map((l) => `• ${getModuleLabel(l.module_key)} — ${l.project_name}`)
-        .join("\n");
-
-      const estimateBefore = await base44.entities.AllInOneEstimate.get(estimate.id);
-      const pendingPrice = getPendingEstimatePriceAcceptance(estimateBefore);
-      if (pendingPrice) {
-        const name = pendingPrice.line?.client_product_name || pendingPrice.line?.project_name || "Product";
-        const resumeLabel = pendingPrice.pending?.kind === "builder_initial_freeze"
-          ? "Resume Initial Price"
-          : pendingPrice.pending?.kind === "builder_detach_override"
-            ? "Resume Part Detach"
-            : pendingPrice.pending?.kind === "builder_detached_override_update"
-              ? "Resume Part Change"
-              : pendingPrice.pending?.kind === "builder_reattach_parts"
-                ? "Resume Reattach"
-                : pendingPrice.pending?.kind === "builder_manual_part_add"
-                  ? "Resume Part Add"
-                  : pendingPrice.pending?.kind === "builder_manual_part_edit"
-                    ? "Resume Part Edit"
-                    : pendingPrice.pending?.kind === "builder_manual_part_switch"
-                      ? "Resume Part Switch"
-                      : pendingPrice.pending?.kind === "builder_manual_part_remove"
-                        ? "Resume Part Remove"
-                        : pendingPrice.pending?.kind === "builder_part_package_add"
-                          ? "Resume Part Insert"
-                          : pendingPrice.pending?.kind === "builder_manual_product_price"
-                            ? "Resume Product Price"
-                            : pendingPrice.pending?.kind === "builder_part_group_clone"
-                              ? "Resume Group Clone"
-                              : pendingPrice.pending?.kind === "builder_part_group_move"
-                                ? "Resume Group Move"
-                                : pendingPrice.pending?.kind === "builder_part_group_create"
-                                  ? "Resume Group Create"
-                                  : pendingPrice.pending?.kind === "builder_part_group_dissolve"
-                                    ? "Resume Group Dissolve"
-                                    : pendingPrice.pending?.kind === "builder_blank_product_insert"
-                                      ? "Resume Product Add"
-                                      : pendingPrice.pending?.kind === "builder_product_remove"
-                                        ? "Resume Product Remove"
-                                        : pendingPrice.pending?.kind === "builder_quick_product_insert"
-                              ? pendingPrice.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
-                              : "Resume Price Update";
-        throw new Error(`“${name}” has a Builder mutation recovery pending. Use ${resumeLabel} before converting this estimate to a Work Order.`);
-      }
-      if (estimateBefore.status !== "approved") {
-        throw new Error("Only an Approved estimate can be converted to a Work Order. Record customer acceptance or approve the estimate first.");
-      }
-      if (estimateBefore.pipeline_sync_pending) {
-        throw new Error("Sales Pipeline synchronization is still pending. Retry that synchronization from Finalize Estimate before converting this estimate to a Work Order.");
-      }
-      if (
-        estimate.updated_date &&
-        estimateBefore.updated_date &&
-        estimate.updated_date !== estimateBefore.updated_date
-      ) {
-        throw new Error("This estimate changed in another session. Reload before converting so newer approved pricing/details are not overwritten.");
-      }
-      const matches = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
-      const activeMatches = (matches || []).filter((row) => row?.deleted !== true);
-      const existing = selectExistingEstimateWorkOrder(activeMatches, estimate.work_order_id);
-      if (!existing && (matches || []).some((row) => row?.deleted === true)) {
-        throw new Error("This estimate's linked Work Order is in Trash. Restore that Work Order from Project Trash before converting the estimate again.");
-      }
-      const customers = await loadAllCustomers();
-      const resolvedCustomer = await resolveCustomerForEstimate(
-        { ...estimateBefore, customer_id: existing?.customer_id || estimateBefore.customer_id || "" },
-        customers || []
-      );
-      const verifiedCustomerId = resolvedCustomer?.id || "";
-
-      // Credit gate — CoreBridge semantics: an explicit credit_hold blocks new
-      // work for staff (admins may override); credit_limit warns when the
-      // projected account exposure (open AR + this estimate) would exceed it.
-      // Open AR loads through the invoicing gateway — when it cannot be read
-      // the limit check says so inside the prompt instead of guessing.
-      const isAdmin = String(currentUser?.role || "").toLowerCase() === "admin";
-      const customerName = resolvedCustomer?.company_name || "This customer";
-      if (resolvedCustomer?.credit_hold === true) {
-        if (!isAdmin) {
-          window.alert(`${customerName} is on CREDIT HOLD — new work orders are blocked. An administrator can clear the hold on the customer record.`);
-          return;
-        }
-        if (!window.confirm(`${customerName} is on CREDIT HOLD. Override the hold and convert anyway?`)) return;
-      } else if (Number(resolvedCustomer?.credit_limit) > 0) {
-        const limit = Number(resolvedCustomer.credit_limit);
-        const estimateTotal = (estimate.line_items || []).reduce(
-          (sum, l) => sum + acceptedCustomerUnitPrice(l) * Math.max(1, Number(l?.customer_quantity) || 1),
-          0,
-        );
-        let openAr = null;
-        if (sessionToken) {
-          try {
-            const r = await base44.functions.invoke("invoicingAction", {
-              session_token: sessionToken,
-              action: "list_invoices",
-              limit: 500,
-            });
-            const data = r?.data || r;
-            if (data?.success) {
-              openAr = (data.invoices || []).reduce(
-                (sum, inv) => (inv?.customer_id === resolvedCustomer.id && inv?.status !== "void" ? sum + (Number(inv?.balance_due) || 0) : sum),
-                0,
-              );
-            }
-          } catch { /* openAr stays null — the prompt reports it could not be verified */ }
-        }
-        const exposure = (openAr || 0) + estimateTotal;
-        if (exposure > limit + 0.005) {
-          const arNote = openAr == null ? "open AR could not be loaded" : `open AR ${openAr.toFixed(2)}`;
-          const msg = `${customerName} would exceed its credit limit — ${arNote} + this estimate ${estimateTotal.toFixed(2)} = ${exposure.toFixed(2)} vs limit ${limit.toFixed(2)}.`;
-          if (!isAdmin) {
-            window.alert(`${msg} New work orders are blocked over the limit — an administrator can override.`);
-            return;
-          }
-          if (!window.confirm(`${msg} Override and convert anyway?`)) return;
-        }
-      }
-      const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
-      const products = mergeWorkOrderProducts(existing?.products || [], estimateProducts);
-      const generatedDescription = [estimate.notes, sections].filter(Boolean).join("\n\n");
-      const convertedFields = buildConvertedWorkOrderFields({
+      const result = await convertEstimateToWorkOrder({
         estimate,
         pricing,
-        existing,
-        products,
-        generatedDescription,
-        conversionDate: localDateStamp(),
-        verifiedCustomerId,
-      });
-      // Converting an already-Won job again must not manufacture Sales
-      // activity. Only a changed approved estimate/Sales field is evidence.
-      const hasConversionSalesActivity = !existing || hasVerifiedEstimateSalesActivity(existing, convertedFields, {
-        includeProducts: true, // Approved quote products are part of the Sales conversion.
-      });
-      const conversionActivityStamp = new Date().toISOString();
-      const workOrderFields = {
-        ...convertedFields,
-        ...(hasConversionSalesActivity ? { sales_last_activity_at: conversionActivityStamp } : {}),
-        ...(existing?.sales_status !== "won" ? { sales_stage_changed_at: conversionActivityStamp } : {}),
-      };
-
-      // Pre-commit gate: conversion writes the Work Order before the estimate
-      // link, so confirm intent up front rather than alerting on a partial
-      // state afterwards. Preview shows the expected WO number/stage when
-      // updating an existing record; new records are numbered by the pipeline.
-      const preview = existing?.id
-        ? `WO ${existing.work_order_number || existing.id.slice(0, 8)} · stage ${existing.current_stage || "estimating"}`
-        : "new record · stage estimating";
-      const sectionNames = (Array.isArray(estimate.line_items) ? estimate.line_items : [])
-        .map((l) => l?.client_product_name || l?.builder_name || l?.module_key).filter(Boolean);
-      const sectionsPreview = sectionNames.length
-        ? `\n\nSections → WO checklist (${sectionNames.length}): ${sectionNames.slice(0, 6).join(", ")}${sectionNames.length > 6 ? ` +${sectionNames.length - 6} more` : ""}`
-        : "";
-      if (!window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline? (${preview})${sectionsPreview}`)) return;
-
-      let workOrder;
-      if (existing?.id) {
-        workOrder = await replaceWorkOrderFieldsIfUnchanged({
-          workOrderId: existing.id,
-          expectedFields: expectedWorkOrderFields(existing, workOrderFields),
-          nextFields: workOrderFields,
-          label: "Approved estimate Work Order conversion",
-        });
-      } else {
-        workOrder = await createEstimateLinkedWorkOrderWithRecovery({
-          entity: base44.entities.WorkOrder,
-          estimateId: estimate.id,
-          data: workOrderFields,
-          label: "Approved estimate Work Order conversion",
-          convergeCreated: (created) => convergeCreatedEstimateWorkOrder({
-            estimateId: estimate.id,
-            created,
-            fields: workOrderFields,
-            sessionToken,
-            duplicateLabel: "Work Order during simultaneous conversion",
-          }),
-        });
-      }
-
-      const internalCost = acceptedInternalEstimateCost(estimate.line_items || []);
-      const { id: _id, created_date: _created_date, updated_date: _updated_date, created_by_id: _created_by_id, created_by: _created_by, ...estimateData } = estimate;
-      const conversionEstimateFields = {
-        ...estimateData,
-        work_order_id: workOrder.id,
-        status: "approved",
-        edit_reason: "",
-        total_cost: internalCost,
-        quote_total: pricing.quoteTotal,
-      };
-      const estimateAfter = {
-        ...estimateBefore,
-        ...conversionEstimateFields,
-      };
-      await replaceEstimateFieldsIfUnchanged({
-        entity: base44.entities.AllInOneEstimate,
-        estimateId: estimate.id,
-        expectedFields: expectedEstimateFields(estimateBefore, conversionEstimateFields),
-        guardFields: { updated_date: estimateBefore.updated_date },
-        nextFields: conversionEstimateFields,
-        label: "Approved Estimate Work Order conversion link",
-      });
-      await ensureEstimateLifecycleRevision({
-        idempotencyKey: `work_order_conversion:${workOrder.id}`,
         sessionToken,
-        estimateBefore,
-        estimateAfter,
-        reason: "Converted approved estimate to Work Order",
-        revisionType: "conversion",
-        quoteTotalBefore: estimateBefore.quote_total,
-        quoteTotalAfter: pricing.quoteTotal,
-        internalCostBefore: estimateBefore.total_cost,
-        internalCostAfter: internalCost,
-        workOrderId: workOrder.id,
+        currentUser,
+        hooks: {
+          // Credit gate — CoreBridge semantics: an explicit credit_hold
+          // blocks staff outright (admins may override); credit_limit warns
+          // when projected account exposure would exceed it.
+          decideCredit: async ({ message, isAdmin }) => {
+            if (!isAdmin) {
+              window.alert(message);
+              return false;
+            }
+            return window.confirm(`${message}\n\nOverride and convert anyway?`);
+          },
+          // Pre-commit gate: conversion writes the Work Order before the
+          // estimate link, so confirm intent up front rather than alerting
+          // on a partial state afterwards. Preview shows the expected WO
+          // number/stage when updating an existing record.
+          confirmBeforeCommit: async ({ existing }) => {
+            const preview = existing?.id
+              ? `WO ${existing.work_order_number || existing.id.slice(0, 8)} · stage ${existing.current_stage || "estimating"}`
+              : "new record · stage estimating";
+            const sectionNames = (Array.isArray(estimate.line_items) ? estimate.line_items : [])
+              .map((l) => l?.client_product_name || l?.builder_name || l?.module_key).filter(Boolean);
+            const sectionsPreview = sectionNames.length
+              ? `\n\nSections → WO checklist (${sectionNames.length}): ${sectionNames.slice(0, 6).join(", ")}${sectionNames.length > 6 ? ` +${sectionNames.length - 6} more` : ""}`
+              : "";
+            return window.confirm(`Create a Work Order for "${estimate.project_name || "this estimate"}" and link it to the sales pipeline? (${preview})${sectionsPreview}`);
+          },
+        },
       });
-
-      setWorkOrderId(workOrder.id);
-      onConverted?.(workOrder.id);
+      if (result.status !== "converted") {
+        if (result.status === "blocked" && result.reason) window.alert(result.reason);
+        return;
+      }
+      setWorkOrderId(result.workOrder.id);
+      onConverted?.(result.workOrder.id);
     } catch (error) {
       // The Work Order may already be committed (a later step failed after
       // the link). Re-read so the alert reflects real state instead of
