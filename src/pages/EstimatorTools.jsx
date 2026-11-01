@@ -43,7 +43,7 @@ export default function EstimatorTools() {
 
         <div className="bg-white divide-y divide-gray-100">
           {LINKS.map((l) => (
-            <Link key={l.to} to={l.to} className="flex items-center justify-between px-4 py-3 hover:bg-red-50/50">
+            <Link key={l.label} to={l.to} className="flex items-center justify-between px-4 py-3 hover:bg-red-50/50">
               <div>
                 <div className="text-sm font-semibold text-gray-800">{l.label}</div>
                 <div className="text-xs text-gray-500">{l.desc}</div>
