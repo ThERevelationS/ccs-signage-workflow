@@ -13,6 +13,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { csvCell } from "@/components/shared/exportCsv";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -33,10 +34,6 @@ const SORTS = [
   { key: "expiring", label: "Expiring first" },
 ];
 
-const csvCell = (value) => {
-  const s = value == null ? "" : String(value);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
 const downloadJson = (filename, payload) => {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);

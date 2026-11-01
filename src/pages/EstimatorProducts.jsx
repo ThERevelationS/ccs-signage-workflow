@@ -21,14 +21,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { csvCell } from "@/components/shared/exportCsv";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const moduleLabel = (key) => ESTIMATOR_MODULES.find((module) => module.key === key)?.label || (key === "custom" ? "Custom Product" : key || "Product");
-
-const csvCell = (value) => {
-  const text = value === undefined || value === null ? "" : String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
 
 const downloadCsv = (filename, headers, rows) => {
   const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
