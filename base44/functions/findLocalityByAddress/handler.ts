@@ -85,6 +85,18 @@ Deno.serve(async req=>{
   diagnostic=body?.action==='geocode_diagnostic';
   const actor=diagnostic?await base44.auth.me().catch(()=>null):await cachedSession(base44,body?.session_token);
   if(diagnostic&&actor?.role!=='admin')return addressResponse({success:false,error:'Admin access required.'},{status:403});
+  if(body?.action==='places_autocomplete'){
+   const input=typeof body.input==='string'?body.input.trim():'';
+   if(input.length<3||input.length>200)return addressResponse({success:true,suggestions:[]});
+   const key=Deno.env.get('GOOGLE_GEOCODING_API_KEY')?.trim()||Deno.env.get('GOOGLE_MAPS_API_KEY')?.trim();
+   if(!key)return addressResponse({success:false,error:'Map service not configured.'},{status:500});
+   try{
+    const res=await fetch('https://places.googleapis.com/v1/places:autocomplete',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':key},body:JSON.stringify({input,includedRegionCodes:['us'],includedPrimaryTypes:['street_address','subpremise','premise','route','intersection','locality'],languageCode:'en',regionCode:'us'}),signal:AbortSignal.timeout(6000)});
+    const data=await res.json();
+    const suggestions=Array.isArray(data?.suggestions)?data.suggestions.slice(0,8).map((s:any)=>{const p=s?.placePrediction||{};return{place_id:p.placeId||'',text:p.text?.text||'',main:p.structuredFormat?.mainText?.text||'',secondary:p.structuredFormat?.secondaryText?.text||''};}).filter((s:any)=>s.text):[];
+    return addressResponse({success:true,suggestions});
+   }catch{return addressResponse({success:true,suggestions:[],autocomplete_error:'Suggestion service unavailable.'});}
+  }
   const address=typeof body.address==='string'?body.address.trim():'';
   if(!address||address.length>500)return addressResponse({success:false,error:'Enter a full street address of 500 characters or fewer.'},{status:400});
   if(!diagnostic&&body.action_token)reporter=await createScanReporter({entity:base44.asServiceRole.entities.PermittingScanRun,token:body.action_token,user:actor,targetId:'address-lookup',targetName:address,kind:'address',label:`Find jurisdiction for ${address}`});

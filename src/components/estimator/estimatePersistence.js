@@ -78,6 +78,19 @@ export async function replaceEstimateFieldsIfUnchanged({
     const current = await entity.get(id);
     if (!current?.id) throw new Error(`${label} could not verify its Estimate before saving.`);
 
+    // A trashed Estimate is write-locked for every path except the Trash
+    // lifecycle itself (soft-delete/restore declare `deleted` in nextFields
+    // and continue through normal CAS). Any other field write landing on a
+    // trashed row would silently mutate Trash, so refuse it outright — both
+    // when the row is trashed now and when the loaded baseline was already
+    // trashed (expectedEstimateFields carries the stored flag).
+    if (
+      (current.deleted === true || expected.deleted === true) &&
+      !Object.prototype.hasOwnProperty.call(desired, "deleted")
+    ) {
+      throw new Error(`${label} was blocked because this Estimate is in Trash. Restore it before saving. No Estimate fields were overwritten.`);
+    }
+
     for (const fieldName of guardNames) {
       if (!sameValue(current[fieldName], guards[fieldName])) {
         throw new Error(`${label} changed in another session (${fieldName}). Reload before saving. No Estimate fields were overwritten.`);
