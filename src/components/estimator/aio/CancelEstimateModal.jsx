@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useEscapeKey, useModalDialog } from "@/components/estimator/a11y";
 
 const REASONS = [
   "Duplicate",
@@ -20,6 +21,8 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { containerRef, dialogProps } = useModalDialog({ open, labelledBy: "cancel-estimate-title" });
+  useEscapeKey(open, () => { if (!submitting) onClose?.(); });
 
   useEffect(() => {
     if (open) {
@@ -52,12 +55,15 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
 
       {/* Modal */}
       <div
+        ref={containerRef}
+        {...dialogProps}
         className="relative bg-white rounded-md shadow-2xl border border-gray-300 w-full max-w-md"
         style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <h2
+            id="cancel-estimate-title"
             className="text-lg font-bold tracking-wide"
             style={{ color: "#7a9a4b" }}
           >
@@ -68,8 +74,9 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
             onClick={onClose}
             className="text-gray-500 hover:text-gray-800 transition-colors p-1"
             title="Close"
+            aria-label="Close cancel estimate dialog"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -91,10 +98,11 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
 
         {/* Reason dropdown */}
         <div className="px-5 py-3">
-          <label className="block text-sm font-medium text-gray-900 mb-1.5">
+          <label htmlFor="cancel-reason" className="block text-sm font-medium text-gray-900 mb-1.5">
             Enter Reason for Cancelling
           </label>
           <select
+            id="cancel-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="w-full h-9 px-2 border border-gray-400 rounded text-sm bg-white focus:outline-none focus:border-lime-600"
@@ -113,6 +121,7 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
               value={customReason}
               onChange={(e) => setCustomReason(e.target.value)}
               placeholder="Enter custom reason…"
+              aria-label="Custom cancellation reason"
               className="w-full h-9 px-2 mt-2 border border-gray-400 rounded text-sm focus:outline-none focus:border-lime-600"
               autoFocus
             />
@@ -125,7 +134,7 @@ export default function CancelEstimateModal({ open, onClose, onConfirm, estimate
             type="button"
             onClick={handleConfirm}
             disabled={!canSubmit || submitting}
-            className="px-5 py-2 rounded border border-gray-500 font-semibold text-sm text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:brightness-95"
+            className="px-5 py-2 min-h-[44px] rounded border border-gray-500 font-semibold text-sm text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:brightness-95"
             style={{ backgroundColor: "#d9e7c5" }}
           >
             {submitting ? "Cancelling…" : "Cancel Estimate"}
