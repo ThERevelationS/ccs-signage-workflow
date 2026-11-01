@@ -18,29 +18,48 @@ const rawClient = createClient({
 // burst queues in the browser instead of tripping the platform allowance.
 const governor = createRequestGovernor({ pools: { read: 6 } });
 
+// Read-only action allowlists per multi-action function. These actions are
+// verified server-side reads (filter/get + return, never a mutation), so a
+// platform 429 — which by definition never ran the function — can be retried
+// safely and the call may ride the read pool/dedupe instead of the write lane.
+const TIMECLOCK_READ_ACTIONS = new Set([
+  'status', 'status_lite', 'time_tracker_snapshot', 'time_tracker_prefs_get',
+  'my_history', 'list_correction_requests', 'list_time_off_requests',
+  'list_pending_requests', 'list_shift_templates', 'list_devices',
+  'list_face_enrollment', 'list_timeclock_audit', 'admin_load_data',
+  'admin_period_compare', 'who_is_in',
+]);
+const NOTIFICATION_READ_ACTIONS = new Set([
+  'list_mine', 'unread_count', 'get_preferences', 'history',
+]);
+const SMARTSHEET_READ_ACTIONS = new Set(['conflict_count']);
+const WORKSPACE_PREFS_READ_ACTIONS = new Set(['prefs_get']);
+const ANNOUNCEMENT_READ_ACTIONS = new Set(['active_feed']);
+
+function isReadFunctionInvocation(fnName, payload) {
+  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  if (fnName === 'timeClockAction') return TIMECLOCK_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'notificationAction') return NOTIFICATION_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'smartsheetSyncAction') return SMARTSHEET_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'workspacePrefsAction') return WORKSPACE_PREFS_READ_ACTIONS.has(payload?.action);
+  if (fnName === 'manageAnnouncements') return ANNOUNCEMENT_READ_ACTIONS.has(payload?.action);
+  return false;
+}
+
 // Only read-only functions may retry on rate limit. Backend functions return
 // their own 429s after doing real work (login lockouts, sync budget), so
 // retrying anything else could duplicate a mutation.
 export function isRetryableFunction(fnName, payload) {
-  if (fnName === 'verifySession') return true;
-  if (fnName === 'permittingScanStatus') return true;
-  // Read gateways never mutate, so a platform 429 can be retried safely.
-  if (fnName === 'staffDataRead' || fnName === 'fleetDataRead' || fnName === 'boardFeed') return true;
-  if (fnName === 'timeClockAction') return ['status', 'status_lite'].includes(payload?.action);
-  if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
-  return false;
+  return isReadFunctionInvocation(fnName, payload);
 }
 
 // Pure reads: concurrency-limited, cooldown-aware and de-duplicated while in
 // flight. Everything else is treated as a write: it is never de-duplicated,
 // never queued behind reads, and it advances the read epoch.
+// boardFeed is a pure board read; treating it as a write let a mount burst
+// bypass the read pool/cooldown and fan out unthrottled invokes that 429'd.
 function isReadInvocation(fnName, payload) {
-  // boardFeed is a pure board read; treating it as a write let a mount burst
-  // bypass the read pool/cooldown and fan out unthrottled invokes that 429'd.
-  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
-  if (fnName === 'timeClockAction') return ['status', 'status_lite'].includes(payload?.action);
-  if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
-  return false;
+  return isReadFunctionInvocation(fnName, payload);
 }
 
 const cloneValue = (value) => {
