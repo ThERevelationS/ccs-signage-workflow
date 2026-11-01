@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { getCanonicalCutoverState } from '../../shared/fleetCutoverState.ts';
 import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
@@ -191,7 +192,7 @@ Deno.serve(async (req) => {
     const parsed = await readPublicJson(req);
     if (parsed.error) return Response.json({error:parsed.error},{status:parsed.status});
 
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const payload = parsed.payload || {};
     const action = String(payload?.action || '').trim();
 
