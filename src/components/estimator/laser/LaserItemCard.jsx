@@ -46,7 +46,7 @@ export default function LaserItemCard({ item, index, onChange, onRemove }) {
           }}
           className="text-gray-400 hover:text-red-600 p-2"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
