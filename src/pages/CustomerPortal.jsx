@@ -946,7 +946,7 @@ export default function CustomerPortal() {
                 </div>
               </>
             )}
-            {data.kind !== "staff_view" && (
+            {data.kind !== "staff_view" && data.invoice && (
             <InvoiceView invoice={data.invoice} payments={data.payments} />
             )}
             {Number(data.invoice?.balance_due) > 0 && (
