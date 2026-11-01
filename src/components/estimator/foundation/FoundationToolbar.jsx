@@ -59,14 +59,14 @@ export default function FoundationToolbar({
             onClick={onBack}
             className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back
           </button>
         ) : (
           <Link
             to={backTo}
             className="h-[28px] px-2.5 flex items-center gap-1 rounded-sm border border-gray-300 text-[12px] font-medium text-gray-700 hover:bg-gray-50"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back
           </Link>
         )}
         <div>
@@ -91,7 +91,7 @@ export default function FoundationToolbar({
           disabled={saving}
           className="h-[28px] px-3 flex items-center gap-1.5 rounded-sm bg-lime-300 border border-lime-400 text-[12px] font-bold text-gray-800 hover:bg-lime-200 disabled:opacity-60"
         >
-          <Save className="w-3.5 h-3.5" /> {saving ? "Saving…" : "Save & Exit"}
+          <Save className="w-3.5 h-3.5" aria-hidden="true" /> {saving ? "Saving…" : "Save & Exit"}
         </button>
 
         <button
