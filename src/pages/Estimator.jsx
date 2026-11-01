@@ -150,6 +150,12 @@ export default function Estimator() {
 
   const visibleTotal = filtered.reduce((s, e) => s + Number(e.quote_total || e.total_cost || 0), 0);
 
+  // Incremental render-window (#404): large estimate lists render the first
+  // PAGE cards and grow on "Show more" — resets whenever the filters change.
+  const CARD_PAGE = 24;
+  const [visibleCount, setVisibleCount] = useState(CARD_PAGE);
+  useEffect(() => { setVisibleCount(CARD_PAGE); }, [status, term, sort]);
+
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -265,9 +271,20 @@ export default function Estimator() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {filtered.map((estimate) => (
+            {filtered.slice(0, visibleCount).map((estimate) => (
               <EstimateCard key={estimate.id} estimate={estimate} />
             ))}
+          </div>
+        )}
+        {visibleCount < filtered.length && (
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((c) => c + CARD_PAGE)}
+              className="h-[30px] px-3 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50"
+            >
+              Show {Math.min(CARD_PAGE, filtered.length - visibleCount)} more ({filtered.length - visibleCount} remaining)
+            </button>
           </div>
         )}
       </div>
