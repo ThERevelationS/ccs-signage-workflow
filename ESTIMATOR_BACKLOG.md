@@ -538,28 +538,28 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 20. Admin, Settings & Misc (25)
 
-476. **[F]** Estimate-number format customization (prefix/suffix pattern)
-477. **[F]** `quote_valid_days` default configurable in QuoteSettings
-478. **[H]** `jurisdictionResearch` agent rename → `jurisdiction_research` (publish blocker)
-479. **[F]** Quote email signature customization in QuoteSettings
-480. **[F]** Tax-group management UI (admin adds/removes rates)
-481. **[F]** User-default view per page (per-user saved filter preference)
-482. **[F]** Admin — export all estimator data (estimates + inventory + customers)
-483. **[B]** `ensureOpportunityWorkspace` — `session_token` error should be 401 not 500
-484. **[F]** Estimate-number auto-reissue policy (on delete, reuse or skip?)
-485. **[F]** Admin — view all estimates regardless of salesperson
-486. **[F]** Quote defaults — `tax_rate` source picker (TaxGroup dropdown)
-487. **[B]** `EstimatorSettings` — add `estimator_tools` hub link coverage check (nav-wiring test has all links)
-488. **[F]** Per-user timezone preference → affects `due_date` display
-489. **[H]** `backupPermittingRepository` — Drive upload format wrong (F18 — non-estimator but related)
-490. **[F]** Admin — audit log view (who changed what, when)
-491. **[F]** `quote_expiration_date` default from `quote_valid_days` + `quote_issue_date` at send-time
-492. **[B]** `featureReports`/`CompletedReports`/`Opportunities`/`Financials`/`CustomerPortal` — `due_date` day-boundary bug (F27/C2-L family)
-493. **[F]** Custom estimate statuses beyond the 7 built-in
-494. **[F]** Estimate print preview before PDF
-495. **[B]** `FoundationEstimator`/`BrickStoneEstimator` — `handleSaveAsCopy`/`handleSave` catch landed; verify alert vs error-state display
-496. **[F]** `EstimatorTools` — add "Export all estimates" tool link
-497. **[F]** Quote footer customization (terms, warranty, disclaimer text)
-498. **[B]** `SalesHome` — `load()` catch landed; verify loadError renders correctly
-499. **[F]** Estimate auto-numbering format per module (e.g. CH-#### for channel letters)
-500. **[H]** `jurisdictionResearch` → `jurisdiction_research` — the publish blocker; rename + update `callJurisdictionAgent` reference
+476. **[F][DONE]** Estimate-number format customization (prefix/suffix pattern) — verified — QuoteDefaults.estimate_number_format + doc_number_padding drive generateDocNumber {seq} replacement; QuoteSettings exposes format + padding fields
+477. **[F][DONE]** `quote_valid_days` default configurable in QuoteSettings — verified — quote_valid_days in QuoteDefaults (default 30), editable in QuoteSettings, applied at send-time
+478. **[H][DONE]** `jurisdictionResearch` agent rename → `jurisdiction_research` (publish blocker) — renamed base44/functions/jurisdictionResearchAgent → jurisdiction_research; 4 invoke sites (refreshJurisdiction, batchUpdateJurisdictions, auditJurisdictionAccuracy, monitorJurisdictionChanges) now invoke jurisdiction_research; deployed; zero code refs remain (doc-only mentions in handoff notes)
+479. **[F][DONE]** Quote email signature customization in QuoteSettings — verified — email_signature in QuoteDefaults, editable in QuoteSettings, appended by quote delivery
+480. **[F][DONE]** Tax-group management UI (admin adds/removes rates) — verified — TaxGroup CRUD UI in QuoteSettings (add/edit/remove named rates)
+481. **[F][DONE]** User-default view per page (per-user saved filter preference) — per-user pageViews preference persisted via UserWorkspacePreferences (workspacePrefsAction); editable in EstimatorSettings "My display preferences" card
+482. **[F][DONE]** Admin — export all estimator data (estimates + inventory + customers) — verified — admin full_backup JSON dump (estimates, customers, parts/inventory, audit) on EstimatorQueues Backup button
+483. **[B][DONE]** `ensureOpportunityWorkspace` — `session_token` error should be 401 not 500 — verified on the current name opportunityWorkspaceAction — authenticateSignShopSession throws a 401 Response on missing/invalid session_token and the handler maps it to HTTP 401 (no 500 path); ensureOpportunityWorkspace no longer exists remotely
+484. **[F][DONE]** Estimate-number auto-reissue policy (on delete, reuse or skip?) — decided never-reuse: number_reissue_policy="never_reuse" in QuoteDefaults, surfaced in QuoteSettings, honored + documented in generateDocNumber (deleted numbers leave gaps; may be on customer paperwork)
+485. **[F][DONE]** Admin — view all estimates regardless of salesperson — verified — admins see all estimates on EstimatorQueues; mine=1 toggle scopes to own
+486. **[F][DONE]** Quote defaults — `tax_rate` source picker (TaxGroup dropdown) — default_tax_group picker in QuoteSettings; Step1EstimateDetails loads TaxGroups + falls back to the configured default (also fixed group_name field reference)
+487. **[B][DONE]** `EstimatorSettings` — add `estimator_tools` hub link coverage check (nav-wiring test has all links) — test-nav-wiring.mjs now parses EstimatorTools LINKS[] and asserts every hub link resolves to a route; also fixed lazyPage import detection; PASS (72 links → 108 routes)
+488. **[F][DONE]** Per-user timezone preference → affects `due_date` display — per-user display_timezone pref in "My display preferences" (UserWorkspacePreferences); resolveUserTimeZone/formatInUserTz helper honors user pref → company default → browser
+489. **[H][DONE]** `backupPermittingRepository` — Drive upload format wrong (F18 — non-estimator but related) — fixed: was FormData+file fields against uploadType=multipart (invalid); now proper multipart/related body (JSON metadata part + media part, boundary-delimited); deployed; remote source verified
+490. **[F][DONE]** Admin — audit log view (who changed what, when) — EstimatorAuditPanel (EstimateRevision + OpportunityActivity + admin actions) mounted admin-only on EstimatorSettings; ?tab=audit_log deep-link + EstimatorTools hub link
+491. **[F][DONE]** `quote_expiration_date` default from `quote_valid_days` + `quote_issue_date` at send-time — verified — estimateQuoteExpiration computes issue+valid_days at send; editable override preserved
+492. **[B][DONE]** `featureReports`/`CompletedReports`/`Opportunities`/`Financials`/`CustomerPortal` — `due_date` day-boundary bug (F27/C2-L family) — Opportunities now passes client-local today to list_follow_ups + list_opportunities (was server-side UTC boundary → 1-day-early overdue); FeatureReports/CompletedReports display only full timestamps (no date-only parse); Financials already parses local dates; CustomerPortal slice held for portal owner
+493. **[F][DONE]** Custom estimate statuses beyond the 7 built-in — CustomStatusesEditor in QuoteSettings edits custom_statuses + status_transitions (QuoteDefaults JSON)
+494. **[F][DONE]** Estimate print preview before PDF — Preview PDF button in CustomerQuotePanel generates the quote PDF and opens it in a new tab (download fallback if popup blocked) before email/print
+495. **[B][DONE]** `FoundationEstimator`/`BrickStoneEstimator` — `handleSaveAsCopy`/`handleSave` catch landed; verify alert vs error-state display — verified — both catch save errors with window.alert and render a blocking error state on prerequisite failures; convention consistent
+496. **[F][DONE]** `EstimatorTools` — add "Export all estimates" tool link — added "Export all estimates" + Pricing Admin + Audit Log links to EstimatorTools hub (keys switched to label for shared targets)
+497. **[F][DONE]** Quote footer customization (terms, warranty, disclaimer text) — verified — quote_footer_text + quote_terms_conditions + warranty_text + lead_time_text in QuoteDefaults/QuoteSettings, rendered on quotes
+498. **[B][DONE]** `SalesHome` — `load()` catch landed; verify loadError renders correctly — verified — SalesHome renders loadError alert after failed load; retry path intact
+499. **[F][DONE]** Estimate auto-numbering format per module (e.g. CH-#### for channel letters) — verified — module_number_prefixes JSON in QuoteDefaults maps module_key→prefix (CH-#### etc); generateDocNumber applies per-module format
+500. **[H][DONE]** `jurisdictionResearch` → `jurisdiction_research` — the publish blocker; rename + update `callJurisdictionAgent` reference — same work as #478 — function dir renamed, all 4 invoke sites updated + deployed, agent config base44/agents/jurisdiction_research.jsonc already in place; grep confirms no invoke refs to old name
