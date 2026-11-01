@@ -64,10 +64,11 @@ function Half({ side, onSpark, onAct, disabled, children, tint, edge }) {
   );
 }
 
-export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = false, verifying = false, success = null }) {
+export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = false, verifying = false, success = null, single = null }) {
   const reduceMotion = useReducedMotion();
   const [sparks, setSparks] = useState([]);
   const hostRef = useRef(null);
+  const soloOut = single === "out";
 
   const spark = useCallback((side, e) => {
     if (disabled || reduceMotion || !hostRef.current) return;
@@ -96,23 +97,35 @@ export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = f
         animate={success ? { scale: [1, 1.04, 1] } : {}}
         transition={{ duration: 0.5 }}
       >
-        {/* dual gradient fields meeting on the diagonal */}
-        <div className="absolute inset-0" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)",
-          background: "linear-gradient(135deg, #34d399 0%, #10b981 38%, #059669 70%, #047857 100%)" }} />
-        <div className="absolute inset-0" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
-          background: "linear-gradient(315deg, #fda4af 0%, #fb7185 30%, #f43f5e 62%, #be123c 100%)" }} />
+        {/* gradient fields ??? diagonal split for dual mode, full coral for single-Out */}
+        {soloOut ? (
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(150deg, #fda4af 0%, #fb7185 28%, #f43f5e 60%, #be123c 100%)" }} />
+        ) : (
+          <>
+            <div className="absolute inset-0" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)",
+              background: "linear-gradient(135deg, #34d399 0%, #10b981 38%, #059669 70%, #047857 100%)" }} />
+            <div className="absolute inset-0" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
+              background: "linear-gradient(315deg, #fda4af 0%, #fb7185 30%, #f43f5e 62%, #be123c 100%)" }} />
+          </>
+        )}
 
         {/* glass highlights per field */}
-        <div className="absolute inset-x-0 top-0 h-16" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)",
+        <div className="absolute inset-x-0 top-0 h-16" style={soloOut ? {
+          background: "linear-gradient(180deg, rgba(255,255,255,0.36), rgba(255,255,255,0))" } : { clipPath: "polygon(0 0, 100% 0, 0 100%)",
           background: "linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,255,255,0))" }} />
         <div className="absolute inset-x-0 bottom-0 h-16" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
           background: "linear-gradient(0deg, rgba(255,255,255,0.3), rgba(255,255,255,0))" }} />
 
-        {/* prismatic diagonal seam */}
-        <div className="absolute inset-0" aria-hidden="true" style={{
-          background: "linear-gradient(to bottom right, transparent calc(50% - 1.5px), rgba(255,255,255,0.95) calc(50% - 0.5px), rgba(147,197,253,0.55) 50%, rgba(255,255,255,0.9) calc(50% + 0.5px), transparent calc(50% + 1.5px))" }} />
-        <div className="absolute inset-0 opacity-60" aria-hidden="true" style={{
-          background: "linear-gradient(to bottom right, transparent calc(50% - 5px), rgba(255,255,255,0.22) 50%, transparent calc(50% + 5px))" }} />
+        {/* prismatic diagonal seam (dual mode only) */}
+        {!soloOut && (
+          <>
+            <div className="absolute inset-0" aria-hidden="true" style={{
+              background: "linear-gradient(to bottom right, transparent calc(50% - 1.5px), rgba(255,255,255,0.95) calc(50% - 0.5px), rgba(147,197,253,0.55) 50%, rgba(255,255,255,0.9) calc(50% + 0.5px), transparent calc(50% + 1.5px))" }} />
+            <div className="absolute inset-0 opacity-60" aria-hidden="true" style={{
+              background: "linear-gradient(to bottom right, transparent calc(50% - 5px), rgba(255,255,255,0.22) 50%, transparent calc(50% + 5px))" }} />
+          </>
+        )}
 
         {/* metallic edging */}
         <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/60" aria-hidden="true" />
@@ -150,25 +163,39 @@ export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = f
           )}
         </AnimatePresence>
 
-        {/* labels ??? anchored to each field's visible polygon side */}
-        <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-2.5 text-white drop-shadow-md sm:left-5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/25 ring-1 ring-white/60 backdrop-blur-sm">
-            <LogIn className="h-5 w-5" />
-          </span>
-          <span>
-            <span className="block text-2xl font-bold leading-none tracking-wide">Clock In</span>
-            <span className="mt-1 block text-[11px] font-medium text-white/85">Start your shift</span>
-          </span>
-        </div>
-        <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-2.5 text-white drop-shadow-md sm:right-5">
-          <span className="text-right">
-            <span className="block text-2xl font-bold leading-none tracking-wide">Clock Out</span>
-            <span className="mt-1 block text-[11px] font-medium text-white/85">End your shift</span>
-          </span>
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/25 ring-1 ring-white/60 backdrop-blur-sm">
-            <LogOut className="h-5 w-5" />
-          </span>
-        </div>
+        {/* labels ??? corner-anchored on the dual surface, centered on solo */}
+        {soloOut ? (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-3 text-white drop-shadow-md">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/25 ring-1 ring-white/60 backdrop-blur-sm">
+              <LogOut className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-2xl font-bold leading-none tracking-wide">Clock Out</span>
+              <span className="mt-1 block text-[11px] font-medium text-white/85">End your shift</span>
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-2.5 text-white drop-shadow-md sm:left-5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/25 ring-1 ring-white/60 backdrop-blur-sm">
+                <LogIn className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-2xl font-bold leading-none tracking-wide">Clock In</span>
+                <span className="mt-1 block text-[11px] font-medium text-white/85">Start your shift</span>
+              </span>
+            </div>
+            <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-2.5 text-white drop-shadow-md sm:right-5">
+              <span className="text-right">
+                <span className="block text-2xl font-bold leading-none tracking-wide">Clock Out</span>
+                <span className="mt-1 block text-[11px] font-medium text-white/85">End your shift</span>
+              </span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/25 ring-1 ring-white/60 backdrop-blur-sm">
+                <LogOut className="h-5 w-5" />
+              </span>
+            </div>
+          </>
+        )}
 
         {/* click sparks */}
         <AnimatePresence>
@@ -177,17 +204,37 @@ export default function CrystalShiftButton({ onClockIn, onClockOut, disabled = f
           ))}
         </AnimatePresence>
 
-        {/* the two real hit targets ??? equal halves, on top of everything visual */}
-        <Half side="in" onSpark={spark} onAct={act} disabled={disabled}
-          tint="bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.35),transparent_60%)]"
-          edge="shadow-[inset_0_0_0_3px_rgba(167,243,208,0.9)]">
-          <span className="sr-only">Clock In</span>
-        </Half>
-        <Half side="out" onSpark={spark} onAct={act} disabled={disabled}
-          tint="bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.35),transparent_60%)]"
-          edge="shadow-[inset_0_0_0_3px_rgba(254,205,211,0.9)]">
-          <span className="sr-only">Clock Out</span>
-        </Half>
+        {/* hit targets ??? equal halves in dual mode, full surface in solo */}
+        {soloOut ? (
+          <motion.button
+            type="button"
+            onPointerDown={(e) => spark("out", e)}
+            onClick={() => act("out")}
+            disabled={disabled}
+            whileTap={{ scale: 0.96 }}
+            whileHover={disabled ? undefined : { y: -2 }}
+            transition={SPRING}
+            className="group absolute inset-0 outline-none focus-visible:z-20 touch-manipulation"
+            aria-label="Clock Out"
+          >
+            <span className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.32),transparent_65%)]" aria-hidden="true" />
+            <span className="pointer-events-none absolute inset-0 rounded-[2rem] opacity-0 transition-opacity duration-300 group-focus-visible:opacity-100 shadow-[inset_0_0_0_3px_rgba(254,205,211,0.9)]" aria-hidden="true" />
+            <span className="sr-only">Clock Out</span>
+          </motion.button>
+        ) : (
+          <>
+            <Half side="in" onSpark={spark} onAct={act} disabled={disabled}
+              tint="bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.35),transparent_60%)]"
+              edge="shadow-[inset_0_0_0_3px_rgba(167,243,208,0.9)]">
+              <span className="sr-only">Clock In</span>
+            </Half>
+            <Half side="out" onSpark={spark} onAct={act} disabled={disabled}
+              tint="bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,255,255,0.35),transparent_60%)]"
+              edge="shadow-[inset_0_0_0_3px_rgba(254,205,211,0.9)]">
+              <span className="sr-only">Clock Out</span>
+            </Half>
+          </>
+        )}
       </motion.div>
     </div>
   );
