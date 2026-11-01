@@ -977,7 +977,18 @@ Deno.serve(async (req) => {
       const estimateBySalesperson: any = {};
       const estimateLostReasonMap: any = {};
       const markupUsage: any = { discount: 0, none: 0, "0-10%": 0, "10-25%": 0, "25-50%": 0, "50%+": 0 };
-      const moduleBreakdown: Record<string, { module: string; count: number; value: number }> = {};
+      // (#281/#285) Module rollup: count = lines per module; estimates/
+      // decided/won count an estimate once per module it touches (not
+      // additive); value/won_value split each quote_total across modules by
+      // line-value share so they ARE additive.
+      const moduleBreakdown: Record<string, { module: string; count: number; estimates: number; decided: number; won: number; value: number; won_value: number }> = {};
+      // (#277) salesperson x created-month avg-quote buckets.
+      const monthlyBySalesperson: any = {};
+      // (#279) ISO-week (Mon-start, same bucketing as the dashboard chart)
+      // created / sent / approved throughput events.
+      const weeklyMap: any = {};
+      // (#280) per-customer decided / win-rate rollup.
+      const byCustomer: any = {};
       let partCostRatioSum = 0;
       let partCostRatioCount = 0;
       for (const row of Array.isArray(estimateRows) ? estimateRows : []) {
@@ -1001,15 +1012,35 @@ Deno.serve(async (req) => {
           if (days != null && days <= 14) agingRows.push({ id: clean(row?.id), estimate_number: clean(row?.estimate_number), project_name: clean(row?.project_name), client_name: clean(row?.client_name), quote_total: total, quote_valid_until: until, days_to_expiry: days, expired: days < 0 });
         }
         let partCost = 0;
+        const estModules: Record<string, { lines: number; lv: number }> = {};
+        let lineValueSum = 0;
         for (const li of Array.isArray(row?.line_items) ? row.line_items : []) {
           const mk = clean(li?.module_key) || "unassigned";
-          const mSlot = moduleBreakdown[mk] || (moduleBreakdown[mk] = { module: mk, count: 0, value: 0 });
-          mSlot.count += 1;
-          mSlot.value += total;
+          const lv = num(li?.total_snapshot) * (num(li?.customer_quantity) || 1);
+          lineValueSum += lv;
+          const em = estModules[mk] || (estModules[mk] = { lines: 0, lv: 0 });
+          em.lines += 1;
+          em.lv += lv;
           const adj = num(li?.adjustment_percent);
           const bucket = adj < 0 ? "discount" : adj === 0 ? "none" : adj <= 10 ? "0-10%" : adj <= 25 ? "10-25%" : adj <= 50 ? "25-50%" : "50%+";
           markupUsage[bucket] += 1;
-          partCost += num(li?.total_snapshot) * (num(li?.customer_quantity) || 1);
+          partCost += lv;
+        }
+        // Module attribution: each estimate counts once per module it
+        // touches; its quote_total splits across those modules by line-value
+        // share (equal shares when no line carries a price, "unassigned"
+        // when the estimate has no lines at all).
+        if (!Object.keys(estModules).length) estModules.unassigned = { lines: 0, lv: 0 };
+        const moduleKeys = Object.keys(estModules);
+        for (const mk of moduleKeys) {
+          const em = estModules[mk];
+          const share = lineValueSum > 0 ? em.lv / lineValueSum : 1 / moduleKeys.length;
+          const mSlot = moduleBreakdown[mk] || (moduleBreakdown[mk] = { module: mk, count: 0, estimates: 0, decided: 0, won: 0, value: 0, won_value: 0 });
+          mSlot.count += em.lines;
+          mSlot.estimates += 1;
+          if (status === "approved") { mSlot.decided += 1; mSlot.won += 1; mSlot.won_value += total * share; }
+          if (status === "archived" || status === "cancelled") mSlot.decided += 1;
+          mSlot.value += total * share;
         }
         if (total > 0 && partCost > 0) { partCostRatioSum += partCost / total; partCostRatioCount += 1; }
         const rep = clean(row?.salesperson) || "Unassigned";
@@ -1018,6 +1049,42 @@ Deno.serve(async (req) => {
         slot.quote_value += total;
         if (status === "approved") { slot.won_count += 1; slot.decided_count += 1; }
         if (status === "archived" || status === "cancelled") slot.decided_count += 1;
+        // (#277) Per-month avg quote value per salesperson — created cohort.
+        const createdD = new Date(clean(row?.created_date));
+        const estMonth = Number.isFinite(createdD.getTime()) ? createdD.toISOString().slice(0, 7) : "";
+        if (estMonth) {
+          const mkey = `${rep}|${estMonth}`;
+          const ms = monthlyBySalesperson[mkey] || (monthlyBySalesperson[mkey] = { salesperson: rep, month: estMonth, created: 0, quote_value: 0, decided_count: 0, won_count: 0 });
+          ms.created += 1;
+          ms.quote_value += total;
+          if (status === "approved") { ms.decided_count += 1; ms.won_count += 1; }
+          if (status === "archived" || status === "cancelled") ms.decided_count += 1;
+        }
+        // (#279) Weekly throughput — each event buckets on its own stamp:
+        // created_date, quote_issue_date (sent), accepted_at (approved).
+        const weeklyEvents: Array<[string, string]> = [
+          [clean(row?.created_date), "created"],
+          [clean(row?.quote_issue_date), "sent"],
+          [clean(row?.accepted_at), "approved"],
+        ];
+        for (const [when, field] of weeklyEvents) {
+          if (!when) continue;
+          const d = new Date(when);
+          if (!Number.isFinite(d.getTime())) continue;
+          const monday = new Date(d);
+          monday.setDate(d.getDate() - d.getDay() + 1);
+          const wk = monday.toISOString().slice(0, 10);
+          const ws = weeklyMap[wk] || (weeklyMap[wk] = { created: 0, sent: 0, approved: 0 });
+          (ws as any)[field] += 1;
+        }
+        // (#280) Per-customer rollup — decided estimates -> won/lost/win rate.
+        const custKey = clean(row?.customer_id) || clean(row?.client_name).toLowerCase() || "unknown";
+        const cs = byCustomer[custKey] || (byCustomer[custKey] = { customer: clean(row?.client_name) || "Unknown Customer", customer_id: clean(row?.customer_id), estimates: 0, quote_value: 0, decided_count: 0, won_count: 0, lost_count: 0, won_value: 0 });
+        cs.estimates += 1;
+        cs.quote_value += total;
+        if (status === "approved") { cs.decided_count += 1; cs.won_count += 1; cs.won_value += total; }
+        if (status === "archived" || status === "cancelled") { cs.decided_count += 1; cs.lost_count += 1; }
+        if (clean(row?.client_name)) cs.customer = clean(row.client_name);
         const internal = num(row?.total_cost);
         if (total > 0 && internal > 0) {
           estimateMarginSum += (total - internal) / total;
@@ -1025,6 +1092,72 @@ Deno.serve(async (req) => {
           estimateMarginCount += 1;
         }
       }
+      // (#298) Per-estimate portal engagement: share-link opens (estimate and
+      // staff_view links keyed by record_id = estimate id) plus the estimate
+      // portal message thread. PortalMessage/CustomerPortalLink are
+      // backend-only entities, so staff surfaces get this compact aggregate
+      // instead of row access. Reorder requests are work-order-scoped
+      // EstimatingRequests, not estimate-thread events — honestly excluded.
+      const PortalLink = (base44.asServiceRole.entities as any).CustomerPortalLink;
+      const [portalMsgRows, portalLinkRows] = await Promise.all([
+        loadAllEntityRows({ entity: PortalMessage, query: { related_kind: "estimate" }, sort: "-created_date", label: "Estimate portal messages" }).catch(() => []),
+        PortalLink ? loadAllEntityRows({ entity: PortalLink, sort: "-created_date", label: "Estimate portal links" }).catch(() => []) : Promise.resolve([]),
+      ]);
+      const estById = new Map<string, any>();
+      for (const e of estimateRows) { if (clean(e?.id) && e?.deleted !== true) estById.set(clean(e.id), e); }
+      const engageMap = new Map<string, any>();
+      const engageSlot = (estId: string) => {
+        const s = engageMap.get(estId) || { opens: 0, last_opened_at: "", customer_messages: 0, staff_replies: 0, approvals: 0, revision_requests: 0, first_customer_at: "", staff_times: [] as string[], last_msg_at: "" };
+        engageMap.set(estId, s);
+        return s;
+      };
+      for (const l of list(portalLinkRows)) {
+        if (!["estimate", "staff_view"].includes(clean(l?.kind))) continue;
+        const estId = clean(l?.record_id);
+        if (!estId || !estById.has(estId)) continue;
+        const s = engageSlot(estId);
+        s.opens += num(l?.open_count);
+        if (clean(l?.last_opened_at) > s.last_opened_at) s.last_opened_at = clean(l.last_opened_at);
+      }
+      for (const m of list(portalMsgRows)) {
+        const estId = clean(m?.related_id);
+        if (!estId || !estById.has(estId)) continue;
+        const s = engageSlot(estId);
+        const side = clean(m?.author_side);
+        const kind = clean(m?.kind) || "message";
+        const at = clean(m?.created_date);
+        if (kind === "estimate_approved") s.approvals += 1;
+        else if (kind === "estimate_revision_requested") s.revision_requests += 1;
+        else if (side === "customer") s.customer_messages += 1;
+        else if (side === "staff") s.staff_replies += 1;
+        if (side === "customer" && at && (!s.first_customer_at || at < s.first_customer_at)) s.first_customer_at = at;
+        if (side === "staff" && at) s.staff_times.push(at);
+        if (at > s.last_msg_at) s.last_msg_at = at;
+      }
+      const portalEngagementAll = [...engageMap.entries()].map(([estId, s]) => {
+        const est = estById.get(estId);
+        const firstReply = s.first_customer_at
+          ? s.staff_times.filter((t: string) => t > s.first_customer_at).sort()[0]
+          : "";
+        const respHrs = s.first_customer_at && firstReply
+          ? Math.round(((Date.parse(firstReply) - Date.parse(s.first_customer_at)) / 3600000) * 10) / 10
+          : null;
+        return {
+          estimate_id: estId,
+          estimate_number: clean(est?.estimate_number),
+          client_name: clean(est?.client_name),
+          status: clean(est?.status) || "draft",
+          opens: s.opens,
+          last_opened_at: s.last_opened_at || null,
+          customer_messages: s.customer_messages,
+          staff_replies: s.staff_replies,
+          approvals: s.approvals,
+          revision_requests: s.revision_requests,
+          first_response_hours: respHrs,
+          last_activity_at: [s.last_msg_at, s.last_opened_at].filter(Boolean).sort().pop() || null,
+        };
+      }).filter((e: any) => e.opens > 0 || e.customer_messages > 0 || e.staff_replies > 0 || e.approvals > 0 || e.revision_requests > 0)
+        .sort((a: any, b: any) => clean(b.last_activity_at).localeCompare(clean(a.last_activity_at)));
       const estimateFunnel = {
         status_counts: estimateStatusCounts,
         total: estimateStatusCounts.draft + estimateStatusCounts.calculated + estimateStatusCounts.sent + estimateStatusCounts.approved + estimateStatusCounts.archived + estimateStatusCounts.cancelled,
@@ -1033,7 +1166,27 @@ Deno.serve(async (req) => {
         win_rate: estimateDecidedCount > 0 ? Math.round((estimateWonCount / estimateDecidedCount) * 1000) / 10 : null,
         won_value: Math.round(estimateWonValue * 100) / 100,
         decided_value: Math.round(estimateDecidedValue * 100) / 100,
-        by_module: Object.values(moduleBreakdown).sort((a: any, b: any) => b.value - a.value).slice(0, 12),
+        by_module: Object.values(moduleBreakdown).map((m: any) => ({ ...m, value: Math.round(m.value * 100) / 100, won_value: Math.round(m.won_value * 100) / 100, win_rate: m.decided > 0 ? Math.round((m.won / m.decided) * 1000) / 10 : null })).sort((a: any, b: any) => b.value - a.value).slice(0, 12),
+        by_salesperson_monthly: Object.values(monthlyBySalesperson).map((s: any) => ({ ...s, quote_value: Math.round(s.quote_value * 100) / 100, avg_quote_value: s.created > 0 ? Math.round((s.quote_value / s.created) * 100) / 100 : 0 })).sort((a: any, b: any) => String(b.month).localeCompare(String(a.month)) || String(a.salesperson).localeCompare(String(b.salesperson))).slice(0, 120),
+        // Trailing 26 ISO weeks (Mon-start — the dashboard's convention),
+        // zero-filled so quiet weeks still render in a series.
+        weekly_throughput: (() => {
+          const weeks: any[] = [];
+          const todayD = new Date(Date.parse(today));
+          const monday = new Date(todayD);
+          monday.setDate(todayD.getDate() - todayD.getDay() + 1);
+          for (let i = 25; i >= 0; i -= 1) {
+            const d = new Date(monday.getTime() - i * 7 * 86400000);
+            const key = d.toISOString().slice(0, 10);
+            const slot = weeklyMap[key] || { created: 0, sent: 0, approved: 0 };
+            weeks.push({ week: key, ...slot });
+          }
+          return weeks;
+        })(),
+        by_customer: Object.values(byCustomer).map((c: any) => ({ ...c, quote_value: Math.round(c.quote_value * 100) / 100, won_value: Math.round(c.won_value * 100) / 100, win_rate: c.decided_count > 0 ? Math.round((c.won_count / c.decided_count) * 1000) / 10 : null })).sort((a: any, b: any) => b.decided_count - a.decided_count || b.quote_value - a.quote_value || String(a.customer).localeCompare(String(b.customer))).slice(0, 25),
+        portal_engagement: portalEngagementAll.slice(0, 200),
+        portal_engagement_matched: portalEngagementAll.length,
+        portal_engagement_truncated: portalEngagementAll.length > 200,
         avg_margin_pct: estimateMarginCount > 0 ? Math.round((estimateMarginSum / estimateMarginCount) * 1000) / 10 : null,
         total_margin: Math.round(estimateMarginTotal * 100) / 100,
         aging_buckets: agingBuckets,
