@@ -36,7 +36,7 @@ import EstimateActivityPanel from "@/components/estimator/EstimateActivityPanel"
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
 import { isEstimateStatusTransitionAllowed, statusTransitionMap } from "@/components/estimator/estimateStatusTransitions";
-import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, startEstimateRevision } from "@/components/estimator/estimateRevisionService";
+import { attachQuoteDeliveryEvidenceToIssuanceRevision, completeEstimateRevision, ensureEstimateLifecycleRevision, getOpenEstimateRevision, quoteRejectRevisionKey, startEstimateRevision, supersedeAcceptanceRevisionKey } from "@/components/estimator/estimateRevisionService";
 import { formatQuoteIssueDate, localDateStamp, quoteExpirationDate, quoteIssueKey, resolveQuoteIssueMetadata } from "@/components/estimator/quoteLifecycle";
 import { hasEstimateVersionConflict } from "@/components/estimator/estimateConcurrency";
 import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@/components/estimator/estimateSaveRecovery";
@@ -1337,6 +1337,205 @@ export default function EstimateDetail() {
     return savedAfter;
   };
 
+  // (#255) Staff-side "reject quote": mirrors the portal decline + Cancel
+  // Estimate conventions — the estimate CAS-transitions to the cancelled/lost
+  // lifecycle state server-side (anchored on its updated_date), an open
+  // EstimatingRequest follow-up is queued for the estimate owner, a cancel
+  // lifecycle revision is recorded, and the Sales Pipeline syncs to lost.
+  const handleRejectQuote = async ({ reason, dueDate } = {}) => {
+    const cleanReason = String(reason || "").trim();
+    if (!cleanReason) throw new Error("A rejection reason is required — a lost quote is never silent.");
+    if (openRevision) {
+      window.alert("Save the open estimate revision before rejecting this quote.");
+      return;
+    }
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
+    assertNoPendingPriceAcceptance(before, "rejecting the customer quote");
+    if (hasServerConflict(before)) {
+      throw new Error("This estimate changed in another session. Reload before rejecting the quote so newer work is not rejected from a stale page.");
+    }
+    if (before.pipeline_sync_pending) {
+      throw new Error("Sales Pipeline synchronization is still pending. Retry that synchronization before rejecting this quote.");
+    }
+    if (before.work_order_id) {
+      throw new Error("This estimate is already linked to a Work Order. Cancel or close the job from the workflow instead of rejecting its source quote.");
+    }
+    if (String(before.status || "") !== "sent") {
+      throw new Error(`This quote is ${before.status || "not awaiting response"} — only sent quotes can be rejected.`);
+    }
+
+    let rejectResponse;
+    try {
+      const response = await base44.functions.invoke("recordEstimateAcceptance", {
+        action: "reject_quote",
+        estimate_id: estimate.id,
+        reason: cleanReason,
+        due_date: String(dueDate || "").trim(),
+        expected_estimate_updated_date: before.updated_date || "",
+        session_token: sessionToken,
+      });
+      rejectResponse = response?.data || response;
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.data?.error || error?.message || "The quote could not be rejected.";
+      throw new Error(message);
+    }
+    if (rejectResponse?.error) throw new Error(rejectResponse.error);
+
+    let after = rejectResponse?.estimate?.id
+      ? rejectResponse.estimate
+      : { ...before, status: "cancelled", cancel_reason: cleanReason, cancelled_at: new Date().toISOString(), edit_reason: "" };
+    await rememberServerVersion(after);
+
+    try {
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: quoteRejectRevisionKey(estimate.id, before.updated_date),
+        sessionToken,
+        estimateBefore: before,
+        estimateAfter: after,
+        reason: `Quote rejected by staff: ${cleanReason}`,
+        revisionType: "cancel",
+        quoteTotalBefore: before.quote_total,
+        quoteTotalAfter: after.quote_total ?? before.quote_total,
+        internalCostBefore: before.total_cost,
+        internalCostAfter: after.total_cost ?? before.total_cost,
+        workOrderId: "",
+      });
+    } catch (revisionError) {
+      setEstimate(after);
+      setPersistedEstimate(after);
+      setRevisionRefreshKey((value) => value + 1);
+      throw new Error(`The quote is rejected, but its cancellation lifecycle revision could not be saved: ${revisionError?.message || "unknown error"}`);
+    }
+
+    try {
+      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "", syncCustomer: false, sessionToken });
+    } catch (syncError) {
+      const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
+      const recovered = await saveEstimateFieldsSafely({
+        baseline: after,
+        nextFields: {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+        },
+        label: "Quote rejection pipeline recovery marker",
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
+      await rememberServerVersion(after);
+      setEstimate(after);
+      setPersistedEstimate(after);
+      setRevisionRefreshKey((value) => value + 1);
+      window.alert(`The quote is rejected and its lifecycle history is saved, but Sales Pipeline synchronization is pending.\n\n${message}\n\nUse Retry Pipeline Sync in Finalize Estimate.`);
+      return;
+    }
+
+    const refreshed = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
+    const savedAfter = { ...after, ...(refreshed || {}), status: "cancelled", edit_reason: "" };
+    if (savedAfter.updated_date) serverUpdatedAtRef.current = savedAfter.updated_date;
+    setEstimate(savedAfter);
+    setPersistedEstimate(savedAfter);
+    setRevisionRefreshKey((value) => value + 1);
+    if (rejectResponse?.follow_up_warning) {
+      window.alert(rejectResponse.follow_up_warning);
+    }
+    navigate("/Estimator");
+  };
+
+  // (#271) Supersede acceptance: the immutable acceptance row for the current
+  // Quote Version is marked superseded server-side (kept in audit history),
+  // the estimate CAS-returns from Approved to the sent/needs-resend state with
+  // its mirrored acceptance fields cleared, and a status_transition lifecycle
+  // revision records the move. Reuses the same CAS + revision guard rails as
+  // the cancel/acceptance paths.
+  const handleSupersedeAcceptance = async ({ reason, acceptanceId } = {}) => {
+    if (openRevision) {
+      window.alert("Save the open estimate revision before superseding this acceptance.");
+      return;
+    }
+    const before = await staffEntities.AllInOneEstimate.get(estimate.id);
+    assertNoPendingPriceAcceptance(before, "superseding customer acceptance");
+    if (hasServerConflict(before)) {
+      throw new Error("This estimate changed in another session. Reload before superseding the acceptance.");
+    }
+    if (before.pipeline_sync_pending) {
+      throw new Error("Sales Pipeline synchronization is still pending. Retry that synchronization before superseding this acceptance.");
+    }
+    if (String(before.status || "") !== "approved") {
+      throw new Error("Only an Approved estimate's customer acceptance can be superseded.");
+    }
+
+    let supersedeResponse;
+    try {
+      const response = await base44.functions.invoke("recordEstimateAcceptance", {
+        action: "supersede_acceptance",
+        estimate_id: estimate.id,
+        acceptance_id: String(acceptanceId || "").trim(),
+        reason: String(reason || "").trim(),
+        expected_estimate_updated_date: before.updated_date || "",
+        session_token: sessionToken,
+      });
+      supersedeResponse = response?.data || response;
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.data?.error || error?.message || "The acceptance could not be superseded.";
+      throw new Error(message);
+    }
+    if (supersedeResponse?.error) throw new Error(supersedeResponse.error);
+
+    let after = supersedeResponse?.estimate?.id
+      ? supersedeResponse.estimate
+      : { ...before, status: "sent", accepted_at: "", accepted_by_name: "", accepted_by_email: "", edit_reason: "" };
+    await rememberServerVersion(after);
+
+    const supersededAcceptanceId = supersedeResponse?.acceptance?.id || String(acceptanceId || "").trim() || estimate.id;
+    try {
+      await ensureEstimateLifecycleRevision({
+        idempotencyKey: supersedeAcceptanceRevisionKey(supersededAcceptanceId),
+        sessionToken,
+        estimateBefore: before,
+        estimateAfter: after,
+        reason: `Customer acceptance of Quote Version ${Math.max(0, Math.floor(Number(before.quote_version || 0)))} superseded${String(reason || "").trim() ? `: ${String(reason).trim()}` : ""}`,
+        revisionType: "status_transition",
+        quoteTotalBefore: before.quote_total,
+        quoteTotalAfter: after.quote_total ?? before.quote_total,
+        internalCostBefore: before.total_cost,
+        internalCostAfter: after.total_cost ?? before.total_cost,
+        workOrderId: after.work_order_id || before.work_order_id || "",
+      });
+    } catch (revisionError) {
+      setEstimate(after);
+      setPersistedEstimate(after);
+      setRevisionRefreshKey((value) => value + 1);
+      throw new Error(`The acceptance is superseded, but its lifecycle revision could not be saved: ${revisionError?.message || "unknown error"}`);
+    }
+
+    try {
+      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "approved", syncCustomer: false, sessionToken });
+    } catch (syncError) {
+      const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
+      const recovered = await saveEstimateFieldsSafely({
+        baseline: after,
+        nextFields: {
+          pipeline_sync_pending: true,
+          pipeline_sync_error: message,
+        },
+        label: "Acceptance supersede pipeline recovery marker",
+      }).catch(() => null) || await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
+      after = { ...after, ...(recovered || {}), pipeline_sync_pending: true, pipeline_sync_error: message };
+      await rememberServerVersion(after);
+      setEstimate(after);
+      setPersistedEstimate(after);
+      setRevisionRefreshKey((value) => value + 1);
+      window.alert(`The acceptance is superseded and its lifecycle history is saved, but Sales Pipeline synchronization is pending.\n\n${message}\n\nUse Retry Pipeline Sync in Finalize Estimate.`);
+      return;
+    }
+
+    const refreshed = await staffEntities.AllInOneEstimate.get(estimate.id).catch(() => after);
+    const savedAfter = { ...after, ...(refreshed || {}), status: "sent", edit_reason: "" };
+    if (savedAfter.updated_date) serverUpdatedAtRef.current = savedAfter.updated_date;
+    setEstimate(savedAfter);
+    setPersistedEstimate(savedAfter);
+    setRevisionRefreshKey((value) => value + 1);
+  };
+
   const handleCancel = async (reason) => {
     if (openRevision) {
       window.alert("Save the open estimate revision before cancelling the estimate.");
@@ -1762,6 +1961,8 @@ export default function EstimateDetail() {
                 estimate={estimate}
                 persistedEstimate={persistedEstimate}
                 onRecordAcceptance={handleRecordAcceptance}
+                onRejectQuote={handleRejectQuote}
+                onSupersedeAcceptance={handleSupersedeAcceptance}
                 refreshKey={revisionRefreshKey + deliveryRefreshKey}
                 isRegistered={isRegistered}
               />
