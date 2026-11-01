@@ -424,7 +424,14 @@ export default function EstimatorCustomers() {
       if (refreshed) {
         setCustomers((rows) => rows.map((customer) => customer.id === customerId ? refreshed : customer));
       }
-      window.alert(error?.message || "Customer pricing tier could not be saved.");  const updateVolumeTiers = async (customerId, text) => {
+      window.alert(error?.message || "Customer pricing tier could not be saved.");
+    } finally {
+      pricingTierSaveRef.current = false;
+      setSavingTierId(null);
+    }
+  };
+
+  const updateVolumeTiers = async (customerId, text) => {
     const tiers = String(text || "").split(",").map((pair) => {
       const [min, pct] = pair.split(":").map((v) => Number(String(v).trim()));
       return Number.isFinite(min) && min > 0 && Number.isFinite(pct) && pct > 0 ? { min_subtotal: min, discount_percent: Math.min(100, pct) } : null;
@@ -442,11 +449,6 @@ export default function EstimatorCustomers() {
       setCustomers((rows) => rows.map((c) => c.id === customerId ? saved : c));
     } catch (e) {
       window.alert(e?.message || "Volume tiers could not be saved.");
-    }
-  };
-    } finally {
-      pricingTierSaveRef.current = false;
-      setSavingTierId(null);
     }
   };
 
