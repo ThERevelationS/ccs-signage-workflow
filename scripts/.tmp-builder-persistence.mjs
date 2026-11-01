@@ -106,7 +106,7 @@ async function deleteBuilderEntityIfUnchanged({
   if (!id || !updatedDate || typeof entity?.deleteMany !== "function" || typeof entity?.get !== "function") {
     throw new Error(`${label} could not initialize its concurrency-safe delete.`);
   }
-  const query = { id, updated_date: updatedDate, ...guardFields };
+  const query = { ...guardFields, id, updated_date: updatedDate };
   let result;
   try {
     result = await entity.deleteMany(query);
