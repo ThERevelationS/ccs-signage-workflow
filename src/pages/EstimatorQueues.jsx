@@ -13,6 +13,7 @@ import { isEstimateStatusTransitionAllowed, statusTransitionMap, allEstimateStat
 import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
+import { ExportEstimatesButton } from "@/components/importer/ImportExportButtons";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { estimateMatchesSearch, pushRecentSearch, readRecentSearches, useEstimateDeepLink } from "@/components/estimator/deepLinks";
 
@@ -564,6 +565,7 @@ export default function EstimatorQueues() {
           <ListFilter className="w-4 h-4 text-red-500" aria-hidden="true" />
           <h1 className="text-xs font-bold tracking-wide text-gray-600">ESTIMATE QUEUES</h1>
           <button type="button" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto h-6 px-2 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" aria-hidden="true" /> CSV</button>
+          <ExportEstimatesButton estimates={rows} />
           {me?.role === "admin" && <button type="button" onClick={exportBackup} disabled={backupBusy} className="h-6 px-2 rounded border border-violet-300 bg-violet-50 text-[10px] font-bold text-violet-700 hover:bg-violet-100 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" aria-hidden="true" />{backupBusy ? " Exporting…" : " Backup (JSON)"}</button>}
           <button type="button" onClick={() => importEstRef.current?.click()} className="h-6 px-2 rounded border border-emerald-300 bg-emerald-50 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 inline-flex items-center gap-1" title="Import an exported estimate JSON bundle (#451)"><Upload className="w-3 h-3" aria-hidden="true" />Import estimate</button>
           <input ref={importEstRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => importEstimateJson(e.target.files?.[0])} />

@@ -25,6 +25,7 @@ import MasterPartPickerModal from "@/components/estimator/parts/MasterPartPicker
 import { base44 } from "@/api/base44Client";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { detachBuilderPartOverride, updateDetachedPartOverride } from "@/components/estimator/builder/partSync";
+import { CopyBomButton } from "@/components/importer/ImportExportButtons";
 import { addCatalogPartToProduct, removeManualProductPart, switchManualProductPart, updateManualProductPart } from "@/components/estimator/parts/customProductService";
 import { typeDetails } from "@/components/estimator/parts/partCatalog";
 import { money } from "@/components/estimator/aioPricing";
@@ -736,6 +737,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           <div className="mt-3 flex items-center justify-center gap-2">
             <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
             <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
+            <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt} />
           </div>
         )}
         <MasterPartPickerModal
@@ -835,6 +837,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               <>
                 <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
                 <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
+                <CopyBomButton estimateId={estimateId} targetBuilderProductId={builderProductId} expectedEstimateUpdatedAt={expectedEstimateUpdatedAt} />
               </>
             )}
             {!readOnly && <button

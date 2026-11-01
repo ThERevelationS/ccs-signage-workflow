@@ -33,6 +33,7 @@ import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/component
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
+import { ExportEstimateJsonButton, ImportLineItemsButton, ImportTemplateSectionsButton, ExportJobCostingCsvButton } from "@/components/importer/ImportExportButtons";
 import EstimateActivityPanel from "@/components/estimator/EstimateActivityPanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
 import { isEstimateProtected, requiresEstimateLifecycleReason } from "@/components/estimator/estimateLifecycle";
@@ -1958,6 +1959,13 @@ export default function EstimateDetail() {
                 refreshKey={revisionRefreshKey}
               />
               <EstimateQuoteDeliveryPanel estimate={estimate} refreshKey={deliveryRefreshKey + revisionRefreshKey} />
+              <div className="flex flex-wrap items-center gap-1.5 rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
+                <span className="text-[9px] font-bold tracking-wide text-gray-500">IMPORT / EXPORT</span>
+                <ExportEstimateJsonButton estimate={estimate} />
+                <ImportLineItemsButton estimate={estimate} onApplied={load} />
+                <ImportTemplateSectionsButton estimate={estimate} onApplied={load} />
+                <ExportJobCostingCsvButton estimate={estimate} />
+              </div>
               <EstimateAcceptancePanel
                 estimate={estimate}
                 persistedEstimate={persistedEstimate}

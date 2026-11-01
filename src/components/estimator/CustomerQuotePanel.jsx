@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FileText, Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
+import { ExportQuoteHtmlButton } from "@/components/importer/ImportExportButtons";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -435,6 +436,7 @@ export default function CustomerQuotePanel({
           </Button>
           <Button type="button" variant="outline" onClick={previewPdf} disabled={revisionInProgress || previewBusy} title={revisionInProgress ? "Save the open revision before previewing the customer quote PDF." : "Generate and preview the customer quote PDF in a new tab before downloading or emailing."} className="h-[31px] text-[11px]">{previewBusy ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" /> : <FileText className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />} {previewBusy ? "Generating…" : revisionInProgress ? "Save Revision Before Preview" : "Preview PDF"}</Button>
           <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
+          <ExportQuoteHtmlButton estimate={estimate} pricing={pricing} quoteRows={quoteRows} />
         </div>
       </div>
 
