@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AUTOMATION_PRESETS, draftFromPreset, recordFilterFields, destinationWorkOrderId, draftProblems } from "@/components/admin/automationBuilderModel.mjs";
 import DataExportPanel from "@/components/admin/DataExportPanel";
+import AssetMigrationPanel from "@/components/admin/AssetMigrationPanel";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2717,6 +2718,7 @@ export default function AdminSettings() {
                     <AdminPanelContent value="backup">
                     <BackupManager />
                     <DataExportPanel />
+                    <AssetMigrationPanel />
                   </AdminPanelContent>
                   <AdminPanelContent value="client_trash">
                     <ProjectTrash />

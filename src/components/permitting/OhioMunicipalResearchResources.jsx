@@ -1,4 +1,5 @@
 import dossiers from "./ohioMunicipalResearch.json";
+import { HostedAssetLink } from "@/shared/hostedAssetUrl";
 
 export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin = false }) {
   const dossier = isAdmin && dossiers.find(row => ["id", "name", "state", "type"].every(key => row[key] === jurisdiction?.[key]));
@@ -16,7 +17,7 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
       <ul className="space-y-3">{dossier.resources.map(resource => <li key={resource.file}>
         <p className="font-medium">{resource.label}</p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <a className="min-h-11 inline-flex items-center underline" href={resource.archive} target="_blank" rel="noopener noreferrer">Retained {resource.format}</a>
+          <HostedAssetLink className="min-h-11 inline-flex items-center underline" href={resource.archive} target="_blank" rel="noopener noreferrer">Retained {resource.format}</HostedAssetLink>
           <a className="min-h-11 inline-flex items-center underline" href={resource.source} target="_blank" rel="noopener noreferrer">Official document</a>
         </div>
       </li>)}</ul>
@@ -45,14 +46,14 @@ export default function OhioMunicipalResearchResources({ jurisdiction, isAdmin =
         {dossier.extraction_note && <p>{dossier.extraction_note}</p>}
         <ul className="space-y-3">{dossier.document_findings?.map(finding => <li key={finding.label}>
           <p className="font-medium">{finding.label}</p><p>{finding.text}</p>
-          <a className="min-h-11 inline-flex items-center underline" href={finding.archive} target="_blank" rel="noopener noreferrer">Original PDF — physical page {finding.physical_page}</a>
+          <HostedAssetLink className="min-h-11 inline-flex items-center underline" href={finding.archive} target="_blank" rel="noopener noreferrer">Original PDF — physical page {finding.physical_page}</HostedAssetLink>
         </li>)}</ul>
       </section>}
       {dossier.electrical_research && <section className="space-y-2 rounded border border-amber-200 p-3" aria-label="Electrical provider routing research">
         <p className="font-medium">Electrical provider routing — municipal coverage unresolved</p>
         <p>{dossier.electrical_research.note}</p>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.guide_archive} target="_blank" rel="noopener noreferrer">Retained ezTrak guide PDF</a>
+          <HostedAssetLink className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.guide_archive} target="_blank" rel="noopener noreferrer">Retained ezTrak guide PDF</HostedAssetLink>
           <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.guide_source} target="_blank" rel="noopener noreferrer">Official guide</a>
           <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.portal} target="_blank" rel="noopener noreferrer">CAGIS ezTrak portal</a>
           <a className="min-h-11 inline-flex items-center underline" href={dossier.electrical_research.schedule_source} target="_blank" rel="noopener noreferrer">Official inspection-area XLS — retention gap</a>

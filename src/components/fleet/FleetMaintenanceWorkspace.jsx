@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { HostedImg } from "@/shared/hostedAssetUrl";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -101,7 +102,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
         <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex items-start gap-3 sm:gap-4 min-w-0">
             <button type="button" onClick={onBack} className="mt-1 min-h-11 min-w-11 shrink-0 p-2 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900" aria-label="Back to maintenance equipment"><ArrowLeft className="w-4 h-4" /></button>
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">{equipment.photo_url ? <img src={equipment.photo_url} alt="" className="w-full h-full object-cover" /> : <Truck className="w-7 h-7 text-gray-400" />}</div>
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">{equipment.photo_url ? <HostedImg src={equipment.photo_url} alt="" className="w-full h-full object-cover" /> : <Truck className="w-7 h-7 text-gray-400" />}</div>
             <div className="min-w-0"><div className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Maintenance Workspace</div><h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 truncate">{equipment.name}</h2><p className="text-sm text-gray-500 dark:text-slate-400 truncate">{[equipment.year, equipment.make, equipment.model].filter(Boolean).join(" ") || pretty(equipment.type)}</p></div>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HostedImg } from "@/shared/hostedAssetUrl";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
@@ -331,7 +332,7 @@ function MaintenanceEquipmentCard({ card, isAdmin, onOpen, onNew }) {
     <div className={`rounded-xl border ${tone} bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col`}>
       <div className="p-4 space-y-4 flex-1">
         <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">{eq.photo_url ? <img src={eq.photo_url} alt="" className="w-full h-full object-cover" /> : <Truck className="w-6 h-6 text-gray-400" />}</div>
+          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">{eq.photo_url ? <HostedImg src={eq.photo_url} alt="" className="w-full h-full object-cover" /> : <Truck className="w-6 h-6 text-gray-400" />}</div>
           <div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(eq.id)}`} className="font-semibold text-gray-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-300 line-clamp-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">{eq.name}</Link><div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">{[eq.year, eq.make, eq.model].filter(Boolean).join(" ") || pretty(eq.type)}</div></div><span className={`shrink-0 text-[11px] px-2 py-1 rounded-full capitalize ${eq.status === "operational" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : eq.status === "down" ? "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300" : "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"}`}>{pretty(eq.status)}</span></div></div>
         </div>
 

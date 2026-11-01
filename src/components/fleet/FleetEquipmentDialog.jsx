@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { HostedImg } from "@/shared/hostedAssetUrl";
 import { base44 } from "@/api/base44Client";
 import { Loader2, X, Upload, ImagePlus, Trash2 } from "lucide-react";
-import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const EMPTY = {
   name: "",
@@ -143,7 +143,7 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
           <div role="status" aria-live="polite" className="sr-only">{uploadingPhoto ? "Uploading equipment photo." : saving ? "Saving equipment." : ""}</div>
           <section className="rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40"><div className="font-medium text-gray-900 dark:text-slate-100 inline-flex items-center gap-2"><ImagePlus className="w-4 h-4 text-indigo-500"/>Equipment Photo</div><label className="min-h-11 px-3 cursor-pointer inline-flex items-center justify-center gap-1 rounded-lg text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-950/30 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-indigo-500"><Upload className="w-4 h-4"/>{form.photo_url || pendingPhoto ? "Replace" : "Add photo"}<input aria-label="Choose equipment photo" type="file" accept="image/*" className="sr-only" onChange={e=>{const file=e.target.files?.[0]||null;setPendingPhoto(file);e.target.value="";}}/></label></div>
-            <div className="p-4"><div className="flex flex-col sm:flex-row sm:items-center gap-3">{form.photo_url ? <img src={form.photo_url} alt={form.name || "Equipment"} className="w-24 h-24 sm:w-20 sm:h-20 rounded-lg object-cover bg-gray-100 dark:bg-slate-800"/> : <div className="w-24 h-24 sm:w-20 sm:h-20 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center"><ImagePlus className="w-7 h-7 text-gray-300"/></div>}<div className="flex-1 min-w-0">{pendingPhoto ? <div role="status" aria-live="polite" className="text-sm text-indigo-700 dark:text-indigo-300 break-all">Selected: {pendingPhoto.name}</div> : <div className="text-xs text-gray-400">{form.photo_url ? "Current Fleet equipment photo." : "No equipment photo."}</div>}{(form.photo_url || pendingPhoto) && <button type="button" onClick={()=>{set("photo_url","");setPendingPhoto(null);}} className="mt-2 min-h-11 px-2 inline-flex items-center gap-1 text-xs font-medium text-red-600"><Trash2 className="w-3.5 h-3.5"/>Remove photo</button>}</div></div>
+            <div className="p-4"><div className="flex flex-col sm:flex-row sm:items-center gap-3">{form.photo_url ? <HostedImg src={form.photo_url} alt={form.name || "Equipment"} className="w-24 h-24 sm:w-20 sm:h-20 rounded-lg object-cover bg-gray-100 dark:bg-slate-800"/> : <div className="w-24 h-24 sm:w-20 sm:h-20 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center"><ImagePlus className="w-7 h-7 text-gray-300"/></div>}<div className="flex-1 min-w-0">{pendingPhoto ? <div role="status" aria-live="polite" className="text-sm text-indigo-700 dark:text-indigo-300 break-all">Selected: {pendingPhoto.name}</div> : <div className="text-xs text-gray-400">{form.photo_url ? "Current Fleet equipment photo." : "No equipment photo."}</div>}{(form.photo_url || pendingPhoto) && <button type="button" onClick={()=>{set("photo_url","");setPendingPhoto(null);}} className="mt-2 min-h-11 px-2 inline-flex items-center gap-1 text-xs font-medium text-red-600"><Trash2 className="w-3.5 h-3.5"/>Remove photo</button>}</div></div>
             <div className="text-xs text-gray-400 mt-2">A selected photo uploads only when you save the equipment record.</div></div>
           </section>
 
@@ -164,9 +164,9 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Location"><input value={form.location} onChange={e => set("location", e.target.value)} className="field" /></Field>
               <Field label="Mileage / hours"><input type="number" min="0" step="0.1" value={form.mileage_hours} onChange={e => set("mileage_hours", e.target.value)} className="field" /></Field>
-              <Field label="Purchase date"><CcsDateField value={form.purchase_date || ""} onChange={e => set("purchase_date", e.target.value)} className="field" /></Field>
-              <Field label="Last service"><CcsDateField value={form.last_service_date || ""} onChange={e => set("last_service_date", e.target.value)} className="field" /></Field>
-              <Field label="Next service due"><CcsDateField value={form.next_service_due || ""} onChange={e => set("next_service_due", e.target.value)} className="field" /></Field>
+              <Field label="Purchase date"><input type="date" value={form.purchase_date || ""} onChange={e => set("purchase_date", e.target.value)} className="field" /></Field>
+              <Field label="Last service"><input type="date" value={form.last_service_date || ""} onChange={e => set("last_service_date", e.target.value)} className="field" /></Field>
+              <Field label="Next service due"><input type="date" value={form.next_service_due || ""} onChange={e => set("next_service_due", e.target.value)} className="field" /></Field>
               <Field label="Engine details"><input value={form.engine_details} onChange={e => set("engine_details", e.target.value)} className="field" /></Field>
             </div>
           </FormSection>

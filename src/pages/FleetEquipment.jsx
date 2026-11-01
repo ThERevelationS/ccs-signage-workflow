@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HostedImg } from "@/shared/hostedAssetUrl";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
@@ -252,7 +253,7 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
   const trackingLabel = identityConflict || eq.bouncie_link_status === "ambiguous" ? "Identity conflict" : trackedVehicle ? (driving ? (speed != null ? `Driving · ${speed} mph` : "Driving") : "Parked") : eq.bouncie_link_status === "not_applicable" ? "Not applicable" : ["matched", "manual"].includes(eq.bouncie_link_status) ? "No current state" : "Unlinked";
 
   return <article className={`rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden ${retired ? "border-gray-300 dark:border-slate-700" : identityConflict || eq.bouncie_link_status === "ambiguous" ? "border-amber-300 dark:border-amber-900" : overdue.length ? "border-red-200 dark:border-red-900" : "border-gray-200 dark:border-slate-800"}`}>
-    <Link to={detailUrl} className="block h-36 bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">{eq.photo_url ? <img src={eq.photo_url} alt={eq.name} className="w-full h-full object-cover" /> : <Truck className="w-12 h-12 text-gray-300" />}</Link>
+    <Link to={detailUrl} className="block h-36 bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">{eq.photo_url ? <HostedImg src={eq.photo_url} alt={eq.name} className="w-full h-full object-cover" /> : <Truck className="w-12 h-12 text-gray-300" />}</Link>
     <div className="p-4 space-y-3">
       <div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link to={detailUrl} className="font-semibold text-gray-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-300 line-clamp-1">{eq.name}</Link><p className="text-xs text-gray-500 dark:text-slate-400 mt-1 truncate">{[eq.year, eq.make, eq.model].filter(Boolean).join(" ") || eq.type}</p><div className="mt-2"><StatusBadge status={eq.status} /></div></div><HealthRing health={health} /></div>
 
