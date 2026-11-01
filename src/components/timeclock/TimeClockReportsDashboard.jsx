@@ -342,7 +342,7 @@ export default function TimeClockReportsDashboard() {
           <div className="flex flex-wrap items-center gap-1.5">
             {presets.map((p) => (
               <button type="button"
-                key={p.name} type="button" onClick={() => applyPreset(p)}
+                key={p.name} onClick={() => applyPreset(p)}
                 onContextMenu={(e) => { e.preventDefault(); if (window.confirm(`Delete preset "${p.name}"?`)) removePreset(p.name); }}
                 className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-700"
                 title="Apply preset (right-click to delete)"
