@@ -231,6 +231,96 @@ const safeExternalUrl = (value: any) => {
   }
 };
 
+// ---- Portal customer file uploads (#244) -----------------------------------
+// Photos + PDF drawings only. Magic-byte sniffing decides the stored mime —
+// a caller-declared image/pdf type can never widen what actually gets stored.
+const PORTAL_UPLOAD_MAX_BYTES = 6 * 1024 * 1024;
+const PORTAL_UPLOAD_MAX_B64_CHARS = Math.ceil(PORTAL_UPLOAD_MAX_BYTES / 3) * 4 + 16;
+const PORTAL_UPLOAD_MAX_MB = Math.round(PORTAL_UPLOAD_MAX_BYTES / (1024 * 1024));
+
+function sniffPortalUpload(bytes: Uint8Array) {
+  if (bytes.length >= 4 && bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return "application/pdf";
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "image/png";
+  if (bytes.length >= 6 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) return "image/gif";
+  if (bytes.length >= 12 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return "image/webp";
+  // Phone photos often arrive as HEIC/HEIF/AVIF — ISO BMFF "ftyp" box with a
+  // known brand at bytes 8-11.
+  if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+    if (/^(heic|heix|hevc|hevx|heim|heis|hevm|hevs|mif1|msf1|avif|avis)$/.test(brand)) return "image/heic";
+  }
+  return "";
+}
+
+function decodePortalUpload(body: any) {
+  const raw = clean(body?.file_base64 ?? body?.attachment_base64);
+  if (!raw) return { error: "A file is required." };
+  const nameRaw = clean(body?.file_name ?? body?.attachment_name).slice(0, 255);
+  if (!nameRaw) return { error: "An attached file needs a filename." };
+  const b64 = raw.startsWith("data:") ? clean(raw.split(",").slice(1).join(",")) : raw;
+  if (b64.length > PORTAL_UPLOAD_MAX_B64_CHARS) return { error: `Files up to ${PORTAL_UPLOAD_MAX_MB} MB can be uploaded — this file is too large.` };
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) return { error: "The attached file could not be decoded." };
+  let bytes: Uint8Array;
+  try {
+    bytes = Uint8Array.from(atob(b64), (c: string) => c.charCodeAt(0));
+  } catch {
+    return { error: "The attached file could not be decoded." };
+  }
+  if (!bytes.byteLength) return { error: "The attached file is empty." };
+  if (bytes.byteLength > PORTAL_UPLOAD_MAX_BYTES) return { error: `Files up to ${PORTAL_UPLOAD_MAX_MB} MB can be uploaded — this file is too large.` };
+  const detected = sniffPortalUpload(bytes);
+  if (!detected) return { error: "Only photos (JPG, PNG, GIF, WebP, HEIC) or PDF drawings can be uploaded." };
+  const declared = clean(body?.file_mime ?? body?.attachment_mime).toLowerCase();
+  if (declared && declared !== "application/pdf" && !declared.startsWith("image/")) return { error: "Only photos (JPG, PNG, GIF, WebP, HEIC) or PDF drawings can be uploaded." };
+  if (declared === "application/pdf" && detected !== "application/pdf") return { error: "The file contents do not match its file type." };
+  if (declared.startsWith("image/") && detected === "application/pdf") return { error: "The file contents do not match its file type." };
+  const ext = detected === "application/pdf" ? "pdf" : detected.split("/")[1];
+  const safeName = nameRaw.replace(/[\r\n"\\/]+/g, "_").replace(/^\.+/, "") || `portal-upload.${ext}`;
+  return { bytes, mime: detected, name: safeName };
+}
+
+// Shared message scope for post_message + upload_file: a work_order link's
+// messages/attachments are hard-scoped to its one job; a customer link may
+// reference a related record only when that record belongs to the customer.
+async function portalMessageScope({ link, body, WorkOrder, Invoice, Estimate }: any) {
+  const isJobLink = clean(link?.kind) === "work_order";
+  const customerId = clean(link?.customer_id) || clean(link?.record_id);
+  let relatedKind = clean(body?.related_kind);
+  let relatedId = clean(body?.related_id);
+  let relatedLabel = clean(body?.related_label).slice(0, 200);
+  if (isJobLink) {
+    const jobOrder = await WorkOrder.get(clean(link.record_id)).catch(() => null);
+    if (!jobOrder?.id || jobOrder?.deleted === true) throw bad("The linked job is no longer available.", 404);
+    return {
+      customerId: clean(jobOrder.customer_id) || customerId,
+      relatedKind: "work_order",
+      relatedId: clean(jobOrder.id),
+      relatedLabel: (clean(jobOrder.est_inv_at || jobOrder.work_order_number || jobOrder.corbridge_invoice_number) || clean(jobOrder.title) || "Job").slice(0, 200),
+    };
+  }
+  if (relatedId) {
+    // Related records must belong to this customer before they can be referenced.
+    const owned = relatedKind === "invoice"
+      ? await Invoice.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
+      : relatedKind === "estimate"
+        ? await Estimate.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
+        : relatedKind === "work_order"
+          ? await WorkOrder.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
+          : false;
+    if (!owned) throw bad("That record cannot be referenced from this portal.", 403);
+  }
+  return { customerId, relatedKind, relatedId, relatedLabel };
+}
+
+// Counter-offer dedupe + display helpers (#257).
+const portalSmallHash = (value: string) => {
+  let h = 5381;
+  for (let i = 0; i < value.length; i += 1) h = ((h << 5) + h + value.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+};
+const portalMoney = (value: any) => `$${num(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 // Single-job threads: a work_order portal link sees only the messages tagged
 // to that job — never the rest of the customer's thread.
 async function loadJobThread(PortalMessage: any, workOrderId: string, markRead = false) {
@@ -467,44 +557,24 @@ Deno.serve(async (req) => {
       // work_order links may post too — every message is hard-scoped to the
       // one job the link points at (related_* below is forced, never trusted).
       if (linkKind !== "customer" && linkKind !== "work_order") throw bad("This portal link cannot send messages.", 403);
-      const isJobLink = linkKind === "work_order";
-      let customerId = clean(link.customer_id) || clean(link.record_id);
-      let jobOrder: any = null;
-      if (isJobLink) {
-        jobOrder = await WorkOrder.get(clean(link.record_id)).catch(() => null);
-        if (!jobOrder?.id || jobOrder?.deleted === true) throw bad("The linked job is no longer available.", 404);
-        customerId = clean(jobOrder.customer_id) || customerId;
-      }
+      const scope = await portalMessageScope({ link, body, WorkOrder, Invoice, Estimate });
       const text = clean(body?.body).slice(0, MESSAGE_MAX);
       const attachmentB64 = clean(body?.attachment_base64);
       let attachmentUrl = safeExternalUrl(body?.attachment_url);
       if (!text && !attachmentB64 && !attachmentUrl) throw bad("A message is required.");
-      let relatedKind = clean(body?.related_kind);
-      let relatedId = clean(body?.related_id);
-      let relatedLabel = clean(body?.related_label).slice(0, 200);
-      if (isJobLink) {
-        relatedKind = "work_order";
-        relatedId = clean(jobOrder.id);
-        relatedLabel = (clean(jobOrder.est_inv_at || jobOrder.work_order_number || jobOrder.corbridge_invoice_number) || clean(jobOrder.title) || "Job").slice(0, 200);
-      } else if (relatedId) {
-        // Related records must belong to this customer before they can be referenced.
-        const owned = relatedKind === "invoice"
-          ? await Invoice.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
-          : relatedKind === "estimate"
-            ? await Estimate.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
-            : relatedKind === "work_order"
-              ? await WorkOrder.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
-              : false;
-        if (!owned) throw bad("That record cannot be referenced from this portal.", 403);
-      }
       // Optional file attachment — pass an http(s) URL for an already-hosted
       // file, or base64 bytes stored server-side via UploadFile so the staff
-      // thread shows a download link.
-      const attachmentName = clean(body?.attachment_name).slice(0, 255);
+      // thread shows a download link. Inline base64 rides the same validated
+      // path as upload_file (#244): photos + PDFs only inside the size cap.
+      let attachmentName = clean(body?.attachment_name).slice(0, 255);
+      let attachmentMime = clean(body?.attachment_mime);
       if (!attachmentUrl && attachmentB64) {
-        if (!attachmentName) throw bad("An attached file needs a filename.");
+        const decoded = decodePortalUpload(body);
+        if (decoded.error) throw bad(decoded.error);
+        attachmentName = decoded.name;
+        attachmentMime = decoded.mime;
         try {
-          const file = new File([Uint8Array.from(atob(attachmentB64), (c) => c.charCodeAt(0))], attachmentName, { type: clean(body?.attachment_mime) || "application/octet-stream" });
+          const file = new File([decoded.bytes], decoded.name, { type: decoded.mime });
           const upload = await base44.asServiceRole.integrations.Core.UploadFile({ file });
           attachmentUrl = clean(upload?.file_url || upload?.url);
         } catch (uploadError) {
@@ -516,18 +586,18 @@ Deno.serve(async (req) => {
         entity: PortalMessage,
         data: {
           creation_request_key: key,
-          customer_id: customerId,
+          customer_id: scope.customerId,
           portal_link_id: clean(link.id),
           author_side: "customer",
           author_name: clean(body?.author_name).slice(0, 120) || "Customer",
           kind: "message",
-          body: text || (attachmentName ? `[Attachment] ${attachmentName}` : ""),
+          body: text || (attachmentName ? `[Attachment] ${attachmentName}` : attachmentUrl ? "[Attachment] file" : ""),
           attachment_name: attachmentName,
           attachment_url: attachmentUrl,
-          attachment_mime: clean(body?.attachment_mime),
-          related_kind: ["estimate", "invoice", "work_order"].includes(relatedKind) ? relatedKind : "none",
-          related_id: relatedId,
-          related_label: relatedLabel,
+          attachment_mime: attachmentMime,
+          related_kind: ["estimate", "invoice", "work_order"].includes(scope.relatedKind) ? scope.relatedKind : "none",
+          related_id: scope.relatedId,
+          related_label: scope.relatedLabel,
           read_by_staff: false,
           read_by_customer: true,
         },
@@ -535,6 +605,55 @@ Deno.serve(async (req) => {
         label: "Portal customer message",
       });
       return Response.json({ success: true, action, message: messageView(result.record) });
+    }
+
+    // Dedicated file upload (#244): site photos + marked-up drawings. The file
+    // is validated (photos/PDFs only, ~6MB binary cap), stored via service-role
+    // UploadFile, then atomically posted to the thread as an attachment
+    // message so it lands in the same staff feed as every other reply.
+    if (action === "upload_file") {
+      const link = await resolveLink(PortalLink, clean(body?.token));
+      const linkKind = clean(link.kind);
+      // Same token scope as post_message — the customer/job the file lands on
+      // is always derived from the link, never trusted from the caller.
+      if (linkKind !== "customer" && linkKind !== "work_order") throw bad("This portal link cannot upload files.", 403);
+      const scope = await portalMessageScope({ link, body, WorkOrder, Invoice, Estimate });
+      const decoded = decodePortalUpload(body);
+      if (decoded.error) throw bad(decoded.error);
+      let attachmentUrl = "";
+      try {
+        const file = new File([decoded.bytes], decoded.name, { type: decoded.mime });
+        const upload = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+        attachmentUrl = clean(upload?.file_url || upload?.url);
+      } catch (uploadError) {
+        throw bad(`The file could not be uploaded: ${uploadError?.message || "upload failed"}`);
+      }
+      if (!/^https?:\/\//.test(attachmentUrl)) throw bad("The file could not be uploaded — storage returned no download URL.", 503);
+      const caption = clean(body?.body).slice(0, MESSAGE_MAX);
+      const key = `portal-upload:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+      const result = await createFoundationRecordWithRecovery({
+        entity: PortalMessage,
+        data: {
+          creation_request_key: key,
+          customer_id: scope.customerId,
+          portal_link_id: clean(link.id),
+          author_side: "customer",
+          author_name: clean(body?.author_name).slice(0, 120) || "Customer",
+          kind: "message",
+          body: caption || `[Attachment] ${decoded.name}`,
+          attachment_name: decoded.name,
+          attachment_url: attachmentUrl,
+          attachment_mime: decoded.mime,
+          related_kind: ["estimate", "invoice", "work_order"].includes(scope.relatedKind) ? scope.relatedKind : "none",
+          related_id: scope.relatedId,
+          related_label: scope.relatedLabel,
+          read_by_staff: false,
+          read_by_customer: true,
+        },
+        readMatches: () => PortalMessage.filter({ creation_request_key: key }),
+        label: "Portal file upload message",
+      });
+      return Response.json({ success: true, action, file_url: attachmentUrl, message: messageView(result.record) });
     }
 
     if (action === "estimate_respond") {
@@ -589,7 +708,7 @@ Deno.serve(async (req) => {
             customer_id: customerId,
             portal_link_id: clean(link.id),
             author_side: "customer",
-            kind: decision === "accepted" ? "estimate_approved" : decision === "rejected" ? "estimate_revision" : "estimate_revision",
+            kind: decision === "accepted" ? "estimate_approved" : decision === "rejected" ? "estimate_revision_requested" : "message",
             body: sectionNote || `${decision === "accepted" ? "Accepted" : decision === "rejected" ? "Declined" : "Asked about"} section “${sectionLabel || sectionKey}”.`,
             related_kind: "estimate",
             related_id: estimateId,
@@ -600,7 +719,7 @@ Deno.serve(async (req) => {
           readMatches: () => PortalMessage.filter({ creation_request_key: secMsgKey }),
           label: "Portal section message",
         });
-        return ok({ responded: true, decision, section_key: sectionKey });
+        return Response.json({ success: true, action, responded: true, decision, section_key: sectionKey });
       }
       if (!["approve", "request_changes", "declined"].includes(decision)) throw bad("decision must be approve, request_changes, or declined.");
       const note = clean(body?.note).slice(0, MESSAGE_MAX);
@@ -736,7 +855,7 @@ Deno.serve(async (req) => {
             customer_id: customerId,
             portal_link_id: clean(link.id),
             author_side: "customer",
-            kind: "estimate_revision",
+            kind: "estimate_revision_requested",
             body: `Declined ${quoteLabel}: ${declineReason}`,
             related_kind: "estimate",
             related_id: estimateId,
@@ -753,9 +872,16 @@ Deno.serve(async (req) => {
             data: {
               creation_request_key: `portal-decline-request:${estimateId}:${clean(msg.record?.id) || key}`,
               estimate_id: estimateId,
-              opportunity_id: await opportunityIdForEstimate(estimateId),
-              status: "open",
-              description: `Customer declined ${quoteLabel} via the portal: ${declineReason.slice(0, 500)}`,
+              opportunity_id: await opportunityIdForEstimate(estimateId) || `portal-decline:${estimateId}`,
+              customer_id: customerId,
+              // "ready" is the queue-visible status — "open" is not in the
+              // EstimatingRequest enum and never landed on the estimator queue.
+              status: "ready",
+              requested_at: new Date().toISOString(),
+              submitted_at: new Date().toISOString(),
+              requested_by: "customer_portal",
+              priority: "normal",
+              request_notes: `Customer declined ${quoteLabel} via the portal: ${declineReason.slice(0, 500)}`,
             },
             readMatches: () => EstimatingRequest.filter({ creation_request_key: `portal-decline-request:${estimateId}:${clean(msg.record?.id) || key}` }),
             label: "Portal decline follow-up task",
@@ -801,9 +927,16 @@ Deno.serve(async (req) => {
           data: {
             creation_request_key: `portal-rev-request:${estimateId}:${clean(msg.record?.id) || key}`,
             estimate_id: estimateId,
-            opportunity_id: await opportunityIdForEstimate(estimateId),
-            status: "open",
-            description: `Customer requested revisions via the portal: ${note.slice(0, 500)}`,
+            opportunity_id: await opportunityIdForEstimate(estimateId) || `portal-revision:${estimateId}`,
+            customer_id: customerId,
+            // "ready" is the queue-visible status — "open" is not in the
+            // EstimatingRequest enum and never landed on the estimator queue.
+            status: "ready",
+            requested_at: new Date().toISOString(),
+            submitted_at: new Date().toISOString(),
+            requested_by: "customer_portal",
+            priority: "normal",
+            request_notes: `Customer requested revisions via the portal: ${note.slice(0, 500)}`,
           },
           readMatches: () => EstimatingRequest.filter({ creation_request_key: `portal-rev-request:${estimateId}:${clean(msg.record?.id) || key}` }),
           label: "Portal revision request task",
@@ -819,6 +952,115 @@ Deno.serve(async (req) => {
         key: `portal-act:revise:${estimateId}:${clean(msg.record?.id) || key}`,
       });
       return Response.json({ success: true, action, estimate: await estimatePortalView(estimate), message: messageView(msg.record) });
+    }
+
+    // Customer counter-offer (#257): a structured proposed_total + note
+    // against a respondable quote. Same link/ownership guards as
+    // estimate_respond; lands on the estimator queue as a "ready"
+    // EstimatingRequest plus the usual portal message + opportunity activity —
+    // all keyed off one attempt key so a retried submit can never double-log.
+    if (action === "counter_offer") {
+      const link = await resolveLink(PortalLink, clean(body?.token));
+      const linkKind = clean(link.kind);
+      if (linkKind !== "customer" && linkKind !== "estimate") throw bad("This portal link cannot send counter offers.", 403);
+      const customerId = clean(link.customer_id) || clean(link.record_id);
+      const estimateId = clean(body?.estimate_id);
+      // An estimate-scoped link may only counter its own quote — never any
+      // other estimate id the caller names.
+      if (linkKind === "estimate" && clean(link.record_id) !== estimateId) throw bad("Quote not found.", 404);
+      const estimate = await Estimate.get(estimateId).catch(() => null);
+      if (!estimate?.id || clean(estimate.customer_id) !== customerId) throw bad("Quote not found.", 404);
+      // Same respondable gate as estimate_respond: sent, and not past the
+      // quote's validity window — an expired quote needs a fresh issue, not a
+      // counter on a dead number.
+      if (clean(estimate.status) !== "sent") {
+        throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can receive counter offers.`, 409);
+      }
+      const quoteExp = quoteValidUntil(estimate);
+      if (quoteExp && quoteExp < new Date().toISOString().slice(0, 10)) {
+        throw bad("This quote has expired — please request an updated quote.", 409);
+      }
+      const proposedTotal = num(body?.proposed_total, NaN);
+      if (!Number.isFinite(proposedTotal) || proposedTotal <= 0) throw bad("Enter the total you'd like to pay — a number greater than zero.");
+      if (proposedTotal > 100_000_000) throw bad("That counter offer doesn't look like a valid amount.");
+      const note = clean(body?.note).slice(0, MESSAGE_MAX);
+      const quoteLabel = clean(estimate.estimate_number) || clean(estimate.quote_title) || "Quote";
+      // Idempotent-ish: a client-supplied attempt key wins; otherwise dedupe
+      // on estimate + total + note hash inside a 10-minute bucket so a double
+      // submit collapses to one event instead of double-logging.
+      const dedupePart = clean(body?.creation_request_key) || `${proposedTotal.toFixed(2)}:${portalSmallHash(note)}:${Math.floor(Date.now() / (10 * 60 * 1000))}`;
+      const key = `portal-counter:${estimateId}:${dedupePart}`.slice(0, 256);
+      const offerText = `Counter offer on ${quoteLabel}: ${portalMoney(proposedTotal)}${num(estimate.quote_total) ? ` (quoted ${portalMoney(estimate.quote_total)})` : ""}.${note ? ` ${note}` : ""}`;
+      const msg = await createFoundationRecordWithRecovery({
+        entity: PortalMessage,
+        data: {
+          creation_request_key: key,
+          customer_id: customerId,
+          portal_link_id: clean(link.id),
+          author_side: "customer",
+          author_name: clean(body?.author_name).slice(0, 120) || "Customer",
+          // estimate_revision_requested is the closest declared kind — a
+          // counter is a request to re-price the quote.
+          kind: "estimate_revision_requested",
+          body: offerText,
+          related_kind: "estimate",
+          related_id: estimateId,
+          related_label: quoteLabel,
+          read_by_staff: false,
+          read_by_customer: true,
+        },
+        readMatches: () => PortalMessage.filter({ creation_request_key: key }),
+        label: "Portal counter offer message",
+      });
+      const msgId = clean(msg.record?.id) || key;
+      // Estimator-queue row: status "ready" is the declared enum value that
+      // lands on open_estimating_requests (an "open" status is not in the
+      // schema). Details ride in request_notes + a handoff snapshot, mirroring
+      // the known-good portal reorder shape.
+      const requestKey = `portal-counter-request:${estimateId}:${msgId}`.slice(0, 256);
+      try {
+        await createFoundationRecordWithRecovery({
+          entity: EstimatingRequest,
+          data: {
+            creation_request_key: requestKey,
+            estimate_id: estimateId,
+            opportunity_id: await opportunityIdForEstimate(estimateId) || `portal-counter:${estimateId}`,
+            customer_id: customerId,
+            status: "ready",
+            requested_at: new Date().toISOString(),
+            submitted_at: new Date().toISOString(),
+            requested_by: "customer_portal",
+            priority: "normal",
+            request_notes: `Customer counter-offered ${portalMoney(proposedTotal)} on ${quoteLabel} via the portal${num(estimate.quote_total) ? ` (quoted ${portalMoney(estimate.quote_total)})` : ""}.${note ? ` Note: ${note}` : ""}`.slice(0, 2000),
+            handoff_snapshot_version: 1,
+            handoff_snapshot: {
+              snapshot_version: 1,
+              source_type: "portal_counter_offer",
+              estimate_id: estimateId,
+              estimate_number: clean(estimate.estimate_number),
+              customer_id: customerId,
+              customer_display_name: clean(estimate.client_name) || clean(link.label),
+              quoted_total: num(estimate.quote_total),
+              proposed_total: proposedTotal,
+              customer_note: note,
+            },
+          },
+          readMatches: () => EstimatingRequest.filter({ creation_request_key: requestKey }),
+          label: "Portal counter offer task",
+        });
+      } catch (reqError: any) {
+        console.error("Portal counter offer message saved but its queue task failed:", reqError?.message || reqError);
+      }
+      logPortalOpportunityActivity(OpportunityActivity, {
+        opportunityId: await opportunityIdForEstimate(estimateId),
+        // event_type "note" is the declared value portal events use; the
+        // counter specifics ride in details.
+        eventType: "note",
+        summary: `Customer counter-offered ${portalMoney(proposedTotal)} on ${quoteLabel} via the portal`,
+        details: { subtype: "counter_offer", estimate_id: estimateId, proposed_total: proposedTotal, quote_total: num(estimate.quote_total), note_preview: note.slice(0, 240), source: "customer_portal" },
+        key: `portal-act:counter:${estimateId}:${msgId}`,
+      });
+      return Response.json({ success: true, action, estimate: await estimatePortalView(estimate), message: messageView(msg.record), reused: msg.status !== "created" });
     }
 
     if (action === "payment_notice") {
