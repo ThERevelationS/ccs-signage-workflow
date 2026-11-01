@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, parseISO, isWithinInterval, differenceInDays } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand inside the export handler — not at page load.
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { fetchAllWorkOrders } from "@/lib/workOrderCache";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -269,7 +269,7 @@ export default function TimeClockReportsDashboard() {
     };
   }, [workOrders, filteredEntries, start, end]);
 
-  const exportReport = () => {
+  const exportReport = async () => {
     const summaryData = metrics.hoursByEmployee.map(emp => ({
       "Employee": emp.name,
       "Total Hours": emp.hours.toFixed(2),
@@ -279,6 +279,7 @@ export default function TimeClockReportsDashboard() {
       "Avg Hours/Entry": emp.entries > 0 ? (emp.hours / emp.entries).toFixed(2) : "0.00"
     }));
 
+    const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
     
     // Summary sheet
