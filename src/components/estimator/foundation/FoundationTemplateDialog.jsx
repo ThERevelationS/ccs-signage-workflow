@@ -125,7 +125,7 @@ export default function FoundationTemplateDialog({ open, mode, onClose, project,
                   Apply
                 </button>
                 <button type="button" onClick={() => remove(t)} className="text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             ))}
