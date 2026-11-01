@@ -1,4 +1,4 @@
-import { jsPDF } from "jspdf";
+// jspdf (~700KB) loads on demand inside the export handler — not at page load.
 import { format } from "date-fns";
 
 const BRAND_PURPLE = [88, 28, 135];
@@ -46,7 +46,8 @@ function boolBadge(doc, val, label, x, y) {
   doc.text(`${label}: ${isTrue ? "Yes" : "No"}`, x + 5, y - 1.5);
 }
 
-export function generateJurisdictionPDF(jurisdiction) {
+export async function generateJurisdictionPDF(jurisdiction) {
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
