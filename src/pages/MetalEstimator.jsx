@@ -19,6 +19,9 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const itemTypes = ["channel_letters", "cabinet_sign", "monument_sign", "pole_sign", "flat_cut_letters", "fabricated_letters", "frame_assembly", "custom_brackets"];
@@ -51,10 +54,13 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
     let cancelled = false;
     const load = async () => {
       setIsLoading(true);
@@ -366,6 +372,60 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
       setIsSaving(false);
     }
   };
+
+  // #78 — clone the current save payload into a brand-new Metal project.
+  const handleSaveAsCopy = async () => {
+    setIsSaving(true);
+    try {
+      const {
+        totalMaterialsCost,
+        totalSuppliesCost,
+        totalFabricationCost,
+        totalWeldingCost,
+        totalFinishingCost,
+        totalLaborCost,
+      } = getProjectCalculations();
+      const copy = await saveModuleProjectCopy({
+        entity: MetalProject,
+        payload: {
+          ...project,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          total_material_cost: totalMaterialsCost,
+          total_supplies_cost: totalSuppliesCost,
+          total_fabrication_cost: totalFabricationCost,
+          total_welding_cost: totalWeldingCost,
+          total_finishing_cost: totalFinishingCost,
+          total_cost: totalMaterialsCost + totalSuppliesCost + totalLaborCost,
+          subtotal: totalMaterialsCost + totalSuppliesCost + totalLaborCost,
+          markup_amount: 0,
+          markup_percent: 0,
+          status: 'calculated',
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "metal_project_copy",
+        baseName: project.project_name || "Metal",
+        label: "Metal project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/MetalEstimator?edit=${copy.id}`);
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildMetalTemplateData = (p) => ({
+    items: p.items || [],
+    fabrication_rate: p.fabrication_rate,
+    welding_rate: p.welding_rate,
+    finishing_rate: p.finishing_rate,
+    notes: p.notes,
+  });
 
   const downloadEstimate = () => {
     const { 
@@ -1381,6 +1441,15 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
             </CardContent></Card>
             {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
             <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />{isEditing ? 'Update Estimate' : 'Save Estimate'}</>}</Button>
+            <div className="flex flex-wrap gap-2">
+              <ModuleActionBar
+                onTemplates={() => setTemplateMode("load")}
+                onSaveAsTemplate={() => setTemplateMode("save")}
+                onSaveAsCopy={handleSaveAsCopy}
+                estimateId={estimateId}
+                saving={isSaving}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <Button onClick={downloadEstimate} variant="outline" className="w-full"><Download className="w-4 h-4 mr-2" /> Download</Button>
               <Button onClick={printEstimate} variant="outline" className="w-full"><Printer className="w-4 h-4 mr-2" /> Print</Button>
@@ -1388,6 +1457,18 @@ export default function MetalEstimator({ embedded = false, embeddedProjectId = n
           </div>
         </div>
       </div>
+
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="metal"
+        title="Metal"
+        buildTemplateData={buildMetalTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
     </div>
   );
 }
