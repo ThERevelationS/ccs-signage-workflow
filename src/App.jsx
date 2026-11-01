@@ -85,6 +85,7 @@ const NewUserSetup = lazyPage(() => import('./pages/NewUserSetup'));
 const PermittingDocs = lazyPage(() => import('./pages/PermittingDocs'));
 const WorkOrderTraveler = lazyPage(() => import('./pages/WorkOrderTraveler'));
 const ProductionSchedule = lazyPage(() => import('./pages/ProductionSchedule'));
+const InstallRouteMap = lazyPage(() => import('./pages/InstallRouteMap'));
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -214,6 +215,11 @@ const AuthenticatedApp = () => {
       <Route path="/ProductionSchedule" element={
         <LayoutWrapper currentPageName="ProductionSchedule">
           <ProductionSchedule />
+        </LayoutWrapper>
+      } />
+      <Route path="/InstallRouteMap" element={
+        <LayoutWrapper currentPageName="InstallRouteMap">
+          <InstallRouteMap />
         </LayoutWrapper>
       } />
       {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (

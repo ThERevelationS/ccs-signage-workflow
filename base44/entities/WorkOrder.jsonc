@@ -591,6 +591,10 @@
       "type": "string",
       "format": "date"
     },
+    "install_route_order": {
+      "type": "number",
+      "description": "Per-day install route stop ordering managed by the InstallRouteMap page."
+    },
     "permit_submitted_date": {
       "type": "string",
       "format": "date"

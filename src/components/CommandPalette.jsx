@@ -28,6 +28,7 @@ const PAGE_LABEL_OVERRIDES = {
   QuickPrice: "Quick Price", SalesHome: "Sales Home", EstimatorQueues: "Estimator Queues",
   EstimatorProducts: "Products", EstimatorParts: "Parts", MasterInventory: "Master Inventory",
   QuoteSettings: "Quote Settings", WorkOrderTraveler: "WO Traveler", ProductionSchedule: "Production Schedule",
+  InstallRouteMap: "Install Route Map",
   VinylEstimator: "Vinyl Estimator", ChannelLetterEstimator: "Channel Letter Estimator",
   CNCEstimator: "CNC Estimator", LaserEstimator: "Laser Estimator", MetalEstimator: "Metal Estimator",
   PaintingEstimator: "Painting Estimator", FoundationEstimator: "Foundation Estimator",
@@ -46,7 +47,7 @@ const EXTRA_PAGE_NAMES = [
   "FleetOverview", "FleetSearch", "FleetNotifications", "FleetTracking", "FleetEquipment",
   "FleetEquipmentDetail", "FleetMaintenance", "FleetInspections", "FleetWorkOrders", "FleetParts",
   "FleetFluids", "FleetFuel", "FleetWarranties", "FleetReservations",
-  "WorkOrderTraveler", "ProductionSchedule",
+  "WorkOrderTraveler", "ProductionSchedule", "InstallRouteMap",
   "ProductQueues", "JobWorkspace", "WalkIn", "OpsReports", "CrmEvents", "Imports",
   "Reconciliation", "CustomerStatements", "PricingAdmin", "CommsFollowups", "Customer360", "CbMigration",
 ];

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { buildWorkOrderSegments, stageColors, stageNames } from "@/components/workflow/workOrderTimelineSegments";
-import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2, MapPin, Search } from "lucide-react";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
 
 const clean = (v) => String(v ?? "").trim();
@@ -160,6 +160,8 @@ export default function ProductionSchedule() {
         <div className="flex items-center gap-2 print:hidden">
           <button type="button" onClick={() => setWeekStart(new Date(weekStart.getTime() - 7 * DAY_MS))}
             className="rounded-lg border border-slate-300 p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"><ChevronLeft className="h-4 w-4" /></button>
+          <button type="button" onClick={() => navigate(createPageUrl("InstallRouteMap"))}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-violet-300 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300"><MapPin className="h-3.5 w-3.5" />Route map</button>
           <button type="button" onClick={() => setWeekStart(startOfWeek(new Date()))}
             className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">This week</button>
           <button type="button" onClick={() => setWeekStart(new Date(weekStart.getTime() + 7 * DAY_MS))}
