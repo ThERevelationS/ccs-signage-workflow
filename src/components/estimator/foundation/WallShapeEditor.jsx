@@ -66,7 +66,7 @@ export default function WallShapeEditor({ shape, onChange }) {
           />
         </label>
         <Button variant="outline" size="sm" onClick={setRectangle}>
-          <Square className="w-4 h-4" /> Use rectangle
+          <Square className="w-4 h-4" aria-hidden="true" /> Use rectangle
         </Button>
         <Button
           variant="outline"
@@ -82,7 +82,7 @@ export default function WallShapeEditor({ shape, onChange }) {
           disabled={!points.length}
           onClick={() => onChange(makeShape(points.slice(0, -1), false))}
         >
-          <Undo2 className="w-4 h-4" /> Undo
+          <Undo2 className="w-4 h-4" aria-hidden="true" /> Undo
         </Button>
         <Button
           variant="ghost"
@@ -93,7 +93,7 @@ export default function WallShapeEditor({ shape, onChange }) {
             onChange(makeShape([], false));
           }}
         >
-          <Trash2 className="w-4 h-4 text-red-500" /> Clear
+          <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" /> Clear
         </Button>
       </div>
 
