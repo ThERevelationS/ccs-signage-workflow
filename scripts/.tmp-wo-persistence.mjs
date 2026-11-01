@@ -41609,9 +41609,7 @@ function readArgs(sortOrOptions, limit, skip) {
       paged: true,
       sort: sortOrOptions.sort,
       limit: sortOrOptions.limit,
-      skip: sortOrOptions.skip ?? sortOrOptions.offset,
-      cursor: sortOrOptions.cursor,
-      fields: sortOrOptions.fields
+      skip: sortOrOptions.skip ?? sortOrOptions.offset
     };
   }
   return { paged: false, sort: sortOrOptions, limit, skip };
@@ -41660,7 +41658,7 @@ async function flushBatch() {
   }
   individual.forEach((e) => singleRead(e.entity, e.args).then(e.resolve, e.reject));
 }
-var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pageOf, pagedRead, pendingBatch, flushScheduled, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
+var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pendingBatch, flushScheduled, BATCH_WINDOW_MS, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
 var init_staffEntities = __esm({
   "src/components/staff/staffEntities.js"() {
     init_define_import_meta_env();
@@ -41719,20 +41717,9 @@ var init_staffEntities = __esm({
       return Array.isArray(rows) ? rows : [];
     };
     page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
-    pageOf = (response) => {
-      const b = bodyOf(response);
-      const rows = Array.isArray(b.items) ? b.items : [];
-      return { items: rows, has_more: b.truncated === true || typeof b.next_cursor === "string", next_cursor: b.next_cursor ?? null };
-    };
-    pagedRead = (entity, args, query) => invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, cursor: args.cursor, fields: args.fields }).then(
-      pageOf,
-      (err) => {
-        if (isForbidden(err)) markDenied(entity);
-        throw err;
-      }
-    );
     pendingBatch = /* @__PURE__ */ new Map();
     flushScheduled = false;
+    BATCH_WINDOW_MS = 30;
     singleRead = (entity, args) => invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
       if (isForbidden(err)) markDenied(entity);
       throw err;
@@ -41750,7 +41737,7 @@ var init_staffEntities = __esm({
       pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
       if (!flushScheduled) {
         flushScheduled = true;
-        queueMicrotask(flushBatch);
+        setTimeout(flushBatch, BATCH_WINDOW_MS);
       }
       return promise;
     };
@@ -41761,10 +41748,9 @@ var init_staffEntities = __esm({
         const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
         const cached = cachedRead(key);
         if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-        if (args.paged) return pagedRead(entity, args, query);
         return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
           cacheRead(key, rows);
-          return rows;
+          return args.paged ? page(rows) : rows;
         });
       },
       list: (entity, sortOrOptions, limit, skip) => {
@@ -41773,10 +41759,9 @@ var init_staffEntities = __esm({
         const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
         const cached = cachedRead(key);
         if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-        if (args.paged) return pagedRead(entity, args);
         return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
           cacheRead(key, rows);
-          return rows;
+          return args.paged ? page(rows) : rows;
         });
       },
       get: (entity, id) => {
@@ -41879,13 +41864,13 @@ var init_staffEntities = __esm({
 function isRetryableFunction(fnName, payload) {
   if (fnName === "verifySession") return true;
   if (fnName === "permittingScanStatus") return true;
-  if (fnName === "staffDataRead" || fnName === "fleetDataRead") return true;
+  if (fnName === "staffDataRead" || fnName === "fleetDataRead" || fnName === "boardFeed") return true;
   if (fnName === "timeClockAction") return ["status", "status_lite"].includes(payload?.action);
   if (fnName === "smartsheetSyncAction") return payload?.action === "conflict_count";
   return false;
 }
 function isReadInvocation(fnName, payload) {
-  if (["staffDataRead", "fleetDataRead", "verifySession", "permittingScanStatus"].includes(fnName)) return true;
+  if (["staffDataRead", "fleetDataRead", "boardFeed", "verifySession", "permittingScanStatus"].includes(fnName)) return true;
   if (fnName === "timeClockAction") return ["status", "status_lite"].includes(payload?.action);
   if (fnName === "smartsheetSyncAction") return payload?.action === "conflict_count";
   return false;
@@ -42345,6 +42330,14 @@ async function loadAuthorizedUserDirectory({ sessionToken } = {}) {
   }
 }
 
+// src/components/comms/sendStaffEmail.js
+init_define_import_meta_env();
+init_base44Client();
+init_EmailGate();
+function emailBodyToPlainText(html) {
+  return String(html || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>\s*<p[^>]*>/gi, "\n\n").replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n").replace(/<li[^>]*>/gi, "\n- ").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 // src/components/workflow/NotificationService.jsx
 init_app_params();
 var EmailNotificationSettings = base44.entities.EmailNotificationSettings;
@@ -42525,13 +42518,24 @@ var triggerNotification = async (triggerType, workOrder, extraData = {}) => {
       const templateSubject = replaceVariables(rule.email_subject, workOrder, extraData);
       const templateBody = replaceVariables(rule.email_body, workOrder, extraData);
       const { subject, body } = await generateAIEmail(templateSubject, templateBody, workOrder, extraData);
+      const ruleSessionToken = getSessionToken();
       for (const email of recipients) {
         try {
-          await base44.functions.invoke("sendGmail", {
-            to: email,
-            subject,
-            body
-          });
+          if (ruleSessionToken) {
+            await base44.functions.invoke("sendStaffEmail", {
+              session_token: ruleSessionToken,
+              to: email,
+              subject,
+              body: emailBodyToPlainText(body),
+              kind: "notification_rule"
+            });
+          } else {
+            await base44.functions.invoke("sendGmail", {
+              to: email,
+              subject,
+              body
+            });
+          }
           console.log(`Notification sent to ${email} for trigger: ${triggerType}`);
         } catch (emailError) {
           console.error(`Failed to send email to ${email}:`, emailError);
@@ -43010,6 +43014,7 @@ function sameValue(a, b) {
       return Math.abs(Number(a) - Number(b)) <= 1e-6;
     }
   }
+  if (typeof a === "string" && typeof b === "string") return a.trim() === b.trim();
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 function sanitizeWorkOrderFormPatch(formData = {}) {
@@ -43028,11 +43033,30 @@ async function createWorkOrderWithRecovery({ data, label = "Work Order", entity 
   if (!title || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
     throw new Error(`${label} could not initialize its retry-safe create.`);
   }
+  const SAME_TITLE_PAGE_SIZE = 500;
+  const SAME_TITLE_VERIFY_MAX_ROWS = 5e3;
   const readMatches = async () => {
-    const rows = await entity.filter({ title }, "-created_date", 500);
-    if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a Work Order list.`);
-    if (rows.length >= 500) throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
-    return rows.filter((row) => workOrderPatchMatches(row, payload));
+    if (typeof entity.count === "function") {
+      const total = await entity.count({ title }).catch(() => null);
+      if (typeof total === "number" && total > SAME_TITLE_VERIFY_MAX_ROWS) {
+        throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
+      }
+    }
+    const matches = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (let skip = 0; skip < SAME_TITLE_VERIFY_MAX_ROWS; skip += SAME_TITLE_PAGE_SIZE) {
+      const page2 = await entity.filter({ title }, "-created_date", SAME_TITLE_PAGE_SIZE, skip);
+      if (!Array.isArray(page2)) throw new Error(`${label} lookup did not return a Work Order list.`);
+      for (let index = 0; index < page2.length; index += 1) {
+        const row = page2[index];
+        const key = String(row?.id || "").trim() || `__row_${skip + index}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (workOrderPatchMatches(row, payload)) matches.push(row);
+      }
+      if (page2.length < SAME_TITLE_PAGE_SIZE) return matches;
+    }
+    throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
   };
   const before = await readMatches();
   const beforeIds = new Set(before.map((row) => row.id));
