@@ -31,7 +31,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={addPole} disabled={options.length === 0}>
-          <Plus className="w-4 h-4" /> Pole
+          <Plus className="w-4 h-4" aria-hidden="true" /> Pole
         </Button>
       </div>
 
@@ -113,7 +113,7 @@ export default function FoundationPolesPanel({ poles = [], options = [], items =
                 <span>Paint {money(pole.pole_painting_cost)}</span>
                 <span className="font-bold text-gray-900 text-sm">{money(pole.total_cost)}</span>
                 <Button variant="ghost" size="icon" onClick={() => removePole(index)}>
-                  <Trash2 className="w-4 h-4 text-red-500" />
+                  <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                 </Button>
               </div>
             </div>
