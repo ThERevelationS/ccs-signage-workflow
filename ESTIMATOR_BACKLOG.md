@@ -342,31 +342,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 13. Search, Deep-Links & Saved Views (25)
 
-301. **[F]** Global estimate search across notes/line-items, not just project_name/client
-302. **[F]** `?estimate=<id>` deep-link on all estimator pages
+301. **[F][DONE]** Global estimate search across notes/line-items, not just project_name/client — shared `estimateMatchesSearch` (src/components/estimator/deepLinks.js) now drives the filter on EstimatorQueues + Estimator: header fields + notes/estimate_notes + line_items[].{title,name,product_name,client_product_name,builder_name,description,module_key,product_category}; Estimating searches the WO notes/description/estimate-number fields it actually has (no line_items on WorkOrders)
+302. **[F][DONE]** `?estimate=<id>` deep-link on all estimator pages — `useEstimateDeepLink()` (deepLinks.js) on EstimatorQueues + Estimator + Estimating forwards to `/EstimateDetail?id=<id>` (same pattern as `/Opportunities?open=`)
 303. **[B][DONE]** Verified — `scope`/`type`/`category`/`status`/`q` all init from `searchParams` and write back via `writeParam`/`setSearchParams` (EstimatorParts ~lines 136-248); no `sort` control exists to parametrize
 304. **[F][DONE]** `?customer=<id>` pre-fill on NewAllInOneEstimate
 305. **[F][DONE]** `?status=` pre-select on NewEstimateDialog (draft vs sent on create)
-306. **[F]** Saved-search views on EstimatorQueues (name a filter combo)
+306. **[F][DONE]** Saved-search views on EstimatorQueues (name a filter combo) — `SavedViews` (localStorage `views.estimator_queues`) already shipped; verified + extended the saved combo to include the `mine` toggle alongside q/status/sort
 307. **[H][DONE]** Verified — `VinylInventoryTab` writes `q`/`category`/`use_case` via `writeParam` on every change (~lines 68-72, 243+) — parity already in place
 308. **[F][DONE]** `?q=` on EstimatorProducts
-309. **[F]** Search in `AddProductGrid` — already has? verify `?q=` init
+309. **[F][DONE]** Search in `AddProductGrid` — verified: grid search input seeds from `?q=` (AddProductGrid ~line 110, URLSearchParams read at state init)
 310. **[B][DONE]** `?q=` write-back added — the page's only param filter is `?q=` (status/sort aren't UI features here); a replaceState effect now keeps `?q=` in sync on every change
-311. **[F]** `?open=<product_id>` deep-link on EstimateProductsList
+311. **[F][DONE]** `?open=<product_id>` deep-link on EstimateProductsList — matches project_id/id/line_id/builder_product_id/product_id, unhides the row (clears search+module filter if needed), scrollIntoView + ring flash (EstimateProductsList ~line 72)
 312. **[F]** `?version=<n>` deep-link on EstimateDetail (open specific revision)
-313. **[F]** Recent-searches dropdown on list pages
+313. **[F][DONE]** Recent-searches dropdown on list pages — last-5 per user in localStorage `ccs.<surface>.<email>.recent_searches` via readRecentSearches/pushRecentSearch (deepLinks.js); dropdown under the search input on EstimatorQueues + Estimator + Estimating (commits on Enter/blur, applies on click)
 314. **[H][DONE]** Verified — `FoundationCatalog` writes both `q` and `type` via `writeParam` on change (~lines 97, 122)
-315. **[F]** `?module=<key>` pre-select on EstimatorTools
-316. **[F]** `?tab=<name>` deep-link on EstimatorSettings + module settings
-317. **[F]** `?filter=<preset>` on EstimatorCustomers (ar_aging, recent, inactive)
+315. **[F][DONE]** `?module=<key>` pre-select on EstimatorTools — page is a link hub with no chooser, so a registry-matched `?module=` forwards to `/<ModulePage>?module=<key>` (replace nav); unknown keys no-op
+316. **[F][DONE]** `?tab=<name>` deep-link on EstimatorSettings + module settings — hub page has no tab UI; `?tab=quote_approval` scrolls + flashes the Quote Approval card (the only tab-addressable section); nothing writes back since there is no tab control. Per-module settings pages own their own tab params
+317. **[F][DONE]** `?filter=<preset>` on EstimatorCustomers (ar_aging, recent, inactive) — preset chips + SavedViews capture; `ar_aging` honestly maps to `credit_hold === true` (Invoice balances are backend-only RLS), `recent` = activity ≤30d, `inactive` = no activity ≥90d via last_contacted_at/updated_date (deepLinks.js)
 318. **[B][DONE]** Root cause fixed — `writeParams` already strips empty values for all keys; the actual bug was status-chip links rebuilding the URL and dropping `q`/`sort`. Status links now preserve both params on navigation
-319. **[F]** `?q=`/`?status=`/`?sort=` write-back on `MasterInventory`
+319. **[F][DONE]** `?q=`/`?status=`/`?sort=` write-back on `MasterInventory` — `?q=` and `?src=` already round-tripped; added `?status=active|inactive` (maps to `is_active`; rows lacking the column count as active) and `?sort=name_asc|name_desc|newest|oldest` with matching selects, all via the existing writeParam replaceState helper
 320. **[F][DONE]** Verified — `?wo=<id>` opens the work order and scrolls the card into view once loaded (Estimating ~lines 103-114)
-321. **[H]** Documented — `QuickPrice` has no history-search input (history is a plain list) so `?q=` has nothing to seed; `?module=` preset works. A history-search field would be the prerequisite
+321. **[H][DONE]** Documented — `QuickPrice` has no history-search input (history is a plain list) so `?q=` has nothing to seed; `?module=` preset works. A history-search field would be the prerequisite — prerequisite shipped: small filter input over the RECENT QUICK PRICES list (project/client/module), `?q=` seeds it and replaceState writes it back
 322. **[F][DONE]** Verified — all three params read at init and written back on change in `VinylInventoryTab`
-323. **[F]** `?line=<id>` scroll-to-line on EstimateProductsList
+323. **[F][DONE]** `?line=<id>` scroll-to-line on EstimateProductsList — matches estimateLineSelectionKey/line_id/id, clears hiding filters, scrollIntoView + blue ring flash; row wrapper carries `data-line-id` (EstimateProductsList ~line 72)
 324. **[B][DONE]** Verified — status chips call `setParam("status", s.key)` which writes the param on click (Estimator.jsx ~line 171)
-325. **[F]** Deep-link into specific aio section (`?section=<key>`)
+325. **[F][DONE]** Deep-link into specific aio section (`?section=<key>`) — verified already shipped: EstimateDetail reads `?section=details|products|pricing` (and `?step=1|2|3`) at ~line 137
 
 ## 14. Notifications & Alerts (25)
 
