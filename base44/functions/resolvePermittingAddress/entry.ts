@@ -515,7 +515,7 @@ Deno.serve(async (req) => {
   let reporter = silentScanReporter;
   let diagnostic = false;
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 4 }), body = await req.json();
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { maxRetries: 2 }), body = await req.json();
     diagnostic = body?.action === "geocode_diagnostic";
     const actor = diagnostic ? await base44.auth.me().catch(() => null) : await cachedSession(base44, body?.session_token);
     if (diagnostic && actor?.role !== "admin") return addressResponse({ success: false, error: "Admin access required." }, { status: 403 });
@@ -663,7 +663,7 @@ Deno.serve(async (req) => {
     return addressResponse({ success: true, scan_run: await reporter.finish(hasServiceIssue ? "completed_with_errors" : "complete", hasServiceIssue ? geocodingService.message : void 0), geocode, geocoding_service: geocodingService, location_resolution: resolution, automatic_scan: automatic, address_archives: addressArchives, research_deferred: true, suggested_locality: matched ? { id: matched.id, name: matched.name, state: matched.state, zip: matched.zip, jurisdiction_profile_id: matched.jurisdiction_profile_id } : null, authority_review: authority, apply_allowed: applyAllowed, not_matched: !matched, ai_locality_name: resolution.target?.name || "", ai_state: resolution.state || "", ai_county: resolution.target?.county || "", match_confidence: matched ? "high" : "unresolved", match_method: matched ? "government_boundary_intersection" : "none", match_reason: reason, notes: !applyAllowed ? "An administrator must confirm the location and sign/zoning office setup before this address is used." : "" });
   } catch (error) {
     const errorStatus = Number(error?.status || error?.response?.status || 0);
-    if (errorStatus === 429 || /rate limit|too many requests/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3, error_detail: String(error?.message || error).slice(0, 300) }, { status: 429, headers: { "Retry-After": "3" } });
+    if (errorStatus === 429 || /rate limit|too many requests|traffic volume/i.test(String(error?.message || ""))) return addressResponse({ success: false, error: "Address lookup is busy. Try again shortly.", retry_after_ms: 3e3, error_detail: String(error?.message || error).slice(0, 300) }, { status: 429, headers: { "Retry-After": "3" } });
     const status = [400, 401, 409, 503].includes(errorStatus) ? errorStatus : 500;
     return addressResponse({ success: false, scan_run: await reporter.finish("failed", "Address lookup could not finish safely."), error: status === 500 ? "Address lookup could not finish safely. Please try again." : error.message, ...diagnostic || status !== 500 ? { error_detail: String(error?.message || error).slice(0, 300) } : {} }, { status });
   }
