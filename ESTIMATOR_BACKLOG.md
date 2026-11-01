@@ -333,7 +333,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 292. **[F][DONE]** Covered — `estimate_funnel.avg_part_cost_ratio` surfaced on the dashboard
 293. **[F][DONE]** Covered — `estimate_funnel.markup_usage` tracks tier application counts
 294. **[F][DONE]** Covered — `stale_sent_estimates` in the attention feed (>7d unresponded) + `aging_buckets` on the dashboard
-295. **[H]** Same as #174 — the feed uses bounded 500-row filtered reads (most-recent by activity sort), which is a defensible attention-feed scope; true cursor pagination does not exist. Documented honestly rather than shipping a fake fix
+295. **[H][DONE]** Attention-feed read bounds — fixed with #174: feed inputs now page via loadAllEntityRows past the old 500-row cap, with matched_totals + truncated indicators on the payload
 296. **[F]** BLOCKED — bounce tracking needs mail-provider webhook feedback; `sendEmail` is disabled and Gmail-send responses carry no bounce state. Flagged until delivery telemetry exists
 297. **[F][DONE]** Covered — `request_conversion` + `estimate_funnel` conversion fields track estimate→WO flow
 298. **[F]** PARTIAL — `PortalMessage` + link `open_count` record activity but no per-estimate report aggregates them. Flagged for a dedicated pass
