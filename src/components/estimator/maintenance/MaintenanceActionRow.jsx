@@ -41,7 +41,7 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
           }}
           className="text-gray-400 hover:text-red-600 p-1"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -73,7 +73,7 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
             }}
             className="text-gray-400 hover:text-red-600"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       ))}
@@ -83,7 +83,7 @@ export default function MaintenanceActionRow({ action, materials, onChange, onRe
           onClick={() => set({ materials: [...(action.materials || []), { quantity: 1 }] })}
           className="flex items-center gap-1 text-gray-500 hover:text-red-600"
         >
-          <Plus className="w-3.5 h-3.5" /> Material
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Material
         </button>
         <span className="text-gray-500">
           {Number(action.labor_hours || 0).toFixed(2)} hr · mat {money(action.materials_cost)} ·{" "}
