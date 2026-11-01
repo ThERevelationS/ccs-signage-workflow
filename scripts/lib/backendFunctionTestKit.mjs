@@ -62,7 +62,9 @@ export function makeEntity(seedRows = []) {
     });
   };
   const entity = {
-    rows: store.rows,
+    // Live getter — updateMany/deleteMany replace store.rows, so a captured
+    // array reference would silently go stale mid-test.
+    get rows() { return store.rows; },
     filter: async (q, sort, limit, skip) => {
       const rows = sortRows(store.rows.filter((r) => matches(r, q)), sort);
       if (typeof limit === 'number' || typeof skip === 'number') {
