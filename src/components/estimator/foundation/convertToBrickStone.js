@@ -1,9 +1,12 @@
 import { staffEntities } from "@/components/staff/staffEntities";
+import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
 
-
-// Convert a Foundation project into a Brick & Stone draft. Carries the shared
-// identity fields; geometry/materials stay at module defaults for recalc.
-export async function convertFoundationToBrickStone({ project }) {
+// Convert a Foundation project into a Brick & Stone draft (#77). Carries the
+// shared identity fields; geometry/materials stay at module defaults for
+// recalc, and the Foundation source is never modified. The optional
+// attemptRef holds a signature-stable creation_request_key so a double-click
+// or a lost response reuses the same draft instead of creating duplicates.
+export async function convertFoundationToBrickStone({ project, attemptRef } = {}) {
   if (!project?.id) throw new Error("Save the Foundation project before converting.");
   const sourceName = String(project.project_name || "Foundation").trim();
   const payload = {
@@ -15,5 +18,18 @@ export async function convertFoundationToBrickStone({ project }) {
     status: "draft",
     notes: `Converted from Foundation project "${sourceName}" (${project.id}). Re-enter masonry dimensions to calculate.`,
   };
-  return staffEntities.BrickStoneProject.create(payload);
+  const signature = JSON.stringify(payload);
+  if (attemptRef && attemptRef.current?.signature !== signature) {
+    attemptRef.current = { signature, key: newCreationRequestKey("foundation_to_brick_stone") };
+  }
+  const key = attemptRef?.current?.key || newCreationRequestKey("foundation_to_brick_stone");
+  const created = await ensureIdempotentEntityCreate({
+    entity: staffEntities.BrickStoneProject,
+    keyField: "creation_request_key",
+    key,
+    data: payload,
+    label: "Brick & Stone draft",
+  });
+  if (!created?.id) throw new Error("Brick & Stone draft could not be verified.");
+  return created;
 }
