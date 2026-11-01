@@ -63,7 +63,7 @@ Give concise wind-load and sizing recommendations: assumed wind speed and exposu
     <div className="bg-violet-50 border border-violet-200 rounded-sm p-3 mb-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <Cpu className="w-4 h-4 text-violet-600 mt-0.5" />
+          <Cpu className="w-4 h-4 text-violet-600 mt-0.5" aria-hidden="true" />
           <div>
             <h3 className="text-[13px] font-bold text-violet-900">AI Engineering Assistant</h3>
             <p className="text-[11px] text-violet-700">
@@ -78,12 +78,12 @@ Give concise wind-load and sizing recommendations: assumed wind speed and exposu
           disabled={running}
           className="h-[30px] px-3 flex items-center gap-1.5 rounded-sm bg-violet-600 text-white text-[12px] font-semibold hover:bg-violet-700 disabled:opacity-60 flex-shrink-0"
         >
-          {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Cpu className="w-3.5 h-3.5" />}
+          {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Cpu className="w-3.5 h-3.5" aria-hidden="true" />}
           {running ? "Calculating…" : "Run AI Engineering Calculator"}
         </button>
       </div>
 
-      {error && <div className="mt-2 text-[11px] text-red-600">{error}</div>}
+      {error && <div role="alert" className="mt-2 text-[11px] text-red-600">{error}</div>}
 
       {recommendation && (
         <div className="mt-3 bg-white border border-violet-200 rounded-sm p-3 text-[12px] text-gray-700 prose prose-sm max-w-none">
