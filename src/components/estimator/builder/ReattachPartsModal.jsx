@@ -59,7 +59,7 @@ export default function ReattachPartsModal({
         <div className="bg-[#3f3f3f] px-5 py-4 text-white border-b-4 border-lime-300">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[17px] text-white">
-              <AlertTriangle className="w-5 h-5 text-amber-300" />
+              <AlertTriangle className="w-5 h-5 text-amber-300" aria-hidden="true" />
               Detached Parts Found
             </DialogTitle>
           </DialogHeader>
@@ -70,7 +70,7 @@ export default function ReattachPartsModal({
 
         <div className="px-5 py-4 overflow-y-auto max-h-[62vh] bg-gray-50">
           <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2.5 mb-3 flex items-start gap-2">
-            <LockKeyhole className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" />
+            <LockKeyhole className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" aria-hidden="true" />
             <div className="text-[11px] leading-5 text-amber-900">
               <strong>Frozen pricing will not change here.</strong> Reattaching only reconnects the Builder to the selected Master Inventory Part. After the Builder recalculates, you can separately choose <strong>Update Price</strong> if you want to accept current inventory pricing.
             </div>
@@ -119,7 +119,7 @@ export default function ReattachPartsModal({
                           <div className="text-[11px] text-red-800 truncate">{part.inventory_item_name || "Original inventory record removed"}</div>
                         </div>
                         <div className="hidden sm:flex justify-center">
-                          {enabled ? <Link2 className="w-4 h-4 text-lime-600" /> : <Unlink className="w-4 h-4 text-gray-400" />}
+                          {enabled ? <Link2 className="w-4 h-4 text-lime-600" aria-hidden="true" /> : <Unlink className="w-4 h-4 text-gray-400" aria-hidden="true" />}
                         </div>
                         <div className={`rounded border px-2 py-1.5 min-w-0 ${enabled ? "bg-lime-50 border-lime-200" : "bg-gray-50 border-gray-200"}`}>
                           <div className={`text-[9px] font-bold tracking-wide uppercase ${enabled ? "text-lime-700" : "text-gray-500"}`}>
@@ -151,7 +151,7 @@ export default function ReattachPartsModal({
           </div>
 
           {error && (
-            <div className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+            <div role="alert" className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
               {error}
             </div>
           )}
@@ -172,7 +172,7 @@ export default function ReattachPartsModal({
             onClick={handleReattach}
             className="h-[34px] px-4 rounded border border-lime-400 bg-lime-200 text-[12px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-40 inline-flex items-center justify-center gap-2"
           >
-            <RefreshCw className={`w-4 h-4 ${saving ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${saving ? "animate-spin" : ""}`} aria-hidden="true" />
             {saving ? "Reattaching…" : `Reattach Selected (${selected.size}) & Open Builder`}
           </button>
         </div>
