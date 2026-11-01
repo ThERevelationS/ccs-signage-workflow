@@ -133,8 +133,8 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ses
  * `updated_date` (plus per-field baselines) so a concurrent save can never
  * be silently overwritten — a conflict aborts with "changed in another
  * session" before anything is written. The revert itself is recorded as a
- * new completed lifecycle revision (manual_revision type; the schema enum
- * is closed so the reason/notes carry the revert identity), preserving the
+ * new completed lifecycle revision (revert type; reason/notes also carry
+ * the target identity), preserving the
  * forward-only audit trail. The fresh estimate row is re-read inside the
  * helper — the caller's loaded row is never trusted.
  */
@@ -185,7 +185,7 @@ export async function revertEstimateToRevision({
     estimateBefore: estimate,
     estimateAfter: saved,
     reason: `Reverted estimate to revision #${revision.revision_number || "?"} (${revision.reason || "no reason recorded"})`,
-    revisionType: "manual_revision",
+    revisionType: "revert",
     quoteTotalBefore: estimate.quote_total,
     quoteTotalAfter: snapshot.quote_total,
     internalCostBefore: estimate.total_cost,

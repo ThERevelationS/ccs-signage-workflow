@@ -294,6 +294,19 @@ export default function AttentionFeed() {
       })),
     },
     {
+      key: "estimate_requests",
+      label: "assigned to me",
+      count: (feed.estimate_requests || []).length,
+      icon: ClipboardList,
+      tone: "text-blue-700 bg-blue-50 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+      items: (feed.estimate_requests || []).slice(0, 6).map((r) => ({
+        id: r.id,
+        primary: `${r.request_number || "Request"}${r.opportunity_title ? ` · ${r.opportunity_title}` : ""}`,
+        secondary: `${r.overdue ? `OVERDUE ${r.due_date} · ` : ""}${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : ""}`,
+        href: r.opportunity_id ? `/Opportunities?open=${r.opportunity_id}` : "/Opportunities",
+      })),
+    },
+    {
       key: "staleQuotes",
       label: "stale sent quotes",
       count: (feed.stale_sent_estimates || []).length,
@@ -518,7 +531,7 @@ export default function AttentionFeed() {
                 </button>
               )}
               <p className="mb-1 border-t border-slate-100 pt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800">Sections</p>
-              {[...["portal","invoices","pos","cos","follow","sent","requests","unassigned","stock","jobs","permits","fees","recalc"], ...COMPUTED_SECTION_KEYS].map((key) => {
+              {[...["portal","invoices","pos","cos","follow","sent","requests","estimate_requests","unassigned","stock","jobs","permits","fees","recalc"], ...COMPUTED_SECTION_KEYS].map((key) => {
                 const cat = categories.find((c) => c.key === key);
                 const label = cat?.label || key;
                 const isSnoozed = snoozed[key] && snoozed[key] > Date.now();

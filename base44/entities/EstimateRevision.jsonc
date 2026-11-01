@@ -24,7 +24,8 @@
         "manual_revision",
         "status_transition",
         "cancel",
-        "conversion"
+        "conversion",
+        "revert"
       ],
       "default": "manual_revision"
     },
