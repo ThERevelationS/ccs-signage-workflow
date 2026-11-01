@@ -98,15 +98,16 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
           className="flex-1 min-w-0 flex items-center gap-2 text-left"
         >
-        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
-        <Box className="w-3.5 h-3.5 text-gray-400" />
+        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" />}
+        <Box className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
         <span className="text-[9px] font-bold tracking-wider text-gray-400 w-[52px] flex-shrink-0">PART {String(index + 1).padStart(2, "0")}</span>
         <span className="text-[12px] font-semibold text-gray-900 truncate flex-1">{part.client_label || part.part_name || "Part"}</span>
         <span className="hidden md:inline text-[10px] text-gray-500 px-2 py-0.5 rounded bg-gray-100">{typeLabel(part)}</span>
         <span className={`hidden sm:inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border ${meta.className}`}>
-          <StatusIcon className="w-3 h-3" /> {meta.label}
+          <StatusIcon className="w-3 h-3" aria-hidden="true" /> {meta.label}
         </span>
           <div className="text-right w-[92px] flex-shrink-0">
             <div className="text-[11px] font-bold text-gray-800">{money(frozen)}</div>
@@ -145,11 +146,12 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                   }}
                   className="h-[28px] px-2.5 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1 disabled:opacity-50"
                   title="Copy Part to 30-day Clipboard"
-                ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
+                  aria-label={`Copy ${part.part_name || "Part"} to 30-day clipboard`}
+                ><ClipboardCopy className="w-3 h-3" aria-hidden="true" /> {copied ? "Copied" : "Copy"}</button>
               )}
-              <button type="button" onClick={() => setSaveLibraryOpen(true)} className="h-[28px] px-2.5 rounded border border-violet-200 bg-white text-[11px] font-semibold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1" title="Save Part permanently to Part Library"><BookmarkPlus className="w-3 h-3" /> Save</button>
+              <button type="button" onClick={() => setSaveLibraryOpen(true)} className="h-[28px] px-2.5 rounded border border-violet-200 bg-white text-[11px] font-semibold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1" title="Save Part permanently to Part Library" aria-label={`Save ${part.part_name || "Part"} permanently to Part Library`}><BookmarkPlus className="w-3 h-3" aria-hidden="true" /> Save</button>
               {!readOnly && isDirectlyEditable && (
-                <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Switch Part</button>
+                <button type="button" onClick={() => setSwitchOpen(true)} className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1"><RefreshCw className="w-3 h-3" aria-hidden="true" /> Switch Part</button>
               )}
               {!readOnly && (
                 <button
@@ -161,7 +163,7 @@ function PartRow({ part, index, selectionMode = false, selected = false, onSelec
                 </button>
               )}
               {!readOnly && isDirectlyEditable && (
-                <button type="button" onClick={async () => { if (!window.confirm(`Remove “${part.part_name || "Part"}” from this Product?`)) return; await removeManualProductPart(part.id, { builderProductId: part.builder_product_id, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part"><Trash2 className="w-3 h-3" /></button>
+                <button type="button" onClick={async () => { if (!window.confirm(`Remove "${part.part_name || "Part"}" from this Product?`)) return; await removeManualProductPart(part.id, { builderProductId: part.builder_product_id, expectedEstimateUpdatedAt, expectedPartUpdatedAt: part.updated_date || "" }); await onChanged?.(); }} className="h-[28px] px-2.5 rounded border border-red-200 bg-white text-[11px] font-semibold text-red-600 hover:bg-red-50" title="Remove Part" aria-label={`Remove ${part.part_name || "Part"} from this Product`}><Trash2 className="w-3 h-3" aria-hidden="true" /></button>
               )}
             </div>
           </div>
@@ -334,7 +336,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
 
   const dissolve = async () => {
     if (structuralActionRef.current) return;
-    if (!window.confirm(`Dissolve “${group.group_name || "Part Group"}”? The Parts will stay in this Product and keep all frozen pricing.`)) return;
+    if (!window.confirm(`Dissolve "${group.group_name || "Part Group"}"? The Parts will stay in this Product and keep all frozen pricing.`)) return;
     structuralActionRef.current = true;
     try {
       await dissolvePartGroup({
@@ -356,9 +358,9 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
   return (
     <div className="border border-gray-300 rounded-sm overflow-hidden bg-gray-50">
       <div className="w-full px-3 py-2 flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-left">
-        <button type="button" onClick={toggleOpen} className="flex items-center gap-2 min-w-0 flex-1 text-left">
-        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-600" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-600" />}
-        <Layers3 className="w-4 h-4 text-gray-600" />
+        <button type="button" onClick={toggleOpen} aria-expanded={open} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+        {open ? <ChevronDown className="w-3.5 h-3.5 text-gray-600" aria-hidden="true" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-600" aria-hidden="true" />}
+        <Layers3 className="w-4 h-4 text-gray-600" aria-hidden="true" />
           <span className="text-[9px] font-extrabold tracking-widest text-gray-500">PART GROUP</span>
           {renaming ? (
             <input
@@ -366,6 +368,7 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
               value={name}
               onChange={(event) => setName(event.target.value)}
               onClick={(event) => event.stopPropagation()}
+              aria-label="Part Group name"
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
@@ -405,20 +408,22 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                 }}
                 className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 title="Copy Part Group to 30-day Clipboard"
-              ><ClipboardCopy className="w-3 h-3" /> {copied ? "Copied" : "Copy"}</button>
+                aria-label={`Copy ${group.group_name || "Part Group"} to 30-day clipboard`}
+              ><ClipboardCopy className="w-3 h-3" aria-hidden="true" /> {copied ? "Copied" : "Copy"}</button>
             )}
             <button
               type="button"
               onClick={() => setSaveLibraryOpen(true)}
               className="h-[26px] px-2 rounded border border-violet-200 bg-white flex items-center gap-1 text-[10px] font-semibold text-violet-700 hover:bg-violet-50"
               title="Save Part Group permanently to Part Library"
-            ><BookmarkPlus className="w-3 h-3" /> Save</button>
+              aria-label={`Save ${group.group_name || "Part Group"} permanently to Part Library`}
+            ><BookmarkPlus className="w-3 h-3" aria-hidden="true" /> Save</button>
             {!readOnly && <>
               <button
                 type="button"
                 disabled={cloning}
                 onClick={async () => {
-                  if (!window.confirm(`Clone “${group.group_name || "Part Group"}” and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
+                  if (!window.confirm(`Clone "${group.group_name || "Part Group"}" and all ${parts.length} Part${parts.length === 1 ? "" : "s"}?`)) return;
                   if (structuralActionRef.current) return;
                   structuralActionRef.current = true;
                   setCloning(true);
@@ -441,29 +446,33 @@ function PartGroup({ group, parts, globalOffset, selectionMode, selectedIds, onS
                 }}
                 className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                 title="Clone Part Group in this Product"
-              ><CopyPlus className="w-3 h-3" /> {cloning ? "Cloning…" : "Clone"}</button>
+                aria-label={`Clone ${group.group_name || "Part Group"} in this Product`}
+              ><CopyPlus className="w-3 h-3" aria-hidden="true" /> {cloning ? "Cloning…" : "Clone"}</button>
               <button
                 type="button"
                 disabled={!canMove || moveTargets.length === 0}
                 onClick={() => setMoveOpen(true)}
                 className="h-[26px] px-2 rounded border border-gray-300 bg-white flex items-center gap-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
                 title={canMove ? "Move Part Group to another Product" : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
-              ><ArrowRightLeft className="w-3 h-3" /> Move</button>
+                aria-label={canMove ? `Move ${group.group_name || "Part Group"} to another Product` : "Builder-owned Parts cannot move directly. Use Clone or Copy instead."}
+              ><ArrowRightLeft className="w-3 h-3" aria-hidden="true" /> Move</button>
               <button
                 type="button"
                 onClick={() => setRenaming(true)}
                 className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50"
                 title="Rename Part Group"
+                aria-label={`Rename ${group.group_name || "Part Group"}`}
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-3 h-3" aria-hidden="true" />
               </button>
               <button
                 type="button"
                 onClick={dissolve}
                 className="w-[26px] h-[26px] rounded border border-gray-300 bg-white flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50"
                 title="Dissolve Part Group"
+                aria-label={`Dissolve ${group.group_name || "Part Group"}`}
               >
-                <Unlink className="w-3 h-3" />
+                <Unlink className="w-3 h-3" aria-hidden="true" />
               </button>
             </>}
           </div>
@@ -716,7 +725,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
     return <div className="px-4 py-4 text-[11px] text-gray-400">This legacy Product does not have Builder Parts yet.</div>;
   }
   if (loading) {
-    return <div className="px-4 py-4 text-[11px] text-gray-400">Loading Parts…</div>;
+    return <div role="status" className="px-4 py-4 text-[11px] text-gray-400">Loading Parts…</div>;
   }
   if (!parts.length) {
     return (
@@ -725,8 +734,8 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
         <div className="text-[10px] text-gray-400 mt-1">Add a Part from Master Inventory now. Builder-generated BOM Parts will also appear here after the Builder is saved; manually added Parts remain independent add-ons.</div>
         {allowAddParts && !readOnly && (
           <div className="mt-3 flex items-center justify-center gap-2">
-            <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
-            <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
+            <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[30px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
+            <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[30px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
           </div>
         )}
         <MasterPartPickerModal
@@ -772,7 +781,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
           <div className="text-[10px] font-bold tracking-widest text-gray-500 whitespace-nowrap">PRODUCT PARTS · {partQuery ? `${visibleParts.length}/${parts.length}` : parts.length}</div>
           {parts.length > 10 && (
             <div className="relative">
-              <Search className="w-3 h-3 text-gray-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-3 h-3 text-gray-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
               <input
                 value={partSearch}
                 onChange={(event) => setPartSearch(event.target.value)}
@@ -808,7 +817,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               title={detachableSelected.length === 0 ? "Only Builder-linked Parts can be detached" : "Detach the selected Builder-linked Parts for independent override"}
               className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[11px] font-bold text-amber-700 hover:bg-amber-50 disabled:opacity-40 inline-flex items-center gap-1"
             >
-              <Unlink className="w-3.5 h-3.5" /> {bulkDetaching ? "Detaching…" : `Detach Selected (${detachableSelected.length})`}
+              <Unlink className="w-3.5 h-3.5" aria-hidden="true" /> {bulkDetaching ? "Detaching…" : `Detach Selected (${detachableSelected.length})`}
             </button>
             <button
               type="button"
@@ -817,15 +826,15 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               title={removableSelected.length === 0 ? "Only independent (non-Builder) Parts can be removed here" : "Remove the selected independent Parts"}
               className="h-[28px] px-3 rounded border border-red-300 bg-white text-[11px] font-bold text-red-600 hover:bg-red-50 disabled:opacity-40 inline-flex items-center gap-1"
             >
-              <Trash2 className="w-3.5 h-3.5" /> {bulkRemoving ? "Removing…" : `Delete Selected (${removableSelected.length})`}
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> {bulkRemoving ? "Removing…" : `Delete Selected (${removableSelected.length})`}
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
             {allowAddParts && !readOnly && (
               <>
-                <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Part</button>
-                <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" /> Add Saved Part</button>
+                <button type="button" onClick={() => setPartPickerOpen(true)} className="h-[28px] px-3 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" aria-hidden="true" /> Add Part</button>
+                <button type="button" onClick={() => setPartLibraryOpen(true)} className="h-[28px] px-3 rounded border border-violet-200 bg-white text-[11px] font-bold text-violet-700 hover:bg-violet-50 inline-flex items-center gap-1.5"><BookmarkPlus className="w-3.5 h-3.5" aria-hidden="true" /> Add Saved Part</button>
               </>
             )}
             {!readOnly && <button
@@ -833,7 +842,7 @@ export default function BuilderPartsPanel({ builderProductId, refreshKey, onLoad
               onClick={() => setSelectionMode(true)}
               className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-700 hover:bg-gray-100 inline-flex items-center gap-1.5"
             >
-              <Layers3 className="w-3.5 h-3.5" /> Group Parts
+              <Layers3 className="w-3.5 h-3.5" aria-hidden="true" /> Group Parts
             </button>}
           </div>
         )}
