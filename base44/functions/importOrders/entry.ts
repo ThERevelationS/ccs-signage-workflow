@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -24,7 +25,7 @@ const retryOnRateLimit = async (fn, maxRetries = 3) => {
 };
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
   try {
   const contentType = req.headers.get('content-type') || '';
   let formData = null;
