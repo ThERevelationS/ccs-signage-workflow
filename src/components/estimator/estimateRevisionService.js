@@ -195,6 +195,36 @@ export async function revertEstimateToRevision({
   return { estimate: saved, revertRevision: revisionRow, targetRevision: revision };
 }
 
+// ---------- Quote rejection + acceptance supersede helpers (#255/#271) ------
+// Pure helpers shared by the staff acceptance panel, the EstimateDetail
+// handlers, and the hardening tests. The matching server-side writes live in
+// the recordEstimateAcceptance function (reject_quote / supersede_acceptance
+// actions); these keys keep the frontend's lifecycle-revision calls anchored
+// on the same identities so retries converge instead of double-writing.
+
+/** A superseded acceptance stays in the audit trail but no longer counts as the canonical approval for its quote version. */
+export const isEstimateAcceptanceSuperseded = (row) =>
+  String(row?.status || "accepted") === "superseded" || !!row?.superseded_at;
+
+/** Active (non-superseded) acceptance rows — the only rows that count as a real customer approval. */
+export const activeEstimateAcceptances = (rows = []) =>
+  (Array.isArray(rows) ? rows : []).filter((row) => !isEstimateAcceptanceSuperseded(row));
+
+/** Trimmed rejection reason; "" means the submission must be blocked — a lost quote is never silent. */
+export const cleanQuoteRejectReason = (reason) => String(reason || "").trim().slice(0, 500);
+
+/** Stable idempotency identity for the estimator-queue follow-up spawned by a staff quote rejection. */
+export const quoteRejectFollowUpKey = (estimateId) =>
+  `staff-reject-request:${String(estimateId || "").trim()}`;
+
+/** Stable lifecycle-revision key for one staff quote rejection attempt (anchored on the pre-write estimate version). */
+export const quoteRejectRevisionKey = (estimateId, expectedUpdatedAt = "") =>
+  `quote_reject:${String(estimateId || "").trim()}:${String(expectedUpdatedAt || "unknown").trim() || "unknown"}`;
+
+/** Stable lifecycle-revision key for superseding one immutable acceptance row. */
+export const supersedeAcceptanceRevisionKey = (acceptanceId) =>
+  `supersede_acceptance:${String(acceptanceId || "").trim()}`;
+
 export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence, sessionToken = "" }) {
   const version = Math.max(0, Math.floor(num(quoteVersion)));
   if (!estimateId || version <= 0 || !evidence) return { revision: null, warning: "" };
