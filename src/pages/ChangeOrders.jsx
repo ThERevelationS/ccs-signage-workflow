@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
+import { ExportChangeOrdersButton } from "@/components/importer/ImportExportButtons";
 import {
   CheckCircle2,
   ChevronRight,
@@ -439,6 +440,7 @@ export default function ChangeOrders() {
           activeName={viewName}
           onApply={(s, name) => { setStatus(s.status || ""); setQuery(s.query || ""); setViewName(name || ""); }}
         />
+        <ExportChangeOrdersButton rows={changeOrders} />
         {selected.size > 0 && (
           <button type="button" onClick={bulkApprove} disabled={bulkBusy}
             className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
