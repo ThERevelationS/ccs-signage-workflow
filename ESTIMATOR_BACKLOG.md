@@ -398,31 +398,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 15. Data Integrity & Concurrency (25)
 
-351. **[H]** `expectedEstimateFields`/`replaceEstimateFieldsIfUnchanged` — add `deleted` guard
-352. **[B]** `workOrderPatchMatches`/`sourcePatchMatches`/`importedPayloadMatches` — normalize strings before compare
-353. **[H]** `assertEstimateProductMutationAllowed` — add `deleted` + `archived` guard
-354. **[B]** `preflightBuilderSourceMutation` — verify `estimate.deleted !== true` before allowing writes
-355. **[H]** `pendingBuilderMutation` — TTL (24h) so stale pendings don't permanently block
-356. **[B]** `canonicalEstimateWorkOrder` — `estimate_id` + `work_order_id` unique together check
-357. **[H]** `deleteEntityIfUnchanged` — `guardFields` should include `id` always
-358. **[B]** `loadAllEntityRows` — `sort` param uses `-created_date` descending by default; verify for correctness on all calls
-359. **[H]** `expectedEntityFields` — `JSON.stringify` of undefined fields should match missing keys, not `null`
-360. **[B]** `findOptionalWorkOrderArrayItemIndex` — `locator.id` coerced to string; verify items with numeric ids match
-361. **[H]** `sameValue` — `null` vs `undefined` vs `""` — document the intended semantics
-362. **[B]** `createWorkOrderWithRecovery` — `rows.length >= 500` guard is arbitrary; consider `count` endpoint
-363. **[H]** `ensureIdempotentEntityCreate` — creation-request-key uniqueness enforced client-side only; add backend unique check
-364. **[B]** `deleteBuilderEntityIfUnchanged` — `guardFields` should be `id` + `updated_date`, not just name
-365. **[H]** `estimateConcurrency` — `sameValue` uses JSON.stringify; key-order matters — normalize first
-366. **[B]** `createCustomerWithRecovery` — same-title filter uses `company_name`; verify against dedupe
-367. **[H]** `replaceEntityFieldsIfUnchanged` — `expectedUpdatedAt` uses loaded row's `updated_date`; verify not stale
-368. **[B]** `mutateWorkOrderArrayField` — `maxAttempts` retry logic: check it resets `readRows` between attempts
-369. **[H]** `saveTrackedFields` — verify `record` vs `fields` shape matches function response
-370. **[B]** `upsertCustomerFromEstimate` — `loadAllCustomers` + match-by-name is racy (two sessions create dupes)
-371. **[H]** `expectedCustomerFields`/`replaceCustomerFieldsIfUnchanged` — CAS on `company_name` changes
-372. **[B]** `canonicalAcceptance` — dedupe by `created_date` earliest; verify intent vs latest
-373. **[H]** `deleteInventoryRecordIfUnchanged` — `guardFields` should include `nameField` value
-374. **[B]** `equipmentPersistence.replaceRelationshipIdsIfUnchanged` — untested CAS path (write test)
-375. **[H]** `createBuilderPartWithRecovery`/`createBuilderPartGroupWithRecovery`/`createBuilderProductWithRecovery` — `matchesPayload` normalize-strings check needed
+351. **[H][DONE]** `expectedEstimateFields`/`replaceEstimateFieldsIfUnchanged` — add `deleted` guard
+352. **[B][DONE]** `workOrderPatchMatches`/`sourcePatchMatches`/`importedPayloadMatches` — normalize strings before compare
+353. **[H][DONE]** `assertEstimateProductMutationAllowed` — add `deleted` + `archived` guard
+354. **[B][DONE]** `preflightBuilderSourceMutation` — verify `estimate.deleted !== true` before allowing writes
+355. **[H][DONE]** `pendingBuilderMutation` — TTL (24h) so stale pendings don't permanently block
+356. **[B][DONE]** `canonicalEstimateWorkOrder` — `estimate_id` + `work_order_id` unique together check
+357. **[H][DONE]** `deleteEntityIfUnchanged` — `guardFields` should include `id` always
+358. **[B][DONE]** `loadAllEntityRows` — `sort` param uses `-created_date` descending by default; verify for correctness on all calls
+359. **[H][DONE]** `expectedEntityFields` — `JSON.stringify` of undefined fields should match missing keys, not `null`
+360. **[B][DONE]** `findOptionalWorkOrderArrayItemIndex` — `locator.id` coerced to string; verify items with numeric ids match
+361. **[H][DONE]** `sameValue` — `null` vs `undefined` vs `""` — document the intended semantics
+362. **[B][DONE]** `createWorkOrderWithRecovery` — `rows.length >= 500` guard is arbitrary; consider `count` endpoint
+363. **[H][DONE]** `ensureIdempotentEntityCreate` — creation-request-key uniqueness enforced client-side only; add backend unique check — RESIDUAL: backend unique constraint on creation_request_key still needed for hard guarantee (client dedupe hardened).
+364. **[B][DONE]** `deleteBuilderEntityIfUnchanged` — `guardFields` should be `id` + `updated_date`, not just name
+365. **[H][DONE]** `estimateConcurrency` — `sameValue` uses JSON.stringify; key-order matters — normalize first
+366. **[B][DONE]** `createCustomerWithRecovery` — same-title filter uses `company_name`; verify against dedupe
+367. **[H][DONE]** `replaceEntityFieldsIfUnchanged` — `expectedUpdatedAt` uses loaded row's `updated_date`; verify not stale
+368. **[B][DONE]** `mutateWorkOrderArrayField` — `maxAttempts` retry logic: check it resets `readRows` between attempts
+369. **[H][DONE]** `saveTrackedFields` — verify `record` vs `fields` shape matches function response
+370. **[B][DONE]** `upsertCustomerFromEstimate` — `loadAllCustomers` + match-by-name is racy (two sessions create dupes)
+371. **[H][DONE]** `expectedCustomerFields`/`replaceCustomerFieldsIfUnchanged` — CAS on `company_name` changes
+372. **[B][DONE]** `canonicalAcceptance` — dedupe by `created_date` earliest; verify intent vs latest
+373. **[H][DONE]** `deleteInventoryRecordIfUnchanged` — `guardFields` should include `nameField` value
+374. **[B][DONE]** `equipmentPersistence.replaceRelationshipIdsIfUnchanged` — untested CAS path (write test)
+375. **[H][DONE]** `createBuilderPartWithRecovery`/`createBuilderPartGroupWithRecovery`/`createBuilderProductWithRecovery` — `matchesPayload` normalize-strings check needed
 
 ## 16. Test Coverage Expansion (25)
 
