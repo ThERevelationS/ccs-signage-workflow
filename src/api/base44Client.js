@@ -25,7 +25,7 @@ export function isRetryableFunction(fnName, payload) {
   if (fnName === 'verifySession') return true;
   if (fnName === 'permittingScanStatus') return true;
   // Read gateways never mutate, so a platform 429 can be retried safely.
-  if (fnName === 'staffDataRead' || fnName === 'fleetDataRead') return true;
+  if (fnName === 'staffDataRead' || fnName === 'fleetDataRead' || fnName === 'boardFeed') return true;
   if (fnName === 'timeClockAction') return ['status', 'status_lite'].includes(payload?.action);
   if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
   return false;
@@ -35,7 +35,9 @@ export function isRetryableFunction(fnName, payload) {
 // flight. Everything else is treated as a write: it is never de-duplicated,
 // never queued behind reads, and it advances the read epoch.
 function isReadInvocation(fnName, payload) {
-  if (['staffDataRead', 'fleetDataRead', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
+  // boardFeed is a pure board read; treating it as a write let a mount burst
+  // bypass the read pool/cooldown and fan out unthrottled invokes that 429'd.
+  if (['staffDataRead', 'fleetDataRead', 'boardFeed', 'verifySession', 'permittingScanStatus'].includes(fnName)) return true;
   if (fnName === 'timeClockAction') return ['status', 'status_lite'].includes(payload?.action);
   if (fnName === 'smartsheetSyncAction') return payload?.action === 'conflict_count';
   return false;

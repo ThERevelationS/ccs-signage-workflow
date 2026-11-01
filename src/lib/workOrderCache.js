@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
 import { staffEntities } from "@/components/staff/staffEntities";
-import { invokeFleet } from "@/components/fleet/fleetInvoke";
+import { invokeFleet, isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
+import { isPlatformRateLimit } from "@/api/requestGovernor.mjs";
 import { getSessionToken } from "@/components/auth/EmailGate";
 
 export const ALL_WORK_ORDERS_KEY = ["workOrders", "all"];
@@ -155,21 +156,39 @@ async function fetchFeedRows(entity, { forceFull = false, preferSnapshot = false
     const hydrate = ensureHydrated(entity);
     state.hydratePromise = hydrate;
     await hydrate;
-    const needsFull = forceFull || !state.cursor || Date.now() - state.fullSyncAt > FULL_RESYNC_MS;
-    let data = await boardFeed({ entity, sort: "-updated_date", since: needsFull ? null : state.cursor });
-    // A delta pull merges onto the current base; only a full pull replaces it
-    // and can prove the row set complete again.
-    let dataIsFullPull = needsFull;
-    if (!needsFull && data.truncated) {
-      // More changed than one delta can carry — resync rather than merge a
-      // partial change window over stale rows.
-      data = await boardFeed({ entity, sort: "-updated_date" });
-      state.rows = new Map();
-      state.fullSyncAt = Date.now();
-      dataIsFullPull = true;
-    } else if (needsFull) {
-      state.rows = new Map();
-      state.fullSyncAt = Date.now();
+    // A pull issued while the shared function budget is cooling down is a
+    // guaranteed 429 that would also blank the board — the persisted snapshot
+    // is free, so serve it and let the next interval try again.
+    if (!forceFull && isFleetCoolingDown() && state.rows.size > 0) {
+      return [...state.rows.values()];
+    }
+    let data;
+    let dataIsFullPull;
+    try {
+      const needsFull = forceFull || !state.cursor || Date.now() - state.fullSyncAt > FULL_RESYNC_MS;
+      data = await boardFeed({ entity, sort: "-updated_date", since: needsFull ? null : state.cursor });
+      // A delta pull merges onto the current base; only a full pull replaces it
+      // and can prove the row set complete again.
+      dataIsFullPull = needsFull;
+      if (!needsFull && data.truncated) {
+        // More changed than one delta can carry — resync rather than merge a
+        // partial change window over stale rows.
+        data = await boardFeed({ entity, sort: "-updated_date" });
+        state.rows = new Map();
+        state.fullSyncAt = Date.now();
+        dataIsFullPull = true;
+      } else if (needsFull) {
+        state.rows = new Map();
+        state.fullSyncAt = Date.now();
+      }
+    } catch (err) {
+      // A rate-limited refresh must never surface as a broken board: keep the
+      // rows we already have and retry on the next interval. Only a first load
+      // with nothing cached is allowed to throw.
+      if (isPlatformRateLimit(err) && state.rows.size > 0) {
+        return [...state.rows.values()];
+      }
+      throw err;
     }
     if (dataIsFullPull) {
       // "truncated" is the backend's hard row-cap flag and a FULL pull can
