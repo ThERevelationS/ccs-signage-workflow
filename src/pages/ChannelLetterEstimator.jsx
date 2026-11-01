@@ -46,6 +46,9 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 
 const fmt = (v) => `$${(parseFloat(v) || 0).toFixed(2)}`;
 
@@ -100,10 +103,13 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
   const [helpTrigger, setHelpTrigger] = useState(false);
   const persistedProjectIdRef = React.useRef(editId || "");
   const createAttemptRef = React.useRef({ signature: "", key: "" });
+  const copyAttemptRef = React.useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
   }, [editId]);
 
   useEffect(() => { if (!isLoading && !loadError) setHasLoaded(true); }, [isLoading, loadError]);
@@ -522,6 +528,53 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     }
     setIsSaving(false);
   };
+
+  // #78 — clone the current save payload into a brand-new Channel Letter project.
+  const handleSaveAsCopy = async () => {
+    setIsSaving(true);
+    try {
+      const copy = await saveModuleProjectCopy({
+        entity: ChannelLetterInstallation,
+        payload: {
+          ...recalculated,
+          customer_pricing: project.customer_pricing,
+          status: "calculated",
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "channel_letter_project_copy",
+        baseName: project.project_name || "Channel Letter",
+        label: "Channel Letter project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/ChannelLetterEstimator?edit=${copy.id}`);
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildChannelLetterTemplateData = (p) => ({
+    items: p.items || [],
+    letter_purchases: p.letter_purchases || [],
+    letters_delivery_fee: p.letters_delivery_fee,
+    letters_design_fee: p.letters_design_fee,
+    letters_install_supplies_fee: p.letters_install_supplies_fee,
+    letters_permitting_fee: p.letters_permitting_fee,
+    letters_other_fee: p.letters_other_fee,
+    letters_markup_percent: p.letters_markup_percent,
+    selected_equipment: p.selected_equipment || [],
+    personnel: p.personnel || [],
+    base_supplies_cost: p.base_supplies_cost,
+    extra_supplies_cost: p.extra_supplies_cost,
+    markup_percent: p.markup_percent,
+    travel_miles_round_trip: p.travel_miles_round_trip,
+    project_scope: p.project_scope,
+    install_environment: p.install_environment,
+    notes: p.notes,
+  });
 
   const copySummary = async () => {
     try {
@@ -1112,6 +1165,15 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
               onCopySummary={copySummary}
               onExportCSV={exportCSV}
             />
+            <div className="flex flex-wrap gap-2">
+              <ModuleActionBar
+                onTemplates={() => setTemplateMode("load")}
+                onSaveAsTemplate={() => setTemplateMode("save")}
+                onSaveAsCopy={handleSaveAsCopy}
+                estimateId={estimateId}
+                saving={isSaving}
+              />
+            </div>
             <CrewEquipmentHint items={recalculated.items} />
             <ValidationWarnings project={recalculated} />
             <div className="text-[10px] text-slate-400 text-center px-2">
@@ -1137,6 +1199,18 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         open={aiInstallOpen}
         onClose={() => setAiInstallOpen(false)}
         onApply={applyAIInstallItems}
+      />
+
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="channel_letters"
+        title="Channel Letter"
+        buildTemplateData={buildChannelLetterTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
       />
 
       <ConfirmModal
