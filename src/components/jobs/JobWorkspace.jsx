@@ -155,6 +155,24 @@ export default function JobWorkspace() {
   const { data: workOrders = [], isFetched } = useAllWorkOrders();
   const { currentUser, sessionToken } = useAuth();
   const [statusLinkState, setStatusLinkState] = useState("");
+  const [driveState, setDriveState] = useState("");
+  const openDriveFolder = async () => {
+    const existing = String(wo?.google_drive_folder_url || "").trim();
+    if (existing) { window.open(existing, "_blank", "noopener"); return; }
+    if (!sessionToken || !wo?.id || driveState === "busy") return;
+    setDriveState("busy");
+    try {
+      const r = await base44.functions.invoke("googleDriveOperations", { session_token: sessionToken, action: "ensureJobFolder", work_order_id: wo.id });
+      const data = r?.data || r;
+      const url = String(data?.url || data?.folder?.webViewLink || "");
+      if (!url) throw new Error(data?.error || "no url");
+      wo.google_drive_folder_url = url;
+      refreshAllWorkOrders();
+      window.open(url, "_blank", "noopener");
+      setDriveState("done");
+    } catch { setDriveState("error"); }
+    setTimeout(() => setDriveState(""), 3000);
+  };
   const copyStatusLink = async () => {
     if (!sessionToken || !wo?.id || statusLinkState === "busy") return;
     setStatusLinkState("busy");
@@ -438,6 +456,15 @@ export default function JobWorkspace() {
               disabled={!sessionToken || statusLinkState === "busy"}
             >
               {statusLinkState === "copied" ? "Status link copied" : statusLinkState === "error" ? "Link failed" : "Status link"}
+            </button>
+            <button
+              type="button"
+              onClick={openDriveFolder}
+              title={wo.google_drive_folder_url ? "Open this job's Google Drive folder" : "Find or create this job's Google Drive folder (admin)"}
+              className="rounded border border-gray-300 px-2 py-1 text-sky-700 hover:bg-sky-50 disabled:opacity-50"
+              disabled={driveState === "busy" || (!wo.google_drive_folder_url && !sessionToken)}
+            >
+              {driveState === "busy" ? "Drive…" : driveState === "error" ? "Drive failed" : wo.google_drive_folder_url ? "Open Drive" : "Drive"}
             </button>
             </div>
           }

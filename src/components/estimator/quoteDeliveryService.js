@@ -80,6 +80,23 @@ export async function archiveQuoteAttachment(attachment) {
   return { fileUrl, sha256, sizeBytes: bytes.byteLength };
 }
 
+// Best-effort send-time failure telemetry (#246/#296): a failed quote email
+// still lands on EstimateQuoteDelivery with delivery_status "failed" so the
+// delivery history shows the attempt. Provider webhook/bounce data is
+// unavailable — this is send-time outcome only. Never throws.
+export async function recordQuoteDeliveryAttempt(data = {}, sessionToken = "") {
+  try {
+    const response = await base44.functions.invoke("recordEstimateQuoteDelivery", {
+      session_token: sessionToken,
+      delivery: { ...data, delivery_status: "failed" },
+    });
+    const result = response?.data || response;
+    return result?.delivery || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function ensureQuoteDeliveryAudit(data = {}, sessionToken = "") {
   const response = await base44.functions.invoke("recordEstimateQuoteDelivery", {
     session_token: sessionToken,
@@ -159,22 +176,48 @@ export async function deliverEstimateQuote({
   // Archive the exact bytes before sending so every successful email has a
   // retrievable source artifact. If archival fails, Gmail is not called.
   const archive = await archiveQuoteAttachment(attachment);
-  const response = await sendGmail({
-    to: recipientEmail,
-    cc: ccEmails || "",
-    bcc: bccEmails || "",
-    subject,
-    body: quoteEmailBodyHtml(message, emailSignature),
-    attachments: [attachment],
-  });
+  const normalizedQuoteVersion = Math.max(0, Math.floor(Number(quoteVersion || 0)));
+  let response;
+  try {
+    response = await sendGmail({
+      to: recipientEmail,
+      cc: ccEmails || "",
+      bcc: bccEmails || "",
+      subject,
+      body: quoteEmailBodyHtml(message, emailSignature),
+      attachments: [attachment],
+    });
+  } catch (sendError) {
+    response = { data: { error: sendError?.message || "Quote email could not be sent." } };
+  }
   const payload = response?.data || response || {};
   if (payload.error || payload.success === false) {
+    // Record the failed attempt before surfacing the error (#246/#296).
+    await recordQuoteDeliveryAttempt({
+      estimate_id: estimate.id,
+      work_order_id: estimate.work_order_id || "",
+      quote_version: normalizedQuoteVersion,
+      quote_issue_date: quoteIssueDate || "",
+      quote_valid_days: Math.max(0, Math.floor(Number(quoteValidDays || 0))),
+      quote_expiration_date: quoteExpirationDate(quoteIssueDate, quoteValidDays),
+      quote_total: Number(quoteTotal || 0),
+      recipient_email: recipientEmail,
+      cc_emails: String(ccEmails || ""),
+      bcc_emails: String(bccEmails || ""),
+      subject,
+      sent_at: new Date().toISOString(),
+      transport: "gmail_api",
+      failure_reason: String(payload.error || "Quote email could not be sent.").slice(0, 500),
+      attachment_filename: attachment?.filename || "",
+      attempt_key: `attempt:${estimate.id}:${Date.now()}`,
+      is_resend: !!isResend,
+      source_status: sourceStatus || estimate.status || "",
+    }, sessionToken);
     throw new Error(payload.error || "Quote email could not be sent.");
   }
 
   const messageId = payload.messageId || "";
   const sentAt = new Date().toISOString();
-  const normalizedQuoteVersion = Math.max(0, Math.floor(Number(quoteVersion || 0)));
   let deliveryLogWarning = "";
   let delivery = null;
   const deliveryData = {
@@ -192,6 +235,7 @@ export async function deliverEstimateQuote({
     subject,
     delivery_method: "email",
     delivery_status: "sent",
+    transport: "gmail_api",
     sent_at: sentAt,
     gmail_message_id: messageId,
     attachment_filename: attachment.filename,

@@ -26,6 +26,102 @@ Deno.serve(async (req) => {
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
 
     switch (action) {
+      case 'ensureJobFolder': {
+        // One Drive folder per job. Reads the WO's saved folder URL first; on
+        // a miss it finds-or-creates "<WO number> <client>" under a root
+        // folder — a GlobalSettings driveConfig row wins when present, else a
+        // top-level app-created "CCS Jobs" folder — then persists the URL.
+        const workOrderId = String(body.work_order_id || '').trim();
+        if (!workOrderId) {
+          return Response.json({ error: 'work_order_id is required' }, { status: 400 });
+        }
+        const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+        const Settings = base44.asServiceRole.entities.GlobalSettings;
+        const order = await WorkOrder.get(workOrderId).catch(() => null);
+        if (!order?.id) {
+          return Response.json({ error: 'Work order not found' }, { status: 404 });
+        }
+        const existingUrl = String(order.google_drive_folder_url || '').trim();
+        if (existingUrl) {
+          return Response.json({ success: true, url: existingUrl, reused: true, work_order_id: order.id });
+        }
+
+        const driveListFiles = async (q) => {
+          const response = await fetch(
+            `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,webViewLink,parents)&supportsAllDrives=true&includeItemsFromAllDrives=true`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+          );
+          if (!response.ok) {
+            await response.text().catch(() => '');
+            throw new Error(`Google Drive list failed (status ${response.status})`);
+          }
+          const data = await response.json();
+          return Array.isArray(data?.files) ? data.files : [];
+        };
+        const driveCreateFolder = async (name, parents) => {
+          const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents }),
+          });
+          if (!response.ok) {
+            await response.text().catch(() => '');
+            return null;
+          }
+          return await response.json();
+        };
+
+        // Root folder: GlobalSettings setting_key "driveConfig" (or
+        // "googleDriveConfig") may pin jobs_root_folder_id; otherwise
+        // find-or-create the shared "CCS Jobs" root at top level.
+        let rootId = '';
+        for (const key of ['driveConfig', 'googleDriveConfig']) {
+          if (rootId) break;
+          const cfgRows = await Settings.filter({ setting_key: key }).catch(() => []);
+          const cfg = (Array.isArray(cfgRows) ? cfgRows[0]?.setting_value : null) || {};
+          const candidate = String(cfg.jobs_root_folder_id || cfg.root_folder_id || cfg.drive_jobs_folder_id || '').trim();
+          if (/^[a-zA-Z0-9_-]+$/.test(candidate)) rootId = candidate;
+        }
+        if (!rootId) {
+          const roots = await driveListFiles("name='CCS Jobs' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+          rootId = String(roots[0]?.id || '');
+          if (!rootId) {
+            const createdRoot = await driveCreateFolder('CCS Jobs', []);
+            rootId = String(createdRoot?.id || '');
+          }
+        }
+        if (!rootId) {
+          return Response.json({ error: 'The CCS Jobs Drive root folder could not be resolved.' }, { status: 502 });
+        }
+
+        const safeQueryName = (v) => String(v || '').replace(/[\\']/g, ' ').replace(/\s+/g, ' ').trim();
+        const jobName = safeQueryName(body.job_name);
+        const woNumber = safeQueryName(order.est_inv_at || order.work_order_number || order.corbridge_invoice_number || order.id);
+        const clientName = safeQueryName(order.client_name || order.title);
+        const folderName = safeQueryName(jobName || `${woNumber} ${clientName}`).slice(0, 180) || order.id;
+        const matches = await driveListFiles(`name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${rootId}' in parents`);
+        let folder = matches[0];
+        if (!folder) {
+          folder = await driveCreateFolder(folderName, [rootId]);
+        }
+        if (!folder?.id) {
+          return Response.json({ error: 'The job Drive folder could not be created.' }, { status: 502 });
+        }
+        const url = String(folder.webViewLink || `https://drive.google.com/drive/folders/${folder.id}`);
+
+        // Persist only while the field is still empty — a concurrent writer's
+        // URL wins over ours rather than being silently replaced.
+        const current = await WorkOrder.get(order.id).catch(() => null);
+        const raced = String(current?.google_drive_folder_url || '').trim();
+        if (raced) {
+          return Response.json({ success: true, url: raced, reused: true, work_order_id: order.id });
+        }
+        await WorkOrder.update(order.id, { google_drive_folder_url: url }).catch((e) => {
+          console.error('ensureJobFolder: WorkOrder update failed:', e?.message || e);
+        });
+        return Response.json({ success: true, url, folder_id: folder.id, root_folder_id: rootId, work_order_id: order.id });
+      }
+
       case 'listFiles': {
         // With drive.file scope, we can only list files we created or user granted access to.
         // Validate an optional folder id before interpolating it into Drive's query language.

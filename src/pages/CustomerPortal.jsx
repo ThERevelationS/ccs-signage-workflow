@@ -180,9 +180,74 @@ function InvoiceView({ invoice, payments }) {
   );
 }
 
+// Draw-to-sign pad (#251): plain canvas + pointer events. onChange receives a
+// PNG data URL when the pad has ink, "" when cleared. Optional — an empty pad
+// submits no signature and the approval proceeds exactly as before.
+function SignaturePad({ onChange }) {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+  const [hasInk, setHasInk] = useState(false);
+  useEffect(() => {
+    const ctx = canvasRef.current?.getContext("2d");
+    if (ctx) { ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#1e293b"; }
+  }, []);
+  const pos = (e) => {
+    const c = canvasRef.current;
+    const r = c.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+  };
+  const start = (e) => {
+    drawing.current = true;
+    const ctx = canvasRef.current.getContext("2d");
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    e.preventDefault();
+  };
+  const move = (e) => {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current.getContext("2d");
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    if (!hasInk) setHasInk(true);
+    e.preventDefault();
+  };
+  const end = () => {
+    if (!drawing.current) return;
+    drawing.current = false;
+    onChange?.(canvasRef.current.toDataURL("image/png"));
+  };
+  const clear = () => {
+    const c = canvasRef.current;
+    c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    setHasInk(false);
+    onChange?.("");
+  };
+  return (
+    <div className="mt-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-emerald-900">Signature (optional)</p>
+        {hasInk && <button type="button" onClick={clear} className="text-[11px] font-medium text-slate-500 underline">Clear</button>}
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={560}
+        height={140}
+        onPointerDown={start}
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerLeave={end}
+        className="mt-1 w-full touch-none cursor-crosshair rounded-lg border border-emerald-300 bg-white"
+      />
+    </div>
+  );
+}
+
 function QuoteCard({ quote, onRespond, busy }) {
   const [mode, setMode] = useState("");
   const [note, setNote] = useState("");
+  const [signature, setSignature] = useState("");
   const [open, setOpen] = useState(false);
   const respondable = quote.can_respond;
   const sections = Array.isArray(quote.sections) ? quote.sections : [];
@@ -272,12 +337,13 @@ function QuoteCard({ quote, onRespond, busy }) {
           <p className="text-sm font-medium text-emerald-900">Approve {quote.estimate_number || "this quote"} for {money(quote.quote_total)}?</p>
           <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note for the team…"
             className="mt-2 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" />
+          <SignaturePad onChange={setSignature} />
           <div className="mt-3 flex gap-2">
-            <button type="button" onClick={() => onRespond(quote, "approve", note)} disabled={busy}
+            <button type="button" onClick={() => onRespond(quote, "approve", note, undefined, signature || undefined)} disabled={busy}
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Confirm approval
             </button>
-            <button type="button" onClick={() => { setMode(""); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+            <button type="button" onClick={() => { setMode(""); setNote(""); setSignature(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -312,13 +378,15 @@ function QuoteCard({ quote, onRespond, busy }) {
   );
 }
 
-function JobCard({ job, onRequestChange, busy }) {
+function JobCard({ job, onRequestChange, onReorder, busy }) {
   const style = JOB_STYLES[job.status] || { label: (job.status || "open").replace(/_/g, " "), cls: "bg-slate-100 text-slate-700" };
   const stepIndex = JOB_STEPS.indexOf(job.status);
   const progress = job.task_progress;
   const pct = progress && progress.total ? Math.round((progress.completed / progress.total) * 100) : (job.status === "completed" ? 100 : stepIndex > 0 ? 50 : 0);
   const [changing, setChanging] = useState(false);
   const [note, setNote] = useState("");
+  const [reordering, setReordering] = useState(false);
+  const [reorderNote, setReorderNote] = useState("");
   const active = !["completed", "cancelled"].includes(job.status);
   // Deposit + terms surface only when the portal payload carries them — the
   // concurrent WO deposit fields (deposit_required/deposit_amount) and any
@@ -381,6 +449,26 @@ function JobCard({ job, onRequestChange, busy }) {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send request
             </button>
             <button type="button" onClick={() => { setChanging(false); setNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
+          </div>
+        </div>
+      )}
+      {onReorder && !reordering && (
+        <button type="button" onClick={() => setReordering(true)} disabled={busy}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-blue-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50">
+          <RefreshCw className="h-4 w-4" />Order something like this
+        </button>
+      )}
+      {onReorder && reordering && (
+        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-medium text-blue-900">Send this job to estimating as the starting point for a new order?</p>
+          <textarea rows={2} value={reorderNote} onChange={(e) => setReorderNote(e.target.value)} placeholder="Anything different this time? (optional)"
+            className="mt-2 w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm" />
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={() => { onReorder(job, reorderNote); setReordering(false); setReorderNote(""); }} disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Send to estimating
+            </button>
+            <button type="button" onClick={() => { setReordering(false); setReorderNote(""); }} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
           </div>
         </div>
       )}
@@ -609,11 +697,12 @@ export default function CustomerPortal() {
     }));
   };
 
-  const respond = async (quote, decision, note, section) => {
+  const respond = async (quote, decision, note, section, signature) => {
     setBusy(true);
     try {
       const payload = { action: "estimate_respond", token, estimate_id: quote.id, decision, note, creation_request_key: crypto.randomUUID() };
       if (section?.key) { payload.section_key = section.key; payload.section_label = section.label || ""; }
+      if (signature) payload.signature_image = signature;
       await call(payload);
       setToast(section?.key ? (decision === "accepted" ? "Section accepted — thank you!" : decision === "rejected" ? "Section declined — noted." : "Question sent.") : decision === "approve" ? "Quote approved — thank you!" : "Revision request sent.");
       await load();
@@ -630,6 +719,16 @@ export default function CustomerPortal() {
       await load();
     } catch (error) {
       setToast(error?.message || "Could not send the notice.");
+    } finally { setBusy(false); }
+  };
+
+  const requestReorder = async (job, note) => {
+    setBusy(true);
+    try {
+      await call({ action: "request_reorder", token, work_order_id: job.id, note, creation_request_key: crypto.randomUUID() });
+      setToast("Sent to estimating — we'll follow up.");
+    } catch (error) {
+      setToast(error?.message || "Could not send the reorder request.");
     } finally { setBusy(false); }
   };
 
@@ -744,6 +843,10 @@ export default function CustomerPortal() {
                     </ul>
                   </div>
                 )}
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Messages about this job</p>
+                  <Thread messages={data.messages || []} onSend={sendMessage} busy={busy} customerName={data?.label} />
+                </div>
                 <p className="text-center text-[11px] text-slate-400">Status updates appear here as the job moves — bookmark this link.</p>
               </div>
             )}
@@ -930,7 +1033,7 @@ export default function CustomerPortal() {
                 {jobs.length === 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-400">No jobs on your account yet.</div>
                 )}
-                {jobs.map((j) => <JobCard key={j.id} job={j} onRequestChange={requestJobChange} busy={busy} />)}
+                {jobs.map((j) => <JobCard key={j.id} job={j} onRequestChange={requestJobChange} onReorder={requestReorder} busy={busy} />)}
               </div>
             )}
 

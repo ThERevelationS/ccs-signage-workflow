@@ -218,6 +218,43 @@ async function loadCustomerThread(PortalMessage: any, customerId: string, markSt
   return list;
 }
 
+// Client-supplied attachment links pass through only when they are plain
+// http(s) URLs — anything else (javascript:, data:, file:) is dropped.
+const safeExternalUrl = (value: any) => {
+  const raw = clean(value).slice(0, 4096);
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    return ["https:", "http:"].includes(url.protocol) ? url.toString() : "";
+  } catch {
+    return "";
+  }
+};
+
+// Single-job threads: a work_order portal link sees only the messages tagged
+// to that job — never the rest of the customer's thread.
+async function loadJobThread(PortalMessage: any, workOrderId: string, markRead = false) {
+  const rows = await loadAllEntityRows({ entity: PortalMessage, query: { related_kind: "work_order", related_id: workOrderId }, sort: "created_date", label: "Portal job thread" }).catch(() => []);
+  const list = (Array.isArray(rows) ? rows : [])
+    .filter((m: any) => clean(m?.related_id) === workOrderId)
+    .sort((a: any, b: any) => clean(a?.created_date).localeCompare(clean(b?.created_date)));
+  if (markRead) {
+    for (const m of list) {
+      if (clean(m?.author_side) === "staff" && m?.read_by_customer !== true) {
+        replaceFoundationFieldsIfUnchanged({
+          entity: PortalMessage,
+          recordId: clean(m.id),
+          expectedFields: expectedFoundationFields(m, { read_by_customer: true }),
+          nextFields: { read_by_customer: true },
+          label: "Portal job message read receipt",
+        }).catch(() => null);
+        m.read_by_customer = true;
+      }
+    }
+  }
+  return list;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
@@ -326,6 +363,7 @@ Deno.serve(async (req) => {
         const order = await WorkOrder.get(clean(link.record_id)).catch(() => null);
         if (!order?.id || order?.deleted === true) throw bad("The linked job is no longer available.", 404);
         const announcements = await loadPortalAnnouncements(clean(link.customer_id) || clean(order.customer_id) || "");
+        const jobThread = await loadJobThread(PortalMessage, clean(order.id), true);
         return Response.json({
           success: true,
           action,
@@ -334,6 +372,7 @@ Deno.serve(async (req) => {
           expires_at: clean(link.expires_at),
           announcements,
           job: jobPortalView(order),
+          messages: jobThread.slice(-100).map(messageView),
           products: (Array.isArray(order?.products) ? order.products : [])
             .filter((p: any) => p && p.deleted !== true)
             .map((p: any) => ({
@@ -424,15 +463,31 @@ Deno.serve(async (req) => {
 
     if (action === "post_message") {
       const link = await resolveLink(PortalLink, clean(body?.token));
-      if (clean(link.kind) !== "customer") throw bad("This portal link cannot send messages.", 403);
-      const customerId = clean(link.customer_id) || clean(link.record_id);
+      const linkKind = clean(link.kind);
+      // work_order links may post too — every message is hard-scoped to the
+      // one job the link points at (related_* below is forced, never trusted).
+      if (linkKind !== "customer" && linkKind !== "work_order") throw bad("This portal link cannot send messages.", 403);
+      const isJobLink = linkKind === "work_order";
+      let customerId = clean(link.customer_id) || clean(link.record_id);
+      let jobOrder: any = null;
+      if (isJobLink) {
+        jobOrder = await WorkOrder.get(clean(link.record_id)).catch(() => null);
+        if (!jobOrder?.id || jobOrder?.deleted === true) throw bad("The linked job is no longer available.", 404);
+        customerId = clean(jobOrder.customer_id) || customerId;
+      }
       const text = clean(body?.body).slice(0, MESSAGE_MAX);
-      if (!text) throw bad("A message is required.");
-      const relatedKind = clean(body?.related_kind);
-      const relatedId = clean(body?.related_id);
-      const relatedLabel = clean(body?.related_label).slice(0, 200);
-      // Related records must belong to this customer before they can be referenced.
-      if (relatedId) {
+      const attachmentB64 = clean(body?.attachment_base64);
+      let attachmentUrl = safeExternalUrl(body?.attachment_url);
+      if (!text && !attachmentB64 && !attachmentUrl) throw bad("A message is required.");
+      let relatedKind = clean(body?.related_kind);
+      let relatedId = clean(body?.related_id);
+      let relatedLabel = clean(body?.related_label).slice(0, 200);
+      if (isJobLink) {
+        relatedKind = "work_order";
+        relatedId = clean(jobOrder.id);
+        relatedLabel = (clean(jobOrder.est_inv_at || jobOrder.work_order_number || jobOrder.corbridge_invoice_number) || clean(jobOrder.title) || "Job").slice(0, 200);
+      } else if (relatedId) {
+        // Related records must belong to this customer before they can be referenced.
         const owned = relatedKind === "invoice"
           ? await Invoice.get(relatedId).then((r: any) => clean(r?.customer_id) === customerId).catch(() => false)
           : relatedKind === "estimate"
@@ -442,12 +497,11 @@ Deno.serve(async (req) => {
               : false;
         if (!owned) throw bad("That record cannot be referenced from this portal.", 403);
       }
-      // Optional file attachment — the customer uploads via the portal composer;
-      // stored server-side via UploadFile so the staff thread shows a download link.
-      let attachmentUrl = "";
+      // Optional file attachment — pass an http(s) URL for an already-hosted
+      // file, or base64 bytes stored server-side via UploadFile so the staff
+      // thread shows a download link.
       const attachmentName = clean(body?.attachment_name).slice(0, 255);
-      const attachmentB64 = clean(body?.attachment_base64);
-      if (attachmentB64) {
+      if (!attachmentUrl && attachmentB64) {
         if (!attachmentName) throw bad("An attached file needs a filename.");
         try {
           const file = new File([Uint8Array.from(atob(attachmentB64), (c) => c.charCodeAt(0))], attachmentName, { type: clean(body?.attachment_mime) || "application/octet-stream" });
@@ -467,7 +521,7 @@ Deno.serve(async (req) => {
           author_side: "customer",
           author_name: clean(body?.author_name).slice(0, 120) || "Customer",
           kind: "message",
-          body: text,
+          body: text || (attachmentName ? `[Attachment] ${attachmentName}` : ""),
           attachment_name: attachmentName,
           attachment_url: attachmentUrl,
           attachment_mime: clean(body?.attachment_mime),
@@ -563,6 +617,29 @@ Deno.serve(async (req) => {
         if (clean(estimate.status) !== "sent") {
           throw bad(`This quote is ${clean(estimate.status) || "not awaiting response"} — only sent quotes can be approved.`, 409);
         }
+        // Optional drawn signature (#251): the approval form sends a PNG data
+        // URL / raw base64. Service-role UploadFile stores it so the acceptance
+        // audit carries retrievable evidence; when the upload is unavailable
+        // the data URL rides on the approval message itself instead of being
+        // dropped — the approval never fails over a signature image.
+        let signatureUrl = "";
+        let signatureDataUrl = "";
+        const sigRaw = clean(body?.signature_image);
+        if (sigRaw) {
+          const sigB64 = sigRaw.startsWith("data:") ? (sigRaw.split(",")[1] || "") : sigRaw;
+          if (sigB64.length > 64 && sigB64.length <= 600000) {
+            try {
+              const bytes = Uint8Array.from(atob(sigB64), (c: string) => c.charCodeAt(0));
+              const file = new File([bytes], `portal-signature-${estimateId}-${Date.now()}.png`, { type: "image/png" });
+              const upload = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+              signatureUrl = clean(upload?.file_url || upload?.url);
+            } catch (sigError: any) {
+              console.error("Portal signature upload failed:", sigError?.message || sigError);
+            }
+            if (!signatureUrl && sigRaw.startsWith("data:image/") && sigRaw.length <= 600000) signatureDataUrl = sigRaw;
+          }
+        }
+        const signatureAttachment = signatureUrl || signatureDataUrl;
         const saved = await replaceFoundationFieldsIfUnchanged({
           entity: Estimate,
           recordId: estimateId,
@@ -579,6 +656,9 @@ Deno.serve(async (req) => {
             author_side: "customer",
             kind: "estimate_approved",
             body: note || `Approved ${quoteLabel}.`,
+            attachment_name: signatureAttachment ? "signature.png" : "",
+            attachment_url: signatureAttachment,
+            attachment_mime: signatureAttachment ? "image/png" : "",
             related_kind: "estimate",
             related_id: estimateId,
             related_label: quoteLabel,
@@ -610,7 +690,11 @@ Deno.serve(async (req) => {
               accepted_by_name: clean(estimate?.order_contact) || clean(estimate?.contact_name),
               accepted_by_email: clean(estimate?.contact_email),
               acceptance_method: "portal",
-              evidence_reference: "Customer portal approval",
+              evidence_reference: signatureUrl
+                ? `Portal approval — signature: ${signatureUrl}`
+                : signatureDataUrl
+                  ? "Customer portal approval — drawn signature captured on the portal thread"
+                  : "Customer portal approval",
               notes: note || `Customer approved ${quoteLabel} via the customer portal.`,
               recorded_by_email: "customer_portal",
               recorded_by_name: "Customer Portal",
@@ -846,6 +930,95 @@ Deno.serve(async (req) => {
         key: `portal-act:jobrev:${workOrderId}:${clean(msg.record?.id) || key}`,
       });
       return Response.json({ success: true, action, change_order_number: coNumber, message: messageView(msg.record) });
+    }
+
+    // Customer-initiated reorder: "order something like this" hands a
+    // job's product list to the estimator queue as an EstimatingRequest.
+    // Customer links only — scoped to a job the link's customer owns.
+    if (action === "request_reorder") {
+      const link = await resolveLink(PortalLink, clean(body?.token));
+      if (clean(link.kind) !== "customer") throw bad("This portal link cannot request reorders.", 403);
+      const customerId = clean(link.customer_id) || clean(link.record_id);
+      const workOrderId = clean(body?.work_order_id);
+      const order = await WorkOrder.get(workOrderId).catch(() => null);
+      if (!order?.id || clean(order.customer_id) !== customerId) throw bad("Job not found.", 404);
+      const note = clean(body?.note).slice(0, MESSAGE_MAX);
+      const woNumber = clean(order.est_inv_at || order.work_order_number || order.corbridge_invoice_number);
+      const woLabel = woNumber || clean(order.title) || "Job";
+      const products = (Array.isArray(order?.products) ? order.products : [])
+        .filter((p: any) => p && p.deleted !== true)
+        .map((p: any) => ({
+          description: clean(p?.description || p?.customer_description) || "Item",
+          quantity: num(p?.quantity) || null,
+          product_type: clean(p?.product_type),
+        }));
+      const productSummary = products.map((p: any) => `${p.quantity > 1 ? `${p.quantity}x ` : ""}${p.description}`).join("; ").slice(0, 800);
+      const key = `portal-reorder:${workOrderId}:${clean(body?.creation_request_key) || crypto.randomUUID()}`.slice(0, 256);
+      const now = new Date().toISOString();
+      const result = await createFoundationRecordWithRecovery({
+        entity: EstimatingRequest,
+        data: {
+          creation_request_key: key,
+          // EstimatingRequest requires opportunity_id; when the job predates
+          // the opportunity migration a namespaced sentinel keeps the request
+          // on the estimator queue without colliding with a real opportunity.
+          opportunity_id: clean(order.opportunity_id) || `portal-reorder:${workOrderId}`,
+          customer_id: customerId,
+          compatibility_work_order_id: workOrderId,
+          status: "ready",
+          requested_at: now,
+          submitted_at: now,
+          requested_by: "customer_portal",
+          priority: "normal",
+          request_notes: [note, `Reorder request for ${woLabel}: ${productSummary || clean(order.title) || "job"}`].filter(Boolean).join("\n\n").slice(0, 2000),
+          handoff_snapshot_version: 1,
+          handoff_snapshot: {
+            snapshot_version: 1,
+            source_type: "portal_reorder",
+            opportunity_id: clean(order.opportunity_id),
+            compatibility_work_order_id: workOrderId,
+            work_order_number: woNumber,
+            customer_id: customerId,
+            customer_display_name: clean(order.client_name) || clean(link.label),
+            title: `Reorder — ${clean(order.title) || woLabel}`,
+            job_description: productSummary,
+            products,
+            install_location: clean(order.install_location),
+            customer_note: note,
+            notes: `Customer requested a reorder of ${woLabel} via the portal.`,
+          },
+        },
+        readMatches: () => EstimatingRequest.filter({ creation_request_key: key }),
+        label: "Portal reorder request",
+      });
+      logPortalOpportunityActivity(OpportunityActivity, {
+        opportunityId: clean(order.opportunity_id),
+        eventType: "note",
+        summary: `Customer requested a reorder of ${woLabel} via the portal`,
+        details: { work_order_id: workOrderId, estimating_request_id: clean(result.record?.id), source: "customer_portal" },
+        key: `portal-act:reorder:${workOrderId}:${clean(result.record?.id) || key}`,
+      });
+      return Response.json({ success: true, action, estimating_request: result.record, reused: result.status !== "created" });
+    }
+
+    // Token-scoped thread reads: a work_order link lists only its own job's
+    // messages; a customer link lists its own thread (same data bootstrap
+    // already returns). Other link kinds cannot read threads.
+    if (action === "list_thread" && clean(body?.token)) {
+      const link = await resolveLink(PortalLink, clean(body?.token));
+      const linkKind = clean(link.kind);
+      if (linkKind === "work_order") {
+        const order = await WorkOrder.get(clean(link.record_id)).catch(() => null);
+        if (!order?.id || order?.deleted === true) throw bad("The linked job is no longer available.", 404);
+        const thread = await loadJobThread(PortalMessage, clean(order.id), true);
+        return Response.json({ success: true, action, related_kind: "work_order", related_id: clean(order.id), messages: thread.slice(-200).map(messageView) });
+      }
+      if (linkKind === "customer") {
+        const customerId = clean(link.customer_id) || clean(link.record_id);
+        const thread = await loadCustomerThread(PortalMessage, customerId, true);
+        return Response.json({ success: true, action, messages: thread.slice(-200).map(messageView) });
+      }
+      throw bad("This portal link cannot list messages.", 403);
     }
 
     // ---------- Staff actions (session-authenticated) ----------

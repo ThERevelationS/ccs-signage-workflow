@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { staffEntities } from "@/components/staff/staffEntities";
 import DragDropList from "../components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
@@ -11,6 +11,92 @@ import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workO
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 const WorkOrder = staffEntities.WorkOrder;
+
+// Route sheet: upcoming installs from this board grouped by project_install_date
+// day (ascending; undated jobs land in "Unscheduled"). Each row links to plain
+// Google Maps directions — no API key. window.print() prints it fine.
+function InstallRouteSheet({ workOrders }) {
+  const [open, setOpen] = useState(false);
+  const groups = useMemo(() => {
+    const byDay = new Map();
+    for (const wo of workOrders || []) {
+      const day = String(wo?.project_install_date || "").trim();
+      const key = /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : "";
+      if (!byDay.has(key)) byDay.set(key, []);
+      byDay.get(key).push(wo);
+    }
+    return [...byDay.entries()]
+      .sort((a, b) => (a[0] === "" ? 1 : b[0] === "" ? -1 : a[0].localeCompare(b[0])))
+      .map(([day, rows]) => ({ day, rows }));
+  }, [workOrders]);
+  const count = (workOrders || []).length;
+  const timeWindow = (wo) =>
+    String(wo?.install_time_window || wo?.install_window || wo?.install_time || wo?.arrival_window || "").trim();
+  const address = (wo) =>
+    [wo?.install_location, wo?.address_line_2].filter((v) => String(v || "").trim()).join(", ");
+  const woNumber = (wo) =>
+    String(wo?.est_inv_at || wo?.corbridge_invoice_number || wo?.work_order_number || "").trim();
+  return (
+    <div className="clay-card mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button type="button" onClick={() => setOpen(!open)} className="text-left">
+          <h2 className="text-lg font-bold text-gray-800">Route sheet {open ? "▾" : "▸"}</h2>
+          <p className="text-xs text-gray-500">Upcoming installs grouped by install date · {count} job{count === 1 ? "" : "s"} on this board</p>
+        </button>
+        <button type="button" onClick={() => window.print()} className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+          Print route sheet
+        </button>
+      </div>
+      {open && (
+        <div className="mt-3 space-y-4">
+          {count === 0 && <p className="text-sm text-gray-400">No installation jobs on this board yet.</p>}
+          {groups.map((g) => (
+            <div key={g.day || "unscheduled"}>
+              <p className="border-b border-gray-200 pb-1 text-sm font-bold text-gray-700">
+                {g.day
+                  ? new Date(`${g.day}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+                  : "Unscheduled"}
+              </p>
+              <ul className="divide-y divide-gray-100">
+                {g.rows.map((wo) => {
+                  const addr = address(wo);
+                  const window_ = timeWindow(wo);
+                  return (
+                    <li key={wo.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800">
+                          {woNumber(wo) && <span className="mr-2 text-gray-500">{woNumber(wo)}</span>}
+                          {wo.title || "Work order"}
+                          {wo.client_name && wo.client_name !== wo.title ? ` — ${wo.client_name}` : ""}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {addr || "No install address on file"}
+                          {window_ ? ` · ${window_}` : ""}
+                        </p>
+                      </div>
+                      {addr ? (
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="shrink-0 rounded border border-blue-300 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                        >
+                          Directions
+                        </a>
+                      ) : (
+                        <span className="shrink-0 text-xs text-gray-300">No address</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function InstallationDeliver() {
   const [workOrders, setWorkOrders] = useState([]);
@@ -242,6 +328,8 @@ export default function InstallationDeliver() {
       )}
       <div className="w-full max-w-[95vw] mx-auto">
         <StageTasksPanel stage="installation" />
+
+        <InstallRouteSheet workOrders={workOrders} />
 
         <div className="clay-card">
           {isLoading ? (
