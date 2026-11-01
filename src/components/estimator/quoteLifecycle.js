@@ -72,7 +72,7 @@ export function resolveQuoteIssueMetadata({
 
 export function estimateQuoteExpiration(estimate = {}, validDaysFallback = 30) {
   const override = String(estimate?.quote_expiration_date || "").trim();
-  if (/^d{4}-d{2}-d{2}$/.test(override)) return override;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(override)) return override;
   return quoteExpirationDate(estimate?.quote_issue_date || localDateStamp(), estimate?.quote_valid_days ?? validDaysFallback);
 }
 
