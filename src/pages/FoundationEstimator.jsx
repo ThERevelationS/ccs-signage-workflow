@@ -41,6 +41,8 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import { convertFoundationToBrickStone } from "@/components/estimator/foundation/convertToBrickStone";
+import { createEstimateReadOnlyShareLink } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const blankItem = (type) => ({
@@ -102,9 +104,11 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
   const [showHelp, setShowHelp] = useState(false);
   const saveRef = useRef(null);
   const copyAttemptRef = useRef({ signature: "", key: "" });
+  const swapAttemptRef = useRef({ signature: "", key: "" });
 
   useEffect(() => {
     copyAttemptRef.current = { signature: "", key: "" };
+    swapAttemptRef.current = { signature: "", key: "" };
   }, [id]);
 
   useEffect(() => {
@@ -400,6 +404,31 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
     }
   };
 
+  // #77 — create a fresh Brick & Stone draft carrying the shared identity
+  // fields; the Foundation source is left untouched.
+  const handleSwapToBrickStone = async () => {
+    setSaving(true);
+    try {
+      const draft = await convertFoundationToBrickStone({ project, attemptRef: swapAttemptRef });
+      navigate(`/BrickStoneEstimator?id=${draft.id}`);
+    } catch (e) {
+      console.error(e); alert("Swap failed: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #88 — copy a read-only staff_view portal link for this estimate.
+  const handleShareLink = async () => {
+    try {
+      const url = await createEstimateReadOnlyShareLink({ estimateId });
+      await navigator.clipboard.writeText(url);
+      alert("Read-only link copied to clipboard:\n" + url);
+    } catch (e) {
+      console.error(e); alert("Share link failed: " + e.message);
+    }
+  };
+
   return (
     <div className="clay-scope min-h-full bg-gray-50">
       <div className="max-w-[1500px] mx-auto p-4">
@@ -424,6 +453,8 @@ export default function FoundationEstimator({ embedded = false, embeddedProjectI
           onSaveAsCopy={handleSaveAsCopy}
           onSaveAsTemplate={() => setTemplateMode("save")}
           onTemplates={() => setTemplateMode("load")}
+          onSwapToBrickStone={handleSwapToBrickStone}
+          onShareLink={estimateId ? handleShareLink : undefined}
           onHelp={() => setShowHelp((v) => !v)}
           onBack={embedded ? onClose : undefined}
         />
