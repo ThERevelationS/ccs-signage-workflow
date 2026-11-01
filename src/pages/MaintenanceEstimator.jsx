@@ -22,6 +22,9 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeMaintenanceProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -65,10 +68,13 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
   const [activeTab, setActiveTab] = useState(embedded ? "items" : "project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
   }, [editId]);
 
   const loadAll = useCallback(async () => {
@@ -270,6 +276,49 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
       setSaving(false);
     }
   };
+
+  // #78 — clone the current save payload into a brand-new Maintenance project.
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    try {
+      const copy = await saveModuleProjectCopy({
+        entity: MaintenanceProject,
+        payload: {
+          ...recalculated,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          site_address: project.site_address || estimateContext?.site_address || "",
+          customer_pricing: project.customer_pricing,
+          status: "calculated",
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "maintenance_project_copy",
+        baseName: project.project_name || "Maintenance",
+        label: "Maintenance project copy",
+      });
+      if (embedded) onSaved?.();
+      else window.location.href = `/MaintenanceEstimator?edit=${copy.id}`;
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildMaintenanceTemplateData = (p) => ({
+    items: p.items || [],
+    selected_equipment: p.selected_equipment || [],
+    personnel: p.personnel || [],
+    travel_miles_round_trip: p.travel_miles_round_trip,
+    supplies_percent_of_materials: p.supplies_percent_of_materials,
+    extra_supplies_cost: p.extra_supplies_cost,
+    markup_percent: p.markup_percent,
+    install_environment: p.install_environment,
+    notes: p.notes,
+  });
 
   if (loading) {
     return (
@@ -593,11 +642,32 @@ export default function MaintenanceEstimator({ embedded = false, embeddedProject
                 <Button onClick={saveProject} disabled={saving} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white mt-2">
                   {saving ? "Savingâ€¦" : (isEditing ? "Save Changes" : "Save Estimate")}
                 </Button>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <ModuleActionBar
+                    onTemplates={() => setTemplateMode("load")}
+                    onSaveAsTemplate={() => setTemplateMode("save")}
+                    onSaveAsCopy={handleSaveAsCopy}
+                    estimateId={estimateId}
+                    saving={saving}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="maintenance"
+        title="Maintenance"
+        buildTemplateData={buildMaintenanceTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
     </div>
   );
 }
