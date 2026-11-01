@@ -757,6 +757,9 @@ html[data-high-contrast] { --tw-ring-opacity: 0.9; }
 html[data-high-contrast] .text-slate-500, html[data-high-contrast] .text-gray-500 { color: #475569 !important; }
 html[data-high-contrast].dark .text-slate-400, html[data-high-contrast].dark .text-gray-400 { color: #cbd5e1 !important; }
 
+/* Native form controls (checkbox/radio/range/progress) pick up the accent */
+html { accent-color: var(--ccs-accent, #6366F1); }
+
 /* Accent: elements that opt in via .ccs-accented pick up the user's accent */
 .ccs-accented { accent-color: var(--ccs-accent, #6366F1); }
 .ccs-accent-ring:focus-visible { outline: 2px solid var(--ccs-accent, #6366F1); outline-offset: 1px; }
