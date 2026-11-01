@@ -1,0 +1,85 @@
+{
+  "name": "NotificationPreference",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Staff email these notification preferences belong to (lowercased AuthorizedEmail.email)"
+    },
+    "schema_version": {
+      "type": "number",
+      "default": 1,
+      "description": "Preference blob schema version for client-side migration"
+    },
+    "hidden_sections": {
+      "type": "array",
+      "description": "Attention-feed section keys this user turned off in the prefs popover",
+      "items": {
+        "type": "string"
+      }
+    },
+    "section_snoozed_until": {
+      "type": "object",
+      "description": "Map of feed section key -> epoch ms; snoozed sections hide until their timestamp passes"
+    },
+    "dismissed_feed_items": {
+      "type": "array",
+      "description": "Per-item feed overlays: {id, handled_at, snoozed_until} \u2014 handled items hide permanently, snoozed until their timestamp. Bounded to the newest 300.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sound_on": {
+      "type": "boolean",
+      "default": true,
+      "description": "Play the subtle notification beep when a new persisted notification arrives"
+    },
+    "digest_opt_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Receive the once-a-day in-app digest notification summarizing the attention feed"
+    },
+    "last_digest_date": {
+      "type": "string",
+      "description": "Client-local YYYY-MM-DD the last digest notification was recorded for \u2014 server skips a second digest the same day"
+    },
+    "last_evaluated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server-side throttle marker for evaluate_triggers \u2014 heavy detectors run at most once per interval per user"
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Deterministic first-create key (notifpref:<email>) so concurrent first writes dedupe"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "Idempotency request id of the most recent preference update"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
