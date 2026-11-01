@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MaintenanceActionRate, Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Clock, DollarSign, Info, MapPin, Package, Save, Wrench } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Info, MapPin, Package, RotateCcw, Save, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { createMaintenanceActionRateIfAbsent } from "@/components/signMaintenance/maintenanceActionRatePersistence";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
+import { MAINTENANCE_SETTINGS_DEFAULTS, resetValuesToDefaults } from "@/components/estimator/settings/moduleSettingDefaults";
 
 const LABOR_FIELDS = [
   { key: "maintenance_crew_lead_rate", label: "Crew Lead", suffix: "$/hr" },
@@ -104,6 +105,13 @@ export default function MaintenanceSettings() {
       next[index] = { ...next[index], ...patch };
       return next;
     });
+  };
+
+  // #83 — stage the managed keys that have documented calculator fallbacks
+  // back to their defaults (chained install_* overrides are left untouched).
+  const handleResetDefaults = () => {
+    setGlobalSettings((prev) => resetValuesToDefaults(prev, MAINTENANCE_SETTINGS_DEFAULTS, Object.keys(MAINTENANCE_SETTINGS_DEFAULTS)));
+    setMessage("Defaults staged — click Save to persist them.");
   };
 
   const saveAll = async () => {
@@ -257,7 +265,7 @@ export default function MaintenanceSettings() {
       <div className="max-w-[1280px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <div className="flex items-center gap-2"><SettingsTransferBar values={globalSettings} allowedKeys={Object.keys(globalSettings)} fileName="maintenance-settings" onImport={(imported) => setGlobalSettings((v) => ({ ...v, ...imported }))} /><Button onClick={saveAll} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={globalSettings} allowedKeys={Object.keys(globalSettings)} fileName="maintenance-settings" onImport={(imported) => setGlobalSettings((v) => ({ ...v, ...imported }))} /><Button variant="outline" onClick={handleResetDefaults} disabled={saving} className="h-[32px] text-[12px] font-semibold" title="Stage calculator fallback defaults — Save to persist"><RotateCcw className="w-4 h-4 mr-1.5" /> Reset to defaults</Button><Button onClick={saveAll} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3 flex items-center gap-3">
