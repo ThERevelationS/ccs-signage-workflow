@@ -137,7 +137,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
 
   // usePolling already pauses when document.hidden, skips open 429 breakers,
   // clears timers on unmount and only refreshes on focus when due (#330).
-  usePolling(load, 60000, { initialDelayMs: 2000 });
+  const { runNow } = usePolling(load, 60000, { initialDelayMs: 2000 });
 
   // Keep the sound flag live — the feed strip and the prefs tab both write it.
   useEffect(() => {
@@ -161,7 +161,7 @@ export default function AttentionBell({ compact = false, shellGlass = false }) {
           </span>
         )}
       </button>
-      <NotificationCenter open={open} onClose={() => setOpen(false)} />
+      <NotificationCenter open={open} onClose={() => setOpen(false)} onRefresh={runNow} />
       {/* Celebration/event toasts — new persisted notifications pop here on
           every page the bell renders on, including EstimatorQueues (#336). */}
       {toasts.length > 0 && (
