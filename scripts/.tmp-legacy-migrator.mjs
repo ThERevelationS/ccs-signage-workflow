@@ -10,10 +10,6 @@ var __esm = (fn, res) => function __init() {
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __export = (target, all3) => {
-  for (var name in all3)
-    __defProp(target, name, { get: all3[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -32,11526 +28,8 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // <define:import.meta.env>
-var define_import_meta_env_default;
 var init_define_import_meta_env = __esm({
   "<define:import.meta.env>"() {
-    define_import_meta_env_default = {};
-  }
-});
-
-// node_modules/axios/lib/helpers/bind.js
-function bind(fn, thisArg) {
-  return function wrap() {
-    return fn.apply(thisArg, arguments);
-  };
-}
-var init_bind = __esm({
-  "node_modules/axios/lib/helpers/bind.js"() {
-    "use strict";
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/axios/lib/utils.js
-function isBuffer(val) {
-  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor) && isFunction(val.constructor.isBuffer) && val.constructor.isBuffer(val);
-}
-function isArrayBufferView(val) {
-  let result;
-  if (typeof ArrayBuffer !== "undefined" && ArrayBuffer.isView) {
-    result = ArrayBuffer.isView(val);
-  } else {
-    result = val && val.buffer && isArrayBuffer(val.buffer);
-  }
-  return result;
-}
-function getGlobal() {
-  if (typeof globalThis !== "undefined") return globalThis;
-  if (typeof self !== "undefined") return self;
-  if (typeof window !== "undefined") return window;
-  if (typeof global !== "undefined") return global;
-  return {};
-}
-function forEach(obj, fn, { allOwnKeys = false } = {}) {
-  if (obj === null || typeof obj === "undefined") {
-    return;
-  }
-  let i;
-  let l;
-  if (typeof obj !== "object") {
-    obj = [obj];
-  }
-  if (isArray(obj)) {
-    for (i = 0, l = obj.length; i < l; i++) {
-      fn.call(null, obj[i], i, obj);
-    }
-  } else {
-    if (isBuffer(obj)) {
-      return;
-    }
-    const keys = allOwnKeys ? Object.getOwnPropertyNames(obj) : Object.keys(obj);
-    const len = keys.length;
-    let key;
-    for (i = 0; i < len; i++) {
-      key = keys[i];
-      fn.call(null, obj[key], key, obj);
-    }
-  }
-}
-function findKey(obj, key) {
-  if (isBuffer(obj)) {
-    return null;
-  }
-  key = key.toLowerCase();
-  const keys = Object.keys(obj);
-  let i = keys.length;
-  let _key;
-  while (i-- > 0) {
-    _key = keys[i];
-    if (key === _key.toLowerCase()) {
-      return _key;
-    }
-  }
-  return null;
-}
-function merge(...objs) {
-  const { caseless, skipUndefined } = isContextDefined(this) && this || {};
-  const result = {};
-  const assignValue = (val, key) => {
-    if (key === "__proto__" || key === "constructor" || key === "prototype") {
-      return;
-    }
-    const targetKey = caseless && typeof key === "string" && findKey(result, key) || key;
-    const existing = hasOwnProperty(result, targetKey) ? result[targetKey] : void 0;
-    if (isPlainObject(existing) && isPlainObject(val)) {
-      result[targetKey] = merge(existing, val);
-    } else if (isPlainObject(val)) {
-      result[targetKey] = merge({}, val);
-    } else if (isArray(val)) {
-      result[targetKey] = val.slice();
-    } else if (!skipUndefined || !isUndefined(val)) {
-      result[targetKey] = val;
-    }
-  };
-  for (let i = 0, l = objs.length; i < l; i++) {
-    const source = objs[i];
-    if (!source || isBuffer(source)) {
-      continue;
-    }
-    forEach(source, assignValue);
-    if (typeof source !== "object" || isArray(source)) {
-      continue;
-    }
-    const symbols = Object.getOwnPropertySymbols(source);
-    for (let j = 0; j < symbols.length; j++) {
-      const symbol = symbols[j];
-      if (propertyIsEnumerable.call(source, symbol)) {
-        assignValue(source[symbol], symbol);
-      }
-    }
-  }
-  return result;
-}
-function isSpecCompliantForm(thing) {
-  return !!(thing && isFunction(thing.append) && thing[toStringTag] === "FormData" && thing[iterator]);
-}
-var toString, getPrototypeOf, iterator, toStringTag, hasOwnProperty, isUnsafeObjectKey, isPrototypeBoundary, isSafeAndFullyMutable, hasOwnInPrototypeChain, getSafeProp, toSafeFlatObject, kindOf, kindOfTest, typeOfTest, isArray, isUndefined, isArrayBuffer, isString, isFunction, isNumber, isObject, isBoolean, isPlainObject, isEmptyObject, isDate, isFile, isReactNativeBlob, isReactNative, isBlob, isFileList, isSet, isStream, G, FormDataCtor, isFormData, isURLSearchParams, isReadableStream, isRequest, isResponse, isHeaders, trim, _global, isContextDefined, extend, stripBOM, inherits, toFlatObject, endsWith, toArray, isTypedArray, forEachEntry, matchAll, isHTMLForm, toCamelCase, propertyIsEnumerable, isRegExp, reduceDescriptors, freezeMethods, toObjectSet, noop, toFiniteNumber, toJSONObject, isAsyncFn, isThenable, _setImmediate, asap, isIterable, isSafeIterable, utils_default;
-var init_utils = __esm({
-  "node_modules/axios/lib/utils.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_bind();
-    ({ toString } = Object.prototype);
-    ({ getPrototypeOf } = Object);
-    ({ iterator, toStringTag } = Symbol);
-    hasOwnProperty = (({ hasOwnProperty: hasOwnProperty2 }) => (obj, prop) => hasOwnProperty2.call(obj, prop))(Object.prototype);
-    isUnsafeObjectKey = (prop) => typeof prop === "string" && (prop === "__proto__" || prop === "constructor" || prop === "prototype");
-    isPrototypeBoundary = (obj, prototype2, source) => obj === Object.prototype || !source && prototype2 === null;
-    isSafeAndFullyMutable = (obj) => {
-      if (!Object.isExtensible(obj)) {
-        return false;
-      }
-      const props = Object.getOwnPropertyNames(obj);
-      if (Object.getOwnPropertySymbols) {
-        props.push(...Object.getOwnPropertySymbols(obj));
-      }
-      return props.every((prop) => {
-        if (isUnsafeObjectKey(prop)) {
-          return false;
-        }
-        const descriptor = Object.getOwnPropertyDescriptor(obj, prop);
-        return !!descriptor && descriptor.configurable && descriptor.writable === true;
-      });
-    };
-    hasOwnInPrototypeChain = (thing, prop) => {
-      let obj = thing;
-      const seen = [];
-      while (obj != null) {
-        if (seen.indexOf(obj) !== -1) {
-          return false;
-        }
-        seen.push(obj);
-        const prototype2 = getPrototypeOf(obj);
-        if (isPrototypeBoundary(obj, prototype2, obj === thing)) {
-          return false;
-        }
-        if (hasOwnProperty(obj, prop)) {
-          return true;
-        }
-        obj = prototype2;
-      }
-      return false;
-    };
-    getSafeProp = (obj, prop) => obj != null && hasOwnInPrototypeChain(obj, prop) ? obj[prop] : void 0;
-    toSafeFlatObject = (thing) => {
-      if (thing == null || typeof thing !== "object" && typeof thing !== "function") {
-        return thing;
-      }
-      const sourcePrototype = getPrototypeOf(thing);
-      if (sourcePrototype === null && isSafeAndFullyMutable(thing)) {
-        return thing;
-      }
-      const result = /* @__PURE__ */ Object.create(null);
-      const merged = /* @__PURE__ */ Object.create(null);
-      const seen = [];
-      let current = thing;
-      while (current != null) {
-        if (seen.indexOf(current) !== -1) {
-          break;
-        }
-        seen.push(current);
-        const prototype2 = current === thing ? sourcePrototype : getPrototypeOf(current);
-        if (isPrototypeBoundary(current, prototype2, current === thing)) {
-          break;
-        }
-        const props = Object.getOwnPropertyNames(current);
-        if (Object.getOwnPropertySymbols) {
-          props.push(...Object.getOwnPropertySymbols(current));
-        }
-        for (const prop of props) {
-          if (isUnsafeObjectKey(prop)) {
-            continue;
-          }
-          if (!hasOwnProperty(merged, prop)) {
-            result[prop] = thing[prop];
-            merged[prop] = true;
-          }
-        }
-        current = prototype2;
-      }
-      return result;
-    };
-    kindOf = /* @__PURE__ */ ((cache2) => (thing) => {
-      const str = toString.call(thing);
-      return cache2[str] || (cache2[str] = str.slice(8, -1).toLowerCase());
-    })(/* @__PURE__ */ Object.create(null));
-    kindOfTest = (type) => {
-      type = type.toLowerCase();
-      return (thing) => kindOf(thing) === type;
-    };
-    typeOfTest = (type) => (thing) => typeof thing === type;
-    ({ isArray } = Array);
-    isUndefined = typeOfTest("undefined");
-    isArrayBuffer = kindOfTest("ArrayBuffer");
-    isString = typeOfTest("string");
-    isFunction = typeOfTest("function");
-    isNumber = typeOfTest("number");
-    isObject = (thing) => thing !== null && typeof thing === "object";
-    isBoolean = (thing) => thing === true || thing === false;
-    isPlainObject = (val) => {
-      if (!isObject(val)) {
-        return false;
-      }
-      const prototype2 = getPrototypeOf(val);
-      return (prototype2 === null || prototype2 === Object.prototype || getPrototypeOf(prototype2) === null) && // Treat safe own/inherited Symbol.toStringTag or Symbol.iterator members as
-      // evidence the value is tagged/iterable, while ignoring members reachable
-      // only through shared or terminal prototype boundaries.
-      !hasOwnInPrototypeChain(val, toStringTag) && !hasOwnInPrototypeChain(val, iterator);
-    };
-    isEmptyObject = (val) => {
-      if (!isObject(val) || isBuffer(val)) {
-        return false;
-      }
-      try {
-        return Object.keys(val).length === 0 && Object.getPrototypeOf(val) === Object.prototype;
-      } catch (e) {
-        return false;
-      }
-    };
-    isDate = kindOfTest("Date");
-    isFile = kindOfTest("File");
-    isReactNativeBlob = (value2) => {
-      return !!(value2 && typeof value2.uri !== "undefined");
-    };
-    isReactNative = (formData) => formData && typeof formData.getParts !== "undefined";
-    isBlob = kindOfTest("Blob");
-    isFileList = kindOfTest("FileList");
-    isSet = kindOfTest("Set");
-    isStream = (val) => isObject(val) && isFunction(val.pipe);
-    G = getGlobal();
-    FormDataCtor = typeof G.FormData !== "undefined" ? G.FormData : void 0;
-    isFormData = (thing) => {
-      if (!thing) return false;
-      if (FormDataCtor && thing instanceof FormDataCtor) return true;
-      const proto = getPrototypeOf(thing);
-      if (!proto || proto === Object.prototype) return false;
-      if (!isFunction(thing.append)) return false;
-      const kind = kindOf(thing);
-      return kind === "formdata" || // detect form-data instance
-      kind === "object" && isFunction(thing.toString) && thing.toString() === "[object FormData]";
-    };
-    isURLSearchParams = kindOfTest("URLSearchParams");
-    [isReadableStream, isRequest, isResponse, isHeaders] = [
-      "ReadableStream",
-      "Request",
-      "Response",
-      "Headers"
-    ].map(kindOfTest);
-    trim = (str) => {
-      return str.trim ? str.trim() : str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, "");
-    };
-    _global = (() => {
-      if (typeof globalThis !== "undefined") return globalThis;
-      return typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : global;
-    })();
-    isContextDefined = (context) => !isUndefined(context) && context !== _global;
-    extend = (a, b, thisArg, { allOwnKeys } = {}) => {
-      forEach(
-        b,
-        (val, key) => {
-          if (thisArg && isFunction(val)) {
-            Object.defineProperty(a, key, {
-              // Null-proto descriptor so a polluted Object.prototype.get cannot
-              // hijack defineProperty's accessor-vs-data resolution.
-              __proto__: null,
-              value: bind(val, thisArg),
-              writable: true,
-              enumerable: true,
-              configurable: true
-            });
-          } else {
-            Object.defineProperty(a, key, {
-              __proto__: null,
-              value: val,
-              writable: true,
-              enumerable: true,
-              configurable: true
-            });
-          }
-        },
-        { allOwnKeys }
-      );
-      return a;
-    };
-    stripBOM = (content) => {
-      if (content.charCodeAt(0) === 65279) {
-        content = content.slice(1);
-      }
-      return content;
-    };
-    inherits = (constructor, superConstructor, props, descriptors) => {
-      constructor.prototype = Object.create(superConstructor.prototype, descriptors);
-      Object.defineProperty(constructor.prototype, "constructor", {
-        __proto__: null,
-        value: constructor,
-        writable: true,
-        enumerable: false,
-        configurable: true
-      });
-      Object.defineProperty(constructor, "super", {
-        __proto__: null,
-        value: superConstructor.prototype
-      });
-      props && Object.assign(constructor.prototype, props);
-    };
-    toFlatObject = (sourceObj, destObj, filter2, propFilter) => {
-      let props;
-      let i;
-      let prop;
-      const merged = {};
-      destObj = destObj || {};
-      if (sourceObj == null) return destObj;
-      do {
-        props = Object.getOwnPropertyNames(sourceObj);
-        i = props.length;
-        while (i-- > 0) {
-          prop = props[i];
-          if ((!propFilter || propFilter(prop, sourceObj, destObj)) && !merged[prop]) {
-            destObj[prop] = sourceObj[prop];
-            merged[prop] = true;
-          }
-        }
-        sourceObj = filter2 !== false && getPrototypeOf(sourceObj);
-      } while (sourceObj && (!filter2 || filter2(sourceObj, destObj)) && sourceObj !== Object.prototype);
-      return destObj;
-    };
-    endsWith = (str, searchString, position) => {
-      str = String(str);
-      if (position === void 0 || position > str.length) {
-        position = str.length;
-      }
-      position -= searchString.length;
-      const lastIndex = str.indexOf(searchString, position);
-      return lastIndex !== -1 && lastIndex === position;
-    };
-    toArray = (thing) => {
-      if (!thing) return null;
-      if (isArray(thing)) return thing;
-      let i = thing.length;
-      if (!isNumber(i)) return null;
-      const arr = new Array(i);
-      while (i-- > 0) {
-        arr[i] = thing[i];
-      }
-      return arr;
-    };
-    isTypedArray = /* @__PURE__ */ ((TypedArray) => {
-      return (thing) => {
-        return TypedArray && thing instanceof TypedArray;
-      };
-    })(typeof Uint8Array !== "undefined" && getPrototypeOf(Uint8Array));
-    forEachEntry = (obj, fn) => {
-      const generator = obj && obj[iterator];
-      const _iterator = generator.call(obj);
-      let result;
-      while ((result = _iterator.next()) && !result.done) {
-        const pair = result.value;
-        fn.call(obj, pair[0], pair[1]);
-      }
-    };
-    matchAll = (regExp, str) => {
-      let matches;
-      const arr = [];
-      while ((matches = regExp.exec(str)) !== null) {
-        arr.push(matches);
-      }
-      return arr;
-    };
-    isHTMLForm = kindOfTest("HTMLFormElement");
-    toCamelCase = (str) => {
-      return str.toLowerCase().replace(/[-_\s]([a-z\d])(\w*)/g, function replacer(m, p1, p2) {
-        return p1.toUpperCase() + p2;
-      });
-    };
-    ({ propertyIsEnumerable } = Object.prototype);
-    isRegExp = kindOfTest("RegExp");
-    reduceDescriptors = (obj, reducer) => {
-      const descriptors = Object.getOwnPropertyDescriptors(obj);
-      const reducedDescriptors = {};
-      forEach(descriptors, (descriptor, name) => {
-        let ret;
-        if ((ret = reducer(descriptor, name, obj)) !== false) {
-          reducedDescriptors[name] = ret || descriptor;
-        }
-      });
-      Object.defineProperties(obj, reducedDescriptors);
-    };
-    freezeMethods = (obj) => {
-      reduceDescriptors(obj, (descriptor, name) => {
-        if (isFunction(obj) && ["arguments", "caller", "callee"].includes(name)) {
-          return false;
-        }
-        const value2 = obj[name];
-        if (!isFunction(value2)) return;
-        descriptor.enumerable = false;
-        if ("writable" in descriptor) {
-          descriptor.writable = false;
-          return;
-        }
-        if (!descriptor.set) {
-          descriptor.set = () => {
-            throw Error("Can not rewrite read-only method '" + name + "'");
-          };
-        }
-      });
-    };
-    toObjectSet = (arrayOrString, delimiter) => {
-      const obj = {};
-      const define = (arr) => {
-        arr.forEach((value2) => {
-          obj[value2] = true;
-        });
-      };
-      isArray(arrayOrString) ? define(arrayOrString) : define(String(arrayOrString).split(delimiter));
-      return obj;
-    };
-    noop = () => {
-    };
-    toFiniteNumber = (value2, defaultValue) => {
-      return value2 != null && Number.isFinite(value2 = +value2) ? value2 : defaultValue;
-    };
-    toJSONObject = (obj) => {
-      const visited = /* @__PURE__ */ new WeakSet();
-      const visit = (source) => {
-        if (isObject(source)) {
-          if (visited.has(source)) {
-            return;
-          }
-          if (isBuffer(source)) {
-            return source;
-          }
-          if (!("toJSON" in source)) {
-            visited.add(source);
-            let target;
-            if (isSet(source)) {
-              target = [];
-              for (const value2 of source) {
-                const reducedValue = visit(value2);
-                !isUndefined(reducedValue) && target.push(reducedValue);
-              }
-            } else {
-              target = isArray(source) ? [] : {};
-              forEach(source, (value2, key) => {
-                const reducedValue = visit(value2);
-                !isUndefined(reducedValue) && (target[key] = reducedValue);
-              });
-            }
-            visited.delete(source);
-            return target;
-          }
-        }
-        return source;
-      };
-      return visit(obj);
-    };
-    isAsyncFn = kindOfTest("AsyncFunction");
-    isThenable = (thing) => thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);
-    _setImmediate = ((setImmediateSupported, postMessageSupported) => {
-      if (setImmediateSupported) {
-        return setImmediate;
-      }
-      return postMessageSupported ? ((token2, callbacks) => {
-        _global.addEventListener(
-          "message",
-          ({ source, data }) => {
-            if (source === _global && data === token2) {
-              callbacks.length && callbacks.shift()();
-            }
-          },
-          false
-        );
-        return (cb) => {
-          callbacks.push(cb);
-          _global.postMessage(token2, "*");
-        };
-      })(`axios@${Math.random()}`, []) : (cb) => setTimeout(cb);
-    })(typeof setImmediate === "function", isFunction(_global.postMessage));
-    asap = typeof queueMicrotask !== "undefined" ? queueMicrotask.bind(_global) : typeof process !== "undefined" && process.nextTick || _setImmediate;
-    isIterable = (thing) => thing != null && isFunction(thing[iterator]);
-    isSafeIterable = (thing) => thing != null && hasOwnInPrototypeChain(thing, iterator) && isIterable(thing);
-    utils_default = {
-      isArray,
-      isArrayBuffer,
-      isBuffer,
-      isFormData,
-      isArrayBufferView,
-      isString,
-      isNumber,
-      isBoolean,
-      isObject,
-      isPlainObject,
-      isEmptyObject,
-      isReadableStream,
-      isRequest,
-      isResponse,
-      isHeaders,
-      isUndefined,
-      isDate,
-      isFile,
-      isReactNativeBlob,
-      isReactNative,
-      isBlob,
-      isRegExp,
-      isFunction,
-      isStream,
-      isURLSearchParams,
-      isTypedArray,
-      isFileList,
-      forEach,
-      merge,
-      extend,
-      trim,
-      stripBOM,
-      inherits,
-      toFlatObject,
-      kindOf,
-      kindOfTest,
-      endsWith,
-      toArray,
-      forEachEntry,
-      matchAll,
-      isHTMLForm,
-      hasOwnProperty,
-      hasOwnProp: hasOwnProperty,
-      // an alias to avoid ESLint no-prototype-builtins detection
-      hasOwnInPrototypeChain,
-      getSafeProp,
-      toSafeFlatObject,
-      reduceDescriptors,
-      freezeMethods,
-      toObjectSet,
-      toCamelCase,
-      noop,
-      toFiniteNumber,
-      findKey,
-      global: _global,
-      isContextDefined,
-      isSpecCompliantForm,
-      toJSONObject,
-      isAsyncFn,
-      isThenable,
-      setImmediate: _setImmediate,
-      asap,
-      isIterable,
-      isSafeIterable
-    };
-  }
-});
-
-// node_modules/axios/lib/helpers/parseHeaders.js
-var ignoreDuplicateOf, parseHeaders_default;
-var init_parseHeaders = __esm({
-  "node_modules/axios/lib/helpers/parseHeaders.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    ignoreDuplicateOf = utils_default.toObjectSet([
-      "age",
-      "authorization",
-      "content-length",
-      "content-type",
-      "etag",
-      "expires",
-      "from",
-      "host",
-      "if-modified-since",
-      "if-unmodified-since",
-      "last-modified",
-      "location",
-      "max-forwards",
-      "proxy-authorization",
-      "referer",
-      "retry-after",
-      "user-agent"
-    ]);
-    parseHeaders_default = (rawHeaders) => {
-      const parsed = {};
-      let key;
-      let val;
-      let i;
-      rawHeaders && rawHeaders.split("\n").forEach(function parser(line) {
-        i = line.indexOf(":");
-        key = line.substring(0, i).trim().toLowerCase();
-        val = line.substring(i + 1).trim();
-        const hasKey = utils_default.hasOwnProp(parsed, key);
-        if (!key || hasKey && utils_default.hasOwnProp(ignoreDuplicateOf, key)) {
-          return;
-        }
-        if (key === "set-cookie") {
-          if (hasKey) {
-            parsed[key].push(val);
-          } else {
-            parsed[key] = [val];
-          }
-        } else {
-          parsed[key] = hasKey ? parsed[key] + ", " + val : val;
-        }
-      });
-      return parsed;
-    };
-  }
-});
-
-// node_modules/axios/lib/helpers/sanitizeHeaderValue.js
-function trimSPorHTAB(str) {
-  let start = 0;
-  let end = str.length;
-  while (start < end) {
-    const code = str.charCodeAt(start);
-    if (code !== 9 && code !== 32) {
-      break;
-    }
-    start += 1;
-  }
-  while (end > start) {
-    const code = str.charCodeAt(end - 1);
-    if (code !== 9 && code !== 32) {
-      break;
-    }
-    end -= 1;
-  }
-  return start === 0 && end === str.length ? str : str.slice(start, end);
-}
-function sanitizeValue(value2, invalidChars) {
-  if (utils_default.isArray(value2)) {
-    return value2.map((item) => sanitizeValue(item, invalidChars));
-  }
-  return trimSPorHTAB(String(value2).replace(invalidChars, ""));
-}
-function toByteStringHeaderObject(headers) {
-  const byteStringHeaders = /* @__PURE__ */ Object.create(null);
-  utils_default.forEach(headers.toJSON(), (value2, header) => {
-    byteStringHeaders[header] = sanitizeByteStringHeaderValue(value2);
-  });
-  return byteStringHeaders;
-}
-var INVALID_UNICODE_HEADER_VALUE_CHARS, INVALID_BYTE_STRING_HEADER_VALUE_CHARS, sanitizeHeaderValue, sanitizeByteStringHeaderValue;
-var init_sanitizeHeaderValue = __esm({
-  "node_modules/axios/lib/helpers/sanitizeHeaderValue.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    INVALID_UNICODE_HEADER_VALUE_CHARS = new RegExp("[\\u0000-\\u0008\\u000a-\\u001f\\u007f]+", "g");
-    INVALID_BYTE_STRING_HEADER_VALUE_CHARS = new RegExp("[^\\u0009\\u0020-\\u007e\\u0080-\\u00ff]+", "g");
-    sanitizeHeaderValue = (value2) => sanitizeValue(value2, INVALID_UNICODE_HEADER_VALUE_CHARS);
-    sanitizeByteStringHeaderValue = (value2) => sanitizeValue(value2, INVALID_BYTE_STRING_HEADER_VALUE_CHARS);
-  }
-});
-
-// node_modules/axios/lib/core/AxiosHeaders.js
-function normalizeHeader(header) {
-  return header && String(header).trim().toLowerCase();
-}
-function normalizeValue(value2) {
-  if (value2 === false || value2 == null) {
-    return value2;
-  }
-  return utils_default.isArray(value2) ? value2.map(normalizeValue) : sanitizeHeaderValue(String(value2));
-}
-function parseTokens(str) {
-  const tokens = /* @__PURE__ */ Object.create(null);
-  const tokensRE = /([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g;
-  let match;
-  while (match = tokensRE.exec(str)) {
-    tokens[match[1]] = match[2];
-  }
-  return tokens;
-}
-function trimOWS(value2) {
-  let start = 0;
-  let end = value2.length;
-  while (start < end) {
-    const code = value2.charCodeAt(start);
-    if (code !== 9 && code !== 32) {
-      break;
-    }
-    start += 1;
-  }
-  while (end > start) {
-    const code = value2.charCodeAt(end - 1);
-    if (code !== 9 && code !== 32) {
-      break;
-    }
-    end -= 1;
-  }
-  return start === 0 && end === value2.length ? value2 : value2.slice(start, end);
-}
-function decodeQuotedString(value2) {
-  const last = value2.length - 1;
-  if (last < 1 || value2.charCodeAt(0) !== 34 || value2.charCodeAt(last) !== 34) {
-    return value2;
-  }
-  let decoded = "";
-  for (let i = 1; i < last; i++) {
-    const code = value2.charCodeAt(i);
-    if (code === 34) {
-      return value2;
-    }
-    if (code === 92) {
-      i += 1;
-      if (i >= last) {
-        return value2;
-      }
-    }
-    decoded += value2[i];
-  }
-  return decoded;
-}
-function parseParameters(value2) {
-  const parameters = /* @__PURE__ */ Object.create(null);
-  const str = String(value2);
-  let start = 0;
-  let quoted = false;
-  let escaped = false;
-  function parseParameter(end) {
-    const part = trimOWS(str.slice(start, end));
-    const equals = part.indexOf("=");
-    if (equals < 1) {
-      return;
-    }
-    const name = trimOWS(part.slice(0, equals));
-    if (!parameterNameRE.test(name)) {
-      return;
-    }
-    const normalizedName = name.toLowerCase();
-    if (normalizedName === "__proto__" || normalizedName === "constructor" || normalizedName === "prototype") {
-      return;
-    }
-    const parameterValue = trimOWS(part.slice(equals + 1));
-    parameters[normalizedName] = decodeQuotedString(parameterValue);
-  }
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (quoted) {
-      if (escaped) {
-        escaped = false;
-      } else if (code === 92) {
-        escaped = true;
-      } else if (code === 34) {
-        quoted = false;
-      }
-    } else if (code === 34) {
-      quoted = true;
-    } else if (code === 44 || code === 59) {
-      parseParameter(i);
-      start = i + 1;
-    }
-  }
-  parseParameter(str.length);
-  return parameters;
-}
-function matchHeaderValue(context, value2, header, filter2, isHeaderNameFilter) {
-  if (utils_default.isFunction(filter2)) {
-    return filter2.call(this, value2, header);
-  }
-  if (isHeaderNameFilter) {
-    value2 = header;
-  }
-  if (!utils_default.isString(value2)) return;
-  if (utils_default.isString(filter2)) {
-    return value2.indexOf(filter2) !== -1;
-  }
-  if (utils_default.isRegExp(filter2)) {
-    return filter2.test(value2);
-  }
-}
-function formatHeader(header) {
-  return header.trim().toLowerCase().replace(/([a-z\d])(\w*)/g, (w, char, str) => {
-    return char.toUpperCase() + str;
-  });
-}
-function buildAccessors(obj, header) {
-  const accessorName = utils_default.toCamelCase(" " + header);
-  ["get", "set", "has"].forEach((methodName) => {
-    Object.defineProperty(obj, methodName + accessorName, {
-      // Null-proto descriptor so a polluted Object.prototype.get cannot turn
-      // this data descriptor into an accessor descriptor on the way in.
-      __proto__: null,
-      value: function(arg1, arg2, arg3) {
-        return this[methodName].call(this, header, arg1, arg2, arg3);
-      },
-      configurable: true
-    });
-  });
-}
-var $internals, parameterNameRE, isValidHeaderName, AxiosHeaders, AxiosHeaders_default;
-var init_AxiosHeaders = __esm({
-  "node_modules/axios/lib/core/AxiosHeaders.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_parseHeaders();
-    init_sanitizeHeaderValue();
-    $internals = Symbol("internals");
-    parameterNameRE = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
-    isValidHeaderName = (str) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(str.trim());
-    AxiosHeaders = class {
-      constructor(headers) {
-        headers && this.set(headers);
-      }
-      set(header, valueOrRewrite, rewrite) {
-        const self2 = this;
-        function setHeader(_value, _header, _rewrite) {
-          const lHeader = normalizeHeader(_header);
-          if (!lHeader) {
-            return;
-          }
-          const key = utils_default.findKey(self2, lHeader);
-          if (!key || self2[key] === void 0 || _rewrite === true || _rewrite === void 0 && self2[key] !== false) {
-            self2[key || _header] = normalizeValue(_value);
-          }
-        }
-        const setHeaders = (headers, _rewrite) => utils_default.forEach(headers, (_value, _header) => setHeader(_value, _header, _rewrite));
-        if (utils_default.isPlainObject(header) || header instanceof this.constructor) {
-          setHeaders(header, valueOrRewrite);
-        } else if (utils_default.isString(header) && (header = header.trim()) && !isValidHeaderName(header)) {
-          setHeaders(parseHeaders_default(header), valueOrRewrite);
-        } else if (utils_default.isObject(header) && utils_default.isSafeIterable(header)) {
-          let obj = /* @__PURE__ */ Object.create(null), dest, key;
-          for (const entry of header) {
-            if (!utils_default.isArray(entry)) {
-              throw new TypeError("Object iterator must return a key-value pair");
-            }
-            key = entry[0];
-            if (utils_default.hasOwnProp(obj, key)) {
-              dest = obj[key];
-              obj[key] = utils_default.isArray(dest) ? [...dest, entry[1]] : [dest, entry[1]];
-            } else {
-              obj[key] = entry[1];
-            }
-          }
-          setHeaders(obj, valueOrRewrite);
-        } else {
-          header != null && setHeader(valueOrRewrite, header, rewrite);
-        }
-        return this;
-      }
-      get(header, parser) {
-        header = normalizeHeader(header);
-        if (header) {
-          const key = utils_default.findKey(this, header);
-          if (key) {
-            const value2 = this[key];
-            if (!parser) {
-              return value2;
-            }
-            if (parser === true) {
-              return parseTokens(value2);
-            }
-            if (utils_default.isFunction(parser)) {
-              return parser.call(this, value2, key);
-            }
-            if (utils_default.isRegExp(parser)) {
-              return parser.exec(value2);
-            }
-            throw new TypeError("parser must be boolean|regexp|function");
-          }
-        }
-      }
-      has(header, matcher) {
-        header = normalizeHeader(header);
-        if (header) {
-          const key = utils_default.findKey(this, header);
-          return !!(key && this[key] !== void 0 && (!matcher || matchHeaderValue(this, this[key], key, matcher)));
-        }
-        return false;
-      }
-      delete(header, matcher) {
-        const self2 = this;
-        let deleted = false;
-        function deleteHeader(_header) {
-          _header = normalizeHeader(_header);
-          if (_header) {
-            const key = utils_default.findKey(self2, _header);
-            if (key && (!matcher || matchHeaderValue(self2, self2[key], key, matcher))) {
-              delete self2[key];
-              deleted = true;
-            }
-          }
-        }
-        if (utils_default.isArray(header)) {
-          header.forEach(deleteHeader);
-        } else {
-          deleteHeader(header);
-        }
-        return deleted;
-      }
-      clear(matcher) {
-        const keys = Object.keys(this);
-        let i = keys.length;
-        let deleted = false;
-        while (i--) {
-          const key = keys[i];
-          if (!matcher || matchHeaderValue(this, this[key], key, matcher, true)) {
-            delete this[key];
-            deleted = true;
-          }
-        }
-        return deleted;
-      }
-      normalize(format) {
-        const self2 = this;
-        const headers = {};
-        utils_default.forEach(this, (value2, header) => {
-          const key = utils_default.findKey(headers, header);
-          if (key) {
-            self2[key] = normalizeValue(value2);
-            delete self2[header];
-            return;
-          }
-          const normalized = format ? formatHeader(header) : String(header).trim();
-          if (normalized !== header) {
-            delete self2[header];
-          }
-          self2[normalized] = normalizeValue(value2);
-          headers[normalized] = true;
-        });
-        return this;
-      }
-      concat(...targets) {
-        return this.constructor.concat(this, ...targets);
-      }
-      toJSON(asStrings) {
-        const obj = /* @__PURE__ */ Object.create(null);
-        utils_default.forEach(this, (value2, header) => {
-          value2 != null && value2 !== false && (obj[header] = asStrings && utils_default.isArray(value2) ? value2.join(", ") : value2);
-        });
-        return obj;
-      }
-      [Symbol.iterator]() {
-        return Object.entries(this.toJSON())[Symbol.iterator]();
-      }
-      toString() {
-        return Object.entries(this.toJSON()).map(([header, value2]) => header + ": " + value2).join("\n");
-      }
-      getSetCookie() {
-        const value2 = this.get("set-cookie");
-        return utils_default.isArray(value2) ? value2 : value2 == null || value2 === false ? [] : [value2];
-      }
-      get [Symbol.toStringTag]() {
-        return "AxiosHeaders";
-      }
-      static from(thing) {
-        return thing instanceof this ? thing : new this(thing);
-      }
-      static parseParameters(value2) {
-        return parseParameters(value2);
-      }
-      static concat(first, ...targets) {
-        const computed = new this(first);
-        targets.forEach((target) => computed.set(target));
-        return computed;
-      }
-      static accessor(header) {
-        const internals = this[$internals] = this[$internals] = {
-          accessors: {}
-        };
-        const accessors = internals.accessors;
-        const prototype2 = this.prototype;
-        function defineAccessor(_header) {
-          const lHeader = normalizeHeader(_header);
-          if (!accessors[lHeader]) {
-            buildAccessors(prototype2, _header);
-            accessors[lHeader] = true;
-          }
-        }
-        utils_default.isArray(header) ? header.forEach(defineAccessor) : defineAccessor(header);
-        return this;
-      }
-    };
-    AxiosHeaders.accessor([
-      "Content-Type",
-      "Content-Length",
-      "Accept",
-      "Accept-Encoding",
-      "User-Agent",
-      "Authorization"
-    ]);
-    utils_default.reduceDescriptors(AxiosHeaders.prototype, ({ value: value2 }, key) => {
-      let mapped = key[0].toUpperCase() + key.slice(1);
-      return {
-        get: () => value2,
-        set(headerValue) {
-          this[mapped] = headerValue;
-        }
-      };
-    });
-    utils_default.freezeMethods(AxiosHeaders);
-    AxiosHeaders_default = AxiosHeaders;
-  }
-});
-
-// node_modules/axios/lib/core/AxiosError.js
-function hasOwnOrPrototypeToJSON(source) {
-  if (utils_default.hasOwnProp(source, "toJSON")) {
-    return true;
-  }
-  let prototype2 = Object.getPrototypeOf(source);
-  while (prototype2 && prototype2 !== Object.prototype) {
-    if (utils_default.hasOwnProp(prototype2, "toJSON")) {
-      return true;
-    }
-    prototype2 = Object.getPrototypeOf(prototype2);
-  }
-  return false;
-}
-function redactConfig(config, redactKeys) {
-  const lowerKeys = new Set(redactKeys.map((k) => String(k).toLowerCase()));
-  const seen = [];
-  const visit = (source) => {
-    if (source === null || typeof source !== "object") return source;
-    if (utils_default.isBuffer(source)) return source;
-    if (seen.indexOf(source) !== -1) return void 0;
-    if (source instanceof AxiosHeaders_default) {
-      source = source.toJSON();
-    }
-    seen.push(source);
-    let result;
-    if (utils_default.isArray(source)) {
-      result = [];
-      source.forEach((v, i) => {
-        const reducedValue = visit(v);
-        if (!utils_default.isUndefined(reducedValue)) {
-          result[i] = reducedValue;
-        }
-      });
-    } else {
-      if (!utils_default.isPlainObject(source) && hasOwnOrPrototypeToJSON(source)) {
-        seen.pop();
-        return source;
-      }
-      result = /* @__PURE__ */ Object.create(null);
-      for (const [key, value2] of Object.entries(source)) {
-        const reducedValue = lowerKeys.has(key.toLowerCase()) ? REDACTED : visit(value2);
-        if (!utils_default.isUndefined(reducedValue)) {
-          result[key] = reducedValue;
-        }
-      }
-    }
-    seen.pop();
-    return result;
-  };
-  return visit(config);
-}
-function stringifySafely(value2) {
-  try {
-    return String(value2);
-  } catch (err) {
-    return "";
-  }
-}
-function aggregateErrorMessage(error) {
-  const message = error.errors.map((entry) => {
-    try {
-      return entry && entry.message ? stringifySafely(entry.message) : stringifySafely(entry);
-    } catch (err) {
-      return "";
-    }
-  }).filter(Boolean).join("; ");
-  return message || error.name || "AggregateError";
-}
-var REDACTED, AxiosError, AxiosError_default;
-var init_AxiosError = __esm({
-  "node_modules/axios/lib/core/AxiosError.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_AxiosHeaders();
-    REDACTED = "[REDACTED ****]";
-    AxiosError = class _AxiosError extends Error {
-      static from(error, code, config, request, response, customProps) {
-        let message = error.message;
-        if (!message && utils_default.isArray(error.errors) && error.errors.length) {
-          message = aggregateErrorMessage(error);
-        }
-        const axiosError = new _AxiosError(message, code || error.code, config, request, response);
-        Object.defineProperty(axiosError, "cause", {
-          __proto__: null,
-          value: error,
-          writable: true,
-          enumerable: false,
-          configurable: true
-        });
-        axiosError.name = error.name;
-        if (error.status != null && axiosError.status == null) {
-          axiosError.status = error.status;
-        }
-        customProps && Object.assign(axiosError, customProps);
-        return axiosError;
-      }
-      /**
-       * Create an Error with the specified message, config, error code, request and response.
-       *
-       * @param {string} message The error message.
-       * @param {string} [code] The error code (for example, 'ECONNABORTED').
-       * @param {Object} [config] The config.
-       * @param {Object} [request] The request.
-       * @param {Object} [response] The response.
-       *
-       * @returns {Error} The created error.
-       */
-      constructor(message, code, config, request, response) {
-        super(message);
-        Object.defineProperty(this, "message", {
-          // Null-proto descriptor so a polluted Object.prototype.get cannot turn
-          // this data descriptor into an accessor descriptor on the way in.
-          __proto__: null,
-          value: message,
-          enumerable: true,
-          writable: true,
-          configurable: true
-        });
-        this.name = "AxiosError";
-        this.isAxiosError = true;
-        code && (this.code = code);
-        config && (this.config = config);
-        request && (this.request = request);
-        if (response) {
-          this.response = response;
-          this.status = response.status;
-        }
-      }
-      toJSON() {
-        const config = this.config;
-        const redactKeys = config && utils_default.hasOwnProp(config, "redact") ? config.redact : void 0;
-        const serializedConfig = utils_default.isArray(redactKeys) && redactKeys.length > 0 ? redactConfig(config, redactKeys) : utils_default.toJSONObject(config);
-        return {
-          // Standard
-          message: this.message,
-          name: this.name,
-          // Microsoft
-          description: this.description,
-          number: this.number,
-          // Mozilla
-          fileName: this.fileName,
-          lineNumber: this.lineNumber,
-          columnNumber: this.columnNumber,
-          stack: this.stack,
-          // Axios
-          config: serializedConfig,
-          code: this.code,
-          status: this.status
-        };
-      }
-    };
-    AxiosError.ERR_BAD_OPTION_VALUE = "ERR_BAD_OPTION_VALUE";
-    AxiosError.ERR_BAD_OPTION = "ERR_BAD_OPTION";
-    AxiosError.ECONNABORTED = "ECONNABORTED";
-    AxiosError.ETIMEDOUT = "ETIMEDOUT";
-    AxiosError.ECONNREFUSED = "ECONNREFUSED";
-    AxiosError.ERR_NETWORK = "ERR_NETWORK";
-    AxiosError.ERR_FR_TOO_MANY_REDIRECTS = "ERR_FR_TOO_MANY_REDIRECTS";
-    AxiosError.ERR_DEPRECATED = "ERR_DEPRECATED";
-    AxiosError.ERR_BAD_RESPONSE = "ERR_BAD_RESPONSE";
-    AxiosError.ERR_BAD_REQUEST = "ERR_BAD_REQUEST";
-    AxiosError.ERR_CANCELED = "ERR_CANCELED";
-    AxiosError.ERR_NOT_SUPPORT = "ERR_NOT_SUPPORT";
-    AxiosError.ERR_INVALID_URL = "ERR_INVALID_URL";
-    AxiosError.ERR_FORM_DATA_DEPTH_EXCEEDED = "ERR_FORM_DATA_DEPTH_EXCEEDED";
-    AxiosError_default = AxiosError;
-  }
-});
-
-// node_modules/axios/lib/helpers/null.js
-var null_default;
-var init_null = __esm({
-  "node_modules/axios/lib/helpers/null.js"() {
-    init_define_import_meta_env();
-    null_default = null;
-  }
-});
-
-// node_modules/axios/lib/helpers/toFormData.js
-function isVisitable(thing) {
-  return utils_default.isPlainObject(thing) || utils_default.isArray(thing);
-}
-function removeBrackets(key) {
-  return utils_default.endsWith(key, "[]") ? key.slice(0, -2) : key;
-}
-function renderKey(path, key, dots) {
-  if (!path) return key;
-  return path.concat(key).map(function each(token2, i) {
-    token2 = removeBrackets(token2);
-    return !dots && i ? "[" + token2 + "]" : token2;
-  }).join(dots ? "." : "");
-}
-function isFlatArray(arr) {
-  return utils_default.isArray(arr) && !arr.some(isVisitable);
-}
-function toFormData(obj, formData, options) {
-  if (!utils_default.isObject(obj)) {
-    throw new TypeError("target must be an object");
-  }
-  formData = formData || new (null_default || FormData)();
-  const option = (name, fallback) => {
-    const value2 = utils_default.getSafeProp(options, name);
-    return utils_default.isUndefined(value2) ? fallback : value2;
-  };
-  const metaTokens = option("metaTokens", true);
-  const visitor = option("visitor") || defaultVisitor;
-  const dots = option("dots", false);
-  const indexes = option("indexes", false);
-  const _Blob = option("Blob") || typeof Blob !== "undefined" && Blob;
-  const maxDepth = option("maxDepth", DEFAULT_FORM_DATA_MAX_DEPTH);
-  const useBlob = _Blob && utils_default.isSpecCompliantForm(formData);
-  const stack = [];
-  if (!utils_default.isFunction(visitor)) {
-    throw new TypeError("visitor must be a function");
-  }
-  function convertValue(value2) {
-    if (value2 === null) return "";
-    if (utils_default.isDate(value2)) {
-      return value2.toISOString();
-    }
-    if (utils_default.isBoolean(value2)) {
-      return value2.toString();
-    }
-    if (!useBlob && utils_default.isBlob(value2)) {
-      throw new AxiosError_default("Blob is not supported. Use a Buffer instead.");
-    }
-    if (utils_default.isArrayBuffer(value2) || utils_default.isTypedArray(value2)) {
-      if (useBlob && typeof _Blob === "function") {
-        return new _Blob([value2]);
-      }
-      if (null_default && null_default.isBufferAvailable()) {
-        return null_default.from(value2);
-      }
-      throw new AxiosError_default(
-        "Blob is not supported. Use a Buffer instead.",
-        AxiosError_default.ERR_NOT_SUPPORT
-      );
-    }
-    return value2;
-  }
-  function throwIfMaxDepthExceeded(depth) {
-    if (depth > maxDepth) {
-      throw new AxiosError_default(
-        "Object is too deeply nested (" + depth + " levels). Max depth: " + maxDepth,
-        AxiosError_default.ERR_FORM_DATA_DEPTH_EXCEEDED
-      );
-    }
-  }
-  function stringifyWithDepthLimit(value2, depth) {
-    if (maxDepth === Infinity) {
-      return JSON.stringify(value2);
-    }
-    const ancestors = [];
-    return JSON.stringify(value2, function limitDepth(_key, currentValue) {
-      if (!utils_default.isObject(currentValue)) {
-        return currentValue;
-      }
-      while (ancestors.length && ancestors[ancestors.length - 1] !== this) {
-        ancestors.pop();
-      }
-      ancestors.push(currentValue);
-      throwIfMaxDepthExceeded(depth + ancestors.length - 1);
-      return currentValue;
-    });
-  }
-  function defaultVisitor(value2, key, path) {
-    let arr = value2;
-    if (utils_default.isReactNative(formData) && utils_default.isReactNativeBlob(value2)) {
-      formData.append(renderKey(path, key, dots), convertValue(value2));
-      return false;
-    }
-    if (value2 && !path && typeof value2 === "object") {
-      if (utils_default.endsWith(key, "{}")) {
-        key = metaTokens ? key : key.slice(0, -2);
-        value2 = stringifyWithDepthLimit(value2, 1);
-      } else if (utils_default.isArray(value2) && isFlatArray(value2) || (utils_default.isFileList(value2) || utils_default.endsWith(key, "[]")) && (arr = utils_default.toArray(value2))) {
-        key = removeBrackets(key);
-        arr.forEach(function each(el, index) {
-          !(utils_default.isUndefined(el) || el === null) && formData.append(
-            // eslint-disable-next-line no-nested-ternary
-            indexes === true ? renderKey([key], index, dots) : indexes === null ? key : key + "[]",
-            convertValue(el)
-          );
-        });
-        return false;
-      }
-    }
-    if (isVisitable(value2)) {
-      return true;
-    }
-    formData.append(renderKey(path, key, dots), convertValue(value2));
-    return false;
-  }
-  const exposedHelpers = Object.assign(predicates, {
-    defaultVisitor,
-    convertValue,
-    isVisitable
-  });
-  function build(value2, path, depth = 0) {
-    if (utils_default.isUndefined(value2)) return;
-    throwIfMaxDepthExceeded(depth);
-    if (stack.indexOf(value2) !== -1) {
-      throw new Error("Circular reference detected in " + path.join("."));
-    }
-    stack.push(value2);
-    utils_default.forEach(value2, function each(el, key) {
-      const result = !(utils_default.isUndefined(el) || el === null) && visitor.call(formData, el, utils_default.isString(key) ? key.trim() : key, path, exposedHelpers);
-      if (result === true) {
-        build(el, path ? path.concat(key) : [key], depth + 1);
-      }
-    });
-    stack.pop();
-  }
-  if (!utils_default.isObject(obj)) {
-    throw new TypeError("data must be an object");
-  }
-  build(obj);
-  return formData;
-}
-var DEFAULT_FORM_DATA_MAX_DEPTH, predicates, toFormData_default;
-var init_toFormData = __esm({
-  "node_modules/axios/lib/helpers/toFormData.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_AxiosError();
-    init_null();
-    init_null();
-    DEFAULT_FORM_DATA_MAX_DEPTH = 100;
-    predicates = utils_default.toFlatObject(utils_default, {}, null, function filter(prop) {
-      return /^is[A-Z]/.test(prop);
-    });
-    toFormData_default = toFormData;
-  }
-});
-
-// node_modules/axios/lib/helpers/AxiosURLSearchParams.js
-function encode(str) {
-  const charMap = {
-    "!": "%21",
-    "'": "%27",
-    "(": "%28",
-    ")": "%29",
-    "~": "%7E",
-    "%20": "+"
-  };
-  return encodeURIComponent(str).replace(/[!'()~]|%20/g, function replacer(match) {
-    return charMap[match];
-  });
-}
-function AxiosURLSearchParams(params, options) {
-  this._pairs = [];
-  params && toFormData_default(params, this, options);
-}
-var prototype, AxiosURLSearchParams_default;
-var init_AxiosURLSearchParams = __esm({
-  "node_modules/axios/lib/helpers/AxiosURLSearchParams.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_toFormData();
-    prototype = AxiosURLSearchParams.prototype;
-    prototype.append = function append(name, value2) {
-      this._pairs.push([name, value2]);
-    };
-    prototype.toString = function toString2(encoder) {
-      const _encode = encoder ? (value2) => encoder.call(this, value2, encode) : encode;
-      return this._pairs.map(function each(pair) {
-        return _encode(pair[0]) + "=" + _encode(pair[1]);
-      }, "").join("&");
-    };
-    AxiosURLSearchParams_default = AxiosURLSearchParams;
-  }
-});
-
-// node_modules/axios/lib/helpers/buildURL.js
-function encode2(val) {
-  return encodeURIComponent(val).replace(/%3A/gi, ":").replace(/%24/g, "$").replace(/%2C/gi, ",").replace(/%20/g, "+");
-}
-function buildURL(url2, params, options) {
-  if (!params) {
-    return url2;
-  }
-  url2 = url2 || "";
-  const _options = utils_default.isFunction(options) ? {
-    serialize: options
-  } : options;
-  const _encode = utils_default.getSafeProp(_options, "encode") || encode2;
-  const serializeFn = utils_default.getSafeProp(_options, "serialize");
-  let serializedParams;
-  if (serializeFn) {
-    serializedParams = serializeFn(params, _options);
-  } else {
-    serializedParams = utils_default.isURLSearchParams(params) ? params.toString() : new AxiosURLSearchParams_default(params, _options).toString(_encode);
-  }
-  if (serializedParams) {
-    const hashmarkIndex = url2.indexOf("#");
-    if (hashmarkIndex !== -1) {
-      url2 = url2.slice(0, hashmarkIndex);
-    }
-    url2 += (url2.indexOf("?") === -1 ? "?" : "&") + serializedParams;
-  }
-  return url2;
-}
-var init_buildURL = __esm({
-  "node_modules/axios/lib/helpers/buildURL.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_AxiosURLSearchParams();
-  }
-});
-
-// node_modules/axios/lib/core/InterceptorManager.js
-function countHandlers(handlers) {
-  return handlers ? handlers.length : 0;
-}
-function trimHandlers(handlers) {
-  if (!handlers) {
-    return;
-  }
-  while (handlers.length && handlers[handlers.length - 1] === null) {
-    handlers.pop();
-  }
-}
-function syncHandlerEntries(manager, internals) {
-  const handlers = manager.handlers;
-  const length = countHandlers(handlers);
-  if (handlers !== internals.handlersRef) {
-    internals.handlersRef = handlers;
-    internals.handlerEntries.clear();
-  } else if (length !== internals.handlersLength) {
-    if (!length) {
-      internals.handlerEntries.clear();
-    } else {
-      internals.handlerEntries.forEach(function removeStaleEntry(entry, id) {
-        if (handlers[entry.index] !== entry.handler) {
-          internals.handlerEntries.delete(id);
-        }
-      });
-    }
-  }
-  internals.handlersLength = length;
-}
-var $internals2, InterceptorManager, InterceptorManager_default;
-var init_InterceptorManager = __esm({
-  "node_modules/axios/lib/core/InterceptorManager.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    $internals2 = Symbol("internals");
-    InterceptorManager = class {
-      constructor() {
-        this.handlers = [];
-        this[$internals2] = {
-          handlersRef: this.handlers,
-          handlersLength: this.handlers.length,
-          handlerEntries: /* @__PURE__ */ new Map(),
-          iterationDepth: 0,
-          nextId: 0
-        };
-      }
-      /**
-       * Add a new interceptor to the stack
-       *
-       * @param {Function} fulfilled The function to handle `then` for a `Promise`
-       * @param {Function} rejected The function to handle `reject` for a `Promise`
-       * @param {Object} options The options for the interceptor, synchronous and runWhen
-       *
-       * @return {Number} An ID used to remove interceptor later
-       */
-      use(fulfilled, rejected, options) {
-        const handler = {
-          fulfilled,
-          rejected,
-          synchronous: options ? options.synchronous : false,
-          runWhen: options ? options.runWhen : null
-        };
-        const internals = this[$internals2];
-        if (this.handlers == null) {
-          this.handlers = [];
-        }
-        syncHandlerEntries(this, internals);
-        const id = internals.nextId++;
-        this.handlers.push(handler);
-        internals.handlerEntries.set(id, {
-          handler,
-          index: this.handlers.length - 1
-        });
-        internals.handlersLength = this.handlers.length;
-        return id;
-      }
-      /**
-       * Remove an interceptor from the stack
-       *
-       * @param {Number} id The ID that was returned by `use`
-       *
-       * @returns {void}
-       */
-      eject(id) {
-        const internals = this[$internals2];
-        syncHandlerEntries(this, internals);
-        const entry = internals.handlerEntries.get(id);
-        if (entry) {
-          internals.handlerEntries.delete(id);
-          if (this.handlers[entry.index] !== entry.handler) {
-            return;
-          }
-          this.handlers[entry.index] = null;
-          if (!internals.iterationDepth) {
-            trimHandlers(this.handlers);
-            internals.handlersLength = this.handlers.length;
-          }
-        }
-      }
-      /**
-       * Clear all interceptors from the stack
-       *
-       * @returns {void}
-       */
-      clear() {
-        if (this.handlers) {
-          this.handlers = [];
-          syncHandlerEntries(this, this[$internals2]);
-        }
-      }
-      /**
-       * Iterate over all the registered interceptors
-       *
-       * This method is particularly useful for skipping over any
-       * interceptors that may have become `null` calling `eject`.
-       *
-       * @param {Function} fn The function to call for each interceptor
-       *
-       * @returns {void}
-       */
-      forEach(fn) {
-        const internals = this[$internals2];
-        syncHandlerEntries(this, internals);
-        internals.iterationDepth++;
-        try {
-          utils_default.forEach(this.handlers, function forEachHandler(h) {
-            if (h !== null) {
-              fn(h);
-            }
-          });
-        } finally {
-          if (!--internals.iterationDepth) {
-            syncHandlerEntries(this, internals);
-            trimHandlers(this.handlers);
-            internals.handlersLength = countHandlers(this.handlers);
-          }
-        }
-      }
-    };
-    InterceptorManager_default = InterceptorManager;
-  }
-});
-
-// node_modules/axios/lib/defaults/transitional.js
-var transitional_default;
-var init_transitional = __esm({
-  "node_modules/axios/lib/defaults/transitional.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    transitional_default = {
-      silentJSONParsing: true,
-      forcedJSONParsing: true,
-      clarifyTimeoutError: false,
-      legacyInterceptorReqResOrdering: true,
-      advertiseZstdAcceptEncoding: false,
-      validateStatusUndefinedResolves: true
-    };
-  }
-});
-
-// node_modules/axios/lib/platform/browser/classes/URLSearchParams.js
-var URLSearchParams_default;
-var init_URLSearchParams = __esm({
-  "node_modules/axios/lib/platform/browser/classes/URLSearchParams.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_AxiosURLSearchParams();
-    URLSearchParams_default = typeof URLSearchParams !== "undefined" ? URLSearchParams : AxiosURLSearchParams_default;
-  }
-});
-
-// node_modules/axios/lib/platform/browser/classes/FormData.js
-var FormData_default;
-var init_FormData = __esm({
-  "node_modules/axios/lib/platform/browser/classes/FormData.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    FormData_default = typeof FormData !== "undefined" ? FormData : null;
-  }
-});
-
-// node_modules/axios/lib/platform/browser/classes/Blob.js
-var Blob_default;
-var init_Blob = __esm({
-  "node_modules/axios/lib/platform/browser/classes/Blob.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    Blob_default = typeof Blob !== "undefined" ? Blob : null;
-  }
-});
-
-// node_modules/axios/lib/platform/browser/index.js
-var browser_default;
-var init_browser = __esm({
-  "node_modules/axios/lib/platform/browser/index.js"() {
-    init_define_import_meta_env();
-    init_URLSearchParams();
-    init_FormData();
-    init_Blob();
-    browser_default = {
-      isBrowser: true,
-      classes: {
-        URLSearchParams: URLSearchParams_default,
-        FormData: FormData_default,
-        Blob: Blob_default
-      },
-      protocols: ["http", "https", "file", "blob", "url", "data"]
-    };
-  }
-});
-
-// node_modules/axios/lib/platform/common/utils.js
-var utils_exports = {};
-__export(utils_exports, {
-  hasBrowserEnv: () => hasBrowserEnv,
-  hasStandardBrowserEnv: () => hasStandardBrowserEnv,
-  hasStandardBrowserWebWorkerEnv: () => hasStandardBrowserWebWorkerEnv,
-  navigator: () => _navigator,
-  origin: () => origin
-});
-var hasBrowserEnv, _navigator, hasStandardBrowserEnv, hasStandardBrowserWebWorkerEnv, origin;
-var init_utils2 = __esm({
-  "node_modules/axios/lib/platform/common/utils.js"() {
-    init_define_import_meta_env();
-    hasBrowserEnv = typeof window !== "undefined" && typeof document !== "undefined";
-    _navigator = typeof navigator === "object" && navigator || void 0;
-    hasStandardBrowserEnv = hasBrowserEnv && (!_navigator || ["ReactNative", "NativeScript", "NS"].indexOf(_navigator.product) < 0);
-    hasStandardBrowserWebWorkerEnv = (() => {
-      return typeof WorkerGlobalScope !== "undefined" && // eslint-disable-next-line no-undef
-      self instanceof WorkerGlobalScope && typeof self.importScripts === "function";
-    })();
-    origin = hasBrowserEnv && window.location.href || "http://localhost";
-  }
-});
-
-// node_modules/axios/lib/platform/index.js
-var platform_default;
-var init_platform = __esm({
-  "node_modules/axios/lib/platform/index.js"() {
-    init_define_import_meta_env();
-    init_browser();
-    init_utils2();
-    platform_default = {
-      ...utils_exports,
-      ...browser_default
-    };
-  }
-});
-
-// node_modules/axios/lib/helpers/toURLEncodedForm.js
-function toURLEncodedForm(data, options) {
-  return toFormData_default(data, new platform_default.classes.URLSearchParams(), {
-    visitor: function(value2, key, path, helpers) {
-      if (platform_default.isNode && utils_default.isBuffer(value2)) {
-        this.append(key, value2.toString("base64"));
-        return false;
-      }
-      return helpers.defaultVisitor.apply(this, arguments);
-    },
-    ...options
-  });
-}
-var init_toURLEncodedForm = __esm({
-  "node_modules/axios/lib/helpers/toURLEncodedForm.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_toFormData();
-    init_platform();
-  }
-});
-
-// node_modules/axios/lib/helpers/formDataToJSON.js
-function throwIfDepthExceeded(index) {
-  if (index > MAX_DEPTH) {
-    throw new AxiosError_default(
-      "FormData field is too deeply nested (" + index + " levels). Max depth: " + MAX_DEPTH,
-      AxiosError_default.ERR_FORM_DATA_DEPTH_EXCEEDED
-    );
-  }
-}
-function parsePropPath(name) {
-  const path = [];
-  const pattern = /[^.[\]]+|\[([^.[\]]*)]/g;
-  let match;
-  while ((match = pattern.exec(name)) !== null) {
-    throwIfDepthExceeded(path.length);
-    path.push(match[0] === "[]" ? "" : match[1] || match[0]);
-  }
-  return path;
-}
-function arrayToObject(arr) {
-  const obj = {};
-  const keys = Object.keys(arr);
-  let i;
-  const len = keys.length;
-  let key;
-  for (i = 0; i < len; i++) {
-    key = keys[i];
-    obj[key] = arr[key];
-  }
-  return obj;
-}
-function formDataToJSON(formData) {
-  function buildPath(path, value2, target, index) {
-    throwIfDepthExceeded(index);
-    let name = path[index++];
-    if (name === "__proto__") return true;
-    const isNumericKey = Number.isFinite(+name);
-    const isLast = index >= path.length;
-    name = !name && utils_default.isArray(target) ? target.length : name;
-    if (isLast) {
-      if (utils_default.hasOwnProp(target, name)) {
-        target[name] = utils_default.isArray(target[name]) ? target[name].concat(value2) : [target[name], value2];
-      } else {
-        target[name] = value2;
-      }
-      return !isNumericKey;
-    }
-    if (!utils_default.hasOwnProp(target, name) || !utils_default.isObject(target[name])) {
-      target[name] = [];
-    }
-    const result = buildPath(path, value2, target[name], index);
-    if (result && utils_default.isArray(target[name])) {
-      target[name] = arrayToObject(target[name]);
-    }
-    return !isNumericKey;
-  }
-  if (utils_default.isFormData(formData) && utils_default.isFunction(formData.entries)) {
-    const obj = {};
-    utils_default.forEachEntry(formData, (name, value2) => {
-      buildPath(parsePropPath(name), value2, obj, 0);
-    });
-    return obj;
-  }
-  return null;
-}
-var MAX_DEPTH, formDataToJSON_default;
-var init_formDataToJSON = __esm({
-  "node_modules/axios/lib/helpers/formDataToJSON.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_AxiosError();
-    init_toFormData();
-    MAX_DEPTH = DEFAULT_FORM_DATA_MAX_DEPTH;
-    formDataToJSON_default = formDataToJSON;
-  }
-});
-
-// node_modules/axios/lib/core/methodList.js
-var methodList, methodList_default;
-var init_methodList = __esm({
-  "node_modules/axios/lib/core/methodList.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    methodList = Object.freeze([
-      "get",
-      "delete",
-      "head",
-      "options",
-      "post",
-      "put",
-      "patch",
-      "purge",
-      "link",
-      "unlink",
-      "query"
-    ]);
-    methodList_default = methodList;
-  }
-});
-
-// node_modules/axios/lib/defaults/index.js
-function stringifySafely2(rawValue, parser, encoder) {
-  if (utils_default.isString(rawValue)) {
-    try {
-      (parser || JSON.parse)(rawValue);
-      return utils_default.trim(rawValue);
-    } catch (e) {
-      if (e.name !== "SyntaxError") {
-        throw e;
-      }
-    }
-  }
-  return (encoder || JSON.stringify)(rawValue);
-}
-var own, defaults, defaults_default;
-var init_defaults = __esm({
-  "node_modules/axios/lib/defaults/index.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_AxiosError();
-    init_transitional();
-    init_toFormData();
-    init_toURLEncodedForm();
-    init_platform();
-    init_formDataToJSON();
-    init_methodList();
-    own = (obj, key) => obj != null && utils_default.hasOwnProp(obj, key) ? obj[key] : void 0;
-    defaults = {
-      transitional: transitional_default,
-      adapter: ["xhr", "http", "fetch"],
-      transformRequest: [
-        function transformRequest(data, headers) {
-          const contentType = headers.getContentType() || "";
-          const hasJSONContentType = contentType.indexOf("application/json") > -1;
-          const isObjectPayload = utils_default.isObject(data);
-          if (isObjectPayload && utils_default.isHTMLForm(data)) {
-            data = new FormData(data);
-          }
-          const isFormData2 = utils_default.isFormData(data);
-          if (isFormData2) {
-            return hasJSONContentType ? JSON.stringify(formDataToJSON_default(data)) : data;
-          }
-          if (utils_default.isArrayBuffer(data) || utils_default.isBuffer(data) || utils_default.isStream(data) || utils_default.isFile(data) || utils_default.isBlob(data) || utils_default.isReadableStream(data)) {
-            return data;
-          }
-          if (utils_default.isArrayBufferView(data)) {
-            return data.buffer;
-          }
-          if (utils_default.isURLSearchParams(data)) {
-            headers.setContentType("application/x-www-form-urlencoded;charset=utf-8", false);
-            return data.toString();
-          }
-          let isFileList2;
-          if (isObjectPayload) {
-            const formSerializer = own(this, "formSerializer");
-            if (contentType.indexOf("application/x-www-form-urlencoded") > -1) {
-              return toURLEncodedForm(data, formSerializer).toString();
-            }
-            if ((isFileList2 = utils_default.isFileList(data)) || contentType.indexOf("multipart/form-data") > -1) {
-              const env = own(this, "env");
-              const _FormData = env && env.FormData;
-              return toFormData_default(
-                isFileList2 ? { "files[]": data } : data,
-                _FormData && new _FormData(),
-                formSerializer
-              );
-            }
-          }
-          if (isObjectPayload || hasJSONContentType) {
-            headers.setContentType("application/json", false);
-            return stringifySafely2(data);
-          }
-          return data;
-        }
-      ],
-      transformResponse: [
-        function transformResponse(data) {
-          const transitional2 = own(this, "transitional") || defaults.transitional;
-          const forcedJSONParsing = transitional2 && transitional2.forcedJSONParsing;
-          const responseType = own(this, "responseType");
-          const JSONRequested = responseType === "json";
-          if (utils_default.isResponse(data) || utils_default.isReadableStream(data)) {
-            return data;
-          }
-          if (data && utils_default.isString(data) && (forcedJSONParsing && !responseType || JSONRequested)) {
-            const silentJSONParsing = transitional2 && transitional2.silentJSONParsing;
-            const strictJSONParsing = !silentJSONParsing && JSONRequested;
-            try {
-              return JSON.parse(data, own(this, "parseReviver"));
-            } catch (e) {
-              if (strictJSONParsing) {
-                if (e.name === "SyntaxError") {
-                  throw AxiosError_default.from(e, AxiosError_default.ERR_BAD_RESPONSE, this, null, own(this, "response"));
-                }
-                throw e;
-              }
-            }
-          }
-          return data;
-        }
-      ],
-      /**
-       * A timeout in milliseconds to abort a request. If set to 0 (default) a
-       * timeout is not created.
-       */
-      timeout: 0,
-      xsrfCookieName: "XSRF-TOKEN",
-      xsrfHeaderName: "X-XSRF-TOKEN",
-      maxContentLength: -1,
-      maxBodyLength: -1,
-      env: {
-        FormData: platform_default.classes.FormData,
-        Blob: platform_default.classes.Blob
-      },
-      validateStatus: function validateStatus(status) {
-        return status >= 200 && status < 300;
-      },
-      headers: {
-        common: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": void 0
-        }
-      }
-    };
-    utils_default.forEach(methodList_default, (method) => {
-      defaults.headers[method] = {};
-    });
-    defaults_default = defaults;
-  }
-});
-
-// node_modules/axios/lib/core/transformData.js
-function transformData(fns, response) {
-  const config = this || defaults_default;
-  const context = response || config;
-  const headers = AxiosHeaders_default.from(context.headers);
-  let data = context.data;
-  utils_default.forEach(fns, function transform(fn) {
-    data = fn.call(config, data, headers.normalize(), response ? response.status : void 0);
-  });
-  headers.normalize();
-  return data;
-}
-var init_transformData = __esm({
-  "node_modules/axios/lib/core/transformData.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_defaults();
-    init_AxiosHeaders();
-  }
-});
-
-// node_modules/axios/lib/cancel/isCancel.js
-function isCancel(value2) {
-  return !!(value2 && value2.__CANCEL__);
-}
-var init_isCancel = __esm({
-  "node_modules/axios/lib/cancel/isCancel.js"() {
-    "use strict";
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/axios/lib/cancel/CanceledError.js
-var CanceledError, CanceledError_default;
-var init_CanceledError = __esm({
-  "node_modules/axios/lib/cancel/CanceledError.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_AxiosError();
-    CanceledError = class extends AxiosError_default {
-      /**
-       * A `CanceledError` is an object that is thrown when an operation is canceled.
-       *
-       * @param {string=} message The message.
-       * @param {Object=} config The config.
-       * @param {Object=} request The request.
-       *
-       * @returns {CanceledError} The created error.
-       */
-      constructor(message, config, request) {
-        super(message == null ? "canceled" : message, AxiosError_default.ERR_CANCELED, config, request);
-        this.name = "CanceledError";
-        this.__CANCEL__ = true;
-      }
-    };
-    CanceledError_default = CanceledError;
-  }
-});
-
-// node_modules/axios/lib/core/settle.js
-function settle(resolve, reject, response) {
-  const validateStatus2 = response.config.validateStatus;
-  if (!response.status || !validateStatus2 || validateStatus2(response.status)) {
-    resolve(response);
-  } else {
-    reject(new AxiosError_default(
-      "Request failed with status code " + response.status,
-      response.status >= 400 && response.status < 500 ? AxiosError_default.ERR_BAD_REQUEST : AxiosError_default.ERR_BAD_RESPONSE,
-      response.config,
-      response.request,
-      response
-    ));
-  }
-}
-var init_settle = __esm({
-  "node_modules/axios/lib/core/settle.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_AxiosError();
-  }
-});
-
-// node_modules/axios/lib/helpers/normalizeURLForProtocolCheck.js
-function normalizeURLForProtocolCheck(url2) {
-  if (typeof url2 !== "string") {
-    return url2;
-  }
-  let start = 0;
-  while (start < url2.length && url2.charCodeAt(start) <= 32) {
-    start++;
-  }
-  return url2.slice(start).replace(urlParserControlCharacters, "");
-}
-var urlParserControlCharacters;
-var init_normalizeURLForProtocolCheck = __esm({
-  "node_modules/axios/lib/helpers/normalizeURLForProtocolCheck.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    urlParserControlCharacters = /[\t\n\r]/g;
-  }
-});
-
-// node_modules/axios/lib/helpers/parseProtocol.js
-function parseProtocol(url2) {
-  const match = /^([-+\w]{1,25}):(?:\/\/)?/.exec(url2);
-  return match && match[1] || "";
-}
-var init_parseProtocol = __esm({
-  "node_modules/axios/lib/helpers/parseProtocol.js"() {
-    "use strict";
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/axios/lib/helpers/speedometer.js
-function speedometer(samplesCount, min) {
-  samplesCount = samplesCount || 10;
-  const bytes = new Array(samplesCount);
-  const timestamps = new Array(samplesCount);
-  let head = 0;
-  let tail = 0;
-  let firstSampleTS;
-  min = min !== void 0 ? min : 1e3;
-  return function push(chunkLength) {
-    const now = Date.now();
-    const startedAt = timestamps[tail];
-    if (!firstSampleTS) {
-      firstSampleTS = now;
-    }
-    bytes[head] = chunkLength;
-    timestamps[head] = now;
-    let i = tail;
-    let bytesCount = 0;
-    while (i !== head) {
-      bytesCount += bytes[i++];
-      i = i % samplesCount;
-    }
-    head = (head + 1) % samplesCount;
-    if (head === tail) {
-      tail = (tail + 1) % samplesCount;
-    }
-    if (now - firstSampleTS < min) {
-      return;
-    }
-    const passed = startedAt && now - startedAt;
-    return passed ? Math.round(bytesCount * 1e3 / passed) : void 0;
-  };
-}
-var speedometer_default;
-var init_speedometer = __esm({
-  "node_modules/axios/lib/helpers/speedometer.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    speedometer_default = speedometer;
-  }
-});
-
-// node_modules/axios/lib/helpers/throttle.js
-function throttle(fn, freq) {
-  let timestamp = 0;
-  let threshold = 1e3 / freq;
-  let lastArgs;
-  let timer;
-  const invoke = (args, now = Date.now()) => {
-    timestamp = now;
-    lastArgs = null;
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-    fn(...args);
-  };
-  const throttled = (...args) => {
-    const now = Date.now();
-    const passed = now - timestamp;
-    if (passed >= threshold) {
-      invoke(args, now);
-    } else {
-      lastArgs = args;
-      if (!timer) {
-        timer = setTimeout(() => {
-          timer = null;
-          invoke(lastArgs);
-        }, threshold - passed);
-      }
-    }
-  };
-  const flush = () => lastArgs && invoke(lastArgs);
-  const flushWith = (...args) => invoke(args);
-  return [throttled, flush, flushWith];
-}
-var throttle_default;
-var init_throttle = __esm({
-  "node_modules/axios/lib/helpers/throttle.js"() {
-    init_define_import_meta_env();
-    throttle_default = throttle;
-  }
-});
-
-// node_modules/axios/lib/helpers/progressEventReducer.js
-var progressEventReducer, progressEventDecorator, asyncDecorator;
-var init_progressEventReducer = __esm({
-  "node_modules/axios/lib/helpers/progressEventReducer.js"() {
-    init_define_import_meta_env();
-    init_speedometer();
-    init_throttle();
-    init_utils();
-    progressEventReducer = (listener, isDownloadStream, freq = 3) => {
-      let bytesNotified = 0;
-      const _speedometer = speedometer_default(50, 250);
-      return throttle_default((e) => {
-        if (!e || !utils_default.isNumber(e.loaded)) {
-          return;
-        }
-        const rawLoaded = e.loaded;
-        const total = e.lengthComputable ? e.total : void 0;
-        const loaded = Math.max(0, total != null ? Math.min(rawLoaded, total) : rawLoaded);
-        const progressBytes = Math.max(0, loaded - bytesNotified);
-        const rate = _speedometer(progressBytes);
-        bytesNotified = Math.max(bytesNotified, loaded);
-        const data = {
-          loaded,
-          total,
-          progress: total ? loaded / total : void 0,
-          bytes: progressBytes,
-          rate: rate ? rate : void 0,
-          estimated: rate && total ? (total - loaded) / rate : void 0,
-          event: e,
-          lengthComputable: total != null,
-          [isDownloadStream ? "download" : "upload"]: true
-        };
-        listener(data);
-      }, freq);
-    };
-    progressEventDecorator = (total, throttled) => {
-      const lengthComputable = total != null;
-      return [
-        (loaded) => throttled[0]({
-          lengthComputable,
-          total,
-          loaded
-        }),
-        throttled[1]
-      ];
-    };
-    asyncDecorator = (fn, scheduler = utils_default.asap) => (...args) => scheduler(() => fn(...args));
-  }
-});
-
-// node_modules/axios/lib/helpers/isURLSameOrigin.js
-var isURLSameOrigin_default;
-var init_isURLSameOrigin = __esm({
-  "node_modules/axios/lib/helpers/isURLSameOrigin.js"() {
-    init_define_import_meta_env();
-    init_platform();
-    isURLSameOrigin_default = platform_default.hasStandardBrowserEnv ? /* @__PURE__ */ ((origin2, isMSIE) => (url2) => {
-      url2 = new URL(url2, platform_default.origin);
-      return origin2.protocol === url2.protocol && origin2.host === url2.host && (isMSIE || origin2.port === url2.port);
-    })(
-      new URL(platform_default.origin),
-      platform_default.navigator && /(msie|trident)/i.test(platform_default.navigator.userAgent)
-    ) : () => true;
-  }
-});
-
-// node_modules/axios/lib/helpers/cookies.js
-var cookies_default;
-var init_cookies = __esm({
-  "node_modules/axios/lib/helpers/cookies.js"() {
-    init_define_import_meta_env();
-    init_utils();
-    init_platform();
-    cookies_default = platform_default.hasStandardBrowserEnv ? (
-      // Standard browser envs support document.cookie
-      {
-        write(name, value2, expires, path, domain, secure, sameSite) {
-          if (typeof document === "undefined") return;
-          const cookie = [`${name}=${encodeURIComponent(value2)}`];
-          if (utils_default.isNumber(expires)) {
-            cookie.push(`expires=${new Date(expires).toUTCString()}`);
-          }
-          if (utils_default.isString(path)) {
-            cookie.push(`path=${path}`);
-          }
-          if (utils_default.isString(domain)) {
-            cookie.push(`domain=${domain}`);
-          }
-          if (secure === true) {
-            cookie.push("secure");
-          }
-          if (utils_default.isString(sameSite)) {
-            cookie.push(`SameSite=${sameSite}`);
-          }
-          document.cookie = cookie.join("; ");
-        },
-        read(name) {
-          if (typeof document === "undefined") return null;
-          const cookies = document.cookie.split(";");
-          for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].replace(/^\s+/, "");
-            const eq = cookie.indexOf("=");
-            if (eq !== -1 && cookie.slice(0, eq) === name) {
-              try {
-                return decodeURIComponent(cookie.slice(eq + 1));
-              } catch (e) {
-                return cookie.slice(eq + 1);
-              }
-            }
-          }
-          return null;
-        },
-        remove(name) {
-          this.write(name, "", Date.now() - 864e5, "/");
-        }
-      }
-    ) : (
-      // Non-standard browser env (web workers, react-native) lack needed support.
-      {
-        write() {
-        },
-        read() {
-          return null;
-        },
-        remove() {
-        }
-      }
-    );
-  }
-});
-
-// node_modules/axios/lib/helpers/isAbsoluteURL.js
-function isAbsoluteURL(url2) {
-  if (typeof url2 !== "string") {
-    return false;
-  }
-  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url2);
-}
-var init_isAbsoluteURL = __esm({
-  "node_modules/axios/lib/helpers/isAbsoluteURL.js"() {
-    "use strict";
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/axios/lib/helpers/combineURLs.js
-function combineURLs(baseURL, relativeURL) {
-  if (!relativeURL) {
-    return baseURL;
-  }
-  let end = baseURL.length;
-  while (end > 0 && baseURL.charCodeAt(end - 1) === 47) {
-    end--;
-  }
-  return baseURL.slice(0, end) + "/" + relativeURL.replace(/^\/+/, "");
-}
-var init_combineURLs = __esm({
-  "node_modules/axios/lib/helpers/combineURLs.js"() {
-    "use strict";
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/axios/lib/core/buildFullPath.js
-function redactFragment(fragment) {
-  if (!fragment) {
-    return fragment;
-  }
-  return fragment.replace(/(^|&)([^=&]*=)?[^&]+/g, (match, separator, parameterName = "") => {
-    return `${separator}${parameterName}${REDACTED}`;
-  });
-}
-function redactSensitiveURLParts(url2) {
-  const redactedURL = url2.replace(/^(https?:\/{0,2})[^/?#]*@/i, `$1${REDACTED}@`);
-  const fragmentIndex = redactedURL.indexOf("#");
-  const urlWithoutFragment = fragmentIndex === -1 ? redactedURL : redactedURL.slice(0, fragmentIndex);
-  const redactedURLWithoutFragment = urlWithoutFragment.replace(
-    /([?&][^=&#]*=)[^&#]*/g,
-    `$1${REDACTED}`
-  );
-  if (fragmentIndex === -1) {
-    return redactedURLWithoutFragment;
-  }
-  return `${redactedURLWithoutFragment}#${redactFragment(redactedURL.slice(fragmentIndex + 1))}`;
-}
-function assertValidHttpProtocolURL(url2, config) {
-  if (typeof url2 === "string") {
-    const normalizedURL = normalizeURLForProtocolCheck(url2);
-    if (malformedHttpProtocol.test(normalizedURL)) {
-      throw new AxiosError_default(
-        `Invalid URL ${JSON.stringify(redactSensitiveURLParts(normalizedURL))}: missing "//" after protocol`,
-        AxiosError_default.ERR_INVALID_URL,
-        config
-      );
-    }
-  }
-}
-function buildFullPath(baseURL, requestedURL, allowAbsoluteUrls, config) {
-  assertValidHttpProtocolURL(requestedURL, config);
-  let isRelativeUrl = !isAbsoluteURL(requestedURL);
-  if (baseURL && (isRelativeUrl || allowAbsoluteUrls === false)) {
-    assertValidHttpProtocolURL(baseURL, config);
-    return combineURLs(baseURL, requestedURL);
-  }
-  return requestedURL;
-}
-var malformedHttpProtocol;
-var init_buildFullPath = __esm({
-  "node_modules/axios/lib/core/buildFullPath.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_AxiosError();
-    init_isAbsoluteURL();
-    init_combineURLs();
-    init_normalizeURLForProtocolCheck();
-    malformedHttpProtocol = /^https?:(?!\/\/)/i;
-  }
-});
-
-// node_modules/axios/lib/core/mergeConfig.js
-function mergeConfig(config1, config2) {
-  config1 = config1 || {};
-  config2 = config2 || {};
-  const config = /* @__PURE__ */ Object.create(null);
-  Object.defineProperty(config, "hasOwnProperty", {
-    // Null-proto descriptor so a polluted Object.prototype.get cannot turn
-    // this data descriptor into an accessor descriptor on the way in.
-    __proto__: null,
-    value: Object.prototype.hasOwnProperty,
-    enumerable: false,
-    writable: true,
-    configurable: true
-  });
-  function getMergedValue(target, source, prop, caseless) {
-    if (utils_default.isPlainObject(target) && utils_default.isPlainObject(source)) {
-      return utils_default.merge.call({ caseless }, target, source);
-    } else if (utils_default.isPlainObject(source)) {
-      return utils_default.merge({}, source);
-    } else if (utils_default.isArray(source)) {
-      return source.slice();
-    }
-    return source;
-  }
-  function mergeDeepProperties(a, b, prop, caseless) {
-    if (!utils_default.isUndefined(b)) {
-      return getMergedValue(a, b, prop, caseless);
-    } else if (!utils_default.isUndefined(a)) {
-      return getMergedValue(void 0, a, prop, caseless);
-    }
-  }
-  function valueFromConfig2(a, b) {
-    if (!utils_default.isUndefined(b)) {
-      return getMergedValue(void 0, b);
-    }
-  }
-  function defaultToConfig2(a, b) {
-    if (!utils_default.isUndefined(b)) {
-      return getMergedValue(void 0, b);
-    } else if (!utils_default.isUndefined(a)) {
-      return getMergedValue(void 0, a);
-    }
-  }
-  function getMergedTransitionalOption(prop) {
-    const transitional2 = utils_default.hasOwnProp(config2, "transitional") ? config2.transitional : void 0;
-    if (!utils_default.isUndefined(transitional2)) {
-      if (utils_default.isPlainObject(transitional2)) {
-        if (utils_default.hasOwnProp(transitional2, prop)) {
-          return transitional2[prop];
-        }
-      } else {
-        return void 0;
-      }
-    }
-    const transitional1 = utils_default.hasOwnProp(config1, "transitional") ? config1.transitional : void 0;
-    if (utils_default.isPlainObject(transitional1) && utils_default.hasOwnProp(transitional1, prop)) {
-      return transitional1[prop];
-    }
-    return void 0;
-  }
-  function mergeDirectKeys(a, b, prop) {
-    if (utils_default.hasOwnProp(config2, prop)) {
-      return getMergedValue(a, b);
-    } else if (utils_default.hasOwnProp(config1, prop)) {
-      return getMergedValue(void 0, a);
-    }
-  }
-  const mergeMap = {
-    url: valueFromConfig2,
-    method: valueFromConfig2,
-    data: valueFromConfig2,
-    baseURL: defaultToConfig2,
-    transformRequest: defaultToConfig2,
-    transformResponse: defaultToConfig2,
-    paramsSerializer: defaultToConfig2,
-    timeout: defaultToConfig2,
-    timeoutErrorMessage: defaultToConfig2,
-    withCredentials: defaultToConfig2,
-    withXSRFToken: defaultToConfig2,
-    adapter: defaultToConfig2,
-    responseType: defaultToConfig2,
-    xsrfCookieName: defaultToConfig2,
-    xsrfHeaderName: defaultToConfig2,
-    onUploadProgress: defaultToConfig2,
-    onDownloadProgress: defaultToConfig2,
-    decompress: defaultToConfig2,
-    maxContentLength: defaultToConfig2,
-    maxBodyLength: defaultToConfig2,
-    beforeRedirect: defaultToConfig2,
-    transport: defaultToConfig2,
-    httpAgent: defaultToConfig2,
-    httpsAgent: defaultToConfig2,
-    cancelToken: defaultToConfig2,
-    socketPath: defaultToConfig2,
-    allowedSocketPaths: defaultToConfig2,
-    responseEncoding: defaultToConfig2,
-    validateStatus: mergeDirectKeys,
-    headers: (a, b, prop) => mergeDeepProperties(headersToObject(a), headersToObject(b), prop, true)
-  };
-  utils_default.forEach(ownEnumerableKeys({ ...config1, ...config2 }), function computeConfigValue(prop) {
-    if (prop === "__proto__" || prop === "constructor" || prop === "prototype") return;
-    const merge2 = utils_default.hasOwnProp(mergeMap, prop) ? mergeMap[prop] : mergeDeepProperties;
-    const a = utils_default.hasOwnProp(config1, prop) ? config1[prop] : void 0;
-    const b = utils_default.hasOwnProp(config2, prop) ? config2[prop] : void 0;
-    const configValue = merge2(a, b, prop);
-    utils_default.isUndefined(configValue) && merge2 !== mergeDirectKeys || (config[prop] = configValue);
-  });
-  if (utils_default.hasOwnProp(config2, "validateStatus") && utils_default.isUndefined(config2.validateStatus) && getMergedTransitionalOption("validateStatusUndefinedResolves") === false) {
-    if (utils_default.hasOwnProp(config1, "validateStatus")) {
-      config.validateStatus = getMergedValue(void 0, config1.validateStatus);
-    } else {
-      delete config.validateStatus;
-    }
-  }
-  return config;
-}
-var headersToObject, ownEnumerableKeys;
-var init_mergeConfig = __esm({
-  "node_modules/axios/lib/core/mergeConfig.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_AxiosHeaders();
-    headersToObject = (thing) => thing instanceof AxiosHeaders_default ? { ...thing } : thing;
-    ownEnumerableKeys = (thing) => {
-      if (Object.getOwnPropertySymbols && Object.getOwnPropertyDescriptor) {
-        return Object.keys(thing).concat(
-          Object.getOwnPropertySymbols(thing).filter(
-            (symbol) => Object.getOwnPropertyDescriptor(thing, symbol).enumerable
-          )
-        );
-      }
-      return Object.keys(thing);
-    };
-  }
-});
-
-// node_modules/axios/lib/core/setFormDataHeaders.js
-function setFormDataHeaders(headers, formHeaders, policy) {
-  if (policy !== "content-only") {
-    headers.set(formHeaders);
-    return;
-  }
-  Object.entries(formHeaders || {}).forEach(([key, val]) => {
-    if (FORM_DATA_CONTENT_HEADERS.includes(key.toLowerCase())) {
-      headers.set(key, val);
-    }
-  });
-}
-var FORM_DATA_CONTENT_HEADERS;
-var init_setFormDataHeaders = __esm({
-  "node_modules/axios/lib/core/setFormDataHeaders.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    FORM_DATA_CONTENT_HEADERS = ["content-type", "content-length"];
-  }
-});
-
-// node_modules/axios/lib/helpers/resolveConfig.js
-function resolveConfig(config) {
-  const newConfig = mergeConfig({}, config);
-  const own2 = (key) => utils_default.hasOwnProp(newConfig, key) ? newConfig[key] : void 0;
-  const data = own2("data");
-  let withXSRFToken = own2("withXSRFToken");
-  const xsrfHeaderName = own2("xsrfHeaderName");
-  const xsrfCookieName = own2("xsrfCookieName");
-  let headers = own2("headers");
-  const auth = own2("auth");
-  const baseURL = own2("baseURL");
-  const allowAbsoluteUrls = own2("allowAbsoluteUrls");
-  const url2 = own2("url");
-  newConfig.headers = headers = AxiosHeaders_default.from(headers);
-  newConfig.url = buildURL(
-    buildFullPath(baseURL, url2, allowAbsoluteUrls, newConfig),
-    own2("params"),
-    own2("paramsSerializer")
-  );
-  if (auth) {
-    const username = utils_default.getSafeProp(auth, "username") || "";
-    const password = utils_default.getSafeProp(auth, "password") || "";
-    try {
-      headers.set(
-        "Authorization",
-        "Basic " + btoa(username + ":" + (password ? encodeUTF8(password) : ""))
-      );
-    } catch (e) {
-      throw AxiosError_default.from(e, AxiosError_default.ERR_BAD_OPTION_VALUE, config);
-    }
-  }
-  if (utils_default.isFormData(data)) {
-    const getHeaders = utils_default.getSafeProp(data, "getHeaders");
-    if (platform_default.hasStandardBrowserEnv || platform_default.hasStandardBrowserWebWorkerEnv || utils_default.isReactNative(data)) {
-      headers.setContentType(void 0);
-    } else if (utils_default.isFunction(getHeaders)) {
-      setFormDataHeaders(headers, getHeaders.call(data), own2("formDataHeaderPolicy"));
-    }
-  }
-  if (platform_default.hasStandardBrowserEnv) {
-    if (utils_default.isFunction(withXSRFToken)) {
-      withXSRFToken = withXSRFToken(newConfig);
-    }
-    const shouldSendXSRF = withXSRFToken === true || withXSRFToken == null && isURLSameOrigin_default(newConfig.url);
-    if (shouldSendXSRF) {
-      const xsrfValue = xsrfHeaderName && xsrfCookieName && cookies_default.read(xsrfCookieName);
-      if (xsrfValue) {
-        headers.set(xsrfHeaderName, xsrfValue);
-      }
-    }
-  }
-  return newConfig;
-}
-var encodeUTF8, resolveConfig_default;
-var init_resolveConfig = __esm({
-  "node_modules/axios/lib/helpers/resolveConfig.js"() {
-    init_define_import_meta_env();
-    init_platform();
-    init_utils();
-    init_AxiosError();
-    init_isURLSameOrigin();
-    init_cookies();
-    init_buildFullPath();
-    init_mergeConfig();
-    init_AxiosHeaders();
-    init_setFormDataHeaders();
-    init_buildURL();
-    encodeUTF8 = (str) => encodeURIComponent(str).replace(
-      /%([0-9A-F]{2})/gi,
-      (_, hex) => String.fromCharCode(parseInt(hex, 16))
-    );
-    resolveConfig_default = resolveConfig;
-  }
-});
-
-// node_modules/axios/lib/adapters/xhr.js
-var isXHRAdapterSupported, xhr_default;
-var init_xhr = __esm({
-  "node_modules/axios/lib/adapters/xhr.js"() {
-    init_define_import_meta_env();
-    init_utils();
-    init_settle();
-    init_transitional();
-    init_AxiosError();
-    init_CanceledError();
-    init_normalizeURLForProtocolCheck();
-    init_parseProtocol();
-    init_platform();
-    init_AxiosHeaders();
-    init_progressEventReducer();
-    init_resolveConfig();
-    init_sanitizeHeaderValue();
-    isXHRAdapterSupported = typeof XMLHttpRequest !== "undefined";
-    xhr_default = isXHRAdapterSupported && function(config) {
-      return new Promise(function dispatchXhrRequest(resolve, reject) {
-        const _config = resolveConfig_default(config);
-        let requestData = _config.data;
-        const requestHeaders = AxiosHeaders_default.from(_config.headers).normalize();
-        let { responseType, onUploadProgress, onDownloadProgress } = _config;
-        let onCanceled;
-        let uploadThrottled, downloadThrottled;
-        let flushUpload, flushDownload, flushDownloadWithEvent;
-        function done() {
-          flushUpload && flushUpload();
-          flushDownload && flushDownload();
-          _config.cancelToken && _config.cancelToken.unsubscribe(onCanceled);
-          _config.signal && _config.signal.removeEventListener("abort", onCanceled);
-        }
-        let request = new XMLHttpRequest();
-        request.open(_config.method.toUpperCase(), _config.url, true);
-        request.timeout = _config.timeout;
-        function onloadend(event) {
-          if (!request) {
-            return;
-          }
-          if (request.status === 0 && (parseProtocol(normalizeURLForProtocolCheck(_config.url)) || parseProtocol(platform_default.origin)) !== "file" && !(request.responseURL && request.responseURL.startsWith("file:"))) {
-            reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config, request));
-            done();
-            request = null;
-            return;
-          }
-          try {
-            if (event) {
-              flushDownloadWithEvent && flushDownloadWithEvent(event);
-            } else {
-              flushDownload && flushDownload();
-            }
-          } catch (err) {
-            setTimeout(() => {
-              throw err;
-            });
-          }
-          if (!request) {
-            return;
-          }
-          const responseHeaders = AxiosHeaders_default.from(
-            "getAllResponseHeaders" in request && request.getAllResponseHeaders()
-          );
-          const responseData = !responseType || responseType === "text" || responseType === "json" ? request.responseText : request.response;
-          const response = {
-            data: responseData,
-            status: request.status,
-            statusText: request.statusText,
-            headers: responseHeaders,
-            config,
-            request
-          };
-          settle(
-            function _resolve(value2) {
-              resolve(value2);
-              done();
-            },
-            function _reject(err) {
-              reject(err);
-              done();
-            },
-            response
-          );
-          request = null;
-        }
-        if ("onloadend" in request) {
-          request.onloadend = onloadend;
-        } else {
-          request.onreadystatechange = function handleLoad() {
-            if (!request || request.readyState !== 4) {
-              return;
-            }
-            if (request.status === 0 && !(request.responseURL && request.responseURL.startsWith("file:"))) {
-              return;
-            }
-            setTimeout(onloadend);
-          };
-        }
-        request.onabort = function handleAbort() {
-          if (!request) {
-            return;
-          }
-          reject(new AxiosError_default("Request aborted", AxiosError_default.ECONNABORTED, config, request));
-          done();
-          request = null;
-        };
-        request.onerror = function handleError(event) {
-          const msg = event && event.message ? event.message : "Network Error";
-          const err = new AxiosError_default(msg, AxiosError_default.ERR_NETWORK, config, request);
-          err.event = event || null;
-          reject(err);
-          done();
-          request = null;
-        };
-        request.ontimeout = function handleTimeout() {
-          let timeoutErrorMessage = _config.timeout ? "timeout of " + _config.timeout + "ms exceeded" : "timeout exceeded";
-          const transitional2 = _config.transitional || transitional_default;
-          if (_config.timeoutErrorMessage) {
-            timeoutErrorMessage = _config.timeoutErrorMessage;
-          }
-          reject(
-            new AxiosError_default(
-              timeoutErrorMessage,
-              transitional2.clarifyTimeoutError ? AxiosError_default.ETIMEDOUT : AxiosError_default.ECONNABORTED,
-              config,
-              request
-            )
-          );
-          done();
-          request = null;
-        };
-        requestData === void 0 && requestHeaders.setContentType(null);
-        if ("setRequestHeader" in request) {
-          utils_default.forEach(toByteStringHeaderObject(requestHeaders), function setRequestHeader(val, key) {
-            request.setRequestHeader(key, val);
-          });
-        }
-        if (!utils_default.isUndefined(_config.withCredentials)) {
-          request.withCredentials = !!_config.withCredentials;
-        }
-        if (responseType && responseType !== "json") {
-          request.responseType = _config.responseType;
-        }
-        if (onDownloadProgress) {
-          [downloadThrottled, flushDownload, flushDownloadWithEvent] = progressEventReducer(
-            onDownloadProgress,
-            true
-          );
-          request.addEventListener("progress", downloadThrottled);
-        }
-        if (onUploadProgress && request.upload) {
-          [uploadThrottled, flushUpload] = progressEventReducer(onUploadProgress);
-          request.upload.addEventListener("progress", uploadThrottled);
-          request.upload.addEventListener("loadend", flushUpload);
-        }
-        if (_config.cancelToken || _config.signal) {
-          onCanceled = (cancel) => {
-            if (!request) {
-              return;
-            }
-            reject(!cancel || cancel.type ? new CanceledError_default(null, config, request) : cancel);
-            request.abort();
-            done();
-            request = null;
-          };
-          _config.cancelToken && _config.cancelToken.subscribe(onCanceled);
-          if (_config.signal) {
-            _config.signal.aborted ? onCanceled() : _config.signal.addEventListener("abort", onCanceled);
-          }
-        }
-        const protocol4 = parseProtocol(_config.url);
-        if (protocol4 && !platform_default.protocols.includes(protocol4)) {
-          reject(
-            new AxiosError_default(
-              "Unsupported protocol " + protocol4 + ":",
-              AxiosError_default.ERR_BAD_REQUEST,
-              config
-            )
-          );
-          done();
-          return;
-        }
-        request.send(requestData || null);
-      });
-    };
-  }
-});
-
-// node_modules/axios/lib/helpers/composeSignals.js
-var composeSignals, composeSignals_default;
-var init_composeSignals = __esm({
-  "node_modules/axios/lib/helpers/composeSignals.js"() {
-    init_define_import_meta_env();
-    init_CanceledError();
-    init_AxiosError();
-    init_utils();
-    composeSignals = (signals, timeout) => {
-      signals = signals ? signals.filter(Boolean) : [];
-      if (!timeout && !signals.length) {
-        return;
-      }
-      const controller = new AbortController();
-      let aborted = false;
-      const onabort = function(reason) {
-        if (!aborted) {
-          aborted = true;
-          unsubscribe();
-          const err = reason instanceof Error ? reason : this.reason;
-          controller.abort(
-            err instanceof AxiosError_default ? err : new CanceledError_default(err instanceof Error ? err.message : err)
-          );
-        }
-      };
-      let timer = timeout && setTimeout(() => {
-        timer = null;
-        onabort(new AxiosError_default(`timeout of ${timeout}ms exceeded`, AxiosError_default.ETIMEDOUT));
-      }, timeout);
-      const unsubscribe = () => {
-        if (!signals) {
-          return;
-        }
-        timer && clearTimeout(timer);
-        timer = null;
-        signals.forEach((signal2) => {
-          signal2.unsubscribe ? signal2.unsubscribe(onabort) : signal2.removeEventListener("abort", onabort);
-        });
-        signals = null;
-      };
-      signals.forEach((signal2) => {
-        if (aborted) {
-          return;
-        }
-        if (signal2.aborted) {
-          onabort.call(signal2);
-          return;
-        }
-        signal2.addEventListener("abort", onabort, { once: true });
-      });
-      const { signal } = controller;
-      signal.unsubscribe = () => utils_default.asap(unsubscribe);
-      return signal;
-    };
-    composeSignals_default = composeSignals;
-  }
-});
-
-// node_modules/axios/lib/helpers/trackStream.js
-var streamChunk, readBytes, readStream, trackStream;
-var init_trackStream = __esm({
-  "node_modules/axios/lib/helpers/trackStream.js"() {
-    init_define_import_meta_env();
-    streamChunk = function* (chunk, chunkSize) {
-      let len = chunk.byteLength;
-      if (!chunkSize || len < chunkSize) {
-        yield chunk;
-        return;
-      }
-      let pos = 0;
-      let end;
-      while (pos < len) {
-        end = pos + chunkSize;
-        yield chunk.slice(pos, end);
-        pos = end;
-      }
-    };
-    readBytes = async function* (iterable, chunkSize) {
-      for await (const chunk of readStream(iterable)) {
-        yield* streamChunk(chunk, chunkSize);
-      }
-    };
-    readStream = async function* (stream) {
-      if (stream[Symbol.asyncIterator]) {
-        yield* stream;
-        return;
-      }
-      const reader = stream.getReader();
-      try {
-        for (; ; ) {
-          const { done, value: value2 } = await reader.read();
-          if (done) {
-            break;
-          }
-          yield value2;
-        }
-      } finally {
-        await reader.cancel();
-      }
-    };
-    trackStream = (stream, chunkSize, onProgress, onFinish) => {
-      const iterator2 = readBytes(stream, chunkSize);
-      let bytes = 0;
-      let done;
-      let _onFinish = (e) => {
-        if (!done) {
-          done = true;
-          onFinish && onFinish(e);
-        }
-      };
-      return new ReadableStream(
-        {
-          async pull(controller) {
-            try {
-              const { done: done2, value: value2 } = await iterator2.next();
-              if (done2) {
-                _onFinish();
-                controller.close();
-                return;
-              }
-              let len = value2.byteLength;
-              if (onProgress) {
-                let loadedBytes = bytes += len;
-                onProgress(loadedBytes);
-              }
-              controller.enqueue(new Uint8Array(value2));
-            } catch (err) {
-              _onFinish(err);
-              throw err;
-            }
-          },
-          cancel(reason) {
-            _onFinish(reason);
-            return iterator2.return();
-          }
-        },
-        {
-          highWaterMark: 2
-        }
-      );
-    };
-  }
-});
-
-// node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js
-function estimateDataURLDecodedBytes(url2) {
-  const fragmentIndex = typeof url2 === "string" ? url2.indexOf("#") : -1;
-  return estimateDataURLBytes(
-    fragmentIndex === -1 ? url2 : url2.slice(0, fragmentIndex),
-    estimatePercentDecodedBase64Bytes
-  );
-}
-var isHexDigit, isPercentEncodedByte, hexValue, isBase64Char, isBase64Whitespace, base64Bytes, estimateBase64BufferAllocation, estimatePercentDecodedBase64Bytes, estimateDataURLBytes;
-var init_estimateDataURLDecodedBytes = __esm({
-  "node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js"() {
-    init_define_import_meta_env();
-    isHexDigit = (charCode) => charCode >= 48 && charCode <= 57 || charCode >= 65 && charCode <= 70 || charCode >= 97 && charCode <= 102;
-    isPercentEncodedByte = (str, i, len) => i + 2 < len && isHexDigit(str.charCodeAt(i + 1)) && isHexDigit(str.charCodeAt(i + 2));
-    hexValue = (charCode) => charCode <= 57 ? charCode - 48 : (charCode & 223) - 55;
-    isBase64Char = (charCode) => charCode >= 65 && charCode <= 90 || // A-Z
-    charCode >= 97 && charCode <= 122 || // a-z
-    charCode >= 48 && charCode <= 57 || // 0-9
-    charCode === 43 || // +
-    charCode === 47 || // /
-    charCode === 45 || // - (base64url)
-    charCode === 95;
-    isBase64Whitespace = (charCode) => charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32;
-    base64Bytes = (significant) => {
-      const groups = Math.floor(significant / 4);
-      const remainder = significant % 4;
-      return groups * 3 + (remainder === 2 ? 1 : remainder === 3 ? 2 : 0);
-    };
-    estimateBase64BufferAllocation = (body) => {
-      const len = body.length;
-      let padding = 0;
-      if (len > 0 && body.charCodeAt(len - 1) === 61) {
-        padding++;
-        if (len > 1 && body.charCodeAt(len - 2) === 61) {
-          padding++;
-        }
-      }
-      return Math.floor((len - padding) * 3 / 4);
-    };
-    estimatePercentDecodedBase64Bytes = (body) => {
-      const len = body.length;
-      let significant = 0;
-      let padding = 0;
-      let invalid = false;
-      for (let i = 0; i < len; i++) {
-        let code = body.charCodeAt(i);
-        if (code === 37 && isPercentEncodedByte(body, i, len)) {
-          code = hexValue(body.charCodeAt(i + 1)) * 16 + hexValue(body.charCodeAt(i + 2));
-          i += 2;
-        }
-        if (isBase64Whitespace(code)) {
-          continue;
-        }
-        if (code === 61) {
-          padding++;
-          continue;
-        }
-        if (!isBase64Char(code) || padding > 0) {
-          invalid = true;
-          continue;
-        }
-        significant++;
-      }
-      if (invalid || padding > 2 || padding > 0 && (significant + padding) % 4 !== 0 || significant % 4 === 1) {
-        return estimateBase64BufferAllocation(body);
-      }
-      return base64Bytes(significant);
-    };
-    estimateDataURLBytes = (url2, estimateBase64) => {
-      if (!url2 || typeof url2 !== "string") return 0;
-      if (!url2.startsWith("data:")) return 0;
-      const comma = url2.indexOf(",");
-      if (comma < 0) return 0;
-      const meta = url2.slice(5, comma);
-      const body = url2.slice(comma + 1);
-      const isBase64 = /;base64/i.test(meta);
-      if (isBase64) {
-        return estimateBase64(body);
-      }
-      let bytes = 0;
-      for (let i = 0, len = body.length; i < len; i++) {
-        const c = body.charCodeAt(i);
-        if (c === 37 && isPercentEncodedByte(body, i, len)) {
-          bytes += 1;
-          i += 2;
-        } else if (c < 128) {
-          bytes += 1;
-        } else if (c < 2048) {
-          bytes += 2;
-        } else if (c >= 55296 && c <= 56319 && i + 1 < len) {
-          const next = body.charCodeAt(i + 1);
-          if (next >= 56320 && next <= 57343) {
-            bytes += 4;
-            i++;
-          } else {
-            bytes += 3;
-          }
-        } else {
-          bytes += 3;
-        }
-      }
-      return bytes;
-    };
-  }
-});
-
-// node_modules/axios/lib/env/data.js
-var VERSION;
-var init_data = __esm({
-  "node_modules/axios/lib/env/data.js"() {
-    init_define_import_meta_env();
-    VERSION = "1.20.0";
-  }
-});
-
-// node_modules/axios/lib/adapters/fetch.js
-var DEFAULT_CHUNK_SIZE, DEFAULT_REQUEST_OPTIONS, isFunction2, encodeUTF82, decodeURIComponentSafe, test, maybeWithAuthCredentials, factory, seedCache, getFetch, adapter;
-var init_fetch = __esm({
-  "node_modules/axios/lib/adapters/fetch.js"() {
-    init_define_import_meta_env();
-    init_platform();
-    init_utils();
-    init_AxiosError();
-    init_composeSignals();
-    init_trackStream();
-    init_AxiosHeaders();
-    init_progressEventReducer();
-    init_resolveConfig();
-    init_settle();
-    init_estimateDataURLDecodedBytes();
-    init_data();
-    init_sanitizeHeaderValue();
-    DEFAULT_CHUNK_SIZE = 64 * 1024;
-    DEFAULT_REQUEST_OPTIONS = {
-      cache: "default",
-      redirect: "follow",
-      referrer: "about:client",
-      referrerPolicy: "",
-      mode: "cors",
-      integrity: "",
-      keepalive: false,
-      priority: "auto",
-      window: null
-    };
-    ({ isFunction: isFunction2 } = utils_default);
-    encodeUTF82 = (str) => encodeURIComponent(str).replace(
-      /%([0-9A-F]{2})/gi,
-      (_, hex) => String.fromCharCode(parseInt(hex, 16))
-    );
-    decodeURIComponentSafe = (value2) => {
-      if (!utils_default.isString(value2)) {
-        return value2;
-      }
-      try {
-        return decodeURIComponent(value2);
-      } catch (error) {
-        return value2;
-      }
-    };
-    test = (fn, ...args) => {
-      try {
-        return !!fn(...args);
-      } catch (e) {
-        return false;
-      }
-    };
-    maybeWithAuthCredentials = (url2) => {
-      const protocolIndex = url2.indexOf("://");
-      let urlToCheck = url2;
-      if (protocolIndex !== -1) {
-        urlToCheck = urlToCheck.slice(protocolIndex + 3);
-      }
-      return urlToCheck.includes("@") || urlToCheck.includes(":");
-    };
-    factory = (env) => {
-      const globalObject = utils_default.global !== void 0 && utils_default.global !== null ? utils_default.global : globalThis;
-      const { ReadableStream: ReadableStream2, TextEncoder: TextEncoder2 } = globalObject;
-      env = utils_default.merge.call(
-        {
-          skipUndefined: true
-        },
-        {
-          Request: globalObject.Request,
-          Response: globalObject.Response
-        },
-        env
-      );
-      const { fetch: envFetch, Request: Request2, Response } = env;
-      const isFetchSupported = envFetch ? isFunction2(envFetch) : typeof fetch === "function";
-      const isRequestSupported = isFunction2(Request2);
-      const isResponseSupported = isFunction2(Response);
-      if (!isFetchSupported) {
-        return false;
-      }
-      const isReadableStreamSupported = isFetchSupported && isFunction2(ReadableStream2);
-      const encodeText = isFetchSupported && (typeof TextEncoder2 === "function" ? /* @__PURE__ */ ((encoder) => (str) => encoder.encode(str))(new TextEncoder2()) : async (str) => new Uint8Array(await new Request2(str).arrayBuffer()));
-      const supportsRequestStream = isRequestSupported && isReadableStreamSupported && test(() => {
-        let duplexAccessed = false;
-        const request = new Request2(platform_default.origin, {
-          body: new ReadableStream2(),
-          method: "POST",
-          get duplex() {
-            duplexAccessed = true;
-            return "half";
-          }
-        });
-        const hasContentType = request.headers.has("Content-Type");
-        if (request.body != null) {
-          request.body.cancel();
-        }
-        return duplexAccessed && !hasContentType;
-      });
-      const supportsResponseStream = isResponseSupported && isReadableStreamSupported && test(() => utils_default.isReadableStream(new Response("").body));
-      const resolvers = {
-        stream: supportsResponseStream && ((res) => res.body)
-      };
-      isFetchSupported && (() => {
-        ["text", "arrayBuffer", "blob", "formData", "stream"].forEach((type) => {
-          !resolvers[type] && (resolvers[type] = (res, config) => {
-            let method = res && res[type];
-            if (method) {
-              return method.call(res);
-            }
-            throw new AxiosError_default(
-              `Response type '${type}' is not supported`,
-              AxiosError_default.ERR_NOT_SUPPORT,
-              config
-            );
-          });
-        });
-      })();
-      const getBodyLength = async (body) => {
-        if (body == null) {
-          return 0;
-        }
-        if (utils_default.isBlob(body)) {
-          return body.size;
-        }
-        if (utils_default.isSpecCompliantForm(body)) {
-          const _request = new Request2(platform_default.origin, {
-            method: "POST",
-            body
-          });
-          return (await _request.arrayBuffer()).byteLength;
-        }
-        if (utils_default.isArrayBufferView(body) || utils_default.isArrayBuffer(body)) {
-          return body.byteLength;
-        }
-        if (utils_default.isURLSearchParams(body)) {
-          body = body + "";
-        }
-        if (utils_default.isString(body)) {
-          return (await encodeText(body)).byteLength;
-        }
-      };
-      const resolveBodyLength = async (headers, body) => {
-        const length = utils_default.toFiniteNumber(headers.getContentLength());
-        return length == null ? getBodyLength(body) : length;
-      };
-      return async (config) => {
-        let {
-          url: url2,
-          method,
-          data,
-          signal,
-          cancelToken,
-          timeout,
-          onDownloadProgress,
-          onUploadProgress,
-          responseType,
-          headers,
-          withCredentials = "same-origin",
-          fetchOptions,
-          maxContentLength,
-          maxBodyLength,
-          maxRedirects
-        } = resolveConfig_default(config);
-        const hasMaxContentLength = utils_default.isNumber(maxContentLength) && maxContentLength > -1;
-        const hasMaxBodyLength = utils_default.isNumber(maxBodyLength) && maxBodyLength > -1;
-        const own2 = (key) => utils_default.hasOwnProp(config, key) ? config[key] : void 0;
-        let _fetch = envFetch || fetch;
-        responseType = responseType ? (responseType + "").toLowerCase() : "text";
-        let composedSignal = composeSignals_default(
-          [signal, cancelToken && cancelToken.toAbortSignal()],
-          timeout
-        );
-        let request = null;
-        const unsubscribe = composedSignal && composedSignal.unsubscribe && (() => {
-          composedSignal.unsubscribe();
-        });
-        let requestContentLength;
-        let pendingBodyError = null;
-        const maxBodyLengthError = () => new AxiosError_default(
-          "Request body larger than maxBodyLength limit",
-          AxiosError_default.ERR_BAD_REQUEST,
-          config,
-          request
-        );
-        try {
-          let auth = void 0;
-          const configAuth = own2("auth");
-          if (configAuth) {
-            const username = utils_default.getSafeProp(configAuth, "username") || "";
-            const password = utils_default.getSafeProp(configAuth, "password") || "";
-            auth = {
-              username,
-              password
-            };
-          }
-          if (maybeWithAuthCredentials(url2)) {
-            const parsedURL = new URL(url2, platform_default.origin);
-            if (!auth && (parsedURL.username || parsedURL.password)) {
-              const urlUsername = decodeURIComponentSafe(parsedURL.username);
-              const urlPassword = decodeURIComponentSafe(parsedURL.password);
-              auth = {
-                username: urlUsername,
-                password: urlPassword
-              };
-            }
-            if (parsedURL.username || parsedURL.password) {
-              parsedURL.username = "";
-              parsedURL.password = "";
-              url2 = parsedURL.href;
-            }
-          }
-          if (auth) {
-            headers.delete("authorization");
-            headers.set(
-              "Authorization",
-              "Basic " + btoa(encodeUTF82((auth.username || "") + ":" + (auth.password || "")))
-            );
-          }
-          if (hasMaxContentLength && typeof url2 === "string" && url2.startsWith("data:")) {
-            const estimated = estimateDataURLDecodedBytes(url2);
-            if (estimated > maxContentLength) {
-              throw new AxiosError_default(
-                "maxContentLength size of " + maxContentLength + " exceeded",
-                AxiosError_default.ERR_BAD_RESPONSE,
-                config,
-                request
-              );
-            }
-          }
-          if (hasMaxBodyLength && method !== "get" && method !== "head") {
-            const outboundLength = await getBodyLength(data);
-            if (typeof outboundLength === "number" && isFinite(outboundLength)) {
-              requestContentLength = outboundLength;
-              if (outboundLength > maxBodyLength) {
-                throw maxBodyLengthError();
-              }
-            }
-          }
-          const mustEnforceStreamBody = hasMaxBodyLength && (utils_default.isReadableStream(data) || utils_default.isStream(data));
-          const trackRequestStream = (stream, onProgress, flush) => trackStream(
-            stream,
-            DEFAULT_CHUNK_SIZE,
-            (loadedBytes) => {
-              if (hasMaxBodyLength && loadedBytes > maxBodyLength) {
-                throw pendingBodyError = maxBodyLengthError();
-              }
-              onProgress && onProgress(loadedBytes);
-            },
-            flush
-          );
-          if (supportsRequestStream && method !== "get" && method !== "head" && (onUploadProgress || mustEnforceStreamBody)) {
-            requestContentLength = requestContentLength == null ? await resolveBodyLength(headers, data) : requestContentLength;
-            if (requestContentLength !== 0 || mustEnforceStreamBody) {
-              let _request = new Request2(url2, {
-                method: "POST",
-                body: data,
-                duplex: "half"
-              });
-              let contentTypeHeader;
-              if (utils_default.isFormData(data) && (contentTypeHeader = _request.headers.get("content-type"))) {
-                headers.setContentType(contentTypeHeader);
-              }
-              if (_request.body) {
-                const [onProgress, flush] = onUploadProgress && progressEventDecorator(
-                  requestContentLength,
-                  progressEventReducer(asyncDecorator(onUploadProgress))
-                ) || [];
-                data = trackRequestStream(_request.body, onProgress, flush);
-              }
-            }
-          } else if (mustEnforceStreamBody && !isRequestSupported && isReadableStreamSupported && method !== "get" && method !== "head") {
-            data = trackRequestStream(data);
-          } else if (mustEnforceStreamBody && isRequestSupported && !supportsRequestStream && method !== "get" && method !== "head") {
-            throw new AxiosError_default(
-              "Stream request bodies are not supported by the current fetch implementation",
-              AxiosError_default.ERR_NOT_SUPPORT,
-              config,
-              request
-            );
-          }
-          if (!utils_default.isString(withCredentials)) {
-            withCredentials = withCredentials ? "include" : "omit";
-          }
-          const isCredentialsSupported = isRequestSupported && "credentials" in Request2.prototype;
-          if (utils_default.isFormData(data)) {
-            const contentType = headers.getContentType();
-            if (contentType && /^multipart\/form-data/i.test(contentType) && !/boundary=/i.test(contentType)) {
-              headers.delete("content-type");
-            }
-          }
-          headers.set("User-Agent", "axios/" + VERSION, false);
-          const safeFetchOptions = fetchOptions == null ? fetchOptions : Object.assign(/* @__PURE__ */ Object.create(null), fetchOptions);
-          if (safeFetchOptions) {
-            delete safeFetchOptions.body;
-            delete safeFetchOptions.headers;
-            delete safeFetchOptions.method;
-            delete safeFetchOptions.signal;
-            delete safeFetchOptions.duplex;
-            delete safeFetchOptions.credentials;
-          }
-          const resolvedOptions = Object.assign(/* @__PURE__ */ Object.create(null), safeFetchOptions, {
-            signal: composedSignal,
-            method: method.toUpperCase(),
-            headers: toByteStringHeaderObject(headers.normalize()),
-            body: data,
-            duplex: "half",
-            credentials: isCredentialsSupported ? withCredentials : void 0
-          });
-          if (isRequestSupported) {
-            utils_default.forEach(DEFAULT_REQUEST_OPTIONS, (value2, key) => {
-              if (resolvedOptions[key] === void 0) {
-                resolvedOptions[key] = value2;
-              }
-            });
-            if (resolvedOptions.signal === void 0) {
-              resolvedOptions.signal = null;
-            }
-            if (resolvedOptions.body === void 0) {
-              resolvedOptions.body = null;
-            }
-          }
-          if (maxRedirects === 0) {
-            resolvedOptions.redirect = "manual";
-            if (safeFetchOptions) {
-              safeFetchOptions.redirect = "manual";
-            }
-          }
-          request = isRequestSupported && new Request2(url2, resolvedOptions);
-          let response = await (isRequestSupported ? _fetch(request, safeFetchOptions) : _fetch(url2, resolvedOptions));
-          const responseHeaders = AxiosHeaders_default.from(response.headers);
-          if (hasMaxContentLength) {
-            const declaredLength = utils_default.toFiniteNumber(responseHeaders.getContentLength());
-            if (declaredLength != null && declaredLength > maxContentLength) {
-              throw new AxiosError_default(
-                "maxContentLength size of " + maxContentLength + " exceeded",
-                AxiosError_default.ERR_BAD_RESPONSE,
-                config,
-                request
-              );
-            }
-          }
-          const isStreamResponse = supportsResponseStream && (responseType === "stream" || responseType === "response");
-          if (supportsResponseStream && response.body && (onDownloadProgress || hasMaxContentLength || isStreamResponse && unsubscribe)) {
-            const options = {};
-            ["status", "statusText", "headers"].forEach((prop) => {
-              options[prop] = response[prop];
-            });
-            const responseContentLength = utils_default.toFiniteNumber(responseHeaders.getContentLength());
-            const [onProgress, flush] = onDownloadProgress && progressEventDecorator(
-              responseContentLength,
-              progressEventReducer(asyncDecorator(onDownloadProgress), true)
-            ) || [];
-            let bytesRead = 0;
-            const onChunkProgress = (loadedBytes) => {
-              if (hasMaxContentLength) {
-                bytesRead = loadedBytes;
-                if (bytesRead > maxContentLength) {
-                  throw new AxiosError_default(
-                    "maxContentLength size of " + maxContentLength + " exceeded",
-                    AxiosError_default.ERR_BAD_RESPONSE,
-                    config,
-                    request
-                  );
-                }
-              }
-              onProgress && onProgress(loadedBytes);
-            };
-            response = new Response(
-              trackStream(response.body, DEFAULT_CHUNK_SIZE, onChunkProgress, () => {
-                flush && flush();
-                unsubscribe && unsubscribe();
-              }),
-              options
-            );
-          }
-          responseType = responseType || "text";
-          let responseData = await resolvers[utils_default.findKey(resolvers, responseType) || "text"](
-            response,
-            config
-          );
-          if (hasMaxContentLength && !supportsResponseStream && !isStreamResponse) {
-            let materializedSize;
-            if (responseData != null) {
-              if (typeof responseData.byteLength === "number") {
-                materializedSize = responseData.byteLength;
-              } else if (typeof responseData.size === "number") {
-                materializedSize = responseData.size;
-              } else if (typeof responseData === "string") {
-                materializedSize = typeof TextEncoder2 === "function" ? new TextEncoder2().encode(responseData).byteLength : responseData.length;
-              }
-            }
-            if (typeof materializedSize === "number" && materializedSize > maxContentLength) {
-              throw new AxiosError_default(
-                "maxContentLength size of " + maxContentLength + " exceeded",
-                AxiosError_default.ERR_BAD_RESPONSE,
-                config,
-                request
-              );
-            }
-          }
-          !isStreamResponse && unsubscribe && unsubscribe();
-          return await new Promise((resolve, reject) => {
-            settle(resolve, reject, {
-              data: responseData,
-              headers: AxiosHeaders_default.from(response.headers),
-              status: response.status,
-              statusText: response.statusText,
-              config,
-              request
-            });
-          });
-        } catch (err) {
-          unsubscribe && unsubscribe();
-          if (composedSignal && composedSignal.aborted && composedSignal.reason instanceof AxiosError_default) {
-            const canceledError = composedSignal.reason;
-            canceledError.config = config;
-            request && (canceledError.request = request);
-            if (err !== canceledError) {
-              Object.defineProperty(canceledError, "cause", {
-                __proto__: null,
-                value: err,
-                writable: true,
-                enumerable: false,
-                configurable: true
-              });
-            }
-            throw canceledError;
-          }
-          if (pendingBodyError) {
-            request && !pendingBodyError.request && (pendingBodyError.request = request);
-            throw pendingBodyError;
-          }
-          if (err instanceof AxiosError_default) {
-            request && !err.request && (err.request = request);
-            throw err;
-          }
-          if (err && err.name === "TypeError" && /Load failed|fetch/i.test(err.message)) {
-            const networkError = new AxiosError_default(
-              "Network Error",
-              AxiosError_default.ERR_NETWORK,
-              config,
-              request,
-              err && err.response
-            );
-            Object.defineProperty(networkError, "cause", {
-              __proto__: null,
-              value: err.cause || err,
-              writable: true,
-              enumerable: false,
-              configurable: true
-            });
-            throw networkError;
-          }
-          throw AxiosError_default.from(err, err && err.code, config, request, err && err.response);
-        }
-      };
-    };
-    seedCache = /* @__PURE__ */ new Map();
-    getFetch = (config) => {
-      let env = config && config.env || {};
-      const { fetch: fetch2, Request: Request2, Response } = env;
-      const seeds = [Request2, Response, fetch2];
-      let len = seeds.length, i = len, seed, target, map = seedCache;
-      while (i--) {
-        seed = seeds[i];
-        target = map.get(seed);
-        target === void 0 && map.set(seed, target = i ? /* @__PURE__ */ new Map() : factory(env));
-        map = target;
-      }
-      return target;
-    };
-    adapter = getFetch();
-  }
-});
-
-// node_modules/axios/lib/adapters/adapters.js
-function getAdapter(adapters, config) {
-  adapters = utils_default.isArray(adapters) ? adapters : [adapters];
-  const { length } = adapters;
-  let nameOrAdapter;
-  let adapter2;
-  const rejectedReasons = {};
-  for (let i = 0; i < length; i++) {
-    nameOrAdapter = adapters[i];
-    let id;
-    adapter2 = nameOrAdapter;
-    if (!isResolvedHandle(nameOrAdapter)) {
-      adapter2 = knownAdapters[(id = String(nameOrAdapter)).toLowerCase()];
-      if (adapter2 === void 0) {
-        throw new AxiosError_default(`Unknown adapter '${id}'`);
-      }
-    }
-    if (adapter2 && (utils_default.isFunction(adapter2) || (adapter2 = adapter2.get(config)))) {
-      break;
-    }
-    rejectedReasons[id || "#" + i] = adapter2;
-  }
-  if (!adapter2) {
-    const reasons = Object.entries(rejectedReasons).map(
-      ([id, state]) => `adapter ${id} ` + (state === false ? "is not supported by the environment" : "is not available in the build")
-    );
-    let s = length ? reasons.length > 1 ? "since :\n" + reasons.map(renderReason).join("\n") : " " + renderReason(reasons[0]) : "as no adapter specified";
-    throw new AxiosError_default(
-      `There is no suitable adapter to dispatch the request ` + s,
-      AxiosError_default.ERR_NOT_SUPPORT
-    );
-  }
-  return adapter2;
-}
-var knownAdapters, renderReason, isResolvedHandle, adapters_default;
-var init_adapters = __esm({
-  "node_modules/axios/lib/adapters/adapters.js"() {
-    init_define_import_meta_env();
-    init_utils();
-    init_null();
-    init_xhr();
-    init_fetch();
-    init_AxiosError();
-    knownAdapters = {
-      http: null_default,
-      xhr: xhr_default,
-      fetch: {
-        get: getFetch
-      }
-    };
-    utils_default.forEach(knownAdapters, (fn, value2) => {
-      if (fn) {
-        try {
-          Object.defineProperty(fn, "name", { __proto__: null, value: value2 });
-        } catch (e) {
-        }
-        Object.defineProperty(fn, "adapterName", { __proto__: null, value: value2 });
-      }
-    });
-    renderReason = (reason) => `- ${reason}`;
-    isResolvedHandle = (adapter2) => utils_default.isFunction(adapter2) || adapter2 === null || adapter2 === false;
-    adapters_default = {
-      /**
-       * Resolve an adapter from a list of adapter names or functions.
-       * @type {Function}
-       */
-      getAdapter,
-      /**
-       * Exposes all known adapters
-       * @type {Object<string, Function|Object>}
-       */
-      adapters: knownAdapters
-    };
-  }
-});
-
-// node_modules/axios/lib/core/dispatchRequest.js
-function throwIfCancellationRequested(config) {
-  if (config.cancelToken) {
-    config.cancelToken.throwIfRequested();
-  }
-  if (config.signal && config.signal.aborted) {
-    throw new CanceledError_default(null, config);
-  }
-}
-function dispatchRequest(_config) {
-  const config = utils_default.toSafeFlatObject(_config);
-  throwIfCancellationRequested(config);
-  config.headers = AxiosHeaders_default.from(utils_default.getSafeProp(config, "headers"));
-  config.data = transformData.call(config, config.transformRequest);
-  if (["post", "put", "patch"].indexOf(config.method) !== -1) {
-    config.headers.setContentType("application/x-www-form-urlencoded", false);
-  }
-  const adapter2 = adapters_default.getAdapter(config.adapter || defaults_default.adapter, config);
-  return adapter2(config).then(
-    function onAdapterResolution(response) {
-      throwIfCancellationRequested(config);
-      config.response = response;
-      try {
-        response.data = transformData.call(config, config.transformResponse, response);
-      } finally {
-        delete config.response;
-      }
-      response.headers = AxiosHeaders_default.from(response.headers);
-      return response;
-    },
-    function onAdapterRejection(reason) {
-      if (!isCancel(reason)) {
-        throwIfCancellationRequested(config);
-        if (reason && reason.response) {
-          config.response = reason.response;
-          try {
-            reason.response.data = transformData.call(
-              config,
-              config.transformResponse,
-              reason.response
-            );
-          } finally {
-            delete config.response;
-          }
-          reason.response.headers = AxiosHeaders_default.from(reason.response.headers);
-        }
-      }
-      return Promise.reject(reason);
-    }
-  );
-}
-var init_dispatchRequest = __esm({
-  "node_modules/axios/lib/core/dispatchRequest.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_transformData();
-    init_isCancel();
-    init_defaults();
-    init_CanceledError();
-    init_AxiosHeaders();
-    init_adapters();
-    init_utils();
-  }
-});
-
-// node_modules/axios/lib/helpers/validator.js
-function assertOptions(options, schema, allowUnknown) {
-  if (typeof options !== "object" || options === null) {
-    throw new AxiosError_default("options must be an object", AxiosError_default.ERR_BAD_OPTION_VALUE);
-  }
-  const keys = Object.keys(options);
-  let i = keys.length;
-  while (i-- > 0) {
-    const opt = keys[i];
-    const validator = Object.prototype.hasOwnProperty.call(schema, opt) ? schema[opt] : void 0;
-    if (validator) {
-      const value2 = options[opt];
-      const result = value2 === void 0 || validator(value2, opt, options);
-      if (result !== true) {
-        throw new AxiosError_default(
-          "option " + opt + " must be " + result,
-          AxiosError_default.ERR_BAD_OPTION_VALUE
-        );
-      }
-      continue;
-    }
-    if (allowUnknown !== true) {
-      throw new AxiosError_default("Unknown option " + opt, AxiosError_default.ERR_BAD_OPTION);
-    }
-  }
-}
-var validators, deprecatedWarnings, validator_default;
-var init_validator = __esm({
-  "node_modules/axios/lib/helpers/validator.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_data();
-    init_AxiosError();
-    validators = {};
-    ["object", "boolean", "number", "function", "string", "symbol"].forEach((type, i) => {
-      validators[type] = function validator(thing) {
-        return typeof thing === type || "a" + (i < 1 ? "n " : " ") + type;
-      };
-    });
-    deprecatedWarnings = {};
-    validators.transitional = function transitional(validator, version, message) {
-      function formatMessage(opt, desc) {
-        return "[Axios v" + VERSION + "] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
-      }
-      return (value2, opt, opts) => {
-        if (validator === false) {
-          throw new AxiosError_default(
-            formatMessage(opt, " has been removed" + (version ? " in " + version : "")),
-            AxiosError_default.ERR_DEPRECATED
-          );
-        }
-        if (version && !deprecatedWarnings[opt]) {
-          deprecatedWarnings[opt] = true;
-          console.warn(
-            formatMessage(
-              opt,
-              " has been deprecated since v" + version + " and will be removed in the near future"
-            )
-          );
-        }
-        return validator ? validator(value2, opt, opts) : true;
-      };
-    };
-    validators.spelling = function spelling(correctSpelling) {
-      return (value2, opt) => {
-        console.warn(`${opt} is likely a misspelling of ${correctSpelling}`);
-        return true;
-      };
-    };
-    validator_default = {
-      assertOptions,
-      validators
-    };
-  }
-});
-
-// node_modules/axios/lib/core/Axios.js
-var validators2, Axios, Axios_default;
-var init_Axios = __esm({
-  "node_modules/axios/lib/core/Axios.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_buildURL();
-    init_InterceptorManager();
-    init_dispatchRequest();
-    init_mergeConfig();
-    init_buildFullPath();
-    init_methodList();
-    init_validator();
-    init_AxiosHeaders();
-    init_transitional();
-    validators2 = validator_default.validators;
-    Axios = class {
-      constructor(instanceConfig) {
-        this.defaults = instanceConfig || {};
-        this.interceptors = {
-          request: new InterceptorManager_default(),
-          response: new InterceptorManager_default()
-        };
-      }
-      /**
-       * Dispatch a request
-       *
-       * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
-       * @param {?Object} config
-       *
-       * @returns {Promise} The Promise to be fulfilled
-       */
-      async request(configOrUrl, config) {
-        try {
-          return await this._request(configOrUrl, config);
-        } catch (err) {
-          if (err instanceof Error) {
-            try {
-              let dummy = {};
-              Error.captureStackTrace ? Error.captureStackTrace(dummy) : dummy = new Error();
-              const dummyStack = dummy.stack;
-              let stack = "";
-              if (typeof dummyStack === "string") {
-                const firstNewlineIndex = dummyStack.indexOf("\n");
-                stack = firstNewlineIndex === -1 ? "" : dummyStack.slice(firstNewlineIndex + 1);
-              }
-              if (!err.stack) {
-                err.stack = stack;
-              } else if (stack) {
-                const firstNewlineIndex = stack.indexOf("\n");
-                const secondNewlineIndex = firstNewlineIndex === -1 ? -1 : stack.indexOf("\n", firstNewlineIndex + 1);
-                const stackWithoutTwoTopLines = secondNewlineIndex === -1 ? "" : stack.slice(secondNewlineIndex + 1);
-                if (!String(err.stack).endsWith(stackWithoutTwoTopLines)) {
-                  err.stack += "\n" + stack;
-                }
-              }
-            } catch (e) {
-            }
-          }
-          throw err;
-        }
-      }
-      _request(configOrUrl, config) {
-        if (typeof configOrUrl === "string") {
-          config = config || {};
-          config.url = configOrUrl;
-        } else {
-          config = configOrUrl || {};
-        }
-        config = mergeConfig(this.defaults, config);
-        const { transitional: transitional2, paramsSerializer, headers } = config;
-        if (transitional2 !== void 0) {
-          validator_default.assertOptions(
-            transitional2,
-            {
-              silentJSONParsing: validators2.transitional(validators2.boolean),
-              forcedJSONParsing: validators2.transitional(validators2.boolean),
-              clarifyTimeoutError: validators2.transitional(validators2.boolean),
-              legacyInterceptorReqResOrdering: validators2.transitional(validators2.boolean),
-              advertiseZstdAcceptEncoding: validators2.transitional(validators2.boolean),
-              validateStatusUndefinedResolves: validators2.transitional(validators2.boolean)
-            },
-            false
-          );
-        }
-        if (paramsSerializer != null) {
-          if (utils_default.isFunction(paramsSerializer)) {
-            config.paramsSerializer = {
-              serialize: paramsSerializer
-            };
-          } else {
-            validator_default.assertOptions(
-              paramsSerializer,
-              {
-                encode: validators2.function,
-                serialize: validators2.function
-              },
-              true
-            );
-          }
-        }
-        if (config.allowAbsoluteUrls !== void 0) {
-        } else if (this.defaults.allowAbsoluteUrls !== void 0) {
-          config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
-        } else {
-          config.allowAbsoluteUrls = true;
-        }
-        validator_default.assertOptions(
-          config,
-          {
-            baseUrl: validators2.spelling("baseURL"),
-            withXsrfToken: validators2.spelling("withXSRFToken")
-          },
-          true
-        );
-        config.method = (utils_default.getSafeProp(config, "method") || utils_default.getSafeProp(this.defaults, "method") || "get").toLowerCase();
-        let contextHeaders = headers && utils_default.merge(headers.common, headers[config.method]);
-        headers && utils_default.forEach(methodList_default.concat("common"), (method) => {
-          delete headers[method];
-        });
-        config.headers = AxiosHeaders_default.concat(contextHeaders, headers);
-        const requestInterceptorChain = [];
-        let synchronousRequestInterceptors = true;
-        this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-          if (typeof interceptor.runWhen === "function" && interceptor.runWhen(config) === false) {
-            return;
-          }
-          synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
-          const transitional3 = config.transitional || transitional_default;
-          const legacyInterceptorReqResOrdering = transitional3 && transitional3.legacyInterceptorReqResOrdering;
-          if (legacyInterceptorReqResOrdering) {
-            requestInterceptorChain.unshift(interceptor.fulfilled, interceptor.rejected);
-          } else {
-            requestInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
-          }
-        });
-        const responseInterceptorChain = [];
-        this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
-          responseInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
-        });
-        let promise;
-        let i = 0;
-        let len;
-        if (!synchronousRequestInterceptors) {
-          const chain = [dispatchRequest.bind(this), void 0];
-          chain.unshift(...requestInterceptorChain);
-          chain.push(...responseInterceptorChain);
-          len = chain.length;
-          promise = Promise.resolve(config);
-          while (i < len) {
-            promise = promise.then(chain[i++], chain[i++]);
-          }
-          return promise;
-        }
-        len = requestInterceptorChain.length;
-        let newConfig = config;
-        while (i < len) {
-          const onFulfilled = requestInterceptorChain[i++];
-          const onRejected = requestInterceptorChain[i++];
-          try {
-            newConfig = onFulfilled ? onFulfilled(newConfig) : newConfig;
-          } catch (error) {
-            if (!onRejected) {
-              promise = Promise.reject(error);
-              break;
-            }
-            try {
-              const rejectedResult = onRejected.call(this, error);
-              if (utils_default.isThenable(rejectedResult)) {
-                promise = Promise.resolve(rejectedResult).then(
-                  () => dispatchRequest.call(this, newConfig)
-                );
-              }
-            } catch (rejectedError) {
-              promise = Promise.reject(rejectedError);
-            }
-            break;
-          }
-        }
-        if (!promise) {
-          try {
-            promise = dispatchRequest.call(this, newConfig);
-          } catch (error) {
-            promise = Promise.reject(error);
-          }
-        }
-        i = 0;
-        len = responseInterceptorChain.length;
-        while (i < len) {
-          promise = promise.then(responseInterceptorChain[i++], responseInterceptorChain[i++]);
-        }
-        return promise;
-      }
-      getUri(config) {
-        config = mergeConfig(this.defaults, config);
-        const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls, config);
-        return buildURL(fullPath, config.params, config.paramsSerializer);
-      }
-    };
-    utils_default.forEach(["delete", "get", "head", "options"], function forEachMethodNoData(method) {
-      Axios.prototype[method] = function(url2, config) {
-        return this.request(
-          mergeConfig(config || {}, {
-            method,
-            url: url2,
-            data: config && utils_default.hasOwnProp(config, "data") ? config.data : void 0
-          })
-        );
-      };
-    });
-    utils_default.forEach(["post", "put", "patch", "query"], function forEachMethodWithData(method) {
-      function generateHTTPMethod(isForm) {
-        return function httpMethod(url2, data, config) {
-          return this.request(
-            mergeConfig(config || {}, {
-              method,
-              headers: isForm ? {
-                "Content-Type": "multipart/form-data"
-              } : {},
-              url: url2,
-              data
-            })
-          );
-        };
-      }
-      Axios.prototype[method] = generateHTTPMethod();
-      if (method !== "query") {
-        Axios.prototype[method + "Form"] = generateHTTPMethod(true);
-      }
-    });
-    Axios_default = Axios;
-  }
-});
-
-// node_modules/axios/lib/cancel/CancelToken.js
-var CancelToken, CancelToken_default;
-var init_CancelToken = __esm({
-  "node_modules/axios/lib/cancel/CancelToken.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_CanceledError();
-    CancelToken = class _CancelToken {
-      constructor(executor) {
-        if (typeof executor !== "function") {
-          throw new TypeError("executor must be a function.");
-        }
-        let resolvePromise;
-        this.promise = new Promise(function promiseExecutor(resolve) {
-          resolvePromise = resolve;
-        });
-        const token2 = this;
-        this.promise.then((cancel) => {
-          if (!token2._listeners) return;
-          let i = token2._listeners.length;
-          while (i-- > 0) {
-            token2._listeners[i](cancel);
-          }
-          token2._listeners = null;
-        });
-        this.promise.then = (onfulfilled) => {
-          let _resolve;
-          const promise = new Promise((resolve) => {
-            token2.subscribe(resolve);
-            _resolve = resolve;
-          }).then(onfulfilled);
-          promise.cancel = function reject() {
-            token2.unsubscribe(_resolve);
-          };
-          return promise;
-        };
-        executor(function cancel(message, config, request) {
-          if (token2.reason) {
-            return;
-          }
-          token2.reason = new CanceledError_default(message, config, request);
-          resolvePromise(token2.reason);
-        });
-      }
-      /**
-       * Throws a `CanceledError` if cancellation has been requested.
-       */
-      throwIfRequested() {
-        if (this.reason) {
-          throw this.reason;
-        }
-      }
-      /**
-       * Subscribe to the cancel signal
-       */
-      subscribe(listener) {
-        if (this.reason) {
-          listener(this.reason);
-          return;
-        }
-        if (this._listeners) {
-          this._listeners.push(listener);
-        } else {
-          this._listeners = [listener];
-        }
-      }
-      /**
-       * Unsubscribe from the cancel signal
-       */
-      unsubscribe(listener) {
-        if (!this._listeners) {
-          return;
-        }
-        const index = this._listeners.indexOf(listener);
-        if (index !== -1) {
-          this._listeners.splice(index, 1);
-        }
-      }
-      toAbortSignal() {
-        const controller = new AbortController();
-        const abort = (err) => {
-          controller.abort(err);
-        };
-        this.subscribe(abort);
-        controller.signal.unsubscribe = () => this.unsubscribe(abort);
-        return controller.signal;
-      }
-      /**
-       * Returns an object that contains a new `CancelToken` and a function that, when called,
-       * cancels the `CancelToken`.
-       */
-      static source() {
-        let cancel;
-        const token2 = new _CancelToken(function executor(c) {
-          cancel = c;
-        });
-        return {
-          token: token2,
-          cancel
-        };
-      }
-    };
-    CancelToken_default = CancelToken;
-  }
-});
-
-// node_modules/axios/lib/helpers/spread.js
-function spread(callback) {
-  return function wrap(arr) {
-    return callback.apply(null, arr);
-  };
-}
-var init_spread = __esm({
-  "node_modules/axios/lib/helpers/spread.js"() {
-    "use strict";
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/axios/lib/helpers/isAxiosError.js
-function isAxiosError(payload) {
-  return utils_default.isObject(payload) && payload.isAxiosError === true;
-}
-var init_isAxiosError = __esm({
-  "node_modules/axios/lib/helpers/isAxiosError.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-  }
-});
-
-// node_modules/axios/lib/helpers/HttpStatusCode.js
-var HttpStatusCode, HttpStatusCode_default;
-var init_HttpStatusCode = __esm({
-  "node_modules/axios/lib/helpers/HttpStatusCode.js"() {
-    init_define_import_meta_env();
-    HttpStatusCode = {
-      Continue: 100,
-      SwitchingProtocols: 101,
-      Processing: 102,
-      EarlyHints: 103,
-      Ok: 200,
-      Created: 201,
-      Accepted: 202,
-      NonAuthoritativeInformation: 203,
-      NoContent: 204,
-      ResetContent: 205,
-      PartialContent: 206,
-      MultiStatus: 207,
-      AlreadyReported: 208,
-      ImUsed: 226,
-      MultipleChoices: 300,
-      MovedPermanently: 301,
-      Found: 302,
-      SeeOther: 303,
-      NotModified: 304,
-      UseProxy: 305,
-      Unused: 306,
-      TemporaryRedirect: 307,
-      PermanentRedirect: 308,
-      BadRequest: 400,
-      Unauthorized: 401,
-      PaymentRequired: 402,
-      Forbidden: 403,
-      NotFound: 404,
-      MethodNotAllowed: 405,
-      NotAcceptable: 406,
-      ProxyAuthenticationRequired: 407,
-      RequestTimeout: 408,
-      Conflict: 409,
-      Gone: 410,
-      LengthRequired: 411,
-      PreconditionFailed: 412,
-      /**
-       * @deprecated Use `ContentTooLarge` instead.
-       */
-      PayloadTooLarge: 413,
-      ContentTooLarge: 413,
-      UriTooLong: 414,
-      UnsupportedMediaType: 415,
-      RangeNotSatisfiable: 416,
-      ExpectationFailed: 417,
-      ImATeapot: 418,
-      MisdirectedRequest: 421,
-      /**
-       * @deprecated Use `UnprocessableContent` instead.
-       */
-      UnprocessableEntity: 422,
-      UnprocessableContent: 422,
-      Locked: 423,
-      FailedDependency: 424,
-      TooEarly: 425,
-      UpgradeRequired: 426,
-      PreconditionRequired: 428,
-      TooManyRequests: 429,
-      RequestHeaderFieldsTooLarge: 431,
-      UnavailableForLegalReasons: 451,
-      InternalServerError: 500,
-      NotImplemented: 501,
-      BadGateway: 502,
-      ServiceUnavailable: 503,
-      GatewayTimeout: 504,
-      HttpVersionNotSupported: 505,
-      VariantAlsoNegotiates: 506,
-      InsufficientStorage: 507,
-      LoopDetected: 508,
-      NotExtended: 510,
-      NetworkAuthenticationRequired: 511,
-      WebServerReturnsAnUnknownError: 520,
-      WebServerIsDown: 521,
-      ConnectionTimedOut: 522,
-      OriginIsUnreachable: 523,
-      TimeoutOccurred: 524,
-      SslHandshakeFailed: 525,
-      InvalidSslCertificate: 526
-    };
-    Object.entries(HttpStatusCode).forEach(([key, value2]) => {
-      if (HttpStatusCode[value2] === void 0) {
-        HttpStatusCode[value2] = key;
-      }
-    });
-    HttpStatusCode_default = HttpStatusCode;
-  }
-});
-
-// node_modules/axios/lib/axios.js
-function createInstance(defaultConfig) {
-  const context = new Axios_default(defaultConfig);
-  const instance = bind(Axios_default.prototype.request, context);
-  utils_default.extend(instance, Axios_default.prototype, context, { allOwnKeys: true });
-  utils_default.extend(instance, context, null, { allOwnKeys: true });
-  instance.create = function create2(instanceConfig) {
-    return createInstance(mergeConfig(defaultConfig, instanceConfig));
-  };
-  return instance;
-}
-var axios, axios_default;
-var init_axios = __esm({
-  "node_modules/axios/lib/axios.js"() {
-    "use strict";
-    init_define_import_meta_env();
-    init_utils();
-    init_bind();
-    init_Axios();
-    init_mergeConfig();
-    init_defaults();
-    init_formDataToJSON();
-    init_CanceledError();
-    init_CancelToken();
-    init_isCancel();
-    init_data();
-    init_toFormData();
-    init_AxiosError();
-    init_spread();
-    init_isAxiosError();
-    init_AxiosHeaders();
-    init_adapters();
-    init_HttpStatusCode();
-    axios = createInstance(defaults_default);
-    axios.Axios = Axios_default;
-    axios.CanceledError = CanceledError_default;
-    axios.CancelToken = CancelToken_default;
-    axios.isCancel = isCancel;
-    axios.VERSION = VERSION;
-    axios.toFormData = toFormData_default;
-    axios.AxiosError = AxiosError_default;
-    axios.Cancel = axios.CanceledError;
-    axios.all = function all(promises) {
-      return Promise.all(promises);
-    };
-    axios.spread = spread;
-    axios.isAxiosError = isAxiosError;
-    axios.mergeConfig = mergeConfig;
-    axios.AxiosHeaders = AxiosHeaders_default;
-    axios.formToJSON = (thing) => formDataToJSON_default(utils_default.isHTMLForm(thing) ? new FormData(thing) : thing);
-    axios.getAdapter = adapters_default.getAdapter;
-    axios.HttpStatusCode = HttpStatusCode_default;
-    axios.default = axios;
-    axios_default = axios;
-  }
-});
-
-// node_modules/axios/index.js
-var Axios2, AxiosError2, CanceledError2, isCancel2, CancelToken2, VERSION2, all2, Cancel, isAxiosError2, spread2, toFormData2, AxiosHeaders2, HttpStatusCode2, formToJSON, getAdapter2, mergeConfig2, create;
-var init_axios2 = __esm({
-  "node_modules/axios/index.js"() {
-    init_define_import_meta_env();
-    init_axios();
-    ({
-      Axios: Axios2,
-      AxiosError: AxiosError2,
-      CanceledError: CanceledError2,
-      isCancel: isCancel2,
-      CancelToken: CancelToken2,
-      VERSION: VERSION2,
-      all: all2,
-      Cancel,
-      isAxiosError: isAxiosError2,
-      spread: spread2,
-      toFormData: toFormData2,
-      AxiosHeaders: AxiosHeaders2,
-      HttpStatusCode: HttpStatusCode2,
-      formToJSON,
-      getAdapter: getAdapter2,
-      mergeConfig: mergeConfig2,
-      create
-    } = axios_default);
-  }
-});
-
-// node_modules/@base44/sdk/dist/utils/common.js
-var isNode, isInIFrame, isReactNative2, generateUuid;
-var init_common = __esm({
-  "node_modules/@base44/sdk/dist/utils/common.js"() {
-    init_define_import_meta_env();
-    isNode = typeof window === "undefined";
-    isInIFrame = !isNode && window.self !== window.top;
-    isReactNative2 = !isNode && typeof document === "undefined";
-    generateUuid = () => {
-      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    };
-  }
-});
-
-// node_modules/uuid/dist/stringify.js
-function unsafeStringify(arr, offset = 0) {
-  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
-}
-var byteToHex;
-var init_stringify = __esm({
-  "node_modules/uuid/dist/stringify.js"() {
-    init_define_import_meta_env();
-    byteToHex = [];
-    for (let i = 0; i < 256; ++i) {
-      byteToHex.push((i + 256).toString(16).slice(1));
-    }
-  }
-});
-
-// node_modules/uuid/dist/rng.js
-function rng() {
-  if (!getRandomValues) {
-    if (typeof crypto === "undefined" || !crypto.getRandomValues) {
-      throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
-    }
-    getRandomValues = crypto.getRandomValues.bind(crypto);
-  }
-  return getRandomValues(rnds8);
-}
-var getRandomValues, rnds8;
-var init_rng = __esm({
-  "node_modules/uuid/dist/rng.js"() {
-    init_define_import_meta_env();
-    rnds8 = new Uint8Array(16);
-  }
-});
-
-// node_modules/uuid/dist/native.js
-var randomUUID, native_default;
-var init_native = __esm({
-  "node_modules/uuid/dist/native.js"() {
-    init_define_import_meta_env();
-    randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
-    native_default = { randomUUID };
-  }
-});
-
-// node_modules/uuid/dist/v4.js
-function _v4(options, buf, offset) {
-  options = options || {};
-  const rnds = options.random ?? options.rng?.() ?? rng();
-  if (rnds.length < 16) {
-    throw new Error("Random bytes length must be >= 16");
-  }
-  rnds[6] = rnds[6] & 15 | 64;
-  rnds[8] = rnds[8] & 63 | 128;
-  if (buf) {
-    offset = offset || 0;
-    if (offset < 0 || offset + 16 > buf.length) {
-      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
-    }
-    for (let i = 0; i < 16; ++i) {
-      buf[offset + i] = rnds[i];
-    }
-    return buf;
-  }
-  return unsafeStringify(rnds);
-}
-function v4(options, buf, offset) {
-  if (native_default.randomUUID && !buf && !options) {
-    return native_default.randomUUID();
-  }
-  return _v4(options, buf, offset);
-}
-var v4_default;
-var init_v4 = __esm({
-  "node_modules/uuid/dist/v4.js"() {
-    init_define_import_meta_env();
-    init_native();
-    init_rng();
-    init_stringify();
-    v4_default = v4;
-  }
-});
-
-// node_modules/uuid/dist/index.js
-var init_dist = __esm({
-  "node_modules/uuid/dist/index.js"() {
-    init_define_import_meta_env();
-    init_v4();
-  }
-});
-
-// node_modules/@base44/sdk/dist/utils/sharedInstance.js
-function getSharedInstance(name, factory2) {
-  if (!windowObj.base44SharedInstances) {
-    windowObj.base44SharedInstances = {};
-  }
-  if (!windowObj.base44SharedInstances[name]) {
-    windowObj.base44SharedInstances[name] = {
-      instance: factory2()
-    };
-  }
-  return windowObj.base44SharedInstances[name].instance;
-}
-var windowObj;
-var init_sharedInstance = __esm({
-  "node_modules/@base44/sdk/dist/utils/sharedInstance.js"() {
-    init_define_import_meta_env();
-    windowObj = typeof window !== "undefined" ? window : { base44SharedInstances: {} };
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/analytics.js
-function stopAnalyticsProcessor() {
-  analyticsSharedState.isProcessing = false;
-}
-async function startAnalyticsProcessor(handleTrack, options) {
-  if (analyticsSharedState.isProcessing) {
-    return;
-  }
-  analyticsSharedState.isProcessing = true;
-  const { throttleTime = 1e3, batchSize = 30 } = options !== null && options !== void 0 ? options : {};
-  while (analyticsSharedState.isProcessing && analyticsSharedState.requestsQueue.length > 0) {
-    const requests = analyticsSharedState.requestsQueue.splice(0, batchSize);
-    requests.length && await handleTrack(requests);
-    await new Promise((resolve) => setTimeout(resolve, throttleTime));
-  }
-  analyticsSharedState.isProcessing = false;
-}
-function startHeartBeatProcessor(track) {
-  var _a;
-  if (typeof window === "undefined" || analyticsSharedState.isHeartBeatProcessing || ((_a = analyticsSharedState.config.heartBeatInterval) !== null && _a !== void 0 ? _a : 0) < 10) {
-    return () => {
-    };
-  }
-  analyticsSharedState.isHeartBeatProcessing = true;
-  const interval = setInterval(() => {
-    track({ eventName: USER_HEARTBEAT_EVENT_NAME });
-  }, analyticsSharedState.config.heartBeatInterval);
-  return () => {
-    clearInterval(interval);
-    analyticsSharedState.isHeartBeatProcessing = false;
-  };
-}
-function trackInitializationEvent(track) {
-  if (typeof window === "undefined" || analyticsSharedState.wasInitializationTracked) {
-    return;
-  }
-  analyticsSharedState.wasInitializationTracked = true;
-  track({
-    eventName: ANALYTICS_INITIALIZATION_EVENT_NAME,
-    properties: {
-      referrer: document === null || document === void 0 ? void 0 : document.referrer,
-      ...getAttributionParams()
-    }
-  });
-}
-function getAttributionParams() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const out = {};
-    for (const key of ATTRIBUTION_PARAM_KEYS) {
-      const value2 = params.get(key);
-      if (value2)
-        out[key] = value2.slice(0, 500);
-    }
-    return out;
-  } catch (_a) {
-    return {};
-  }
-}
-function setSessionDurationTimerStart() {
-  if (typeof window === "undefined" || analyticsSharedState.sessionStartTime !== null) {
-    return;
-  }
-  analyticsSharedState.sessionStartTime = (/* @__PURE__ */ new Date()).toISOString();
-}
-function trackSessionDurationEvent(track) {
-  if (typeof window === "undefined" || analyticsSharedState.sessionStartTime === null)
-    return;
-  const sessionDuration = (/* @__PURE__ */ new Date()).getTime() - new Date(analyticsSharedState.sessionStartTime).getTime();
-  analyticsSharedState.sessionStartTime = null;
-  track({
-    eventName: ANALYTICS_SESSION_DURATION_EVENT_NAME,
-    properties: { sessionDuration }
-  });
-}
-function getEventIntrinsicData() {
-  var _a, _b;
-  return {
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    // `window.location` is absent on React Native, so read it optionally.
-    pageUrl: typeof window !== "undefined" ? (_b = (_a = window.location) === null || _a === void 0 ? void 0 : _a.pathname) !== null && _b !== void 0 ? _b : null : null
-  };
-}
-function transformEventDataToApiRequestData(sessionContext) {
-  return (eventData) => ({
-    event_name: eventData.eventName,
-    properties: eventData.properties,
-    timestamp: eventData.timestamp,
-    page_url: eventData.pageUrl,
-    ...sessionContext
-  });
-}
-function resetAnalyticsSessionContext() {
-  analyticsSharedState.sessionContext = null;
-  sessionContextPromise = null;
-}
-async function getSessionContext(userAuthModule) {
-  if (!analyticsSharedState.sessionContext) {
-    if (!userAuthModule.hasToken()) {
-      return { user_id: null, session_id: getAnalyticsSessionId() };
-    }
-    if (!sessionContextPromise) {
-      const sessionId = getAnalyticsSessionId();
-      sessionContextPromise = userAuthModule.me().then((user) => ({
-        user_id: user.id,
-        session_id: sessionId
-      })).catch(() => ({
-        user_id: null,
-        session_id: sessionId
-      }));
-    }
-    const pending = sessionContextPromise;
-    const context = await pending;
-    if (sessionContextPromise === pending) {
-      analyticsSharedState.sessionContext = context;
-    }
-    return context;
-  }
-  return analyticsSharedState.sessionContext;
-}
-function getAnalyticsConfigFromUrlParams() {
-  if (typeof window === "undefined" || !window.location)
-    return void 0;
-  const urlParams = new URLSearchParams(window.location.search);
-  const analyticsEnable = urlParams.get(ANALYTICS_CONFIG_ENABLE_URL_PARAM_KEY);
-  if (analyticsEnable == null || !analyticsEnable.length)
-    return void 0;
-  const newUrlParams = new URLSearchParams(window.location.search);
-  newUrlParams.delete(ANALYTICS_CONFIG_ENABLE_URL_PARAM_KEY);
-  const newUrl = window.location.pathname + (newUrlParams.toString() ? "?" + newUrlParams.toString() : "");
-  window.history.replaceState({}, "", newUrl);
-  return { enabled: analyticsEnable === "true" };
-}
-function getFallbackSessionId() {
-  var _a;
-  return (_a = analyticsSharedState.fallbackSessionId) !== null && _a !== void 0 ? _a : analyticsSharedState.fallbackSessionId = generateUuid();
-}
-function getAnalyticsSessionId() {
-  if (typeof window === "undefined") {
-    return getFallbackSessionId();
-  }
-  try {
-    const sessionId = localStorage.getItem(ANALYTICS_SESSION_ID_LOCAL_STORAGE_KEY);
-    if (!sessionId) {
-      const newSessionId = generateUuid();
-      localStorage.setItem(ANALYTICS_SESSION_ID_LOCAL_STORAGE_KEY, newSessionId);
-      return newSessionId;
-    }
-    return sessionId;
-  } catch (_a) {
-    return getFallbackSessionId();
-  }
-}
-var USER_HEARTBEAT_EVENT_NAME, ANALYTICS_INITIALIZATION_EVENT_NAME, ANALYTICS_SESSION_DURATION_EVENT_NAME, ANALYTICS_CONFIG_ENABLE_URL_PARAM_KEY, ANALYTICS_SESSION_ID_LOCAL_STORAGE_KEY, defaultConfiguration, ANALYTICS_SHARED_STATE_NAME, analyticsSharedState, createAnalyticsModule, ATTRIBUTION_PARAM_KEYS, sessionContextPromise;
-var init_analytics = __esm({
-  "node_modules/@base44/sdk/dist/modules/analytics.js"() {
-    init_define_import_meta_env();
-    init_sharedInstance();
-    init_common();
-    USER_HEARTBEAT_EVENT_NAME = "__user_heartbeat_event__";
-    ANALYTICS_INITIALIZATION_EVENT_NAME = "__initialization_event__";
-    ANALYTICS_SESSION_DURATION_EVENT_NAME = "__session_duration_event__";
-    ANALYTICS_CONFIG_ENABLE_URL_PARAM_KEY = "analytics-enable";
-    ANALYTICS_SESSION_ID_LOCAL_STORAGE_KEY = "base44_analytics_session_id";
-    defaultConfiguration = {
-      // default to enabled //
-      enabled: true,
-      maxQueueSize: 1e3,
-      throttleTime: 1e3,
-      batchSize: 30,
-      heartBeatInterval: 60 * 1e3
-    };
-    ANALYTICS_SHARED_STATE_NAME = "analytics";
-    analyticsSharedState = getSharedInstance(ANALYTICS_SHARED_STATE_NAME, () => ({
-      requestsQueue: [],
-      isProcessing: false,
-      isHeartBeatProcessing: false,
-      wasInitializationTracked: false,
-      sessionContext: null,
-      sessionStartTime: null,
-      // Memoized session id for when `localStorage` can't persist one — see
-      // getAnalyticsSessionId.
-      fallbackSessionId: null,
-      config: {
-        ...defaultConfiguration,
-        ...getAnalyticsConfigFromUrlParams()
-      }
-    }));
-    createAnalyticsModule = ({ axiosClient, serverUrl: serverUrl2, appId: appId2, userAuthModule, enabled }) => {
-      var _a;
-      const { maxQueueSize, throttleTime, batchSize } = analyticsSharedState.config;
-      if (!enabled || !((_a = analyticsSharedState.config) === null || _a === void 0 ? void 0 : _a.enabled) || isReactNative2) {
-        return {
-          track: () => {
-          },
-          cleanup: () => {
-          }
-        };
-      }
-      let clearHeartBeatProcessor = void 0;
-      const trackBatchUrl = `${serverUrl2}/api/apps/${appId2}/analytics/track/batch`;
-      const batchRequestFallback = async (events) => {
-        await axiosClient.request({
-          method: "POST",
-          url: `/apps/${appId2}/analytics/track/batch`,
-          data: { events }
-        });
-      };
-      const beaconRequest = (events) => {
-        try {
-          const beaconPayload = JSON.stringify({ events });
-          const blob = new Blob([beaconPayload], { type: "application/json" });
-          return typeof navigator === "undefined" || beaconPayload.length > 6e4 || !navigator.sendBeacon(trackBatchUrl, blob);
-        } catch (_a2) {
-          return false;
-        }
-      };
-      const flush = async (eventsData, options = {}) => {
-        if (eventsData.length === 0)
-          return;
-        const sessionContext_ = await getSessionContext(userAuthModule);
-        const events = eventsData.map(transformEventDataToApiRequestData(sessionContext_));
-        try {
-          if (!options.isBeacon || !beaconRequest(events)) {
-            await batchRequestFallback(events);
-          }
-        } catch (_a2) {
-        }
-      };
-      const startProcessing = () => {
-        startAnalyticsProcessor(flush, {
-          throttleTime,
-          batchSize
-        });
-      };
-      const track = (params) => {
-        if (analyticsSharedState.requestsQueue.length >= maxQueueSize) {
-          return;
-        }
-        const intrinsicData = getEventIntrinsicData();
-        analyticsSharedState.requestsQueue.push({
-          ...params,
-          ...intrinsicData
-        });
-        startProcessing();
-      };
-      const onDocVisible = () => {
-        startAnalyticsProcessor(flush, {
-          throttleTime,
-          batchSize
-        });
-        clearHeartBeatProcessor = startHeartBeatProcessor(track);
-        setSessionDurationTimerStart();
-      };
-      const onDocHidden = () => {
-        stopAnalyticsProcessor();
-        clearHeartBeatProcessor === null || clearHeartBeatProcessor === void 0 ? void 0 : clearHeartBeatProcessor();
-        trackSessionDurationEvent(track);
-        const eventsData = analyticsSharedState.requestsQueue.splice(0);
-        flush(eventsData, { isBeacon: true });
-      };
-      const onVisibilityChange = () => {
-        if (typeof window === "undefined")
-          return;
-        if (document.visibilityState === "hidden") {
-          onDocHidden();
-        } else if (document.visibilityState === "visible") {
-          onDocVisible();
-        }
-      };
-      const cleanup = () => {
-        stopAnalyticsProcessor();
-        clearHeartBeatProcessor === null || clearHeartBeatProcessor === void 0 ? void 0 : clearHeartBeatProcessor();
-        if (typeof window !== "undefined") {
-          window.removeEventListener("visibilitychange", onVisibilityChange);
-        }
-      };
-      startProcessing();
-      clearHeartBeatProcessor = startHeartBeatProcessor(track);
-      trackInitializationEvent(track);
-      if (typeof window !== "undefined") {
-        window.addEventListener("visibilitychange", onVisibilityChange);
-      }
-      return {
-        track,
-        cleanup
-      };
-    };
-    ATTRIBUTION_PARAM_KEYS = [
-      "utm_source",
-      "utm_medium",
-      "utm_campaign",
-      "utm_term",
-      "utm_content",
-      "utm_id",
-      "gclid",
-      "gbraid",
-      "wbraid",
-      "gad_source",
-      "gad_campaignid",
-      "fbclid",
-      "msclkid",
-      "ttclid",
-      "li_fat_id"
-    ];
-    sessionContextPromise = null;
-  }
-});
-
-// node_modules/@base44/sdk/dist/utils/axios-client.js
-function safeErrorLog(prefix, error) {
-  if (error instanceof Base44Error) {
-    console.error(`${prefix} ${error.status}: ${error.message}`);
-    if (error.data) {
-      try {
-        console.error("Error data:", JSON.stringify(error.data, null, 2));
-      } catch (e) {
-        console.error("Error data: [Cannot stringify error data]");
-      }
-    }
-  } else {
-    console.error(`${prefix} ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-function createAxiosClient({ baseURL, headers = {}, token: token2, interceptResponses = true, onError }) {
-  const client = axios_default.create({
-    baseURL,
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...headers
-    }
-  });
-  if (token2) {
-    client.defaults.headers.common["Authorization"] = `Bearer ${token2}`;
-  }
-  client.interceptors.request.use((config) => {
-    if (typeof window !== "undefined") {
-      if (window.location) {
-        config.headers.set("X-Origin-URL", window.location.href);
-      }
-      if (!config.headers.get("Authorization")) {
-        config.headers.set("X-Base44-Anonymous-Id", getAnalyticsSessionId());
-      }
-    }
-    const requestId = v4_default();
-    config.requestId = requestId;
-    if (isInIFrame) {
-      try {
-        window.parent.postMessage({
-          type: "api-request-start",
-          requestId,
-          data: {
-            url: baseURL + config.url,
-            method: config.method,
-            body: config.data instanceof FormData ? "[FormData object]" : config.data
-          }
-        }, "*");
-      } catch (_a) {
-      }
-    }
-    return config;
-  });
-  if (interceptResponses) {
-    client.interceptors.response.use((response) => {
-      var _a;
-      const requestId = (_a = response.config) === null || _a === void 0 ? void 0 : _a.requestId;
-      try {
-        if (isInIFrame && requestId) {
-          window.parent.postMessage({
-            type: "api-request-end",
-            requestId,
-            data: {
-              statusCode: response.status,
-              response: response.data
-            }
-          }, "*");
-        }
-      } catch (_b) {
-      }
-      return response.data;
-    }, (error) => {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
-      const data = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data;
-      const message = ((_b = data === null || data === void 0 ? void 0 : data.error) === null || _b === void 0 ? void 0 : _b.message) || (data === null || data === void 0 ? void 0 : data.message) || (data === null || data === void 0 ? void 0 : data.detail) || error.message;
-      const base44Error = new Base44Error(message, (_c = error.response) === null || _c === void 0 ? void 0 : _c.status, (_k = (_f = (_e = (_d = data === null || data === void 0 ? void 0 : data.error) === null || _d === void 0 ? void 0 : _d.code) !== null && _e !== void 0 ? _e : data === null || data === void 0 ? void 0 : data.code) !== null && _f !== void 0 ? _f : (_j = (_h = (_g = error.response) === null || _g === void 0 ? void 0 : _g.headers) === null || _h === void 0 ? void 0 : _h.get) === null || _j === void 0 ? void 0 : _j.call(_h, "x-base44-connector-error")) !== null && _k !== void 0 ? _k : (_m = (_l = error.response) === null || _l === void 0 ? void 0 : _l.headers) === null || _m === void 0 ? void 0 : _m["x-base44-connector-error"], data, error);
-      if (true) {
-        safeErrorLog("[Base44 SDK Error]", base44Error);
-      }
-      onError === null || onError === void 0 ? void 0 : onError(base44Error);
-      return Promise.reject(base44Error);
-    });
-  }
-  return client;
-}
-var Base44Error;
-var init_axios_client = __esm({
-  "node_modules/@base44/sdk/dist/utils/axios-client.js"() {
-    init_define_import_meta_env();
-    init_axios2();
-    init_common();
-    init_dist();
-    init_analytics();
-    Base44Error = class extends Error {
-      /**
-       * Creates a new Base44Error instance.
-       *
-       * @param message - Human-readable error message
-       * @param status - HTTP status code
-       * @param code - Error code from the API
-       * @param data - Full response data from the server
-       * @param originalError - Original axios error object
-       * @internal
-       */
-      constructor(message, status, code, data, originalError) {
-        super(message);
-        this.name = "Base44Error";
-        this.status = status;
-        this.code = code;
-        this.data = data;
-        this.originalError = originalError;
-      }
-      /**
-       * Serializes the error to a JSON-safe object.
-       *
-       * Useful for logging or sending error information to external services
-       * without circular reference issues.
-       *
-       * @returns JSON-safe representation of the error.
-       *
-       * @example
-       * ```typescript
-       * try {
-       *   await client.entities.Todo.get('invalid-id');
-       * } catch (error) {
-       *   if (error instanceof Base44Error) {
-       *     const json = error.toJSON();
-       *     console.log(json);
-       *     // {
-       *     //   name: "Base44Error",
-       *     //   message: "Not found",
-       *     //   status: 404,
-       *     //   code: "NOT_FOUND",
-       *     //   data: { ... }
-       *     // }
-       *   }
-       * }
-       * ```
-       */
-      toJSON() {
-        return {
-          name: this.name,
-          message: this.message,
-          status: this.status,
-          code: this.code,
-          data: this.data
-        };
-      }
-    };
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/entities.js
-function createEntitiesModule(config) {
-  const { axios: axios2, appId: appId2, getSocket } = config;
-  return new Proxy({}, {
-    get(target, entityName) {
-      if (typeof entityName !== "string" || entityName === "then" || entityName.startsWith("_")) {
-        return void 0;
-      }
-      return createEntityHandler(axios2, appId2, entityName, getSocket);
-    }
-  });
-}
-function parseRealtimeMessage(dataStr) {
-  var _a;
-  try {
-    const parsed = JSON.parse(dataStr);
-    return {
-      type: parsed.type,
-      data: parsed.data,
-      id: parsed.id || ((_a = parsed.data) === null || _a === void 0 ? void 0 : _a.id),
-      timestamp: parsed.timestamp || (/* @__PURE__ */ new Date()).toISOString()
-    };
-  } catch (error) {
-    console.warn("[Base44 SDK] Failed to parse realtime message:", error);
-    return null;
-  }
-}
-function isPageOptions(value2) {
-  return typeof value2 === "object" && value2 !== null;
-}
-function createEntityHandler(axios2, appId2, entityName, getSocket) {
-  const baseURL = `/apps/${appId2}/entities/${entityName}`;
-  const fieldsParam = (fields) => Array.isArray(fields) ? fields.join(",") : fields;
-  const readArray = (sort, limit, skip, fields, query) => {
-    const params = {};
-    if (query)
-      params.q = JSON.stringify(query);
-    if (sort)
-      params.sort = sort;
-    if (limit)
-      params.limit = limit;
-    if (skip)
-      params.skip = skip;
-    if (fields)
-      params.fields = fieldsParam(fields);
-    return axios2.get(baseURL, { params });
-  };
-  const readPage = (options, query) => {
-    const params = {};
-    if (query)
-      params.q = JSON.stringify(query);
-    params.limit = options.limit || DEFAULT_PAGE_LIMIT;
-    if (options.cursor)
-      params.cursor = options.cursor;
-    if ("distinct" in options) {
-      params.distinct = options.distinct;
-    } else {
-      if (options.sort)
-        params.sort = options.sort;
-      if (options.fields)
-        params.fields = fieldsParam(options.fields);
-    }
-    return axios2.get(`${baseURL}/v2/list`, { params });
-  };
-  return {
-    // list(sort, limit, skip, fields) returns an array; list(options) returns one cursor page.
-    async list(...args) {
-      const [sort, limit, skip, fields] = args;
-      return isPageOptions(sort) ? readPage(sort) : readArray(sort, limit, skip, fields);
-    },
-    // filter(query, sort, limit, skip, fields) returns an array; filter(query, options) returns one cursor page.
-    async filter(query, ...args) {
-      const [sort, limit, skip, fields] = args;
-      return isPageOptions(sort) ? readPage(sort, query) : readArray(sort, limit, skip, fields, query);
-    },
-    // Get entity by ID
-    async get(id) {
-      return axios2.get(`${baseURL}/${id}`);
-    },
-    // Create new entity
-    async create(data) {
-      return axios2.post(baseURL, data);
-    },
-    // Update entity by ID
-    async update(id, data) {
-      return axios2.put(`${baseURL}/${id}`, data);
-    },
-    // Delete entity by ID
-    async delete(id) {
-      return axios2.delete(`${baseURL}/${id}`);
-    },
-    // Delete multiple entities based on query
-    async deleteMany(query) {
-      return axios2.delete(baseURL, { data: query });
-    },
-    // Create multiple entities in a single request
-    async bulkCreate(data) {
-      return axios2.post(`${baseURL}/bulk`, data);
-    },
-    // Update multiple entities matching a query using a MongoDB update operator
-    async updateMany(query, data) {
-      return axios2.patch(`${baseURL}/update-many`, { query, data });
-    },
-    // Count entities matching a query
-    async count(query) {
-      const params = {};
-      if (query)
-        params.q = JSON.stringify(query);
-      const result = await axios2.get(`${baseURL}/count`, { params });
-      return result.count;
-    },
-    // Server-side group-by aggregation
-    async aggregate(spec) {
-      return axios2.post(`${baseURL}/aggregate`, spec);
-    },
-    // Create or update by a natural key
-    async upsert(records, options) {
-      return axios2.post(`${baseURL}/upsert`, { records, key: options.key });
-    },
-    // Update multiple entities by ID, each with its own update data
-    async bulkUpdate(data) {
-      return axios2.put(`${baseURL}/bulk`, data);
-    },
-    // Import entities from a file
-    async importEntities(file) {
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-      return axios2.post(`${baseURL}/import`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-    },
-    // Subscribe to realtime updates
-    subscribe(callback) {
-      const room = `entities:${appId2}:${entityName}`;
-      const socket = getSocket();
-      const unsubscribe = socket.subscribeToRoom(room, {
-        update_model: (msg) => {
-          var _a;
-          const event = parseRealtimeMessage(msg.data);
-          if (!event) {
-            return;
-          }
-          if (event.type !== "delete" && ((_a = event.data) === null || _a === void 0 ? void 0 : _a._oversize)) {
-            console.error(`[Base44 SDK] Realtime broadcast for ${entityName}#${event.id} was oversize and got slimmed for transport. Fields >10 KB are empty and the rest of the record may be a stub. Call \`entities.${entityName}.get("${event.id}")\` to fetch the full record.`);
-          }
-          try {
-            callback(event);
-          } catch (error) {
-            console.error("[Base44 SDK] Subscription callback error:", error);
-          }
-        }
-      });
-      return unsubscribe;
-    }
-  };
-}
-var DEFAULT_PAGE_LIMIT;
-var init_entities = __esm({
-  "node_modules/@base44/sdk/dist/modules/entities.js"() {
-    init_define_import_meta_env();
-    DEFAULT_PAGE_LIMIT = 100;
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/custom-integrations.js
-function createCustomIntegrationsModule(axios2, appId2) {
-  return {
-    async call(slug, operationId, params) {
-      if (!(slug === null || slug === void 0 ? void 0 : slug.trim())) {
-        throw new Error("Integration slug is required and cannot be empty");
-      }
-      if (!(operationId === null || operationId === void 0 ? void 0 : operationId.trim())) {
-        throw new Error("Operation ID is required and cannot be empty");
-      }
-      const { pathParams, queryParams, ...rest } = params !== null && params !== void 0 ? params : {};
-      const body = {
-        ...rest,
-        ...pathParams && { path_params: pathParams },
-        ...queryParams && { query_params: queryParams }
-      };
-      const response = await axios2.post(`/apps/${appId2}/integrations/custom/${slug}/${operationId}`, body);
-      return response;
-    }
-  };
-}
-var init_custom_integrations = __esm({
-  "node_modules/@base44/sdk/dist/modules/custom-integrations.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/integrations.js
-function createIntegrationsModule(axios2, appId2) {
-  const customModule = createCustomIntegrationsModule(axios2, appId2);
-  return new Proxy({}, {
-    get(target, packageName) {
-      if (typeof packageName !== "string" || packageName === "then" || packageName.startsWith("_")) {
-        return void 0;
-      }
-      if (packageName === "custom") {
-        return customModule;
-      }
-      return new Proxy({}, {
-        get(target2, endpointName) {
-          if (typeof endpointName !== "string" || endpointName === "then" || endpointName.startsWith("_")) {
-            return void 0;
-          }
-          return async (data) => {
-            if (typeof data === "string") {
-              throw new Error(`Integration ${endpointName} must receive an object with named parameters, received: ${data}`);
-            }
-            let formData;
-            let contentType;
-            if (data instanceof FormData || data && Object.values(data).some((value2) => value2 instanceof File)) {
-              formData = new FormData();
-              Object.keys(data).forEach((key) => {
-                if (data[key] instanceof File) {
-                  formData.append(key, data[key], data[key].name);
-                } else if (typeof data[key] === "object" && data[key] !== null) {
-                  formData.append(key, JSON.stringify(data[key]));
-                } else {
-                  formData.append(key, data[key]);
-                }
-              });
-              contentType = "multipart/form-data";
-            } else {
-              formData = data;
-              contentType = "application/json";
-            }
-            if (packageName === "Core") {
-              return axios2.post(`/apps/${appId2}/integration-endpoints/Core/${endpointName}`, formData || data, { headers: { "Content-Type": contentType } });
-            }
-            return axios2.post(`/apps/${appId2}/integration-endpoints/installable/${packageName}/integration-endpoints/${endpointName}`, formData || data, { headers: { "Content-Type": contentType } });
-          };
-        }
-      });
-    }
-  });
-}
-var init_integrations = __esm({
-  "node_modules/@base44/sdk/dist/modules/integrations.js"() {
-    init_define_import_meta_env();
-    init_custom_integrations();
-  }
-});
-
-// node_modules/@base44/sdk/dist/utils/auth-utils.js
-function getAccessToken(options = {}) {
-  const { storageKey = "base44_access_token", paramName = "access_token", saveToStorage = true, removeFromUrl = true } = options;
-  let token2 = null;
-  if (typeof window !== "undefined" && window.location) {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      token2 = urlParams.get(paramName);
-      if (token2) {
-        if (saveToStorage) {
-          saveAccessToken(token2, { storageKey });
-        }
-        if (removeFromUrl) {
-          urlParams.delete(paramName);
-          const newUrl = `${window.location.pathname}${urlParams.toString() ? `?${urlParams.toString()}` : ""}${window.location.hash}`;
-          window.history.replaceState({}, document.title, newUrl);
-        }
-        return token2;
-      }
-    } catch (e) {
-      console.error("Error retrieving token from URL:", e);
-    }
-  }
-  if (typeof window !== "undefined" && window.localStorage) {
-    try {
-      token2 = window.localStorage.getItem(storageKey);
-      return token2;
-    } catch (e) {
-      console.error("Error retrieving token from local storage:", e);
-    }
-  }
-  return null;
-}
-function saveAccessToken(token2, options) {
-  const { storageKey = "base44_access_token" } = options;
-  if (typeof window === "undefined" || !window.localStorage || !token2) {
-    return false;
-  }
-  try {
-    window.localStorage.setItem(storageKey, token2);
-    window.localStorage.setItem("token", token2);
-    return true;
-  } catch (e) {
-    console.error("Error saving token to local storage:", e);
-    return false;
-  }
-}
-function removeAccessToken(options) {
-  const { storageKey = "base44_access_token" } = options;
-  if (typeof window === "undefined" || !window.localStorage) {
-    return false;
-  }
-  try {
-    window.localStorage.removeItem(storageKey);
-    return true;
-  } catch (e) {
-    console.error("Error removing token from local storage:", e);
-    return false;
-  }
-}
-var init_auth_utils = __esm({
-  "node_modules/@base44/sdk/dist/utils/auth-utils.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/auth.js
-function isInsideIframe() {
-  if (typeof window === "undefined")
-    return false;
-  return window !== window.parent;
-}
-function loginViaPopup(url2, redirectUrl, expectedOrigin) {
-  const width = 500;
-  const height = 600;
-  const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
-  const top = Math.round(window.screenY + (window.outerHeight - height) / 2);
-  const popup = window.open(url2, "base44_auth", `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
-  if (!popup) {
-    return;
-  }
-  const cleanup = () => {
-    window.removeEventListener("message", onMessage);
-    clearInterval(pollTimer);
-    if (!popup.closed)
-      popup.close();
-  };
-  const onMessage = (event) => {
-    var _a;
-    if (event.origin !== expectedOrigin)
-      return;
-    if (event.source !== popup)
-      return;
-    if (!((_a = event.data) === null || _a === void 0 ? void 0 : _a.access_token))
-      return;
-    cleanup();
-    const callbackUrl = new URL(redirectUrl);
-    const { access_token, is_new_user } = event.data;
-    callbackUrl.searchParams.set("access_token", access_token);
-    if (is_new_user != null) {
-      callbackUrl.searchParams.set("is_new_user", String(is_new_user));
-    }
-    window.location.href = callbackUrl.toString();
-  };
-  const pollTimer = setInterval(() => {
-    if (popup.closed)
-      cleanup();
-  }, 500);
-  window.addEventListener("message", onMessage);
-}
-function removeStoredAccessTokens() {
-  removeAccessToken({});
-  removeAccessToken({ storageKey: "token" });
-}
-function clearTokenOnRejection(error, sentAuthorization) {
-  if (error.status === 401 && isStoredAccessToken(sentAuthorization)) {
-    removeStoredAccessTokens();
-  }
-}
-function createAuthModule(axios2, functionsAxiosClient, appId2, options) {
-  let pendingMe = null;
-  const clearPendingMe = () => {
-    pendingMe = null;
-  };
-  let hasAccessToken = Boolean(options.token);
-  return {
-    hasToken() {
-      return hasAccessToken;
-    },
-    // Get current user information
-    async me() {
-      const sentAuthorization = axios2.defaults.headers.common["Authorization"];
-      const request = pendingMe !== null && pendingMe !== void 0 ? pendingMe : axios2.get(`/apps/${appId2}/entities/User/me`).catch((error) => {
-        clearTokenOnRejection(error, sentAuthorization);
-        throw error;
-      }).finally(() => {
-        if (pendingMe === request)
-          pendingMe = null;
-      });
-      pendingMe = request;
-      return request;
-    },
-    // Update current user data
-    async updateMe(data) {
-      return axios2.put(`/apps/${appId2}/entities/User/me`, data);
-    },
-    // Redirects the user to the app's login page
-    redirectToLogin(nextUrl) {
-      if (typeof window === "undefined") {
-        throw new Error("Login method can only be used in a browser environment");
-      }
-      const redirectUrl = nextUrl ? new URL(nextUrl, window.location.origin).toString() : window.location.href;
-      const loginUrl = `${options.appBaseUrl}/login?from_url=${encodeURIComponent(redirectUrl)}`;
-      window.location.href = loginUrl;
-    },
-    // Redirects the user to a provider's login page
-    loginWithProvider(provider, fromUrl = "/") {
-      const redirectUrl = new URL(fromUrl, window.location.origin).toString();
-      const queryParams = `app_id=${appId2}&from_url=${encodeURIComponent(redirectUrl)}`;
-      let authPath;
-      if (provider === "sso") {
-        authPath = `/apps/${appId2}/auth/sso/login`;
-      } else {
-        const providerPath = provider === "google" ? "" : `/${provider}`;
-        authPath = `/apps/auth${providerPath}/login`;
-      }
-      const loginUrl = `${options.appBaseUrl}/api${authPath}?${queryParams}`;
-      if (isInsideIframe()) {
-        const popupLoginUrl = `${loginUrl}&popup_origin=${encodeURIComponent(window.location.origin)}`;
-        return loginViaPopup(popupLoginUrl, redirectUrl, window.location.origin);
-      }
-      window.location.href = loginUrl;
-    },
-    // Logout the current user
-    logout(redirectUrl) {
-      delete axios2.defaults.headers.common["Authorization"];
-      clearPendingMe();
-      resetAnalyticsSessionContext();
-      hasAccessToken = false;
-      if (typeof window !== "undefined") {
-        removeStoredAccessTokens();
-        const fromUrl = redirectUrl || window.location.href;
-        const logoutUrl = `${options.appBaseUrl}/api/apps/auth/logout?from_url=${encodeURIComponent(fromUrl)}`;
-        window.location.href = logoutUrl;
-      }
-    },
-    // Set authentication token
-    setToken(token2, saveToStorage = true) {
-      if (!token2)
-        return;
-      clearPendingMe();
-      resetAnalyticsSessionContext();
-      hasAccessToken = true;
-      axios2.defaults.headers.common["Authorization"] = `Bearer ${token2}`;
-      functionsAxiosClient.defaults.headers.common["Authorization"] = `Bearer ${token2}`;
-      if (saveToStorage && typeof window !== "undefined" && window.localStorage) {
-        try {
-          window.localStorage.setItem("base44_access_token", token2);
-          window.localStorage.setItem("token", token2);
-        } catch (e) {
-          console.error("Failed to save token to localStorage:", e);
-        }
-      }
-    },
-    // Login using username and password
-    async loginViaEmailPassword(email, password, turnstileToken) {
-      var _a;
-      try {
-        const response = await axios2.post(`/apps/${appId2}/auth/login`, {
-          email,
-          password,
-          ...turnstileToken && { turnstile_token: turnstileToken }
-        });
-        const { access_token, user } = response;
-        if (access_token) {
-          this.setToken(access_token);
-        }
-        return {
-          access_token,
-          user
-        };
-      } catch (error) {
-        if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 401) {
-          await this.logout();
-        }
-        throw error;
-      }
-    },
-    // Verify if the current token is valid
-    async isAuthenticated() {
-      try {
-        await this.me();
-        return true;
-      } catch (error) {
-        return false;
-      }
-    },
-    // Invite a user to the app
-    inviteUser(userEmail, role) {
-      return axios2.post(`/apps/${appId2}/users/invite-user`, {
-        user_email: userEmail,
-        role
-      });
-    },
-    // Register a new user account
-    register(payload) {
-      return axios2.post(`/apps/${appId2}/auth/register`, payload);
-    },
-    // Verify an OTP (One-time password) code
-    verifyOtp({ email, otpCode }) {
-      return axios2.post(`/apps/${appId2}/auth/verify-otp`, {
-        email,
-        otp_code: otpCode
-      });
-    },
-    // Resend an OTP code to the user's email
-    resendOtp(email) {
-      return axios2.post(`/apps/${appId2}/auth/resend-otp`, { email });
-    },
-    // Request a password reset
-    resetPasswordRequest(email) {
-      return axios2.post(`/apps/${appId2}/auth/reset-password-request`, {
-        email
-      });
-    },
-    // Reset password using a reset token
-    resetPassword({ resetToken, newPassword }) {
-      return axios2.post(`/apps/${appId2}/auth/reset-password`, {
-        reset_token: resetToken,
-        new_password: newPassword
-      });
-    },
-    // Change the user's password
-    changePassword({ userId, currentPassword, newPassword }) {
-      return axios2.post(`/apps/${appId2}/auth/change-password`, {
-        user_id: userId,
-        current_password: currentPassword,
-        new_password: newPassword
-      });
-    }
-  };
-}
-var isStoredAccessToken;
-var init_auth = __esm({
-  "node_modules/@base44/sdk/dist/modules/auth.js"() {
-    init_define_import_meta_env();
-    init_auth_utils();
-    init_analytics();
-    isStoredAccessToken = (authorization) => authorization === `Bearer ${getAccessToken({ saveToStorage: false, removeFromUrl: false })}`;
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/sso.js
-function createSsoModule(axios2, appId2) {
-  return {
-    // Get SSO access token for a specific user
-    async getAccessToken(userid) {
-      const url2 = `/apps/${appId2}/auth/sso/accesstoken/${userid}`;
-      return axios2.get(url2);
-    },
-    // Get the stored SSO OIDC ID token for a specific user
-    async getIdToken(userid) {
-      const url2 = `/apps/${appId2}/auth/sso/idtoken/${userid}`;
-      return axios2.get(url2);
-    }
-  };
-}
-var init_sso = __esm({
-  "node_modules/@base44/sdk/dist/modules/sso.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/browser.js
-function createBrowserModule(axios2) {
-  const endSession = async (sessionId) => {
-    if (!sessionId || typeof sessionId !== "string") {
-      throw new Error("Session ID is required and must be a string");
-    }
-    await axios2.delete(`/v1/browser-sessions/${encodeURIComponent(sessionId)}`);
-  };
-  return {
-    async getSession(options = {}) {
-      var _a;
-      const response = await axios2.post("/v1/browser-sessions", {
-        capture_debug_artifacts: (_a = options.captureDebugArtifacts) !== null && _a !== void 0 ? _a : true,
-        // Omit when unset so the backend applies its configured default.
-        ...options.sessionTimeoutSeconds !== void 0 && {
-          session_timeout_seconds: options.sessionTimeoutSeconds
-        }
-      });
-      const data = response;
-      return {
-        sessionId: data.session_id,
-        connectionUrl: data.connection_url,
-        connectionScope: data.connection_scope,
-        ...data.connection_expires_at && {
-          connectionExpiresAt: data.connection_expires_at
-        },
-        ...data.session_expires_at && {
-          sessionExpiresAt: data.session_expires_at
-        },
-        end: () => endSession(data.session_id)
-      };
-    },
-    endSession
-  };
-}
-var init_browser2 = __esm({
-  "node_modules/@base44/sdk/dist/modules/browser.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/connectors.js
-function createConnectorsModule(axios2, appId2) {
-  return {
-    /**
-     * Retrieve an OAuth access token for a specific external integration type.
-     * @deprecated Use getConnection(integrationType) and use the returned accessToken (and connectionConfig when needed) instead.
-     */
-    // @ts-expect-error Return type mismatch with interface - implementation returns string, interface expects string but implementation is typed as ConnectorAccessTokenResponse
-    async getAccessToken(integrationType) {
-      if (!integrationType || typeof integrationType !== "string") {
-        throw new Error("Integration type is required and must be a string");
-      }
-      const response = await axios2.get(`/apps/${appId2}/external-auth/tokens/${encodeURIComponent(integrationType)}`);
-      return response.access_token;
-    },
-    async getConnection(integrationType) {
-      var _a;
-      if (!integrationType || typeof integrationType !== "string") {
-        throw new Error("Integration type is required and must be a string");
-      }
-      const response = await axios2.get(`/apps/${appId2}/external-auth/tokens/${encodeURIComponent(integrationType)}`);
-      const data = response;
-      return {
-        accessToken: data.access_token,
-        connectionConfig: (_a = data.connection_config) !== null && _a !== void 0 ? _a : null
-      };
-    },
-    async getWorkspaceConnection(connectorId) {
-      var _a;
-      if (!connectorId || typeof connectorId !== "string") {
-        throw new Error("Connector ID is required and must be a string");
-      }
-      const response = await axios2.get(`/apps/${appId2}/external-auth/tokens/connectors/${encodeURIComponent(connectorId)}`);
-      const data = response;
-      return {
-        accessToken: data.access_token,
-        connectionConfig: (_a = data.connection_config) !== null && _a !== void 0 ? _a : null
-      };
-    },
-    /**
-     * @deprecated Use getCurrentAppUserConnection(connectorId) and use the returned accessToken (and connectionConfig when needed) instead.
-     */
-    async getCurrentAppUserAccessToken(connectorId) {
-      if (!connectorId || typeof connectorId !== "string") {
-        throw new Error("Connector ID is required and must be a string");
-      }
-      const response = await axios2.get(`/apps/${appId2}/app-user-auth/connectors/${encodeURIComponent(connectorId)}/token`);
-      const data = response;
-      return data.access_token;
-    },
-    async getCurrentAppUserConnection(connectorId) {
-      var _a;
-      if (!connectorId || typeof connectorId !== "string") {
-        throw new Error("Connector ID is required and must be a string");
-      }
-      const response = await axios2.get(`/apps/${appId2}/app-user-auth/connectors/${encodeURIComponent(connectorId)}/token`);
-      const data = response;
-      return {
-        accessToken: data.access_token,
-        connectionConfig: (_a = data.connection_config) !== null && _a !== void 0 ? _a : null
-      };
-    },
-    async callApi(integrationType, request) {
-      assertNonEmptyString(integrationType, "Integration type");
-      return proxyCall(axios2, `/apps/${appId2}/connectors/${encodeURIComponent(integrationType)}/call`, request);
-    }
-  };
-}
-function assertNonEmptyString(value2, label) {
-  if (!value2 || typeof value2 !== "string") {
-    throw new Error(`${label} is required and must be a string`);
-  }
-}
-async function proxyCall(axios2, url2, request) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _j;
-  if (!request || typeof request !== "object") {
-    throw new Error("Request is required and must be an object");
-  }
-  assertNonEmptyString(request.path, "Request path");
-  const method = (_a = request.method) !== null && _a !== void 0 ? _a : "GET";
-  if (!CONNECTOR_API_METHODS.has(method)) {
-    throw new Error("Request method must be one of GET, POST, PUT, PATCH, DELETE, or HEAD");
-  }
-  const response = await axios2.post(url2, {
-    method,
-    // Omitted when unset (undefined or null, since untyped callers write
-    // either) so the proxy applies the connector's declared default host.
-    ...request.host == null ? {} : { host: request.host },
-    path: request.path,
-    query: (_b = request.query) !== null && _b !== void 0 ? _b : {},
-    headers: (_c = request.headers) !== null && _c !== void 0 ? _c : {},
-    body: (_d = request.body) !== null && _d !== void 0 ? _d : null
-  });
-  const data = response;
-  return {
-    success: data.success,
-    phase: data.phase,
-    status: (_e = data.status_code) !== null && _e !== void 0 ? _e : null,
-    data: data.data,
-    dataBase64: (_f = data.data_base64) !== null && _f !== void 0 ? _f : null,
-    contentType: (_g = data.content_type) !== null && _g !== void 0 ? _g : null,
-    headers: (_h = data.headers) !== null && _h !== void 0 ? _h : {},
-    creditsCharged: (_j = data.credits_charged) !== null && _j !== void 0 ? _j : 0
-  };
-}
-function createUserConnectorsModule(axios2, appId2) {
-  return {
-    async connectAppUser(connectorId) {
-      if (!connectorId || typeof connectorId !== "string") {
-        throw new Error("Connector ID is required and must be a string");
-      }
-      const response = await axios2.post(`/apps/${appId2}/app-user-auth/connectors/${encodeURIComponent(connectorId)}/initiate`);
-      const data = response;
-      return data.redirect_url;
-    },
-    async disconnectAppUser(connectorId) {
-      if (!connectorId || typeof connectorId !== "string") {
-        throw new Error("Connector ID is required and must be a string");
-      }
-      await axios2.delete(`/apps/${appId2}/app-user-auth/connectors/${encodeURIComponent(connectorId)}`);
-    }
-  };
-}
-var CONNECTOR_API_METHODS;
-var init_connectors = __esm({
-  "node_modules/@base44/sdk/dist/modules/connectors.js"() {
-    init_define_import_meta_env();
-    CONNECTOR_API_METHODS = /* @__PURE__ */ new Set([
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "HEAD"
-    ]);
-  }
-});
-
-// node_modules/@base44/sdk/dist/utils/fetch-with-auth.js
-function createFetchWithAuth({ axios: axios2, serviceRoleAxios, appId: appId2, serverUrl: serverUrl2, functionsVersion: functionsVersion2, platformHeaders }) {
-  const inherited = new Headers(platformHeaders);
-  const bearer = (client) => {
-    const header = client.defaults.headers.common["Authorization"];
-    return typeof header === "string" && header.startsWith("Bearer ") ? header : null;
-  };
-  return async function fetchWithAuth(path, init = {}) {
-    assertOwnOriginPath(path);
-    const { fetch: transport = fetch, ...requestInit } = init;
-    const headers = new Headers(init.headers);
-    const inherit = (name, value2) => {
-      if (value2 && !headers.has(name))
-        headers.set(name, value2);
-    };
-    inherit("Authorization", bearer(axios2));
-    inherit("Base44-Service-Authorization", bearer(serviceRoleAxios));
-    inherit("Base44-App-Id", appId2);
-    inherit("Base44-Api-Url", serverUrl2);
-    inherit("Base44-Functions-Version", functionsVersion2);
-    inherit("Base44-State", inherited.get("Base44-State"));
-    inherit("X-Data-Env", inherited.get("X-Data-Env"));
-    return transport(path, { ...requestInit, headers });
-  };
-}
-function assertOwnOriginPath(path) {
-  if (typeof path !== "string" || path === "") {
-    throw new Error("fetchWithAuth() requires a path, such as '/api/orders'.");
-  }
-  const asParsed = path.replace(/[\t\n\r]/g, "").replace(/^[\x00-\x20]+/, "");
-  if (!asParsed.startsWith("/") || asParsed.startsWith("//") || asParsed.startsWith("/\\")) {
-    throw new Error(`fetchWithAuth() only sends requests to your app's own origin, so your app's credentials never reach a third party. "${path}" is not a path on it \u2014 pass a relative path such as '/api/orders'. Use base44.functions.fetch() to call a Base44 backend function, or plain fetch() for another origin.`);
-  }
-}
-var init_fetch_with_auth = __esm({
-  "node_modules/@base44/sdk/dist/utils/fetch-with-auth.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/functions.js
-function createFunctionsModule(axios2, appId2, config) {
-  const joinBaseUrl = (base, path) => {
-    if (!base)
-      return path;
-    return `${String(base).replace(/\/$/, "")}${path}`;
-  };
-  const toHeaders = (inputHeaders) => {
-    const headers = new Headers();
-    if (config === null || config === void 0 ? void 0 : config.getAuthHeaders) {
-      const authHeaders = config.getAuthHeaders();
-      Object.entries(authHeaders).forEach(([key, value2]) => {
-        if (value2 !== void 0 && value2 !== null) {
-          headers.set(key, String(value2));
-        }
-      });
-    }
-    if (inputHeaders) {
-      new Headers(inputHeaders).forEach((value2, key) => {
-        headers.set(key, value2);
-      });
-    }
-    return headers;
-  };
-  return {
-    // Invoke a custom backend function by name
-    async invoke(functionName, data) {
-      if (typeof data === "string") {
-        throw new Error(`Function ${functionName} must receive an object with named parameters, received: ${data}`);
-      }
-      let formData;
-      let contentType;
-      if (data instanceof FormData || data && Object.values(data).some((value2) => value2 instanceof File)) {
-        formData = new FormData();
-        Object.keys(data).forEach((key) => {
-          if (data[key] instanceof File) {
-            formData.append(key, data[key], data[key].name);
-          } else if (typeof data[key] === "object" && data[key] !== null) {
-            formData.append(key, JSON.stringify(data[key]));
-          } else {
-            formData.append(key, data[key]);
-          }
-        });
-        contentType = "multipart/form-data";
-      } else {
-        formData = data;
-        contentType = "application/json";
-      }
-      return axios2.post(`/apps/${appId2}/functions/${functionName}`, formData || data, { headers: { "Content-Type": contentType } });
-    },
-    // Fetch a backend function endpoint directly.
-    async fetch(path, init = {}) {
-      const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-      const primaryPath = `/functions${normalizedPath}`;
-      const headers = toHeaders(init.headers);
-      const requestInit = {
-        ...init,
-        headers
-      };
-      const response = await fetch(joinBaseUrl(config === null || config === void 0 ? void 0 : config.baseURL, primaryPath), requestInit);
-      return response;
-    }
-  };
-}
-var init_functions = __esm({
-  "node_modules/@base44/sdk/dist/modules/functions.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/agents.js
-function createAgentsModule({ axios: axios2, getSocket, appId: appId2, serverUrl: serverUrl2, token: token2 }) {
-  const baseURL = `/apps/${appId2}/agents`;
-  const currentConversations = {};
-  const getConversations = () => {
-    return axios2.get(`${baseURL}/conversations`);
-  };
-  const getConversation = (conversationId) => {
-    return axios2.get(`${baseURL}/conversations/${conversationId}`);
-  };
-  const listConversations = (filterParams) => {
-    return axios2.get(`${baseURL}/conversations`, {
-      params: filterParams
-    });
-  };
-  const createConversation = (conversation) => {
-    return axios2.post(`${baseURL}/conversations`, conversation);
-  };
-  const addMessage = async (conversation, message) => {
-    return axios2.post(`${baseURL}/conversations/v2/${conversation.id}/messages`, message);
-  };
-  const subscribeToConversation = (conversationId, onUpdate) => {
-    const room = `/agent-conversations/${conversationId}`;
-    const socket = getSocket();
-    const conversationPromise = getConversation(conversationId).then((conv) => {
-      currentConversations[conversationId] = conv;
-      return conv;
-    });
-    return socket.subscribeToRoom(room, {
-      connect: () => {
-      },
-      update_model: async ({ data: jsonStr }) => {
-        const data = JSON.parse(jsonStr);
-        if (data._message) {
-          await conversationPromise;
-          const message = data._message;
-          const currentConversation = currentConversations[conversationId];
-          if (currentConversation) {
-            const messages = currentConversation.messages || [];
-            const existingIndex = messages.findIndex((m) => m.id === message.id);
-            const updatedMessages = existingIndex !== -1 ? messages.map((m, i) => i === existingIndex ? message : m) : [...messages, message];
-            currentConversations[conversationId] = {
-              ...currentConversation,
-              messages: updatedMessages
-            };
-            onUpdate === null || onUpdate === void 0 ? void 0 : onUpdate(currentConversations[conversationId]);
-          }
-        }
-      }
-    });
-  };
-  const getWhatsAppConnectURL = (agentName) => {
-    const baseUrl = `${serverUrl2}/api/apps/${appId2}/agents/${encodeURIComponent(agentName)}/whatsapp`;
-    const accessToken = token2 !== null && token2 !== void 0 ? token2 : getAccessToken();
-    if (accessToken) {
-      return `${baseUrl}?token=${accessToken}`;
-    } else {
-      return baseUrl;
-    }
-  };
-  const getTelegramConnectURL = (agentName) => {
-    const baseUrl = `${serverUrl2}/api/apps/${appId2}/agents/${encodeURIComponent(agentName)}/telegram`;
-    const accessToken = token2 !== null && token2 !== void 0 ? token2 : getAccessToken();
-    if (accessToken) {
-      return `${baseUrl}?token=${accessToken}`;
-    } else {
-      return baseUrl;
-    }
-  };
-  return {
-    getConversations,
-    getConversation,
-    listConversations,
-    createConversation,
-    addMessage,
-    subscribeToConversation,
-    getWhatsAppConnectURL,
-    getTelegramConnectURL
-  };
-}
-var init_agents = __esm({
-  "node_modules/@base44/sdk/dist/modules/agents.js"() {
-    init_define_import_meta_env();
-    init_auth_utils();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/ai-gateway.js
-function createAiGatewayModule({ serverUrl: serverUrl2, token: token2, appId: appId2, headers = {} }) {
-  const connection = ({ provider = "openai" } = {}) => {
-    var _a;
-    if (!Object.prototype.hasOwnProperty.call(PROVIDER_PATHS, provider)) {
-      throw new Error(`Unsupported AI Gateway provider: ${provider}`);
-    }
-    const providerPath = PROVIDER_PATHS[provider];
-    return {
-      baseURL: `${serverUrl2}/api/apps/${appId2}/ai/${providerPath}/v1`,
-      token: (_a = token2 !== null && token2 !== void 0 ? token2 : getAccessToken()) !== null && _a !== void 0 ? _a : "",
-      headers: { ...headers }
-    };
-  };
-  return {
-    connection
-  };
-}
-var PROVIDER_PATHS;
-var init_ai_gateway = __esm({
-  "node_modules/@base44/sdk/dist/modules/ai-gateway.js"() {
-    init_define_import_meta_env();
-    init_auth_utils();
-    PROVIDER_PATHS = {
-      openai: "openai",
-      typesafe: "typesafe"
-    };
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/app-logs.js
-function createAppLogsModule(axios2, appId2) {
-  const baseURL = `/app-logs/${appId2}`;
-  return {
-    // Log user activity in the app
-    async logUserInApp(pageName) {
-      await axios2.post(`${baseURL}/log-user-in-app/${pageName}`);
-    },
-    // Fetch app logs with optional parameters
-    async fetchLogs(params = {}) {
-      const response = await axios2.get(baseURL, { params });
-      return response;
-    },
-    // Get app statistics
-    async getStats(params = {}) {
-      const response = await axios2.get(`${baseURL}/stats`, { params });
-      return response;
-    }
-  };
-}
-var init_app_logs = __esm({
-  "node_modules/@base44/sdk/dist/modules/app-logs.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/app.js
-function createAppModule(axios2, appId2) {
-  return {
-    async getPublicSettings() {
-      return axios2.get(`/apps/public/prod/public-settings/by-id/${appId2}`);
-    }
-  };
-}
-var init_app = __esm({
-  "node_modules/@base44/sdk/dist/modules/app.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/users.js
-function createUsersModule(axios2, appId2) {
-  return {
-    /**
-     * Invite a user to the application
-     * @param {string} user_email - User's email address
-     * @param {'user'|'admin'} role - User's role (user or admin)
-     * @returns {Promise<any>}
-     */
-    async inviteUser(user_email, role) {
-      if (role !== "user" && role !== "admin") {
-        throw new Error(`Invalid role: "${role}". Role must be either "user" or "admin".`);
-      }
-      const response = await axios2.post(`/apps/${appId2}/runtime/users/invite-user`, { user_email, role });
-      return response;
-    }
-  };
-}
-var init_users = __esm({
-  "node_modules/@base44/sdk/dist/modules/users.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/engine.io-parser/build/esm/commons.js
-var PACKET_TYPES, PACKET_TYPES_REVERSE, ERROR_PACKET;
-var init_commons = __esm({
-  "node_modules/engine.io-parser/build/esm/commons.js"() {
-    init_define_import_meta_env();
-    PACKET_TYPES = /* @__PURE__ */ Object.create(null);
-    PACKET_TYPES["open"] = "0";
-    PACKET_TYPES["close"] = "1";
-    PACKET_TYPES["ping"] = "2";
-    PACKET_TYPES["pong"] = "3";
-    PACKET_TYPES["message"] = "4";
-    PACKET_TYPES["upgrade"] = "5";
-    PACKET_TYPES["noop"] = "6";
-    PACKET_TYPES_REVERSE = /* @__PURE__ */ Object.create(null);
-    Object.keys(PACKET_TYPES).forEach((key) => {
-      PACKET_TYPES_REVERSE[PACKET_TYPES[key]] = key;
-    });
-    ERROR_PACKET = { type: "error", data: "parser error" };
-  }
-});
-
-// node_modules/engine.io-parser/build/esm/encodePacket.browser.js
-function toArray2(data) {
-  if (data instanceof Uint8Array) {
-    return data;
-  } else if (data instanceof ArrayBuffer) {
-    return new Uint8Array(data);
-  } else {
-    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  }
-}
-function encodePacketToBinary(packet, callback) {
-  if (withNativeBlob && packet.data instanceof Blob) {
-    return packet.data.arrayBuffer().then(toArray2).then(callback);
-  } else if (withNativeArrayBuffer && (packet.data instanceof ArrayBuffer || isView(packet.data))) {
-    return callback(toArray2(packet.data));
-  }
-  encodePacket(packet, false, (encoded) => {
-    if (!TEXT_ENCODER) {
-      TEXT_ENCODER = new TextEncoder();
-    }
-    callback(TEXT_ENCODER.encode(encoded));
-  });
-}
-var withNativeBlob, withNativeArrayBuffer, isView, encodePacket, encodeBlobAsBase64, TEXT_ENCODER;
-var init_encodePacket_browser = __esm({
-  "node_modules/engine.io-parser/build/esm/encodePacket.browser.js"() {
-    init_define_import_meta_env();
-    init_commons();
-    withNativeBlob = typeof Blob === "function" || typeof Blob !== "undefined" && Object.prototype.toString.call(Blob) === "[object BlobConstructor]";
-    withNativeArrayBuffer = typeof ArrayBuffer === "function";
-    isView = (obj) => {
-      return typeof ArrayBuffer.isView === "function" ? ArrayBuffer.isView(obj) : obj && obj.buffer instanceof ArrayBuffer;
-    };
-    encodePacket = ({ type, data }, supportsBinary, callback) => {
-      if (withNativeBlob && data instanceof Blob) {
-        if (supportsBinary) {
-          return callback(data);
-        } else {
-          return encodeBlobAsBase64(data, callback);
-        }
-      } else if (withNativeArrayBuffer && (data instanceof ArrayBuffer || isView(data))) {
-        if (supportsBinary) {
-          return callback(data);
-        } else {
-          return encodeBlobAsBase64(new Blob([data]), callback);
-        }
-      }
-      return callback(PACKET_TYPES[type] + (data || ""));
-    };
-    encodeBlobAsBase64 = (data, callback) => {
-      const fileReader = new FileReader();
-      fileReader.onload = function() {
-        const content = fileReader.result.split(",")[1];
-        callback("b" + (content || ""));
-      };
-      return fileReader.readAsDataURL(data);
-    };
-  }
-});
-
-// node_modules/engine.io-parser/build/esm/contrib/base64-arraybuffer.js
-var chars, lookup, decode;
-var init_base64_arraybuffer = __esm({
-  "node_modules/engine.io-parser/build/esm/contrib/base64-arraybuffer.js"() {
-    init_define_import_meta_env();
-    chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    lookup = typeof Uint8Array === "undefined" ? [] : new Uint8Array(256);
-    for (let i = 0; i < chars.length; i++) {
-      lookup[chars.charCodeAt(i)] = i;
-    }
-    decode = (base64) => {
-      let bufferLength = base64.length * 0.75, len = base64.length, i, p = 0, encoded1, encoded2, encoded3, encoded4;
-      if (base64[base64.length - 1] === "=") {
-        bufferLength--;
-        if (base64[base64.length - 2] === "=") {
-          bufferLength--;
-        }
-      }
-      const arraybuffer = new ArrayBuffer(bufferLength), bytes = new Uint8Array(arraybuffer);
-      for (i = 0; i < len; i += 4) {
-        encoded1 = lookup[base64.charCodeAt(i)];
-        encoded2 = lookup[base64.charCodeAt(i + 1)];
-        encoded3 = lookup[base64.charCodeAt(i + 2)];
-        encoded4 = lookup[base64.charCodeAt(i + 3)];
-        bytes[p++] = encoded1 << 2 | encoded2 >> 4;
-        bytes[p++] = (encoded2 & 15) << 4 | encoded3 >> 2;
-        bytes[p++] = (encoded3 & 3) << 6 | encoded4 & 63;
-      }
-      return arraybuffer;
-    };
-  }
-});
-
-// node_modules/engine.io-parser/build/esm/decodePacket.browser.js
-var withNativeArrayBuffer2, decodePacket, decodeBase64Packet, mapBinary;
-var init_decodePacket_browser = __esm({
-  "node_modules/engine.io-parser/build/esm/decodePacket.browser.js"() {
-    init_define_import_meta_env();
-    init_commons();
-    init_base64_arraybuffer();
-    withNativeArrayBuffer2 = typeof ArrayBuffer === "function";
-    decodePacket = (encodedPacket, binaryType) => {
-      if (typeof encodedPacket !== "string") {
-        return {
-          type: "message",
-          data: mapBinary(encodedPacket, binaryType)
-        };
-      }
-      const type = encodedPacket.charAt(0);
-      if (type === "b") {
-        return {
-          type: "message",
-          data: decodeBase64Packet(encodedPacket.substring(1), binaryType)
-        };
-      }
-      const packetType = PACKET_TYPES_REVERSE[type];
-      if (!packetType) {
-        return ERROR_PACKET;
-      }
-      return encodedPacket.length > 1 ? {
-        type: PACKET_TYPES_REVERSE[type],
-        data: encodedPacket.substring(1)
-      } : {
-        type: PACKET_TYPES_REVERSE[type]
-      };
-    };
-    decodeBase64Packet = (data, binaryType) => {
-      if (withNativeArrayBuffer2) {
-        const decoded = decode(data);
-        return mapBinary(decoded, binaryType);
-      } else {
-        return { base64: true, data };
-      }
-    };
-    mapBinary = (data, binaryType) => {
-      switch (binaryType) {
-        case "blob":
-          if (data instanceof Blob) {
-            return data;
-          } else {
-            return new Blob([data]);
-          }
-        case "arraybuffer":
-        default:
-          if (data instanceof ArrayBuffer) {
-            return data;
-          } else {
-            return data.buffer;
-          }
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-parser/build/esm/index.js
-function createPacketEncoderStream() {
-  return new TransformStream({
-    transform(packet, controller) {
-      encodePacketToBinary(packet, (encodedPacket) => {
-        const payloadLength = encodedPacket.length;
-        let header;
-        if (payloadLength < 126) {
-          header = new Uint8Array(1);
-          new DataView(header.buffer).setUint8(0, payloadLength);
-        } else if (payloadLength < 65536) {
-          header = new Uint8Array(3);
-          const view = new DataView(header.buffer);
-          view.setUint8(0, 126);
-          view.setUint16(1, payloadLength);
-        } else {
-          header = new Uint8Array(9);
-          const view = new DataView(header.buffer);
-          view.setUint8(0, 127);
-          view.setBigUint64(1, BigInt(payloadLength));
-        }
-        if (packet.data && typeof packet.data !== "string") {
-          header[0] |= 128;
-        }
-        controller.enqueue(header);
-        controller.enqueue(encodedPacket);
-      });
-    }
-  });
-}
-function totalLength(chunks) {
-  return chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-}
-function concatChunks(chunks, size) {
-  if (chunks[0].length === size) {
-    return chunks.shift();
-  }
-  const buffer = new Uint8Array(size);
-  let j = 0;
-  for (let i = 0; i < size; i++) {
-    buffer[i] = chunks[0][j++];
-    if (j === chunks[0].length) {
-      chunks.shift();
-      j = 0;
-    }
-  }
-  if (chunks.length && j < chunks[0].length) {
-    chunks[0] = chunks[0].slice(j);
-  }
-  return buffer;
-}
-function createPacketDecoderStream(maxPayload, binaryType) {
-  if (!TEXT_DECODER) {
-    TEXT_DECODER = new TextDecoder();
-  }
-  const chunks = [];
-  let state = 0;
-  let expectedLength = -1;
-  let isBinary2 = false;
-  return new TransformStream({
-    transform(chunk, controller) {
-      chunks.push(chunk);
-      while (true) {
-        if (state === 0) {
-          if (totalLength(chunks) < 1) {
-            break;
-          }
-          const header = concatChunks(chunks, 1);
-          isBinary2 = (header[0] & 128) === 128;
-          expectedLength = header[0] & 127;
-          if (expectedLength < 126) {
-            state = 3;
-          } else if (expectedLength === 126) {
-            state = 1;
-          } else {
-            state = 2;
-          }
-        } else if (state === 1) {
-          if (totalLength(chunks) < 2) {
-            break;
-          }
-          const headerArray = concatChunks(chunks, 2);
-          expectedLength = new DataView(headerArray.buffer, headerArray.byteOffset, headerArray.length).getUint16(0);
-          state = 3;
-        } else if (state === 2) {
-          if (totalLength(chunks) < 8) {
-            break;
-          }
-          const headerArray = concatChunks(chunks, 8);
-          const view = new DataView(headerArray.buffer, headerArray.byteOffset, headerArray.length);
-          const n = view.getUint32(0);
-          if (n > Math.pow(2, 53 - 32) - 1) {
-            controller.enqueue(ERROR_PACKET);
-            break;
-          }
-          expectedLength = n * Math.pow(2, 32) + view.getUint32(4);
-          state = 3;
-        } else {
-          if (totalLength(chunks) < expectedLength) {
-            break;
-          }
-          const data = concatChunks(chunks, expectedLength);
-          controller.enqueue(decodePacket(isBinary2 ? data : TEXT_DECODER.decode(data), binaryType));
-          state = 0;
-        }
-        if (expectedLength === 0 || expectedLength > maxPayload) {
-          controller.enqueue(ERROR_PACKET);
-          break;
-        }
-      }
-    }
-  });
-}
-var SEPARATOR, encodePayload, decodePayload, TEXT_DECODER, protocol;
-var init_esm = __esm({
-  "node_modules/engine.io-parser/build/esm/index.js"() {
-    init_define_import_meta_env();
-    init_encodePacket_browser();
-    init_decodePacket_browser();
-    init_commons();
-    SEPARATOR = String.fromCharCode(30);
-    encodePayload = (packets, callback) => {
-      const length = packets.length;
-      const encodedPackets = new Array(length);
-      let count3 = 0;
-      packets.forEach((packet, i) => {
-        encodePacket(packet, false, (encodedPacket) => {
-          encodedPackets[i] = encodedPacket;
-          if (++count3 === length) {
-            callback(encodedPackets.join(SEPARATOR));
-          }
-        });
-      });
-    };
-    decodePayload = (encodedPayload, binaryType) => {
-      const encodedPackets = encodedPayload.split(SEPARATOR);
-      const packets = [];
-      for (let i = 0; i < encodedPackets.length; i++) {
-        const decodedPacket = decodePacket(encodedPackets[i], binaryType);
-        packets.push(decodedPacket);
-        if (decodedPacket.type === "error") {
-          break;
-        }
-      }
-      return packets;
-    };
-    protocol = 4;
-  }
-});
-
-// node_modules/@socket.io/component-emitter/lib/esm/index.js
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-}
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-var init_esm2 = __esm({
-  "node_modules/@socket.io/component-emitter/lib/esm/index.js"() {
-    init_define_import_meta_env();
-    Emitter.prototype.on = Emitter.prototype.addEventListener = function(event, fn) {
-      this._callbacks = this._callbacks || {};
-      (this._callbacks["$" + event] = this._callbacks["$" + event] || []).push(fn);
-      return this;
-    };
-    Emitter.prototype.once = function(event, fn) {
-      function on2() {
-        this.off(event, on2);
-        fn.apply(this, arguments);
-      }
-      on2.fn = fn;
-      this.on(event, on2);
-      return this;
-    };
-    Emitter.prototype.off = Emitter.prototype.removeListener = Emitter.prototype.removeAllListeners = Emitter.prototype.removeEventListener = function(event, fn) {
-      this._callbacks = this._callbacks || {};
-      if (0 == arguments.length) {
-        this._callbacks = {};
-        return this;
-      }
-      var callbacks = this._callbacks["$" + event];
-      if (!callbacks) return this;
-      if (1 == arguments.length) {
-        delete this._callbacks["$" + event];
-        return this;
-      }
-      var cb;
-      for (var i = 0; i < callbacks.length; i++) {
-        cb = callbacks[i];
-        if (cb === fn || cb.fn === fn) {
-          callbacks.splice(i, 1);
-          break;
-        }
-      }
-      if (callbacks.length === 0) {
-        delete this._callbacks["$" + event];
-      }
-      return this;
-    };
-    Emitter.prototype.emit = function(event) {
-      this._callbacks = this._callbacks || {};
-      var args = new Array(arguments.length - 1), callbacks = this._callbacks["$" + event];
-      for (var i = 1; i < arguments.length; i++) {
-        args[i - 1] = arguments[i];
-      }
-      if (callbacks) {
-        callbacks = callbacks.slice(0);
-        for (var i = 0, len = callbacks.length; i < len; ++i) {
-          callbacks[i].apply(this, args);
-        }
-      }
-      return this;
-    };
-    Emitter.prototype.emitReserved = Emitter.prototype.emit;
-    Emitter.prototype.listeners = function(event) {
-      this._callbacks = this._callbacks || {};
-      return this._callbacks["$" + event] || [];
-    };
-    Emitter.prototype.hasListeners = function(event) {
-      return !!this.listeners(event).length;
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/globals.js
-function createCookieJar() {
-}
-var nextTick, globalThisShim, defaultBinaryType;
-var init_globals = __esm({
-  "node_modules/engine.io-client/build/esm/globals.js"() {
-    init_define_import_meta_env();
-    nextTick = (() => {
-      const isPromiseAvailable = typeof Promise === "function" && typeof Promise.resolve === "function";
-      if (isPromiseAvailable) {
-        return (cb) => Promise.resolve().then(cb);
-      } else {
-        return (cb, setTimeoutFn) => setTimeoutFn(cb, 0);
-      }
-    })();
-    globalThisShim = (() => {
-      if (typeof self !== "undefined") {
-        return self;
-      } else if (typeof window !== "undefined") {
-        return window;
-      } else {
-        return Function("return this")();
-      }
-    })();
-    defaultBinaryType = "arraybuffer";
-  }
-});
-
-// node_modules/engine.io-client/build/esm/util.js
-function pick(obj, ...attr) {
-  return attr.reduce((acc, k) => {
-    if (obj.hasOwnProperty(k)) {
-      acc[k] = obj[k];
-    }
-    return acc;
-  }, {});
-}
-function installTimerFunctions(obj, opts) {
-  if (opts.useNativeTimers) {
-    obj.setTimeoutFn = NATIVE_SET_TIMEOUT.bind(globalThisShim);
-    obj.clearTimeoutFn = NATIVE_CLEAR_TIMEOUT.bind(globalThisShim);
-  } else {
-    obj.setTimeoutFn = globalThisShim.setTimeout.bind(globalThisShim);
-    obj.clearTimeoutFn = globalThisShim.clearTimeout.bind(globalThisShim);
-  }
-}
-function byteLength(obj) {
-  if (typeof obj === "string") {
-    return utf8Length(obj);
-  }
-  return Math.ceil((obj.byteLength || obj.size) * BASE64_OVERHEAD);
-}
-function utf8Length(str) {
-  let c = 0, length = 0;
-  for (let i = 0, l = str.length; i < l; i++) {
-    c = str.charCodeAt(i);
-    if (c < 128) {
-      length += 1;
-    } else if (c < 2048) {
-      length += 2;
-    } else if (c < 55296 || c >= 57344) {
-      length += 3;
-    } else {
-      i++;
-      length += 4;
-    }
-  }
-  return length;
-}
-function randomString() {
-  return Date.now().toString(36).substring(3) + Math.random().toString(36).substring(2, 5);
-}
-var NATIVE_SET_TIMEOUT, NATIVE_CLEAR_TIMEOUT, BASE64_OVERHEAD;
-var init_util = __esm({
-  "node_modules/engine.io-client/build/esm/util.js"() {
-    init_define_import_meta_env();
-    init_globals();
-    NATIVE_SET_TIMEOUT = globalThisShim.setTimeout;
-    NATIVE_CLEAR_TIMEOUT = globalThisShim.clearTimeout;
-    BASE64_OVERHEAD = 1.33;
-  }
-});
-
-// node_modules/engine.io-client/build/esm/contrib/parseqs.js
-function encode3(obj) {
-  let str = "";
-  for (let i in obj) {
-    if (obj.hasOwnProperty(i)) {
-      if (str.length)
-        str += "&";
-      str += encodeURIComponent(i) + "=" + encodeURIComponent(obj[i]);
-    }
-  }
-  return str;
-}
-function decode2(qs) {
-  let qry = {};
-  let pairs = qs.split("&");
-  for (let i = 0, l = pairs.length; i < l; i++) {
-    let pair = pairs[i].split("=");
-    qry[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
-  }
-  return qry;
-}
-var init_parseqs = __esm({
-  "node_modules/engine.io-client/build/esm/contrib/parseqs.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transport.js
-var TransportError, Transport;
-var init_transport = __esm({
-  "node_modules/engine.io-client/build/esm/transport.js"() {
-    init_define_import_meta_env();
-    init_esm();
-    init_esm2();
-    init_util();
-    init_parseqs();
-    TransportError = class extends Error {
-      constructor(reason, description, context) {
-        super(reason);
-        this.description = description;
-        this.context = context;
-        this.type = "TransportError";
-      }
-    };
-    Transport = class extends Emitter {
-      /**
-       * Transport abstract constructor.
-       *
-       * @param {Object} opts - options
-       * @protected
-       */
-      constructor(opts) {
-        super();
-        this.writable = false;
-        installTimerFunctions(this, opts);
-        this.opts = opts;
-        this.query = opts.query;
-        this.socket = opts.socket;
-        this.supportsBinary = !opts.forceBase64;
-      }
-      /**
-       * Emits an error.
-       *
-       * @param {String} reason
-       * @param description
-       * @param context - the error context
-       * @return {Transport} for chaining
-       * @protected
-       */
-      onError(reason, description, context) {
-        super.emitReserved("error", new TransportError(reason, description, context));
-        return this;
-      }
-      /**
-       * Opens the transport.
-       */
-      open() {
-        this.readyState = "opening";
-        this.doOpen();
-        return this;
-      }
-      /**
-       * Closes the transport.
-       */
-      close() {
-        if (this.readyState === "opening" || this.readyState === "open") {
-          this.doClose();
-          this.onClose();
-        }
-        return this;
-      }
-      /**
-       * Sends multiple packets.
-       *
-       * @param {Array} packets
-       */
-      send(packets) {
-        if (this.readyState === "open") {
-          this.write(packets);
-        } else {
-        }
-      }
-      /**
-       * Called upon open
-       *
-       * @protected
-       */
-      onOpen() {
-        this.readyState = "open";
-        this.writable = true;
-        super.emitReserved("open");
-      }
-      /**
-       * Called with data.
-       *
-       * @param {String} data
-       * @protected
-       */
-      onData(data) {
-        const packet = decodePacket(data, this.socket.binaryType);
-        this.onPacket(packet);
-      }
-      /**
-       * Called with a decoded packet.
-       *
-       * @protected
-       */
-      onPacket(packet) {
-        super.emitReserved("packet", packet);
-      }
-      /**
-       * Called upon close.
-       *
-       * @protected
-       */
-      onClose(details) {
-        this.readyState = "closed";
-        super.emitReserved("close", details);
-      }
-      /**
-       * Pauses the transport, in order not to lose packets during an upgrade.
-       *
-       * @param onPause
-       */
-      pause(onPause) {
-      }
-      createUri(schema, query = {}) {
-        return schema + "://" + this._hostname() + this._port() + this.opts.path + this._query(query);
-      }
-      _hostname() {
-        const hostname = this.opts.hostname;
-        return hostname.indexOf(":") === -1 ? hostname : "[" + hostname + "]";
-      }
-      _port() {
-        if (this.opts.port && (this.opts.secure && Number(this.opts.port) !== 443 || !this.opts.secure && Number(this.opts.port) !== 80)) {
-          return ":" + this.opts.port;
-        } else {
-          return "";
-        }
-      }
-      _query(query) {
-        const encodedQuery = encode3(query);
-        return encodedQuery.length ? "?" + encodedQuery : "";
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transports/polling.js
-var Polling;
-var init_polling = __esm({
-  "node_modules/engine.io-client/build/esm/transports/polling.js"() {
-    init_define_import_meta_env();
-    init_transport();
-    init_util();
-    init_esm();
-    Polling = class extends Transport {
-      constructor() {
-        super(...arguments);
-        this._polling = false;
-      }
-      get name() {
-        return "polling";
-      }
-      /**
-       * Opens the socket (triggers polling). We write a PING message to determine
-       * when the transport is open.
-       *
-       * @protected
-       */
-      doOpen() {
-        this._poll();
-      }
-      /**
-       * Pauses polling.
-       *
-       * @param {Function} onPause - callback upon buffers are flushed and transport is paused
-       * @package
-       */
-      pause(onPause) {
-        this.readyState = "pausing";
-        const pause = () => {
-          this.readyState = "paused";
-          onPause();
-        };
-        if (this._polling || !this.writable) {
-          let total = 0;
-          if (this._polling) {
-            total++;
-            this.once("pollComplete", function() {
-              --total || pause();
-            });
-          }
-          if (!this.writable) {
-            total++;
-            this.once("drain", function() {
-              --total || pause();
-            });
-          }
-        } else {
-          pause();
-        }
-      }
-      /**
-       * Starts polling cycle.
-       *
-       * @private
-       */
-      _poll() {
-        this._polling = true;
-        this.doPoll();
-        this.emitReserved("poll");
-      }
-      /**
-       * Overloads onData to detect payloads.
-       *
-       * @protected
-       */
-      onData(data) {
-        const callback = (packet) => {
-          if ("opening" === this.readyState && packet.type === "open") {
-            this.onOpen();
-          }
-          if ("close" === packet.type) {
-            this.onClose({ description: "transport closed by the server" });
-            return false;
-          }
-          this.onPacket(packet);
-        };
-        decodePayload(data, this.socket.binaryType).forEach(callback);
-        if ("closed" !== this.readyState) {
-          this._polling = false;
-          this.emitReserved("pollComplete");
-          if ("open" === this.readyState) {
-            this._poll();
-          } else {
-          }
-        }
-      }
-      /**
-       * For polling, send a close packet.
-       *
-       * @protected
-       */
-      doClose() {
-        const close = () => {
-          this.write([{ type: "close" }]);
-        };
-        if ("open" === this.readyState) {
-          close();
-        } else {
-          this.once("open", close);
-        }
-      }
-      /**
-       * Writes a packets payload.
-       *
-       * @param {Array} packets - data packets
-       * @protected
-       */
-      write(packets) {
-        this.writable = false;
-        encodePayload(packets, (data) => {
-          this.doWrite(data, () => {
-            this.writable = true;
-            this.emitReserved("drain");
-          });
-        });
-      }
-      /**
-       * Generates uri for connection.
-       *
-       * @private
-       */
-      uri() {
-        const schema = this.opts.secure ? "https" : "http";
-        const query = this.query || {};
-        if (false !== this.opts.timestampRequests) {
-          query[this.opts.timestampParam] = randomString();
-        }
-        if (!this.supportsBinary && !query.sid) {
-          query.b64 = 1;
-        }
-        return this.createUri(schema, query);
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/contrib/has-cors.js
-var value, hasCORS;
-var init_has_cors = __esm({
-  "node_modules/engine.io-client/build/esm/contrib/has-cors.js"() {
-    init_define_import_meta_env();
-    value = false;
-    try {
-      value = typeof XMLHttpRequest !== "undefined" && "withCredentials" in new XMLHttpRequest();
-    } catch (err) {
-    }
-    hasCORS = value;
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transports/polling-xhr.js
-function empty() {
-}
-function unloadHandler() {
-  for (let i in Request.requests) {
-    if (Request.requests.hasOwnProperty(i)) {
-      Request.requests[i].abort();
-    }
-  }
-}
-function newRequest(opts) {
-  const xdomain = opts.xdomain;
-  try {
-    if ("undefined" !== typeof XMLHttpRequest && (!xdomain || hasCORS)) {
-      return new XMLHttpRequest();
-    }
-  } catch (e) {
-  }
-  if (!xdomain) {
-    try {
-      return new globalThisShim[["Active"].concat("Object").join("X")]("Microsoft.XMLHTTP");
-    } catch (e) {
-    }
-  }
-}
-var BaseXHR, Request, hasXHR2, XHR;
-var init_polling_xhr = __esm({
-  "node_modules/engine.io-client/build/esm/transports/polling-xhr.js"() {
-    init_define_import_meta_env();
-    init_polling();
-    init_esm2();
-    init_util();
-    init_globals();
-    init_has_cors();
-    BaseXHR = class extends Polling {
-      /**
-       * XHR Polling constructor.
-       *
-       * @param {Object} opts
-       * @package
-       */
-      constructor(opts) {
-        super(opts);
-        if (typeof location !== "undefined") {
-          const isSSL = "https:" === location.protocol;
-          let port = location.port;
-          if (!port) {
-            port = isSSL ? "443" : "80";
-          }
-          this.xd = typeof location !== "undefined" && opts.hostname !== location.hostname || port !== opts.port;
-        }
-      }
-      /**
-       * Sends data.
-       *
-       * @param {String} data - data to send.
-       * @param {Function} fn - called upon flush.
-       * @private
-       */
-      doWrite(data, fn) {
-        const req = this.request({
-          method: "POST",
-          data
-        });
-        req.on("success", fn);
-        req.on("error", (xhrStatus, context) => {
-          this.onError("xhr post error", xhrStatus, context);
-        });
-      }
-      /**
-       * Starts a poll cycle.
-       *
-       * @private
-       */
-      doPoll() {
-        const req = this.request();
-        req.on("data", this.onData.bind(this));
-        req.on("error", (xhrStatus, context) => {
-          this.onError("xhr poll error", xhrStatus, context);
-        });
-        this.pollXhr = req;
-      }
-    };
-    Request = class _Request extends Emitter {
-      /**
-       * Request constructor
-       *
-       * @param {Object} options
-       * @package
-       */
-      constructor(createRequest, uri, opts) {
-        super();
-        this.createRequest = createRequest;
-        installTimerFunctions(this, opts);
-        this._opts = opts;
-        this._method = opts.method || "GET";
-        this._uri = uri;
-        this._data = void 0 !== opts.data ? opts.data : null;
-        this._create();
-      }
-      /**
-       * Creates the XHR object and sends the request.
-       *
-       * @private
-       */
-      _create() {
-        var _a;
-        const opts = pick(this._opts, "agent", "pfx", "key", "passphrase", "cert", "ca", "ciphers", "rejectUnauthorized", "autoUnref");
-        opts.xdomain = !!this._opts.xd;
-        const xhr = this._xhr = this.createRequest(opts);
-        try {
-          xhr.open(this._method, this._uri, true);
-          try {
-            if (this._opts.extraHeaders) {
-              xhr.setDisableHeaderCheck && xhr.setDisableHeaderCheck(true);
-              for (let i in this._opts.extraHeaders) {
-                if (this._opts.extraHeaders.hasOwnProperty(i)) {
-                  xhr.setRequestHeader(i, this._opts.extraHeaders[i]);
-                }
-              }
-            }
-          } catch (e) {
-          }
-          if ("POST" === this._method) {
-            try {
-              xhr.setRequestHeader("Content-type", "text/plain;charset=UTF-8");
-            } catch (e) {
-            }
-          }
-          try {
-            xhr.setRequestHeader("Accept", "*/*");
-          } catch (e) {
-          }
-          (_a = this._opts.cookieJar) === null || _a === void 0 ? void 0 : _a.addCookies(xhr);
-          if ("withCredentials" in xhr) {
-            xhr.withCredentials = this._opts.withCredentials;
-          }
-          if (this._opts.requestTimeout) {
-            xhr.timeout = this._opts.requestTimeout;
-          }
-          xhr.onreadystatechange = () => {
-            var _a2;
-            if (xhr.readyState === 3) {
-              (_a2 = this._opts.cookieJar) === null || _a2 === void 0 ? void 0 : _a2.parseCookies(
-                // @ts-ignore
-                xhr.getResponseHeader("set-cookie")
-              );
-            }
-            if (4 !== xhr.readyState)
-              return;
-            if (200 === xhr.status || 1223 === xhr.status) {
-              this._onLoad();
-            } else {
-              this.setTimeoutFn(() => {
-                this._onError(typeof xhr.status === "number" ? xhr.status : 0);
-              }, 0);
-            }
-          };
-          xhr.send(this._data);
-        } catch (e) {
-          this.setTimeoutFn(() => {
-            this._onError(e);
-          }, 0);
-          return;
-        }
-        if (typeof document !== "undefined") {
-          this._index = _Request.requestsCount++;
-          _Request.requests[this._index] = this;
-        }
-      }
-      /**
-       * Called upon error.
-       *
-       * @private
-       */
-      _onError(err) {
-        this.emitReserved("error", err, this._xhr);
-        this._cleanup(true);
-      }
-      /**
-       * Cleans up house.
-       *
-       * @private
-       */
-      _cleanup(fromError) {
-        if ("undefined" === typeof this._xhr || null === this._xhr) {
-          return;
-        }
-        this._xhr.onreadystatechange = empty;
-        if (fromError) {
-          try {
-            this._xhr.abort();
-          } catch (e) {
-          }
-        }
-        if (typeof document !== "undefined") {
-          delete _Request.requests[this._index];
-        }
-        this._xhr = null;
-      }
-      /**
-       * Called upon load.
-       *
-       * @private
-       */
-      _onLoad() {
-        const data = this._xhr.responseText;
-        if (data !== null) {
-          this.emitReserved("data", data);
-          this.emitReserved("success");
-          this._cleanup();
-        }
-      }
-      /**
-       * Aborts the request.
-       *
-       * @package
-       */
-      abort() {
-        this._cleanup();
-      }
-    };
-    Request.requestsCount = 0;
-    Request.requests = {};
-    if (typeof document !== "undefined") {
-      if (typeof attachEvent === "function") {
-        attachEvent("onunload", unloadHandler);
-      } else if (typeof addEventListener === "function") {
-        const terminationEvent = "onpagehide" in globalThisShim ? "pagehide" : "unload";
-        addEventListener(terminationEvent, unloadHandler, false);
-      }
-    }
-    hasXHR2 = (function() {
-      const xhr = newRequest({
-        xdomain: false
-      });
-      return xhr && xhr.responseType !== null;
-    })();
-    XHR = class extends BaseXHR {
-      constructor(opts) {
-        super(opts);
-        const forceBase64 = opts && opts.forceBase64;
-        this.supportsBinary = hasXHR2 && !forceBase64;
-      }
-      request(opts = {}) {
-        Object.assign(opts, { xd: this.xd }, this.opts);
-        return new Request(newRequest, this.uri(), opts);
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transports/websocket.js
-var isReactNative3, BaseWS, WebSocketCtor, WS;
-var init_websocket = __esm({
-  "node_modules/engine.io-client/build/esm/transports/websocket.js"() {
-    init_define_import_meta_env();
-    init_transport();
-    init_util();
-    init_esm();
-    init_globals();
-    isReactNative3 = typeof navigator !== "undefined" && typeof navigator.product === "string" && navigator.product.toLowerCase() === "reactnative";
-    BaseWS = class extends Transport {
-      get name() {
-        return "websocket";
-      }
-      doOpen() {
-        const uri = this.uri();
-        const protocols = this.opts.protocols;
-        const opts = isReactNative3 ? {} : pick(this.opts, "agent", "perMessageDeflate", "pfx", "key", "passphrase", "cert", "ca", "ciphers", "rejectUnauthorized", "localAddress", "protocolVersion", "origin", "maxPayload", "family", "checkServerIdentity");
-        if (this.opts.extraHeaders) {
-          opts.headers = this.opts.extraHeaders;
-        }
-        try {
-          this.ws = this.createSocket(uri, protocols, opts);
-        } catch (err) {
-          return this.emitReserved("error", err);
-        }
-        this.ws.binaryType = this.socket.binaryType;
-        this.addEventListeners();
-      }
-      /**
-       * Adds event listeners to the socket
-       *
-       * @private
-       */
-      addEventListeners() {
-        this.ws.onopen = () => {
-          if (this.opts.autoUnref) {
-            this.ws._socket.unref();
-          }
-          this.onOpen();
-        };
-        this.ws.onclose = (closeEvent) => this.onClose({
-          description: "websocket connection closed",
-          context: closeEvent
-        });
-        this.ws.onmessage = (ev) => this.onData(ev.data);
-        this.ws.onerror = (e) => this.onError("websocket error", e);
-      }
-      write(packets) {
-        this.writable = false;
-        for (let i = 0; i < packets.length; i++) {
-          const packet = packets[i];
-          const lastPacket = i === packets.length - 1;
-          encodePacket(packet, this.supportsBinary, (data) => {
-            try {
-              this.doWrite(packet, data);
-            } catch (e) {
-            }
-            if (lastPacket) {
-              nextTick(() => {
-                this.writable = true;
-                this.emitReserved("drain");
-              }, this.setTimeoutFn);
-            }
-          });
-        }
-      }
-      doClose() {
-        if (typeof this.ws !== "undefined") {
-          this.ws.onerror = () => {
-          };
-          this.ws.close();
-          this.ws = null;
-        }
-      }
-      /**
-       * Generates uri for connection.
-       *
-       * @private
-       */
-      uri() {
-        const schema = this.opts.secure ? "wss" : "ws";
-        const query = this.query || {};
-        if (this.opts.timestampRequests) {
-          query[this.opts.timestampParam] = randomString();
-        }
-        if (!this.supportsBinary) {
-          query.b64 = 1;
-        }
-        return this.createUri(schema, query);
-      }
-    };
-    WebSocketCtor = globalThisShim.WebSocket || globalThisShim.MozWebSocket;
-    WS = class extends BaseWS {
-      createSocket(uri, protocols, opts) {
-        return !isReactNative3 ? protocols ? new WebSocketCtor(uri, protocols) : new WebSocketCtor(uri) : new WebSocketCtor(uri, protocols, opts);
-      }
-      doWrite(_packet, data) {
-        this.ws.send(data);
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transports/webtransport.js
-var WT;
-var init_webtransport = __esm({
-  "node_modules/engine.io-client/build/esm/transports/webtransport.js"() {
-    init_define_import_meta_env();
-    init_transport();
-    init_globals();
-    init_esm();
-    WT = class extends Transport {
-      get name() {
-        return "webtransport";
-      }
-      doOpen() {
-        try {
-          this._transport = new WebTransport(this.createUri("https"), this.opts.transportOptions[this.name]);
-        } catch (err) {
-          return this.emitReserved("error", err);
-        }
-        this._transport.closed.then(() => {
-          this.onClose();
-        }).catch((err) => {
-          this.onError("webtransport error", err);
-        });
-        this._transport.ready.then(() => {
-          this._transport.createBidirectionalStream().then((stream) => {
-            const decoderStream = createPacketDecoderStream(Number.MAX_SAFE_INTEGER, this.socket.binaryType);
-            const reader = stream.readable.pipeThrough(decoderStream).getReader();
-            const encoderStream = createPacketEncoderStream();
-            encoderStream.readable.pipeTo(stream.writable);
-            this._writer = encoderStream.writable.getWriter();
-            const read = () => {
-              reader.read().then(({ done, value: value2 }) => {
-                if (done) {
-                  return;
-                }
-                this.onPacket(value2);
-                read();
-              }).catch((err) => {
-              });
-            };
-            read();
-            const packet = { type: "open" };
-            if (this.query.sid) {
-              packet.data = `{"sid":"${this.query.sid}"}`;
-            }
-            this._writer.write(packet).then(() => this.onOpen());
-          });
-        });
-      }
-      write(packets) {
-        this.writable = false;
-        for (let i = 0; i < packets.length; i++) {
-          const packet = packets[i];
-          const lastPacket = i === packets.length - 1;
-          this._writer.write(packet).then(() => {
-            if (lastPacket) {
-              nextTick(() => {
-                this.writable = true;
-                this.emitReserved("drain");
-              }, this.setTimeoutFn);
-            }
-          });
-        }
-      }
-      doClose() {
-        var _a;
-        (_a = this._transport) === null || _a === void 0 ? void 0 : _a.close();
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transports/index.js
-var transports;
-var init_transports = __esm({
-  "node_modules/engine.io-client/build/esm/transports/index.js"() {
-    init_define_import_meta_env();
-    init_polling_xhr();
-    init_websocket();
-    init_webtransport();
-    transports = {
-      websocket: WS,
-      webtransport: WT,
-      polling: XHR
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/contrib/parseuri.js
-function parse(str) {
-  if (str.length > 8e3) {
-    throw "URI too long";
-  }
-  const src = str, b = str.indexOf("["), e = str.indexOf("]");
-  if (b != -1 && e != -1) {
-    str = str.substring(0, b) + str.substring(b, e).replace(/:/g, ";") + str.substring(e, str.length);
-  }
-  let m = re.exec(str || ""), uri = {}, i = 14;
-  while (i--) {
-    uri[parts[i]] = m[i] || "";
-  }
-  if (b != -1 && e != -1) {
-    uri.source = src;
-    uri.host = uri.host.substring(1, uri.host.length - 1).replace(/;/g, ":");
-    uri.authority = uri.authority.replace("[", "").replace("]", "").replace(/;/g, ":");
-    uri.ipv6uri = true;
-  }
-  uri.pathNames = pathNames(uri, uri["path"]);
-  uri.queryKey = queryKey(uri, uri["query"]);
-  return uri;
-}
-function pathNames(obj, path) {
-  const regx = /\/{2,9}/g, names = path.replace(regx, "/").split("/");
-  if (path.slice(0, 1) == "/" || path.length === 0) {
-    names.splice(0, 1);
-  }
-  if (path.slice(-1) == "/") {
-    names.splice(names.length - 1, 1);
-  }
-  return names;
-}
-function queryKey(uri, query) {
-  const data = {};
-  query.replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
-    if ($1) {
-      data[$1] = $2;
-    }
-  });
-  return data;
-}
-var re, parts;
-var init_parseuri = __esm({
-  "node_modules/engine.io-client/build/esm/contrib/parseuri.js"() {
-    init_define_import_meta_env();
-    re = /^(?:(?![^:@\/?#]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@\/?#]*)(?::([^:@\/?#]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
-    parts = [
-      "source",
-      "protocol",
-      "authority",
-      "userInfo",
-      "user",
-      "password",
-      "host",
-      "port",
-      "relative",
-      "path",
-      "directory",
-      "file",
-      "query",
-      "anchor"
-    ];
-  }
-});
-
-// node_modules/engine.io-client/build/esm/socket.js
-var withEventListeners, OFFLINE_EVENT_LISTENERS, SocketWithoutUpgrade, SocketWithUpgrade, Socket;
-var init_socket = __esm({
-  "node_modules/engine.io-client/build/esm/socket.js"() {
-    init_define_import_meta_env();
-    init_transports();
-    init_util();
-    init_parseqs();
-    init_parseuri();
-    init_esm2();
-    init_esm();
-    init_globals();
-    withEventListeners = typeof addEventListener === "function" && typeof removeEventListener === "function";
-    OFFLINE_EVENT_LISTENERS = [];
-    if (withEventListeners) {
-      addEventListener("offline", () => {
-        OFFLINE_EVENT_LISTENERS.forEach((listener) => listener());
-      }, false);
-    }
-    SocketWithoutUpgrade = class _SocketWithoutUpgrade extends Emitter {
-      /**
-       * Socket constructor.
-       *
-       * @param {String|Object} uri - uri or options
-       * @param {Object} opts - options
-       */
-      constructor(uri, opts) {
-        super();
-        this.binaryType = defaultBinaryType;
-        this.writeBuffer = [];
-        this._prevBufferLen = 0;
-        this._pingInterval = -1;
-        this._pingTimeout = -1;
-        this._maxPayload = -1;
-        this._pingTimeoutTime = Infinity;
-        if (uri && "object" === typeof uri) {
-          opts = uri;
-          uri = null;
-        }
-        if (uri) {
-          const parsedUri = parse(uri);
-          opts.hostname = parsedUri.host;
-          opts.secure = parsedUri.protocol === "https" || parsedUri.protocol === "wss";
-          opts.port = parsedUri.port;
-          if (parsedUri.query)
-            opts.query = parsedUri.query;
-        } else if (opts.host) {
-          opts.hostname = parse(opts.host).host;
-        }
-        installTimerFunctions(this, opts);
-        this.secure = null != opts.secure ? opts.secure : typeof location !== "undefined" && "https:" === location.protocol;
-        if (opts.hostname && !opts.port) {
-          opts.port = this.secure ? "443" : "80";
-        }
-        this.hostname = opts.hostname || (typeof location !== "undefined" ? location.hostname : "localhost");
-        this.port = opts.port || (typeof location !== "undefined" && location.port ? location.port : this.secure ? "443" : "80");
-        this.transports = [];
-        this._transportsByName = {};
-        opts.transports.forEach((t) => {
-          const transportName = t.prototype.name;
-          this.transports.push(transportName);
-          this._transportsByName[transportName] = t;
-        });
-        this.opts = Object.assign({
-          path: "/engine.io",
-          agent: false,
-          withCredentials: false,
-          upgrade: true,
-          timestampParam: "t",
-          rememberUpgrade: false,
-          addTrailingSlash: true,
-          rejectUnauthorized: true,
-          perMessageDeflate: {
-            threshold: 1024
-          },
-          transportOptions: {},
-          closeOnBeforeunload: false
-        }, opts);
-        this.opts.path = this.opts.path.replace(/\/$/, "") + (this.opts.addTrailingSlash ? "/" : "");
-        if (typeof this.opts.query === "string") {
-          this.opts.query = decode2(this.opts.query);
-        }
-        if (withEventListeners) {
-          if (this.opts.closeOnBeforeunload) {
-            this._beforeunloadEventListener = () => {
-              if (this.transport) {
-                this.transport.removeAllListeners();
-                this.transport.close();
-              }
-            };
-            addEventListener("beforeunload", this._beforeunloadEventListener, false);
-          }
-          if (this.hostname !== "localhost") {
-            this._offlineEventListener = () => {
-              this._onClose("transport close", {
-                description: "network connection lost"
-              });
-            };
-            OFFLINE_EVENT_LISTENERS.push(this._offlineEventListener);
-          }
-        }
-        if (this.opts.withCredentials) {
-          this._cookieJar = createCookieJar();
-        }
-        this._open();
-      }
-      /**
-       * Creates transport of the given type.
-       *
-       * @param {String} name - transport name
-       * @return {Transport}
-       * @private
-       */
-      createTransport(name) {
-        const query = Object.assign({}, this.opts.query);
-        query.EIO = protocol;
-        query.transport = name;
-        if (this.id)
-          query.sid = this.id;
-        const opts = Object.assign({}, this.opts, {
-          query,
-          socket: this,
-          hostname: this.hostname,
-          secure: this.secure,
-          port: this.port
-        }, this.opts.transportOptions[name]);
-        return new this._transportsByName[name](opts);
-      }
-      /**
-       * Initializes transport to use and starts probe.
-       *
-       * @private
-       */
-      _open() {
-        if (this.transports.length === 0) {
-          this.setTimeoutFn(() => {
-            this.emitReserved("error", "No transports available");
-          }, 0);
-          return;
-        }
-        const transportName = this.opts.rememberUpgrade && _SocketWithoutUpgrade.priorWebsocketSuccess && this.transports.indexOf("websocket") !== -1 ? "websocket" : this.transports[0];
-        this.readyState = "opening";
-        const transport = this.createTransport(transportName);
-        transport.open();
-        this.setTransport(transport);
-      }
-      /**
-       * Sets the current transport. Disables the existing one (if any).
-       *
-       * @private
-       */
-      setTransport(transport) {
-        if (this.transport) {
-          this.transport.removeAllListeners();
-        }
-        this.transport = transport;
-        transport.on("drain", this._onDrain.bind(this)).on("packet", this._onPacket.bind(this)).on("error", this._onError.bind(this)).on("close", (reason) => this._onClose("transport close", reason));
-      }
-      /**
-       * Called when connection is deemed open.
-       *
-       * @private
-       */
-      onOpen() {
-        this.readyState = "open";
-        _SocketWithoutUpgrade.priorWebsocketSuccess = "websocket" === this.transport.name;
-        this.emitReserved("open");
-        this.flush();
-      }
-      /**
-       * Handles a packet.
-       *
-       * @private
-       */
-      _onPacket(packet) {
-        if ("opening" === this.readyState || "open" === this.readyState || "closing" === this.readyState) {
-          this.emitReserved("packet", packet);
-          this.emitReserved("heartbeat");
-          switch (packet.type) {
-            case "open":
-              this.onHandshake(JSON.parse(packet.data));
-              break;
-            case "ping":
-              this._sendPacket("pong");
-              this.emitReserved("ping");
-              this.emitReserved("pong");
-              this._resetPingTimeout();
-              break;
-            case "error":
-              const err = new Error("server error");
-              err.code = packet.data;
-              this._onError(err);
-              break;
-            case "message":
-              this.emitReserved("data", packet.data);
-              this.emitReserved("message", packet.data);
-              break;
-          }
-        } else {
-        }
-      }
-      /**
-       * Called upon handshake completion.
-       *
-       * @param {Object} data - handshake obj
-       * @private
-       */
-      onHandshake(data) {
-        this.emitReserved("handshake", data);
-        this.id = data.sid;
-        this.transport.query.sid = data.sid;
-        this._pingInterval = data.pingInterval;
-        this._pingTimeout = data.pingTimeout;
-        this._maxPayload = data.maxPayload;
-        this.onOpen();
-        if ("closed" === this.readyState)
-          return;
-        this._resetPingTimeout();
-      }
-      /**
-       * Sets and resets ping timeout timer based on server pings.
-       *
-       * @private
-       */
-      _resetPingTimeout() {
-        this.clearTimeoutFn(this._pingTimeoutTimer);
-        const delay = this._pingInterval + this._pingTimeout;
-        this._pingTimeoutTime = Date.now() + delay;
-        this._pingTimeoutTimer = this.setTimeoutFn(() => {
-          this._onClose("ping timeout");
-        }, delay);
-        if (this.opts.autoUnref) {
-          this._pingTimeoutTimer.unref();
-        }
-      }
-      /**
-       * Called on `drain` event
-       *
-       * @private
-       */
-      _onDrain() {
-        this.writeBuffer.splice(0, this._prevBufferLen);
-        this._prevBufferLen = 0;
-        if (0 === this.writeBuffer.length) {
-          this.emitReserved("drain");
-        } else {
-          this.flush();
-        }
-      }
-      /**
-       * Flush write buffers.
-       *
-       * @private
-       */
-      flush() {
-        if ("closed" !== this.readyState && this.transport.writable && !this.upgrading && this.writeBuffer.length) {
-          const packets = this._getWritablePackets();
-          this.transport.send(packets);
-          this._prevBufferLen = packets.length;
-          this.emitReserved("flush");
-        }
-      }
-      /**
-       * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP
-       * long-polling)
-       *
-       * @private
-       */
-      _getWritablePackets() {
-        const shouldCheckPayloadSize = this._maxPayload && this.transport.name === "polling" && this.writeBuffer.length > 1;
-        if (!shouldCheckPayloadSize) {
-          return this.writeBuffer;
-        }
-        let payloadSize = 1;
-        for (let i = 0; i < this.writeBuffer.length; i++) {
-          const data = this.writeBuffer[i].data;
-          if (data) {
-            payloadSize += byteLength(data);
-          }
-          if (i > 0 && payloadSize > this._maxPayload) {
-            return this.writeBuffer.slice(0, i);
-          }
-          payloadSize += 2;
-        }
-        return this.writeBuffer;
-      }
-      /**
-       * Checks whether the heartbeat timer has expired but the socket has not yet been notified.
-       *
-       * Note: this method is private for now because it does not really fit the WebSocket API, but if we put it in the
-       * `write()` method then the message would not be buffered by the Socket.IO client.
-       *
-       * @return {boolean}
-       * @private
-       */
-      /* private */
-      _hasPingExpired() {
-        if (!this._pingTimeoutTime)
-          return true;
-        const hasExpired = Date.now() > this._pingTimeoutTime;
-        if (hasExpired) {
-          this._pingTimeoutTime = 0;
-          nextTick(() => {
-            this._onClose("ping timeout");
-          }, this.setTimeoutFn);
-        }
-        return hasExpired;
-      }
-      /**
-       * Sends a message.
-       *
-       * @param {String} msg - message.
-       * @param {Object} options.
-       * @param {Function} fn - callback function.
-       * @return {Socket} for chaining.
-       */
-      write(msg, options, fn) {
-        this._sendPacket("message", msg, options, fn);
-        return this;
-      }
-      /**
-       * Sends a message. Alias of {@link Socket#write}.
-       *
-       * @param {String} msg - message.
-       * @param {Object} options.
-       * @param {Function} fn - callback function.
-       * @return {Socket} for chaining.
-       */
-      send(msg, options, fn) {
-        this._sendPacket("message", msg, options, fn);
-        return this;
-      }
-      /**
-       * Sends a packet.
-       *
-       * @param {String} type - packet type.
-       * @param {String} data.
-       * @param {Object} options.
-       * @param {Function} fn - callback function.
-       * @private
-       */
-      _sendPacket(type, data, options, fn) {
-        if ("function" === typeof data) {
-          fn = data;
-          data = void 0;
-        }
-        if ("function" === typeof options) {
-          fn = options;
-          options = null;
-        }
-        if ("closing" === this.readyState || "closed" === this.readyState) {
-          return;
-        }
-        options = options || {};
-        options.compress = false !== options.compress;
-        const packet = {
-          type,
-          data,
-          options
-        };
-        this.emitReserved("packetCreate", packet);
-        this.writeBuffer.push(packet);
-        if (fn)
-          this.once("flush", fn);
-        this.flush();
-      }
-      /**
-       * Closes the connection.
-       */
-      close() {
-        const close = () => {
-          this._onClose("forced close");
-          this.transport.close();
-        };
-        const cleanupAndClose = () => {
-          this.off("upgrade", cleanupAndClose);
-          this.off("upgradeError", cleanupAndClose);
-          close();
-        };
-        const waitForUpgrade = () => {
-          this.once("upgrade", cleanupAndClose);
-          this.once("upgradeError", cleanupAndClose);
-        };
-        if ("opening" === this.readyState || "open" === this.readyState) {
-          this.readyState = "closing";
-          if (this.writeBuffer.length) {
-            this.once("drain", () => {
-              if (this.upgrading) {
-                waitForUpgrade();
-              } else {
-                close();
-              }
-            });
-          } else if (this.upgrading) {
-            waitForUpgrade();
-          } else {
-            close();
-          }
-        }
-        return this;
-      }
-      /**
-       * Called upon transport error
-       *
-       * @private
-       */
-      _onError(err) {
-        _SocketWithoutUpgrade.priorWebsocketSuccess = false;
-        if (this.opts.tryAllTransports && this.transports.length > 1 && this.readyState === "opening") {
-          this.transports.shift();
-          return this._open();
-        }
-        this.emitReserved("error", err);
-        this._onClose("transport error", err);
-      }
-      /**
-       * Called upon transport close.
-       *
-       * @private
-       */
-      _onClose(reason, description) {
-        if ("opening" === this.readyState || "open" === this.readyState || "closing" === this.readyState) {
-          this.clearTimeoutFn(this._pingTimeoutTimer);
-          this.transport.removeAllListeners("close");
-          this.transport.close();
-          this.transport.removeAllListeners();
-          if (withEventListeners) {
-            if (this._beforeunloadEventListener) {
-              removeEventListener("beforeunload", this._beforeunloadEventListener, false);
-            }
-            if (this._offlineEventListener) {
-              const i = OFFLINE_EVENT_LISTENERS.indexOf(this._offlineEventListener);
-              if (i !== -1) {
-                OFFLINE_EVENT_LISTENERS.splice(i, 1);
-              }
-            }
-          }
-          this.readyState = "closed";
-          this.id = null;
-          this.emitReserved("close", reason, description);
-          this.writeBuffer = [];
-          this._prevBufferLen = 0;
-        }
-      }
-    };
-    SocketWithoutUpgrade.protocol = protocol;
-    SocketWithUpgrade = class extends SocketWithoutUpgrade {
-      constructor() {
-        super(...arguments);
-        this._upgrades = [];
-      }
-      onOpen() {
-        super.onOpen();
-        if ("open" === this.readyState && this.opts.upgrade) {
-          for (let i = 0; i < this._upgrades.length; i++) {
-            this._probe(this._upgrades[i]);
-          }
-        }
-      }
-      /**
-       * Probes a transport.
-       *
-       * @param {String} name - transport name
-       * @private
-       */
-      _probe(name) {
-        let transport = this.createTransport(name);
-        let failed = false;
-        SocketWithoutUpgrade.priorWebsocketSuccess = false;
-        const onTransportOpen = () => {
-          if (failed)
-            return;
-          transport.send([{ type: "ping", data: "probe" }]);
-          transport.once("packet", (msg) => {
-            if (failed)
-              return;
-            if ("pong" === msg.type && "probe" === msg.data) {
-              this.upgrading = true;
-              this.emitReserved("upgrading", transport);
-              if (!transport)
-                return;
-              SocketWithoutUpgrade.priorWebsocketSuccess = "websocket" === transport.name;
-              this.transport.pause(() => {
-                if (failed)
-                  return;
-                if ("closed" === this.readyState)
-                  return;
-                cleanup();
-                this.setTransport(transport);
-                transport.send([{ type: "upgrade" }]);
-                this.emitReserved("upgrade", transport);
-                transport = null;
-                this.upgrading = false;
-                this.flush();
-              });
-            } else {
-              const err = new Error("probe error");
-              err.transport = transport.name;
-              this.emitReserved("upgradeError", err);
-            }
-          });
-        };
-        function freezeTransport() {
-          if (failed)
-            return;
-          failed = true;
-          cleanup();
-          transport.close();
-          transport = null;
-        }
-        const onerror = (err) => {
-          const error = new Error("probe error: " + err);
-          error.transport = transport.name;
-          freezeTransport();
-          this.emitReserved("upgradeError", error);
-        };
-        function onTransportClose() {
-          onerror("transport closed");
-        }
-        function onclose() {
-          onerror("socket closed");
-        }
-        function onupgrade(to) {
-          if (transport && to.name !== transport.name) {
-            freezeTransport();
-          }
-        }
-        const cleanup = () => {
-          transport.removeListener("open", onTransportOpen);
-          transport.removeListener("error", onerror);
-          transport.removeListener("close", onTransportClose);
-          this.off("close", onclose);
-          this.off("upgrading", onupgrade);
-        };
-        transport.once("open", onTransportOpen);
-        transport.once("error", onerror);
-        transport.once("close", onTransportClose);
-        this.once("close", onclose);
-        this.once("upgrading", onupgrade);
-        if (this._upgrades.indexOf("webtransport") !== -1 && name !== "webtransport") {
-          this.setTimeoutFn(() => {
-            if (!failed) {
-              transport.open();
-            }
-          }, 200);
-        } else {
-          transport.open();
-        }
-      }
-      onHandshake(data) {
-        this._upgrades = this._filterUpgrades(data.upgrades);
-        super.onHandshake(data);
-      }
-      /**
-       * Filters upgrades, returning only those matching client transports.
-       *
-       * @param {Array} upgrades - server upgrades
-       * @private
-       */
-      _filterUpgrades(upgrades) {
-        const filteredUpgrades = [];
-        for (let i = 0; i < upgrades.length; i++) {
-          if (~this.transports.indexOf(upgrades[i]))
-            filteredUpgrades.push(upgrades[i]);
-        }
-        return filteredUpgrades;
-      }
-    };
-    Socket = class extends SocketWithUpgrade {
-      constructor(uri, opts = {}) {
-        const isOptionsOnly = typeof uri === "object";
-        const o = isOptionsOnly ? { ...uri } : { ...opts };
-        if (!o.transports || o.transports && typeof o.transports[0] === "string") {
-          o.transports = (o.transports || ["polling", "websocket", "webtransport"]).map((transportName) => transports[transportName]).filter((t) => !!t);
-        }
-        super(isOptionsOnly ? o : uri, o);
-      }
-    };
-  }
-});
-
-// node_modules/engine.io-client/build/esm/transports/polling-fetch.js
-var init_polling_fetch = __esm({
-  "node_modules/engine.io-client/build/esm/transports/polling-fetch.js"() {
-    init_define_import_meta_env();
-    init_polling();
-  }
-});
-
-// node_modules/engine.io-client/build/esm/index.js
-var protocol2;
-var init_esm3 = __esm({
-  "node_modules/engine.io-client/build/esm/index.js"() {
-    init_define_import_meta_env();
-    init_socket();
-    init_socket();
-    init_transport();
-    init_transports();
-    init_util();
-    init_parseuri();
-    init_globals();
-    init_polling_fetch();
-    init_polling_xhr();
-    init_polling_xhr();
-    init_websocket();
-    init_websocket();
-    init_webtransport();
-    protocol2 = Socket.protocol;
-  }
-});
-
-// node_modules/socket.io-client/build/esm/url.js
-function url(uri, path = "", loc) {
-  let obj = uri;
-  loc = loc || typeof location !== "undefined" && location;
-  if (null == uri)
-    uri = loc.protocol + "//" + loc.host;
-  if (typeof uri === "string") {
-    if ("/" === uri.charAt(0)) {
-      if ("/" === uri.charAt(1)) {
-        uri = loc.protocol + uri;
-      } else {
-        uri = loc.host + uri;
-      }
-    }
-    if (!/^(https?|wss?):\/\//.test(uri)) {
-      if ("undefined" !== typeof loc) {
-        uri = loc.protocol + "//" + uri;
-      } else {
-        uri = "https://" + uri;
-      }
-    }
-    obj = parse(uri);
-  }
-  if (!obj.port) {
-    if (/^(http|ws)$/.test(obj.protocol)) {
-      obj.port = "80";
-    } else if (/^(http|ws)s$/.test(obj.protocol)) {
-      obj.port = "443";
-    }
-  }
-  obj.path = obj.path || "/";
-  const ipv6 = obj.host.indexOf(":") !== -1;
-  const host = ipv6 ? "[" + obj.host + "]" : obj.host;
-  obj.id = obj.protocol + "://" + host + ":" + obj.port + path;
-  obj.href = obj.protocol + "://" + host + (loc && loc.port === obj.port ? "" : ":" + obj.port);
-  return obj;
-}
-var init_url = __esm({
-  "node_modules/socket.io-client/build/esm/url.js"() {
-    init_define_import_meta_env();
-    init_esm3();
-  }
-});
-
-// node_modules/socket.io-parser/build/esm/is-binary.js
-function isBinary(obj) {
-  return withNativeArrayBuffer3 && (obj instanceof ArrayBuffer || isView2(obj)) || withNativeBlob2 && obj instanceof Blob || withNativeFile && obj instanceof File;
-}
-function hasBinary(obj, toJSON) {
-  if (!obj || typeof obj !== "object") {
-    return false;
-  }
-  if (Array.isArray(obj)) {
-    for (let i = 0, l = obj.length; i < l; i++) {
-      if (hasBinary(obj[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-  if (isBinary(obj)) {
-    return true;
-  }
-  if (obj.toJSON && typeof obj.toJSON === "function" && arguments.length === 1) {
-    return hasBinary(obj.toJSON(), true);
-  }
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key) && hasBinary(obj[key])) {
-      return true;
-    }
-  }
-  return false;
-}
-var withNativeArrayBuffer3, isView2, toString3, withNativeBlob2, withNativeFile;
-var init_is_binary = __esm({
-  "node_modules/socket.io-parser/build/esm/is-binary.js"() {
-    init_define_import_meta_env();
-    withNativeArrayBuffer3 = typeof ArrayBuffer === "function";
-    isView2 = (obj) => {
-      return typeof ArrayBuffer.isView === "function" ? ArrayBuffer.isView(obj) : obj.buffer instanceof ArrayBuffer;
-    };
-    toString3 = Object.prototype.toString;
-    withNativeBlob2 = typeof Blob === "function" || typeof Blob !== "undefined" && toString3.call(Blob) === "[object BlobConstructor]";
-    withNativeFile = typeof File === "function" || typeof File !== "undefined" && toString3.call(File) === "[object FileConstructor]";
-  }
-});
-
-// node_modules/socket.io-parser/build/esm/binary.js
-function deconstructPacket(packet) {
-  const buffers = [];
-  const packetData = packet.data;
-  const pack = packet;
-  pack.data = _deconstructPacket(packetData, buffers);
-  pack.attachments = buffers.length;
-  return { packet: pack, buffers };
-}
-function _deconstructPacket(data, buffers) {
-  if (!data)
-    return data;
-  if (isBinary(data)) {
-    const placeholder = { _placeholder: true, num: buffers.length };
-    buffers.push(data);
-    return placeholder;
-  } else if (Array.isArray(data)) {
-    const newData = new Array(data.length);
-    for (let i = 0; i < data.length; i++) {
-      newData[i] = _deconstructPacket(data[i], buffers);
-    }
-    return newData;
-  } else if (typeof data === "object" && !(data instanceof Date)) {
-    const newData = {};
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        newData[key] = _deconstructPacket(data[key], buffers);
-      }
-    }
-    return newData;
-  }
-  return data;
-}
-function reconstructPacket(packet, buffers) {
-  packet.data = _reconstructPacket(packet.data, buffers);
-  delete packet.attachments;
-  return packet;
-}
-function _reconstructPacket(data, buffers) {
-  if (!data)
-    return data;
-  if (data && data._placeholder === true) {
-    const isIndexValid = typeof data.num === "number" && data.num >= 0 && data.num < buffers.length;
-    if (isIndexValid) {
-      return buffers[data.num];
-    } else {
-      throw new Error("illegal attachments");
-    }
-  } else if (Array.isArray(data)) {
-    for (let i = 0; i < data.length; i++) {
-      data[i] = _reconstructPacket(data[i], buffers);
-    }
-  } else if (typeof data === "object") {
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        data[key] = _reconstructPacket(data[key], buffers);
-      }
-    }
-  }
-  return data;
-}
-var init_binary = __esm({
-  "node_modules/socket.io-parser/build/esm/binary.js"() {
-    init_define_import_meta_env();
-    init_is_binary();
-  }
-});
-
-// node_modules/socket.io-parser/build/esm/index.js
-var esm_exports = {};
-__export(esm_exports, {
-  Decoder: () => Decoder,
-  Encoder: () => Encoder,
-  PacketType: () => PacketType,
-  isPacketValid: () => isPacketValid,
-  protocol: () => protocol3
-});
-function isNamespaceValid(nsp) {
-  return typeof nsp === "string";
-}
-function isAckIdValid(id) {
-  return id === void 0 || isInteger(id);
-}
-function isObject2(value2) {
-  return Object.prototype.toString.call(value2) === "[object Object]";
-}
-function isDataValid(type, payload) {
-  switch (type) {
-    case PacketType.CONNECT:
-      return payload === void 0 || isObject2(payload);
-    case PacketType.DISCONNECT:
-      return payload === void 0;
-    case PacketType.EVENT:
-      return Array.isArray(payload) && (typeof payload[0] === "number" || typeof payload[0] === "string" && RESERVED_EVENTS.indexOf(payload[0]) === -1);
-    case PacketType.ACK:
-      return Array.isArray(payload);
-    case PacketType.CONNECT_ERROR:
-      return typeof payload === "string" || isObject2(payload);
-    default:
-      return false;
-  }
-}
-function isPacketValid(packet) {
-  return isNamespaceValid(packet.nsp) && isAckIdValid(packet.id) && isDataValid(packet.type, packet.data);
-}
-var RESERVED_EVENTS, protocol3, PacketType, Encoder, Decoder, BinaryReconstructor, isInteger;
-var init_esm4 = __esm({
-  "node_modules/socket.io-parser/build/esm/index.js"() {
-    init_define_import_meta_env();
-    init_esm2();
-    init_binary();
-    init_is_binary();
-    RESERVED_EVENTS = [
-      "connect",
-      // used on the client side
-      "connect_error",
-      // used on the client side
-      "disconnect",
-      // used on both sides
-      "disconnecting",
-      // used on the server side
-      "newListener",
-      // used by the Node.js EventEmitter
-      "removeListener"
-      // used by the Node.js EventEmitter
-    ];
-    protocol3 = 5;
-    (function(PacketType2) {
-      PacketType2[PacketType2["CONNECT"] = 0] = "CONNECT";
-      PacketType2[PacketType2["DISCONNECT"] = 1] = "DISCONNECT";
-      PacketType2[PacketType2["EVENT"] = 2] = "EVENT";
-      PacketType2[PacketType2["ACK"] = 3] = "ACK";
-      PacketType2[PacketType2["CONNECT_ERROR"] = 4] = "CONNECT_ERROR";
-      PacketType2[PacketType2["BINARY_EVENT"] = 5] = "BINARY_EVENT";
-      PacketType2[PacketType2["BINARY_ACK"] = 6] = "BINARY_ACK";
-    })(PacketType || (PacketType = {}));
-    Encoder = class {
-      /**
-       * Encoder constructor
-       *
-       * @param {function} replacer - custom replacer to pass down to JSON.parse
-       */
-      constructor(replacer) {
-        this.replacer = replacer;
-      }
-      /**
-       * Encode a packet as a single string if non-binary, or as a
-       * buffer sequence, depending on packet type.
-       *
-       * @param {Object} obj - packet object
-       */
-      encode(obj) {
-        if (obj.type === PacketType.EVENT || obj.type === PacketType.ACK) {
-          if (hasBinary(obj)) {
-            return this.encodeAsBinary({
-              type: obj.type === PacketType.EVENT ? PacketType.BINARY_EVENT : PacketType.BINARY_ACK,
-              nsp: obj.nsp,
-              data: obj.data,
-              id: obj.id
-            });
-          }
-        }
-        return [this.encodeAsString(obj)];
-      }
-      /**
-       * Encode packet as string.
-       */
-      encodeAsString(obj) {
-        let str = "" + obj.type;
-        if (obj.type === PacketType.BINARY_EVENT || obj.type === PacketType.BINARY_ACK) {
-          str += obj.attachments + "-";
-        }
-        if (obj.nsp && "/" !== obj.nsp) {
-          str += obj.nsp + ",";
-        }
-        if (null != obj.id) {
-          str += obj.id;
-        }
-        if (null != obj.data) {
-          str += JSON.stringify(obj.data, this.replacer);
-        }
-        return str;
-      }
-      /**
-       * Encode packet as 'buffer sequence' by removing blobs, and
-       * deconstructing packet into object with placeholders and
-       * a list of buffers.
-       */
-      encodeAsBinary(obj) {
-        const deconstruction = deconstructPacket(obj);
-        const pack = this.encodeAsString(deconstruction.packet);
-        const buffers = deconstruction.buffers;
-        buffers.unshift(pack);
-        return buffers;
-      }
-    };
-    Decoder = class _Decoder extends Emitter {
-      /**
-       * Decoder constructor
-       */
-      constructor(opts) {
-        super();
-        this.opts = Object.assign({
-          reviver: void 0,
-          maxAttachments: 10
-        }, typeof opts === "function" ? { reviver: opts } : opts);
-      }
-      /**
-       * Decodes an encoded packet string into packet JSON.
-       *
-       * @param {String} obj - encoded packet
-       */
-      add(obj) {
-        let packet;
-        if (typeof obj === "string") {
-          if (this.reconstructor) {
-            throw new Error("got plaintext data when reconstructing a packet");
-          }
-          packet = this.decodeString(obj);
-          const isBinaryEvent = packet.type === PacketType.BINARY_EVENT;
-          if (isBinaryEvent || packet.type === PacketType.BINARY_ACK) {
-            packet.type = isBinaryEvent ? PacketType.EVENT : PacketType.ACK;
-            this.reconstructor = new BinaryReconstructor(packet);
-            if (packet.attachments === 0) {
-              super.emitReserved("decoded", packet);
-            }
-          } else {
-            super.emitReserved("decoded", packet);
-          }
-        } else if (isBinary(obj) || obj.base64) {
-          if (!this.reconstructor) {
-            throw new Error("got binary data when not reconstructing a packet");
-          } else {
-            packet = this.reconstructor.takeBinaryData(obj);
-            if (packet) {
-              this.reconstructor = null;
-              super.emitReserved("decoded", packet);
-            }
-          }
-        } else {
-          throw new Error("Unknown type: " + obj);
-        }
-      }
-      /**
-       * Decode a packet String (JSON data)
-       *
-       * @param {String} str
-       * @return {Object} packet
-       */
-      decodeString(str) {
-        let i = 0;
-        const p = {
-          type: Number(str.charAt(0))
-        };
-        if (PacketType[p.type] === void 0) {
-          throw new Error("unknown packet type " + p.type);
-        }
-        if (p.type === PacketType.BINARY_EVENT || p.type === PacketType.BINARY_ACK) {
-          const start = i + 1;
-          while (str.charAt(++i) !== "-" && i != str.length) {
-          }
-          const buf = str.substring(start, i);
-          if (buf != Number(buf) || str.charAt(i) !== "-") {
-            throw new Error("Illegal attachments");
-          }
-          const n = Number(buf);
-          if (!isInteger(n) || n < 0) {
-            throw new Error("Illegal attachments");
-          } else if (n > this.opts.maxAttachments) {
-            throw new Error("too many attachments");
-          }
-          p.attachments = n;
-        }
-        if ("/" === str.charAt(i + 1)) {
-          const start = i + 1;
-          while (++i) {
-            const c = str.charAt(i);
-            if ("," === c)
-              break;
-            if (i === str.length)
-              break;
-          }
-          p.nsp = str.substring(start, i);
-        } else {
-          p.nsp = "/";
-        }
-        const next = str.charAt(i + 1);
-        if ("" !== next && Number(next) == next) {
-          const start = i + 1;
-          while (++i) {
-            const c = str.charAt(i);
-            if (null == c || Number(c) != c) {
-              --i;
-              break;
-            }
-            if (i === str.length)
-              break;
-          }
-          p.id = Number(str.substring(start, i + 1));
-        }
-        if (str.charAt(++i)) {
-          const payload = this.tryParse(str.substr(i));
-          if (_Decoder.isPayloadValid(p.type, payload)) {
-            p.data = payload;
-          } else {
-            throw new Error("invalid payload");
-          }
-        }
-        return p;
-      }
-      tryParse(str) {
-        try {
-          return JSON.parse(str, this.opts.reviver);
-        } catch (e) {
-          return false;
-        }
-      }
-      static isPayloadValid(type, payload) {
-        switch (type) {
-          case PacketType.CONNECT:
-            return isObject2(payload);
-          case PacketType.DISCONNECT:
-            return payload === void 0;
-          case PacketType.CONNECT_ERROR:
-            return typeof payload === "string" || isObject2(payload);
-          case PacketType.EVENT:
-          case PacketType.BINARY_EVENT:
-            return Array.isArray(payload) && (typeof payload[0] === "number" || typeof payload[0] === "string" && RESERVED_EVENTS.indexOf(payload[0]) === -1);
-          case PacketType.ACK:
-          case PacketType.BINARY_ACK:
-            return Array.isArray(payload);
-        }
-      }
-      /**
-       * Deallocates a parser's resources
-       */
-      destroy() {
-        if (this.reconstructor) {
-          this.reconstructor.finishedReconstruction();
-          this.reconstructor = null;
-        }
-      }
-    };
-    BinaryReconstructor = class {
-      constructor(packet) {
-        this.packet = packet;
-        this.buffers = [];
-        this.reconPack = packet;
-      }
-      /**
-       * Method to be called when binary data received from connection
-       * after a BINARY_EVENT packet.
-       *
-       * @param {Buffer | ArrayBuffer} binData - the raw binary data received
-       * @return {null | Object} returns null if more binary data is expected or
-       *   a reconstructed packet object if all buffers have been received.
-       */
-      takeBinaryData(binData) {
-        this.buffers.push(binData);
-        if (this.buffers.length === this.reconPack.attachments) {
-          const packet = reconstructPacket(this.reconPack, this.buffers);
-          this.finishedReconstruction();
-          return packet;
-        }
-        return null;
-      }
-      /**
-       * Cleans up binary packet reconstruction variables.
-       */
-      finishedReconstruction() {
-        this.reconPack = null;
-        this.buffers = [];
-      }
-    };
-    isInteger = Number.isInteger || function(value2) {
-      return typeof value2 === "number" && isFinite(value2) && Math.floor(value2) === value2;
-    };
-  }
-});
-
-// node_modules/socket.io-client/build/esm/on.js
-function on(obj, ev, fn) {
-  obj.on(ev, fn);
-  return function subDestroy() {
-    obj.off(ev, fn);
-  };
-}
-var init_on = __esm({
-  "node_modules/socket.io-client/build/esm/on.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/socket.io-client/build/esm/socket.js
-var RESERVED_EVENTS2, Socket2;
-var init_socket2 = __esm({
-  "node_modules/socket.io-client/build/esm/socket.js"() {
-    init_define_import_meta_env();
-    init_esm4();
-    init_on();
-    init_esm2();
-    RESERVED_EVENTS2 = Object.freeze({
-      connect: 1,
-      connect_error: 1,
-      disconnect: 1,
-      disconnecting: 1,
-      // EventEmitter reserved events: https://nodejs.org/api/events.html#events_event_newlistener
-      newListener: 1,
-      removeListener: 1
-    });
-    Socket2 = class extends Emitter {
-      /**
-       * `Socket` constructor.
-       */
-      constructor(io, nsp, opts) {
-        super();
-        this.connected = false;
-        this.recovered = false;
-        this.receiveBuffer = [];
-        this.sendBuffer = [];
-        this._queue = [];
-        this._queueSeq = 0;
-        this.ids = 0;
-        this.acks = {};
-        this.flags = {};
-        this.io = io;
-        this.nsp = nsp;
-        if (opts && opts.auth) {
-          this.auth = opts.auth;
-        }
-        this._opts = Object.assign({}, opts);
-        if (this.io._autoConnect)
-          this.open();
-      }
-      /**
-       * Whether the socket is currently disconnected
-       *
-       * @example
-       * const socket = io();
-       *
-       * socket.on("connect", () => {
-       *   console.log(socket.disconnected); // false
-       * });
-       *
-       * socket.on("disconnect", () => {
-       *   console.log(socket.disconnected); // true
-       * });
-       */
-      get disconnected() {
-        return !this.connected;
-      }
-      /**
-       * Subscribe to open, close and packet events
-       *
-       * @private
-       */
-      subEvents() {
-        if (this.subs)
-          return;
-        const io = this.io;
-        this.subs = [
-          on(io, "open", this.onopen.bind(this)),
-          on(io, "packet", this.onpacket.bind(this)),
-          on(io, "error", this.onerror.bind(this)),
-          on(io, "close", this.onclose.bind(this))
-        ];
-      }
-      /**
-       * Whether the Socket will try to reconnect when its Manager connects or reconnects.
-       *
-       * @example
-       * const socket = io();
-       *
-       * console.log(socket.active); // true
-       *
-       * socket.on("disconnect", (reason) => {
-       *   if (reason === "io server disconnect") {
-       *     // the disconnection was initiated by the server, you need to manually reconnect
-       *     console.log(socket.active); // false
-       *   }
-       *   // else the socket will automatically try to reconnect
-       *   console.log(socket.active); // true
-       * });
-       */
-      get active() {
-        return !!this.subs;
-      }
-      /**
-       * "Opens" the socket.
-       *
-       * @example
-       * const socket = io({
-       *   autoConnect: false
-       * });
-       *
-       * socket.connect();
-       */
-      connect() {
-        if (this.connected)
-          return this;
-        this.subEvents();
-        if (!this.io["_reconnecting"])
-          this.io.open();
-        if ("open" === this.io._readyState)
-          this.onopen();
-        return this;
-      }
-      /**
-       * Alias for {@link connect()}.
-       */
-      open() {
-        return this.connect();
-      }
-      /**
-       * Sends a `message` event.
-       *
-       * This method mimics the WebSocket.send() method.
-       *
-       * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send
-       *
-       * @example
-       * socket.send("hello");
-       *
-       * // this is equivalent to
-       * socket.emit("message", "hello");
-       *
-       * @return self
-       */
-      send(...args) {
-        args.unshift("message");
-        this.emit.apply(this, args);
-        return this;
-      }
-      /**
-       * Override `emit`.
-       * If the event is in `events`, it's emitted normally.
-       *
-       * @example
-       * socket.emit("hello", "world");
-       *
-       * // all serializable datastructures are supported (no need to call JSON.stringify)
-       * socket.emit("hello", 1, "2", { 3: ["4"], 5: Uint8Array.from([6]) });
-       *
-       * // with an acknowledgement from the server
-       * socket.emit("hello", "world", (val) => {
-       *   // ...
-       * });
-       *
-       * @return self
-       */
-      emit(ev, ...args) {
-        var _a, _b, _c;
-        if (RESERVED_EVENTS2.hasOwnProperty(ev)) {
-          throw new Error('"' + ev.toString() + '" is a reserved event name');
-        }
-        args.unshift(ev);
-        if (this._opts.retries && !this.flags.fromQueue && !this.flags.volatile) {
-          this._addToQueue(args);
-          return this;
-        }
-        const packet = {
-          type: PacketType.EVENT,
-          data: args
-        };
-        packet.options = {};
-        packet.options.compress = this.flags.compress !== false;
-        if ("function" === typeof args[args.length - 1]) {
-          const id = this.ids++;
-          const ack = args.pop();
-          this._registerAckCallback(id, ack);
-          packet.id = id;
-        }
-        const isTransportWritable = (_b = (_a = this.io.engine) === null || _a === void 0 ? void 0 : _a.transport) === null || _b === void 0 ? void 0 : _b.writable;
-        const isConnected = this.connected && !((_c = this.io.engine) === null || _c === void 0 ? void 0 : _c._hasPingExpired());
-        const discardPacket = this.flags.volatile && !isTransportWritable;
-        if (discardPacket) {
-        } else if (isConnected) {
-          this.notifyOutgoingListeners(packet);
-          this.packet(packet);
-        } else {
-          this.sendBuffer.push(packet);
-        }
-        this.flags = {};
-        return this;
-      }
-      /**
-       * @private
-       */
-      _registerAckCallback(id, ack) {
-        var _a;
-        const timeout = (_a = this.flags.timeout) !== null && _a !== void 0 ? _a : this._opts.ackTimeout;
-        if (timeout === void 0) {
-          this.acks[id] = ack;
-          return;
-        }
-        const timer = this.io.setTimeoutFn(() => {
-          delete this.acks[id];
-          for (let i = 0; i < this.sendBuffer.length; i++) {
-            if (this.sendBuffer[i].id === id) {
-              this.sendBuffer.splice(i, 1);
-            }
-          }
-          ack.call(this, new Error("operation has timed out"));
-        }, timeout);
-        const fn = (...args) => {
-          this.io.clearTimeoutFn(timer);
-          ack.apply(this, args);
-        };
-        fn.withError = true;
-        this.acks[id] = fn;
-      }
-      /**
-       * Emits an event and waits for an acknowledgement
-       *
-       * @example
-       * // without timeout
-       * const response = await socket.emitWithAck("hello", "world");
-       *
-       * // with a specific timeout
-       * try {
-       *   const response = await socket.timeout(1000).emitWithAck("hello", "world");
-       * } catch (err) {
-       *   // the server did not acknowledge the event in the given delay
-       * }
-       *
-       * @return a Promise that will be fulfilled when the server acknowledges the event
-       */
-      emitWithAck(ev, ...args) {
-        return new Promise((resolve, reject) => {
-          const fn = (arg1, arg2) => {
-            return arg1 ? reject(arg1) : resolve(arg2);
-          };
-          fn.withError = true;
-          args.push(fn);
-          this.emit(ev, ...args);
-        });
-      }
-      /**
-       * Add the packet to the queue.
-       * @param args
-       * @private
-       */
-      _addToQueue(args) {
-        let ack;
-        if (typeof args[args.length - 1] === "function") {
-          ack = args.pop();
-        }
-        const packet = {
-          id: this._queueSeq++,
-          tryCount: 0,
-          pending: false,
-          args,
-          flags: Object.assign({ fromQueue: true }, this.flags)
-        };
-        args.push((err, ...responseArgs) => {
-          if (packet !== this._queue[0]) {
-          }
-          const hasError = err !== null;
-          if (hasError) {
-            if (packet.tryCount > this._opts.retries) {
-              this._queue.shift();
-              if (ack) {
-                ack(err);
-              }
-            }
-          } else {
-            this._queue.shift();
-            if (ack) {
-              ack(null, ...responseArgs);
-            }
-          }
-          packet.pending = false;
-          return this._drainQueue();
-        });
-        this._queue.push(packet);
-        this._drainQueue();
-      }
-      /**
-       * Send the first packet of the queue, and wait for an acknowledgement from the server.
-       * @param force - whether to resend a packet that has not been acknowledged yet
-       *
-       * @private
-       */
-      _drainQueue(force = false) {
-        if (!this.connected || this._queue.length === 0) {
-          return;
-        }
-        const packet = this._queue[0];
-        if (packet.pending && !force) {
-          return;
-        }
-        packet.pending = true;
-        packet.tryCount++;
-        this.flags = packet.flags;
-        this.emit.apply(this, packet.args);
-      }
-      /**
-       * Sends a packet.
-       *
-       * @param packet
-       * @private
-       */
-      packet(packet) {
-        packet.nsp = this.nsp;
-        this.io._packet(packet);
-      }
-      /**
-       * Called upon engine `open`.
-       *
-       * @private
-       */
-      onopen() {
-        if (typeof this.auth == "function") {
-          this.auth((data) => {
-            this._sendConnectPacket(data);
-          });
-        } else {
-          this._sendConnectPacket(this.auth);
-        }
-      }
-      /**
-       * Sends a CONNECT packet to initiate the Socket.IO session.
-       *
-       * @param data
-       * @private
-       */
-      _sendConnectPacket(data) {
-        this.packet({
-          type: PacketType.CONNECT,
-          data: this._pid ? Object.assign({ pid: this._pid, offset: this._lastOffset }, data) : data
-        });
-      }
-      /**
-       * Called upon engine or manager `error`.
-       *
-       * @param err
-       * @private
-       */
-      onerror(err) {
-        if (!this.connected) {
-          this.emitReserved("connect_error", err);
-        }
-      }
-      /**
-       * Called upon engine `close`.
-       *
-       * @param reason
-       * @param description
-       * @private
-       */
-      onclose(reason, description) {
-        this.connected = false;
-        delete this.id;
-        this.emitReserved("disconnect", reason, description);
-        this._clearAcks();
-      }
-      /**
-       * Clears the acknowledgement handlers upon disconnection, since the client will never receive an acknowledgement from
-       * the server.
-       *
-       * @private
-       */
-      _clearAcks() {
-        Object.keys(this.acks).forEach((id) => {
-          const isBuffered = this.sendBuffer.some((packet) => String(packet.id) === id);
-          if (!isBuffered) {
-            const ack = this.acks[id];
-            delete this.acks[id];
-            if (ack.withError) {
-              ack.call(this, new Error("socket has been disconnected"));
-            }
-          }
-        });
-      }
-      /**
-       * Called with socket packet.
-       *
-       * @param packet
-       * @private
-       */
-      onpacket(packet) {
-        const sameNamespace = packet.nsp === this.nsp;
-        if (!sameNamespace)
-          return;
-        switch (packet.type) {
-          case PacketType.CONNECT:
-            if (packet.data && packet.data.sid) {
-              this.onconnect(packet.data.sid, packet.data.pid);
-            } else {
-              this.emitReserved("connect_error", new Error("It seems you are trying to reach a Socket.IO server in v2.x with a v3.x client, but they are not compatible (more information here: https://socket.io/docs/v3/migrating-from-2-x-to-3-0/)"));
-            }
-            break;
-          case PacketType.EVENT:
-          case PacketType.BINARY_EVENT:
-            this.onevent(packet);
-            break;
-          case PacketType.ACK:
-          case PacketType.BINARY_ACK:
-            this.onack(packet);
-            break;
-          case PacketType.DISCONNECT:
-            this.ondisconnect();
-            break;
-          case PacketType.CONNECT_ERROR:
-            this.destroy();
-            const err = new Error(packet.data.message);
-            err.data = packet.data.data;
-            this.emitReserved("connect_error", err);
-            break;
-        }
-      }
-      /**
-       * Called upon a server event.
-       *
-       * @param packet
-       * @private
-       */
-      onevent(packet) {
-        const args = packet.data || [];
-        if (null != packet.id) {
-          args.push(this.ack(packet.id));
-        }
-        if (this.connected) {
-          this.emitEvent(args);
-        } else {
-          this.receiveBuffer.push(Object.freeze(args));
-        }
-      }
-      emitEvent(args) {
-        if (this._anyListeners && this._anyListeners.length) {
-          const listeners = this._anyListeners.slice();
-          for (const listener of listeners) {
-            listener.apply(this, args);
-          }
-        }
-        super.emit.apply(this, args);
-        if (this._pid && args.length && typeof args[args.length - 1] === "string") {
-          this._lastOffset = args[args.length - 1];
-        }
-      }
-      /**
-       * Produces an ack callback to emit with an event.
-       *
-       * @private
-       */
-      ack(id) {
-        const self2 = this;
-        let sent = false;
-        return function(...args) {
-          if (sent)
-            return;
-          sent = true;
-          self2.packet({
-            type: PacketType.ACK,
-            id,
-            data: args
-          });
-        };
-      }
-      /**
-       * Called upon a server acknowledgement.
-       *
-       * @param packet
-       * @private
-       */
-      onack(packet) {
-        const ack = this.acks[packet.id];
-        if (typeof ack !== "function") {
-          return;
-        }
-        delete this.acks[packet.id];
-        if (ack.withError) {
-          packet.data.unshift(null);
-        }
-        ack.apply(this, packet.data);
-      }
-      /**
-       * Called upon server connect.
-       *
-       * @private
-       */
-      onconnect(id, pid) {
-        this.id = id;
-        this.recovered = pid && this._pid === pid;
-        this._pid = pid;
-        this.connected = true;
-        this.emitBuffered();
-        this._drainQueue(true);
-        this.emitReserved("connect");
-      }
-      /**
-       * Emit buffered events (received and emitted).
-       *
-       * @private
-       */
-      emitBuffered() {
-        this.receiveBuffer.forEach((args) => this.emitEvent(args));
-        this.receiveBuffer = [];
-        this.sendBuffer.forEach((packet) => {
-          this.notifyOutgoingListeners(packet);
-          this.packet(packet);
-        });
-        this.sendBuffer = [];
-      }
-      /**
-       * Called upon server disconnect.
-       *
-       * @private
-       */
-      ondisconnect() {
-        this.destroy();
-        this.onclose("io server disconnect");
-      }
-      /**
-       * Called upon forced client/server side disconnections,
-       * this method ensures the manager stops tracking us and
-       * that reconnections don't get triggered for this.
-       *
-       * @private
-       */
-      destroy() {
-        if (this.subs) {
-          this.subs.forEach((subDestroy) => subDestroy());
-          this.subs = void 0;
-        }
-        this.io["_destroy"](this);
-      }
-      /**
-       * Disconnects the socket manually. In that case, the socket will not try to reconnect.
-       *
-       * If this is the last active Socket instance of the {@link Manager}, the low-level connection will be closed.
-       *
-       * @example
-       * const socket = io();
-       *
-       * socket.on("disconnect", (reason) => {
-       *   // console.log(reason); prints "io client disconnect"
-       * });
-       *
-       * socket.disconnect();
-       *
-       * @return self
-       */
-      disconnect() {
-        if (this.connected) {
-          this.packet({ type: PacketType.DISCONNECT });
-        }
-        this.destroy();
-        if (this.connected) {
-          this.onclose("io client disconnect");
-        }
-        return this;
-      }
-      /**
-       * Alias for {@link disconnect()}.
-       *
-       * @return self
-       */
-      close() {
-        return this.disconnect();
-      }
-      /**
-       * Sets the compress flag.
-       *
-       * @example
-       * socket.compress(false).emit("hello");
-       *
-       * @param compress - if `true`, compresses the sending data
-       * @return self
-       */
-      compress(compress) {
-        this.flags.compress = compress;
-        return this;
-      }
-      /**
-       * Sets a modifier for a subsequent event emission that the event message will be dropped when this socket is not
-       * ready to send messages.
-       *
-       * @example
-       * socket.volatile.emit("hello"); // the server may or may not receive it
-       *
-       * @returns self
-       */
-      get volatile() {
-        this.flags.volatile = true;
-        return this;
-      }
-      /**
-       * Sets a modifier for a subsequent event emission that the callback will be called with an error when the
-       * given number of milliseconds have elapsed without an acknowledgement from the server:
-       *
-       * @example
-       * socket.timeout(5000).emit("my-event", (err) => {
-       *   if (err) {
-       *     // the server did not acknowledge the event in the given delay
-       *   }
-       * });
-       *
-       * @returns self
-       */
-      timeout(timeout) {
-        this.flags.timeout = timeout;
-        return this;
-      }
-      /**
-       * Adds a listener that will be fired when any event is emitted. The event name is passed as the first argument to the
-       * callback.
-       *
-       * @example
-       * socket.onAny((event, ...args) => {
-       *   console.log(`got ${event}`);
-       * });
-       *
-       * @param listener
-       */
-      onAny(listener) {
-        this._anyListeners = this._anyListeners || [];
-        this._anyListeners.push(listener);
-        return this;
-      }
-      /**
-       * Adds a listener that will be fired when any event is emitted. The event name is passed as the first argument to the
-       * callback. The listener is added to the beginning of the listeners array.
-       *
-       * @example
-       * socket.prependAny((event, ...args) => {
-       *   console.log(`got event ${event}`);
-       * });
-       *
-       * @param listener
-       */
-      prependAny(listener) {
-        this._anyListeners = this._anyListeners || [];
-        this._anyListeners.unshift(listener);
-        return this;
-      }
-      /**
-       * Removes the listener that will be fired when any event is emitted.
-       *
-       * @example
-       * const catchAllListener = (event, ...args) => {
-       *   console.log(`got event ${event}`);
-       * }
-       *
-       * socket.onAny(catchAllListener);
-       *
-       * // remove a specific listener
-       * socket.offAny(catchAllListener);
-       *
-       * // or remove all listeners
-       * socket.offAny();
-       *
-       * @param listener
-       */
-      offAny(listener) {
-        if (!this._anyListeners) {
-          return this;
-        }
-        if (listener) {
-          const listeners = this._anyListeners;
-          for (let i = 0; i < listeners.length; i++) {
-            if (listener === listeners[i]) {
-              listeners.splice(i, 1);
-              return this;
-            }
-          }
-        } else {
-          this._anyListeners = [];
-        }
-        return this;
-      }
-      /**
-       * Returns an array of listeners that are listening for any event that is specified. This array can be manipulated,
-       * e.g. to remove listeners.
-       */
-      listenersAny() {
-        return this._anyListeners || [];
-      }
-      /**
-       * Adds a listener that will be fired when any event is emitted. The event name is passed as the first argument to the
-       * callback.
-       *
-       * Note: acknowledgements sent to the server are not included.
-       *
-       * @example
-       * socket.onAnyOutgoing((event, ...args) => {
-       *   console.log(`sent event ${event}`);
-       * });
-       *
-       * @param listener
-       */
-      onAnyOutgoing(listener) {
-        this._anyOutgoingListeners = this._anyOutgoingListeners || [];
-        this._anyOutgoingListeners.push(listener);
-        return this;
-      }
-      /**
-       * Adds a listener that will be fired when any event is emitted. The event name is passed as the first argument to the
-       * callback. The listener is added to the beginning of the listeners array.
-       *
-       * Note: acknowledgements sent to the server are not included.
-       *
-       * @example
-       * socket.prependAnyOutgoing((event, ...args) => {
-       *   console.log(`sent event ${event}`);
-       * });
-       *
-       * @param listener
-       */
-      prependAnyOutgoing(listener) {
-        this._anyOutgoingListeners = this._anyOutgoingListeners || [];
-        this._anyOutgoingListeners.unshift(listener);
-        return this;
-      }
-      /**
-       * Removes the listener that will be fired when any event is emitted.
-       *
-       * @example
-       * const catchAllListener = (event, ...args) => {
-       *   console.log(`sent event ${event}`);
-       * }
-       *
-       * socket.onAnyOutgoing(catchAllListener);
-       *
-       * // remove a specific listener
-       * socket.offAnyOutgoing(catchAllListener);
-       *
-       * // or remove all listeners
-       * socket.offAnyOutgoing();
-       *
-       * @param [listener] - the catch-all listener (optional)
-       */
-      offAnyOutgoing(listener) {
-        if (!this._anyOutgoingListeners) {
-          return this;
-        }
-        if (listener) {
-          const listeners = this._anyOutgoingListeners;
-          for (let i = 0; i < listeners.length; i++) {
-            if (listener === listeners[i]) {
-              listeners.splice(i, 1);
-              return this;
-            }
-          }
-        } else {
-          this._anyOutgoingListeners = [];
-        }
-        return this;
-      }
-      /**
-       * Returns an array of listeners that are listening for any event that is specified. This array can be manipulated,
-       * e.g. to remove listeners.
-       */
-      listenersAnyOutgoing() {
-        return this._anyOutgoingListeners || [];
-      }
-      /**
-       * Notify the listeners for each packet sent
-       *
-       * @param packet
-       *
-       * @private
-       */
-      notifyOutgoingListeners(packet) {
-        if (this._anyOutgoingListeners && this._anyOutgoingListeners.length) {
-          const listeners = this._anyOutgoingListeners.slice();
-          for (const listener of listeners) {
-            listener.apply(this, packet.data);
-          }
-        }
-      }
-    };
-  }
-});
-
-// node_modules/socket.io-client/build/esm/contrib/backo2.js
-function Backoff(opts) {
-  opts = opts || {};
-  this.ms = opts.min || 100;
-  this.max = opts.max || 1e4;
-  this.factor = opts.factor || 2;
-  this.jitter = opts.jitter > 0 && opts.jitter <= 1 ? opts.jitter : 0;
-  this.attempts = 0;
-}
-var init_backo2 = __esm({
-  "node_modules/socket.io-client/build/esm/contrib/backo2.js"() {
-    init_define_import_meta_env();
-    Backoff.prototype.duration = function() {
-      var ms = this.ms * Math.pow(this.factor, this.attempts++);
-      if (this.jitter) {
-        var rand = Math.random();
-        var deviation = Math.floor(rand * this.jitter * ms);
-        ms = (Math.floor(rand * 10) & 1) == 0 ? ms - deviation : ms + deviation;
-      }
-      return Math.min(ms, this.max) | 0;
-    };
-    Backoff.prototype.reset = function() {
-      this.attempts = 0;
-    };
-    Backoff.prototype.setMin = function(min) {
-      this.ms = min;
-    };
-    Backoff.prototype.setMax = function(max) {
-      this.max = max;
-    };
-    Backoff.prototype.setJitter = function(jitter) {
-      this.jitter = jitter;
-    };
-  }
-});
-
-// node_modules/socket.io-client/build/esm/manager.js
-var Manager;
-var init_manager = __esm({
-  "node_modules/socket.io-client/build/esm/manager.js"() {
-    init_define_import_meta_env();
-    init_esm3();
-    init_socket2();
-    init_esm4();
-    init_on();
-    init_backo2();
-    init_esm2();
-    Manager = class extends Emitter {
-      constructor(uri, opts) {
-        var _a;
-        super();
-        this.nsps = {};
-        this.subs = [];
-        if (uri && "object" === typeof uri) {
-          opts = uri;
-          uri = void 0;
-        }
-        opts = opts || {};
-        opts.path = opts.path || "/socket.io";
-        this.opts = opts;
-        installTimerFunctions(this, opts);
-        this.reconnection(opts.reconnection !== false);
-        this.reconnectionAttempts(opts.reconnectionAttempts || Infinity);
-        this.reconnectionDelay(opts.reconnectionDelay || 1e3);
-        this.reconnectionDelayMax(opts.reconnectionDelayMax || 5e3);
-        this.randomizationFactor((_a = opts.randomizationFactor) !== null && _a !== void 0 ? _a : 0.5);
-        this.backoff = new Backoff({
-          min: this.reconnectionDelay(),
-          max: this.reconnectionDelayMax(),
-          jitter: this.randomizationFactor()
-        });
-        this.timeout(null == opts.timeout ? 2e4 : opts.timeout);
-        this._readyState = "closed";
-        this.uri = uri;
-        const _parser = opts.parser || esm_exports;
-        this.encoder = new _parser.Encoder();
-        this.decoder = new _parser.Decoder();
-        this._autoConnect = opts.autoConnect !== false;
-        if (this._autoConnect)
-          this.open();
-      }
-      reconnection(v) {
-        if (!arguments.length)
-          return this._reconnection;
-        this._reconnection = !!v;
-        if (!v) {
-          this.skipReconnect = true;
-        }
-        return this;
-      }
-      reconnectionAttempts(v) {
-        if (v === void 0)
-          return this._reconnectionAttempts;
-        this._reconnectionAttempts = v;
-        return this;
-      }
-      reconnectionDelay(v) {
-        var _a;
-        if (v === void 0)
-          return this._reconnectionDelay;
-        this._reconnectionDelay = v;
-        (_a = this.backoff) === null || _a === void 0 ? void 0 : _a.setMin(v);
-        return this;
-      }
-      randomizationFactor(v) {
-        var _a;
-        if (v === void 0)
-          return this._randomizationFactor;
-        this._randomizationFactor = v;
-        (_a = this.backoff) === null || _a === void 0 ? void 0 : _a.setJitter(v);
-        return this;
-      }
-      reconnectionDelayMax(v) {
-        var _a;
-        if (v === void 0)
-          return this._reconnectionDelayMax;
-        this._reconnectionDelayMax = v;
-        (_a = this.backoff) === null || _a === void 0 ? void 0 : _a.setMax(v);
-        return this;
-      }
-      timeout(v) {
-        if (!arguments.length)
-          return this._timeout;
-        this._timeout = v;
-        return this;
-      }
-      /**
-       * Starts trying to reconnect if reconnection is enabled and we have not
-       * started reconnecting yet
-       *
-       * @private
-       */
-      maybeReconnectOnOpen() {
-        if (!this._reconnecting && this._reconnection && this.backoff.attempts === 0) {
-          this.reconnect();
-        }
-      }
-      /**
-       * Sets the current transport `socket`.
-       *
-       * @param {Function} fn - optional, callback
-       * @return self
-       * @public
-       */
-      open(fn) {
-        if (~this._readyState.indexOf("open"))
-          return this;
-        this.engine = new Socket(this.uri, this.opts);
-        const socket = this.engine;
-        const self2 = this;
-        this._readyState = "opening";
-        this.skipReconnect = false;
-        const openSubDestroy = on(socket, "open", function() {
-          self2.onopen();
-          fn && fn();
-        });
-        const onError = (err) => {
-          this.cleanup();
-          this._readyState = "closed";
-          this.emitReserved("error", err);
-          if (fn) {
-            fn(err);
-          } else {
-            this.maybeReconnectOnOpen();
-          }
-        };
-        const errorSub = on(socket, "error", onError);
-        if (false !== this._timeout) {
-          const timeout = this._timeout;
-          const timer = this.setTimeoutFn(() => {
-            openSubDestroy();
-            onError(new Error("timeout"));
-            socket.close();
-          }, timeout);
-          if (this.opts.autoUnref) {
-            timer.unref();
-          }
-          this.subs.push(() => {
-            this.clearTimeoutFn(timer);
-          });
-        }
-        this.subs.push(openSubDestroy);
-        this.subs.push(errorSub);
-        return this;
-      }
-      /**
-       * Alias for open()
-       *
-       * @return self
-       * @public
-       */
-      connect(fn) {
-        return this.open(fn);
-      }
-      /**
-       * Called upon transport open.
-       *
-       * @private
-       */
-      onopen() {
-        this.cleanup();
-        this._readyState = "open";
-        this.emitReserved("open");
-        const socket = this.engine;
-        this.subs.push(
-          on(socket, "ping", this.onping.bind(this)),
-          on(socket, "data", this.ondata.bind(this)),
-          on(socket, "error", this.onerror.bind(this)),
-          on(socket, "close", this.onclose.bind(this)),
-          // @ts-ignore
-          on(this.decoder, "decoded", this.ondecoded.bind(this))
-        );
-      }
-      /**
-       * Called upon a ping.
-       *
-       * @private
-       */
-      onping() {
-        this.emitReserved("ping");
-      }
-      /**
-       * Called with data.
-       *
-       * @private
-       */
-      ondata(data) {
-        try {
-          this.decoder.add(data);
-        } catch (e) {
-          this.onclose("parse error", e);
-        }
-      }
-      /**
-       * Called when parser fully decodes a packet.
-       *
-       * @private
-       */
-      ondecoded(packet) {
-        nextTick(() => {
-          this.emitReserved("packet", packet);
-        }, this.setTimeoutFn);
-      }
-      /**
-       * Called upon socket error.
-       *
-       * @private
-       */
-      onerror(err) {
-        this.emitReserved("error", err);
-      }
-      /**
-       * Creates a new socket for the given `nsp`.
-       *
-       * @return {Socket}
-       * @public
-       */
-      socket(nsp, opts) {
-        let socket = this.nsps[nsp];
-        if (!socket) {
-          socket = new Socket2(this, nsp, opts);
-          this.nsps[nsp] = socket;
-        } else if (this._autoConnect && !socket.active) {
-          socket.connect();
-        }
-        return socket;
-      }
-      /**
-       * Called upon a socket close.
-       *
-       * @param socket
-       * @private
-       */
-      _destroy(socket) {
-        const nsps = Object.keys(this.nsps);
-        for (const nsp of nsps) {
-          const socket2 = this.nsps[nsp];
-          if (socket2.active) {
-            return;
-          }
-        }
-        this._close();
-      }
-      /**
-       * Writes a packet.
-       *
-       * @param packet
-       * @private
-       */
-      _packet(packet) {
-        const encodedPackets = this.encoder.encode(packet);
-        for (let i = 0; i < encodedPackets.length; i++) {
-          this.engine.write(encodedPackets[i], packet.options);
-        }
-      }
-      /**
-       * Clean up transport subscriptions and packet buffer.
-       *
-       * @private
-       */
-      cleanup() {
-        this.subs.forEach((subDestroy) => subDestroy());
-        this.subs.length = 0;
-        this.decoder.destroy();
-      }
-      /**
-       * Close the current socket.
-       *
-       * @private
-       */
-      _close() {
-        this.skipReconnect = true;
-        this._reconnecting = false;
-        this.onclose("forced close");
-      }
-      /**
-       * Alias for close()
-       *
-       * @private
-       */
-      disconnect() {
-        return this._close();
-      }
-      /**
-       * Called when:
-       *
-       * - the low-level engine is closed
-       * - the parser encountered a badly formatted packet
-       * - all sockets are disconnected
-       *
-       * @private
-       */
-      onclose(reason, description) {
-        var _a;
-        this.cleanup();
-        (_a = this.engine) === null || _a === void 0 ? void 0 : _a.close();
-        this.backoff.reset();
-        this._readyState = "closed";
-        this.emitReserved("close", reason, description);
-        if (this._reconnection && !this.skipReconnect) {
-          this.reconnect();
-        }
-      }
-      /**
-       * Attempt a reconnection.
-       *
-       * @private
-       */
-      reconnect() {
-        if (this._reconnecting || this.skipReconnect)
-          return this;
-        const self2 = this;
-        if (this.backoff.attempts >= this._reconnectionAttempts) {
-          this.backoff.reset();
-          this.emitReserved("reconnect_failed");
-          this._reconnecting = false;
-        } else {
-          const delay = this.backoff.duration();
-          this._reconnecting = true;
-          const timer = this.setTimeoutFn(() => {
-            if (self2.skipReconnect)
-              return;
-            this.emitReserved("reconnect_attempt", self2.backoff.attempts);
-            if (self2.skipReconnect)
-              return;
-            self2.open((err) => {
-              if (err) {
-                self2._reconnecting = false;
-                self2.reconnect();
-                this.emitReserved("reconnect_error", err);
-              } else {
-                self2.onreconnect();
-              }
-            });
-          }, delay);
-          if (this.opts.autoUnref) {
-            timer.unref();
-          }
-          this.subs.push(() => {
-            this.clearTimeoutFn(timer);
-          });
-        }
-      }
-      /**
-       * Called upon successful reconnect.
-       *
-       * @private
-       */
-      onreconnect() {
-        const attempt = this.backoff.attempts;
-        this._reconnecting = false;
-        this.backoff.reset();
-        this.emitReserved("reconnect", attempt);
-      }
-    };
-  }
-});
-
-// node_modules/socket.io-client/build/esm/index.js
-function lookup2(uri, opts) {
-  if (typeof uri === "object") {
-    opts = uri;
-    uri = void 0;
-  }
-  opts = opts || {};
-  const parsed = url(uri, opts.path || "/socket.io");
-  const source = parsed.source;
-  const id = parsed.id;
-  const path = parsed.path;
-  const sameNamespace = cache[id] && path in cache[id]["nsps"];
-  const newConnection = opts.forceNew || opts["force new connection"] || false === opts.multiplex || sameNamespace;
-  let io;
-  if (newConnection) {
-    io = new Manager(source, opts);
-  } else {
-    if (!cache[id]) {
-      cache[id] = new Manager(source, opts);
-    }
-    io = cache[id];
-  }
-  if (parsed.query && !opts.query) {
-    opts.query = parsed.queryKey;
-  }
-  return io.socket(parsed.path, opts);
-}
-var cache;
-var init_esm5 = __esm({
-  "node_modules/socket.io-client/build/esm/index.js"() {
-    init_define_import_meta_env();
-    init_url();
-    init_manager();
-    init_socket2();
-    init_esm4();
-    init_esm3();
-    cache = {};
-    Object.assign(lookup2, {
-      Manager,
-      Socket: Socket2,
-      io: lookup2,
-      connect: lookup2
-    });
-  }
-});
-
-// node_modules/@base44/sdk/dist/utils/socket-utils.js
-function initializeSocket(config, handlers) {
-  var _a;
-  const resolvedToken = (_a = config.token) !== null && _a !== void 0 ? _a : getAccessToken();
-  const query = {
-    app_id: config.appId
-  };
-  if (resolvedToken) {
-    query.token = resolvedToken;
-  } else {
-    query.anonymous_id = getAnalyticsSessionId();
-  }
-  const socket = lookup2(config.serverUrl, {
-    path: config.mountPath,
-    transports: config.transports,
-    query
-  });
-  socket.on("connect", async () => {
-    var _a2;
-    console.log("connect", socket.id);
-    return (_a2 = handlers.connect) === null || _a2 === void 0 ? void 0 : _a2.call(handlers);
-  });
-  socket.on("update_model", async (msg) => {
-    var _a2;
-    return (_a2 = handlers.update_model) === null || _a2 === void 0 ? void 0 : _a2.call(handlers, msg);
-  });
-  socket.on("error", async (error) => {
-    var _a2;
-    return (_a2 = handlers.error) === null || _a2 === void 0 ? void 0 : _a2.call(handlers, error);
-  });
-  socket.on("connect_error", async (error) => {
-    var _a2;
-    console.error("connect_error", error);
-    return (_a2 = handlers.error) === null || _a2 === void 0 ? void 0 : _a2.call(handlers, error);
-  });
-  return socket;
-}
-function RoomsSocket({ config }) {
-  let currentConfig = { ...config };
-  const roomsToListeners = {};
-  const pendingRoomLeaves = {};
-  const handlers = {
-    connect: async () => {
-      const promises = [];
-      Object.keys(roomsToListeners).forEach((room) => {
-        const listeners = getListeners(room);
-        if (listeners.length === 0) {
-          return;
-        }
-        joinRoom(room);
-        listeners.forEach(({ connect }) => {
-          const promise = async () => connect === null || connect === void 0 ? void 0 : connect();
-          promises.push(promise());
-        });
-      });
-      await Promise.all(promises);
-    },
-    update_model: async (msg) => {
-      const listeners = getListeners(msg.room);
-      const promises = listeners.map((listener) => {
-        var _a;
-        return (_a = listener.update_model) === null || _a === void 0 ? void 0 : _a.call(listener, msg);
-      });
-      await Promise.all(promises);
-    },
-    error: async (error) => {
-      console.error("error", error);
-      const promises = Object.values(roomsToListeners).flat().map((listener) => {
-        var _a;
-        return (_a = listener.error) === null || _a === void 0 ? void 0 : _a.call(listener, error);
-      });
-      await Promise.all(promises);
-    }
-  };
-  let socket = initializeSocket(config, handlers);
-  function cleanup() {
-    disconnect();
-  }
-  function disconnect() {
-    clearPendingRoomLeaves();
-    if (socket) {
-      socket.disconnect();
-    }
-  }
-  function updateConfig(config2) {
-    cleanup();
-    currentConfig = {
-      ...currentConfig,
-      ...config2
-    };
-    socket = initializeSocket(currentConfig, handlers);
-  }
-  function joinRoom(room) {
-    socket.emit("join", room);
-  }
-  function leaveRoom(room) {
-    socket.emit("leave", room);
-  }
-  async function updateModel(room, data) {
-    var _a;
-    const dataStr = JSON.stringify(data);
-    return (_a = handlers.update_model) === null || _a === void 0 ? void 0 : _a.call(handlers, { room, data: dataStr });
-  }
-  function getListeners(room) {
-    var _a;
-    return (_a = roomsToListeners[room]) !== null && _a !== void 0 ? _a : [];
-  }
-  function cancelPendingRoomLeave(room) {
-    const pendingLeave = pendingRoomLeaves[room];
-    if (!pendingLeave) {
-      return;
-    }
-    clearTimeout(pendingLeave);
-    delete pendingRoomLeaves[room];
-  }
-  function clearPendingRoomLeaves() {
-    Object.keys(pendingRoomLeaves).forEach((room) => {
-      var _a, _b;
-      clearTimeout(pendingRoomLeaves[room]);
-      delete pendingRoomLeaves[room];
-      if (((_b = (_a = roomsToListeners[room]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) === 0) {
-        delete roomsToListeners[room];
-      }
-    });
-  }
-  function scheduleRoomLeave(room) {
-    cancelPendingRoomLeave(room);
-    pendingRoomLeaves[room] = setTimeout(() => {
-      var _a, _b;
-      delete pendingRoomLeaves[room];
-      if (((_b = (_a = roomsToListeners[room]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) > 0) {
-        return;
-      }
-      leaveRoom(room);
-      delete roomsToListeners[room];
-    }, ROOM_LEAVE_GRACE_MS);
-  }
-  const subscribeToRoom = (room, handlers2) => {
-    if (roomsToListeners[room]) {
-      cancelPendingRoomLeave(room);
-    } else {
-      joinRoom(room);
-      roomsToListeners[room] = [];
-    }
-    roomsToListeners[room].push(handlers2);
-    let unsubscribed = false;
-    return () => {
-      var _a, _b;
-      if (unsubscribed) {
-        return;
-      }
-      unsubscribed = true;
-      roomsToListeners[room] = (_b = (_a = roomsToListeners[room]) === null || _a === void 0 ? void 0 : _a.filter((listener) => listener !== handlers2)) !== null && _b !== void 0 ? _b : [];
-      if (roomsToListeners[room].length === 0) {
-        scheduleRoomLeave(room);
-      }
-    };
-  };
-  return {
-    socket,
-    subscribeToRoom,
-    updateConfig,
-    updateModel,
-    disconnect
-  };
-}
-var ROOM_LEAVE_GRACE_MS;
-var init_socket_utils = __esm({
-  "node_modules/@base44/sdk/dist/utils/socket-utils.js"() {
-    init_define_import_meta_env();
-    init_esm5();
-    init_auth_utils();
-    init_analytics();
-    ROOM_LEAVE_GRACE_MS = 250;
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/payments-checkout.js
-async function scriptUrlFor(provider, deps) {
-  var _a, _b;
-  const value2 = (_b = (_a = await deps.getConfig()) === null || _a === void 0 ? void 0 : _a[provider]) === null || _b === void 0 ? void 0 : _b.script_url;
-  let url2;
-  try {
-    url2 = value2 ? new URL(value2) : void 0;
-  } catch (_c) {
-    url2 = void 0;
-  }
-  if (!url2 || url2.protocol !== "https:" || url2.port !== "" || url2.username !== "" || url2.password !== "" || !ALLOWED_SCRIPT_HOSTS[provider].includes(url2.hostname)) {
-    const name = provider === "paypal" ? "PayPal" : "Stripe";
-    throw new Error(`The payments config has no valid ${name} script URL`);
-  }
-  return url2.href;
-}
-function browserGlobals() {
-  return window;
-}
-async function loadGlobal(src, read, load) {
-  if (!read()) {
-    await load(src);
-  }
-  const value2 = read();
-  if (!value2) {
-    throw new Error(`${src} loaded but didn't define its global`);
-  }
-  return value2;
-}
-function mountStripe(element, scriptUrl, embedded, deps) {
-  const mount = stripeQueue.then(async () => {
-    var _a;
-    const Stripe = await loadGlobal(scriptUrl, () => browserGlobals().Stripe, deps.loadScript);
-    let stripe = stripeInstances.get(embedded.publishable_key);
-    if (!stripe) {
-      stripe = Stripe(embedded.publishable_key);
-      stripeInstances.set(embedded.publishable_key, stripe);
-    }
-    const create2 = (_a = stripe.initEmbeddedCheckout) !== null && _a !== void 0 ? _a : stripe.createEmbeddedCheckoutPage;
-    if (typeof create2 !== "function") {
-      throw new Error("Stripe.js doesn't support Embedded Checkout");
-    }
-    activeStripeCheckout === null || activeStripeCheckout === void 0 ? void 0 : activeStripeCheckout.destroy();
-    const checkout = await create2.call(stripe, {
-      fetchClientSecret: () => Promise.resolve(embedded.client_secret)
-    });
-    try {
-      checkout.mount(element);
-    } catch (error) {
-      checkout.destroy();
-      throw error;
-    }
-    let destroyed = false;
-    const handle = {
-      destroy() {
-        if (destroyed)
-          return;
-        destroyed = true;
-        if (activeStripeCheckout === handle)
-          activeStripeCheckout = null;
-        checkout.destroy();
-      }
-    };
-    activeStripeCheckout = handle;
-    return handle;
-  });
-  stripeQueue = mount.catch(() => void 0);
-  return mount;
-}
-async function mountPayPal(element, scriptUrl, checkoutId, currency, embedded, options, deps) {
-  var _a;
-  const paypal = await loadGlobal(scriptUrl, () => browserGlobals().paypal, deps.loadScript);
-  if (typeof paypal.createInstance !== "function") {
-    throw new Error("Another PayPal JS SDK version is already loaded on this page. Remove it to use mountCheckout().");
-  }
-  const subscription = embedded.intent === "subscription";
-  const sdk = await paypal.createInstance({
-    clientId: embedded.client_id,
-    merchantId: embedded.merchant_id,
-    // Sent only when set, since the backend returns null when no attribution ID is configured.
-    ...embedded.partner_attribution_id ? { partnerAttributionId: embedded.partner_attribution_id } : {},
-    components: [subscription ? "paypal-subscriptions" : "paypal-payments"],
-    pageType: "checkout"
-  });
-  const methods = await sdk.findEligibleMethods({
-    currencyCode: currency.toUpperCase(),
-    ...subscription ? { paymentFlow: "RECURRING_PAYMENT" } : {}
-  });
-  if (!methods.isEligible("paypal")) {
-    throw new Error("PayPal isn't available for this checkout");
-  }
-  const createSession = subscription ? (_a = sdk.createPayPalSubscriptionPaymentSession) !== null && _a !== void 0 ? _a : sdk.createPayPalSubscriptionSession : sdk.createPayPalOneTimePaymentSession;
-  if (typeof createSession !== "function") {
-    throw new Error("The loaded PayPal JS SDK can't create this checkout");
-  }
-  let destroyed = false;
-  let completing = false;
-  const notify = (callback) => {
-    if (destroyed)
-      return;
-    try {
-      callback();
-    } catch (error) {
-      console.error("[Base44 SDK] A mountCheckout() callback threw", error);
-    }
-  };
-  const button = document.createElement("paypal-button");
-  const session = createSession.call(sdk, {
-    // Errors are reported here, not rethrown, so PayPal doesn't report them a second time.
-    async onApprove() {
-      completing = true;
-      button.disabled = true;
-      let result;
-      try {
-        result = await deps.completeCheckout(checkoutId);
-      } catch (error) {
-        completing = false;
-        button.disabled = false;
-        notify(() => {
-          var _a2;
-          return (_a2 = options.onError) === null || _a2 === void 0 ? void 0 : _a2.call(options, error);
-        });
-        return;
-      }
-      completing = false;
-      notify(() => {
-        var _a2;
-        return (_a2 = options.onComplete) === null || _a2 === void 0 ? void 0 : _a2.call(options, result);
-      });
-    },
-    onCancel() {
-      notify(() => {
-        var _a2;
-        return (_a2 = options.onCancel) === null || _a2 === void 0 ? void 0 : _a2.call(options);
-      });
-    },
-    onError(error) {
-      notify(() => {
-        var _a2;
-        return (_a2 = options.onError) === null || _a2 === void 0 ? void 0 : _a2.call(options, error);
-      });
-    }
-  });
-  button.setAttribute("type", subscription ? "subscribe" : "pay");
-  const onClick = () => {
-    if (completing)
-      return;
-    const id = Promise.resolve(subscription ? { subscriptionId: checkoutId } : { orderId: checkoutId });
-    const report = (error) => notify(() => {
-      var _a2;
-      return (_a2 = options.onError) === null || _a2 === void 0 ? void 0 : _a2.call(options, error);
-    });
-    try {
-      Promise.resolve(session.start({ presentationMode: "auto" }, id)).catch(report);
-    } catch (error) {
-      report(error);
-    }
-  };
-  button.addEventListener("click", onClick);
-  element.appendChild(button);
-  return {
-    destroy() {
-      var _a2;
-      if (destroyed)
-        return;
-      destroyed = true;
-      button.removeEventListener("click", onClick);
-      button.remove();
-      (_a2 = session.destroy) === null || _a2 === void 0 ? void 0 : _a2.call(session);
-    }
-  };
-}
-async function mountCheckout(element, checkout, options, deps) {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    throw new Error("mountCheckout() requires a browser environment");
-  }
-  if (!element) {
-    throw new Error("mountCheckout() requires an element to render in");
-  }
-  const embedded = checkout === null || checkout === void 0 ? void 0 : checkout.embedded;
-  if (!embedded) {
-    throw new Error("This checkout isn't embedded. Create it with presentation: 'embedded', or send the buyer to its redirect_url.");
-  }
-  switch (embedded.provider) {
-    case "stripe":
-      return mountStripe(element, await scriptUrlFor("stripe", deps), embedded, deps);
-    case "paypal":
-      return mountPayPal(element, await scriptUrlFor("paypal", deps), checkout.checkout_id, checkout.currency, embedded, options, deps);
-    default:
-      throw new Error(`Embedded checkout isn't supported for provider ${embedded.provider}`);
-  }
-}
-var ALLOWED_SCRIPT_HOSTS, scriptLoads, loadScript, stripeInstances, stripeQueue, activeStripeCheckout;
-var init_payments_checkout = __esm({
-  "node_modules/@base44/sdk/dist/modules/payments-checkout.js"() {
-    init_define_import_meta_env();
-    ALLOWED_SCRIPT_HOSTS = {
-      paypal: ["www.paypal.com", "www.sandbox.paypal.com"],
-      stripe: ["js.stripe.com"]
-    };
-    scriptLoads = /* @__PURE__ */ new Map();
-    loadScript = (src) => {
-      let load = scriptLoads.get(src);
-      if (!load) {
-        load = new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = src;
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () => {
-            scriptLoads.delete(src);
-            script.remove();
-            reject(new Error(`Failed to load ${src}`));
-          };
-          document.head.appendChild(script);
-        });
-        scriptLoads.set(src, load);
-      }
-      return load;
-    };
-    stripeInstances = /* @__PURE__ */ new Map();
-    stripeQueue = Promise.resolve();
-    activeStripeCheckout = null;
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/payments.js
-function requireId(value2, name) {
-  if (!value2 || typeof value2 !== "string") {
-    throw new Error(`${name} is required and must be a string`);
-  }
-  return encodeURIComponent(value2);
-}
-function createPaymentsRequests(axios2, appId2) {
-  const base = `/apps/${appId2}/payments`;
-  return {
-    async completeCheckout(checkoutId) {
-      const id = requireId(checkoutId, "Checkout ID");
-      return axios2.post(`${base}/checkout-sessions/${id}/complete`);
-    },
-    async listPurchases(params = {}) {
-      return axios2.get(`${base}/purchases`, { params });
-    },
-    async createCheckout(params) {
-      return axios2.post(`${base}/checkout-sessions`, params);
-    },
-    async refund(params) {
-      return axios2.post(`${base}/refunds`, params);
-    },
-    async cancelSubscription(subscriptionId, options = {}) {
-      const id = requireId(subscriptionId, "Subscription ID");
-      return axios2.post(`${base}/subscriptions/${id}/cancel`, options);
-    },
-    async pauseSubscription(subscriptionId) {
-      const id = requireId(subscriptionId, "Subscription ID");
-      return axios2.post(`${base}/subscriptions/${id}/pause`);
-    },
-    async resumeSubscription(subscriptionId) {
-      const id = requireId(subscriptionId, "Subscription ID");
-      return axios2.post(`${base}/subscriptions/${id}/resume`);
-    }
-  };
-}
-function createPaymentsModule(axios2, appId2) {
-  const requests = createPaymentsRequests(axios2, appId2);
-  let config;
-  const getConfig = () => {
-    config !== null && config !== void 0 ? config : config = axios2.get(`/apps/${appId2}/payments/config`).catch((error) => {
-      config = void 0;
-      throw error;
-    });
-    return config;
-  };
-  return {
-    completeCheckout: requests.completeCheckout,
-    listPurchases: requests.listPurchases,
-    mountCheckout(element, checkout, options = {}) {
-      return mountCheckout(element, checkout, options, {
-        completeCheckout: requests.completeCheckout,
-        getConfig,
-        loadScript
-      });
-    }
-  };
-}
-function createServiceRolePaymentsModule(axios2, appId2) {
-  return createPaymentsRequests(axios2, appId2);
-}
-var init_payments = __esm({
-  "node_modules/@base44/sdk/dist/modules/payments.js"() {
-    init_define_import_meta_env();
-    init_payments_checkout();
-  }
-});
-
-// node_modules/partysocket/dist/chunk-TPTC3KUF.mjs
-function assert(condition, msg) {
-  if (!condition) {
-    throw new Error(msg);
-  }
-}
-function cloneEventBrowser(e) {
-  return new e.constructor(e.type, e);
-}
-function cloneEventNode(e) {
-  if ("data" in e) {
-    const evt2 = new MessageEvent(e.type, e);
-    return evt2;
-  }
-  if ("code" in e || "reason" in e) {
-    const evt2 = new CloseEvent(
-      // @ts-expect-error we need to fix event/listener types
-      e.code || 1999,
-      // @ts-expect-error we need to fix event/listener types
-      e.reason || "unknown reason",
-      e
-    );
-    return evt2;
-  }
-  if ("error" in e) {
-    const evt2 = new ErrorEvent(e.error, e);
-    return evt2;
-  }
-  const evt = new Event(e.type, e);
-  return evt;
-}
-var ErrorEvent, CloseEvent, Events, isNode2, cloneEvent, DEFAULT, didWarnAboutMissingWebSocket, ReconnectingWebSocket;
-var init_chunk_TPTC3KUF = __esm({
-  "node_modules/partysocket/dist/chunk-TPTC3KUF.mjs"() {
-    init_define_import_meta_env();
-    if (!globalThis.EventTarget || !globalThis.Event) {
-      console.error(`
-  PartySocket requires a global 'EventTarget' class to be available!
-  You can polyfill this global by adding this to your code before any partysocket imports: 
-  
-  \`\`\`
-  import 'partysocket/event-target-polyfill';
-  \`\`\`
-  Please file an issue at https://github.com/partykit/partykit if you're still having trouble.
-`);
-    }
-    ErrorEvent = class extends Event {
-      message;
-      error;
-      constructor(error, target) {
-        super("error", target);
-        this.message = error.message;
-        this.error = error;
-      }
-    };
-    CloseEvent = class extends Event {
-      code;
-      reason;
-      wasClean = true;
-      constructor(code = 1e3, reason = "", target) {
-        super("close", target);
-        this.code = code;
-        this.reason = reason;
-      }
-    };
-    Events = {
-      Event,
-      ErrorEvent,
-      CloseEvent
-    };
-    isNode2 = typeof process !== "undefined" && typeof process.versions?.node !== "undefined" && typeof document === "undefined";
-    cloneEvent = isNode2 ? cloneEventNode : cloneEventBrowser;
-    DEFAULT = {
-      maxReconnectionDelay: 1e4,
-      minReconnectionDelay: 1e3 + Math.random() * 4e3,
-      minUptime: 5e3,
-      reconnectionDelayGrowFactor: 1.3,
-      connectionTimeout: 4e3,
-      maxRetries: Infinity,
-      maxEnqueuedMessages: Infinity,
-      startClosed: false,
-      debug: false
-    };
-    didWarnAboutMissingWebSocket = false;
-    ReconnectingWebSocket = class _ReconnectingWebSocket extends EventTarget {
-      _ws;
-      _retryCount = -1;
-      _uptimeTimeout;
-      _connectTimeout;
-      _shouldReconnect = true;
-      _connectLock = false;
-      _binaryType = "blob";
-      _closeCalled = false;
-      _messageQueue = [];
-      _url;
-      _protocols;
-      _options;
-      constructor(url2, protocols, options = {}) {
-        super();
-        this._url = url2;
-        this._protocols = protocols;
-        this._options = options;
-        if (this._options.startClosed) {
-          this._shouldReconnect = false;
-        }
-        this._connect();
-      }
-      static get CONNECTING() {
-        return 0;
-      }
-      static get OPEN() {
-        return 1;
-      }
-      static get CLOSING() {
-        return 2;
-      }
-      static get CLOSED() {
-        return 3;
-      }
-      get CONNECTING() {
-        return _ReconnectingWebSocket.CONNECTING;
-      }
-      get OPEN() {
-        return _ReconnectingWebSocket.OPEN;
-      }
-      get CLOSING() {
-        return _ReconnectingWebSocket.CLOSING;
-      }
-      get CLOSED() {
-        return _ReconnectingWebSocket.CLOSED;
-      }
-      get binaryType() {
-        return this._ws ? this._ws.binaryType : this._binaryType;
-      }
-      set binaryType(value2) {
-        this._binaryType = value2;
-        if (this._ws) {
-          this._ws.binaryType = value2;
-        }
-      }
-      /**
-       * Returns the number or connection retries
-       */
-      get retryCount() {
-        return Math.max(this._retryCount, 0);
-      }
-      /**
-       * The number of bytes of data that have been queued using calls to send() but not yet
-       * transmitted to the network. This value resets to zero once all queued data has been sent.
-       * This value does not reset to zero when the connection is closed; if you keep calling send(),
-       * this will continue to climb. Read only
-       */
-      get bufferedAmount() {
-        const bytes = this._messageQueue.reduce((acc, message) => {
-          if (typeof message === "string") {
-            acc += message.length;
-          } else if (message instanceof Blob) {
-            acc += message.size;
-          } else {
-            acc += message.byteLength;
-          }
-          return acc;
-        }, 0);
-        return bytes + (this._ws ? this._ws.bufferedAmount : 0);
-      }
-      /**
-       * The extensions selected by the server. This is currently only the empty string or a list of
-       * extensions as negotiated by the connection
-       */
-      get extensions() {
-        return this._ws ? this._ws.extensions : "";
-      }
-      /**
-       * A string indicating the name of the sub-protocol the server selected;
-       * this will be one of the strings specified in the protocols parameter when creating the
-       * WebSocket object
-       */
-      get protocol() {
-        return this._ws ? this._ws.protocol : "";
-      }
-      /**
-       * The current state of the connection; this is one of the Ready state constants
-       */
-      get readyState() {
-        if (this._ws) {
-          return this._ws.readyState;
-        }
-        return this._options.startClosed ? _ReconnectingWebSocket.CLOSED : _ReconnectingWebSocket.CONNECTING;
-      }
-      /**
-       * The URL as resolved by the constructor
-       */
-      get url() {
-        return this._ws ? this._ws.url : "";
-      }
-      /**
-       * Whether the websocket object is now in reconnectable state
-       */
-      get shouldReconnect() {
-        return this._shouldReconnect;
-      }
-      /**
-       * An event listener to be called when the WebSocket connection's readyState changes to CLOSED
-       */
-      onclose = null;
-      /**
-       * An event listener to be called when an error occurs
-       */
-      onerror = null;
-      /**
-       * An event listener to be called when a message is received from the server
-       */
-      onmessage = null;
-      /**
-       * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
-       * this indicates that the connection is ready to send and receive data
-       */
-      onopen = null;
-      /**
-       * Closes the WebSocket connection or connection attempt, if any. If the connection is already
-       * CLOSED, this method does nothing
-       */
-      close(code = 1e3, reason) {
-        this._closeCalled = true;
-        this._shouldReconnect = false;
-        this._clearTimeouts();
-        if (!this._ws) {
-          this._debug("close enqueued: no ws instance");
-          return;
-        }
-        if (this._ws.readyState === this.CLOSED) {
-          this._debug("close: already closed");
-          return;
-        }
-        this._ws.close(code, reason);
-      }
-      /**
-       * Closes the WebSocket connection or connection attempt and connects again.
-       * Resets retry counter;
-       */
-      reconnect(code, reason) {
-        this._shouldReconnect = true;
-        this._closeCalled = false;
-        this._retryCount = -1;
-        if (!this._ws || this._ws.readyState === this.CLOSED) {
-          this._connect();
-        } else {
-          this._disconnect(code, reason);
-          this._connect();
-        }
-      }
-      /**
-       * Enqueue specified data to be transmitted to the server over the WebSocket connection
-       */
-      send(data) {
-        if (this._ws && this._ws.readyState === this.OPEN) {
-          this._debug("send", data);
-          this._ws.send(data);
-        } else {
-          const { maxEnqueuedMessages = DEFAULT.maxEnqueuedMessages } = this._options;
-          if (this._messageQueue.length < maxEnqueuedMessages) {
-            this._debug("enqueue", data);
-            this._messageQueue.push(data);
-          }
-        }
-      }
-      _debug(...args) {
-        if (this._options.debug) {
-          console.log.apply(console, ["RWS>", ...args]);
-        }
-      }
-      _getNextDelay() {
-        const {
-          reconnectionDelayGrowFactor = DEFAULT.reconnectionDelayGrowFactor,
-          minReconnectionDelay = DEFAULT.minReconnectionDelay,
-          maxReconnectionDelay = DEFAULT.maxReconnectionDelay
-        } = this._options;
-        let delay = 0;
-        if (this._retryCount > 0) {
-          delay = minReconnectionDelay * Math.pow(reconnectionDelayGrowFactor, this._retryCount - 1);
-          if (delay > maxReconnectionDelay) {
-            delay = maxReconnectionDelay;
-          }
-        }
-        this._debug("next delay", delay);
-        return delay;
-      }
-      _wait() {
-        return new Promise((resolve) => {
-          setTimeout(resolve, this._getNextDelay());
-        });
-      }
-      _getNextProtocols(protocolsProvider) {
-        if (!protocolsProvider)
-          return Promise.resolve(null);
-        if (typeof protocolsProvider === "string" || Array.isArray(protocolsProvider)) {
-          return Promise.resolve(protocolsProvider);
-        }
-        if (typeof protocolsProvider === "function") {
-          const protocols = protocolsProvider();
-          if (!protocols)
-            return Promise.resolve(null);
-          if (typeof protocols === "string" || Array.isArray(protocols)) {
-            return Promise.resolve(protocols);
-          }
-          if (protocols.then) {
-            return protocols;
-          }
-        }
-        throw Error("Invalid protocols");
-      }
-      _getNextUrl(urlProvider) {
-        if (typeof urlProvider === "string") {
-          return Promise.resolve(urlProvider);
-        }
-        if (typeof urlProvider === "function") {
-          const url2 = urlProvider();
-          if (typeof url2 === "string") {
-            return Promise.resolve(url2);
-          }
-          if (url2.then) {
-            return url2;
-          }
-        }
-        throw Error("Invalid URL");
-      }
-      _connect() {
-        if (this._connectLock || !this._shouldReconnect) {
-          return;
-        }
-        this._connectLock = true;
-        const {
-          maxRetries = DEFAULT.maxRetries,
-          connectionTimeout = DEFAULT.connectionTimeout
-        } = this._options;
-        if (this._retryCount >= maxRetries) {
-          this._debug("max retries reached", this._retryCount, ">=", maxRetries);
-          return;
-        }
-        this._retryCount++;
-        this._debug("connect", this._retryCount);
-        this._removeListeners();
-        this._wait().then(
-          () => Promise.all([
-            this._getNextUrl(this._url),
-            this._getNextProtocols(this._protocols || null)
-          ])
-        ).then(([url2, protocols]) => {
-          if (this._closeCalled) {
-            this._connectLock = false;
-            return;
-          }
-          if (!this._options.WebSocket && typeof WebSocket === "undefined" && !didWarnAboutMissingWebSocket) {
-            console.error(`\u203C\uFE0F No WebSocket implementation available. You should define options.WebSocket. 
-
-For example, if you're using node.js, run \`npm install ws\`, and then in your code:
-
-import PartySocket from 'partysocket';
-import WS from 'ws';
-
-const partysocket = new PartySocket({
-  host: "127.0.0.1:1999",
-  room: "test-room",
-  WebSocket: WS
-});
-
-`);
-            didWarnAboutMissingWebSocket = true;
-          }
-          const WS2 = this._options.WebSocket || WebSocket;
-          this._debug("connect", { url: url2, protocols });
-          this._ws = protocols ? new WS2(url2, protocols) : new WS2(url2);
-          this._ws.binaryType = this._binaryType;
-          this._connectLock = false;
-          this._addListeners();
-          this._connectTimeout = setTimeout(
-            () => this._handleTimeout(),
-            connectionTimeout
-          );
-        }).catch((err) => {
-          this._connectLock = false;
-          this._handleError(new Events.ErrorEvent(Error(err.message), this));
-        });
-      }
-      _handleTimeout() {
-        this._debug("timeout event");
-        this._handleError(new Events.ErrorEvent(Error("TIMEOUT"), this));
-      }
-      _disconnect(code = 1e3, reason) {
-        this._clearTimeouts();
-        if (!this._ws) {
-          return;
-        }
-        this._removeListeners();
-        try {
-          this._ws.close(code, reason);
-          this._handleClose(new Events.CloseEvent(code, reason, this));
-        } catch (error) {
-        }
-      }
-      _acceptOpen() {
-        this._debug("accept open");
-        this._retryCount = 0;
-      }
-      _handleOpen = (event) => {
-        this._debug("open event");
-        const { minUptime = DEFAULT.minUptime } = this._options;
-        clearTimeout(this._connectTimeout);
-        this._uptimeTimeout = setTimeout(() => this._acceptOpen(), minUptime);
-        assert(this._ws, "WebSocket is not defined");
-        this._ws.binaryType = this._binaryType;
-        this._messageQueue.forEach((message) => this._ws?.send(message));
-        this._messageQueue = [];
-        if (this.onopen) {
-          this.onopen(event);
-        }
-        this.dispatchEvent(cloneEvent(event));
-      };
-      _handleMessage = (event) => {
-        this._debug("message event");
-        if (this.onmessage) {
-          this.onmessage(event);
-        }
-        this.dispatchEvent(cloneEvent(event));
-      };
-      _handleError = (event) => {
-        this._debug("error event", event.message);
-        this._disconnect(
-          void 0,
-          event.message === "TIMEOUT" ? "timeout" : void 0
-        );
-        if (this.onerror) {
-          this.onerror(event);
-        }
-        this._debug("exec error listeners");
-        this.dispatchEvent(cloneEvent(event));
-        this._connect();
-      };
-      _handleClose = (event) => {
-        this._debug("close event");
-        this._clearTimeouts();
-        if (this._shouldReconnect) {
-          this._connect();
-        }
-        if (this.onclose) {
-          this.onclose(event);
-        }
-        this.dispatchEvent(cloneEvent(event));
-      };
-      _removeListeners() {
-        if (!this._ws) {
-          return;
-        }
-        this._debug("removeListeners");
-        this._ws.removeEventListener("open", this._handleOpen);
-        this._ws.removeEventListener("close", this._handleClose);
-        this._ws.removeEventListener("message", this._handleMessage);
-        this._ws.removeEventListener("error", this._handleError);
-      }
-      _addListeners() {
-        if (!this._ws) {
-          return;
-        }
-        this._debug("addListeners");
-        this._ws.addEventListener("open", this._handleOpen);
-        this._ws.addEventListener("close", this._handleClose);
-        this._ws.addEventListener("message", this._handleMessage);
-        this._ws.addEventListener("error", this._handleError);
-      }
-      _clearTimeouts() {
-        clearTimeout(this._connectTimeout);
-        clearTimeout(this._uptimeTimeout);
-      }
-    };
-  }
-});
-
-// node_modules/partysocket/dist/chunk-SNLXKDCY.mjs
-var init_chunk_SNLXKDCY = __esm({
-  "node_modules/partysocket/dist/chunk-SNLXKDCY.mjs"() {
-    init_define_import_meta_env();
-    init_chunk_TPTC3KUF();
-  }
-});
-
-// node_modules/partysocket/dist/index.mjs
-var init_dist2 = __esm({
-  "node_modules/partysocket/dist/index.mjs"() {
-    init_define_import_meta_env();
-    init_chunk_SNLXKDCY();
-    init_chunk_TPTC3KUF();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/actors.js
-function mintErrorStatus(err) {
-  const status = err && typeof err === "object" ? err.status : void 0;
-  return typeof status === "number" ? status : void 0;
-}
-function toError(err) {
-  return err instanceof Error ? err : new Error(String(err));
-}
-function makeActorRef(actorName, instanceId, config, connections) {
-  let conn = null;
-  return {
-    connect(options) {
-      if (conn)
-        return conn;
-      const c = new Connection(actorName, instanceId, config, options, () => {
-        connections.delete(c);
-        if (conn === c)
-          conn = null;
-      });
-      conn = c;
-      connections.add(c);
-      return c;
-    }
-  };
-}
-function buildProxyActorUrl(rawHost, actorName, instanceId, connectionId, appId2, token2, functionsVersion2) {
-  let host = rawHost.replace(/^(http|https|ws|wss):\/\//, "");
-  if (host.endsWith("/"))
-    host = host.slice(0, -1);
-  const insecure = host.startsWith("localhost:") || host.startsWith("127.0.0.1:") || host.startsWith("192.168.") || host.startsWith("10.") || host.startsWith("172.") && host.split(".")[1] >= "16" && host.split(".")[1] <= "31" || host.startsWith("[::ffff:7f00:1]:");
-  const query = new URLSearchParams([
-    ["_pk", connectionId],
-    ["app_id", appId2],
-    ["handler", actorName]
-  ]);
-  if (token2)
-    query.append("token", token2);
-  if (functionsVersion2)
-    query.append("fv", functionsVersion2);
-  return `${insecure ? "ws" : "wss"}://${host}/parties/${actorName}/${instanceId}?${query}`;
-}
-function resolveActorsHost(serverUrl2, browserOrigin) {
-  return serverUrl2 && !serverUrl2.startsWith("/") ? serverUrl2 : browserOrigin !== null && browserOrigin !== void 0 ? browserOrigin : serverUrl2;
-}
-function createActorsModule(config) {
-  const connections = /* @__PURE__ */ new Set();
-  const module = new Proxy({}, {
-    get(_, key) {
-      if (typeof key !== "string" || key === "then")
-        return void 0;
-      return (instanceId) => makeActorRef(key, instanceId, config, connections);
-    }
-  });
-  return {
-    module,
-    closeAll: () => {
-      for (const c of [...connections])
-        c.close();
-    }
-  };
-}
-var PING_MS, DEAD_MS, PROXY_FALLBACK_STATUSES, TERMINAL_MINT_STATUSES, Connection;
-var init_actors = __esm({
-  "node_modules/@base44/sdk/dist/modules/actors.js"() {
-    init_define_import_meta_env();
-    init_dist2();
-    PING_MS = 1e3;
-    DEAD_MS = 3e3;
-    PROXY_FALLBACK_STATUSES = /* @__PURE__ */ new Set([405, 409, 422, 503]);
-    TERMINAL_MINT_STATUSES = /* @__PURE__ */ new Set([400, 403, 404]);
-    Connection = class {
-      constructor(actorName, instanceId, config, options, onClose) {
-        var _a;
-        this.onClose = onClose;
-        this.listeners = /* @__PURE__ */ new Set();
-        this.heartbeat = null;
-        this.closed = false;
-        this.id = (_a = options === null || options === void 0 ? void 0 : options.id) !== null && _a !== void 0 ? _a : crypto.randomUUID();
-        let useProxy = config.transport === "proxy";
-        const urlProvider = async () => {
-          var _a2;
-          if (this.closed)
-            throw new Error("Actor connection is closed");
-          if (!useProxy) {
-            try {
-              const { websocket_url, token: token2 } = await config.mintConnectionToken(actorName, instanceId, this.id);
-              const sep = websocket_url.includes("?") ? "&" : "?";
-              return `${websocket_url}${sep}token=${encodeURIComponent(token2)}`;
-            } catch (err) {
-              const status = mintErrorStatus(err);
-              const isFallback = config.transport !== "direct" && status !== void 0 && PROXY_FALLBACK_STATUSES.has(status);
-              if (!isFallback) {
-                if (status !== void 0 && TERMINAL_MINT_STATUSES.has(status)) {
-                  this.close();
-                }
-                try {
-                  (_a2 = config.onMintError) === null || _a2 === void 0 ? void 0 : _a2.call(config, toError(err));
-                } catch (_b) {
-                }
-                throw err;
-              }
-              useProxy = true;
-            }
-          }
-          return buildProxyActorUrl(config.host, actorName, instanceId, this.id, config.appId, config.getAuthToken(), config.functionsVersion);
-        };
-        const ws = new ReconnectingWebSocket(urlProvider);
-        this.ws = ws;
-        let lastMsg = Date.now();
-        const bumpAlive = () => {
-          lastMsg = Date.now();
-        };
-        ws.addEventListener("open", bumpAlive);
-        ws.addEventListener("message", (ev) => {
-          bumpAlive();
-          let data;
-          try {
-            data = JSON.parse(ev.data);
-          } catch (_a2) {
-            return;
-          }
-          const msgType = data && typeof data === "object" ? data.type : void 0;
-          if (msgType === "__pong")
-            return;
-          for (const listener of this.listeners)
-            listener(data);
-        });
-        this.heartbeat = setInterval(() => {
-          if (Date.now() - lastMsg > DEAD_MS) {
-            bumpAlive();
-            if (ws.readyState === ws.OPEN)
-              ws.reconnect();
-            return;
-          }
-          try {
-            ws.send(JSON.stringify({ type: "__ping" }));
-          } catch (_a2) {
-          }
-        }, PING_MS);
-      }
-      subscribe(callback) {
-        this.listeners.add(callback);
-        return {
-          unsubscribe: () => {
-            this.listeners.delete(callback);
-          }
-        };
-      }
-      send(data) {
-        if (this.closed)
-          return;
-        this.ws.send(JSON.stringify(data));
-      }
-      close() {
-        if (this.closed)
-          return;
-        this.closed = true;
-        if (this.heartbeat) {
-          clearInterval(this.heartbeat);
-          this.heartbeat = null;
-        }
-        this.listeners.clear();
-        this.ws.close();
-        this.onClose();
-      }
-    };
-  }
-});
-
-// node_modules/@base44/sdk/dist/client.js
-function createClient(config) {
-  var _a, _b, _c, _d;
-  const { serverUrl: serverUrl2 = "https://base44.app", appId: appId2, analytics, token: token2, serviceToken, requiresAuth = false, appBaseUrl, options, functionsVersion: functionsVersion2, headers: optionalHeaders } = config;
-  const normalizedAppBaseUrl = typeof appBaseUrl === "string" ? appBaseUrl : "";
-  const socketConfig = {
-    serverUrl: serverUrl2,
-    mountPath: "/ws-user-apps/socket.io/",
-    transports: ["websocket"],
-    appId: appId2,
-    token: token2
-  };
-  let socket = null;
-  const getSocket = () => {
-    if (!socket) {
-      socket = RoomsSocket({
-        config: socketConfig
-      });
-    }
-    return socket;
-  };
-  const headers = {
-    ...optionalHeaders,
-    "X-App-Id": String(appId2)
-  };
-  const stateHeader = optionalHeaders === null || optionalHeaders === void 0 ? void 0 : optionalHeaders["Base44-State"];
-  const aiGatewayHeaders = stateHeader ? { "Base44-State": stateHeader } : {};
-  const functionHeaders = functionsVersion2 ? {
-    ...headers,
-    "Base44-Functions-Version": functionsVersion2
-  } : headers;
-  const axiosClient = createAxiosClient({
-    baseURL: `${serverUrl2}/api`,
-    headers,
-    token: token2,
-    onError: options === null || options === void 0 ? void 0 : options.onError
-  });
-  const functionsAxiosClient = createAxiosClient({
-    baseURL: `${serverUrl2}/api`,
-    headers: functionHeaders,
-    token: token2,
-    interceptResponses: false,
-    onError: options === null || options === void 0 ? void 0 : options.onError
-  });
-  const serviceRoleHeaders = {
-    ...headers,
-    ...token2 ? { "on-behalf-of": `Bearer ${token2}` } : {}
-  };
-  const serviceRoleAxiosClient = createAxiosClient({
-    baseURL: `${serverUrl2}/api`,
-    headers: serviceRoleHeaders,
-    token: serviceToken,
-    onError: options === null || options === void 0 ? void 0 : options.onError
-  });
-  const serviceRoleFunctionsAxiosClient = createAxiosClient({
-    baseURL: `${serverUrl2}/api`,
-    headers: functionHeaders,
-    token: serviceToken,
-    interceptResponses: false
-  });
-  const actorsAxiosClient = createAxiosClient({
-    baseURL: `${serverUrl2}/api`,
-    headers
-  });
-  const userAuthModule = createAuthModule(axiosClient, functionsAxiosClient, appId2, {
-    appBaseUrl: normalizedAppBaseUrl,
-    serverUrl: serverUrl2,
-    token: token2
-  });
-  if (typeof window !== "undefined") {
-    const accessToken = token2 || getAccessToken();
-    if (accessToken) {
-      userAuthModule.setToken(accessToken);
-    }
-  }
-  const actorsModule = createActorsModule({
-    appId: appId2,
-    // serverUrl is often relative/empty (same-origin app); the proxy-fallback
-    // URL needs an absolute host, so fall back to the page origin.
-    host: resolveActorsHost(serverUrl2, typeof window !== "undefined" ? (_a = window.location) === null || _a === void 0 ? void 0 : _a.origin : void 0),
-    functionsVersion: functionsVersion2,
-    getAuthToken: () => token2 || getAccessToken(),
-    mintConnectionToken: async (actorName, room, connectionId) => {
-      const authToken = token2 || getAccessToken();
-      return await actorsAxiosClient.post(`/apps/${appId2}/actors/${encodeURIComponent(actorName)}/connection-token`, { room, connection_id: connectionId }, {
-        headers: {
-          ...authToken ? { Authorization: `Bearer ${authToken}` } : {},
-          // The mint endpoint resolves draft vs published from this header;
-          // only the functions axios clients send it by default.
-          ...functionsVersion2 ? { "Base44-Functions-Version": functionsVersion2 } : {}
-        }
-      });
-    },
-    transport: options === null || options === void 0 ? void 0 : options.actorsTransport,
-    onMintError: options === null || options === void 0 ? void 0 : options.onError
-  });
-  const userModules = {
-    entities: createEntitiesModule({
-      axios: axiosClient,
-      appId: appId2,
-      getSocket
-    }),
-    integrations: createIntegrationsModule(axiosClient, appId2),
-    connectors: createUserConnectorsModule(axiosClient, appId2),
-    auth: userAuthModule,
-    functions: createFunctionsModule(functionsAxiosClient, appId2, {
-      getAuthHeaders: () => {
-        const headers2 = {};
-        const currentToken = token2 || getAccessToken();
-        if (currentToken) {
-          headers2["Authorization"] = `Bearer ${currentToken}`;
-        }
-        return headers2;
-      },
-      baseURL: (_b = functionsAxiosClient.defaults) === null || _b === void 0 ? void 0 : _b.baseURL
-    }),
-    agents: createAgentsModule({
-      axios: axiosClient,
-      getSocket,
-      appId: appId2,
-      serverUrl: serverUrl2,
-      token: token2
-    }),
-    aiGateway: createAiGatewayModule({
-      serverUrl: serverUrl2,
-      token: token2,
-      appId: appId2,
-      headers: aiGatewayHeaders
-    }),
-    appLogs: createAppLogsModule(axiosClient, appId2),
-    app: createAppModule(axiosClient, appId2),
-    users: createUsersModule(axiosClient, appId2),
-    payments: createPaymentsModule(axiosClient, appId2),
-    analytics: createAnalyticsModule({
-      axiosClient,
-      serverUrl: serverUrl2,
-      appId: appId2,
-      userAuthModule,
-      enabled: (_c = analytics === null || analytics === void 0 ? void 0 : analytics.enabled) !== null && _c !== void 0 ? _c : true
-    }),
-    actors: actorsModule.module,
-    cleanup: () => {
-      userModules.analytics.cleanup();
-      actorsModule.closeAll();
-      if (socket) {
-        socket.disconnect();
-      }
-    }
-  };
-  const serviceRoleModules = {
-    entities: createEntitiesModule({
-      axios: serviceRoleAxiosClient,
-      appId: appId2,
-      getSocket
-    }),
-    integrations: createIntegrationsModule(serviceRoleAxiosClient, appId2),
-    sso: createSsoModule(serviceRoleAxiosClient, appId2),
-    browser: createBrowserModule(serviceRoleAxiosClient),
-    connectors: createConnectorsModule(serviceRoleAxiosClient, appId2),
-    functions: createFunctionsModule(serviceRoleFunctionsAxiosClient, appId2, {
-      getAuthHeaders: () => {
-        const headers2 = {};
-        if (serviceToken) {
-          headers2["Authorization"] = `Bearer ${serviceToken}`;
-        }
-        return headers2;
-      },
-      baseURL: (_d = serviceRoleFunctionsAxiosClient.defaults) === null || _d === void 0 ? void 0 : _d.baseURL
-    }),
-    agents: createAgentsModule({
-      axios: serviceRoleAxiosClient,
-      getSocket,
-      appId: appId2,
-      serverUrl: serverUrl2,
-      token: token2
-    }),
-    aiGateway: createAiGatewayModule({
-      serverUrl: serverUrl2,
-      token: serviceToken,
-      appId: appId2,
-      headers: aiGatewayHeaders
-    }),
-    appLogs: createAppLogsModule(serviceRoleAxiosClient, appId2),
-    payments: createServiceRolePaymentsModule(serviceRoleAxiosClient, appId2),
-    cleanup: () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    }
-  };
-  if (requiresAuth && typeof window !== "undefined") {
-    setTimeout(async () => {
-      try {
-        const isAuthenticated = await userModules.auth.isAuthenticated();
-        if (!isAuthenticated) {
-          userModules.auth.redirectToLogin(window.location.href);
-        }
-      } catch (error) {
-        console.error("Authentication check failed:", error);
-        userModules.auth.redirectToLogin(window.location.href);
-      }
-    }, 0);
-  }
-  const client = {
-    ...userModules,
-    /** See {@link Base44Client.fetchWithAuth}. */
-    fetchWithAuth: createFetchWithAuth({
-      axios: axiosClient,
-      serviceRoleAxios: serviceRoleAxiosClient,
-      appId: String(appId2),
-      serverUrl: serverUrl2,
-      functionsVersion: functionsVersion2,
-      platformHeaders: optionalHeaders
-    }),
-    /**
-     * Sets a new authentication token for all subsequent requests.
-     *
-     * @param newToken - The new authentication token
-     *
-     * @example
-     * ```typescript
-     * // Update token after login
-     * const { access_token } = await base44.auth.loginViaEmailPassword(
-     *   'user@example.com',
-     *   'password'
-     * );
-     * base44.setToken(access_token);
-     * ```
-     */
-    setToken(newToken) {
-      userModules.auth.setToken(newToken);
-      if (socket) {
-        socket.updateConfig({
-          token: newToken
-        });
-      }
-      socketConfig.token = newToken;
-    },
-    /**
-     * Gets the current client configuration.
-     *
-     * @internal
-     */
-    getConfig() {
-      return {
-        serverUrl: serverUrl2,
-        appId: appId2,
-        requiresAuth
-      };
-    },
-    /**
-     * Provides access to service role modules.
-     *
-     * Service role authentication provides elevated permissions for backend operations. Unlike user authentication, which is scoped to a specific user's permissions, service role authentication bypasses entity access rules and field-level security entirely, giving full read and write access to all of the app's data.
-     *
-     * @throws {Error} When accessed without providing a serviceToken during client creation.
-     *
-     * @example
-     * ```typescript
-     * const base44 = createClient({
-     *   appId: 'my-app-id',
-     *   serviceToken: 'service-role-token'
-     * });
-     *
-     * // Read every user record, bypassing the User entity's access rules
-     * const allUsers = await base44.asServiceRole.entities.User.list();
-     * ```
-     */
-    get asServiceRole() {
-      if (!serviceToken) {
-        throw new Error("Service token is required to use asServiceRole. Please provide a serviceToken when creating the client.");
-      }
-      return serviceRoleModules;
-    }
-  };
-  return client;
-}
-var init_client = __esm({
-  "node_modules/@base44/sdk/dist/client.js"() {
-    init_define_import_meta_env();
-    init_axios_client();
-    init_entities();
-    init_integrations();
-    init_auth();
-    init_sso();
-    init_browser2();
-    init_connectors();
-    init_auth_utils();
-    init_fetch_with_auth();
-    init_functions();
-    init_agents();
-    init_ai_gateway();
-    init_app_logs();
-    init_app();
-    init_users();
-    init_socket_utils();
-    init_analytics();
-    init_payments();
-    init_actors();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/app.types.js
-var init_app_types = __esm({
-  "node_modules/@base44/sdk/dist/modules/app.types.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/agents.types.js
-var init_agents_types = __esm({
-  "node_modules/@base44/sdk/dist/modules/agents.types.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/ai-gateway.types.js
-var init_ai_gateway_types = __esm({
-  "node_modules/@base44/sdk/dist/modules/ai-gateway.types.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/connectors.types.js
-var init_connectors_types = __esm({
-  "node_modules/@base44/sdk/dist/modules/connectors.types.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/analytics.types.js
-var init_analytics_types = __esm({
-  "node_modules/@base44/sdk/dist/modules/analytics.types.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/modules/types.js
-var init_types = __esm({
-  "node_modules/@base44/sdk/dist/modules/types.js"() {
-    init_define_import_meta_env();
-    init_app_types();
-    init_agents_types();
-    init_ai_gateway_types();
-    init_connectors_types();
-    init_analytics_types();
-  }
-});
-
-// node_modules/@base44/sdk/dist/types.js
-var init_types2 = __esm({
-  "node_modules/@base44/sdk/dist/types.js"() {
-    init_define_import_meta_env();
-    init_types();
-  }
-});
-
-// node_modules/@base44/sdk/dist/actor.js
-var init_actor = __esm({
-  "node_modules/@base44/sdk/dist/actor.js"() {
-    init_define_import_meta_env();
-  }
-});
-
-// node_modules/@base44/sdk/dist/index.js
-var init_dist3 = __esm({
-  "node_modules/@base44/sdk/dist/index.js"() {
-    init_define_import_meta_env();
-    init_client();
-    init_axios_client();
-    init_auth_utils();
-    init_types2();
-    init_actor();
-  }
-});
-
-// src/lib/app-params.js
-var isNode3, windowObj2, storage, toSnakeCase, getAppParamValue, getAppParams, appParams;
-var init_app_params = __esm({
-  "src/lib/app-params.js"() {
-    init_define_import_meta_env();
-    isNode3 = typeof window === "undefined";
-    windowObj2 = isNode3 ? { localStorage: /* @__PURE__ */ new Map() } : window;
-    storage = windowObj2.localStorage;
-    toSnakeCase = (str) => {
-      return str.replace(/([A-Z])/g, "_$1").toLowerCase();
-    };
-    getAppParamValue = (paramName, { defaultValue = void 0, removeFromUrl = false } = {}) => {
-      if (isNode3) {
-        return defaultValue;
-      }
-      const storageKey = `base44_${toSnakeCase(paramName)}`;
-      const urlParams = new URLSearchParams(window.location.search);
-      const searchParam = urlParams.get(paramName);
-      if (removeFromUrl) {
-        urlParams.delete(paramName);
-        const newUrl = `${window.location.pathname}${urlParams.toString() ? `?${urlParams.toString()}` : ""}${window.location.hash}`;
-        window.history.replaceState({}, document.title, newUrl);
-      }
-      if (searchParam) {
-        storage.setItem(storageKey, searchParam);
-        return searchParam;
-      }
-      if (defaultValue) {
-        storage.setItem(storageKey, defaultValue);
-        return defaultValue;
-      }
-      const storedValue = storage.getItem(storageKey);
-      if (storedValue) {
-        return storedValue;
-      }
-      return null;
-    };
-    getAppParams = () => {
-      return {
-        appId: getAppParamValue("app_id", { defaultValue: define_import_meta_env_default.VITE_BASE44_APP_ID }),
-        serverUrl: getAppParamValue("server_url", { defaultValue: define_import_meta_env_default.VITE_BASE44_BACKEND_URL }),
-        token: getAppParamValue("access_token", { removeFromUrl: true }),
-        fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),
-        functionsVersion: getAppParamValue("functions_version")
-      };
-    };
-    appParams = {
-      ...getAppParams()
-    };
-  }
-});
-
-// src/api/requestGovernor.mjs
-function rateLimitStatus(err) {
-  return err?.status ?? err?.response?.status;
-}
-function isPlatformRateLimit(err) {
-  if (rateLimitStatus(err) === 429) return true;
-  const text = [
-    err?.message,
-    err?.response?.data?.error,
-    err?.response?.data?.message,
-    err?.data?.error
-  ].filter(Boolean).join(" ");
-  return /rate limit|too many requests|traffic volume/i.test(text);
-}
-function retryAfterMs(err, capMs = 3e4) {
-  const headers = err?.response?.headers;
-  const raw = (typeof headers?.get === "function" ? headers.get("retry-after") : headers?.["retry-after"]) ?? err?.retryAfter;
-  if (raw == null || raw === "") {
-    const bodyMs = Number(err?.response?.data?.retry_after_ms);
-    return Number.isFinite(bodyMs) && bodyMs > 0 ? Math.min(bodyMs, capMs) : 0;
-  }
-  const seconds = Number(raw);
-  const ms = Number.isFinite(seconds) ? seconds * 1e3 : Date.parse(String(raw)) - Date.now();
-  return Number.isFinite(ms) && ms > 0 ? Math.min(ms, capMs) : 0;
-}
-function createRequestGovernor({
-  maxConcurrent = 8,
-  pools: poolSizes = {},
-  maxRetries = 4,
-  baseDelayMs = 1e3,
-  maxDelayMs = 8e3,
-  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  rand = Math.random,
-  now = () => Date.now()
-} = {}) {
-  const stats = {
-    startedAt: now(),
-    total: 0,
-    inFlight: 0,
-    peakInFlight: 0,
-    queued: 0,
-    rateLimited: 0,
-    retries: 0,
-    gaveUp: 0,
-    deduped: 0,
-    errors: 0,
-    cooldownWaits: 0,
-    byLabel: {},
-    detail: {},
-    slow: []
-  };
-  const pools = /* @__PURE__ */ new Map();
-  const poolFor = (name) => {
-    if (!pools.has(name)) {
-      pools.set(name, { max: name === "default" ? maxConcurrent : poolSizes[name] || maxConcurrent, active: 0, waiters: [] });
-    }
-    return pools.get(name);
-  };
-  const acquire = (pool) => new Promise((resolve) => {
-    const take = () => {
-      pool.active += 1;
-      stats.inFlight += 1;
-      stats.peakInFlight = Math.max(stats.peakInFlight, stats.inFlight);
-      resolve();
-    };
-    if (pool.active < pool.max) {
-      take();
-      return;
-    }
-    stats.queued += 1;
-    pool.waiters.push(() => {
-      stats.queued -= 1;
-      take();
-    });
-  });
-  const release = (pool) => {
-    pool.active -= 1;
-    stats.inFlight -= 1;
-    const next = pool.waiters.shift();
-    if (next) next();
-  };
-  let cooldownUntil2 = 0;
-  let epoch = 0;
-  const inflight = /* @__PURE__ */ new Map();
-  const record = (label, ms, failed) => {
-    const d = stats.detail[label] || (stats.detail[label] = { count: 0, errors: 0, totalMs: 0, maxMs: 0 });
-    d.count += 1;
-    d.totalMs += ms;
-    d.maxMs = Math.max(d.maxMs, ms);
-    if (failed) {
-      d.errors += 1;
-      stats.errors += 1;
-    }
-    if (ms >= SLOW_MS) {
-      stats.slow.push({ label, ms: Math.round(ms), at: new Date(now()).toISOString() });
-      if (stats.slow.length > SLOW_KEEP) stats.slow.shift();
-    }
-  };
-  const run = async (label, fn, {
-    limitConcurrency = true,
-    pool: poolName = "default",
-    retryOnRateLimit = false,
-    respectCooldown = false,
-    shouldRetry = null,
-    maxAttempts = maxRetries
-  } = {}) => {
-    stats.total += 1;
-    stats.byLabel[label] = (stats.byLabel[label] || 0) + 1;
-    const pool = limitConcurrency ? poolFor(poolName) : null;
-    const started = now();
-    for (let attempt = 0; ; attempt += 1) {
-      if (respectCooldown && attempt === 0) {
-        const wait = cooldownUntil2 - now();
-        if (wait > 0) {
-          stats.cooldownWaits += 1;
-          await sleep(wait);
-        }
-      }
-      if (pool) await acquire(pool);
-      try {
-        const result = await fn();
-        if (pool) release(pool);
-        record(label, now() - started, false);
-        return result;
-      } catch (err) {
-        if (pool) release(pool);
-        const limited = isPlatformRateLimit(err);
-        if (limited) stats.rateLimited += 1;
-        const retryable = limited && retryOnRateLimit || typeof shouldRetry === "function" && shouldRetry(err, attempt);
-        if (retryable && attempt < maxAttempts) {
-          stats.retries += 1;
-          const backoff = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt) * (0.5 + rand());
-          const delay = Math.max(backoff, limited ? retryAfterMs(err) : 0);
-          if (limited) cooldownUntil2 = Math.max(cooldownUntil2, now() + delay);
-          await sleep(delay);
-          continue;
-        }
-        if (limited && retryOnRateLimit) {
-          err.ccsGovernorRetried = attempt;
-          stats.gaveUp += 1;
-        }
-        record(label, now() - started, true);
-        throw err;
-      }
-    }
-  };
-  const dedupe = (key, fn, copy = (value2) => value2) => {
-    const fullKey = `${epoch}|${key}`;
-    const existing = inflight.get(fullKey);
-    if (existing) {
-      stats.deduped += 1;
-      return existing.then(copy);
-    }
-    const promise = Promise.resolve().then(fn);
-    inflight.set(fullKey, promise);
-    promise.catch(() => {
-    }).finally(() => {
-      if (inflight.get(fullKey) === promise) inflight.delete(fullKey);
-    });
-    return promise;
-  };
-  const bumpEpoch = () => {
-    epoch += 1;
-  };
-  const getEpoch = () => epoch;
-  return { run, dedupe, bumpEpoch, getEpoch, stats };
-}
-var SLOW_MS, SLOW_KEEP;
-var init_requestGovernor = __esm({
-  "src/api/requestGovernor.mjs"() {
-    init_define_import_meta_env();
-    SLOW_MS = 3e3;
-    SLOW_KEEP = 25;
-  }
-});
-
-// src/api/rateLimitCooldown.js
-function noteRateLimit(retryMs = 0) {
-  const wait = Math.max(cooldownMs, Math.min(Number(retryMs) || 0, MAX_COOLDOWN_MS));
-  cooldownUntil = Math.max(cooldownUntil, Date.now() + wait);
-  cooldownMs = Math.min(cooldownMs * 2, MAX_COOLDOWN_MS);
-}
-function noteRateLimitSuccess() {
-  cooldownMs = BASE_COOLDOWN_MS;
-}
-var BASE_COOLDOWN_MS, MAX_COOLDOWN_MS, cooldownUntil, cooldownMs, isAppCoolingDown;
-var init_rateLimitCooldown = __esm({
-  "src/api/rateLimitCooldown.js"() {
-    init_define_import_meta_env();
-    BASE_COOLDOWN_MS = 2e4;
-    MAX_COOLDOWN_MS = 6e4;
-    cooldownUntil = 0;
-    cooldownMs = BASE_COOLDOWN_MS;
-    isAppCoolingDown = () => Date.now() < cooldownUntil;
-  }
-});
-
-// src/api/base44Client.js
-function isRetryableFunction(fnName, payload) {
-  if (fnName === "verifySession") return true;
-  if (fnName === "permittingScanStatus") return true;
-  if (fnName === "staffDataRead" || fnName === "fleetDataRead") return true;
-  if (fnName === "timeClockAction") return ["status", "status_lite"].includes(payload?.action);
-  if (fnName === "smartsheetSyncAction") return payload?.action === "conflict_count";
-  return false;
-}
-function isReadInvocation(fnName, payload) {
-  if (["staffDataRead", "fleetDataRead", "verifySession", "permittingScanStatus"].includes(fnName)) return true;
-  if (fnName === "timeClockAction") return ["status", "status_lite"].includes(payload?.action);
-  if (fnName === "smartsheetSyncAction") return payload?.action === "conflict_count";
-  return false;
-}
-function isUnprocessedSignInFailure(err) {
-  const status = err?.response?.status ?? err?.status;
-  return typeof status === "number" ? status >= 500 : true;
-}
-function routeReadArgs(method, args) {
-  if (method === "get" || method === "count") return { call: args, paged: false, unsupported: false };
-  const positional = method === "filter" ? [args[0], args[1], args[2], args[3]] : [null, args[0], args[1], args[2]];
-  if (!isPlainObject2(positional[1])) {
-    return { call: method === "filter" ? positional : positional.slice(1), paged: false, unsupported: false };
-  }
-  const options = positional[1];
-  const rest = [options.sort, options.limit, options.skip ?? options.offset];
-  return {
-    call: method === "filter" ? [positional[0], ...rest] : rest,
-    paged: true,
-    unsupported: Boolean(options.distinct || options.cursor)
-  };
-}
-function wrapEntity(name, target) {
-  if (!target || typeof target !== "object") return target;
-  if (entityWrappers.has(name)) return entityWrappers.get(name);
-  const wrapped = new Proxy(target, {
-    get(t, prop) {
-      const value2 = Reflect.get(t, prop);
-      if (prop === "subscribe" && STAFF_READ_ENTITIES.has(name)) {
-        return (callback) => {
-          let unsub = () => {
-          };
-          Promise.resolve().then(() => (init_staffEntities(), staffEntities_exports)).then(({ staffEntities: staffEntities2 }) => {
-            const u = staffEntities2[name]?.subscribe?.(callback);
-            if (typeof u === "function") unsub = u;
-          }).catch(() => {
-          });
-          return () => unsub();
-        };
-      }
-      if (prop === "subscribe" || typeof value2 !== "function") return value2;
-      if (STAFF_READ_ENTITIES.has(name) && READ_METHODS.has(String(prop))) {
-        return async (...args) => {
-          const { call, paged, unsupported } = routeReadArgs(String(prop), args);
-          if (unsupported) return value2.apply(t, args);
-          try {
-            const { staffEntities: staffEntities2 } = await Promise.resolve().then(() => (init_staffEntities(), staffEntities_exports));
-            const result = await staffEntities2[name][String(prop)](...call);
-            return paged && Array.isArray(result) ? { items: result, has_more: false, next_cursor: null } : result;
-          } catch (error) {
-            const status = Number(error?.response?.status ?? error?.status);
-            if (status === 401) return value2.apply(t, args);
-            throw error;
-          }
-        };
-      }
-      const isWrite = !READ_METHODS.has(String(prop));
-      return (...args) => {
-        if (isWrite) governor.bumpEpoch();
-        const pending = governor.run(`${name}.${String(prop)}`, () => value2.apply(t, args), { retryOnRateLimit: true, respectCooldown: !isWrite });
-        const tracked = pending.then(
-          (r2) => {
-            noteRateLimitSuccess();
-            return r2;
-          },
-          (e) => {
-            if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 6e4));
-            throw e;
-          }
-        );
-        return isWrite ? tracked.finally(governor.bumpEpoch) : tracked;
-      };
-    }
-  });
-  entityWrappers.set(name, wrapped);
-  return wrapped;
-}
-var appId, serverUrl, token, functionsVersion, rawClient, governor, cloneValue, copyResponse, STAFF_READ_ENTITIES, READ_METHODS, isPlainObject2, entityWrappers, entitiesProxy, authProxy, functionsProxy, base44;
-var init_base44Client = __esm({
-  "src/api/base44Client.js"() {
-    init_define_import_meta_env();
-    init_dist3();
-    init_app_params();
-    init_requestGovernor();
-    init_rateLimitCooldown();
-    ({ appId, serverUrl, token, functionsVersion } = appParams);
-    rawClient = createClient({
-      appId,
-      serverUrl,
-      token,
-      functionsVersion,
-      requiresAuth: false
-    });
-    governor = createRequestGovernor({ pools: { read: 6 } });
-    cloneValue = (value2) => {
-      if (value2 == null || typeof value2 !== "object") return value2;
-      try {
-        return structuredClone(value2);
-      } catch {
-        return JSON.parse(JSON.stringify(value2));
-      }
-    };
-    copyResponse = (res) => res && typeof res === "object" && "data" in res ? { ...res, data: cloneValue(res.data) } : cloneValue(res);
-    STAFF_READ_ENTITIES = /* @__PURE__ */ new Set([
-      "AllInOneEstimate",
-      "Announcement",
-      "AutomationRule",
-      "BuilderPart",
-      "BuilderPartGroup",
-      "BuilderPriceRevision",
-      "BuilderProduct",
-      "CalendarEvent",
-      "CellHistory",
-      "ChannelLetterInstallEquipment",
-      "ChecklistSubItem",
-      "Customer",
-      "CustomerLocation",
-      "EmailGroup",
-      "EmailNotificationSettings",
-      "EstimateAcceptance",
-      "EstimateOption",
-      "EstimateQuoteDelivery",
-      "EstimateRevision",
-      "EstimateSectionAcceptance",
-      "GeneralTask",
-      "GlobalSettings",
-      "Inventory",
-      "InventoryMovement",
-      "JurisdictionProfile",
-      "OpportunityActivity",
-      "Order",
-      "PTOPolicy",
-      "PermitLineItem",
-      "PermitLocality",
-      "PortalMessage",
-      "ProjectTemplate",
-      "QuickProduct",
-      "MarkupTier",
-      "QuickProductCategory",
-      "RegulationAlert",
-      "SalesFilter",
-      "Settings",
-      "SipChecklistTemplate",
-      "TimeEntry",
-      "TimeOffRequest",
-      "UserCapacity",
-      "UserPTOBalance",
-      "WorkOrder"
-    ]);
-    READ_METHODS = /* @__PURE__ */ new Set(["filter", "list", "get", "count"]);
-    isPlainObject2 = (value2) => Boolean(value2) && typeof value2 === "object" && !Array.isArray(value2);
-    entityWrappers = /* @__PURE__ */ new Map();
-    entitiesProxy = new Proxy(rawClient.entities, {
-      get(t, prop) {
-        return wrapEntity(String(prop), Reflect.get(t, prop));
-      }
-    });
-    authProxy = new Proxy(rawClient.auth, {
-      get(t, prop) {
-        const value2 = Reflect.get(t, prop);
-        if (prop === "me" && typeof value2 === "function" && !token) {
-          return () => {
-            const err = new Error("Platform authentication required");
-            err.status = 401;
-            return Promise.reject(err);
-          };
-        }
-        return value2;
-      }
-    });
-    functionsProxy = new Proxy(rawClient.functions, {
-      get(t, prop) {
-        const value2 = Reflect.get(t, prop);
-        if (prop === "invoke" && typeof value2 === "function") {
-          return (fnName, payload) => {
-            const read = isReadInvocation(fnName, payload);
-            const exec = () => governor.run(`fn:${fnName}`, () => value2.call(t, fnName, payload), {
-              limitConcurrency: read,
-              pool: "read",
-              respectCooldown: read,
-              retryOnRateLimit: isRetryableFunction(fnName, payload),
-              shouldRetry: fnName === "verifyLogin" ? isUnprocessedSignInFailure : null,
-              // Keep the sign-in spinner bounded: a couple of quick retries, no long wait.
-              maxAttempts: fnName === "verifyLogin" ? 2 : 1
-            });
-            const tracked = () => exec().then(
-              (r2) => {
-                noteRateLimitSuccess();
-                return r2;
-              },
-              (e) => {
-                if (isPlatformRateLimit(e)) noteRateLimit(retryAfterMs(e, 6e4));
-                throw e;
-              }
-            );
-            if (read) return governor.dedupe(`fn:${fnName}:${JSON.stringify(payload ?? null)}`, tracked, copyResponse);
-            governor.bumpEpoch();
-            return tracked().finally(governor.bumpEpoch);
-          };
-        }
-        return value2;
-      }
-    });
-    base44 = new Proxy(rawClient, {
-      get(t, prop) {
-        if (prop === "entities") return entitiesProxy;
-        if (prop === "functions") return functionsProxy;
-        if (prop === "auth") return authProxy;
-        const value2 = Reflect.get(t, prop);
-        return typeof value2 === "function" ? value2.bind(t) : value2;
-      }
-    });
-    if (typeof window !== "undefined") {
-      governor.stats.scriptReadyMs = typeof performance !== "undefined" ? Math.round(performance.now()) : null;
-      window.__ccsRequestStats = governor.stats;
-      window.__ccsRequestReport = () => {
-        const rows = Object.entries(governor.stats.detail).map(([label, d]) => ({ label, count: d.count, errors: d.errors, avgMs: Math.round(d.totalMs / d.count), maxMs: Math.round(d.maxMs) })).sort((a, b) => b.count - a.count);
-        const minutes = Math.max(1 / 60, (Date.now() - governor.stats.startedAt) / 6e4);
-        console.table(rows);
-        return { perMinute: Math.round(governor.stats.total / minutes), peakInFlight: governor.stats.peakInFlight, rateLimited: governor.stats.rateLimited, retries: governor.stats.retries, deduped: governor.stats.deduped, slow: governor.stats.slow, rows };
-      };
-    }
   }
 });
 
@@ -11827,34 +305,34 @@ var require_react_development = __commonJS({
           return refObject;
         }
         var isArrayImpl = Array.isArray;
-        function isArray2(a) {
+        function isArray(a) {
           return isArrayImpl(a);
         }
-        function typeName(value2) {
+        function typeName(value) {
           {
             var hasToStringTag = typeof Symbol === "function" && Symbol.toStringTag;
-            var type = hasToStringTag && value2[Symbol.toStringTag] || value2.constructor.name || "Object";
+            var type = hasToStringTag && value[Symbol.toStringTag] || value.constructor.name || "Object";
             return type;
           }
         }
-        function willCoercionThrow(value2) {
+        function willCoercionThrow(value) {
           {
             try {
-              testStringCoercion(value2);
+              testStringCoercion(value);
               return false;
             } catch (e) {
               return true;
             }
           }
         }
-        function testStringCoercion(value2) {
-          return "" + value2;
+        function testStringCoercion(value) {
+          return "" + value;
         }
-        function checkKeyStringCoercion(value2) {
+        function checkKeyStringCoercion(value) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided key is an unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided key is an unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
@@ -11928,7 +406,7 @@ var require_react_development = __commonJS({
           }
           return null;
         }
-        var hasOwnProperty2 = Object.prototype.hasOwnProperty;
+        var hasOwnProperty = Object.prototype.hasOwnProperty;
         var RESERVED_PROPS = {
           key: true,
           ref: true,
@@ -11941,7 +419,7 @@ var require_react_development = __commonJS({
         }
         function hasValidRef(config) {
           {
-            if (hasOwnProperty2.call(config, "ref")) {
+            if (hasOwnProperty.call(config, "ref")) {
               var getter = Object.getOwnPropertyDescriptor(config, "ref").get;
               if (getter && getter.isReactWarning) {
                 return false;
@@ -11952,7 +430,7 @@ var require_react_development = __commonJS({
         }
         function hasValidKey(config) {
           {
-            if (hasOwnProperty2.call(config, "key")) {
+            if (hasOwnProperty.call(config, "key")) {
               var getter = Object.getOwnPropertyDescriptor(config, "key").get;
               if (getter && getter.isReactWarning) {
                 return false;
@@ -12002,7 +480,7 @@ var require_react_development = __commonJS({
             }
           }
         }
-        var ReactElement = function(type, key, ref, self2, source, owner, props) {
+        var ReactElement = function(type, key, ref, self, source, owner, props) {
           var element = {
             // This tag allows us to uniquely identify this as a React Element
             $$typeof: REACT_ELEMENT_TYPE,
@@ -12026,7 +504,7 @@ var require_react_development = __commonJS({
               configurable: false,
               enumerable: false,
               writable: false,
-              value: self2
+              value: self
             });
             Object.defineProperty(element, "_source", {
               configurable: false,
@@ -12046,7 +524,7 @@ var require_react_development = __commonJS({
           var props = {};
           var key = null;
           var ref = null;
-          var self2 = null;
+          var self = null;
           var source = null;
           if (config != null) {
             if (hasValidRef(config)) {
@@ -12061,10 +539,10 @@ var require_react_development = __commonJS({
               }
               key = "" + config.key;
             }
-            self2 = config.__self === void 0 ? null : config.__self;
+            self = config.__self === void 0 ? null : config.__self;
             source = config.__source === void 0 ? null : config.__source;
             for (propName in config) {
-              if (hasOwnProperty2.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
+              if (hasOwnProperty.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
                 props[propName] = config[propName];
               }
             }
@@ -12103,7 +581,7 @@ var require_react_development = __commonJS({
               }
             }
           }
-          return ReactElement(type, key, ref, self2, source, ReactCurrentOwner.current, props);
+          return ReactElement(type, key, ref, self, source, ReactCurrentOwner.current, props);
         }
         function cloneAndReplaceKey(oldElement, newKey) {
           var newElement = ReactElement(oldElement.type, newKey, oldElement.ref, oldElement._self, oldElement._source, oldElement._owner, oldElement.props);
@@ -12117,7 +595,7 @@ var require_react_development = __commonJS({
           var props = assign({}, element.props);
           var key = element.key;
           var ref = element.ref;
-          var self2 = element._self;
+          var self = element._self;
           var source = element._source;
           var owner = element._owner;
           if (config != null) {
@@ -12136,7 +614,7 @@ var require_react_development = __commonJS({
               defaultProps = element.type.defaultProps;
             }
             for (propName in config) {
-              if (hasOwnProperty2.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
+              if (hasOwnProperty.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
                 if (config[propName] === void 0 && defaultProps !== void 0) {
                   props[propName] = defaultProps[propName];
                 } else {
@@ -12155,12 +633,12 @@ var require_react_development = __commonJS({
             }
             props.children = childArray;
           }
-          return ReactElement(element.type, key, ref, self2, source, owner, props);
+          return ReactElement(element.type, key, ref, self, source, owner, props);
         }
         function isValidElement2(object) {
           return typeof object === "object" && object !== null && object.$$typeof === REACT_ELEMENT_TYPE;
         }
-        var SEPARATOR2 = ".";
+        var SEPARATOR = ".";
         var SUBSEPARATOR = ":";
         function escape(key) {
           var escapeRegex = /[=:]/g;
@@ -12212,8 +690,8 @@ var require_react_development = __commonJS({
           if (invokeCallback) {
             var _child = children;
             var mappedChild = callback(_child);
-            var childKey = nameSoFar === "" ? SEPARATOR2 + getElementKey(_child, 0) : nameSoFar;
-            if (isArray2(mappedChild)) {
+            var childKey = nameSoFar === "" ? SEPARATOR + getElementKey(_child, 0) : nameSoFar;
+            if (isArray(mappedChild)) {
               var escapedChildKey = "";
               if (childKey != null) {
                 escapedChildKey = escapeUserProvidedKey(childKey) + "/";
@@ -12247,8 +725,8 @@ var require_react_development = __commonJS({
           var child;
           var nextName;
           var subtreeCount = 0;
-          var nextNamePrefix = nameSoFar === "" ? SEPARATOR2 : nameSoFar + SUBSEPARATOR;
-          if (isArray2(children)) {
+          var nextNamePrefix = nameSoFar === "" ? SEPARATOR : nameSoFar + SUBSEPARATOR;
+          if (isArray(children)) {
             for (var i = 0; i < children.length; i++) {
               child = children[i];
               nextName = nextNamePrefix + getElementKey(child, i);
@@ -12266,10 +744,10 @@ var require_react_development = __commonJS({
                   didWarnAboutMaps = true;
                 }
               }
-              var iterator2 = iteratorFn.call(iterableChildren);
+              var iterator = iteratorFn.call(iterableChildren);
               var step;
               var ii = 0;
-              while (!(step = iterator2.next()).done) {
+              while (!(step = iterator.next()).done) {
                 child = step.value;
                 nextName = nextNamePrefix + getElementKey(child, ii++);
                 subtreeCount += mapIntoArray(child, array, escapedPrefix, nextName, callback);
@@ -12304,7 +782,7 @@ var require_react_development = __commonJS({
             forEachFunc.apply(this, arguments);
           }, forEachContext);
         }
-        function toArray3(children) {
+        function toArray(children) {
           return mapChildren(children, function(child) {
             return child;
           }) || [];
@@ -12627,43 +1105,43 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useRef(initialValue);
         }
-        function useEffect15(create2, deps) {
+        function useEffect15(create, deps) {
           var dispatcher = resolveDispatcher();
-          return dispatcher.useEffect(create2, deps);
+          return dispatcher.useEffect(create, deps);
         }
-        function useInsertionEffect2(create2, deps) {
+        function useInsertionEffect2(create, deps) {
           var dispatcher = resolveDispatcher();
-          return dispatcher.useInsertionEffect(create2, deps);
+          return dispatcher.useInsertionEffect(create, deps);
         }
-        function useLayoutEffect4(create2, deps) {
+        function useLayoutEffect4(create, deps) {
           var dispatcher = resolveDispatcher();
-          return dispatcher.useLayoutEffect(create2, deps);
+          return dispatcher.useLayoutEffect(create, deps);
         }
         function useCallback8(callback, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useCallback(callback, deps);
         }
-        function useMemo5(create2, deps) {
+        function useMemo5(create, deps) {
           var dispatcher = resolveDispatcher();
-          return dispatcher.useMemo(create2, deps);
+          return dispatcher.useMemo(create, deps);
         }
-        function useImperativeHandle(ref, create2, deps) {
+        function useImperativeHandle(ref, create, deps) {
           var dispatcher = resolveDispatcher();
-          return dispatcher.useImperativeHandle(ref, create2, deps);
+          return dispatcher.useImperativeHandle(ref, create, deps);
         }
-        function useDebugValue(value2, formatterFn) {
+        function useDebugValue(value, formatterFn) {
           {
             var dispatcher = resolveDispatcher();
-            return dispatcher.useDebugValue(value2, formatterFn);
+            return dispatcher.useDebugValue(value, formatterFn);
           }
         }
         function useTransition() {
           var dispatcher = resolveDispatcher();
           return dispatcher.useTransition();
         }
-        function useDeferredValue(value2) {
+        function useDeferredValue(value) {
           var dispatcher = resolveDispatcher();
-          return dispatcher.useDeferredValue(value2);
+          return dispatcher.useDeferredValue(value);
         }
         function useId2() {
           var dispatcher = resolveDispatcher();
@@ -12881,8 +1359,8 @@ var require_react_development = __commonJS({
           }
         }
         function shouldConstruct(Component2) {
-          var prototype2 = Component2.prototype;
-          return !!(prototype2 && prototype2.isReactComponent);
+          var prototype = Component2.prototype;
+          return !!(prototype && prototype.isReactComponent);
         }
         function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
           if (type == null) {
@@ -12934,31 +1412,31 @@ var require_react_development = __commonJS({
             }
           }
         }
-        function checkPropTypes(typeSpecs, values, location2, componentName, element) {
+        function checkPropTypes(typeSpecs, values, location, componentName, element) {
           {
-            var has = Function.call.bind(hasOwnProperty2);
+            var has = Function.call.bind(hasOwnProperty);
             for (var typeSpecName in typeSpecs) {
               if (has(typeSpecs, typeSpecName)) {
                 var error$1 = void 0;
                 try {
                   if (typeof typeSpecs[typeSpecName] !== "function") {
-                    var err = Error((componentName || "React class") + ": " + location2 + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
+                    var err = Error((componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
                     err.name = "Invariant Violation";
                     throw err;
                   }
-                  error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location2, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
+                  error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
                 } catch (ex) {
                   error$1 = ex;
                 }
                 if (error$1 && !(error$1 instanceof Error)) {
                   setCurrentlyValidatingElement(element);
-                  error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location2, typeSpecName, typeof error$1);
+                  error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location, typeSpecName, typeof error$1);
                   setCurrentlyValidatingElement(null);
                 }
                 if (error$1 instanceof Error && !(error$1.message in loggedTypeFailures)) {
                   loggedTypeFailures[error$1.message] = true;
                   setCurrentlyValidatingElement(element);
-                  error("Failed %s type: %s", location2, error$1.message);
+                  error("Failed %s type: %s", location, error$1.message);
                   setCurrentlyValidatingElement(null);
                 }
               }
@@ -13038,7 +1516,7 @@ var require_react_development = __commonJS({
           if (typeof node !== "object") {
             return;
           }
-          if (isArray2(node)) {
+          if (isArray(node)) {
             for (var i = 0; i < node.length; i++) {
               var child = node[i];
               if (isValidElement2(child)) {
@@ -13053,9 +1531,9 @@ var require_react_development = __commonJS({
             var iteratorFn = getIteratorFn(node);
             if (typeof iteratorFn === "function") {
               if (iteratorFn !== node.entries) {
-                var iterator2 = iteratorFn.call(node);
+                var iterator = iteratorFn.call(node);
                 var step;
-                while (!(step = iterator2.next()).done) {
+                while (!(step = iterator.next()).done) {
                   if (isValidElement2(step.value)) {
                     validateExplicitKey(step.value, parentType);
                   }
@@ -13128,7 +1606,7 @@ var require_react_development = __commonJS({
             var typeString;
             if (type === null) {
               typeString = "null";
-            } else if (isArray2(type)) {
+            } else if (isArray(type)) {
               typeString = "array";
             } else if (type !== void 0 && type.$$typeof === REACT_ELEMENT_TYPE) {
               typeString = "<" + (getComponentNameFromType(type.type) || "Unknown") + " />";
@@ -13383,7 +1861,7 @@ var require_react_development = __commonJS({
           map: mapChildren,
           forEach: forEachChildren,
           count: countChildren,
-          toArray: toArray3,
+          toArray,
           only: onlyChild
         };
         exports.Children = Children5;
@@ -13440,66 +1918,6 @@ var require_react = __commonJS({
     } else {
       module.exports = require_react_development();
     }
-  }
-});
-
-// node_modules/@radix-ui/primitive/dist/index.mjs
-function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForDefaultPrevented = true } = {}) {
-  return function handleEvent(event) {
-    originalEventHandler?.(event);
-    if (checkForDefaultPrevented === false || !event.defaultPrevented) {
-      return ourEventHandler?.(event);
-    }
-  };
-}
-var canUseDOM;
-var init_dist4 = __esm({
-  "node_modules/@radix-ui/primitive/dist/index.mjs"() {
-    init_define_import_meta_env();
-    canUseDOM = !!(typeof window !== "undefined" && window.document && window.document.createElement);
-  }
-});
-
-// node_modules/@radix-ui/react-compose-refs/dist/index.mjs
-function setRef(ref, value2) {
-  if (typeof ref === "function") {
-    return ref(value2);
-  } else if (ref !== null && ref !== void 0) {
-    ref.current = value2;
-  }
-}
-function composeRefs(...refs) {
-  return (node) => {
-    let hasCleanup = false;
-    const cleanups = refs.map((ref) => {
-      const cleanup = setRef(ref, node);
-      if (!hasCleanup && typeof cleanup == "function") {
-        hasCleanup = true;
-      }
-      return cleanup;
-    });
-    if (hasCleanup) {
-      return () => {
-        for (let i = 0; i < cleanups.length; i++) {
-          const cleanup = cleanups[i];
-          if (typeof cleanup == "function") {
-            cleanup();
-          } else {
-            setRef(refs[i], null);
-          }
-        }
-      };
-    }
-  };
-}
-function useComposedRefs(...refs) {
-  return React.useCallback(composeRefs(...refs), refs);
-}
-var React;
-var init_dist5 = __esm({
-  "node_modules/@radix-ui/react-compose-refs/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React = __toESM(require_react(), 1);
   }
 });
 
@@ -13869,8 +2287,8 @@ var require_react_jsx_runtime_development = __commonJS({
           }
         }
         function shouldConstruct(Component) {
-          var prototype2 = Component.prototype;
-          return !!(prototype2 && prototype2.isReactComponent);
+          var prototype = Component.prototype;
+          return !!(prototype && prototype.isReactComponent);
         }
         function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
           if (type == null) {
@@ -13909,7 +2327,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return "";
         }
-        var hasOwnProperty2 = Object.prototype.hasOwnProperty;
+        var hasOwnProperty = Object.prototype.hasOwnProperty;
         var loggedTypeFailures = {};
         var ReactDebugCurrentFrame = ReactSharedInternals.ReactDebugCurrentFrame;
         function setCurrentlyValidatingElement(element) {
@@ -13923,31 +2341,31 @@ var require_react_jsx_runtime_development = __commonJS({
             }
           }
         }
-        function checkPropTypes(typeSpecs, values, location2, componentName, element) {
+        function checkPropTypes(typeSpecs, values, location, componentName, element) {
           {
-            var has = Function.call.bind(hasOwnProperty2);
+            var has = Function.call.bind(hasOwnProperty);
             for (var typeSpecName in typeSpecs) {
               if (has(typeSpecs, typeSpecName)) {
                 var error$1 = void 0;
                 try {
                   if (typeof typeSpecs[typeSpecName] !== "function") {
-                    var err = Error((componentName || "React class") + ": " + location2 + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
+                    var err = Error((componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
                     err.name = "Invariant Violation";
                     throw err;
                   }
-                  error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location2, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
+                  error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
                 } catch (ex) {
                   error$1 = ex;
                 }
                 if (error$1 && !(error$1 instanceof Error)) {
                   setCurrentlyValidatingElement(element);
-                  error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location2, typeSpecName, typeof error$1);
+                  error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location, typeSpecName, typeof error$1);
                   setCurrentlyValidatingElement(null);
                 }
                 if (error$1 instanceof Error && !(error$1.message in loggedTypeFailures)) {
                   loggedTypeFailures[error$1.message] = true;
                   setCurrentlyValidatingElement(element);
-                  error("Failed %s type: %s", location2, error$1.message);
+                  error("Failed %s type: %s", location, error$1.message);
                   setCurrentlyValidatingElement(null);
                 }
               }
@@ -13955,34 +2373,34 @@ var require_react_jsx_runtime_development = __commonJS({
           }
         }
         var isArrayImpl = Array.isArray;
-        function isArray2(a) {
+        function isArray(a) {
           return isArrayImpl(a);
         }
-        function typeName(value2) {
+        function typeName(value) {
           {
             var hasToStringTag = typeof Symbol === "function" && Symbol.toStringTag;
-            var type = hasToStringTag && value2[Symbol.toStringTag] || value2.constructor.name || "Object";
+            var type = hasToStringTag && value[Symbol.toStringTag] || value.constructor.name || "Object";
             return type;
           }
         }
-        function willCoercionThrow(value2) {
+        function willCoercionThrow(value) {
           {
             try {
-              testStringCoercion(value2);
+              testStringCoercion(value);
               return false;
             } catch (e) {
               return true;
             }
           }
         }
-        function testStringCoercion(value2) {
-          return "" + value2;
+        function testStringCoercion(value) {
+          return "" + value;
         }
-        function checkKeyStringCoercion(value2) {
+        function checkKeyStringCoercion(value) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided key is an unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided key is an unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
@@ -14001,7 +2419,7 @@ var require_react_jsx_runtime_development = __commonJS({
         }
         function hasValidRef(config) {
           {
-            if (hasOwnProperty2.call(config, "ref")) {
+            if (hasOwnProperty.call(config, "ref")) {
               var getter = Object.getOwnPropertyDescriptor(config, "ref").get;
               if (getter && getter.isReactWarning) {
                 return false;
@@ -14012,7 +2430,7 @@ var require_react_jsx_runtime_development = __commonJS({
         }
         function hasValidKey(config) {
           {
-            if (hasOwnProperty2.call(config, "key")) {
+            if (hasOwnProperty.call(config, "key")) {
               var getter = Object.getOwnPropertyDescriptor(config, "key").get;
               if (getter && getter.isReactWarning) {
                 return false;
@@ -14021,9 +2439,9 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return config.key !== void 0;
         }
-        function warnIfStringRefCannotBeAutoConverted(config, self2) {
+        function warnIfStringRefCannotBeAutoConverted(config, self) {
           {
-            if (typeof config.ref === "string" && ReactCurrentOwner.current && self2 && ReactCurrentOwner.current.stateNode !== self2) {
+            if (typeof config.ref === "string" && ReactCurrentOwner.current && self && ReactCurrentOwner.current.stateNode !== self) {
               var componentName = getComponentNameFromType(ReactCurrentOwner.current.type);
               if (!didWarnAboutStringRefs[componentName]) {
                 error('Component "%s" contains the string ref "%s". Support for string refs will be removed in a future major release. This case cannot be automatically converted to an arrow function. We ask you to manually fix this case by using useRef() or createRef() instead. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-string-ref', getComponentNameFromType(ReactCurrentOwner.current.type), config.ref);
@@ -14062,7 +2480,7 @@ var require_react_jsx_runtime_development = __commonJS({
             });
           }
         }
-        var ReactElement = function(type, key, ref, self2, source, owner, props) {
+        var ReactElement = function(type, key, ref, self, source, owner, props) {
           var element = {
             // This tag allows us to uniquely identify this as a React Element
             $$typeof: REACT_ELEMENT_TYPE,
@@ -14086,7 +2504,7 @@ var require_react_jsx_runtime_development = __commonJS({
               configurable: false,
               enumerable: false,
               writable: false,
-              value: self2
+              value: self
             });
             Object.defineProperty(element, "_source", {
               configurable: false,
@@ -14101,7 +2519,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return element;
         };
-        function jsxDEV(type, config, maybeKey, source, self2) {
+        function jsxDEV(type, config, maybeKey, source, self) {
           {
             var propName;
             var props = {};
@@ -14121,10 +2539,10 @@ var require_react_jsx_runtime_development = __commonJS({
             }
             if (hasValidRef(config)) {
               ref = config.ref;
-              warnIfStringRefCannotBeAutoConverted(config, self2);
+              warnIfStringRefCannotBeAutoConverted(config, self);
             }
             for (propName in config) {
-              if (hasOwnProperty2.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
+              if (hasOwnProperty.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
                 props[propName] = config[propName];
               }
             }
@@ -14145,7 +2563,7 @@ var require_react_jsx_runtime_development = __commonJS({
                 defineRefPropWarningGetter(props, displayName);
               }
             }
-            return ReactElement(type, key, ref, self2, source, ReactCurrentOwner.current, props);
+            return ReactElement(type, key, ref, self, source, ReactCurrentOwner.current, props);
           }
         }
         var ReactCurrentOwner$1 = ReactSharedInternals.ReactCurrentOwner;
@@ -14229,7 +2647,7 @@ var require_react_jsx_runtime_development = __commonJS({
             if (typeof node !== "object") {
               return;
             }
-            if (isArray2(node)) {
+            if (isArray(node)) {
               for (var i = 0; i < node.length; i++) {
                 var child = node[i];
                 if (isValidElement2(child)) {
@@ -14244,9 +2662,9 @@ var require_react_jsx_runtime_development = __commonJS({
               var iteratorFn = getIteratorFn(node);
               if (typeof iteratorFn === "function") {
                 if (iteratorFn !== node.entries) {
-                  var iterator2 = iteratorFn.call(node);
+                  var iterator = iteratorFn.call(node);
                   var step;
-                  while (!(step = iterator2.next()).done) {
+                  while (!(step = iterator.next()).done) {
                     if (isValidElement2(step.value)) {
                       validateExplicitKey(step.value, parentType);
                     }
@@ -14305,7 +2723,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
         }
         var didWarnAboutKeySpread = {};
-        function jsxWithValidation(type, props, key, isStaticChildren, source, self2) {
+        function jsxWithValidation(type, props, key, isStaticChildren, source, self) {
           {
             var validType = isValidElementType(type);
             if (!validType) {
@@ -14322,7 +2740,7 @@ var require_react_jsx_runtime_development = __commonJS({
               var typeString;
               if (type === null) {
                 typeString = "null";
-              } else if (isArray2(type)) {
+              } else if (isArray(type)) {
                 typeString = "array";
               } else if (type !== void 0 && type.$$typeof === REACT_ELEMENT_TYPE) {
                 typeString = "<" + (getComponentNameFromType(type.type) || "Unknown") + " />";
@@ -14332,7 +2750,7 @@ var require_react_jsx_runtime_development = __commonJS({
               }
               error("React.jsx: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: %s.%s", typeString, info);
             }
-            var element = jsxDEV(type, props, key, source, self2);
+            var element = jsxDEV(type, props, key, source, self);
             if (element == null) {
               return element;
             }
@@ -14340,7 +2758,7 @@ var require_react_jsx_runtime_development = __commonJS({
               var children = props.children;
               if (children !== void 0) {
                 if (isStaticChildren) {
-                  if (isArray2(children)) {
+                  if (isArray(children)) {
                     for (var i = 0; i < children.length; i++) {
                       validateChildKeys(children[i], type);
                     }
@@ -14356,7 +2774,7 @@ var require_react_jsx_runtime_development = __commonJS({
               }
             }
             {
-              if (hasOwnProperty2.call(props, "key")) {
+              if (hasOwnProperty.call(props, "key")) {
                 var componentName = getComponentNameFromType(type);
                 var keys = Object.keys(props).filter(function(k) {
                   return k !== "key";
@@ -14407,195 +2825,6 @@ var require_jsx_runtime = __commonJS({
     } else {
       module.exports = require_react_jsx_runtime_development();
     }
-  }
-});
-
-// node_modules/@radix-ui/react-context/dist/index.mjs
-function createContext2(rootComponentName, defaultContext) {
-  const Context = React2.createContext(defaultContext);
-  const Provider = (props) => {
-    const { children, ...context } = props;
-    const value2 = React2.useMemo(() => context, Object.values(context));
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Context.Provider, { value: value2, children });
-  };
-  Provider.displayName = rootComponentName + "Provider";
-  function useContext22(consumerName) {
-    const context = React2.useContext(Context);
-    if (context) return context;
-    if (defaultContext !== void 0) return defaultContext;
-    throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
-  }
-  return [Provider, useContext22];
-}
-function createContextScope(scopeName, createContextScopeDeps = []) {
-  let defaultContexts = [];
-  function createContext32(rootComponentName, defaultContext) {
-    const BaseContext = React2.createContext(defaultContext);
-    const index = defaultContexts.length;
-    defaultContexts = [...defaultContexts, defaultContext];
-    const Provider = (props) => {
-      const { scope, children, ...context } = props;
-      const Context = scope?.[scopeName]?.[index] || BaseContext;
-      const value2 = React2.useMemo(() => context, Object.values(context));
-      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Context.Provider, { value: value2, children });
-    };
-    Provider.displayName = rootComponentName + "Provider";
-    function useContext22(consumerName, scope) {
-      const Context = scope?.[scopeName]?.[index] || BaseContext;
-      const context = React2.useContext(Context);
-      if (context) return context;
-      if (defaultContext !== void 0) return defaultContext;
-      throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
-    }
-    return [Provider, useContext22];
-  }
-  const createScope = () => {
-    const scopeContexts = defaultContexts.map((defaultContext) => {
-      return React2.createContext(defaultContext);
-    });
-    return function useScope(scope) {
-      const contexts = scope?.[scopeName] || scopeContexts;
-      return React2.useMemo(
-        () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
-        [scope, contexts]
-      );
-    };
-  };
-  createScope.scopeName = scopeName;
-  return [createContext32, composeContextScopes(createScope, ...createContextScopeDeps)];
-}
-function composeContextScopes(...scopes) {
-  const baseScope = scopes[0];
-  if (scopes.length === 1) return baseScope;
-  const createScope = () => {
-    const scopeHooks = scopes.map((createScope2) => ({
-      useScope: createScope2(),
-      scopeName: createScope2.scopeName
-    }));
-    return function useComposedScopes(overrideScopes) {
-      const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName }) => {
-        const scopeProps = useScope(overrideScopes);
-        const currentScope = scopeProps[`__scope${scopeName}`];
-        return { ...nextScopes2, ...currentScope };
-      }, {});
-      return React2.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
-    };
-  };
-  createScope.scopeName = baseScope.scopeName;
-  return createScope;
-}
-var React2, import_jsx_runtime;
-var init_dist6 = __esm({
-  "node_modules/@radix-ui/react-context/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React2 = __toESM(require_react(), 1);
-    import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
-  }
-});
-
-// node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs
-var React3, useLayoutEffect2;
-var init_dist7 = __esm({
-  "node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React3 = __toESM(require_react(), 1);
-    useLayoutEffect2 = globalThis?.document ? React3.useLayoutEffect : () => {
-    };
-  }
-});
-
-// node_modules/@radix-ui/react-id/dist/index.mjs
-function useId(deterministicId) {
-  const [id, setId] = React4.useState(useReactId());
-  useLayoutEffect2(() => {
-    if (!deterministicId) setId((reactId) => reactId ?? String(count++));
-  }, [deterministicId]);
-  return deterministicId || (id ? `radix-${id}` : "");
-}
-var React4, useReactId, count;
-var init_dist8 = __esm({
-  "node_modules/@radix-ui/react-id/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React4 = __toESM(require_react(), 1);
-    init_dist7();
-    useReactId = React4[" useId ".trim().toString()] || (() => void 0);
-    count = 0;
-  }
-});
-
-// node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
-function useControllableState({
-  prop,
-  defaultProp,
-  onChange = () => {
-  },
-  caller
-}) {
-  const [uncontrolledProp, setUncontrolledProp, onChangeRef] = useUncontrolledState({
-    defaultProp,
-    onChange
-  });
-  const isControlled = prop !== void 0;
-  const value2 = isControlled ? prop : uncontrolledProp;
-  if (true) {
-    const isControlledRef = React5.useRef(prop !== void 0);
-    React5.useEffect(() => {
-      const wasControlled = isControlledRef.current;
-      if (wasControlled !== isControlled) {
-        const from = wasControlled ? "controlled" : "uncontrolled";
-        const to = isControlled ? "controlled" : "uncontrolled";
-        console.warn(
-          `${caller} is changing from ${from} to ${to}. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.`
-        );
-      }
-      isControlledRef.current = isControlled;
-    }, [isControlled, caller]);
-  }
-  const setValue = React5.useCallback(
-    (nextValue) => {
-      if (isControlled) {
-        const value22 = isFunction3(nextValue) ? nextValue(prop) : nextValue;
-        if (value22 !== prop) {
-          onChangeRef.current?.(value22);
-        }
-      } else {
-        setUncontrolledProp(nextValue);
-      }
-    },
-    [isControlled, prop, setUncontrolledProp, onChangeRef]
-  );
-  return [value2, setValue];
-}
-function useUncontrolledState({
-  defaultProp,
-  onChange
-}) {
-  const [value2, setValue] = React5.useState(defaultProp);
-  const prevValueRef = React5.useRef(value2);
-  const onChangeRef = React5.useRef(onChange);
-  useInsertionEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
-  React5.useEffect(() => {
-    if (prevValueRef.current !== value2) {
-      onChangeRef.current?.(value2);
-      prevValueRef.current = value2;
-    }
-  }, [value2, prevValueRef]);
-  return [value2, setValue, onChangeRef];
-}
-function isFunction3(value2) {
-  return typeof value2 === "function";
-}
-var React5, React22, useInsertionEffect, SYNC_STATE;
-var init_dist9 = __esm({
-  "node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React5 = __toESM(require_react(), 1);
-    init_dist7();
-    React22 = __toESM(require_react(), 1);
-    useInsertionEffect = React5[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
-    SYNC_STATE = Symbol("RADIX:SYNC_STATE");
   }
 });
 
@@ -15180,72 +3409,72 @@ var require_react_dom_development = __commonJS({
           }
         }
         var canUseDOM2 = !!(typeof window !== "undefined" && typeof window.document !== "undefined" && typeof window.document.createElement !== "undefined");
-        var hasOwnProperty2 = Object.prototype.hasOwnProperty;
-        function typeName(value2) {
+        var hasOwnProperty = Object.prototype.hasOwnProperty;
+        function typeName(value) {
           {
             var hasToStringTag = typeof Symbol === "function" && Symbol.toStringTag;
-            var type = hasToStringTag && value2[Symbol.toStringTag] || value2.constructor.name || "Object";
+            var type = hasToStringTag && value[Symbol.toStringTag] || value.constructor.name || "Object";
             return type;
           }
         }
-        function willCoercionThrow(value2) {
+        function willCoercionThrow(value) {
           {
             try {
-              testStringCoercion(value2);
+              testStringCoercion(value);
               return false;
             } catch (e) {
               return true;
             }
           }
         }
-        function testStringCoercion(value2) {
-          return "" + value2;
+        function testStringCoercion(value) {
+          return "" + value;
         }
-        function checkAttributeStringCoercion(value2, attributeName) {
+        function checkAttributeStringCoercion(value, attributeName) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided `%s` attribute is an unsupported type %s. This value must be coerced to a string before before using it here.", attributeName, typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided `%s` attribute is an unsupported type %s. This value must be coerced to a string before before using it here.", attributeName, typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
-        function checkKeyStringCoercion(value2) {
+        function checkKeyStringCoercion(value) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided key is an unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided key is an unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
-        function checkPropStringCoercion(value2, propName) {
+        function checkPropStringCoercion(value, propName) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided `%s` prop is an unsupported type %s. This value must be coerced to a string before before using it here.", propName, typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided `%s` prop is an unsupported type %s. This value must be coerced to a string before before using it here.", propName, typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
-        function checkCSSPropertyStringCoercion(value2, propName) {
+        function checkCSSPropertyStringCoercion(value, propName) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided `%s` CSS property is an unsupported type %s. This value must be coerced to a string before before using it here.", propName, typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided `%s` CSS property is an unsupported type %s. This value must be coerced to a string before before using it here.", propName, typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
-        function checkHtmlStringCoercion(value2) {
+        function checkHtmlStringCoercion(value) {
           {
-            if (willCoercionThrow(value2)) {
-              error("The provided HTML markup uses a value of unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("The provided HTML markup uses a value of unsupported type %s. This value must be coerced to a string before before using it here.", typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
-        function checkFormFieldValueStringCoercion(value2) {
+        function checkFormFieldValueStringCoercion(value) {
           {
-            if (willCoercionThrow(value2)) {
-              error("Form field values (value, checked, defaultValue, or defaultChecked props) must be strings, not %s. This value must be coerced to a string before before using it here.", typeName(value2));
-              return testStringCoercion(value2);
+            if (willCoercionThrow(value)) {
+              error("Form field values (value, checked, defaultValue, or defaultChecked props) must be strings, not %s. This value must be coerced to a string before before using it here.", typeName(value));
+              return testStringCoercion(value);
             }
           }
         }
@@ -15262,10 +3491,10 @@ var require_react_dom_development = __commonJS({
         var illegalAttributeNameCache = {};
         var validatedAttributeNameCache = {};
         function isAttributeNameSafe(attributeName) {
-          if (hasOwnProperty2.call(validatedAttributeNameCache, attributeName)) {
+          if (hasOwnProperty.call(validatedAttributeNameCache, attributeName)) {
             return true;
           }
-          if (hasOwnProperty2.call(illegalAttributeNameCache, attributeName)) {
+          if (hasOwnProperty.call(illegalAttributeNameCache, attributeName)) {
             return false;
           }
           if (VALID_ATTRIBUTE_NAME_REGEX.test(attributeName)) {
@@ -15290,11 +3519,11 @@ var require_react_dom_development = __commonJS({
           }
           return false;
         }
-        function shouldRemoveAttributeWithWarning(name, value2, propertyInfo, isCustomComponentTag) {
+        function shouldRemoveAttributeWithWarning(name, value, propertyInfo, isCustomComponentTag) {
           if (propertyInfo !== null && propertyInfo.type === RESERVED) {
             return false;
           }
-          switch (typeof value2) {
+          switch (typeof value) {
             case "function":
             // $FlowIssue symbol is perfectly valid here
             case "symbol":
@@ -15314,11 +3543,11 @@ var require_react_dom_development = __commonJS({
               return false;
           }
         }
-        function shouldRemoveAttribute(name, value2, propertyInfo, isCustomComponentTag) {
-          if (value2 === null || typeof value2 === "undefined") {
+        function shouldRemoveAttribute(name, value, propertyInfo, isCustomComponentTag) {
+          if (value === null || typeof value === "undefined") {
             return true;
           }
-          if (shouldRemoveAttributeWithWarning(name, value2, propertyInfo, isCustomComponentTag)) {
+          if (shouldRemoveAttributeWithWarning(name, value, propertyInfo, isCustomComponentTag)) {
             return true;
           }
           if (isCustomComponentTag) {
@@ -15327,13 +3556,13 @@ var require_react_dom_development = __commonJS({
           if (propertyInfo !== null) {
             switch (propertyInfo.type) {
               case BOOLEAN:
-                return !value2;
+                return !value;
               case OVERLOADED_BOOLEAN:
-                return value2 === false;
+                return value === false;
               case NUMERIC:
-                return isNaN(value2);
+                return isNaN(value);
               case POSITIVE_NUMERIC:
-                return isNaN(value2) || value2 < 1;
+                return isNaN(value) || value < 1;
             }
           }
           return false;
@@ -15553,8 +3782,8 @@ var require_react_dom_development = __commonJS({
           );
         });
         var CAMELIZE = /[\-\:]([a-z])/g;
-        var capitalize = function(token2) {
-          return token2[1].toUpperCase();
+        var capitalize = function(token) {
+          return token[1].toUpperCase();
         };
         [
           "accent-height",
@@ -15737,11 +3966,11 @@ var require_react_dom_development = __commonJS({
         });
         var isJavaScriptProtocol = /^[\u0000-\u001F ]*j[\r\n\t]*a[\r\n\t]*v[\r\n\t]*a[\r\n\t]*s[\r\n\t]*c[\r\n\t]*r[\r\n\t]*i[\r\n\t]*p[\r\n\t]*t[\r\n\t]*\:/i;
         var didWarn = false;
-        function sanitizeURL(url2) {
+        function sanitizeURL(url) {
           {
-            if (!didWarn && isJavaScriptProtocol.test(url2)) {
+            if (!didWarn && isJavaScriptProtocol.test(url)) {
               didWarn = true;
-              error("A future version of React will block javascript: URLs as a security precaution. Use event handlers instead if you can. If you need to generate unsafe HTML try using dangerouslySetInnerHTML instead. React was passed %s.", JSON.stringify(url2));
+              error("A future version of React will block javascript: URLs as a security precaution. Use event handlers instead if you can. If you need to generate unsafe HTML try using dangerouslySetInnerHTML instead. React was passed %s.", JSON.stringify(url));
             }
           }
         }
@@ -15761,17 +3990,17 @@ var require_react_dom_development = __commonJS({
               var stringValue = null;
               if (propertyInfo.type === OVERLOADED_BOOLEAN) {
                 if (node.hasAttribute(attributeName)) {
-                  var value2 = node.getAttribute(attributeName);
-                  if (value2 === "") {
+                  var value = node.getAttribute(attributeName);
+                  if (value === "") {
                     return true;
                   }
                   if (shouldRemoveAttribute(name, expected, propertyInfo, false)) {
-                    return value2;
+                    return value;
                   }
-                  if (value2 === "" + expected) {
+                  if (value === "" + expected) {
                     return expected;
                   }
-                  return value2;
+                  return value;
                 }
               } else if (node.hasAttribute(attributeName)) {
                 if (shouldRemoveAttribute(name, expected, propertyInfo, false)) {
@@ -15800,34 +4029,34 @@ var require_react_dom_development = __commonJS({
             if (!node.hasAttribute(name)) {
               return expected === void 0 ? void 0 : null;
             }
-            var value2 = node.getAttribute(name);
+            var value = node.getAttribute(name);
             {
               checkAttributeStringCoercion(expected, name);
             }
-            if (value2 === "" + expected) {
+            if (value === "" + expected) {
               return expected;
             }
-            return value2;
+            return value;
           }
         }
-        function setValueForProperty(node, name, value2, isCustomComponentTag) {
+        function setValueForProperty(node, name, value, isCustomComponentTag) {
           var propertyInfo = getPropertyInfo(name);
           if (shouldIgnoreAttribute(name, propertyInfo, isCustomComponentTag)) {
             return;
           }
-          if (shouldRemoveAttribute(name, value2, propertyInfo, isCustomComponentTag)) {
-            value2 = null;
+          if (shouldRemoveAttribute(name, value, propertyInfo, isCustomComponentTag)) {
+            value = null;
           }
           if (isCustomComponentTag || propertyInfo === null) {
             if (isAttributeNameSafe(name)) {
               var _attributeName = name;
-              if (value2 === null) {
+              if (value === null) {
                 node.removeAttribute(_attributeName);
               } else {
                 {
-                  checkAttributeStringCoercion(value2, name);
+                  checkAttributeStringCoercion(value, name);
                 }
-                node.setAttribute(_attributeName, "" + value2);
+                node.setAttribute(_attributeName, "" + value);
               }
             }
             return;
@@ -15835,28 +4064,28 @@ var require_react_dom_development = __commonJS({
           var mustUseProperty = propertyInfo.mustUseProperty;
           if (mustUseProperty) {
             var propertyName = propertyInfo.propertyName;
-            if (value2 === null) {
+            if (value === null) {
               var type = propertyInfo.type;
               node[propertyName] = type === BOOLEAN ? false : "";
             } else {
-              node[propertyName] = value2;
+              node[propertyName] = value;
             }
             return;
           }
           var attributeName = propertyInfo.attributeName, attributeNamespace = propertyInfo.attributeNamespace;
-          if (value2 === null) {
+          if (value === null) {
             node.removeAttribute(attributeName);
           } else {
             var _type = propertyInfo.type;
             var attributeValue;
-            if (_type === BOOLEAN || _type === OVERLOADED_BOOLEAN && value2 === true) {
+            if (_type === BOOLEAN || _type === OVERLOADED_BOOLEAN && value === true) {
               attributeValue = "";
             } else {
               {
                 {
-                  checkAttributeStringCoercion(value2, attributeName);
+                  checkAttributeStringCoercion(value, attributeName);
                 }
-                attributeValue = "" + value2;
+                attributeValue = "" + value;
               }
               if (propertyInfo.sanitizeURL) {
                 sanitizeURL(attributeValue.toString());
@@ -16113,8 +4342,8 @@ var require_react_dom_development = __commonJS({
           }
         }
         function shouldConstruct(Component) {
-          var prototype2 = Component.prototype;
-          return !!(prototype2 && prototype2.isReactComponent);
+          var prototype = Component.prototype;
+          return !!(prototype && prototype.isReactComponent);
         }
         function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
           if (type == null) {
@@ -16375,21 +4604,21 @@ var require_react_dom_development = __commonJS({
             isRendering = rendering;
           }
         }
-        function toString4(value2) {
-          return "" + value2;
+        function toString(value) {
+          return "" + value;
         }
-        function getToStringValue(value2) {
-          switch (typeof value2) {
+        function getToStringValue(value) {
+          switch (typeof value) {
             case "boolean":
             case "number":
             case "string":
             case "undefined":
-              return value2;
+              return value;
             case "object":
               {
-                checkFormFieldValueStringCoercion(value2);
+                checkFormFieldValueStringCoercion(value);
               }
-              return value2;
+              return value;
             default:
               return "";
           }
@@ -16425,16 +4654,16 @@ var require_react_dom_development = __commonJS({
           node._valueTracker = null;
         }
         function getValueFromNode(node) {
-          var value2 = "";
+          var value = "";
           if (!node) {
-            return value2;
+            return value;
           }
           if (isCheckable(node)) {
-            value2 = node.checked ? "true" : "false";
+            value = node.checked ? "true" : "false";
           } else {
-            value2 = node.value;
+            value = node.value;
           }
-          return value2;
+          return value;
         }
         function trackValueOnNode(node) {
           var valueField = isCheckable(node) ? "checked" : "value";
@@ -16452,12 +4681,12 @@ var require_react_dom_development = __commonJS({
             get: function() {
               return get2.call(this);
             },
-            set: function(value2) {
+            set: function(value) {
               {
-                checkFormFieldValueStringCoercion(value2);
+                checkFormFieldValueStringCoercion(value);
               }
-              currentValue = "" + value2;
-              set2.call(this, value2);
+              currentValue = "" + value;
+              set2.call(this, value);
             }
           });
           Object.defineProperty(node, valueField, {
@@ -16467,11 +4696,11 @@ var require_react_dom_development = __commonJS({
             getValue: function() {
               return currentValue;
             },
-            setValue: function(value2) {
+            setValue: function(value) {
               {
-                checkFormFieldValueStringCoercion(value2);
+                checkFormFieldValueStringCoercion(value);
               }
-              currentValue = "" + value2;
+              currentValue = "" + value;
             },
             stopTracking: function() {
               detachTracker(node);
@@ -16573,17 +4802,17 @@ var require_react_dom_development = __commonJS({
             }
           }
           updateChecked(element, props);
-          var value2 = getToStringValue(props.value);
+          var value = getToStringValue(props.value);
           var type = props.type;
-          if (value2 != null) {
+          if (value != null) {
             if (type === "number") {
-              if (value2 === 0 && node.value === "" || // We explicitly want to coerce to number here if possible.
+              if (value === 0 && node.value === "" || // We explicitly want to coerce to number here if possible.
               // eslint-disable-next-line
-              node.value != value2) {
-                node.value = toString4(value2);
+              node.value != value) {
+                node.value = toString(value);
               }
-            } else if (node.value !== toString4(value2)) {
-              node.value = toString4(value2);
+            } else if (node.value !== toString(value)) {
+              node.value = toString(value);
             }
           } else if (type === "submit" || type === "reset") {
             node.removeAttribute("value");
@@ -16591,7 +4820,7 @@ var require_react_dom_development = __commonJS({
           }
           {
             if (props.hasOwnProperty("value")) {
-              setDefaultValue(node, props.type, value2);
+              setDefaultValue(node, props.type, value);
             } else if (props.hasOwnProperty("defaultValue")) {
               setDefaultValue(node, props.type, getToStringValue(props.defaultValue));
             }
@@ -16610,7 +4839,7 @@ var require_react_dom_development = __commonJS({
             if (isButton && (props.value === void 0 || props.value === null)) {
               return;
             }
-            var initialValue = toString4(node._wrapperState.initialValue);
+            var initialValue = toString(node._wrapperState.initialValue);
             if (!isHydrating2) {
               {
                 if (initialValue !== node.value) {
@@ -16664,15 +4893,15 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        function setDefaultValue(node, type, value2) {
+        function setDefaultValue(node, type, value) {
           if (
             // Focused number inputs synchronize on blur. See ChangeEventPlugin.js
             type !== "number" || getActiveElement(node.ownerDocument) !== node
           ) {
-            if (value2 == null) {
-              node.defaultValue = toString4(node._wrapperState.initialValue);
-            } else if (node.defaultValue !== toString4(value2)) {
-              node.defaultValue = toString4(value2);
+            if (value == null) {
+              node.defaultValue = toString(node._wrapperState.initialValue);
+            } else if (node.defaultValue !== toString(value)) {
+              node.defaultValue = toString(value);
             }
           }
         }
@@ -16710,11 +4939,11 @@ var require_react_dom_development = __commonJS({
         }
         function postMountWrapper$1(element, props) {
           if (props.value != null) {
-            element.setAttribute("value", toString4(getToStringValue(props.value)));
+            element.setAttribute("value", toString(getToStringValue(props.value)));
           }
         }
         var isArrayImpl = Array.isArray;
-        function isArray2(a) {
+        function isArray(a) {
           return isArrayImpl(a);
         }
         var didWarnValueDefaultValue$1;
@@ -16737,7 +4966,7 @@ var require_react_dom_development = __commonJS({
               if (props[propName] == null) {
                 continue;
               }
-              var propNameIsArray = isArray2(props[propName]);
+              var propNameIsArray = isArray(props[propName]);
               if (props.multiple && !propNameIsArray) {
                 error("The `%s` prop supplied to <select> must be an array if `multiple` is true.%s", propName, getDeclarationErrorAddendum());
               } else if (!props.multiple && propNameIsArray) {
@@ -16764,7 +4993,7 @@ var require_react_dom_development = __commonJS({
               }
             }
           } else {
-            var _selectedValue = toString4(getToStringValue(propValue));
+            var _selectedValue = toString(getToStringValue(propValue));
             var defaultSelected = null;
             for (var _i2 = 0; _i2 < options2.length; _i2++) {
               if (options2[_i2].value === _selectedValue) {
@@ -16806,9 +5035,9 @@ var require_react_dom_development = __commonJS({
         function postMountWrapper$2(element, props) {
           var node = element;
           node.multiple = !!props.multiple;
-          var value2 = props.value;
-          if (value2 != null) {
-            updateOptions(node, !!props.multiple, value2, false);
+          var value = props.value;
+          if (value != null) {
+            updateOptions(node, !!props.multiple, value, false);
           } else if (props.defaultValue != null) {
             updateOptions(node, !!props.multiple, props.defaultValue, true);
           }
@@ -16817,9 +5046,9 @@ var require_react_dom_development = __commonJS({
           var node = element;
           var wasMultiple = node._wrapperState.wasMultiple;
           node._wrapperState.wasMultiple = !!props.multiple;
-          var value2 = props.value;
-          if (value2 != null) {
-            updateOptions(node, !!props.multiple, value2, false);
+          var value = props.value;
+          if (value != null) {
+            updateOptions(node, !!props.multiple, value, false);
           } else if (wasMultiple !== !!props.multiple) {
             if (props.defaultValue != null) {
               updateOptions(node, !!props.multiple, props.defaultValue, true);
@@ -16830,9 +5059,9 @@ var require_react_dom_development = __commonJS({
         }
         function restoreControlledState$1(element, props) {
           var node = element;
-          var value2 = props.value;
-          if (value2 != null) {
-            updateOptions(node, !!props.multiple, value2, false);
+          var value = props.value;
+          if (value != null) {
+            updateOptions(node, !!props.multiple, value, false);
           }
         }
         var didWarnValDefaultVal = false;
@@ -16844,7 +5073,7 @@ var require_react_dom_development = __commonJS({
           var hostProps = assign({}, props, {
             value: void 0,
             defaultValue: void 0,
-            children: toString4(node._wrapperState.initialValue)
+            children: toString(node._wrapperState.initialValue)
           });
           return hostProps;
         }
@@ -16868,7 +5097,7 @@ var require_react_dom_development = __commonJS({
                 if (defaultValue != null) {
                   throw new Error("If you supply `defaultValue` on a <textarea>, do not pass children.");
                 }
-                if (isArray2(children)) {
+                if (isArray(children)) {
                   if (children.length > 1) {
                     throw new Error("<textarea> can only have at most one child.");
                   }
@@ -16888,10 +5117,10 @@ var require_react_dom_development = __commonJS({
         }
         function updateWrapper$1(element, props) {
           var node = element;
-          var value2 = getToStringValue(props.value);
+          var value = getToStringValue(props.value);
           var defaultValue = getToStringValue(props.defaultValue);
-          if (value2 != null) {
-            var newValue = toString4(value2);
+          if (value != null) {
+            var newValue = toString(value);
             if (newValue !== node.value) {
               node.value = newValue;
             }
@@ -16900,7 +5129,7 @@ var require_react_dom_development = __commonJS({
             }
           }
           if (defaultValue != null) {
-            node.defaultValue = toString4(defaultValue);
+            node.defaultValue = toString(defaultValue);
           }
         }
         function postMountWrapper$3(element, props) {
@@ -17085,18 +5314,18 @@ var require_react_dom_development = __commonJS({
             isUnitlessNumber[prefixKey(prefix2, prop)] = isUnitlessNumber[prop];
           });
         });
-        function dangerousStyleValue(name, value2, isCustomProperty) {
-          var isEmpty = value2 == null || typeof value2 === "boolean" || value2 === "";
+        function dangerousStyleValue(name, value, isCustomProperty) {
+          var isEmpty = value == null || typeof value === "boolean" || value === "";
           if (isEmpty) {
             return "";
           }
-          if (!isCustomProperty && typeof value2 === "number" && value2 !== 0 && !(isUnitlessNumber.hasOwnProperty(name) && isUnitlessNumber[name])) {
-            return value2 + "px";
+          if (!isCustomProperty && typeof value === "number" && value !== 0 && !(isUnitlessNumber.hasOwnProperty(name) && isUnitlessNumber[name])) {
+            return value + "px";
           }
           {
-            checkCSSPropertyStringCoercion(value2, name);
+            checkCSSPropertyStringCoercion(value, name);
           }
-          return ("" + value2).trim();
+          return ("" + value).trim();
         }
         var uppercasePattern = /([A-Z])/g;
         var msPattern = /^ms-/;
@@ -17140,40 +5369,40 @@ var require_react_dom_development = __commonJS({
             warnedStyleNames[name] = true;
             error("Unsupported vendor-prefixed style property %s. Did you mean %s?", name, name.charAt(0).toUpperCase() + name.slice(1));
           };
-          var warnStyleValueWithSemicolon = function(name, value2) {
-            if (warnedStyleValues.hasOwnProperty(value2) && warnedStyleValues[value2]) {
+          var warnStyleValueWithSemicolon = function(name, value) {
+            if (warnedStyleValues.hasOwnProperty(value) && warnedStyleValues[value]) {
               return;
             }
-            warnedStyleValues[value2] = true;
-            error(`Style property values shouldn't contain a semicolon. Try "%s: %s" instead.`, name, value2.replace(badStyleValueWithSemicolonPattern, ""));
+            warnedStyleValues[value] = true;
+            error(`Style property values shouldn't contain a semicolon. Try "%s: %s" instead.`, name, value.replace(badStyleValueWithSemicolonPattern, ""));
           };
-          var warnStyleValueIsNaN = function(name, value2) {
+          var warnStyleValueIsNaN = function(name, value) {
             if (warnedForNaNValue) {
               return;
             }
             warnedForNaNValue = true;
             error("`NaN` is an invalid value for the `%s` css style property.", name);
           };
-          var warnStyleValueIsInfinity = function(name, value2) {
+          var warnStyleValueIsInfinity = function(name, value) {
             if (warnedForInfinityValue) {
               return;
             }
             warnedForInfinityValue = true;
             error("`Infinity` is an invalid value for the `%s` css style property.", name);
           };
-          warnValidStyle = function(name, value2) {
+          warnValidStyle = function(name, value) {
             if (name.indexOf("-") > -1) {
               warnHyphenatedStyleName(name);
             } else if (badVendoredStyleNamePattern.test(name)) {
               warnBadVendoredStyleName(name);
-            } else if (badStyleValueWithSemicolonPattern.test(value2)) {
-              warnStyleValueWithSemicolon(name, value2);
+            } else if (badStyleValueWithSemicolonPattern.test(value)) {
+              warnStyleValueWithSemicolon(name, value);
             }
-            if (typeof value2 === "number") {
-              if (isNaN(value2)) {
-                warnStyleValueIsNaN(name, value2);
-              } else if (!isFinite(value2)) {
-                warnStyleValueIsInfinity(name, value2);
+            if (typeof value === "number") {
+              if (isNaN(value)) {
+                warnStyleValueIsNaN(name, value);
+              } else if (!isFinite(value)) {
+                warnStyleValueIsInfinity(name, value);
               }
             }
           };
@@ -17221,8 +5450,8 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        function isValueEmpty(value2) {
-          return value2 == null || typeof value2 === "boolean" || value2 === "";
+        function isValueEmpty(value) {
+          return value == null || typeof value === "boolean" || value === "";
         }
         function expandShorthandMap(styles) {
           var expanded = {};
@@ -17879,7 +6108,7 @@ var require_react_dom_development = __commonJS({
         var rARIACamel = new RegExp("^(aria)[A-Z][" + ATTRIBUTE_NAME_CHAR + "]*$");
         function validateProperty(tagName, name) {
           {
-            if (hasOwnProperty2.call(warnedProperties, name) && warnedProperties[name]) {
+            if (hasOwnProperty.call(warnedProperties, name) && warnedProperties[name]) {
               return true;
             }
             if (rARIACamel.test(name)) {
@@ -17961,8 +6190,8 @@ var require_react_dom_development = __commonJS({
           var INVALID_EVENT_NAME_REGEX = /^on[^A-Z]/;
           var rARIA$1 = new RegExp("^(aria)-[" + ATTRIBUTE_NAME_CHAR + "]*$");
           var rARIACamel$1 = new RegExp("^(aria)[A-Z][" + ATTRIBUTE_NAME_CHAR + "]*$");
-          validateProperty$1 = function(tagName, name, value2, eventRegistry) {
-            if (hasOwnProperty2.call(warnedProperties$1, name) && warnedProperties$1[name]) {
+          validateProperty$1 = function(tagName, name, value, eventRegistry) {
+            if (hasOwnProperty.call(warnedProperties$1, name) && warnedProperties$1[name]) {
               return true;
             }
             var lowerCasedName = name.toLowerCase();
@@ -18007,12 +6236,12 @@ var require_react_dom_development = __commonJS({
               warnedProperties$1[name] = true;
               return true;
             }
-            if (lowerCasedName === "is" && value2 !== null && value2 !== void 0 && typeof value2 !== "string") {
-              error("Received a `%s` for a string attribute `is`. If this is expected, cast the value to a string.", typeof value2);
+            if (lowerCasedName === "is" && value !== null && value !== void 0 && typeof value !== "string") {
+              error("Received a `%s` for a string attribute `is`. If this is expected, cast the value to a string.", typeof value);
               warnedProperties$1[name] = true;
               return true;
             }
-            if (typeof value2 === "number" && isNaN(value2)) {
+            if (typeof value === "number" && isNaN(value)) {
               error("Received NaN for the `%s` attribute. If this is expected, cast the value to a string.", name);
               warnedProperties$1[name] = true;
               return true;
@@ -18031,11 +6260,11 @@ var require_react_dom_development = __commonJS({
               warnedProperties$1[name] = true;
               return true;
             }
-            if (typeof value2 === "boolean" && shouldRemoveAttributeWithWarning(name, value2, propertyInfo, false)) {
-              if (value2) {
-                error('Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s="%s" or %s={value.toString()}.', value2, name, name, value2, name);
+            if (typeof value === "boolean" && shouldRemoveAttributeWithWarning(name, value, propertyInfo, false)) {
+              if (value) {
+                error('Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s="%s" or %s={value.toString()}.', value, name, name, value, name);
               } else {
-                error('Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s="%s" or %s={value.toString()}.\n\nIf you used to conditionally omit it with %s={condition && value}, pass %s={condition ? value : undefined} instead.', value2, name, name, value2, name, name, name);
+                error('Received `%s` for a non-boolean attribute `%s`.\n\nIf you want to write it to the DOM, pass a string instead: %s="%s" or %s={value.toString()}.\n\nIf you used to conditionally omit it with %s={condition && value}, pass %s={condition ? value : undefined} instead.', value, name, name, value, name, name, name);
               }
               warnedProperties$1[name] = true;
               return true;
@@ -18043,12 +6272,12 @@ var require_react_dom_development = __commonJS({
             if (isReserved) {
               return true;
             }
-            if (shouldRemoveAttributeWithWarning(name, value2, propertyInfo, false)) {
+            if (shouldRemoveAttributeWithWarning(name, value, propertyInfo, false)) {
               warnedProperties$1[name] = true;
               return false;
             }
-            if ((value2 === "false" || value2 === "true") && propertyInfo !== null && propertyInfo.type === BOOLEAN) {
-              error("Received the string `%s` for the boolean attribute `%s`. %s Did you mean %s={%s}?", value2, name, value2 === "false" ? "The browser will interpret it as a truthy value." : 'Although this works, it will not work as expected if you pass the string "false".', name, value2);
+            if ((value === "false" || value === "true") && propertyInfo !== null && propertyInfo.type === BOOLEAN) {
+              error("Received the string `%s` for the boolean attribute `%s`. %s Did you mean %s={%s}?", value, name, value === "false" ? "The browser will interpret it as a truthy value." : 'Although this works, it will not work as expected if you pass the string "false".', name, value);
               warnedProperties$1[name] = true;
               return true;
             }
@@ -18372,8 +6601,8 @@ var require_react_dom_development = __commonJS({
         function has(key) {
           return key._reactInternals !== void 0;
         }
-        function set(key, value2) {
-          key._reactInternals = value2;
+        function set(key, value) {
+          key._reactInternals = value;
         }
         var NoFlags = (
           /*                      */
@@ -20780,11 +9009,11 @@ var require_react_dom_development = __commonJS({
               hasSpaceKeypress = true;
               return SPACEBAR_CHAR;
             case "textInput":
-              var chars2 = nativeEvent.data;
-              if (chars2 === SPACEBAR_CHAR && hasSpaceKeypress) {
+              var chars = nativeEvent.data;
+              if (chars === SPACEBAR_CHAR && hasSpaceKeypress) {
                 return null;
               }
-              return chars2;
+              return chars;
             default:
               return null;
           }
@@ -20792,10 +9021,10 @@ var require_react_dom_development = __commonJS({
         function getFallbackBeforeInputChars(domEventName, nativeEvent) {
           if (isComposing) {
             if (domEventName === "compositionend" || !canUseCompositionEvent && isFallbackCompositionEnd(domEventName, nativeEvent)) {
-              var chars2 = getData();
+              var chars = getData();
               reset();
               isComposing = false;
-              return chars2;
+              return chars;
             }
             return null;
           }
@@ -20818,13 +9047,13 @@ var require_react_dom_development = __commonJS({
           }
         }
         function extractBeforeInputEvent(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget) {
-          var chars2;
+          var chars;
           if (canUseTextInputEvent) {
-            chars2 = getNativeBeforeInputChars(domEventName, nativeEvent);
+            chars = getNativeBeforeInputChars(domEventName, nativeEvent);
           } else {
-            chars2 = getFallbackBeforeInputChars(domEventName, nativeEvent);
+            chars = getFallbackBeforeInputChars(domEventName, nativeEvent);
           }
-          if (!chars2) {
+          if (!chars) {
             return null;
           }
           var listeners = accumulateTwoPhaseListeners(targetInst, "onBeforeInput");
@@ -20834,7 +9063,7 @@ var require_react_dom_development = __commonJS({
               event,
               listeners
             });
-            event.data = chars2;
+            event.data = chars;
           }
         }
         function extractEvents(dispatchQueue, domEventName, targetInst, nativeEvent, nativeEventTarget, eventSystemFlags, targetContainer) {
@@ -21103,7 +9332,7 @@ var require_react_dom_development = __commonJS({
           }
           for (var i = 0; i < keysA.length; i++) {
             var currentKey = keysA[i];
-            if (!hasOwnProperty2.call(objB, currentKey) || !objectIs(objA[currentKey], objB[currentKey])) {
+            if (!hasOwnProperty.call(objB, currentKey) || !objectIs(objA[currentKey], objB[currentKey])) {
               return false;
             }
           }
@@ -22044,10 +10273,10 @@ var require_react_dom_development = __commonJS({
         function getOwnerDocumentFromRootContainer(rootContainerElement) {
           return rootContainerElement.nodeType === DOCUMENT_NODE ? rootContainerElement : rootContainerElement.ownerDocument;
         }
-        function noop2() {
+        function noop() {
         }
         function trapClickOnNonInteractiveElement(node) {
-          node.onclick = noop2;
+          node.onclick = noop;
         }
         function setInitialDOMProperties(tag, domElement, rootContainerElement, nextProps, isCustomComponentTag) {
           for (var propKey in nextProps) {
@@ -22147,7 +10376,7 @@ var require_react_dom_development = __commonJS({
           }
           {
             if (namespaceURI === HTML_NAMESPACE) {
-              if (!isCustomComponentTag && Object.prototype.toString.call(domElement) === "[object HTMLUnknownElement]" && !hasOwnProperty2.call(warnedUnknownTags, type)) {
+              if (!isCustomComponentTag && Object.prototype.toString.call(domElement) === "[object HTMLUnknownElement]" && !hasOwnProperty.call(warnedUnknownTags, type)) {
                 warnedUnknownTags[type] = true;
                 error("The tag <%s> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.", type);
               }
@@ -22965,7 +11194,7 @@ var require_react_dom_development = __commonJS({
           eventsEnabled = null;
           selectionInformation = null;
         }
-        function createInstance2(type, props, rootContainerInstance, hostContext, internalInstanceHandle) {
+        function createInstance(type, props, rootContainerInstance, hostContext, internalInstanceHandle) {
           var parentNamespace;
           {
             var hostContextDev = hostContext;
@@ -23496,31 +11725,31 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        function checkPropTypes(typeSpecs, values, location2, componentName, element) {
+        function checkPropTypes(typeSpecs, values, location, componentName, element) {
           {
-            var has2 = Function.call.bind(hasOwnProperty2);
+            var has2 = Function.call.bind(hasOwnProperty);
             for (var typeSpecName in typeSpecs) {
               if (has2(typeSpecs, typeSpecName)) {
                 var error$1 = void 0;
                 try {
                   if (typeof typeSpecs[typeSpecName] !== "function") {
-                    var err = Error((componentName || "React class") + ": " + location2 + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
+                    var err = Error((componentName || "React class") + ": " + location + " type `" + typeSpecName + "` is invalid; it must be a function, usually from the `prop-types` package, but received `" + typeof typeSpecs[typeSpecName] + "`.This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.");
                     err.name = "Invariant Violation";
                     throw err;
                   }
-                  error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location2, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
+                  error$1 = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, "SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED");
                 } catch (ex) {
                   error$1 = ex;
                 }
                 if (error$1 && !(error$1 instanceof Error)) {
                   setCurrentlyValidatingElement(element);
-                  error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location2, typeSpecName, typeof error$1);
+                  error("%s: type specification of %s `%s` is invalid; the type checker function must return `null` or an `Error` but returned a %s. You may have forgotten to pass an argument to the type checker creator (arrayOf, instanceOf, objectOf, oneOf, oneOfType, and shape all require an argument).", componentName || "React class", location, typeSpecName, typeof error$1);
                   setCurrentlyValidatingElement(null);
                 }
                 if (error$1 instanceof Error && !(error$1.message in loggedTypeFailures)) {
                   loggedTypeFailures[error$1.message] = true;
                   setCurrentlyValidatingElement(element);
-                  error("Failed %s type: %s", location2, error$1.message);
+                  error("Failed %s type: %s", location, error$1.message);
                   setCurrentlyValidatingElement(null);
                 }
               }
@@ -23557,13 +11786,13 @@ var require_react_dom_development = __commonJS({
           }
           index--;
         }
-        function push(cursor, value2, fiber) {
+        function push(cursor, value, fiber) {
           index++;
           valueStack[index] = cursor.current;
           {
             fiberStack[index] = fiber;
           }
-          cursor.current = value2;
+          cursor.current = value;
         }
         var warnedAboutMissingGetChildContext;
         {
@@ -24316,8 +12545,8 @@ var require_react_dom_development = __commonJS({
           };
           var setToSortedString = function(set2) {
             var array = [];
-            set2.forEach(function(value2) {
-              array.push(value2);
+            set2.forEach(function(value) {
+              array.push(value);
             });
             return array.sort().join(", ");
           };
@@ -24552,12 +12781,12 @@ var require_react_dom_development = __commonJS({
               if (current2 !== null && current2.ref !== null && typeof current2.ref === "function" && current2.ref._stringRef === stringRef) {
                 return current2.ref;
               }
-              var ref = function(value2) {
+              var ref = function(value) {
                 var refs = resolvedInst.refs;
-                if (value2 === null) {
+                if (value === null) {
                   delete refs[stringRef];
                 } else {
-                  refs[stringRef] = value2;
+                  refs[stringRef] = value;
                 }
               };
               ref._stringRef = stringRef;
@@ -24746,7 +12975,7 @@ var require_react_dom_development = __commonJS({
                   return createChild(returnFiber, init(payload), lanes);
                 }
               }
-              if (isArray2(newChild) || getIteratorFn(newChild)) {
+              if (isArray(newChild) || getIteratorFn(newChild)) {
                 var _created3 = createFiberFromFragment(newChild, returnFiber.mode, lanes, null);
                 _created3.return = returnFiber;
                 return _created3;
@@ -24790,7 +13019,7 @@ var require_react_dom_development = __commonJS({
                   return updateSlot(returnFiber, oldFiber, init(payload), lanes);
                 }
               }
-              if (isArray2(newChild) || getIteratorFn(newChild)) {
+              if (isArray(newChild) || getIteratorFn(newChild)) {
                 if (key !== null) {
                   return null;
                 }
@@ -24825,7 +13054,7 @@ var require_react_dom_development = __commonJS({
                   var init = newChild._init;
                   return updateFromMap(existingChildren, returnFiber, newIdx, init(payload), lanes);
               }
-              if (isArray2(newChild) || getIteratorFn(newChild)) {
+              if (isArray(newChild) || getIteratorFn(newChild)) {
                 var _matchedFiber3 = existingChildren.get(newIdx) || null;
                 return updateFragment2(returnFiber, _matchedFiber3, newChild, lanes, null);
               }
@@ -25199,7 +13428,7 @@ var require_react_dom_development = __commonJS({
                   var init = newChild._init;
                   return reconcileChildFibers2(returnFiber, currentFirstChild, init(payload), lanes);
               }
-              if (isArray2(newChild)) {
+              if (isArray(newChild)) {
                 return reconcileChildrenArray(returnFiber, currentFirstChild, newChild, lanes);
               }
               if (getIteratorFn(newChild)) {
@@ -25425,12 +13654,12 @@ var require_react_dom_development = __commonJS({
               error("Context can only be read while React is rendering. In classes, you can read it in the render method or getDerivedStateFromProps. In function components, you can read it directly in the function body, but not inside Hooks like useReducer() or useMemo().");
             }
           }
-          var value2 = context._currentValue;
+          var value = context._currentValue;
           if (lastFullyObservedContext === context) ;
           else {
             var contextItem = {
               context,
-              memoizedValue: value2,
+              memoizedValue: value,
               next: null
             };
             if (lastContextDependency === null) {
@@ -25446,7 +13675,7 @@ var require_react_dom_development = __commonJS({
               lastContextDependency = lastContextDependency.next = contextItem;
             }
           }
-          return value2;
+          return value;
         }
         var concurrentQueues = null;
         function pushConcurrentUpdateQueue(queue) {
@@ -26114,7 +14343,7 @@ var require_react_dom_development = __commonJS({
         }
         function checkDepsAreArrayDev(deps) {
           {
-            if (deps !== void 0 && deps !== null && !isArray2(deps)) {
+            if (deps !== void 0 && deps !== null && !isArray(deps)) {
               error("%s received a final argument that is not an array (instead, received `%s`). When specified, the final argument must be an array.", currentHookNameInDev, typeof deps);
             }
           }
@@ -26668,10 +14897,10 @@ var require_react_dom_development = __commonJS({
         function rerenderState(initialState) {
           return rerenderReducer(basicStateReducer);
         }
-        function pushEffect(tag, create2, destroy, deps) {
+        function pushEffect(tag, create, destroy, deps) {
           var effect = {
             tag,
-            create: create2,
+            create,
             destroy,
             deps,
             // Circular
@@ -26709,13 +14938,13 @@ var require_react_dom_development = __commonJS({
           var hook = updateWorkInProgressHook();
           return hook.memoizedState;
         }
-        function mountEffectImpl(fiberFlags, hookFlags, create2, deps) {
+        function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
           var hook = mountWorkInProgressHook();
           var nextDeps = deps === void 0 ? null : deps;
           currentlyRenderingFiber$1.flags |= fiberFlags;
-          hook.memoizedState = pushEffect(HasEffect | hookFlags, create2, void 0, nextDeps);
+          hook.memoizedState = pushEffect(HasEffect | hookFlags, create, void 0, nextDeps);
         }
-        function updateEffectImpl(fiberFlags, hookFlags, create2, deps) {
+        function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
           var hook = updateWorkInProgressHook();
           var nextDeps = deps === void 0 ? null : deps;
           var destroy = void 0;
@@ -26725,31 +14954,31 @@ var require_react_dom_development = __commonJS({
             if (nextDeps !== null) {
               var prevDeps = prevEffect.deps;
               if (areHookInputsEqual(nextDeps, prevDeps)) {
-                hook.memoizedState = pushEffect(hookFlags, create2, destroy, nextDeps);
+                hook.memoizedState = pushEffect(hookFlags, create, destroy, nextDeps);
                 return;
               }
             }
           }
           currentlyRenderingFiber$1.flags |= fiberFlags;
-          hook.memoizedState = pushEffect(HasEffect | hookFlags, create2, destroy, nextDeps);
+          hook.memoizedState = pushEffect(HasEffect | hookFlags, create, destroy, nextDeps);
         }
-        function mountEffect(create2, deps) {
+        function mountEffect(create, deps) {
           if ((currentlyRenderingFiber$1.mode & StrictEffectsMode) !== NoMode) {
-            return mountEffectImpl(MountPassiveDev | Passive | PassiveStatic, Passive$1, create2, deps);
+            return mountEffectImpl(MountPassiveDev | Passive | PassiveStatic, Passive$1, create, deps);
           } else {
-            return mountEffectImpl(Passive | PassiveStatic, Passive$1, create2, deps);
+            return mountEffectImpl(Passive | PassiveStatic, Passive$1, create, deps);
           }
         }
-        function updateEffect(create2, deps) {
-          return updateEffectImpl(Passive, Passive$1, create2, deps);
+        function updateEffect(create, deps) {
+          return updateEffectImpl(Passive, Passive$1, create, deps);
         }
-        function mountInsertionEffect(create2, deps) {
-          return mountEffectImpl(Update, Insertion, create2, deps);
+        function mountInsertionEffect(create, deps) {
+          return mountEffectImpl(Update, Insertion, create, deps);
         }
-        function updateInsertionEffect(create2, deps) {
-          return updateEffectImpl(Update, Insertion, create2, deps);
+        function updateInsertionEffect(create, deps) {
+          return updateEffectImpl(Update, Insertion, create, deps);
         }
-        function mountLayoutEffect(create2, deps) {
+        function mountLayoutEffect(create, deps) {
           var fiberFlags = Update;
           {
             fiberFlags |= LayoutStatic;
@@ -26757,15 +14986,15 @@ var require_react_dom_development = __commonJS({
           if ((currentlyRenderingFiber$1.mode & StrictEffectsMode) !== NoMode) {
             fiberFlags |= MountLayoutDev;
           }
-          return mountEffectImpl(fiberFlags, Layout, create2, deps);
+          return mountEffectImpl(fiberFlags, Layout, create, deps);
         }
-        function updateLayoutEffect(create2, deps) {
-          return updateEffectImpl(Update, Layout, create2, deps);
+        function updateLayoutEffect(create, deps) {
+          return updateEffectImpl(Update, Layout, create, deps);
         }
-        function imperativeHandleEffect(create2, ref) {
+        function imperativeHandleEffect(create, ref) {
           if (typeof ref === "function") {
             var refCallback = ref;
-            var _inst = create2();
+            var _inst = create();
             refCallback(_inst);
             return function() {
               refCallback(null);
@@ -26777,17 +15006,17 @@ var require_react_dom_development = __commonJS({
                 error("Expected useImperativeHandle() first argument to either be a ref callback or React.createRef() object. Instead received: %s.", "an object with keys {" + Object.keys(refObject).join(", ") + "}");
               }
             }
-            var _inst2 = create2();
+            var _inst2 = create();
             refObject.current = _inst2;
             return function() {
               refObject.current = null;
             };
           }
         }
-        function mountImperativeHandle(ref, create2, deps) {
+        function mountImperativeHandle(ref, create, deps) {
           {
-            if (typeof create2 !== "function") {
-              error("Expected useImperativeHandle() second argument to be a function that creates a handle. Instead received: %s.", create2 !== null ? typeof create2 : "null");
+            if (typeof create !== "function") {
+              error("Expected useImperativeHandle() second argument to be a function that creates a handle. Instead received: %s.", create !== null ? typeof create : "null");
             }
           }
           var effectDeps = deps !== null && deps !== void 0 ? deps.concat([ref]) : null;
@@ -26798,18 +15027,18 @@ var require_react_dom_development = __commonJS({
           if ((currentlyRenderingFiber$1.mode & StrictEffectsMode) !== NoMode) {
             fiberFlags |= MountLayoutDev;
           }
-          return mountEffectImpl(fiberFlags, Layout, imperativeHandleEffect.bind(null, create2, ref), effectDeps);
+          return mountEffectImpl(fiberFlags, Layout, imperativeHandleEffect.bind(null, create, ref), effectDeps);
         }
-        function updateImperativeHandle(ref, create2, deps) {
+        function updateImperativeHandle(ref, create, deps) {
           {
-            if (typeof create2 !== "function") {
-              error("Expected useImperativeHandle() second argument to be a function that creates a handle. Instead received: %s.", create2 !== null ? typeof create2 : "null");
+            if (typeof create !== "function") {
+              error("Expected useImperativeHandle() second argument to be a function that creates a handle. Instead received: %s.", create !== null ? typeof create : "null");
             }
           }
           var effectDeps = deps !== null && deps !== void 0 ? deps.concat([ref]) : null;
-          return updateEffectImpl(Update, Layout, imperativeHandleEffect.bind(null, create2, ref), effectDeps);
+          return updateEffectImpl(Update, Layout, imperativeHandleEffect.bind(null, create, ref), effectDeps);
         }
-        function mountDebugValue(value2, formatterFn) {
+        function mountDebugValue(value, formatterFn) {
         }
         var updateDebugValue = mountDebugValue;
         function mountCallback(callback, deps) {
@@ -26856,31 +15085,31 @@ var require_react_dom_development = __commonJS({
           hook.memoizedState = [nextValue, nextDeps];
           return nextValue;
         }
-        function mountDeferredValue(value2) {
+        function mountDeferredValue(value) {
           var hook = mountWorkInProgressHook();
-          hook.memoizedState = value2;
-          return value2;
+          hook.memoizedState = value;
+          return value;
         }
-        function updateDeferredValue(value2) {
+        function updateDeferredValue(value) {
           var hook = updateWorkInProgressHook();
           var resolvedCurrentHook = currentHook;
           var prevValue = resolvedCurrentHook.memoizedState;
-          return updateDeferredValueImpl(hook, prevValue, value2);
+          return updateDeferredValueImpl(hook, prevValue, value);
         }
-        function rerenderDeferredValue(value2) {
+        function rerenderDeferredValue(value) {
           var hook = updateWorkInProgressHook();
           if (currentHook === null) {
-            hook.memoizedState = value2;
-            return value2;
+            hook.memoizedState = value;
+            return value;
           } else {
             var prevValue = currentHook.memoizedState;
-            return updateDeferredValueImpl(hook, prevValue, value2);
+            return updateDeferredValueImpl(hook, prevValue, value);
           }
         }
-        function updateDeferredValueImpl(hook, prevValue, value2) {
+        function updateDeferredValueImpl(hook, prevValue, value) {
           var shouldDeferValue = !includesOnlyNonUrgentLanes(renderLanes);
           if (shouldDeferValue) {
-            if (!objectIs(value2, prevValue)) {
+            if (!objectIs(value, prevValue)) {
               var deferredLane = claimNextTransitionLane();
               currentlyRenderingFiber$1.lanes = mergeLanes(currentlyRenderingFiber$1.lanes, deferredLane);
               markSkippedUpdateLanes(deferredLane);
@@ -26892,8 +15121,8 @@ var require_react_dom_development = __commonJS({
               hook.baseState = false;
               markWorkInProgressReceivedUpdate();
             }
-            hook.memoizedState = value2;
-            return value2;
+            hook.memoizedState = value;
+            return value;
           }
         }
         function startTransition(setPending, callback, options2) {
@@ -27129,38 +15358,38 @@ var require_react_dom_development = __commonJS({
               mountHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
-              return mountEffect(create2, deps);
+              return mountEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
-              return mountImperativeHandle(ref, create2, deps);
+              return mountImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
-              return mountInsertionEffect(create2, deps);
+              return mountInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
-              return mountLayoutEffect(create2, deps);
+              return mountLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               mountHookTypesDev();
               checkDepsAreArrayDev(deps);
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnMountInDEV;
               try {
-                return mountMemo(create2, deps);
+                return mountMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27192,15 +15421,15 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               mountHookTypesDev();
               return mountDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               mountHookTypesDev();
-              return mountDeferredValue(value2);
+              return mountDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -27238,33 +15467,33 @@ var require_react_dom_development = __commonJS({
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               updateHookTypesDev();
-              return mountEffect(create2, deps);
+              return mountEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               updateHookTypesDev();
-              return mountImperativeHandle(ref, create2, deps);
+              return mountImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               updateHookTypesDev();
-              return mountInsertionEffect(create2, deps);
+              return mountInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               updateHookTypesDev();
-              return mountLayoutEffect(create2, deps);
+              return mountLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnMountInDEV;
               try {
-                return mountMemo(create2, deps);
+                return mountMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27296,15 +15525,15 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               updateHookTypesDev();
               return mountDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               updateHookTypesDev();
-              return mountDeferredValue(value2);
+              return mountDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -27342,33 +15571,33 @@ var require_react_dom_development = __commonJS({
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               updateHookTypesDev();
-              return updateEffect(create2, deps);
+              return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               updateHookTypesDev();
-              return updateImperativeHandle(ref, create2, deps);
+              return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               updateHookTypesDev();
-              return updateInsertionEffect(create2, deps);
+              return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               updateHookTypesDev();
-              return updateLayoutEffect(create2, deps);
+              return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnUpdateInDEV;
               try {
-                return updateMemo(create2, deps);
+                return updateMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27400,15 +15629,15 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               updateHookTypesDev();
-              return updateDeferredValue(value2);
+              return updateDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -27446,33 +15675,33 @@ var require_react_dom_development = __commonJS({
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               updateHookTypesDev();
-              return updateEffect(create2, deps);
+              return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               updateHookTypesDev();
-              return updateImperativeHandle(ref, create2, deps);
+              return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               updateHookTypesDev();
-              return updateInsertionEffect(create2, deps);
+              return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               updateHookTypesDev();
-              return updateLayoutEffect(create2, deps);
+              return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnRerenderInDEV;
               try {
-                return updateMemo(create2, deps);
+                return updateMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27504,15 +15733,15 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               updateHookTypesDev();
-              return rerenderDeferredValue(value2);
+              return rerenderDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -27553,38 +15782,38 @@ var require_react_dom_development = __commonJS({
               mountHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               warnInvalidHookAccess();
               mountHookTypesDev();
-              return mountEffect(create2, deps);
+              return mountEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               warnInvalidHookAccess();
               mountHookTypesDev();
-              return mountImperativeHandle(ref, create2, deps);
+              return mountImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               warnInvalidHookAccess();
               mountHookTypesDev();
-              return mountInsertionEffect(create2, deps);
+              return mountInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               warnInvalidHookAccess();
               mountHookTypesDev();
-              return mountLayoutEffect(create2, deps);
+              return mountLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               warnInvalidHookAccess();
               mountHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnMountInDEV;
               try {
-                return mountMemo(create2, deps);
+                return mountMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27619,17 +15848,17 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               warnInvalidHookAccess();
               mountHookTypesDev();
               return mountDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               warnInvalidHookAccess();
               mountHookTypesDev();
-              return mountDeferredValue(value2);
+              return mountDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -27674,38 +15903,38 @@ var require_react_dom_development = __commonJS({
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateEffect(create2, deps);
+              return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateImperativeHandle(ref, create2, deps);
+              return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateInsertionEffect(create2, deps);
+              return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateLayoutEffect(create2, deps);
+              return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               warnInvalidHookAccess();
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnUpdateInDEV;
               try {
-                return updateMemo(create2, deps);
+                return updateMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27740,17 +15969,17 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateDeferredValue(value2);
+              return updateDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -27795,38 +16024,38 @@ var require_react_dom_development = __commonJS({
               updateHookTypesDev();
               return readContext(context);
             },
-            useEffect: function(create2, deps) {
+            useEffect: function(create, deps) {
               currentHookNameInDev = "useEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateEffect(create2, deps);
+              return updateEffect(create, deps);
             },
-            useImperativeHandle: function(ref, create2, deps) {
+            useImperativeHandle: function(ref, create, deps) {
               currentHookNameInDev = "useImperativeHandle";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateImperativeHandle(ref, create2, deps);
+              return updateImperativeHandle(ref, create, deps);
             },
-            useInsertionEffect: function(create2, deps) {
+            useInsertionEffect: function(create, deps) {
               currentHookNameInDev = "useInsertionEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateInsertionEffect(create2, deps);
+              return updateInsertionEffect(create, deps);
             },
-            useLayoutEffect: function(create2, deps) {
+            useLayoutEffect: function(create, deps) {
               currentHookNameInDev = "useLayoutEffect";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return updateLayoutEffect(create2, deps);
+              return updateLayoutEffect(create, deps);
             },
-            useMemo: function(create2, deps) {
+            useMemo: function(create, deps) {
               currentHookNameInDev = "useMemo";
               warnInvalidHookAccess();
               updateHookTypesDev();
               var prevDispatcher = ReactCurrentDispatcher$1.current;
               ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnUpdateInDEV;
               try {
-                return updateMemo(create2, deps);
+                return updateMemo(create, deps);
               } finally {
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
@@ -27861,17 +16090,17 @@ var require_react_dom_development = __commonJS({
                 ReactCurrentDispatcher$1.current = prevDispatcher;
               }
             },
-            useDebugValue: function(value2, formatterFn) {
+            useDebugValue: function(value, formatterFn) {
               currentHookNameInDev = "useDebugValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
               return updateDebugValue();
             },
-            useDeferredValue: function(value2) {
+            useDeferredValue: function(value) {
               currentHookNameInDev = "useDeferredValue";
               warnInvalidHookAccess();
               updateHookTypesDev();
-              return rerenderDeferredValue(value2);
+              return rerenderDeferredValue(value);
             },
             useTransition: function() {
               currentHookNameInDev = "useTransition";
@@ -28268,7 +16497,7 @@ var require_react_dom_development = __commonJS({
               error("%s: getSnapshotBeforeUpdate() is defined as a static method and will be ignored. Instead, declare it as an instance method.", name);
             }
             var _state = instance.state;
-            if (_state && (typeof _state !== "object" || isArray2(_state))) {
+            if (_state && (typeof _state !== "object" || isArray(_state))) {
               error("%s.state: must be set to an object or null", name);
             }
             if (typeof instance.getChildContext === "function" && typeof ctor.childContextTypes !== "object") {
@@ -28628,17 +16857,17 @@ var require_react_dom_development = __commonJS({
           instance.context = nextContext;
           return shouldUpdate;
         }
-        function createCapturedValueAtFiber(value2, source) {
+        function createCapturedValueAtFiber(value, source) {
           return {
-            value: value2,
+            value,
             source,
             stack: getStackByFiberInDevAndProd(source),
             digest: null
           };
         }
-        function createCapturedValue(value2, digest, stack) {
+        function createCapturedValue(value, digest, stack) {
           return {
-            value: value2,
+            value,
             source: null,
             stack: stack != null ? stack : null,
             digest: digest != null ? digest : null
@@ -28825,15 +17054,15 @@ var require_react_dom_development = __commonJS({
           suspenseBoundary.lanes = rootRenderLanes;
           return suspenseBoundary;
         }
-        function throwException(root2, returnFiber, sourceFiber, value2, rootRenderLanes) {
+        function throwException(root2, returnFiber, sourceFiber, value, rootRenderLanes) {
           sourceFiber.flags |= Incomplete;
           {
             if (isDevToolsPresent) {
               restorePendingUpdaters(root2, rootRenderLanes);
             }
           }
-          if (value2 !== null && typeof value2 === "object" && typeof value2.then === "function") {
-            var wakeable = value2;
+          if (value !== null && typeof value === "object" && typeof value.then === "function") {
+            var wakeable = value;
             resetSuspendedComponent(sourceFiber);
             {
               if (getIsHydrating() && sourceFiber.mode & ConcurrentMode) {
@@ -28856,7 +17085,7 @@ var require_react_dom_development = __commonJS({
                 return;
               }
               var uncaughtSuspenseError = new Error("A component suspended while responding to synchronous input. This will cause the UI to be replaced with a loading indicator. To fix, updates that suspend should be wrapped with startTransition.");
-              value2 = uncaughtSuspenseError;
+              value = uncaughtSuspenseError;
             }
           } else {
             if (getIsHydrating() && sourceFiber.mode & ConcurrentMode) {
@@ -28867,18 +17096,18 @@ var require_react_dom_development = __commonJS({
                   _suspenseBoundary.flags |= ForceClientRender;
                 }
                 markSuspenseBoundaryShouldCapture(_suspenseBoundary, returnFiber, sourceFiber, root2, rootRenderLanes);
-                queueHydrationError(createCapturedValueAtFiber(value2, sourceFiber));
+                queueHydrationError(createCapturedValueAtFiber(value, sourceFiber));
                 return;
               }
             }
           }
-          value2 = createCapturedValueAtFiber(value2, sourceFiber);
-          renderDidError(value2);
+          value = createCapturedValueAtFiber(value, sourceFiber);
+          renderDidError(value);
           var workInProgress2 = returnFiber;
           do {
             switch (workInProgress2.tag) {
               case HostRoot: {
-                var _errorInfo = value2;
+                var _errorInfo = value;
                 workInProgress2.flags |= ShouldCapture;
                 var lane = pickArbitraryLane(rootRenderLanes);
                 workInProgress2.lanes = mergeLanes(workInProgress2.lanes, lane);
@@ -28887,7 +17116,7 @@ var require_react_dom_development = __commonJS({
                 return;
               }
               case ClassComponent:
-                var errorInfo = value2;
+                var errorInfo = value;
                 var ctor = workInProgress2.type;
                 var instance = workInProgress2.stateNode;
                 if ((workInProgress2.flags & DidCapture) === NoFlags && (typeof ctor.getDerivedStateFromError === "function" || instance !== null && typeof instance.componentDidCatch === "function" && !isAlreadyFailedLegacyErrorBoundary(instance))) {
@@ -29550,7 +17779,7 @@ var require_react_dom_development = __commonJS({
             context = getMaskedContext(workInProgress2, unmaskedContext);
           }
           prepareToReadContext(workInProgress2, renderLanes2);
-          var value2;
+          var value;
           var hasId;
           {
             markComponentRenderStarted(workInProgress2);
@@ -29568,7 +17797,7 @@ var require_react_dom_development = __commonJS({
             }
             setIsRendering(true);
             ReactCurrentOwner$1.current = workInProgress2;
-            value2 = renderWithHooks(null, workInProgress2, Component, props, context, renderLanes2);
+            value = renderWithHooks(null, workInProgress2, Component, props, context, renderLanes2);
             hasId = checkDidRenderIdHook();
             setIsRendering(false);
           }
@@ -29577,7 +17806,7 @@ var require_react_dom_development = __commonJS({
           }
           workInProgress2.flags |= PerformedWork;
           {
-            if (typeof value2 === "object" && value2 !== null && typeof value2.render === "function" && value2.$$typeof === void 0) {
+            if (typeof value === "object" && value !== null && typeof value.render === "function" && value.$$typeof === void 0) {
               var _componentName = getComponentNameFromType(Component) || "Unknown";
               if (!didWarnAboutModulePatternComponent[_componentName]) {
                 error("The <%s /> component appears to be a function component that returns a class instance. Change %s to a class that extends React.Component instead. If you can't use a class try assigning the prototype on the function as a workaround. `%s.prototype = React.Component.prototype`. Don't use an arrow function since it cannot be called with `new` by React.", _componentName, _componentName, _componentName);
@@ -29588,7 +17817,7 @@ var require_react_dom_development = __commonJS({
           if (
             // Run these checks in production only if the flag is off.
             // Eventually we'll delete this branch altogether.
-            typeof value2 === "object" && value2 !== null && typeof value2.render === "function" && value2.$$typeof === void 0
+            typeof value === "object" && value !== null && typeof value.render === "function" && value.$$typeof === void 0
           ) {
             {
               var _componentName2 = getComponentNameFromType(Component) || "Unknown";
@@ -29607,9 +17836,9 @@ var require_react_dom_development = __commonJS({
             } else {
               hasContext = false;
             }
-            workInProgress2.memoizedState = value2.state !== null && value2.state !== void 0 ? value2.state : null;
+            workInProgress2.memoizedState = value.state !== null && value.state !== void 0 ? value.state : null;
             initializeUpdateQueue(workInProgress2);
-            adoptClassInstance(workInProgress2, value2);
+            adoptClassInstance(workInProgress2, value);
             mountClassInstance(workInProgress2, Component, props, renderLanes2);
             return finishClassComponent(null, workInProgress2, Component, true, hasContext, renderLanes2);
           } else {
@@ -29618,7 +17847,7 @@ var require_react_dom_development = __commonJS({
               if (workInProgress2.mode & StrictLegacyMode) {
                 setIsStrictModeForDevtools(true);
                 try {
-                  value2 = renderWithHooks(null, workInProgress2, Component, props, context, renderLanes2);
+                  value = renderWithHooks(null, workInProgress2, Component, props, context, renderLanes2);
                   hasId = checkDidRenderIdHook();
                 } finally {
                   setIsStrictModeForDevtools(false);
@@ -29628,7 +17857,7 @@ var require_react_dom_development = __commonJS({
             if (getIsHydrating() && hasId) {
               pushMaterializedTreeId(workInProgress2);
             }
-            reconcileChildren(null, workInProgress2, value2, renderLanes2);
+            reconcileChildren(null, workInProgress2, value, renderLanes2);
             {
               validateFunctionComponentInDev(workInProgress2, Component);
             }
@@ -30112,9 +18341,9 @@ var require_react_dom_development = __commonJS({
         }
         function validateSuspenseListNestedChild(childSlot, index2) {
           {
-            var isAnArray = isArray2(childSlot);
-            var isIterable2 = !isAnArray && typeof getIteratorFn(childSlot) === "function";
-            if (isAnArray || isIterable2) {
+            var isAnArray = isArray(childSlot);
+            var isIterable = !isAnArray && typeof getIteratorFn(childSlot) === "function";
+            if (isAnArray || isIterable) {
               var type = isAnArray ? "array" : "iterable";
               error("A nested %s was passed to row #%s in <SuspenseList />. Wrap it in an additional SuspenseList to configure its revealOrder: <SuspenseList revealOrder=...> ... <SuspenseList revealOrder=...>{%s}</SuspenseList> ... </SuspenseList>", type, index2, type);
               return false;
@@ -30125,7 +18354,7 @@ var require_react_dom_development = __commonJS({
         function validateSuspenseListChildren(children, revealOrder) {
           {
             if ((revealOrder === "forwards" || revealOrder === "backwards") && children !== void 0 && children !== null && children !== false) {
-              if (isArray2(children)) {
+              if (isArray(children)) {
                 for (var i = 0; i < children.length; i++) {
                   if (!validateSuspenseListNestedChild(children[i], i)) {
                     return;
@@ -30932,7 +19161,7 @@ var require_react_dom_development = __commonJS({
                     markUpdate(workInProgress2);
                   }
                 } else {
-                  var instance = createInstance2(type, newProps, rootContainerInstance, currentHostContext, workInProgress2);
+                  var instance = createInstance(type, newProps, rootContainerInstance, currentHostContext, workInProgress2);
                   appendAllChildren(instance, workInProgress2, false, false);
                   workInProgress2.stateNode = instance;
                   if (finalizeInitialChildren(instance, type, newProps, rootContainerInstance)) {
@@ -31551,13 +19780,13 @@ var require_react_dom_development = __commonJS({
                     markComponentLayoutEffectMountStarted(finishedWork);
                   }
                 }
-                var create2 = effect.create;
+                var create = effect.create;
                 {
                   if ((flags & Insertion) !== NoFlags$1) {
                     setIsRunningInsertionEffect(true);
                   }
                 }
-                effect.destroy = create2();
+                effect.destroy = create();
                 {
                   if ((flags & Insertion) !== NoFlags$1) {
                     setIsRunningInsertionEffect(false);
@@ -34876,8 +23105,8 @@ var require_react_dom_development = __commonJS({
           return new FiberNode(tag, pendingProps, key, mode);
         };
         function shouldConstruct$1(Component) {
-          var prototype2 = Component.prototype;
-          return !!(prototype2 && prototype2.isReactComponent);
+          var prototype = Component.prototype;
+          return !!(prototype && prototype.isReactComponent);
         }
         function isSimpleFunctionComponent(type) {
           return typeof type === "function" && !shouldConstruct$1(type) && type.defaultProps === void 0;
@@ -35537,9 +23766,9 @@ var require_react_dom_development = __commonJS({
         {
           var copyWithDeleteImpl = function(obj, path, index2) {
             var key = path[index2];
-            var updated = isArray2(obj) ? obj.slice() : assign({}, obj);
+            var updated = isArray(obj) ? obj.slice() : assign({}, obj);
             if (index2 + 1 === path.length) {
-              if (isArray2(updated)) {
+              if (isArray(updated)) {
                 updated.splice(key, 1);
               } else {
                 delete updated[key];
@@ -35554,11 +23783,11 @@ var require_react_dom_development = __commonJS({
           };
           var copyWithRenameImpl = function(obj, oldPath, newPath, index2) {
             var oldKey = oldPath[index2];
-            var updated = isArray2(obj) ? obj.slice() : assign({}, obj);
+            var updated = isArray(obj) ? obj.slice() : assign({}, obj);
             if (index2 + 1 === oldPath.length) {
               var newKey = newPath[index2];
               updated[newKey] = updated[oldKey];
-              if (isArray2(updated)) {
+              if (isArray(updated)) {
                 updated.splice(oldKey, 1);
               } else {
                 delete updated[oldKey];
@@ -35588,17 +23817,17 @@ var require_react_dom_development = __commonJS({
             }
             return copyWithRenameImpl(obj, oldPath, newPath, 0);
           };
-          var copyWithSetImpl = function(obj, path, index2, value2) {
+          var copyWithSetImpl = function(obj, path, index2, value) {
             if (index2 >= path.length) {
-              return value2;
+              return value;
             }
             var key = path[index2];
-            var updated = isArray2(obj) ? obj.slice() : assign({}, obj);
-            updated[key] = copyWithSetImpl(obj[key], path, index2 + 1, value2);
+            var updated = isArray(obj) ? obj.slice() : assign({}, obj);
+            updated[key] = copyWithSetImpl(obj[key], path, index2 + 1, value);
             return updated;
           };
-          var copyWithSet = function(obj, path, value2) {
-            return copyWithSetImpl(obj, path, 0, value2);
+          var copyWithSet = function(obj, path, value) {
+            return copyWithSetImpl(obj, path, 0, value);
           };
           var findHook = function(fiber, id) {
             var currentHook2 = fiber.memoizedState;
@@ -35608,10 +23837,10 @@ var require_react_dom_development = __commonJS({
             }
             return currentHook2;
           };
-          overrideHookState = function(fiber, id, path, value2) {
+          overrideHookState = function(fiber, id, path, value) {
             var hook = findHook(fiber, id);
             if (hook !== null) {
-              var newState = copyWithSet(hook.memoizedState, path, value2);
+              var newState = copyWithSet(hook.memoizedState, path, value);
               hook.memoizedState = newState;
               hook.baseState = newState;
               fiber.memoizedProps = assign({}, fiber.memoizedProps);
@@ -35647,8 +23876,8 @@ var require_react_dom_development = __commonJS({
               }
             }
           };
-          overrideProps = function(fiber, path, value2) {
-            fiber.pendingProps = copyWithSet(fiber.memoizedProps, path, value2);
+          overrideProps = function(fiber, path, value) {
+            fiber.pendingProps = copyWithSet(fiber.memoizedProps, path, value);
             if (fiber.alternate) {
               fiber.alternate.pendingProps = fiber.pendingProps;
             }
@@ -36201,9 +24430,9 @@ var require_react_dom_development = __commonJS({
         {
           if (!foundDevTools && canUseDOM2 && window.top === window.self) {
             if (navigator.userAgent.indexOf("Chrome") > -1 && navigator.userAgent.indexOf("Edge") === -1 || navigator.userAgent.indexOf("Firefox") > -1) {
-              var protocol4 = window.location.protocol;
-              if (/^(https?|file):$/.test(protocol4)) {
-                console.info("%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools" + (protocol4 === "file:" ? "\nYou might need to use a local HTTP server (instead of file://): https://reactjs.org/link/react-devtools-faq" : ""), "font-weight:bold");
+              var protocol = window.location.protocol;
+              if (/^(https?|file):$/.test(protocol)) {
+                console.info("%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools" + (protocol === "file:" ? "\nYou might need to use a local HTTP server (instead of file://): https://reactjs.org/link/react-devtools-faq" : ""), "font-weight:bold");
               }
             }
           }
@@ -36242,7 +24471,267 @@ var require_react_dom = __commonJS({
   }
 });
 
+// src/components/masterInventory/legacyInventoryMigrator.jsx
+init_define_import_meta_env();
+
+// src/api/gatedEntities.js
+init_define_import_meta_env();
+
+// src/components/staff/staffEntities.js
+init_define_import_meta_env();
+
+// src/components/fleet/fleetInvoke.js
+init_define_import_meta_env();
+
+// scripts/.tmp-sdk-legacy.mjs
+init_define_import_meta_env();
+var base44 = { entities: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => [] }) }), functions: new Proxy({}, { get: () => async () => ({}) }), integrations: new Proxy({}, { get: () => new Proxy({}, { get: () => async () => ({}) }) }), auth: new Proxy({}, { get: () => async () => null }) };
+var isRetryableFunction = () => false;
+
+// src/components/auth/EmailGate.jsx
+init_define_import_meta_env();
+var import_react4 = __toESM(require_react(), 1);
+
+// src/components/ui/dialog.jsx
+init_define_import_meta_env();
+var React25 = __toESM(require_react(), 1);
+
+// node_modules/@radix-ui/react-dialog/dist/index.mjs
+init_define_import_meta_env();
+var React24 = __toESM(require_react(), 1);
+
+// node_modules/@radix-ui/primitive/dist/index.mjs
+init_define_import_meta_env();
+var canUseDOM = !!(typeof window !== "undefined" && window.document && window.document.createElement);
+function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForDefaultPrevented = true } = {}) {
+  return function handleEvent(event) {
+    originalEventHandler?.(event);
+    if (checkForDefaultPrevented === false || !event.defaultPrevented) {
+      return ourEventHandler?.(event);
+    }
+  };
+}
+
+// node_modules/@radix-ui/react-compose-refs/dist/index.mjs
+init_define_import_meta_env();
+var React = __toESM(require_react(), 1);
+function setRef(ref, value) {
+  if (typeof ref === "function") {
+    return ref(value);
+  } else if (ref !== null && ref !== void 0) {
+    ref.current = value;
+  }
+}
+function composeRefs(...refs) {
+  return (node) => {
+    let hasCleanup = false;
+    const cleanups = refs.map((ref) => {
+      const cleanup = setRef(ref, node);
+      if (!hasCleanup && typeof cleanup == "function") {
+        hasCleanup = true;
+      }
+      return cleanup;
+    });
+    if (hasCleanup) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
+          if (typeof cleanup == "function") {
+            cleanup();
+          } else {
+            setRef(refs[i], null);
+          }
+        }
+      };
+    }
+  };
+}
+function useComposedRefs(...refs) {
+  return React.useCallback(composeRefs(...refs), refs);
+}
+
+// node_modules/@radix-ui/react-context/dist/index.mjs
+init_define_import_meta_env();
+var React2 = __toESM(require_react(), 1);
+var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+function createContext2(rootComponentName, defaultContext) {
+  const Context = React2.createContext(defaultContext);
+  const Provider = (props) => {
+    const { children, ...context } = props;
+    const value = React2.useMemo(() => context, Object.values(context));
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Context.Provider, { value, children });
+  };
+  Provider.displayName = rootComponentName + "Provider";
+  function useContext22(consumerName) {
+    const context = React2.useContext(Context);
+    if (context) return context;
+    if (defaultContext !== void 0) return defaultContext;
+    throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+  }
+  return [Provider, useContext22];
+}
+function createContextScope(scopeName, createContextScopeDeps = []) {
+  let defaultContexts = [];
+  function createContext32(rootComponentName, defaultContext) {
+    const BaseContext = React2.createContext(defaultContext);
+    const index = defaultContexts.length;
+    defaultContexts = [...defaultContexts, defaultContext];
+    const Provider = (props) => {
+      const { scope, children, ...context } = props;
+      const Context = scope?.[scopeName]?.[index] || BaseContext;
+      const value = React2.useMemo(() => context, Object.values(context));
+      return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Context.Provider, { value, children });
+    };
+    Provider.displayName = rootComponentName + "Provider";
+    function useContext22(consumerName, scope) {
+      const Context = scope?.[scopeName]?.[index] || BaseContext;
+      const context = React2.useContext(Context);
+      if (context) return context;
+      if (defaultContext !== void 0) return defaultContext;
+      throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+    }
+    return [Provider, useContext22];
+  }
+  const createScope = () => {
+    const scopeContexts = defaultContexts.map((defaultContext) => {
+      return React2.createContext(defaultContext);
+    });
+    return function useScope(scope) {
+      const contexts = scope?.[scopeName] || scopeContexts;
+      return React2.useMemo(
+        () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
+        [scope, contexts]
+      );
+    };
+  };
+  createScope.scopeName = scopeName;
+  return [createContext32, composeContextScopes(createScope, ...createContextScopeDeps)];
+}
+function composeContextScopes(...scopes) {
+  const baseScope = scopes[0];
+  if (scopes.length === 1) return baseScope;
+  const createScope = () => {
+    const scopeHooks = scopes.map((createScope2) => ({
+      useScope: createScope2(),
+      scopeName: createScope2.scopeName
+    }));
+    return function useComposedScopes(overrideScopes) {
+      const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName }) => {
+        const scopeProps = useScope(overrideScopes);
+        const currentScope = scopeProps[`__scope${scopeName}`];
+        return { ...nextScopes2, ...currentScope };
+      }, {});
+      return React2.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
+    };
+  };
+  createScope.scopeName = baseScope.scopeName;
+  return createScope;
+}
+
+// node_modules/@radix-ui/react-id/dist/index.mjs
+init_define_import_meta_env();
+var React4 = __toESM(require_react(), 1);
+
+// node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs
+init_define_import_meta_env();
+var React3 = __toESM(require_react(), 1);
+var useLayoutEffect2 = globalThis?.document ? React3.useLayoutEffect : () => {
+};
+
+// node_modules/@radix-ui/react-id/dist/index.mjs
+var useReactId = React4[" useId ".trim().toString()] || (() => void 0);
+var count = 0;
+function useId(deterministicId) {
+  const [id, setId] = React4.useState(useReactId());
+  useLayoutEffect2(() => {
+    if (!deterministicId) setId((reactId) => reactId ?? String(count++));
+  }, [deterministicId]);
+  return deterministicId || (id ? `radix-${id}` : "");
+}
+
+// node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
+init_define_import_meta_env();
+var React5 = __toESM(require_react(), 1);
+var React22 = __toESM(require_react(), 1);
+var useInsertionEffect = React5[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
+function useControllableState({
+  prop,
+  defaultProp,
+  onChange = () => {
+  },
+  caller
+}) {
+  const [uncontrolledProp, setUncontrolledProp, onChangeRef] = useUncontrolledState({
+    defaultProp,
+    onChange
+  });
+  const isControlled = prop !== void 0;
+  const value = isControlled ? prop : uncontrolledProp;
+  if (true) {
+    const isControlledRef = React5.useRef(prop !== void 0);
+    React5.useEffect(() => {
+      const wasControlled = isControlledRef.current;
+      if (wasControlled !== isControlled) {
+        const from = wasControlled ? "controlled" : "uncontrolled";
+        const to = isControlled ? "controlled" : "uncontrolled";
+        console.warn(
+          `${caller} is changing from ${from} to ${to}. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.`
+        );
+      }
+      isControlledRef.current = isControlled;
+    }, [isControlled, caller]);
+  }
+  const setValue = React5.useCallback(
+    (nextValue) => {
+      if (isControlled) {
+        const value2 = isFunction(nextValue) ? nextValue(prop) : nextValue;
+        if (value2 !== prop) {
+          onChangeRef.current?.(value2);
+        }
+      } else {
+        setUncontrolledProp(nextValue);
+      }
+    },
+    [isControlled, prop, setUncontrolledProp, onChangeRef]
+  );
+  return [value, setValue];
+}
+function useUncontrolledState({
+  defaultProp,
+  onChange
+}) {
+  const [value, setValue] = React5.useState(defaultProp);
+  const prevValueRef = React5.useRef(value);
+  const onChangeRef = React5.useRef(onChange);
+  useInsertionEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  React5.useEffect(() => {
+    if (prevValueRef.current !== value) {
+      onChangeRef.current?.(value);
+      prevValueRef.current = value;
+    }
+  }, [value, prevValueRef]);
+  return [value, setValue, onChangeRef];
+}
+function isFunction(value) {
+  return typeof value === "function";
+}
+var SYNC_STATE = Symbol("RADIX:SYNC_STATE");
+
+// node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
+init_define_import_meta_env();
+var React10 = __toESM(require_react(), 1);
+
+// node_modules/@radix-ui/react-primitive/dist/index.mjs
+init_define_import_meta_env();
+var React7 = __toESM(require_react(), 1);
+var ReactDOM = __toESM(require_react_dom(), 1);
+
 // node_modules/@radix-ui/react-slot/dist/index.mjs
+init_define_import_meta_env();
+var React6 = __toESM(require_react(), 1);
+var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 // @__NO_SIDE_EFFECTS__
 function createSlot(ownerName) {
   const SlotClone = /* @__PURE__ */ createSlotClone(ownerName);
@@ -36267,6 +24756,7 @@ function createSlot(ownerName) {
   Slot22.displayName = `${ownerName}.Slot`;
   return Slot22;
 }
+var Slot = /* @__PURE__ */ createSlot("Slot");
 // @__NO_SIDE_EFFECTS__
 function createSlotClone(ownerName) {
   const SlotClone = React6.forwardRef((props, forwardedRef) => {
@@ -36284,6 +24774,7 @@ function createSlotClone(ownerName) {
   SlotClone.displayName = `${ownerName}.SlotClone`;
   return SlotClone;
 }
+var SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
 function isSlottable(child) {
   return React6.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
 }
@@ -36324,66 +24815,48 @@ function getElementRef(element) {
   }
   return element.props.ref || element.ref;
 }
-var React6, import_jsx_runtime2, Slot, SLOTTABLE_IDENTIFIER;
-var init_dist10 = __esm({
-  "node_modules/@radix-ui/react-slot/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React6 = __toESM(require_react(), 1);
-    init_dist5();
-    import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
-    Slot = /* @__PURE__ */ createSlot("Slot");
-    SLOTTABLE_IDENTIFIER = Symbol("radix.slottable");
-  }
-});
 
 // node_modules/@radix-ui/react-primitive/dist/index.mjs
+var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+var NODES = [
+  "a",
+  "button",
+  "div",
+  "form",
+  "h2",
+  "h3",
+  "img",
+  "input",
+  "label",
+  "li",
+  "nav",
+  "ol",
+  "p",
+  "select",
+  "span",
+  "svg",
+  "ul"
+];
+var Primitive = NODES.reduce((primitive, node) => {
+  const Slot3 = createSlot(`Primitive.${node}`);
+  const Node2 = React7.forwardRef((props, forwardedRef) => {
+    const { asChild, ...primitiveProps } = props;
+    const Comp = asChild ? Slot3 : node;
+    if (typeof window !== "undefined") {
+      window[Symbol.for("radix-ui")] = true;
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Comp, { ...primitiveProps, ref: forwardedRef });
+  });
+  Node2.displayName = `Primitive.${node}`;
+  return { ...primitive, [node]: Node2 };
+}, {});
 function dispatchDiscreteCustomEvent(target, event) {
   if (target) ReactDOM.flushSync(() => target.dispatchEvent(event));
 }
-var React7, ReactDOM, import_jsx_runtime3, NODES, Primitive;
-var init_dist11 = __esm({
-  "node_modules/@radix-ui/react-primitive/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React7 = __toESM(require_react(), 1);
-    ReactDOM = __toESM(require_react_dom(), 1);
-    init_dist10();
-    import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
-    NODES = [
-      "a",
-      "button",
-      "div",
-      "form",
-      "h2",
-      "h3",
-      "img",
-      "input",
-      "label",
-      "li",
-      "nav",
-      "ol",
-      "p",
-      "select",
-      "span",
-      "svg",
-      "ul"
-    ];
-    Primitive = NODES.reduce((primitive, node) => {
-      const Slot3 = createSlot(`Primitive.${node}`);
-      const Node2 = React7.forwardRef((props, forwardedRef) => {
-        const { asChild, ...primitiveProps } = props;
-        const Comp = asChild ? Slot3 : node;
-        if (typeof window !== "undefined") {
-          window[Symbol.for("radix-ui")] = true;
-        }
-        return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Comp, { ...primitiveProps, ref: forwardedRef });
-      });
-      Node2.displayName = `Primitive.${node}`;
-      return { ...primitive, [node]: Node2 };
-    }, {});
-  }
-});
 
 // node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs
+init_define_import_meta_env();
+var React8 = __toESM(require_react(), 1);
 function useCallbackRef(callback) {
   const callbackRef = React8.useRef(callback);
   React8.useEffect(() => {
@@ -36391,15 +24864,10 @@ function useCallbackRef(callback) {
   });
   return React8.useMemo(() => (...args) => callbackRef.current?.(...args), []);
 }
-var React8;
-var init_dist12 = __esm({
-  "node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React8 = __toESM(require_react(), 1);
-  }
-});
 
 // node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs
+init_define_import_meta_env();
+var React9 = __toESM(require_react(), 1);
 function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.document) {
   const onEscapeKeyDown = useCallbackRef(onEscapeKeyDownProp);
   React9.useEffect(() => {
@@ -36412,16 +24880,133 @@ function useEscapeKeydown(onEscapeKeyDownProp, ownerDocument = globalThis?.docum
     return () => ownerDocument.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, [onEscapeKeyDown, ownerDocument]);
 }
-var React9;
-var init_dist13 = __esm({
-  "node_modules/@radix-ui/react-use-escape-keydown/dist/index.mjs"() {
-    init_define_import_meta_env();
-    React9 = __toESM(require_react(), 1);
-    init_dist12();
-  }
-});
 
 // node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
+var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+var DISMISSABLE_LAYER_NAME = "DismissableLayer";
+var CONTEXT_UPDATE = "dismissableLayer.update";
+var POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
+var FOCUS_OUTSIDE = "dismissableLayer.focusOutside";
+var originalBodyPointerEvents;
+var DismissableLayerContext = React10.createContext({
+  layers: /* @__PURE__ */ new Set(),
+  layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
+  branches: /* @__PURE__ */ new Set()
+});
+var DismissableLayer = React10.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      disableOutsidePointerEvents = false,
+      onEscapeKeyDown,
+      onPointerDownOutside,
+      onFocusOutside,
+      onInteractOutside,
+      onDismiss,
+      ...layerProps
+    } = props;
+    const context = React10.useContext(DismissableLayerContext);
+    const [node, setNode] = React10.useState(null);
+    const ownerDocument = node?.ownerDocument ?? globalThis?.document;
+    const [, force] = React10.useState({});
+    const composedRefs = useComposedRefs(forwardedRef, (node2) => setNode(node2));
+    const layers = Array.from(context.layers);
+    const [highestLayerWithOutsidePointerEventsDisabled] = [...context.layersWithOutsidePointerEventsDisabled].slice(-1);
+    const highestLayerWithOutsidePointerEventsDisabledIndex = layers.indexOf(highestLayerWithOutsidePointerEventsDisabled);
+    const index = node ? layers.indexOf(node) : -1;
+    const isBodyPointerEventsDisabled = context.layersWithOutsidePointerEventsDisabled.size > 0;
+    const isPointerEventsEnabled = index >= highestLayerWithOutsidePointerEventsDisabledIndex;
+    const pointerDownOutside = usePointerDownOutside((event) => {
+      const target = event.target;
+      const isPointerDownOnBranch = [...context.branches].some((branch) => branch.contains(target));
+      if (!isPointerEventsEnabled || isPointerDownOnBranch) return;
+      onPointerDownOutside?.(event);
+      onInteractOutside?.(event);
+      if (!event.defaultPrevented) onDismiss?.();
+    }, ownerDocument);
+    const focusOutside = useFocusOutside((event) => {
+      const target = event.target;
+      const isFocusInBranch = [...context.branches].some((branch) => branch.contains(target));
+      if (isFocusInBranch) return;
+      onFocusOutside?.(event);
+      onInteractOutside?.(event);
+      if (!event.defaultPrevented) onDismiss?.();
+    }, ownerDocument);
+    useEscapeKeydown((event) => {
+      const isHighestLayer = index === context.layers.size - 1;
+      if (!isHighestLayer) return;
+      onEscapeKeyDown?.(event);
+      if (!event.defaultPrevented && onDismiss) {
+        event.preventDefault();
+        onDismiss();
+      }
+    }, ownerDocument);
+    React10.useEffect(() => {
+      if (!node) return;
+      if (disableOutsidePointerEvents) {
+        if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
+          originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
+          ownerDocument.body.style.pointerEvents = "none";
+        }
+        context.layersWithOutsidePointerEventsDisabled.add(node);
+      }
+      context.layers.add(node);
+      dispatchUpdate();
+      return () => {
+        if (disableOutsidePointerEvents && context.layersWithOutsidePointerEventsDisabled.size === 1) {
+          ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
+        }
+      };
+    }, [node, ownerDocument, disableOutsidePointerEvents, context]);
+    React10.useEffect(() => {
+      return () => {
+        if (!node) return;
+        context.layers.delete(node);
+        context.layersWithOutsidePointerEventsDisabled.delete(node);
+        dispatchUpdate();
+      };
+    }, [node, context]);
+    React10.useEffect(() => {
+      const handleUpdate = () => force({});
+      document.addEventListener(CONTEXT_UPDATE, handleUpdate);
+      return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
+    }, []);
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      Primitive.div,
+      {
+        ...layerProps,
+        ref: composedRefs,
+        style: {
+          pointerEvents: isBodyPointerEventsDisabled ? isPointerEventsEnabled ? "auto" : "none" : void 0,
+          ...props.style
+        },
+        onFocusCapture: composeEventHandlers(props.onFocusCapture, focusOutside.onFocusCapture),
+        onBlurCapture: composeEventHandlers(props.onBlurCapture, focusOutside.onBlurCapture),
+        onPointerDownCapture: composeEventHandlers(
+          props.onPointerDownCapture,
+          pointerDownOutside.onPointerDownCapture
+        )
+      }
+    );
+  }
+);
+DismissableLayer.displayName = DISMISSABLE_LAYER_NAME;
+var BRANCH_NAME = "DismissableLayerBranch";
+var DismissableLayerBranch = React10.forwardRef((props, forwardedRef) => {
+  const context = React10.useContext(DismissableLayerContext);
+  const ref = React10.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, ref);
+  React10.useEffect(() => {
+    const node = ref.current;
+    if (node) {
+      context.branches.add(node);
+      return () => {
+        context.branches.delete(node);
+      };
+    }
+  }, [context.branches]);
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Primitive.div, { ...props, ref: composedRefs });
+});
+DismissableLayerBranch.displayName = BRANCH_NAME;
 function usePointerDownOutside(onPointerDownOutside, ownerDocument = globalThis?.document) {
   const handlePointerDownOutside = useCallbackRef(onPointerDownOutside);
   const isPointerInsideReactTreeRef = React10.useRef(false);
@@ -36500,145 +25085,132 @@ function handleAndDispatchCustomEvent(name, handler, detail, { discrete }) {
     target.dispatchEvent(event);
   }
 }
-var React10, import_jsx_runtime4, DISMISSABLE_LAYER_NAME, CONTEXT_UPDATE, POINTER_DOWN_OUTSIDE, FOCUS_OUTSIDE, originalBodyPointerEvents, DismissableLayerContext, DismissableLayer, BRANCH_NAME, DismissableLayerBranch;
-var init_dist14 = __esm({
-  "node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React10 = __toESM(require_react(), 1);
-    init_dist4();
-    init_dist11();
-    init_dist5();
-    init_dist12();
-    init_dist13();
-    import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-    DISMISSABLE_LAYER_NAME = "DismissableLayer";
-    CONTEXT_UPDATE = "dismissableLayer.update";
-    POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
-    FOCUS_OUTSIDE = "dismissableLayer.focusOutside";
-    DismissableLayerContext = React10.createContext({
-      layers: /* @__PURE__ */ new Set(),
-      layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
-      branches: /* @__PURE__ */ new Set()
-    });
-    DismissableLayer = React10.forwardRef(
-      (props, forwardedRef) => {
-        const {
-          disableOutsidePointerEvents = false,
-          onEscapeKeyDown,
-          onPointerDownOutside,
-          onFocusOutside,
-          onInteractOutside,
-          onDismiss,
-          ...layerProps
-        } = props;
-        const context = React10.useContext(DismissableLayerContext);
-        const [node, setNode] = React10.useState(null);
-        const ownerDocument = node?.ownerDocument ?? globalThis?.document;
-        const [, force] = React10.useState({});
-        const composedRefs = useComposedRefs(forwardedRef, (node2) => setNode(node2));
-        const layers = Array.from(context.layers);
-        const [highestLayerWithOutsidePointerEventsDisabled] = [...context.layersWithOutsidePointerEventsDisabled].slice(-1);
-        const highestLayerWithOutsidePointerEventsDisabledIndex = layers.indexOf(highestLayerWithOutsidePointerEventsDisabled);
-        const index = node ? layers.indexOf(node) : -1;
-        const isBodyPointerEventsDisabled = context.layersWithOutsidePointerEventsDisabled.size > 0;
-        const isPointerEventsEnabled = index >= highestLayerWithOutsidePointerEventsDisabledIndex;
-        const pointerDownOutside = usePointerDownOutside((event) => {
-          const target = event.target;
-          const isPointerDownOnBranch = [...context.branches].some((branch) => branch.contains(target));
-          if (!isPointerEventsEnabled || isPointerDownOnBranch) return;
-          onPointerDownOutside?.(event);
-          onInteractOutside?.(event);
-          if (!event.defaultPrevented) onDismiss?.();
-        }, ownerDocument);
-        const focusOutside = useFocusOutside((event) => {
-          const target = event.target;
-          const isFocusInBranch = [...context.branches].some((branch) => branch.contains(target));
-          if (isFocusInBranch) return;
-          onFocusOutside?.(event);
-          onInteractOutside?.(event);
-          if (!event.defaultPrevented) onDismiss?.();
-        }, ownerDocument);
-        useEscapeKeydown((event) => {
-          const isHighestLayer = index === context.layers.size - 1;
-          if (!isHighestLayer) return;
-          onEscapeKeyDown?.(event);
-          if (!event.defaultPrevented && onDismiss) {
-            event.preventDefault();
-            onDismiss();
-          }
-        }, ownerDocument);
-        React10.useEffect(() => {
-          if (!node) return;
-          if (disableOutsidePointerEvents) {
-            if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
-              originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
-              ownerDocument.body.style.pointerEvents = "none";
-            }
-            context.layersWithOutsidePointerEventsDisabled.add(node);
-          }
-          context.layers.add(node);
-          dispatchUpdate();
-          return () => {
-            if (disableOutsidePointerEvents && context.layersWithOutsidePointerEventsDisabled.size === 1) {
-              ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
-            }
-          };
-        }, [node, ownerDocument, disableOutsidePointerEvents, context]);
-        React10.useEffect(() => {
-          return () => {
-            if (!node) return;
-            context.layers.delete(node);
-            context.layersWithOutsidePointerEventsDisabled.delete(node);
-            dispatchUpdate();
-          };
-        }, [node, context]);
-        React10.useEffect(() => {
-          const handleUpdate = () => force({});
-          document.addEventListener(CONTEXT_UPDATE, handleUpdate);
-          return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
-        }, []);
-        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
-          Primitive.div,
-          {
-            ...layerProps,
-            ref: composedRefs,
-            style: {
-              pointerEvents: isBodyPointerEventsDisabled ? isPointerEventsEnabled ? "auto" : "none" : void 0,
-              ...props.style
-            },
-            onFocusCapture: composeEventHandlers(props.onFocusCapture, focusOutside.onFocusCapture),
-            onBlurCapture: composeEventHandlers(props.onBlurCapture, focusOutside.onBlurCapture),
-            onPointerDownCapture: composeEventHandlers(
-              props.onPointerDownCapture,
-              pointerDownOutside.onPointerDownCapture
-            )
-          }
-        );
-      }
-    );
-    DismissableLayer.displayName = DISMISSABLE_LAYER_NAME;
-    BRANCH_NAME = "DismissableLayerBranch";
-    DismissableLayerBranch = React10.forwardRef((props, forwardedRef) => {
-      const context = React10.useContext(DismissableLayerContext);
-      const ref = React10.useRef(null);
-      const composedRefs = useComposedRefs(forwardedRef, ref);
-      React10.useEffect(() => {
-        const node = ref.current;
-        if (node) {
-          context.branches.add(node);
-          return () => {
-            context.branches.delete(node);
-          };
-        }
-      }, [context.branches]);
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Primitive.div, { ...props, ref: composedRefs });
-    });
-    DismissableLayerBranch.displayName = BRANCH_NAME;
-  }
-});
 
 // node_modules/@radix-ui/react-focus-scope/dist/index.mjs
+init_define_import_meta_env();
+var React11 = __toESM(require_react(), 1);
+var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
+var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
+var EVENT_OPTIONS = { bubbles: false, cancelable: true };
+var FOCUS_SCOPE_NAME = "FocusScope";
+var FocusScope = React11.forwardRef((props, forwardedRef) => {
+  const {
+    loop = false,
+    trapped = false,
+    onMountAutoFocus: onMountAutoFocusProp,
+    onUnmountAutoFocus: onUnmountAutoFocusProp,
+    ...scopeProps
+  } = props;
+  const [container, setContainer] = React11.useState(null);
+  const onMountAutoFocus = useCallbackRef(onMountAutoFocusProp);
+  const onUnmountAutoFocus = useCallbackRef(onUnmountAutoFocusProp);
+  const lastFocusedElementRef = React11.useRef(null);
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContainer(node));
+  const focusScope = React11.useRef({
+    paused: false,
+    pause() {
+      this.paused = true;
+    },
+    resume() {
+      this.paused = false;
+    }
+  }).current;
+  React11.useEffect(() => {
+    if (trapped) {
+      let handleFocusIn2 = function(event) {
+        if (focusScope.paused || !container) return;
+        const target = event.target;
+        if (container.contains(target)) {
+          lastFocusedElementRef.current = target;
+        } else {
+          focus(lastFocusedElementRef.current, { select: true });
+        }
+      }, handleFocusOut2 = function(event) {
+        if (focusScope.paused || !container) return;
+        const relatedTarget = event.relatedTarget;
+        if (relatedTarget === null) return;
+        if (!container.contains(relatedTarget)) {
+          focus(lastFocusedElementRef.current, { select: true });
+        }
+      }, handleMutations2 = function(mutations) {
+        const focusedElement = document.activeElement;
+        if (focusedElement !== document.body) return;
+        for (const mutation of mutations) {
+          if (mutation.removedNodes.length > 0) focus(container);
+        }
+      };
+      var handleFocusIn = handleFocusIn2, handleFocusOut = handleFocusOut2, handleMutations = handleMutations2;
+      document.addEventListener("focusin", handleFocusIn2);
+      document.addEventListener("focusout", handleFocusOut2);
+      const mutationObserver = new MutationObserver(handleMutations2);
+      if (container) mutationObserver.observe(container, { childList: true, subtree: true });
+      return () => {
+        document.removeEventListener("focusin", handleFocusIn2);
+        document.removeEventListener("focusout", handleFocusOut2);
+        mutationObserver.disconnect();
+      };
+    }
+  }, [trapped, container, focusScope.paused]);
+  React11.useEffect(() => {
+    if (container) {
+      focusScopesStack.add(focusScope);
+      const previouslyFocusedElement = document.activeElement;
+      const hasFocusedCandidate = container.contains(previouslyFocusedElement);
+      if (!hasFocusedCandidate) {
+        const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT, EVENT_OPTIONS);
+        container.addEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
+        container.dispatchEvent(mountEvent);
+        if (!mountEvent.defaultPrevented) {
+          focusFirst(removeLinks(getTabbableCandidates(container)), { select: true });
+          if (document.activeElement === previouslyFocusedElement) {
+            focus(container);
+          }
+        }
+      }
+      return () => {
+        container.removeEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
+        setTimeout(() => {
+          const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT, EVENT_OPTIONS);
+          container.addEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+          container.dispatchEvent(unmountEvent);
+          if (!unmountEvent.defaultPrevented) {
+            focus(previouslyFocusedElement ?? document.body, { select: true });
+          }
+          container.removeEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+          focusScopesStack.remove(focusScope);
+        }, 0);
+      };
+    }
+  }, [container, onMountAutoFocus, onUnmountAutoFocus, focusScope]);
+  const handleKeyDown = React11.useCallback(
+    (event) => {
+      if (!loop && !trapped) return;
+      if (focusScope.paused) return;
+      const isTabKey = event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey;
+      const focusedElement = document.activeElement;
+      if (isTabKey && focusedElement) {
+        const container2 = event.currentTarget;
+        const [first, last] = getTabbableEdges(container2);
+        const hasTabbableElementsInside = first && last;
+        if (!hasTabbableElementsInside) {
+          if (focusedElement === container2) event.preventDefault();
+        } else {
+          if (!event.shiftKey && focusedElement === last) {
+            event.preventDefault();
+            if (loop) focus(first, { select: true });
+          } else if (event.shiftKey && focusedElement === first) {
+            event.preventDefault();
+            if (loop) focus(last, { select: true });
+          }
+        }
+      }
+    },
+    [loop, trapped, focusScope.paused]
+  );
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Primitive.div, { tabIndex: -1, ...scopeProps, ref: composedRefs, onKeyDown: handleKeyDown });
+});
+FocusScope.displayName = FOCUS_SCOPE_NAME;
 function focusFirst(candidates, { select = false } = {}) {
   const previouslyFocusedElement = document.activeElement;
   for (const candidate of candidates) {
@@ -36689,6 +25261,7 @@ function focus(element, { select = false } = {}) {
       element.select();
   }
 }
+var focusScopesStack = createFocusScopesStack();
 function createFocusScopesStack() {
   let stack = [];
   return {
@@ -36717,171 +25290,41 @@ function arrayRemove(array, item) {
 function removeLinks(items) {
   return items.filter((item) => item.tagName !== "A");
 }
-var React11, import_jsx_runtime5, AUTOFOCUS_ON_MOUNT, AUTOFOCUS_ON_UNMOUNT, EVENT_OPTIONS, FOCUS_SCOPE_NAME, FocusScope, focusScopesStack;
-var init_dist15 = __esm({
-  "node_modules/@radix-ui/react-focus-scope/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React11 = __toESM(require_react(), 1);
-    init_dist5();
-    init_dist11();
-    init_dist12();
-    import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
-    AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
-    AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
-    EVENT_OPTIONS = { bubbles: false, cancelable: true };
-    FOCUS_SCOPE_NAME = "FocusScope";
-    FocusScope = React11.forwardRef((props, forwardedRef) => {
-      const {
-        loop = false,
-        trapped = false,
-        onMountAutoFocus: onMountAutoFocusProp,
-        onUnmountAutoFocus: onUnmountAutoFocusProp,
-        ...scopeProps
-      } = props;
-      const [container, setContainer] = React11.useState(null);
-      const onMountAutoFocus = useCallbackRef(onMountAutoFocusProp);
-      const onUnmountAutoFocus = useCallbackRef(onUnmountAutoFocusProp);
-      const lastFocusedElementRef = React11.useRef(null);
-      const composedRefs = useComposedRefs(forwardedRef, (node) => setContainer(node));
-      const focusScope = React11.useRef({
-        paused: false,
-        pause() {
-          this.paused = true;
-        },
-        resume() {
-          this.paused = false;
-        }
-      }).current;
-      React11.useEffect(() => {
-        if (trapped) {
-          let handleFocusIn2 = function(event) {
-            if (focusScope.paused || !container) return;
-            const target = event.target;
-            if (container.contains(target)) {
-              lastFocusedElementRef.current = target;
-            } else {
-              focus(lastFocusedElementRef.current, { select: true });
-            }
-          }, handleFocusOut2 = function(event) {
-            if (focusScope.paused || !container) return;
-            const relatedTarget = event.relatedTarget;
-            if (relatedTarget === null) return;
-            if (!container.contains(relatedTarget)) {
-              focus(lastFocusedElementRef.current, { select: true });
-            }
-          }, handleMutations2 = function(mutations) {
-            const focusedElement = document.activeElement;
-            if (focusedElement !== document.body) return;
-            for (const mutation of mutations) {
-              if (mutation.removedNodes.length > 0) focus(container);
-            }
-          };
-          var handleFocusIn = handleFocusIn2, handleFocusOut = handleFocusOut2, handleMutations = handleMutations2;
-          document.addEventListener("focusin", handleFocusIn2);
-          document.addEventListener("focusout", handleFocusOut2);
-          const mutationObserver = new MutationObserver(handleMutations2);
-          if (container) mutationObserver.observe(container, { childList: true, subtree: true });
-          return () => {
-            document.removeEventListener("focusin", handleFocusIn2);
-            document.removeEventListener("focusout", handleFocusOut2);
-            mutationObserver.disconnect();
-          };
-        }
-      }, [trapped, container, focusScope.paused]);
-      React11.useEffect(() => {
-        if (container) {
-          focusScopesStack.add(focusScope);
-          const previouslyFocusedElement = document.activeElement;
-          const hasFocusedCandidate = container.contains(previouslyFocusedElement);
-          if (!hasFocusedCandidate) {
-            const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT, EVENT_OPTIONS);
-            container.addEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
-            container.dispatchEvent(mountEvent);
-            if (!mountEvent.defaultPrevented) {
-              focusFirst(removeLinks(getTabbableCandidates(container)), { select: true });
-              if (document.activeElement === previouslyFocusedElement) {
-                focus(container);
-              }
-            }
-          }
-          return () => {
-            container.removeEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
-            setTimeout(() => {
-              const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT, EVENT_OPTIONS);
-              container.addEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
-              container.dispatchEvent(unmountEvent);
-              if (!unmountEvent.defaultPrevented) {
-                focus(previouslyFocusedElement ?? document.body, { select: true });
-              }
-              container.removeEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
-              focusScopesStack.remove(focusScope);
-            }, 0);
-          };
-        }
-      }, [container, onMountAutoFocus, onUnmountAutoFocus, focusScope]);
-      const handleKeyDown = React11.useCallback(
-        (event) => {
-          if (!loop && !trapped) return;
-          if (focusScope.paused) return;
-          const isTabKey = event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey;
-          const focusedElement = document.activeElement;
-          if (isTabKey && focusedElement) {
-            const container2 = event.currentTarget;
-            const [first, last] = getTabbableEdges(container2);
-            const hasTabbableElementsInside = first && last;
-            if (!hasTabbableElementsInside) {
-              if (focusedElement === container2) event.preventDefault();
-            } else {
-              if (!event.shiftKey && focusedElement === last) {
-                event.preventDefault();
-                if (loop) focus(first, { select: true });
-              } else if (event.shiftKey && focusedElement === first) {
-                event.preventDefault();
-                if (loop) focus(last, { select: true });
-              }
-            }
-          }
-        },
-        [loop, trapped, focusScope.paused]
-      );
-      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Primitive.div, { tabIndex: -1, ...scopeProps, ref: composedRefs, onKeyDown: handleKeyDown });
-    });
-    FocusScope.displayName = FOCUS_SCOPE_NAME;
-    focusScopesStack = createFocusScopesStack();
-  }
-});
 
 // node_modules/@radix-ui/react-portal/dist/index.mjs
-var React12, import_react_dom, import_jsx_runtime6, PORTAL_NAME, Portal;
-var init_dist16 = __esm({
-  "node_modules/@radix-ui/react-portal/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React12 = __toESM(require_react(), 1);
-    import_react_dom = __toESM(require_react_dom(), 1);
-    init_dist11();
-    init_dist7();
-    import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
-    PORTAL_NAME = "Portal";
-    Portal = React12.forwardRef((props, forwardedRef) => {
-      const { container: containerProp, ...portalProps } = props;
-      const [mounted, setMounted] = React12.useState(false);
-      useLayoutEffect2(() => setMounted(true), []);
-      const container = containerProp || mounted && globalThis?.document?.body;
-      return container ? import_react_dom.default.createPortal(/* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Primitive.div, { ...portalProps, ref: forwardedRef }), container) : null;
-    });
-    Portal.displayName = PORTAL_NAME;
-  }
+init_define_import_meta_env();
+var React12 = __toESM(require_react(), 1);
+var import_react_dom = __toESM(require_react_dom(), 1);
+var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+var PORTAL_NAME = "Portal";
+var Portal = React12.forwardRef((props, forwardedRef) => {
+  const { container: containerProp, ...portalProps } = props;
+  const [mounted, setMounted] = React12.useState(false);
+  useLayoutEffect2(() => setMounted(true), []);
+  const container = containerProp || mounted && globalThis?.document?.body;
+  return container ? import_react_dom.default.createPortal(/* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Primitive.div, { ...portalProps, ref: forwardedRef }), container) : null;
 });
+Portal.displayName = PORTAL_NAME;
 
 // node_modules/@radix-ui/react-presence/dist/index.mjs
+init_define_import_meta_env();
+var React23 = __toESM(require_react(), 1);
+var React13 = __toESM(require_react(), 1);
 function useStateMachine(initialState, machine) {
   return React13.useReducer((state, event) => {
     const nextState = machine[state][event];
     return nextState ?? state;
   }, initialState);
 }
+var Presence = (props) => {
+  const { present, children } = props;
+  const presence = usePresence(present);
+  const child = typeof children === "function" ? children({ present: presence.isPresent }) : React23.Children.only(children);
+  const ref = useComposedRefs(presence.ref, getElementRef2(child));
+  const forceMount = typeof children === "function";
+  return forceMount || presence.isPresent ? React23.cloneElement(child, { ref }) : null;
+};
+Presence.displayName = "Presence";
 function usePresence(present) {
   const [node, setNode] = React23.useState();
   const stylesRef = React23.useRef(null);
@@ -36989,28 +25432,11 @@ function getElementRef2(element) {
   }
   return element.props.ref || element.ref;
 }
-var React23, React13, Presence;
-var init_dist17 = __esm({
-  "node_modules/@radix-ui/react-presence/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React23 = __toESM(require_react(), 1);
-    init_dist5();
-    init_dist7();
-    React13 = __toESM(require_react(), 1);
-    Presence = (props) => {
-      const { present, children } = props;
-      const presence = usePresence(present);
-      const child = typeof children === "function" ? children({ present: presence.isPresent }) : React23.Children.only(children);
-      const ref = useComposedRefs(presence.ref, getElementRef2(child));
-      const forceMount = typeof children === "function";
-      return forceMount || presence.isPresent ? React23.cloneElement(child, { ref }) : null;
-    };
-    Presence.displayName = "Presence";
-  }
-});
 
 // node_modules/@radix-ui/react-focus-guards/dist/index.mjs
+init_define_import_meta_env();
+var React14 = __toESM(require_react(), 1);
+var count2 = 0;
 function useFocusGuards() {
   React14.useEffect(() => {
     const edgeGuards = document.querySelectorAll("[data-radix-focus-guard]");
@@ -37035,17 +25461,25 @@ function createFocusGuard() {
   element.style.pointerEvents = "none";
   return element;
 }
-var React14, count2;
-var init_dist18 = __esm({
-  "node_modules/@radix-ui/react-focus-guards/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React14 = __toESM(require_react(), 1);
-    count2 = 0;
-  }
-});
+
+// node_modules/react-remove-scroll/dist/es2015/index.js
+init_define_import_meta_env();
+
+// node_modules/react-remove-scroll/dist/es2015/Combination.js
+init_define_import_meta_env();
 
 // node_modules/tslib/tslib.es6.mjs
+init_define_import_meta_env();
+var __assign = function() {
+  __assign = Object.assign || function __assign2(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+    }
+    return t;
+  };
+  return __assign.apply(this, arguments);
+};
 function __rest(s, e) {
   var t = {};
   for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -37066,51 +25500,38 @@ function __spreadArray(to, from, pack) {
   }
   return to.concat(ar || Array.prototype.slice.call(from));
 }
-var __assign;
-var init_tslib_es6 = __esm({
-  "node_modules/tslib/tslib.es6.mjs"() {
-    init_define_import_meta_env();
-    __assign = function() {
-      __assign = Object.assign || function __assign2(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-          s = arguments[i];
-          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-      };
-      return __assign.apply(this, arguments);
-    };
-  }
-});
+
+// node_modules/react-remove-scroll/dist/es2015/Combination.js
+var React21 = __toESM(require_react());
+
+// node_modules/react-remove-scroll/dist/es2015/UI.js
+init_define_import_meta_env();
+var React17 = __toESM(require_react());
 
 // node_modules/react-remove-scroll-bar/dist/es2015/constants.js
-var zeroRightClassName, fullWidthClassName, noScrollbarsClassName, removedBarSizeVariable;
-var init_constants = __esm({
-  "node_modules/react-remove-scroll-bar/dist/es2015/constants.js"() {
-    init_define_import_meta_env();
-    zeroRightClassName = "right-scroll-bar-position";
-    fullWidthClassName = "width-before-scroll-bar";
-    noScrollbarsClassName = "with-scroll-bars-hidden";
-    removedBarSizeVariable = "--removed-body-scroll-bar-size";
-  }
-});
+init_define_import_meta_env();
+var zeroRightClassName = "right-scroll-bar-position";
+var fullWidthClassName = "width-before-scroll-bar";
+var noScrollbarsClassName = "with-scroll-bars-hidden";
+var removedBarSizeVariable = "--removed-body-scroll-bar-size";
+
+// node_modules/use-callback-ref/dist/es2015/index.js
+init_define_import_meta_env();
 
 // node_modules/use-callback-ref/dist/es2015/assignRef.js
-function assignRef(ref, value2) {
+init_define_import_meta_env();
+function assignRef(ref, value) {
   if (typeof ref === "function") {
-    ref(value2);
+    ref(value);
   } else if (ref) {
-    ref.current = value2;
+    ref.current = value;
   }
   return ref;
 }
-var init_assignRef = __esm({
-  "node_modules/use-callback-ref/dist/es2015/assignRef.js"() {
-    init_define_import_meta_env();
-  }
-});
 
 // node_modules/use-callback-ref/dist/es2015/useRef.js
+init_define_import_meta_env();
+var import_react = __toESM(require_react());
 function useCallbackRef2(initialValue, callback) {
   var ref = (0, import_react.useState)(function() {
     return {
@@ -37123,11 +25544,11 @@ function useCallbackRef2(initialValue, callback) {
         get current() {
           return ref.value;
         },
-        set current(value2) {
+        set current(value) {
           var last = ref.value;
-          if (last !== value2) {
-            ref.value = value2;
-            ref.callback(value2, last);
+          if (last !== value) {
+            ref.value = value;
+            ref.callback(value, last);
           }
         }
       }
@@ -37136,15 +25557,12 @@ function useCallbackRef2(initialValue, callback) {
   ref.callback = callback;
   return ref.facade;
 }
-var import_react;
-var init_useRef = __esm({
-  "node_modules/use-callback-ref/dist/es2015/useRef.js"() {
-    init_define_import_meta_env();
-    import_react = __toESM(require_react());
-  }
-});
 
 // node_modules/use-callback-ref/dist/es2015/useMergeRef.js
+init_define_import_meta_env();
+var React15 = __toESM(require_react());
+var useIsomorphicLayoutEffect = typeof window !== "undefined" ? React15.useLayoutEffect : React15.useEffect;
+var currentValues = /* @__PURE__ */ new WeakMap();
 function useMergeRefs(refs, defaultValue) {
   var callbackRef = useCallbackRef2(defaultValue || null, function(newValue) {
     return refs.forEach(function(ref) {
@@ -37172,31 +25590,19 @@ function useMergeRefs(refs, defaultValue) {
   }, [refs]);
   return callbackRef;
 }
-var React15, useIsomorphicLayoutEffect, currentValues;
-var init_useMergeRef = __esm({
-  "node_modules/use-callback-ref/dist/es2015/useMergeRef.js"() {
-    init_define_import_meta_env();
-    React15 = __toESM(require_react());
-    init_assignRef();
-    init_useRef();
-    useIsomorphicLayoutEffect = typeof window !== "undefined" ? React15.useLayoutEffect : React15.useEffect;
-    currentValues = /* @__PURE__ */ new WeakMap();
-  }
-});
 
-// node_modules/use-callback-ref/dist/es2015/index.js
-var init_es2015 = __esm({
-  "node_modules/use-callback-ref/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    init_useMergeRef();
-  }
-});
+// node_modules/react-remove-scroll/dist/es2015/medium.js
+init_define_import_meta_env();
+
+// node_modules/use-sidecar/dist/es2015/index.js
+init_define_import_meta_env();
 
 // node_modules/use-sidecar/dist/es2015/medium.js
+init_define_import_meta_env();
 function ItoI(a) {
   return a;
 }
-function innerCreateMedium(defaults2, middleware) {
+function innerCreateMedium(defaults, middleware) {
   if (middleware === void 0) {
     middleware = ItoI;
   }
@@ -37210,7 +25616,7 @@ function innerCreateMedium(defaults2, middleware) {
       if (buffer.length) {
         return buffer[buffer.length - 1];
       }
-      return defaults2;
+      return defaults;
     },
     useMedium: function(data) {
       var item = middleware(data, assigned);
@@ -37260,8 +25666,8 @@ function innerCreateMedium(defaults2, middleware) {
           pendingQueue.push(x);
           cycle();
         },
-        filter: function(filter2) {
-          pendingQueue = pendingQueue.filter(filter2);
+        filter: function(filter) {
+          pendingQueue = pendingQueue.filter(filter);
           return buffer;
         }
       };
@@ -37277,117 +25683,101 @@ function createSidecarMedium(options) {
   medium.options = __assign({ async: true, ssr: false }, options);
   return medium;
 }
-var init_medium = __esm({
-  "node_modules/use-sidecar/dist/es2015/medium.js"() {
-    init_define_import_meta_env();
-    init_tslib_es6();
-  }
-});
 
 // node_modules/use-sidecar/dist/es2015/exports.js
+init_define_import_meta_env();
+var React16 = __toESM(require_react());
+var SideCar = function(_a) {
+  var sideCar = _a.sideCar, rest = __rest(_a, ["sideCar"]);
+  if (!sideCar) {
+    throw new Error("Sidecar: please provide `sideCar` property to import the right car");
+  }
+  var Target = sideCar.read();
+  if (!Target) {
+    throw new Error("Sidecar medium not found");
+  }
+  return React16.createElement(Target, __assign({}, rest));
+};
+SideCar.isSideCarExport = true;
 function exportSidecar(medium, exported) {
   medium.useMedium(exported);
   return SideCar;
 }
-var React16, SideCar;
-var init_exports = __esm({
-  "node_modules/use-sidecar/dist/es2015/exports.js"() {
-    init_define_import_meta_env();
-    init_tslib_es6();
-    React16 = __toESM(require_react());
-    SideCar = function(_a) {
-      var sideCar = _a.sideCar, rest = __rest(_a, ["sideCar"]);
-      if (!sideCar) {
-        throw new Error("Sidecar: please provide `sideCar` property to import the right car");
-      }
-      var Target = sideCar.read();
-      if (!Target) {
-        throw new Error("Sidecar medium not found");
-      }
-      return React16.createElement(Target, __assign({}, rest));
-    };
-    SideCar.isSideCarExport = true;
-  }
-});
-
-// node_modules/use-sidecar/dist/es2015/index.js
-var init_es20152 = __esm({
-  "node_modules/use-sidecar/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    init_medium();
-    init_exports();
-  }
-});
 
 // node_modules/react-remove-scroll/dist/es2015/medium.js
-var effectCar;
-var init_medium2 = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/medium.js"() {
-    init_define_import_meta_env();
-    init_es20152();
-    effectCar = createSidecarMedium();
-  }
-});
+var effectCar = createSidecarMedium();
 
 // node_modules/react-remove-scroll/dist/es2015/UI.js
-var React17, nothing, RemoveScroll;
-var init_UI = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/UI.js"() {
-    init_define_import_meta_env();
-    init_tslib_es6();
-    React17 = __toESM(require_react());
-    init_constants();
-    init_es2015();
-    init_medium2();
-    nothing = function() {
-      return;
-    };
-    RemoveScroll = React17.forwardRef(function(props, parentRef) {
-      var ref = React17.useRef(null);
-      var _a = React17.useState({
-        onScrollCapture: nothing,
-        onWheelCapture: nothing,
-        onTouchMoveCapture: nothing
-      }), callbacks = _a[0], setCallbacks = _a[1];
-      var forwardProps = props.forwardProps, children = props.children, className = props.className, removeScrollBar = props.removeScrollBar, enabled = props.enabled, shards = props.shards, sideCar = props.sideCar, noRelative = props.noRelative, noIsolation = props.noIsolation, inert = props.inert, allowPinchZoom = props.allowPinchZoom, _b = props.as, Container = _b === void 0 ? "div" : _b, gapMode = props.gapMode, rest = __rest(props, ["forwardProps", "children", "className", "removeScrollBar", "enabled", "shards", "sideCar", "noRelative", "noIsolation", "inert", "allowPinchZoom", "as", "gapMode"]);
-      var SideCar2 = sideCar;
-      var containerRef = useMergeRefs([ref, parentRef]);
-      var containerProps = __assign(__assign({}, rest), callbacks);
-      return React17.createElement(
-        React17.Fragment,
-        null,
-        enabled && React17.createElement(SideCar2, { sideCar: effectCar, removeScrollBar, shards, noRelative, noIsolation, inert, setCallbacks, allowPinchZoom: !!allowPinchZoom, lockRef: ref, gapMode }),
-        forwardProps ? React17.cloneElement(React17.Children.only(children), __assign(__assign({}, containerProps), { ref: containerRef })) : React17.createElement(Container, __assign({}, containerProps, { className, ref: containerRef }), children)
-      );
-    });
-    RemoveScroll.defaultProps = {
-      enabled: true,
-      removeScrollBar: true,
-      inert: false
-    };
-    RemoveScroll.classNames = {
-      fullWidth: fullWidthClassName,
-      zeroRight: zeroRightClassName
-    };
-  }
+var nothing = function() {
+  return;
+};
+var RemoveScroll = React17.forwardRef(function(props, parentRef) {
+  var ref = React17.useRef(null);
+  var _a = React17.useState({
+    onScrollCapture: nothing,
+    onWheelCapture: nothing,
+    onTouchMoveCapture: nothing
+  }), callbacks = _a[0], setCallbacks = _a[1];
+  var forwardProps = props.forwardProps, children = props.children, className = props.className, removeScrollBar = props.removeScrollBar, enabled = props.enabled, shards = props.shards, sideCar = props.sideCar, noRelative = props.noRelative, noIsolation = props.noIsolation, inert = props.inert, allowPinchZoom = props.allowPinchZoom, _b = props.as, Container = _b === void 0 ? "div" : _b, gapMode = props.gapMode, rest = __rest(props, ["forwardProps", "children", "className", "removeScrollBar", "enabled", "shards", "sideCar", "noRelative", "noIsolation", "inert", "allowPinchZoom", "as", "gapMode"]);
+  var SideCar2 = sideCar;
+  var containerRef = useMergeRefs([ref, parentRef]);
+  var containerProps = __assign(__assign({}, rest), callbacks);
+  return React17.createElement(
+    React17.Fragment,
+    null,
+    enabled && React17.createElement(SideCar2, { sideCar: effectCar, removeScrollBar, shards, noRelative, noIsolation, inert, setCallbacks, allowPinchZoom: !!allowPinchZoom, lockRef: ref, gapMode }),
+    forwardProps ? React17.cloneElement(React17.Children.only(children), __assign(__assign({}, containerProps), { ref: containerRef })) : React17.createElement(Container, __assign({}, containerProps, { className, ref: containerRef }), children)
+  );
 });
+RemoveScroll.defaultProps = {
+  enabled: true,
+  removeScrollBar: true,
+  inert: false
+};
+RemoveScroll.classNames = {
+  fullWidth: fullWidthClassName,
+  zeroRight: zeroRightClassName
+};
+
+// node_modules/react-remove-scroll/dist/es2015/sidecar.js
+init_define_import_meta_env();
+
+// node_modules/react-remove-scroll/dist/es2015/SideEffect.js
+init_define_import_meta_env();
+var React20 = __toESM(require_react());
+
+// node_modules/react-remove-scroll-bar/dist/es2015/index.js
+init_define_import_meta_env();
+
+// node_modules/react-remove-scroll-bar/dist/es2015/component.js
+init_define_import_meta_env();
+var React19 = __toESM(require_react());
+
+// node_modules/react-style-singleton/dist/es2015/index.js
+init_define_import_meta_env();
+
+// node_modules/react-style-singleton/dist/es2015/component.js
+init_define_import_meta_env();
+
+// node_modules/react-style-singleton/dist/es2015/hook.js
+init_define_import_meta_env();
+var React18 = __toESM(require_react());
+
+// node_modules/react-style-singleton/dist/es2015/singleton.js
+init_define_import_meta_env();
 
 // node_modules/get-nonce/dist/es2015/index.js
-var currentNonce, getNonce;
-var init_es20153 = __esm({
-  "node_modules/get-nonce/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    getNonce = function() {
-      if (currentNonce) {
-        return currentNonce;
-      }
-      if (typeof __webpack_nonce__ !== "undefined") {
-        return __webpack_nonce__;
-      }
-      return void 0;
-    };
+init_define_import_meta_env();
+var currentNonce;
+var getNonce = function() {
+  if (currentNonce) {
+    return currentNonce;
   }
-});
+  if (typeof __webpack_nonce__ !== "undefined") {
+    return __webpack_nonce__;
+  }
+  return void 0;
+};
 
 // node_modules/react-style-singleton/dist/es2015/singleton.js
 function makeStyleTag() {
@@ -37412,317 +25802,268 @@ function insertStyleTag(tag) {
   var head = document.head || document.getElementsByTagName("head")[0];
   head.appendChild(tag);
 }
-var stylesheetSingleton;
-var init_singleton = __esm({
-  "node_modules/react-style-singleton/dist/es2015/singleton.js"() {
-    init_define_import_meta_env();
-    init_es20153();
-    stylesheetSingleton = function() {
-      var counter = 0;
-      var stylesheet = null;
-      return {
-        add: function(style) {
-          if (counter == 0) {
-            if (stylesheet = makeStyleTag()) {
-              injectStyles(stylesheet, style);
-              insertStyleTag(stylesheet);
-            }
-          }
-          counter++;
-        },
-        remove: function() {
-          counter--;
-          if (!counter && stylesheet) {
-            stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
-            stylesheet = null;
-          }
+var stylesheetSingleton = function() {
+  var counter = 0;
+  var stylesheet = null;
+  return {
+    add: function(style) {
+      if (counter == 0) {
+        if (stylesheet = makeStyleTag()) {
+          injectStyles(stylesheet, style);
+          insertStyleTag(stylesheet);
         }
-      };
-    };
-  }
-});
-
-// node_modules/react-style-singleton/dist/es2015/hook.js
-var React18, styleHookSingleton;
-var init_hook = __esm({
-  "node_modules/react-style-singleton/dist/es2015/hook.js"() {
-    init_define_import_meta_env();
-    React18 = __toESM(require_react());
-    init_singleton();
-    styleHookSingleton = function() {
-      var sheet = stylesheetSingleton();
-      return function(styles, isDynamic) {
-        React18.useEffect(function() {
-          sheet.add(styles);
-          return function() {
-            sheet.remove();
-          };
-        }, [styles && isDynamic]);
-      };
-    };
-  }
-});
-
-// node_modules/react-style-singleton/dist/es2015/component.js
-var styleSingleton;
-var init_component = __esm({
-  "node_modules/react-style-singleton/dist/es2015/component.js"() {
-    init_define_import_meta_env();
-    init_hook();
-    styleSingleton = function() {
-      var useStyle = styleHookSingleton();
-      var Sheet = function(_a) {
-        var styles = _a.styles, dynamic = _a.dynamic;
-        useStyle(styles, dynamic);
-        return null;
-      };
-      return Sheet;
-    };
-  }
-});
-
-// node_modules/react-style-singleton/dist/es2015/index.js
-var init_es20154 = __esm({
-  "node_modules/react-style-singleton/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    init_component();
-    init_singleton();
-    init_hook();
-  }
-});
-
-// node_modules/react-remove-scroll-bar/dist/es2015/utils.js
-var zeroGap, parse2, getOffset, getGapWidth;
-var init_utils3 = __esm({
-  "node_modules/react-remove-scroll-bar/dist/es2015/utils.js"() {
-    init_define_import_meta_env();
-    zeroGap = {
-      left: 0,
-      top: 0,
-      right: 0,
-      gap: 0
-    };
-    parse2 = function(x) {
-      return parseInt(x || "", 10) || 0;
-    };
-    getOffset = function(gapMode) {
-      var cs = window.getComputedStyle(document.body);
-      var left = cs[gapMode === "padding" ? "paddingLeft" : "marginLeft"];
-      var top = cs[gapMode === "padding" ? "paddingTop" : "marginTop"];
-      var right = cs[gapMode === "padding" ? "paddingRight" : "marginRight"];
-      return [parse2(left), parse2(top), parse2(right)];
-    };
-    getGapWidth = function(gapMode) {
-      if (gapMode === void 0) {
-        gapMode = "margin";
       }
-      if (typeof window === "undefined") {
-        return zeroGap;
-      }
-      var offsets = getOffset(gapMode);
-      var documentWidth = document.documentElement.clientWidth;
-      var windowWidth = window.innerWidth;
-      return {
-        left: offsets[0],
-        top: offsets[1],
-        right: offsets[2],
-        gap: Math.max(0, windowWidth - documentWidth + offsets[2] - offsets[0])
-      };
-    };
-  }
-});
-
-// node_modules/react-remove-scroll-bar/dist/es2015/component.js
-var React19, Style, lockAttribute, getStyles, getCurrentUseCounter, useLockAttribute, RemoveScrollBar;
-var init_component2 = __esm({
-  "node_modules/react-remove-scroll-bar/dist/es2015/component.js"() {
-    init_define_import_meta_env();
-    React19 = __toESM(require_react());
-    init_es20154();
-    init_constants();
-    init_utils3();
-    Style = styleSingleton();
-    lockAttribute = "data-scroll-locked";
-    getStyles = function(_a, allowRelative, gapMode, important) {
-      var left = _a.left, top = _a.top, right = _a.right, gap = _a.gap;
-      if (gapMode === void 0) {
-        gapMode = "margin";
-      }
-      return "\n  .".concat(noScrollbarsClassName, " {\n   overflow: hidden ").concat(important, ";\n   padding-right: ").concat(gap, "px ").concat(important, ";\n  }\n  body[").concat(lockAttribute, "] {\n    overflow: hidden ").concat(important, ";\n    overscroll-behavior: contain;\n    ").concat([
-        allowRelative && "position: relative ".concat(important, ";"),
-        gapMode === "margin" && "\n    padding-left: ".concat(left, "px;\n    padding-top: ").concat(top, "px;\n    padding-right: ").concat(right, "px;\n    margin-left:0;\n    margin-top:0;\n    margin-right: ").concat(gap, "px ").concat(important, ";\n    "),
-        gapMode === "padding" && "padding-right: ".concat(gap, "px ").concat(important, ";")
-      ].filter(Boolean).join(""), "\n  }\n  \n  .").concat(zeroRightClassName, " {\n    right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " {\n    margin-right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(zeroRightClassName, " .").concat(zeroRightClassName, " {\n    right: 0 ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " .").concat(fullWidthClassName, " {\n    margin-right: 0 ").concat(important, ";\n  }\n  \n  body[").concat(lockAttribute, "] {\n    ").concat(removedBarSizeVariable, ": ").concat(gap, "px;\n  }\n");
-    };
-    getCurrentUseCounter = function() {
-      var counter = parseInt(document.body.getAttribute(lockAttribute) || "0", 10);
-      return isFinite(counter) ? counter : 0;
-    };
-    useLockAttribute = function() {
-      React19.useEffect(function() {
-        document.body.setAttribute(lockAttribute, (getCurrentUseCounter() + 1).toString());
-        return function() {
-          var newCounter = getCurrentUseCounter() - 1;
-          if (newCounter <= 0) {
-            document.body.removeAttribute(lockAttribute);
-          } else {
-            document.body.setAttribute(lockAttribute, newCounter.toString());
-          }
-        };
-      }, []);
-    };
-    RemoveScrollBar = function(_a) {
-      var noRelative = _a.noRelative, noImportant = _a.noImportant, _b = _a.gapMode, gapMode = _b === void 0 ? "margin" : _b;
-      useLockAttribute();
-      var gap = React19.useMemo(function() {
-        return getGapWidth(gapMode);
-      }, [gapMode]);
-      return React19.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? "!important" : "") });
-    };
-  }
-});
-
-// node_modules/react-remove-scroll-bar/dist/es2015/index.js
-var init_es20155 = __esm({
-  "node_modules/react-remove-scroll-bar/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    init_component2();
-    init_constants();
-    init_utils3();
-  }
-});
-
-// node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js
-var passiveSupported, options, nonPassive;
-var init_aggresiveCapture = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js"() {
-    init_define_import_meta_env();
-    passiveSupported = false;
-    if (typeof window !== "undefined") {
-      try {
-        options = Object.defineProperty({}, "passive", {
-          get: function() {
-            passiveSupported = true;
-            return true;
-          }
-        });
-        window.addEventListener("test", options, options);
-        window.removeEventListener("test", options, options);
-      } catch (err) {
-        passiveSupported = false;
+      counter++;
+    },
+    remove: function() {
+      counter--;
+      if (!counter && stylesheet) {
+        stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
+        stylesheet = null;
       }
     }
-    nonPassive = passiveSupported ? { passive: false } : false;
+  };
+};
+
+// node_modules/react-style-singleton/dist/es2015/hook.js
+var styleHookSingleton = function() {
+  var sheet = stylesheetSingleton();
+  return function(styles, isDynamic) {
+    React18.useEffect(function() {
+      sheet.add(styles);
+      return function() {
+        sheet.remove();
+      };
+    }, [styles && isDynamic]);
+  };
+};
+
+// node_modules/react-style-singleton/dist/es2015/component.js
+var styleSingleton = function() {
+  var useStyle = styleHookSingleton();
+  var Sheet = function(_a) {
+    var styles = _a.styles, dynamic = _a.dynamic;
+    useStyle(styles, dynamic);
+    return null;
+  };
+  return Sheet;
+};
+
+// node_modules/react-remove-scroll-bar/dist/es2015/utils.js
+init_define_import_meta_env();
+var zeroGap = {
+  left: 0,
+  top: 0,
+  right: 0,
+  gap: 0
+};
+var parse = function(x) {
+  return parseInt(x || "", 10) || 0;
+};
+var getOffset = function(gapMode) {
+  var cs = window.getComputedStyle(document.body);
+  var left = cs[gapMode === "padding" ? "paddingLeft" : "marginLeft"];
+  var top = cs[gapMode === "padding" ? "paddingTop" : "marginTop"];
+  var right = cs[gapMode === "padding" ? "paddingRight" : "marginRight"];
+  return [parse(left), parse(top), parse(right)];
+};
+var getGapWidth = function(gapMode) {
+  if (gapMode === void 0) {
+    gapMode = "margin";
   }
-});
+  if (typeof window === "undefined") {
+    return zeroGap;
+  }
+  var offsets = getOffset(gapMode);
+  var documentWidth = document.documentElement.clientWidth;
+  var windowWidth = window.innerWidth;
+  return {
+    left: offsets[0],
+    top: offsets[1],
+    right: offsets[2],
+    gap: Math.max(0, windowWidth - documentWidth + offsets[2] - offsets[0])
+  };
+};
+
+// node_modules/react-remove-scroll-bar/dist/es2015/component.js
+var Style = styleSingleton();
+var lockAttribute = "data-scroll-locked";
+var getStyles = function(_a, allowRelative, gapMode, important) {
+  var left = _a.left, top = _a.top, right = _a.right, gap = _a.gap;
+  if (gapMode === void 0) {
+    gapMode = "margin";
+  }
+  return "\n  .".concat(noScrollbarsClassName, " {\n   overflow: hidden ").concat(important, ";\n   padding-right: ").concat(gap, "px ").concat(important, ";\n  }\n  body[").concat(lockAttribute, "] {\n    overflow: hidden ").concat(important, ";\n    overscroll-behavior: contain;\n    ").concat([
+    allowRelative && "position: relative ".concat(important, ";"),
+    gapMode === "margin" && "\n    padding-left: ".concat(left, "px;\n    padding-top: ").concat(top, "px;\n    padding-right: ").concat(right, "px;\n    margin-left:0;\n    margin-top:0;\n    margin-right: ").concat(gap, "px ").concat(important, ";\n    "),
+    gapMode === "padding" && "padding-right: ".concat(gap, "px ").concat(important, ";")
+  ].filter(Boolean).join(""), "\n  }\n  \n  .").concat(zeroRightClassName, " {\n    right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " {\n    margin-right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(zeroRightClassName, " .").concat(zeroRightClassName, " {\n    right: 0 ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " .").concat(fullWidthClassName, " {\n    margin-right: 0 ").concat(important, ";\n  }\n  \n  body[").concat(lockAttribute, "] {\n    ").concat(removedBarSizeVariable, ": ").concat(gap, "px;\n  }\n");
+};
+var getCurrentUseCounter = function() {
+  var counter = parseInt(document.body.getAttribute(lockAttribute) || "0", 10);
+  return isFinite(counter) ? counter : 0;
+};
+var useLockAttribute = function() {
+  React19.useEffect(function() {
+    document.body.setAttribute(lockAttribute, (getCurrentUseCounter() + 1).toString());
+    return function() {
+      var newCounter = getCurrentUseCounter() - 1;
+      if (newCounter <= 0) {
+        document.body.removeAttribute(lockAttribute);
+      } else {
+        document.body.setAttribute(lockAttribute, newCounter.toString());
+      }
+    };
+  }, []);
+};
+var RemoveScrollBar = function(_a) {
+  var noRelative = _a.noRelative, noImportant = _a.noImportant, _b = _a.gapMode, gapMode = _b === void 0 ? "margin" : _b;
+  useLockAttribute();
+  var gap = React19.useMemo(function() {
+    return getGapWidth(gapMode);
+  }, [gapMode]);
+  return React19.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? "!important" : "") });
+};
+
+// node_modules/react-remove-scroll/dist/es2015/aggresiveCapture.js
+init_define_import_meta_env();
+var passiveSupported = false;
+if (typeof window !== "undefined") {
+  try {
+    options = Object.defineProperty({}, "passive", {
+      get: function() {
+        passiveSupported = true;
+        return true;
+      }
+    });
+    window.addEventListener("test", options, options);
+    window.removeEventListener("test", options, options);
+  } catch (err) {
+    passiveSupported = false;
+  }
+}
+var options;
+var nonPassive = passiveSupported ? { passive: false } : false;
 
 // node_modules/react-remove-scroll/dist/es2015/handleScroll.js
-var alwaysContainsScroll, elementCanBeScrolled, elementCouldBeVScrolled, elementCouldBeHScrolled, locationCouldBeScrolled, getVScrollVariables, getHScrollVariables, elementCouldBeScrolled, getScrollVariables, getDirectionFactor, handleScroll;
-var init_handleScroll = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/handleScroll.js"() {
-    init_define_import_meta_env();
-    alwaysContainsScroll = function(node) {
-      return node.tagName === "TEXTAREA";
-    };
-    elementCanBeScrolled = function(node, overflow) {
-      if (!(node instanceof Element)) {
-        return false;
-      }
-      var styles = window.getComputedStyle(node);
-      return (
-        // not-not-scrollable
-        styles[overflow] !== "hidden" && // contains scroll inside self
-        !(styles.overflowY === styles.overflowX && !alwaysContainsScroll(node) && styles[overflow] === "visible")
-      );
-    };
-    elementCouldBeVScrolled = function(node) {
-      return elementCanBeScrolled(node, "overflowY");
-    };
-    elementCouldBeHScrolled = function(node) {
-      return elementCanBeScrolled(node, "overflowX");
-    };
-    locationCouldBeScrolled = function(axis, node) {
-      var ownerDocument = node.ownerDocument;
-      var current = node;
-      do {
-        if (typeof ShadowRoot !== "undefined" && current instanceof ShadowRoot) {
-          current = current.host;
-        }
-        var isScrollable = elementCouldBeScrolled(axis, current);
-        if (isScrollable) {
-          var _a = getScrollVariables(axis, current), scrollHeight = _a[1], clientHeight = _a[2];
-          if (scrollHeight > clientHeight) {
-            return true;
-          }
-        }
-        current = current.parentNode;
-      } while (current && current !== ownerDocument.body);
-      return false;
-    };
-    getVScrollVariables = function(_a) {
-      var scrollTop = _a.scrollTop, scrollHeight = _a.scrollHeight, clientHeight = _a.clientHeight;
-      return [
-        scrollTop,
-        scrollHeight,
-        clientHeight
-      ];
-    };
-    getHScrollVariables = function(_a) {
-      var scrollLeft = _a.scrollLeft, scrollWidth = _a.scrollWidth, clientWidth = _a.clientWidth;
-      return [
-        scrollLeft,
-        scrollWidth,
-        clientWidth
-      ];
-    };
-    elementCouldBeScrolled = function(axis, node) {
-      return axis === "v" ? elementCouldBeVScrolled(node) : elementCouldBeHScrolled(node);
-    };
-    getScrollVariables = function(axis, node) {
-      return axis === "v" ? getVScrollVariables(node) : getHScrollVariables(node);
-    };
-    getDirectionFactor = function(axis, direction) {
-      return axis === "h" && direction === "rtl" ? -1 : 1;
-    };
-    handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
-      var directionFactor = getDirectionFactor(axis, window.getComputedStyle(endTarget).direction);
-      var delta = directionFactor * sourceDelta;
-      var target = event.target;
-      var targetInLock = endTarget.contains(target);
-      var shouldCancelScroll = false;
-      var isDeltaPositive = delta > 0;
-      var availableScroll = 0;
-      var availableScrollTop = 0;
-      do {
-        if (!target) {
-          break;
-        }
-        var _a = getScrollVariables(axis, target), position = _a[0], scroll_1 = _a[1], capacity = _a[2];
-        var elementScroll = scroll_1 - capacity - directionFactor * position;
-        if (position || elementScroll) {
-          if (elementCouldBeScrolled(axis, target)) {
-            availableScroll += elementScroll;
-            availableScrollTop += position;
-          }
-        }
-        var parent_1 = target.parentNode;
-        target = parent_1 && parent_1.nodeType === Node.DOCUMENT_FRAGMENT_NODE ? parent_1.host : parent_1;
-      } while (
-        // portaled content
-        !targetInLock && target !== document.body || // self content
-        targetInLock && (endTarget.contains(target) || endTarget === target)
-      );
-      if (isDeltaPositive && (noOverscroll && Math.abs(availableScroll) < 1 || !noOverscroll && delta > availableScroll)) {
-        shouldCancelScroll = true;
-      } else if (!isDeltaPositive && (noOverscroll && Math.abs(availableScrollTop) < 1 || !noOverscroll && -delta > availableScrollTop)) {
-        shouldCancelScroll = true;
-      }
-      return shouldCancelScroll;
-    };
+init_define_import_meta_env();
+var alwaysContainsScroll = function(node) {
+  return node.tagName === "TEXTAREA";
+};
+var elementCanBeScrolled = function(node, overflow) {
+  if (!(node instanceof Element)) {
+    return false;
   }
-});
+  var styles = window.getComputedStyle(node);
+  return (
+    // not-not-scrollable
+    styles[overflow] !== "hidden" && // contains scroll inside self
+    !(styles.overflowY === styles.overflowX && !alwaysContainsScroll(node) && styles[overflow] === "visible")
+  );
+};
+var elementCouldBeVScrolled = function(node) {
+  return elementCanBeScrolled(node, "overflowY");
+};
+var elementCouldBeHScrolled = function(node) {
+  return elementCanBeScrolled(node, "overflowX");
+};
+var locationCouldBeScrolled = function(axis, node) {
+  var ownerDocument = node.ownerDocument;
+  var current = node;
+  do {
+    if (typeof ShadowRoot !== "undefined" && current instanceof ShadowRoot) {
+      current = current.host;
+    }
+    var isScrollable = elementCouldBeScrolled(axis, current);
+    if (isScrollable) {
+      var _a = getScrollVariables(axis, current), scrollHeight = _a[1], clientHeight = _a[2];
+      if (scrollHeight > clientHeight) {
+        return true;
+      }
+    }
+    current = current.parentNode;
+  } while (current && current !== ownerDocument.body);
+  return false;
+};
+var getVScrollVariables = function(_a) {
+  var scrollTop = _a.scrollTop, scrollHeight = _a.scrollHeight, clientHeight = _a.clientHeight;
+  return [
+    scrollTop,
+    scrollHeight,
+    clientHeight
+  ];
+};
+var getHScrollVariables = function(_a) {
+  var scrollLeft = _a.scrollLeft, scrollWidth = _a.scrollWidth, clientWidth = _a.clientWidth;
+  return [
+    scrollLeft,
+    scrollWidth,
+    clientWidth
+  ];
+};
+var elementCouldBeScrolled = function(axis, node) {
+  return axis === "v" ? elementCouldBeVScrolled(node) : elementCouldBeHScrolled(node);
+};
+var getScrollVariables = function(axis, node) {
+  return axis === "v" ? getVScrollVariables(node) : getHScrollVariables(node);
+};
+var getDirectionFactor = function(axis, direction) {
+  return axis === "h" && direction === "rtl" ? -1 : 1;
+};
+var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
+  var directionFactor = getDirectionFactor(axis, window.getComputedStyle(endTarget).direction);
+  var delta = directionFactor * sourceDelta;
+  var target = event.target;
+  var targetInLock = endTarget.contains(target);
+  var shouldCancelScroll = false;
+  var isDeltaPositive = delta > 0;
+  var availableScroll = 0;
+  var availableScrollTop = 0;
+  do {
+    if (!target) {
+      break;
+    }
+    var _a = getScrollVariables(axis, target), position = _a[0], scroll_1 = _a[1], capacity = _a[2];
+    var elementScroll = scroll_1 - capacity - directionFactor * position;
+    if (position || elementScroll) {
+      if (elementCouldBeScrolled(axis, target)) {
+        availableScroll += elementScroll;
+        availableScrollTop += position;
+      }
+    }
+    var parent_1 = target.parentNode;
+    target = parent_1 && parent_1.nodeType === Node.DOCUMENT_FRAGMENT_NODE ? parent_1.host : parent_1;
+  } while (
+    // portaled content
+    !targetInLock && target !== document.body || // self content
+    targetInLock && (endTarget.contains(target) || endTarget === target)
+  );
+  if (isDeltaPositive && (noOverscroll && Math.abs(availableScroll) < 1 || !noOverscroll && delta > availableScroll)) {
+    shouldCancelScroll = true;
+  } else if (!isDeltaPositive && (noOverscroll && Math.abs(availableScrollTop) < 1 || !noOverscroll && -delta > availableScrollTop)) {
+    shouldCancelScroll = true;
+  }
+  return shouldCancelScroll;
+};
 
 // node_modules/react-remove-scroll/dist/es2015/SideEffect.js
+var getTouchXY = function(event) {
+  return "changedTouches" in event ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY] : [0, 0];
+};
+var getDeltaXY = function(event) {
+  return [event.deltaX, event.deltaY];
+};
+var extractRef = function(ref) {
+  return ref && "current" in ref ? ref.current : ref;
+};
+var deltaCompare = function(x, y) {
+  return x[0] === y[0] && x[1] === y[1];
+};
+var generateStyle = function(id) {
+  return "\n  .block-interactivity-".concat(id, " {pointer-events: none;}\n  .allow-interactivity-").concat(id, " {pointer-events: all;}\n");
+};
+var idCounter = 0;
+var lockStack = [];
 function RemoveScrollSideCar(props) {
   var shouldPreventQueue = React20.useRef([]);
   var touchStartRef = React20.useRef([0, 0]);
@@ -37869,643 +26210,533 @@ function getOutermostShadowParent(node) {
   }
   return shadowParent;
 }
-var React20, getTouchXY, getDeltaXY, extractRef, deltaCompare, generateStyle, idCounter, lockStack;
-var init_SideEffect = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/SideEffect.js"() {
-    init_define_import_meta_env();
-    init_tslib_es6();
-    React20 = __toESM(require_react());
-    init_es20155();
-    init_es20154();
-    init_aggresiveCapture();
-    init_handleScroll();
-    getTouchXY = function(event) {
-      return "changedTouches" in event ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY] : [0, 0];
-    };
-    getDeltaXY = function(event) {
-      return [event.deltaX, event.deltaY];
-    };
-    extractRef = function(ref) {
-      return ref && "current" in ref ? ref.current : ref;
-    };
-    deltaCompare = function(x, y) {
-      return x[0] === y[0] && x[1] === y[1];
-    };
-    generateStyle = function(id) {
-      return "\n  .block-interactivity-".concat(id, " {pointer-events: none;}\n  .allow-interactivity-").concat(id, " {pointer-events: all;}\n");
-    };
-    idCounter = 0;
-    lockStack = [];
-  }
-});
 
 // node_modules/react-remove-scroll/dist/es2015/sidecar.js
-var sidecar_default;
-var init_sidecar = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/sidecar.js"() {
-    init_define_import_meta_env();
-    init_es20152();
-    init_SideEffect();
-    init_medium2();
-    sidecar_default = exportSidecar(effectCar, RemoveScrollSideCar);
-  }
-});
+var sidecar_default = exportSidecar(effectCar, RemoveScrollSideCar);
 
 // node_modules/react-remove-scroll/dist/es2015/Combination.js
-var React21, ReactRemoveScroll, Combination_default;
-var init_Combination = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/Combination.js"() {
-    init_define_import_meta_env();
-    init_tslib_es6();
-    React21 = __toESM(require_react());
-    init_UI();
-    init_sidecar();
-    ReactRemoveScroll = React21.forwardRef(function(props, ref) {
-      return React21.createElement(RemoveScroll, __assign({}, props, { ref, sideCar: sidecar_default }));
-    });
-    ReactRemoveScroll.classNames = RemoveScroll.classNames;
-    Combination_default = ReactRemoveScroll;
-  }
+var ReactRemoveScroll = React21.forwardRef(function(props, ref) {
+  return React21.createElement(RemoveScroll, __assign({}, props, { ref, sideCar: sidecar_default }));
 });
-
-// node_modules/react-remove-scroll/dist/es2015/index.js
-var init_es20156 = __esm({
-  "node_modules/react-remove-scroll/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    init_Combination();
-  }
-});
+ReactRemoveScroll.classNames = RemoveScroll.classNames;
+var Combination_default = ReactRemoveScroll;
 
 // node_modules/aria-hidden/dist/es2015/index.js
-var getDefaultParent, counterMap, uncontrolledNodes, markerMap, lockCount, unwrapHost, correctTargets, applyAttributeToOthers, hideOthers;
-var init_es20157 = __esm({
-  "node_modules/aria-hidden/dist/es2015/index.js"() {
-    init_define_import_meta_env();
-    getDefaultParent = function(originalTarget) {
-      if (typeof document === "undefined") {
-        return null;
-      }
-      var sampleTarget = Array.isArray(originalTarget) ? originalTarget[0] : originalTarget;
-      return sampleTarget.ownerDocument.body;
-    };
-    counterMap = /* @__PURE__ */ new WeakMap();
-    uncontrolledNodes = /* @__PURE__ */ new WeakMap();
-    markerMap = {};
-    lockCount = 0;
-    unwrapHost = function(node) {
-      return node && (node.host || unwrapHost(node.parentNode));
-    };
-    correctTargets = function(parent, targets) {
-      return targets.map(function(target) {
-        if (parent.contains(target)) {
-          return target;
-        }
-        var correctedTarget = unwrapHost(target);
-        if (correctedTarget && parent.contains(correctedTarget)) {
-          return correctedTarget;
-        }
-        console.error("aria-hidden", target, "in not contained inside", parent, ". Doing nothing");
-        return null;
-      }).filter(function(x) {
-        return Boolean(x);
-      });
-    };
-    applyAttributeToOthers = function(originalTarget, parentNode, markerName, controlAttribute) {
-      var targets = correctTargets(parentNode, Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
-      if (!markerMap[markerName]) {
-        markerMap[markerName] = /* @__PURE__ */ new WeakMap();
-      }
-      var markerCounter = markerMap[markerName];
-      var hiddenNodes = [];
-      var elementsToKeep = /* @__PURE__ */ new Set();
-      var elementsToStop = new Set(targets);
-      var keep = function(el) {
-        if (!el || elementsToKeep.has(el)) {
-          return;
-        }
-        elementsToKeep.add(el);
-        keep(el.parentNode);
-      };
-      targets.forEach(keep);
-      var deep = function(parent) {
-        if (!parent || elementsToStop.has(parent)) {
-          return;
-        }
-        Array.prototype.forEach.call(parent.children, function(node) {
-          if (elementsToKeep.has(node)) {
-            deep(node);
-          } else {
-            try {
-              var attr = node.getAttribute(controlAttribute);
-              var alreadyHidden = attr !== null && attr !== "false";
-              var counterValue = (counterMap.get(node) || 0) + 1;
-              var markerValue = (markerCounter.get(node) || 0) + 1;
-              counterMap.set(node, counterValue);
-              markerCounter.set(node, markerValue);
-              hiddenNodes.push(node);
-              if (counterValue === 1 && alreadyHidden) {
-                uncontrolledNodes.set(node, true);
-              }
-              if (markerValue === 1) {
-                node.setAttribute(markerName, "true");
-              }
-              if (!alreadyHidden) {
-                node.setAttribute(controlAttribute, "true");
-              }
-            } catch (e) {
-              console.error("aria-hidden: cannot operate on ", node, e);
-            }
-          }
-        });
-      };
-      deep(parentNode);
-      elementsToKeep.clear();
-      lockCount++;
-      return function() {
-        hiddenNodes.forEach(function(node) {
-          var counterValue = counterMap.get(node) - 1;
-          var markerValue = markerCounter.get(node) - 1;
+init_define_import_meta_env();
+var getDefaultParent = function(originalTarget) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  var sampleTarget = Array.isArray(originalTarget) ? originalTarget[0] : originalTarget;
+  return sampleTarget.ownerDocument.body;
+};
+var counterMap = /* @__PURE__ */ new WeakMap();
+var uncontrolledNodes = /* @__PURE__ */ new WeakMap();
+var markerMap = {};
+var lockCount = 0;
+var unwrapHost = function(node) {
+  return node && (node.host || unwrapHost(node.parentNode));
+};
+var correctTargets = function(parent, targets) {
+  return targets.map(function(target) {
+    if (parent.contains(target)) {
+      return target;
+    }
+    var correctedTarget = unwrapHost(target);
+    if (correctedTarget && parent.contains(correctedTarget)) {
+      return correctedTarget;
+    }
+    console.error("aria-hidden", target, "in not contained inside", parent, ". Doing nothing");
+    return null;
+  }).filter(function(x) {
+    return Boolean(x);
+  });
+};
+var applyAttributeToOthers = function(originalTarget, parentNode, markerName, controlAttribute) {
+  var targets = correctTargets(parentNode, Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
+  if (!markerMap[markerName]) {
+    markerMap[markerName] = /* @__PURE__ */ new WeakMap();
+  }
+  var markerCounter = markerMap[markerName];
+  var hiddenNodes = [];
+  var elementsToKeep = /* @__PURE__ */ new Set();
+  var elementsToStop = new Set(targets);
+  var keep = function(el) {
+    if (!el || elementsToKeep.has(el)) {
+      return;
+    }
+    elementsToKeep.add(el);
+    keep(el.parentNode);
+  };
+  targets.forEach(keep);
+  var deep = function(parent) {
+    if (!parent || elementsToStop.has(parent)) {
+      return;
+    }
+    Array.prototype.forEach.call(parent.children, function(node) {
+      if (elementsToKeep.has(node)) {
+        deep(node);
+      } else {
+        try {
+          var attr = node.getAttribute(controlAttribute);
+          var alreadyHidden = attr !== null && attr !== "false";
+          var counterValue = (counterMap.get(node) || 0) + 1;
+          var markerValue = (markerCounter.get(node) || 0) + 1;
           counterMap.set(node, counterValue);
           markerCounter.set(node, markerValue);
-          if (!counterValue) {
-            if (!uncontrolledNodes.has(node)) {
-              node.removeAttribute(controlAttribute);
-            }
-            uncontrolledNodes.delete(node);
+          hiddenNodes.push(node);
+          if (counterValue === 1 && alreadyHidden) {
+            uncontrolledNodes.set(node, true);
           }
-          if (!markerValue) {
-            node.removeAttribute(markerName);
+          if (markerValue === 1) {
+            node.setAttribute(markerName, "true");
           }
-        });
-        lockCount--;
-        if (!lockCount) {
-          counterMap = /* @__PURE__ */ new WeakMap();
-          counterMap = /* @__PURE__ */ new WeakMap();
-          uncontrolledNodes = /* @__PURE__ */ new WeakMap();
-          markerMap = {};
+          if (!alreadyHidden) {
+            node.setAttribute(controlAttribute, "true");
+          }
+        } catch (e) {
+          console.error("aria-hidden: cannot operate on ", node, e);
         }
-      };
-    };
-    hideOthers = function(originalTarget, parentNode, markerName) {
-      if (markerName === void 0) {
-        markerName = "data-aria-hidden";
       }
-      var targets = Array.from(Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
-      var activeParentNode = parentNode || getDefaultParent(originalTarget);
-      if (!activeParentNode) {
-        return function() {
-          return null;
-        };
+    });
+  };
+  deep(parentNode);
+  elementsToKeep.clear();
+  lockCount++;
+  return function() {
+    hiddenNodes.forEach(function(node) {
+      var counterValue = counterMap.get(node) - 1;
+      var markerValue = markerCounter.get(node) - 1;
+      counterMap.set(node, counterValue);
+      markerCounter.set(node, markerValue);
+      if (!counterValue) {
+        if (!uncontrolledNodes.has(node)) {
+          node.removeAttribute(controlAttribute);
+        }
+        uncontrolledNodes.delete(node);
       }
-      targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
-      return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
+      if (!markerValue) {
+        node.removeAttribute(markerName);
+      }
+    });
+    lockCount--;
+    if (!lockCount) {
+      counterMap = /* @__PURE__ */ new WeakMap();
+      counterMap = /* @__PURE__ */ new WeakMap();
+      uncontrolledNodes = /* @__PURE__ */ new WeakMap();
+      markerMap = {};
+    }
+  };
+};
+var hideOthers = function(originalTarget, parentNode, markerName) {
+  if (markerName === void 0) {
+    markerName = "data-aria-hidden";
+  }
+  var targets = Array.from(Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
+  var activeParentNode = parentNode || getDefaultParent(originalTarget);
+  if (!activeParentNode) {
+    return function() {
+      return null;
     };
   }
-});
+  targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
+  return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
+};
 
 // node_modules/@radix-ui/react-dialog/dist/index.mjs
+var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+var DIALOG_NAME = "Dialog";
+var [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
+var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
+var Dialog = (props) => {
+  const {
+    __scopeDialog,
+    children,
+    open: openProp,
+    defaultOpen,
+    onOpenChange,
+    modal = true
+  } = props;
+  const triggerRef = React24.useRef(null);
+  const contentRef = React24.useRef(null);
+  const [open, setOpen] = useControllableState({
+    prop: openProp,
+    defaultProp: defaultOpen ?? false,
+    onChange: onOpenChange,
+    caller: DIALOG_NAME
+  });
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+    DialogProvider,
+    {
+      scope: __scopeDialog,
+      triggerRef,
+      contentRef,
+      contentId: useId(),
+      titleId: useId(),
+      descriptionId: useId(),
+      open,
+      onOpenChange: setOpen,
+      onOpenToggle: React24.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
+      modal,
+      children
+    }
+  );
+};
+Dialog.displayName = DIALOG_NAME;
+var TRIGGER_NAME = "DialogTrigger";
+var DialogTrigger = React24.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...triggerProps } = props;
+    const context = useDialogContext(TRIGGER_NAME, __scopeDialog);
+    const composedTriggerRef = useComposedRefs(forwardedRef, context.triggerRef);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      Primitive.button,
+      {
+        type: "button",
+        "aria-haspopup": "dialog",
+        "aria-expanded": context.open,
+        "aria-controls": context.contentId,
+        "data-state": getState(context.open),
+        ...triggerProps,
+        ref: composedTriggerRef,
+        onClick: composeEventHandlers(props.onClick, context.onOpenToggle)
+      }
+    );
+  }
+);
+DialogTrigger.displayName = TRIGGER_NAME;
+var PORTAL_NAME2 = "DialogPortal";
+var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME2, {
+  forceMount: void 0
+});
+var DialogPortal = (props) => {
+  const { __scopeDialog, forceMount, children, container } = props;
+  const context = useDialogContext(PORTAL_NAME2, __scopeDialog);
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: React24.Children.map(children, (child) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Portal, { asChild: true, container, children: child }) })) });
+};
+DialogPortal.displayName = PORTAL_NAME2;
+var OVERLAY_NAME = "DialogOverlay";
+var DialogOverlay = React24.forwardRef(
+  (props, forwardedRef) => {
+    const portalContext = usePortalContext(OVERLAY_NAME, props.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...overlayProps } = props;
+    const context = useDialogContext(OVERLAY_NAME, props.__scopeDialog);
+    return context.modal ? /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DialogOverlayImpl, { ...overlayProps, ref: forwardedRef }) }) : null;
+  }
+);
+DialogOverlay.displayName = OVERLAY_NAME;
+var Slot2 = createSlot("DialogOverlay.RemoveScroll");
+var DialogOverlayImpl = React24.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...overlayProps } = props;
+    const context = useDialogContext(OVERLAY_NAME, __scopeDialog);
+    return (
+      // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
+      // ie. when `Overlay` and `Content` are siblings
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Combination_default, { as: Slot2, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+        Primitive.div,
+        {
+          "data-state": getState(context.open),
+          ...overlayProps,
+          ref: forwardedRef,
+          style: { pointerEvents: "auto", ...overlayProps.style }
+        }
+      ) })
+    );
+  }
+);
+var CONTENT_NAME = "DialogContent";
+var DialogContent = React24.forwardRef(
+  (props, forwardedRef) => {
+    const portalContext = usePortalContext(CONTENT_NAME, props.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...contentProps } = props;
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DialogContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DialogContentNonModal, { ...contentProps, ref: forwardedRef }) });
+  }
+);
+DialogContent.displayName = CONTENT_NAME;
+var DialogContentModal = React24.forwardRef(
+  (props, forwardedRef) => {
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    const contentRef = React24.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, context.contentRef, contentRef);
+    React24.useEffect(() => {
+      const content = contentRef.current;
+      if (content) return hideOthers(content);
+    }, []);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      DialogContentImpl,
+      {
+        ...props,
+        ref: composedRefs,
+        trapFocus: context.open,
+        disableOutsidePointerEvents: true,
+        onCloseAutoFocus: composeEventHandlers(props.onCloseAutoFocus, (event) => {
+          event.preventDefault();
+          context.triggerRef.current?.focus();
+        }),
+        onPointerDownOutside: composeEventHandlers(props.onPointerDownOutside, (event) => {
+          const originalEvent = event.detail.originalEvent;
+          const ctrlLeftClick = originalEvent.button === 0 && originalEvent.ctrlKey === true;
+          const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
+          if (isRightClick) event.preventDefault();
+        }),
+        onFocusOutside: composeEventHandlers(
+          props.onFocusOutside,
+          (event) => event.preventDefault()
+        )
+      }
+    );
+  }
+);
+var DialogContentNonModal = React24.forwardRef(
+  (props, forwardedRef) => {
+    const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
+    const hasInteractedOutsideRef = React24.useRef(false);
+    const hasPointerDownOutsideRef = React24.useRef(false);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      DialogContentImpl,
+      {
+        ...props,
+        ref: forwardedRef,
+        trapFocus: false,
+        disableOutsidePointerEvents: false,
+        onCloseAutoFocus: (event) => {
+          props.onCloseAutoFocus?.(event);
+          if (!event.defaultPrevented) {
+            if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus();
+            event.preventDefault();
+          }
+          hasInteractedOutsideRef.current = false;
+          hasPointerDownOutsideRef.current = false;
+        },
+        onInteractOutside: (event) => {
+          props.onInteractOutside?.(event);
+          if (!event.defaultPrevented) {
+            hasInteractedOutsideRef.current = true;
+            if (event.detail.originalEvent.type === "pointerdown") {
+              hasPointerDownOutsideRef.current = true;
+            }
+          }
+          const target = event.target;
+          const targetIsTrigger = context.triggerRef.current?.contains(target);
+          if (targetIsTrigger) event.preventDefault();
+          if (event.detail.originalEvent.type === "focusin" && hasPointerDownOutsideRef.current) {
+            event.preventDefault();
+          }
+        }
+      }
+    );
+  }
+);
+var DialogContentImpl = React24.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props;
+    const context = useDialogContext(CONTENT_NAME, __scopeDialog);
+    const contentRef = React24.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, contentRef);
+    useFocusGuards();
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+        FocusScope,
+        {
+          asChild: true,
+          loop: true,
+          trapped: trapFocus,
+          onMountAutoFocus: onOpenAutoFocus,
+          onUnmountAutoFocus: onCloseAutoFocus,
+          children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+            DismissableLayer,
+            {
+              role: "dialog",
+              id: context.contentId,
+              "aria-describedby": context.descriptionId,
+              "aria-labelledby": context.titleId,
+              "data-state": getState(context.open),
+              ...contentProps,
+              ref: composedRefs,
+              onDismiss: () => context.onOpenChange(false)
+            }
+          )
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(TitleWarning, { titleId: context.titleId }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DescriptionWarning, { contentRef, descriptionId: context.descriptionId })
+      ] })
+    ] });
+  }
+);
+var TITLE_NAME = "DialogTitle";
+var DialogTitle = React24.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...titleProps } = props;
+    const context = useDialogContext(TITLE_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Primitive.h2, { id: context.titleId, ...titleProps, ref: forwardedRef });
+  }
+);
+DialogTitle.displayName = TITLE_NAME;
+var DESCRIPTION_NAME = "DialogDescription";
+var DialogDescription = React24.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...descriptionProps } = props;
+    const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Primitive.p, { id: context.descriptionId, ...descriptionProps, ref: forwardedRef });
+  }
+);
+DialogDescription.displayName = DESCRIPTION_NAME;
+var CLOSE_NAME = "DialogClose";
+var DialogClose = React24.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeDialog, ...closeProps } = props;
+    const context = useDialogContext(CLOSE_NAME, __scopeDialog);
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      Primitive.button,
+      {
+        type: "button",
+        ...closeProps,
+        ref: forwardedRef,
+        onClick: composeEventHandlers(props.onClick, () => context.onOpenChange(false))
+      }
+    );
+  }
+);
+DialogClose.displayName = CLOSE_NAME;
 function getState(open) {
   return open ? "open" : "closed";
 }
-var React24, import_jsx_runtime7, DIALOG_NAME, createDialogContext, createDialogScope, DialogProvider, useDialogContext, Dialog, TRIGGER_NAME, DialogTrigger, PORTAL_NAME2, PortalProvider, usePortalContext, DialogPortal, OVERLAY_NAME, DialogOverlay, Slot2, DialogOverlayImpl, CONTENT_NAME, DialogContent, DialogContentModal, DialogContentNonModal, DialogContentImpl, TITLE_NAME, DialogTitle, DESCRIPTION_NAME, DialogDescription, CLOSE_NAME, DialogClose, TITLE_WARNING_NAME, WarningProvider, useWarningContext, TitleWarning, DESCRIPTION_WARNING_NAME, DescriptionWarning, Portal2, Overlay, Content, Title, Description, Close;
-var init_dist19 = __esm({
-  "node_modules/@radix-ui/react-dialog/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React24 = __toESM(require_react(), 1);
-    init_dist4();
-    init_dist5();
-    init_dist6();
-    init_dist8();
-    init_dist9();
-    init_dist14();
-    init_dist15();
-    init_dist16();
-    init_dist17();
-    init_dist11();
-    init_dist18();
-    init_es20156();
-    init_es20157();
-    init_dist10();
-    import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
-    DIALOG_NAME = "Dialog";
-    [createDialogContext, createDialogScope] = createContextScope(DIALOG_NAME);
-    [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
-    Dialog = (props) => {
-      const {
-        __scopeDialog,
-        children,
-        open: openProp,
-        defaultOpen,
-        onOpenChange,
-        modal = true
-      } = props;
-      const triggerRef = React24.useRef(null);
-      const contentRef = React24.useRef(null);
-      const [open, setOpen] = useControllableState({
-        prop: openProp,
-        defaultProp: defaultOpen ?? false,
-        onChange: onOpenChange,
-        caller: DIALOG_NAME
-      });
-      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-        DialogProvider,
-        {
-          scope: __scopeDialog,
-          triggerRef,
-          contentRef,
-          contentId: useId(),
-          titleId: useId(),
-          descriptionId: useId(),
-          open,
-          onOpenChange: setOpen,
-          onOpenToggle: React24.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
-          modal,
-          children
-        }
-      );
-    };
-    Dialog.displayName = DIALOG_NAME;
-    TRIGGER_NAME = "DialogTrigger";
-    DialogTrigger = React24.forwardRef(
-      (props, forwardedRef) => {
-        const { __scopeDialog, ...triggerProps } = props;
-        const context = useDialogContext(TRIGGER_NAME, __scopeDialog);
-        const composedTriggerRef = useComposedRefs(forwardedRef, context.triggerRef);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-          Primitive.button,
-          {
-            type: "button",
-            "aria-haspopup": "dialog",
-            "aria-expanded": context.open,
-            "aria-controls": context.contentId,
-            "data-state": getState(context.open),
-            ...triggerProps,
-            ref: composedTriggerRef,
-            onClick: composeEventHandlers(props.onClick, context.onOpenToggle)
-          }
-        );
-      }
-    );
-    DialogTrigger.displayName = TRIGGER_NAME;
-    PORTAL_NAME2 = "DialogPortal";
-    [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME2, {
-      forceMount: void 0
-    });
-    DialogPortal = (props) => {
-      const { __scopeDialog, forceMount, children, container } = props;
-      const context = useDialogContext(PORTAL_NAME2, __scopeDialog);
-      return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(PortalProvider, { scope: __scopeDialog, forceMount, children: React24.Children.map(children, (child) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Portal, { asChild: true, container, children: child }) })) });
-    };
-    DialogPortal.displayName = PORTAL_NAME2;
-    OVERLAY_NAME = "DialogOverlay";
-    DialogOverlay = React24.forwardRef(
-      (props, forwardedRef) => {
-        const portalContext = usePortalContext(OVERLAY_NAME, props.__scopeDialog);
-        const { forceMount = portalContext.forceMount, ...overlayProps } = props;
-        const context = useDialogContext(OVERLAY_NAME, props.__scopeDialog);
-        return context.modal ? /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DialogOverlayImpl, { ...overlayProps, ref: forwardedRef }) }) : null;
-      }
-    );
-    DialogOverlay.displayName = OVERLAY_NAME;
-    Slot2 = createSlot("DialogOverlay.RemoveScroll");
-    DialogOverlayImpl = React24.forwardRef(
-      (props, forwardedRef) => {
-        const { __scopeDialog, ...overlayProps } = props;
-        const context = useDialogContext(OVERLAY_NAME, __scopeDialog);
-        return (
-          // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
-          // ie. when `Overlay` and `Content` are siblings
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Combination_default, { as: Slot2, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-            Primitive.div,
-            {
-              "data-state": getState(context.open),
-              ...overlayProps,
-              ref: forwardedRef,
-              style: { pointerEvents: "auto", ...overlayProps.style }
-            }
-          ) })
-        );
-      }
-    );
-    CONTENT_NAME = "DialogContent";
-    DialogContent = React24.forwardRef(
-      (props, forwardedRef) => {
-        const portalContext = usePortalContext(CONTENT_NAME, props.__scopeDialog);
-        const { forceMount = portalContext.forceMount, ...contentProps } = props;
-        const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DialogContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DialogContentNonModal, { ...contentProps, ref: forwardedRef }) });
-      }
-    );
-    DialogContent.displayName = CONTENT_NAME;
-    DialogContentModal = React24.forwardRef(
-      (props, forwardedRef) => {
-        const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
-        const contentRef = React24.useRef(null);
-        const composedRefs = useComposedRefs(forwardedRef, context.contentRef, contentRef);
-        React24.useEffect(() => {
-          const content = contentRef.current;
-          if (content) return hideOthers(content);
-        }, []);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-          DialogContentImpl,
-          {
-            ...props,
-            ref: composedRefs,
-            trapFocus: context.open,
-            disableOutsidePointerEvents: true,
-            onCloseAutoFocus: composeEventHandlers(props.onCloseAutoFocus, (event) => {
-              event.preventDefault();
-              context.triggerRef.current?.focus();
-            }),
-            onPointerDownOutside: composeEventHandlers(props.onPointerDownOutside, (event) => {
-              const originalEvent = event.detail.originalEvent;
-              const ctrlLeftClick = originalEvent.button === 0 && originalEvent.ctrlKey === true;
-              const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
-              if (isRightClick) event.preventDefault();
-            }),
-            onFocusOutside: composeEventHandlers(
-              props.onFocusOutside,
-              (event) => event.preventDefault()
-            )
-          }
-        );
-      }
-    );
-    DialogContentNonModal = React24.forwardRef(
-      (props, forwardedRef) => {
-        const context = useDialogContext(CONTENT_NAME, props.__scopeDialog);
-        const hasInteractedOutsideRef = React24.useRef(false);
-        const hasPointerDownOutsideRef = React24.useRef(false);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-          DialogContentImpl,
-          {
-            ...props,
-            ref: forwardedRef,
-            trapFocus: false,
-            disableOutsidePointerEvents: false,
-            onCloseAutoFocus: (event) => {
-              props.onCloseAutoFocus?.(event);
-              if (!event.defaultPrevented) {
-                if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus();
-                event.preventDefault();
-              }
-              hasInteractedOutsideRef.current = false;
-              hasPointerDownOutsideRef.current = false;
-            },
-            onInteractOutside: (event) => {
-              props.onInteractOutside?.(event);
-              if (!event.defaultPrevented) {
-                hasInteractedOutsideRef.current = true;
-                if (event.detail.originalEvent.type === "pointerdown") {
-                  hasPointerDownOutsideRef.current = true;
-                }
-              }
-              const target = event.target;
-              const targetIsTrigger = context.triggerRef.current?.contains(target);
-              if (targetIsTrigger) event.preventDefault();
-              if (event.detail.originalEvent.type === "focusin" && hasPointerDownOutsideRef.current) {
-                event.preventDefault();
-              }
-            }
-          }
-        );
-      }
-    );
-    DialogContentImpl = React24.forwardRef(
-      (props, forwardedRef) => {
-        const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props;
-        const context = useDialogContext(CONTENT_NAME, __scopeDialog);
-        const contentRef = React24.useRef(null);
-        const composedRefs = useComposedRefs(forwardedRef, contentRef);
-        useFocusGuards();
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-            FocusScope,
-            {
-              asChild: true,
-              loop: true,
-              trapped: trapFocus,
-              onMountAutoFocus: onOpenAutoFocus,
-              onUnmountAutoFocus: onCloseAutoFocus,
-              children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-                DismissableLayer,
-                {
-                  role: "dialog",
-                  id: context.contentId,
-                  "aria-describedby": context.descriptionId,
-                  "aria-labelledby": context.titleId,
-                  "data-state": getState(context.open),
-                  ...contentProps,
-                  ref: composedRefs,
-                  onDismiss: () => context.onOpenChange(false)
-                }
-              )
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(TitleWarning, { titleId: context.titleId }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(DescriptionWarning, { contentRef, descriptionId: context.descriptionId })
-          ] })
-        ] });
-      }
-    );
-    TITLE_NAME = "DialogTitle";
-    DialogTitle = React24.forwardRef(
-      (props, forwardedRef) => {
-        const { __scopeDialog, ...titleProps } = props;
-        const context = useDialogContext(TITLE_NAME, __scopeDialog);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Primitive.h2, { id: context.titleId, ...titleProps, ref: forwardedRef });
-      }
-    );
-    DialogTitle.displayName = TITLE_NAME;
-    DESCRIPTION_NAME = "DialogDescription";
-    DialogDescription = React24.forwardRef(
-      (props, forwardedRef) => {
-        const { __scopeDialog, ...descriptionProps } = props;
-        const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Primitive.p, { id: context.descriptionId, ...descriptionProps, ref: forwardedRef });
-      }
-    );
-    DialogDescription.displayName = DESCRIPTION_NAME;
-    CLOSE_NAME = "DialogClose";
-    DialogClose = React24.forwardRef(
-      (props, forwardedRef) => {
-        const { __scopeDialog, ...closeProps } = props;
-        const context = useDialogContext(CLOSE_NAME, __scopeDialog);
-        return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-          Primitive.button,
-          {
-            type: "button",
-            ...closeProps,
-            ref: forwardedRef,
-            onClick: composeEventHandlers(props.onClick, () => context.onOpenChange(false))
-          }
-        );
-      }
-    );
-    DialogClose.displayName = CLOSE_NAME;
-    TITLE_WARNING_NAME = "DialogTitleWarning";
-    [WarningProvider, useWarningContext] = createContext2(TITLE_WARNING_NAME, {
-      contentName: CONTENT_NAME,
-      titleName: TITLE_NAME,
-      docsSlug: "dialog"
-    });
-    TitleWarning = ({ titleId }) => {
-      const titleWarningContext = useWarningContext(TITLE_WARNING_NAME);
-      const MESSAGE = `\`${titleWarningContext.contentName}\` requires a \`${titleWarningContext.titleName}\` for the component to be accessible for screen reader users.
+var TITLE_WARNING_NAME = "DialogTitleWarning";
+var [WarningProvider, useWarningContext] = createContext2(TITLE_WARNING_NAME, {
+  contentName: CONTENT_NAME,
+  titleName: TITLE_NAME,
+  docsSlug: "dialog"
+});
+var TitleWarning = ({ titleId }) => {
+  const titleWarningContext = useWarningContext(TITLE_WARNING_NAME);
+  const MESSAGE = `\`${titleWarningContext.contentName}\` requires a \`${titleWarningContext.titleName}\` for the component to be accessible for screen reader users.
 
 If you want to hide the \`${titleWarningContext.titleName}\`, you can wrap it with our VisuallyHidden component.
 
 For more information, see https://radix-ui.com/primitives/docs/components/${titleWarningContext.docsSlug}`;
-      React24.useEffect(() => {
-        if (titleId) {
-          const hasTitle = document.getElementById(titleId);
-          if (!hasTitle) console.error(MESSAGE);
-        }
-      }, [MESSAGE, titleId]);
-      return null;
-    };
-    DESCRIPTION_WARNING_NAME = "DialogDescriptionWarning";
-    DescriptionWarning = ({ contentRef, descriptionId }) => {
-      const descriptionWarningContext = useWarningContext(DESCRIPTION_WARNING_NAME);
-      const MESSAGE = `Warning: Missing \`Description\` or \`aria-describedby={undefined}\` for {${descriptionWarningContext.contentName}}.`;
-      React24.useEffect(() => {
-        const describedById = contentRef.current?.getAttribute("aria-describedby");
-        if (descriptionId && describedById) {
-          const hasDescription = document.getElementById(descriptionId);
-          if (!hasDescription) console.warn(MESSAGE);
-        }
-      }, [MESSAGE, contentRef, descriptionId]);
-      return null;
-    };
-    Portal2 = DialogPortal;
-    Overlay = DialogOverlay;
-    Content = DialogContent;
-    Title = DialogTitle;
-    Description = DialogDescription;
-    Close = DialogClose;
-  }
-});
-
-// node_modules/lucide-react/dist/esm/shared/src/utils.js
-var toKebabCase, mergeClasses;
-var init_utils4 = __esm({
-  "node_modules/lucide-react/dist/esm/shared/src/utils.js"() {
-    init_define_import_meta_env();
-    toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-    mergeClasses = (...classes) => classes.filter((className, index, array) => {
-      return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
-    }).join(" ").trim();
-  }
-});
-
-// node_modules/lucide-react/dist/esm/defaultAttributes.js
-var defaultAttributes;
-var init_defaultAttributes = __esm({
-  "node_modules/lucide-react/dist/esm/defaultAttributes.js"() {
-    init_define_import_meta_env();
-    defaultAttributes = {
-      xmlns: "http://www.w3.org/2000/svg",
-      width: 24,
-      height: 24,
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "currentColor",
-      strokeWidth: 2,
-      strokeLinecap: "round",
-      strokeLinejoin: "round"
-    };
-  }
-});
-
-// node_modules/lucide-react/dist/esm/Icon.js
-var import_react2, Icon;
-var init_Icon = __esm({
-  "node_modules/lucide-react/dist/esm/Icon.js"() {
-    init_define_import_meta_env();
-    import_react2 = __toESM(require_react(), 1);
-    init_defaultAttributes();
-    init_utils4();
-    Icon = (0, import_react2.forwardRef)(
-      ({
-        color = "currentColor",
-        size = 24,
-        strokeWidth = 2,
-        absoluteStrokeWidth,
-        className = "",
-        children,
-        iconNode,
-        ...rest
-      }, ref) => {
-        return (0, import_react2.createElement)(
-          "svg",
-          {
-            ref,
-            ...defaultAttributes,
-            width: size,
-            height: size,
-            stroke: color,
-            strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
-            className: mergeClasses("lucide", className),
-            ...rest
-          },
-          [
-            ...iconNode.map(([tag, attrs]) => (0, import_react2.createElement)(tag, attrs)),
-            ...Array.isArray(children) ? children : [children]
-          ]
-        );
-      }
-    );
-  }
-});
-
-// node_modules/lucide-react/dist/esm/createLucideIcon.js
-var import_react3, createLucideIcon;
-var init_createLucideIcon = __esm({
-  "node_modules/lucide-react/dist/esm/createLucideIcon.js"() {
-    init_define_import_meta_env();
-    import_react3 = __toESM(require_react(), 1);
-    init_utils4();
-    init_Icon();
-    createLucideIcon = (iconName, iconNode) => {
-      const Component = (0, import_react3.forwardRef)(
-        ({ className, ...props }, ref) => (0, import_react3.createElement)(Icon, {
-          ref,
-          iconNode,
-          className: mergeClasses(`lucide-${toKebabCase(iconName)}`, className),
-          ...props
-        })
-      );
-      Component.displayName = `${iconName}`;
-      return Component;
-    };
-  }
-});
-
-// node_modules/lucide-react/dist/esm/icons/x.js
-var __iconNode, X;
-var init_x = __esm({
-  "node_modules/lucide-react/dist/esm/icons/x.js"() {
-    init_define_import_meta_env();
-    init_createLucideIcon();
-    __iconNode = [
-      ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
-      ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
-    ];
-    X = createLucideIcon("X", __iconNode);
-  }
-});
+  React24.useEffect(() => {
+    if (titleId) {
+      const hasTitle = document.getElementById(titleId);
+      if (!hasTitle) console.error(MESSAGE);
+    }
+  }, [MESSAGE, titleId]);
+  return null;
+};
+var DESCRIPTION_WARNING_NAME = "DialogDescriptionWarning";
+var DescriptionWarning = ({ contentRef, descriptionId }) => {
+  const descriptionWarningContext = useWarningContext(DESCRIPTION_WARNING_NAME);
+  const MESSAGE = `Warning: Missing \`Description\` or \`aria-describedby={undefined}\` for {${descriptionWarningContext.contentName}}.`;
+  React24.useEffect(() => {
+    const describedById = contentRef.current?.getAttribute("aria-describedby");
+    if (descriptionId && describedById) {
+      const hasDescription = document.getElementById(descriptionId);
+      if (!hasDescription) console.warn(MESSAGE);
+    }
+  }, [MESSAGE, contentRef, descriptionId]);
+  return null;
+};
+var Portal2 = DialogPortal;
+var Overlay = DialogOverlay;
+var Content = DialogContent;
+var Title = DialogTitle;
+var Description = DialogDescription;
+var Close = DialogClose;
 
 // node_modules/lucide-react/dist/esm/lucide-react.js
-var init_lucide_react = __esm({
-  "node_modules/lucide-react/dist/esm/lucide-react.js"() {
-    init_define_import_meta_env();
-    init_x();
+init_define_import_meta_env();
+
+// node_modules/lucide-react/dist/esm/createLucideIcon.js
+init_define_import_meta_env();
+var import_react3 = __toESM(require_react(), 1);
+
+// node_modules/lucide-react/dist/esm/shared/src/utils.js
+init_define_import_meta_env();
+var toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+var mergeClasses = (...classes) => classes.filter((className, index, array) => {
+  return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
+}).join(" ").trim();
+
+// node_modules/lucide-react/dist/esm/Icon.js
+init_define_import_meta_env();
+var import_react2 = __toESM(require_react(), 1);
+
+// node_modules/lucide-react/dist/esm/defaultAttributes.js
+init_define_import_meta_env();
+var defaultAttributes = {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: 24,
+  height: 24,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round"
+};
+
+// node_modules/lucide-react/dist/esm/Icon.js
+var Icon = (0, import_react2.forwardRef)(
+  ({
+    color = "currentColor",
+    size = 24,
+    strokeWidth = 2,
+    absoluteStrokeWidth,
+    className = "",
+    children,
+    iconNode,
+    ...rest
+  }, ref) => {
+    return (0, import_react2.createElement)(
+      "svg",
+      {
+        ref,
+        ...defaultAttributes,
+        width: size,
+        height: size,
+        stroke: color,
+        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+        className: mergeClasses("lucide", className),
+        ...rest
+      },
+      [
+        ...iconNode.map(([tag, attrs]) => (0, import_react2.createElement)(tag, attrs)),
+        ...Array.isArray(children) ? children : [children]
+      ]
+    );
   }
-});
+);
+
+// node_modules/lucide-react/dist/esm/createLucideIcon.js
+var createLucideIcon = (iconName, iconNode) => {
+  const Component = (0, import_react3.forwardRef)(
+    ({ className, ...props }, ref) => (0, import_react3.createElement)(Icon, {
+      ref,
+      iconNode,
+      className: mergeClasses(`lucide-${toKebabCase(iconName)}`, className),
+      ...props
+    })
+  );
+  Component.displayName = `${iconName}`;
+  return Component;
+};
+
+// node_modules/lucide-react/dist/esm/icons/x.js
+init_define_import_meta_env();
+var __iconNode = [
+  ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+  ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+];
+var X = createLucideIcon("X", __iconNode);
+
+// src/lib/utils.js
+init_define_import_meta_env();
 
 // node_modules/clsx/dist/clsx.mjs
+init_define_import_meta_env();
 function r(e) {
   var t, f, n = "";
   if ("string" == typeof e || "number" == typeof e) n += e;
@@ -38519,13 +26750,313 @@ function clsx() {
   for (var e, t, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t = r(e)) && (n && (n += " "), n += t);
   return n;
 }
-var init_clsx = __esm({
-  "node_modules/clsx/dist/clsx.mjs"() {
-    init_define_import_meta_env();
-  }
-});
 
 // node_modules/tailwind-merge/dist/bundle-mjs.mjs
+init_define_import_meta_env();
+var CLASS_PART_SEPARATOR = "-";
+var createClassGroupUtils = (config) => {
+  const classMap = createClassMap(config);
+  const {
+    conflictingClassGroups,
+    conflictingClassGroupModifiers
+  } = config;
+  const getClassGroupId = (className) => {
+    const classParts = className.split(CLASS_PART_SEPARATOR);
+    if (classParts[0] === "" && classParts.length !== 1) {
+      classParts.shift();
+    }
+    return getGroupRecursive(classParts, classMap) || getGroupIdForArbitraryProperty(className);
+  };
+  const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
+    const conflicts = conflictingClassGroups[classGroupId] || [];
+    if (hasPostfixModifier && conflictingClassGroupModifiers[classGroupId]) {
+      return [...conflicts, ...conflictingClassGroupModifiers[classGroupId]];
+    }
+    return conflicts;
+  };
+  return {
+    getClassGroupId,
+    getConflictingClassGroupIds
+  };
+};
+var getGroupRecursive = (classParts, classPartObject) => {
+  if (classParts.length === 0) {
+    return classPartObject.classGroupId;
+  }
+  const currentClassPart = classParts[0];
+  const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
+  const classGroupFromNextClassPart = nextClassPartObject ? getGroupRecursive(classParts.slice(1), nextClassPartObject) : void 0;
+  if (classGroupFromNextClassPart) {
+    return classGroupFromNextClassPart;
+  }
+  if (classPartObject.validators.length === 0) {
+    return void 0;
+  }
+  const classRest = classParts.join(CLASS_PART_SEPARATOR);
+  return classPartObject.validators.find(({
+    validator
+  }) => validator(classRest))?.classGroupId;
+};
+var arbitraryPropertyRegex = /^\[(.+)\]$/;
+var getGroupIdForArbitraryProperty = (className) => {
+  if (arbitraryPropertyRegex.test(className)) {
+    const arbitraryPropertyClassName = arbitraryPropertyRegex.exec(className)[1];
+    const property = arbitraryPropertyClassName?.substring(0, arbitraryPropertyClassName.indexOf(":"));
+    if (property) {
+      return "arbitrary.." + property;
+    }
+  }
+};
+var createClassMap = (config) => {
+  const {
+    theme,
+    classGroups
+  } = config;
+  const classMap = {
+    nextPart: /* @__PURE__ */ new Map(),
+    validators: []
+  };
+  for (const classGroupId in classGroups) {
+    processClassesRecursively(classGroups[classGroupId], classMap, classGroupId, theme);
+  }
+  return classMap;
+};
+var processClassesRecursively = (classGroup, classPartObject, classGroupId, theme) => {
+  classGroup.forEach((classDefinition) => {
+    if (typeof classDefinition === "string") {
+      const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
+      classPartObjectToEdit.classGroupId = classGroupId;
+      return;
+    }
+    if (typeof classDefinition === "function") {
+      if (isThemeGetter(classDefinition)) {
+        processClassesRecursively(classDefinition(theme), classPartObject, classGroupId, theme);
+        return;
+      }
+      classPartObject.validators.push({
+        validator: classDefinition,
+        classGroupId
+      });
+      return;
+    }
+    Object.entries(classDefinition).forEach(([key, classGroup2]) => {
+      processClassesRecursively(classGroup2, getPart(classPartObject, key), classGroupId, theme);
+    });
+  });
+};
+var getPart = (classPartObject, path) => {
+  let currentClassPartObject = classPartObject;
+  path.split(CLASS_PART_SEPARATOR).forEach((pathPart) => {
+    if (!currentClassPartObject.nextPart.has(pathPart)) {
+      currentClassPartObject.nextPart.set(pathPart, {
+        nextPart: /* @__PURE__ */ new Map(),
+        validators: []
+      });
+    }
+    currentClassPartObject = currentClassPartObject.nextPart.get(pathPart);
+  });
+  return currentClassPartObject;
+};
+var isThemeGetter = (func) => func.isThemeGetter;
+var createLruCache = (maxCacheSize) => {
+  if (maxCacheSize < 1) {
+    return {
+      get: () => void 0,
+      set: () => {
+      }
+    };
+  }
+  let cacheSize = 0;
+  let cache = /* @__PURE__ */ new Map();
+  let previousCache = /* @__PURE__ */ new Map();
+  const update = (key, value) => {
+    cache.set(key, value);
+    cacheSize++;
+    if (cacheSize > maxCacheSize) {
+      cacheSize = 0;
+      previousCache = cache;
+      cache = /* @__PURE__ */ new Map();
+    }
+  };
+  return {
+    get(key) {
+      let value = cache.get(key);
+      if (value !== void 0) {
+        return value;
+      }
+      if ((value = previousCache.get(key)) !== void 0) {
+        update(key, value);
+        return value;
+      }
+    },
+    set(key, value) {
+      if (cache.has(key)) {
+        cache.set(key, value);
+      } else {
+        update(key, value);
+      }
+    }
+  };
+};
+var IMPORTANT_MODIFIER = "!";
+var MODIFIER_SEPARATOR = ":";
+var MODIFIER_SEPARATOR_LENGTH = MODIFIER_SEPARATOR.length;
+var createParseClassName = (config) => {
+  const {
+    prefix,
+    experimentalParseClassName
+  } = config;
+  let parseClassName = (className) => {
+    const modifiers = [];
+    let bracketDepth = 0;
+    let parenDepth = 0;
+    let modifierStart = 0;
+    let postfixModifierPosition;
+    for (let index = 0; index < className.length; index++) {
+      let currentCharacter = className[index];
+      if (bracketDepth === 0 && parenDepth === 0) {
+        if (currentCharacter === MODIFIER_SEPARATOR) {
+          modifiers.push(className.slice(modifierStart, index));
+          modifierStart = index + MODIFIER_SEPARATOR_LENGTH;
+          continue;
+        }
+        if (currentCharacter === "/") {
+          postfixModifierPosition = index;
+          continue;
+        }
+      }
+      if (currentCharacter === "[") {
+        bracketDepth++;
+      } else if (currentCharacter === "]") {
+        bracketDepth--;
+      } else if (currentCharacter === "(") {
+        parenDepth++;
+      } else if (currentCharacter === ")") {
+        parenDepth--;
+      }
+    }
+    const baseClassNameWithImportantModifier = modifiers.length === 0 ? className : className.substring(modifierStart);
+    const baseClassName = stripImportantModifier(baseClassNameWithImportantModifier);
+    const hasImportantModifier = baseClassName !== baseClassNameWithImportantModifier;
+    const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
+    return {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    };
+  };
+  if (prefix) {
+    const fullPrefix = prefix + MODIFIER_SEPARATOR;
+    const parseClassNameOriginal = parseClassName;
+    parseClassName = (className) => className.startsWith(fullPrefix) ? parseClassNameOriginal(className.substring(fullPrefix.length)) : {
+      isExternal: true,
+      modifiers: [],
+      hasImportantModifier: false,
+      baseClassName: className,
+      maybePostfixModifierPosition: void 0
+    };
+  }
+  if (experimentalParseClassName) {
+    const parseClassNameOriginal = parseClassName;
+    parseClassName = (className) => experimentalParseClassName({
+      className,
+      parseClassName: parseClassNameOriginal
+    });
+  }
+  return parseClassName;
+};
+var stripImportantModifier = (baseClassName) => {
+  if (baseClassName.endsWith(IMPORTANT_MODIFIER)) {
+    return baseClassName.substring(0, baseClassName.length - 1);
+  }
+  if (baseClassName.startsWith(IMPORTANT_MODIFIER)) {
+    return baseClassName.substring(1);
+  }
+  return baseClassName;
+};
+var createSortModifiers = (config) => {
+  const orderSensitiveModifiers = Object.fromEntries(config.orderSensitiveModifiers.map((modifier) => [modifier, true]));
+  const sortModifiers = (modifiers) => {
+    if (modifiers.length <= 1) {
+      return modifiers;
+    }
+    const sortedModifiers = [];
+    let unsortedModifiers = [];
+    modifiers.forEach((modifier) => {
+      const isPositionSensitive = modifier[0] === "[" || orderSensitiveModifiers[modifier];
+      if (isPositionSensitive) {
+        sortedModifiers.push(...unsortedModifiers.sort(), modifier);
+        unsortedModifiers = [];
+      } else {
+        unsortedModifiers.push(modifier);
+      }
+    });
+    sortedModifiers.push(...unsortedModifiers.sort());
+    return sortedModifiers;
+  };
+  return sortModifiers;
+};
+var createConfigUtils = (config) => ({
+  cache: createLruCache(config.cacheSize),
+  parseClassName: createParseClassName(config),
+  sortModifiers: createSortModifiers(config),
+  ...createClassGroupUtils(config)
+});
+var SPLIT_CLASSES_REGEX = /\s+/;
+var mergeClassList = (classList, configUtils) => {
+  const {
+    parseClassName,
+    getClassGroupId,
+    getConflictingClassGroupIds,
+    sortModifiers
+  } = configUtils;
+  const classGroupsInConflict = [];
+  const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
+  let result = "";
+  for (let index = classNames.length - 1; index >= 0; index -= 1) {
+    const originalClassName = classNames[index];
+    const {
+      isExternal,
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    } = parseClassName(originalClassName);
+    if (isExternal) {
+      result = originalClassName + (result.length > 0 ? " " + result : result);
+      continue;
+    }
+    let hasPostfixModifier = !!maybePostfixModifierPosition;
+    let classGroupId = getClassGroupId(hasPostfixModifier ? baseClassName.substring(0, maybePostfixModifierPosition) : baseClassName);
+    if (!classGroupId) {
+      if (!hasPostfixModifier) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      classGroupId = getClassGroupId(baseClassName);
+      if (!classGroupId) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      hasPostfixModifier = false;
+    }
+    const variantModifier = sortModifiers(modifiers).join(":");
+    const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
+    const classId = modifierId + classGroupId;
+    if (classGroupsInConflict.includes(classId)) {
+      continue;
+    }
+    classGroupsInConflict.push(classId);
+    const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
+    for (let i = 0; i < conflictGroups.length; ++i) {
+      const group = conflictGroups[i];
+      classGroupsInConflict.push(modifierId + group);
+    }
+    result = originalClassName + (result.length > 0 ? " " + result : result);
+  }
+  return result;
+};
 function twJoin() {
   let index = 0;
   let argument;
@@ -38541,6 +27072,22 @@ function twJoin() {
   }
   return string;
 }
+var toValue = (mix) => {
+  if (typeof mix === "string") {
+    return mix;
+  }
+  let resolvedValue;
+  let string = "";
+  for (let k = 0; k < mix.length; k++) {
+    if (mix[k]) {
+      if (resolvedValue = toValue(mix[k])) {
+        string && (string += " ");
+        string += resolvedValue;
+      }
+    }
+  }
+  return string;
+};
 function createTailwindMerge(createConfigFirst, ...createConfigRest) {
   let configUtils;
   let cacheGet;
@@ -38567,3206 +27114,2832 @@ function createTailwindMerge(createConfigFirst, ...createConfigRest) {
     return functionToCall(twJoin.apply(null, arguments));
   };
 }
-var CLASS_PART_SEPARATOR, createClassGroupUtils, getGroupRecursive, arbitraryPropertyRegex, getGroupIdForArbitraryProperty, createClassMap, processClassesRecursively, getPart, isThemeGetter, createLruCache, IMPORTANT_MODIFIER, MODIFIER_SEPARATOR, MODIFIER_SEPARATOR_LENGTH, createParseClassName, stripImportantModifier, createSortModifiers, createConfigUtils, SPLIT_CLASSES_REGEX, mergeClassList, toValue, fromTheme, arbitraryValueRegex, arbitraryVariableRegex, fractionRegex, tshirtUnitRegex, lengthUnitRegex, colorFunctionRegex, shadowRegex, imageRegex, isFraction, isNumber2, isInteger2, isPercent, isTshirtSize, isAny, isLengthOnly, isNever, isShadow, isImage, isAnyNonArbitrary, isArbitrarySize, isArbitraryValue, isArbitraryLength, isArbitraryNumber, isArbitraryPosition, isArbitraryImage, isArbitraryShadow, isArbitraryVariable, isArbitraryVariableLength, isArbitraryVariableFamilyName, isArbitraryVariablePosition, isArbitraryVariableSize, isArbitraryVariableImage, isArbitraryVariableShadow, getIsArbitraryValue, getIsArbitraryVariable, isLabelPosition, isLabelImage, isLabelSize, isLabelLength, isLabelNumber, isLabelFamilyName, isLabelShadow, getDefaultConfig, twMerge;
-var init_bundle_mjs = __esm({
-  "node_modules/tailwind-merge/dist/bundle-mjs.mjs"() {
-    init_define_import_meta_env();
-    CLASS_PART_SEPARATOR = "-";
-    createClassGroupUtils = (config) => {
-      const classMap = createClassMap(config);
-      const {
-        conflictingClassGroups,
-        conflictingClassGroupModifiers
-      } = config;
-      const getClassGroupId = (className) => {
-        const classParts = className.split(CLASS_PART_SEPARATOR);
-        if (classParts[0] === "" && classParts.length !== 1) {
-          classParts.shift();
-        }
-        return getGroupRecursive(classParts, classMap) || getGroupIdForArbitraryProperty(className);
-      };
-      const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
-        const conflicts = conflictingClassGroups[classGroupId] || [];
-        if (hasPostfixModifier && conflictingClassGroupModifiers[classGroupId]) {
-          return [...conflicts, ...conflictingClassGroupModifiers[classGroupId]];
-        }
-        return conflicts;
-      };
-      return {
-        getClassGroupId,
-        getConflictingClassGroupIds
-      };
-    };
-    getGroupRecursive = (classParts, classPartObject) => {
-      if (classParts.length === 0) {
-        return classPartObject.classGroupId;
-      }
-      const currentClassPart = classParts[0];
-      const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
-      const classGroupFromNextClassPart = nextClassPartObject ? getGroupRecursive(classParts.slice(1), nextClassPartObject) : void 0;
-      if (classGroupFromNextClassPart) {
-        return classGroupFromNextClassPart;
-      }
-      if (classPartObject.validators.length === 0) {
-        return void 0;
-      }
-      const classRest = classParts.join(CLASS_PART_SEPARATOR);
-      return classPartObject.validators.find(({
-        validator
-      }) => validator(classRest))?.classGroupId;
-    };
-    arbitraryPropertyRegex = /^\[(.+)\]$/;
-    getGroupIdForArbitraryProperty = (className) => {
-      if (arbitraryPropertyRegex.test(className)) {
-        const arbitraryPropertyClassName = arbitraryPropertyRegex.exec(className)[1];
-        const property = arbitraryPropertyClassName?.substring(0, arbitraryPropertyClassName.indexOf(":"));
-        if (property) {
-          return "arbitrary.." + property;
-        }
-      }
-    };
-    createClassMap = (config) => {
-      const {
-        theme,
-        classGroups
-      } = config;
-      const classMap = {
-        nextPart: /* @__PURE__ */ new Map(),
-        validators: []
-      };
-      for (const classGroupId in classGroups) {
-        processClassesRecursively(classGroups[classGroupId], classMap, classGroupId, theme);
-      }
-      return classMap;
-    };
-    processClassesRecursively = (classGroup, classPartObject, classGroupId, theme) => {
-      classGroup.forEach((classDefinition) => {
-        if (typeof classDefinition === "string") {
-          const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
-          classPartObjectToEdit.classGroupId = classGroupId;
-          return;
-        }
-        if (typeof classDefinition === "function") {
-          if (isThemeGetter(classDefinition)) {
-            processClassesRecursively(classDefinition(theme), classPartObject, classGroupId, theme);
-            return;
-          }
-          classPartObject.validators.push({
-            validator: classDefinition,
-            classGroupId
-          });
-          return;
-        }
-        Object.entries(classDefinition).forEach(([key, classGroup2]) => {
-          processClassesRecursively(classGroup2, getPart(classPartObject, key), classGroupId, theme);
-        });
-      });
-    };
-    getPart = (classPartObject, path) => {
-      let currentClassPartObject = classPartObject;
-      path.split(CLASS_PART_SEPARATOR).forEach((pathPart) => {
-        if (!currentClassPartObject.nextPart.has(pathPart)) {
-          currentClassPartObject.nextPart.set(pathPart, {
-            nextPart: /* @__PURE__ */ new Map(),
-            validators: []
-          });
-        }
-        currentClassPartObject = currentClassPartObject.nextPart.get(pathPart);
-      });
-      return currentClassPartObject;
-    };
-    isThemeGetter = (func) => func.isThemeGetter;
-    createLruCache = (maxCacheSize) => {
-      if (maxCacheSize < 1) {
-        return {
-          get: () => void 0,
-          set: () => {
-          }
-        };
-      }
-      let cacheSize = 0;
-      let cache2 = /* @__PURE__ */ new Map();
-      let previousCache = /* @__PURE__ */ new Map();
-      const update = (key, value2) => {
-        cache2.set(key, value2);
-        cacheSize++;
-        if (cacheSize > maxCacheSize) {
-          cacheSize = 0;
-          previousCache = cache2;
-          cache2 = /* @__PURE__ */ new Map();
-        }
-      };
-      return {
-        get(key) {
-          let value2 = cache2.get(key);
-          if (value2 !== void 0) {
-            return value2;
-          }
-          if ((value2 = previousCache.get(key)) !== void 0) {
-            update(key, value2);
-            return value2;
-          }
-        },
-        set(key, value2) {
-          if (cache2.has(key)) {
-            cache2.set(key, value2);
-          } else {
-            update(key, value2);
-          }
-        }
-      };
-    };
-    IMPORTANT_MODIFIER = "!";
-    MODIFIER_SEPARATOR = ":";
-    MODIFIER_SEPARATOR_LENGTH = MODIFIER_SEPARATOR.length;
-    createParseClassName = (config) => {
-      const {
-        prefix,
-        experimentalParseClassName
-      } = config;
-      let parseClassName = (className) => {
-        const modifiers = [];
-        let bracketDepth = 0;
-        let parenDepth = 0;
-        let modifierStart = 0;
-        let postfixModifierPosition;
-        for (let index = 0; index < className.length; index++) {
-          let currentCharacter = className[index];
-          if (bracketDepth === 0 && parenDepth === 0) {
-            if (currentCharacter === MODIFIER_SEPARATOR) {
-              modifiers.push(className.slice(modifierStart, index));
-              modifierStart = index + MODIFIER_SEPARATOR_LENGTH;
-              continue;
-            }
-            if (currentCharacter === "/") {
-              postfixModifierPosition = index;
-              continue;
-            }
-          }
-          if (currentCharacter === "[") {
-            bracketDepth++;
-          } else if (currentCharacter === "]") {
-            bracketDepth--;
-          } else if (currentCharacter === "(") {
-            parenDepth++;
-          } else if (currentCharacter === ")") {
-            parenDepth--;
-          }
-        }
-        const baseClassNameWithImportantModifier = modifiers.length === 0 ? className : className.substring(modifierStart);
-        const baseClassName = stripImportantModifier(baseClassNameWithImportantModifier);
-        const hasImportantModifier = baseClassName !== baseClassNameWithImportantModifier;
-        const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
-        return {
-          modifiers,
-          hasImportantModifier,
-          baseClassName,
-          maybePostfixModifierPosition
-        };
-      };
-      if (prefix) {
-        const fullPrefix = prefix + MODIFIER_SEPARATOR;
-        const parseClassNameOriginal = parseClassName;
-        parseClassName = (className) => className.startsWith(fullPrefix) ? parseClassNameOriginal(className.substring(fullPrefix.length)) : {
-          isExternal: true,
-          modifiers: [],
-          hasImportantModifier: false,
-          baseClassName: className,
-          maybePostfixModifierPosition: void 0
-        };
-      }
-      if (experimentalParseClassName) {
-        const parseClassNameOriginal = parseClassName;
-        parseClassName = (className) => experimentalParseClassName({
-          className,
-          parseClassName: parseClassNameOriginal
-        });
-      }
-      return parseClassName;
-    };
-    stripImportantModifier = (baseClassName) => {
-      if (baseClassName.endsWith(IMPORTANT_MODIFIER)) {
-        return baseClassName.substring(0, baseClassName.length - 1);
-      }
-      if (baseClassName.startsWith(IMPORTANT_MODIFIER)) {
-        return baseClassName.substring(1);
-      }
-      return baseClassName;
-    };
-    createSortModifiers = (config) => {
-      const orderSensitiveModifiers = Object.fromEntries(config.orderSensitiveModifiers.map((modifier) => [modifier, true]));
-      const sortModifiers = (modifiers) => {
-        if (modifiers.length <= 1) {
-          return modifiers;
-        }
-        const sortedModifiers = [];
-        let unsortedModifiers = [];
-        modifiers.forEach((modifier) => {
-          const isPositionSensitive = modifier[0] === "[" || orderSensitiveModifiers[modifier];
-          if (isPositionSensitive) {
-            sortedModifiers.push(...unsortedModifiers.sort(), modifier);
-            unsortedModifiers = [];
-          } else {
-            unsortedModifiers.push(modifier);
-          }
-        });
-        sortedModifiers.push(...unsortedModifiers.sort());
-        return sortedModifiers;
-      };
-      return sortModifiers;
-    };
-    createConfigUtils = (config) => ({
-      cache: createLruCache(config.cacheSize),
-      parseClassName: createParseClassName(config),
-      sortModifiers: createSortModifiers(config),
-      ...createClassGroupUtils(config)
-    });
-    SPLIT_CLASSES_REGEX = /\s+/;
-    mergeClassList = (classList, configUtils) => {
-      const {
-        parseClassName,
-        getClassGroupId,
-        getConflictingClassGroupIds,
-        sortModifiers
-      } = configUtils;
-      const classGroupsInConflict = [];
-      const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
-      let result = "";
-      for (let index = classNames.length - 1; index >= 0; index -= 1) {
-        const originalClassName = classNames[index];
-        const {
-          isExternal,
-          modifiers,
-          hasImportantModifier,
-          baseClassName,
-          maybePostfixModifierPosition
-        } = parseClassName(originalClassName);
-        if (isExternal) {
-          result = originalClassName + (result.length > 0 ? " " + result : result);
-          continue;
-        }
-        let hasPostfixModifier = !!maybePostfixModifierPosition;
-        let classGroupId = getClassGroupId(hasPostfixModifier ? baseClassName.substring(0, maybePostfixModifierPosition) : baseClassName);
-        if (!classGroupId) {
-          if (!hasPostfixModifier) {
-            result = originalClassName + (result.length > 0 ? " " + result : result);
-            continue;
-          }
-          classGroupId = getClassGroupId(baseClassName);
-          if (!classGroupId) {
-            result = originalClassName + (result.length > 0 ? " " + result : result);
-            continue;
-          }
-          hasPostfixModifier = false;
-        }
-        const variantModifier = sortModifiers(modifiers).join(":");
-        const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
-        const classId = modifierId + classGroupId;
-        if (classGroupsInConflict.includes(classId)) {
-          continue;
-        }
-        classGroupsInConflict.push(classId);
-        const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
-        for (let i = 0; i < conflictGroups.length; ++i) {
-          const group = conflictGroups[i];
-          classGroupsInConflict.push(modifierId + group);
-        }
-        result = originalClassName + (result.length > 0 ? " " + result : result);
-      }
-      return result;
-    };
-    toValue = (mix) => {
-      if (typeof mix === "string") {
-        return mix;
-      }
-      let resolvedValue;
-      let string = "";
-      for (let k = 0; k < mix.length; k++) {
-        if (mix[k]) {
-          if (resolvedValue = toValue(mix[k])) {
-            string && (string += " ");
-            string += resolvedValue;
-          }
-        }
-      }
-      return string;
-    };
-    fromTheme = (key) => {
-      const themeGetter = (theme) => theme[key] || [];
-      themeGetter.isThemeGetter = true;
-      return themeGetter;
-    };
-    arbitraryValueRegex = /^\[(?:(\w[\w-]*):)?(.+)\]$/i;
-    arbitraryVariableRegex = /^\((?:(\w[\w-]*):)?(.+)\)$/i;
-    fractionRegex = /^\d+\/\d+$/;
-    tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
-    lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
-    colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
-    shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
-    imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
-    isFraction = (value2) => fractionRegex.test(value2);
-    isNumber2 = (value2) => !!value2 && !Number.isNaN(Number(value2));
-    isInteger2 = (value2) => !!value2 && Number.isInteger(Number(value2));
-    isPercent = (value2) => value2.endsWith("%") && isNumber2(value2.slice(0, -1));
-    isTshirtSize = (value2) => tshirtUnitRegex.test(value2);
-    isAny = () => true;
-    isLengthOnly = (value2) => (
-      // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
-      // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
-      // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
-      lengthUnitRegex.test(value2) && !colorFunctionRegex.test(value2)
-    );
-    isNever = () => false;
-    isShadow = (value2) => shadowRegex.test(value2);
-    isImage = (value2) => imageRegex.test(value2);
-    isAnyNonArbitrary = (value2) => !isArbitraryValue(value2) && !isArbitraryVariable(value2);
-    isArbitrarySize = (value2) => getIsArbitraryValue(value2, isLabelSize, isNever);
-    isArbitraryValue = (value2) => arbitraryValueRegex.test(value2);
-    isArbitraryLength = (value2) => getIsArbitraryValue(value2, isLabelLength, isLengthOnly);
-    isArbitraryNumber = (value2) => getIsArbitraryValue(value2, isLabelNumber, isNumber2);
-    isArbitraryPosition = (value2) => getIsArbitraryValue(value2, isLabelPosition, isNever);
-    isArbitraryImage = (value2) => getIsArbitraryValue(value2, isLabelImage, isImage);
-    isArbitraryShadow = (value2) => getIsArbitraryValue(value2, isLabelShadow, isShadow);
-    isArbitraryVariable = (value2) => arbitraryVariableRegex.test(value2);
-    isArbitraryVariableLength = (value2) => getIsArbitraryVariable(value2, isLabelLength);
-    isArbitraryVariableFamilyName = (value2) => getIsArbitraryVariable(value2, isLabelFamilyName);
-    isArbitraryVariablePosition = (value2) => getIsArbitraryVariable(value2, isLabelPosition);
-    isArbitraryVariableSize = (value2) => getIsArbitraryVariable(value2, isLabelSize);
-    isArbitraryVariableImage = (value2) => getIsArbitraryVariable(value2, isLabelImage);
-    isArbitraryVariableShadow = (value2) => getIsArbitraryVariable(value2, isLabelShadow, true);
-    getIsArbitraryValue = (value2, testLabel, testValue) => {
-      const result = arbitraryValueRegex.exec(value2);
-      if (result) {
-        if (result[1]) {
-          return testLabel(result[1]);
-        }
-        return testValue(result[2]);
-      }
-      return false;
-    };
-    getIsArbitraryVariable = (value2, testLabel, shouldMatchNoLabel = false) => {
-      const result = arbitraryVariableRegex.exec(value2);
-      if (result) {
-        if (result[1]) {
-          return testLabel(result[1]);
-        }
-        return shouldMatchNoLabel;
-      }
-      return false;
-    };
-    isLabelPosition = (label) => label === "position" || label === "percentage";
-    isLabelImage = (label) => label === "image" || label === "url";
-    isLabelSize = (label) => label === "length" || label === "size" || label === "bg-size";
-    isLabelLength = (label) => label === "length";
-    isLabelNumber = (label) => label === "number";
-    isLabelFamilyName = (label) => label === "family-name";
-    isLabelShadow = (label) => label === "shadow";
-    getDefaultConfig = () => {
-      const themeColor = fromTheme("color");
-      const themeFont = fromTheme("font");
-      const themeText = fromTheme("text");
-      const themeFontWeight = fromTheme("font-weight");
-      const themeTracking = fromTheme("tracking");
-      const themeLeading = fromTheme("leading");
-      const themeBreakpoint = fromTheme("breakpoint");
-      const themeContainer = fromTheme("container");
-      const themeSpacing = fromTheme("spacing");
-      const themeRadius = fromTheme("radius");
-      const themeShadow = fromTheme("shadow");
-      const themeInsetShadow = fromTheme("inset-shadow");
-      const themeTextShadow = fromTheme("text-shadow");
-      const themeDropShadow = fromTheme("drop-shadow");
-      const themeBlur = fromTheme("blur");
-      const themePerspective = fromTheme("perspective");
-      const themeAspect = fromTheme("aspect");
-      const themeEase = fromTheme("ease");
-      const themeAnimate = fromTheme("animate");
-      const scaleBreak = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
-      const scalePosition = () => [
-        "center",
-        "top",
-        "bottom",
-        "left",
-        "right",
-        "top-left",
-        // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-        "left-top",
-        "top-right",
-        // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-        "right-top",
-        "bottom-right",
-        // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-        "right-bottom",
-        "bottom-left",
-        // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
-        "left-bottom"
-      ];
-      const scalePositionWithArbitrary = () => [...scalePosition(), isArbitraryVariable, isArbitraryValue];
-      const scaleOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
-      const scaleOverscroll = () => ["auto", "contain", "none"];
-      const scaleUnambiguousSpacing = () => [isArbitraryVariable, isArbitraryValue, themeSpacing];
-      const scaleInset = () => [isFraction, "full", "auto", ...scaleUnambiguousSpacing()];
-      const scaleGridTemplateColsRows = () => [isInteger2, "none", "subgrid", isArbitraryVariable, isArbitraryValue];
-      const scaleGridColRowStartAndEnd = () => ["auto", {
-        span: ["full", isInteger2, isArbitraryVariable, isArbitraryValue]
-      }, isInteger2, isArbitraryVariable, isArbitraryValue];
-      const scaleGridColRowStartOrEnd = () => [isInteger2, "auto", isArbitraryVariable, isArbitraryValue];
-      const scaleGridAutoColsRows = () => ["auto", "min", "max", "fr", isArbitraryVariable, isArbitraryValue];
-      const scaleAlignPrimaryAxis = () => ["start", "end", "center", "between", "around", "evenly", "stretch", "baseline", "center-safe", "end-safe"];
-      const scaleAlignSecondaryAxis = () => ["start", "end", "center", "stretch", "center-safe", "end-safe"];
-      const scaleMargin = () => ["auto", ...scaleUnambiguousSpacing()];
-      const scaleSizing = () => [isFraction, "auto", "full", "dvw", "dvh", "lvw", "lvh", "svw", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
-      const scaleColor = () => [themeColor, isArbitraryVariable, isArbitraryValue];
-      const scaleBgPosition = () => [...scalePosition(), isArbitraryVariablePosition, isArbitraryPosition, {
-        position: [isArbitraryVariable, isArbitraryValue]
-      }];
-      const scaleBgRepeat = () => ["no-repeat", {
-        repeat: ["", "x", "y", "space", "round"]
-      }];
-      const scaleBgSize = () => ["auto", "cover", "contain", isArbitraryVariableSize, isArbitrarySize, {
-        size: [isArbitraryVariable, isArbitraryValue]
-      }];
-      const scaleGradientStopPosition = () => [isPercent, isArbitraryVariableLength, isArbitraryLength];
-      const scaleRadius = () => [
-        // Deprecated since Tailwind CSS v4.0.0
-        "",
-        "none",
-        "full",
-        themeRadius,
-        isArbitraryVariable,
-        isArbitraryValue
-      ];
-      const scaleBorderWidth = () => ["", isNumber2, isArbitraryVariableLength, isArbitraryLength];
-      const scaleLineStyle = () => ["solid", "dashed", "dotted", "double"];
-      const scaleBlendMode = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
-      const scaleMaskImagePosition = () => [isNumber2, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
-      const scaleBlur = () => [
-        // Deprecated since Tailwind CSS v4.0.0
-        "",
-        "none",
-        themeBlur,
-        isArbitraryVariable,
-        isArbitraryValue
-      ];
-      const scaleRotate = () => ["none", isNumber2, isArbitraryVariable, isArbitraryValue];
-      const scaleScale = () => ["none", isNumber2, isArbitraryVariable, isArbitraryValue];
-      const scaleSkew = () => [isNumber2, isArbitraryVariable, isArbitraryValue];
-      const scaleTranslate = () => [isFraction, "full", ...scaleUnambiguousSpacing()];
-      return {
-        cacheSize: 500,
-        theme: {
-          animate: ["spin", "ping", "pulse", "bounce"],
-          aspect: ["video"],
-          blur: [isTshirtSize],
-          breakpoint: [isTshirtSize],
-          color: [isAny],
-          container: [isTshirtSize],
-          "drop-shadow": [isTshirtSize],
-          ease: ["in", "out", "in-out"],
-          font: [isAnyNonArbitrary],
-          "font-weight": ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"],
-          "inset-shadow": [isTshirtSize],
-          leading: ["none", "tight", "snug", "normal", "relaxed", "loose"],
-          perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
-          radius: [isTshirtSize],
-          shadow: [isTshirtSize],
-          spacing: ["px", isNumber2],
-          text: [isTshirtSize],
-          "text-shadow": [isTshirtSize],
-          tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
-        },
-        classGroups: {
-          // --------------
-          // --- Layout ---
-          // --------------
-          /**
-           * Aspect Ratio
-           * @see https://tailwindcss.com/docs/aspect-ratio
-           */
-          aspect: [{
-            aspect: ["auto", "square", isFraction, isArbitraryValue, isArbitraryVariable, themeAspect]
-          }],
-          /**
-           * Container
-           * @see https://tailwindcss.com/docs/container
-           * @deprecated since Tailwind CSS v4.0.0
-           */
-          container: ["container"],
-          /**
-           * Columns
-           * @see https://tailwindcss.com/docs/columns
-           */
-          columns: [{
-            columns: [isNumber2, isArbitraryValue, isArbitraryVariable, themeContainer]
-          }],
-          /**
-           * Break After
-           * @see https://tailwindcss.com/docs/break-after
-           */
-          "break-after": [{
-            "break-after": scaleBreak()
-          }],
-          /**
-           * Break Before
-           * @see https://tailwindcss.com/docs/break-before
-           */
-          "break-before": [{
-            "break-before": scaleBreak()
-          }],
-          /**
-           * Break Inside
-           * @see https://tailwindcss.com/docs/break-inside
-           */
-          "break-inside": [{
-            "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
-          }],
-          /**
-           * Box Decoration Break
-           * @see https://tailwindcss.com/docs/box-decoration-break
-           */
-          "box-decoration": [{
-            "box-decoration": ["slice", "clone"]
-          }],
-          /**
-           * Box Sizing
-           * @see https://tailwindcss.com/docs/box-sizing
-           */
-          box: [{
-            box: ["border", "content"]
-          }],
-          /**
-           * Display
-           * @see https://tailwindcss.com/docs/display
-           */
-          display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
-          /**
-           * Screen Reader Only
-           * @see https://tailwindcss.com/docs/display#screen-reader-only
-           */
-          sr: ["sr-only", "not-sr-only"],
-          /**
-           * Floats
-           * @see https://tailwindcss.com/docs/float
-           */
-          float: [{
-            float: ["right", "left", "none", "start", "end"]
-          }],
-          /**
-           * Clear
-           * @see https://tailwindcss.com/docs/clear
-           */
-          clear: [{
-            clear: ["left", "right", "both", "none", "start", "end"]
-          }],
-          /**
-           * Isolation
-           * @see https://tailwindcss.com/docs/isolation
-           */
-          isolation: ["isolate", "isolation-auto"],
-          /**
-           * Object Fit
-           * @see https://tailwindcss.com/docs/object-fit
-           */
-          "object-fit": [{
-            object: ["contain", "cover", "fill", "none", "scale-down"]
-          }],
-          /**
-           * Object Position
-           * @see https://tailwindcss.com/docs/object-position
-           */
-          "object-position": [{
-            object: scalePositionWithArbitrary()
-          }],
-          /**
-           * Overflow
-           * @see https://tailwindcss.com/docs/overflow
-           */
-          overflow: [{
-            overflow: scaleOverflow()
-          }],
-          /**
-           * Overflow X
-           * @see https://tailwindcss.com/docs/overflow
-           */
-          "overflow-x": [{
-            "overflow-x": scaleOverflow()
-          }],
-          /**
-           * Overflow Y
-           * @see https://tailwindcss.com/docs/overflow
-           */
-          "overflow-y": [{
-            "overflow-y": scaleOverflow()
-          }],
-          /**
-           * Overscroll Behavior
-           * @see https://tailwindcss.com/docs/overscroll-behavior
-           */
-          overscroll: [{
-            overscroll: scaleOverscroll()
-          }],
-          /**
-           * Overscroll Behavior X
-           * @see https://tailwindcss.com/docs/overscroll-behavior
-           */
-          "overscroll-x": [{
-            "overscroll-x": scaleOverscroll()
-          }],
-          /**
-           * Overscroll Behavior Y
-           * @see https://tailwindcss.com/docs/overscroll-behavior
-           */
-          "overscroll-y": [{
-            "overscroll-y": scaleOverscroll()
-          }],
-          /**
-           * Position
-           * @see https://tailwindcss.com/docs/position
-           */
-          position: ["static", "fixed", "absolute", "relative", "sticky"],
-          /**
-           * Top / Right / Bottom / Left
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          inset: [{
-            inset: scaleInset()
-          }],
-          /**
-           * Right / Left
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          "inset-x": [{
-            "inset-x": scaleInset()
-          }],
-          /**
-           * Top / Bottom
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          "inset-y": [{
-            "inset-y": scaleInset()
-          }],
-          /**
-           * Start
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          start: [{
-            start: scaleInset()
-          }],
-          /**
-           * End
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          end: [{
-            end: scaleInset()
-          }],
-          /**
-           * Top
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          top: [{
-            top: scaleInset()
-          }],
-          /**
-           * Right
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          right: [{
-            right: scaleInset()
-          }],
-          /**
-           * Bottom
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          bottom: [{
-            bottom: scaleInset()
-          }],
-          /**
-           * Left
-           * @see https://tailwindcss.com/docs/top-right-bottom-left
-           */
-          left: [{
-            left: scaleInset()
-          }],
-          /**
-           * Visibility
-           * @see https://tailwindcss.com/docs/visibility
-           */
-          visibility: ["visible", "invisible", "collapse"],
-          /**
-           * Z-Index
-           * @see https://tailwindcss.com/docs/z-index
-           */
-          z: [{
-            z: [isInteger2, "auto", isArbitraryVariable, isArbitraryValue]
-          }],
-          // ------------------------
-          // --- Flexbox and Grid ---
-          // ------------------------
-          /**
-           * Flex Basis
-           * @see https://tailwindcss.com/docs/flex-basis
-           */
-          basis: [{
-            basis: [isFraction, "full", "auto", themeContainer, ...scaleUnambiguousSpacing()]
-          }],
-          /**
-           * Flex Direction
-           * @see https://tailwindcss.com/docs/flex-direction
-           */
-          "flex-direction": [{
-            flex: ["row", "row-reverse", "col", "col-reverse"]
-          }],
-          /**
-           * Flex Wrap
-           * @see https://tailwindcss.com/docs/flex-wrap
-           */
-          "flex-wrap": [{
-            flex: ["nowrap", "wrap", "wrap-reverse"]
-          }],
-          /**
-           * Flex
-           * @see https://tailwindcss.com/docs/flex
-           */
-          flex: [{
-            flex: [isNumber2, isFraction, "auto", "initial", "none", isArbitraryValue]
-          }],
-          /**
-           * Flex Grow
-           * @see https://tailwindcss.com/docs/flex-grow
-           */
-          grow: [{
-            grow: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Flex Shrink
-           * @see https://tailwindcss.com/docs/flex-shrink
-           */
-          shrink: [{
-            shrink: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Order
-           * @see https://tailwindcss.com/docs/order
-           */
-          order: [{
-            order: [isInteger2, "first", "last", "none", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Grid Template Columns
-           * @see https://tailwindcss.com/docs/grid-template-columns
-           */
-          "grid-cols": [{
-            "grid-cols": scaleGridTemplateColsRows()
-          }],
-          /**
-           * Grid Column Start / End
-           * @see https://tailwindcss.com/docs/grid-column
-           */
-          "col-start-end": [{
-            col: scaleGridColRowStartAndEnd()
-          }],
-          /**
-           * Grid Column Start
-           * @see https://tailwindcss.com/docs/grid-column
-           */
-          "col-start": [{
-            "col-start": scaleGridColRowStartOrEnd()
-          }],
-          /**
-           * Grid Column End
-           * @see https://tailwindcss.com/docs/grid-column
-           */
-          "col-end": [{
-            "col-end": scaleGridColRowStartOrEnd()
-          }],
-          /**
-           * Grid Template Rows
-           * @see https://tailwindcss.com/docs/grid-template-rows
-           */
-          "grid-rows": [{
-            "grid-rows": scaleGridTemplateColsRows()
-          }],
-          /**
-           * Grid Row Start / End
-           * @see https://tailwindcss.com/docs/grid-row
-           */
-          "row-start-end": [{
-            row: scaleGridColRowStartAndEnd()
-          }],
-          /**
-           * Grid Row Start
-           * @see https://tailwindcss.com/docs/grid-row
-           */
-          "row-start": [{
-            "row-start": scaleGridColRowStartOrEnd()
-          }],
-          /**
-           * Grid Row End
-           * @see https://tailwindcss.com/docs/grid-row
-           */
-          "row-end": [{
-            "row-end": scaleGridColRowStartOrEnd()
-          }],
-          /**
-           * Grid Auto Flow
-           * @see https://tailwindcss.com/docs/grid-auto-flow
-           */
-          "grid-flow": [{
-            "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
-          }],
-          /**
-           * Grid Auto Columns
-           * @see https://tailwindcss.com/docs/grid-auto-columns
-           */
-          "auto-cols": [{
-            "auto-cols": scaleGridAutoColsRows()
-          }],
-          /**
-           * Grid Auto Rows
-           * @see https://tailwindcss.com/docs/grid-auto-rows
-           */
-          "auto-rows": [{
-            "auto-rows": scaleGridAutoColsRows()
-          }],
-          /**
-           * Gap
-           * @see https://tailwindcss.com/docs/gap
-           */
-          gap: [{
-            gap: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Gap X
-           * @see https://tailwindcss.com/docs/gap
-           */
-          "gap-x": [{
-            "gap-x": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Gap Y
-           * @see https://tailwindcss.com/docs/gap
-           */
-          "gap-y": [{
-            "gap-y": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Justify Content
-           * @see https://tailwindcss.com/docs/justify-content
-           */
-          "justify-content": [{
-            justify: [...scaleAlignPrimaryAxis(), "normal"]
-          }],
-          /**
-           * Justify Items
-           * @see https://tailwindcss.com/docs/justify-items
-           */
-          "justify-items": [{
-            "justify-items": [...scaleAlignSecondaryAxis(), "normal"]
-          }],
-          /**
-           * Justify Self
-           * @see https://tailwindcss.com/docs/justify-self
-           */
-          "justify-self": [{
-            "justify-self": ["auto", ...scaleAlignSecondaryAxis()]
-          }],
-          /**
-           * Align Content
-           * @see https://tailwindcss.com/docs/align-content
-           */
-          "align-content": [{
-            content: ["normal", ...scaleAlignPrimaryAxis()]
-          }],
-          /**
-           * Align Items
-           * @see https://tailwindcss.com/docs/align-items
-           */
-          "align-items": [{
-            items: [...scaleAlignSecondaryAxis(), {
-              baseline: ["", "last"]
-            }]
-          }],
-          /**
-           * Align Self
-           * @see https://tailwindcss.com/docs/align-self
-           */
-          "align-self": [{
-            self: ["auto", ...scaleAlignSecondaryAxis(), {
-              baseline: ["", "last"]
-            }]
-          }],
-          /**
-           * Place Content
-           * @see https://tailwindcss.com/docs/place-content
-           */
-          "place-content": [{
-            "place-content": scaleAlignPrimaryAxis()
-          }],
-          /**
-           * Place Items
-           * @see https://tailwindcss.com/docs/place-items
-           */
-          "place-items": [{
-            "place-items": [...scaleAlignSecondaryAxis(), "baseline"]
-          }],
-          /**
-           * Place Self
-           * @see https://tailwindcss.com/docs/place-self
-           */
-          "place-self": [{
-            "place-self": ["auto", ...scaleAlignSecondaryAxis()]
-          }],
-          // Spacing
-          /**
-           * Padding
-           * @see https://tailwindcss.com/docs/padding
-           */
-          p: [{
-            p: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding X
-           * @see https://tailwindcss.com/docs/padding
-           */
-          px: [{
-            px: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding Y
-           * @see https://tailwindcss.com/docs/padding
-           */
-          py: [{
-            py: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding Start
-           * @see https://tailwindcss.com/docs/padding
-           */
-          ps: [{
-            ps: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding End
-           * @see https://tailwindcss.com/docs/padding
-           */
-          pe: [{
-            pe: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding Top
-           * @see https://tailwindcss.com/docs/padding
-           */
-          pt: [{
-            pt: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding Right
-           * @see https://tailwindcss.com/docs/padding
-           */
-          pr: [{
-            pr: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding Bottom
-           * @see https://tailwindcss.com/docs/padding
-           */
-          pb: [{
-            pb: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Padding Left
-           * @see https://tailwindcss.com/docs/padding
-           */
-          pl: [{
-            pl: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Margin
-           * @see https://tailwindcss.com/docs/margin
-           */
-          m: [{
-            m: scaleMargin()
-          }],
-          /**
-           * Margin X
-           * @see https://tailwindcss.com/docs/margin
-           */
-          mx: [{
-            mx: scaleMargin()
-          }],
-          /**
-           * Margin Y
-           * @see https://tailwindcss.com/docs/margin
-           */
-          my: [{
-            my: scaleMargin()
-          }],
-          /**
-           * Margin Start
-           * @see https://tailwindcss.com/docs/margin
-           */
-          ms: [{
-            ms: scaleMargin()
-          }],
-          /**
-           * Margin End
-           * @see https://tailwindcss.com/docs/margin
-           */
-          me: [{
-            me: scaleMargin()
-          }],
-          /**
-           * Margin Top
-           * @see https://tailwindcss.com/docs/margin
-           */
-          mt: [{
-            mt: scaleMargin()
-          }],
-          /**
-           * Margin Right
-           * @see https://tailwindcss.com/docs/margin
-           */
-          mr: [{
-            mr: scaleMargin()
-          }],
-          /**
-           * Margin Bottom
-           * @see https://tailwindcss.com/docs/margin
-           */
-          mb: [{
-            mb: scaleMargin()
-          }],
-          /**
-           * Margin Left
-           * @see https://tailwindcss.com/docs/margin
-           */
-          ml: [{
-            ml: scaleMargin()
-          }],
-          /**
-           * Space Between X
-           * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-           */
-          "space-x": [{
-            "space-x": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Space Between X Reverse
-           * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-           */
-          "space-x-reverse": ["space-x-reverse"],
-          /**
-           * Space Between Y
-           * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-           */
-          "space-y": [{
-            "space-y": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Space Between Y Reverse
-           * @see https://tailwindcss.com/docs/margin#adding-space-between-children
-           */
-          "space-y-reverse": ["space-y-reverse"],
-          // --------------
-          // --- Sizing ---
-          // --------------
-          /**
-           * Size
-           * @see https://tailwindcss.com/docs/width#setting-both-width-and-height
-           */
-          size: [{
-            size: scaleSizing()
-          }],
-          /**
-           * Width
-           * @see https://tailwindcss.com/docs/width
-           */
-          w: [{
-            w: [themeContainer, "screen", ...scaleSizing()]
-          }],
-          /**
-           * Min-Width
-           * @see https://tailwindcss.com/docs/min-width
-           */
-          "min-w": [{
-            "min-w": [
-              themeContainer,
-              "screen",
-              /** Deprecated. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-              "none",
-              ...scaleSizing()
-            ]
-          }],
-          /**
-           * Max-Width
-           * @see https://tailwindcss.com/docs/max-width
-           */
-          "max-w": [{
-            "max-w": [
-              themeContainer,
-              "screen",
-              "none",
-              /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-              "prose",
-              /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-              {
-                screen: [themeBreakpoint]
-              },
-              ...scaleSizing()
-            ]
-          }],
-          /**
-           * Height
-           * @see https://tailwindcss.com/docs/height
-           */
-          h: [{
-            h: ["screen", "lh", ...scaleSizing()]
-          }],
-          /**
-           * Min-Height
-           * @see https://tailwindcss.com/docs/min-height
-           */
-          "min-h": [{
-            "min-h": ["screen", "lh", "none", ...scaleSizing()]
-          }],
-          /**
-           * Max-Height
-           * @see https://tailwindcss.com/docs/max-height
-           */
-          "max-h": [{
-            "max-h": ["screen", "lh", ...scaleSizing()]
-          }],
-          // ------------------
-          // --- Typography ---
-          // ------------------
-          /**
-           * Font Size
-           * @see https://tailwindcss.com/docs/font-size
-           */
-          "font-size": [{
-            text: ["base", themeText, isArbitraryVariableLength, isArbitraryLength]
-          }],
-          /**
-           * Font Smoothing
-           * @see https://tailwindcss.com/docs/font-smoothing
-           */
-          "font-smoothing": ["antialiased", "subpixel-antialiased"],
-          /**
-           * Font Style
-           * @see https://tailwindcss.com/docs/font-style
-           */
-          "font-style": ["italic", "not-italic"],
-          /**
-           * Font Weight
-           * @see https://tailwindcss.com/docs/font-weight
-           */
-          "font-weight": [{
-            font: [themeFontWeight, isArbitraryVariable, isArbitraryNumber]
-          }],
-          /**
-           * Font Stretch
-           * @see https://tailwindcss.com/docs/font-stretch
-           */
-          "font-stretch": [{
-            "font-stretch": ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal", "semi-expanded", "expanded", "extra-expanded", "ultra-expanded", isPercent, isArbitraryValue]
-          }],
-          /**
-           * Font Family
-           * @see https://tailwindcss.com/docs/font-family
-           */
-          "font-family": [{
-            font: [isArbitraryVariableFamilyName, isArbitraryValue, themeFont]
-          }],
-          /**
-           * Font Variant Numeric
-           * @see https://tailwindcss.com/docs/font-variant-numeric
-           */
-          "fvn-normal": ["normal-nums"],
-          /**
-           * Font Variant Numeric
-           * @see https://tailwindcss.com/docs/font-variant-numeric
-           */
-          "fvn-ordinal": ["ordinal"],
-          /**
-           * Font Variant Numeric
-           * @see https://tailwindcss.com/docs/font-variant-numeric
-           */
-          "fvn-slashed-zero": ["slashed-zero"],
-          /**
-           * Font Variant Numeric
-           * @see https://tailwindcss.com/docs/font-variant-numeric
-           */
-          "fvn-figure": ["lining-nums", "oldstyle-nums"],
-          /**
-           * Font Variant Numeric
-           * @see https://tailwindcss.com/docs/font-variant-numeric
-           */
-          "fvn-spacing": ["proportional-nums", "tabular-nums"],
-          /**
-           * Font Variant Numeric
-           * @see https://tailwindcss.com/docs/font-variant-numeric
-           */
-          "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
-          /**
-           * Letter Spacing
-           * @see https://tailwindcss.com/docs/letter-spacing
-           */
-          tracking: [{
-            tracking: [themeTracking, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Line Clamp
-           * @see https://tailwindcss.com/docs/line-clamp
-           */
-          "line-clamp": [{
-            "line-clamp": [isNumber2, "none", isArbitraryVariable, isArbitraryNumber]
-          }],
-          /**
-           * Line Height
-           * @see https://tailwindcss.com/docs/line-height
-           */
-          leading: [{
-            leading: [
-              /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
-              themeLeading,
-              ...scaleUnambiguousSpacing()
-            ]
-          }],
-          /**
-           * List Style Image
-           * @see https://tailwindcss.com/docs/list-style-image
-           */
-          "list-image": [{
-            "list-image": ["none", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * List Style Position
-           * @see https://tailwindcss.com/docs/list-style-position
-           */
-          "list-style-position": [{
-            list: ["inside", "outside"]
-          }],
-          /**
-           * List Style Type
-           * @see https://tailwindcss.com/docs/list-style-type
-           */
-          "list-style-type": [{
-            list: ["disc", "decimal", "none", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Text Alignment
-           * @see https://tailwindcss.com/docs/text-align
-           */
-          "text-alignment": [{
-            text: ["left", "center", "right", "justify", "start", "end"]
-          }],
-          /**
-           * Placeholder Color
-           * @deprecated since Tailwind CSS v3.0.0
-           * @see https://v3.tailwindcss.com/docs/placeholder-color
-           */
-          "placeholder-color": [{
-            placeholder: scaleColor()
-          }],
-          /**
-           * Text Color
-           * @see https://tailwindcss.com/docs/text-color
-           */
-          "text-color": [{
-            text: scaleColor()
-          }],
-          /**
-           * Text Decoration
-           * @see https://tailwindcss.com/docs/text-decoration
-           */
-          "text-decoration": ["underline", "overline", "line-through", "no-underline"],
-          /**
-           * Text Decoration Style
-           * @see https://tailwindcss.com/docs/text-decoration-style
-           */
-          "text-decoration-style": [{
-            decoration: [...scaleLineStyle(), "wavy"]
-          }],
-          /**
-           * Text Decoration Thickness
-           * @see https://tailwindcss.com/docs/text-decoration-thickness
-           */
-          "text-decoration-thickness": [{
-            decoration: [isNumber2, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
-          }],
-          /**
-           * Text Decoration Color
-           * @see https://tailwindcss.com/docs/text-decoration-color
-           */
-          "text-decoration-color": [{
-            decoration: scaleColor()
-          }],
-          /**
-           * Text Underline Offset
-           * @see https://tailwindcss.com/docs/text-underline-offset
-           */
-          "underline-offset": [{
-            "underline-offset": [isNumber2, "auto", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Text Transform
-           * @see https://tailwindcss.com/docs/text-transform
-           */
-          "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
-          /**
-           * Text Overflow
-           * @see https://tailwindcss.com/docs/text-overflow
-           */
-          "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
-          /**
-           * Text Wrap
-           * @see https://tailwindcss.com/docs/text-wrap
-           */
-          "text-wrap": [{
-            text: ["wrap", "nowrap", "balance", "pretty"]
-          }],
-          /**
-           * Text Indent
-           * @see https://tailwindcss.com/docs/text-indent
-           */
-          indent: [{
-            indent: scaleUnambiguousSpacing()
-          }],
-          /**
-           * Vertical Alignment
-           * @see https://tailwindcss.com/docs/vertical-align
-           */
-          "vertical-align": [{
-            align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Whitespace
-           * @see https://tailwindcss.com/docs/whitespace
-           */
-          whitespace: [{
-            whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
-          }],
-          /**
-           * Word Break
-           * @see https://tailwindcss.com/docs/word-break
-           */
-          break: [{
-            break: ["normal", "words", "all", "keep"]
-          }],
-          /**
-           * Overflow Wrap
-           * @see https://tailwindcss.com/docs/overflow-wrap
-           */
-          wrap: [{
-            wrap: ["break-word", "anywhere", "normal"]
-          }],
-          /**
-           * Hyphens
-           * @see https://tailwindcss.com/docs/hyphens
-           */
-          hyphens: [{
-            hyphens: ["none", "manual", "auto"]
-          }],
-          /**
-           * Content
-           * @see https://tailwindcss.com/docs/content
-           */
-          content: [{
-            content: ["none", isArbitraryVariable, isArbitraryValue]
-          }],
-          // -------------------
-          // --- Backgrounds ---
-          // -------------------
-          /**
-           * Background Attachment
-           * @see https://tailwindcss.com/docs/background-attachment
-           */
-          "bg-attachment": [{
-            bg: ["fixed", "local", "scroll"]
-          }],
-          /**
-           * Background Clip
-           * @see https://tailwindcss.com/docs/background-clip
-           */
-          "bg-clip": [{
-            "bg-clip": ["border", "padding", "content", "text"]
-          }],
-          /**
-           * Background Origin
-           * @see https://tailwindcss.com/docs/background-origin
-           */
-          "bg-origin": [{
-            "bg-origin": ["border", "padding", "content"]
-          }],
-          /**
-           * Background Position
-           * @see https://tailwindcss.com/docs/background-position
-           */
-          "bg-position": [{
-            bg: scaleBgPosition()
-          }],
-          /**
-           * Background Repeat
-           * @see https://tailwindcss.com/docs/background-repeat
-           */
-          "bg-repeat": [{
-            bg: scaleBgRepeat()
-          }],
-          /**
-           * Background Size
-           * @see https://tailwindcss.com/docs/background-size
-           */
-          "bg-size": [{
-            bg: scaleBgSize()
-          }],
-          /**
-           * Background Image
-           * @see https://tailwindcss.com/docs/background-image
-           */
-          "bg-image": [{
-            bg: ["none", {
-              linear: [{
-                to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
-              }, isInteger2, isArbitraryVariable, isArbitraryValue],
-              radial: ["", isArbitraryVariable, isArbitraryValue],
-              conic: [isInteger2, isArbitraryVariable, isArbitraryValue]
-            }, isArbitraryVariableImage, isArbitraryImage]
-          }],
-          /**
-           * Background Color
-           * @see https://tailwindcss.com/docs/background-color
-           */
-          "bg-color": [{
-            bg: scaleColor()
-          }],
-          /**
-           * Gradient Color Stops From Position
-           * @see https://tailwindcss.com/docs/gradient-color-stops
-           */
-          "gradient-from-pos": [{
-            from: scaleGradientStopPosition()
-          }],
-          /**
-           * Gradient Color Stops Via Position
-           * @see https://tailwindcss.com/docs/gradient-color-stops
-           */
-          "gradient-via-pos": [{
-            via: scaleGradientStopPosition()
-          }],
-          /**
-           * Gradient Color Stops To Position
-           * @see https://tailwindcss.com/docs/gradient-color-stops
-           */
-          "gradient-to-pos": [{
-            to: scaleGradientStopPosition()
-          }],
-          /**
-           * Gradient Color Stops From
-           * @see https://tailwindcss.com/docs/gradient-color-stops
-           */
-          "gradient-from": [{
-            from: scaleColor()
-          }],
-          /**
-           * Gradient Color Stops Via
-           * @see https://tailwindcss.com/docs/gradient-color-stops
-           */
-          "gradient-via": [{
-            via: scaleColor()
-          }],
-          /**
-           * Gradient Color Stops To
-           * @see https://tailwindcss.com/docs/gradient-color-stops
-           */
-          "gradient-to": [{
-            to: scaleColor()
-          }],
-          // ---------------
-          // --- Borders ---
-          // ---------------
-          /**
-           * Border Radius
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          rounded: [{
-            rounded: scaleRadius()
-          }],
-          /**
-           * Border Radius Start
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-s": [{
-            "rounded-s": scaleRadius()
-          }],
-          /**
-           * Border Radius End
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-e": [{
-            "rounded-e": scaleRadius()
-          }],
-          /**
-           * Border Radius Top
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-t": [{
-            "rounded-t": scaleRadius()
-          }],
-          /**
-           * Border Radius Right
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-r": [{
-            "rounded-r": scaleRadius()
-          }],
-          /**
-           * Border Radius Bottom
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-b": [{
-            "rounded-b": scaleRadius()
-          }],
-          /**
-           * Border Radius Left
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-l": [{
-            "rounded-l": scaleRadius()
-          }],
-          /**
-           * Border Radius Start Start
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-ss": [{
-            "rounded-ss": scaleRadius()
-          }],
-          /**
-           * Border Radius Start End
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-se": [{
-            "rounded-se": scaleRadius()
-          }],
-          /**
-           * Border Radius End End
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-ee": [{
-            "rounded-ee": scaleRadius()
-          }],
-          /**
-           * Border Radius End Start
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-es": [{
-            "rounded-es": scaleRadius()
-          }],
-          /**
-           * Border Radius Top Left
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-tl": [{
-            "rounded-tl": scaleRadius()
-          }],
-          /**
-           * Border Radius Top Right
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-tr": [{
-            "rounded-tr": scaleRadius()
-          }],
-          /**
-           * Border Radius Bottom Right
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-br": [{
-            "rounded-br": scaleRadius()
-          }],
-          /**
-           * Border Radius Bottom Left
-           * @see https://tailwindcss.com/docs/border-radius
-           */
-          "rounded-bl": [{
-            "rounded-bl": scaleRadius()
-          }],
-          /**
-           * Border Width
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w": [{
-            border: scaleBorderWidth()
-          }],
-          /**
-           * Border Width X
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-x": [{
-            "border-x": scaleBorderWidth()
-          }],
-          /**
-           * Border Width Y
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-y": [{
-            "border-y": scaleBorderWidth()
-          }],
-          /**
-           * Border Width Start
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-s": [{
-            "border-s": scaleBorderWidth()
-          }],
-          /**
-           * Border Width End
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-e": [{
-            "border-e": scaleBorderWidth()
-          }],
-          /**
-           * Border Width Top
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-t": [{
-            "border-t": scaleBorderWidth()
-          }],
-          /**
-           * Border Width Right
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-r": [{
-            "border-r": scaleBorderWidth()
-          }],
-          /**
-           * Border Width Bottom
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-b": [{
-            "border-b": scaleBorderWidth()
-          }],
-          /**
-           * Border Width Left
-           * @see https://tailwindcss.com/docs/border-width
-           */
-          "border-w-l": [{
-            "border-l": scaleBorderWidth()
-          }],
-          /**
-           * Divide Width X
-           * @see https://tailwindcss.com/docs/border-width#between-children
-           */
-          "divide-x": [{
-            "divide-x": scaleBorderWidth()
-          }],
-          /**
-           * Divide Width X Reverse
-           * @see https://tailwindcss.com/docs/border-width#between-children
-           */
-          "divide-x-reverse": ["divide-x-reverse"],
-          /**
-           * Divide Width Y
-           * @see https://tailwindcss.com/docs/border-width#between-children
-           */
-          "divide-y": [{
-            "divide-y": scaleBorderWidth()
-          }],
-          /**
-           * Divide Width Y Reverse
-           * @see https://tailwindcss.com/docs/border-width#between-children
-           */
-          "divide-y-reverse": ["divide-y-reverse"],
-          /**
-           * Border Style
-           * @see https://tailwindcss.com/docs/border-style
-           */
-          "border-style": [{
-            border: [...scaleLineStyle(), "hidden", "none"]
-          }],
-          /**
-           * Divide Style
-           * @see https://tailwindcss.com/docs/border-style#setting-the-divider-style
-           */
-          "divide-style": [{
-            divide: [...scaleLineStyle(), "hidden", "none"]
-          }],
-          /**
-           * Border Color
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color": [{
-            border: scaleColor()
-          }],
-          /**
-           * Border Color X
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-x": [{
-            "border-x": scaleColor()
-          }],
-          /**
-           * Border Color Y
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-y": [{
-            "border-y": scaleColor()
-          }],
-          /**
-           * Border Color S
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-s": [{
-            "border-s": scaleColor()
-          }],
-          /**
-           * Border Color E
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-e": [{
-            "border-e": scaleColor()
-          }],
-          /**
-           * Border Color Top
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-t": [{
-            "border-t": scaleColor()
-          }],
-          /**
-           * Border Color Right
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-r": [{
-            "border-r": scaleColor()
-          }],
-          /**
-           * Border Color Bottom
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-b": [{
-            "border-b": scaleColor()
-          }],
-          /**
-           * Border Color Left
-           * @see https://tailwindcss.com/docs/border-color
-           */
-          "border-color-l": [{
-            "border-l": scaleColor()
-          }],
-          /**
-           * Divide Color
-           * @see https://tailwindcss.com/docs/divide-color
-           */
-          "divide-color": [{
-            divide: scaleColor()
-          }],
-          /**
-           * Outline Style
-           * @see https://tailwindcss.com/docs/outline-style
-           */
-          "outline-style": [{
-            outline: [...scaleLineStyle(), "none", "hidden"]
-          }],
-          /**
-           * Outline Offset
-           * @see https://tailwindcss.com/docs/outline-offset
-           */
-          "outline-offset": [{
-            "outline-offset": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Outline Width
-           * @see https://tailwindcss.com/docs/outline-width
-           */
-          "outline-w": [{
-            outline: ["", isNumber2, isArbitraryVariableLength, isArbitraryLength]
-          }],
-          /**
-           * Outline Color
-           * @see https://tailwindcss.com/docs/outline-color
-           */
-          "outline-color": [{
-            outline: scaleColor()
-          }],
-          // ---------------
-          // --- Effects ---
-          // ---------------
-          /**
-           * Box Shadow
-           * @see https://tailwindcss.com/docs/box-shadow
-           */
-          shadow: [{
-            shadow: [
-              // Deprecated since Tailwind CSS v4.0.0
-              "",
-              "none",
-              themeShadow,
-              isArbitraryVariableShadow,
-              isArbitraryShadow
-            ]
-          }],
-          /**
-           * Box Shadow Color
-           * @see https://tailwindcss.com/docs/box-shadow#setting-the-shadow-color
-           */
-          "shadow-color": [{
-            shadow: scaleColor()
-          }],
-          /**
-           * Inset Box Shadow
-           * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-shadow
-           */
-          "inset-shadow": [{
-            "inset-shadow": ["none", themeInsetShadow, isArbitraryVariableShadow, isArbitraryShadow]
-          }],
-          /**
-           * Inset Box Shadow Color
-           * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-shadow-color
-           */
-          "inset-shadow-color": [{
-            "inset-shadow": scaleColor()
-          }],
-          /**
-           * Ring Width
-           * @see https://tailwindcss.com/docs/box-shadow#adding-a-ring
-           */
-          "ring-w": [{
-            ring: scaleBorderWidth()
-          }],
-          /**
-           * Ring Width Inset
-           * @see https://v3.tailwindcss.com/docs/ring-width#inset-rings
-           * @deprecated since Tailwind CSS v4.0.0
-           * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
-           */
-          "ring-w-inset": ["ring-inset"],
-          /**
-           * Ring Color
-           * @see https://tailwindcss.com/docs/box-shadow#setting-the-ring-color
-           */
-          "ring-color": [{
-            ring: scaleColor()
-          }],
-          /**
-           * Ring Offset Width
-           * @see https://v3.tailwindcss.com/docs/ring-offset-width
-           * @deprecated since Tailwind CSS v4.0.0
-           * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
-           */
-          "ring-offset-w": [{
-            "ring-offset": [isNumber2, isArbitraryLength]
-          }],
-          /**
-           * Ring Offset Color
-           * @see https://v3.tailwindcss.com/docs/ring-offset-color
-           * @deprecated since Tailwind CSS v4.0.0
-           * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
-           */
-          "ring-offset-color": [{
-            "ring-offset": scaleColor()
-          }],
-          /**
-           * Inset Ring Width
-           * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-ring
-           */
-          "inset-ring-w": [{
-            "inset-ring": scaleBorderWidth()
-          }],
-          /**
-           * Inset Ring Color
-           * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-ring-color
-           */
-          "inset-ring-color": [{
-            "inset-ring": scaleColor()
-          }],
-          /**
-           * Text Shadow
-           * @see https://tailwindcss.com/docs/text-shadow
-           */
-          "text-shadow": [{
-            "text-shadow": ["none", themeTextShadow, isArbitraryVariableShadow, isArbitraryShadow]
-          }],
-          /**
-           * Text Shadow Color
-           * @see https://tailwindcss.com/docs/text-shadow#setting-the-shadow-color
-           */
-          "text-shadow-color": [{
-            "text-shadow": scaleColor()
-          }],
-          /**
-           * Opacity
-           * @see https://tailwindcss.com/docs/opacity
-           */
-          opacity: [{
-            opacity: [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Mix Blend Mode
-           * @see https://tailwindcss.com/docs/mix-blend-mode
-           */
-          "mix-blend": [{
-            "mix-blend": [...scaleBlendMode(), "plus-darker", "plus-lighter"]
-          }],
-          /**
-           * Background Blend Mode
-           * @see https://tailwindcss.com/docs/background-blend-mode
-           */
-          "bg-blend": [{
-            "bg-blend": scaleBlendMode()
-          }],
-          /**
-           * Mask Clip
-           * @see https://tailwindcss.com/docs/mask-clip
-           */
-          "mask-clip": [{
-            "mask-clip": ["border", "padding", "content", "fill", "stroke", "view"]
-          }, "mask-no-clip"],
-          /**
-           * Mask Composite
-           * @see https://tailwindcss.com/docs/mask-composite
-           */
-          "mask-composite": [{
-            mask: ["add", "subtract", "intersect", "exclude"]
-          }],
-          /**
-           * Mask Image
-           * @see https://tailwindcss.com/docs/mask-image
-           */
-          "mask-image-linear-pos": [{
-            "mask-linear": [isNumber2]
-          }],
-          "mask-image-linear-from-pos": [{
-            "mask-linear-from": scaleMaskImagePosition()
-          }],
-          "mask-image-linear-to-pos": [{
-            "mask-linear-to": scaleMaskImagePosition()
-          }],
-          "mask-image-linear-from-color": [{
-            "mask-linear-from": scaleColor()
-          }],
-          "mask-image-linear-to-color": [{
-            "mask-linear-to": scaleColor()
-          }],
-          "mask-image-t-from-pos": [{
-            "mask-t-from": scaleMaskImagePosition()
-          }],
-          "mask-image-t-to-pos": [{
-            "mask-t-to": scaleMaskImagePosition()
-          }],
-          "mask-image-t-from-color": [{
-            "mask-t-from": scaleColor()
-          }],
-          "mask-image-t-to-color": [{
-            "mask-t-to": scaleColor()
-          }],
-          "mask-image-r-from-pos": [{
-            "mask-r-from": scaleMaskImagePosition()
-          }],
-          "mask-image-r-to-pos": [{
-            "mask-r-to": scaleMaskImagePosition()
-          }],
-          "mask-image-r-from-color": [{
-            "mask-r-from": scaleColor()
-          }],
-          "mask-image-r-to-color": [{
-            "mask-r-to": scaleColor()
-          }],
-          "mask-image-b-from-pos": [{
-            "mask-b-from": scaleMaskImagePosition()
-          }],
-          "mask-image-b-to-pos": [{
-            "mask-b-to": scaleMaskImagePosition()
-          }],
-          "mask-image-b-from-color": [{
-            "mask-b-from": scaleColor()
-          }],
-          "mask-image-b-to-color": [{
-            "mask-b-to": scaleColor()
-          }],
-          "mask-image-l-from-pos": [{
-            "mask-l-from": scaleMaskImagePosition()
-          }],
-          "mask-image-l-to-pos": [{
-            "mask-l-to": scaleMaskImagePosition()
-          }],
-          "mask-image-l-from-color": [{
-            "mask-l-from": scaleColor()
-          }],
-          "mask-image-l-to-color": [{
-            "mask-l-to": scaleColor()
-          }],
-          "mask-image-x-from-pos": [{
-            "mask-x-from": scaleMaskImagePosition()
-          }],
-          "mask-image-x-to-pos": [{
-            "mask-x-to": scaleMaskImagePosition()
-          }],
-          "mask-image-x-from-color": [{
-            "mask-x-from": scaleColor()
-          }],
-          "mask-image-x-to-color": [{
-            "mask-x-to": scaleColor()
-          }],
-          "mask-image-y-from-pos": [{
-            "mask-y-from": scaleMaskImagePosition()
-          }],
-          "mask-image-y-to-pos": [{
-            "mask-y-to": scaleMaskImagePosition()
-          }],
-          "mask-image-y-from-color": [{
-            "mask-y-from": scaleColor()
-          }],
-          "mask-image-y-to-color": [{
-            "mask-y-to": scaleColor()
-          }],
-          "mask-image-radial": [{
-            "mask-radial": [isArbitraryVariable, isArbitraryValue]
-          }],
-          "mask-image-radial-from-pos": [{
-            "mask-radial-from": scaleMaskImagePosition()
-          }],
-          "mask-image-radial-to-pos": [{
-            "mask-radial-to": scaleMaskImagePosition()
-          }],
-          "mask-image-radial-from-color": [{
-            "mask-radial-from": scaleColor()
-          }],
-          "mask-image-radial-to-color": [{
-            "mask-radial-to": scaleColor()
-          }],
-          "mask-image-radial-shape": [{
-            "mask-radial": ["circle", "ellipse"]
-          }],
-          "mask-image-radial-size": [{
-            "mask-radial": [{
-              closest: ["side", "corner"],
-              farthest: ["side", "corner"]
-            }]
-          }],
-          "mask-image-radial-pos": [{
-            "mask-radial-at": scalePosition()
-          }],
-          "mask-image-conic-pos": [{
-            "mask-conic": [isNumber2]
-          }],
-          "mask-image-conic-from-pos": [{
-            "mask-conic-from": scaleMaskImagePosition()
-          }],
-          "mask-image-conic-to-pos": [{
-            "mask-conic-to": scaleMaskImagePosition()
-          }],
-          "mask-image-conic-from-color": [{
-            "mask-conic-from": scaleColor()
-          }],
-          "mask-image-conic-to-color": [{
-            "mask-conic-to": scaleColor()
-          }],
-          /**
-           * Mask Mode
-           * @see https://tailwindcss.com/docs/mask-mode
-           */
-          "mask-mode": [{
-            mask: ["alpha", "luminance", "match"]
-          }],
-          /**
-           * Mask Origin
-           * @see https://tailwindcss.com/docs/mask-origin
-           */
-          "mask-origin": [{
-            "mask-origin": ["border", "padding", "content", "fill", "stroke", "view"]
-          }],
-          /**
-           * Mask Position
-           * @see https://tailwindcss.com/docs/mask-position
-           */
-          "mask-position": [{
-            mask: scaleBgPosition()
-          }],
-          /**
-           * Mask Repeat
-           * @see https://tailwindcss.com/docs/mask-repeat
-           */
-          "mask-repeat": [{
-            mask: scaleBgRepeat()
-          }],
-          /**
-           * Mask Size
-           * @see https://tailwindcss.com/docs/mask-size
-           */
-          "mask-size": [{
-            mask: scaleBgSize()
-          }],
-          /**
-           * Mask Type
-           * @see https://tailwindcss.com/docs/mask-type
-           */
-          "mask-type": [{
-            "mask-type": ["alpha", "luminance"]
-          }],
-          /**
-           * Mask Image
-           * @see https://tailwindcss.com/docs/mask-image
-           */
-          "mask-image": [{
-            mask: ["none", isArbitraryVariable, isArbitraryValue]
-          }],
-          // ---------------
-          // --- Filters ---
-          // ---------------
-          /**
-           * Filter
-           * @see https://tailwindcss.com/docs/filter
-           */
-          filter: [{
-            filter: [
-              // Deprecated since Tailwind CSS v3.0.0
-              "",
-              "none",
-              isArbitraryVariable,
-              isArbitraryValue
-            ]
-          }],
-          /**
-           * Blur
-           * @see https://tailwindcss.com/docs/blur
-           */
-          blur: [{
-            blur: scaleBlur()
-          }],
-          /**
-           * Brightness
-           * @see https://tailwindcss.com/docs/brightness
-           */
-          brightness: [{
-            brightness: [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Contrast
-           * @see https://tailwindcss.com/docs/contrast
-           */
-          contrast: [{
-            contrast: [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Drop Shadow
-           * @see https://tailwindcss.com/docs/drop-shadow
-           */
-          "drop-shadow": [{
-            "drop-shadow": [
-              // Deprecated since Tailwind CSS v4.0.0
-              "",
-              "none",
-              themeDropShadow,
-              isArbitraryVariableShadow,
-              isArbitraryShadow
-            ]
-          }],
-          /**
-           * Drop Shadow Color
-           * @see https://tailwindcss.com/docs/filter-drop-shadow#setting-the-shadow-color
-           */
-          "drop-shadow-color": [{
-            "drop-shadow": scaleColor()
-          }],
-          /**
-           * Grayscale
-           * @see https://tailwindcss.com/docs/grayscale
-           */
-          grayscale: [{
-            grayscale: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Hue Rotate
-           * @see https://tailwindcss.com/docs/hue-rotate
-           */
-          "hue-rotate": [{
-            "hue-rotate": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Invert
-           * @see https://tailwindcss.com/docs/invert
-           */
-          invert: [{
-            invert: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Saturate
-           * @see https://tailwindcss.com/docs/saturate
-           */
-          saturate: [{
-            saturate: [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Sepia
-           * @see https://tailwindcss.com/docs/sepia
-           */
-          sepia: [{
-            sepia: ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Filter
-           * @see https://tailwindcss.com/docs/backdrop-filter
-           */
-          "backdrop-filter": [{
-            "backdrop-filter": [
-              // Deprecated since Tailwind CSS v3.0.0
-              "",
-              "none",
-              isArbitraryVariable,
-              isArbitraryValue
-            ]
-          }],
-          /**
-           * Backdrop Blur
-           * @see https://tailwindcss.com/docs/backdrop-blur
-           */
-          "backdrop-blur": [{
-            "backdrop-blur": scaleBlur()
-          }],
-          /**
-           * Backdrop Brightness
-           * @see https://tailwindcss.com/docs/backdrop-brightness
-           */
-          "backdrop-brightness": [{
-            "backdrop-brightness": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Contrast
-           * @see https://tailwindcss.com/docs/backdrop-contrast
-           */
-          "backdrop-contrast": [{
-            "backdrop-contrast": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Grayscale
-           * @see https://tailwindcss.com/docs/backdrop-grayscale
-           */
-          "backdrop-grayscale": [{
-            "backdrop-grayscale": ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Hue Rotate
-           * @see https://tailwindcss.com/docs/backdrop-hue-rotate
-           */
-          "backdrop-hue-rotate": [{
-            "backdrop-hue-rotate": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Invert
-           * @see https://tailwindcss.com/docs/backdrop-invert
-           */
-          "backdrop-invert": [{
-            "backdrop-invert": ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Opacity
-           * @see https://tailwindcss.com/docs/backdrop-opacity
-           */
-          "backdrop-opacity": [{
-            "backdrop-opacity": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Saturate
-           * @see https://tailwindcss.com/docs/backdrop-saturate
-           */
-          "backdrop-saturate": [{
-            "backdrop-saturate": [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Backdrop Sepia
-           * @see https://tailwindcss.com/docs/backdrop-sepia
-           */
-          "backdrop-sepia": [{
-            "backdrop-sepia": ["", isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          // --------------
-          // --- Tables ---
-          // --------------
-          /**
-           * Border Collapse
-           * @see https://tailwindcss.com/docs/border-collapse
-           */
-          "border-collapse": [{
-            border: ["collapse", "separate"]
-          }],
-          /**
-           * Border Spacing
-           * @see https://tailwindcss.com/docs/border-spacing
-           */
-          "border-spacing": [{
-            "border-spacing": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Border Spacing X
-           * @see https://tailwindcss.com/docs/border-spacing
-           */
-          "border-spacing-x": [{
-            "border-spacing-x": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Border Spacing Y
-           * @see https://tailwindcss.com/docs/border-spacing
-           */
-          "border-spacing-y": [{
-            "border-spacing-y": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Table Layout
-           * @see https://tailwindcss.com/docs/table-layout
-           */
-          "table-layout": [{
-            table: ["auto", "fixed"]
-          }],
-          /**
-           * Caption Side
-           * @see https://tailwindcss.com/docs/caption-side
-           */
-          caption: [{
-            caption: ["top", "bottom"]
-          }],
-          // ---------------------------------
-          // --- Transitions and Animation ---
-          // ---------------------------------
-          /**
-           * Transition Property
-           * @see https://tailwindcss.com/docs/transition-property
-           */
-          transition: [{
-            transition: ["", "all", "colors", "opacity", "shadow", "transform", "none", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Transition Behavior
-           * @see https://tailwindcss.com/docs/transition-behavior
-           */
-          "transition-behavior": [{
-            transition: ["normal", "discrete"]
-          }],
-          /**
-           * Transition Duration
-           * @see https://tailwindcss.com/docs/transition-duration
-           */
-          duration: [{
-            duration: [isNumber2, "initial", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Transition Timing Function
-           * @see https://tailwindcss.com/docs/transition-timing-function
-           */
-          ease: [{
-            ease: ["linear", "initial", themeEase, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Transition Delay
-           * @see https://tailwindcss.com/docs/transition-delay
-           */
-          delay: [{
-            delay: [isNumber2, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Animation
-           * @see https://tailwindcss.com/docs/animation
-           */
-          animate: [{
-            animate: ["none", themeAnimate, isArbitraryVariable, isArbitraryValue]
-          }],
-          // ------------------
-          // --- Transforms ---
-          // ------------------
-          /**
-           * Backface Visibility
-           * @see https://tailwindcss.com/docs/backface-visibility
-           */
-          backface: [{
-            backface: ["hidden", "visible"]
-          }],
-          /**
-           * Perspective
-           * @see https://tailwindcss.com/docs/perspective
-           */
-          perspective: [{
-            perspective: [themePerspective, isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Perspective Origin
-           * @see https://tailwindcss.com/docs/perspective-origin
-           */
-          "perspective-origin": [{
-            "perspective-origin": scalePositionWithArbitrary()
-          }],
-          /**
-           * Rotate
-           * @see https://tailwindcss.com/docs/rotate
-           */
-          rotate: [{
-            rotate: scaleRotate()
-          }],
-          /**
-           * Rotate X
-           * @see https://tailwindcss.com/docs/rotate
-           */
-          "rotate-x": [{
-            "rotate-x": scaleRotate()
-          }],
-          /**
-           * Rotate Y
-           * @see https://tailwindcss.com/docs/rotate
-           */
-          "rotate-y": [{
-            "rotate-y": scaleRotate()
-          }],
-          /**
-           * Rotate Z
-           * @see https://tailwindcss.com/docs/rotate
-           */
-          "rotate-z": [{
-            "rotate-z": scaleRotate()
-          }],
-          /**
-           * Scale
-           * @see https://tailwindcss.com/docs/scale
-           */
-          scale: [{
-            scale: scaleScale()
-          }],
-          /**
-           * Scale X
-           * @see https://tailwindcss.com/docs/scale
-           */
-          "scale-x": [{
-            "scale-x": scaleScale()
-          }],
-          /**
-           * Scale Y
-           * @see https://tailwindcss.com/docs/scale
-           */
-          "scale-y": [{
-            "scale-y": scaleScale()
-          }],
-          /**
-           * Scale Z
-           * @see https://tailwindcss.com/docs/scale
-           */
-          "scale-z": [{
-            "scale-z": scaleScale()
-          }],
-          /**
-           * Scale 3D
-           * @see https://tailwindcss.com/docs/scale
-           */
-          "scale-3d": ["scale-3d"],
-          /**
-           * Skew
-           * @see https://tailwindcss.com/docs/skew
-           */
-          skew: [{
-            skew: scaleSkew()
-          }],
-          /**
-           * Skew X
-           * @see https://tailwindcss.com/docs/skew
-           */
-          "skew-x": [{
-            "skew-x": scaleSkew()
-          }],
-          /**
-           * Skew Y
-           * @see https://tailwindcss.com/docs/skew
-           */
-          "skew-y": [{
-            "skew-y": scaleSkew()
-          }],
-          /**
-           * Transform
-           * @see https://tailwindcss.com/docs/transform
-           */
-          transform: [{
-            transform: [isArbitraryVariable, isArbitraryValue, "", "none", "gpu", "cpu"]
-          }],
-          /**
-           * Transform Origin
-           * @see https://tailwindcss.com/docs/transform-origin
-           */
-          "transform-origin": [{
-            origin: scalePositionWithArbitrary()
-          }],
-          /**
-           * Transform Style
-           * @see https://tailwindcss.com/docs/transform-style
-           */
-          "transform-style": [{
-            transform: ["3d", "flat"]
-          }],
-          /**
-           * Translate
-           * @see https://tailwindcss.com/docs/translate
-           */
-          translate: [{
-            translate: scaleTranslate()
-          }],
-          /**
-           * Translate X
-           * @see https://tailwindcss.com/docs/translate
-           */
-          "translate-x": [{
-            "translate-x": scaleTranslate()
-          }],
-          /**
-           * Translate Y
-           * @see https://tailwindcss.com/docs/translate
-           */
-          "translate-y": [{
-            "translate-y": scaleTranslate()
-          }],
-          /**
-           * Translate Z
-           * @see https://tailwindcss.com/docs/translate
-           */
-          "translate-z": [{
-            "translate-z": scaleTranslate()
-          }],
-          /**
-           * Translate None
-           * @see https://tailwindcss.com/docs/translate
-           */
-          "translate-none": ["translate-none"],
-          // ---------------------
-          // --- Interactivity ---
-          // ---------------------
-          /**
-           * Accent Color
-           * @see https://tailwindcss.com/docs/accent-color
-           */
-          accent: [{
-            accent: scaleColor()
-          }],
-          /**
-           * Appearance
-           * @see https://tailwindcss.com/docs/appearance
-           */
-          appearance: [{
-            appearance: ["none", "auto"]
-          }],
-          /**
-           * Caret Color
-           * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
-           */
-          "caret-color": [{
-            caret: scaleColor()
-          }],
-          /**
-           * Color Scheme
-           * @see https://tailwindcss.com/docs/color-scheme
-           */
-          "color-scheme": [{
-            scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]
-          }],
-          /**
-           * Cursor
-           * @see https://tailwindcss.com/docs/cursor
-           */
-          cursor: [{
-            cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryVariable, isArbitraryValue]
-          }],
-          /**
-           * Field Sizing
-           * @see https://tailwindcss.com/docs/field-sizing
-           */
-          "field-sizing": [{
-            "field-sizing": ["fixed", "content"]
-          }],
-          /**
-           * Pointer Events
-           * @see https://tailwindcss.com/docs/pointer-events
-           */
-          "pointer-events": [{
-            "pointer-events": ["auto", "none"]
-          }],
-          /**
-           * Resize
-           * @see https://tailwindcss.com/docs/resize
-           */
-          resize: [{
-            resize: ["none", "", "y", "x"]
-          }],
-          /**
-           * Scroll Behavior
-           * @see https://tailwindcss.com/docs/scroll-behavior
-           */
-          "scroll-behavior": [{
-            scroll: ["auto", "smooth"]
-          }],
-          /**
-           * Scroll Margin
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-m": [{
-            "scroll-m": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin X
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-mx": [{
-            "scroll-mx": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin Y
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-my": [{
-            "scroll-my": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin Start
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-ms": [{
-            "scroll-ms": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin End
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-me": [{
-            "scroll-me": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin Top
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-mt": [{
-            "scroll-mt": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin Right
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-mr": [{
-            "scroll-mr": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin Bottom
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-mb": [{
-            "scroll-mb": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Margin Left
-           * @see https://tailwindcss.com/docs/scroll-margin
-           */
-          "scroll-ml": [{
-            "scroll-ml": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-p": [{
-            "scroll-p": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding X
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-px": [{
-            "scroll-px": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding Y
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-py": [{
-            "scroll-py": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding Start
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-ps": [{
-            "scroll-ps": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding End
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-pe": [{
-            "scroll-pe": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding Top
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-pt": [{
-            "scroll-pt": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding Right
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-pr": [{
-            "scroll-pr": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding Bottom
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-pb": [{
-            "scroll-pb": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Padding Left
-           * @see https://tailwindcss.com/docs/scroll-padding
-           */
-          "scroll-pl": [{
-            "scroll-pl": scaleUnambiguousSpacing()
-          }],
-          /**
-           * Scroll Snap Align
-           * @see https://tailwindcss.com/docs/scroll-snap-align
-           */
-          "snap-align": [{
-            snap: ["start", "end", "center", "align-none"]
-          }],
-          /**
-           * Scroll Snap Stop
-           * @see https://tailwindcss.com/docs/scroll-snap-stop
-           */
-          "snap-stop": [{
-            snap: ["normal", "always"]
-          }],
-          /**
-           * Scroll Snap Type
-           * @see https://tailwindcss.com/docs/scroll-snap-type
-           */
-          "snap-type": [{
-            snap: ["none", "x", "y", "both"]
-          }],
-          /**
-           * Scroll Snap Type Strictness
-           * @see https://tailwindcss.com/docs/scroll-snap-type
-           */
-          "snap-strictness": [{
-            snap: ["mandatory", "proximity"]
-          }],
-          /**
-           * Touch Action
-           * @see https://tailwindcss.com/docs/touch-action
-           */
-          touch: [{
-            touch: ["auto", "none", "manipulation"]
-          }],
-          /**
-           * Touch Action X
-           * @see https://tailwindcss.com/docs/touch-action
-           */
-          "touch-x": [{
-            "touch-pan": ["x", "left", "right"]
-          }],
-          /**
-           * Touch Action Y
-           * @see https://tailwindcss.com/docs/touch-action
-           */
-          "touch-y": [{
-            "touch-pan": ["y", "up", "down"]
-          }],
-          /**
-           * Touch Action Pinch Zoom
-           * @see https://tailwindcss.com/docs/touch-action
-           */
-          "touch-pz": ["touch-pinch-zoom"],
-          /**
-           * User Select
-           * @see https://tailwindcss.com/docs/user-select
-           */
-          select: [{
-            select: ["none", "text", "all", "auto"]
-          }],
-          /**
-           * Will Change
-           * @see https://tailwindcss.com/docs/will-change
-           */
-          "will-change": [{
-            "will-change": ["auto", "scroll", "contents", "transform", isArbitraryVariable, isArbitraryValue]
-          }],
-          // -----------
-          // --- SVG ---
-          // -----------
-          /**
-           * Fill
-           * @see https://tailwindcss.com/docs/fill
-           */
-          fill: [{
-            fill: ["none", ...scaleColor()]
-          }],
-          /**
-           * Stroke Width
-           * @see https://tailwindcss.com/docs/stroke-width
-           */
-          "stroke-w": [{
-            stroke: [isNumber2, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
-          }],
-          /**
-           * Stroke
-           * @see https://tailwindcss.com/docs/stroke
-           */
-          stroke: [{
-            stroke: ["none", ...scaleColor()]
-          }],
-          // ---------------------
-          // --- Accessibility ---
-          // ---------------------
-          /**
-           * Forced Color Adjust
-           * @see https://tailwindcss.com/docs/forced-color-adjust
-           */
-          "forced-color-adjust": [{
-            "forced-color-adjust": ["auto", "none"]
-          }]
-        },
-        conflictingClassGroups: {
-          overflow: ["overflow-x", "overflow-y"],
-          overscroll: ["overscroll-x", "overscroll-y"],
-          inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
-          "inset-x": ["right", "left"],
-          "inset-y": ["top", "bottom"],
-          flex: ["basis", "grow", "shrink"],
-          gap: ["gap-x", "gap-y"],
-          p: ["px", "py", "ps", "pe", "pt", "pr", "pb", "pl"],
-          px: ["pr", "pl"],
-          py: ["pt", "pb"],
-          m: ["mx", "my", "ms", "me", "mt", "mr", "mb", "ml"],
-          mx: ["mr", "ml"],
-          my: ["mt", "mb"],
-          size: ["w", "h"],
-          "font-size": ["leading"],
-          "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
-          "fvn-ordinal": ["fvn-normal"],
-          "fvn-slashed-zero": ["fvn-normal"],
-          "fvn-figure": ["fvn-normal"],
-          "fvn-spacing": ["fvn-normal"],
-          "fvn-fraction": ["fvn-normal"],
-          "line-clamp": ["display", "overflow"],
-          rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
-          "rounded-s": ["rounded-ss", "rounded-es"],
-          "rounded-e": ["rounded-se", "rounded-ee"],
-          "rounded-t": ["rounded-tl", "rounded-tr"],
-          "rounded-r": ["rounded-tr", "rounded-br"],
-          "rounded-b": ["rounded-br", "rounded-bl"],
-          "rounded-l": ["rounded-tl", "rounded-bl"],
-          "border-spacing": ["border-spacing-x", "border-spacing-y"],
-          "border-w": ["border-w-x", "border-w-y", "border-w-s", "border-w-e", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
-          "border-w-x": ["border-w-r", "border-w-l"],
-          "border-w-y": ["border-w-t", "border-w-b"],
-          "border-color": ["border-color-x", "border-color-y", "border-color-s", "border-color-e", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
-          "border-color-x": ["border-color-r", "border-color-l"],
-          "border-color-y": ["border-color-t", "border-color-b"],
-          translate: ["translate-x", "translate-y", "translate-none"],
-          "translate-none": ["translate", "translate-x", "translate-y", "translate-z"],
-          "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
-          "scroll-mx": ["scroll-mr", "scroll-ml"],
-          "scroll-my": ["scroll-mt", "scroll-mb"],
-          "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
-          "scroll-px": ["scroll-pr", "scroll-pl"],
-          "scroll-py": ["scroll-pt", "scroll-pb"],
-          touch: ["touch-x", "touch-y", "touch-pz"],
-          "touch-x": ["touch"],
-          "touch-y": ["touch"],
-          "touch-pz": ["touch"]
-        },
-        conflictingClassGroupModifiers: {
-          "font-size": ["leading"]
-        },
-        orderSensitiveModifiers: ["*", "**", "after", "backdrop", "before", "details-content", "file", "first-letter", "first-line", "marker", "placeholder", "selection"]
-      };
-    };
-    twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
+var fromTheme = (key) => {
+  const themeGetter = (theme) => theme[key] || [];
+  themeGetter.isThemeGetter = true;
+  return themeGetter;
+};
+var arbitraryValueRegex = /^\[(?:(\w[\w-]*):)?(.+)\]$/i;
+var arbitraryVariableRegex = /^\((?:(\w[\w-]*):)?(.+)\)$/i;
+var fractionRegex = /^\d+\/\d+$/;
+var tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
+var lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
+var colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
+var shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
+var imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
+var isFraction = (value) => fractionRegex.test(value);
+var isNumber = (value) => !!value && !Number.isNaN(Number(value));
+var isInteger = (value) => !!value && Number.isInteger(Number(value));
+var isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
+var isTshirtSize = (value) => tshirtUnitRegex.test(value);
+var isAny = () => true;
+var isLengthOnly = (value) => (
+  // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
+  // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
+  // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
+  lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
+);
+var isNever = () => false;
+var isShadow = (value) => shadowRegex.test(value);
+var isImage = (value) => imageRegex.test(value);
+var isAnyNonArbitrary = (value) => !isArbitraryValue(value) && !isArbitraryVariable(value);
+var isArbitrarySize = (value) => getIsArbitraryValue(value, isLabelSize, isNever);
+var isArbitraryValue = (value) => arbitraryValueRegex.test(value);
+var isArbitraryLength = (value) => getIsArbitraryValue(value, isLabelLength, isLengthOnly);
+var isArbitraryNumber = (value) => getIsArbitraryValue(value, isLabelNumber, isNumber);
+var isArbitraryPosition = (value) => getIsArbitraryValue(value, isLabelPosition, isNever);
+var isArbitraryImage = (value) => getIsArbitraryValue(value, isLabelImage, isImage);
+var isArbitraryShadow = (value) => getIsArbitraryValue(value, isLabelShadow, isShadow);
+var isArbitraryVariable = (value) => arbitraryVariableRegex.test(value);
+var isArbitraryVariableLength = (value) => getIsArbitraryVariable(value, isLabelLength);
+var isArbitraryVariableFamilyName = (value) => getIsArbitraryVariable(value, isLabelFamilyName);
+var isArbitraryVariablePosition = (value) => getIsArbitraryVariable(value, isLabelPosition);
+var isArbitraryVariableSize = (value) => getIsArbitraryVariable(value, isLabelSize);
+var isArbitraryVariableImage = (value) => getIsArbitraryVariable(value, isLabelImage);
+var isArbitraryVariableShadow = (value) => getIsArbitraryVariable(value, isLabelShadow, true);
+var getIsArbitraryValue = (value, testLabel, testValue) => {
+  const result = arbitraryValueRegex.exec(value);
+  if (result) {
+    if (result[1]) {
+      return testLabel(result[1]);
+    }
+    return testValue(result[2]);
   }
-});
+  return false;
+};
+var getIsArbitraryVariable = (value, testLabel, shouldMatchNoLabel = false) => {
+  const result = arbitraryVariableRegex.exec(value);
+  if (result) {
+    if (result[1]) {
+      return testLabel(result[1]);
+    }
+    return shouldMatchNoLabel;
+  }
+  return false;
+};
+var isLabelPosition = (label) => label === "position" || label === "percentage";
+var isLabelImage = (label) => label === "image" || label === "url";
+var isLabelSize = (label) => label === "length" || label === "size" || label === "bg-size";
+var isLabelLength = (label) => label === "length";
+var isLabelNumber = (label) => label === "number";
+var isLabelFamilyName = (label) => label === "family-name";
+var isLabelShadow = (label) => label === "shadow";
+var getDefaultConfig = () => {
+  const themeColor = fromTheme("color");
+  const themeFont = fromTheme("font");
+  const themeText = fromTheme("text");
+  const themeFontWeight = fromTheme("font-weight");
+  const themeTracking = fromTheme("tracking");
+  const themeLeading = fromTheme("leading");
+  const themeBreakpoint = fromTheme("breakpoint");
+  const themeContainer = fromTheme("container");
+  const themeSpacing = fromTheme("spacing");
+  const themeRadius = fromTheme("radius");
+  const themeShadow = fromTheme("shadow");
+  const themeInsetShadow = fromTheme("inset-shadow");
+  const themeTextShadow = fromTheme("text-shadow");
+  const themeDropShadow = fromTheme("drop-shadow");
+  const themeBlur = fromTheme("blur");
+  const themePerspective = fromTheme("perspective");
+  const themeAspect = fromTheme("aspect");
+  const themeEase = fromTheme("ease");
+  const themeAnimate = fromTheme("animate");
+  const scaleBreak = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
+  const scalePosition = () => [
+    "center",
+    "top",
+    "bottom",
+    "left",
+    "right",
+    "top-left",
+    // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+    "left-top",
+    "top-right",
+    // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+    "right-top",
+    "bottom-right",
+    // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+    "right-bottom",
+    "bottom-left",
+    // Deprecated since Tailwind CSS v4.1.0, see https://github.com/tailwindlabs/tailwindcss/pull/17378
+    "left-bottom"
+  ];
+  const scalePositionWithArbitrary = () => [...scalePosition(), isArbitraryVariable, isArbitraryValue];
+  const scaleOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
+  const scaleOverscroll = () => ["auto", "contain", "none"];
+  const scaleUnambiguousSpacing = () => [isArbitraryVariable, isArbitraryValue, themeSpacing];
+  const scaleInset = () => [isFraction, "full", "auto", ...scaleUnambiguousSpacing()];
+  const scaleGridTemplateColsRows = () => [isInteger, "none", "subgrid", isArbitraryVariable, isArbitraryValue];
+  const scaleGridColRowStartAndEnd = () => ["auto", {
+    span: ["full", isInteger, isArbitraryVariable, isArbitraryValue]
+  }, isInteger, isArbitraryVariable, isArbitraryValue];
+  const scaleGridColRowStartOrEnd = () => [isInteger, "auto", isArbitraryVariable, isArbitraryValue];
+  const scaleGridAutoColsRows = () => ["auto", "min", "max", "fr", isArbitraryVariable, isArbitraryValue];
+  const scaleAlignPrimaryAxis = () => ["start", "end", "center", "between", "around", "evenly", "stretch", "baseline", "center-safe", "end-safe"];
+  const scaleAlignSecondaryAxis = () => ["start", "end", "center", "stretch", "center-safe", "end-safe"];
+  const scaleMargin = () => ["auto", ...scaleUnambiguousSpacing()];
+  const scaleSizing = () => [isFraction, "auto", "full", "dvw", "dvh", "lvw", "lvh", "svw", "svh", "min", "max", "fit", ...scaleUnambiguousSpacing()];
+  const scaleColor = () => [themeColor, isArbitraryVariable, isArbitraryValue];
+  const scaleBgPosition = () => [...scalePosition(), isArbitraryVariablePosition, isArbitraryPosition, {
+    position: [isArbitraryVariable, isArbitraryValue]
+  }];
+  const scaleBgRepeat = () => ["no-repeat", {
+    repeat: ["", "x", "y", "space", "round"]
+  }];
+  const scaleBgSize = () => ["auto", "cover", "contain", isArbitraryVariableSize, isArbitrarySize, {
+    size: [isArbitraryVariable, isArbitraryValue]
+  }];
+  const scaleGradientStopPosition = () => [isPercent, isArbitraryVariableLength, isArbitraryLength];
+  const scaleRadius = () => [
+    // Deprecated since Tailwind CSS v4.0.0
+    "",
+    "none",
+    "full",
+    themeRadius,
+    isArbitraryVariable,
+    isArbitraryValue
+  ];
+  const scaleBorderWidth = () => ["", isNumber, isArbitraryVariableLength, isArbitraryLength];
+  const scaleLineStyle = () => ["solid", "dashed", "dotted", "double"];
+  const scaleBlendMode = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
+  const scaleMaskImagePosition = () => [isNumber, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
+  const scaleBlur = () => [
+    // Deprecated since Tailwind CSS v4.0.0
+    "",
+    "none",
+    themeBlur,
+    isArbitraryVariable,
+    isArbitraryValue
+  ];
+  const scaleRotate = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
+  const scaleScale = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
+  const scaleSkew = () => [isNumber, isArbitraryVariable, isArbitraryValue];
+  const scaleTranslate = () => [isFraction, "full", ...scaleUnambiguousSpacing()];
+  return {
+    cacheSize: 500,
+    theme: {
+      animate: ["spin", "ping", "pulse", "bounce"],
+      aspect: ["video"],
+      blur: [isTshirtSize],
+      breakpoint: [isTshirtSize],
+      color: [isAny],
+      container: [isTshirtSize],
+      "drop-shadow": [isTshirtSize],
+      ease: ["in", "out", "in-out"],
+      font: [isAnyNonArbitrary],
+      "font-weight": ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"],
+      "inset-shadow": [isTshirtSize],
+      leading: ["none", "tight", "snug", "normal", "relaxed", "loose"],
+      perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
+      radius: [isTshirtSize],
+      shadow: [isTshirtSize],
+      spacing: ["px", isNumber],
+      text: [isTshirtSize],
+      "text-shadow": [isTshirtSize],
+      tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
+    },
+    classGroups: {
+      // --------------
+      // --- Layout ---
+      // --------------
+      /**
+       * Aspect Ratio
+       * @see https://tailwindcss.com/docs/aspect-ratio
+       */
+      aspect: [{
+        aspect: ["auto", "square", isFraction, isArbitraryValue, isArbitraryVariable, themeAspect]
+      }],
+      /**
+       * Container
+       * @see https://tailwindcss.com/docs/container
+       * @deprecated since Tailwind CSS v4.0.0
+       */
+      container: ["container"],
+      /**
+       * Columns
+       * @see https://tailwindcss.com/docs/columns
+       */
+      columns: [{
+        columns: [isNumber, isArbitraryValue, isArbitraryVariable, themeContainer]
+      }],
+      /**
+       * Break After
+       * @see https://tailwindcss.com/docs/break-after
+       */
+      "break-after": [{
+        "break-after": scaleBreak()
+      }],
+      /**
+       * Break Before
+       * @see https://tailwindcss.com/docs/break-before
+       */
+      "break-before": [{
+        "break-before": scaleBreak()
+      }],
+      /**
+       * Break Inside
+       * @see https://tailwindcss.com/docs/break-inside
+       */
+      "break-inside": [{
+        "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
+      }],
+      /**
+       * Box Decoration Break
+       * @see https://tailwindcss.com/docs/box-decoration-break
+       */
+      "box-decoration": [{
+        "box-decoration": ["slice", "clone"]
+      }],
+      /**
+       * Box Sizing
+       * @see https://tailwindcss.com/docs/box-sizing
+       */
+      box: [{
+        box: ["border", "content"]
+      }],
+      /**
+       * Display
+       * @see https://tailwindcss.com/docs/display
+       */
+      display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
+      /**
+       * Screen Reader Only
+       * @see https://tailwindcss.com/docs/display#screen-reader-only
+       */
+      sr: ["sr-only", "not-sr-only"],
+      /**
+       * Floats
+       * @see https://tailwindcss.com/docs/float
+       */
+      float: [{
+        float: ["right", "left", "none", "start", "end"]
+      }],
+      /**
+       * Clear
+       * @see https://tailwindcss.com/docs/clear
+       */
+      clear: [{
+        clear: ["left", "right", "both", "none", "start", "end"]
+      }],
+      /**
+       * Isolation
+       * @see https://tailwindcss.com/docs/isolation
+       */
+      isolation: ["isolate", "isolation-auto"],
+      /**
+       * Object Fit
+       * @see https://tailwindcss.com/docs/object-fit
+       */
+      "object-fit": [{
+        object: ["contain", "cover", "fill", "none", "scale-down"]
+      }],
+      /**
+       * Object Position
+       * @see https://tailwindcss.com/docs/object-position
+       */
+      "object-position": [{
+        object: scalePositionWithArbitrary()
+      }],
+      /**
+       * Overflow
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      overflow: [{
+        overflow: scaleOverflow()
+      }],
+      /**
+       * Overflow X
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-x": [{
+        "overflow-x": scaleOverflow()
+      }],
+      /**
+       * Overflow Y
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-y": [{
+        "overflow-y": scaleOverflow()
+      }],
+      /**
+       * Overscroll Behavior
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      overscroll: [{
+        overscroll: scaleOverscroll()
+      }],
+      /**
+       * Overscroll Behavior X
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-x": [{
+        "overscroll-x": scaleOverscroll()
+      }],
+      /**
+       * Overscroll Behavior Y
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-y": [{
+        "overscroll-y": scaleOverscroll()
+      }],
+      /**
+       * Position
+       * @see https://tailwindcss.com/docs/position
+       */
+      position: ["static", "fixed", "absolute", "relative", "sticky"],
+      /**
+       * Top / Right / Bottom / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      inset: [{
+        inset: scaleInset()
+      }],
+      /**
+       * Right / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-x": [{
+        "inset-x": scaleInset()
+      }],
+      /**
+       * Top / Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-y": [{
+        "inset-y": scaleInset()
+      }],
+      /**
+       * Start
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      start: [{
+        start: scaleInset()
+      }],
+      /**
+       * End
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      end: [{
+        end: scaleInset()
+      }],
+      /**
+       * Top
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      top: [{
+        top: scaleInset()
+      }],
+      /**
+       * Right
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      right: [{
+        right: scaleInset()
+      }],
+      /**
+       * Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      bottom: [{
+        bottom: scaleInset()
+      }],
+      /**
+       * Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      left: [{
+        left: scaleInset()
+      }],
+      /**
+       * Visibility
+       * @see https://tailwindcss.com/docs/visibility
+       */
+      visibility: ["visible", "invisible", "collapse"],
+      /**
+       * Z-Index
+       * @see https://tailwindcss.com/docs/z-index
+       */
+      z: [{
+        z: [isInteger, "auto", isArbitraryVariable, isArbitraryValue]
+      }],
+      // ------------------------
+      // --- Flexbox and Grid ---
+      // ------------------------
+      /**
+       * Flex Basis
+       * @see https://tailwindcss.com/docs/flex-basis
+       */
+      basis: [{
+        basis: [isFraction, "full", "auto", themeContainer, ...scaleUnambiguousSpacing()]
+      }],
+      /**
+       * Flex Direction
+       * @see https://tailwindcss.com/docs/flex-direction
+       */
+      "flex-direction": [{
+        flex: ["row", "row-reverse", "col", "col-reverse"]
+      }],
+      /**
+       * Flex Wrap
+       * @see https://tailwindcss.com/docs/flex-wrap
+       */
+      "flex-wrap": [{
+        flex: ["nowrap", "wrap", "wrap-reverse"]
+      }],
+      /**
+       * Flex
+       * @see https://tailwindcss.com/docs/flex
+       */
+      flex: [{
+        flex: [isNumber, isFraction, "auto", "initial", "none", isArbitraryValue]
+      }],
+      /**
+       * Flex Grow
+       * @see https://tailwindcss.com/docs/flex-grow
+       */
+      grow: [{
+        grow: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Flex Shrink
+       * @see https://tailwindcss.com/docs/flex-shrink
+       */
+      shrink: [{
+        shrink: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Order
+       * @see https://tailwindcss.com/docs/order
+       */
+      order: [{
+        order: [isInteger, "first", "last", "none", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Grid Template Columns
+       * @see https://tailwindcss.com/docs/grid-template-columns
+       */
+      "grid-cols": [{
+        "grid-cols": scaleGridTemplateColsRows()
+      }],
+      /**
+       * Grid Column Start / End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start-end": [{
+        col: scaleGridColRowStartAndEnd()
+      }],
+      /**
+       * Grid Column Start
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start": [{
+        "col-start": scaleGridColRowStartOrEnd()
+      }],
+      /**
+       * Grid Column End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-end": [{
+        "col-end": scaleGridColRowStartOrEnd()
+      }],
+      /**
+       * Grid Template Rows
+       * @see https://tailwindcss.com/docs/grid-template-rows
+       */
+      "grid-rows": [{
+        "grid-rows": scaleGridTemplateColsRows()
+      }],
+      /**
+       * Grid Row Start / End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start-end": [{
+        row: scaleGridColRowStartAndEnd()
+      }],
+      /**
+       * Grid Row Start
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start": [{
+        "row-start": scaleGridColRowStartOrEnd()
+      }],
+      /**
+       * Grid Row End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-end": [{
+        "row-end": scaleGridColRowStartOrEnd()
+      }],
+      /**
+       * Grid Auto Flow
+       * @see https://tailwindcss.com/docs/grid-auto-flow
+       */
+      "grid-flow": [{
+        "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
+      }],
+      /**
+       * Grid Auto Columns
+       * @see https://tailwindcss.com/docs/grid-auto-columns
+       */
+      "auto-cols": [{
+        "auto-cols": scaleGridAutoColsRows()
+      }],
+      /**
+       * Grid Auto Rows
+       * @see https://tailwindcss.com/docs/grid-auto-rows
+       */
+      "auto-rows": [{
+        "auto-rows": scaleGridAutoColsRows()
+      }],
+      /**
+       * Gap
+       * @see https://tailwindcss.com/docs/gap
+       */
+      gap: [{
+        gap: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Gap X
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-x": [{
+        "gap-x": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Gap Y
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-y": [{
+        "gap-y": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Justify Content
+       * @see https://tailwindcss.com/docs/justify-content
+       */
+      "justify-content": [{
+        justify: [...scaleAlignPrimaryAxis(), "normal"]
+      }],
+      /**
+       * Justify Items
+       * @see https://tailwindcss.com/docs/justify-items
+       */
+      "justify-items": [{
+        "justify-items": [...scaleAlignSecondaryAxis(), "normal"]
+      }],
+      /**
+       * Justify Self
+       * @see https://tailwindcss.com/docs/justify-self
+       */
+      "justify-self": [{
+        "justify-self": ["auto", ...scaleAlignSecondaryAxis()]
+      }],
+      /**
+       * Align Content
+       * @see https://tailwindcss.com/docs/align-content
+       */
+      "align-content": [{
+        content: ["normal", ...scaleAlignPrimaryAxis()]
+      }],
+      /**
+       * Align Items
+       * @see https://tailwindcss.com/docs/align-items
+       */
+      "align-items": [{
+        items: [...scaleAlignSecondaryAxis(), {
+          baseline: ["", "last"]
+        }]
+      }],
+      /**
+       * Align Self
+       * @see https://tailwindcss.com/docs/align-self
+       */
+      "align-self": [{
+        self: ["auto", ...scaleAlignSecondaryAxis(), {
+          baseline: ["", "last"]
+        }]
+      }],
+      /**
+       * Place Content
+       * @see https://tailwindcss.com/docs/place-content
+       */
+      "place-content": [{
+        "place-content": scaleAlignPrimaryAxis()
+      }],
+      /**
+       * Place Items
+       * @see https://tailwindcss.com/docs/place-items
+       */
+      "place-items": [{
+        "place-items": [...scaleAlignSecondaryAxis(), "baseline"]
+      }],
+      /**
+       * Place Self
+       * @see https://tailwindcss.com/docs/place-self
+       */
+      "place-self": [{
+        "place-self": ["auto", ...scaleAlignSecondaryAxis()]
+      }],
+      // Spacing
+      /**
+       * Padding
+       * @see https://tailwindcss.com/docs/padding
+       */
+      p: [{
+        p: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding X
+       * @see https://tailwindcss.com/docs/padding
+       */
+      px: [{
+        px: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding Y
+       * @see https://tailwindcss.com/docs/padding
+       */
+      py: [{
+        py: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding Start
+       * @see https://tailwindcss.com/docs/padding
+       */
+      ps: [{
+        ps: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding End
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pe: [{
+        pe: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding Top
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pt: [{
+        pt: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding Right
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pr: [{
+        pr: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding Bottom
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pb: [{
+        pb: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Padding Left
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pl: [{
+        pl: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Margin
+       * @see https://tailwindcss.com/docs/margin
+       */
+      m: [{
+        m: scaleMargin()
+      }],
+      /**
+       * Margin X
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mx: [{
+        mx: scaleMargin()
+      }],
+      /**
+       * Margin Y
+       * @see https://tailwindcss.com/docs/margin
+       */
+      my: [{
+        my: scaleMargin()
+      }],
+      /**
+       * Margin Start
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ms: [{
+        ms: scaleMargin()
+      }],
+      /**
+       * Margin End
+       * @see https://tailwindcss.com/docs/margin
+       */
+      me: [{
+        me: scaleMargin()
+      }],
+      /**
+       * Margin Top
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mt: [{
+        mt: scaleMargin()
+      }],
+      /**
+       * Margin Right
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mr: [{
+        mr: scaleMargin()
+      }],
+      /**
+       * Margin Bottom
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mb: [{
+        mb: scaleMargin()
+      }],
+      /**
+       * Margin Left
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ml: [{
+        ml: scaleMargin()
+      }],
+      /**
+       * Space Between X
+       * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+       */
+      "space-x": [{
+        "space-x": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Space Between X Reverse
+       * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+       */
+      "space-x-reverse": ["space-x-reverse"],
+      /**
+       * Space Between Y
+       * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+       */
+      "space-y": [{
+        "space-y": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Space Between Y Reverse
+       * @see https://tailwindcss.com/docs/margin#adding-space-between-children
+       */
+      "space-y-reverse": ["space-y-reverse"],
+      // --------------
+      // --- Sizing ---
+      // --------------
+      /**
+       * Size
+       * @see https://tailwindcss.com/docs/width#setting-both-width-and-height
+       */
+      size: [{
+        size: scaleSizing()
+      }],
+      /**
+       * Width
+       * @see https://tailwindcss.com/docs/width
+       */
+      w: [{
+        w: [themeContainer, "screen", ...scaleSizing()]
+      }],
+      /**
+       * Min-Width
+       * @see https://tailwindcss.com/docs/min-width
+       */
+      "min-w": [{
+        "min-w": [
+          themeContainer,
+          "screen",
+          /** Deprecated. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+          "none",
+          ...scaleSizing()
+        ]
+      }],
+      /**
+       * Max-Width
+       * @see https://tailwindcss.com/docs/max-width
+       */
+      "max-w": [{
+        "max-w": [
+          themeContainer,
+          "screen",
+          "none",
+          /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+          "prose",
+          /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+          {
+            screen: [themeBreakpoint]
+          },
+          ...scaleSizing()
+        ]
+      }],
+      /**
+       * Height
+       * @see https://tailwindcss.com/docs/height
+       */
+      h: [{
+        h: ["screen", "lh", ...scaleSizing()]
+      }],
+      /**
+       * Min-Height
+       * @see https://tailwindcss.com/docs/min-height
+       */
+      "min-h": [{
+        "min-h": ["screen", "lh", "none", ...scaleSizing()]
+      }],
+      /**
+       * Max-Height
+       * @see https://tailwindcss.com/docs/max-height
+       */
+      "max-h": [{
+        "max-h": ["screen", "lh", ...scaleSizing()]
+      }],
+      // ------------------
+      // --- Typography ---
+      // ------------------
+      /**
+       * Font Size
+       * @see https://tailwindcss.com/docs/font-size
+       */
+      "font-size": [{
+        text: ["base", themeText, isArbitraryVariableLength, isArbitraryLength]
+      }],
+      /**
+       * Font Smoothing
+       * @see https://tailwindcss.com/docs/font-smoothing
+       */
+      "font-smoothing": ["antialiased", "subpixel-antialiased"],
+      /**
+       * Font Style
+       * @see https://tailwindcss.com/docs/font-style
+       */
+      "font-style": ["italic", "not-italic"],
+      /**
+       * Font Weight
+       * @see https://tailwindcss.com/docs/font-weight
+       */
+      "font-weight": [{
+        font: [themeFontWeight, isArbitraryVariable, isArbitraryNumber]
+      }],
+      /**
+       * Font Stretch
+       * @see https://tailwindcss.com/docs/font-stretch
+       */
+      "font-stretch": [{
+        "font-stretch": ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal", "semi-expanded", "expanded", "extra-expanded", "ultra-expanded", isPercent, isArbitraryValue]
+      }],
+      /**
+       * Font Family
+       * @see https://tailwindcss.com/docs/font-family
+       */
+      "font-family": [{
+        font: [isArbitraryVariableFamilyName, isArbitraryValue, themeFont]
+      }],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-normal": ["normal-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-ordinal": ["ordinal"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-slashed-zero": ["slashed-zero"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-figure": ["lining-nums", "oldstyle-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-spacing": ["proportional-nums", "tabular-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
+      /**
+       * Letter Spacing
+       * @see https://tailwindcss.com/docs/letter-spacing
+       */
+      tracking: [{
+        tracking: [themeTracking, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Line Clamp
+       * @see https://tailwindcss.com/docs/line-clamp
+       */
+      "line-clamp": [{
+        "line-clamp": [isNumber, "none", isArbitraryVariable, isArbitraryNumber]
+      }],
+      /**
+       * Line Height
+       * @see https://tailwindcss.com/docs/line-height
+       */
+      leading: [{
+        leading: [
+          /** Deprecated since Tailwind CSS v4.0.0. @see https://github.com/tailwindlabs/tailwindcss.com/issues/2027#issuecomment-2620152757 */
+          themeLeading,
+          ...scaleUnambiguousSpacing()
+        ]
+      }],
+      /**
+       * List Style Image
+       * @see https://tailwindcss.com/docs/list-style-image
+       */
+      "list-image": [{
+        "list-image": ["none", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * List Style Position
+       * @see https://tailwindcss.com/docs/list-style-position
+       */
+      "list-style-position": [{
+        list: ["inside", "outside"]
+      }],
+      /**
+       * List Style Type
+       * @see https://tailwindcss.com/docs/list-style-type
+       */
+      "list-style-type": [{
+        list: ["disc", "decimal", "none", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Text Alignment
+       * @see https://tailwindcss.com/docs/text-align
+       */
+      "text-alignment": [{
+        text: ["left", "center", "right", "justify", "start", "end"]
+      }],
+      /**
+       * Placeholder Color
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://v3.tailwindcss.com/docs/placeholder-color
+       */
+      "placeholder-color": [{
+        placeholder: scaleColor()
+      }],
+      /**
+       * Text Color
+       * @see https://tailwindcss.com/docs/text-color
+       */
+      "text-color": [{
+        text: scaleColor()
+      }],
+      /**
+       * Text Decoration
+       * @see https://tailwindcss.com/docs/text-decoration
+       */
+      "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+      /**
+       * Text Decoration Style
+       * @see https://tailwindcss.com/docs/text-decoration-style
+       */
+      "text-decoration-style": [{
+        decoration: [...scaleLineStyle(), "wavy"]
+      }],
+      /**
+       * Text Decoration Thickness
+       * @see https://tailwindcss.com/docs/text-decoration-thickness
+       */
+      "text-decoration-thickness": [{
+        decoration: [isNumber, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
+      }],
+      /**
+       * Text Decoration Color
+       * @see https://tailwindcss.com/docs/text-decoration-color
+       */
+      "text-decoration-color": [{
+        decoration: scaleColor()
+      }],
+      /**
+       * Text Underline Offset
+       * @see https://tailwindcss.com/docs/text-underline-offset
+       */
+      "underline-offset": [{
+        "underline-offset": [isNumber, "auto", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Text Transform
+       * @see https://tailwindcss.com/docs/text-transform
+       */
+      "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
+      /**
+       * Text Overflow
+       * @see https://tailwindcss.com/docs/text-overflow
+       */
+      "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
+      /**
+       * Text Wrap
+       * @see https://tailwindcss.com/docs/text-wrap
+       */
+      "text-wrap": [{
+        text: ["wrap", "nowrap", "balance", "pretty"]
+      }],
+      /**
+       * Text Indent
+       * @see https://tailwindcss.com/docs/text-indent
+       */
+      indent: [{
+        indent: scaleUnambiguousSpacing()
+      }],
+      /**
+       * Vertical Alignment
+       * @see https://tailwindcss.com/docs/vertical-align
+       */
+      "vertical-align": [{
+        align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Whitespace
+       * @see https://tailwindcss.com/docs/whitespace
+       */
+      whitespace: [{
+        whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
+      }],
+      /**
+       * Word Break
+       * @see https://tailwindcss.com/docs/word-break
+       */
+      break: [{
+        break: ["normal", "words", "all", "keep"]
+      }],
+      /**
+       * Overflow Wrap
+       * @see https://tailwindcss.com/docs/overflow-wrap
+       */
+      wrap: [{
+        wrap: ["break-word", "anywhere", "normal"]
+      }],
+      /**
+       * Hyphens
+       * @see https://tailwindcss.com/docs/hyphens
+       */
+      hyphens: [{
+        hyphens: ["none", "manual", "auto"]
+      }],
+      /**
+       * Content
+       * @see https://tailwindcss.com/docs/content
+       */
+      content: [{
+        content: ["none", isArbitraryVariable, isArbitraryValue]
+      }],
+      // -------------------
+      // --- Backgrounds ---
+      // -------------------
+      /**
+       * Background Attachment
+       * @see https://tailwindcss.com/docs/background-attachment
+       */
+      "bg-attachment": [{
+        bg: ["fixed", "local", "scroll"]
+      }],
+      /**
+       * Background Clip
+       * @see https://tailwindcss.com/docs/background-clip
+       */
+      "bg-clip": [{
+        "bg-clip": ["border", "padding", "content", "text"]
+      }],
+      /**
+       * Background Origin
+       * @see https://tailwindcss.com/docs/background-origin
+       */
+      "bg-origin": [{
+        "bg-origin": ["border", "padding", "content"]
+      }],
+      /**
+       * Background Position
+       * @see https://tailwindcss.com/docs/background-position
+       */
+      "bg-position": [{
+        bg: scaleBgPosition()
+      }],
+      /**
+       * Background Repeat
+       * @see https://tailwindcss.com/docs/background-repeat
+       */
+      "bg-repeat": [{
+        bg: scaleBgRepeat()
+      }],
+      /**
+       * Background Size
+       * @see https://tailwindcss.com/docs/background-size
+       */
+      "bg-size": [{
+        bg: scaleBgSize()
+      }],
+      /**
+       * Background Image
+       * @see https://tailwindcss.com/docs/background-image
+       */
+      "bg-image": [{
+        bg: ["none", {
+          linear: [{
+            to: ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
+          }, isInteger, isArbitraryVariable, isArbitraryValue],
+          radial: ["", isArbitraryVariable, isArbitraryValue],
+          conic: [isInteger, isArbitraryVariable, isArbitraryValue]
+        }, isArbitraryVariableImage, isArbitraryImage]
+      }],
+      /**
+       * Background Color
+       * @see https://tailwindcss.com/docs/background-color
+       */
+      "bg-color": [{
+        bg: scaleColor()
+      }],
+      /**
+       * Gradient Color Stops From Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from-pos": [{
+        from: scaleGradientStopPosition()
+      }],
+      /**
+       * Gradient Color Stops Via Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via-pos": [{
+        via: scaleGradientStopPosition()
+      }],
+      /**
+       * Gradient Color Stops To Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to-pos": [{
+        to: scaleGradientStopPosition()
+      }],
+      /**
+       * Gradient Color Stops From
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from": [{
+        from: scaleColor()
+      }],
+      /**
+       * Gradient Color Stops Via
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via": [{
+        via: scaleColor()
+      }],
+      /**
+       * Gradient Color Stops To
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to": [{
+        to: scaleColor()
+      }],
+      // ---------------
+      // --- Borders ---
+      // ---------------
+      /**
+       * Border Radius
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      rounded: [{
+        rounded: scaleRadius()
+      }],
+      /**
+       * Border Radius Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-s": [{
+        "rounded-s": scaleRadius()
+      }],
+      /**
+       * Border Radius End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-e": [{
+        "rounded-e": scaleRadius()
+      }],
+      /**
+       * Border Radius Top
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-t": [{
+        "rounded-t": scaleRadius()
+      }],
+      /**
+       * Border Radius Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-r": [{
+        "rounded-r": scaleRadius()
+      }],
+      /**
+       * Border Radius Bottom
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-b": [{
+        "rounded-b": scaleRadius()
+      }],
+      /**
+       * Border Radius Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-l": [{
+        "rounded-l": scaleRadius()
+      }],
+      /**
+       * Border Radius Start Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ss": [{
+        "rounded-ss": scaleRadius()
+      }],
+      /**
+       * Border Radius Start End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-se": [{
+        "rounded-se": scaleRadius()
+      }],
+      /**
+       * Border Radius End End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ee": [{
+        "rounded-ee": scaleRadius()
+      }],
+      /**
+       * Border Radius End Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-es": [{
+        "rounded-es": scaleRadius()
+      }],
+      /**
+       * Border Radius Top Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tl": [{
+        "rounded-tl": scaleRadius()
+      }],
+      /**
+       * Border Radius Top Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tr": [{
+        "rounded-tr": scaleRadius()
+      }],
+      /**
+       * Border Radius Bottom Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-br": [{
+        "rounded-br": scaleRadius()
+      }],
+      /**
+       * Border Radius Bottom Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-bl": [{
+        "rounded-bl": scaleRadius()
+      }],
+      /**
+       * Border Width
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w": [{
+        border: scaleBorderWidth()
+      }],
+      /**
+       * Border Width X
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-x": [{
+        "border-x": scaleBorderWidth()
+      }],
+      /**
+       * Border Width Y
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-y": [{
+        "border-y": scaleBorderWidth()
+      }],
+      /**
+       * Border Width Start
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-s": [{
+        "border-s": scaleBorderWidth()
+      }],
+      /**
+       * Border Width End
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-e": [{
+        "border-e": scaleBorderWidth()
+      }],
+      /**
+       * Border Width Top
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-t": [{
+        "border-t": scaleBorderWidth()
+      }],
+      /**
+       * Border Width Right
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-r": [{
+        "border-r": scaleBorderWidth()
+      }],
+      /**
+       * Border Width Bottom
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-b": [{
+        "border-b": scaleBorderWidth()
+      }],
+      /**
+       * Border Width Left
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-l": [{
+        "border-l": scaleBorderWidth()
+      }],
+      /**
+       * Divide Width X
+       * @see https://tailwindcss.com/docs/border-width#between-children
+       */
+      "divide-x": [{
+        "divide-x": scaleBorderWidth()
+      }],
+      /**
+       * Divide Width X Reverse
+       * @see https://tailwindcss.com/docs/border-width#between-children
+       */
+      "divide-x-reverse": ["divide-x-reverse"],
+      /**
+       * Divide Width Y
+       * @see https://tailwindcss.com/docs/border-width#between-children
+       */
+      "divide-y": [{
+        "divide-y": scaleBorderWidth()
+      }],
+      /**
+       * Divide Width Y Reverse
+       * @see https://tailwindcss.com/docs/border-width#between-children
+       */
+      "divide-y-reverse": ["divide-y-reverse"],
+      /**
+       * Border Style
+       * @see https://tailwindcss.com/docs/border-style
+       */
+      "border-style": [{
+        border: [...scaleLineStyle(), "hidden", "none"]
+      }],
+      /**
+       * Divide Style
+       * @see https://tailwindcss.com/docs/border-style#setting-the-divider-style
+       */
+      "divide-style": [{
+        divide: [...scaleLineStyle(), "hidden", "none"]
+      }],
+      /**
+       * Border Color
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color": [{
+        border: scaleColor()
+      }],
+      /**
+       * Border Color X
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-x": [{
+        "border-x": scaleColor()
+      }],
+      /**
+       * Border Color Y
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-y": [{
+        "border-y": scaleColor()
+      }],
+      /**
+       * Border Color S
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-s": [{
+        "border-s": scaleColor()
+      }],
+      /**
+       * Border Color E
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-e": [{
+        "border-e": scaleColor()
+      }],
+      /**
+       * Border Color Top
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-t": [{
+        "border-t": scaleColor()
+      }],
+      /**
+       * Border Color Right
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-r": [{
+        "border-r": scaleColor()
+      }],
+      /**
+       * Border Color Bottom
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-b": [{
+        "border-b": scaleColor()
+      }],
+      /**
+       * Border Color Left
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-l": [{
+        "border-l": scaleColor()
+      }],
+      /**
+       * Divide Color
+       * @see https://tailwindcss.com/docs/divide-color
+       */
+      "divide-color": [{
+        divide: scaleColor()
+      }],
+      /**
+       * Outline Style
+       * @see https://tailwindcss.com/docs/outline-style
+       */
+      "outline-style": [{
+        outline: [...scaleLineStyle(), "none", "hidden"]
+      }],
+      /**
+       * Outline Offset
+       * @see https://tailwindcss.com/docs/outline-offset
+       */
+      "outline-offset": [{
+        "outline-offset": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Outline Width
+       * @see https://tailwindcss.com/docs/outline-width
+       */
+      "outline-w": [{
+        outline: ["", isNumber, isArbitraryVariableLength, isArbitraryLength]
+      }],
+      /**
+       * Outline Color
+       * @see https://tailwindcss.com/docs/outline-color
+       */
+      "outline-color": [{
+        outline: scaleColor()
+      }],
+      // ---------------
+      // --- Effects ---
+      // ---------------
+      /**
+       * Box Shadow
+       * @see https://tailwindcss.com/docs/box-shadow
+       */
+      shadow: [{
+        shadow: [
+          // Deprecated since Tailwind CSS v4.0.0
+          "",
+          "none",
+          themeShadow,
+          isArbitraryVariableShadow,
+          isArbitraryShadow
+        ]
+      }],
+      /**
+       * Box Shadow Color
+       * @see https://tailwindcss.com/docs/box-shadow#setting-the-shadow-color
+       */
+      "shadow-color": [{
+        shadow: scaleColor()
+      }],
+      /**
+       * Inset Box Shadow
+       * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-shadow
+       */
+      "inset-shadow": [{
+        "inset-shadow": ["none", themeInsetShadow, isArbitraryVariableShadow, isArbitraryShadow]
+      }],
+      /**
+       * Inset Box Shadow Color
+       * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-shadow-color
+       */
+      "inset-shadow-color": [{
+        "inset-shadow": scaleColor()
+      }],
+      /**
+       * Ring Width
+       * @see https://tailwindcss.com/docs/box-shadow#adding-a-ring
+       */
+      "ring-w": [{
+        ring: scaleBorderWidth()
+      }],
+      /**
+       * Ring Width Inset
+       * @see https://v3.tailwindcss.com/docs/ring-width#inset-rings
+       * @deprecated since Tailwind CSS v4.0.0
+       * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
+       */
+      "ring-w-inset": ["ring-inset"],
+      /**
+       * Ring Color
+       * @see https://tailwindcss.com/docs/box-shadow#setting-the-ring-color
+       */
+      "ring-color": [{
+        ring: scaleColor()
+      }],
+      /**
+       * Ring Offset Width
+       * @see https://v3.tailwindcss.com/docs/ring-offset-width
+       * @deprecated since Tailwind CSS v4.0.0
+       * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
+       */
+      "ring-offset-w": [{
+        "ring-offset": [isNumber, isArbitraryLength]
+      }],
+      /**
+       * Ring Offset Color
+       * @see https://v3.tailwindcss.com/docs/ring-offset-color
+       * @deprecated since Tailwind CSS v4.0.0
+       * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
+       */
+      "ring-offset-color": [{
+        "ring-offset": scaleColor()
+      }],
+      /**
+       * Inset Ring Width
+       * @see https://tailwindcss.com/docs/box-shadow#adding-an-inset-ring
+       */
+      "inset-ring-w": [{
+        "inset-ring": scaleBorderWidth()
+      }],
+      /**
+       * Inset Ring Color
+       * @see https://tailwindcss.com/docs/box-shadow#setting-the-inset-ring-color
+       */
+      "inset-ring-color": [{
+        "inset-ring": scaleColor()
+      }],
+      /**
+       * Text Shadow
+       * @see https://tailwindcss.com/docs/text-shadow
+       */
+      "text-shadow": [{
+        "text-shadow": ["none", themeTextShadow, isArbitraryVariableShadow, isArbitraryShadow]
+      }],
+      /**
+       * Text Shadow Color
+       * @see https://tailwindcss.com/docs/text-shadow#setting-the-shadow-color
+       */
+      "text-shadow-color": [{
+        "text-shadow": scaleColor()
+      }],
+      /**
+       * Opacity
+       * @see https://tailwindcss.com/docs/opacity
+       */
+      opacity: [{
+        opacity: [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Mix Blend Mode
+       * @see https://tailwindcss.com/docs/mix-blend-mode
+       */
+      "mix-blend": [{
+        "mix-blend": [...scaleBlendMode(), "plus-darker", "plus-lighter"]
+      }],
+      /**
+       * Background Blend Mode
+       * @see https://tailwindcss.com/docs/background-blend-mode
+       */
+      "bg-blend": [{
+        "bg-blend": scaleBlendMode()
+      }],
+      /**
+       * Mask Clip
+       * @see https://tailwindcss.com/docs/mask-clip
+       */
+      "mask-clip": [{
+        "mask-clip": ["border", "padding", "content", "fill", "stroke", "view"]
+      }, "mask-no-clip"],
+      /**
+       * Mask Composite
+       * @see https://tailwindcss.com/docs/mask-composite
+       */
+      "mask-composite": [{
+        mask: ["add", "subtract", "intersect", "exclude"]
+      }],
+      /**
+       * Mask Image
+       * @see https://tailwindcss.com/docs/mask-image
+       */
+      "mask-image-linear-pos": [{
+        "mask-linear": [isNumber]
+      }],
+      "mask-image-linear-from-pos": [{
+        "mask-linear-from": scaleMaskImagePosition()
+      }],
+      "mask-image-linear-to-pos": [{
+        "mask-linear-to": scaleMaskImagePosition()
+      }],
+      "mask-image-linear-from-color": [{
+        "mask-linear-from": scaleColor()
+      }],
+      "mask-image-linear-to-color": [{
+        "mask-linear-to": scaleColor()
+      }],
+      "mask-image-t-from-pos": [{
+        "mask-t-from": scaleMaskImagePosition()
+      }],
+      "mask-image-t-to-pos": [{
+        "mask-t-to": scaleMaskImagePosition()
+      }],
+      "mask-image-t-from-color": [{
+        "mask-t-from": scaleColor()
+      }],
+      "mask-image-t-to-color": [{
+        "mask-t-to": scaleColor()
+      }],
+      "mask-image-r-from-pos": [{
+        "mask-r-from": scaleMaskImagePosition()
+      }],
+      "mask-image-r-to-pos": [{
+        "mask-r-to": scaleMaskImagePosition()
+      }],
+      "mask-image-r-from-color": [{
+        "mask-r-from": scaleColor()
+      }],
+      "mask-image-r-to-color": [{
+        "mask-r-to": scaleColor()
+      }],
+      "mask-image-b-from-pos": [{
+        "mask-b-from": scaleMaskImagePosition()
+      }],
+      "mask-image-b-to-pos": [{
+        "mask-b-to": scaleMaskImagePosition()
+      }],
+      "mask-image-b-from-color": [{
+        "mask-b-from": scaleColor()
+      }],
+      "mask-image-b-to-color": [{
+        "mask-b-to": scaleColor()
+      }],
+      "mask-image-l-from-pos": [{
+        "mask-l-from": scaleMaskImagePosition()
+      }],
+      "mask-image-l-to-pos": [{
+        "mask-l-to": scaleMaskImagePosition()
+      }],
+      "mask-image-l-from-color": [{
+        "mask-l-from": scaleColor()
+      }],
+      "mask-image-l-to-color": [{
+        "mask-l-to": scaleColor()
+      }],
+      "mask-image-x-from-pos": [{
+        "mask-x-from": scaleMaskImagePosition()
+      }],
+      "mask-image-x-to-pos": [{
+        "mask-x-to": scaleMaskImagePosition()
+      }],
+      "mask-image-x-from-color": [{
+        "mask-x-from": scaleColor()
+      }],
+      "mask-image-x-to-color": [{
+        "mask-x-to": scaleColor()
+      }],
+      "mask-image-y-from-pos": [{
+        "mask-y-from": scaleMaskImagePosition()
+      }],
+      "mask-image-y-to-pos": [{
+        "mask-y-to": scaleMaskImagePosition()
+      }],
+      "mask-image-y-from-color": [{
+        "mask-y-from": scaleColor()
+      }],
+      "mask-image-y-to-color": [{
+        "mask-y-to": scaleColor()
+      }],
+      "mask-image-radial": [{
+        "mask-radial": [isArbitraryVariable, isArbitraryValue]
+      }],
+      "mask-image-radial-from-pos": [{
+        "mask-radial-from": scaleMaskImagePosition()
+      }],
+      "mask-image-radial-to-pos": [{
+        "mask-radial-to": scaleMaskImagePosition()
+      }],
+      "mask-image-radial-from-color": [{
+        "mask-radial-from": scaleColor()
+      }],
+      "mask-image-radial-to-color": [{
+        "mask-radial-to": scaleColor()
+      }],
+      "mask-image-radial-shape": [{
+        "mask-radial": ["circle", "ellipse"]
+      }],
+      "mask-image-radial-size": [{
+        "mask-radial": [{
+          closest: ["side", "corner"],
+          farthest: ["side", "corner"]
+        }]
+      }],
+      "mask-image-radial-pos": [{
+        "mask-radial-at": scalePosition()
+      }],
+      "mask-image-conic-pos": [{
+        "mask-conic": [isNumber]
+      }],
+      "mask-image-conic-from-pos": [{
+        "mask-conic-from": scaleMaskImagePosition()
+      }],
+      "mask-image-conic-to-pos": [{
+        "mask-conic-to": scaleMaskImagePosition()
+      }],
+      "mask-image-conic-from-color": [{
+        "mask-conic-from": scaleColor()
+      }],
+      "mask-image-conic-to-color": [{
+        "mask-conic-to": scaleColor()
+      }],
+      /**
+       * Mask Mode
+       * @see https://tailwindcss.com/docs/mask-mode
+       */
+      "mask-mode": [{
+        mask: ["alpha", "luminance", "match"]
+      }],
+      /**
+       * Mask Origin
+       * @see https://tailwindcss.com/docs/mask-origin
+       */
+      "mask-origin": [{
+        "mask-origin": ["border", "padding", "content", "fill", "stroke", "view"]
+      }],
+      /**
+       * Mask Position
+       * @see https://tailwindcss.com/docs/mask-position
+       */
+      "mask-position": [{
+        mask: scaleBgPosition()
+      }],
+      /**
+       * Mask Repeat
+       * @see https://tailwindcss.com/docs/mask-repeat
+       */
+      "mask-repeat": [{
+        mask: scaleBgRepeat()
+      }],
+      /**
+       * Mask Size
+       * @see https://tailwindcss.com/docs/mask-size
+       */
+      "mask-size": [{
+        mask: scaleBgSize()
+      }],
+      /**
+       * Mask Type
+       * @see https://tailwindcss.com/docs/mask-type
+       */
+      "mask-type": [{
+        "mask-type": ["alpha", "luminance"]
+      }],
+      /**
+       * Mask Image
+       * @see https://tailwindcss.com/docs/mask-image
+       */
+      "mask-image": [{
+        mask: ["none", isArbitraryVariable, isArbitraryValue]
+      }],
+      // ---------------
+      // --- Filters ---
+      // ---------------
+      /**
+       * Filter
+       * @see https://tailwindcss.com/docs/filter
+       */
+      filter: [{
+        filter: [
+          // Deprecated since Tailwind CSS v3.0.0
+          "",
+          "none",
+          isArbitraryVariable,
+          isArbitraryValue
+        ]
+      }],
+      /**
+       * Blur
+       * @see https://tailwindcss.com/docs/blur
+       */
+      blur: [{
+        blur: scaleBlur()
+      }],
+      /**
+       * Brightness
+       * @see https://tailwindcss.com/docs/brightness
+       */
+      brightness: [{
+        brightness: [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Contrast
+       * @see https://tailwindcss.com/docs/contrast
+       */
+      contrast: [{
+        contrast: [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Drop Shadow
+       * @see https://tailwindcss.com/docs/drop-shadow
+       */
+      "drop-shadow": [{
+        "drop-shadow": [
+          // Deprecated since Tailwind CSS v4.0.0
+          "",
+          "none",
+          themeDropShadow,
+          isArbitraryVariableShadow,
+          isArbitraryShadow
+        ]
+      }],
+      /**
+       * Drop Shadow Color
+       * @see https://tailwindcss.com/docs/filter-drop-shadow#setting-the-shadow-color
+       */
+      "drop-shadow-color": [{
+        "drop-shadow": scaleColor()
+      }],
+      /**
+       * Grayscale
+       * @see https://tailwindcss.com/docs/grayscale
+       */
+      grayscale: [{
+        grayscale: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Hue Rotate
+       * @see https://tailwindcss.com/docs/hue-rotate
+       */
+      "hue-rotate": [{
+        "hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Invert
+       * @see https://tailwindcss.com/docs/invert
+       */
+      invert: [{
+        invert: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Saturate
+       * @see https://tailwindcss.com/docs/saturate
+       */
+      saturate: [{
+        saturate: [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Sepia
+       * @see https://tailwindcss.com/docs/sepia
+       */
+      sepia: [{
+        sepia: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Filter
+       * @see https://tailwindcss.com/docs/backdrop-filter
+       */
+      "backdrop-filter": [{
+        "backdrop-filter": [
+          // Deprecated since Tailwind CSS v3.0.0
+          "",
+          "none",
+          isArbitraryVariable,
+          isArbitraryValue
+        ]
+      }],
+      /**
+       * Backdrop Blur
+       * @see https://tailwindcss.com/docs/backdrop-blur
+       */
+      "backdrop-blur": [{
+        "backdrop-blur": scaleBlur()
+      }],
+      /**
+       * Backdrop Brightness
+       * @see https://tailwindcss.com/docs/backdrop-brightness
+       */
+      "backdrop-brightness": [{
+        "backdrop-brightness": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Contrast
+       * @see https://tailwindcss.com/docs/backdrop-contrast
+       */
+      "backdrop-contrast": [{
+        "backdrop-contrast": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Grayscale
+       * @see https://tailwindcss.com/docs/backdrop-grayscale
+       */
+      "backdrop-grayscale": [{
+        "backdrop-grayscale": ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Hue Rotate
+       * @see https://tailwindcss.com/docs/backdrop-hue-rotate
+       */
+      "backdrop-hue-rotate": [{
+        "backdrop-hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Invert
+       * @see https://tailwindcss.com/docs/backdrop-invert
+       */
+      "backdrop-invert": [{
+        "backdrop-invert": ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Opacity
+       * @see https://tailwindcss.com/docs/backdrop-opacity
+       */
+      "backdrop-opacity": [{
+        "backdrop-opacity": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Saturate
+       * @see https://tailwindcss.com/docs/backdrop-saturate
+       */
+      "backdrop-saturate": [{
+        "backdrop-saturate": [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Backdrop Sepia
+       * @see https://tailwindcss.com/docs/backdrop-sepia
+       */
+      "backdrop-sepia": [{
+        "backdrop-sepia": ["", isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      // --------------
+      // --- Tables ---
+      // --------------
+      /**
+       * Border Collapse
+       * @see https://tailwindcss.com/docs/border-collapse
+       */
+      "border-collapse": [{
+        border: ["collapse", "separate"]
+      }],
+      /**
+       * Border Spacing
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing": [{
+        "border-spacing": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Border Spacing X
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-x": [{
+        "border-spacing-x": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Border Spacing Y
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-y": [{
+        "border-spacing-y": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Table Layout
+       * @see https://tailwindcss.com/docs/table-layout
+       */
+      "table-layout": [{
+        table: ["auto", "fixed"]
+      }],
+      /**
+       * Caption Side
+       * @see https://tailwindcss.com/docs/caption-side
+       */
+      caption: [{
+        caption: ["top", "bottom"]
+      }],
+      // ---------------------------------
+      // --- Transitions and Animation ---
+      // ---------------------------------
+      /**
+       * Transition Property
+       * @see https://tailwindcss.com/docs/transition-property
+       */
+      transition: [{
+        transition: ["", "all", "colors", "opacity", "shadow", "transform", "none", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Transition Behavior
+       * @see https://tailwindcss.com/docs/transition-behavior
+       */
+      "transition-behavior": [{
+        transition: ["normal", "discrete"]
+      }],
+      /**
+       * Transition Duration
+       * @see https://tailwindcss.com/docs/transition-duration
+       */
+      duration: [{
+        duration: [isNumber, "initial", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Transition Timing Function
+       * @see https://tailwindcss.com/docs/transition-timing-function
+       */
+      ease: [{
+        ease: ["linear", "initial", themeEase, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Transition Delay
+       * @see https://tailwindcss.com/docs/transition-delay
+       */
+      delay: [{
+        delay: [isNumber, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Animation
+       * @see https://tailwindcss.com/docs/animation
+       */
+      animate: [{
+        animate: ["none", themeAnimate, isArbitraryVariable, isArbitraryValue]
+      }],
+      // ------------------
+      // --- Transforms ---
+      // ------------------
+      /**
+       * Backface Visibility
+       * @see https://tailwindcss.com/docs/backface-visibility
+       */
+      backface: [{
+        backface: ["hidden", "visible"]
+      }],
+      /**
+       * Perspective
+       * @see https://tailwindcss.com/docs/perspective
+       */
+      perspective: [{
+        perspective: [themePerspective, isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Perspective Origin
+       * @see https://tailwindcss.com/docs/perspective-origin
+       */
+      "perspective-origin": [{
+        "perspective-origin": scalePositionWithArbitrary()
+      }],
+      /**
+       * Rotate
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      rotate: [{
+        rotate: scaleRotate()
+      }],
+      /**
+       * Rotate X
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      "rotate-x": [{
+        "rotate-x": scaleRotate()
+      }],
+      /**
+       * Rotate Y
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      "rotate-y": [{
+        "rotate-y": scaleRotate()
+      }],
+      /**
+       * Rotate Z
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      "rotate-z": [{
+        "rotate-z": scaleRotate()
+      }],
+      /**
+       * Scale
+       * @see https://tailwindcss.com/docs/scale
+       */
+      scale: [{
+        scale: scaleScale()
+      }],
+      /**
+       * Scale X
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-x": [{
+        "scale-x": scaleScale()
+      }],
+      /**
+       * Scale Y
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-y": [{
+        "scale-y": scaleScale()
+      }],
+      /**
+       * Scale Z
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-z": [{
+        "scale-z": scaleScale()
+      }],
+      /**
+       * Scale 3D
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-3d": ["scale-3d"],
+      /**
+       * Skew
+       * @see https://tailwindcss.com/docs/skew
+       */
+      skew: [{
+        skew: scaleSkew()
+      }],
+      /**
+       * Skew X
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-x": [{
+        "skew-x": scaleSkew()
+      }],
+      /**
+       * Skew Y
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-y": [{
+        "skew-y": scaleSkew()
+      }],
+      /**
+       * Transform
+       * @see https://tailwindcss.com/docs/transform
+       */
+      transform: [{
+        transform: [isArbitraryVariable, isArbitraryValue, "", "none", "gpu", "cpu"]
+      }],
+      /**
+       * Transform Origin
+       * @see https://tailwindcss.com/docs/transform-origin
+       */
+      "transform-origin": [{
+        origin: scalePositionWithArbitrary()
+      }],
+      /**
+       * Transform Style
+       * @see https://tailwindcss.com/docs/transform-style
+       */
+      "transform-style": [{
+        transform: ["3d", "flat"]
+      }],
+      /**
+       * Translate
+       * @see https://tailwindcss.com/docs/translate
+       */
+      translate: [{
+        translate: scaleTranslate()
+      }],
+      /**
+       * Translate X
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-x": [{
+        "translate-x": scaleTranslate()
+      }],
+      /**
+       * Translate Y
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-y": [{
+        "translate-y": scaleTranslate()
+      }],
+      /**
+       * Translate Z
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-z": [{
+        "translate-z": scaleTranslate()
+      }],
+      /**
+       * Translate None
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-none": ["translate-none"],
+      // ---------------------
+      // --- Interactivity ---
+      // ---------------------
+      /**
+       * Accent Color
+       * @see https://tailwindcss.com/docs/accent-color
+       */
+      accent: [{
+        accent: scaleColor()
+      }],
+      /**
+       * Appearance
+       * @see https://tailwindcss.com/docs/appearance
+       */
+      appearance: [{
+        appearance: ["none", "auto"]
+      }],
+      /**
+       * Caret Color
+       * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
+       */
+      "caret-color": [{
+        caret: scaleColor()
+      }],
+      /**
+       * Color Scheme
+       * @see https://tailwindcss.com/docs/color-scheme
+       */
+      "color-scheme": [{
+        scheme: ["normal", "dark", "light", "light-dark", "only-dark", "only-light"]
+      }],
+      /**
+       * Cursor
+       * @see https://tailwindcss.com/docs/cursor
+       */
+      cursor: [{
+        cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryVariable, isArbitraryValue]
+      }],
+      /**
+       * Field Sizing
+       * @see https://tailwindcss.com/docs/field-sizing
+       */
+      "field-sizing": [{
+        "field-sizing": ["fixed", "content"]
+      }],
+      /**
+       * Pointer Events
+       * @see https://tailwindcss.com/docs/pointer-events
+       */
+      "pointer-events": [{
+        "pointer-events": ["auto", "none"]
+      }],
+      /**
+       * Resize
+       * @see https://tailwindcss.com/docs/resize
+       */
+      resize: [{
+        resize: ["none", "", "y", "x"]
+      }],
+      /**
+       * Scroll Behavior
+       * @see https://tailwindcss.com/docs/scroll-behavior
+       */
+      "scroll-behavior": [{
+        scroll: ["auto", "smooth"]
+      }],
+      /**
+       * Scroll Margin
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-m": [{
+        "scroll-m": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin X
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mx": [{
+        "scroll-mx": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin Y
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-my": [{
+        "scroll-my": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin Start
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ms": [{
+        "scroll-ms": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin End
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-me": [{
+        "scroll-me": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin Top
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mt": [{
+        "scroll-mt": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin Right
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mr": [{
+        "scroll-mr": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin Bottom
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mb": [{
+        "scroll-mb": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Margin Left
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ml": [{
+        "scroll-ml": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-p": [{
+        "scroll-p": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding X
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-px": [{
+        "scroll-px": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding Y
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-py": [{
+        "scroll-py": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding Start
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-ps": [{
+        "scroll-ps": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding End
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pe": [{
+        "scroll-pe": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding Top
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pt": [{
+        "scroll-pt": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding Right
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pr": [{
+        "scroll-pr": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding Bottom
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pb": [{
+        "scroll-pb": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Padding Left
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pl": [{
+        "scroll-pl": scaleUnambiguousSpacing()
+      }],
+      /**
+       * Scroll Snap Align
+       * @see https://tailwindcss.com/docs/scroll-snap-align
+       */
+      "snap-align": [{
+        snap: ["start", "end", "center", "align-none"]
+      }],
+      /**
+       * Scroll Snap Stop
+       * @see https://tailwindcss.com/docs/scroll-snap-stop
+       */
+      "snap-stop": [{
+        snap: ["normal", "always"]
+      }],
+      /**
+       * Scroll Snap Type
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-type": [{
+        snap: ["none", "x", "y", "both"]
+      }],
+      /**
+       * Scroll Snap Type Strictness
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-strictness": [{
+        snap: ["mandatory", "proximity"]
+      }],
+      /**
+       * Touch Action
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      touch: [{
+        touch: ["auto", "none", "manipulation"]
+      }],
+      /**
+       * Touch Action X
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-x": [{
+        "touch-pan": ["x", "left", "right"]
+      }],
+      /**
+       * Touch Action Y
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-y": [{
+        "touch-pan": ["y", "up", "down"]
+      }],
+      /**
+       * Touch Action Pinch Zoom
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-pz": ["touch-pinch-zoom"],
+      /**
+       * User Select
+       * @see https://tailwindcss.com/docs/user-select
+       */
+      select: [{
+        select: ["none", "text", "all", "auto"]
+      }],
+      /**
+       * Will Change
+       * @see https://tailwindcss.com/docs/will-change
+       */
+      "will-change": [{
+        "will-change": ["auto", "scroll", "contents", "transform", isArbitraryVariable, isArbitraryValue]
+      }],
+      // -----------
+      // --- SVG ---
+      // -----------
+      /**
+       * Fill
+       * @see https://tailwindcss.com/docs/fill
+       */
+      fill: [{
+        fill: ["none", ...scaleColor()]
+      }],
+      /**
+       * Stroke Width
+       * @see https://tailwindcss.com/docs/stroke-width
+       */
+      "stroke-w": [{
+        stroke: [isNumber, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
+      }],
+      /**
+       * Stroke
+       * @see https://tailwindcss.com/docs/stroke
+       */
+      stroke: [{
+        stroke: ["none", ...scaleColor()]
+      }],
+      // ---------------------
+      // --- Accessibility ---
+      // ---------------------
+      /**
+       * Forced Color Adjust
+       * @see https://tailwindcss.com/docs/forced-color-adjust
+       */
+      "forced-color-adjust": [{
+        "forced-color-adjust": ["auto", "none"]
+      }]
+    },
+    conflictingClassGroups: {
+      overflow: ["overflow-x", "overflow-y"],
+      overscroll: ["overscroll-x", "overscroll-y"],
+      inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
+      "inset-x": ["right", "left"],
+      "inset-y": ["top", "bottom"],
+      flex: ["basis", "grow", "shrink"],
+      gap: ["gap-x", "gap-y"],
+      p: ["px", "py", "ps", "pe", "pt", "pr", "pb", "pl"],
+      px: ["pr", "pl"],
+      py: ["pt", "pb"],
+      m: ["mx", "my", "ms", "me", "mt", "mr", "mb", "ml"],
+      mx: ["mr", "ml"],
+      my: ["mt", "mb"],
+      size: ["w", "h"],
+      "font-size": ["leading"],
+      "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
+      "fvn-ordinal": ["fvn-normal"],
+      "fvn-slashed-zero": ["fvn-normal"],
+      "fvn-figure": ["fvn-normal"],
+      "fvn-spacing": ["fvn-normal"],
+      "fvn-fraction": ["fvn-normal"],
+      "line-clamp": ["display", "overflow"],
+      rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
+      "rounded-s": ["rounded-ss", "rounded-es"],
+      "rounded-e": ["rounded-se", "rounded-ee"],
+      "rounded-t": ["rounded-tl", "rounded-tr"],
+      "rounded-r": ["rounded-tr", "rounded-br"],
+      "rounded-b": ["rounded-br", "rounded-bl"],
+      "rounded-l": ["rounded-tl", "rounded-bl"],
+      "border-spacing": ["border-spacing-x", "border-spacing-y"],
+      "border-w": ["border-w-x", "border-w-y", "border-w-s", "border-w-e", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
+      "border-w-x": ["border-w-r", "border-w-l"],
+      "border-w-y": ["border-w-t", "border-w-b"],
+      "border-color": ["border-color-x", "border-color-y", "border-color-s", "border-color-e", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
+      "border-color-x": ["border-color-r", "border-color-l"],
+      "border-color-y": ["border-color-t", "border-color-b"],
+      translate: ["translate-x", "translate-y", "translate-none"],
+      "translate-none": ["translate", "translate-x", "translate-y", "translate-z"],
+      "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
+      "scroll-mx": ["scroll-mr", "scroll-ml"],
+      "scroll-my": ["scroll-mt", "scroll-mb"],
+      "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
+      "scroll-px": ["scroll-pr", "scroll-pl"],
+      "scroll-py": ["scroll-pt", "scroll-pb"],
+      touch: ["touch-x", "touch-y", "touch-pz"],
+      "touch-x": ["touch"],
+      "touch-y": ["touch"],
+      "touch-pz": ["touch"]
+    },
+    conflictingClassGroupModifiers: {
+      "font-size": ["leading"]
+    },
+    orderSensitiveModifiers: ["*", "**", "after", "backdrop", "before", "details-content", "file", "first-letter", "first-line", "marker", "placeholder", "selection"]
+  };
+};
+var twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
 
 // src/lib/utils.js
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
-var isIframe;
-var init_utils5 = __esm({
-  "src/lib/utils.js"() {
-    init_define_import_meta_env();
-    init_clsx();
-    init_bundle_mjs();
-    isIframe = window.self !== window.top;
-  }
-});
+var isIframe = window.self !== window.top;
 
 // src/components/ui/dialog.jsx
-var React25, import_jsx_runtime8, DialogPortal2, DialogOverlay2, DialogContent2, DialogHeader, DialogFooter, DialogTitle2, DialogDescription2;
-var init_dialog = __esm({
-  "src/components/ui/dialog.jsx"() {
-    "use client";
-    init_define_import_meta_env();
-    React25 = __toESM(require_react(), 1);
-    init_dist19();
-    init_lucide_react();
-    init_utils5();
-    import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
-    DialogPortal2 = Portal2;
-    DialogOverlay2 = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-      Overlay,
-      {
-        ref,
-        className: cn(
-          "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          className
-        ),
-        ...props
-      }
-    ));
-    DialogOverlay2.displayName = Overlay.displayName;
-    DialogContent2 = React25.forwardRef(({ className, children, hideClose, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(DialogPortal2, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(DialogOverlay2, {}),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
-        Content,
-        {
-          ref,
-          className: cn(
-            "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-            className
-          ),
-          ...props,
-          children: [
-            children,
-            !hideClose && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
-              Close,
-              {
-                className: "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground",
-                children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(X, { className: "h-4 w-4" }),
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "sr-only", children: "Close" })
-                ]
-              }
-            )
-          ]
-        }
-      )
-    ] }));
-    DialogContent2.displayName = Content.displayName;
-    DialogHeader = ({
-      className,
-      ...props
-    }) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-      "div",
-      {
-        className: cn("flex flex-col space-y-1.5 text-center sm:text-left", className),
-        ...props
-      }
-    );
-    DialogHeader.displayName = "DialogHeader";
-    DialogFooter = ({
-      className,
-      ...props
-    }) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-      "div",
-      {
-        className: cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className),
-        ...props
-      }
-    );
-    DialogFooter.displayName = "DialogFooter";
-    DialogTitle2 = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-      Title,
-      {
-        ref,
-        className: cn("text-lg font-semibold leading-none tracking-tight", className),
-        ...props
-      }
-    ));
-    DialogTitle2.displayName = Title.displayName;
-    DialogDescription2 = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-      Description,
-      {
-        ref,
-        className: cn("text-sm text-muted-foreground", className),
-        ...props
-      }
-    ));
-    DialogDescription2.displayName = Description.displayName;
+var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+var DialogPortal2 = Portal2;
+var DialogOverlay2 = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+  Overlay,
+  {
+    ref,
+    className: cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    ),
+    ...props
   }
-});
-
-// node_modules/class-variance-authority/dist/index.mjs
-var falsyToString, cx, cva;
-var init_dist20 = __esm({
-  "node_modules/class-variance-authority/dist/index.mjs"() {
-    init_define_import_meta_env();
-    init_clsx();
-    falsyToString = (value2) => typeof value2 === "boolean" ? `${value2}` : value2 === 0 ? "0" : value2;
-    cx = clsx;
-    cva = (base, config) => (props) => {
-      var _config_compoundVariants;
-      if ((config === null || config === void 0 ? void 0 : config.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
-      const { variants, defaultVariants } = config;
-      const getVariantClassNames = Object.keys(variants).map((variant) => {
-        const variantProp = props === null || props === void 0 ? void 0 : props[variant];
-        const defaultVariantProp = defaultVariants === null || defaultVariants === void 0 ? void 0 : defaultVariants[variant];
-        if (variantProp === null) return null;
-        const variantKey = falsyToString(variantProp) || falsyToString(defaultVariantProp);
-        return variants[variant][variantKey];
-      });
-      const propsWithoutUndefined = props && Object.entries(props).reduce((acc, param) => {
-        let [key, value2] = param;
-        if (value2 === void 0) {
-          return acc;
-        }
-        acc[key] = value2;
-        return acc;
-      }, {});
-      const getCompoundVariantClassNames = config === null || config === void 0 ? void 0 : (_config_compoundVariants = config.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
-        let { class: cvClass, className: cvClassName, ...compoundVariantOptions } = param;
-        return Object.entries(compoundVariantOptions).every((param2) => {
-          let [key, value2] = param2;
-          return Array.isArray(value2) ? value2.includes({
-            ...defaultVariants,
-            ...propsWithoutUndefined
-          }[key]) : {
-            ...defaultVariants,
-            ...propsWithoutUndefined
-          }[key] === value2;
-        }) ? [
-          ...acc,
-          cvClass,
-          cvClassName
-        ] : acc;
-      }, []);
-      return cx(base, getVariantClassNames, getCompoundVariantClassNames, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
-    };
+));
+DialogOverlay2.displayName = Overlay.displayName;
+var DialogContent2 = React25.forwardRef(({ className, children, hideClose, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(DialogPortal2, { children: [
+  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(DialogOverlay2, {}),
+  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+    Content,
+    {
+      ref,
+      className: cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      ),
+      ...props,
+      children: [
+        children,
+        !hideClose && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+          Close,
+          {
+            className: "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(X, { className: "h-4 w-4" }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "sr-only", children: "Close" })
+            ]
+          }
+        )
+      ]
+    }
+  )
+] }));
+DialogContent2.displayName = Content.displayName;
+var DialogHeader = ({
+  className,
+  ...props
+}) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+  "div",
+  {
+    className: cn("flex flex-col space-y-1.5 text-center sm:text-left", className),
+    ...props
   }
-});
+);
+DialogHeader.displayName = "DialogHeader";
+var DialogFooter = ({
+  className,
+  ...props
+}) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+  "div",
+  {
+    className: cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className),
+    ...props
+  }
+);
+DialogFooter.displayName = "DialogFooter";
+var DialogTitle2 = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+  Title,
+  {
+    ref,
+    className: cn("text-lg font-semibold leading-none tracking-tight", className),
+    ...props
+  }
+));
+DialogTitle2.displayName = Title.displayName;
+var DialogDescription2 = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+  Description,
+  {
+    ref,
+    className: cn("text-sm text-muted-foreground", className),
+    ...props
+  }
+));
+DialogDescription2.displayName = Description.displayName;
 
 // src/components/ui/button.jsx
-var React26, import_jsx_runtime9, buttonVariants, Button;
-var init_button = __esm({
-  "src/components/ui/button.jsx"() {
-    init_define_import_meta_env();
-    React26 = __toESM(require_react(), 1);
-    init_dist10();
-    init_dist20();
-    init_utils5();
-    import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
-    buttonVariants = cva(
-      "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 motion-safe:active:scale-[0.97] motion-safe:active:duration-100 will-change-transform",
-      {
-        variants: {
-          variant: {
-            default: "bg-primary text-primary-foreground shadow hover:bg-primary/90 motion-safe:hover:-translate-y-px motion-safe:hover:shadow-md",
-            destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 motion-safe:hover:-translate-y-px",
-            outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground motion-safe:hover:-translate-y-px",
-            secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 motion-safe:hover:-translate-y-px",
-            ghost: "hover:bg-accent hover:text-accent-foreground",
-            link: "text-primary underline-offset-4 hover:underline"
-          },
-          size: {
-            default: "h-9 px-4 py-2",
-            sm: "h-8 rounded-md px-3 text-xs",
-            lg: "h-10 rounded-md px-8",
-            icon: "h-9 w-9"
-          }
-        },
-        defaultVariants: {
-          variant: "default",
-          size: "default"
-        }
+init_define_import_meta_env();
+var React26 = __toESM(require_react(), 1);
+
+// node_modules/class-variance-authority/dist/index.mjs
+init_define_import_meta_env();
+var falsyToString = (value) => typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
+var cx = clsx;
+var cva = (base, config) => (props) => {
+  var _config_compoundVariants;
+  if ((config === null || config === void 0 ? void 0 : config.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+  const { variants, defaultVariants } = config;
+  const getVariantClassNames = Object.keys(variants).map((variant) => {
+    const variantProp = props === null || props === void 0 ? void 0 : props[variant];
+    const defaultVariantProp = defaultVariants === null || defaultVariants === void 0 ? void 0 : defaultVariants[variant];
+    if (variantProp === null) return null;
+    const variantKey = falsyToString(variantProp) || falsyToString(defaultVariantProp);
+    return variants[variant][variantKey];
+  });
+  const propsWithoutUndefined = props && Object.entries(props).reduce((acc, param) => {
+    let [key, value] = param;
+    if (value === void 0) {
+      return acc;
+    }
+    acc[key] = value;
+    return acc;
+  }, {});
+  const getCompoundVariantClassNames = config === null || config === void 0 ? void 0 : (_config_compoundVariants = config.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
+    let { class: cvClass, className: cvClassName, ...compoundVariantOptions } = param;
+    return Object.entries(compoundVariantOptions).every((param2) => {
+      let [key, value] = param2;
+      return Array.isArray(value) ? value.includes({
+        ...defaultVariants,
+        ...propsWithoutUndefined
+      }[key]) : {
+        ...defaultVariants,
+        ...propsWithoutUndefined
+      }[key] === value;
+    }) ? [
+      ...acc,
+      cvClass,
+      cvClassName
+    ] : acc;
+  }, []);
+  return cx(base, getVariantClassNames, getCompoundVariantClassNames, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+};
+
+// src/components/ui/button.jsx
+var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+var buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 motion-safe:active:scale-[0.97] motion-safe:active:duration-100 will-change-transform",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90 motion-safe:hover:-translate-y-px motion-safe:hover:shadow-md",
+        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 motion-safe:hover:-translate-y-px",
+        outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground motion-safe:hover:-translate-y-px",
+        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 motion-safe:hover:-translate-y-px",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline"
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-8",
+        icon: "h-9 w-9"
       }
-    );
-    Button = React26.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-      const Comp = asChild ? Slot : "button";
-      return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
-        Comp,
-        {
-          className: cn(buttonVariants({ variant, size, className })),
-          ref,
-          ...props
-        }
-      );
-    });
-    Button.displayName = "Button";
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
   }
+);
+var Button = React26.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
+  const Comp = asChild ? Slot : "button";
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+    Comp,
+    {
+      className: cn(buttonVariants({ variant, size, className })),
+      ref,
+      ...props
+    }
+  );
 });
+Button.displayName = "Button";
 
 // src/components/ui/input.jsx
-var React27, import_jsx_runtime10, Input;
-var init_input = __esm({
-  "src/components/ui/input.jsx"() {
-    init_define_import_meta_env();
-    React27 = __toESM(require_react(), 1);
-    init_utils5();
-    import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
-    Input = React27.forwardRef(({ className, type, ...props }, ref) => {
-      return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
-        "input",
-        {
-          type,
-          className: cn(
-            "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            className
-          ),
-          ref,
-          ...props
-        }
-      );
-    });
-    Input.displayName = "Input";
-  }
+init_define_import_meta_env();
+var React27 = __toESM(require_react(), 1);
+var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
+var Input = React27.forwardRef(({ className, type, ...props }, ref) => {
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
+    "input",
+    {
+      type,
+      className: cn(
+        "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        className
+      ),
+      ref,
+      ...props
+    }
+  );
 });
-
-// node_modules/@radix-ui/react-label/dist/index.mjs
-var React28, import_jsx_runtime11, NAME, Label, Root2;
-var init_dist21 = __esm({
-  "node_modules/@radix-ui/react-label/dist/index.mjs"() {
-    "use client";
-    init_define_import_meta_env();
-    React28 = __toESM(require_react(), 1);
-    init_dist11();
-    import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
-    NAME = "Label";
-    Label = React28.forwardRef((props, forwardedRef) => {
-      return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
-        Primitive.label,
-        {
-          ...props,
-          ref: forwardedRef,
-          onMouseDown: (event) => {
-            const target = event.target;
-            if (target.closest("button, input, select, textarea")) return;
-            props.onMouseDown?.(event);
-            if (!event.defaultPrevented && event.detail > 1) event.preventDefault();
-          }
-        }
-      );
-    });
-    Label.displayName = NAME;
-    Root2 = Label;
-  }
-});
+Input.displayName = "Input";
 
 // src/components/ui/label.jsx
-var React29, import_jsx_runtime12, labelVariants, Label2;
-var init_label = __esm({
-  "src/components/ui/label.jsx"() {
-    init_define_import_meta_env();
-    React29 = __toESM(require_react(), 1);
-    init_dist21();
-    init_dist20();
-    init_utils5();
-    import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
-    labelVariants = cva(
-      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-    );
-    Label2 = React29.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Root2, { ref, className: cn(labelVariants(), className), ...props }));
-    Label2.displayName = Root2.displayName;
-  }
+init_define_import_meta_env();
+var React29 = __toESM(require_react(), 1);
+
+// node_modules/@radix-ui/react-label/dist/index.mjs
+init_define_import_meta_env();
+var React28 = __toESM(require_react(), 1);
+var import_jsx_runtime11 = __toESM(require_jsx_runtime(), 1);
+var NAME = "Label";
+var Label = React28.forwardRef((props, forwardedRef) => {
+  return /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(
+    Primitive.label,
+    {
+      ...props,
+      ref: forwardedRef,
+      onMouseDown: (event) => {
+        const target = event.target;
+        if (target.closest("button, input, select, textarea")) return;
+        props.onMouseDown?.(event);
+        if (!event.defaultPrevented && event.detail > 1) event.preventDefault();
+      }
+    }
+  );
 });
+Label.displayName = NAME;
+var Root2 = Label;
+
+// src/components/ui/label.jsx
+var import_jsx_runtime12 = __toESM(require_jsx_runtime(), 1);
+var labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+);
+var Label2 = React29.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ (0, import_jsx_runtime12.jsx)(Root2, { ref, className: cn(labelVariants(), className), ...props }));
+Label2.displayName = Root2.displayName;
 
 // src/components/auth/EmailGate.jsx
+var import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
+var TOKEN_KEY = "sss_session_token";
 function getSessionToken() {
   try {
     return localStorage.getItem(TOKEN_KEY) || "";
@@ -41774,23 +29947,208 @@ function getSessionToken() {
     return "";
   }
 }
-var import_react4, import_jsx_runtime13, TOKEN_KEY, AuthContext;
-var init_EmailGate = __esm({
-  "src/components/auth/EmailGate.jsx"() {
-    init_define_import_meta_env();
-    import_react4 = __toESM(require_react(), 1);
-    init_base44Client();
-    init_dialog();
-    init_button();
-    init_input();
-    init_label();
-    import_jsx_runtime13 = __toESM(require_jsx_runtime(), 1);
-    TOKEN_KEY = "sss_session_token";
-    AuthContext = (0, import_react4.createContext)(null);
+var AuthContext = (0, import_react4.createContext)(null);
+
+// src/api/requestGovernor.mjs
+init_define_import_meta_env();
+function rateLimitStatus(err) {
+  return err?.status ?? err?.response?.status;
+}
+function isPlatformRateLimit(err) {
+  if (rateLimitStatus(err) === 429) return true;
+  const text = [
+    err?.message,
+    err?.response?.data?.error,
+    err?.response?.data?.message,
+    err?.data?.error
+  ].filter(Boolean).join(" ");
+  return /rate limit|too many requests|traffic volume/i.test(text);
+}
+function retryAfterMs(err, capMs = 3e4) {
+  const headers = err?.response?.headers;
+  const raw = (typeof headers?.get === "function" ? headers.get("retry-after") : headers?.["retry-after"]) ?? err?.retryAfter;
+  if (raw == null || raw === "") {
+    const bodyMs = Number(err?.response?.data?.retry_after_ms);
+    return Number.isFinite(bodyMs) && bodyMs > 0 ? Math.min(bodyMs, capMs) : 0;
   }
-});
+  const seconds = Number(raw);
+  const ms = Number.isFinite(seconds) ? seconds * 1e3 : Date.parse(String(raw)) - Date.now();
+  return Number.isFinite(ms) && ms > 0 ? Math.min(ms, capMs) : 0;
+}
+var SLOW_MS = 3e3;
+var SLOW_KEEP = 25;
+function createRequestGovernor({
+  maxConcurrent = 8,
+  pools: poolSizes = {},
+  maxRetries = 4,
+  baseDelayMs = 1e3,
+  maxDelayMs = 8e3,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  rand = Math.random,
+  now = () => Date.now()
+} = {}) {
+  const stats = {
+    startedAt: now(),
+    total: 0,
+    inFlight: 0,
+    peakInFlight: 0,
+    queued: 0,
+    rateLimited: 0,
+    retries: 0,
+    gaveUp: 0,
+    deduped: 0,
+    errors: 0,
+    cooldownWaits: 0,
+    byLabel: {},
+    detail: {},
+    slow: []
+  };
+  const pools = /* @__PURE__ */ new Map();
+  const poolFor = (name) => {
+    if (!pools.has(name)) {
+      pools.set(name, { max: name === "default" ? maxConcurrent : poolSizes[name] || maxConcurrent, active: 0, waiters: [] });
+    }
+    return pools.get(name);
+  };
+  const acquire = (pool) => new Promise((resolve) => {
+    const take = () => {
+      pool.active += 1;
+      stats.inFlight += 1;
+      stats.peakInFlight = Math.max(stats.peakInFlight, stats.inFlight);
+      resolve();
+    };
+    if (pool.active < pool.max) {
+      take();
+      return;
+    }
+    stats.queued += 1;
+    pool.waiters.push(() => {
+      stats.queued -= 1;
+      take();
+    });
+  });
+  const release = (pool) => {
+    pool.active -= 1;
+    stats.inFlight -= 1;
+    const next = pool.waiters.shift();
+    if (next) next();
+  };
+  let cooldownUntil2 = 0;
+  let epoch = 0;
+  const inflight = /* @__PURE__ */ new Map();
+  const record = (label, ms, failed) => {
+    const d = stats.detail[label] || (stats.detail[label] = { count: 0, errors: 0, totalMs: 0, maxMs: 0 });
+    d.count += 1;
+    d.totalMs += ms;
+    d.maxMs = Math.max(d.maxMs, ms);
+    if (failed) {
+      d.errors += 1;
+      stats.errors += 1;
+    }
+    if (ms >= SLOW_MS) {
+      stats.slow.push({ label, ms: Math.round(ms), at: new Date(now()).toISOString() });
+      if (stats.slow.length > SLOW_KEEP) stats.slow.shift();
+    }
+  };
+  const run = async (label, fn, {
+    limitConcurrency = true,
+    pool: poolName = "default",
+    retryOnRateLimit = false,
+    respectCooldown = false,
+    shouldRetry = null,
+    maxAttempts = maxRetries
+  } = {}) => {
+    stats.total += 1;
+    stats.byLabel[label] = (stats.byLabel[label] || 0) + 1;
+    const pool = limitConcurrency ? poolFor(poolName) : null;
+    const started = now();
+    for (let attempt = 0; ; attempt += 1) {
+      if (respectCooldown && attempt === 0) {
+        const wait = cooldownUntil2 - now();
+        if (wait > 0) {
+          stats.cooldownWaits += 1;
+          await sleep(wait);
+        }
+      }
+      if (pool) await acquire(pool);
+      try {
+        const result = await fn();
+        if (pool) release(pool);
+        record(label, now() - started, false);
+        return result;
+      } catch (err) {
+        if (pool) release(pool);
+        const limited = isPlatformRateLimit(err);
+        if (limited) stats.rateLimited += 1;
+        const retryable = limited && retryOnRateLimit || typeof shouldRetry === "function" && shouldRetry(err, attempt);
+        if (retryable && attempt < maxAttempts) {
+          stats.retries += 1;
+          const backoff = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt) * (0.5 + rand());
+          const delay = Math.max(backoff, limited ? retryAfterMs(err) : 0);
+          if (limited) cooldownUntil2 = Math.max(cooldownUntil2, now() + delay);
+          await sleep(delay);
+          continue;
+        }
+        if (limited && retryOnRateLimit) {
+          err.ccsGovernorRetried = attempt;
+          stats.gaveUp += 1;
+        }
+        record(label, now() - started, true);
+        throw err;
+      }
+    }
+  };
+  const dedupe = (key, fn, copy = (value) => value) => {
+    const fullKey = `${epoch}|${key}`;
+    const existing = inflight.get(fullKey);
+    if (existing) {
+      stats.deduped += 1;
+      return existing.then(copy);
+    }
+    const promise = Promise.resolve().then(fn);
+    inflight.set(fullKey, promise);
+    promise.catch(() => {
+    }).finally(() => {
+      if (inflight.get(fullKey) === promise) inflight.delete(fullKey);
+    });
+    return promise;
+  };
+  const bumpEpoch = () => {
+    epoch += 1;
+  };
+  const getEpoch = () => epoch;
+  return { run, dedupe, bumpEpoch, getEpoch, stats };
+}
+
+// src/api/rateLimitCooldown.js
+init_define_import_meta_env();
+var BASE_COOLDOWN_MS = 2e4;
+var MAX_COOLDOWN_MS = 6e4;
+var cooldownUntil = 0;
+var cooldownMs = BASE_COOLDOWN_MS;
+var isAppCoolingDown = () => Date.now() < cooldownUntil;
+function noteRateLimit(retryMs = 0) {
+  const wait = Math.max(cooldownMs, Math.min(Number(retryMs) || 0, MAX_COOLDOWN_MS));
+  cooldownUntil = Math.max(cooldownUntil, Date.now() + wait);
+  cooldownMs = Math.min(cooldownMs * 2, MAX_COOLDOWN_MS);
+}
 
 // src/components/fleet/fleetInvoke.js
+var mutationEpoch = 0;
+var READ_ONLY_FUNCTIONS = /* @__PURE__ */ new Set([
+  "fleetDataRead",
+  "verifySession",
+  "bouncieStatus",
+  "bouncieApi",
+  "getGoogleMapsKey"
+]);
+var invokeGovernor = createRequestGovernor({
+  maxConcurrent: 6,
+  maxRetries: 1,
+  baseDelayMs: 800,
+  maxDelayMs: 1e4
+});
+var isFleetCoolingDown = isAppCoolingDown;
 async function invokeFleet(name, payload = {}) {
   try {
     return await invokeGovernor.run(
@@ -41807,38 +30165,56 @@ async function invokeFleet(name, payload = {}) {
     if (!READ_ONLY_FUNCTIONS.has(name)) mutationEpoch += 1;
   }
 }
-var mutationEpoch, READ_ONLY_FUNCTIONS, invokeGovernor, isFleetCoolingDown;
-var init_fleetInvoke = __esm({
-  "src/components/fleet/fleetInvoke.js"() {
-    init_define_import_meta_env();
-    init_base44Client();
-    init_EmailGate();
-    init_requestGovernor();
-    init_rateLimitCooldown();
-    mutationEpoch = 0;
-    READ_ONLY_FUNCTIONS = /* @__PURE__ */ new Set([
-      "fleetDataRead",
-      "verifySession",
-      "bouncieStatus",
-      "bouncieApi",
-      "getGoogleMapsKey"
-    ]);
-    invokeGovernor = createRequestGovernor({
-      maxConcurrent: 6,
-      maxRetries: 1,
-      baseDelayMs: 800,
-      maxDelayMs: 1e4
-    });
-    isFleetCoolingDown = isAppCoolingDown;
-  }
-});
 
 // src/components/staff/staffEntities.js
-var staffEntities_exports = {};
-__export(staffEntities_exports, {
-  loadEntitiesBatch: () => loadEntitiesBatch,
-  staffEntities: () => staffEntities
-});
+var hasSession = () => !!getSessionToken();
+var NO_SESSION_ERR = () => new Error("Sign-in required");
+var deniedSessionToken;
+var deniedEntities = /* @__PURE__ */ new Set();
+var syncDeniedScope = () => {
+  const token = getSessionToken();
+  if (token !== deniedSessionToken) {
+    deniedEntities.clear();
+    deniedSessionToken = token;
+  }
+};
+var markDenied = (entity) => {
+  if (!entity) return;
+  syncDeniedScope();
+  deniedEntities.add(entity);
+};
+var isDenied = (entity) => {
+  syncDeniedScope();
+  return deniedEntities.has(entity);
+};
+var isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
+var READ_CACHE_TTL_MS = 3e4;
+var readCache = /* @__PURE__ */ new Map();
+var readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
+var cachedRead = (key) => {
+  const entry = readCache.get(key);
+  if (!entry) return void 0;
+  if (entry.expires <= Date.now()) {
+    readCache.delete(key);
+    return void 0;
+  }
+  return entry.value;
+};
+var cacheRead = (key, value) => {
+  readCache.set(key, { value, expires: Date.now() + READ_CACHE_TTL_MS });
+};
+var bustReadCache = (entity) => {
+  const marker = `|${entity}|`;
+  for (const key of readCache.keys()) {
+    if (key.includes(marker)) readCache.delete(key);
+  }
+};
+var bodyOf = (response) => {
+  if (!response || typeof response !== "object") return {};
+  const isEnvelope = Object.prototype.hasOwnProperty.call(response, "status") && Object.prototype.hasOwnProperty.call(response, "data");
+  const body = isEnvelope ? response.data : response;
+  return body && typeof body === "object" ? body : {};
+};
 function readArgs(sortOrOptions, limit, skip) {
   if (sortOrOptions && typeof sortOrOptions === "object" && !Array.isArray(sortOrOptions)) {
     return {
@@ -41850,6 +30226,18 @@ function readArgs(sortOrOptions, limit, skip) {
   }
   return { paged: false, sort: sortOrOptions, limit, skip };
 }
+var asRows = (response) => {
+  const rows = bodyOf(response).items;
+  return Array.isArray(rows) ? rows : [];
+};
+var page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
+var pendingBatch = /* @__PURE__ */ new Map();
+var flushScheduled = false;
+var BATCH_WINDOW_MS = 30;
+var singleRead = (entity, args) => invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
+  if (isForbidden(err)) markDenied(entity);
+  throw err;
+});
 async function flushBatch() {
   flushScheduled = false;
   const entries = [...pendingBatch.values()];
@@ -41894,215 +30282,131 @@ async function flushBatch() {
   }
   individual.forEach((e) => singleRead(e.entity, e.args).then(e.resolve, e.reject));
 }
-var hasSession, NO_SESSION_ERR, deniedSessionToken, deniedEntities, syncDeniedScope, markDenied, isDenied, isForbidden, READ_CACHE_TTL_MS, readCache, readCacheKey, cachedRead, cacheRead, bustReadCache, bodyOf, asRows, page, pendingBatch, flushScheduled, BATCH_WINDOW_MS, singleRead, batchedRead, METHODS, proxy, staffEntities, loadEntitiesBatch;
-var init_staffEntities = __esm({
-  "src/components/staff/staffEntities.js"() {
-    init_define_import_meta_env();
-    init_fleetInvoke();
-    init_EmailGate();
-    init_rateLimitCooldown();
-    hasSession = () => !!getSessionToken();
-    NO_SESSION_ERR = () => new Error("Sign-in required");
-    deniedEntities = /* @__PURE__ */ new Set();
-    syncDeniedScope = () => {
-      const token2 = getSessionToken();
-      if (token2 !== deniedSessionToken) {
-        deniedEntities.clear();
-        deniedSessionToken = token2;
-      }
-    };
-    markDenied = (entity) => {
-      if (!entity) return;
-      syncDeniedScope();
-      deniedEntities.add(entity);
-    };
-    isDenied = (entity) => {
-      syncDeniedScope();
-      return deniedEntities.has(entity);
-    };
-    isForbidden = (err) => Number(err?.status ?? err?.response?.status) === 403;
-    READ_CACHE_TTL_MS = 3e4;
-    readCache = /* @__PURE__ */ new Map();
-    readCacheKey = (entity, args) => `${getSessionToken()}|${entity}|${JSON.stringify(args)}`;
-    cachedRead = (key) => {
-      const entry = readCache.get(key);
-      if (!entry) return void 0;
-      if (entry.expires <= Date.now()) {
-        readCache.delete(key);
-        return void 0;
-      }
-      return entry.value;
-    };
-    cacheRead = (key, value2) => {
-      readCache.set(key, { value: value2, expires: Date.now() + READ_CACHE_TTL_MS });
-    };
-    bustReadCache = (entity) => {
-      const marker = `|${entity}|`;
-      for (const key of readCache.keys()) {
-        if (key.includes(marker)) readCache.delete(key);
-      }
-    };
-    bodyOf = (response) => {
-      if (!response || typeof response !== "object") return {};
-      const isEnvelope = Object.prototype.hasOwnProperty.call(response, "status") && Object.prototype.hasOwnProperty.call(response, "data");
-      const body = isEnvelope ? response.data : response;
-      return body && typeof body === "object" ? body : {};
-    };
-    asRows = (response) => {
-      const rows = bodyOf(response).items;
-      return Array.isArray(rows) ? rows : [];
-    };
-    page = (rows) => ({ items: rows, has_more: false, next_cursor: null });
-    pendingBatch = /* @__PURE__ */ new Map();
-    flushScheduled = false;
-    BATCH_WINDOW_MS = 30;
-    singleRead = (entity, args) => invokeFleet("staffDataRead", { entity, ...args }).then(asRows, (err) => {
-      if (isForbidden(err)) markDenied(entity);
-      throw err;
+var batchedRead = (entity, args) => {
+  if (!hasSession()) return Promise.resolve([]);
+  const key = entity + "|" + JSON.stringify(args);
+  const existing = pendingBatch.get(key);
+  if (existing) return existing.promise;
+  let resolveRef, rejectRef;
+  const promise = new Promise((resolve, reject) => {
+    resolveRef = resolve;
+    rejectRef = reject;
+  });
+  pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
+  if (!flushScheduled) {
+    flushScheduled = true;
+    setTimeout(flushBatch, BATCH_WINDOW_MS);
+  }
+  return promise;
+};
+var METHODS = {
+  filter: (entity, query, sortOrOptions, limit, skip) => {
+    const args = readArgs(sortOrOptions, limit, skip);
+    if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
+    const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
+    const cached = cachedRead(key);
+    if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+    return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
+      cacheRead(key, rows);
+      return args.paged ? page(rows) : rows;
     });
-    batchedRead = (entity, args) => {
-      if (!hasSession()) return Promise.resolve([]);
-      const key = entity + "|" + JSON.stringify(args);
-      const existing = pendingBatch.get(key);
-      if (existing) return existing.promise;
-      let resolveRef, rejectRef;
-      const promise = new Promise((resolve, reject) => {
-        resolveRef = resolve;
-        rejectRef = reject;
-      });
-      pendingBatch.set(key, { entity, args, resolve: resolveRef, reject: rejectRef, promise });
-      if (!flushScheduled) {
-        flushScheduled = true;
-        setTimeout(flushBatch, BATCH_WINDOW_MS);
-      }
-      return promise;
-    };
-    METHODS = {
-      filter: (entity, query, sortOrOptions, limit, skip) => {
-        const args = readArgs(sortOrOptions, limit, skip);
-        if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
-        const key = readCacheKey(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip });
-        const cached = cachedRead(key);
-        if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-        return batchedRead(entity, { query, sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
-          cacheRead(key, rows);
-          return args.paged ? page(rows) : rows;
-        });
-      },
-      list: (entity, sortOrOptions, limit, skip) => {
-        const args = readArgs(sortOrOptions, limit, skip);
-        if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
-        const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
-        const cached = cachedRead(key);
-        if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
-        return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
-          cacheRead(key, rows);
-          return args.paged ? page(rows) : rows;
-        });
-      },
-      get: (entity, id) => {
-        if (!hasSession() || isDenied(entity)) return Promise.resolve(null);
-        return invokeFleet("staffDataRead", { entity, id }).then(
-          (r2) => bodyOf(r2).item ?? null,
-          (err) => {
-            if (isForbidden(err)) markDenied(entity);
-            throw err;
-          }
-        );
-      },
-      count: (entity, query, sortOrOptions, limit, skip) => {
-        const args = readArgs(sortOrOptions, limit, skip);
-        if (!hasSession() || isDenied(entity)) return Promise.resolve(0);
-        return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then(
-          (r2) => bodyOf(r2).count ?? 0,
-          (err) => {
-            if (isForbidden(err)) markDenied(entity);
-            throw err;
-          }
-        );
-      },
-      create: (entity, data) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r2) => {
-        bustReadCache(entity);
-        return bodyOf(r2).record;
-      }) : Promise.reject(NO_SESSION_ERR()),
-      update: (entity, id, data) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r2) => {
-        bustReadCache(entity);
-        return bodyOf(r2).record;
-      }) : Promise.reject(NO_SESSION_ERR()),
-      updateMany: (entity, query, update) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r2) => {
-        bustReadCache(entity);
-        return bodyOf(r2).result;
-      }) : Promise.reject(NO_SESSION_ERR()),
-      delete: (entity, id) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r2) => {
-        bustReadCache(entity);
-        return bodyOf(r2).deleted === true;
-      }) : Promise.reject(NO_SESSION_ERR()),
-      deleteMany: (entity, query) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "deleteMany", query }).then((r2) => {
-        bustReadCache(entity);
-        return bodyOf(r2).result;
-      }) : Promise.reject(NO_SESSION_ERR()),
-      // Staff sessions cannot use platform live-subscriptions (entity RLS is
-      // backend-only), so subscribe polls staffDataRead and emits a synthetic
-      // change event when the row set changes. Returns an unsubscribe function,
-      // matching the SDK contract: `unsub = entity.subscribe(cb)`.
-      subscribe: (entity, callback) => {
-        if (typeof callback !== "function") return () => {
-        };
-        let stopped = false;
-        let last = "";
-        const check = async () => {
-          if (!hasSession() || isDenied(entity) || isFleetCoolingDown()) return;
-          try {
-            const r2 = await invokeFleet("staffDataRead", { entity, limit: 50, sort: "-updated_date" });
-            const rows = Array.isArray(bodyOf(r2).items) ? bodyOf(r2).items : [];
-            const stamp = rows.map((r3) => `${r3?.id}:${r3?.updated_date}`).join("|");
-            if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
-            last = stamp;
-          } catch (err) {
-            if (isForbidden(err)) markDenied(entity);
-          }
-        };
-        check();
-        const timer = setInterval(check, 12e4);
-        return () => {
-          stopped = true;
-          clearInterval(timer);
-        };
-      }
-    };
-    proxy = (name) => new Proxy({}, {
-      get(_, method) {
-        const fn = METHODS[method];
-        if (fn) return (...args) => fn(name, ...args);
-        return () => Promise.reject(new Error(`${name}.${String(method)} is not available to staff reads`));
-      }
+  },
+  list: (entity, sortOrOptions, limit, skip) => {
+    const args = readArgs(sortOrOptions, limit, skip);
+    if (isDenied(entity)) return Promise.resolve(args.paged ? page([]) : []);
+    const key = readCacheKey(entity, { sort: args.sort, limit: args.limit, skip: args.skip });
+    const cached = cachedRead(key);
+    if (cached !== void 0) return Promise.resolve(args.paged ? page(cached.slice()) : cached.slice());
+    return batchedRead(entity, { sort: args.sort, limit: args.limit, skip: args.skip }).then((rows) => {
+      cacheRead(key, rows);
+      return args.paged ? page(rows) : rows;
     });
-    staffEntities = new Proxy({}, {
-      get(_, name) {
-        if (typeof name !== "string") return void 0;
-        return proxy(name);
+  },
+  get: (entity, id) => {
+    if (!hasSession() || isDenied(entity)) return Promise.resolve(null);
+    return invokeFleet("staffDataRead", { entity, id }).then(
+      (r2) => bodyOf(r2).item ?? null,
+      (err) => {
+        if (isForbidden(err)) markDenied(entity);
+        throw err;
       }
-    });
-    loadEntitiesBatch = (requests) => {
-      if (!hasSession()) return Promise.resolve({});
-      const live = (requests || []).filter((r2) => !isDenied(r2?.entity));
-      if (live.length === 0) return Promise.resolve({});
-      return invokeFleet("staffDataRead", { entities: live }).then((r2) => {
-        const body = bodyOf(r2);
-        (body.denied || []).forEach(markDenied);
-        return body.entities || {};
-      });
+    );
+  },
+  count: (entity, query, sortOrOptions, limit, skip) => {
+    const args = readArgs(sortOrOptions, limit, skip);
+    if (!hasSession() || isDenied(entity)) return Promise.resolve(0);
+    return invokeFleet("staffDataRead", { entity, query, sort: args.sort, limit: args.limit, skip: args.skip, count: true }).then(
+      (r2) => bodyOf(r2).count ?? 0,
+      (err) => {
+        if (isForbidden(err)) markDenied(entity);
+        throw err;
+      }
+    );
+  },
+  create: (entity, data) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "create", data }).then((r2) => {
+    bustReadCache(entity);
+    return bodyOf(r2).record;
+  }) : Promise.reject(NO_SESSION_ERR()),
+  update: (entity, id, data) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "update", id, data }).then((r2) => {
+    bustReadCache(entity);
+    return bodyOf(r2).record;
+  }) : Promise.reject(NO_SESSION_ERR()),
+  updateMany: (entity, query, update) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "updateMany", id: query?.id, query, update }).then((r2) => {
+    bustReadCache(entity);
+    return bodyOf(r2).result;
+  }) : Promise.reject(NO_SESSION_ERR()),
+  delete: (entity, id) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "delete", id }).then((r2) => {
+    bustReadCache(entity);
+    return bodyOf(r2).deleted === true;
+  }) : Promise.reject(NO_SESSION_ERR()),
+  deleteMany: (entity, query) => hasSession() ? invokeFleet("staffEntityWrite", { entity, op: "deleteMany", query }).then((r2) => {
+    bustReadCache(entity);
+    return bodyOf(r2).result;
+  }) : Promise.reject(NO_SESSION_ERR()),
+  // Staff sessions cannot use platform live-subscriptions (entity RLS is
+  // backend-only), so subscribe polls staffDataRead and emits a synthetic
+  // change event when the row set changes. Returns an unsubscribe function,
+  // matching the SDK contract: `unsub = entity.subscribe(cb)`.
+  subscribe: (entity, callback) => {
+    if (typeof callback !== "function") return () => {
     };
+    let stopped = false;
+    let last = "";
+    const check = async () => {
+      if (!hasSession() || isDenied(entity) || isFleetCoolingDown()) return;
+      try {
+        const r2 = await invokeFleet("staffDataRead", { entity, limit: 50, sort: "-updated_date" });
+        const rows = Array.isArray(bodyOf(r2).items) ? bodyOf(r2).items : [];
+        const stamp = rows.map((r3) => `${r3?.id}:${r3?.updated_date}`).join("|");
+        if (last && stamp !== last && !stopped) callback({ type: "update", data: null });
+        last = stamp;
+      } catch (err) {
+        if (isForbidden(err)) markDenied(entity);
+      }
+    };
+    check();
+    const timer = setInterval(check, 12e4);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }
+};
+var proxy = (name) => new Proxy({}, {
+  get(_, method) {
+    const fn = METHODS[method];
+    if (fn) return (...args) => fn(name, ...args);
+    return () => Promise.reject(new Error(`${name}.${String(method)} is not available to staff reads`));
+  }
+});
+var staffEntities = new Proxy({}, {
+  get(_, name) {
+    if (typeof name !== "string") return void 0;
+    return proxy(name);
   }
 });
 
-// src/components/masterInventory/legacyInventoryMigrator.jsx
-init_define_import_meta_env();
-
 // src/api/gatedEntities.js
-init_define_import_meta_env();
-init_staffEntities();
-init_base44Client();
 var ActivityLog = staffEntities.ActivityLog;
 var AllInOneEstimate = staffEntities.AllInOneEstimate;
 var AuthorizedEmail = staffEntities.AuthorizedEmail;
@@ -42194,7 +30498,7 @@ async function deleteBuilderEntityIfUnchanged({
   if (!id || !updatedDate || typeof entity?.deleteMany !== "function" || typeof entity?.get !== "function") {
     throw new Error(`${label} could not initialize its concurrency-safe delete.`);
   }
-  const query = { id, updated_date: updatedDate, ...guardFields };
+  const query = { ...guardFields, id, updated_date: updatedDate };
   let result;
   try {
     result = await entity.deleteMany(query);
@@ -42504,21 +30808,15 @@ function previewLegacyMigration(allInventoryRows) {
 }
 export {
   LEGACY_INVENTORY_CLEANUP_BATCH,
+  TARGET_ENTITY,
   VALID_EXTRUSION_PRODUCT_TYPES,
   VALID_MATERIAL_TYPES,
+  buildPayload,
   classifyLegacyRow,
   migrateLegacyInventoryRows,
   previewLegacyMigration
 };
 /*! Bundled license information:
-
-partysocket/dist/chunk-TPTC3KUF.mjs:
-  (*!
-   * Reconnecting WebSocket
-   * by Pedro Ladaria <pedro.ladaria@gmail.com>
-   * https://github.com/pladaria/reconnecting-websocket
-   * License MIT
-   *)
 
 react/cjs/react.development.js:
   (**
