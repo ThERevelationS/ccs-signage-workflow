@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Calculator, Cpu, DollarSign, Gauge, Save, Wrench } from "lucide-react";
+import { ArrowLeft, Calculator, Cpu, DollarSign, Gauge, RotateCcw, Save, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
+import { CNC_SETTINGS_DEFAULTS, resetValuesToDefaults } from "@/components/estimator/settings/moduleSettingDefaults";
 
 const SIZES = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
 const MATERIALS = ["Acrylic", "Wood", "MDF", "Plywood", "PVC", "HDPE", "Aluminum", "Corian"];
@@ -68,6 +69,12 @@ export default function CNCSettings() {
     return { depreciation, maintenance, power, tooling, overhead, operator, total: depreciation + maintenance + power + tooling + overhead };
   }, [values]);
 
+  // #83 â€” stage every managed key back to the calculator's documented fallback.
+  const handleResetDefaults = () => {
+    setValues((prev) => resetValuesToDefaults(prev, CNC_SETTINGS_DEFAULTS, [...KEYS]));
+    setMessage("Defaults staged â€” click Save to persist them.");
+  };
+
   const handleSave = async () => {
     if (settingsSaveRef.current) return;
     settingsSaveRef.current = true;
@@ -99,7 +106,7 @@ export default function CNCSettings() {
       <div className="max-w-[1180px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="cnc-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button onClick={handleSave} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="cnc-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button variant="outline" onClick={handleResetDefaults} disabled={saving} className="h-[32px] text-[12px] font-semibold" title="Stage calculator fallback defaults â€” Save to persist"><RotateCcw className="w-4 h-4 mr-1.5" /> Reset to defaults</Button><Button onClick={handleSave} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3 flex items-center gap-3">
