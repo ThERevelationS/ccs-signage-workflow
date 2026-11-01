@@ -24,6 +24,9 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import AddressAutocomplete from "@/components/channelLetterInstall/AddressAutocomplete";
 import EquipmentSelector from "@/components/channelLetterInstall/EquipmentSelector";
 import PersonnelSelector from "@/components/channelLetterInstall/PersonnelSelector";
@@ -61,10 +64,13 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(projectId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = projectId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
   }, [projectId]);
 
   // Workflow tab UI state
@@ -378,6 +384,71 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
     }
     setSaving(false);
   };
+
+  // #78 — clone the current save payload into a brand-new Vinyl project.
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    try {
+      const cleanWorkflows = (project.workflows || []).map(({ _calc, ...rest }) => rest);
+      const flatItems = cleanWorkflows.flatMap(wf =>
+        (wf.items || []).map(it => ({ ...it, workflow_id: wf.id, workflow_name: wf.name }))
+      );
+      const copy = await saveModuleProjectCopy({
+        entity: VinylProject,
+        payload: {
+          ...project,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          site_address: project.site_address || estimateContext?.site_address || "",
+          workflows: cleanWorkflows,
+          items: flatItems,
+          customer_pricing: project.customer_pricing,
+          status: "calculated",
+          default_vinyl_id:    cleanWorkflows[0]?.vinyl_id   || "",
+          default_laminate_id: cleanWorkflows[0]?.laminate_id || "",
+          printer_id:    cleanWorkflows[0]?.printer_id   || "",
+          cutter_id:     cleanWorkflows[0]?.cutter_id    || "",
+          laminator_id:  cleanWorkflows[0]?.laminator_id || "",
+          total_print_sqft: rollup.usedSqFt,
+          total_vinyl_sqft: rollup.totalRollSqFt,
+          total_laminate_sqft: rollup.laminateSqFt,
+          total_vinyl_cost: rollup.vinylCost,
+          total_laminate_cost: rollup.laminateCost,
+          total_ink_cost: rollup.inkCost,
+          total_blade_cost: rollup.bladeCost,
+          total_machine_cost: rollup.machineCost,
+          total_personnel_cost: rollup.personnelCost,
+          total_supplies_cost: rollup.supplies,
+          base_supplies_cost: rollup.baseSupplies,
+          labor_hours: rollup.laborHours,
+          labor_cost: rollup.laborCost,
+          subtotal: rollup.subtotal,
+          markup_amount: rollup.markupAmount,
+          total_cost: rollup.totalCost,
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "vinyl_project_copy",
+        baseName: project.project_name || "Vinyl",
+        label: "Vinyl project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/VinylEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save copy failed: " + e.message);
+    }
+    setSaving(false);
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildVinylTemplateData = (p) => ({
+    workflows: (p.workflows || []).map(({ _calc, ...rest }) => rest),
+    markup_percent: p.markup_percent,
+    supplies_percent_of_materials: p.supplies_percent_of_materials,
+    extra_supplies_cost: p.extra_supplies_cost,
+    travel_miles_round_trip: p.travel_miles_round_trip,
+    notes: p.notes,
+  });
 
   if (loading) {
     return <div className="p-12 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Loading…</div>;
@@ -718,6 +789,15 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
               onSave={save}
               isSaving={saving}
             />
+            <div className="flex flex-wrap gap-2">
+              <ModuleActionBar
+                onTemplates={() => setTemplateMode("load")}
+                onSaveAsTemplate={() => setTemplateMode("save")}
+                onSaveAsCopy={handleSaveAsCopy}
+                estimateId={estimateId}
+                saving={saving}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -747,6 +827,17 @@ export default function VinylEstimator({ embedded = false, embeddedProjectId = n
           movePart(moveContext.workflowIdx, moveContext.partIdx, toIdx);
           setMoveContext(null);
         }}
+      />
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => updateProject(data)}
+        moduleKey="vinyl"
+        title="Vinyl"
+        buildTemplateData={buildVinylTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.workflows || []).length} workflows`}
       />
     </div>
   );
