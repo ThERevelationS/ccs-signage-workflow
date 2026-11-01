@@ -102,20 +102,17 @@ Deno.serve(async (req) => {
                   if (!response.ok) throw new Error(`Stored document fetch returned HTTP ${response.status}`);
                   const blob = await readBackupBlob(response);
 
-                  const formData = new FormData();
-                  formData.append('file', blob, fileName);
-                  formData.append('parents', JSON.stringify([jurisdictionFolder.id]));
-
-                  const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: formData
+                  const uploadRes = await uploadFileToDrive(accessToken, {
+                    name: fileName,
+                    mimeType: blob.type || 'application/pdf',
+                    data: blob,
+                    parentId: jurisdictionFolder.id,
                   });
 
                   if (uploadRes.ok) {
                     filesUploaded++;
+                  } else {
+                    console.error(`Drive upload failed for ${fileName}: HTTP ${uploadRes.status}`, await uploadRes.text().catch(() => ''));
                   }
                 }
               } catch (e) {
@@ -147,20 +144,17 @@ Deno.serve(async (req) => {
             const metadataContent = JSON.stringify(metadata, null, 2);
             const metadataBlob = new Blob([metadataContent], { type: 'application/json' });
 
-            const formData = new FormData();
-            formData.append('file', metadataBlob, 'jurisdiction_metadata.json');
-            formData.append('parents', JSON.stringify([jurisdictionFolder.id]));
-
-            const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`
-              },
-              body: formData
+            const uploadRes = await uploadFileToDrive(accessToken, {
+              name: 'jurisdiction_metadata.json',
+              mimeType: 'application/json',
+              data: metadataBlob,
+              parentId: jurisdictionFolder.id,
             });
 
             if (uploadRes.ok) {
               filesUploaded++;
+            } else {
+              console.error(`Drive upload failed for metadata of ${jurisdiction.name}: HTTP ${uploadRes.status}`, await uploadRes.text().catch(() => ''));
             }
           } catch (e) {
             console.error(`Error uploading metadata for ${jurisdiction.name}:`, e);
@@ -182,6 +176,33 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Permitting Repository backup could not be completed safely' }, { status: 500 });
   }
 });
+
+// Drive's uploadType=multipart endpoint requires a multipart/related body —
+// a JSON metadata part (name/parents) followed by the media part. Plain
+// multipart/form-data with `file`/`parents` fields is not a valid upload and
+// also dropped the file name entirely, so uploads landed wrong or failed.
+async function uploadFileToDrive(accessToken, { name, mimeType, data, parentId }) {
+  const boundary = `b44_backup_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  const metadata = { name: String(name || 'backup.bin').slice(0, 300) };
+  if (parentId) metadata.parents = [parentId];
+  const head = new TextEncoder().encode(
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\n` +
+    `Content-Type: ${mimeType || 'application/octet-stream'}\r\n\r\n`
+  );
+  const tail = new TextEncoder().encode(`\r\n--${boundary}--`);
+  const body = new Blob([head, data, tail]);
+  return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': `multipart/related; boundary=${boundary}`,
+    },
+    body,
+  });
+}
 
 async function createOrGetFolder(folderName, parentId, accessToken) {
   try {
