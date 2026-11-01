@@ -51,7 +51,7 @@ async function nextPoNumber(PurchaseOrder: any) {
   return `PO-${seq}`;
 }
 
-async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, note, actor, key }: any) {
+async function applyMovement({ Inventory, Movement, item, delta, reason, workOrderId, estimateId, note, actor, key }: any) {
   const current = num(item?.quantity_on_hand);
   const next = money(current + delta);
   if (next < -0.0005) {
@@ -77,6 +77,7 @@ async function applyMovement({ Inventory, Movement, item, delta, reason, workOrd
       unit_cost: num(item?.cost_per_unit),
       resulting_qty: Math.max(0, next),
       work_order_id: workOrderId,
+      estimate_id: estimateId,
       note,
       created_by: actor,
     },
@@ -98,6 +99,8 @@ Deno.serve(async (req) => {
     const Inventory = base44.asServiceRole.entities.Inventory;
     const Movement = base44.asServiceRole.entities.InventoryMovement;
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const BuilderProduct = base44.asServiceRole.entities.BuilderProduct;
+    const BuilderPart = base44.asServiceRole.entities.BuilderPart;
     const PurchaseOrder = base44.asServiceRole.entities.PurchaseOrder;
 
     if (action === "list_stock") {
@@ -292,6 +295,62 @@ Deno.serve(async (req) => {
         item_id: clean(item.id),
         deleted: saved?.deleted === true,
         updated_date: clean(saved?.updated_date),
+      });
+    }
+
+
+    if (action === "reserve_for_estimate") {
+      const estimateId = clean(body?.estimate_id);
+      if (!estimateId) throw bad("An estimate_id is required.");
+      const baseKey = clean(body?.creation_request_key) || `reserve:${estimateId}`;
+      const products = await BuilderProduct.filter({ estimate_id: estimateId }, undefined, 50).catch(() => []);
+      const productIds = (Array.isArray(products) ? products : []).map((p: any) => clean(p?.id)).filter(Boolean);
+      const parts: any[] = [];
+      for (const pid of productIds) {
+        const rows = await BuilderPart.filter({ builder_product_id: pid }, undefined, 100).catch(() => []);
+        if (Array.isArray(rows)) parts.push(...rows);
+        if (parts.length > 300) break;
+      }
+      const reservable = parts.filter((p: any) =>
+        clean(p?.inventory_entity) === "Inventory" &&
+        !!clean(p?.inventory_item_id) &&
+        clean(p?.inventory_link_state) !== "detached" &&
+        num(p?.quantity, 0) > 0);
+      const reserved: any[] = [];
+      const skipped: any[] = [];
+      for (const part of reservable.slice(0, 200)) {
+        const itemId = clean(part?.inventory_item_id);
+        const partKey = `${baseKey}:${clean(part?.id)}`;
+        const existing = await Movement.filter({ creation_request_key: partKey }).catch(() => []);
+        if (Array.isArray(existing) && existing.length) {
+          skipped.push({ part_id: clean(part?.id), item_id: itemId, reason: "already_reserved" });
+          continue;
+        }
+        const item = await Inventory.get(itemId).catch(() => null);
+        if (!item?.id || item?.legacy_compatibility === true || item?.deleted === true) {
+          skipped.push({ part_id: clean(part?.id), item_id: itemId, reason: "item_missing" });
+          continue;
+        }
+        const qty = num(part?.quantity, 0);
+        try {
+          const result = await applyMovement({
+            Inventory, Movement, item, delta: -qty, reason: "reserve",
+            workOrderId: "", estimateId,
+            note: `Reserved for estimate ${estimateId}`, actor, key: partKey,
+          });
+          reserved.push({ part_id: clean(part?.id), item_id: itemId, quantity: qty, movement_id: clean(result?.movement?.id) });
+        } catch (error: any) {
+          skipped.push({ part_id: clean(part?.id), item_id: itemId, reason: error?.message || "reserve_failed" });
+        }
+      }
+      return Response.json({
+        success: true,
+        action,
+        estimate_id: estimateId,
+        reserved_count: reserved.length,
+        skipped_count: skipped.length,
+        reserved,
+        skipped,
       });
     }
 
