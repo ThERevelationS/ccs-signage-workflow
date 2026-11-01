@@ -5,14 +5,31 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import CustomerSearchDialog from "./CustomerSearchDialog";
 import NewCustomerDialog from "./NewCustomerDialog";
 
-const Row = ({ label, hint, children }) => (
-  <div className="flex items-center gap-2 mb-2">
-    <label className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
-      {label}: {hint && <span className="text-blue-500">ⓘ</span>}
-    </label>
-    <div className="flex-1 flex items-center gap-1">{children}</div>
-  </div>
-);
+const Row = ({ label, hint, children }) => {
+  const labelId = React.useId();
+  let labelled = false;
+  const controls = React.Children.map(children, (child) => {
+    if (
+      !labelled &&
+      React.isValidElement(child) &&
+      ["input", "select", "textarea"].includes(child.type) &&
+      !child.props["aria-label"] &&
+      !child.props["aria-labelledby"]
+    ) {
+      labelled = true;
+      return React.cloneElement(child, { "aria-labelledby": labelId });
+    }
+    return child;
+  });
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span id={labelId} className="w-36 text-right text-xs text-slate-700 flex-shrink-0">
+        {label}: {hint && <span className="text-blue-500" aria-hidden="true">ⓘ</span>}
+      </span>
+      <div className="flex-1 flex items-center gap-1">{controls}</div>
+    </div>
+  );
+};
 
 const inputCls =
   "w-full h-8 px-2 border border-slate-300 bg-white rounded-sm text-sm focus:outline-none focus:border-lime-500";
@@ -246,18 +263,20 @@ export default function Step1EstimateDetails({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
+            aria-label="Search customers"
             title="Search customers"
             className="flex-shrink-0 text-lime-600 hover:text-lime-700"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => setNewOpen(true)}
+            aria-label="New customer"
             title="New customer"
             className="flex-shrink-0 text-lime-600 hover:text-lime-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
           </button>
           {linkedCustomer?.credit_hold === true && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 border border-red-200">
@@ -282,7 +301,7 @@ export default function Step1EstimateDetails({
           <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px]" aria-label="Recent customers">
             <span className="mr-1 text-slate-500">Recent:</span>
             {recentCustomers.map((customer) => (
-              <button type="button"
+              <button
                 key={customer.id}
                 type="button"
                 onClick={() => applyCustomer(customer)}
@@ -338,7 +357,7 @@ export default function Step1EstimateDetails({
             disabled={generating}
             className="h-[26px] px-2 border border-gray-300 rounded-sm text-[12px] flex items-center gap-1 whitespace-nowrap hover:bg-gray-50 disabled:opacity-60"
           >
-            <Sparkles className="w-3 h-3" /> Generate
+            <Sparkles className="w-3 h-3" aria-hidden="true" /> Generate
           </button>
         </Row>
       </div>
@@ -389,6 +408,7 @@ export default function Step1EstimateDetails({
             />
             <span className="text-[11px] text-gray-500">Ext.</span>
             <input
+              aria-label="Phone extension"
               value={form.office_phone_ext}
               onChange={(e) => patch({ office_phone_ext: e.target.value })}
               className="w-[52px] h-[26px] px-2 border border-gray-300 rounded-sm text-[12px]"
@@ -405,6 +425,7 @@ export default function Step1EstimateDetails({
               <select
                 value=""
                 onChange={(e) => applySavedLocation(e.target.value)}
+                aria-label="Fill site address from a saved customer location"
                 title="Fill site address from a saved customer location"
                 className={pickerCls}
               >
