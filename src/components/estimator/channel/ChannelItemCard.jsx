@@ -27,7 +27,7 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
           }}
           className="text-gray-400 hover:text-red-600 p-2"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -139,7 +139,7 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
               }}
               className="text-gray-400 hover:text-red-600"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         ))}
@@ -148,7 +148,7 @@ export default function ChannelItemCard({ item, index, materials, onChange, onRe
           size="sm"
           onClick={() => set({ materials: [...(item.materials || []), {}] })}
         >
-          <Plus className="w-4 h-4" /> Material
+          <Plus className="w-4 h-4" aria-hidden="true" /> Material
         </Button>
       </div>
 
