@@ -156,7 +156,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       researchData = { permitting_url: jurisdiction.permitting_url, documents: [] };
     } else {
       await reporter.emit({kind:'search',detail:`Researching ${jurisdiction.name}, ${jurisdiction.state}: official permitting/zoning pages, sign rules, applications, fees, portals and contacts. Internal AI web queries are not exposed.`},{stage:'AI research',indeterminate:true});
-      const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+      const agentResult = await base44.asServiceRole.functions.invoke('jurisdiction_research', {
         jurisdictionName: jurisdiction.name,
         jurisdictionState: jurisdiction.state,
         jurisdictionType: jurisdiction.type,
