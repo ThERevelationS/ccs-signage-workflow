@@ -25,7 +25,8 @@ import {
   createFaceScanSession,
   loadFaceModelsOnce,
 } from '@/components/timeclock/faceScanRuntime';
-import { Html5Qrcode } from "html5-qrcode";
+// html5-qrcode (~300KB) loads on demand when QR mode is picked — most
+// clock-ins use face or PIN, so it isn't fetched at page load.
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -797,7 +798,7 @@ export default function QuickClockSection({
       const schedStart = data.todays_schedule?.scheduled_start || data.todays_schedule?.start_time || "";
       const early = schedStart ? (() => { const [sh, sm] = String(schedStart).split(":").map(Number); const sMin = sh * 60 + (sm || 0); const pMin = clockInAt.getHours() * 60 + clockInAt.getMinutes(); return sMin - pMin > 20 ? Math.round(sMin - pMin) : 0; })() : 0;
       setRecognitionStatus(
-        `Clocked in at ${format(clockInAt, "h:mm a")} ??? lunch reminder ~${format(lunchEta, "h:mm a")}.` +
+        `Clocked in at ${format(clockInAt, "h:mm a")} — lunch reminder ~${format(lunchEta, "h:mm a")}.` +
         (early ? ` (${early}m ahead of your ${schedStart} schedule)` : "")
       );
       setClockOutDismissed(data.entry?.id, true);
@@ -1046,6 +1047,7 @@ export default function QuickClockSection({
   };
 
   const startQrScannerWithFacingMode = async (facingMode) => {
+    const { Html5Qrcode } = await import("html5-qrcode");
     const scanner = new Html5Qrcode("hybrid-qr-reader");
     qrScannerRef.current = scanner;
     await scanner.start(
