@@ -119,3 +119,17 @@ Suites green: estimate-cas(10) entity-persistence(16) customer-persistence(7) es
 - #201 EstimateRevisionPanel before/after comparison grid.
 - #205 revertEstimateToRevision: CAS revert of estimate_snapshot_before + revision_type "revert" (enum added to EstimateRevision.jsonc; panel Revert to #N on completed revisions).
 - opportunityWorkspaceAction DEPLOYED. validate-opportunity-workspace + test-estimate-lifecycle PASS.
+
+## Backlog sweep — Phase B batch 3 (modules/inventory/pricing §4–6) DONE — 10 items
+
+- #78 Save As Copy: shared moduleShared/moduleProjectActions.js + ModuleActionBar across all 8 modules (Vinyl/CNC/Laser/Metal/BrickStone/Maintenance/Painting/ChannelLetter) — clones real save payload, strips ids, fresh creation_request_key.
+- #79 Save-as-template: moduleTemplateService.js + ModuleTemplateDialog keyed by module_key on shared ProjectTemplate entity.
+- #83 Reset-to-defaults: settings/moduleSettingDefaults.js per-module fallback maps; Reset buttons on 6 settings pages via saveSettingsRowsSafely.
+- #88 Module share read-only: customerPortalAction create_link kind staff_view controls; staff_view read-only render already existed.
+- #77 Foundation→BrickStone: foundation/convertToBrickStone.js + toolbar button — fresh draft w/ mappable dims, source untouched.
+- #92 Laser DXF/SVG: verified already present (SVG viewBox + DXF EXTMIN/EXTMAX/INSUNITS auto-fill).
+- #104 Reservation ledger: inventoryAction reserve_for_estimate — one InventoryMovement (reason reserve, estimate_id, per-part idempotency keys) per inventory-linked BuilderPart; invoked after durable approval in EstimateDetail; schema additive; DEPLOYED.
+- #118 Kits/bundles: Inventory.is_kit/kit_items/kit_price; products/kitService.js expands kits into BuilderParts (kit_price → manual adjustment part); KITS section in AddProductGrid.
+- #127 MarkupTier admin: pricing/MarkupTierPanel.jsx in PricingAdmin — CRUD, per-category markups, JSON import/export w/ CAS.
+- #145 Re-apply tier: per-tier re-apply to ≤25 draft estimates via replaceEntityFieldsIfUnchanged (updated_date + status CAS), price_recalc_required flag, applied/skipped report.
+- inventoryAction DEPLOYED; 27/27 touched files compile.
