@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Loader2, Link as LinkIcon } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand inside the export handler — not at page load.
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
@@ -320,6 +320,7 @@ const FinancialsSpreadsheet = React.forwardRef(({
     });
     exportData.push(totalsRow);
 
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Financials");
