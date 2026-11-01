@@ -8,6 +8,7 @@ import { MATERIAL_TYPES, typeLabel } from "@/components/masterInventory/foundati
 import FoundationMaterialDialog from "@/components/masterInventory/FoundationMaterialDialog";
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function FoundationCatalog() {
@@ -77,7 +78,7 @@ export default function FoundationCatalog() {
       await deleteEntityIfUnchanged({
         entity: staffEntities.FoundationInventory,
         record: live,
-        label: `Foundation Catalog item “${live.material_name || row.material_name || "Material"}”`,
+        label: `Foundation Catalog item "${live.material_name || row.material_name || "Material"}"`,
       });
       await load();
     } catch (error) {
@@ -94,12 +95,13 @@ export default function FoundationCatalog() {
       <div className="max-w-5xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
           <Link to="/Estimator" className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-600">
-            <ArrowLeft className="w-4 h-4" /> Estimator
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Estimator
           </Link>
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
             <Input
               placeholder="Search name, description, supplier…"
+              aria-label="Search catalog materials"
               value={search}
               onChange={(e) => { const v = e.target.value; setSearch(v); writeParam("q", v); }}
               className="pl-9 h-9"
@@ -113,7 +115,7 @@ export default function FoundationCatalog() {
             }}
             className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
           >
-            <Plus className="w-4 h-4" /> New Material
+            <Plus className="w-4 h-4" aria-hidden="true" /> New Material
           </Button>
         </div>
 
@@ -122,10 +124,21 @@ export default function FoundationCatalog() {
           Materials, poles, walls and equipment used by the Concrete | Masonry | Poles estimator.
         </p>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4" role="tablist" aria-label="Material type filter"
+          onKeyDown={(e) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+            const tabs = [...e.currentTarget.querySelectorAll('button[role="tab"]')];
+            const i = tabs.indexOf(document.activeElement);
+            if (i < 0) return;
+            e.preventDefault();
+            const next = e.key === "Home" ? tabs[0] : e.key === "End" ? tabs[tabs.length - 1] : tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+            next?.focus();
+          }}>
           {MATERIAL_TYPES.map((t) => (
             <button type="button"
               key={t.value}
+              role="tab"
+              aria-selected={activeType === t.value}
               onClick={() => { const v = t.value; setActiveType(v); writeParam("type", v, "concrete_service"); }}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border ${
                 activeType === t.value
@@ -139,9 +152,9 @@ export default function FoundationCatalog() {
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-gray-400">Loading catalog…</div>
+          <ListSkeleton rows={6} />
         ) : loadError ? (
-          <div className="py-8 text-center bg-red-50 rounded-xl border border-red-200 text-red-700">
+          <div role="alert" className="py-8 text-center bg-red-50 rounded-xl border border-red-200 text-red-700">
             <div className="font-semibold">Foundation Catalog could not be verified.</div>
             <div className="text-xs mt-1">{loadError}</div>
             <Button variant="outline" size="sm" className="mt-3" onClick={load}>Retry</Button>
@@ -176,12 +189,14 @@ export default function FoundationCatalog() {
                       setEditing(row);
                       setDialogOpen(true);
                     }}
-                    className="text-gray-400 hover:text-red-600"
+                    title={`Edit ${row.material_name || "material"}`}
+                    aria-label={`Edit ${row.material_name || "material"}`}
+                    className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-red-600"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-4 h-4" aria-hidden="true" />
                   </button>
-                  <button type="button" onClick={() => handleDelete(row)} className="text-gray-400 hover:text-red-600">
-                    <Trash2 className="w-4 h-4" />
+                  <button type="button" onClick={() => handleDelete(row)} title={`Delete ${row.material_name || "material"}`} aria-label={`Delete ${row.material_name || "material"}`} className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-gray-400 hover:text-red-600">
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
               </div>
