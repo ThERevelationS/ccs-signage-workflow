@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
@@ -178,7 +179,7 @@ async function readWipBytes(response) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     if (actor?.role !== 'admin') {
