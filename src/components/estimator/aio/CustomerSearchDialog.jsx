@@ -111,11 +111,12 @@ export default function CustomerSearchDialog({ open, onClose, customers = [], on
         </DialogHeader>
 
         <div className="relative">
-          <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" aria-hidden="true" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search customers"
             placeholder="Search by company, contact, email, phone or city…"
             className="w-full h-[32px] pl-8 pr-2 border border-gray-300 rounded-sm text-[13px] focus:outline-none focus:border-red-400"
           />
