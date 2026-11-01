@@ -1,8 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { useWorkspacePreferences } from "@/components/layout/WorkspacePreferencesProvider";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
@@ -19,7 +20,13 @@ import {
   PageHeader,
   filterInputCls,
 } from "@/components/kit";
-import { BarChart3, Download, RefreshCw } from "lucide-react";
+import { BarChart3, Bookmark, Download, RefreshCw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DEFAULT_QUEUE_FILTERS,
   filterQueueRows,
@@ -28,6 +35,7 @@ import {
 } from "@/components/queues/productQueueModel";
 import { OPS_REPORTS, OPS_REPORT_GROUPS, OPS_REPORT_MAP, SALES_DATE_BASES } from "./opsReportModel";
 import { CcsDateField } from "@/components/ui/ccs-date-field";
+import { Input } from "@/components/ui/input";
 
 const clean = (v) => String(v ?? "").trim();
 const norm = (v) => clean(v).toLowerCase();
@@ -45,12 +53,38 @@ const RANGE_LABELS = { dueRange: "Due", createdRange: "Created", issueRange: "Is
 
 // Session-gated datasets: these reads carry the staff session token to a
 // function, so they cannot resolve (or even start) without a session.
-const SESSION_GATED = new Set(["invoices", "payments", "purchaseOrders"]);
+const SESSION_GATED = new Set(["invoices", "payments", "purchaseOrders", "estimateFunnel"]);
 
 // Open purchase orders whose line detail the Parts Needed report will fetch.
 // list_purchase_orders returns header snapshots only — line_items ship on
 // get_purchase_order — so each open PO costs one invoke.
 const OPEN_PO_DETAIL_CAP = 60;
+
+// Saved report views (#286): named report+filter snapshots persisted in the
+// per-user workspace prefs blob (UserWorkspacePreferences.preferences via
+// workspacePrefsAction — private to the signed-in user, synced across their
+// sessions). A view captures the report key and the full filter state so it
+// works across reports, not just within one.
+const SAVED_VIEWS_PATH = "opsReports.savedViews";
+const SAVED_VIEWS_CAP = 30;
+const VIEW_FILTER_KEYS = ["from", "to", "salesperson", "location", "responsibility", "assignedTo", "designer", "dateBasis"];
+
+// Filter state → stored view filters. Every key lands in a fixed order with
+// defaults filled so identical states serialize identically (needed for the
+// "which saved view is applied" match).
+const serializeViewFilters = (f = {}) => {
+  const out = {};
+  for (const key of VIEW_FILTER_KEYS) {
+    out[key] = clean(f[key]) || DEFAULT_FILTERS[key] || "";
+  }
+  return out;
+};
+
+const canonicalView = (reportKey, filters) =>
+  JSON.stringify({ reportKey: clean(reportKey), filters: serializeViewFilters(filters) });
+
+const sortSavedViews = (views = []) =>
+  [...(views || [])].sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || "")));
 
 // Filter controls share the kit's filterInputCls vocabulary (FilterBar and
 // its FilterField/FilterSelect children carry the same styles).
@@ -153,11 +187,24 @@ function ReportFilterSelect({ label, value, onChange, options }) {
 
 export default function OpsReportView({ reportKey, onSelect }) {
   const { sessionToken } = useAuth();
+  const { prefs, updatePrefs } = useWorkspacePreferences();
   const def = OPS_REPORT_MAP[reportKey] || OPS_REPORTS[0];
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [glNote, setGlNote] = useState("");
   const [glBusy, setGlBusy] = useState(false);
-  useEffect(() => { setFilters(DEFAULT_FILTERS); setGlNote(""); }, [reportKey]);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewName, setViewName] = useState("");
+  const [viewNote, setViewNote] = useState("");
+  // When a saved view switches reports, the new report's filter state must
+  // land AFTER the reportKey-change reset — stash it here and the effect
+  // applies it instead of defaults on the next render pass.
+  const pendingViewFiltersRef = useRef(null);
+  useEffect(() => {
+    const pending = pendingViewFiltersRef.current;
+    pendingViewFiltersRef.current = null;
+    setFilters(pending ? { ...DEFAULT_FILTERS, ...pending } : DEFAULT_FILTERS);
+    setGlNote("");
+  }, [reportKey]);
   const set = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
 
   const { data: workOrders = [], isLoading: woLoading, error: woError, refetch: refetchWos } = useAllWorkOrders();
@@ -279,6 +326,26 @@ export default function OpsReportView({ reportKey, onSelect }) {
     staleTime: 120000,
   });
 
+  // Estimate funnel payload (opportunityWorkspaceAction.list_opportunities)
+  // — server-side aggregates the staff tier cannot read directly, e.g. the
+  // per-estimate portal engagement rollup behind the Portal Engagement
+  // report. One invoke, shared across every report needing it.
+  const estimateFunnelQuery = useQuery({
+    queryKey: ["opsReports", "estimateFunnel", sessionToken],
+    queryFn: async () => {
+      const res = await base44.functions.invoke("opportunityWorkspaceAction", {
+        session_token: sessionToken,
+        action: "list_opportunities",
+        limit: 1,
+      });
+      const data = res?.data || res;
+      if (!data?.success) throw new Error(data?.error || "Estimate funnel data could not be verified completely.");
+      return data?.funnel?.estimate_funnel || null;
+    },
+    enabled: needSet.has("estimateFunnel") && Boolean(sessionToken),
+    staleTime: 120000,
+  });
+
   const queryByNeed = {
     workOrders: { isLoading: woLoading, error: woError, refetch: refetchWos },
     estimates: estimatesQuery,
@@ -288,6 +355,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
     builderProducts: builderProductsQuery,
     inventoryItems: inventoryQuery,
     purchaseOrders: purchaseOrdersQuery,
+    estimateFunnel: estimateFunnelQuery,
   };
   const dataByNeed = {
     workOrders,
@@ -299,6 +367,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
     inventoryItems: inventoryQuery.data || [],
     purchaseOrders: purchaseOrdersQuery.data?.open || [],
     purchaseOrderHeaders: purchaseOrdersQuery.data?.headers || [],
+    estimateFunnel: estimateFunnelQuery.data || null,
   };
 
   const needed = [...needSet];
@@ -393,6 +462,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
       inventoryItems: dataByNeed.inventoryItems,
       purchaseOrders: dataByNeed.purchaseOrders,
       purchaseOrderHeaders: dataByNeed.purchaseOrderHeaders,
+      estimateFunnel: dataByNeed.estimateFunnel,
       dateBasis: filters.dateBasis,
       now: new Date(),
     });
@@ -401,7 +471,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
     def, workOrders, filters, needSet,
     estimatesQuery.data, invoicesQuery.data, paymentsQuery.data,
     builderPartsQuery.data, builderProductsQuery.data,
-    inventoryQuery.data, purchaseOrdersQuery.data,
+    inventoryQuery.data, purchaseOrdersQuery.data, estimateFunnelQuery.data,
   ]);
 
   const exportCsv = () => {
@@ -432,6 +502,64 @@ export default function OpsReportView({ reportKey, onSelect }) {
     } finally {
       setGlBusy(false);
     }
+  };
+
+  // --- saved report views (#286) ---------------------------------------------------
+  // Per-user named report+filter snapshots in the workspace prefs blob —
+  // private, synced across the user's sessions via workspacePrefsAction.
+  const savedViews = useMemo(
+    () => sortSavedViews(Array.isArray(prefs?.opsReports?.savedViews) ? prefs.opsReports.savedViews : []),
+    [prefs],
+  );
+  const appliedView = useMemo(
+    () => savedViews.find((v) => canonicalView(v?.reportKey, v?.filters) === canonicalView(def.key, filters)) || null,
+    [savedViews, def.key, filters],
+  );
+  const writeSavedViews = (next) => updatePrefs(SAVED_VIEWS_PATH, (next || []).slice(-SAVED_VIEWS_CAP));
+
+  const applyView = (view) => {
+    const target = OPS_REPORT_MAP[view?.reportKey] ? view.reportKey : def.key;
+    const next = { ...DEFAULT_FILTERS, ...(view?.filters || {}) };
+    if (target !== def.key) {
+      // The reportKey-change reset effect consumes pendingViewFiltersRef.
+      pendingViewFiltersRef.current = next;
+      onSelect(target);
+    } else {
+      setFilters(next);
+    }
+  };
+
+  const confirmSaveView = () => {
+    const name = clean(viewName).slice(0, 80);
+    if (!name) return;
+    const existing = savedViews.find((v) => clean(v?.name).toLowerCase() === name.toLowerCase());
+    const view = {
+      id: existing?.id || `view-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      name,
+      reportKey: def.key,
+      filters: serializeViewFilters(filters),
+      saved_at: new Date().toISOString(),
+    };
+    writeSavedViews([...savedViews.filter((v) => v.id !== existing?.id), view]);
+    setViewDialogOpen(false);
+    setViewName("");
+    setViewNote(`Saved view "${name}"${existing ? " (overwritten)" : ""}.`);
+  };
+
+  const removeView = (view) => {
+    if (!view?.id) return;
+    writeSavedViews(savedViews.filter((v) => v.id !== view.id));
+    setViewNote(`Deleted saved view "${view.name}".`);
+  };
+
+  const onViewAction = (e) => {
+    const value = e.target.value;
+    e.target.value = "";
+    if (!value) return;
+    if (value === "__save__") { setViewName(""); setViewDialogOpen(true); return; }
+    if (value === "__delete__") { removeView(appliedView); return; }
+    const view = savedViews.find((v) => v.id === value);
+    if (view) applyView(view);
   };
 
   const has = (f) => def.filters.includes(f);
@@ -513,8 +641,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
             <p className="mb-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">{glNote}</p>
           )}
 
-          {/* Filters */}
-          {def.filters.length > 0 && (
+          {/* Filters + saved views */}
           <FilterBar
             className="items-end bg-white dark:bg-slate-900"
             actions={filtersActive ? (
@@ -523,6 +650,18 @@ export default function OpsReportView({ reportKey, onSelect }) {
               </button>
             ) : null}
           >
+            <FilterField label="Saved Views">
+              <FilterSelect value="" onChange={onViewAction} title="Named report + filter snapshots saved to your workspace preferences">
+                <option value="">{appliedView ? `✓ ${appliedView.name}` : "Saved views…"}</option>
+                {savedViews.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}{v.reportKey !== def.key ? ` → ${OPS_REPORT_MAP[v.reportKey]?.title || v.reportKey}` : ""}
+                  </option>
+                ))}
+                <option value="__save__">+ Save current report &amp; filters…</option>
+                {appliedView && <option value="__delete__">Delete “{appliedView.name}”</option>}
+              </FilterSelect>
+            </FilterField>
             {rangeKey && (
               <>
                 <FilterField label={`${rangeLabel} From`}>
@@ -558,6 +697,9 @@ export default function OpsReportView({ reportKey, onSelect }) {
               </FilterField>
             )}
           </FilterBar>
+
+          {viewNote && (
+            <p className="mb-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">{viewNote}</p>
           )}
 
           {def.notes && (
@@ -579,6 +721,47 @@ export default function OpsReportView({ reportKey, onSelect }) {
           )}
         </div>
       </main>
+
+      {/* Save current report + filters as a named view */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <Bookmark className="h-4 w-4 text-violet-600" /> Save Report View
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Saves <b>{def.title}</b> with the current filters to your workspace preferences — apply it any time from the Saved Views dropdown. Reusing a name overwrites that view.
+            </p>
+            <Input
+              autoFocus
+              value={viewName}
+              onChange={(e) => setViewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmSaveView(); }}
+              placeholder="View name (e.g. Q4 receivables)"
+              maxLength={80}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setViewDialogOpen(false)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSaveView}
+                disabled={!clean(viewName)}
+                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                Save View
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
