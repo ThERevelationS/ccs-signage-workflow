@@ -1,1 +1,30 @@
-IyBCYWNrbG9nIE1hc3RlcnBsYW4g4oCUIDIyNiBvcGVuIGl0ZW1zCgpXb3JraW5nIGxlZGdlciBmb3IgdGhlIHVuYXR0ZW5kZWQgYmFja2xvZyBzd2VlcC4gU291cmNlIG9mIHRydXRoIGZvciBpdGVtIHN0YXR1cyBpcyBgRVNUSU1BVE9SX0JBQ0tMT0cubWRgIChbRE9ORV0gbWFya3MpOyB0aGlzIGRvYyBpcyB0aGUgZXhlY3V0aW9uIHBsYW4gKyBwZXItcGhhc2UgbGVkZ2VyLgoKIyMgUnVsZXMgZm9yIGV2ZXJ5IGFnZW50CgoxLiAqKlJlLXZlcmlmeSBlYWNoIGl0ZW0gYWdhaW5zdCBjdXJyZW50IHJlbW90ZSBjb2RlIGJlZm9yZSBpbXBsZW1lbnRpbmcqKiDigJQgYW5ub3RhdGlvbnMgbWF5IGJlIHN0YWxlLiBJZiBhbiBpdGVtIGlzIGFscmVhZHkgc2F0aXNmaWVkLCByZXBvcnQgaXQgImFscmVhZHktZG9uZSI7IGlmIGluZmVhc2libGUsIHJlcG9ydCAiYmxvY2tlZDogPHJlYXNvbj4iIOKAlCBuZXZlciBmYWtlIGEgZml4LgoyLiAqKlB1bGwgcmVtb3RlIGJlZm9yZSBlZGl0aW5nKiogKGBucHggYmFzZTQ0QGxhdGVzdCBzYW5kYm94IHJlYWRgKTsgdGhlIHNhbmRib3ggaXMgc291cmNlIG9mIHRydXRoLiBWZXJpZnkgdGltZWQtb3V0IHdyaXRlcyBsYW5kZWQgYmVmb3JlIHJldHJ5aW5nLgozLiAqKkRvIG5vdCBlZGl0IGBFU1RJTUFUT1JfQkFDS0xPRy5tZGAgb3IgYElOVEVHUkFUSU9OX1BST0dSRVNTLm1kYCoqIOKAlCB0aGUgcGFyZW50IG1hcmtzIGl0ZW1zIGFmdGVyIHlvdXIgcmVwb3J0Lgo0LiBgZXNidWlsZGAgY29tcGlsZSBldmVyeSB0b3VjaGVkIGZpbGU7IHJ1biB0aGUgbGlzdGVkIGNvbnRyYWN0IHN1aXRlczsgcmVwb3J0IHBlci1pdGVtIHN0YXR1cy4KNS4gSG9uZXN0IGRlZ3JhZGF0aW9uIGZvciBleHRlcm5hbCBkZXBzIChTTVRQIGVudiwgcHVibGlzaCwgd2ViaG9va3MpIOKAlCBjb2RlLWNvbXBsZXRlIHdpdGggZXhwbGljaXQgZmFsbGJhY2ssIG5vdGUgYXMgImRlZ3JhZGVkIi4KNi4gTm8gc2l0ZSBwdWJsaXNoLiBGdW5jdGlvbiBkZXBsb3lzIGhhcHBlbiBwYXJlbnQtc2lkZS4KCiMjIFBoYXNlIGxlZGdlciAocGFyZW50IHVwZGF0ZXMgc3RhdHVzKQoKfCBQaGFzZSB8IFNjb3BlIHwgSXRlbXMgfCBTdGF0dXMgfAp8LS0tfC0tLXwtLS18LS0tfAp8IEEgfCDCpzE1IERhdGEgSW50ZWdyaXR5ICYgQ29uY3VycmVuY3kgfCAjMzUx4oCTMzc1ICgyNSkgfCB8CnwgQiB8IMKnNOKAkzExIGZlYXR1cmUgY29tcGxldGlvbnMgKyBzdGFuZGFsb25lIHwgIzc3LDc4LDc5LDgzLDg4LDkyLDEwNCwxMTgsMTI3LDE0NSwxNjcsMTcwLDE3NCwxODAsMTg1LDE5MiwyMDEsMjA1LDI0MiwyNDQsMjQ2LDI1MSwyNTUsMjU3LDI2MiwyNzEgKyByZW9yZGVyL2RyaXZlL21hcC9qb2ItbXNncyB8IHwKfCBDIHwgwqcxNCBOb3RpZmljYXRpb25zICYgQWxlcnRzIHwgIzMyNuKAkzM1MCAoMjUpIHwgfAp8IEQgfCDCpzEyIFJlcG9ydGluZyAmIERhc2hib2FyZHMgfCAjMjc34oCTMzAwICgxMSkgfCB8CnwgRSB8IMKnMTMgU2VhcmNoL0RlZXAtbGlua3MvU2F2ZWQgdmlld3MgfCAjMzAx4oCTMzI1ICgxNCkgfCB8CnwgRiB8IMKnMTkgSW1wb3J0L0V4cG9ydCAmIE1pZ3JhdGlvbiB8ICM0NTHigJM0NzUgKDI1KSB8IHwKfCBHIHwgwqcyMCBBZG1pbi9TZXR0aW5ncy9NaXNjIHwgIzQ3NuKAkzUwMCAoMjUpIHwgfAp8IEggfCDCpzE3IFBlcmZvcm1hbmNlICYgUmF0ZS1MaW1pdCB8ICM0MDHigJM0MjUgKDI1KSB8IHwKfCBJIHwgwqcxOCBBY2Nlc3NpYmlsaXR5ICYgVVggfCAjNDI24oCTNDUwICgyNSkgfCB8CnwgSiB8IMKnMTYgVGVzdCBDb3ZlcmFnZSB8ICMzNzbigJM0MDAgKDI1KSB8IHwKfCBLIHwgRmluYWwgc3dlZXAgKyB2ZXJpZmljYXRpb24gfCBzdHJhZ2dsZXJzIHwgfAoKUGhhc2Ugb3JkZXIgcmF0aW9uYWxlOiBjb3JyZWN0bmVzcy9oYXJkZW5pbmcgZmlyc3Q7IGJpZyBmZWF0dXJlIHN1cmZhY2VzIG1pZGRsZTsgc3dlZXBzIChwZXJmL2ExMXkpIGFmdGVyIGNodXJuIHNldHRsZXM7IHRlc3RzIGxhc3Qgc28gdGhleSBjb3ZlciBmaW5hbCBjb2RlLgo=
+# Backlog Masterplan — 226 open items
+
+Working ledger for the unattended backlog sweep. Source of truth for item status is `ESTIMATOR_BACKLOG.md` ([DONE] marks); this doc is the execution plan + per-phase ledger.
+
+## Rules for every agent
+
+1. **Re-verify each item against current remote code before implementing** — annotations may be stale. If an item is already satisfied, report it "already-done"; if infeasible, report "blocked: <reason>" — never fake a fix.
+2. **Pull remote before editing** (`npx base44@latest sandbox read`); the sandbox is source of truth. Verify timed-out writes landed before retrying.
+3. **Do not edit `ESTIMATOR_BACKLOG.md` or `INTEGRATION_PROGRESS.md`** — the parent marks items after your report.
+4. `esbuild` compile every touched file; run the listed contract suites; report per-item status.
+5. Honest degradation for external deps (SMTP env, publish, webhooks) — code-complete with explicit fallback, note as "degraded".
+6. No site publish. Function deploys happen parent-side.
+
+## Phase ledger (parent updates status)
+
+| Phase | Scope | Items | Status |
+|---|---|---|---|
+| A | §15 Data Integrity & Concurrency | #351–375 (25) | |
+| B | §4–11 feature completions + standalone | #77,78,79,83,88,92,104,118,127,145,167,170,174,180,185,192,201,205,242,244,246,251,255,257,262,271 + reorder/drive/map/job-msgs | |
+| C | §14 Notifications & Alerts | #326–350 (25) | |
+| D | §12 Reporting & Dashboards | #277–300 (11) | |
+| E | §13 Search/Deep-links/Saved views | #301–325 (14) | |
+| F | §19 Import/Export & Migration | #451–475 (25) | |
+| G | §20 Admin/Settings/Misc | #476–500 (25) | |
+| H | §17 Performance & Rate-Limit | #401–425 (25) | |
+| I | §18 Accessibility & UX | #426–450 (25) | |
+| J | §16 Test Coverage | #376–400 (25) | |
+| K | Final sweep + verification | stragglers | |
+
+Phase order rationale: correctness/hardening first; big feature surfaces middle; sweeps (perf/a11y) after churn settles; tests last so they cover final code.
