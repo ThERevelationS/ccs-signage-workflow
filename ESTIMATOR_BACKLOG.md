@@ -353,7 +353,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 309. **[F][DONE]** Search in `AddProductGrid` — verified: grid search input seeds from `?q=` (AddProductGrid ~line 110, URLSearchParams read at state init)
 310. **[B][DONE]** `?q=` write-back added — the page's only param filter is `?q=` (status/sort aren't UI features here); a replaceState effect now keeps `?q=` in sync on every change
 311. **[F][DONE]** `?open=<product_id>` deep-link on EstimateProductsList — matches project_id/id/line_id/builder_product_id/product_id, unhides the row (clears search+module filter if needed), scrollIntoView + ring flash (EstimateProductsList ~line 72)
-312. **[F]** `?version=<n>` deep-link on EstimateDetail (open specific revision)
+312. **[F][DONE]** ?version=<n> deep-link on EstimateDetail — EstimateRevisionPanel reads ?version= (wantVersion), selects that revision for the before/after diff and expands its SnapshotDiffToggle inline on the history row
 313. **[F][DONE]** Recent-searches dropdown on list pages — last-5 per user in localStorage `ccs.<surface>.<email>.recent_searches` via readRecentSearches/pushRecentSearch (deepLinks.js); dropdown under the search input on EstimatorQueues + Estimator + Estimating (commits on Enter/blur, applies on click)
 314. **[H][DONE]** Verified — `FoundationCatalog` writes both `q` and `type` via `writeParam` on change (~lines 97, 122)
 315. **[F][DONE]** `?module=<key>` pre-select on EstimatorTools — page is a link hub with no chooser, so a registry-matched `?module=` forwards to `/<ModulePage>?module=<key>` (replace nav); unknown keys no-op
