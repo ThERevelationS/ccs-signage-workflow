@@ -8,6 +8,8 @@ import {
   BookmarkPlus,
   Copy,
   Save,
+  ArrowLeftRight,
+  Link2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { money } from "./foundationCalc";
@@ -43,6 +45,8 @@ export default function FoundationToolbar({
   onSaveAsCopy,
   onSaveAsTemplate,
   onTemplates,
+  onSwapToBrickStone,
+  onShareLink,
   onHelp,
   onBack,
 }) {
@@ -79,6 +83,8 @@ export default function FoundationToolbar({
         <Btn icon={LayoutTemplate} label="Templates" onClick={onTemplates} />
         <Btn icon={BookmarkPlus} label="Save as Template" onClick={onSaveAsTemplate} />
         <Btn icon={Copy} label="Save As Copy" onClick={onSaveAsCopy} />
+        {onSwapToBrickStone ? <Btn icon={ArrowLeftRight} label="Swap to BrickStone" onClick={onSwapToBrickStone} /> : null}
+        {onShareLink ? <Btn icon={Link2} label="Share Link" onClick={onShareLink} /> : null}
         <button
           type="button"
           onClick={onSaveAndExit}
