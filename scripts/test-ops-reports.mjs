@@ -33,6 +33,7 @@ const {
   customerAnalyticsReport,
   estimateFunnelReport,
   taxLiabilityReport,
+  vendorScorecardReport,
   OPS_REPORTS,
   OPS_REPORT_MAP,
 } = await import(pathToFileURL(out).href);
@@ -460,6 +461,33 @@ for (const def of OPS_REPORTS) {
   const paid = taxLiabilityReport({ invoices, basis: 'paid_date' });
   assert.equal(paid.rows.length, 1, 'only fully-paid invoices on cash basis');
   assert.equal(paid.rows[0][4], 49.5, 'i2 + i7 land in Nov');
+}
+
+// vendorScorecardReport: per-vendor spend / open / on-time from PO headers.
+{
+  const report = vendorScorecardReport({ purchaseOrderHeaders: [
+    { id: 'p1', vendor_name: 'Gemini', status: 'received', total: 1000, expected_date: '2026-10-10', received_date: '2026-10-09' },   // on time
+    { id: 'p2', vendor_name: 'Gemini', status: 'received', total: 500, expected_date: '2026-10-20', received_date: '2026-10-25' },    // 5d late
+    { id: 'p3', vendor_name: 'Gemini', status: 'sent', total: 300 },                                                                  // open
+    { id: 'p4', vendor_name: 'SignComp', status: 'received', total: 800, expected_date: '2026-10-15', updated_date: '2026-10-15T09:00:00Z' }, // updated_date fallback → on time
+    { id: 'p5', vendor_name: 'SignComp', status: 'partially_received', total: 200 },
+    { id: 'p6', vendor_name: 'Draft Co', status: 'draft', total: 999 },
+    { id: 'p7', vendor_name: '', status: 'cancelled', total: 888 },
+  ] });
+  assert.equal(report.rows.length, 2, 'draft and cancelled vendors excluded');
+  const gem = report.rows.find((r) => r[0] === 'Gemini');
+  assert.equal(gem[1], 3);
+  assert.equal(gem[2], 1800);
+  assert.equal(gem[3], 1, 'one open PO');
+  assert.equal(gem[4], 2, 'two received with dates');
+  assert.ok(Math.abs(gem[5] - 0.5) < 1e-9, '1 of 2 on time');
+  assert.equal(gem[6], 5);
+  const sc = report.rows.find((r) => r[0] === 'SignComp');
+  assert.equal(sc[5], 1, 'updated_date fallback rates on-time');
+  assert.equal(sc[6], null, 'no late receipts → null avg');
+  assert.equal(report.totals[1], 5);
+  assert.equal(report.totals[3], 2);
+  assert.ok(report.totals[0].includes('2 draft/cancelled'));
 }
 
 rmSync(out);
