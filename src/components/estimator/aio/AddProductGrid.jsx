@@ -236,6 +236,31 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
     }
   };
 
+  const kitResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return kits.filter((kit) => {
+      if (!q) return true;
+      const haystack = ["kit", kitLabel(kit), kit.supplier, kit.notes, kit.material_type, kit.product_type].filter(Boolean).join(" ").toLowerCase();
+      return q.split(/\s+/).every((term) => haystack.includes(term));
+    });
+  }, [kits, query]);
+
+  const handleAddKit = async (kit) => {
+    if (!kit?.id || typeof onAddKit !== "function" || actionRef.current) return;
+    actionRef.current = true;
+    setAddingKey(`kit:${kit.id}`);
+    setActionError("");
+    try {
+      await onAddKit(kit);
+      setOpen(false);
+    } catch (error) {
+      setActionError(error?.message || "Kit could not be added.");
+    } finally {
+      actionRef.current = false;
+      setAddingKey(null);
+    }
+  };
+
   const handleSearchKeyDown = (event) => {
     const totalMatches = results.length + quickResults.length + (customMatches ? 1 : 0);
     if (event.key !== "Enter" || totalMatches !== 1 || addingKey) return;
@@ -440,6 +465,44 @@ export default function AddProductGrid({ counts = {}, onAdd, onAddCustom, onAddQ
                       )}
                     </div>
                   )}
+                </div>
+              )}
+              {typeof onAddKit === "function" && kitResults.length > 0 && (
+                <div>
+                  <div className="text-[9px] font-extrabold tracking-widest text-gray-400 px-1 pb-1.5 pt-3 flex items-center justify-between">
+                    <span>INVENTORY KITS</span>
+                    <span className="font-medium normal-case tracking-normal">{kitsError || `${kitResults.length} available`}</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {kitResults.map((kit) => {
+                      const adding = addingKey === `kit:${kit.id}`;
+                      const kitPrice = Number.isFinite(Number(kit.kit_price)) && Number(kit.kit_price) > 0 ? Number(kit.kit_price) : null;
+                      return (
+                        <button
+                          type="button"
+                          key={kit.id}
+                          disabled={!!addingKey}
+                          onClick={() => handleAddKit(kit)}
+                          className="group min-h-[74px] text-left border border-violet-200 rounded-md p-3 bg-violet-50/40 hover:border-violet-400 hover:bg-violet-50 transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-wait"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-md bg-violet-100 text-violet-700 flex items-center justify-center flex-shrink-0"><PackagePlus className="w-[18px] h-[18px]" /></div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[12px] font-bold text-gray-900 truncate">{kitLabel(kit)}</span>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded border border-violet-200 bg-white text-violet-700 font-semibold">KIT</span>
+                              </div>
+                              <div className="mt-1 text-[10px] text-gray-500 truncate">{(kit.kit_items || []).length} component{(kit.kit_items || []).length === 1 ? "" : "s"} — expands into Parts on add</div>
+                              <div className="mt-1.5 flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-gray-700 group-hover:text-gray-950">{adding ? "Adding kit…" : "Add kit"}{!adding && <ArrowRight className="w-3 h-3" />}</span>
+                                <span className="text-[11px] font-bold text-gray-800">{kitPrice !== null ? money(kitPrice) : "Σ parts"}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
