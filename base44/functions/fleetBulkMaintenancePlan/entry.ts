@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 const MAX_EQUIPMENT = 50;
 const TASK_TYPES = new Set(['recurring', 'one_off']);
@@ -122,7 +123,7 @@ async function fingerprint(schedule: any, equipmentRows: any[]) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const auth = await requireAdmin(base44);
     if (auth.error) return auth.error;
 
