@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     for (const jurisdiction of batch) {
       try {
         // Use the research agent to get fresh data, then compare against stored data
-        const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+        const agentResult = await base44.asServiceRole.functions.invoke('jurisdiction_research', {
           jurisdictionName: jurisdiction.name,
           jurisdictionState: jurisdiction.state,
           jurisdictionType: jurisdiction.type,
