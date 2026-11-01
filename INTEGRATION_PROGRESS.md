@@ -87,3 +87,15 @@ Verified: backend round-trip + request_id reuse; live preview — dark/system/li
 - Backlog item (tax liability report) DONE: taxLiabilityReport pure fn in opsReportModel — per (month, tax rate) buckets: taxed invoice count, taxable base (subtotal - discount), tax charged; issue_date = accrual / paid_date = cash-proxy basis via the existing dateBasis + monthRange filters; voids/drafts/untaxed/undated excluded with honest exclusion counts in totals. Registered as Receivables > Tax Liability at /OpsReports?report=tax_liability (CSV export free via uniform shape). test-ops-reports gained real-math cases both bases — PASS local + remote.
 
 - Backlog item (vendor scorecard) DONE: vendorScorecardReport in opsReportModel — per vendor: PO count, spend, open POs, rated count, on-time % (received_date vs expected_date, updated_date fallback), avg days late. Drafts/cancelled excluded honestly. poSnapshot now exposes sent_date + received_date (purchaseOrderAction DEPLOYED). OpsReportView returns {headers, open} — headers feed the scorecard, detailed-open feeds parts-needed unchanged. Registered Purchasing > Vendor Scorecard at /OpsReports?report=vendor_scorecard. Real-math test cases PASS local + remote.
+
+## Backlog sweep — Phase A (Data Integrity & Concurrency, §15 #351–375) DONE
+
+3 file-fenced agents verified every item; ~19 already-hardened by prior work, 6 real fixes landed:
+- #351 refuse-on-trashed check completed in replaceEstimateFieldsIfUnchanged (declared deleted still CASes for trash lifecycle)
+- #353 archived lock added to assertEstimateProductMutationAllowed (deleted was already there)
+- #371 expectedCustomerFields carries company_name baseline; rename races now fail closed
+- #372 REAL BUG: recordEstimateAcceptance mirrored the discarded duplicate instead of canonical — fixed + DEPLOYED
+- #363 ensureIdempotentEntityCreate concurrent-dup guard (RESIDUAL: backend unique constraint on creation_request_key still needed)
+- #375 createBuilderPartGroupWithRecovery normalization gap filled
+- #361 sameValue semantics documented in both copies
+Suites green: estimate-cas(10) entity-persistence(16) customer-persistence(7) estimate-lifecycle(14) builder-persistence(8) builder-service(12) builder-recovery(22) module-registry(22) work-order-persistence(16) quick-price(5). Agent checkpoints 6ae6ee43/6ae6ef30/6ae6ef6c.
