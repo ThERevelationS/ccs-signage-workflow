@@ -21,7 +21,6 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const UserCapacity = base44.entities.UserCapacity;
 
 const SUBCONTRACTOR_KEY = "subcontractorDirectory";
 
@@ -107,7 +106,7 @@ export default function ResourceAllocationView({ compact = false }) {
     try {
       const [directory, capacitiesData, ordersData] = await Promise.all([
         loadAuthorizedUserDirectory({ sessionToken }),
-        loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Allocation user capacities" }),
+        loadAllEntityRows({ entity: staffEntities.UserCapacity, sort: null, label: "Resource Allocation user capacities" }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
