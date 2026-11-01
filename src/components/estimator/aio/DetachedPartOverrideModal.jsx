@@ -95,7 +95,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
         <div className="bg-[#444] border-b-4 border-amber-300 px-5 py-4 text-white">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2 text-[16px]">
-              <LockKeyhole className="w-5 h-5 text-amber-300" /> {isManual ? "Edit Independent Product Part" : "Detached Part Override"}
+              <LockKeyhole className="w-5 h-5 text-amber-300" aria-hidden="true" /> {isManual ? "Edit Independent Product Part" : "Detached Part Override"}
             </DialogTitle>
           </DialogHeader>
           <p className="text-[11px] text-gray-200 mt-1">
@@ -140,7 +140,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
                   disabled={overrideCount === 0}
                   onClick={() => { if (!window.confirm(`Reset all ${overrideCount} type-specific override${overrideCount === 1 ? "" : "s"} back to the Master Inventory values?`)) return; set("detail_overrides", {}); }}
                   className="h-[28px] px-3 rounded border border-gray-300 bg-white text-[10px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 inline-flex items-center gap-1"
-                ><RotateCcw className="w-3 h-3" /> Reset All ({overrideCount})</button>
+                ><RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset All ({overrideCount})</button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -153,7 +153,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
                       )}
                     </div>
                     {field.kind === "boolean" ? (
-                      <select value={inputValue(field)} onChange={(e) => setDetail(field.field, e.target.value, field.kind)} className="h-[32px] w-full border border-gray-300 rounded px-2 text-[11px] bg-white">
+                      <select value={inputValue(field)} onChange={(e) => setDetail(field.field, e.target.value, field.kind)} aria-label={field.label} className="h-[32px] w-full border border-gray-300 rounded px-2 text-[11px] bg-white">
                         <option value="">Use Master Inventory value</option>
                         <option value="true">Yes</option>
                         <option value="false">No</option>
@@ -164,6 +164,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
                         step={field.kind === "number" ? "any" : undefined}
                         value={inputValue(field)}
                         onChange={(e) => setDetail(field.field, e.target.value, field.kind)}
+                        aria-label={field.label}
                         className="h-[32px] w-full border border-gray-300 rounded px-2 text-[11px] bg-white"
                         placeholder={field.kind === "list" ? "Comma-separated values" : ""}
                       />
@@ -184,7 +185,7 @@ export default function DetachedPartOverrideModal({ open, part, onClose, onSave,
               ? "This is an explicit Product Part edit. Frozen cost changes are audited immediately; type-specific overrides remain estimate-only; future Master Inventory pricing remains separate until Update Price is accepted."
               : "Saving this override changes the Product frozen total only by this Part's cost difference. It does not update or recalculate the Builder. Type-specific overrides remain estimate-only until the Part is reattached."}
           </div>
-          {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
           <div className="flex justify-end gap-2 sticky bottom-0 bg-white pt-2 border-t border-gray-100">
             <button type="button" disabled={saving} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[12px] font-semibold text-gray-700">Cancel</button>
             <button type="submit" disabled={saving || !String(form.part_name || "").trim()} className="h-[32px] px-4 rounded border border-amber-400 bg-amber-200 text-[12px] font-bold text-gray-900 hover:bg-amber-300 disabled:opacity-50">{saving ? "Saving…" : isManual ? "Save Part" : "Save Detached Override"}</button>
