@@ -426,31 +426,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 16. Test Coverage Expansion (25)
 
-376. **[T]** `estimator/` dead-code test â€” mark dead files as "no-op" so grep doesn't flag them
-377. **[T]** `transitionWorkOrderFromLoadedSnapshot` full path with stub entity (CAS + stage transition)
-378. **[T]** `preflightBuilderSourceMutation` â€” mock `getEstimate` + `assertMutationAllowed`
-379. **[T]** `recordEstimateAcceptance` â€” stub entity + dedupe-by-version
-380. **[T]** `recordEstimateQuoteDelivery` â€” safeUrl scheme stripping (javascript:/data:)
-381. **[T]** `loadAllEntityRows` pagination â€” mock entity returns 2 pages
-382. **[T]** `customerSync` â€” `syncEstimateToPipeline` with stub entities
-383. **[T]** `getOpenEstimateRevision` â€” stub EstimateRevision filter
-384. **[T]** `listEstimateRevisions` â€” strict vs non-strict error handling
-385. **[T]** `ensureOpportunityWorkspace` â€” session-error â†’ 401 path
-386. **[T]** `canonicalEstimateWorkOrder` â€” `estimate_id` + `work_order_id` identity
-387. **[T]** `expectedWorkOrderFields`/`replaceWorkOrderFieldsIfUnchanged` CAS guard
-388. **[T]** `deleteWorkOrderFieldsIfUnchanged` â€” guard-field + updated_date
-389. **[T]** `sanitizeWorkOrderFormPatch` â€” SYSTEM_FIELDS exclusion complete
-390. **[T]** `workOrderPatchMatches` â€” normalize-strings requirement (add impl + test)
-391. **[T]** `createWorkOrderWithRecovery` â€” preflight limit + recovery dedupe
-392. **[T]** `deleteInventoryRecordIfUnchanged` â€” guardFields nameField check
-393. **[T]** `equipmentPersistence.replaceRelationshipIdsIfUnchanged` â€” CAS on relationship writes
-394. **[T]** `staffEntities` â€” proxy facade method routing + error on mutation methods
-395. **[T]** `estimateRevisionService` â€” `startEstimateRevision`/`completeEstimateRevision` with stub
-396. **[T]** `expectedCustomerFields`/`replaceCustomerFieldsIfUnchanged` â€” CAS on name change
-397. **[T]** `canonicalAcceptance` â€” earliest-created wins
-398. **[T]** `ensureOpenEstimateRevision` â€” session fallback after C2-F fix
-399. **[T]** `updateEstimateRevisionAudit` â€” expected_estimate_updated_date CAS
-400. **[T]** `assertEstimateProductMutationAllowed` â€” deleted/archived/sent guards
+376. **[T][DONE]** `estimator/` dead-code test — `scripts/test-estimator-dead-code.mjs` sweeps all estimator sources, classifies comment/re-export-only "no-op marker" files (10 synthetic classifier cases), and fails on any unreferenced no-op file not on the documented empty dead-file list (175 files scanned, 0 dead)
+377. **[T][DONE]** `transitionWorkOrderFromLoadedSnapshot` full path with stub entity (CAS + stage transition) — `scripts/test-work-order-transition.mjs` (23 cases): CAS expected/next fields, open-permit block, allowPermitSkip, reopen clears `completed`, legacy-notes normalize, CAS-conflict propagation
+378. **[T][DONE]** `preflightBuilderSourceMutation` — mock `getEstimate` + `assertMutationAllowed` — `scripts/test-preflight-source-mutation.mjs` (26 cases): deleted/archived/sent rows still delegate to the guard, guard rejection propagates verbatim, `updateBuilderSourceProject` never reaches updateMany when the guard trips, happy-path CAS write
+379. **[T][DONE]** `recordEstimateAcceptance` — stub entity + dedupe-by-version — `scripts/test-estimate-acceptance.mjs` (16 cases, real Deno entry bundled under Node with stub SDK/session/entities): 401 gate, method/date validation, draft + stale-version 409s, create + mirror fields, active-row dedupe `reused:true`, superseded rows excluded
+380. **[T][DONE]** `recordEstimateQuoteDelivery` — safeUrl scheme stripping (javascript:/data:) — `scripts/test-quote-delivery-safeurl.mjs` (10 cases): persisted rows prove https-only sanitizer (javascript/data/vbscript/ftp/bare blanked, http blanked, https kept); `safeDeliveryEvidence` http(s) preserved vs javascript blanked→400. NB: surfaced an unrelated `clean()` ReferenceError in `respondWithDelivery` (last_contacted_at mirror) — flagged separately, not in this fence
+381. **[T][DONE]** `loadAllEntityRows` pagination — mock entity returns 2 pages — `scripts/test-entity-persistence.mjs` (23 cases): two-page scan, id dedupe across page overlap, `limit` bound never over-fetches (limit<pageSize costs one bounded request, dedupe inside bound), maxRows still fails closed on unbounded scan
+382. **[T][DONE]** `customerSync` — `syncEstimateToPipeline` with stub entities — `scripts/test-customer-sync-pipeline.mjs` (30 cases): create path (estimating/production stages, permit auto-seed, sales_stage CAS stamp), existing-row CAS via fieldHistoryAction expected/next fields, amount-drift `estimate_revision_required`, trashed-link refusal, concurrent-link convergence (earliest-created canonical wins, loser deleted via guarded backend call, linkage-only converge write)
+383. **[T][DONE]** `getOpenEstimateRevision` — stub EstimateRevision filter — `scripts/test-revision-service.mjs` + `scripts/test-revision-reads.mjs`: one bounded filtered read `{estimate_id, revision_status:"open"}` sort `-revision_number` limit 50; missing id → null
+384. **[T][DONE]** `listEstimateRevisions` — strict vs non-strict error handling — `scripts/test-revision-service.mjs`: desc revision_number sort, missing id → [], non-strict swallows read failure → [], strict propagates
+385. **[T][DONE]** `ensureOpportunityWorkspace` — session-error → 401 path — no `ensureOpportunityWorkspace` symbol exists; the workspace gateway is `opportunityWorkspaceAction`, tested at its real Deno entry in `scripts/test-revision-functions.mjs`: missing/forged session → 401 via `authenticateSignShopSession`, valid session reaches dispatch (bogus action → 400)
+386. **[T][DONE]** `canonicalEstimateWorkOrder` — `estimate_id` + `work_order_id` identity — `scripts/test-canonical-compares.mjs` + `scripts/test-customer-sync.mjs` (earliest-created wins, id tiebreak, empty/null) + `scripts/test-customer-sync-pipeline.mjs` (convergence adopts the earliest estimate-linked row)
+387. **[T][DONE]** `expectedWorkOrderFields`/`replaceWorkOrderFieldsIfUnchanged` CAS guard — `scripts/test-work-order-transition.mjs`: baseline snapshots only desired fields + `work_order_number` identity anchor, CAS payload forwarded to saveTrackedFields (entityType/id/expected/next/guard), errors propagate
+388. **[T][DONE]** `deleteWorkOrderFieldsIfUnchanged` — guard-field + updated_date — the WO conditional-delete seam is `deleteCreatedDuplicateWorkOrderIfUnchanged` (no function literally named deleteWorkOrderFieldsIfUnchanged exists); `scripts/test-work-order-create.mjs`: id+updated_date+estimate_id guards forwarded to the backend delete, lost-response → confirmed_absent convergence, surviving row rethrows, unknown status fails closed
+389. **[T][DONE]** `sanitizeWorkOrderFormPatch` — SYSTEM_FIELDS exclusion complete — `scripts/test-work-order-persistence.mjs`: id/created_date/updated_date/created_by/created_by_id all stripped regardless of shape; custom/undeclared fields preserved
+390. **[T][DONE]** `workOrderPatchMatches` — normalize-strings requirement (add impl + test) — impl ALREADY present in remote `sameValue` (top-level string trim compare with the documented nested-string-strict rationale); no production change needed. `scripts/test-work-order-persistence.mjs`: trimmed-string match, case strict, nested-string strict, numeric tolerance, null/empty/missing distinctions
+391. **[T][DONE]** `createWorkOrderWithRecovery` — preflight limit + recovery dedupe — `scripts/test-work-order-create.mjs` (16 cases): init guards, preflight same-title count cap (no create past ceiling), lost-response single-match recovery, two-new-matches ambiguity, unverifiable rethrow, per-page id dedupe
+392. **[T][DONE]** `deleteInventoryRecordIfUnchanged` — guardFields nameField check — `scripts/test-inventory-delete-guard.mjs` (11 cases): nameField value forwarded into guardFields, missing/blank nameField → empty guard, real `deleteEntityIfUnchanged` query = guards + id + updated_date, guard-mismatch refuses to claim delete
+393. **[T][DONE]** `equipmentPersistence.replaceRelationshipIdsIfUnchanged` — CAS on relationship writes — `scripts/test-equipment-relationship-persistence.mjs` (5 cases) already covers init guards, CAS update path, conflict behavior — verified green
+394. **[T][DONE]** `staffEntities` — proxy facade method routing + error on mutation methods — `scripts/test-staff-entities.mjs` (18 cases): filter/list/get/count → staffDataRead, create/update/delete → staffEntityWrite ops, unsupported method errors — verified green
+395. **[T][DONE]** `estimateRevisionService` — `startEstimateRevision`/`completeEstimateRevision` with stub — `scripts/test-revision-service.mjs`: start validation, open-revision short-circuit (no invoke), ensureOpenEstimateRevision invoke carries estimate_id + expected_estimate_updated_date + reason + session_token, error/unverifiable propagation; complete missing-revision → null, no-session graceful skip (no call), CAS anchors forwarded, error propagation
+396. **[T][DONE]** `expectedCustomerFields`/`replaceCustomerFieldsIfUnchanged` — CAS on name change — `scripts/test-customer-persistence.mjs` (13 cases): company_name baseline always carried, concurrent rename fails closed before updateMany, declared rename writes through, missing baseline fails closed
+397. **[T][DONE]** `canonicalAcceptance` — earliest-created wins — `scripts/test-estimate-acceptance.mjs`: concurrent race re-read resolves to the earliest-created active row, losing duplicate deleted via CAS-guarded deleteMany (`concurrent_duplicate_discarded`, acceptance = canonical row)
+398. **[T][DONE]** `ensureOpenEstimateRevision` — session fallback after C2-F fix — `scripts/test-revision-functions.mjs`: sign-shop session token path (auth.me never called), auth.me() fallback unblocks the write, neither → 401; existing open revision reused idempotently
+399. **[T][DONE]** `updateEstimateRevisionAudit` — expected_estimate_updated_date CAS — `scripts/test-revision-functions.mjs`: moved estimate → 409 "changed in another session" with revision left open; matching estimate + revision anchors complete the revision (completed_at + change_summary); replayed complete → reused:true
+400. **[T][DONE]** `assertEstimateProductMutationAllowed` — deleted/archived/sent guards — `scripts/test-mutation-guard.mjs` (16 cases): deleted → Trash error (version drift reported first), archived → locked, cancelled → locked, sent/approved without open revision → protected error, open revision unblocks, expired pending entries no longer block, unparseable pending still blocks
 
 ## 17. Performance & Rate-Limit (25)
 
