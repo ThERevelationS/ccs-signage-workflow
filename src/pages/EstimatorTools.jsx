@@ -1,6 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Wrench, ArrowRight } from "lucide-react";
+import { ESTIMATOR_MODULES } from "@/components/estimator/moduleRegistry";
 
 const LINKS = [
   { label: "Quick Price", desc: "Price one module fast", to: "/QuickPrice" },
@@ -19,6 +20,19 @@ const LINKS = [
 ];
 
 export default function EstimatorTools() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const moduleJumpRef = useRef("");
+  // #315 — this page is a link hub (no module chooser), so ?module=<key>
+  // pre-selects by forwarding to that module's estimator page.
+  useEffect(() => {
+    const key = new URLSearchParams(location.search).get("module") || "";
+    if (!key || moduleJumpRef.current === key) return;
+    const mod = ESTIMATOR_MODULES.find((m) => m.key === key);
+    if (!mod) return;
+    moduleJumpRef.current = key;
+    navigate(`/${mod.page}?module=${encodeURIComponent(key)}`, { replace: true });
+  }, [location.search, navigate]);
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-3">
