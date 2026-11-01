@@ -61,6 +61,9 @@ export default function SignaturePad({ onChange, disabled = false, height = 110 
     <div>
       <canvas
         ref={canvasRef}
+        role="img"
+        aria-label={hasStrokes ? "Signature captured" : "Signature pad — draw your signature with a mouse, stylus, or touch"}
+        aria-disabled={disabled || undefined}
         style={{ height, touchAction: "none" }}
         className={`w-full rounded border border-gray-300 bg-white ${disabled ? "opacity-50" : "cursor-crosshair"}`}
         onPointerDown={start}
