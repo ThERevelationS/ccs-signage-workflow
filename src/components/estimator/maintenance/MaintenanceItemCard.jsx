@@ -32,7 +32,7 @@ export default function MaintenanceItemCard({ item, index, materials, onChange, 
           }}
           className="text-gray-400 hover:text-red-600 p-2"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -121,7 +121,7 @@ export default function MaintenanceItemCard({ item, index, materials, onChange, 
           size="sm"
           onClick={() => set({ actions: [...(item.actions || []), { materials: [] }] })}
         >
-          <Plus className="w-4 h-4" /> Add Action
+          <Plus className="w-4 h-4" aria-hidden="true" /> Add Action
         </Button>
       </div>
 
