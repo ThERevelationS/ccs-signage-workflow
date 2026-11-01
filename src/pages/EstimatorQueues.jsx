@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive, Briefcase, Layers } from "lucide-react";
+import { ListFilter, Search, ArrowUpDown, RotateCcw, Trash2, Download, Upload, Copy, Archive, Briefcase, Layers, History } from "lucide-react";
 import { convertEstimateToWorkOrder, convertEstimatesToSharedWorkOrder } from "@/components/estimator/estimateConversionService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { localDateStamp, formatInCompanyTz, quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
@@ -14,6 +14,7 @@ import { staffEntities } from "@/components/staff/staffEntities";
 import { useAuth } from "@/components/auth/EmailGate";
 import SavedViews from "@/components/workflow/SavedViews";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { estimateMatchesSearch, pushRecentSearch, readRecentSearches, useEstimateDeepLink } from "@/components/estimator/deepLinks";
 
 const STATUSES = [
   { key: "", label: "All" },
@@ -121,6 +122,12 @@ export default function EstimatorQueues() {
   const [customStatuses, setCustomStatuses] = useState([]);
   const [backupBusy, setBackupBusy] = useState(false);
   const importEstRef = useRef(null);
+  // #302 — /EstimatorQueues?estimate=<id> forwards to the estimate detail.
+  useEstimateDeepLink();
+  // #313 — last-5 searches per user, dropdown under the search input.
+  const [recentOpen, setRecentOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches("estimator_queues", myEmail));
+  const commitRecentSearch = (v) => setRecentSearches(pushRecentSearch("estimator_queues", myEmail, v));
   // Per-row retry anchors for the inline quick actions — a retried duplicate
   // reuses its creation key instead of minting a second estimate.
   const quickKeysRef = useRef({});
@@ -489,11 +496,10 @@ export default function EstimatorQueues() {
       const mineEmail = String(me.email).toLowerCase();
       list = list.filter((e) => String(e.salesperson_email || e.created_by || "").toLowerCase() === mineEmail);
     }
+    // #301 — global estimate search: header fields + notes + every loaded
+    // line item (title/name/description/module_key — see deepLinks.js).
     if (q) {
-      list = list.filter((e) =>
-        [e.project_name, e.client_name, e.estimate_number, e.notes, e.estimate_notes, e.contact_name, e.project_address, e.site_address,
-         ...(Array.isArray(e.line_items) ? e.line_items.map((l) => [l.name, l.product_name, l.description].join(" ")) : [])
-        ].some((v) => String(v || "").toLowerCase().includes(q)));
+      list = list.filter((e) => estimateMatchesSearch(e, q));
     }
     const val = (e) => Number(e.quote_total || e.total_cost || 0);
     const exp = (e) => expiryOf(e) || "9999-12-31";
@@ -629,9 +635,32 @@ export default function EstimatorQueues() {
             <input
               value={query}
               onChange={(e) => { const v = e.target.value; setQuery(v); writeParams("q", v); }}
-              placeholder="Search project, client, or estimate #â€¦"
+              onFocus={() => { setRecentSearches(readRecentSearches("estimator_queues", myEmail)); setRecentOpen(true); }}
+              onBlur={() => { commitRecentSearch(query); window.setTimeout(() => setRecentOpen(false), 150); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { commitRecentSearch(query); setRecentOpen(false); }
+                else if (e.key === "Escape") setRecentOpen(false);
+              }}
+              placeholder="Search project, client, estimate #, notes or productsâ€¦"
               className="w-full rounded-lg border border-gray-200 bg-white/80 py-2 pl-9 pr-3 text-sm outline-none focus:border-red-300"
             />
+            {recentOpen && recentSearches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
+                  <History className="h-3 w-3" /> Recent searches
+                </div>
+                {recentSearches.map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); setQuery(term); writeParams("q", term); commitRecentSearch(term); setRecentOpen(false); }}
+                    className="block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-red-50"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1.5">
             <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
@@ -646,7 +675,7 @@ export default function EstimatorQueues() {
           <SavedViews
             storageKey="views.estimator_queues"
             autoApply={!status && !params.get("q") && !params.get("sort") && !mine}
-            getState={() => ({ q: query, status, sort })}
+            getState={() => ({ q: query, status, sort, mine })}
             onApply={(s) => {
               const nextQ = s?.q || ""; const nextSort = s?.sort || "newest"; const nextStatus = s?.status || "";
               setQuery(nextQ); setSort(nextSort);
@@ -654,6 +683,7 @@ export default function EstimatorQueues() {
               if (nextStatus) p.set("status", nextStatus);
               if (nextQ) p.set("q", nextQ);
               if (nextSort !== "newest") p.set("sort", nextSort);
+              if (s?.mine) p.set("mine", "1");
               navigate(`/EstimatorQueues${p.size ? `?${p.toString()}` : ""}`, { replace: true });
             }}
           />
