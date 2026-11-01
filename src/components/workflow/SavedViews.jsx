@@ -69,9 +69,9 @@ export default function SavedViews({ storageKey, getState, onApply, activeName, 
         onClick={() => setOpen((v) => !v)}
         className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
       >
-        <Bookmark className="h-4 w-4" />
-        {activeName || "Views"}
-        <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+        <Bookmark className="h-4 w-4 shrink-0" />
+        <span className="max-w-[10rem] truncate">{activeName || "Views"}</span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
       </button>
       {open && (
         <div className="absolute right-0 z-30 mt-1 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
