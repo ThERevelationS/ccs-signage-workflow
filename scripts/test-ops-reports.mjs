@@ -34,6 +34,13 @@ const {
   estimateFunnelReport,
   taxLiabilityReport,
   vendorScorecardReport,
+  avgQuoteByMonthReport,
+  weeklyThroughputReport,
+  winRateByCustomerReport,
+  valueByModuleReport,
+  customerLtvReport,
+  portalEngagementReport,
+  estVsActualCostReport,
   OPS_REPORTS,
   OPS_REPORT_MAP,
 } = await import(pathToFileURL(out).href);
@@ -488,6 +495,204 @@ for (const def of OPS_REPORTS) {
   assert.equal(report.totals[1], 5);
   assert.equal(report.totals[3], 2);
   assert.ok(report.totals[0].includes('2 draft/cancelled'));
+}
+
+// avgQuoteByMonthReport (#277): salesperson x created-month buckets with avg,
+// decided and won; templates and undated estimates excluded.
+{
+  const report = avgQuoteByMonthReport({ estimates: [
+    { id: 'e1', salesperson: 'Ann', created_date: '2026-10-05T10:00:00', status: 'approved', quote_total: 1000 },
+    { id: 'e2', salesperson: 'Ann', created_date: '2026-10-15T10:00:00', status: 'sent', quote_total: 500 },
+    { id: 'e3', salesperson: 'Ann', created_date: '2026-11-02T10:00:00', status: 'cancelled', quote_total: 300 },
+    { id: 'e4', salesperson: 'Bob', created_date: '2026-10-10T10:00:00', status: 'draft', quote_total: 200 },
+    { id: 'e5', salesperson: 'Bob', created_date: '2026-11-01T10:00:00', status: 'approved', is_template: true },
+    { id: 'e6', salesperson: 'Ann', status: 'sent', quote_total: 50 }, // undated → no bucket
+  ] });
+  assert.equal(report.rows.length, 3);
+  const [annNov, annOct, bobOct] = report.rows;
+  assert.deepEqual([annNov[0], annNov[2], annNov[3], annNov[4], annNov[5], annNov[6]], ['Ann', 1, 300, 300, 1, 0]);
+  assert.deepEqual([annOct[0], annOct[2], annOct[3], annOct[4], annOct[5], annOct[6]], ['Ann', 2, 1500, 750, 1, 1]);
+  assert.deepEqual([bobOct[0], bobOct[2], bobOct[5]], ['Bob', 1, 0], 'Bob bucket — no decided');
+  assert.equal(report.totals[2], 4, 'template + undated excluded from total');
+  assert.equal(report.totals[3], 2000);
+  assert.equal(report.totals[4], 500, 'overall avg = 2000/4');
+  assert.equal(report.totals[6], 1);
+}
+
+// weeklyThroughputReport (#279): created/sent/approved each bucket on their
+// own event week; unstamped events fall back so the funnel never drops them.
+{
+  const report = weeklyThroughputReport({ estimates: [
+    { id: 'e1', created_date: '2026-11-09T09:00:00', status: 'sent', quote_issue_date: '2026-11-09', quote_total: 100 },   // Mon Nov 9
+    { id: 'e2', created_date: '2026-11-04T09:00:00', status: 'sent', quote_issue_date: '2026-11-09', quote_total: 200 },   // created w/ Nov 2, sent w/ Nov 9
+    { id: 'e3', created_date: '2026-10-26T09:00:00', status: 'approved', accepted_at: '2026-11-10T15:00:00', quote_total: 300 }, // created w/ Oct 26, approved w/ Nov 9
+    { id: 'e4', created_date: '2026-11-01T09:00:00', status: 'approved', quote_issue_date: '2026-11-02', quote_total: 50 }, // Sunday Nov 1 → Mon-start convention lands w/ Nov 2; approved unstamped → updated/created week fallback (w/ Nov 2)
+    { id: 'e5', created_date: '2026-11-09T09:00:00', status: 'approved', is_template: true, accepted_at: '2026-11-10T00:00:00' },
+    { id: 'e6', status: 'sent', quote_issue_date: '2026-11-09' }, // undated created → excluded entirely
+  ] });
+  const wOct26 = report.rows.find((r) => r[0].includes('Oct 26'));
+  assert.deepEqual(wOct26.slice(1), [1, 1, 0, 300], 'e3 created + sent fallback lands in created week');
+  const wNov2 = report.rows.find((r) => r[0].includes('Nov 2'));
+  assert.ok(wNov2, 'w/ Nov 2 bucket exists (Sun Nov 1 → Monday convention)');
+  assert.deepEqual(wNov2.slice(1), [2, 1, 1, 250], 'e2+e4 created, e4 sent, e4 approved fallback');
+  const wN9 = report.rows.find((r) => r[0].includes('Nov 9'));
+  assert.deepEqual(wN9.slice(1), [1, 2, 1, 100], 'e1 created+sent, e2 sent, e3 approved');
+  assert.equal(report.totals[1], 4, 'template + undated excluded');
+  assert.equal(report.totals[2], 4, 'sent: e1, e2, e3 (created-week fallback), e4');
+  assert.equal(report.totals[3], 2, 'approved: e3, e4');
+  assert.equal(report.totals[4], 650);
+  assert.ok(report.totals[0].includes('1 undated'), 'undated exclusion counted');
+}
+
+// winRateByCustomerReport (#280): decided estimates → won/lost/win rate per
+// customer; groups on customer_id with client_name fallback.
+{
+  const report = winRateByCustomerReport({ estimates: [
+    { id: 'e1', customer_id: 'c1', client_name: 'Acme', status: 'approved', quote_total: 1000 },
+    { id: 'e2', customer_id: 'c1', client_name: 'Acme', status: 'sent', quote_total: 500 },
+    { id: 'e3', customer_id: 'c1', client_name: 'Acme', status: 'cancelled', quote_total: 300 },
+    { id: 'e4', customer_id: 'c2', client_name: 'Beta', status: 'archived', quote_total: 200 },
+    { id: 'e5', customer_id: 'c2', client_name: 'Beta', status: 'archived', quote_total: 100 },
+    { id: 'e6', client_name: 'Gamma', status: 'draft', quote_total: 50 },
+    { id: 'e7', customer_id: 'c1', client_name: 'Acme', status: 'approved', is_template: true },
+  ] });
+  assert.equal(report.rows.length, 3);
+  const acme = report.rows.find((r) => r[0] === 'Acme');
+  assert.deepEqual(acme.slice(1), [3, 2, 1, 1, 0.5, 1800, 1000]);
+  const beta = report.rows.find((r) => r[0] === 'Beta');
+  assert.deepEqual(beta.slice(1), [2, 2, 0, 2, 0, 300, 0]);
+  const gamma = report.rows.find((r) => r[0] === 'Gamma');
+  assert.equal(gamma[5], null, 'no decided → null rate');
+  assert.equal(report.totals[1], 6, 'template excluded');
+  assert.equal(report.totals[5], 0.25, '1 won of 4 decided');
+}
+
+// valueByModuleReport (#281/#285): estimate counts once per module it touches;
+// quote_total splits across modules by line-value share — additive money on
+// non-additive counts.
+{
+  const report = valueByModuleReport({ estimates: [
+    { id: 'e1', status: 'approved', quote_total: 1000, line_items: [
+      { module_key: 'monument', total_snapshot: 600, customer_quantity: 1 },
+      { module_key: 'vinyl', total_snapshot: 200, customer_quantity: 2 },
+    ] },
+    { id: 'e2', status: 'cancelled', quote_total: 500, line_items: [
+      { module_key: 'monument' }, { module_key: 'monument' },
+    ] },
+    { id: 'e3', status: 'sent', quote_total: 900 }, // no lines → unassigned
+    { id: 'e4', status: 'approved', is_template: true, quote_total: 7000, line_items: [{ module_key: 'monument', total_snapshot: 7000 }] },
+  ] });
+  const mon = report.rows.find((r) => r[0] === 'Monument');
+  const vinyl = report.rows.find((r) => r[0] === 'Vinyl');
+  const un = report.rows.find((r) => r[0] === 'Unassigned');
+  // monument: e1 share 0.6 → 600; e2 equal share → 500. value 1100, won 600.
+  assert.deepEqual(mon.slice(1), [2, 3, 2, 1, 0.5, 1100, 600]);
+  assert.deepEqual(vinyl.slice(1), [1, 1, 1, 1, 1, 400, 400]);
+  assert.deepEqual(un.slice(1), [1, 0, 0, 0, null, 900, 0]);
+  assert.equal(report.totals[4], 1, 'deduped won count');
+  assert.equal(report.totals[6], 2400, 'additive attributed value = all quote totals');
+  assert.equal(report.totals[7], 1000, 'won estimate value, not invoiced');
+  assert.ok(report.totals[0].includes('not additive'), 'honest totals note');
+}
+
+// customerLtvReport (#289): lifetime invoiced + collected + open AR + won
+// estimate value per customer; last activity spans both datasets.
+{
+  const report = customerLtvReport({
+    invoices: [
+      { id: 'i1', status: 'sent', total: 100, balance_due: 100, issue_date: '2026-11-01', customer_id: 'c1', customer_display_name: 'Acme' },
+      { id: 'i2', status: 'paid', total: 300, amount_paid: 300, issue_date: '2026-10-01', customer_id: 'c1', customer_display_name: 'Acme' },
+      { id: 'i3', status: 'partially_paid', total: 200, amount_paid: 50, balance_due: 150, issue_date: '2026-11-05', customer_id: 'c2', customer_display_name: 'Beta' },
+      { id: 'i4', status: 'draft', total: 999, customer_id: 'c1', customer_display_name: 'Acme' },
+      { id: 'i5', status: 'void', total: 888, customer_id: 'c1', customer_display_name: 'Acme' },
+    ],
+    estimates: [
+      { id: 'e1', customer_id: 'c1', client_name: 'Acme', status: 'approved', quote_total: 250, accepted_at: '2026-11-08T12:00:00', created_date: '2026-10-01T00:00:00' },
+      { id: 'e2', customer_id: 'c2', client_name: 'Beta', status: 'draft', quote_total: 400, created_date: '2026-11-06T00:00:00' },
+      { id: 'e3', customer_id: 'c1', client_name: 'Acme', status: 'sent', is_template: true, quote_total: 500 },
+    ],
+  });
+  const acme = report.rows.find((r) => r[0] === 'Acme');
+  assert.equal(acme[1], 2, 'draft+void excluded');
+  assert.equal(acme[2], 400);
+  assert.equal(acme[3], 300);
+  assert.equal(acme[4], 100);
+  assert.equal(acme[5], 1, 'one won estimate');
+  assert.equal(acme[6], 250);
+  assert.equal(acme[7], 200, 'avg invoice');
+  assert.equal(acme[8], '2026-11-08', 'acceptance is the latest activity');
+  const beta = report.rows.find((r) => r[0] === 'Beta');
+  assert.equal(beta[5], 0, 'draft estimate is not won value');
+  assert.equal(beta[8], '2026-11-06', 'estimate created is last activity');
+  assert.equal(report.totals[2], 600);
+  assert.equal(report.totals[6], 250);
+}
+
+// portalEngagementReport (#298): renders the estimate_funnel
+// portal_engagement aggregate — opens, thread counts, first response.
+{
+  const funnel = { portal_engagement: [
+    { estimate_id: 'e1', estimate_number: 'EST-1', client_name: 'Acme', status: 'approved', opens: 3, last_opened_at: '2026-11-08T10:00:00', customer_messages: 2, staff_replies: 1, approvals: 1, revision_requests: 0, first_response_hours: 4.5, last_activity_at: '2026-11-09T08:00:00' },
+    { estimate_id: 'e2', estimate_number: 'EST-2', client_name: 'Beta', status: 'sent', opens: 0, customer_messages: 0, staff_replies: 0, approvals: 0, revision_requests: 1, first_response_hours: null, last_activity_at: '2026-11-05T08:00:00' },
+  ], portal_engagement_truncated: false };
+  const report = portalEngagementReport({ estimateFunnel: funnel });
+  assert.equal(report.rows.length, 2);
+  const [r1] = report.rows;
+  assert.deepEqual(r1.slice(0, 9), ['EST-1', 'Acme', 'Approved', 3, 2, 1, 1, 0, 4.5]);
+  assert.equal(report.rows[1][8], null, 'no reply → null response time');
+  assert.equal(report.totals[3], 3);
+  assert.equal(report.totals[4], 2);
+  assert.equal(report.totals[7], 1);
+  assert.equal(report.rowLinks[0], '/EstimateDetail?id=e1');
+  const empty = portalEngagementReport({ estimateFunnel: null });
+  assert.equal(empty.rows.length, 0, 'honest empty when funnel unavailable');
+}
+
+// estVsActualCostReport (#300): per-WO estimate cost basis vs committed PO
+// spend; variance + exclusions counted honestly.
+{
+  const report = estVsActualCostReport({
+    workOrders: [
+      { id: 'w1', corbridge_invoice_number: 'CB-1', client_name: 'Acme', estimate_id: 'e1', current_stage: 'production', created_date: isoDaysAgo(5) },
+      { id: 'w2', corbridge_invoice_number: 'CB-2', client_name: 'Beta', estimate_id: 'e2', current_stage: 'design', created_date: isoDaysAgo(4) },
+      { id: 'w3', corbridge_invoice_number: 'CB-3', client_name: 'Gamma', estimate_id: 'e3', current_stage: 'production', created_date: isoDaysAgo(3) },
+      { id: 'w4', corbridge_invoice_number: 'CB-4', client_name: 'Delta', created_date: isoDaysAgo(2) },                 // no estimate link
+      { id: 'w5', corbridge_invoice_number: 'CB-5', client_name: 'Echo', estimate_id: 'eX', created_date: isoDaysAgo(1) }, // estimate outside loaded set
+      { id: 'w6', corbridge_invoice_number: 'CB-6', client_name: 'Fox', estimate_id: 'e1', created_date: isoDaysAgo(1) },  // linked but no POs
+      { id: 'w7', deleted: true, estimate_id: 'e1' },                                                                    // deleted → skipped
+    ],
+    estimates: [
+      { id: 'e1', estimate_number: 'EST-1', total_cost: 500, status: 'approved' },
+      { id: 'e2', estimate_number: 'EST-2', total_cost: 0, status: 'approved' }, // no cost basis
+      { id: 'e3', estimate_number: 'EST-3', total_cost: 800, status: 'approved' },
+    ],
+    purchaseOrderHeaders: [
+      { id: 'p1', status: 'sent', total: 400, work_order_id: 'w1' },
+      { id: 'p2', status: 'received', total: 200, work_order_id: 'w1' },
+      { id: 'p3', status: 'sent', total: 300, estimate_id: 'e2' },               // estimate-id join when no wo link
+      { id: 'p4', status: 'draft', total: 999, work_order_id: 'w3' },            // no commitment — skipped
+      { id: 'p5', status: 'cancelled', total: 888, work_order_id: 'w3' },        // skipped
+      { id: 'p6', status: 'received', total: 700, work_order_id: 'w3' },
+    ],
+  });
+  assert.equal(report.rows.length, 3);
+  const [r1, r3, r2] = report.rows; // variance desc → w1 (+100), w3 (−100), w2 (null)
+  assert.deepEqual(r1.slice(0, 4), ['CB-1', 'Acme', 'Production', 'EST-1']);
+  assert.deepEqual(r1.slice(4), [500, 2, 600, 100, 0.2]);
+  assert.equal(r3[0], 'CB-3');
+  assert.deepEqual(r3.slice(4), [800, 1, 700, -100, -0.125]);
+  assert.equal(r2[0], 'CB-2');
+  assert.deepEqual(r2.slice(4), [null, 1, 300, null, null], 'no cost basis → null est/variance');
+  assert.equal(report.totals[4], 1300, 'est cost sums rated rows only');
+  assert.equal(report.totals[5], 4);
+  assert.equal(report.totals[6], 1600);
+  assert.equal(report.totals[7], 0);
+  assert.equal(report.totals[8], 0);
+  const label = report.totals[0];
+  for (const frag of ['1 no estimate link', '1 estimate not loaded', '1 no PO spend yet', '1 no est. cost', '2 draft/cancelled POs']) {
+    assert.ok(label.includes(frag), `totals label reports: ${frag}`);
+  }
+  assert.equal(report.rowLinks[0], '/JobWorkspace?wo=w1');
 }
 
 rmSync(out);
