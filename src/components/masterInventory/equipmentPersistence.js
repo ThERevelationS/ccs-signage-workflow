@@ -99,6 +99,7 @@ export async function replaceRelationshipIdsIfUnchanged({
   return replaceEntityFieldsIfUnchanged({
     entity,
     id: row.id,
+    expectedUpdatedAt: row.updated_date || "",
     expectedFields: expectedEntityFields(row, patch),
     nextFields: patch,
     label,
