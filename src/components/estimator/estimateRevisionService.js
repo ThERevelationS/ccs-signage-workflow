@@ -1,4 +1,5 @@
 import { base44 } from "@/api/base44Client";
+import { staffEntities } from "@/components/staff/staffEntities";
 import { estimateAuditSnapshot } from "./estimateLifecycle";
 import { loadAllEntityRows, withRateLimitRetry } from "./loadAllEntityRows";
 
@@ -11,7 +12,7 @@ export async function getOpenEstimateRevision(estimateId) {
   // which compounds API calls during estimate page load and can trip the
   // platform rate limit after the preceding builder/part reconciliation.
   const rows = await withRateLimitRetry(() =>
-    base44.entities.EstimateRevision.filter(
+    staffEntities.EstimateRevision.filter(
       { estimate_id: estimateId, revision_status: "open" },
       "-revision_number",
       50,
@@ -24,7 +25,7 @@ export async function getOpenEstimateRevision(estimateId) {
 export async function listEstimateRevisions(estimateId, { strict = false } = {}) {
   if (!estimateId) return [];
   try {
-    const rows = await loadAllEntityRows({ entity: base44.entities.EstimateRevision, query: { estimate_id: estimateId }, sort: "-revision_number", label: "Estimate revisions" });
+    const rows = await loadAllEntityRows({ entity: staffEntities.EstimateRevision, query: { estimate_id: estimateId }, sort: "-revision_number", label: "Estimate revisions" });
     return (rows || []).slice().sort((a, b) => num(b.revision_number) - num(a.revision_number));
   } catch (error) {
     if (strict) throw error;

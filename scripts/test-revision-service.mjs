@@ -14,13 +14,14 @@ export const base44 = { entities: { EstimateRevision: {
   get: async () => null,
   updateMany: async () => ({ updated: 0 }),
 }}, functions: { invoke: async () => ({}) } };
+export const staffEntities = base44.entities;
 export function __setRows(rows) { globalThis.__revisionRows = rows; }
 `);
 const out = resolve(here, '.tmp-revision-service.mjs');
 buildSync({
   entryPoints: [resolve(here, '../src/components/estimator/estimateRevisionService.js')],
   bundle: true, format: 'esm', outfile: out, logLevel: 'silent',
-  alias: { '@/api/base44Client': stub },
+  alias: { '@/api/base44Client': stub, '@/components/staff/staffEntities': stub },
 });
 const svc = await import(pathToFileURL(out).href);
 const stubMod = await import(pathToFileURL(stub).href);
