@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const moduleLabel = (key) => ESTIMATOR_MODULES.find((module) => module.key === key)?.label || (key === "custom" ? "Custom Product" : key || "Product");
@@ -324,18 +325,18 @@ export default function EstimatorProducts() {
             <div className="px-4 py-3 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center gap-3">
               <div className="min-w-0 lg:flex-1"><h2 className="text-[13px] font-bold text-gray-900">Quick Product Library</h2><p className="text-[10px] text-gray-500">Reusable Product snapshots saved from an estimate Product. Metadata can change here without rewriting the frozen Builder/Part package.</p></div>
               <div className="flex flex-wrap items-center gap-1.5">
-                <div className="relative w-[230px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" /><input value={query} onChange={(event) => { const v = event.target.value; setQuery(v); const next = new URLSearchParams(searchParams); if (v) next.set("q", v); else next.delete("q"); setSearchParams(next, { replace: true }); }} placeholder="Search Quick Products..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div>
-                <select value={scope} onChange={(event) => setScope(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select>
-                <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
-                <select value={status} onChange={(event) => setStatus(event.target.value)} className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select>
+                <div className="relative w-[230px]"><Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" aria-hidden="true" /><input value={query} onChange={(event) => { const v = event.target.value; setQuery(v); const next = new URLSearchParams(searchParams); if (v) next.set("q", v); else next.delete("q"); setSearchParams(next, { replace: true }); }} aria-label="Search quick products" placeholder="Search Quick Products..." className="w-full h-[30px] pl-8 pr-2 border border-gray-300 rounded text-[11px]" /></div>
+                <select value={scope} onChange={(event) => setScope(event.target.value)} aria-label="Library scope filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">My + Global</option><option value="my">My</option><option value="global">Global</option></select>
+                <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="all">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
+                <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Active status filter" className="h-[30px] px-2 border border-gray-300 rounded bg-white text-[10px]"><option value="active">Active</option><option value="inactive">Inactive</option><option value="all">All Statuses</option></select>
                 <button type="button" onClick={exportCsv} disabled={visibleQuickProducts.length === 0} className="h-[30px] px-2.5 rounded border border-gray-300 bg-white text-[10px] font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 inline-flex items-center gap-1"><Download className="w-3 h-3" /> CSV</button>
               </div>
             </div>
 
             <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 text-[9px] text-gray-500 flex items-center justify-between"><span>{visibleQuickProducts.length} matching Quick Product{visibleQuickProducts.length === 1 ? "" : "s"}</span><span>{activeCount} active total</span></div>
 
-            {loading ? <div className="py-14 text-center text-[11px] text-gray-400">Loading Quick Products…</div> : libraryError ? (
-              <div className="py-12 px-6 text-center bg-red-50 border-t border-red-200"><div className="text-[12px] font-bold text-red-800">Quick Product Library could not be verified.</div><div className="mt-1 text-[10px] text-red-600">{libraryError}</div><Button variant="outline" className="mt-3 h-[30px] text-[10px]" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button></div>
+            {loading ? <TableSkeleton columns={7} rows={6} /> : libraryError ? (
+              <div role="alert" className="py-12 px-6 text-center bg-red-50 border-t border-red-200"><div className="text-[12px] font-bold text-red-800">Quick Product Library could not be verified.</div><div className="mt-1 text-[10px] text-red-600">{libraryError}</div><Button variant="outline" className="mt-3 h-[30px] text-[10px]" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button></div>
             ) : visibleQuickProducts.length === 0 ? (
               <div className="py-12 px-6 text-center">
                 <PackagePlus className="w-9 h-9 text-gray-300 mx-auto" />
