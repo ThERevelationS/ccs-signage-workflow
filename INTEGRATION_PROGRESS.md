@@ -99,3 +99,23 @@ Verified: backend round-trip + request_id reuse; live preview — dark/system/li
 - #375 createBuilderPartGroupWithRecovery normalization gap filled
 - #361 sameValue semantics documented in both copies
 Suites green: estimate-cas(10) entity-persistence(16) customer-persistence(7) estimate-lifecycle(14) builder-persistence(8) builder-service(12) builder-recovery(22) module-registry(22) work-order-persistence(16) quick-price(5). Agent checkpoints 6ae6ee43/6ae6ef30/6ae6ef6c.
+
+## Backlog sweep — Phase B batch 1 (portal + standalone) DONE
+
+- Portal reorder (request_reorder): customer/work_order link ownership + WO ownership validated; creates EstimatingRequest with compatibility_work_order_id, requested_by customer_portal, ready status, product summary, install location, handoff snapshot. Legacy jobs use an opportunity_id sentinel (documented).
+- Work-order job messaging: post_message + list_thread support work_order links; messages forced to the linked WO; bootstrap returns job-scoped thread; attachment_url (http/s only) + attachment-only messages; staff read-state surfaced.
+- Drive-per-job folders: googleDriveOperations.ensureJobFolder — reuses saved WorkOrder.google_drive_folder_url, else resolves configured roots (GlobalSettings driveConfig/googleDriveConfig) or app-owned CCS Jobs root, creates WO-number+client folder, CAS-safe write only-if-empty. JobWorkspace Drive button. Needs googledrive connector scope (owner action).
+- Install route map: InstallationDeliver route sheet groups by project_install_date asc (unscheduled last); WO#/title/location/address2 + Google Maps directions links; tolerant install-time lookup (install_time_window/install_window/install_time/arrival_window — no canonical field exists); print action.
+- Delivery failure telemetry: EstimateQuoteDelivery +recordAttempt fields (status "failed", transport/failure/event telemetry); recordEstimateQuoteDelivery writes failed attempts w/ anti-forgery + attempt-key dedupe; quoteDeliveryService records Gmail failures pre-rethrow. Provider webhook/bounce unavailable (owner action noted).
+- Portal signature: SignaturePad PNG data URL -> backend uploads via service role to EstimateAcceptance.evidence_reference; fallback = portal message attachment, never blocks approval.
+- Deployed: customerPortalAction, googleDriveOperations, recordEstimateQuoteDelivery.
+
+## Backlog sweep — Phase B batch 2 (pipeline/conversion/revision, §7–9 flagged items) DONE — 8 items
+
+- #167 assigned-to-me feed: estimate_requests section (session email/name match) + AttentionFeed "assigned to me" category rendered — in-app notify (email stays disabled by design).
+- #170 bidirectional sales_stage: AllInOneEstimate.sales_stage/sales_stage_changed_at; sync_estimate_sales_stage action + get_opportunity reconcile; customerSync forward-stamp.
+- #174 feed pagination: loadAllEntityRows paging + matched_totals + truncated flag.
+- #180/#185/#192 estimateConversionService.js: convertEstimateToWorkOrder (extracted), convertEstimatesToSharedWorkOrder (merged WO: estimate_ids + primary estimate_id, sections/tasks/materials merged, row provenance, same-customer + divergent-WO guards), buildEstimateMaterialsManifest (BuilderPart cost snapshots -> WO.materials w/ provenance); EstimatorQueues bulk convert (separate or shared WO).
+- #201 EstimateRevisionPanel before/after comparison grid.
+- #205 revertEstimateToRevision: CAS revert of estimate_snapshot_before + revision_type "revert" (enum added to EstimateRevision.jsonc; panel Revert to #N on completed revisions).
+- opportunityWorkspaceAction DEPLOYED. validate-opportunity-workspace + test-estimate-lifecycle PASS.
