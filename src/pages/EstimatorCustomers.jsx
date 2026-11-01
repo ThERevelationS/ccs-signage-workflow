@@ -270,6 +270,7 @@ export default function EstimatorCustomers() {
   const [customers, setCustomers] = useState([]);
   const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
   });
@@ -308,17 +309,20 @@ export default function EstimatorCustomers() {
 
   useEffect(() => {
     const load = async () => {
-      const [res, tierRows, user] = await Promise.all([
-        loadAllCustomers(),
-        loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
-        base44.auth.me().catch(() => null),
-      ]);
-      setCustomers(res || []);
-      setTiers(tierRows || []);
-      setMe(user);
-      setLoading(false);
+      try {
+        const [res, tierRows, user] = await Promise.all([
+          loadAllCustomers().catch((e) => { setLoadError(e?.message || "Customer list could not be loaded. Try again."); return []; }),
+          loadAllEntityRows({ entity: staffEntities.MarkupTier, sort: "sort_order", label: "Customer markup tiers" }).catch(() => []),
+          base44.auth.me().catch(() => null),
+        ]);
+        setCustomers(res || []);
+        setTiers(tierRows || []);
+        setMe(user);
+      } finally {
+        setLoading(false);
+      }
     };
-    load();
+    load().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -571,6 +575,10 @@ export default function EstimatorCustomers() {
             </button>
           </>)}
         </div>
+
+        {loadError && (
+          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{loadError}</div>
+        )}
 
         {linkedCustomerId && (
           <div className="flex flex-col gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
