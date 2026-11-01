@@ -93,7 +93,7 @@ function quoteValidUntil(estimate: any) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-async function estimatePortalView(estimate: any) {
+async function estimatePortalView(estimate: any, base44: any) {
   // Customer-facing section price = unit snapshot x customer qty x (1 + adj%).
   // Sections flagged include_in_customer=false roll up into a single bundled line.
   const items = Array.isArray(estimate?.line_items) ? estimate.line_items : [];
@@ -430,7 +430,7 @@ Deno.serve(async (req) => {
         const quoteDefaults = await loadAllEntityRows({ entity: base44.asServiceRole.entities.QuoteDefaults, query: { config_name: "default" }, label: "Portal quote defaults" }).catch(() => []);
         const qd = (Array.isArray(quoteDefaults) ? quoteDefaults : [])[0] || {};
         const companyBranding = { name: clean(qd?.company_name) || "CCS Signage", logo_url: clean(qd?.company_logo_url) };
-        const view = await estimatePortalView(estimate);
+        const view = await estimatePortalView(estimate, base44);
         return Response.json({
           success: true,
           action,
@@ -487,7 +487,7 @@ Deno.serve(async (req) => {
           label: clean(link.label),
           expires_at: clean(link.expires_at),
           view_only: true,
-          estimate: estimatePortalView(estimate),
+          estimate: estimatePortalView(estimate, base44),
         });
       }
 
@@ -521,7 +521,7 @@ Deno.serve(async (req) => {
       const viewEstimates = await Promise.all(
         (Array.isArray(estimates) ? estimates : [])
           .filter((e: any) => e?.deleted !== true)
-          .map((e: any) => estimatePortalView(e))
+          .map((e: any) => estimatePortalView(e, base44))
       );
       return Response.json({
         success: true,
@@ -829,7 +829,7 @@ Deno.serve(async (req) => {
           details: { estimate_id: estimateId, quote_total: num(estimate.quote_total), source: "customer_portal" },
           key: `portal-act:approve:${estimateId}:${clean(msg.record?.id) || key}`,
         });
-        return Response.json({ success: true, action, estimate: await estimatePortalView(saved), message: messageView(msg.record) });
+        return Response.json({ success: true, action, estimate: await estimatePortalView(saved, base44), message: messageView(msg.record) });
       }
 
       if (decision === "declined") {
@@ -896,7 +896,7 @@ Deno.serve(async (req) => {
           details: { estimate_id: estimateId, note_preview: declineReason.slice(0, 240), source: "customer_portal" },
           key: `portal-act:decline:${estimateId}:${clean(msg.record?.id) || key}`,
         });
-        return Response.json({ success: true, action, estimate: await estimatePortalView(saved), message: messageView(msg.record) });
+        return Response.json({ success: true, action, estimate: await estimatePortalView(saved, base44), message: messageView(msg.record) });
       }
 
       if (!note) throw bad("Please describe the changes you'd like so we can revise the quote.");
@@ -951,7 +951,7 @@ Deno.serve(async (req) => {
         details: { estimate_id: estimateId, note_preview: note.slice(0, 240), source: "customer_portal" },
         key: `portal-act:revise:${estimateId}:${clean(msg.record?.id) || key}`,
       });
-      return Response.json({ success: true, action, estimate: await estimatePortalView(estimate), message: messageView(msg.record) });
+      return Response.json({ success: true, action, estimate: await estimatePortalView(estimate, base44), message: messageView(msg.record) });
     }
 
     // Customer counter-offer (#257): a structured proposed_total + note
@@ -1060,7 +1060,7 @@ Deno.serve(async (req) => {
         details: { subtype: "counter_offer", estimate_id: estimateId, proposed_total: proposedTotal, quote_total: num(estimate.quote_total), note_preview: note.slice(0, 240), source: "customer_portal" },
         key: `portal-act:counter:${estimateId}:${msgId}`,
       });
-      return Response.json({ success: true, action, estimate: await estimatePortalView(estimate), message: messageView(msg.record), reused: msg.status !== "created" });
+      return Response.json({ success: true, action, estimate: await estimatePortalView(estimate, base44), message: messageView(msg.record), reused: msg.status !== "created" });
     }
 
     if (action === "payment_notice") {
