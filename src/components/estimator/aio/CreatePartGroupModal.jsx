@@ -33,7 +33,7 @@ export default function CreatePartGroupModal({ open, selectedCount, onClose, onC
         <div className="bg-[#444] border-b-4 border-lime-300 px-5 py-4 text-white">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2 text-[16px]">
-              <Layers3 className="w-5 h-5 text-lime-300" /> Create Part Group
+              <Layers3 className="w-5 h-5 text-lime-300" aria-hidden="true" /> Create Part Group
             </DialogTitle>
           </DialogHeader>
           <p className="text-[11px] text-gray-200 mt-1">
@@ -51,7 +51,7 @@ export default function CreatePartGroupModal({ open, selectedCount, onClose, onC
               placeholder="e.g. Installation, Face Components, Electrical"
             />
           </label>
-          {error && <div className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
+          {error && <div role="alert" className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{error}</div>}
           <div className="mt-5 flex justify-end gap-2">
             <button
               type="button"
