@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const CUSTOMER_FIELDS = new Set([
@@ -158,7 +159,7 @@ async function hasAnyCustomerReference(base44: any, customerId: string) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
     const companyName = String(body?.company_name || '').trim();
