@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { X, Loader2 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { estimateLineSelectionKey } from "@/components/estimator/estimateCreationService";
+import { useEscapeKey, useModalDialog } from "@/components/estimator/a11y";
 
 const lineLabel = (line, index) =>
   line?.client_product_name || line?.product_name || line?.name || `Section ${index + 1}`;
@@ -19,6 +20,8 @@ export default function MergeEstimateDialog({ open, currentEstimateId, onClose, 
   const [loadingSecondary, setLoadingSecondary] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const { containerRef, dialogProps } = useModalDialog({ open, labelledBy: "merge-estimate-title" });
+  useEscapeKey(open, () => { if (!submitting) onClose?.(); });
 
   useEffect(() => {
     if (!open) return;
@@ -89,15 +92,17 @@ export default function MergeEstimateDialog({ open, currentEstimateId, onClose, 
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div
+        ref={containerRef}
+        {...dialogProps}
         className="relative bg-white rounded-md shadow-2xl border border-gray-300 w-full max-w-lg max-h-[85vh] flex flex-col"
         style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <h2 className="text-lg font-bold tracking-wide" style={{ color: "#7a9a4b" }}>
+          <h2 id="merge-estimate-title" className="text-lg font-bold tracking-wide" style={{ color: "#7a9a4b" }}>
             MERGE AN ESTIMATE INTO THIS ONE
           </h2>
-          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800 p-1" title="Close">
-            <X className="w-4 h-4" />
+          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800 p-1" title="Close" aria-label="Close merge estimate dialog">
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -106,8 +111,8 @@ export default function MergeEstimateDialog({ open, currentEstimateId, onClose, 
             Pick another draft estimate, choose the sections to move here. The other estimate is archived afterward with a note pointing back to this one.
           </p>
 
-          {loadingList && <p className="text-xs text-gray-500 flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading drafts…</p>}
-          {listError && <p className="text-xs text-red-600">{listError}</p>}
+          {loadingList && <p role="status" className="text-xs text-gray-500 flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Loading drafts…</p>}
+          {listError && <p role="alert" className="text-xs text-red-600">{listError}</p>}
           {!loadingList && !listError && candidates.length === 0 && (
             <p className="text-xs text-gray-500">No other draft or calculated estimates to merge.</p>
           )}
@@ -117,8 +122,8 @@ export default function MergeEstimateDialog({ open, currentEstimateId, onClose, 
               {candidates.map((e) => (
                 <button type="button"
                   key={e.id}
-                  type="button"
                   onClick={() => pickSecondary(e.id)}
+                  aria-pressed={secondary?.id === e.id}
                   className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between gap-2 ${secondary?.id === e.id ? "bg-emerald-50 border border-emerald-300" : "hover:bg-gray-50 border border-transparent"}`}
                 >
                   <span className="min-w-0">
@@ -131,7 +136,7 @@ export default function MergeEstimateDialog({ open, currentEstimateId, onClose, 
             </div>
           )}
 
-          {loadingSecondary && <p className="text-xs text-gray-500 flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading sections…</p>}
+          {loadingSecondary && <p role="status" className="text-xs text-gray-500 flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Loading sections…</p>}
 
           {secondary && !loadingSecondary && (
             <div className="border border-gray-200 rounded p-2">
