@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, History, LockKeyhole, PencilLine, RefreshCw, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronRight, History, LockKeyhole, PencilLine, RefreshCw, RotateCcw, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { isEstimateProtected, requiresEstimateLifecycleReason, summarizeEstimateChanges } from "./estimateLifecycle";
-import { listEstimateRevisions } from "./estimateRevisionService";
+import { listEstimateRevisions, revertEstimateToRevision } from "./estimateRevisionService";
 
 const TYPE_LABELS = {
   manual_revision: "Manual revision",
@@ -11,23 +11,85 @@ const TYPE_LABELS = {
   conversion: "Work Order conversion",
 };
 
-function SnapshotDiffToggle({ lines, expanded, onToggle, active = false }) {
-  if (!lines.length) return null;
+// (#201) Two-column snapshot grid — mirrors the exact field coverage of
+// summarizeEstimateChanges (status/version/totals, quote settings,
+// estimate details) plus the section count, so a reviewer sees before→after
+// VALUES, not just the bullet summary. Only fields that differ render.
+const SNAPSHOT_GRID_FIELDS = [
+  ["status", "Status", (v) => v || "draft"],
+  ["quote_version", "Quote version", (v) => (Number(v) || 0) > 0 ? `Version ${Number(v)}` : "—"],
+  ["quote_issue_date", "Quote issue date", (v) => v || "—"],
+  ["quote_total", "Customer quote total", (v) => `$${Number(v || 0).toFixed(2)}`],
+  ["total_cost", "Internal cost", (v) => `$${Number(v || 0).toFixed(2)}`],
+  ["line_items", "Estimate sections", (v) => `${(Array.isArray(v) ? v : []).length}`],
+  ["work_order_id", "Work Order link", (v) => v ? String(v).slice(0, 12) : "—"],
+  ["project_name", "Project", (v) => v || "—"],
+  ["client_name", "Client", (v) => v || "—"],
+  ["customer_id", "Customer link", (v) => v ? String(v).slice(0, 12) : "—"],
+  ["po_number", "PO number", (v) => v || "—"],
+  ["site_address", "Site address", (v) => v || "—"],
+  ["order_contact", "Order contact", (v) => v || "—"],
+  ["contact_email", "Contact email", (v) => v || "—"],
+  ["contact_phone", "Contact phone", (v) => v || "—"],
+  ["salesperson", "Salesperson", (v) => v || "—"],
+  ["target_install_date", "Target install date", (v) => v || "—"],
+  ["priority", "Priority", (v) => v || "—"],
+  ["discount_percent", "Discount %", (v) => `${Number(v || 0)}%`],
+  ["contingency_percent", "Contingency %", (v) => `${Number(v || 0)}%`],
+  ["tax_percent", "Tax %", (v) => `${Number(v || 0)}%`],
+  ["deposit_percent", "Deposit %", (v) => `${Number(v || 0)}%`],
+  ["shipping_fee", "Shipping fee", (v) => `$${Number(v || 0).toFixed(2)}`],
+  ["permit_fee", "Permit fee", (v) => `$${Number(v || 0).toFixed(2)}`],
+  ["quote_title", "Quote title", (v) => v || "—"],
+  ["payment_terms", "Payment terms", (v) => v || "—"],
+  ["lead_time_text", "Lead time", (v) => v || "—"],
+];
+
+function SnapshotCompareGrid({ before, after, afterLabel = "Current estimate", active = false }) {
+  if (!before || typeof before !== "object" || !after || typeof after !== "object") return null;
+  const rows = SNAPSHOT_GRID_FIELDS
+    .filter(([key]) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
+    .map(([key, label, fmt]) => ({ key, label, before: fmt(before[key]), after: fmt(after[key]) }));
+  if (!rows.length) return null;
+  const cell = active ? "text-blue-800" : "text-gray-600";
+  return (
+    <div className={`mt-1.5 rounded border ${active ? "border-blue-200 bg-white" : "border-gray-200 bg-gray-50"} overflow-hidden`}>
+      <div className={`grid grid-cols-[110px_1fr_1fr] px-2 py-1 text-[8px] font-bold tracking-wide ${active ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-500"}`}>
+        <span>FIELD</span><span>BEFORE SNAPSHOT</span><span>{afterLabel.toUpperCase()}</span>
+      </div>
+      {rows.map((row) => (
+        <div key={row.key} className={`grid grid-cols-[110px_1fr_1fr] px-2 py-1 border-t text-[9px] ${active ? "border-blue-100" : "border-gray-100"}`}>
+          <span className="font-semibold text-gray-500 pr-2">{row.label}</span>
+          <span className="text-red-700/80 break-words pr-2">{row.before}</span>
+          <span className={`${cell} break-words`}>{row.after}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SnapshotDiffToggle({ lines, expanded, onToggle, active = false, before = null, after = null, afterLabel = "Current estimate" }) {
+  if (!lines.length && !(before && after)) return null;
   return (
     <div className="mt-1.5">
       <button type="button" onClick={onToggle} className={`inline-flex items-center gap-1 text-[9px] font-bold ${active ? "text-blue-700 hover:text-blue-900" : "text-gray-500 hover:text-gray-700"}`}>
         {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />} Changes vs snapshot
       </button>
       {expanded && (
-        <ul className={`mt-1 list-disc pl-4 space-y-0.5 text-[9px] ${active ? "text-blue-800" : "text-gray-600"}`}>
-          {lines.map((line, index) => (<li key={index}>{line}</li>))}
-        </ul>
+        <div>
+          {lines.length > 0 && (
+            <ul className={`mt-1 list-disc pl-4 space-y-0.5 text-[9px] ${active ? "text-blue-800" : "text-gray-600"}`}>
+              {lines.map((line, index) => (<li key={index}>{line}</li>))}
+            </ul>
+          )}
+          <SnapshotCompareGrid before={before} after={after} afterLabel={afterLabel} active={active} />
+        </div>
       )}
     </div>
   );
 }
 
-export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, onRepairConversionTracking, repairingConversionTracking = false, refreshKey = 0 }) {
+export default function EstimateRevisionPanel({ estimate, persistedEstimate, openRevision, onStartRevision, onChange, onRetryPipelineSync, retryingPipelineSync = false, onRepairConversionTracking, repairingConversionTracking = false, refreshKey = 0, sessionToken = "", onReverted }) {
   const [rows, setRows] = useState([]);
   const [revisionsLoading, setRevisionsLoading] = useState(true);
   const [revisionReadError, setRevisionReadError] = useState("");
@@ -36,16 +98,21 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [diffExpanded, setDiffExpanded] = useState(true);
+  const [revertingId, setRevertingId] = useState("");
+
+  const reloadRevisions = () => {
+    let stale = false;
+    setRevisionsLoading(true);
+    listEstimateRevisions(estimate?.id, { strict: true })
+      .then((result) => { if (!stale) setRows(result || []); })
+      .catch((err) => { if (!stale) setRevisionReadError(err?.message || "Revision history could not be loaded."); })
+      .finally(() => { if (!stale) setRevisionsLoading(false); });
+    return () => { stale = true; };
+  };
 
   useEffect(() => {
-    let active = true;
-    setRevisionsLoading(true);
     setRevisionReadError("");
-    listEstimateRevisions(estimate?.id, { strict: true })
-      .then((result) => active && setRows(result || []))
-      .catch((err) => active && setRevisionReadError(err?.message || "Revision history could not be loaded."))
-      .finally(() => active && setRevisionsLoading(false));
-    return () => { active = false; };
+    return reloadRevisions();
   }, [estimate?.id, refreshKey, openRevision?.id, openRevision?.revision_status]);
 
   const persistedStatus = persistedEstimate?.status || estimate?.status || "draft";
@@ -104,6 +171,35 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
       setError(err?.message || "Revision could not be started.");
     } finally {
       setStarting(false);
+    }
+  };
+
+  // (#205) Guarded revert — restores the row's before-snapshot through the
+  // same updated_date CAS used by normal saves; a concurrent edit aborts
+  // the revert before anything is written, and the revert lands as a new
+  // completed revision so the audit trail stays forward-only.
+  const revertTo = async (row) => {
+    if (revertingId || !row?.estimate_snapshot_before) return;
+    const ok = window.confirm(
+      `Revert this estimate to the snapshot recorded before revision #${row.revision_number ?? "?"}?\n\n` +
+      `Snapshot reason: ${row.reason || "none recorded"}\n\n` +
+      "All fields captured by that snapshot will be restored, and the revert itself is recorded as a new revision.",
+    );
+    if (!ok) return;
+    setRevertingId(row.id);
+    try {
+      const result = await revertEstimateToRevision({
+        estimateId: estimate?.id,
+        revisionId: row.id,
+        sessionToken,
+      });
+      reloadRevisions();
+      onReverted?.(result);
+      window.alert(`Estimate reverted to the revision #${row.revision_number ?? "?"} snapshot.`);
+    } catch (err) {
+      window.alert(err?.message || "The estimate could not be reverted.");
+    } finally {
+      setRevertingId("");
     }
   };
 
@@ -169,7 +265,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
         {openRevision && (
           <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-start gap-2">
             <PencilLine className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" />
-            <div className="min-w-0"><div className="text-[11px] font-bold text-blue-900">Revision #{openRevision.revision_number} in progress</div><div className="text-[10px] text-blue-800 mt-0.5">Reason: {openRevision.reason}</div><div className="text-[9px] text-blue-600 mt-1">Save the estimate when finished. The completed revision will preserve the before/after snapshots and change summary.</div><SnapshotDiffToggle lines={snapshotDiffLines} expanded={diffExpanded} onToggle={() => setDiffExpanded((value) => !value)} active /></div>
+            <div className="min-w-0"><div className="text-[11px] font-bold text-blue-900">Revision #{openRevision.revision_number} in progress</div><div className="text-[10px] text-blue-800 mt-0.5">Reason: {openRevision.reason}</div><div className="text-[9px] text-blue-600 mt-1">Save the estimate when finished. The completed revision will preserve the before/after snapshots and change summary.</div><SnapshotDiffToggle lines={snapshotDiffLines} expanded={diffExpanded} onToggle={() => setDiffExpanded((value) => !value)} active before={openRevision?.estimate_snapshot_before} after={estimate} /></div>
           </div>
         )}
 
@@ -203,7 +299,27 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
                 <div className="mt-1 text-[10px] text-gray-600">{row.reason}</div>
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span>{Number(row.quote_version || 0) > 0 && <span>Quote Version {Number(row.quote_version)}</span>}<span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.created_by && <span>by {row.created_by}</span>}{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Work Order linked</span>}</div>
                 {(row.change_summary || []).length > 0 && <div className="mt-1 text-[9px] text-gray-500">{row.change_summary.join(" · ")}</div>}
-                {!openRevision && row.id === snapshotDiffRevision?.id && <SnapshotDiffToggle lines={snapshotDiffLines} expanded={diffExpanded} onToggle={() => setDiffExpanded((value) => !value)} />}
+                {!openRevision && row.id === snapshotDiffRevision?.id && (
+                  <SnapshotDiffToggle
+                    lines={snapshotDiffLines}
+                    expanded={diffExpanded}
+                    onToggle={() => setDiffExpanded((value) => !value)}
+                    before={snapshotDiffRevision?.estimate_snapshot_before}
+                    after={estimate}
+                  />
+                )}
+                {row.revision_status === "completed" && row.estimate_snapshot_before && !openRevision && !cancelledEstimate && (
+                  <button
+                    type="button"
+                    onClick={() => revertTo(row)}
+                    disabled={!!revertingId}
+                    className="mt-1.5 inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[8px] font-bold text-gray-500 hover:border-amber-400 hover:text-amber-700 disabled:opacity-50"
+                    title="Restore this snapshot through a concurrency-guarded save; the revert is recorded as a new revision."
+                  >
+                    <RotateCcw className={`w-2.5 h-2.5 ${revertingId === row.id ? "animate-spin" : ""}`} />
+                    {revertingId === row.id ? "Reverting…" : `Revert to #${row.revision_number ?? "?"}`}
+                  </button>
+                )}
               </div>
             ))}
           </div>
