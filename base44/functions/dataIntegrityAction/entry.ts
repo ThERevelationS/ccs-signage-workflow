@@ -1,5 +1,6 @@
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // Read-only referential scan — reports orphaned rows; never deletes or repairs.
 const CHECKS = [
@@ -36,7 +37,7 @@ async function scanEntityRows(entity: any, query: any = null) {
 
 export async function handler(request: Request) {
   try {
-    const base44 = createClientFromRequest(request);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(request));
     const body = await request.json().catch(() => ({}));
     const actor = await authenticateSignShopSession(base44, body?.session_token);
     if (actor.role !== 'admin') {
