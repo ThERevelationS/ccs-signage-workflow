@@ -1841,10 +1841,13 @@ export default function QuickClockSection({
               type="button"
               onClick={() => { identifyIntentRef.current = "missed_clock_in"; startRecognition(); }}
               disabled={isLoading}
-              className="w-64 flex items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-md motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60"
+              className="group relative w-72 sm:w-80 flex items-center justify-center gap-2.5 overflow-hidden rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-100/90 via-white/95 to-amber-100/90 px-4 py-3 text-sm font-bold text-amber-900 shadow-lg shadow-amber-900/10 backdrop-blur-sm transition-[box-shadow,transform,border-color] duration-200 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-900/15 motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 touch-manipulation"
             >
-              <Clock3 className="w-4 h-4" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-200/70 ring-1 ring-amber-300/80 transition-transform duration-200 group-hover:scale-110">
+                <Clock3 className="w-4 h-4" />
+              </span>
               Forgot to Clock In? Set arrival time
+              <span className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60" aria-hidden="true" />
             </button>
             <CrystalShiftButton
               onClockIn={startRecognition}
