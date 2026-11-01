@@ -24,3 +24,16 @@
 - Registration: App.jsx lazyPage+route, CommandPalette discovery+label, ProductionSchedule header "Route map" cross-link, WorkOrder.jsonc install_route_order.
 - Verified: all 5 files esbuild clean, WorkOrder.jsonc parses, test-nav-wiring PASS (81 links→110 routes). boardFeed projection regen skipped intentionally — no feed consumes install_route_order.
 - Standalone inventory now complete: portal reorder, Drive-per-job folders (ensureJobFolder), portal job messages (PortalMessage + work-order-scoped threads), install route map — all shipped.
+
+
+## 2026-11-01 16:42Z — Full-app Playwright pass (local dev → live backend)
+
+Ran base44 dev --remote on a FULLY synced local tree (658/1125 src files were stale — pulled all). Browsed as admin against production data.
+
+**Two real bugs found & fixed:**
+1. EstimateDetail Pricing tab crash — ImportLineItemsButton/ImportTemplateSectionsButton mounts used onApplied={load}; no such function exists in that file (page reload path is refreshProducts). onApplied={refreshProducts} — patched, page verified rendering end-to-end.
+2. customerPortalAction estimate bootstrap 500 "base44 is not defined" — module-level estimatePortalView() referenced handler-scoped base44 client. Passed base44 as param to all 8 sites; deployed. Live bundle still serving stale (known rotation window; publish forces it when ready).
+
+**Verified live surfaces:** MyWorkflow board (7 jobs), Estimator home (22 estimates, Sync Issues chip, Expiring-first sort), EstimateDetail (wizard sections, Order Summary, products+parts cards w/ live-price diffs, reattach gating, parts totals, Pricing tab: revision/delivery history, IMPORT/EXPORT row, 24 display toggles, live quote preview), EstimatorQueues (Export CSV/Backup JSON/Import estimate/Views), InstallRouteMap (?date= deep-link, empty state, Maps button, cross-link), OpsReports (all new reports incl. Tax Liability w/ issue/paid basis + saved views), EstimatorParts (CSV+import), SalesHome, JobWorkspace (Drive button), ProductionSchedule (Route map cross-link + ?week= deep-link), Opportunities, Financials, MainWorkflow.
+
+**Environmental (not defects):** intermittent 429s on staffDataRead/timeClockAction/smartsheetSyncAction (shared app read budget — systemic #424; honest degraded banners shown); workspacePrefsAction one transient 500 (prefs_get verified 200); manifest.json 404 (dev-mode only).
