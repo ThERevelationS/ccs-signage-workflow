@@ -36,7 +36,7 @@ const isNoOpFile = (src) => {
 const estimatorFiles = walk(TARGET).map((p) => p.replace(/\\/g, '/'));
 const noop = estimatorFiles.filter((p) => isNoOpFile(readFileSync(p, 'utf8')));
 
-const allSrc = ROOTS.flatMap(walk).map((p) => p.replace(/\\/g, '/'));
+const allSrc = ROOTS.flatMap((r) => walk(r)).map((p) => p.replace(/\\/g, '/'));
 const corpus = allSrc.map((p) => [p, readFileSync(p, 'utf8')]);
 
 const referenced = (path) => {
