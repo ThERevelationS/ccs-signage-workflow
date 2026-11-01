@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import ChannelLetterHelpAssistant from "@/components/channelLetterInstall/ChannelLetterHelpAssistant";
 import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
-import { useAuth } from "@/components/auth/EmailGate";
+import { useAuth, getSessionToken } from "@/components/auth/EmailGate";
 import ClientSearchInput from "@/components/ClientSearchInput";
 import InstallSummaryCard from "@/components/channelLetterInstall/InstallSummaryCard";
 import ItemsList from "@/components/channelLetterInstall/ItemsList";
@@ -326,7 +326,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
     let cancelled = false;
     (async () => {
       try {
-        const res = await base44.functions.invoke("calculateTravelMiles", { shop_address: shop, site_address: site });
+        const res = await base44.functions.invoke("calculateTravelMiles", { shop_address: shop, site_address: site, session_token: getSessionToken() });
         const rt = parseFloat(res?.data?.round_trip_miles);
         if (!cancelled && isFinite(rt) && rt > 0) {
           updateProject({ travel_miles_round_trip: rt });
