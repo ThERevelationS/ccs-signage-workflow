@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
+import { addKitToEstimate } from "@/components/estimator/products/kitService";
 import EstimateProductsList from "@/components/estimator/aio/EstimateProductsList";
 import InlineProductEditor from "@/components/estimator/aio/InlineProductEditor";
 import EstimateHeaderForm from "@/components/estimator/EstimateHeaderForm";
@@ -660,6 +661,22 @@ export default function EstimateDetail() {
     } catch (error) {
       await refreshProducts().catch(() => null);
       window.alert(`${error?.message || "Quick Product could not be added."}\n\nThe estimate was refreshed. If insertion had already started, use Resume Quick Product to safely continue it.`);
+    }
+  };
+
+  const addKit = async (kit) => {
+    if (readOnly) return;
+    const current = await loadCurrentProductMutationEstimate();
+    try {
+      await addKitToEstimate({
+        estimateId: estimate.id,
+        kit,
+        expectedEstimateUpdatedAt: current.updated_date || serverUpdatedAtRef.current,
+      });
+      await refreshProducts();
+    } catch (error) {
+      await refreshProducts().catch(() => null);
+      window.alert(`${error?.message || "Inventory Kit could not be added."}\n\nThe estimate was refreshed. If insertion had already started, use Resume Product Add to safely continue it.`);
     }
   };
 
@@ -1633,7 +1650,7 @@ export default function EstimateDetail() {
             ) : (
               <>
                 {!readOnly && <div className="flex justify-end">
-                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />
+                  <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} onAddKit={addKit} />
                 </div>}
                 <EstimateProductsList
                   lines={lines.map((l) => ({ ...l, estimate_id: estimate.id, estimate_updated_date: serverUpdatedAtRef.current }))}
@@ -1671,7 +1688,7 @@ export default function EstimateDetail() {
                     <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${refreshing ? "animate-spin" : ""}`} />
                     {refreshing ? "Repricing…" : "Reprice products"}
                   </button>
-                  {!readOnly && <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} />}
+                  {!readOnly && <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} onAddKit={addKit} />}
                 </div>
               </>
             )
