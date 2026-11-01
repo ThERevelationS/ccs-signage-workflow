@@ -98,7 +98,7 @@ export default function InlineProductEditor({ line, lines = [], estimateId, expe
 
   if (checkingDetached && !reviewHandled) {
     return (
-      <div className="bg-white border border-gray-200 rounded-md p-8 text-center text-[12px] text-gray-500">
+      <div role="status" className="bg-white border border-gray-200 rounded-md p-8 text-center text-[12px] text-gray-500">
         Checking Builder Part links…
       </div>
     );
