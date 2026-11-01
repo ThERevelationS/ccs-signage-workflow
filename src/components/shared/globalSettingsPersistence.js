@@ -1,4 +1,5 @@
 import { replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
+import { withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -18,7 +19,7 @@ export async function loadSingleGlobalSetting({ entity, settingKey, label = "Glo
   if (!key || typeof entity?.filter !== "function") {
     throw new Error(`${label} could not load its saved setting.`);
   }
-  const rows = await entity.filter({ setting_key: key });
+  const rows = await withRateLimitRetry(() => entity.filter({ setting_key: key }));
   if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
   if (rows.length > 1) {
     throw new Error(`${label} has ${rows.length} records for setting key ${key}. No value was changed; review the duplicate settings first.`);
@@ -42,7 +43,7 @@ export async function saveGlobalSettingValueIfUnchanged({
     if (String(loadedRecord.setting_key || "") !== key) {
       throw new Error(`${label} loaded a different setting key. Reload before saving.`);
     }
-    return replaceEntityFieldsIfUnchanged({
+    return withRateLimitRetry(() => replaceEntityFieldsIfUnchanged({
       entity,
       id: loadedRecord.id,
       expectedUpdatedAt: loadedRecord.updated_date || "",
@@ -50,7 +51,7 @@ export async function saveGlobalSettingValueIfUnchanged({
       nextFields: { setting_value: nextValue },
       guardFields: { setting_key: key },
       label,
-    });
+    }));
   }
 
   const before = await loadSingleGlobalSetting({ entity, settingKey: key, label });
@@ -61,14 +62,14 @@ export async function saveGlobalSettingValueIfUnchanged({
   let created = null;
   let createError = null;
   try {
-    created = await entity.create({ setting_key: key, setting_value: nextValue });
+    created = await withRateLimitRetry(() => entity.create({ setting_key: key, setting_value: nextValue }));
   } catch (error) {
     createError = error;
   }
 
   let after;
   try {
-    after = await entity.filter({ setting_key: key });
+    after = await withRateLimitRetry(() => entity.filter({ setting_key: key }));
   } catch (verifyError) {
     if (createError) throw createError;
     throw verifyError;
