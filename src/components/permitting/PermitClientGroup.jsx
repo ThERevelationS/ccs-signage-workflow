@@ -439,7 +439,7 @@ export default function PermitClientGroup({
                 variant="outline"
                 className="min-h-11 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
               >
-                <MapPin className="w-3.5 h-3.5" /> Pick the town's office…
+                <MapPin className="w-3.5 h-3.5" /> Find the right office…
               </Button>
             </div>
           ) : (
