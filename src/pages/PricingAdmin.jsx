@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Calculator, Clock, Cog, Plus, Table2, Trash2 } from "lucide-react";
+import { Calculator, Clock, Cog, Layers, Plus, Table2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/kit";
 import PricingMatrixTable from "@/components/pricing/PricingMatrixTable";
 import PricingCrudTable from "@/components/pricing/PricingCrudTable";
+import MarkupTierPanel from "@/components/pricing/MarkupTierPanel";
 import { loadPricingCatalog } from "@/components/pricing/pricingPersistence";
 import { priceQuote } from "@/components/pricing/pricingEngine";
 
@@ -121,12 +122,17 @@ export default function PricingAdmin() {
         {error && <div className="px-3 py-2 rounded border border-red-200 bg-red-50 text-[11px] text-red-700">{error}</div>}
 
         <Tabs defaultValue="matrices" className="space-y-4">
-          <TabsList className="grid grid-cols-4 h-auto bg-white border border-gray-200 p-1">
+          <TabsList className="grid grid-cols-5 h-auto bg-white border border-gray-200 p-1">
+            <TabsTrigger value="tiers" className="text-[11px] py-2"><Layers className="w-3.5 h-3.5 mr-1.5" /> Markup Tiers</TabsTrigger>
             <TabsTrigger value="matrices" className="text-[11px] py-2"><Table2 className="w-3.5 h-3.5 mr-1.5" /> Tier Matrices</TabsTrigger>
             <TabsTrigger value="labor" className="text-[11px] py-2"><Clock className="w-3.5 h-3.5 mr-1.5" /> Labor Levels</TabsTrigger>
             <TabsTrigger value="machines" className="text-[11px] py-2"><Cog className="w-3.5 h-3.5 mr-1.5" /> Machine Rates</TabsTrigger>
             <TabsTrigger value="simulator" className="text-[11px] py-2"><Calculator className="w-3.5 h-3.5 mr-1.5" /> Quote Simulator</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="tiers" className="mt-0">
+            <MarkupTierPanel tiers={catalog.tiers} categories={catalog.categories} onSaved={reload} />
+          </TabsContent>
 
           <TabsContent value="matrices" className="mt-0">
             <PricingMatrixTable
