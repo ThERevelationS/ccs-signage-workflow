@@ -73,8 +73,8 @@ function SnapshotDiffToggle({ lines, expanded, onToggle, active = false, before 
   if (!lines.length && !(before && after)) return null;
   return (
     <div className="mt-1.5">
-      <button type="button" onClick={onToggle} className={`inline-flex items-center gap-1 text-[9px] font-bold ${active ? "text-blue-700 hover:text-blue-900" : "text-gray-500 hover:text-gray-700"}`}>
-        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />} Changes vs snapshot
+      <button type="button" onClick={onToggle} aria-expanded={expanded} className={`inline-flex items-center gap-1 text-[9px] font-bold ${active ? "text-blue-700 hover:text-blue-900" : "text-gray-500 hover:text-gray-700"}`}>
+        {expanded ? <ChevronDown className="w-3 h-3" aria-hidden="true" /> : <ChevronRight className="w-3 h-3" aria-hidden="true" />} Changes vs snapshot
       </button>
       {expanded && (
         <div>
@@ -212,12 +212,12 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
     <section className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
         <div>
-          <div className="text-[12px] font-bold text-gray-900 flex items-center gap-2"><History className="w-4 h-4 text-red-600" /> Estimate Revision History</div>
+          <div className="text-[12px] font-bold text-gray-900 flex items-center gap-2"><History className="w-4 h-4 text-red-600" aria-hidden="true" /> Estimate Revision History</div>
           <div className="mt-0.5 text-[10px] text-gray-500">Whole-estimate lifecycle history. Product price revisions remain in each Product's Price History.</div>
         </div>
         {canStartRevision && (
           <button type="button" onClick={() => { setDialogOpen(true); setError(""); }} className="h-[31px] px-3 rounded border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-800 hover:bg-amber-100 inline-flex items-center gap-1.5">
-            <PencilLine className="w-3.5 h-3.5" /> Revise Estimate
+            <PencilLine className="w-3.5 h-3.5" aria-hidden="true" /> Revise Estimate
           </button>
         )}
       </div>
@@ -232,14 +232,14 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
         {conversionTrackingMissing && (
           <div className="rounded border border-rose-300 bg-rose-50 px-3 py-2.5 flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-rose-700 mt-0.5 flex-shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-rose-700 mt-0.5 flex-shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-[11px] font-bold text-rose-900">Work Order conversion tracking incomplete</div>
                 <div className="text-[10px] text-rose-800 mt-0.5">The estimate is already linked to Work Order {estimate.work_order_id}, but its conversion lifecycle revision is missing. Repairing this adds only the missing audit row; it does not change the estimate, pricing, or Work Order.</div>
               </div>
             </div>
             <button type="button" onClick={onRepairConversionTracking} disabled={repairingConversionTracking} className="h-[30px] px-3 rounded border border-rose-300 bg-white text-[10px] font-bold text-rose-800 hover:bg-rose-100 disabled:opacity-50 inline-flex items-center gap-1.5 whitespace-nowrap">
-              <RefreshCw className={`w-3.5 h-3.5 ${repairingConversionTracking ? "animate-spin" : ""}`} /> {repairingConversionTracking ? "Repairing…" : "Repair Conversion Tracking"}
+              <RefreshCw className={`w-3.5 h-3.5 ${repairingConversionTracking ? "animate-spin" : ""}`} aria-hidden="true" /> {repairingConversionTracking ? "Repairing…" : "Repair Conversion Tracking"}
             </button>
           </div>
         )}
@@ -247,7 +247,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
         {estimate?.pipeline_sync_pending && (
           <div className="rounded border border-orange-300 bg-orange-50 px-3 py-2.5 flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-2">
-              <RefreshCw className="w-4 h-4 text-orange-700 mt-0.5 flex-shrink-0" />
+              <RefreshCw className="w-4 h-4 text-orange-700 mt-0.5 flex-shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-[11px] font-bold text-orange-900">Sales Pipeline synchronization pending</div>
                 <div className="text-[10px] text-orange-800 mt-0.5">The estimate and lifecycle history are saved. Only the shared Customer / Sales Pipeline synchronization needs to be retried.</div>
@@ -255,21 +255,21 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
               </div>
             </div>
             <button type="button" onClick={onRetryPipelineSync} disabled={retryingPipelineSync} className="h-[30px] px-3 rounded border border-orange-300 bg-white text-[10px] font-bold text-orange-800 hover:bg-orange-100 disabled:opacity-50 inline-flex items-center gap-1.5 whitespace-nowrap">
-              <RefreshCw className={`w-3.5 h-3.5 ${retryingPipelineSync ? "animate-spin" : ""}`} /> {retryingPipelineSync ? "Retrying…" : "Retry Pipeline Sync"}
+              <RefreshCw className={`w-3.5 h-3.5 ${retryingPipelineSync ? "animate-spin" : ""}`} aria-hidden="true" /> {retryingPipelineSync ? "Retrying…" : "Retry Pipeline Sync"}
             </button>
           </div>
         )}
 
         {protectedEstimate && !openRevision && (
           <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-start gap-2">
-            <LockKeyhole className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" />
+            <LockKeyhole className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" aria-hidden="true" />
             <div><div className="text-[11px] font-bold text-amber-900">{cancelledEstimate ? "Cancelled estimate · permanently locked" : "Protected estimate"}</div><div className="text-[10px] text-amber-800 mt-0.5">{cancelledEstimate ? "This cancelled estimate remains available for history and reference, but cannot be reopened for editing." : `This ${persistedStatus} estimate is read-only. Start a revision with a reason before changing Products, pricing, customer details, or quote settings.`}</div></div>
           </div>
         )}
 
         {openRevision && (
           <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2.5 flex items-start gap-2">
-            <PencilLine className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" />
+            <PencilLine className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" aria-hidden="true" />
             <div className="min-w-0"><div className="text-[11px] font-bold text-blue-900">Revision #{openRevision.revision_number} in progress</div><div className="text-[10px] text-blue-800 mt-0.5">Reason: {openRevision.reason}</div><div className="text-[9px] text-blue-600 mt-1">Save the estimate when finished. The completed revision will preserve the before/after snapshots and change summary.</div><SnapshotDiffToggle lines={snapshotDiffLines} expanded={diffExpanded} onToggle={() => setDiffExpanded((value) => !value)} active before={openRevision?.estimate_snapshot_before} after={estimate} /></div>
           </div>
         )}
@@ -302,7 +302,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
                   <div className="text-[9px] text-gray-400 whitespace-nowrap">{row.completed_at || row.started_at ? new Date(row.completed_at || row.started_at).toLocaleString() : ""}</div>
                 </div>
                 <div className="mt-1 text-[10px] text-gray-600">{row.reason}</div>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span>{Number(row.quote_version || 0) > 0 && <span>Quote Version {Number(row.quote_version)}</span>}<span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.created_by && <span>by {row.created_by}</span>}{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Work Order linked</span>}</div>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[9px] text-gray-400"><span>{row.previous_status || "draft"} → {row.new_status || row.previous_status || "draft"}</span>{Number(row.quote_version || 0) > 0 && <span>Quote Version {Number(row.quote_version)}</span>}<span>Quote ${Number(row.previous_quote_total || 0).toFixed(2)} → ${Number(row.new_quote_total || 0).toFixed(2)}</span>{row.created_by && <span>by {row.created_by}</span>}{row.work_order_id && <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3 h-3" aria-hidden="true" /> Work Order linked</span>}</div>
                 {(row.change_summary || []).length > 0 && <div className="mt-1 text-[9px] text-gray-500">{row.change_summary.join(" · ")}</div>}
                 {!openRevision && row.id === snapshotDiffRevision?.id && (
                   <SnapshotDiffToggle
@@ -321,7 +321,7 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
                     className="mt-1.5 inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[8px] font-bold text-gray-500 hover:border-amber-400 hover:text-amber-700 disabled:opacity-50"
                     title="Restore this snapshot through a concurrency-guarded save; the revert is recorded as a new revision."
                   >
-                    <RotateCcw className={`w-2.5 h-2.5 ${revertingId === row.id ? "animate-spin" : ""}`} />
+                    <RotateCcw className={`w-2.5 h-2.5 ${revertingId === row.id ? "animate-spin" : ""}`} aria-hidden="true" />
                     {revertingId === row.id ? "Reverting…" : `Revert to #${row.revision_number ?? "?"}`}
                   </button>
                 )}
@@ -334,13 +334,13 @@ export default function EstimateRevisionPanel({ estimate, persistedEstimate, ope
       <Dialog open={dialogOpen} onOpenChange={(next) => !starting && setDialogOpen(next)}>
         <DialogContent className="sm:max-w-[560px] p-0 overflow-hidden border-gray-300 shadow-xl">
           <DialogHeader className="px-5 py-4 bg-[#424242] text-white border-b-4 border-lime-300">
-            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><PencilLine className="w-5 h-5 text-lime-300" /> Revise Protected Estimate</DialogTitle>
+            <DialogTitle className="text-white text-[16px] flex items-center gap-2"><PencilLine className="w-5 h-5 text-lime-300" aria-hidden="true" /> Revise Protected Estimate</DialogTitle>
             <p className="mt-1 text-[10px] text-gray-300">A before-snapshot is recorded as soon as the revision starts. This protects the audit trail even if the browser closes before the revision is saved.</p>
           </DialogHeader>
           <div className="p-5 space-y-4 bg-white">
             <label className="block text-[10px] font-bold tracking-wide text-gray-500">REVISION REASON<textarea autoFocus value={reason} onChange={(event) => setReason(event.target.value)} rows={4} placeholder="What needs to change and why?" className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[12px] font-normal text-gray-800 resize-y" /></label>
             <div className="flex flex-wrap gap-1.5">{["Client request", "Correction", "Scope change", "Price update", "Site conditions"].map((preset) => <button type="button" key={preset} type="button" onClick={() => setReason((current) => current.trim() ? `${current.trim().replace(/\.*$/, "")} — ${preset}` : preset)} className="px-2 py-1 rounded border border-gray-300 bg-gray-50 text-[9px] font-semibold text-gray-600 hover:border-lime-400 hover:text-gray-900">{preset}</button>)}</div>
-            {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+            {error && <div role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
             <div className="flex justify-end gap-2"><button type="button" disabled={starting} onClick={() => setDialogOpen(false)} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button><button type="button" disabled={starting || !reason.trim()} onClick={start} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50">{starting ? "Starting…" : "Start Revision"}</button></div>
           </div>
         </DialogContent>
