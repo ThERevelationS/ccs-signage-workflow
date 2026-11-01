@@ -367,11 +367,16 @@ export default function EstimatorCustomers() {
       if (!lines.length) throw new Error("The CSV file is empty.");
       const header = parseRow(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, "_"));
       const col = (row, ...names) => { for (const n of names) { const i = header.indexOf(n); if (i >= 0 && row[i]) return row[i]; } return ""; };
-      let created = 0, skipped = 0;
+      // Dry-run preview first (#457): classify every row against the loaded
+      // customer list (normalized company-name match) and show exact
+      // new/existing/skipped counts before any write happens.
+      const nameKeyLocal = (v) => String(v || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const existingNames = new Set(customers.map((c) => nameKeyLocal(c.company_name)).filter(Boolean));
+      const preview = { rows: [], create: 0, match: 0, skip: 0 };
       for (const line of lines.slice(1)) {
         const row = parseRow(line);
         const companyName = col(row, "company_name", "name", "company", "customer");
-        if (!companyName) { skipped++; continue; }
+        if (!companyName) { preview.skip++; continue; }
         const fields = {
           contact_email: col(row, "contact_email", "email"),
           company_phone: col(row, "company_phone", "phone", "office_phone"),
@@ -380,6 +385,21 @@ export default function EstimatorCustomers() {
           terms: col(row, "terms", "payment_terms"),
           default_tax_group: col(row, "tax_group"),
         };
+        const exists = existingNames.has(nameKeyLocal(companyName));
+        preview.rows.push({ companyName, fields, exists });
+        if (exists) preview.match++; else preview.create++;
+      }
+      if (!preview.rows.length) throw new Error("No importable rows — every row needs a company_name (aliases: name, company, customer).");
+      const proceed = window.confirm(
+        `Customer CSV preview (${lines.length - 1} data rows):\n\n` +
+        `• ${preview.create} new customer${preview.create === 1 ? "" : "s"} to create\n` +
+        `• ${preview.match} row${preview.match === 1 ? "" : "s"} matching an existing customer name\n` +
+        `• ${preview.skip} row${preview.skip === 1 ? "" : "s"} skipped (no company name)\n\n` +
+        `Matching rows are resolved by create-if-missing — existing customers are not duplicated. Continue?`
+      );
+      if (!proceed) return;
+      let created = 0, skipped = preview.skip;
+      for (const { companyName, fields } of preview.rows) {
         try {
           const res = await base44.functions.invoke("ensureEstimateCustomer", { company_name: companyName, fields, session_token: sessionToken });
           const data = res?.data || res;
