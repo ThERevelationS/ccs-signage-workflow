@@ -99,6 +99,99 @@ function splitTopLevel(args) {
   return parts;
 }
 
+// Param-list variant that also treats < > as nesting so generic types like
+// `Record<string, any>` do not desynchronize the positional mapping.
+function splitParams(src) {
+  const parts = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < src.length; i += 1) {
+    const c = src[i];
+    if (c === '"' || c === "'" || c === '`') {
+      const q = c;
+      i += 1;
+      while (i < src.length && src[i] !== q) {
+        if (src[i] === '\\') i += 1;
+        i += 1;
+      }
+      continue;
+    }
+    if (c === '(' || c === '{' || c === '[' || c === '<') depth += 1;
+    else if (c === ')' || c === '}' || c === ']' || c === '>') depth -= 1;
+    else if (c === ',' && depth === 0) {
+      parts.push(src.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(src.slice(start));
+  return parts;
+}
+
+function callArgsAt(src, openParen) {
+  let depth = 0;
+  for (let i = openParen; i < src.length; i += 1) {
+    const c = src[i];
+    if (c === '"' || c === "'" || c === '`') {
+      const q = c;
+      i += 1;
+      while (i < src.length && src[i] !== q) {
+        if (src[i] === '\\') i += 1;
+        i += 1;
+      }
+      continue;
+    }
+    if (c === '(' || c === '{' || c === '[') depth += 1;
+    else if (c === ')' || c === '}' || c === ']') {
+      depth -= 1;
+      if (depth === 0) return src.slice(openParen + 1, i);
+    }
+  }
+  return null;
+}
+
+// A local helper such as
+//   const feedRead = async (entity, query, sort, cap, label) =>
+//     entity.filter(query, sort, cap, 0)
+// forwards a named parameter into the entity read's limit slot. Resolve such
+// identifiers from the helper's call sites: the parameter counts as an
+// explicit bound iff every call site passes a resolvable limit at that
+// position. Returns param name -> minimum call-site limit (conservative for
+// helpers invoked with more than one bound).
+function delegatedLimits(blockSrc) {
+  const acc = new Map(); // param -> { min, sawCall, unresolvable }
+  const helperRe = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>/g;
+  let hm;
+  while ((hm = helperRe.exec(blockSrc))) {
+    const helper = hm[1];
+    const params = splitParams(hm[2])
+      .map((p) => p.trim().split(':')[0].trim())
+      .filter(Boolean);
+    if (!params.length) continue;
+    const callRe = new RegExp(`\\b${helper}\\s*\\(`, 'g');
+    let cm;
+    while ((cm = callRe.exec(blockSrc))) {
+      const openParen = cm.index + cm[0].lastIndexOf('(');
+      // Skip the declaration site itself (`const helper = async (`).
+      if (/=\s*(?:async\s*)?$/.test(blockSrc.slice(Math.max(0, cm.index - 16), cm.index))) continue;
+      const rawArgs = callArgsAt(blockSrc, openParen);
+      const args = rawArgs == null ? [] : splitTopLevel(rawArgs);
+      params.forEach((p, i) => {
+        if (!acc.has(p)) acc.set(p, { min: Infinity, sawCall: false, unresolvable: false });
+        const a = acc.get(p);
+        a.sawCall = true;
+        const v = resolveLimit(args[i]);
+        if (v == null) a.unresolvable = true;
+        else a.min = Math.min(a.min, v);
+      });
+    }
+  }
+  const out = new Map();
+  for (const [p, a] of acc) {
+    if (a.sawCall && !a.unresolvable) out.set(p, a.min);
+  }
+  return out;
+}
+
 function entityFilterCalls(src) {
   const calls = [];
   let idx = 0;
@@ -149,10 +242,15 @@ const SCOPED_KEY = /(\b[a-zA-Z]*_id\b|\bid\b|creation_request_key|config_name|\b
 
 function violations(blockSrc, { cappedOk }) {
   const out = [];
+  const delegated = delegatedLimits(blockSrc);
   for (const { args, call } of entityFilterCalls(blockSrc)) {
     const parts = splitTopLevel(args);
     const query = (parts[0] || '').trim();
-    const limit = resolveLimit(parts[2]);
+    let limit = resolveLimit(parts[2]);
+    if (limit == null) {
+      const expr = (parts[2] || '').trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(expr)) limit = delegated.get(expr) ?? null;
+    }
     if (limit != null && limit >= 500) continue; // explicit deep read
     if (cappedOk && limit != null) continue;      // recency-capped feed: explicit bound required
     if (UNIQUE_KEY.test(query)) continue;         // unique-key lookup, tiny result by definition
