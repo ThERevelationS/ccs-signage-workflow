@@ -39,6 +39,23 @@
       "type": "string",
       "description": "Optional linked WorkOrder id \u2014 ties this estimate to a job in the workflow."
     },
+    "sales_stage": {
+      "type": "string",
+      "enum": [
+        "lead",
+        "quoted",
+        "follow_up",
+        "won",
+        "lost",
+        "on_hold"
+      ],
+      "description": "Mirror of the linked WorkOrder's sales_status, written back when the pipeline stage changes (WorkOrder to estimate reverse sync). Distinct from the estimate lifecycle status field; absent on estimates that were never pipeline-linked."
+    },
+    "sales_stage_changed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent sales_stage write-back from the linked WorkOrder."
+    },
     "estimate_number": {
       "type": "string"
     },
