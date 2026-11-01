@@ -12,6 +12,11 @@ for (const entity of ['Opportunity', 'OpportunityIntake', 'EstimatingRequest', '
   assert.match(schema, /backend_only/, `${entity} must remain backend-only via RLS`);
   assert.match(schema, /creation_request_key/, `${entity} requires a retry-safe creation key`);
 }
+{
+  const schema = readFileSync('base44/entities/ProjectTemplate.jsonc', 'utf8');
+  assert.match(schema, /"read":\s*\{\s*"user_condition":\s*\{\s*"role":\s*"__[a-z_]+backend_only__"/, 'ProjectTemplate read must stay backend-only (staff read via staffDataRead)');
+  assert.doesNotMatch(schema, /"role":\s*"(user|admin)"/, 'ProjectTemplate RLS must not grant platform user/admin roles');
+}
 for (const entity of ['CustomerContact', 'CustomerLocation']) {
   const schema = readFileSync(`base44/entities/${entity}.jsonc`, 'utf8');
   assert.ok(schema.includes('"customer_id"'), `${entity} must link its owning Customer`);
