@@ -115,6 +115,9 @@ export default function Permitting() {
   const workScrollRef = useRef(null);
   const workScrollTopRef = useRef(0);
   const highlightScrolledRef = useRef(false);
+  // One automatic retry per failure streak — the 60s poller still runs, but a
+  // fast second try bridges the common transient rate-limit blip.
+  const autoRetriedRef = useRef(false);
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
@@ -134,32 +137,47 @@ export default function Permitting() {
         { entity: "PermitLocality" },
         { entity: "AuthorizedEmail" },
       ]).catch(() => null);
-      const [items, locs, wos, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
+      // The board itself only needs lines + work orders — if a helper list
+      // (offices, users, settings) fails, degrade that piece and say so
+      // instead of blanking the whole board on one slow read.
+      const [items, wos] = await Promise.all([
         batched?.PermitLineItem
           ? Promise.resolve(primeAndReturn("Permitting line items", null, "-updated_date", batched.PermitLineItem))
           : loadAllEntityRows({ entity: PermitLineItem, sort: "-updated_date", label: "Permitting line items", cacheTtlMs: 30000 }),
-        batched?.PermitLocality
-          ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
-          : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
         fetchAllWorkOrders({ preferSnapshot: true }).then((rows) =>
           (rows || [])
             .filter((wo) => wo.completed !== true && wo.deleted !== true)
             .sort((a, b) => (a.created_date || "").localeCompare(b.created_date || ""))),
-
-        batched?.AuthorizedEmail
-          ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
-          : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
-        loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
-          settingKey: "permitOfficeTypes",
-          label: "Permitting office types",
-        }),
-        loadSingleGlobalSetting({
-          entity: staffEntities.GlobalSettings,
-          settingKey: "salesTaskDescriptions",
-          label: "Permitting sales task descriptions",
-        })
       ]);
+      const missing = [];
+      const degrade = (promise, fallback, name) => promise.catch(() => { missing.push(name); return fallback; });
+      const [locs, usersData, officeTypesSetting, taskDescSetting] = await Promise.all([
+        degrade(
+          batched?.PermitLocality
+            ? Promise.resolve(primeAndReturn("Permitting localities", null, null, batched.PermitLocality))
+            : loadAllEntityRows({ entity: PermitLocality, sort: null, label: "Permitting localities", cacheTtlMs: 15000 }),
+          [], "the saved offices list"),
+        degrade(
+          batched?.AuthorizedEmail
+            ? Promise.resolve(primeAndReturn("Permitting authorized users", null, null, batched.AuthorizedEmail))
+            : loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Permitting authorized users", cacheTtlMs: 60000 }),
+          [], "the team list"),
+        degrade(
+          loadSingleGlobalSetting({
+            entity: staffEntities.GlobalSettings,
+            settingKey: "permitOfficeTypes",
+            label: "Permitting office types",
+          }),
+          null, "office type settings"),
+        degrade(
+          loadSingleGlobalSetting({
+            entity: staffEntities.GlobalSettings,
+            settingKey: "salesTaskDescriptions",
+            label: "Permitting sales task descriptions",
+          }),
+          null, "task settings"),
+      ]);
+      if (missing.length) setLoadError(`Some helper info could not be loaded (${missing.join(", ")}). The board still works — press Try again to fill it in.`);
       setLocalities(locs);
       setUsers(usersData);
 
@@ -208,12 +226,17 @@ export default function Permitting() {
       setWorkOrders(permittingWOs);
       lineItemBaselinesRef.current = new Map(visibleItems.map((item) => [item.id, item]));
       setLineItems(visibleItems);
-      setLoadError("");
+      autoRetriedRef.current = false;
+      if (!missing.length) setLoadError("");
     } catch (error) {
       console.error("Error loading data:", error);
       // A failed mount read must not masquerade as "0 permit lines" — surface
       // the failure with a retry instead of an empty board.
       setLoadError(error?.message || "Permits could not be loaded.");
+      if (!autoRetriedRef.current) {
+        autoRetriedRef.current = true;
+        setTimeout(() => { if (!document.hidden) loadData(false); }, 5000);
+      }
     }
     if (showLoading) setIsLoading(false);
   };
