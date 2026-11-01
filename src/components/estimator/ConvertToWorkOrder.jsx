@@ -93,7 +93,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
     return (
       <div className="bg-white border border-gray-200 rounded-md p-4 border-l-4 border-l-emerald-400">
         <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm mb-1">
-          <CheckCircle2 className="w-4 h-4" /> Job created
+          <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> Job created
         </div>
         <p className="text-xs text-gray-500 mb-3">
           This estimate is linked to a job in the main workflow.
@@ -123,7 +123,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
         disabled={disabled || busy || !approved || !(estimate.line_items || []).length}
         className="w-full rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold disabled:opacity-50"
       >
-        <Briefcase className="w-4 h-4" /> {disabled ? (disabledReason || "Save Revision First") : !approved ? "Approve Estimate Before Converting" : busy ? "Creating job…" : "Create Work Order"}
+        <Briefcase className="w-4 h-4" aria-hidden="true" /> {disabled ? (disabledReason || "Save Revision First") : !approved ? "Approve Estimate Before Converting" : busy ? "Creating job…" : "Create Work Order"}
       </Button>
     </div>
   );
