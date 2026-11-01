@@ -6,7 +6,7 @@ import { usePolling } from "@/lib/usePolling";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { format, differenceInDays } from "date-fns";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand inside export handlers — not at page load.
 import { Plus, Trash2, Loader2, Download, Upload, Pencil, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import LoadErrorBanner from "@/components/LoadErrorBanner";
 
@@ -1916,6 +1916,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }));
     await new Promise(resolve => setTimeout(resolve, 300));
     setExportProgress({ show: true, progress: 50 });
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sales Pipeline");
@@ -2014,7 +2015,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const downloadImportIssues = () => {
+  const downloadImportIssues = async () => {
     const issues = importPreview?.appliedResult?.issues || importPreview?.issues || [];
     if (!issues.length) return;
     const rows = issues.map((issue) => ({
@@ -2026,6 +2027,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Fields": Array.isArray(issue.fields) ? issue.fields.join(", ") : "",
       "Matching WorkOrder IDs": Array.isArray(issue.match_ids) ? issue.match_ids.join(", ") : "",
     }));
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Import Issues");
