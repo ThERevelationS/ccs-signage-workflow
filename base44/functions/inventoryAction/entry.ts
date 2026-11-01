@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import {
   createFoundationRecordWithRecovery,
@@ -87,7 +88,7 @@ async function applyMovement({ Inventory, Movement, item, delta, reason, workOrd
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
     const actor = clean(user?.email) || clean(user?.id) || "unknown";
