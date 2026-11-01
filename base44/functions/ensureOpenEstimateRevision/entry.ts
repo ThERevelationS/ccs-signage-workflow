@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { estimateAuditSnapshot, estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -97,7 +98,7 @@ async function settleCreatedRevisionNumber(RevisionService: any, estimateId: str
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     // Revision writes were gated solely on the custom session token, which left
     // the audit trail empty when callers ran under plain request-context auth.
