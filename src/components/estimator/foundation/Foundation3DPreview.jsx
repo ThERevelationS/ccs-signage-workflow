@@ -236,7 +236,7 @@ export default function Foundation3DPreview({ project }) {
           onClick={() => setVisible((v) => !v)}
           className="text-[11px] font-medium text-gray-600 hover:text-red-600 flex items-center gap-1"
         >
-          {visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          {visible ? <EyeOff className="w-3.5 h-3.5" aria-hidden="true" /> : <Eye className="w-3.5 h-3.5" aria-hidden="true" />}
           {visible ? "Hide 3D View" : "Show 3D View"}
         </button>
       </div>
@@ -248,17 +248,17 @@ export default function Foundation3DPreview({ project }) {
             <ToolBtn onClick={() => setView("side")}>Side</ToolBtn>
             <ToolBtn onClick={() => setView("top")}>Top</ToolBtn>
             <ToolBtn onClick={() => setView("reset")}>
-              <RotateCcw className="w-3 h-3" /> Reset
+              <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reset
             </ToolBtn>
             <span className="text-[11px] text-gray-500 px-1">{zoom}%</span>
             <ToolBtn onClick={() => setShowGround((v) => !v)} active={!showGround}>
               {showGround ? "Hide Ground" : "Show Ground"}
             </ToolBtn>
             <ToolBtn onClick={() => setSolid((v) => !v)} active={solid}>
-              <Box className="w-3 h-3" /> {solid ? "Solid Mode" : "Wireframe"}
+              <Box className="w-3 h-3" aria-hidden="true" /> {solid ? "Solid Mode" : "Wireframe"}
             </ToolBtn>
             <ToolBtn onClick={() => mountRef.current?.requestFullscreen?.()}>
-              <Maximize2 className="w-3 h-3" /> Full Screen
+              <Maximize2 className="w-3 h-3" aria-hidden="true" /> Full Screen
             </ToolBtn>
           </div>
 
