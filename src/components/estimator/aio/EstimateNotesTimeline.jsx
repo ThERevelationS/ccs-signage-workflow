@@ -27,7 +27,7 @@ export default function EstimateNotesTimeline({ estimate, onChange, readOnly = f
   return (
     <div className="rounded border border-gray-200 bg-white">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
-        <StickyNote className="w-3.5 h-3.5 text-gray-400" />
+        <StickyNote className="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
         <span className="text-[11px] font-bold uppercase tracking-wide text-gray-600">Notes timeline</span>
         <span className="text-[10px] text-gray-400">{log.length} {log.length === 1 ? "entry" : "entries"}</span>
       </div>
@@ -46,6 +46,7 @@ export default function EstimateNotesTimeline({ estimate, onChange, readOnly = f
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            aria-label="Add a note to the timeline"
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
             placeholder="Add a note to the timeline…"
             className="flex-1 h-7 px-2 border border-gray-300 rounded text-[11px] focus:outline-none focus:border-emerald-500"
@@ -56,7 +57,7 @@ export default function EstimateNotesTimeline({ estimate, onChange, readOnly = f
             disabled={!draft.trim()}
             className="h-7 px-2.5 rounded bg-emerald-700 text-white text-[11px] font-bold hover:bg-emerald-800 disabled:opacity-40 flex items-center gap-1"
           >
-            <Plus className="w-3 h-3" /> Add
+            <Plus className="w-3 h-3" aria-hidden="true" /> Add
           </button>
         </div>
       )}
