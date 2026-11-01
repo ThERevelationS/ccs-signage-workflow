@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Settings as SettingsEntity } from "@/entities/all";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BrickWall, Clock, PaintBucket, Save, Shovel } from "lucide-react";
+import { ArrowLeft, BrickWall, Clock, PaintBucket, RotateCcw, Save, Shovel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveSettingsRowsSafely } from "@/components/estimator/settings/settingsSaveGuard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import SettingsTransferBar from "@/components/estimator/settings/SettingsTransferBar";
+import { FOUNDATION_SETTINGS_DEFAULTS, resetValuesToDefaults } from "@/components/estimator/settings/moduleSettingDefaults";
 
 const GROUPS = [
   {
@@ -88,6 +89,12 @@ export default function FoundationSettings() {
   const patch = (key, value) => setValues((prev) => ({ ...prev, [key]: String(value) }));
   const dirtyCount = rows.filter((row) => String(values[row.setting_name] ?? "") !== String(original[row.setting_name] ?? "")).length;
 
+  // #83 — stage every managed key back to the calculator's documented fallback.
+  const handleResetDefaults = () => {
+    setValues((prev) => resetValuesToDefaults(prev, FOUNDATION_SETTINGS_DEFAULTS, [...ACTIVE_KEYS]));
+    setMessage("Defaults staged — click Save to persist them.");
+  };
+
   const save = async () => {
     if (settingsSaveRef.current) return;
     settingsSaveRef.current = true;
@@ -119,7 +126,7 @@ export default function FoundationSettings() {
       <div className="max-w-[1050px] mx-auto p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Link to="/EstimatorSettings" className="inline-flex items-center gap-1 text-[12px] font-semibold text-gray-600 hover:text-gray-900"><ArrowLeft className="w-4 h-4" /> Estimator Settings</Link>
-          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="foundation-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button onClick={save} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
+          <div className="flex items-center gap-2"><SettingsTransferBar values={values} allowedKeys={Object.keys(values)} fileName="foundation-settings" onImport={(imported) => setValues((v) => ({ ...v, ...imported }))} /><Button variant="outline" onClick={handleResetDefaults} disabled={saving} className="h-[32px] text-[12px] font-semibold" title="Stage calculator fallback defaults — Save to persist"><RotateCcw className="w-4 h-4 mr-1.5" /> Reset to defaults</Button><Button onClick={save} disabled={saving || dirtyCount === 0} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold disabled:opacity-50"><Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : `Save${dirtyCount ? ` (${dirtyCount})` : ""}`}</Button></div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-md px-4 py-3">
