@@ -292,6 +292,31 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Single-job status tracker: a 'work_order' link opens exactly one job's
+      // customer-safe status view — no invoices, payments, or other jobs.
+      if (clean(link.kind) === "work_order") {
+        const order = await WorkOrder.get(clean(link.record_id)).catch(() => null);
+        if (!order?.id || order?.deleted === true) throw bad("The linked job is no longer available.", 404);
+        const announcements = await loadPortalAnnouncements(clean(link.customer_id) || clean(order.customer_id) || "");
+        return Response.json({
+          success: true,
+          action,
+          kind: "work_order",
+          label: clean(link.label),
+          expires_at: clean(link.expires_at),
+          announcements,
+          job: jobPortalView(order),
+          products: (Array.isArray(order?.products) ? order.products : [])
+            .filter((p: any) => p && p.deleted !== true)
+            .map((p: any) => ({
+              description: clean(p?.description || p?.customer_description) || "Item",
+              quantity: num(p?.quantity) || null,
+              customer_facing_status: clean(p?.customer_facing_status),
+              fulfillment_state: clean(p?.fulfillment_state) === "none" ? "" : clean(p?.fulfillment_state),
+            })),
+        });
+      }
+
       // Staff read-only share link (#88): a 'staff_view' link opens exactly one
       // estimate's quote, read-only. Every mutation action below already fails
       // closed on kind !== 'customer', so nothing on this link can write.
@@ -816,8 +841,8 @@ Deno.serve(async (req) => {
 
     if (action === "create_link") {
       const kind = clean(body?.kind) || "invoice";
-      const recordId = kind === "customer" ? clean(body?.customer_id) : kind === "staff_view" ? clean(body?.estimate_id) : clean(body?.invoice_id);
-      if (!["invoice", "customer", "staff_view"].includes(kind)) throw bad("kind must be invoice, customer, or staff_view.");
+      const recordId = kind === "customer" ? clean(body?.customer_id) : kind === "staff_view" ? clean(body?.estimate_id) : kind === "work_order" ? clean(body?.work_order_id) : clean(body?.invoice_id);
+      if (!["invoice", "customer", "staff_view", "work_order"].includes(kind)) throw bad("kind must be invoice, customer, staff_view, or work_order.");
       if (!recordId) throw bad(`${kind === "customer" ? "customer_id" : kind === "staff_view" ? "estimate_id" : "invoice_id"} is required.`);
       let customerId = "";
       let label = clean(body?.label);
@@ -831,6 +856,11 @@ Deno.serve(async (req) => {
         if (!invoice?.id) throw bad("Invoice not found.", 404);
         customerId = clean(invoice.customer_id);
         label = label || `Invoice ${clean(invoice.invoice_number) || recordId}`;
+      } else if (kind === "work_order") {
+        const order = await WorkOrder.get(recordId).catch(() => null);
+        if (!order?.id) throw bad("Work order not found.", 404);
+        customerId = clean(order.customer_id);
+        label = label || `Job ${clean(order.est_inv_at || order.work_order_number) || recordId} status`;
       } else {
         const customer = await Customer.get(recordId).catch(() => null);
         if (!customer?.id) throw bad("Customer not found.", 404);

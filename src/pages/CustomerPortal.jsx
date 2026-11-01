@@ -563,6 +563,7 @@ export default function CustomerPortal() {
 
   const data = state.data;
   const isCustomer = data?.kind === "customer";
+  const isWorkOrder = data?.kind === "work_order";
   const estimates = data?.estimates || [];
   const jobs = data?.jobs || [];
   const invoices = data?.invoices || [];
@@ -713,6 +714,27 @@ export default function CustomerPortal() {
 
         {!state.loading && data && !isCustomer && (
           <>
+            {isWorkOrder && data.job && (
+              <div className="space-y-4">
+                <JobCard job={data.job} busy={false} />
+                {Array.isArray(data.products) && data.products.length > 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Items on this job</p>
+                    <ul className="mt-2 divide-y divide-slate-100">
+                      {data.products.map((p, i) => (
+                        <li key={i} className="flex items-center justify-between gap-3 py-2 text-sm">
+                          <span className="min-w-0 truncate text-slate-800">{p.description}{Number(p.quantity) > 1 ? ` x ${p.quantity}` : ""}</span>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+                            {p.fulfillment_state ? `${p.fulfillment_state.replace(/_/g, " ")}` : (p.customer_facing_status || "In progress")}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <p className="text-center text-[11px] text-slate-400">Status updates appear here as the job moves — bookmark this link.</p>
+              </div>
+            )}
             {data.kind === "staff_view" && data.estimate && (
               <>
                 <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">

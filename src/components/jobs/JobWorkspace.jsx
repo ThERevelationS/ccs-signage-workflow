@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
+import { invokePortal } from "@/components/portal/PortalPanel";
 import { useAllWorkOrders, refreshAllWorkOrders } from "@/lib/workOrderCache";
 import {
   OPERATIONAL_STATUS_CUSTOMER_LABELS,
@@ -153,6 +154,19 @@ function WorkOrderPicker({ workOrders, estimateId }) {
 export default function JobWorkspace() {
   const { data: workOrders = [], isFetched } = useAllWorkOrders();
   const { currentUser, sessionToken } = useAuth();
+  const [statusLinkState, setStatusLinkState] = useState("");
+  const copyStatusLink = async () => {
+    if (!sessionToken || !wo?.id || statusLinkState === "busy") return;
+    setStatusLinkState("busy");
+    try {
+      const d = await invokePortal(sessionToken, { action: "create_link", kind: "work_order", work_order_id: wo.id, creation_request_key: crypto.randomUUID() });
+      const token = d?.token || d?.link?.token;
+      if (!token) throw new Error("no token");
+      await navigator.clipboard.writeText(`${window.location.origin}/customerportal?token=${encodeURIComponent(token)}`);
+      setStatusLinkState("copied");
+    } catch { setStatusLinkState("error"); }
+    setTimeout(() => setStatusLinkState(""), 2500);
+  };
   const actor = String(currentUser?.email || "").trim();
   const [searchParams] = useSearchParams();
   const woParam = String(searchParams.get("wo") || "").trim();
@@ -416,6 +430,15 @@ export default function JobWorkspace() {
                 Statement
               </Link>
             )}
+            <button
+              type="button"
+              onClick={copyStatusLink}
+              title="Copy a no-login customer link that shows only this job's status"
+              className="rounded border border-gray-300 px-2 py-1 text-sky-700 hover:bg-sky-50 disabled:opacity-50"
+              disabled={!sessionToken || statusLinkState === "busy"}
+            >
+              {statusLinkState === "copied" ? "Status link copied" : statusLinkState === "error" ? "Link failed" : "Status link"}
+            </button>
             </div>
           }
         >
