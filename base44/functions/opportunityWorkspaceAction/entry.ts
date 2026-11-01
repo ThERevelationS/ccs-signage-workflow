@@ -631,12 +631,17 @@ Deno.serve(async (req) => {
         feedRead(Inventory, null, "-updated_date", 300, "Feed inventory").catch(afFail),
         feedRead(WorkOrder, null, "-updated_date", 300, "Feed work orders").catch(afFail),
         feedRead(PermitLineItem, null, "-updated_date", 300, "Feed permit lines").catch(afFail),
-        feedRead(Estimate, { status: "sent" }, "-updated_date", 300, "Feed sent estimates").catch(afFail),
-        feedRead(Estimate, { pipeline_sync_pending: true }, "-updated_date", 100, "Feed sync-pending estimates").catch(afFail),
+        // (#401/#406) One Estimate scan feeds all three estimate-derived
+        // sections (sent, expiring/expired, sync-pending) — the fan-out used
+        // to issue a second Estimate query for sync-pending rows. The merged
+        // cap is the sum of the old caps so neither sub-window shrinks.
+        feedRead(Estimate, { $or: [{ status: "sent" }, { pipeline_sync_pending: true }] }, "-updated_date", 400, "Feed estimate rows").catch(afFail),
         feedRead(BuilderPart, { needs_recalc: true }, "-updated_date", 150, "Feed needs-recalc parts").catch(afFail),
       ]);
       if (!afCached && !afFailed) attentionFeedRowsCache = { rows: feedRows, expires: Date.now() + ATTENTION_FEED_CACHE_MS };
-      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, sentEstimates, syncPendingRows, needsRecalcRows] = feedRows;
+      const [messages, invoices, pos, cos, opps, requests, stock, workOrders, permits, estimateRows, needsRecalcRows] = feedRows;
+      const sentEstimates = list(estimateRows).filter((e: any) => clean(e?.status) === "sent");
+      const syncPendingRows = list(estimateRows).filter((e: any) => e?.pipeline_sync_pending === true);
       // Response arrays stay display-capped at the historic per-section
       // ceilings so the payload shape is unchanged; matched_totals and the
       // truncated map now report the post-filter count across ALL rows.
