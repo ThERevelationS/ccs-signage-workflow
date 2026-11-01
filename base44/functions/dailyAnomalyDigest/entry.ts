@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // Daily anomaly scan — flags unusual admin/security activity and emails admins
 // only when something crosses a threshold. Quiet when nothing is wrong.
@@ -10,7 +11,7 @@ const THRESHOLDS = {
 
 export async function handler() {
   try {
-    const base44 = createClientFromRequest(new Request("https://internal/cron"));
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(new Request("https://internal/cron")));
     const ent = base44.asServiceRole.entities;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const [failedRows, auditRows] = await Promise.all([
