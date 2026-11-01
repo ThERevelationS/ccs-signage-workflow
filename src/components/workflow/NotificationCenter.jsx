@@ -62,7 +62,7 @@ const SEVERITY_TONE = {
 // entity rows (mark read / snooze / handled / deep-link), "Feed" = the live
 // attention_feed categories, "Prefs" = per-user section toggles (#328)
 // persisted through notificationAction.
-export default function NotificationCenter({ open, onClose }) {
+export default function NotificationCenter({ open, onClose, onRefresh }) {
   const { sessionToken } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("alerts");
@@ -81,8 +81,11 @@ export default function NotificationCenter({ open, onClose }) {
       setNotifications(data.notifications || []);
       setUnread(data.unread_count ?? 0);
     }
+    // The Feed tab renders the bell's last attention_feed snapshot — pull a
+    // fresh one so refresh actually refreshes both tabs.
+    try { await onRefresh?.(); } catch { /* non-fatal */ }
     setLoading(false);
-  }, [sessionToken]);
+  }, [sessionToken, onRefresh]);
 
   useEffect(() => {
     const unsub = subscribeNotificationPrefs(setPrefs);
