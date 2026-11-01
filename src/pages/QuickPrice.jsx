@@ -56,13 +56,18 @@ export default function QuickPrice() {
   const [historyQuery, setHistoryQuery] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("q") || ""; } catch { return ""; }
   });
+  // (#415) Debounce the ?q= write-back: history.replaceState used to run on
+  // every keystroke; now it settles 300ms after typing stops.
   useEffect(() => {
-    try {
-      const next = new URLSearchParams(window.location.search);
-      const v = historyQuery.trim();
-      if (v) next.set("q", v); else next.delete("q");
-      window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        const next = new URLSearchParams(window.location.search);
+        const v = historyQuery.trim();
+        if (v) next.set("q", v); else next.delete("q");
+        window.history.replaceState(null, "", `${window.location.pathname}?${next}`);
+      } catch {}
+    }, 300);
+    return () => clearTimeout(timer);
   }, [historyQuery]);
   const filteredHistory = useMemo(() => {
     const q = historyQuery.trim().toLowerCase();
