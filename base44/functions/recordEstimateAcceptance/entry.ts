@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { createFoundationRecordWithRecovery } from '../../shared/opportunityFoundationPersistence.mjs';
 
 const METHODS = new Set(['signed_quote', 'email', 'verbal', 'in_person', 'other']);
 
@@ -29,6 +30,13 @@ const canonicalAcceptance = (rows: any[] = []) => rows.slice().sort((a, b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
+// A superseded acceptance stays in the audit trail but no longer counts as the
+// canonical approval for its quote version — dedupe/convergence checks run on
+// active rows only so a fresh acceptance can be recorded after a supersede.
+const isActiveAcceptance = (row: any) =>
+  String(row?.status || 'accepted') !== 'superseded' && !row?.superseded_at;
+const activeAcceptanceRows = (rows: any[] = []) => (Array.isArray(rows) ? rows : []).filter(isActiveAcceptance);
+
 // Mirror the canonical acceptance onto the Estimate record itself so
 // accepted_at/accepted_by_* is queryable without joining EstimateAcceptance.
 // CAS on the loaded updated_date; failures never fail the acceptance write.
@@ -49,11 +57,235 @@ async function patchEstimateAcceptanceFields(Estimate: any, estimateId: string, 
   }
 }
 
+/**
+ * (#255) Staff-side "reject quote": CAS the estimate to cancelled (the state the
+ * codebase treats as customer-lost — the pipeline maps it to `lost`, mirroring
+ * the portal decline path and the Cancel Estimate modal's cancelled_at /
+ * cancel_reason fields) and queue an idempotent `ready` EstimatingRequest
+ * follow-up assigned to the estimate owner with a due date. CAS-anchored on the
+ * estimate's updated_date; retries converge instead of double-writing.
+ */
+async function rejectEstimateQuote({ base44, user, body }: any) {
+  const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
+  const EstimatingRequest = base44.asServiceRole.entities.EstimatingRequest;
+  const estimateId = String(body?.estimate_id || '').trim();
+  const reason = String(body?.reason || '').trim().slice(0, 500);
+  if (!estimateId) {
+    return Response.json({ error: 'Estimate is required to reject a quote.' }, { status: 400 });
+  }
+  if (!reason) {
+    return Response.json({ error: 'A rejection reason is required — a lost quote must never be silent.' }, { status: 400 });
+  }
+  const rawDueDate = String(body?.due_date || '').trim();
+  const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDueDate)
+    ? rawDueDate
+    : new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+  const expectedVersion = String(body?.expected_estimate_updated_date || '').trim();
+
+  const estimate = await Estimate.get(estimateId).catch(() => null);
+  if (!estimate?.id || estimate?.deleted === true) {
+    return Response.json({ error: 'Estimate could not be verified for quote rejection.' }, { status: 404 });
+  }
+  if (expectedVersion && expectedVersion !== String(estimate.updated_date || '').trim()) {
+    return Response.json({ error: 'This estimate changed in another session. Reload before rejecting the quote.' }, { status: 409 });
+  }
+  if (String(estimate.work_order_id || '').trim()) {
+    return Response.json({ error: 'This estimate is already linked to a Work Order. Cancel or close the job from the workflow instead of rejecting its source quote.' }, { status: 409 });
+  }
+
+  const status = String(estimate.status || '').trim();
+  let saved = estimate;
+  let reused = false;
+  if (status === 'sent') {
+    const anchor = String(estimate.updated_date || '').trim();
+    if (!anchor) {
+      return Response.json({ error: 'Estimate is missing version metadata and cannot be rejected safely.' }, { status: 409 });
+    }
+    const result = await Estimate.updateMany(
+      { id: estimateId, updated_date: anchor },
+      { $set: { status: 'cancelled', cancel_reason: reason, cancelled_at: new Date().toISOString(), edit_reason: '' } },
+    );
+    if (!result || typeof result.updated !== 'number') {
+      throw new Error('Quote rejection conditional-update result could not be verified.');
+    }
+    if (result.updated !== 1) {
+      // CAS lost the race — converge only when the row already reflects THIS
+      // rejection (same reason), never paper over a different transition.
+      const after = await Estimate.get(estimateId).catch(() => null);
+      if (after?.id && String(after?.status || '') === 'cancelled' && String(after?.cancel_reason || '').trim() === reason) {
+        saved = after;
+        reused = true;
+      } else {
+        return Response.json({ error: 'Estimate changed while the quote was being rejected. Reload before rejecting again.' }, { status: 409 });
+      }
+    } else {
+      saved = await Estimate.get(estimateId).catch(() => null) || estimate;
+    }
+  } else if (status === 'cancelled' && String(estimate.cancel_reason || '').trim() === reason) {
+    // Replay of this exact rejection — the estimate is already cancelled;
+    // converge on the follow-up task below.
+    reused = true;
+  } else {
+    return Response.json({ error: `This quote is ${status || 'not awaiting response'} — only sent quotes can be rejected.` }, { status: 409 });
+  }
+
+  // Staff follow-up task: an idempotent queue-visible EstimatingRequest puts
+  // the loss on the estimator queue assigned to the estimate owner with a due
+  // date (mirrors the portal decline's `ready` follow-up row convention).
+  let followUp: any = null;
+  let followUpWarning = '';
+  const requestKey = `staff-reject-request:${estimateId}`;
+  const quoteVersion = Math.max(0, whole(estimate.quote_version));
+  const quoteLabel = `Quote Version ${quoteVersion || '?'}${estimate.estimate_number ? ` · ${estimate.estimate_number}` : ''}`;
+  try {
+    const projectName = String(estimate.project_name || estimate.estimate_number || 'estimate').trim();
+    const created = await createFoundationRecordWithRecovery({
+      entity: EstimatingRequest,
+      data: {
+        creation_request_key: requestKey,
+        estimate_id: estimateId,
+        opportunity_id: String(estimate.opportunity_id || '').trim() || `staff-reject:${estimateId}`,
+        customer_id: String(estimate.customer_id || '').trim(),
+        // "ready" is the queue-visible status — it lands on the estimator
+        // queue and attention feed, unlike the legacy "open" value.
+        status: 'ready',
+        requested_at: new Date().toISOString(),
+        submitted_at: new Date().toISOString(),
+        requested_by: String(user.email || user.full_name || user.name || 'staff').trim(),
+        assigned_estimator: String(estimate.salesperson_email || estimate.created_by || estimate.salesperson || '').trim(),
+        due_date: dueDate,
+        priority: 'high',
+        request_kind: 'quote_rejection_followup',
+        request_notes: `Staff rejected ${quoteLabel} on ${projectName}: ${reason.slice(0, 400)} — follow up with the customer.`,
+      },
+      readMatches: () => EstimatingRequest.filter({ creation_request_key: requestKey }),
+      label: 'Staff quote rejection follow-up task',
+    });
+    followUp = created?.record || null;
+  } catch (error: any) {
+    // The rejection itself is durable — a queue failure is surfaced, never
+    // silently rolled back or fatal (mirrors the portal decline convention).
+    console.error('Quote rejected but its follow-up task failed:', error?.message || error);
+    followUpWarning = 'The quote was rejected, but its estimator follow-up task could not be queued. Create the follow-up manually.';
+  }
+
+  return Response.json({ success: true, action: 'reject_quote', estimate: saved, follow_up: followUp, follow_up_warning: followUpWarning, reused });
+}
+
+/**
+ * (#271) Supersede acceptance: mark the canonical EstimateAcceptance row for
+ * the current Quote Version as superseded (additive status/superseded_* audit
+ * fields, CAS on the row's own updated_date) and CAS the estimate from
+ * Approved back to Sent (needs-resend) with the acceptance mirror fields
+ * cleared. The lifecycle EstimateRevision is written by the caller through
+ * the normal guarded path. Retries converge on either half.
+ */
+async function supersedeEstimateAcceptance({ base44, user, body }: any) {
+  const Estimate = base44.asServiceRole.entities.AllInOneEstimate;
+  const Acceptance = base44.asServiceRole.entities.EstimateAcceptance;
+  const estimateId = String(body?.estimate_id || '').trim();
+  const acceptanceId = String(body?.acceptance_id || '').trim();
+  const reason = String(body?.reason || '').trim().slice(0, 500) || 'Customer acceptance superseded by staff.';
+  const expectedVersion = String(body?.expected_estimate_updated_date || '').trim();
+  if (!estimateId) {
+    return Response.json({ error: 'Estimate is required to supersede an acceptance.' }, { status: 400 });
+  }
+
+  const estimate = await Estimate.get(estimateId).catch(() => null);
+  if (!estimate?.id || estimate?.deleted === true) {
+    return Response.json({ error: 'Estimate could not be verified for acceptance supersede.' }, { status: 404 });
+  }
+  if (expectedVersion && expectedVersion !== String(estimate.updated_date || '').trim()) {
+    return Response.json({ error: 'This estimate changed in another session. Reload before superseding the acceptance.' }, { status: 409 });
+  }
+  const status = String(estimate.status || '').trim();
+  if (!['approved', 'sent'].includes(status)) {
+    return Response.json({ error: `Only an Approved estimate's customer acceptance can be superseded.` }, { status: 409 });
+  }
+  const quoteVersion = Math.max(0, whole(estimate.quote_version));
+  const rows = await Acceptance.filter({ estimate_id: estimateId, quote_version: quoteVersion });
+  if (!Array.isArray(rows)) {
+    throw new Error('Acceptance history could not be verified safely.');
+  }
+  const activeRows = activeAcceptanceRows(rows);
+  const target = (acceptanceId ? activeRows.find((row: any) => String(row?.id || '') === acceptanceId) : null)
+    || canonicalAcceptance(activeRows);
+  if (!target?.id) {
+    return Response.json({ error: 'No active customer acceptance exists for the current Quote Version.' }, { status: 409 });
+  }
+
+  // Return the estimate to Sent (the needs-resend state) first; the mirror
+  // fields are cleared so lists stop showing the stale customer approval.
+  let saved = estimate;
+  let reused = false;
+  if (status === 'approved') {
+    const anchor = String(estimate.updated_date || '').trim();
+    if (!anchor) {
+      return Response.json({ error: 'Estimate is missing version metadata and cannot be superseded safely.' }, { status: 409 });
+    }
+    const result = await Estimate.updateMany(
+      { id: estimateId, updated_date: anchor },
+      { $set: { status: 'sent', accepted_at: '', accepted_by_name: '', accepted_by_email: '', edit_reason: '' } },
+    );
+    if (!result || typeof result.updated !== 'number') {
+      throw new Error('Acceptance supersede conditional-update result could not be verified.');
+    }
+    if (result.updated !== 1) {
+      const after = await Estimate.get(estimateId).catch(() => null);
+      if (after?.id && String(after?.status || '') === 'sent') {
+        saved = after;
+        reused = true;
+      } else {
+        return Response.json({ error: 'Estimate changed while the acceptance was being superseded. Reload before superseding again.' }, { status: 409 });
+      }
+    } else {
+      saved = await Estimate.get(estimateId).catch(() => null) || estimate;
+    }
+  } else {
+    // Already Sent — a prior attempt CAS'd the estimate before failing on the
+    // acceptance mark; converge on the acceptance update below.
+    reused = true;
+  }
+
+  const targetVersion = String(target.updated_date || '').trim();
+  if (!targetVersion) {
+    throw new Error('The acceptance record is missing version metadata and cannot be superseded safely.');
+  }
+  const patch = {
+    status: 'superseded',
+    superseded_at: new Date().toISOString(),
+    superseded_by_email: String(user.email || '').trim(),
+    superseded_by_name: String(user.full_name || user.name || user.email || '').trim(),
+    supersede_reason: reason,
+  };
+  const result = await Acceptance.updateMany({ id: target.id, updated_date: targetVersion }, { $set: patch });
+  if (!result || typeof result.updated !== 'number') {
+    throw new Error('Acceptance supersede conditional-update result could not be verified.');
+  }
+  let superseded: any = target;
+  if (result.updated === 1) {
+    superseded = await Acceptance.get(target.id).catch(() => null) || { ...target, ...patch };
+  } else {
+    const after = await Acceptance.get(target.id).catch(() => null);
+    if (after?.id && !isActiveAcceptance(after)) {
+      superseded = after;
+      reused = true;
+    } else {
+      return Response.json({ error: 'Acceptance changed while it was being superseded. Reload before superseding again.' }, { status: 409 });
+    }
+  }
+
+  return Response.json({ success: true, action: 'supersede_acceptance', estimate: saved, acceptance: superseded, reused });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
+    const action = String(body?.action || 'record').trim();
+    if (action === 'reject_quote') return await rejectEstimateQuote({ base44, user, body });
+    if (action === 'supersede_acceptance') return await supersedeEstimateAcceptance({ base44, user, body });
     const estimateId = String(body?.estimate_id || '').trim();
     const quoteVersion = Math.max(0, whole(body?.quote_version));
     const acceptedByName = String(body?.accepted_by_name || '').trim();
@@ -115,13 +347,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Accepted by is required and no customer contact name is on file.' }, { status: 400 });
     }
 
-    const existingRows = await Acceptance.filter({
+    // Dedupe/convergence considers ACTIVE acceptances only — a superseded row
+    // must not block a fresh acceptance on the same quote version.
+    const existingRowsRaw = await Acceptance.filter({
       estimate_id: estimateId,
       quote_version: quoteVersion,
     });
-    if (!Array.isArray(existingRows)) {
+    if (!Array.isArray(existingRowsRaw)) {
       throw new Error('Acceptance history could not be verified safely.');
     }
+    const existingRows = activeAcceptanceRows(existingRowsRaw);
     if (existingRows.length > 1) {
       throw new Error('Multiple immutable acceptance records already exist for this Quote Version. No acceptance was changed; review the acceptance history before continuing.');
     }
@@ -176,13 +411,14 @@ Deno.serve(async (req) => {
     // requiring unsupported database unique-index behavior. Only this request's
     // losing insert is removed; an already-canonical immutable row is never edited.
     await new Promise((resolve) => setTimeout(resolve, 50));
-    const afterCreateRows = await Acceptance.filter({
+    const afterCreateRowsRaw = await Acceptance.filter({
       estimate_id: estimateId,
       quote_version: quoteVersion,
     });
-    if (!Array.isArray(afterCreateRows)) {
+    if (!Array.isArray(afterCreateRowsRaw)) {
       throw new Error('Acceptance create outcome could not be verified safely.');
     }
+    const afterCreateRows = activeAcceptanceRows(afterCreateRowsRaw);
     if (!created?.id) {
       if (afterCreateRows.length === 1) {
         await patchEstimateAcceptanceFields(Estimate, estimateId, estimate, afterCreateRows[0]);
