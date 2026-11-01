@@ -40,7 +40,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
           <p className="text-xs text-gray-500">Full stock price is charged per cut piece.</p>
         </div>
         <Button variant="outline" size="sm" onClick={addCap} disabled={options.length === 0}>
-          <Plus className="w-4 h-4" /> Cap
+          <Plus className="w-4 h-4" aria-hidden="true" /> Cap
         </Button>
       </div>
 
@@ -107,7 +107,7 @@ export default function FoundationWallCapsPanel({ caps = [], walls = [], options
               <div className="flex items-center gap-3">
                 <span className="font-bold text-gray-900">{money(cap.cost)}</span>
                 <Button variant="ghost" size="icon" onClick={() => removeCap(index)}>
-                  <Trash2 className="w-4 h-4 text-red-500" />
+                  <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
                 </Button>
               </div>
             </div>
