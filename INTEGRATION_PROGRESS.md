@@ -133,3 +133,13 @@ Suites green: estimate-cas(10) entity-persistence(16) customer-persistence(7) es
 - #127 MarkupTier admin: pricing/MarkupTierPanel.jsx in PricingAdmin — CRUD, per-category markups, JSON import/export w/ CAS.
 - #145 Re-apply tier: per-tier re-apply to ≤25 draft estimates via replaceEntityFieldsIfUnchanged (updated_date + status CAS), price_recalc_required flag, applied/skipped report.
 - inventoryAction DEPLOYED; 27/27 touched files compile.
+
+## Backlog sweep — Phases C+D+E landed
+
+Phase C — §14 Notifications (~22 items DONE): NEW persisted layer — Notification + NotificationPreference entities, notificationAction function (list_mine/mark_read/mark_all_read/snooze/mark_handled/record/evaluate_triggers — DEPLOYED), NotificationCenter dropdown + NotificationHistory view, attentionFeedCategories.js extraction, event triggers (status change, assignment, expiry, invoice-overdue, unassigned>2d, sync-pending, needs_recalc, watch/approved), snooze/handled overlays on feed items, in-app digest, sound toggle, visibility-aware polling, celebration toast. sendEmail untouched (Smartsheet-owned). PASS notification-center + unified-alerts.
+
+Phase D — §12 Reporting (9 items DONE): opsReportModel +7 reports (avg_quote_by_month, weekly_throughput, win_rate_by_customer, value_by_module, customer_ltv, portal_engagement, est_vs_actual_cost); estimate_funnel payload extended (by_salesperson_monthly, weekly, by_customer top-25, by_module — bounded); saved-views on OpsReports via UserWorkspacePreferences; opportunityWorkspaceAction DEPLOYED. PASS ops-reports local+remote.
+
+Phase E — §13 Search & Deep-links (13 items DONE + parent #301/#312): deepLinks.js (estimateMatchesSearch notes+line_items, useEstimateDeepLink) on Queues/Estimator/Estimating; saved-views on Queues; recent-searches (last-5 per-user localStorage); ?open/?line scroll+flash on EstimateProductsList; ?module/?tab/?filter/?q/?status/?sort params across Tools/Settings/Customers/MasterInventory/QuickPrice; QuickPrice history search; ?section= verified present; ?version= verified present (panel wantVersion diff-select); backend global_search deep-scan (notes→regex fields + bounded 500-row line_items values scan merged dedupe) DEPLOYED.
+
+Parent-held integrations closed: #312 version deep-link verified shipped; #334 feed per-section caps verified shipped; #345 overdue_jobs local-today verified; #301 backend deep search shipped + deployed. validate-opportunity-workspace re-pinned to read attentionFeedCategories.js + AttentionFeed.jsx.
