@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.53";
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { authenticateSignShopSession } from "../../shared/signShopSession.ts";
 import { loadAllEntityRows } from "../../shared/pagedEntityRows.ts";
 
@@ -83,7 +84,7 @@ function rollup(workOrder: any, inputs: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     await authenticateSignShopSession(base44, body?.session_token);
     const action = clean(body?.action);
