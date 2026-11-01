@@ -48,6 +48,7 @@ import {
 
 const clean = (v) => String(v ?? "").trim();
 const uuid = () => crypto.randomUUID();
+const portalUrlFor = (token) => (/^[a-f0-9]{16,128}$/i.test(String(token || "")) ? `${window.location.origin}/customerportal?token=${encodeURIComponent(String(token))}` : "");
 const usd = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -104,8 +105,8 @@ function PortalLinks({ sessionToken, invoiceId }) {
       const data = await invokePortal(sessionToken, body);
       await load();
       const link = data?.link;
-      if (link && !link.revoked) {
-        const url = `${window.location.origin}/customerportal?token=${encodeURIComponent(link.token || data.token)}`;
+      const url = link && !link.revoked ? portalUrlFor(link.token) || portalUrlFor(data.token) : "";
+      if (url) {
         try { await navigator.clipboard.writeText(url); setCopied(link.id || "new"); } catch { /* clipboard unavailable */ }
       }
     } catch (err) {
@@ -116,7 +117,7 @@ function PortalLinks({ sessionToken, invoiceId }) {
   };
 
   const active = (links || []).find((l) => l.usable && !l.revoked);
-  const activeUrl = active ? `${window.location.origin}/customerportal?token=${encodeURIComponent(active.token)}` : "";
+  const activeUrl = active ? portalUrlFor(active.token) : "";
 
   if (links === null) return null;
   return (
@@ -135,12 +136,16 @@ function PortalLinks({ sessionToken, invoiceId }) {
       {active && (
         <div className="mt-2 space-y-1.5">
           <div className="flex items-center gap-2">
+            {activeUrl ? (<>
             <input readOnly value={activeUrl} onFocus={(e) => e.target.select()}
               className="min-h-9 flex-1 truncate rounded-lg border border-blue-200 bg-white px-2.5 text-xs text-slate-700 dark:border-blue-800 dark:bg-slate-900 dark:text-slate-200" />
             <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(activeUrl); setCopied(active.id); } catch { /* clipboard unavailable */ } }}
               className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-blue-300 px-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300">
               <Copy className="h-3.5 w-3.5" />{copied === active.id ? "Copied" : "Copy"}
             </button>
+            </>) : (
+              <span className="flex-1 text-xs text-slate-600 dark:text-slate-300">Link {active.token} is active · only admins can copy raw portal links.</span>
+            )}
             <button type="button" disabled={Boolean(busy)} onClick={() => { if (confirm("Revoke this portal link? The customer will no longer be able to open it.")) run("revoke", { action: "revoke_link", link_id: active.id }); }}
               className="inline-flex min-h-9 items-center rounded-lg border border-red-300 px-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:text-red-400">
               {busy === "revoke" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Revoke"}

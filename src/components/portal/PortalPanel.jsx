@@ -57,7 +57,9 @@ export default function PortalPanel({ sessionToken, customerId }) {
   };
 
   const customerLink = links.find((l) => l.kind === "customer" && l.usable && !l.revoked);
-  const portalUrl = customerLink ? `${window.location.origin}/customerportal?token=${encodeURIComponent(customerLink.token)}` : "";
+  const rawToken = (t) => (/^[a-f0-9]{16,128}$/i.test(String(t || "")) ? String(t) : "");
+  const urlFor = (t) => (rawToken(t) ? `${window.location.origin}/customerportal?token=${encodeURIComponent(rawToken(t))}` : "");
+  const portalUrl = customerLink ? urlFor(customerLink.token) : "";
   const copy = async (url, key) => { try { await navigator.clipboard.writeText(url); setCopied(key); } catch { /* clipboard unavailable */ } };
   const unread = (thread || []).filter((m) => m.author_side === "customer" && !m.read_by_staff).length;
 
@@ -71,17 +73,20 @@ export default function PortalPanel({ sessionToken, customerId }) {
         {!customerLink ? (
           <button type="button" disabled={Boolean(busy)} onClick={() => run("link", { action: "create_link", kind: "customer", customer_id: customerId, creation_request_key: crypto.randomUUID() }, async (d) => {
             const link = d?.link;
-            if (link) await copy(`${window.location.origin}/customerportal?token=${encodeURIComponent(link.token || d.token)}`, "new");
+            const url = link ? urlFor(link.token) || urlFor(d.token) : "";
+            if (url) await copy(url, "new");
           })}
             className="inline-flex h-8 items-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
             {busy === "link" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}Create portal link
           </button>
         ) : (
           <div className="flex items-center gap-1.5">
-            <button type="button" onClick={() => copy(portalUrl, "link")}
-              className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-300 bg-white px-2.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
-              <Copy className="h-3 w-3" />{copied === "link" ? "Copied" : "Copy link"}
-            </button>
+            {portalUrl && (
+              <button type="button" onClick={() => copy(portalUrl, "link")}
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-300 bg-white px-2.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
+                <Copy className="h-3 w-3" />{copied === "link" ? "Copied" : "Copy link"}
+              </button>
+            )}
             <button type="button" disabled={Boolean(busy)} onClick={() => run("email", { action: "email_link", customer_id: customerId, portal_base: window.location.origin }, (d) => { if (d?.sent_to) setEmailed(d.sent_to); })}
               className="inline-flex h-8 items-center gap-1 rounded-md border border-blue-300 bg-white px-2.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50">
               {busy === "email" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}Email link
