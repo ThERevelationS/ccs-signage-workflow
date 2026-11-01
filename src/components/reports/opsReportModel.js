@@ -1028,6 +1028,533 @@ export function vendorScorecardReport({ purchaseOrderHeaders = [] } = {}) {
   };
 }
 
+// --- estimate lifecycle rollups (#277/#279/#280/#281/#285/#289/#298/#300) ---------
+//
+// Shared stage vocabulary, kept identical to the estimate_funnel payload in
+// opportunityWorkspaceAction so the reports and the dashboard card agree:
+//   won      = status "approved"
+//   lost     = status "archived" | "cancelled"
+//   decided  = won + lost
+//   sent     = status sent/approved or any later proof (accepted_at /
+//              work_order_id / quote_issue_date)
+//   approved = accepted_at or status approved or a linked work order
+//   converted= work_order_id set
+// Templates never count.
+const EST_WON = new Set(["approved"]);
+const EST_LOST = new Set(["archived", "cancelled"]);
+const isDecidedStatus = (est) => EST_WON.has(norm(est?.status)) || EST_LOST.has(norm(est?.status));
+const isWonStatus = (est) => EST_WON.has(norm(est?.status));
+const isLostStatus = (est) => EST_LOST.has(norm(est?.status));
+const isSentEstimate = (est) => {
+  const status = norm(est?.status);
+  return status === "sent" || status === "approved" || Boolean(clean(est?.accepted_at))
+    || Boolean(clean(est?.work_order_id)) || Boolean(clean(est?.quote_issue_date));
+};
+const isApprovedEstimate = (est) =>
+  norm(est?.status) === "approved" || Boolean(clean(est?.accepted_at)) || Boolean(clean(est?.work_order_id));
+
+// Monday-start week key ("YYYY-MM-DD") — the same bucketing the
+// ReportingDashboard weekly chart uses (d.getDay() Sunday=0 → the following
+// Monday; kept deliberately identical so week numbers match across surfaces).
+const weekKey = (value) => {
+  const d = parseLocalDate(value);
+  if (!d) return "";
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - d.getDay() + 1);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, "0");
+  const dd = String(monday.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+};
+const weekLabel = (key) => {
+  const d = parseLocalDate(key);
+  return d ? `w/ ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : key;
+};
+
+// Estimate customer display name: client_name is the estimate's own field;
+// customer_id is only used for grouping so name renames still aggregate.
+const estimateCustomerKey = (est) => clean(est?.customer_id) || norm(est?.client_name) || "unknown";
+const estimateCustomerName = (est) => clean(est?.client_name) || "Unknown Customer";
+
+// Quote value per estimate line — the customer-facing snapshot price times
+// quantity (the same line value the overrides audit uses). Used to split a
+// multi-module estimate's quote_total across the modules it touches.
+const estimateLineValue = (line) => num(line?.total_snapshot) * (num(line?.customer_quantity) || 1);
+
+// Module shares for one estimate: module_key → fraction of quote_total to
+// attribute, proportional to each module's line-value share. Estimates with
+// no lines (or no priced lines) split evenly across the modules present;
+// estimates with no lines at all land on "unassigned".
+const estimateModuleShares = (est) => {
+  const lines = (Array.isArray(est?.line_items) ? est.line_items : []).filter(Boolean);
+  const byModule = new Map();
+  let lineValueSum = 0;
+  for (const line of lines) {
+    const mk = clean(line?.module_key) || "unassigned";
+    const lv = estimateLineValue(line);
+    lineValueSum += lv;
+    byModule.set(mk, num(byModule.get(mk)) + lv);
+  }
+  if (!byModule.size) byModule.set("unassigned", 0);
+  const even = 1 / byModule.size;
+  return [...byModule.entries()].map(([module, lv]) => ({
+    module,
+    lines: lines.filter((l) => (clean(l?.module_key) || "unassigned") === module).length,
+    share: lineValueSum > 0 ? lv / lineValueSum : even,
+  }));
+};
+
+// Avg Quote Value by Month per Salesperson (#277) — created-month cohorts
+// bucketed by salesperson: created count, quote value, per-month average,
+// plus decided/won so the month column also reads as a mini funnel.
+export function avgQuoteByMonthReport({ estimates = [] } = {}) {
+  const groups = new Map();
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    const key = monthKey(est.created_date);
+    if (!key) continue;
+    const rep = clean(est.salesperson) || "Unassigned";
+    const gk = `${rep}|${key}`;
+    const g = groups.get(gk) || { rep, key, created: 0, value: 0, decided: 0, won: 0 };
+    g.created += 1;
+    g.value = money(g.value + num(est.quote_total));
+    if (isDecidedStatus(est)) g.decided += 1;
+    if (isWonStatus(est)) g.won += 1;
+    groups.set(gk, g);
+  }
+  const sorted = [...groups.values()].sort((a, b) =>
+    a.rep.localeCompare(b.rep) || b.key.localeCompare(a.key));
+  const total = sorted.reduce((t, g) => ({
+    created: t.created + g.created, value: money(t.value + g.value),
+    decided: t.decided + g.decided, won: t.won + g.won,
+  }), { created: 0, value: 0, decided: 0, won: 0 });
+  return {
+    columns: [
+      { key: "salesperson", label: "Salesperson" },
+      { key: "month", label: "Created Month" },
+      { key: "created", label: "Created", align: "right", format: "int" },
+      { key: "value", label: "Quote Value", align: "right", format: "money" },
+      { key: "avg", label: "Avg Quote", align: "right", format: "money" },
+      { key: "decided", label: "Decided", align: "right", format: "int" },
+      { key: "won", label: "Won", align: "right", format: "int" },
+    ],
+    rows: sorted.map((g) => [
+      g.rep, monthLabel(g.key), g.created, g.value,
+      g.created ? money(g.value / g.created) : null, g.decided, g.won,
+    ]),
+    totals: [
+      `Total — ${sorted.length} bucket${sorted.length === 1 ? "" : "s"}`,
+      "",
+      total.created,
+      total.value,
+      total.created ? money(total.value / total.created) : null,
+      total.decided,
+      total.won,
+    ],
+    rowLinks: sorted.map(() => null),
+  };
+}
+
+// Weekly Estimate Throughput (#279) — estimates moving through the pipeline
+// each week. Each column is bucketed on its own event date: created on
+// created_date, sent on quote_issue_date, approved on accepted_at (an
+// approved estimate whose accepted_at was never stamped falls back to its
+// updated week — noted on the def). Created value follows the created count.
+export function weeklyThroughputReport({ estimates = [] } = {}) {
+  const weeks = new Map();
+  const bump = (value, field) => {
+    const key = weekKey(value);
+    if (!key) return false;
+    const w = weeks.get(key) || { key, created: 0, sent: 0, approved: 0, value: 0 };
+    w[field] += 1;
+    weeks.set(key, w);
+    return true;
+  };
+  let undated = 0;
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    const cKey = weekKey(est.created_date);
+    if (!cKey) { undated += 1; continue; }
+    const w = weeks.get(cKey) || { key: cKey, created: 0, sent: 0, approved: 0, value: 0 };
+    w.created += 1;
+    w.value = money(w.value + num(est.quote_total));
+    weeks.set(cKey, w);
+    if (isSentEstimate(est)) {
+      const stamped = bump(est.quote_issue_date, "sent");
+      // No sent timestamp — the event lands in the created week so the
+      // funnel column never drops a quote that did go out.
+      if (!stamped) bump(est.created_date, "sent");
+    }
+    if (isApprovedEstimate(est)) {
+      const stamped = bump(est.accepted_at, "approved");
+      if (!stamped) bump(est.updated_date || est.created_date, "approved");
+    }
+  }
+  const sorted = [...weeks.values()].sort((a, b) => a.key.localeCompare(b.key));
+  return {
+    columns: [
+      { key: "week", label: "Week Of" },
+      { key: "created", label: "Created", align: "right", format: "int" },
+      { key: "sent", label: "Sent", align: "right", format: "int" },
+      { key: "approved", label: "Approved", align: "right", format: "int" },
+      { key: "value", label: "Created Value", align: "right", format: "money" },
+    ],
+    rows: sorted.map((w) => [weekLabel(w.key), w.created, w.sent, w.approved, w.value]),
+    totals: [
+      `Total${undated ? ` — excl. ${undated} undated` : ""}`,
+      sum(sorted, (w) => w.created),
+      sum(sorted, (w) => w.sent),
+      sum(sorted, (w) => w.approved),
+      money(sum(sorted, (w) => w.value)),
+    ],
+    rowLinks: sorted.map(() => null),
+  };
+}
+
+// Win Rate by Customer (#280) — decided estimates per customer:
+// estimates created, decided, won, lost, win rate (won ÷ decided), plus the
+// quote value at stake and the value actually won. Customer groups on
+// customer_id (client_name fallback) so name changes do not fragment it.
+export function winRateByCustomerReport({ estimates = [] } = {}) {
+  const groups = new Map();
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    const key = estimateCustomerKey(est);
+    const g = groups.get(key) || {
+      key, name: estimateCustomerName(est),
+      estimates: 0, decided: 0, won: 0, lost: 0, value: 0, wonValue: 0,
+    };
+    g.estimates += 1;
+    g.value = money(g.value + num(est.quote_total));
+    if (isDecidedStatus(est)) g.decided += 1;
+    if (isWonStatus(est)) { g.won += 1; g.wonValue = money(g.wonValue + num(est.quote_total)); }
+    if (isLostStatus(est)) g.lost += 1;
+    if (clean(est.client_name)) g.name = clean(est.client_name);
+    groups.set(key, g);
+  }
+  const sorted = [...groups.values()].sort((a, b) =>
+    b.decided - a.decided || b.value - a.value || a.name.localeCompare(b.name));
+  return {
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "estimates", label: "Estimates", align: "right", format: "int" },
+      { key: "decided", label: "Decided", align: "right", format: "int" },
+      { key: "won", label: "Won", align: "right", format: "int" },
+      { key: "lost", label: "Lost", align: "right", format: "int" },
+      { key: "win", label: "Win %", align: "right", format: "percent" },
+      { key: "value", label: "Quote Value", align: "right", format: "money" },
+      { key: "won_value", label: "Won Value", align: "right", format: "money" },
+    ],
+    rows: sorted.map((g) => [
+      g.name, g.estimates, g.decided, g.won, g.lost,
+      g.decided ? g.won / g.decided : null, g.value, g.wonValue,
+    ]),
+    totals: [
+      `Total — ${sorted.length} customer${sorted.length === 1 ? "" : "s"}`,
+      sum(sorted, (g) => g.estimates),
+      sum(sorted, (g) => g.decided),
+      sum(sorted, (g) => g.won),
+      sum(sorted, (g) => g.lost),
+      sum(sorted, (g) => g.decided) ? sum(sorted, (g) => g.won) / sum(sorted, (g) => g.decided) : null,
+      money(sum(sorted, (g) => g.value)),
+      money(sum(sorted, (g) => g.wonValue)),
+    ],
+    rowLinks: sorted.map(() => null),
+  };
+}
+
+// Quote Value & Win Rate by Module (#281 + #285) — estimates touching each
+// line_items[].module_key. An estimate counts once per module it touches (a
+// monument+vinyl quote appears under both), so count columns are NOT additive
+// — the totals row reports deduped estimate counts. Value columns ARE
+// additive: each estimate's quote_total is split across its modules in
+// proportion to line-value share (equal split when no line carries a price;
+// "unassigned" when there are no lines). "Won value" is the same split on
+// approved quotes — won estimate value, not invoiced revenue.
+export function valueByModuleReport({ estimates = [] } = {}) {
+  const groups = new Map();
+  const distinct = { estimates: 0, decided: 0, won: 0 };
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    distinct.estimates += 1;
+    if (isDecidedStatus(est)) distinct.decided += 1;
+    if (isWonStatus(est)) distinct.won += 1;
+    const total = num(est.quote_total);
+    for (const { module, lines, share } of estimateModuleShares(est)) {
+      const g = groups.get(module) || { module, estimates: 0, lines: 0, decided: 0, won: 0, value: 0, wonValue: 0 };
+      g.estimates += 1;
+      g.lines += lines;
+      if (isDecidedStatus(est)) g.decided += 1;
+      if (isWonStatus(est)) { g.won += 1; g.wonValue = money(g.wonValue + total * share); }
+      g.value = money(g.value + total * share);
+      groups.set(module, g);
+    }
+  }
+  const sorted = [...groups.values()].sort((a, b) => b.value - a.value || a.module.localeCompare(b.module));
+  return {
+    columns: [
+      { key: "module", label: "Module" },
+      { key: "estimates", label: "Estimates", align: "right", format: "int" },
+      { key: "lines", label: "Lines", align: "right", format: "int" },
+      { key: "decided", label: "Decided", align: "right", format: "int" },
+      { key: "won", label: "Won", align: "right", format: "int" },
+      { key: "win", label: "Win %", align: "right", format: "percent" },
+      { key: "value", label: "Quote Value (attrib.)", align: "right", format: "money" },
+      { key: "won_value", label: "Won Est. Value", align: "right", format: "money" },
+    ],
+    rows: sorted.map((g) => [
+      humanize(g.module), g.estimates, g.lines, g.decided, g.won,
+      g.decided ? g.won / g.decided : null, g.value, g.wonValue,
+    ]),
+    totals: [
+      `Total — ${distinct.estimates} estimate${distinct.estimates === 1 ? "" : "s"} across ${sorted.length} module${sorted.length === 1 ? "" : "s"} (count cols not additive)`,
+      distinct.estimates,
+      sum(sorted, (g) => g.lines),
+      distinct.decided,
+      distinct.won,
+      distinct.decided ? distinct.won / distinct.decided : null,
+      money(sum(sorted, (g) => g.value)),
+      money(sum(sorted, (g) => g.wonValue)),
+    ],
+    rowLinks: sorted.map(() => null),
+  };
+}
+
+// Customer Lifetime Value (#289) — per-customer rollup across invoices and
+// estimates: lifetime invoiced (drafts/voids excluded), collected, open AR,
+// won estimate value (approved quote totals — pipeline value, not invoiced),
+// average invoice, and last activity (latest of invoice issue date, estimate
+// creation, or acceptance). Value columns stay unblended on purpose —
+// invoiced and won-estimate totals overlap when a quote became a job.
+export function customerLtvReport({ estimates = [], invoices = [] } = {}) {
+  const groups = new Map();
+  const groupFor = (key, name) => {
+    const g = groups.get(key) || {
+      key, name: name || "Unknown Customer",
+      invoices: 0, invoiced: 0, collected: 0, openAr: 0,
+      wonEstimates: 0, wonValue: 0, lastActivity: "",
+    };
+    if (name) g.name = name;
+    groups.set(key, g);
+    return g;
+  };
+  const touch = (g, when) => {
+    const d = clean(when);
+    if (d && d.slice(0, 10) > g.lastActivity) g.lastActivity = d.slice(0, 10);
+  };
+  for (const inv of invoices || []) {
+    const status = norm(inv?.status);
+    if (!status || status === "draft" || status === "void") continue;
+    const g = groupFor(clean(inv?.customer_id) || norm(inv?.customer_display_name) || "unknown", clean(inv?.customer_display_name));
+    g.invoices += 1;
+    g.invoiced = money(g.invoiced + num(inv?.total));
+    g.collected = money(g.collected + num(inv?.amount_paid));
+    if (OPEN_AR_STATUSES.has(status)) g.openAr = money(g.openAr + num(inv?.balance_due));
+    touch(g, inv?.issue_date || inv?.created_date);
+  }
+  for (const est of estimates || []) {
+    if (!est || est.is_template === true) continue;
+    const g = groupFor(estimateCustomerKey(est), estimateCustomerName(est));
+    if (isWonStatus(est)) {
+      g.wonEstimates += 1;
+      g.wonValue = money(g.wonValue + num(est.quote_total));
+    }
+    touch(g, est?.accepted_at);
+    touch(g, est?.created_date);
+  }
+  const sorted = [...groups.values()].sort((a, b) =>
+    (b.invoiced + b.wonValue) - (a.invoiced + a.wonValue) || a.name.localeCompare(b.name));
+  return {
+    columns: [
+      { key: "customer", label: "Customer" },
+      { key: "invoices", label: "Invoices", align: "right", format: "int" },
+      { key: "invoiced", label: "Lifetime Invoiced", align: "right", format: "money" },
+      { key: "collected", label: "Collected", align: "right", format: "money" },
+      { key: "open_ar", label: "Open AR", align: "right", format: "money" },
+      { key: "won_est", label: "Won Estimates", align: "right", format: "int" },
+      { key: "won_value", label: "Won Est. Value", align: "right", format: "money" },
+      { key: "aov", label: "Avg Invoice", align: "right", format: "money" },
+      { key: "last", label: "Last Activity", format: "date" },
+    ],
+    rows: sorted.map((g) => [
+      g.name, g.invoices, g.invoiced, g.collected, g.openAr, g.wonEstimates, g.wonValue,
+      g.invoices ? money(g.invoiced / g.invoices) : null, g.lastActivity || null,
+    ]),
+    totals: [
+      `Total — ${sorted.length} customer${sorted.length === 1 ? "" : "s"}`,
+      sum(sorted, (g) => g.invoices),
+      money(sum(sorted, (g) => g.invoiced)),
+      money(sum(sorted, (g) => g.collected)),
+      money(sum(sorted, (g) => g.openAr)),
+      sum(sorted, (g) => g.wonEstimates),
+      money(sum(sorted, (g) => g.wonValue)),
+      null,
+      null,
+    ],
+    rowLinks: sorted.map(() => "/CustomerStatements"),
+  };
+}
+
+// Portal Engagement per Estimate (#298) — the estimate_funnel payload's
+// portal_engagement aggregate rendered as rows: share-link opens, customer
+// messages, staff replies, approvals, revision requests, first staff
+// response time (hours) and last activity. Reorder requests are
+// work-order-scoped EstimatingRequests, not estimate-thread events, so they
+// are honestly out of scope for this report.
+export function portalEngagementReport({ estimateFunnel = null } = {}) {
+  const engaged = Array.isArray(estimateFunnel?.portal_engagement) ? estimateFunnel.portal_engagement : [];
+  const truncated = estimateFunnel?.portal_engagement_truncated === true;
+  return {
+    columns: [
+      { key: "estimate", label: "Estimate" },
+      { key: "customer", label: "Customer" },
+      { key: "status", label: "Est. Status" },
+      { key: "opens", label: "Link Opens", align: "right", format: "int" },
+      { key: "cust_msgs", label: "Customer Msgs", align: "right", format: "int" },
+      { key: "staff_msgs", label: "Staff Replies", align: "right", format: "int" },
+      { key: "approvals", label: "Approvals", align: "right", format: "int" },
+      { key: "revisions", label: "Revision Reqs", align: "right", format: "int" },
+      { key: "resp", label: "First Reply (hrs)", align: "right", format: "num1" },
+      { key: "last", label: "Last Activity", format: "date" },
+    ],
+    rows: engaged.map((e) => [
+      clean(e?.estimate_number) || clean(e?.estimate_id),
+      clean(e?.client_name) || "Unknown Customer",
+      humanize(e?.status) || "—",
+      num(e?.opens),
+      num(e?.customer_messages),
+      num(e?.staff_replies),
+      num(e?.approvals),
+      num(e?.revision_requests),
+      e?.first_response_hours == null ? null : num(e.first_response_hours),
+      clean(e?.last_activity_at) || null,
+    ]),
+    totals: [
+      `Total — ${engaged.length} estimate${engaged.length === 1 ? "" : "s"} with portal activity${truncated ? " (truncated)" : ""}`,
+      "", "",
+      sum(engaged, (e) => e?.opens),
+      sum(engaged, (e) => e?.customer_messages),
+      sum(engaged, (e) => e?.staff_replies),
+      sum(engaged, (e) => e?.approvals),
+      sum(engaged, (e) => e?.revision_requests),
+      null,
+      null,
+    ],
+    rowLinks: engaged.map((e) => (clean(e?.estimate_id) ? `/EstimateDetail?id=${clean(e.estimate_id)}` : null)),
+  };
+}
+
+// Est vs Actual Cost (#300) — estimator accuracy: per work order linked to
+// an estimate, the estimate's internal cost basis (total_cost — the raw
+// section sum before adjustments/margin) vs actual PO spend (sent /
+// partially_received / received PO totals — committed spend; draft and
+// cancelled POs carry no commitment). POs join on work_order_id, falling
+// back to estimate_id when the PO header lacks a work-order link. Honest
+// exclusions land in the totals label: orders with no estimate link, links
+// to estimates not in the loaded set, orders with no PO spend yet, and
+// estimates carrying no cost basis.
+export function estVsActualCostReport({ workOrders = [], estimates = [], purchaseOrderHeaders = [] } = {}) {
+  const estById = new Map((estimates || []).map((e) => [clean(e?.id), e]).filter(([k]) => k));
+  const spendByWo = new Map();
+  const spendByEstimateOnly = new Map();
+  const SPEND_STATUSES = new Set(["sent", "partially_received", "received"]);
+  let skippedPos = 0;
+  for (const po of purchaseOrderHeaders || []) {
+    if (!SPEND_STATUSES.has(norm(po?.status))) { skippedPos += 1; continue; }
+    const total = num(po?.total);
+    const woId = clean(po?.work_order_id);
+    if (woId) {
+      const s = spendByWo.get(woId) || { spend: 0, pos: 0 };
+      s.spend = money(s.spend + total);
+      s.pos += 1;
+      spendByWo.set(woId, s);
+      continue;
+    }
+    const estId = clean(po?.estimate_id);
+    if (estId) {
+      const s = spendByEstimateOnly.get(estId) || { spend: 0, pos: 0 };
+      s.spend = money(s.spend + total);
+      s.pos += 1;
+      spendByEstimateOnly.set(estId, s);
+    }
+  }
+  const detail = [];
+  let noLink = 0;
+  let missingEstimate = 0;
+  let noPoSpend = 0;
+  let noCostBasis = 0;
+  for (const wo of workOrders || []) {
+    if (!wo?.id || wo.deleted === true) continue;
+    const estId = clean(wo.estimate_id);
+    if (!estId) { noLink += 1; continue; }
+    const est = estById.get(estId);
+    if (!est) { missingEstimate += 1; continue; }
+    const direct = spendByWo.get(clean(wo.id)) || { spend: 0, pos: 0 };
+    const viaEst = spendByEstimateOnly.get(estId) || { spend: 0, pos: 0 };
+    const actual = money(direct.spend + viaEst.spend);
+    const pos = direct.pos + viaEst.pos;
+    if (!pos) { noPoSpend += 1; continue; }
+    const estCost = num(est.total_cost) > 0 ? money(num(est.total_cost)) : null;
+    if (estCost == null) noCostBasis += 1;
+    const variance = estCost == null ? null : money(actual - estCost);
+    detail.push({
+      woId: clean(wo.id),
+      ref: clean(wo.corbridge_invoice_number) || clean(wo.work_order_number) || clean(wo.est_inv_at) || clean(wo.title) || clean(wo.id),
+      customer: clean(wo.client_name) || clean(wo.customer_name) || clean(est.client_name) || "Unknown Customer",
+      stage: stageLabel(wo.current_stage),
+      estimate: clean(est.estimate_number) || estId,
+      estId,
+      estCost,
+      pos,
+      actual,
+      variance,
+      pct: estCost ? variance / estCost : null,
+    });
+  }
+  // Biggest overruns first; null variance (no cost basis) last.
+  detail.sort((a, b) =>
+    (b.variance == null ? -Infinity : b.variance) - (a.variance == null ? -Infinity : a.variance)
+    || b.actual - a.actual || a.ref.localeCompare(b.ref));
+  const exclusions = [
+    noLink ? `${noLink} no estimate link` : "",
+    missingEstimate ? `${missingEstimate} estimate not loaded` : "",
+    noPoSpend ? `${noPoSpend} no PO spend yet` : "",
+    noCostBasis ? `${noCostBasis} no est. cost` : "",
+    skippedPos ? `${skippedPos} draft/cancelled POs` : "",
+  ].filter(Boolean).join(", ");
+  const totals = detail.reduce((t, d) => ({
+    pos: t.pos + d.pos,
+    actual: money(t.actual + d.actual),
+    estCost: money(t.estCost + (d.estCost || 0)),
+    variance: money(t.variance + (d.variance || 0)),
+    rated: t.rated + (d.estCost != null ? 1 : 0),
+  }), { pos: 0, actual: 0, estCost: 0, variance: 0, rated: 0 });
+  return {
+    columns: [
+      { key: "order", label: "Order" },
+      { key: "customer", label: "Customer" },
+      { key: "stage", label: "Stage" },
+      { key: "estimate", label: "Estimate" },
+      { key: "est_cost", label: "Est. Cost", align: "right", format: "money" },
+      { key: "pos", label: "POs", align: "right", format: "int" },
+      { key: "actual", label: "PO Spend", align: "right", format: "money" },
+      { key: "var", label: "Variance $", align: "right", format: "money" },
+      { key: "pct", label: "Var %", align: "right", format: "percent" },
+    ],
+    rows: detail.map((d) => [d.ref, d.customer, d.stage, d.estimate, d.estCost, d.pos, d.actual, d.variance, d.pct]),
+    totals: [
+      `Total — ${detail.length} order${detail.length === 1 ? "" : "s"}${exclusions ? ` — excl. ${exclusions}` : ""}`,
+      "", "", "",
+      totals.rated ? totals.estCost : null,
+      totals.pos,
+      totals.actual,
+      totals.rated ? totals.variance : null,
+      totals.estCost ? totals.variance / totals.estCost : null,
+    ],
+    rowLinks: detail.map((d) => (d.woId ? `/JobWorkspace?wo=${d.woId}` : null)),
+  };
+}
+
 // --- report registry -------------------------------------------------------------
 // `needs` lists the datasets the view must load lazily for the report.
 // `filters` lists the filter controls the view should render for the report;
@@ -1176,6 +1703,77 @@ export const OPS_REPORTS = [
     description: "Per-vendor purchasing performance: spend, open orders, on-time delivery.",
     notes: "On-Time = received_date on or before expected_date (received orders only; updated_date fallback when received_date is blank). Draft and cancelled POs excluded. Line detail is not on header snapshots, so fill rate is not scored. PO list is limited to the 250 most recent by the purchasing action.",
     build: ({ purchaseOrderHeaders }) => vendorScorecardReport({ purchaseOrderHeaders }),
+  },
+  {
+    key: "avg_quote_by_month",
+    title: "Avg Quote Value by Month",
+    group: "Sales & Estimates",
+    needs: ["estimates"],
+    filters: ["createdRange", "salesperson", "location"],
+    description: "Per-month average quote value per salesperson (created-month cohorts).",
+    notes: "Cohort = estimate created month. Avg = quote_total sum ÷ created that month. Decided/won follow the estimate lifecycle (won = approved; lost = archived/cancelled). Templates excluded.",
+    build: ({ estimates }) => avgQuoteByMonthReport({ estimates }),
+  },
+  {
+    key: "weekly_throughput",
+    title: "Weekly Estimate Throughput",
+    group: "Sales & Estimates",
+    needs: ["estimates"],
+    filters: ["createdRange", "salesperson", "location"],
+    description: "Estimates created, sent, and approved per week.",
+    notes: "Each column buckets on its own event date: created on created_date, sent on quote_issue_date (created week fallback when unstamped), approved on accepted_at (last-update fallback). Weeks start Monday, matching the dashboard chart. Created value follows the created count. Templates excluded.",
+    build: ({ estimates }) => weeklyThroughputReport({ estimates }),
+  },
+  {
+    key: "win_rate_by_customer",
+    title: "Win Rate by Customer",
+    group: "Sales & Estimates",
+    needs: ["estimates"],
+    filters: ["createdRange", "salesperson", "location"],
+    description: "Decided estimates per customer: won, lost, and win rate.",
+    notes: "Decided = approved + archived + cancelled; won = approved; lost = archived/cancelled. Win % = won ÷ decided (null until a quote is decided). Customer groups on customer_id so name edits do not fragment the rollup. Templates excluded.",
+    build: ({ estimates }) => winRateByCustomerReport({ estimates }),
+  },
+  {
+    key: "value_by_module",
+    title: "Quote Value by Module",
+    group: "Sales & Estimates",
+    needs: ["estimates"],
+    filters: ["createdRange", "salesperson", "location"],
+    description: "Estimates, quote value, and win rate per estimate module.",
+    notes: "An estimate counts once per module its lines touch (count columns are not additive — totals report deduped counts). Value is additive: quote_total splits across modules by line-value share (equal split on unpriced lines; 'unassigned' with no lines). Won Est. Value = the same split on approved quotes — won estimate value, not invoiced revenue. Templates excluded.",
+    build: ({ estimates }) => valueByModuleReport({ estimates }),
+  },
+  {
+    key: "customer_ltv",
+    title: "Customer Lifetime Value",
+    group: "Customers",
+    needs: ["estimates", "invoices"],
+    filters: [],
+    description: "Lifetime invoiced, collected, open AR, and won-estimate value per customer.",
+    notes: "Invoiced/collected/open AR cover issued invoices only (drafts/voids excluded; list limited to the 250 most recent). Won Est. Value = approved quote totals — pipeline value, never blended into invoiced totals. Avg Invoice = invoiced ÷ invoices. Last Activity = latest of issue date, estimate creation, or acceptance.",
+    build: ({ estimates, invoices }) => customerLtvReport({ estimates, invoices }),
+  },
+  {
+    key: "portal_engagement",
+    title: "Portal Engagement",
+    group: "Sales & Estimates",
+    needs: ["estimateFunnel"],
+    filters: [],
+    description: "Customer portal activity per estimate: link opens, messages, approvals, response time.",
+    notes: "Opens = open_count on the estimate's estimate/staff_view share links. Messages = customer-authored portal thread entries on the estimate; staff replies counted apart. First Reply = hours from first customer message to first staff reply on that thread. Reorder requests are work-order-scoped, not estimate-thread events, so they are not counted. Aggregated server-side in the estimate funnel payload (top 200 engaged estimates).",
+    build: ({ estimateFunnel }) => portalEngagementReport({ estimateFunnel }),
+  },
+  {
+    key: "est_vs_actual_cost",
+    title: "Est vs Actual Cost",
+    group: "Estimating",
+    needs: ["workOrders", "estimates", "purchaseOrders"],
+    filters: ["createdRange", "salesperson"],
+    description: "Estimator accuracy: estimated internal cost vs actual PO spend per work order.",
+    notes: "Est. Cost = the linked estimate's total_cost (raw section sum before adjustments/margin). PO Spend = committed spend — sent/partially-received/received PO totals joined on work_order_id (estimate_id fallback when the PO lacks a work-order link); drafts and cancelled POs excluded. Orders without an estimate link, without PO spend, or whose estimate is outside the loaded set are excluded and counted in the totals label. Variance = PO Spend − Est. Cost.",
+    build: ({ workOrders, estimates, purchaseOrderHeaders }) =>
+      estVsActualCostReport({ workOrders, estimates, purchaseOrderHeaders }),
   },
 ];
 
