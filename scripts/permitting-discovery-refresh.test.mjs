@@ -9,13 +9,14 @@ import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments, app
 import { retainOfficeResearchResponseHistory } from '../base44/shared/officeResearchResponseHistory.mjs';
 import { mergeJurisdictionResearchDocuments } from '../base44/shared/jurisdictionResearchDocumentMerge.mjs';
 import { assertOfficialProfileResearchIdentity, assertResearchSourceIdentity } from '../base44/shared/permittingSourceIdentity.mjs';
+import { gateResearchSourceUrls } from '../base44/shared/permittingResearchUrlTrust.mjs';
 const entry=fs.readFileSync('base44/functions/refreshJurisdiction/entry.ts','utf8');
 const compiled=ts.transpileModule(entry.slice(entry.indexOf('async function refreshJurisdictionRecord')),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText;
 function harness({profile={},ai={},pages={}}={}) {
   const initial={id:'fixture',name:'Fixture',state:'OH',type:'city',updated_date:'v1',permitting_url:'https://city.gov/permits',documents:[{id:'manual',url:'https://city.gov/old.pdf',source:'manual',file_url:'stored',extracted_text:'preserve'}],...profile};
   let written, researchCalls=0;const fetched=[];
   const deps={normalizeOfficeResearch,silentScanReporter,readPermittingResourceResponse,scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,applyDiscoveryFetchTimestamp,retainOfficeResearchResponseHistory,mergeJurisdictionResearchDocuments,
-    assertOfficialProfileResearchIdentity,assertResearchSourceIdentity,
+    assertOfficialProfileResearchIdentity,assertResearchSourceIdentity,gateResearchSourceUrls,
     safeExternalFetch:async url=>{fetched.push(url);if(!(url in pages))throw Error('fixture unavailable');return new Response(pages[url],{headers:{'content-type':'text/html'}});},
     RESEARCH_FETCH_TIMEOUT_MS:12000,readResearchDocumentBytes:async response=>new Uint8Array(await response.arrayBuffer()),
     sanitizeJurisdictionResearch:v=>v,gateResearchRegulatoryPromotion:({updateData})=>({blocked:false,updateData}),
@@ -131,4 +132,17 @@ test('research refresh saves office findings and electrical details on the exact
  assert.equal(result.jurisdiction.office_research.profile_snapshot.id,'fixture');
  assert.equal(result.jurisdiction.office_research.roles.find(r=>r.role==='electrical_permit').research_fields.fees,'Official schedule');
  assert.equal(Object.hasOwn(result.jurisdiction,'offices'),false);
+});
+
+test('AI host change is held for review: canonical URL unchanged and no fetch against the new host',async()=>{
+  const h=harness({ai:{permitting_url:'https://evil.example/permits',website_url:'https://evil.example/',documents:[{url:'https://evil.example/app.pdf',title:'Sign Application'},{url:'https://city.gov/ai.pdf',title:'AI form'}]},
+    pages:{'https://city.gov/permits':'<a href="/missing.pdf">Sign Application</a>','https://evil.example/permits':'<a href="/x.pdf">Sign Application</a>'}});
+  const r=await h.run();
+  assert(!h.fetched.some(u=>u.includes('evil.example')));
+  assert.deepEqual(h.fetched,['https://city.gov/permits']);
+  assert(!Object.hasOwn(h.written,'permitting_url') && !Object.hasOwn(h.written,'website_url'));
+  assert.equal(r.jurisdiction.permitting_url,'https://city.gov/permits');
+  assert(!r.jurisdiction.documents.some(d=>d.url.includes('evil.example')));
+  assert(r.jurisdiction.documents.some(d=>d.url==='https://city.gov/ai.pdf'));
+  assert.deepEqual(r.source_url_review.map(x=>x.field).sort(),['documents','permitting_url','website_url']);
 });

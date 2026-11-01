@@ -4,6 +4,7 @@ import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } fr
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
+import { gateResearchSourceUrls } from '../../shared/permittingResearchUrlTrust.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -40,7 +41,8 @@ Deno.serve(async (req) => {
           includeParentCounty: jurisdiction.type !== 'county'
         });
 
-        const data = agentResult?.data?.data || agentResult?.data || agentResult;
+        const { research: data, review: sourceUrlReview } = gateResearchSourceUrls(jurisdiction, agentResult?.data?.data || agentResult?.data || agentResult);
+        if (sourceUrlReview.length) console.warn(`Held ${sourceUrlReview.length} AI source URL(s) for review on ${jurisdiction.name}: ${sourceUrlReview.map(r => r.reason).join(', ')}`);
 
         // Build update object, respecting manual data protection
         const updateData = {};
