@@ -61,7 +61,7 @@ export default function LetterPurchasesPanel({ project, purchases, totals, onCha
             }}
             className="text-gray-400 hover:text-red-600 p-1"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       ))}
@@ -77,7 +77,7 @@ export default function LetterPurchasesPanel({ project, purchases, totals, onCha
           onChange({ letter_purchases: [...(project.letter_purchases || []), { qty: 1, unit_cost: 0 }] })
         }
       >
-        <Plus className="w-4 h-4" /> Add Letter Line
+        <Plus className="w-4 h-4" aria-hidden="true" /> Add Letter Line
       </Button>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 border-t border-gray-100 pt-3">
