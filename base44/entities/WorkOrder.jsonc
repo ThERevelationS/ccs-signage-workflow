@@ -26,6 +26,78 @@
       "type": "string",
       "description": "Linked AllInOneEstimate id, when this job was created from an estimate."
     },
+    "estimate_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Every AllInOneEstimate id merged into this job. Populated by combined multi-estimate conversion; the primary estimate also remains in estimate_id for backward-compatible single-link lookups."
+    },
+    "materials": {
+      "type": "array",
+      "description": "Flattened materials manifest built at estimate conversion from the estimate's BuilderPart frozen-cost snapshots. Each row carries its full provenance (source_estimate_id, estimate_line_id, builder_product_id, module_key, section_name) so section-level pricing origin survives the merge onto the WorkOrder.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "builder_part_id": {
+            "type": "string"
+          },
+          "part_key": {
+            "type": "string"
+          },
+          "part_name": {
+            "type": "string"
+          },
+          "part_type": {
+            "type": "string"
+          },
+          "part_subtype": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unit_cost": {
+            "type": "number"
+          },
+          "extended_cost": {
+            "type": "number"
+          },
+          "inventory_item_id": {
+            "type": "string"
+          },
+          "inventory_item_name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "Origin marker \u2014 'estimate_conversion' for rows seeded from a converted estimate."
+          },
+          "source_estimate_id": {
+            "type": "string"
+          },
+          "source_estimate_number": {
+            "type": "string"
+          },
+          "estimate_line_id": {
+            "type": "string"
+          },
+          "builder_product_id": {
+            "type": "string"
+          },
+          "module_key": {
+            "type": "string"
+          },
+          "section_name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
     "description": {
       "type": "string",
       "description": "Detailed description of the work"
@@ -775,6 +847,14 @@
           "module_key": {
             "type": "string",
             "description": "Estimator Builder module key."
+          },
+          "source_estimate_id": {
+            "type": "string",
+            "description": "AllInOneEstimate id this product row came from \u2014 set on every conversion row so combined multi-estimate jobs keep per-estimate section provenance."
+          },
+          "source_estimate_number": {
+            "type": "string",
+            "description": "Estimate number of the source estimate at conversion time (display aid alongside source_estimate_id)."
           },
           "quantity": {
             "type": "number"
