@@ -57,7 +57,7 @@ export default function NavPageLink({
       {...handleProps}
       to={item.url}
       onClick={onNavigate}
-      className={`ccs-glass-nav-item ccs-densify flex items-center border ${
+      className={`ccs-glass-nav-item flex items-center border ${
         isTop
           ? `flex-shrink-0 whitespace-nowrap ${sizing}`
           : `w-full ${sizing}`
