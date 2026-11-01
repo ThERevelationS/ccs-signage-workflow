@@ -67,5 +67,5 @@ assert.equal(findOptionalWorkOrderArrayItemIndex(items, { snapshot: { name: 'y' 
 assert.equal(findWorkOrderArrayItemIndex(items, { id: 'a' }), 0);
 assert.throws(() => findWorkOrderArrayItemIndex(items, { id: 'ghost' }), /changed or disappeared/);
 
-console.log('PASS work order persistence (16 cases)');
+console.log('PASS work order persistence (24 cases)');
 process.exit(0);
