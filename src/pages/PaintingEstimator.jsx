@@ -11,6 +11,9 @@ import { recordBuilderSave } from "@/components/estimator/builder/builderService
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizePaintProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -43,10 +46,13 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
   const [error, setError] = useState("");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
   }, [editId]);
 
   useEffect(() => {
@@ -256,6 +262,54 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
     }
   };
 
+  // #78 — clone the current save payload into a brand-new Painting project.
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const cleanItems = (calculated?.items || []).map((item) => ({
+        ...item,
+        paint_colors: (item.paint_colors || []).filter((color) => String(color || "").trim()),
+      }));
+      const copy = await saveModuleProjectCopy({
+        entity: Project,
+        payload: {
+          project_name: project.project_name,
+          client_name: project.client_name,
+          customer_id: project.customer_id || null,
+          estimate_number: project.estimate_number || "",
+          hyperlink: project.hyperlink || "",
+          status: "calculated",
+          items: cleanItems,
+          paint_supplies_per_sqft: Number(project.paint_supplies_per_sqft || 0),
+          total_paint_mask_cost: Number(totals.total_paint_mask_cost || 0),
+          total_liquid_paint_and_supplies_cost: Number(totals.total_liquid_paint_and_supplies_cost || 0),
+          total_labor_cost: Number(totals.total_labor_cost || 0),
+          customer_pricing: project.customer_pricing,
+          notes: project.notes || "",
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "painting_project_copy",
+        baseName: project.project_name || "Painting",
+        label: "Painting project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/PaintingEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error("Could not copy Painting estimator:", e);
+      setError(e.message || "Could not copy Painting estimator.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildPaintingTemplateData = (p) => ({
+    items: p.items || [],
+    paint_supplies_per_sqft: p.paint_supplies_per_sqft,
+    notes: p.notes,
+  });
+
   if (loading) return <div className="p-10 text-center text-gray-400">Loading Painting Builder…</div>;
   if (!project) return <div className="p-10 text-center text-red-600">{error || "Painting project not found."}</div>;
 
@@ -276,6 +330,13 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
           <Button onClick={saveProject} disabled={saving || !project.project_name?.trim() || !project.client_name?.trim()} className="h-[32px] bg-[#454545] hover:bg-[#353535] text-white text-[12px] font-semibold">
             <Save className="w-4 h-4 mr-1.5" /> {saving ? "Saving…" : "Save Painting"}
           </Button>
+          <ModuleActionBar
+            onTemplates={() => setTemplateMode("load")}
+            onSaveAsTemplate={() => setTemplateMode("save")}
+            onSaveAsCopy={handleSaveAsCopy}
+            estimateId={estimateId}
+            saving={saving}
+          />
         </div>
 
         <div className="flex items-center gap-3 mb-4">
@@ -457,6 +518,17 @@ export default function PaintingEstimator({ embedded = false, embeddedProjectId 
           />
         </div>
       </div>
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => patchProject(data)}
+        moduleKey="painting"
+        title="Painting"
+        buildTemplateData={buildPaintingTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
     </div>
   );
 }
