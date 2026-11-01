@@ -77,7 +77,7 @@ import {
   PackageCheck,
   AlertTriangle
 } from "lucide-react";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand inside the export handler — not at page load.
 import {
   Tooltip,
   TooltipContent,
@@ -1366,6 +1366,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     await new Promise(resolve => setTimeout(resolve, 300));
     setExportProgress({ show: true, progress: 50 });
 
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Orders");
