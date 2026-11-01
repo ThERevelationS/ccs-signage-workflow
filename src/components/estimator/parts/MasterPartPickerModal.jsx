@@ -135,7 +135,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
       <DialogContent className="sm:max-w-[1050px] p-0 overflow-hidden gap-0 border-gray-300 shadow-2xl">
         <DialogHeader className="px-5 pt-5 pb-4 bg-[#3f3f3f] text-white border-b-4 border-lime-300">
           <div className="flex items-center gap-3 pr-8">
-            <div className="w-10 h-10 rounded bg-lime-300 text-gray-900 flex items-center justify-center"><Boxes className="w-5 h-5" /></div>
+            <div className="w-10 h-10 rounded bg-lime-300 text-gray-900 flex items-center justify-center"><Boxes className="w-5 h-5" aria-hidden="true" /></div>
             <div>
               <DialogTitle className="text-white text-[17px]">{mode === "switch" ? "Switch Part from Master Inventory" : mode === "select" ? "Select Master Inventory Resource" : "Add Part from Master Inventory"}</DialogTitle>
               <p className="text-[11px] text-gray-300 mt-1">{mode === "switch" ? "Choose the replacement inventory record. The current Part quantity is preserved while the inventory link and frozen inventory/pricing snapshot are explicitly replaced." : mode === "select" ? "Choose the authoritative Master Inventory resource. This selection creates a reference only; it does not copy or change the inventory record." : "Choose the exact inventory record. The complete Master Inventory row and current pricing are frozen into the estimate Part."}</p>
@@ -147,52 +147,52 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
           <section className="border-r border-gray-200 min-w-0 flex flex-col">
             <div className="p-3 border-b border-gray-200 space-y-2 bg-gray-50">
               <div className="relative">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search inventory by name, type, supplier, size, manufacturer..." className="w-full h-[36px] pl-9 pr-3 border border-gray-300 rounded text-[12px] bg-white" />
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search inventory" placeholder="Search inventory by name, type, supplier, size, manufacturer..." className="w-full h-[36px] pl-9 pr-3 border border-gray-300 rounded text-[12px] bg-white" />
               </div>
               <div className="flex gap-1.5 overflow-x-auto pb-1">
-                <button type="button" onClick={() => setCategory("all")} className={`h-[27px] px-2.5 rounded border text-[10px] font-semibold whitespace-nowrap ${category === "all" ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"}`}>All Parts</button>
+                <button type="button" onClick={() => setCategory("all")} aria-pressed={category === "all"} className={`h-[27px] px-2.5 rounded border text-[10px] font-semibold whitespace-nowrap ${category === "all" ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"}`}>All Parts</button>
                 {categories.map((cat) => (
-                  <button type="button" key={cat.key} type="button" onClick={() => setCategory(cat.key)} className={`h-[27px] px-2.5 rounded border text-[10px] font-semibold whitespace-nowrap ${category === cat.key ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"}`}>{cat.label}</button>
+                  <button key={cat.key} type="button" onClick={() => setCategory(cat.key)} aria-pressed={category === cat.key} className={`h-[27px] px-2.5 rounded border text-[10px] font-semibold whitespace-nowrap ${category === cat.key ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-600 border-gray-300"}`}>{cat.label}</button>
                 ))}
               </div>
             </div>
             <div className="px-3 py-2 border-b border-gray-100 text-[10px] text-gray-500 flex items-center justify-between">
               <span>{filtered.length} matching Master Inventory Part{filtered.length === 1 ? "" : "s"}</span>
-              <button type="button" onClick={() => { setQuickOpen(!quickOpen); setQuickError(""); }} className="text-[10px] font-bold text-gray-600 hover:text-gray-900 underline">
+              <button type="button" onClick={() => { setQuickOpen(!quickOpen); setQuickError(""); }} aria-expanded={quickOpen} className="text-[10px] font-bold text-gray-600 hover:text-gray-900 underline">
                 {quickOpen ? "Cancel quick add" : "+ Quick add item"}
               </button>
             </div>
             {quickOpen && (
               <div className="px-3 py-2 border-b border-gray-200 bg-white space-y-1.5">
                 <div className="grid grid-cols-3 gap-1.5">
-                  <input value={quickForm.material_type} onChange={(e) => setQuickForm((f) => ({ ...f, material_type: e.target.value }))} placeholder="Material type *" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
-                  <input value={quickForm.product_type} onChange={(e) => setQuickForm((f) => ({ ...f, product_type: e.target.value }))} placeholder="Product type *" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
-                  <input value={quickForm.size} onChange={(e) => setQuickForm((f) => ({ ...f, size: e.target.value }))} placeholder="Size *" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
-                  <select value={quickForm.unit_type} onChange={(e) => setQuickForm((f) => ({ ...f, unit_type: e.target.value }))} className="h-[28px] px-1.5 border border-gray-300 rounded text-[11px] bg-white">
+                  <input value={quickForm.material_type} onChange={(e) => setQuickForm((f) => ({ ...f, material_type: e.target.value }))} aria-label="Material type" placeholder="Material type *" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
+                  <input value={quickForm.product_type} onChange={(e) => setQuickForm((f) => ({ ...f, product_type: e.target.value }))} aria-label="Product type" placeholder="Product type *" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
+                  <input value={quickForm.size} onChange={(e) => setQuickForm((f) => ({ ...f, size: e.target.value }))} aria-label="Size" placeholder="Size *" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
+                  <select value={quickForm.unit_type} onChange={(e) => setQuickForm((f) => ({ ...f, unit_type: e.target.value }))} aria-label="Unit type" className="h-[28px] px-1.5 border border-gray-300 rounded text-[11px] bg-white">
                     {["per_piece", "per_foot", "per_pound", "per_sqft"].map((u) => <option key={u} value={u}>{u.replace(/_/g, " ")}</option>)}
                   </select>
-                  <input type="number" min="0" step="any" value={quickForm.cost_per_unit} onChange={(e) => setQuickForm((f) => ({ ...f, cost_per_unit: e.target.value }))} placeholder="Cost per unit" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
-                  <input value={quickForm.supplier} onChange={(e) => setQuickForm((f) => ({ ...f, supplier: e.target.value }))} placeholder="Supplier" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
+                  <input type="number" min="0" step="any" value={quickForm.cost_per_unit} onChange={(e) => setQuickForm((f) => ({ ...f, cost_per_unit: e.target.value }))} aria-label="Cost per unit" placeholder="Cost per unit" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
+                  <input value={quickForm.supplier} onChange={(e) => setQuickForm((f) => ({ ...f, supplier: e.target.value }))} aria-label="Supplier" placeholder="Supplier" className="h-[28px] px-2 border border-gray-300 rounded text-[11px]" />
                 </div>
-                {quickError && <div className="text-[10px] font-semibold text-red-600">{quickError}</div>}
+                {quickError && <div role="alert" className="text-[10px] font-semibold text-red-600">{quickError}</div>}
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] text-gray-400">Creates a Master Inventory row (stock starts at 0), then selects it here.</span>
                   <button type="button" disabled={quickBusy} onClick={quickAddSave} className="h-[26px] px-3 rounded bg-lime-200 border border-lime-400 text-[10px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1">
-                    {quickBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : null}Create & select
+                    {quickBusy ? <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> : null}Create & select
                   </button>
                 </div>
               </div>
             )}
             <div className="flex-1 overflow-y-auto max-h-[480px] p-2 space-y-1">
               {loading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-[12px] text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Loading Master Inventory…</div>
+                <div className="py-16 flex items-center justify-center gap-2 text-[12px] text-gray-500"><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Loading Master Inventory…</div>
               ) : loadError ? (
                 <div className="py-16 text-center"><div className="text-[12px] font-semibold text-red-700">Master Inventory could not be verified.</div><div className="text-[10px] text-red-500 mt-1">{loadError}</div><div className="text-[10px] text-gray-400 mt-1">Close and reopen the picker to retry. No Part can be selected from a partial catalog.</div></div>
               ) : filtered.length === 0 ? (
                 <div className="py-16 text-center text-[12px] text-gray-400">No inventory Parts match this search.</div>
               ) : filtered.map((item) => (
-                <button type="button" key={item.id} type="button" onClick={() => setSelectedId(item.id)} className={`w-full text-left p-3 rounded border transition-colors ${selected?.id === item.id ? "border-lime-400 bg-lime-50" : "border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300"}`}>
+                <button key={item.id} type="button" onClick={() => setSelectedId(item.id)} aria-pressed={selected?.id === item.id} className={`w-full text-left p-3 rounded border transition-colors ${selected?.id === item.id ? "border-lime-400 bg-lime-50" : "border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[12px] font-bold text-gray-900 truncate">{item.name}</div>
@@ -249,7 +249,7 @@ export default function MasterPartPickerModal({ open, onClose, onAdd, mode = "ad
                   )}
                   <div className="flex justify-end gap-2">
                     <button type="button" disabled={adding} onClick={onClose} className="h-[32px] px-4 rounded border border-gray-300 bg-white text-[11px] font-semibold text-gray-600">Cancel</button>
-                    <button type="button" disabled={adding} onClick={add} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">{adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}{adding ? (mode === "switch" ? "Switching…" : mode === "select" ? "Selecting…" : "Adding…") : (mode === "switch" ? "Switch Part" : mode === "select" ? "Select Resource" : "Add Part")}</button>
+                    <button type="button" disabled={adding} onClick={add} className="h-[32px] px-4 rounded border border-lime-400 bg-lime-200 text-[11px] font-bold text-gray-900 hover:bg-lime-300 disabled:opacity-50 inline-flex items-center gap-1.5">{adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Plus className="w-3.5 h-3.5" aria-hidden="true" />}{adding ? (mode === "switch" ? "Switching…" : mode === "select" ? "Selecting…" : "Adding…") : (mode === "switch" ? "Switch Part" : mode === "select" ? "Select Resource" : "Add Part")}</button>
                   </div>
                 </div>
               </>
