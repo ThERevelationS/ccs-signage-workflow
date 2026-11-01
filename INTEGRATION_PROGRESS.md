@@ -83,3 +83,5 @@ Verified: backend round-trip + request_id reuse; live preview — dark/system/li
 - EstimateAcceptancePanel banner now offers two buttons: Copy Quote Link (scoped, preferred) and Copy Portal Link (whole account).
 - CustomerPortal renders a focused single-quote page for estimate links with the same QuoteCard respond UI.
 - customerPortalAction deployed; validate-opportunity-workspace, test-customer-quote, test-quote-lifecycle PASS; local stale Layout.jsx re-synced (remote had OpsReports nav).
+
+- Backlog item (tax liability report) DONE: taxLiabilityReport pure fn in opsReportModel — per (month, tax rate) buckets: taxed invoice count, taxable base (subtotal - discount), tax charged; issue_date = accrual / paid_date = cash-proxy basis via the existing dateBasis + monthRange filters; voids/drafts/untaxed/undated excluded with honest exclusion counts in totals. Registered as Receivables > Tax Liability at /OpsReports?report=tax_liability (CSV export free via uniform shape). test-ops-reports gained real-math cases both bases — PASS local + remote.
