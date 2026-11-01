@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 
 // Public shop-traveler payload. The work order id is the capability: travelers
 // are opened from printed QR links on the shop floor without an app login, so
@@ -44,7 +45,7 @@ function pickWorkOrder(wo: any) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const id = String(body?.work_order_id || body?.wo || '').trim();
     if (!id || id.length > 80) {
