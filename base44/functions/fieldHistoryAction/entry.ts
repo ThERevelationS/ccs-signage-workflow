@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { equivalent, trackedConditionalSave } from '../../shared/fieldAudit.ts';
@@ -46,7 +47,7 @@ async function verifyGuardedSipsTaskEligibility(base44, record) {
 }
 async function fieldHistoryHandler(req) {
   try {
-    const base44=measureSyncEntities(createClientFromRequest(req)), body=await req.json();
+    const base44=measureSyncEntities(withEntityRateLimitRetry(createClientFromRequest(req))), body=await req.json();
     const actor=body.session_token ? await authenticateSignShopSession(base44,body.session_token) : await base44.auth.me();
     if(!actor || !['admin','user'].includes(actor.role))return Response.json({error:'Sign in to access field history.'},{status:401});
     const type=body.entity_type;
