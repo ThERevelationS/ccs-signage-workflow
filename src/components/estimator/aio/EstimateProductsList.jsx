@@ -7,6 +7,11 @@ import { acceptedCustomerUnitPrice } from "@/components/estimator/customerPricin
 import { money } from "@/components/estimator/aioPricing";
 import { loadProductionProductTypes } from "@/components/estimator/productionProductTypes";
 
+// (#408) Long product lists render in chunks so a 200-line estimate doesn't
+// mount every ProductRow at once. "Show more" grows the window; deep links
+// expand it as needed to reach their target row.
+const ROW_PAGE = 50;
+
 export default function EstimateProductsList({ lines = [], rawTotal = 0, onChange, onRemove, onEdit, onUpdatePrice, onProductRefresh, onClone, onSaveNotes, onCreateQuickProduct, onPersistSettings, onSplit, readOnly = false }) {
   const [query, setQuery] = useState("");
   const [splitMode, setSplitMode] = useState(false);
@@ -40,6 +45,8 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
   const toggleSplitId = (id) => setSplitIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const [moduleFilter, setModuleFilter] = useState("all");
   const [productionProductTypes, setProductionProductTypes] = useState([]);
+  const [rowWindow, setRowWindow] = useState(ROW_PAGE);
+  useEffect(() => { setRowWindow(ROW_PAGE); }, [query, moduleFilter]);
 
   useEffect(() => {
     let active = true;
@@ -99,6 +106,13 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
       if (moduleFilter !== "all") setModuleFilter("all");
       return;
     }
+    // The target may sit past the render window — expand the window first,
+    // then let the effect re-run once the row is actually mounted.
+    const visibleIndex = visible.findIndex(({ line, index }) => estimateLineSelectionKey(line, index) === targetKey);
+    if (visibleIndex >= rowWindow) {
+      setRowWindow(visibleIndex + 1);
+      return;
+    }
     deepLinkedLineRef.current = true;
     const el = rowRefs.current[targetKey];
     if (el) {
@@ -108,7 +122,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         window.setTimeout(() => el.classList.remove("ring-4", "ring-blue-400", "rounded-md"), 3500);
       }, 150);
     }
-  }, [lines, visible, query, moduleFilter]);
+  }, [lines, visible, query, moduleFilter, rowWindow]);
 
   return (
     <div className="bg-white border border-gray-200 rounded-md">
@@ -173,7 +187,7 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
         </div>
       ) : (
         <div className="p-2 space-y-2 bg-gray-50">
-          {visible.map(({ line, index }) => {
+          {visible.slice(0, rowWindow).map(({ line, index }) => {
             const lineId = estimateLineSelectionKey(line, index);
             return (
             <div key={lineId} data-line-id={lineId} ref={(el) => { if (el) rowRefs.current[lineId] = el; else delete rowRefs.current[lineId]; }} className="relative">
@@ -203,6 +217,15 @@ export default function EstimateProductsList({ lines = [], rawTotal = 0, onChang
             </div>
             );
           })}
+          {visible.length > rowWindow && (
+            <button
+              type="button"
+              onClick={() => setRowWindow((n) => n + ROW_PAGE)}
+              className="w-full h-[30px] rounded border border-gray-300 bg-white text-[11px] font-bold text-gray-600 hover:bg-gray-50"
+            >
+              Show {Math.min(ROW_PAGE, visible.length - rowWindow)} more products ({visible.length - rowWindow} remaining)
+            </button>
+          )}
         </div>
       )}
 
