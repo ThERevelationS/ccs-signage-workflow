@@ -78,6 +78,8 @@ function poSnapshot(row: any) {
     estimate_id: clean(row?.estimate_id),
     order_date: clean(row?.order_date),
     expected_date: clean(row?.expected_date),
+    sent_date: clean(row?.sent_date),
+    received_date: clean(row?.received_date),
     subtotal: num(row?.subtotal),
     shipping_fee: num(row?.shipping_fee),
     total: num(row?.total),

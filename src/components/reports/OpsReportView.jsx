@@ -256,7 +256,8 @@ export default function OpsReportView({ reportKey, onSelect }) {
       });
       const data = res?.data || res;
       if (!data?.success) throw new Error(data?.error || "Purchase order data could not be verified completely.");
-      const open = (data.purchase_orders || [])
+      const headers = data.purchase_orders || [];
+      const open = headers
         .filter((po) => ["sent", "partially_received"].includes(clean(po?.status)))
         .slice(0, OPEN_PO_DETAIL_CAP);
       const out = [];
@@ -270,7 +271,9 @@ export default function OpsReportView({ reportKey, onSelect }) {
           }).then((r) => (r?.data || r)?.purchase_order || null).catch(() => null)));
         out.push(...chunk.filter(Boolean));
       }
-      return out;
+      // Header snapshots for every listed PO (vendor scorecard) + the
+      // line-detailed open subset (parts-needed on-order quantities).
+      return { headers, open: out };
     },
     enabled: needSet.has("purchaseOrders") && Boolean(sessionToken),
     staleTime: 120000,
@@ -294,7 +297,8 @@ export default function OpsReportView({ reportKey, onSelect }) {
     builderParts: builderPartsQuery.data || [],
     builderProducts: builderProductsQuery.data || [],
     inventoryItems: inventoryQuery.data || [],
-    purchaseOrders: purchaseOrdersQuery.data || [],
+    purchaseOrders: purchaseOrdersQuery.data?.open || [],
+    purchaseOrderHeaders: purchaseOrdersQuery.data?.headers || [],
   };
 
   const needed = [...needSet];
@@ -388,6 +392,7 @@ export default function OpsReportView({ reportKey, onSelect }) {
       builderProducts: dataByNeed.builderProducts,
       inventoryItems: dataByNeed.inventoryItems,
       purchaseOrders: dataByNeed.purchaseOrders,
+      purchaseOrderHeaders: dataByNeed.purchaseOrderHeaders,
       dateBasis: filters.dateBasis,
       now: new Date(),
     });
