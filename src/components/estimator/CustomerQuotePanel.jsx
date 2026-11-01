@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
+import { FileText, Loader2, Mail, Printer, RefreshCw, Settings2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -190,6 +190,38 @@ export default function CustomerQuotePanel({
 
   const printQuote = () => {
     window.print();
+  };
+
+  // #494 — preview the exact PDF artifact before it is emailed or saved:
+  // generate it, open it in a new tab (falls back to a download when the
+  // popup is blocked), and let the browser's own viewer be the preview.
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const previewPdf = async () => {
+    if (previewBusy) return;
+    setPreviewBusy(true);
+    try {
+      const pdf = await generateCustomerQuotePdf({
+        estimateNumber: estimate.estimate_number,
+        projectName: estimate.project_name,
+        quoteIssueDate: estimate.quote_issue_date || localDateStamp(),
+        quoteVersion: estimate.quote_version || 0,
+        quoteValidDays: estimate.quote_valid_days ?? 30,
+      });
+      const bytes = Uint8Array.from(atob(pdf.base64 || ""), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: pdf.mimeType || "application/pdf" }));
+      const win = window.open(url, "_blank", "noopener");
+      if (!win) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = pdf.filename || "quote.pdf";
+        a.click();
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      window.alert(error?.message || "The quote PDF could not be generated for preview.");
+    } finally {
+      setPreviewBusy(false);
+    }
   };
 
   const applyCompanyDefaults = async () => {
@@ -401,6 +433,7 @@ export default function CustomerQuotePanel({
             <Mail className="w-3.5 h-3.5 mr-1.5" />
             {revisionInProgress ? "Save Revision Before Sending" : emailActionLabel}
           </Button>
+          <Button type="button" variant="outline" onClick={previewPdf} disabled={revisionInProgress || previewBusy} title={revisionInProgress ? "Save the open revision before previewing the customer quote PDF." : "Generate and preview the customer quote PDF in a new tab before downloading or emailing."} className="h-[31px] text-[11px]">{previewBusy ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />} {previewBusy ? "Generating…" : revisionInProgress ? "Save Revision Before Preview" : "Preview PDF"}</Button>
           <Button type="button" variant="outline" onClick={printQuote} disabled={revisionInProgress} title={revisionInProgress ? "Save the open revision before printing the customer quote." : "Print Quote"} className="h-[31px] text-[11px]"><Printer className="w-3.5 h-3.5 mr-1.5" /> {revisionInProgress ? "Save Revision Before Printing" : "Print Quote"}</Button>
         </div>
       </div>
