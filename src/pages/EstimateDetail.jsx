@@ -1962,8 +1962,8 @@ export default function EstimateDetail() {
               <div className="flex flex-wrap items-center gap-1.5 rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
                 <span className="text-[9px] font-bold tracking-wide text-gray-500">IMPORT / EXPORT</span>
                 <ExportEstimateJsonButton estimate={estimate} />
-                <ImportLineItemsButton estimate={estimate} onApplied={load} />
-                <ImportTemplateSectionsButton estimate={estimate} onApplied={load} />
+                <ImportLineItemsButton estimate={estimate} onApplied={refreshProducts} />
+                <ImportTemplateSectionsButton estimate={estimate} onApplied={refreshProducts} />
                 <ExportJobCostingCsvButton estimate={estimate} />
               </div>
               <EstimateAcceptancePanel
