@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { INTERNAL_FUNCTION_CAPABILITY } from '../../shared/internalFunctionCapability.ts';
@@ -132,7 +133,7 @@ async function ensureFailureWorkOrder(base44: any, WorkOrder: any, Equipment: an
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const action = norm(body?.action);
     const adminRequired = ['template_create','template_update'].includes(action);
