@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from "react";
-import * as XLSX from "xlsx";
+// xlsx (~1MB) loads on demand when a file is picked — not at dialog open.
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,6 +76,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
     setParsing(true);
     try {
       const buf = await f.arrayBuffer();
+      const XLSX = await import("xlsx");
       const wb = XLSX.read(buf, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
