@@ -60,6 +60,17 @@ assert.equal(barePlastic, 'sign_parts_supplies', 'bare plastic name falls to cat
 const vinylGroupPlasticName = detectTarget({ 'Part Name': 'Plastic sheet', 'Part Group': 'Vinyl' });
 assert.equal(vinylGroupPlasticName, 'vinyl', 'Part Group mapping outranks plastic keywords');
 
+// #454 — PART_GROUP_MAP precedence over KEYWORD_RULES, exhaustive direction:
+// every keyword-hit name must still route to the group target when the group
+// cell is mapped. These names would otherwise land on lighting/substrate/
+// dimensional-letter targets via keywords alone.
+assert.equal(detectTarget({ 'Part Name': 'LED module', 'Part Group': 'Vinyl' }), 'vinyl', 'group map outranks LED keyword');
+assert.equal(detectTarget({ 'Part Name': 'acrylic panel', 'Part Group': 'Lighting' }), 'sign_lighting', 'group map outranks acrylic keyword');
+assert.equal(detectTarget({ 'Part Name': 'acrylic sheet', 'Part Group': 'Retainers' }), 'sign_parts_supplies', 'mapped group wins over substrate keyword');
+assert.equal(detectTarget({ 'Part Name': 'LED acrylic sheet', 'Part Group': '' }), 'sign_lighting', 'keyword order decides when group empty');
+// And the inverse: unmapped group cell does NOT block keyword routing.
+assert.equal(detectTarget({ 'Part Name': 'LED module', 'Part Group': 'Totally Custom' }), 'sign_lighting', 'unmapped group falls through to keywords');
+
 // routeRow returns target metadata + payload name.
 {
   const r = routeRow({ 'Part Name': 'Cast Vinyl 54', 'Part Group': 'Vinyl', 'Part Cost': '10', 'Is Active': 'yes' });
@@ -69,4 +80,4 @@ assert.equal(vinylGroupPlasticName, 'vinyl', 'Part Group mapping outranks plasti
   assert.ok(r.payload && typeof r.payload === 'object');
 }
 
-console.log('PASS import mappers (16 cases)');
+console.log('PASS import mappers (21 cases)');
