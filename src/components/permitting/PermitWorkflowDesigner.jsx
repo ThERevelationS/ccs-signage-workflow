@@ -121,12 +121,13 @@ export default function PermitWorkflowDesigner({
   const [sourceEvidence, setSourceEvidence] = useState(null);
   const [reviewPacket, setReviewPacket] = useState(null);
   const [draftLoadError, setDraftLoadError] = useState('');
+  const activeJurisdiction = pickedJurisdiction || preselectedJurisdiction;
   useEffect(() => {
     let active = true;
-    if (isOpen) loadWorkflowDrafts(preselectedJurisdiction?.jurisdiction_id).then(rows => { if (active) setSavedDrafts(rows); })
+    if (isOpen) loadWorkflowDrafts(activeJurisdiction?.jurisdiction_id, activeJurisdiction?.jurisdiction_name).then(rows => { if (active) setSavedDrafts(rows); })
       .catch(() => { if (active) setDraftLoadError("Couldn't load saved plans — you can still build a new one."); });
     return () => { active = false; };
-  }, [isOpen, preselectedJurisdiction?.jurisdiction_id]);
+  }, [isOpen, activeJurisdiction?.jurisdiction_id, activeJurisdiction?.jurisdiction_name]);
 
   const [generating, setGenerating] = useState(false);
   const [draft, setDraft] = useState(null);
@@ -318,13 +319,13 @@ export default function PermitWorkflowDesigner({
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-600" />
             <h2 className="text-lg font-bold text-gray-900">AI Permit Plan Builder</h2>
-            {preselectedJurisdiction?.jurisdiction_name && (
+            {activeJurisdiction?.jurisdiction_name && (
               <Badge className="bg-purple-100 text-purple-700">
                 <MapPin className="mr-1 h-3 w-3" />
-                {preselectedJurisdiction.jurisdiction_name}
+                {activeJurisdiction.jurisdiction_name}
               </Badge>
             )}
-            {(draft?.jurisdiction?.offices_need_check || preselectedJurisdiction?.offices_need_check) && (
+            {(draft?.jurisdiction?.offices_need_check || activeJurisdiction?.offices_need_check) && (
               <Badge className="bg-amber-100 text-amber-800">Office setup needs a check</Badge>
             )}
           </div>
