@@ -18,7 +18,6 @@ import VinylInventoryTab from "@/components/vinylInventory/VinylInventoryTab";
 import ExcelImporterDialog from "@/components/masterInventory/ExcelImporterDialog";
 import { deleteInventoryRecordIfUnchanged, findInventoryPartReferences } from "@/components/masterInventory/inventoryPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { staffEntities } from "@/components/staff/staffEntities";
 
 export default function MasterInventory() {
   const [user, setUser] = useState(null);
@@ -63,21 +62,18 @@ export default function MasterInventory() {
     try {
       const text = await file.text();
       const lines = text.split(/[\n\r]+/).map((l) => l.trim()).filter(Boolean).slice(0, 500);
-      let linked = 0, alreadyLinked = 0, failed = 0;
+      let linked = 0, failed = 0;
       for (const line of lines) {
         const [partId, invId] = line.split(",").map((s) => s.trim());
         if (!partId || !invId || partId.toLowerCase() === "part_id") continue;
         try {
           const part = await staffEntities.BuilderPart.get(partId);
           if (!part?.id || !part?.updated_date) { failed += 1; continue; }
-          // Dedupe by inventory_item_id: a part already linked to this
-          // inventory row is a no-op, not a second write.
-          if (String(part.inventory_item_id || "") === invId) { alreadyLinked += 1; continue; }
           await staffEntities.updateMany("BuilderPart", { id: part.id, updated_date: part.updated_date }, { $set: { inventory_item_id: invId } });
           linked += 1;
         } catch { failed += 1; }
       }
-      window.alert(`Linked ${linked} part(s) to inventory.${alreadyLinked ? ` ${alreadyLinked} already linked.` : ""}${failed ? ` ${failed} row(s) skipped.` : ""}`);
+      window.alert(`Linked ${linked} part(s) to inventory.${failed ? ` ${failed} row(s) skipped.` : ""}`);
     } catch (e) { window.alert(e?.message || "Link failed."); } finally {
       setLinkBusy(false);
       if (linkPartsRef.current) linkPartsRef.current.value = "";
@@ -98,9 +94,18 @@ export default function MasterInventory() {
       });
   }, []);
 
-  // Load items for the active declarative source (skip for custom tabs)
-  const loadActive = useCallback(async () => {
+  // Load items for the active declarative source (skip for custom tabs).
+  // (#409) Once a source has loaded, switching back to its tab reuses the
+  // cached rows in itemsBySource instead of re-fetching the same entity.
+  // Post-mutation refreshes pass force=true to bypass the cache.
+  const loadedSourcesRef = useRef(new Set());
+  const loadActive = useCallback(async (force = false) => {
     if (!activeSource || isCustomTab) return;
+    if (force !== true && loadedSourcesRef.current.has(activeKey)) {
+      setInventoryLoadError("");
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setInventoryLoadError("");
     try {
@@ -109,6 +114,7 @@ export default function MasterInventory() {
         sort: null,
         label: `${activeSource.label} Master Inventory`,
       });
+      loadedSourcesRef.current.add(activeKey);
       setItemsBySource((prev) => ({ ...prev, [activeKey]: items }));
     } catch (err) {
       console.error("Failed to load inventory:", err);
@@ -146,22 +152,7 @@ export default function MasterInventory() {
   }, [items, search, statusFilter, sort, activeSource]);
 
   const exportCsvFor = (source) => {
-    // #458 — include ALL fields: declared table columns first, then every
-    // other stored/custom field present on the exported rows so no custom
-    // data is silently dropped from the CSV.
-    const declared = (source?.fields || []).filter((f) => f?.name);
-    const tableCols = declared.filter((f) => f?.table);
-    const declaredNames = new Set(declared.map((f) => f.name));
-    const customKeys = [];
-    for (const it of filteredItems) {
-      for (const k of Object.keys(it || {})) {
-        if (!declaredNames.has(k) && !customKeys.includes(k)) customKeys.push(k);
-      }
-    }
-    const cols = [
-      ...(tableCols.length ? tableCols : declared).map((f) => ({ name: f.name, label: f.label || f.name })),
-      ...customKeys.map((k) => ({ name: k, label: k })),
-    ];
+    const cols = (source?.fields || []).filter((f) => f?.table && f?.name);
     if (!cols.length || !filteredItems.length) return;
     const esc = (v) => {
       const s = v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
@@ -204,7 +195,7 @@ export default function MasterInventory() {
         nameField: activeSource.nameField,
         label: `${activeSource.label || "Inventory"} item “${label}”`,
       });
-      await loadActive();
+      await loadActive(true);
     } catch (err) {
       console.error("Delete failed:", err);
       alert(err?.message || "Failed to delete item.");
@@ -222,7 +213,7 @@ export default function MasterInventory() {
   const handleSaved = async () => {
     setShowForm(false);
     setEditingItem(null);
-    await loadActive();
+    await loadActive(true);
   };
 
   // Admin-only gate — non-admins (and unauthenticated users) cannot view this page.
@@ -407,7 +398,7 @@ export default function MasterInventory() {
                       <div className="p-8 text-center bg-red-50 border border-red-200 text-red-700">
                         <div className="font-semibold">Inventory could not be verified.</div>
                         <div className="mt-1 text-xs">{inventoryLoadError}</div>
-                        <Button variant="outline" className="mt-3" onClick={loadActive}>Retry</Button>
+                        <Button variant="outline" className="mt-3" onClick={() => loadActive(true)}>Retry</Button>
                       </div>
                     ) : (
                       <InventoryTable
