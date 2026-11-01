@@ -1,5 +1,12 @@
 import { deleteEntityIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Read-after-write grace for the post-create verify read: a create whose
+// response was lost can still have landed, and an immediate empty verify
+// read is not conclusive.
+const VERIFY_RETRY_DELAY_MS = 700;
+
 const canonicalRecord = (rows = []) => [...rows].sort((a, b) => {
   const aStamp = String(a?.created_date || "");
   const bStamp = String(b?.created_date || "");
@@ -78,10 +85,27 @@ export async function ensureIdempotentEntityCreate({
     createError = error;
   }
 
-  let afterCreate;
+  let afterCreate = null;
+  let verifyError = null;
   try {
     afterCreate = await load();
-  } catch (verifyError) {
+  } catch (error) {
+    verifyError = error;
+  }
+  // Read-after-write lag: a create that failed at the response layer can
+  // still have landed, so an immediate empty/failed verify is not conclusive.
+  // Give the write a moment and re-read once before declaring the outcome
+  // unknown — a retry must resolve the existing row, never create a dup.
+  if ((!Array.isArray(afterCreate) || afterCreate.length === 0) && (createError || !created?.id)) {
+    await sleep(VERIFY_RETRY_DELAY_MS);
+    try {
+      const retryRows = await load();
+      if (Array.isArray(retryRows)) afterCreate = retryRows;
+    } catch (error) {
+      verifyError = verifyError || error;
+    }
+  }
+  if (!Array.isArray(afterCreate)) {
     if (created?.id && matchesPayload(created, payload)) return created;
     throw new Error(`${label} create outcome could not be verified. Do not retry blindly; reload first. ${verifyError?.message || "Recovery lookup failed."}`);
   }

@@ -27,6 +27,13 @@ function sameValue(a, b) {
       return Math.abs(Number(a) - Number(b)) <= 0.000001;
     }
   }
+  // The backend trims most string fields on write, so a stored value won't
+  // byte-match an untrimmed patch value. Compare top-level strings trimmed —
+  // the same convention the idempotent-create payload matcher uses — or
+  // post-save verification false-negatives a patch that actually landed.
+  // Nested strings inside arrays/objects stay strict so CAS snapshots keep
+  // their full-fidelity compare.
+  if (typeof a === "string" && typeof b === "string") return a.trim() === b.trim();
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 
@@ -52,11 +59,38 @@ export async function createWorkOrderWithRecovery({ data, label = "Work Order", 
     throw new Error(`${label} could not initialize its retry-safe create.`);
   }
 
+  // Create verification must scan the whole same-title set. entity.filter
+  // pages at 500 rows, so an exact same-title count (staffDataRead gateway)
+  // bounds the scan up front and the read then pages through the titles.
+  // SAME_TITLE_VERIFY_MAX_ROWS is a fail-closed safety cap on that scan,
+  // not a platform limit — beyond it, retry-safe verification is not
+  // trustworthy (e.g. high-volume same-title jobs like walk-in sales).
+  const SAME_TITLE_PAGE_SIZE = 500; // entity.filter page cap
+  const SAME_TITLE_VERIFY_MAX_ROWS = 5000;
   const readMatches = async () => {
-    const rows = await entity.filter({ title }, "-created_date", 500);
-    if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a Work Order list.`);
-    if (rows.length >= 500) throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
-    return rows.filter((row) => workOrderPatchMatches(row, payload));
+    if (typeof entity.count === "function") {
+      const total = await entity.count({ title }).catch(() => null);
+      if (typeof total === "number" && total > SAME_TITLE_VERIFY_MAX_ROWS) {
+        throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
+      }
+    }
+    const matches = [];
+    const seen = new Set();
+    for (let skip = 0; skip < SAME_TITLE_VERIFY_MAX_ROWS; skip += SAME_TITLE_PAGE_SIZE) {
+      const page = await entity.filter({ title }, "-created_date", SAME_TITLE_PAGE_SIZE, skip);
+      if (!Array.isArray(page)) throw new Error(`${label} lookup did not return a Work Order list.`);
+      for (let index = 0; index < page.length; index += 1) {
+        const row = page[index];
+        // Newest-first pages shift under concurrent inserts, so dedupe by id
+        // the same way loadAllEntityRows does.
+        const key = String(row?.id || "").trim() || `__row_${skip + index}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (workOrderPatchMatches(row, payload)) matches.push(row);
+      }
+      if (page.length < SAME_TITLE_PAGE_SIZE) return matches;
+    }
+    throw new Error(`${label} has too many same-title Work Orders to verify creation safely. Review existing jobs before retrying.`);
   };
 
   const before = await readMatches();

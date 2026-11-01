@@ -52,6 +52,13 @@ export async function withRateLimitRetry(fn) {
  * using the SDK's list/filter(sort, limit, skip) contract, fails closed on an
  * unreadable page, and de-duplicates by entity id so callers never silently
  * estimate from a partial catalog.
+ *
+ * Paging order defaults to ASCENDING "created_date" (not "-created_date").
+ * That is deliberate: new rows append to the end of the set, so earlier
+ * skip/limit pages stay stable while a full scan is in flight — a
+ * newest-first order would shift every page on each concurrent insert.
+ * Callers may pass any SDK sort string; it is forwarded to list/filter on
+ * every page (an empty/falsy sort falls back to the SDK's own default).
  */
 /**
  * @param {{
