@@ -389,7 +389,7 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 342. **[F][DONE]** Unassigned >2d escalation — feed section kept + escalated red tone/⚠ marker; evaluate_triggers persists `unassigned_escalation` (critical) to every admin once per request
 343. **[F][DONE]** `pipeline_sync_pending` >24h — feed already returned `sync_pending_estimates`; now rendered as a section + persisted `sync_pending` notification to salesperson (admins fallback)
 344. **[F][DONE]** `needs_recalc` — feed section kept; evaluate_triggers persists `needs_recalc` notifications to the owning estimate's salesperson (admins fallback), dedupe per part
-345. **[B]** `overdue_jobs` attention-feed — uses UTC day-boundary; fix for local-time
+345. **[B][DONE]** overdue_jobs day-boundary — verified local-time aware: feed compares due_date against client-supplied local today (YYYY-MM-DD, en-CA) — same fix as #166; no server-side UTC boundary remains
 346. **[F][DONE]** Quote-expiry 7-day warning — `quotes_expiring_soon` feed section existed; evaluate_triggers now persists `qexp7:<id>` `quote_expiring` notifications to the salesperson once per estimate
 347. **[F][DONE]** Invoice-overdue → notify — persists `invoice_overdue` (critical) to `salesperson_email`; falls back to admins (closest CS queue) when no salesperson recorded; dedupe per invoice
 348. **[H][DONE]** `open_estimating_requests` links verified — `/Opportunities?open=<opportunity_id>` is honored by the page (fallback `/Opportunities`)

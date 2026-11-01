@@ -1,2 +1,0 @@
-import fs from "node:fs";const s=fs.readFileSync("ESTIMATOR_BACKLOG.md","utf8");const i=s.indexOf("345. **[B]**");const e=s.indexOf("
-",i);const line=s.slice(i,e);if(line.includes("DONE")){console.log("ALREADY")}else{fs.writeFileSync("ESTIMATOR_BACKLOG.md",s.slice(0,i)+"345. **[B][DONE]** overdue_jobs day-boundary — verified local-time aware: feed compares due_date against client-supplied local today (YYYY-MM-DD, en-CA) — same fix as #166; no server-side UTC boundary remains"+s.slice(e));console.log("MARKED 345")}
