@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Save } from "lucide-react";
@@ -9,6 +9,9 @@ import { calcBrickStoneProject } from "@/components/estimator/brick/brickCalc";
 import { recordBuilderSave } from "@/components/estimator/builder/builderService";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import CustomerPricingTab from "@/components/markup/CustomerPricingTab";
 import { categorizeBrickStoneProject } from "@/components/markup/projectCategorizer";
 import { calculateSavedCustomerPricing } from "@/components/markup/savedCustomerPricing";
@@ -24,9 +27,13 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [templateMode, setTemplateMode] = useState(null);
   const saveRef = useRef(null);
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const navigate = useNavigate();
 
   useEffect(() => {
+    copyAttemptRef.current = { signature: "", key: "" };
     const load = async () => {
       setLoading(true);
       setLoadError("");
@@ -191,6 +198,80 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
   };
   saveRef.current = handleSave;
 
+  // #78 — clone the current save payload into a brand-new Brick & Stone project.
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    try {
+      const copy = await saveModuleProjectCopy({
+        entity: staffEntities.BrickStoneProject,
+        payload: {
+          project_name: project.project_name,
+          client_name: project.client_name,
+          customer_id: project.customer_id,
+          estimate_number: project.estimate_number,
+          hyperlink: project.hyperlink,
+          notes: project.notes,
+          status: "calculated",
+          selected_material_id: project.selected_material_id,
+          material_name: project.material_name,
+          material_dimensions: project.material_dimensions,
+          bricks_along_length: project.bricks_along_length,
+          bricks_along_width: project.bricks_along_width,
+          courses_high: project.courses_high,
+          layers: project.layers,
+          mortar_gap: project.mortar_gap,
+          waste_factor: project.waste_factor,
+          mortar_bag_cost: project.mortar_bag_cost,
+          bricks_per_hour: project.bricks_per_hour,
+          labor_rate_per_hour: project.labor_rate_per_hour,
+          markup_percent: project.markup_percent,
+          base_length: totals.derived_length,
+          base_width: totals.derived_width,
+          base_height: totals.derived_height,
+          calculated_bricks: totals.calculated_bricks,
+          calculated_surface_area: totals.calculated_surface_area,
+          mortar_bags_needed: totals.mortar_bags_needed,
+          material_cost: totals.material_cost,
+          mortar_cost: totals.mortar_cost,
+          labor_hours: totals.labor_hours,
+          labor_cost: totals.labor_cost,
+          subtotal: totals.subtotal,
+          markup_amount: totals.markup_amount,
+          total_cost: totals.total_cost,
+          customer_pricing: project.customer_pricing,
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "brick_stone_project_copy",
+        baseName: project.project_name || "Brick & Stone",
+        label: "Brick & Stone project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/BrickStoneEstimator?id=${copy.id}`);
+    } catch (e) {
+      console.error(e); alert("Save copy failed: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable masonry setup a user would reuse.
+  const buildBrickStoneTemplateData = (p) => ({
+    selected_material_id: p.selected_material_id,
+    material_name: p.material_name,
+    material_dimensions: p.material_dimensions,
+    bricks_along_length: p.bricks_along_length,
+    bricks_along_width: p.bricks_along_width,
+    courses_high: p.courses_high,
+    layers: p.layers,
+    mortar_gap: p.mortar_gap,
+    waste_factor: p.waste_factor,
+    mortar_bag_cost: p.mortar_bag_cost,
+    bricks_per_hour: p.bricks_per_hour,
+    labor_rate_per_hour: p.labor_rate_per_hour,
+    markup_percent: p.markup_percent,
+    notes: p.notes,
+  });
+
   return (
     <div className="clay-scope min-h-full bg-gradient-to-br from-rose-50 to-orange-50">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -215,6 +296,13 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
           <Button onClick={handleSave} disabled={saving || !project.selected_material_id} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
             <Save className="w-4 h-4" /> {saving ? "Saving…" : "Save Section"}
           </Button>
+          <ModuleActionBar
+            onTemplates={() => setTemplateMode("load")}
+            onSaveAsTemplate={() => setTemplateMode("save")}
+            onSaveAsCopy={handleSaveAsCopy}
+            estimateId={estimateId}
+            saving={saving}
+          />
         </div>
 
         <div className="mb-4">
@@ -281,6 +369,18 @@ export default function BrickStoneEstimator({ embedded = false, embeddedProjectI
             })}
           />
         </div>
+
+        <ModuleTemplateDialog
+          open={!!templateMode}
+          mode={templateMode}
+          onClose={() => setTemplateMode(null)}
+          project={project}
+          onApply={(data) => patch(data)}
+          moduleKey="brick_stone"
+          title="Brick & Stone"
+          buildTemplateData={buildBrickStoneTemplateData}
+          describeTemplate={(t) => (t.project_data?.material_name || "Saved wall setup")}
+        />
       </div>
     </div>
   );
