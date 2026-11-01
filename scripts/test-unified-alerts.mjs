@@ -12,6 +12,7 @@ const NEW_TRIGGERS = [
 const admin = readFileSync('src/pages/AdminSettings.jsx', 'utf8');
 const service = readFileSync('src/components/workflow/NotificationService.jsx', 'utf8');
 const feed = readFileSync('src/components/workflow/AttentionFeed.jsx', 'utf8');
+const categories = readFileSync('src/components/workflow/attentionFeedCategories.js', 'utf8');
 const bell = readFileSync('src/components/workflow/AttentionBell.jsx', 'utf8');
 const model = readFileSync('src/components/workflow/attentionComputedModel.js', 'utf8');
 const engine = readFileSync('base44/shared/workflowTriggerEngine.ts', 'utf8');
@@ -75,9 +76,11 @@ for (const m of ['proofSent', 'proofApproved', 'productTransition', 'crmEventCom
 }
 
 // --- 4. Computed attention-feed sections ------------------------------------
+// The category→item mapping lives in attentionFeedCategories.js (shared by
+// the strip and the bell dropdown); AttentionFeed renders what it builds.
 for (const key of ['overdue_products', 'crm_events_due', 'comms_followups_due', 'recon_variance_batches']) {
   assert.ok(model.includes(`"${key}"`), `computed model must define section ${key}`);
-  assert.ok(feed.includes(`key: "${key}"`), `AttentionFeed must render section ${key}`);
+  assert.ok(categories.includes(`key: "${key}"`), `attentionFeedCategories must render section ${key}`);
 }
 for (const fn of ['overdueProducts', 'dueCrmEvents', 'dueCommsFollowups', 'overdueInvoices', 'overdueOpenPos', 'varianceBatches', 'publishComputedAttention', 'computedAttentionCount']) {
   assert.ok(model.includes(`export function ${fn}`), `model must export ${fn}`);
@@ -87,11 +90,13 @@ assert.match(model, /flattenQueueRows/, 'overdue products must reuse productQueu
 assert.match(model, /isOpenEvent/, 'CRM due events must reuse crmEventsModel openness');
 assert.match(feed, /publishComputedAttention/, 'feed must publish computed sections for the bell');
 assert.match(bell, /computedAttentionCount/, 'AttentionBell must include computed sections in its count');
-assert.match(feed, /COMPUTED_SECTION_KEYS/, 'hide/snooze prefs must include computed section keys');
+for (const key of ['overdue_products', 'crm_events_due', 'comms_followups_due', 'recon_variance_batches']) {
+  assert.ok(categories.includes(`"${key}"`), `hide/snooze pref keys must include computed section ${key}`);
+}
 
 // --- 5. Required deep links --------------------------------------------------
 for (const route of ['/ProductQueues', '/CrmEvents', '/CommsFollowups', '/Invoices?invoice=', '/PurchaseOrders?po=', '/Reconciliation']) {
-  assert.ok(feed.includes(route), `AttentionFeed must deep-link ${route}`);
+  assert.ok(categories.includes(route), `attentionFeedCategories must deep-link ${route}`);
 }
 
 // --- 6. Existing behavior preserved ------------------------------------------
@@ -99,5 +104,13 @@ assert.ok(feed.includes('attention_handled'), 'handled-item localStorage behavio
 assert.ok(feed.includes('attention_hidden_sections'), 'hidden-section behavior must remain');
 assert.ok(feed.includes('attention_snoozed'), 'snooze behavior must remain');
 assert.match(feed, /dedupeById/, 'server/computed rows must dedupe by id');
+
+// --- 7. Persisted-notification layer (§14) ------------------------------------
+assert.match(feed, /buildAttentionCategories/, 'feed must render the shared category model');
+assert.match(feed, /dismissFeedItems/, 'feed-item overlays must persist via notificationAction');
+assert.match(bell, /NotificationCenter/, 'bell must open the notification center');
+assert.match(bell, /usePolling\(load, 60000/, 'bell must poll every 60s');
+assert.ok(categories.includes('/EstimatorCustomers?customer='), 'portal messages must deep-link the portal surface (#338)');
+assert.ok(categories.includes('sync_pending_estimates'), 'sync-pending section must render (#343)');
 
 console.log('PASS unified-alerts');
