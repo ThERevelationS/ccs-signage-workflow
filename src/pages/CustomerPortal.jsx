@@ -113,7 +113,7 @@ function InvoiceView({ invoice, payments }) {
             <p className="text-xs text-slate-500">Due</p>
             <p className="mt-0.5 flex items-center gap-1 text-sm font-medium text-slate-800">
               {invoice.due_date || "—"}
-              {Number(invoice.balance_due) > 0 && invoice.due_date && new Date(invoice.due_date) < new Date() && <Clock className="h-3.5 w-3.5 text-red-500" />}
+              {Number(invoice.balance_due) > 0 && invoice.due_date && invoice.due_date < new Date().toLocaleDateString("en-CA") && <Clock className="h-3.5 w-3.5 text-red-500" />}
             </p>
           </div>
           <div><p className="text-xs text-slate-500">Paid to date</p><p className="mt-0.5 text-sm font-medium text-slate-800">{money(invoice.amount_paid)}</p></div>
