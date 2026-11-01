@@ -119,11 +119,14 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       const drops = [];
       const routed = data
         .map((row, idx) => {
+          // Spreadsheet row number for skip reporting (header row = 1).
+          const sourceRow = idx + 2;
           const r = routeRow(row);
-          if (!r.name) { drops.push({ row: idx + 1, reason: "No routable item name" }); return null; }
+          if (!r.name) { drops.push({ row: sourceRow, reason: "No routable item name" }); return null; }
           const existingItem = existing[r.target_key].get(nameKey(r.name));
           return {
             ...r,
+            sourceRow,
             action: existingItem ? "update" : "create",
             existingId: existingItem?.id || null,
             existingUpdatedDate: existingItem?.updated_date || null,
@@ -136,7 +139,7 @@ export default function ExcelImporterDialog({ onClose, onComplete }) {
       routed.forEach((r) => {
         const k = `${r.target_key}::${nameKey(r.name)}`;
         const prior = seen.get(k);
-        if (prior) drops.push({ row: r.name, reason: `Duplicate in file — kept the later "${r.name}" row` });
+        if (prior) drops.push({ row: prior.sourceRow, reason: `Duplicate in file — kept the later "${r.name}" row ${r.sourceRow}` });
         seen.set(k, r);
       });
 
