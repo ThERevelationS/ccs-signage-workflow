@@ -21,6 +21,9 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { preflightBuilderSourceMutation, updateBuilderSourceProject } from "@/components/estimator/builder/sourceProjectPersistence";
 import { newBuilderItemId, seedBuilderItemIds } from "@/components/estimator/builder/itemIdentity";
 import { ensureIdempotentEntityCreate, newCreationRequestKey } from "@/components/estimator/idempotentEntityCreate";
+import ModuleActionBar from "@/components/estimator/moduleShared/ModuleActionBar";
+import ModuleTemplateDialog from "@/components/estimator/moduleShared/ModuleTemplateDialog";
+import { saveModuleProjectCopy } from "@/components/estimator/moduleShared/moduleProjectActions";
 import { staffEntities } from "@/components/staff/staffEntities";
 
 const imperialSizes = ["1/16", "1/8", "3/16", "1/4", "3/8", "1/2", "5/8", "3/4", "7/8", "1", "1-1/4", "1-1/2", "2", "2-1/2", "3", "3-1/2", "4"];
@@ -63,10 +66,13 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
   const [activeTab, setActiveTab] = useState("project");
   const persistedProjectIdRef = useRef(editId || "");
   const createAttemptRef = useRef({ signature: "", key: "" });
+  const copyAttemptRef = useRef({ signature: "", key: "" });
+  const [templateMode, setTemplateMode] = useState(null);
 
   useEffect(() => {
     persistedProjectIdRef.current = editId || "";
     createAttemptRef.current = { signature: "", key: "" };
+    copyAttemptRef.current = { signature: "", key: "" };
     loadPrerequisites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId, estimateId]);
@@ -364,6 +370,48 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
     }
     setIsSaving(false);
   };
+
+  // #78 — clone the current save payload into a brand-new CNC project.
+  const handleSaveAsCopy = async () => {
+    setIsSaving(true);
+    try {
+      const totals = calculateTotals();
+      const copy = await saveModuleProjectCopy({
+        entity: CNCProject,
+        payload: {
+          ...project,
+          client_name: estimateContext?.client_name || project.client_name,
+          customer_id: estimateContext?.customer_id || project.customer_id,
+          estimate_number: estimateContext?.estimate_number || project.estimate_number,
+          total_machine_cost: totals.totalMachine,
+          total_labor_cost: totals.totalLabor,
+          total_cost: totals.totalMachine + totals.totalLabor,
+          status: 'calculated',
+        },
+        attemptRef: copyAttemptRef,
+        keyPrefix: "cnc_project_copy",
+        baseName: project.project_name || "CNC",
+        label: "CNC project copy",
+      });
+      if (embedded) onSaved?.();
+      else navigate(`/CNCEstimator?edit=${copy.id}`);
+    } catch (e) {
+      console.error(e);
+      alert("Save copy failed: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // #79 — template payload = the editable setup a user would reuse.
+  const buildCncTemplateData = (p) => ({
+    items: p.items || [],
+    machine_rate_per_hour: p.machine_rate_per_hour,
+    labor_rate: p.labor_rate,
+    setup_time_percentage: p.setup_time_percentage,
+    fixed_setup_hours: p.fixed_setup_hours,
+    notes: p.notes,
+  });
 
   const downloadEstimate = () => {
     const { totalMachine, totalLabor } = calculateTotals();
@@ -1395,11 +1443,32 @@ export default function CNCEstimator({ embedded = false, embeddedProjectId = nul
             </Card>
             {project?.updated_date && (<div className="mt-1 text-[10px] text-gray-400">Last saved {new Date(project.updated_date).toLocaleString()}</div>)}
             <Button onClick={saveProject} disabled={isSaving || !project.project_name || !(estimateContext?.client_name || project.client_name)} className="w-full bg-green-600 hover:bg-green-700">{isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" />Save Estimate</>}</Button>
+            <div className="flex flex-wrap gap-2">
+              <ModuleActionBar
+                onTemplates={() => setTemplateMode("load")}
+                onSaveAsTemplate={() => setTemplateMode("save")}
+                onSaveAsCopy={handleSaveAsCopy}
+                estimateId={estimateId}
+                saving={isSaving}
+              />
+            </div>
             <Button onClick={downloadEstimate} variant="outline" className="w-full">Download Estimate (HTML)</Button>
             <Button onClick={printEstimate} variant="outline" className="w-full">Print Estimate</Button>
           </div>
         </div>
       </div>
+
+      <ModuleTemplateDialog
+        open={!!templateMode}
+        mode={templateMode}
+        onClose={() => setTemplateMode(null)}
+        project={project}
+        onApply={(data) => setProject((prev) => ({ ...prev, ...data }))}
+        moduleKey="cnc"
+        title="CNC"
+        buildTemplateData={buildCncTemplateData}
+        describeTemplate={(t) => `${(t.project_data?.items || []).length} items`}
+      />
     </div>
   );
 }
