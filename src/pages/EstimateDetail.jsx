@@ -31,6 +31,7 @@ import { removeProductFromEstimate, resumeProductRemoval } from "@/components/es
 import { resumeIndependentPartGroupMove } from "@/components/estimator/parts/partGroupService";
 import { estimateCustomerChangedKeys, syncEstimateEverywhere } from "@/components/estimator/customerSync";
 import EstimateRevisionPanel from "@/components/estimator/EstimateRevisionPanel";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import EstimateAcceptancePanel from "@/components/estimator/EstimateAcceptancePanel";
 import EstimateActivityPanel from "@/components/estimator/EstimateActivityPanel";
 import EstimateQuoteDeliveryPanel from "@/components/estimator/EstimateQuoteDeliveryPanel";
@@ -99,7 +100,7 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
                                   : entry.pending?.kind === "builder_quick_product_insert"
                         ? entry.pending?.source_type === "product_clone" ? "Resume Product Clone" : "Resume Quick Product"
                         : "Resume Price Update";
-  throw new Error(`â€œ${name}â€� has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
+  throw new Error(`"${name}" has a Builder mutation recovery pending. Use ${resumeLabel} before ${action}.`);
 }
 
 export default function EstimateDetail() {
@@ -407,7 +408,7 @@ export default function EstimateDetail() {
     return undefined;
   }, [persistedEstimate?.status]);
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Loading estimateâ€¦</div>;
+  if (loading) return <div className="p-10 max-w-3xl mx-auto"><ListSkeleton rows={6} /><span className="sr-only" role="status">Loading estimate…</span></div>;
   if (!estimate) return <div className="p-10 text-center text-gray-500">Estimate not found.</div>;
 
   if (estimate.deleted === true) {
@@ -415,7 +416,7 @@ export default function EstimateDetail() {
       <div className="min-h-full bg-gray-50 flex items-start justify-center p-8">
         <div className="w-full max-w-lg rounded border border-red-300 bg-red-50 px-4 py-4 space-y-3">
           <div className="flex items-center gap-2 text-sm font-bold text-red-800">
-            <Trash2 className="w-4 h-4" /> In Trash â€” {estimate.project_name || "Estimate"}
+            <Trash2 className="w-4 h-4" aria-hidden="true" /> In Trash — {estimate.project_name || "Estimate"}
           </div>
           <div className="text-xs text-red-700">
             {estimate.deleted_at ? `Deleted ${new Date(estimate.deleted_at).toLocaleString()}` : "Deleted"}
@@ -431,7 +432,7 @@ export default function EstimateDetail() {
               disabled={trashing}
               className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-emerald-300 bg-white text-emerald-700 text-[12px] font-semibold hover:bg-emerald-50 disabled:opacity-40"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> {trashing ? "Restoringâ€¦" : "Restore Estimate"}
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> {trashing ? "Restoring…" : "Restore Estimate"}
             </button>
             <button
               type="button"
@@ -562,7 +563,7 @@ export default function EstimateDetail() {
   const addSection = async (mod) => {
     if (readOnly) return;
     const current = await loadCurrentProductMutationEstimate();
-    const sectionName = `${current.project_name} â€” ${mod.label}`;
+    const sectionName = `${current.project_name} — ${mod.label}`;
     try {
       const result = await addBlankProduct({
         estimateId: estimate.id,
@@ -697,7 +698,7 @@ export default function EstimateDetail() {
           .map((part) => part.part_name || part.inventory_item_name)
           .filter(Boolean);
         window.alert(
-          `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `â€¢ ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
+          `Price update blocked. ${result.detachedCount} Part${result.detachedCount === 1 ? "" : "s"} must be reattached or resolved first.${names.length ? `\n\n${names.map((name) => `• ${name}`).join("\n")}` : ""}\n\nThe frozen product price has not changed.`
         );
       } else if (result?.blocked && result.reason === "recalc_required") {
         window.alert(
@@ -1664,7 +1665,7 @@ export default function EstimateDetail() {
       {celebration ? <div role="status" aria-live="polite" className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-emerald-300 bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-xl">&#10003; {celebration}</div> : null}
       <AioEstimateHeader
         title={estimate.project_name || "Estimate"}
-        subtitle={`One page, one set of project info, every estimator. Â· Totals synced ${new Date().toLocaleTimeString()}`}
+        subtitle={`One page, one set of project info, every estimator. · Totals synced ${new Date().toLocaleTimeString()}`}
         status={estimate.status || "draft"}
         quoteTotal={pricing.quoteTotal}
         onSave={handleSave}
@@ -1700,7 +1701,7 @@ export default function EstimateDetail() {
           pricing tier, open estimates get pricing_stale — recompute + re-save
           clears it. */}
       {estimate.pricing_stale && (
-        <div className="mx-3 mb-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-800">
+        <div role="alert" className="mx-3 mb-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-800">
           {estimate.pricing_stale_reason || "The pricing tier changed — recompute and re-save this estimate before sending."}
         </div>
       )}
@@ -1716,7 +1717,7 @@ export default function EstimateDetail() {
             } catch (e) { setWatchNote(e?.message || "Couldn't set the watch."); } finally { setWatchBusy(false); }
           }}
             className="inline-flex items-center gap-1.5 rounded border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50">
-            <Eye className="w-3.5 h-3.5" /> Watch for approval
+            <Eye className="w-3.5 h-3.5" aria-hidden="true" /> Watch for approval
           </button>
           {watchNote ? <span className="ml-2 text-[10px] text-violet-600">{watchNote}</span> : null}
           <button type="button" onClick={async () => {
@@ -1815,20 +1816,20 @@ export default function EstimateDetail() {
           <WorkspaceNav />
 
           {reconciliationWarnings.length > 0 && (
-            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] text-amber-900">
+            <div role="alert" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] text-amber-900">
               <div className="font-bold">Live Product pricing could not be fully verified.</div>
               <div className="mt-0.5">Saved estimate pricing was retained for {reconciliationWarnings.length} Product{reconciliationWarnings.length === 1 ? "" : "s"}. Reload to retry before accepting new pricing.</div>
               <div className="mt-1 text-[9px] text-amber-700 truncate" title={reconciliationWarnings.map((item) => `${item.product_name}: ${item.message}`).join("\n")}>
-                {reconciliationWarnings.map((item) => item.product_name).join(" Â· ")}
+                {reconciliationWarnings.map((item) => item.product_name).join(" · ")}
               </div>
             </div>
           )}
 
           {readOnly && (
             <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-[11px] text-amber-800"><LockKeyhole className="w-4 h-4" /><span><strong>Protected {persistedStatus} estimate.</strong> {canEditWithRevision ? "Click Edit to open a recorded revision and make changes." : "Viewing is available; a cancelled estimate stays permanently locked."}</span></div>
+              <div className="flex items-center gap-2 text-[11px] text-amber-800"><LockKeyhole className="w-4 h-4" aria-hidden="true" /><span><strong>Protected {persistedStatus} estimate.</strong> {canEditWithRevision ? "Click Edit to open a recorded revision and make changes." : "Viewing is available; a cancelled estimate stays permanently locked."}</span></div>
               {canEditWithRevision ? (
-                <button type="button" onClick={handleEditProtected} disabled={editStarting} className="h-[28px] px-3 inline-flex items-center gap-1 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"><PencilLine className="w-3 h-3" /> {editStarting ? "Opening…" : "Edit"}</button>
+                <button type="button" onClick={handleEditProtected} disabled={editStarting} className="h-[28px] px-3 inline-flex items-center gap-1 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100 disabled:opacity-50"><PencilLine className="w-3 h-3" aria-hidden="true" /> {editStarting ? "Opening…" : "Edit"}</button>
               ) : (
                 <button type="button" onClick={() => setStep(3)} className="h-[28px] px-3 rounded border border-amber-300 bg-white text-[10px] font-bold text-amber-800 hover:bg-amber-100">Open Finalize / History</button>
               )}
@@ -1836,14 +1837,14 @@ export default function EstimateDetail() {
           )}
 
           {quoteDaysLeft !== null && quoteDaysLeft < 0 && (
-            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 flex items-center gap-2 text-[11px] text-red-800">
-              <AlertTriangle className="w-4 h-4" /><span><strong>Quote EXPIRED {formatQuoteIssueDate(expiresOn)}</strong> â€” re-issue or request a revision.</span>
+            <div role="alert" className="rounded border border-red-300 bg-red-50 px-3 py-2 flex items-center gap-2 text-[11px] text-red-800">
+              <AlertTriangle className="w-4 h-4" aria-hidden="true" /><span><strong>Quote EXPIRED {formatQuoteIssueDate(expiresOn)}</strong> — re-issue or request a revision.</span>
             </div>
           )}
 
           {quoteDaysLeft !== null && quoteDaysLeft >= 0 && quoteDaysLeft <= 7 && (
-            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 flex items-center gap-2 text-[11px] text-amber-800">
-              <Clock className="w-4 h-4" /><span><strong>Quote expires {formatQuoteIssueDate(expiresOn)}</strong> ({quoteDaysLeft} days left)</span>
+            <div role="status" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 flex items-center gap-2 text-[11px] text-amber-800">
+              <Clock className="w-4 h-4" aria-hidden="true" /><span><strong>Quote expires {formatQuoteIssueDate(expiresOn)}</strong> ({quoteDaysLeft} days left)</span>
             </div>
           )}
 
@@ -1892,7 +1893,7 @@ export default function EstimateDetail() {
                     className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100 disabled:opacity-40"
                     title="Open 30-day estimator clipboard"
                   >
-                    <ClipboardPaste className="w-3.5 h-3.5 text-gray-500" /> Clipboard
+                    <ClipboardPaste className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" /> Clipboard
                   </button>
                   <button
                     type="button"
@@ -1902,7 +1903,7 @@ export default function EstimateDetail() {
                     title="Re-run current live pricing across every Product in this estimate"
                     className="h-[32px] px-3 inline-flex items-center gap-1.5 rounded-sm border border-gray-300 bg-white text-gray-700 text-[12px] font-semibold shadow-sm hover:bg-gray-100 disabled:opacity-40"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${refreshing ? "animate-spin" : ""}`} />
+                    <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${refreshing ? "animate-spin" : ""}`} aria-hidden="true" />
                     {refreshing ? "Repricing…" : "Reprice products"}
                   </button>
                   {!readOnly && <AddProductGrid counts={counts} onAdd={addSection} onAddCustom={addCustomSection} onAddQuickProduct={addQuickProduct} onAddKit={addKit} />}
@@ -1920,7 +1921,7 @@ export default function EstimateDetail() {
                   className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   title={openRevision ? "Save the open revision before cancelling this estimate." : "Cancel Estimate"}
                 >
-                  <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} />
+                  <FileMinus className="w-4 h-4" style={{ color: "#8b1e1e" }} aria-hidden="true" />
                   <span className="text-sm font-medium text-gray-800">{openRevision ? "Save Revision Before Cancelling" : "Cancel Estimate"}</span>
                 </button>
               )}
@@ -1931,13 +1932,13 @@ export default function EstimateDetail() {
                   className="w-full flex items-center gap-2 px-3 py-2 mb-3 bg-white border border-red-200 rounded-sm hover:bg-red-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   title={openRevision ? "Save the open revision before moving this estimate to Trash." : "Move to Trash"}
                 >
-                  <Trash2 className="w-4 h-4" style={{ color: "#8b1e1e" }} />
-                  <span className="text-sm font-medium text-gray-800">{trashing ? "Moving to Trashâ€¦" : "Move to Trash"}</span>
+                  <Trash2 className="w-4 h-4" style={{ color: "#8b1e1e" }} aria-hidden="true" />
+                  <span className="text-sm font-medium text-gray-800">{trashing ? "Moving to Trash…" : "Move to Trash"}</span>
                 </button>
               )}
               {estimate.status !== "cancelled" && estimate.work_order_id && (
                 <div className="w-full flex items-start gap-2 px-3 py-2 mb-3 bg-gray-50 border border-gray-200 rounded-sm text-left">
-                  <LockKeyhole className="w-4 h-4 mt-0.5 text-gray-500 flex-shrink-0" />
+                  <LockKeyhole className="w-4 h-4 mt-0.5 text-gray-500 flex-shrink-0" aria-hidden="true" />
                   <div>
                     <div className="text-sm font-medium text-gray-800">Cancellation managed from the Work Order</div>
                     <div className="mt-0.5 text-[10px] text-gray-500">This estimate has already been converted. Cancel or close the linked job in the workflow so the production record is not left active while its source estimate is cancelled.</div>
