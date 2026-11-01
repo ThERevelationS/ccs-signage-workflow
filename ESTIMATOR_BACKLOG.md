@@ -510,31 +510,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 19. Import, Export & Migration (25)
 
-451. **[F]** Export estimate as JSON (re-importable)
-452. **[F]** Bulk-export estimates CSV (all fields) on EstimatorQueues
-453. **[F]** Import parts library from CSV
-454. **[B]** `importMappers.detectTarget` — PART_GROUP_MAP vs KEYWORD_RULES precedence test
-455. **[F]** Import estimates from other module (e.g. legacy BOM → new structure)
-456. **[F]** Export estimate quote as printable PDF (not just HTML)
-457. **[F]** Import customer list from CSV on EstimatorCustomers
-458. **[F]** Export inventory CSV with all custom fields
-459. **[B]** `importSalesPipeline` — `478` dead ternary — verify the intended fallback
-460. **[F]** Import estimate → link to existing customer by name
-461. **[F]** Export quote HTML as standalone file (shareable)
-462. **[F]** Import pricing tiers from JSON
-463. **[B]** `importOrders` — no upload size cap (C2-O)
-464. **[F]** Import parts from other estimate (copy BOM)
-465. **[F]** Export change orders CSV
-466. **[B]** `legacyInventoryMigrator` — `buildPayload` per target — verify all 6 targets handled
-467. **[F]** Import estimate sections from template
-468. **[F]** Export all estimates → backup file
-469. **[B]** `ExcelImporterDialog` — `skippedRows` now shows count; add per-row skip reasons
-470. **[F]** Import inventory → link existing parts by `inventory_item_id`
-471. **[F]** Export customer list CSV on EstimatorCustomers
-472. **[B]** `importSalesPipeline` fuzzy match — score threshold too low (wrong-customer WO stamps — C2-H)
-473. **[F]** Import estimate line items from CSV
-474. **[F]** Export estimate breakdown for job costing
-475. **[B]** `ensureOpenEstimateRevision` — `ensureEstimateLifecycleRevision` — `ensureBuilderPriceRevision` — `ensureCustomerSummary` — `deleteCreatedDuplicateWorkOrder` — `updateEstimateRevisionAudit` — all `auth.me()`-gated (C2-F)
+451. **[F][DONE]** Export estimate as JSON (re-importable) — shipped src/components/estimator/exportEstimates.js (aio-estimate-v1 envelope) + importEstimates.js re-import as fresh draft; ExportEstimateJsonButton/ImportEstimateJsonButton mountable in src/components/importer/ImportExportButtons.jsx — mount pending on EstimateDetail (owner file)
+452. **[F][DONE]** Bulk-export estimates CSV (all fields) on EstimatorQueues — shipped exportEstimatesCsv + ExportEstimatesButton in src/components/importer/ImportExportButtons.jsx — mount pending on EstimatorQueues.jsx (owner file, fenced)
+453. **[F][DONE]** Import parts library from CSV — shipped mapPartsLibraryCsv + importPartsLibraryRows — CSV rows land as `part`-type PartTemplate rows with deterministic idempotency keys (re-run reports existing, creates nothing); ImportPartsLibraryButton mountable — honestly PartTemplate (the library entity), not per-product BuilderPart
+454. **[B][DONE]** `importMappers.detectTarget` — PART_GROUP_MAP vs KEYWORD_RULES precedence test — test-import-mappers.mjs — 5 new precedence assertions: mapped Part Group outranks LED/acrylic/retainer keywords; unmapped group falls through to keywords
+455. **[F][DONE]** Import estimates from other module (e.g. legacy BOM → new structure) — mapLegacyEstimateToAio in importEstimates.js maps {customer, project, items|line_items|bom|parts} → AllInOneEstimate payload; unsupported shapes fail closed with an honest error; wired into ImportEstimateJsonButton
+456. **[F][DONE]** Export estimate quote as printable PDF (not just HTML) — verified — src/components/estimator/quotePdf.js already lazy-loads html2canvas + jsPDF, slices multi-page, and window.print on the quote article prints to PDF
+457. **[F][DONE]** Import customer list from CSV on EstimatorCustomers — EstimatorCustomers.importCustomersCsv now dry-runs every row against loaded customers and confirms exact new/matched/skipped counts via window.confirm before any ensureEstimateCustomer write
+458. **[F][DONE]** Export inventory CSV with all custom fields — MasterInventory.exportCsvFor now exports declared columns + every stored/custom key found on the filtered rows — no custom field silently dropped
+459. **[B][DONE]** `importSalesPipeline` — `478` dead ternary — verify the intended fallback — verified — `proposed.close_date ?? current.close_date` and `proposed.lost_reason ?? current.lost_reason` are live: omitted sheet fields keep current values, explicit values win; no change needed
+460. **[F][DONE]** Import estimate → link to existing customer by name — resolveImportCustomer in importEstimates.js: exact normalized company_name match auto-links, single fuzzy hit requires caller confirmation (window.confirm in ImportEstimateJsonButton), ambiguous never auto-links
+461. **[F][DONE]** Export quote HTML as standalone file (shareable) — buildStandaloneQuoteHtml in exportEstimates.js — fully self-contained .html (inline styles, print button, quote display settings honored, internal costs never included); ExportQuoteHtmlButton mountable — mount pending (owner files)
+462. **[F][DONE]** Import pricing tiers from JSON — verified — MarkupTierPanel already carries JSON import/export plus page-level tier JSON import on EstimatorCustomers
+463. **[B][DONE]** `importOrders` — no upload size cap (C2-O) — verified — base44/functions/importOrders/entry.ts rejects uploads over 15 MB with HTTP 413 before parsing
+464. **[F][DONE]** Import parts from other estimate (copy BOM) — copyProductBomToProduct + buildCopiedBomPackages in importEstimates.js clone a source Product's groups+parts via addPartPackageToProduct (fresh part_key/group_key per copy); CopyBomButton picker mountable — mount pending (owner files)
+465. **[F][DONE]** Export change orders CSV — exportChangeOrdersCsv + ExportChangeOrdersButton shipped — mount pending on the change-orders surface (owner file, fenced)
+466. **[B][DONE]** `legacyInventoryMigrator` — `buildPayload` per target — verify all 6 targets handled — test-legacy-migrator.mjs covers every classifyLegacyRow target: labor_service, sign_parts_supplies, substrate get valid payloads; keep/unknown return null (fail closed); buildPayload + TARGET_ENTITY exported for the test seam
+467. **[F][DONE]** Import estimate sections from template — templateImportableSections + appendTemplateSectionsToEstimate instantiate a ProjectTemplate's line_items/sections list into the estimate via CAS; ImportTemplateSectionsButton dialog mountable — mount pending (owner files)
+468. **[F][DONE]** Export all estimates → backup file — buildEstimatesBackupDocument (aio-estimate-backup-v1) + Backup JSON inside ExportEstimatesButton — mount pending on EstimatorQueues.jsx (owner file, fenced)
+469. **[B][DONE]** `ExcelImporterDialog` — `skippedRows` now shows count; add per-row skip reasons — ExcelImporterDialog now stamps sourceRow (spreadsheet row #) on every row and includes row numbers in 'No routable item name' and duplicate skip reasons
+470. **[F][DONE]** Import inventory → link existing parts by `inventory_item_id` — MasterInventory.linkPartsCsv — added missing staffEntities import (was a guaranteed ReferenceError) and dedupe: parts already linked to that inventory_item_id are counted as already-linked, not rewritten
+471. **[F][DONE]** Export customer list CSV on EstimatorCustomers — verified — customer CSV export button already on EstimatorCustomers
+472. **[B][DONE]** `importSalesPipeline` fuzzy match — score threshold too low (wrong-customer WO stamps — C2-H) — verified — salesImportUtils.mjs uses identity-first matching (source-row id, Est/Inv identity, exact customer/title); no fuzzy score threshold exists — ambiguous rows fail closed, so wrong-customer stamping is not reachable
+473. **[F][DONE]** Import estimate line items from CSV — mapLineItemsCsv + appendLineItemsToEstimate append CSV line items to estimate.line_items via replaceEstimateFieldsIfUnchanged CAS; ImportLineItemsButton mountable — mount pending on EstimateDetail (owner file)
+474. **[F][DONE]** Export estimate breakdown for job costing — exportEstimateCostingCsvRows/ exportEstimateCostingCsv emit per-part cost vs customer price per section + totals; ExportJobCostingCsvButton mountable — mount pending on EstimateDetail (owner file)
+475. **[B][DONE]** `ensureOpenEstimateRevision` — `ensureEstimateLifecycleRevision` — `ensureBuilderPriceRevision` — `ensureCustomerSummary` — `deleteCreatedDuplicateWorkOrder` — `updateEstimateRevisionAudit` — all `auth.me()`-gated (C2-F) — verified all six: ensureOpenEstimateRevision, ensureEstimateLifecycleRevision, ensureBuilderPriceRevision, ensureCustomerSummary, updateEstimateRevisionAudit, deleteCreatedDuplicateWorkOrder — each gates on authenticateSignShopSession with base44.auth.me() fallback; no gaps
 
 ## 20. Admin, Settings & Misc (25)
 
