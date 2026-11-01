@@ -24,7 +24,7 @@ test('unsafe links and ambiguous names remain unresolved drafts',()=>{
  assert.equal(result.roles.find(r=>r.role==='electrical_inspection').office_name,null);
 });
 let handler;let calls=0,prompt,schema;
-const bundle=await build({entryPoints:['base44/functions/jurisdictionResearchAgent/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',
+const bundle=await build({entryPoints:['base44/functions/jurisdiction_research/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',
  plugins:[{name:'sdk',setup(b){b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const createClientFromRequest=()=>globalThis.officeResearchFixture;',loader:'js'}));}}]});
 globalThis.Deno={serve:fn=>handler=fn};await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
 test('actual agent collects office checklist in its single existing AI call',async()=>{
