@@ -134,6 +134,20 @@ function LocalityPickerSession({
   const [gpsCoords, setGpsCoords] = useState(null);
   // A new or edited address invalidates an earlier "Use my location" fix — the >500ft warning must never compare fresh coordinates against a stale pin.
   const setAddress = (v) => { setAddressRaw(v); setGpsCoords(null); };
+  const [suggestions, setSuggestions] = useState([]);
+  const suggestionReq = useRef(0);
+  useEffect(() => {
+    const q = address.trim();
+    if (!sessionToken || q.length < 4 || result) { setSuggestions([]); return; }
+    const reqId = ++suggestionReq.current;
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await base44.functions.invoke('findLocalityByAddress', { action: 'places_autocomplete', input: q, session_token: sessionToken });
+        if (reqId === suggestionReq.current) setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
+      } catch { /* suggestions are a convenience — never block the field */ }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [address, result, sessionToken]);
   const [scanningQR, setScanningQR] = useState(false);
   const scanVideoRef = useRef(null);
   const scanStreamRef = useRef(null);
@@ -472,6 +486,28 @@ function LocalityPickerSession({
                 }}
               />
             </div>
+            {suggestions.length > 0 && !result && (
+              <ul className="mt-1 divide-y rounded-lg border bg-white shadow-sm">
+                {suggestions.map(s => (
+                  <li key={s.place_id || s.text}>
+                    <button
+                      type="button"
+                      className="min-h-11 w-full px-3 py-2 text-left hover:bg-indigo-50"
+                      onClick={() => {
+                        suggestionReq.current++;
+                        setSuggestions([]);
+                        searchVersion.current++; pendingSearch.current = null;
+                        setAddress(s.text); setResult(null); setSelectedLocalityId(''); setSearching(false);
+                        setTimeout(() => runSearch(), 0);
+                      }}
+                    >
+                      <span className="block text-sm font-medium text-gray-900">{s.main || s.text}</span>
+                      {s.secondary && <span className="block text-xs text-gray-500">{s.secondary}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             {/(\bp\.?o\.?\s*box\b|\brural\s*route\b|\brr\s*\d+\b)/i.test(address) && (
               <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
                 That looks like a PO box or rural route — we found a postal area, not a physical sign location. Check the map pin before applying.
