@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { X, Loader2, ArrowRight } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { useEscapeKey, useModalDialog } from "@/components/estimator/a11y";
 
 const name = (c) => c?.company_name || c?.display_name || c?.customer_name || c?.client_name || "Unnamed customer";
 const norm = (v) => String(v || "").trim().toLowerCase();
@@ -15,6 +16,8 @@ export default function CustomerMergeDialog({ open, customers = [], onClose, onM
   const [scanning, setScanning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { containerRef, dialogProps } = useModalDialog({ open, labelledBy: "customer-merge-title" });
+  useEscapeKey(open, () => { if (!busy) onClose?.(); });
 
   const active = useMemo(
     () => customers.filter((c) => c?.id && !c.merged_into_customer_id && c.deleted !== true),
@@ -87,10 +90,10 @@ export default function CustomerMergeDialog({ open, customers = [], onClose, onM
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-md shadow-2xl border border-gray-300 w-full max-w-md" style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+      <div ref={containerRef} {...dialogProps} className="relative bg-white rounded-md shadow-2xl border border-gray-300 w-full max-w-md" style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <h2 className="text-lg font-bold tracking-wide" style={{ color: "#7a9a4b" }}>MERGE CUSTOMERS</h2>
-          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800 p-1" title="Close"><X className="w-4 h-4" /></button>
+          <h2 id="customer-merge-title" className="text-lg font-bold tracking-wide" style={{ color: "#7a9a4b" }}>MERGE CUSTOMERS</h2>
+          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800 p-1" title="Close" aria-label="Close merge customers dialog"><X className="w-4 h-4" aria-hidden="true" /></button>
         </div>
         <div className="px-5 pb-4 space-y-3">
           <p className="text-xs text-gray-600">
@@ -123,14 +126,14 @@ export default function CustomerMergeDialog({ open, customers = [], onClose, onM
             <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-700">
               <div className="flex items-center gap-2 font-semibold">
                 <span className="truncate">{name(lose)}</span>
-                <ArrowRight className="w-3 h-3 shrink-0 text-emerald-600" />
+                <ArrowRight className="w-3 h-3 shrink-0 text-emerald-600" aria-hidden="true" />
                 <span className="truncate text-emerald-800">{name(keep)}</span>
               </div>
-              {scanning && <p className="mt-1 flex items-center gap-1.5 text-gray-500"><Loader2 className="w-3 h-3 animate-spin" /> Checking linked records…</p>}
+              {scanning && <p role="status" className="mt-1 flex items-center gap-1.5 text-gray-500"><Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> Checking linked records…</p>}
               {preview && <p className="mt-1">Will relink <strong>{preview.estimates}</strong> estimate{preview.estimates === 1 ? "" : "s"} and <strong>{preview.workOrders}</strong> work order{preview.workOrders === 1 ? "" : "s"}.</p>}
             </div>
           )}
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
         </div>
         <div className="flex justify-end gap-2 px-5 pb-4">
           <button type="button" onClick={onClose} className="h-9 px-4 rounded border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
