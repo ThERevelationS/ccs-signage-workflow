@@ -402,7 +402,7 @@ assert.match(invoicesPage, /send_past_due_reminder/, 'invoice detail must offer 
 assert.match(oppPage3, /dupes/, 'intake must warn on possible duplicate customers');
 assert.match(entry, /attention_feed/, 'workspace must expose an attention feed');
 assert.match(entry, /read_by_staff: false/, 'attention feed must count unread portal messages');
-const attentionFeed = readFileSync('src/components/workflow/AttentionFeed.jsx', 'utf8');
+const attentionFeed = readFileSync('src/components/workflow/attentionFeedCategories.js', 'utf8') + readFileSync('src/components/workflow/AttentionFeed.jsx', 'utf8');
 assert.match(attentionFeed, /attention_feed/, 'attention feed must call the workspace action');
 const mainWorkflow = readFileSync('src/pages/MainWorkflow.jsx', 'utf8');
 assert.match(mainWorkflow, /AttentionFeed/, 'main workflow must mount the attention feed');
