@@ -198,6 +198,42 @@ function LocalityPickerSession({
     return () => { cancelled = true; };
   }, [isOpen, repositoryRetry]);
 
+  // Fast path: the full repository catalog pages in slowly under rate limits,
+  // but the match card only needs the few profiles sharing this result's
+  // name/state. A filtered read (one small page) surfaces them right away;
+  // the full catalog still loads for the manual pick list and double checks.
+  useEffect(() => {
+    if (!isOpen || !result) return undefined;
+    const names = [...new Set([
+      result.suggested_locality?.name,
+      result.ai_locality_name,
+      result.ai_county ? (/county$/i.test(result.ai_county) ? result.ai_county : `${result.ai_county} County`) : "",
+    ].map((v) => String(v || "").trim()).filter(Boolean))];
+    if (!names.length) return undefined;
+    let cancelled = false;
+    (async () => {
+      for (const name of names) {
+        try {
+          const rows = await loadAllEntityRows({
+            entity: staffEntities.JurisdictionProfile,
+            query: { name },
+            sort: "name",
+            limit: 50,
+            label: `Repository fast-match ${name}`,
+            cacheTtlMs: 15000,
+          });
+          if (cancelled || !Array.isArray(rows) || !rows.length) continue;
+          setRepositoryJurisdictions((prev) => {
+            const seen = new Set(prev.map((row) => row.id));
+            const extra = rows.filter((row) => !seen.has(row.id));
+            return extra.length ? [...prev, ...extra] : prev;
+          });
+        } catch { /* the full-catalog load still covers this — a fast-match miss is not an error */ }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, result]);
+
   useEffect(() => {
     if (!searching) { setSlowSearch(false); return; }
     const t = setTimeout(() => setSlowSearch(true), 90000);
@@ -941,7 +977,7 @@ function LocalityPickerSession({
                       <p className="text-xs text-violet-700">No matching repository profile was found.</p>
                     )}
 
-                    {!repositoryLoading && repositoryMatches.map((jurisdiction) => {
+                    {repositoryMatches.map((jurisdiction) => {
                       const duplicate = hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction);
                       const trust = assessJurisdictionTrust(jurisdiction, duplicate ? 2 : 1);
                       const parentCounty = jurisdiction.parent_county?.name;
