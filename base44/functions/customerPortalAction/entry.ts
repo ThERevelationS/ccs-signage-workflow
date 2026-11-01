@@ -50,7 +50,7 @@ function bumpOpen(PortalLink: any, link: any) {
   replaceFoundationFieldsIfUnchanged({
     entity: PortalLink,
     recordId: clean(link.id),
-    expectedFields: expectedFoundationFields(link, { open_count: link.open_count ?? 0 }),
+    expectedFields: expectedFoundationFields(link, { open_count: 0, last_opened_at: "" }),
     nextFields: { open_count: num(link.open_count) + 1, last_opened_at: new Date().toISOString() },
     label: "Portal link open tracking",
   }).catch(() => null);
@@ -1361,7 +1361,7 @@ Deno.serve(async (req) => {
       const saved = await replaceFoundationFieldsIfUnchanged({
         entity: PortalLink,
         recordId: linkId,
-        expectedFields: expectedFoundationFields(current, { revoked: true }),
+        expectedFields: expectedFoundationFields(current, { revoked: true, revoked_at: "" }),
         nextFields: { revoked: true, revoked_at: new Date().toISOString() },
         label: "Portal link revocation",
       });
