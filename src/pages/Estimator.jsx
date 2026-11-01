@@ -9,6 +9,7 @@ import NewEstimateDialog from "@/components/estimator/NewEstimateDialog";
 import { runHistoricalBuilderBackfill } from "@/components/estimator/builder/historicalBackfill";
 import { runLegacyBomReconcile } from "@/components/estimator/builder/legacyBomReconcile";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { quoteExpirationDate } from "@/components/estimator/quoteLifecycle";
 import { staffEntities } from "@/components/staff/staffEntities";
 import { isFleetCoolingDown } from "@/components/fleet/fleetInvoke";
@@ -168,7 +169,7 @@ export default function Estimator() {
                 boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.08)',
               }}
             >
-              <Calculator className="w-6 h-6 text-red-600" />
+              <Calculator className="w-6 h-6 text-red-600" aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Estimator</h1>
@@ -176,17 +177,28 @@ export default function Estimator() {
             </div>
           </div>
           <Button onClick={() => navigate("/NewAllInOneEstimate")} className="clay-button border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-bold">
-            <Plus className="w-4 h-4" /> New Estimate
+            <Plus className="w-4 h-4" aria-hidden="true" /> New Estimate
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-4" role="tablist" aria-label="Estimate status filter"
+          onKeyDown={(e) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+            const tabs = [...e.currentTarget.querySelectorAll('button[role="tab"]')];
+            const i = tabs.indexOf(document.activeElement);
+            if (i < 0) return;
+            e.preventDefault();
+            const next = e.key === "Home" ? tabs[0] : e.key === "End" ? tabs[tabs.length - 1] : tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+            next?.focus();
+          }}>
           {STATUSES.map((s) => {
             const b = buckets[s.key] || { count: 0, total: 0 };
             return (
               <button
                 key={s.key || "all"}
                 type="button"
+                role="tab"
+                aria-selected={status === s.key}
                 onClick={() => setParam("status", s.key)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
                   status === s.key
@@ -206,9 +218,10 @@ export default function Estimator() {
 
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <div className="relative flex-1 min-w-48">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <Input
               value={search}
+              aria-label="Search estimates"
               onChange={(e) => { setSearch(e.target.value); setParam("q", e.target.value); }}
               onFocus={() => { setRecentSearches(readRecentSearches("estimator", userEmail)); setRecentOpen(true); }}
               onBlur={() => { commitRecentSearch(search); window.setTimeout(() => setRecentOpen(false), 150); }}
@@ -222,7 +235,7 @@ export default function Estimator() {
             {recentOpen && recentSearches.length > 0 && (
               <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                 <div className="flex items-center gap-1.5 px-3 pt-2 text-[9px] font-bold uppercase tracking-wide text-gray-400">
-                  <History className="h-3 w-3" /> Recent searches
+                  <History className="h-3 w-3" aria-hidden="true" /> Recent searches
                 </div>
                 {recentSearches.map((recent) => (
                   <button
@@ -238,7 +251,7 @@ export default function Estimator() {
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
             <select
               aria-label="Sort estimates"
               value={sort}
@@ -254,14 +267,14 @@ export default function Estimator() {
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400">Loading estimates…</div>
+          <ListSkeleton rows={6} />
         ) : loadError ? (
-          <div className="clay-card text-center py-16">
+          <div className="clay-card text-center py-16" role="alert">
             <p className="text-red-600 font-medium">{loadError}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="clay-card text-center py-16">
-            <Calculator className="w-8 h-8 text-red-300 mx-auto mb-3" />
+            <Calculator className="w-8 h-8 text-red-300 mx-auto mb-3" aria-hidden="true" />
             <p className="text-gray-600 font-medium">
               {liveEstimates.length === 0 ? "No estimates yet" : "No estimates match your search"}
             </p>
