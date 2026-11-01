@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
+import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, safeDeliveryEvidence, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const text = (value: unknown, max = 2000) => String(value || '').trim().slice(0, max);
@@ -7,22 +7,6 @@ const whole = (value: unknown, fallback = 0) => {
   const parsed = Math.floor(Number(value));
   return Number.isFinite(parsed) ? parsed : fallback;
 };
-
-function safeDeliveryEvidence(input: any = {}) {
-  const sentAt = text(input?.sent_at, 80);
-  const fileUrl = text(input?.attachment_file_url, 4000);
-  return {
-    delivery_id: text(input?.delivery_id, 128),
-    gmail_message_id: text(input?.gmail_message_id, 512),
-    recipient_email: text(input?.recipient_email, 320),
-    sent_at: sentAt && Number.isFinite(Date.parse(sentAt)) ? new Date(sentAt).toISOString() : '',
-    // Only http(s) evidence URLs are stored — javascript:/data: and other
-    // schemes can never be persisted as delivery evidence.
-    attachment_file_url: /^https?:\/\//i.test(fileUrl) ? fileUrl : '',
-    attachment_sha256: text(input?.attachment_sha256, 128),
-    attachment_size_bytes: Math.max(0, Number(input?.attachment_size_bytes || 0)),
-  };
-}
 
 Deno.serve(async (req) => {
   try {

@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
+import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, safeDeliveryEvidence, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const REVISION_TYPES = new Set(['manual_revision', 'status_transition', 'cancel', 'conversion']);
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
       estimate_snapshot_before: before,
       estimate_snapshot_after: after,
       work_order_id: authoritativeWorkOrderId,
-      delivery_evidence: revision?.delivery_evidence && typeof revision.delivery_evidence === 'object' ? revision.delivery_evidence : {},
+      delivery_evidence: revision?.delivery_evidence && typeof revision.delivery_evidence === 'object' ? safeDeliveryEvidence(revision.delivery_evidence) : {},
       idempotency_key: idempotencyKey,
       notes: idempotencyKey,
       started_at: timestamp,
