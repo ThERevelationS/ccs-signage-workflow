@@ -18,3 +18,5 @@
 **Non-defects confirmed:** notificationAction 500s (transient rate pressure — all actions verified 200), manageFeatureReports list (works both scopes), 'Report could not be changed safely' = generic wrapper for transient fails, manifest.json (dev-only), remaining 429s (systemic entity budget).
 
 **Test artifact:** estimate portal link for test estimate 6a95bbea... minted during pass (link 6ae76a75...) — revoke pending bundle rotation (fix deployed).
+
+**Update (later same pass):** customerPortalAction rotated — revoke_link verified live (success:true), revoked token now correctly rejects bootstrap ("invalid, expired, or revoked"). Test link 6ae76a75 revoked. bumpOpen CAS fix live in same bundle. All pending items closed.
