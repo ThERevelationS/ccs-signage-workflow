@@ -70,6 +70,32 @@
     "recorded_by_name": {
       "type": "string",
       "description": "Internal staff display name that recorded the acceptance."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "superseded"
+      ],
+      "default": "accepted",
+      "description": "Lifecycle of this acceptance row. Rows default to 'accepted'; a staff 'Supersede acceptance' action marks the row 'superseded', after which it no longer counts as the canonical approval for its quote version but stays in the audit history."
+    },
+    "superseded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp the acceptance was superseded by staff."
+    },
+    "superseded_by_email": {
+      "type": "string",
+      "description": "Staff email that superseded the acceptance."
+    },
+    "superseded_by_name": {
+      "type": "string",
+      "description": "Staff display name that superseded the acceptance."
+    },
+    "supersede_reason": {
+      "type": "string",
+      "description": "Reason recorded when the acceptance was superseded."
     }
   },
   "required": [
