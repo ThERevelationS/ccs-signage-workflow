@@ -760,6 +760,7 @@ export default function CustomerPortal() {
   // double-clicked submit reuses the server-side idempotency receipt instead
   // of double-logging the event.
   const sendCounter = async (quote, proposedTotal, note) => {
+    if (!window.confirm(`Send a counter offer of ${money(proposedTotal)} on ${quote.estimate_number || "this quote"}? We'll review it and follow up.`)) return;
     setBusy(true);
     try {
       if (!counterKeyRef.current) counterKeyRef.current = crypto.randomUUID();
