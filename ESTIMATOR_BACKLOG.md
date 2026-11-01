@@ -370,31 +370,31 @@ Organized by area. Items marked **[B]** are bug fixes, **[H]** hardening, **[F]*
 
 ## 14. Notifications & Alerts (25)
 
-326. **[F]** Notification center panel (dropdown from bell with categorized feed)
-327. **[F]** Mark-all-read on attention feed sections
-328. **[F]** Notification preferences per user (which sections to show)
-329. **[F]** Estimate-status-change notifications to salesperson
-330. **[B]** `AttentionBell` polls every 60s — verify it stops when tab hidden (page-visibility API)
-331. **[F]** Notification click → deep-link into entity detail (each section type)
-332. **[F]** Snooze-notification per item (hide for N hours)
-333. **[F]** Email-digest option (daily summary of attention feed)
+326. **[F][DONE]** Notification center panel — `NotificationCenter.jsx` dropdown from `AttentionBell` (Alerts/Feed/Prefs tabs: persisted Notification rows + live attention-feed sections + per-user prefs)
+327. **[F][DONE]** Mark-all-read — verified existing `customerPortalAction.mark_all_read` covers PortalMessage.read_by_staff only; extended via `notificationAction.mark_all_read` (+category), per-section buttons (portal/notifications/all feed items via handled overlay) and a global strip button
+328. **[F][DONE]** Notification preferences per user — new `NotificationPreference` entity (hidden_sections, section_snoozed_until, sound_on, digest_opt_in, dismissed_feed_items) synced via `notificationAction` get/save_preferences; localStorage kept as instant cache; also fixes the legacy prefKey mismatch ("follow"/"sent" toggles never matched their categories)
+329. **[F][DONE]** Estimate-status-change → salesperson — `notificationAction.evaluate_triggers` detectors persist once-per-transition notifications (`est_status:<id>:<status>` dedupe; approved=celebration, sent=info) to salesperson_email (14d lookback)
+330. **[B][DONE]** `AttentionBell` polls every 60s via `usePolling(load, 60000)` — pauses when `document.hidden`, clears timers on unmount, focus-refresh only when due
+331. **[F][DONE]** Notification click → deep-link — persisted rows carry `deep_link` and navigate on click (marking read); every feed-section item href now lives in shared `attentionFeedCategories.js` used by strip + dropdown
+332. **[F][DONE]** Snooze-notification per item — feed items get a per-item 4h snooze persisted in `NotificationPreference.dismissed_feed_items` (`dismiss_feed_item` mode=snooze); Notification rows get a real `snoozed_until` field via `notificationAction.snooze`
+333. **[F][DONE]** Daily digest — in-app only (email stays disabled): `daily_digest` persists one deduped `digest` Notification per user per local day with section counts; opt-in via prefs; bell poll requests it
 334. **[H]** `attention_feed` — per-section `limit` to avoid unbounded feeds
-335. **[F]** Estimate-request assigned → browser push notification
-336. **[F]** Quote-approved → celebration toast on EstimatorQueues
-337. **[F]** Low-stock alert → PO-draft suggestion
-338. **[B]** `AttentionFeed` section titles — `unread_portal_messages` should link to portal messages, not inbox
-339. **[F]** Notification sound toggle
-340. **[F]** Mark-as-handled on each notification item
-341. **[H]** `permittingScanStatus` polling — interval-based, respect tab visibility
-342. **[F]** Estimate-request unassigned > 2 days → escalate notification
-343. **[F]** `pipeline_sync_pending` unresolved > 24h → alert
-344. **[F]** Builder-product `needs_recalc` flag → notification
+335. **[F][DONE]** Estimate-request assigned → notify — `estimator_assigned` OpportunityActivity events persist `estimate_assigned` notifications to the resolved assignee (dedupe by activity id)
+336. **[F][DONE]** Quote-approved celebration toast — `ToastCard` in `AttentionBell` pops `quote_approved` notifications on every page (bell is global, incl. EstimatorQueues); 🎉 + emerald styling + beep
+337. **[F][DONE]** Low-stock → PO-draft — verified already wired: low_stock items link `/PurchaseOrders?draft_item=<id>` and the page honors `?draft_item=`
+338. **[B][DONE]** `unread_portal_messages` now link `/EstimatorCustomers?customer=<id>` (the PortalPanel staff surface) instead of `/Customer360?id=` which has no message thread
+339. **[F][DONE]** Notification sound toggle — `sound_on` pref persisted per user + WebAudio beep (no asset) on newly-arrived persisted notifications
+340. **[F][DONE]** Mark-as-handled per item — `handled_at`/`handled_by` on Notification rows; feed items persist handled overlays in `dismissed_feed_items` (cross-device)
+341. **[H][DONE]** `permittingScanStatus` polling — verified already visibility-aware: `ResearchProgressContext.poll()` early-returns on `document.hidden`
+342. **[F][DONE]** Unassigned >2d escalation — feed section kept + escalated red tone/⚠ marker; evaluate_triggers persists `unassigned_escalation` (critical) to every admin once per request
+343. **[F][DONE]** `pipeline_sync_pending` >24h — feed already returned `sync_pending_estimates`; now rendered as a section + persisted `sync_pending` notification to salesperson (admins fallback)
+344. **[F][DONE]** `needs_recalc` — feed section kept; evaluate_triggers persists `needs_recalc` notifications to the owning estimate's salesperson (admins fallback), dedupe per part
 345. **[B]** `overdue_jobs` attention-feed — uses UTC day-boundary; fix for local-time
-346. **[F]** Quote-expiry 7-day warning → notification to salesperson
-347. **[F]** Invoice-overdue → notify salesperson + customer-service
-348. **[H]** `open_estimating_requests` attention feed — verify the link goes to /Opportunities with filter
-349. **[F]** Custom notification triggers (e.g. "tell me when estimate X is approved")
-350. **[F]** Notification history log (what was notified, when, by which system)
+346. **[F][DONE]** Quote-expiry 7-day warning — `quotes_expiring_soon` feed section existed; evaluate_triggers now persists `qexp7:<id>` `quote_expiring` notifications to the salesperson once per estimate
+347. **[F][DONE]** Invoice-overdue → notify — persists `invoice_overdue` (critical) to `salesperson_email`; falls back to admins (closest CS queue) when no salesperson recorded; dedupe per invoice
+348. **[H][DONE]** `open_estimating_requests` links verified — `/Opportunities?open=<opportunity_id>` is honored by the page (fallback `/Opportunities`)
+349. **[F][DONE]** Custom triggers — `set_watch`/`list_watches`/`clear_watch`/`check_watches` already persisted per-user rules on GlobalSettings; evaluate_triggers now also persists `watch_hit` notifications on matches
+350. **[F][DONE]** Notification history log — the Notification entity is the log; `history` action (category/search/since filters) + `NotificationHistory` dialog (filters, deep-links, reopen handled)
 
 ## 15. Data Integrity & Concurrency (25)
 
