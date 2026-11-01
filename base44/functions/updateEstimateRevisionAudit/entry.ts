@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
@@ -26,7 +27,7 @@ function safeDeliveryEvidence(input: any = {}) {
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     // Fall back to auth.me() when no sign-shop session token is supplied so
     // plain request-context auth can write audit rows too.
