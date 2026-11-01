@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 
 /**
@@ -52,11 +52,11 @@ export function useHostedAssetUrl(path) {
 /** Anchor wrapper for legacy asset links (research JSON archives, etc.). */
 export function HostedAssetLink({ href, children, ...rest }) {
   const resolved = useHostedAssetUrl(href);
-  return <a href={resolved} {...rest}>{children}</a>;
+  return createElement("a", { href: resolved, ...rest }, children);
 }
 
 /** Drop-in <img> that resolves legacy public paths to hosted file-storage URLs. */
 export function HostedImg({ src, ...rest }) {
   const resolved = useHostedAssetUrl(src);
-  return <img src={resolved} {...rest} />;
+  return createElement("img", { src: resolved, ...rest });
 }
