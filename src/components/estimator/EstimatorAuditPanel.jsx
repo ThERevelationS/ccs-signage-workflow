@@ -85,7 +85,7 @@ export default function EstimatorAuditPanel() {
   return (
     <div className="bg-white px-4 py-4 border-t-4 border-violet-300">
       <div className="flex items-center gap-2">
-        <History className="w-4 h-4 text-red-500" />
+        <History className="w-4 h-4 text-red-500" aria-hidden="true" />
         <div className="text-xs font-bold tracking-wide text-gray-600">ADMIN AUDIT LOG</div>
         <span className="ml-auto text-[10px] text-gray-400">{rows?.length ?? 0} records{capped ? " · newest only (capped)" : ""}</span>
       </div>
@@ -104,7 +104,7 @@ export default function EstimatorAuditPanel() {
           title={myDefault === type && type ? "This filter is already your default" : "Save this filter as your default view for the audit log"}
           className={`ml-auto inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-semibold ${myDefault === (type || "") && (type || myDefault) ? "border-amber-300 bg-amber-50 text-amber-700" : "border-gray-200 text-gray-500 hover:border-amber-300"}`}
         >
-          <Star className={`w-3 h-3 ${myDefault === type && type ? "fill-amber-400 text-amber-500" : ""}`} />
+          <Star className={`w-3 h-3 ${myDefault === type && type ? "fill-amber-400 text-amber-500" : ""}`} aria-hidden="true" />
           {type && myDefault === type ? "Your default" : type ? "Make default" : myDefault ? "Clear default" : "Make default"}
         </button>
       </div>
@@ -112,7 +112,7 @@ export default function EstimatorAuditPanel() {
         <div className="mt-1 text-[9px] text-amber-600">Showing your saved default view ({TYPES.find((t) => t.key === myDefault)?.label || myDefault}).</div>
       )}
 
-      {error && <div className="mt-2 border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
+      {error && <div role="alert" className="mt-2 border border-red-200 bg-red-50 px-3 py-2 text-[10px] text-red-700">{error}</div>}
       <div className="mt-2 border border-gray-200 rounded">
         {rows === null ? <ListSkeleton rows={8} /> : rows.length === 0 ? (
           <div className="px-4 py-8 text-center text-[11px] text-gray-400">No audit records yet.</div>
