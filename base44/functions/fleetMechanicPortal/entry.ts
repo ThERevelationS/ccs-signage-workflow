@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { withEntityRateLimitRetry } from '../../shared/entityRateLimitRetry.ts';
 import { resolveFleetStaffUser } from '../../shared/fleetStaffSession.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
@@ -1011,7 +1012,7 @@ Deno.serve(async (req) => {
     if (parsed.error) return json({error:parsed.error},{status:parsed.status});
     const body:any = parsed.payload || {};
     const action = String(body?.action || '').trim();
-    const base44 = createClientFromRequest(req);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const Access = base44.asServiceRole.entities.FleetMechanicAccess;
     const Log = base44.asServiceRole.entities.FleetSystemLog;
 
