@@ -32,6 +32,34 @@ export const ACCENTS = {
   amber: "#F59E0B", violet: "#8B5CF6", rose: "#F43F5E",
 };
 
+// Density multiplies the rem root — Tailwind spacing is rem-based, so this
+// genuinely tightens/loosens the whole interface, not just a DOM attribute.
+const DENSITY_SCALE = { compact: 0.93, comfortable: 1, spacious: 1.07 };
+
+// "#RRGGBB" -> "H S% L%" triplet matching the shadcn CSS-var convention.
+function hexToHslTriplet(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  let h = 0, s = 0;
+  if (d) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    h = max === r ? ((g - b) / d + (g < b ? 6 : 0)) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+  }
+  return `${h.toFixed(0)} ${(s * 100).toFixed(1)}% ${(l * 100).toFixed(1)}%`;
+}
+
+// Light accents (e.g. amber) need dark text on primary surfaces for contrast.
+function accentNeedsDarkText(hex) {
+  const l = parseFloat((hexToHslTriplet(hex) || "0 0% 0%").split(" ")[2]);
+  return l >= 58;
+}
+
 export function defaultPrefs() {
   return {
     version: PREFS_VERSION,
@@ -213,10 +241,22 @@ export function applyAppearance(prefs) {
   }
   try { localStorage.setItem("ccsWorkspacePrefs:__mode__", JSON.stringify(a.mode || "system")); } catch {}
   const scale = Math.min(1.15, Math.max(0.9, Number(a.fontScale) || 1));
-  root.style.fontSize = `${(16 * scale).toFixed(2)}px`;
+  const densScale = DENSITY_SCALE[prefs.density] || 1;
+  root.style.fontSize = `${(16 * scale * densScale).toFixed(2)}px`;
   root.dataset.density = prefs.density || "comfortable";
   root.dataset.ccsAccent = a.accent || "indigo";
-  root.style.setProperty("--ccs-accent", ACCENTS[a.accent] || ACCENTS.indigo);
+  const accentHex = ACCENTS[a.accent] || ACCENTS.indigo;
+  root.style.setProperty("--ccs-accent", accentHex);
+  // Non-default accents re-theme the shared --primary ramp (buttons, switches,
+  // checkboxes, badges) so the pick has a real visual effect. Default keeps the
+  // base theme by removing the inline override.
+  if (a.accent && a.accent !== "indigo" && ACCENTS[a.accent]) {
+    root.style.setProperty("--primary", hexToHslTriplet(accentHex));
+    root.style.setProperty("--primary-foreground", accentNeedsDarkText(accentHex) ? "0 0% 9%" : "0 0% 98%");
+  } else {
+    root.style.removeProperty("--primary");
+    root.style.removeProperty("--primary-foreground");
+  }
   root.toggleAttribute("data-reduced-motion", !!a.reducedMotion);
   root.toggleAttribute("data-high-contrast", !!a.highContrast);
 }
