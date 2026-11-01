@@ -3,40 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import {
-  AlertTriangle,
   Bell,
+  CheckCheck,
   ChevronDown,
   ChevronUp,
   Clock,
   Eye,
-  ClipboardList,
-  DollarSign,
-  FileWarning,
-  GitBranch,
-  Inbox,
-  Layers,
   Loader2,
-  Mail,
-  Package,
-  Phone,
-  Receipt,
   RefreshCw,
-  RotateCcw,
-  Scale,
   Settings,
-  ShoppingCart,
   Volume2,
   VolumeX,
-  Wrench,
   X,
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { useAllWorkOrders } from "@/lib/workOrderCache";
 import { AllInOneEstimate, GlobalSettings, OpportunityActivity } from "@/api/gatedEntities";
-import { FOLLOWUP_KIND_META } from "@/components/comms/followupModel";
 import {
-  COMPUTED_SECTION_KEYS,
   dedupeById,
   dueCommsFollowups,
   dueCrmEvents,
@@ -46,76 +30,166 @@ import {
   publishComputedAttention,
   varianceBatches,
 } from "./attentionComputedModel";
+import { buildAttentionCategories, PREF_SECTION_KEYS } from "./attentionFeedCategories";
+import {
+  dismissFeedItems,
+  listMyNotifications,
+  loadNotificationPrefs,
+  markAllNotificationsRead,
+  markNotificationHandled,
+  markNotificationRead,
+  saveNotificationPrefs,
+  snoozeNotification,
+  subscribeNotificationPrefs,
+} from "./notificationClient";
+import {
+  filterVisibleFeedItems,
+  isNotificationUnread,
+  publishAttentionFeed,
+} from "./notificationModel.mjs";
 
-const money = (n) => `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const todayLocal = () => new Date().toLocaleDateString("en-CA");
+const DISMISS_CAP = 300;
+
+// Dismissal overlay stored in localStorage for instant boot; the backend
+// NotificationPreference.dismissed_feed_items is the same shape and wins
+// once loaded (per-user, cross-device).
+const readLocalDismissed = () => {
+  try { return JSON.parse(localStorage.getItem("attention_dismissed") || "[]"); } catch { return []; }
+};
+const readLegacyHandled = () => {
+  // Migrate the old attention_handled id-set into dismissal entries.
+  try { return JSON.parse(localStorage.getItem("attention_handled") || "[]").map((id) => ({ id: String(id), handled_at: "migrated" })); } catch { return []; }
+};
 
 export default function AttentionFeed() {
   const { sessionToken } = useAuth();
   const navigate = useNavigate();
   const [feed, setFeed] = useState(null);
   const [computed, setComputed] = useState(null);
+  const [persisted, setPersisted] = useState([]);
   const { data: allWorkOrders = [] } = useAllWorkOrders({ enabled: !!sessionToken });
   const overdueProductRows = useMemo(() => overdueProducts(allWorkOrders), [allWorkOrders]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState("");
-  const [handled, setHandled] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem("attention_handled") || "[]")); } catch { return new Set(); }
-  });
-  const markHandled = (id) => {
-    setHandled((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      try { localStorage.setItem("attention_handled", JSON.stringify([...next].slice(-300))); } catch {}
-      return next;
-    });
-  };
+  const [dismissed, setDismissed] = useState(() => [...readLocalDismissed(), ...readLegacyHandled()]);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("attention_sound") !== "off");
-  // Per-user notification prefs (#328): sections hidden via the settings
-  // popover persist in localStorage; snoozed sections hide until their
-  // timestamp passes (#332).
+  // Per-user notification prefs (#328): localStorage hydrates instantly; the
+  // NotificationPreference row syncs them to the account.
   const [hiddenSections, setHiddenSections] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem("attention_hidden_sections") || "[]")); } catch { return new Set(); }
   });
   const [digestOn, setDigestOn] = useState(() => { try { return localStorage.getItem("attention_digest_opt_in") === "1"; } catch { return false; } });
-  const [digestSending, setDigestSending] = useState(false);
+  const [snoozed, setSnoozed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("attention_snoozed") || "{}"); } catch { return {}; }
+  });
   const [watchHits, setWatchHits] = useState([]);
-  const sendDigest = async () => {
-    if (digestSending || !sessionToken) return;
-    setDigestSending(true);
-    try { await base44.functions.invoke("opportunityWorkspaceAction", { session_token: sessionToken, action: "send_digest" }); } catch { /* fail-soft */ } finally { setDigestSending(false); }
+  const [prefsOpen, setPrefsOpen] = useState(false);
+
+  const persistDismissed = useCallback((next) => {
+    const capped = next.slice(-DISMISS_CAP);
+    setDismissed(capped);
+    try {
+      localStorage.setItem("attention_dismissed", JSON.stringify(capped));
+      // Legacy mirror — older builds/tests still read this key.
+      localStorage.setItem("attention_handled", JSON.stringify(capped.filter((d) => d.handled_at).map((d) => d.id)));
+    } catch { /* quota — non-fatal */ }
+  }, []);
+
+  // Backend prefs → local state. One subscription keeps this strip, the bell
+  // dropdown prefs tab, and any other mounted surface in sync. Dismissals
+  // union-merge rather than replace — a stale publish must never un-dismiss
+  // an item a newer overlay already hid.
+  useEffect(() => {
+    const apply = (prefs) => {
+      if (!prefs) return;
+      const p = prefs;
+      setHiddenSections(new Set(p.hidden_sections || []));
+      setSnoozed(p.section_snoozed_until || {});
+      setSoundOn(p.sound_on !== false);
+      setDigestOn(p.digest_opt_in === true);
+      if (Array.isArray(p.dismissed_feed_items)) {
+        setDismissed((local) => {
+          const byId = new Map();
+          for (const d of [...local, ...p.dismissed_feed_items]) {
+            if (!d?.id) continue;
+            const prev = byId.get(d.id);
+            if (!prev) { byId.set(d.id, d); continue; }
+            byId.set(d.id, {
+              id: d.id,
+              handled_at: prev.handled_at || d.handled_at || undefined,
+              snoozed_until: [prev.snoozed_until, d.snoozed_until].filter(Boolean).sort().pop(),
+            });
+          }
+          const merged = [...byId.values()].slice(-DISMISS_CAP);
+          try {
+            localStorage.setItem("attention_dismissed", JSON.stringify(merged));
+            localStorage.setItem("attention_handled", JSON.stringify(merged.filter((d) => d.handled_at).map((d) => d.id)));
+          } catch { /* non-fatal */ }
+          return merged;
+        });
+      }
+      try {
+        localStorage.setItem("attention_hidden_sections", JSON.stringify(p.hidden_sections || []));
+        localStorage.setItem("attention_snoozed", JSON.stringify(p.section_snoozed_until || {}));
+        localStorage.setItem("attention_sound", p.sound_on !== false ? "on" : "off");
+        localStorage.setItem("attention_digest_opt_in", p.digest_opt_in === true ? "1" : "0");
+      } catch { /* non-fatal */ }
+    };
+    const unsub = subscribeNotificationPrefs(apply);
+    if (sessionToken) loadNotificationPrefs(sessionToken).then(apply).catch(() => {});
+    return unsub;
+  }, [sessionToken, persistDismissed]);
+
+  const savePrefPatch = useCallback((patch) => {
+    void saveNotificationPrefs(sessionToken, patch);
+  }, [sessionToken]);
+
+  const markItemHandled = (id) => {
+    persistDismissed([...dismissed.filter((d) => d.id !== id), { id, handled_at: new Date().toISOString() }]);
+    void dismissFeedItems(sessionToken, [id], "handled");
   };
+
+  const snoozeItem = (id, hours = 4) => {
+    const until = new Date(Date.now() + hours * 3600000).toISOString();
+    persistDismissed([...dismissed.filter((d) => d.id !== id), { id, snoozed_until: until }]);
+    void dismissFeedItems(sessionToken, [id], "snooze", hours);
+  };
+
   const toggleDigest = () => {
     const next = !digestOn;
     setDigestOn(next);
     try { localStorage.setItem("attention_digest_opt_in", next ? "1" : "0"); } catch {}
-    if (next) sendDigest();
+    savePrefPatch({ digest_opt_in: next });
   };
-  const [snoozed, setSnoozed] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("attention_snoozed") || "{}"); } catch { return {}; }
-  });
-  const [prefsOpen, setPrefsOpen] = useState(false);
-  const toggleHidden = (key) => {
+
+  const toggleHidden = (prefKey) => {
     setHiddenSections((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(prefKey)) next.delete(prefKey); else next.add(prefKey);
       try { localStorage.setItem("attention_hidden_sections", JSON.stringify([...next])); } catch {}
+      savePrefPatch({ hidden_sections: [...next] });
       return next;
     });
-    if (section === key) setSection("");
+    if (section === prefKey) setSection("");
   };
-  const snoozeSection = (key, hours = 4) => {
+
+  const snoozeSection = (prefKey, hours = 4) => {
     setSnoozed((prev) => {
-      const next = { ...prev, [key]: Date.now() + hours * 3600000 };
+      const next = { ...prev, [prefKey]: Date.now() + hours * 3600000 };
       try { localStorage.setItem("attention_snoozed", JSON.stringify(next)); } catch {}
+      savePrefPatch({ section_snoozed_until: next });
       return next;
     });
-    if (section === key) setSection("");
+    if (section === prefKey) setSection("");
   };
+
   const toggleSound = () => {
     setSoundOn((on) => {
       const next = !on;
       try { localStorage.setItem("attention_sound", next ? "on" : "off"); } catch {}
+      savePrefPatch({ sound_on: next });
       return next;
     });
   };
@@ -157,11 +231,11 @@ export default function AttentionFeed() {
     if (!sessionToken) return;
     setLoading(true);
     try {
-      const [r, watchRes] = await Promise.all([
+      const [r, watchRes, notifRes] = await Promise.all([
         base44.functions.invoke("opportunityWorkspaceAction", {
           session_token: sessionToken,
           action: "attention_feed",
-          today: new Date().toLocaleDateString("en-CA"),
+          today: todayLocal(),
         }),
         // Watch-rule hits (#349): "tell me when X reaches state Y" — the
         // dispatcher surfaces matching watched records here.
@@ -169,11 +243,16 @@ export default function AttentionFeed() {
           session_token: sessionToken,
           action: "check_watches",
         }).catch(() => null),
+        listMyNotifications(sessionToken, { limit: 40 }),
       ]);
       const d = r?.data || r;
-      if (d?.success) setFeed(d);
+      if (d?.success) {
+        setFeed(d);
+        publishAttentionFeed(d); // the bell dropdown's Feed tab reuses it
+      }
       const hits = (watchRes?.data || watchRes)?.hits;
       setWatchHits(Array.isArray(hits) ? hits : []);
+      if (notifRes) setPersisted(notifRes.notifications || []);
       void loadComputed();
     } catch { /* fail-soft — strip hides itself */ }
     finally { setLoading(false); }
@@ -202,288 +281,96 @@ export default function AttentionFeed() {
   const mergedInvoices = dedupeById([...(feed?.overdue_invoices || []), ...(computed?.overdue_invoices || [])]);
   const mergedPos = dedupeById([...(feed?.overdue_pos || []), ...(computed?.overdue_open_pos || [])]);
 
+  const activePersisted = useMemo(
+    () => persisted.filter((n) => !n.handled_at && !(n.snoozed_until && Date.parse(n.snoozed_until) > Date.now())),
+    [persisted],
+  );
+
   const markAllRead = async () => {
     if (!sessionToken) return;
     setLoading(true);
+    // #327 global mark-all-read: portal messages keep the existing
+    // customerPortalAction writer; persisted notifications go through
+    // notificationAction — run both and refresh.
     try {
-      await base44.functions.invoke("customerPortalAction", {
-        session_token: sessionToken,
-        action: "mark_all_read",
-      });
+      await Promise.all([
+        base44.functions.invoke("customerPortalAction", {
+          session_token: sessionToken,
+          action: "mark_all_read",
+        }).catch(() => null),
+        markAllNotificationsRead(sessionToken),
+      ]);
     } catch { /* non-fatal */ }
     await load();
   };
 
-  const categories = feed ? [
-    {
-      key: "portal",
-      label: "portal messages",
-      count: (feed.unread_portal_messages || []).length,
-      icon: Inbox,
-      tone: "text-violet-700 bg-violet-50 border-violet-300 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
-      items: (feed.unread_portal_messages || []).slice(0, 6).map((m) => ({
-        id: m.id,
-        primary: m.related_label || m.author_name || "Customer message",
-        secondary: m.excerpt,
-        href: m.customer_id ? `/Customer360?id=${m.customer_id}` : "/EstimatorCustomers",
-      })),
-    },
-    {
-      key: "invoices",
-      label: `overdue invoices${feed.overdue_invoice_total ? ` (${money(feed.overdue_invoice_total)})` : ""}`,
-      count: mergedInvoices.length,
-      icon: Receipt,
-      tone: "text-red-700 bg-red-50 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800",
-      items: mergedInvoices.slice(0, 6).map((i) => ({
-        id: i.id,
-        primary: `${i.invoice_number || "Invoice"}${i.customer_name ? ` · ${i.customer_name}` : ""}`,
-        secondary: `due ${i.due_date} · ${money(i.balance_due)} open${i.salesperson_email ? ` · ${i.salesperson_email}` : ""}`,
-        href: `/Invoices?invoice=${i.id}`,
-      })),
-    },
-    {
-      key: "pos",
-      label: "overdue POs",
-      count: mergedPos.length,
-      icon: ShoppingCart,
-      tone: "text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-      items: mergedPos.slice(0, 6).map((p) => ({
-        id: p.id,
-        primary: `${p.po_number || "PO"}${p.vendor_name ? ` · ${p.vendor_name}` : ""}`,
-        secondary: `expected ${p.expected_date} · ${p.status}`,
-        href: `/PurchaseOrders?po=${p.id}`,
-      })),
-    },
-    {
-      key: "cos",
-      label: "proposed COs",
-      count: (feed.proposed_cos || []).length,
-      icon: GitBranch,
-      tone: "text-blue-700 bg-blue-50 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-      items: (feed.proposed_cos || []).slice(0, 6).map((c) => ({
-        id: c.id,
-        primary: `${c.change_order_number || "CO"}${c.customer_display_name ? ` · ${c.customer_display_name}` : ""}`,
-        secondary: `${c.proposed_by === "customer_portal" ? "customer request" : "staff draft"} · ${money(c.amount_delta)}`,
-        href: `/ChangeOrders?co=${c.id}`,
-      })),
-    },
-    {
-      key: "followups",
-      label: "overdue follow-ups",
-      count: (feed.overdue_follow_ups || []).length,
-      icon: Bell,
-      tone: "text-orange-700 bg-orange-50 border-orange-300 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800",
-      items: (feed.overdue_follow_ups || []).slice(0, 6).map((o) => ({
-        id: o.id,
-        primary: `${o.title || o.customer_display_name || "Opportunity"}${o.salesperson ? ` · ${o.salesperson}` : ""}`,
-        secondary: `${o.next_action || "follow-up"} · due ${o.next_action_due}`,
-        href: `/Opportunities?open=${o.id}`,
-      })),
-    },
-    {
-      key: "requests",
-      label: "estimate requests",
-      count: (feed.open_estimating_requests || []).length,
-      icon: ClipboardList,
-      tone: "text-slate-700 bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600",
-      items: (feed.open_estimating_requests || []).slice(0, 6).map((r) => ({
-        id: r.id,
-        primary: `${r.request_number || "Request"}${r.opportunity_title ? ` · ${r.opportunity_title}` : ""}`,
-        secondary: `${r.overdue ? `OVERDUE ${r.due_date} · ` : ""}${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : " · unassigned"}`,
-        href: r.opportunity_id ? `/Opportunities?open=${r.opportunity_id}` : "/Opportunities",
-      })),
-    },
-    {
-      key: "estimate_requests",
-      label: "assigned to me",
-      count: (feed.estimate_requests || []).length,
-      icon: ClipboardList,
-      tone: "text-blue-700 bg-blue-50 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-      items: (feed.estimate_requests || []).slice(0, 6).map((r) => ({
-        id: r.id,
-        primary: `${r.request_number || "Request"}${r.opportunity_title ? ` · ${r.opportunity_title}` : ""}`,
-        secondary: `${r.overdue ? `OVERDUE ${r.due_date} · ` : ""}${r.status}${r.assigned_estimator ? ` · ${r.assigned_estimator}` : ""}`,
-        href: r.opportunity_id ? `/Opportunities?open=${r.opportunity_id}` : "/Opportunities",
-      })),
-    },
-    {
-      key: "staleQuotes",
-      label: "stale sent quotes",
-      count: (feed.stale_sent_estimates || []).length,
-      icon: Bell,
-      tone: "text-blue-700 bg-blue-50 border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-      items: (feed.stale_sent_estimates || []).slice(0, 6).map((e) => ({
-        id: e.id,
-        primary: `${e.project_name || "Estimate"}${e.estimate_number ? ` · #${e.estimate_number}` : ""}`,
-        secondary: `${e.client_name || ""}${e.days_sent ? ` · sent ${e.days_sent}d ago` : ""}${e.quote_total ? ` · $${Number(e.quote_total).toLocaleString()}` : ""}`,
-        href: `/EstimateDetail?id=${e.id}`,
-      })),
-    },
-    {
-      key: "quotesExpiringSoon",
-      label: "quotes expiring soon",
-      count: (feed.quotes_expiring_soon || []).length,
-      icon: Clock,
-      tone: "text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-      items: (feed.quotes_expiring_soon || []).slice(0, 6).map((e) => ({
-        id: e.id,
-        primary: `${e.project_name || "Estimate"}${e.estimate_number ? ` · #${e.estimate_number}` : ""}`,
-        secondary: `${e.client_name || ""}${e.days_until_expiry != null ? ` · expires in ${e.days_until_expiry}d` : ""}${e.salesperson_email ? ` · ${e.salesperson_email}` : ""}`,
-        href: `/EstimateDetail?id=${e.id}`,
-      })),
-    },
-    {
-      key: "quotesExpired",
-      label: "expired quotes",
-      count: (feed.quotes_expired || []).length,
-      icon: AlertTriangle,
-      tone: "text-red-700 bg-red-50 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800",
-      items: (feed.quotes_expired || []).slice(0, 6).map((e) => ({
-        id: e.id,
-        primary: `${e.project_name || "Estimate"}${e.estimate_number ? ` · #${e.estimate_number}` : ""}`,
-        secondary: `${e.client_name || ""}${e.quote_expiration_date ? ` · expired ${e.quote_expiration_date}` : ""}${e.salesperson_email ? ` · ${e.salesperson_email}` : ""}`,
-        href: `/EstimateDetail?id=${e.id}`,
-      })),
-    },
-    {
-      key: "stock",
-      label: "low stock",
-      count: (feed.low_stock || []).length,
-      icon: Package,
-      tone: "text-teal-700 bg-teal-50 border-teal-300 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800",
-      items: (feed.low_stock || []).slice(0, 6).map((it) => ({
-        id: it.id,
-        primary: it.label,
-        secondary: `${it.quantity_on_hand} on hand · reorder at ${it.reorder_point}${it.supplier ? ` · ${it.supplier}` : ""}`,
-        href: it.id ? `/PurchaseOrders?draft_item=${it.id}` : "/Inventory",
-      })),
-    },
-    {
-      key: "jobs",
-      label: "overdue jobs",
-      count: (feed.overdue_jobs || []).length,
-      icon: Wrench,
-      tone: "text-rose-700 bg-rose-50 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800",
-      items: (feed.overdue_jobs || []).slice(0, 6).map((w) => ({
-        id: w.id,
-        primary: `${w.title || "Work order"}${w.client_name ? ` · ${w.client_name}` : ""}`,
-        secondary: `${w.current_stage || "job"} · due ${w.due_date}`,
-        href: `/MainWorkflow?wo=${w.id}`,
-      })),
-    },
-    {
-      key: "permits",
-      label: "permits expiring",
-      count: (feed.expiring_permits || []).length,
-      icon: FileWarning,
-      tone: "text-indigo-700 bg-indigo-50 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800",
-      items: (feed.expiring_permits || []).slice(0, 6).map((p) => ({
-        id: p.id,
-        primary: `${p.row_name || "Permit"}${p.locality_name ? ` · ${p.locality_name}` : ""}`,
-        secondary: `${p.expired ? "EXPIRED" : "expires"} ${p.expiration_date}${p.work_order_title ? ` · ${p.work_order_title}` : ""}`,
-        href: p.work_order_id ? `/MainWorkflow?wo=${p.work_order_id}` : "/Permitting",
-      })),
-    },
-    {
-      key: "fees",
-      label: "permit fees due",
-      count: (feed.permit_fees_due || []).length,
-      icon: DollarSign,
-      tone: "text-sky-700 bg-sky-50 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800",
-      items: (feed.permit_fees_due || []).slice(0, 6).map((p) => ({
-        id: p.id,
-        primary: `${p.row_name || "Permit fee"}${p.locality_name ? ` · ${p.locality_name}` : ""}`,
-        secondary: `${p.fee_amount ? money(p.fee_amount) : "fee"} due${p.work_order_title ? ` · ${p.work_order_title}` : ""}`,
-        href: p.work_order_id ? `/MainWorkflow?wo=${p.work_order_id}` : "/Permitting",
-      })),
-    },
-    {
-      key: "unassigned",
-      label: "unassigned requests",
-      count: (feed.unassigned_estimating_requests || []).length,
-      icon: Inbox,
-      tone: "text-red-700 bg-red-50 border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800",
-      items: (feed.unassigned_estimating_requests || []).slice(0, 6).map((r) => ({
-        id: r.id,
-        primary: `${r.request_number || "Request"}${r.opportunity_title ? ` - ${r.opportunity_title}` : ""}`,
-        secondary: "Unassigned over 2 days - needs an estimator",
-        href: "/EstimatingQueues",
-      })),
-    },
-    {
-      key: "recalc",
-      label: "needs recalc",
-      count: (feed.needs_recalc_parts || []).length,
-      icon: RotateCcw,
-      tone: "text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-      items: (feed.needs_recalc_parts || []).slice(0, 6).map((p) => ({
-        id: p.id,
-        primary: p.part_name || "Part",
-        secondary: "Flagged needs_recalc - price may be stale",
-        href: p.estimate_id ? `/EstimateDetail?id=${p.estimate_id}` : "/EstimatorQueues",
-      })),
-    },
-    // --- Computed sections (unified alerts) --------------------------------
-    // Client-computed from staff-readable sources; invoice/PO overdue rows
-    // merge into the server-fed categories above.
-    {
-      key: "overdue_products",
-      label: "overdue products",
-      count: overdueProductRows.length,
-      icon: Layers,
-      tone: "text-cyan-700 bg-cyan-50 border-cyan-300 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800",
-      items: overdueProductRows.slice(0, 6).map((r) => ({
-        id: `product:${r.workOrderId}:${r.productId}`,
-        primary: `${r.productName}${r.company ? ` · ${r.company}` : ""}`,
-        secondary: `${r.status} · due ${r.due}${r.hardDue ? " · hard due" : ""}`,
-        href: "/ProductQueues?queue=all",
-      })),
-    },
-    {
-      key: "crm_events_due",
-      label: "CRM events due",
-      count: (computed?.crm_events_due || []).length,
-      icon: Phone,
-      tone: "text-fuchsia-700 bg-fuchsia-50 border-fuchsia-300 dark:bg-fuchsia-950/40 dark:text-fuchsia-300 dark:border-fuchsia-800",
-      items: (computed?.crm_events_due || []).slice(0, 6).map((a) => ({
-        id: `crm:${a.id}`,
-        primary: `${a.subject || a.summary || a.event_type || "CRM event"}${a.company_name ? ` · ${a.company_name}` : ""}`,
-        secondary: `${a.event_type || "event"} · due ${String(a.due_at || "").slice(0, 10)}${a.assigned_to ? ` · ${a.assigned_to}` : ""}`,
-        href: "/CrmEvents",
-      })),
-    },
-    {
-      key: "comms_followups_due",
-      label: "comms follow-ups due",
-      count: (computed?.comms_followups_due || []).length,
-      icon: Mail,
-      tone: "text-lime-700 bg-lime-50 border-lime-300 dark:bg-lime-950/40 dark:text-lime-300 dark:border-lime-800",
-      items: (computed?.comms_followups_due || []).slice(0, 6).map((f) => ({
-        id: `followup:${f.kind}:${f.targetId}`,
-        primary: `${f.targetRef || "Follow-up"}${f.customerName ? ` · ${f.customerName}` : ""}`,
-        secondary: `${FOLLOWUP_KIND_META[f.kind]?.label || f.kind} · due ${f.dueDate}${f.daysOverdue ? ` · ${f.daysOverdue}d over` : ""}`,
-        href: "/CommsFollowups",
-      })),
-    },
-    {
-      key: "recon_variance_batches",
-      label: "recon variance",
-      count: (computed?.recon_variance_batches || []).length,
-      icon: Scale,
-      tone: "text-yellow-700 bg-yellow-50 border-yellow-300 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800",
-      items: (computed?.recon_variance_batches || []).slice(0, 6).map((b) => ({
-        id: `recon:${b.id}`,
-        primary: `${b.batch_number || "Batch"}${b.location ? ` · ${b.location}` : ""}`,
-        secondary: `closed ${String(b.closed_at || "").slice(0, 10)} · ${Number(b.variance) > 0 ? "over" : "short"} ${money(Math.abs(Number(b.variance) || 0))}`,
-        href: "/Reconciliation",
-      })),
-    },
-  ].filter((c) => c.count > 0 && !hiddenSections.has(c.key) && !(snoozed[c.key] && snoozed[c.key] > Date.now())) : [];
+  const markSectionRead = async (category) => {
+    if (!sessionToken) return;
+    setLoading(true);
+    try {
+      if (category.key === "portal") {
+        await base44.functions.invoke("customerPortalAction", {
+          session_token: sessionToken,
+          action: "mark_all_read",
+        }).catch(() => null);
+      } else if (category.notifications) {
+        await markAllNotificationsRead(sessionToken);
+      } else {
+        // #327 per-section: feed items have no read state server-side, so
+        // "mark read" here = persist a handled overlay for every listed id.
+        const ids = category.items.map((i) => i.id);
+        persistDismissed([
+          ...dismissed.filter((d) => !ids.includes(d.id)),
+          ...ids.map((id) => ({ id, handled_at: new Date().toISOString() })),
+        ]);
+        await dismissFeedItems(sessionToken, ids, "handled").catch(() => null);
+      }
+    } catch { /* non-fatal */ }
+    await load();
+  };
+
+  const handleItemAction = async (item, kind) => {
+    if (item.notification) {
+      // Persisted notification — real row transitions.
+      if (kind === "handled") {
+        setPersisted((prev) => prev.filter((n) => n.id !== item.id));
+        await markNotificationHandled(sessionToken, item.id).catch(() => null);
+      } else if (kind === "snooze") {
+        setPersisted((prev) => prev.filter((n) => n.id !== item.id));
+        await snoozeNotification(sessionToken, item.id, 4).catch(() => null);
+      }
+      return;
+    }
+    if (kind === "handled") markItemHandled(item.id);
+    else if (kind === "snooze") snoozeItem(item.id, 4);
+  };
+
+  const openItem = (item) => {
+    if (item.notification) {
+      if (isNotificationUnread(item.notification)) {
+        setPersisted((prev) => prev.map((n) => (n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n)));
+        void markNotificationRead(sessionToken, item.id);
+      }
+    }
+    navigate(item.href);
+  };
+
+  const categories = feed ? buildAttentionCategories({
+    feed,
+    computed,
+    overdueProductRows,
+    mergedInvoices,
+    mergedPos,
+    persisted: activePersisted,
+  }).filter((c) => c.count > 0
+    && !hiddenSections.has(c.prefKey)
+    && !(snoozed[c.prefKey] && snoozed[c.prefKey] > Date.now())) : [];
 
   if (!feed) return null;
   if (categories.length === 0 && !loading) return null;
 
-  const active = categories.find((c) => c.key === section);
+  const active = categories.find((c) => c.key === section || c.prefKey === section);
+  const visibleItems = active ? filterVisibleFeedItems(active.items, dismissed) : [];
 
   return (
     <div className="mb-3 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900">
@@ -501,8 +388,8 @@ export default function AttentionFeed() {
         </button>
         {categories.map((c) => (
           <button key={c.key} type="button"
-            onClick={() => { setSection(section === c.key ? "" : c.key); setOpen(true); }}
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${c.tone} ${section === c.key ? "ring-2 ring-violet-400" : ""}`}>
+            onClick={() => { setSection(section === c.key || section === c.prefKey ? "" : c.key); setOpen(true); }}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${c.tone} ${section === c.key || section === c.prefKey ? "ring-2 ring-violet-400" : ""}`}>
             <c.icon className="h-3 w-3" />
             {c.count} {c.label}
           </button>
@@ -512,6 +399,11 @@ export default function AttentionFeed() {
           {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
           {soundOn ? "Sound on" : "Sound off"}
         </button>
+        <button type="button" onClick={markAllRead} disabled={loading} title="Mark portal messages and notifications read"
+          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold text-slate-500 hover:text-slate-800 disabled:opacity-50">
+          <CheckCheck className="h-3.5 w-3.5" />
+          Mark all read
+        </button>
         <div className="relative ml-auto">
           <button type="button" onClick={() => setPrefsOpen((v) => !v)} title="Notification preferences"
             className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
@@ -519,20 +411,14 @@ export default function AttentionFeed() {
           </button>
           {prefsOpen && (
             <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Daily email digest</p>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Daily in-app digest</p>
               <label className="flex items-center gap-1.5 px-1 py-1 text-xs text-slate-700 dark:text-slate-300">
                 <input type="checkbox" checked={digestOn} onChange={toggleDigest} className="h-3 w-3" />
-                Email me a daily digest
+                Digest notification each morning
               </label>
-              {digestOn && (
-                <button type="button" onClick={sendDigest} disabled={digestSending}
-                  className="mb-1 px-1 text-[10px] font-semibold text-violet-600 hover:text-violet-800 disabled:opacity-50">
-                  {digestSending ? "Sending..." : "Send a digest now"}
-                </button>
-              )}
               <p className="mb-1 border-t border-slate-100 pt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:border-slate-800">Sections</p>
-              {[...["portal","invoices","pos","cos","follow","sent","requests","estimate_requests","unassigned","stock","jobs","permits","fees","recalc"], ...COMPUTED_SECTION_KEYS].map((key) => {
-                const cat = categories.find((c) => c.key === key);
+              {PREF_SECTION_KEYS.map((key) => {
+                const cat = categories.find((c) => c.prefKey === key || c.key === key);
                 const label = cat?.label || key;
                 const isSnoozed = snoozed[key] && snoozed[key] > Date.now();
                 return (
@@ -558,29 +444,34 @@ export default function AttentionFeed() {
       </div>
       {open && active && (
         <div className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-700">
-          {active.items.filter((it) => !handled.has(it.id)).map((it) => (
+          {visibleItems.map((it) => (
             <div key={it.id} className="flex w-full items-center gap-1 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800">
-              <button type="button" onClick={() => navigate(it.href)}
+              <button type="button" onClick={() => openItem(it)}
                 className="flex flex-1 items-center justify-between gap-3 text-left">
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{it.primary}</span>
+                <span className={`text-sm font-medium ${it.notification && isNotificationUnread(it.notification) ? "font-bold text-slate-900 dark:text-white" : "text-slate-800 dark:text-slate-200"}`}>
+                  {it.primary}
+                </span>
                 <span className="truncate text-xs text-slate-500">{it.secondary}</span>
               </button>
-              <button type="button" onClick={(e) => { e.stopPropagation(); markHandled(it.id); }}
+              <button type="button" onClick={(e) => { e.stopPropagation(); void handleItemAction(it, "snooze"); }}
+                title="Snooze 4 hours"
+                className="shrink-0 rounded p-0.5 text-slate-300 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-slate-700">
+                <Clock className="h-3.5 w-3.5" />
+              </button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); void handleItemAction(it, "handled"); }}
                 title="Mark as handled"
                 className="shrink-0 rounded p-0.5 text-slate-300 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700">
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
-          {active.count > active.items.length && (
-            <div className="px-3 py-1.5 text-xs text-slate-400">+{active.count - active.items.length} more</div>
+          {active.count > visibleItems.length && (
+            <div className="px-3 py-1.5 text-xs text-slate-400">+{Math.max(0, active.count - active.items.length)} more{visibleItems.length !== active.items.length ? " (some hidden by handled/snooze)" : ""}</div>
           )}
-          {active.key === "portal" && (
-            <button type="button" onClick={markAllRead} disabled={loading}
-              className="w-full border-t border-slate-100 px-3 py-1.5 text-left text-xs font-semibold text-violet-600 hover:bg-violet-50 disabled:opacity-50 dark:border-slate-800 dark:text-violet-300 dark:hover:bg-slate-800">
-              Mark all portal messages read
-            </button>
-          )}
+          <button type="button" onClick={() => markSectionRead(active)} disabled={loading}
+            className="w-full border-t border-slate-100 px-3 py-1.5 text-left text-xs font-semibold text-violet-600 hover:bg-violet-50 disabled:opacity-50 dark:border-slate-800 dark:text-violet-300 dark:hover:bg-slate-800">
+            {active.key === "portal" ? "Mark all portal messages read" : active.notifications ? "Mark all notifications read" : "Mark this section handled"}
+          </button>
         </div>
       )}
     </div>
