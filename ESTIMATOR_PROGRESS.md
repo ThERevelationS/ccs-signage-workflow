@@ -16,3 +16,11 @@
 **9 BLOCKED (honest external limits, documented in backlog):** #242/#246/#296 sendEmail disabled→no bounce/delivery telemetry (in-app + Smartsheet paths used instead); #402 permittingScanStatus backend outside fence; #405/#425 line_items needed by list search (server window would drop matches); #411/#416 managed-backend indexes; #424 smartsheetSync/timeClock outside fence.
 
 **Owner-action leftovers:** publish decision (forbidden here); B5's customerPortalAction bundle rotates on runtime lag; mail-provider telemetry for bounce items; backend index requests to Base44 for #411/#416.
+
+
+## 2026-11-01 16:16Z — Install Route Map shipped (last standalone item)
+
+- NEW src/pages/InstallRouteMap.jsx (/InstallRouteMap): per-day install route planner — WOs filtered by project_install_date=date & active; ordered stops via up/down persisted to new WorkOrder.install_route_order field; "Open in Google Maps" builds a documented Maps URL-API multi-stop link (origin = crew-set localStorage field, blank = device location); stops missing install_location flagged with a direct "Add location" job link; ?date= deep-link + Today/prev/next nav.
+- Registration: App.jsx lazyPage+route, CommandPalette discovery+label, ProductionSchedule header "Route map" cross-link, WorkOrder.jsonc install_route_order.
+- Verified: all 5 files esbuild clean, WorkOrder.jsonc parses, test-nav-wiring PASS (81 links→110 routes). boardFeed projection regen skipped intentionally — no feed consumes install_route_order.
+- Standalone inventory now complete: portal reorder, Drive-per-job folders (ensureJobFolder), portal job messages (PortalMessage + work-order-scoped threads), install route map — all shipped.
