@@ -32,6 +32,7 @@ const {
   overridesAuditReport,
   customerAnalyticsReport,
   estimateFunnelReport,
+  taxLiabilityReport,
   OPS_REPORTS,
   OPS_REPORT_MAP,
 } = await import(pathToFileURL(out).href);
@@ -430,6 +431,35 @@ for (const def of OPS_REPORTS) {
   const adjRow = report.rows.find((r) => r[4] === 'Line price adjustment');
   assert.equal(adjRow[6], 200, '10% of 1000 × qty 2');
   assert.equal(report.rowLinks[0], '/EstimateDetail?id=e1');
+}
+
+// taxLiabilityReport: tax charged per (month, rate); basis toggle moves the
+// bucket month between issue_date (accrual) and paid_date (cash).
+{
+  const invoices = [
+    { id: 'i1', status: 'sent', issue_date: '2026-10-05', subtotal: 1000, discount_amount: 0, tax_rate: 0.0825, tax_amount: 82.5 },
+    { id: 'i2', status: 'paid', issue_date: '2026-10-20', paid_date: '2026-11-02', subtotal: 500, discount_amount: 0, tax_rate: 0.0825, tax_amount: 41.25 },
+    { id: 'i3', status: 'sent', issue_date: '2026-10-25', subtotal: 300, discount_amount: 20, tax_rate: 0.07, tax_amount: 21 },
+    { id: 'i4', status: 'void', issue_date: '2026-10-01', tax_rate: 0.0825, tax_amount: 999 },
+    { id: 'i5', status: 'draft', issue_date: '2026-10-02', tax_rate: 0.0825, tax_amount: 888 },
+    { id: 'i6', status: 'sent', issue_date: '2026-10-28', subtotal: 200, tax_rate: 0, tax_amount: 0 }, // untaxed
+    { id: 'i7', status: 'paid', issue_date: '', paid_date: '2026-11-05', subtotal: 100, tax_rate: 0.0825, tax_amount: 8.25 },
+  ];
+  const issue = taxLiabilityReport({ invoices, basis: 'issue_date' });
+  assert.equal(issue.rows.length, 2, 'Oct 8.25% + Oct 7% buckets (i7 undated on issue basis)');
+  const oct825 = issue.rows.find((r) => r[1] === '8.25%');
+  assert.equal(oct825[2], 2, 'i1 + i2 (void/draft excluded)');
+  assert.equal(oct825[3], 1500);
+  assert.equal(oct825[4], 123.75);
+  const oct7 = issue.rows.find((r) => r[1] === '7%');
+  assert.equal(oct7[3], 280, 'taxable = subtotal - discount');
+  assert.equal(oct7[4], 21);
+  assert.equal(issue.totals[2], 3, 'taxed invoice count');
+  assert.equal(issue.totals[4], 144.75);
+  assert.ok(issue.totals[0].includes('untaxed'), 'untaxed exclusion noted');
+  const paid = taxLiabilityReport({ invoices, basis: 'paid_date' });
+  assert.equal(paid.rows.length, 1, 'only fully-paid invoices on cash basis');
+  assert.equal(paid.rows[0][4], 49.5, 'i2 + i7 land in Nov');
 }
 
 rmSync(out);
