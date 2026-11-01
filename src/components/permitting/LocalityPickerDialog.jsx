@@ -66,14 +66,10 @@ function verifiedAuthoritySummary(locality) {
   };
 }
 
-const normalizeAddress=(raw)=>{let a=String(raw||"").replace(/s+/g," ").trim();a=a.replace(/(unit|suite|ste|apt|apartment|#)s*[A-Za-z0-9-]+/ig,"");a=a.replace(/,s*(USA|United States|US).?$/i,"");a=a.replace(/([0-9]{5})-[0-9]{4}/g,"$1");a=a.replace(/[ 	]+,/g,",").replace(/,(?=S)/g,", ").replace(/s+/g," ").trim().replace(/^,+|,+$/g,"");return a||String(raw||"").trim();};
+const normalizeAddress=(raw)=>{let a=String(raw||"").replace(/\s+/g," ").trim();a=a.replace(/\b(unit|suite|ste|apt|apartment|#)\s*[A-Za-z0-9-]+\b/ig,"");a=a.replace(/,\s*(USA|United States|US)\.?$/i,"");a=a.replace(/\b([0-9]{5})-[0-9]{4}\b/g,"$1");a=a.replace(/[ \t]+,/g,",").replace(/,(?=\S)/g,", ").replace(/,\s*,+/g,",").replace(/\s+/g," ").trim().replace(/^,+|,+$/g,"");return a||String(raw||"").trim();};
 const RECENT_ADDR_KEY="permitting_recent_addresses";
 const loadRecentAddresses=()=>{try{return JSON.parse(localStorage.getItem(RECENT_ADDR_KEY)||"[]");}catch{return[];}};
 const rememberAddress=(addr)=>{const a=String(addr||"").trim();if(!a)return;try{const list=loadRecentAddresses().filter(x=>x!==a);list.unshift(a);localStorage.setItem(RECENT_ADDR_KEY,JSON.stringify(list.slice(0,5)));}catch{}};
-const LAST_SEARCH_KEY="permitting_last_search_";
-const lastSearchKeyFor=(addr)=>LAST_SEARCH_KEY+normalizeAddress(addr).toLowerCase();
-const loadLastSearch=(addr)=>{try{const r=JSON.parse(localStorage.getItem(lastSearchKeyFor(addr))||"null");return r?.result||null;}catch{return null;}};
-const saveLastSearch=(addr,result)=>{try{localStorage.setItem(lastSearchKeyFor(addr),JSON.stringify({result,saved_at:Date.now()}));}catch{}};
 // Browser-side geocode → census_hint payload for the resolver. Shared by the
 // geocoding-issue resubmit and the total-failure last try.
 async function geocodeInBrowser(address){
@@ -108,7 +104,7 @@ function LocalityPickerSession({
   const [searching, setSearching] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState(() => loadRecentAddresses());
   const [slowSearch, setSlowSearch] = useState(false);
-  const [searchedFor, setSearchedFor] = useState("");
+
   const [firstRun, setFirstRun] = useState(() => { try { return localStorage.getItem("permitting_first_run_done") !== "1"; } catch { return true; } });
   const [showOptions, setShowOptions] = useState(() => { try { return localStorage.getItem("permitting_show_options") === "1"; } catch { return false; } });
   const [advanced, setAdvanced] = useState(() => { try { return localStorage.getItem("permitting_advanced_view") === "1"; } catch { return false; } });
@@ -138,7 +134,7 @@ function LocalityPickerSession({
   const suggestionReq = useRef(0);
   useEffect(() => {
     const q = address.trim();
-    if (!sessionToken || q.length < 4 || result) { setSuggestions([]); return; }
+    if (!sessionToken || q.length < 4 || result || searching) { setSuggestions([]); return; }
     const reqId = ++suggestionReq.current;
     const t = setTimeout(async () => {
       try {
@@ -147,7 +143,7 @@ function LocalityPickerSession({
       } catch { /* suggestions are a convenience — never block the field */ }
     }, 350);
     return () => clearTimeout(t);
-  }, [address, result, sessionToken]);
+  }, [address, result, searching, sessionToken]);
   const [scanningQR, setScanningQR] = useState(false);
   const scanVideoRef = useRef(null);
   const scanStreamRef = useRef(null);
@@ -158,8 +154,6 @@ function LocalityPickerSession({
     searchVersion.current++;pendingSearch.current=null;
     if (isOpen) {
       const preset = String(initialAddress || "").trim();
-      const cached = preset ? loadLastSearch(preset) : null;
-      if (cached) setResult(cached);
       setAddress(preset);
       setSearching(false);
       setResult(null);
@@ -269,8 +263,8 @@ function LocalityPickerSession({
       } else {
         setResult(data);
         setError("");
-        if(data){serviceFails.current=0;setSearchedFor(norm);}
-        if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());saveLastSearch(address,data);}
+        if(data){serviceFails.current=0;}
+        if(data?.suggested_locality||data?.geocode){rememberAddress(address.trim());setRecentAddresses(loadRecentAddresses());}
         if (data?.suggested_locality?.id) {
           setSelectedLocalityId(data.suggested_locality.id);
         }
@@ -286,7 +280,7 @@ function LocalityPickerSession({
             const retry=await invoke('resolvePermittingAddress',{address:normalizeAddress(address),session_token:sessionToken,census_hint:hint},`Looking up ${address.trim()}`);
             const d=retry?.data;
             if(d&&d.success!==false){
-              setResult(d);setError("");serviceFails.current=0;setSearchedFor(norm);
+              setResult(d);setError("");serviceFails.current=0;
               if(d.suggested_locality?.id)setSelectedLocalityId(d.suggested_locality.id);
               if(pendingSearch.current===version)pendingSearch.current=null;
               if(version===searchVersion.current&&openRef.current)setSearching(false);
@@ -422,6 +416,31 @@ function LocalityPickerSession({
   })();
   const markerTitle = result?.geocode?.display_name || address.trim();
 
+  // When the Use button is greyed out, say exactly why in plain words — a dead
+  // button with no reason is the top "now what?" moment in this dialog.
+  const applyHint = (() => {
+    if (searching) return "";
+    if (selectedLocalityId && (addressCanApply || addressNeedsCheck)) return "";
+    if (!address.trim()) return selectedLocalityId ? "Now enter the job address above so we can check this office is right for that spot." : "Type or paste the job address above — then the Use button lights up.";
+    if (!result) return "Press Find my office to check this address.";
+    if (!result.suggested_locality) return "No office matched that spot yet — pick a saved office above, or check the address.";
+    if (result.location_resolution?.status !== 'location_verified') return "We haven't pinned down the exact spot — the map has to confirm it before an office can be used.";
+    if (selectedLocalityId && selectedLocalityId !== result.suggested_locality.id) return "The office picked doesn't match the searched spot — press Find my office again.";
+    if (!selectedLocalityId) return "This office isn't linked to a record yet — pick a saved office above or ask an admin.";
+    return "";
+  })();
+
+  // Picking a suggestion fills the field and searches immediately — same path
+  // as a paste or a QR scan, so the user never presses Find after tapping.
+  const pickSuggestion = (s) => {
+    suggestionReq.current++;
+    setSuggestions([]);
+    setError("");
+    searchVersion.current++; pendingSearch.current = null;
+    setAddress(s.text); setResult(null); setSelectedLocalityId(''); setSearching(false);
+    setAutoSearchNonce(Date.now());
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(o) => {
       if (o) return;
@@ -455,7 +474,7 @@ function LocalityPickerSession({
                     const rec = new SR(); rec.lang = 'en-US'; rec.interimResults = false;
                     rec.onresult = (ev) => {
                       const text = String(ev.results?.[0]?.[0]?.transcript || '').trim();
-                      if (text) { searchVersion.current++; pendingSearch.current = null; setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false); setTimeout(() => runSearch(), 0); }
+                      if (text) { searchVersion.current++; pendingSearch.current = null; setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false); setAutoSearchNonce(Date.now()); }
                     };
                     rec.onerror = () => setError("Couldn't hear that — type the address instead.");
                     try { rec.start(); } catch {}
@@ -471,7 +490,11 @@ function LocalityPickerSession({
                 onChange={(e) => {searchVersion.current++;pendingSearch.current=null;setAddress(e.target.value);setResult(null);setSelectedLocalityId('');setSearching(false);}}
                 placeholder="e.g. 4900 Parkway Dr, Mason, OH 45040"
                 className="min-h-11 pl-8 pr-10 text-base"
-                onKeyDown={(e) => e.key === 'Enter' && !searching && runSearch()}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' || searching) return;
+                  if (suggestions.length) { e.preventDefault(); pickSuggestion(suggestions[0]); }
+                  else runSearch();
+                }}
                 onPaste={(e) => {
                   // Paste-and-go: if the pasted text looks like a complete
                   // street address, search immediately — zero extra clicks.
@@ -481,25 +504,20 @@ function LocalityPickerSession({
                     e.preventDefault();
                     searchVersion.current++; pendingSearch.current = null;
                     setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false);
-                    setTimeout(() => runSearch(), 0);
+                    setAutoSearchNonce(Date.now());
                   }
                 }}
               />
             </div>
             {suggestions.length > 0 && !result && (
-              <ul className="mt-1 divide-y rounded-lg border bg-white shadow-sm">
+              <ul aria-label="Matching addresses — tap one or press Enter for the first" className="mt-1 divide-y rounded-lg border bg-white shadow-sm">
+                <li className="px-3 py-1.5 text-[11px] font-semibold text-gray-500">Pick your address — or press Enter for the first one:</li>
                 {suggestions.map(s => (
                   <li key={s.place_id || s.text}>
                     <button
                       type="button"
                       className="min-h-11 w-full px-3 py-2 text-left hover:bg-indigo-50"
-                      onClick={() => {
-                        suggestionReq.current++;
-                        setSuggestions([]);
-                        searchVersion.current++; pendingSearch.current = null;
-                        setAddress(s.text); setResult(null); setSelectedLocalityId(''); setSearching(false);
-                        setTimeout(() => runSearch(), 0);
-                      }}
+                      onClick={() => pickSuggestion(s)}
                     >
                       <span className="block text-sm font-medium text-gray-900">{s.main || s.text}</span>
                       {s.secondary && <span className="block text-xs text-gray-500">{s.secondary}</span>}
@@ -612,7 +630,7 @@ function LocalityPickerSession({
                   const found = parts.join(', ');
                   setAddress(found); setResult(null); setSelectedLocalityId(''); setSearching(false);
                   setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                  setTimeout(() => runSearch(), 0);
+                  setAutoSearchNonce(Date.now());
                 } catch { setError("Couldn't read an address from your location — type it instead."); }
               }, () => setError("Location was blocked — allow location access or type the address."), { timeout: 15000 });
             }}
@@ -638,7 +656,7 @@ function LocalityPickerSession({
                       if (codes.length && codes[0].rawValue) {
                         scanStreamRef.current?.getTracks().forEach((t) => t.stop()); scanStreamRef.current = null; setScanningQR(false);
                         setAddress(String(codes[0].rawValue)); setResult(null); setSelectedLocalityId(''); setSearching(false);
-                        setTimeout(() => runSearch(), 0); return;
+                        setAutoSearchNonce(Date.now()); return;
                       }
                     } catch {}
                     if (scanStreamRef.current) setTimeout(tick, 300);
@@ -665,7 +683,7 @@ function LocalityPickerSession({
                 if (!/\d/.test(text) || !/[a-zA-Z]{3,}/.test(text)) { setError("The clipboard doesn't look like a street address — copy the address first."); return; }
                 searchVersion.current++; pendingSearch.current = null;
                 setAddress(text); setResult(null); setSelectedLocalityId(''); setSearching(false);
-                setTimeout(() => runSearch(), 0);
+                setAutoSearchNonce(Date.now());
               } catch { setError("Couldn't read the clipboard — paste into the field instead."); }
             }}
           >
@@ -706,8 +724,8 @@ function LocalityPickerSession({
           <div className="flex flex-wrap gap-1.5 items-center px-4">
             <span className="text-[10px] text-gray-500 font-medium">Recent:</span>
             {recentAddresses.map((addr) => (
-              <button type="button" key={addr} type="button" title={addr}
-                onClick={() => { searchVersion.current++; pendingSearch.current = null; setAddress(addr); setResult(null); setSelectedLocalityId(''); setTimeout(() => runSearch(), 0); }}
+              <button type="button" key={addr} title={addr}
+                onClick={() => { searchVersion.current++; pendingSearch.current = null; setAddress(addr); setResult(null); setSelectedLocalityId(''); setSearching(false); setAutoSearchNonce(Date.now()); }}
                 className="text-[11px] text-violet-700 bg-violet-50 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-100 max-w-[240px] truncate">
                 {addr}
               </button>
@@ -796,9 +814,7 @@ function LocalityPickerSession({
               </label>
               <Button type="button" disabled={!repositoryDraftId||creatingDraft||repositoryLoading||Boolean(repositoryError)} onClick={()=>{const matches=repositoryJurisdictions.filter(row=>row.id===repositoryDraftId);if(matches.length===1)requestDraftFromRepository(matches[0]);}}>Check the draft before making it</Button>
             </section>}
-            {result && searchedFor && normalizeAddress(address).toLowerCase() !== searchedFor.toLowerCase() && (
-              <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">The address changed since this result — press Find again to re-check.</div>
-            )}
+            {/* Editing the field clears the result (see onChange), so a result on screen always matches the address shown. */}
             {result && (
               <>
                 {/* Locality match */}
@@ -1016,7 +1032,7 @@ function LocalityPickerSession({
                 const hit = await r.json();
                 const a = hit?.address || {};
                 const parts = [[a.house_number, a.road].filter(Boolean).join(' '), a.city || a.town || a.village || a.hamlet || a.county, a.state, a.postcode].filter(Boolean);
-                if (parts.length) { setAddress(parts.join(', ')); setResult(null); setSelectedLocalityId(''); setSearching(false); setTimeout(() => runSearch(), 0); }
+                if (parts.length) { setAddress(parts.join(', ')); setResult(null); setSelectedLocalityId(''); setSearching(false); setAutoSearchNonce(Date.now()); }
               } catch { setError("Couldn't read the dragged pin's address — re-type it instead."); }
             }} />
           </div>
@@ -1060,6 +1076,7 @@ function LocalityPickerSession({
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t px-4 pb-3 pt-3">
           <div className="text-[11px] text-gray-500">
+            {applyHint && <span className="block text-xs font-medium text-slate-600 mb-0.5">{applyHint}</span>}
             {excludeElectrical ? "🚫 Electrical Inspectors will be excluded" : "⚡ Electrical Inspectors will be included"}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -1071,7 +1088,7 @@ function LocalityPickerSession({
               aria-label="Use the picked office" disabled={!selectedLocalityId || searching || !(addressCanApply||addressNeedsCheck)}
               className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
-              <Save className="w-4 h-4" /> {addressNeedsCheck ? "Use it anyway — needs a check" : "Use this office"}
+              <Save className="w-4 h-4" /> {addressNeedsCheck ? "Use it anyway — needs a check" : (() => { const n = selectedLocality?.name || result?.suggested_locality?.name || ""; return n ? `Use ${n.length > 22 ? n.slice(0, 22) + "…" : n}` : "Use this office"; })()}
             </Button>
           </div>
         </div>
