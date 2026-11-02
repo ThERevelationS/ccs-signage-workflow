@@ -718,7 +718,10 @@ export function rollupEstimateRows(rows: any[] = [], opts: any = {}) {
     }
     g.estimate_count += 1;
     g.total_cents += Math.round(num(r.total_cents));
-    if (dayInRange(r.sent_day, from, to)) {
+    // sent_count needs send evidence — an undated (never-sent) row counts
+    // under unbounded windows only if dayInRange is called bare; require the
+    // day itself so drafts don't inflate the bucket (N-04.1).
+    if (r.sent_day && dayInRange(r.sent_day, from, to)) {
       g.sent_count += 1;
       g.sent_cents += Math.round(num(r.total_cents));
     }
@@ -795,7 +798,7 @@ export function conversionSalespersonRows(rows: any[] = [], opts: any = {}) {
   const groups = new Map<string, any>();
   for (const r of Array.isArray(rows) ? rows : []) {
     if (!isObj(r)) continue;
-    const sentIn = dayInRange(r.sent_day, from, to);
+    const sentIn = Boolean(r.sent_day) && dayInRange(r.sent_day, from, to);
     const convIn = r.converted === true && dayInRange(r.converted_day, from, to);
     if (!sentIn && !convIn) continue;
     const key = clean(r.salesperson) || '(unassigned)';
