@@ -452,7 +452,17 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
 }, rules = [], enteredAddress = "" }) {
   const state = normalizeAddressState(geocode?.address_parts?.administrative_area_level_1).toUpperCase(), point = { lat: geocode?.lat, lng: geocode?.lon };
   const base = { status: "unresolved", state, point, checked_at: (/* @__PURE__ */ new Date()).toISOString(), targets: [], boundaries: [], sources: [], reason: "We could not confirm the property location. An administrator needs to check it." };
-  if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng) || !["OH", "KY"].includes(state)) return { ...base, reason: "Enter a complete street address in Ohio or Kentucky." };
+  const streetPartRaw = String(enteredAddress || "").split(",")[0].trim();
+  const invalidReason = (() => {
+    if (!streetPartRaw) return "Enter a numbered street address.";
+    if (/^[0-9A-Z]{4}\+[0-9A-Z]{2,}/i.test(streetPartRaw)) return "This looks like a map plus-code, not a street address. Enter a numbered street address.";
+    const streetPart = norm(streetPartRaw);
+    if (streetPart && !/[a-z]/.test(streetPart)) return "This looks like a phone or ID number, not a street address. Enter a numbered street address.";
+    if (streetPart && !/\d/.test(streetPart)) return "This is missing a house or street number \u2014 enter a numbered street address.";
+    return null;
+  })();
+  if (invalidReason) return { ...base, status: "invalid_input", reason: invalidReason };
+  if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng) || !["OH", "KY"].includes(state)) return { ...base, status: "invalid_input", reason: "Enter a complete street address in Ohio or Kentucky." };
   const fips = state === "OH" ? "39" : "21";
   async function query(kind, url) {
     const params = new URLSearchParams({ f: "json", where: "1=1", geometry: JSON.stringify({ x: point.lng, y: point.lat, spatialReference: { wkid: 4326 } }), geometryType: "esriGeometryPoint", inSR: "4326", spatialRel: "esriSpatialRelIntersects", distance: "25", units: "esriSRUnit_Meter", outFields: "*", returnGeometry: "true", outSR: "4326", resultRecordCount: "10" }), source = url + "/query?" + params;
@@ -600,11 +610,6 @@ async function resolveSpatialLocation({ geocode, fetchJSON, onProgress = async (
     if (!geocode.location_exact && !geocode.approximate_source) {
       const ar = applyResolutionRules(rules, { enteredCity, enteredAddr: enteredAddress, state, countyName, target });
       if (ar) return { ...base, status: "location_verified", reason: "Map position is approximate, but a confirmed review rule places this address in " + ar.pick.name + " \u2014 resolving to " + ar.pick.name + ". Spot-check the pin on the map.", target: base.targets[0], corroborated_by: "resolution_rule" };
-      const streetPart = norm(String(enteredAddress || "").split(",")[0]);
-      if (streetPart) {
-        if (!/[a-z]/.test(streetPart)) return { ...base, status: "invalid_input", reason: "This looks like a phone or ID number, not a street address. Enter a numbered street address." };
-        if (!/\d/.test(streetPart)) return { ...base, status: "invalid_input", reason: "This is missing a house or street number \u2014 enter a numbered street address." };
-      }
       return { ...base, status: "needs_review", target: base.targets[0], reason: "The map found an approximate address. We cannot confirm its jurisdiction yet." };
     }
     if (relevant.some((f) => f.distance_m <= edge)) {
