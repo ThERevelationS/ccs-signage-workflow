@@ -58,6 +58,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 
 const Order = base44.entities.Order;
 const AuthorizedEmail = staffEntities.AuthorizedEmail;
@@ -132,13 +133,12 @@ export default function WorkOrderOrders({ workOrderId, workOrderTitle, clientNam
     let active = true;
     const loadRequestTypes = async () => {
       try {
-        const rows = await GlobalSettings.filter({ setting_key: ORDER_REQUEST_TYPES_SETTING_KEY });
+        const setting = await loadSingleGlobalSetting({
+          entity: GlobalSettings,
+          settingKey: ORDER_REQUEST_TYPES_SETTING_KEY,
+          label: "Order item types",
+        });
         if (!active) return;
-        if (!Array.isArray(rows)) throw new Error("Order item-type settings did not return a record list.");
-        if (rows.length > 1) {
-          throw new Error(`Order item types have ${rows.length} shared settings records. Ask an admin to resolve the duplicate settings.`);
-        }
-        const setting = rows[0] || null;
         setRequestTypeSetting(setting);
         const sharedTypes = normalizeOrderRequestTypes(setting?.setting_value?.items);
         if (sharedTypes.length) {
