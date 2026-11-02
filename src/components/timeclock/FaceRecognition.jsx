@@ -18,6 +18,7 @@ import {
   FACE_QUALITY,
   loadFaceModelsOnce,
   passesFaceQualityGate,
+  supportsInlineQrDetection,
 } from '@/components/timeclock/faceScanRuntime';
 import { IDENTIFY_CAMERA_BLURB, IDENTIFY_QR_BADGE_BLURB, IDENTIFY_QR_BUTTON_PROMPT } from '@/components/timeclock/timeClockIdentifyCopy';
 
@@ -148,7 +149,7 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
   // badges, a BarcodeDetector pass runs alongside the face session so a badge
   // and a face are equally valid identifiers on one camera.
   useEffect(() => {
-    if (!isScanning || isEnrollMode || !onQrScan || !("BarcodeDetector" in window)) return;
+    if (!isScanning || isEnrollMode || !onQrScan || !supportsInlineQrDetection()) return;
     const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
     const qrRun = ++qrLoopRef.current;
     const tick = async () => {
@@ -243,7 +244,7 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
     setIsScanning(true);
     setRecognizedUser(null);
     setScanStatus(onQrScan
-      ? ("BarcodeDetector" in window ? IDENTIFY_CAMERA_BLURB : IDENTIFY_QR_BUTTON_PROMPT)
+      ? (supportsInlineQrDetection() ? IDENTIFY_CAMERA_BLURB : IDENTIFY_QR_BUTTON_PROMPT)
       : "Looking for face...");
     session.start();
   };
@@ -481,7 +482,7 @@ export default function FaceRecognition({ allUsers, onRecognized, onQrScan, isEn
               Start Scan
             </Button>
           )}
-          {onQrScan && !("BarcodeDetector" in window) && (
+          {onQrScan && !supportsInlineQrDetection() && (
             <Button onClick={startQrMode} variant="outline" className="gap-2">
               <QrCode className="w-4 h-4" />
               Scan QR badge
