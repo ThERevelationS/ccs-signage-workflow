@@ -25,7 +25,7 @@ const STAGE_LABELS: Record<string, string> = {
 };
 const formatStage = (s: unknown) => STAGE_LABELS[String(s || '')] || String(s || '');
 
-// rider_stage excludes 'completed' — the enum stops at installation.
+// rider_stage excludes 'completed' ??? the enum stops at installation.
 const RIDER_STAGES = new Set(['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation']);
 
 // Event vocabularies that carry a business record other than a Work Order
@@ -74,7 +74,7 @@ const RECORD_CONTEXT_EVENTS: Record<string, string> = {
   recon_variance: 'ReconciliationBatch',
 };
 
-// Human labels for record-bearing domains — drives the default email subject.
+// Human labels for record-bearing domains ??? drives the default email subject.
 const RECORD_LABELS: Record<string, string> = {
   Opportunity: 'Opportunity',
   TimeEntry: 'Time Entry',
@@ -307,7 +307,7 @@ async function matchesTrigger(base44: any, trigger: any, eventType: string, work
     if (condition.max_quantity != null && !(Number(order.quantity) <= Number(condition.max_quantity))) return false;
   }
 
-  // Cross-entity guard — 'related_*' fields load a row from another entity and
+  // Cross-entity guard ??? 'related_*' fields load a row from another entity and
   // require a field match. Fail-closed: a lookup error or missing row stops
   // the trigger rather than firing actions from a broken config.
   if (condition.related_entity && condition.related_match_field && condition.related_field) {
@@ -449,10 +449,10 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
     '{{clock_out_time}}': esc(record?.clock_out),
     '{{total_hours}}': esc(record?.total_hours),
     '{{time_off_type}}': esc(record?.request_type),
-    '{{time_off_dates}}': esc(record?.start_date ? `${record.start_date} – ${record.end_date || record.start_date}` : ''),
+    '{{time_off_dates}}': esc(record?.start_date ? `${record.start_date} ??? ${record.end_date || record.start_date}` : ''),
     '{{time_off_hours}}': esc(record?.hours_requested),
     '{{time_off_reason}}': esc(record?.reason),
-    // Generic record identity — FeatureReport title, JurisdictionProfile name,
+    // Generic record identity ??? FeatureReport title, JurisdictionProfile name,
     // PendingImport doc/email subject all resolve through these.
     '{{record_title}}': esc(record?.title || record?.name || record?.doc_number || record?.email_subject),
     '{{name}}': esc(record?.name),
@@ -505,7 +505,7 @@ async function sendEmailAction(base44: any, config: any, context: any, changedBy
   }
 
   const sent: string[] = [];
-  // Per-user notification preferences — admins/staff with
+  // Per-user notification preferences ??? admins/staff with
   // notification_prefs.automation_emails === false are skipped. The lookup is
   // fail-open: a prefs read failure must never block a configured send.
   let sendList = [...new Set(recipients)];
@@ -630,7 +630,7 @@ async function executeAction(base44: any, action: any, workOrder: any, context: 
       const title = (titleTemplate ? titleTemplate.replace(/\{\{title\}\}/g, String(workOrder.title || '')) : `${workOrder.title || 'Work Order'} - Rider`).trim();
       if (!title) break;
       // A rule that already created a rider with this title for this parent
-      // does not create another — re-fired events must not duplicate riders.
+      // does not create another ??? re-fired events must not duplicate riders.
       const existing = await base44.asServiceRole.entities.WorkOrder.filter({ parent_work_order_id: workOrder.id, is_rider: true, title });
       if (!Array.isArray(existing)) throw new Error('Workflow rider dedup lookup could not be verified.');
       if (existing.length > 0) return { skipped: true, reason: 'A rider with this title already exists for this work order', rider_id: existing[0].id };
@@ -741,11 +741,11 @@ export async function processWorkflowTriggerEvent({ base44, payload, changedByOv
   const runStampWarnings: string[] = [];
   const orderedRules = automations.filter(Boolean).sort((a: any, b: any) => (Number(a.priority) || 0) - (Number(b.priority) || 0));
   for (const rule of orderedRules) {
-    // Approval-gated automations: a pending rule is a proposal — it never fires
+    // Approval-gated automations: a pending rule is a proposal ??? it never fires
     // until an administrator approves it, even if it is enabled.
     if (!rule || rule.enabled !== true || rule.approval_status === 'pending' || !Array.isArray(rule.triggers) || !Array.isArray(rule.actions)) continue;
     // Triggers combine with each row's declared logic (and/or). AND only
-    // holds when several trigger rows can match the same event — the same
+    // holds when several trigger rows can match the same event ??? the same
     // semantics the Admin editor warns about for mixed event types.
     let triggered: boolean | null = null;
     for (const trigger of rule.triggers || []) {
