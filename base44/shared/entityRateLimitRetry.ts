@@ -29,7 +29,16 @@ export function withEntityRateLimitRetry(client: any, { paceMs = 0, maxRetries =
           if (paceMs) await reserveRequest();
           try { return await value.apply(target, args); }
           catch (e) {
-            if (!isLimited(e) || attempt >= maxRetries) throw e;
+            if (!isLimited(e)) throw e;
+            if (attempt >= maxRetries) {
+              // Normalize the outgoing shape: catches across the functions map
+              // error.status/statusCode to an HTTP status, but some SDK rate-
+              // limit errors arrive message-only. Stamping 429 lets every
+              // catch propagate a retryable status instead of flattening to 500.
+              e.status = e.status ?? 429;
+              e.statusCode = e.statusCode ?? 429;
+              throw e;
+            }
             // Background work yields longer instead of competing with employee access.
             const delay = paceMs ? 15000 * (attempt + 1) : 1500 * (attempt + 1);
             if (paceMs) nextRequestAt = Math.max(nextRequestAt, Date.now() + delay);
