@@ -41,7 +41,7 @@ export default function SipChecklistSection({ workOrder, onUpdate }) {
     try {
       const [freshWO, usersData, dropdownsSetting] = await Promise.all([
         WorkOrder.filter({ id: workOrder.id }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "SIP checklist authorized users" }),
+        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, cacheTtlMs: 30000, label: "SIP checklist authorized users" }),
         loadSingleGlobalSetting({
           entity: base44.entities.GlobalSettings,
           settingKey: "dropdownConditions",
