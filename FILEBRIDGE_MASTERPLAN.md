@@ -10,7 +10,7 @@ Live data feed from the shop's two Unraid servers into CCS Signage Workflow (Bas
 - Folder layout = configurable roots + auto-match + review queue + forward convention.
 - Permissions = all staff browse/search/open/upload; **delete = app-created files only**.
 - Backup server = **read-replica failover agent** (RO), not a write target.
-- Transport = **outbound-only**: agent polls/WS outbound to app; nothing inbound, no tunnel. `FileBridgeHub` actor = optional wake accelerator; entity queue is always the truth.
+- Transport = **outbound-only**: agent polls/streams outbound to app; nothing inbound, no tunnel. **SSE long-poll `command_wait` = primary wake channel** (spike-proven 55s+ holds, live events); adaptive short-poll = fallback. `FileBridgeHub` actor deferred — spike showed actor runtime only activates on app publish (403 pre-publish, no `.actors` on anonymous request clients). Entity queue is always the truth.
 - Provenance = **`FileBridgeUpload` permanent append-only ledger** → `managed_by` (organizable) vs `origin` (deletable) tiers → `/.ccs_trash/` tombstones + `restore_trash`.
 - App-loss fail-safe: no provenance → everything treated external → nothing deletable.
 
@@ -18,7 +18,7 @@ Live data feed from the shop's two Unraid servers into CCS Signage Workflow (Bas
 
 - New functions: `base44/functions/<name>/entry.ts` only (sandbox auto-syncs; **no function.jsonc** in sandbox mode — `functions pull`'s malformed entry path is irrelevant here).
 - New entities: `base44/entities/<PascalCase>.jsonc` — write syncs schema. All bridge entities are **backend-only RLS** and must NEVER appear in `staffDataRead`/`staffEntityWrite` allowlists or `boardFeedFields` — guard-tested.
-- New actor: `base44/actors/FileBridgeHub/entry.ts` — PascalCase folder, class extends `Actor` from `base44:runtime/actors`. Actors get no secrets — agent auth verified via `functions.invoke('fileBridgeIngest', verify_agent)`.
+- Deferred actor (post-publish only): `base44/actors/FileBridgeHub/entry.ts` — PascalCase folder, class extends `Actor` from `base44:runtime/actors`, **`handleTick() {}` mandatory** (abstract member — won't compile without it). Actors get no secrets — agent auth verified via `functions.invoke('fileBridgeIngest', verify_agent)`.
 - Staff-facing reads/writes go through `fileBridgeAction` with `authenticateSignShopSession`; agent traffic through `fileBridgeIngest` with HMAC `{key_id, ts, body}` + timing-safe compare + 5-min replay window (`key_current`/`key_previous` rotation in `GlobalSettings.fileBridge`).
 - Idempotency: `path_key` = sha1(agent_id + root + NFC+casefold path) as `creation_request_key` on FileIndex creates; `request_key`/`dedupe_key` on commands/uploads.
 - Rate limits: index upserts prefer **by-id updates** (agent persists entity ids in `entity_ids.db`); batched path_key resolution for unknowns; `suggested_batch_size` + 429 backoff. Poll = 1 small read. Deep search = 0 entity reads (results ride command rows).
@@ -29,10 +29,10 @@ Live data feed from the shop's two Unraid servers into CCS Signage Workflow (Bas
 PRIMARY Unraid (agent, RW)          BACKUP Unraid (agent, RO replica)
   /mnt/user shares — SQLite FTS5      /mnt/user shares — SQLite FTS5
   manifest · previews · spool         manifest(rebuild-on-promote) · spool
-        \  outbound only — FileBridgeHub actor wake + adaptive poll fallback
+        \  outbound only — SSE command_wait (~45s holds) + adaptive poll fallback
          ▼                            ▼
   fileBridgeIngest (HMAC agent API)   fileBridgeAction (staff session API)
-  fileBridgeMaintenance (scheduled)   FileBridgeHub (actor wake rooms)
+  fileBridgeMaintenance (scheduled)   FileBridgeHub actor (deferred, post-publish)
         ▼
   Entities: FileIndex(hot) · FileShareRoot · CustomerFolderLink ·
     FileBridgeCommand · FileBridgeChunk · FileBridgeUpload(ledger) ·
@@ -51,7 +51,7 @@ PRIMARY Unraid (agent, RW)          BACKUP Unraid (agent, RO replica)
 ### WS-A — FOUNDATION & SPIKES
 
 - [ ] `FB-01` This document + AGENTS.md scope note + `fileBridge.enabled` feature flag wiring. | Verify: doc exists, AGENTS.md updated.
-- [ ] `FB-02` `fileBridgeSpike` function + `FileBridgeSpike` actor: measure (a) function request body cap, (b) actor anonymous connect + function→room send + latency, (c) `UploadFile` from function + whether storage has a delete API, (d) bulk write API existence (`bulkCreate`/`createMany`), (e) SSE/held-request tolerance, (f) storage quota signals. | Verify: `docs/filebridge-spike-results.md` records measured numbers → feeds caps in model.
+- [x] `FB-02` `fileBridgeSpike` function + `FileBridgeSpike` actor + `FileBridgeSpikeRow` entity: measured (a) body cap ~64MB raw/~89MB b64, 96MB→413 → chunk 32MB; (b) actor connect 403 pre-publish, `.actors` absent on anonymous request client → SSE primary, actor deferred; (c) `UploadFile` works, **no delete API** → `keep_delivered_max_mb` + `secure_download` mandatory; (d) `bulkCreate` present, `deleteMany` works; (e) serial write ~91ms → batching mandatory; (f) SSE 55s holds live → `command_wait` ~45s. | Verify: `docs/filebridge-spike-results.md` recorded ✓. Spike resources marked THROWAWAY, delete before publish.
 - [ ] `FB-03` Replication/lag info from Brett (primary→backup mechanism + typical lag) — walkthrough input only.
 
 ### WS-B — CONTRACT MODEL & ENTITIES
@@ -63,11 +63,11 @@ PRIMARY Unraid (agent, RW)          BACKUP Unraid (agent, RO replica)
 
 ### WS-C — TRANSPORT SPINE
 
-- [ ] `FB-20` `fileBridgeIngest` — agent API: `handshake` (mint/return agent_id, config push by `config_version`, `detect_roots`, role assign + singleton-primary guard), `command_poll`, `command_complete` (idempotent), `index_batch` (entity-id-first, batched path_key resolution, adaptive batch), `thumb_push`/`preview_push`, `deliver_chunk`/`deliver_stitch`/`deliver_complete`, `event`, `recent_batch`, `inventory_report`, `manifest_sync`, `become_primary`. HMAC auth + replay window + key rotation. | Verify: unit-covered auth paths; sandbox curl round-trip.
+- [ ] `FB-20` `fileBridgeIngest` — agent API: `handshake` (mint/return agent_id, config push by `config_version`, `detect_roots`, role assign + singleton-primary guard), `command_poll`, `command_wait` (SSE ~45s hold = primary wake channel), `command_complete` (idempotent), `index_batch` (`bulkCreate` inserts + entity-id-first updates, batched path_key resolution, adaptive batch), `thumb_push`/`preview_push`, `deliver_chunk`/`deliver_stitch`/`deliver_complete` (32MB chunks, 48MB inline cap), `event`, `recent_batch`, `inventory_report`, `manifest_sync`, `become_primary`. HMAC auth + replay window + key rotation. | Verify: unit-covered auth paths; sandbox curl round-trip.
 - [ ] `FB-21` `fileBridgeAction` — staff API skeleton: session auth, `get_health`, `search_hot`, `list_folder`, `queue_*` writers w/ per-actor rate limit + `commandSpec` + `dedupe_key`, event/audit writes. | Verify: session-gated 401s; command rows created w/ lease fields.
-- [ ] `FB-22` `FileBridgeHub` actor — anonymous conn `agent:<agent_id>` → `verify_agent` via ingest fn → accept/reject; `wake` → rebroadcast `commands_pending` to agent conns only. | Verify: spike proven; reconnect/reclaim conn.id works.
-- [ ] `FB-23` `fileBridgeMaintenance` + workflow jsonc: stale-command/lease reaper, `delivered_url` sweep honoring `keep_delivered_max_mb` (delete-API dependent — else dereference), chunk reaper, trash retention sweep command, stale-health alert, event/recent retention, missing-row purge. FileBridgeUpload exempt from reaping. | Verify: scheduled run logs; reaper drills.
-- [ ] `FB-24` Dev harness: `agent/` skeleton (config loader, state dirs, command channel w/ poll+WS fallback, spool, heartbeat, executor stub) + `docker-compose.dev.yml` (fixture tree + simulated second agent + chaos toggles: drop-cmd, fake clock, kill-channel). | Verify: harness e2e round-trip `echo` command.
+- [ ] `FB-22` `command_wait` SSE implementation in `fileBridgeIngest` — ~45s hold, emits pending `FileBridgeCommand` rows for the calling agent on arrival; reconnect = heartbeat. **DEFERRED**: `FileBridgeHub` actor as post-publish wake accelerator (spike: runtime activates only on publish; `handleTick` required). | Verify: curl-held stream delivers queued command <1s after write; fallback poll works with stream dead.
+- [ ] `FB-23` `fileBridgeMaintenance` + workflow jsonc: stale-command/lease reaper, `delivered_url` sweep honoring `keep_delivered_max_mb` (**spike: no storage delete API exists → sweep dereferences rows only**; storage grows permanently, so keep-cap stays strict), chunk reaper, trash retention sweep command, stale-health alert, event/recent retention, missing-row purge. FileBridgeUpload exempt from reaping. | Verify: scheduled run logs; reaper drills.
+- [ ] `FB-24` Dev harness: `agent/` skeleton (config loader, state dirs, command channel w/ SSE `command_wait` + poll fallback, spool, heartbeat, executor stub) + `docker-compose.dev.yml` (fixture tree + simulated second agent + chaos toggles: drop-cmd, fake clock, kill-channel). | Verify: harness e2e round-trip `echo` command.
 
 ### WS-D — INDEX & BROWSE
 
@@ -117,7 +117,7 @@ PRIMARY Unraid (agent, RW)          BACKUP Unraid (agent, RO replica)
 ## Security rules (non-negotiable)
 
 - All bridge entities backend-only RLS; never in `staffDataRead`/`staffEntityWrite` allowlists or `boardFeedFields`.
-- Agent auth = HMAC `{key_id,ts,body}`, timing-safe, 5-min window, `key_current`/`key_previous` rotation; actor conn validated via `verify_agent`.
+- Agent auth = HMAC `{key_id,ts,body}`, timing-safe, 5-min window, `key_current`/`key_previous` rotation; `command_wait` stream authenticates the same way per-connection.
 - Root allowlist + realpath/`..`/symlink guards enforced IN THE AGENT (not just UI); `commandSpec` validated both sides; per-actor rate limits.
 - Deletes require manifest `origin:bridge` → tombstone, reversible via `restore_trash`; moves require `managed_by`/`origin`; non-empty dirs rejected; bulk cap 50; backup agent refuses ALL mutations until promoted.
 - UI/events show **root-relative paths only** — `/mnt/user/` never leaks.
