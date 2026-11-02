@@ -10,6 +10,10 @@ import { metalEngineEconomics } from "./metal/metalSellPricing";
 
 import { laserEngineEconomics } from "./laser/laserSellPricing";
 
+import { paintEngineEconomics } from "./paint/paintSellPricing";
+
+import { foundationEngineEconomics } from "./foundation/foundationSellPricing";
+
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 export function hasNumericValue(value) {
@@ -60,10 +64,24 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0, pri
     const cost = fallback;
     const markupPercent = num(record.customer_markup_percent);
     const override = num(record.customer_price_override);
-    return withSavedTier({
-      internalCost: cost,
-      customerPrice: override > 0 ? override : cost * (1 + markupPercent / 100),
-    });
+    const baselineSell = override > 0 ? override : cost * (1 + markupPercent / 100);
+    // F-23h pricing-engine wire: when the saved foundation record explicitly
+    // carries engine config (engine_pricing-style context block or component-
+    // scoped descriptors on the persisted split-total cost components), the
+    // shared engine owns the sell side and wins over a legacy saved
+    // customer_pricing snapshot. The module cost math above stays
+    // authoritative; with no config the wire returns null and the record
+    // keeps today's numbers byte-identically — the manual markup/override
+    // and the saved Markup-Tier snapshot still apply.
+    const wired = foundationEngineEconomics(record, { baselineSell, internalCost: cost, markupPercent, pricingContext });
+    if (wired) {
+      return {
+        internalCost: wired.internalCost,
+        customerPrice: wired.customerPrice,
+        pricing_engine: wired.resolution,
+      };
+    }
+    return withSavedTier({ internalCost: cost, customerPrice: baselineSell });
   }
 
   if (["vinyl", "brick_stone", "maintenance"].includes(moduleKey)) {
@@ -175,6 +193,30 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0, pri
       };
     }
     return withSavedTier({ internalCost, customerPrice: total });
+  }
+
+  if (moduleKey === "painting") {
+    // F-23g pricing-engine wire: when the saved paint record explicitly
+    // carries engine config (engine_pricing-style context block or per-line
+    // tier/template descriptors on items[]), the shared engine owns the sell
+    // side and wins over a legacy saved customer_pricing snapshot. Paint
+    // records have no total_cost field and no module markup — the baseline
+    // sell is the pure cost sum (total_paint_mask_cost +
+    // total_liquid_paint_and_supplies_cost + total_labor_cost via
+    // sourceProjectTotal's painting branch, which `total` resolves to since
+    // record.total_cost is absent) — so the internal cost and the sell
+    // baseline are the same number. With no config the wire returns null
+    // and the record keeps today's numbers byte-identically — the saved
+    // Markup-Tier snapshot still applies.
+    const wired = paintEngineEconomics(record, { baselineSell: total, internalCost: total, pricingContext });
+    if (wired) {
+      return {
+        internalCost: wired.internalCost,
+        customerPrice: wired.customerPrice,
+        pricing_engine: wired.resolution,
+      };
+    }
+    return withSavedTier({ internalCost: total, customerPrice: total });
   }
 
   return withSavedTier({ internalCost: fallback, customerPrice: fallback });
