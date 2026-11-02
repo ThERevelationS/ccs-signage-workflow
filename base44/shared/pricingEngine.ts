@@ -52,6 +52,12 @@ export const PRICING_MODES = Object.freeze({
   MARKUP: 'markup',
   COST_PLUS: 'cost_plus',
   MARKET: 'market',
+  // F-05 activation vocabulary: 'market_based' is the entity/admin spelling of
+  // the same retail-minus-discount chart family the engine rows call 'market'
+  // (PricingTemplate.market_based, GlobalPricingTier.rules[].market_based).
+  // 'fixed' is a pinned unit sell price (part.fixed_price family).
+  MARKET_BASED: 'market_based',
+  FIXED: 'fixed',
 } as const);
 
 // --- Date windows (chart rows may carry effective_from / effective_to) --------
@@ -127,9 +133,14 @@ const newerRow = (a: any, b: any): any => {
 // --- Qty-break charts -----------------------------------------------------------
 
 // The bracket with the highest qualifying `qty` threshold wins.
-export function pickUnitBreak(breaks: any, qty: unknown): any {
+// opts.interpolate === true switches to linear interpolation between bracket
+// points (see interpolateUnitBreak). With opts absent/false the pick is
+// byte-for-byte the legacy bracket pick — callers never interpolate unless a
+// chart explicitly opts in (interpolate_breaks / break_interpolation:'linear').
+export function pickUnitBreak(breaks: any, qty: unknown, opts: any = {}): any {
   const q = num(qty);
   if (!Array.isArray(breaks) || q <= 0) return null;
+  if (opts && opts.interpolate === true) return interpolateUnitBreak(breaks, q);
   let pick: any = null;
   for (const b of breaks) {
     const bq = num(b?.qty, NaN);
@@ -138,6 +149,66 @@ export function pickUnitBreak(breaks: any, qty: unknown): any {
     if (!pick || bq > num(pick.qty)) pick = b;
   }
   return pick;
+}
+
+// Valid brackets ({qty>0, finite unit_price}) sorted ascending by qty with
+// duplicate thresholds collapsed — the first-declared bracket wins its slot.
+// This is the lattice interpolation walks.
+const sortedUnitBreaks = (breaks: any): any[] => {
+  const list: any[] = [];
+  for (const b of Array.isArray(breaks) ? breaks : []) {
+    const bq = num(b?.qty, NaN);
+    if (!Number.isFinite(bq) || bq <= 0) continue;
+    if (!Number.isFinite(Number(b?.unit_price))) continue;
+    list.push(b);
+  }
+  list.sort((a: any, b: any) => num(a.qty) - num(b.qty));
+  return list.filter((b: any, i: number) => i === 0 || num(b.qty) !== num(list[i - 1].qty));
+};
+
+// Linear interpolation between neighboring bracket points (F-04 — CoreBridge
+// interpolated qty-break charts). Semantics:
+//   qty in [lo.qty, hi.qty): unit_price = lo.p + (hi.p - lo.p) * t where
+//     t = (qty - lo.qty) / (hi.qty - lo.qty); result rounds to 4 decimals
+//     (round4 — same precision as every engine unit price).
+//   qty below the FIRST bracket  -> null (never extrapolate below the chart;
+//     the caller falls back to markup/market exactly like a missed break).
+//   qty exactly ON a bracket qty -> that bracket object verbatim.
+//   qty at/above the TOP bracket -> top bracket verbatim (clamp — the best
+//     published volume price, never an extrapolation off the chart's end).
+//   0 or 1 valid brackets        -> plain bracket-pick semantics.
+// Mid-bracket hits return a synthetic bracket
+//   {qty: lower.qty, unit_price, interpolated: true, at_qty: <requested>,
+//    between: [lowerBracket, upperBracket]}
+// so a downstream `breakApplied` audit can show the interpolation anchors.
+export function interpolateUnitBreak(breaks: any, qty: unknown): any {
+  const q = num(qty);
+  const list = sortedUnitBreaks(breaks);
+  if (!list.length || q <= 0 || q < num(list[0].qty)) return null;
+  const last = list[list.length - 1];
+  if (q >= num(last.qty)) return last;
+  let lower = list[0];
+  let upper = last;
+  for (let i = 0; i < list.length - 1; i += 1) {
+    if (q < num(list[i + 1].qty)) {
+      lower = list[i];
+      upper = list[i + 1];
+      break;
+    }
+  }
+  if (q === num(lower.qty)) return lower;
+  const loQ = num(lower.qty);
+  const hiQ = num(upper.qty);
+  const loP = num(lower.unit_price);
+  const hiP = num(upper.unit_price);
+  const t = (q - loQ) / (hiQ - loQ);
+  return {
+    qty: loQ,
+    unit_price: round4(loP + (hiP - loP) * t),
+    interpolated: true,
+    at_qty: q,
+    between: [lower, upper],
+  };
 }
 
 // --- Formula modifiers -----------------------------------------------------------
@@ -182,8 +253,27 @@ export function applyFormulaModifiers(unitPrice: unknown, modifiers: any): { uni
 //   formulaModifiers?   ordered unit-price adjustments
 //   ref?                originating record/descriptor (echoed for audit)
 
-const marketKind = (row: any): boolean =>
-  normStr(row?.pricing_mode) === PRICING_MODES.MARKET && Number.isFinite(Number(row?.market_retail));
+const marketKind = (row: any): boolean => {
+  const pm = normStr(row?.pricing_mode);
+  // 'market' is the engine token; 'market_based' is the entity/admin spelling
+  // of the same chart family — both require a finite market_retail.
+  return (pm === PRICING_MODES.MARKET || pm === PRICING_MODES.MARKET_BASED)
+    && Number.isFinite(Number(row?.market_retail));
+};
+
+// A chart row / override descriptor opts its qty-break chart into interpolated
+// pricing via interpolate_breaks (boolean | 'true' | 'linear'), the camelCase
+// twins interpolateBreaks/interpolate, or break_interpolation:'linear'.
+// Off by default — every unflagged chart keeps exact bracket-pick semantics.
+const wantsInterpolatedBreaks = (src: any): boolean => {
+  if (!src || typeof src !== 'object') return false;
+  if (normStr(src.break_interpolation) === 'linear') return true;
+  for (const f of ['interpolate_breaks', 'interpolateBreaks', 'interpolate']) {
+    const v = (src as any)[f];
+    if (v === true || normStr(v) === 'true' || normStr(v) === 'linear') return true;
+  }
+  return false;
+};
 
 function ruleFromChartRow(row: any): any {
   return {
@@ -192,6 +282,7 @@ function ruleFromChartRow(row: any): any {
     marketRetail: marketKind(row) ? num(row?.market_retail) : undefined,
     marketDiscountPct: marketKind(row) ? num(row?.market_discount_pct) : undefined,
     unitBreaks: Array.isArray(row?.per_unit_breaks) ? row.per_unit_breaks : undefined,
+    interpolateBreaks: wantsInterpolatedBreaks(row) || undefined,
     minimumCharge: Number.isFinite(Number(row?.minimum_charge)) ? num(row.minimum_charge) : undefined,
     formulaModifiers: Array.isArray(row?.formula_modifiers) ? row.formula_modifiers : undefined,
     ref: row,
@@ -239,6 +330,7 @@ function overrideRule(source: any, tierRules: any[]): any {
     return {
       kind: 'breaks',
       unitBreaks: breaks,
+      interpolateBreaks: wantsInterpolatedBreaks(source) || undefined,
       markupPct: firstFinite(source.markup_pct) ?? undefined,
       minimumCharge: firstFinite(source.minimum_charge) ?? undefined,
       formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : undefined,
@@ -252,6 +344,7 @@ function overrideRule(source: any, tierRules: any[]): any {
       marketRetail: num(source.market_retail),
       marketDiscountPct: num(source.market_discount_pct),
       unitBreaks: Array.isArray(source.per_unit_breaks) ? source.per_unit_breaks : undefined,
+      interpolateBreaks: wantsInterpolatedBreaks(source) || undefined,
       minimumCharge: firstFinite(source.minimum_charge) ?? undefined,
       formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : undefined,
       ref: source,
@@ -263,6 +356,7 @@ function overrideRule(source: any, tierRules: any[]): any {
     return {
       kind: 'markup',
       markupPct: markup,
+      interpolateBreaks: wantsInterpolatedBreaks(source) || undefined,
       minimumCharge: firstFinite(source.minimum_charge) ?? undefined,
       formulaModifiers: Array.isArray(source.formula_modifiers) ? source.formula_modifiers : undefined,
       ref: source,
@@ -389,7 +483,9 @@ export function pricePart(input: any = {}): any {
   let market: any = null;
 
   const breaks = Array.isArray(rule.unitBreaks) ? rule.unitBreaks : null;
-  const brk = breaks ? pickUnitBreak(breaks, qty) : null;
+  // Interpolated break charts opt in via rule.interpolateBreaks (matrix row /
+  // descriptor flag) — unflagged charts keep exact bracket-pick semantics.
+  const brk = breaks ? pickUnitBreak(breaks, qty, { interpolate: rule.interpolateBreaks === true }) : null;
 
   if (rule.kind === 'fixed') {
     unitPrice = num(rule.fixedPrice);
@@ -508,4 +604,195 @@ export function priceLines({ lines = [], ...shared }: any = {}): any {
         : null))
       .filter(Boolean),
   };
+}
+
+// --- Entity activation layer (F-04 / F-05) -------------------------------------
+//
+// The engine resolves plain chart-row objects; this section bridges persisted
+// Base44 entity shapes to those rows. Still pure/deterministic — no io.
+//
+// PricingTierMatrix.jsonc field reality (verified against the schema):
+//   name, status ('active'|'inactive'), customer_tier (MarkupTier.tier_name /
+//   tier_number / record id; blank = every tier), category (MarkupCategory
+//   .category_key; blank = every category), markup_pct, minimum_charge,
+//   per_unit_breaks [{qty, unit_price}], effective_from / effective_to
+//   (YYYY-MM-DD; `to` inclusive through end of day), updated_by, updated_note,
+//   sort_order — plus tolerated extras the engine understands when present:
+//   pricing_mode ('market'|'market_based'), market_retail,
+//   market_discount_pct, formula_modifiers, interpolate_breaks.
+//
+// matrixRowToRule normalizes one row: tolerated aliases collapse onto the
+// canonical engine fields (unit_breaks / qty_breaks -> per_unit_breaks; bracket
+// {price|unit_price} and {qty|min_qty|quantity} -> {qty, unit_price};
+// 'market-based' -> 'market_based'; retail / retail_price -> market_retail;
+// discount_pct -> market_discount_pct; any interpolation spelling ->
+// interpolate_breaks:true). Break charts are sanitized: non-positive qty and
+// non-finite price brackets drop; a chart emptied that way is removed entirely
+// so it can't mask the markup path. NOTE `breaks` is deliberately NOT aliased —
+// PricingTemplate.breaks carries {qty, tier_markups} which is a different
+// chart, not a {qty, unit_price} list.
+//
+// matrixRowsToRules applies the row gate the entity contract requires —
+// status:'inactive' rows and rows outside their effective_from/effective_to
+// window (checked at `now`) never reach the resolver — then maps each
+// survivor through matrixRowToRule. Output rows are drop-in `tierRules` for
+// resolveTier / pricePart (which re-check status + window themselves, so a
+// stale adapted list still can't price an expired row).
+export function matrixRowToRule(row: any, opts: any = {}): any {
+  if (!row || typeof row !== 'object') return null;
+  const out: any = { ...row };
+
+  // Canonical status token: anything but 'inactive' is live (blank = active).
+  out.status = normStr(row.status) === 'inactive' ? 'inactive' : 'active';
+
+  const rawBreaks = Array.isArray(row.per_unit_breaks) ? row.per_unit_breaks
+    : Array.isArray(row.unit_breaks) ? row.unit_breaks
+    : Array.isArray(row.qty_breaks) ? row.qty_breaks
+    : null;
+  if (rawBreaks) {
+    const clean = rawBreaks
+      .map((b: any) => ({
+        qty: num(b?.qty ?? b?.min_qty ?? b?.quantity, NaN),
+        unit_price: num(b?.unit_price ?? b?.price, NaN),
+      }))
+      .filter((b: any) => Number.isFinite(b.qty) && b.qty > 0 && Number.isFinite(b.unit_price));
+    if (clean.length) out.per_unit_breaks = clean;
+    else delete out.per_unit_breaks;
+  }
+
+  if (normStr(out.pricing_mode) === 'market-based') out.pricing_mode = 'market_based';
+  const retail = firstFinite(row.market_retail, row.retail_price, row.retail);
+  if (retail != null) out.market_retail = retail;
+  const discount = firstFinite(row.market_discount_pct, row.discount_pct);
+  if (discount != null) out.market_discount_pct = discount;
+
+  if (wantsInterpolatedBreaks(row) || opts.interpolateBreaks === true) {
+    out.interpolate_breaks = true;
+  }
+  return out;
+}
+
+export function matrixRowsToRules(rows: any, opts: any = {}): any[] {
+  const now = opts.now ?? new Date();
+  const list = Array.isArray(rows) ? rows : Array.isArray(rows?.rows) ? rows.rows : [];
+  const out: any[] = [];
+  for (const row of list) {
+    if (!row || typeof row !== 'object') continue;
+    if (!rowIsActive(row)) continue;          // status:'inactive' never competes
+    if (!rowIsEffective(row, now)) continue;  // effective_from/to window (entity field names)
+    out.push(matrixRowToRule(row, opts));
+  }
+  return out;
+}
+
+// --- resolvePricingMode -----------------------------------------------------------
+//
+// Which pricing FAMILY a part prices under (F-05):
+//   'cost_plus'    markup over unit cost — includes the %-tier matrix chart;
+//                  PricingMode.active_mode 'tier' maps here.
+//   'market_based' retail minus discount — PricingTemplate.market_based /
+//                  GlobalPricingTier rule market_based / market_retail data.
+//   'fixed'        pinned unit sell price (fixed_price / price_override family).
+//
+// Precedence: part > template > globalDefault > 'cost_plus' fallback.
+// Within each layer: explicit mode token > fixed_price > bound tier_ref's
+// chart row > market signals — mirroring overrideRule's own precedence.
+//   { part, template, globalDefault, tierRules }
+//   part          part-level descriptor. Field-name trap: inventory entities
+//                 use `pricing_mode` for UNIT enums ('per_piece', 'per_roll'…)
+//                 — unrecognized tokens are skipped, never guessed as a family.
+//   template      PricingTemplate-like ({market_based, breaks, ...}) or any
+//                 descriptor carrying the same signals.
+//   globalDefault PricingMode entity ({active_mode:'tier'|'cost_plus'}),
+//                 a settings-like object, or a bare mode string.
+//   tierRules     optional chart rows so a bound tier_ref resolves to its row's
+//                 family (a dangling ref resolves nothing — falls through).
+// Returns {mode, source:'part'|'template'|'global'|'default', raw, via}.
+
+const MODE_TOKENS: Record<string, string> = {
+  fixed: PRICING_MODES.FIXED,
+  fixed_price: PRICING_MODES.FIXED,
+  flat: PRICING_MODES.FIXED,
+  market: PRICING_MODES.MARKET_BASED,
+  market_based: PRICING_MODES.MARKET_BASED,
+  'market-based': PRICING_MODES.MARKET_BASED,
+  retail: PRICING_MODES.MARKET_BASED,
+  retail_minus_discount: PRICING_MODES.MARKET_BASED,
+  cost_plus: PRICING_MODES.COST_PLUS,
+  'cost-plus': PRICING_MODES.COST_PLUS,
+  costplus: PRICING_MODES.COST_PLUS,
+  markup: PRICING_MODES.COST_PLUS,
+  tier: PRICING_MODES.COST_PLUS,
+  tier_markup: PRICING_MODES.COST_PLUS,
+  tiered: PRICING_MODES.COST_PLUS,
+};
+
+export const normalizePricingMode = (v: unknown): string | null =>
+  MODE_TOKENS[normStr(v)] ?? null;
+
+// Explicit token fields, checked in order. A bare string/number descriptor is
+// itself the token (via:'value').
+const explicitModeHit = (src: any): any => {
+  if (src == null) return null;
+  if (typeof src !== 'object') {
+    const m = normalizePricingMode(src);
+    return m ? { mode: m, raw: src, via: 'value' } : null;
+  }
+  for (const f of ['pricing_mode', 'price_mode', 'mode', 'active_mode']) {
+    const m = normalizePricingMode(src[f]);
+    if (m) return { mode: m, raw: src[f], via: f };
+  }
+  return null;
+};
+
+const fixedSignalHit = (src: any): any => {
+  if (!src || typeof src !== 'object') return null;
+  const fixed = firstFinite(src.fixed_price, src.price_override, src.override_price);
+  return fixed != null && fixed > 0
+    ? { mode: PRICING_MODES.FIXED, raw: fixed, via: 'fixed_price' }
+    : null;
+};
+
+const marketSignalHit = (src: any): any => {
+  if (!src || typeof src !== 'object') return null;
+  if (src.market_based === true || normStr(src.market_based) === 'true') {
+    return { mode: PRICING_MODES.MARKET_BASED, raw: src.market_based, via: 'market_based' };
+  }
+  const retail = firstFinite(src.market_retail, src.retail_price, src.retail);
+  return retail != null && retail > 0
+    ? { mode: PRICING_MODES.MARKET_BASED, raw: retail, via: 'market_retail' }
+    : null;
+};
+
+// tier_ref / tier / tier_name binding -> the bound chart row's family. A market
+// row (pricing_mode market + finite market_retail) resolves 'market_based';
+// any other bound row is the cost-plus family. A DANGLING ref resolves
+// nothing — falls through rather than guessing.
+const tierRefModeHit = (src: any, rows: any): any => {
+  if (!src || typeof src !== 'object') return null;
+  const ref = src.tier_ref ?? src.tier ?? src.tier_name;
+  if (ref == null || !normStr(ref)) return null;
+  const wanted = normStr(typeof ref === 'object' ? (ref as any).name ?? (ref as any).id : ref);
+  const row = (Array.isArray(rows) ? rows : []).find(
+    (r: any) => r && rowIsActive(r) && (normStr(r.name) === wanted || normStr(r.id) === wanted),
+  );
+  if (!row) return null;
+  return {
+    mode: marketKind(row) ? PRICING_MODES.MARKET_BASED : PRICING_MODES.COST_PLUS,
+    raw: row,
+    via: 'tier_ref',
+  };
+};
+
+const descriptorModeHit = (src: any, rows: any): any =>
+  explicitModeHit(src) || fixedSignalHit(src) || tierRefModeHit(src, rows) || marketSignalHit(src);
+
+export function resolvePricingMode({ part = null, template = null, globalDefault = null, tierRules = null }: any = {}): any {
+  const partHit = descriptorModeHit(part, tierRules);
+  if (partHit) return { mode: partHit.mode, source: 'part', raw: partHit.raw, via: partHit.via };
+  const tplHit = descriptorModeHit(template, tierRules);
+  if (tplHit) return { mode: tplHit.mode, source: 'template', raw: tplHit.raw, via: tplHit.via };
+  const gHit = descriptorModeHit(globalDefault, tierRules);
+  if (gHit) return { mode: gHit.mode, source: 'global', raw: gHit.raw, via: gHit.via };
+  return { mode: PRICING_MODES.COST_PLUS, source: 'default', raw: null, via: 'fallback' };
 }
