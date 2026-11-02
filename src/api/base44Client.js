@@ -27,7 +27,7 @@ const TIMECLOCK_READ_ACTIONS = new Set([
   'my_history', 'list_correction_requests', 'list_time_off_requests',
   'list_pending_requests', 'list_shift_templates', 'list_devices',
   'list_face_enrollment', 'list_timeclock_audit', 'admin_load_data',
-  'admin_period_compare', 'who_is_in',
+  'admin_load_all', 'admin_period_compare', 'who_is_in',
 ]);
 const NOTIFICATION_READ_ACTIONS = new Set([
   'list_mine', 'unread_count', 'get_preferences', 'history',
