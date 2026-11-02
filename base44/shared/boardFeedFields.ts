@@ -72,6 +72,7 @@ export const FEED_FIELDS: Record<string, string[]> = {
     "files",
     "follow_up",
     "follow_up_date",
+    "fulfillment_method",
     "google_drive_file_ids",
     "google_drive_folder_url",
     "health_notes",
