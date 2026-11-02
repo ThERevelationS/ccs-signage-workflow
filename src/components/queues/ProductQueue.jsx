@@ -344,7 +344,7 @@ export default function ProductQueue({
     setSearchParams((prev) => {
       const nextFilters = typeof updater === "function" ? updater(parseQueueFilters(prev)) : updater;
       const next = new URLSearchParams(prev);
-      for (const key of ["status", "substatus", "designer", "responsibility", "assignedTo", "category", "moduleKey", "due", "sort", "q", "size", "fulfilled"]) {
+      for (const key of ["status", "substatus", "designer", "responsibility", "assignedTo", "category", "moduleKey", "due", "sort", "q", "size", "fulfilled", "machine", "part", "salesperson", "enteredBy", "entered_by", "fulfillment", "proof", "rush", "assigned"]) {
         next.delete(key);
       }
       for (const [key, value] of Object.entries(serializeQueueFilters(nextFilters))) {
