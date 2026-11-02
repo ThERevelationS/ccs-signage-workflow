@@ -942,6 +942,31 @@
           "queue_priority": {
             "type": "number"
           },
+          "responsibility_color": {
+            "type": "string",
+            "description": "Display color for the responsibility department/person/group badge."
+          },
+          "priority": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 99,
+            "description": "CoreBridge-style 1-99 line priority; distinct from queue_priority ordering."
+          },
+          "quick_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Persistent custom substatus tags applied to this product."
+          },
+          "design_time_seconds": {
+            "type": "number",
+            "description": "Accumulated design labor time logged against this product, in seconds."
+          },
+          "production_time_seconds": {
+            "type": "number",
+            "description": "Accumulated production labor time logged against this product, in seconds."
+          },
           "proof_status": {
             "type": "string",
             "enum": [
