@@ -71,6 +71,13 @@
         "type": "string"
       }
     },
+    "warning_flag_details": {
+      "type": "object",
+      "description": "Per-flag audit sidecar (G-11): {flag: {note, set_by, set_at}} written by customerWarningModel.setFlagPatch \u2014 keeps warning_flags[] a clean string list while persisting badge detail.",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
     "tags": {
       "type": "array",
       "items": {
