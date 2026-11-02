@@ -70,6 +70,37 @@
       "description": "Actor or detector that wrote the row"
     }
   },
+  "delivery_channel": {
+    "type": "string",
+    "description": "Adapter lane that carried the event \u2014 email | smartsheet | internal (deliveryTelemetryModel DELIVERY_CHANNELS)"
+  },
+  "delivery_status": {
+    "type": "string",
+    "description": "Last delivery outcome \u2014 delivered | failed | skipped | queued"
+  },
+  "delivery_attempted_at": {
+    "type": "string",
+    "format": "date-time",
+    "description": "Timestamp of the most recent delivery attempt/stamp"
+  },
+  "delivered_at": {
+    "type": "string",
+    "format": "date-time",
+    "description": "When an attempt last confirmed delivery; absent while last status is not delivered"
+  },
+  "delivery_error": {
+    "type": "string",
+    "description": "PII-stripped error text from the last attempt (<=500 chars)"
+  },
+  "delivery_attempts": {
+    "type": "number",
+    "description": "Total delivery attempts recorded on this row"
+  },
+  "last_delivery_at": {
+    "type": "string",
+    "format": "date-time",
+    "description": "Timestamp of the most recent telemetry stamp"
+  },
   "required": [
     "recipient_email",
     "category",
