@@ -2,6 +2,10 @@ import { channelSellEconomics } from "./channel/channelSellPricing";
 
 import { vinylEngineEconomics } from "./vinyl/vinylEnginePricing";
 
+import { brickEngineEconomics } from "./brick/brickSellPricing";
+
+import { cncEngineEconomics } from "./cnc/cncSellPricing";
+
 const num = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 export function hasNumericValue(value) {
@@ -62,15 +66,18 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0, pri
     const internalCost = hasNumericValue(record.subtotal)
       ? num(record.subtotal)
       : total - num(record.markup_amount);
-    // F-23b pricing-engine wire: when the saved vinyl record explicitly
-    // carries engine config (pricing_engine/engine_pricing context block or
-    // per-line tier/template descriptors), the shared engine owns the sell
-    // side and wins over a legacy saved customer_pricing snapshot. The module
-    // cost math above stays authoritative; with no config this returns null
-    // and the record keeps today's numbers byte-identically.
+    // F-23b/F-23c pricing-engine wires: when the saved vinyl/brick record
+    // explicitly carries engine config (pricing_engine/engine_pricing context
+    // block or per-line/component tier/template descriptors), the shared
+    // engine owns the sell side and wins over a legacy saved customer_pricing
+    // snapshot. The module cost math above stays authoritative; with no
+    // config this returns null and the record keeps today's numbers
+    // byte-identically.
     const wired = moduleKey === "vinyl"
       ? vinylEngineEconomics(record, { baselineSell: total, internalCost, pricingContext })
-      : null;
+      : moduleKey === "brick_stone"
+        ? brickEngineEconomics(record, { baselineSell: total, internalCost, pricingContext })
+        : null;
     if (wired) {
       return {
         internalCost: wired.internalCost,
@@ -102,6 +109,26 @@ export function sourceProjectEconomics(moduleKey, record, fallbackTotal = 0, pri
       };
     }
     return withSavedTier({ internalCost, customerPrice: total });
+  }
+
+  if (moduleKey === "cnc") {
+    // F-23d pricing-engine wire: when the saved CNC record explicitly carries
+    // engine config (engine_pricing-style context block or per-line
+    // tier/template descriptors on items[]), the shared engine owns the sell
+    // side and wins over a legacy saved customer_pricing snapshot. CNC
+    // total_cost is a pure cost total (no module markup), so the internal
+    // cost and the sell baseline are the same number. With no config the
+    // wire returns null and the record keeps today's numbers
+    // byte-identically — the saved Markup-Tier snapshot still applies.
+    const wired = cncEngineEconomics(record, { baselineSell: total, internalCost: total, pricingContext });
+    if (wired) {
+      return {
+        internalCost: wired.internalCost,
+        customerPrice: wired.customerPrice,
+        pricing_engine: wired.resolution,
+      };
+    }
+    return withSavedTier({ internalCost: total, customerPrice: total });
   }
 
   return withSavedTier({ internalCost: fallback, customerPrice: fallback });
