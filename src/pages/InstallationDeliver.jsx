@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { staffEntities } from "@/components/staff/staffEntities";
+import QueueFilterBar from "@/components/queues/QueueFilterBar";
+import {
+  DEFAULT_QUEUE_FILTERS,
+  flattenQueueRows,
+  filterQueueRows,
+  serializeQueueFilters,
+} from "@/components/queues/productQueueModel";
+import { OPERATIONAL_STATUS_CUSTOMER_LABELS } from "@/components/estimator/workOrderConversion";
 import DragDropList from "../components/workflow/DragDropList";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import WorkOrderForm from "../components/workflow/WorkOrderForm";
@@ -11,6 +19,78 @@ import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workO
 import { NotificationTriggers } from "@/components/workflow/NotificationService";
 
 const WorkOrder = staffEntities.WorkOrder;
+
+// C-01 — shared CoreBridge queue filter bar on this board. The bar is
+// stateless; the page owns the filter object and pushes it through the
+// product-queue model. flattenQueueRows only emits product rows, so each
+// work order also contributes one order-level "meta" row carrying the
+// order fields the bar can still match (ref/company search blob, WO
+// designer/assignee, sales rep, entered-by, install-date due). Product-only
+// fields stay blank on meta rows so select filters remain product-accurate.
+const WO_META_SEARCH_FIELDS = [
+  "title", "client_name", "contact_name", "corbridge_invoice_number",
+  "work_order_number", "source_estimate_number", "customer_description",
+  "description", "estimator_notes", "work_notes", "current_task_description",
+];
+
+function woMetaQueueRow(wo) {
+  return {
+    workOrderId: wo.id,
+    ref: wo.corbridge_invoice_number || wo.title || wo.id,
+    company: wo.client_name || "",
+    productName: WO_META_SEARCH_FIELDS.map((f) => wo?.[f]).filter((v) => String(v || "").trim()).join(" "),
+    status: "none",
+    substatus: "",
+    designer: wo.designer || "",
+    assignedTo: wo.assigned_to || "",
+    responsibility: "",
+    category: "",
+    moduleKey: "",
+    due: "",
+    woDue: wo.project_install_date || "",
+    hardDue: false,
+    machine: "",
+    part: "",
+    salesperson: wo.sales_rep || wo.salesperson || wo.salesperson_email || "",
+    enteredBy: wo.created_by || wo.entered_by || "",
+    rush: wo.is_rush === true || wo.rush === true ||
+      String(wo.order_priority || "").trim().toLowerCase() === "rush",
+  };
+}
+
+// Options are {value,label} lists of the distinct values present in the
+// queue rows — the QueueFilterBar contract.
+function queueOptionsFromRows(rows) {
+  const uniq = (key) =>
+    [...new Set((rows || []).map((r) => r[key]).filter((v) => String(v || "").trim()))]
+      .sort((a, b) => String(a).localeCompare(String(b)))
+      .map((v) => ({ value: v, label: v }));
+  return {
+    machines: uniq("machine"),
+    partCategories: uniq("category"),
+    parts: uniq("part"),
+    designers: uniq("designer"),
+    substatuses: uniq("substatus"),
+    responsibilities: uniq("responsibility"),
+    assignees: uniq("assignedTo"),
+    salespeople: uniq("salesperson"),
+    enteredBys: uniq("enteredBy"),
+    moduleKeys: uniq("moduleKey"),
+    statuses: [...new Set((rows || []).map((r) => r.status).filter((s) => s && s !== "none"))]
+      .sort()
+      .map((s) => ({ value: s, label: OPERATIONAL_STATUS_CUSTOMER_LABELS[s] || s })),
+  };
+}
+
+// Non-default filters (beyond page size / include-fulfilled which do not
+// change which orders show on a board) disable drag reorder — a filtered
+// subset has no meaningful order to persist.
+function queueFiltersActive(filters) {
+  const ser = serializeQueueFilters({ ...filters, pageSize: DEFAULT_QUEUE_FILTERS.pageSize });
+  delete ser.fulfilled;
+  return Object.keys(ser).length > 0 ||
+    ["machine", "part", "salesperson", "enteredBy"].some((k) => (filters?.[k] ?? "all") !== "all");
+}
 
 // Route sheet: upcoming installs from this board grouped by project_install_date
 // day (ascending; undated jobs land in "Unscheduled"). Each row links to plain
@@ -107,6 +187,23 @@ export default function InstallationDeliver() {
   const [isLoading, setIsLoading] = useState(true);
   const [isReordering, setIsReordering] = useState(false);
   const { currentUser, isRegistered, promptForEmail } = useAuth();
+  const [queueFilters, setQueueFilters] = useState(() => ({ ...DEFAULT_QUEUE_FILTERS }));
+
+  // Queue-row universe for the filter bar: product rows (flatten honors
+  // includeFulfilled) + one order-level meta row per work order.
+  const queueRows = useMemo(() => {
+    const rows = flattenQueueRows(workOrders, { includeFulfilled: queueFilters.includeFulfilled });
+    for (const wo of workOrders) if (wo?.id) rows.push(woMetaQueueRow(wo));
+    return rows;
+  }, [workOrders, queueFilters.includeFulfilled]);
+
+  const queueOptions = useMemo(() => queueOptionsFromRows(queueRows), [queueRows]);
+  const filtersActive = useMemo(() => queueFiltersActive(queueFilters), [queueFilters]);
+
+  const visibleWorkOrders = useMemo(() => {
+    const ids = new Set(filterQueueRows(queueRows, queueFilters).map((r) => r.workOrderId));
+    return workOrders.filter((wo) => ids.has(wo.id));
+  }, [workOrders, queueRows, queueFilters]);
 
   useEffect(() => {
     document.title = "Installation - Workflow Manager";
@@ -329,7 +426,16 @@ export default function InstallationDeliver() {
       <div className="w-full max-w-[95vw] mx-auto">
         <StageTasksPanel stage="installation" />
 
-        <InstallRouteSheet workOrders={workOrders} />
+        <QueueFilterBar
+          className="mb-3"
+          filters={queueFilters}
+          onChange={setQueueFilters}
+          options={queueOptions}
+          pageSize={queueFilters.pageSize}
+          onPageSizeChange={(n) => setQueueFilters((f) => ({ ...f, pageSize: n }))}
+        />
+
+        <InstallRouteSheet workOrders={visibleWorkOrders} />
 
         <div className="clay-card">
           {isLoading ? (
@@ -338,9 +444,9 @@ export default function InstallationDeliver() {
             </div>
           ) : (
             <DragDropList
-              workOrders={workOrders}
+              workOrders={visibleWorkOrders}
               onReorder={handleReorder}
-              reorderDisabled={isReordering}
+              reorderDisabled={isReordering || filtersActive}
               onEdit={handleEdit}
               onMove={handleMove}
               onSplit={handleSplit}
