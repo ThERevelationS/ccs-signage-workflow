@@ -105,6 +105,7 @@ import {
   useAuth,
 } from "@/components/auth/EmailGate";
 import { verifyLogin } from "@/functions/verifyLogin";
+import { IDENTIFY_CAMERA_BLURB } from "@/components/timeclock/timeClockIdentifyCopy";
 import {
   createAutomationRuleIfAbsent,
   deleteAutomationRuleIfUnchanged,
@@ -2317,6 +2318,30 @@ export default function AdminSettings() {
     }
   };
 
+  // QR badge arm - the same TIMECLOCK2 badge the kiosk accepts identifies an
+  // admin here too; the backend verifies it server-side before issuing.
+  const handleBadgeScanned = async (decodedText) => {
+    const code = String(decodedText || "").trim();
+    if (!code.startsWith("TIMECLOCK2:")) {
+      setPasswordError("This is an old or invalid Time Clock badge. Generate a new secure badge from Time Clock Settings.");
+      return;
+    }
+    setIsVerifying(true);
+    setPasswordError("");
+    try {
+      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { badge_code: code });
+      const accessData = accessRes?.data || accessRes;
+      if (!accessData?.success || !accessData?.capability) {
+        throw new Error(accessData?.error || "Badge could not be verified by the server.");
+      }
+      applyAdminAccess(accessData);
+    } catch (error) {
+      setPasswordError(error?.response?.data?.error || error?.message || "Badge verification failed.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   // Password protection screen
   if (!isUnlocked) {
     return (
@@ -2327,7 +2352,7 @@ export default function AdminSettings() {
               <Settings className="w-8 h-8 text-purple-700" />
             </div>
             <h2 className="text-xl font-bold text-gray-800">Admin Settings</h2>
-            <p className="text-sm text-gray-500 mt-1">Use Face ID or enter your credentials</p>
+            <p className="text-sm text-gray-500 mt-1">{IDENTIFY_CAMERA_BLURB}</p>
           </div>
 
           <div className="space-y-4">
@@ -2335,6 +2360,7 @@ export default function AdminSettings() {
             <FaceRecognition
               allUsers={allUsers}
               onRecognized={handleFaceRecognized}
+              onQrScan={handleBadgeScanned}
             />
 
             {passwordError && <p className="text-red-500 text-sm text-center">{passwordError}</p>}
