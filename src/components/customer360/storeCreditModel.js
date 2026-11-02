@@ -79,7 +79,7 @@ import { clean, num } from "./customer360Model";
 
 const toCents = (v) => {
   const n = Number(v);
-  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  return Number.isFinite(n) ? Math.sign(n) * Math.round(Math.abs(n) * 100 + 1e-9) : 0;
 };
 const fromCents = (c) => Math.round(num(c)) / 100;
 const asCents = (v) => {
