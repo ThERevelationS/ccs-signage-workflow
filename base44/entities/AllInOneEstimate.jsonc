@@ -219,6 +219,46 @@
       "default": false,
       "description": "Persisted mirror of the computed expiry check (sent past quote_issue_date + quote_valid_days) so expired quotes are reportable by filter without recomputing per row."
     },
+    "quote_valid_until": {
+      "type": "string",
+      "description": "Derived expiry alias read by quote delivery + workspace views (K-10); mirrors quote_expiration_date/computed expiry."
+    },
+    "email_signature": {
+      "type": "string",
+      "description": "Per-estimate copy of the QuoteDefaults email signature snapshot for delivery emails (K-10)."
+    },
+    "email_subject_template": {
+      "type": "string",
+      "description": "Per-estimate email subject template snapshot (K-10)."
+    },
+    "email_message_template": {
+      "type": "string",
+      "description": "Per-estimate email body template snapshot (K-10)."
+    },
+    "default_tax_group": {
+      "type": "string",
+      "description": "TaxGroup name resolved for this estimate when no manual tax pick exists (K-10 chain: manual > customer > defaults > TaxGroup.is_default)."
+    },
+    "signature_text": {
+      "type": "string",
+      "description": "Print-surface signature block text snapshot (K-10)."
+    },
+    "disclaimer_text": {
+      "type": "string",
+      "description": "Print-footer disclaimer line snapshot (K-10)."
+    },
+    "tax_rate_source": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "customer_default",
+        "shop_default",
+        "group_default",
+        "manual",
+        "none"
+      ],
+      "description": "Which hop of the tax-rate resolution chain this estimate used (K-10)."
+    },
     "quote_version": {
       "type": "number",
       "default": 0,
